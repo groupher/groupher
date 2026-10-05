@@ -23,9 +23,11 @@ defmodule GroupherServer.CMS.Gate.Scope.ArticleSchema do
   @doc "Returns the canonical Article schema for a resource thread."
   @spec fetch(atom()) :: {:ok, module()} | {:error, ErrorCat.error()}
   def fetch(thread) when is_atom(thread) do
-    if thread in @article_threads,
-      do: {:ok, Article},
-      else: {:error, ErrorCat.scope_context_missing()}
+    if thread in @article_threads do
+      {:ok, Article}
+    else
+      {:error, ErrorCat.scope_context_missing()}
+    end
   end
 
   def fetch(_thread), do: {:error, ErrorCat.scope_context_missing()}

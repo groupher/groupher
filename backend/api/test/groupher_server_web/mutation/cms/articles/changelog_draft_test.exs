@@ -27,16 +27,16 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
 
     updated =
       context.user_conn
-    |> gq_mutation(S.Article.m(:update_article, :changelog), %{
-      article: %{
-        inner_id: result["innerId"],
-        community: context.community.slug,
-        thread: "CHANGELOG"
-      },
-      expectedVersion: public_changelog.version,
-      title: "Republished Changelog",
-      body: mock_rich_text("republished changelog")
-    })
+      |> gq_mutation(S.Article.m(:update_article, :changelog), %{
+        article: %{
+          inner_id: result["innerId"],
+          community: context.community.slug,
+          thread: "CHANGELOG"
+        },
+        expectedVersion: public_changelog.version,
+        title: "Republished Changelog",
+        body: mock_rich_text("republished changelog")
+      })
 
     assert updated["title"] == "Republished Changelog"
     assert {:error, :not_found} = CMS.Articles.read_draft(public_changelog.id, context.user)
@@ -129,7 +129,6 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
              CMS.Articles.read_draft(draft["id"], context.user)
 
     assert stored_draft.title == "Author Changelog Draft"
-
   end
 
   test "only the public Changelog author can start its first Draft", context do

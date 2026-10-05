@@ -70,10 +70,14 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     assert results |> get_in(["meta", "illegalWords"]) == []
 
     {:ok, _} =
-      CMS.Articles.set_illegal(blog.id, %{
-        illegal_reason: ["some-reason"],
-        illegal_words: ["some-word"]
-      }, :operations)
+      CMS.Articles.set_illegal(
+        blog.id,
+        %{
+          illegal_reason: ["some-reason"],
+          illegal_words: ["some-word"]
+        },
+        :operations
+      )
 
     results = user_conn |> gq_query(S.Article.q(:article, :blog), variables)
 

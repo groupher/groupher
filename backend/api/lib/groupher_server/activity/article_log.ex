@@ -67,16 +67,19 @@ defmodule GroupherServer.Activity.ArticleLog do
     Gate.Access.access_check(actor, :read, article)
   end
 
-  defp maybe_branch(query, %{branch_id: branch_id}) when not is_nil(branch_id),
-    do: where(query, [log], log.branch_id == ^branch_id)
+  defp maybe_branch(query, %{branch_id: branch_id}) when not is_nil(branch_id) do
+    where(query, [log], log.branch_id == ^branch_id)
+  end
 
   defp maybe_branch(query, _article), do: query
 
   defp pagination(filter) when is_map(filter) do
     page = Map.get(filter, :page, 1)
 
-    if Map.keys(filter) -- [:page] == [] and is_integer(page) and page > 0,
-      do: {:ok, page},
-      else: {:error, GroupherServer.Activity.ErrorCat.invalid_pagination()}
+    if Map.keys(filter) -- [:page] == [] and is_integer(page) and page > 0 do
+      {:ok, page}
+    else
+      {:error, GroupherServer.Activity.ErrorCat.invalid_pagination()}
+    end
   end
 end

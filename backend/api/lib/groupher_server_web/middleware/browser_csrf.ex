@@ -52,8 +52,9 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
 
   defp browser_cookie?(conn), do: Map.has_key?(conn.req_cookies, "groupher-auth.token")
 
-  defp mutation_request?(%Plug.Conn{method: "GET", query_params: params}),
-    do: mutation_params?(params)
+  defp mutation_request?(%Plug.Conn{method: "GET", query_params: params}) do
+    mutation_params?(params)
+  end
 
   defp mutation_request?(%Plug.Conn{body_params: %Plug.Conn.Unfetched{}}), do: false
   defp mutation_request?(%Plug.Conn{body_params: params}), do: mutation_params?(params)
@@ -113,15 +114,17 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
 
   defp allowed_origin?(_), do: false
 
-  defp no_path_or_query?(uri),
-    do: uri.path in [nil, "/"] and is_nil(uri.query) and is_nil(uri.fragment)
+  defp no_path_or_query?(uri) do
+    uri.path in [nil, "/"] and is_nil(uri.query) and is_nil(uri.fragment)
+  end
 
   defp host_allowed?(%URI{scheme: "https", port: port, host: host}) when port in [nil, 443] do
     MapSet.member?(@production_hosts, host) or development_host?(host)
   end
 
-  defp host_allowed?(%URI{scheme: "http", port: port, host: host}) when port in [nil, 80],
-    do: development_host?(host)
+  defp host_allowed?(%URI{scheme: "http", port: port, host: host}) when port in [nil, 80] do
+    development_host?(host)
+  end
 
   defp host_allowed?(_), do: false
 

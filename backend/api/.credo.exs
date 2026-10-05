@@ -44,7 +44,8 @@
       requires: [
         "credo_checks/no_direct_repo_in_boundaries.ex",
         "credo_checks/no_direct_orm_in_transport.ex",
-        "credo_checks/no_external_effects_in_commands.ex"
+        "credo_checks/no_external_effects_in_commands.ex",
+        "credo_checks/no_wrapped_inline_do.ex"
       ],
       #
       # If you want to enforce a style guide and need a more traditional linting
@@ -97,6 +98,7 @@
           {GroupherServer.Credo.Check.NoDirectRepoInBoundaries, [exit_status: 2]},
           {GroupherServer.Credo.Check.NoDirectOrmInTransport, [exit_status: 2]},
           {GroupherServer.Credo.Check.NoExternalEffectsInCommands, [exit_status: 2]},
+          {GroupherServer.Credo.Check.NoWrappedInlineDo, [exit_status: 2]},
 
           #
           ## Readability Checks

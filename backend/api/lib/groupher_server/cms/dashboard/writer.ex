@@ -40,8 +40,9 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
     update(community, key, SectionPayload.section_args(key, args))
   end
 
-  def update(%Community{}, _args),
-    do: {:error, ErrorCat.invalid_dsb_section()}
+  def update(%Community{}, _args) do
+    {:error, ErrorCat.invalid_dsb_section()}
+  end
 
   @doc "Updates one explicit dashboard section, including base-info synchronization."
   @spec update(Community.t(), atom(), map() | list() | boolean()) ::
@@ -99,8 +100,9 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
     end)
   end
 
-  def replace_section(%CommunityDashboard{}, :content_shadow, _args),
-    do: {:error, CmsErrorCat.custom("invalid dashboard content shadow")}
+  def replace_section(%CommunityDashboard{}, :content_shadow, _args) do
+    {:error, CmsErrorCat.custom("invalid dashboard content shadow")}
+  end
 
   def replace_section(%CommunityDashboard{} = community_dashboard, key, args) do
     with {:ok, section_payload} <- SectionPayload.prepare(community_dashboard, key, args) do

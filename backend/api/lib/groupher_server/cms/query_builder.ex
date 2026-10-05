@@ -127,9 +127,11 @@ defmodule GroupherServer.CMS.QueryBuilder do
         )
 
       {:thread, thread}, query ->
-        if is_atom(thread) and thread in @threads,
-          do: from(q in query, where: q.thread == ^thread),
-          else: from(q in query, where: false)
+        if is_atom(thread) and thread in @threads do
+          from(q in query, where: q.thread == ^thread)
+        else
+          from(q in query, where: false)
+        end
 
       {:community_id, community_id}, query ->
         from(q in query,
@@ -155,22 +157,27 @@ defmodule GroupherServer.CMS.QueryBuilder do
   end
 
   defp trans_article_cat(queryable, cat) when is_atom(cat) do
-    if cat in @article_cat,
-      do: where(queryable, [article], article.cat == ^cat),
-      else: where(queryable, [article], article.id == -1)
+    if cat in @article_cat do
+      where(queryable, [article], article.cat == ^cat)
+    else
+      where(queryable, [article], article.id == -1)
+    end
   end
 
   defp trans_article_status(queryable, status) when is_atom(status) do
-    if status in @article_status,
-      do: where(queryable, [article], article.status == ^status),
-      else: where(queryable, [article], article.id == -1)
+    if status in @article_status do
+      where(queryable, [article], article.status == ^status)
+    else
+      where(queryable, [article], article.id == -1)
+    end
   end
 
   defp trans_articles_order(queryable, :upvotes), do: queryable
   defp trans_articles_order(queryable, :comments), do: order_by(queryable, desc: :comments_count)
 
-  defp trans_articles_order(queryable, :views),
-    do: queryable
+  defp trans_articles_order(queryable, :views) do
+    queryable
+  end
 
   defp trans_articles_order(queryable, :publish), do: order_by(queryable, desc: :inserted_at)
   defp trans_articles_order(queryable, _order), do: queryable

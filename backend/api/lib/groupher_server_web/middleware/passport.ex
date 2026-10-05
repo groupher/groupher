@@ -160,8 +160,9 @@ defmodule GroupherServerWeb.Middleware.Passport do
   defp owner_pass?(_, _), do: false
 
   defp fetch_cur_passport(%{context: %{cur_user: %{cur_passport: cur_passport}}})
-       when is_map(cur_passport),
-       do: {:ok, cur_passport}
+       when is_map(cur_passport) do
+    {:ok, cur_passport}
+  end
 
   defp fetch_cur_passport(_), do: {:error, CmsErrorCat.missing_passport()}
 
@@ -193,8 +194,9 @@ defmodule GroupherServerWeb.Middleware.Passport do
     end
   end
 
-  defp check_scope_permission(_passport, _resolution, %{owner_fallback: true, grant: nil}),
-    do: false
+  defp check_scope_permission(_passport, _resolution, %{owner_fallback: true, grant: nil}) do
+    false
+  end
 
   defp check_scope_permission(_passport, _resolution, %{owner_fallback: true}), do: false
   defp check_scope_permission(_passport, _resolution, _), do: false
@@ -209,32 +211,39 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   defp resolve_grant(_, _), do: {:error, CmsErrorCat.invalid_requirement()}
 
-  defp fetch_thread(%{arguments: %{article_path: %{thread: thread}}}) when is_atom(thread),
-    do: {:ok, Atom.to_string(thread)}
+  defp fetch_thread(%{arguments: %{article_path: %{thread: thread}}}) when is_atom(thread) do
+    {:ok, Atom.to_string(thread)}
+  end
 
-  defp fetch_thread(%{arguments: %{thread: thread}}) when is_atom(thread),
-    do: {:ok, Atom.to_string(thread)}
+  defp fetch_thread(%{arguments: %{thread: thread}}) when is_atom(thread) do
+    {:ok, Atom.to_string(thread)}
+  end
 
   defp fetch_thread(%{arguments: %{thread: thread}}) when is_binary(thread), do: {:ok, thread}
   defp fetch_thread(_), do: {:error, CmsErrorCat.missing_thread()}
 
   defp fetch_community_slug(%{arguments: %{article_path: %{community: %{slug: slug}}}})
-       when is_binary(slug),
-       do: {:ok, slug}
+       when is_binary(slug) do
+    {:ok, slug}
+  end
 
   defp fetch_community_slug(%{arguments: %{article_path: %{community: community}}})
-       when is_binary(community),
-       do: {:ok, community}
+       when is_binary(community) do
+    {:ok, community}
+  end
 
-  defp fetch_community_slug(%{arguments: %{community: %{slug: slug}}}) when is_binary(slug),
-    do: {:ok, slug}
+  defp fetch_community_slug(%{arguments: %{community: %{slug: slug}}}) when is_binary(slug) do
+    {:ok, slug}
+  end
 
-  defp fetch_community_slug(%{arguments: %{community: community}}) when is_binary(community),
-    do: {:ok, community}
+  defp fetch_community_slug(%{arguments: %{community: community}}) when is_binary(community) do
+    {:ok, community}
+  end
 
   defp fetch_community_slug(%{arguments: %{input: %{community: community}}})
-       when is_binary(community),
-       do: {:ok, community}
+       when is_binary(community) do
+    {:ok, community}
+  end
 
   defp fetch_community_slug(_), do: {:error, CmsErrorCat.missing_community()}
 

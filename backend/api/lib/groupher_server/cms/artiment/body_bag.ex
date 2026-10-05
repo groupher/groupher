@@ -218,8 +218,9 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
     end)
   end
 
-  defp validate_json(:json, json) when byte_size(json) > @max_json_bytes,
-    do: [json: "exceeds the #{@max_json_bytes} byte limit"]
+  defp validate_json(:json, json) when byte_size(json) > @max_json_bytes do
+    [json: "exceeds the #{@max_json_bytes} byte limit"]
+  end
 
   defp validate_json(:json, json) do
     case Jason.decode(json) do
@@ -238,8 +239,9 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
 
   defp walk([], count), do: {:ok, count}
 
-  defp walk([{_value, depth} | _rest], _count) when depth > @max_depth,
-    do: {:error, "exceeds the maximum depth of #{@max_depth}"}
+  defp walk([{_value, depth} | _rest], _count) when depth > @max_depth do
+    {:error, "exceeds the maximum depth of #{@max_depth}"}
+  end
 
   defp walk([{value, depth} | rest], count) when is_list(value) do
     walk(Enum.map(value, &{&1, depth + 1}) ++ rest, count)
@@ -258,8 +260,9 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
 
   defp walk([_value | rest], count), do: walk(rest, count)
 
-  defp validate_derived_size(field, value) when byte_size(value) > @max_derived_bytes,
-    do: [{field, "exceeds the #{@max_derived_bytes} byte limit"}]
+  defp validate_derived_size(field, value) when byte_size(value) > @max_derived_bytes do
+    [{field, "exceeds the #{@max_derived_bytes} byte limit"}]
+  end
 
   defp validate_derived_size(_field, _value), do: []
 
@@ -276,17 +279,21 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   end
 
   defp required_string_fields(options) do
-    if Keyword.get(options, :thread) == :doc,
-      do: @string_fields -- [:plain_text, :digest],
-      else: @string_fields
+    if Keyword.get(options, :thread) == :doc do
+      @string_fields -- [:plain_text, :digest]
+    else
+      @string_fields
+    end
   end
 
   # Ecto normally treats empty strings as absent input. An empty Docs document
   # is a valid publisher result, so preserve its exact plain_text/digest values.
   defp cast_fields(body_bag, attrs, options) do
-    if Keyword.get(options, :thread) == :doc,
-      do: Ecto.Changeset.cast(body_bag, attrs, @fields, empty_values: []),
-      else: Ecto.Changeset.cast(body_bag, attrs, @fields)
+    if Keyword.get(options, :thread) == :doc do
+      Ecto.Changeset.cast(body_bag, attrs, @fields, empty_values: [])
+    else
+      Ecto.Changeset.cast(body_bag, attrs, @fields)
+    end
   end
 
   defp validate_total_size(changeset) do
@@ -298,13 +305,16 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
         end
       end)
 
-    if total > @max_total_bytes,
-      do: add_error(changeset, :json, "BodyBag exceeds the #{@max_total_bytes} byte limit"),
-      else: changeset
+    if total > @max_total_bytes do
+      add_error(changeset, :json, "BodyBag exceeds the #{@max_total_bytes} byte limit")
+    else
+      changeset
+    end
   end
 
-  defp apply_body_bag(%Ecto.Changeset{valid?: true} = changeset),
-    do: {:ok, apply_changes(changeset)}
+  defp apply_body_bag(%Ecto.Changeset{valid?: true} = changeset) do
+    {:ok, apply_changes(changeset)}
+  end
 
   defp apply_body_bag(changeset), do: {:error, changeset}
 

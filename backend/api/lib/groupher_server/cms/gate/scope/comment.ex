@@ -62,8 +62,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   defp maybe_filter_thread(query, %{thread: :all}), do: query
 
-  defp maybe_filter_thread(query, %{thread: thread}),
-    do: where(query, [comment], comment.thread == ^thread)
+  defp maybe_filter_thread(query, %{thread: thread}) do
+    where(query, [comment], comment.thread == ^thread)
+  end
 
   defp maybe_filter_thread(query, _context), do: query
 
@@ -98,8 +99,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       on: lifecycle.comment_id == comment.id,
       left_join: article_lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
-      on:
-        article_lifecycle.article_id == comment.article_id and comment.thread != ^:doc,
+      on: article_lifecycle.article_id == comment.article_id and comment.thread != ^:doc,
       left_join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:

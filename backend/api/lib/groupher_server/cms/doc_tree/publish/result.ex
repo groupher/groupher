@@ -17,7 +17,6 @@ defmodule GroupherServer.CMS.DocTree.Publish.Result do
   project-wide result abstraction.
   """
 
-
   @doc """
   Maps an enumerable while every function result is `{:ok, value}`.
 

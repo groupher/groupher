@@ -159,9 +159,11 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
           |> length
           |> Kernel.>(0)
 
-        if not reported_before,
-          do: {:ok, report},
-          else: {:error, ErrorCat.already_reported("#{login} already reported")}
+        if not reported_before do
+          {:ok, report}
+        else
+          {:error, ErrorCat.already_reported("#{login} already reported")}
+        end
     end
   end
 

@@ -312,8 +312,9 @@ defmodule GroupherServer.Support.Factory.Articles do
 
   defp flatten_text(%{"text" => text}) when is_binary(text), do: text
 
-  defp flatten_text(%{"type" => "mention", "value" => value}) when is_binary(value),
-    do: value
+  defp flatten_text(%{"type" => "mention", "value" => value}) when is_binary(value) do
+    value
+  end
 
   defp flatten_text(%{"children" => children}) when is_list(children), do: flatten_text(children)
   defp flatten_text(_value), do: ""

@@ -112,8 +112,9 @@ defmodule GroupherServer.CMS.Comments.States do
   @spec fold_for_report(Comment.t()) :: T.domain_res(Comment.t())
   def fold_for_report(%Comment{} = comment), do: ORM.update(comment, %{is_folded: true})
 
-  defp do_fold_comment(%Comment{} = comment, is_folded) when is_boolean(is_folded),
-    do: ORM.update(comment, %{is_folded: is_folded})
+  defp do_fold_comment(%Comment{} = comment, is_folded) when is_boolean(is_folded) do
+    ORM.update(comment, %{is_folded: is_folded})
+  end
 
   defp pin_unlocked(%Comment{} = comment, article, user, opts) do
     with {:ok, comment} <- maybe_existing_pinned_comment(comment),
@@ -152,8 +153,9 @@ defmodule GroupherServer.CMS.Comments.States do
     )
   end
 
-  defp pinned_comment_attrs(%{id: article_id}, comment, _thread),
-    do: %{comment_id: comment.id, article_id: article_id, branch_id: comment.branch_id}
+  defp pinned_comment_attrs(%{id: article_id}, comment, _thread) do
+    %{comment_id: comment.id, article_id: article_id, branch_id: comment.branch_id}
+  end
 
   defp undo_pin_unlocked(%Comment{} = comment, article, user, opts) do
     Multi.new()
@@ -212,17 +214,21 @@ defmodule GroupherServer.CMS.Comments.States do
   defp result({:ok, %{update_comment_flag: result}}), do: {:ok, result}
   defp result({:ok, %{fold_comment: result}}), do: {:ok, result}
 
-  defp result({:error, ErrorCat.error_pattern(reason: :already_pinned, details: result)}),
-    do: {:ok, result}
+  defp result({:error, ErrorCat.error_pattern(reason: :already_pinned, details: result)}) do
+    {:ok, result}
+  end
 
-  defp result({:error, :update_comment_flag, _result, _steps}),
-    do: {:error, ErrorCat.update_fails()}
+  defp result({:error, :update_comment_flag, _result, _steps}) do
+    {:error, ErrorCat.update_fails()}
+  end
 
-  defp result({:error, :add_pined_comment, _result, _steps}),
-    do: {:error, ErrorCat.create_fails()}
+  defp result({:error, :add_pined_comment, _result, _steps}) do
+    {:error, ErrorCat.create_fails()}
+  end
 
-  defp result({:error, :remove_pined_comment, _result, _steps}),
-    do: {:error, ErrorCat.delete_fails()}
+  defp result({:error, :remove_pined_comment, _result, _steps}) do
+    {:error, ErrorCat.delete_fails()}
+  end
 
   defp result({:error, _, result, _steps}), do: {:error, result}
 end

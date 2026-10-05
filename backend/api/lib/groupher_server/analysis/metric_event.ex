@@ -37,8 +37,9 @@ defmodule GroupherServer.Analysis.MetricEvent do
     end
   end
 
-  def append_article_action(_article, _operation_id, _metric, _opts),
-    do: {:error, :invalid_article_metric}
+  def append_article_action(_article, _operation_id, _metric, _opts) do
+    {:error, :invalid_article_metric}
+  end
 
   @doc "Appends one metric fact; duplicate producer retries are successful no-ops."
   @spec append(map()) :: :ok | {:error, term()}

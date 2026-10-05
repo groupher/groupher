@@ -50,8 +50,9 @@ defmodule GroupherServer.CMS.Seeds.Communities do
     Domain.community(slug, type)
   end
 
-  def mock(_slug, type) when is_atom(type),
-    do: {:error, ErrorCat.custom("unknown community type")}
+  def mock(_slug, type) when is_atom(type) do
+    {:error, ErrorCat.custom("unknown community type")}
+  end
 
   @spec mock(String.t() | atom(), keyword()) :: T.domain_res(Community.t())
   def mock(slug, opts) when is_list(opts) do

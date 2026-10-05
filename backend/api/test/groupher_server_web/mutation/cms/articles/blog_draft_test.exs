@@ -27,12 +27,12 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
 
     updated =
       context.user_conn
-    |> gq_mutation(S.Article.m(:update_article, :blog), %{
-      article: %{inner_id: result["innerId"], community: context.community.slug, thread: "BLOG"},
-      expectedVersion: public_blog.version,
-      title: "Republished Blog",
-      body: mock_rich_text("republished blog")
-    })
+      |> gq_mutation(S.Article.m(:update_article, :blog), %{
+        article: %{inner_id: result["innerId"], community: context.community.slug, thread: "BLOG"},
+        expectedVersion: public_blog.version,
+        title: "Republished Blog",
+        body: mock_rich_text("republished blog")
+      })
 
     assert updated["title"] == "Republished Blog"
     assert {:error, :not_found} = CMS.Articles.read_draft(public_blog.id, context.user)

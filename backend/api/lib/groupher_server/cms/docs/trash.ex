@@ -38,8 +38,9 @@ defmodule GroupherServer.CMS.Docs.Trash do
       #=> {:ok, %TrashAction{}}
 
   """
-  def create_action(community, actor, attrs),
-    do: Trash.create_action(community, actor, attrs)
+  def create_action(community, actor, attrs) do
+    Trash.create_action(community, actor, attrs)
+  end
 
   @doc """
   Attaches many docs to one trash action inside a branch.
@@ -269,9 +270,11 @@ defmodule GroupherServer.CMS.Docs.Trash do
     grouped? =
       Repo.exists?(from(item in TrashedDocTreeNode, where: item.trash_action_id == ^action_id))
 
-    if grouped? and not Keyword.get(opts, :group_action, false),
-      do: {:error, ErrorCat.custom("Trash action must be restored as one group")},
-      else: :ok
+    if grouped? and not Keyword.get(opts, :group_action, false) do
+      {:error, ErrorCat.custom("Trash action must be restored as one group")}
+    else
+      :ok
+    end
   end
 
   defp representative_doc(%Community{id: community_id}, branch, article_id) do

@@ -89,7 +89,6 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       }
 
       _results = guest_conn |> gq_query(S.Article.q(:article, :changelog), variables)
-
     end
 
     test "guest user can get comment participants after comment created",

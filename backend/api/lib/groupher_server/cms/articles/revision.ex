@@ -80,8 +80,9 @@ defmodule GroupherServer.CMS.Articles.Revision do
   end
 
   defp validate_draft_owner(%Article{id: id, thread: thread}, %ArticleDraft{article_id: id})
-       when thread in @ordinary_threads,
-       do: :ok
+       when thread in @ordinary_threads do
+    :ok
+  end
 
   defp validate_draft_owner(%Article{id: id, thread: :doc}, %DocDraft{article_id: id}), do: :ok
   defp validate_draft_owner(_article, _draft), do: {:error, :revision_owner_mismatch}
@@ -218,20 +219,22 @@ defmodule GroupherServer.CMS.Articles.Revision do
     |> Repo.insert()
   end
 
-  defp typed_draft_filter(:doc, draft),
-    do: [article_id: draft.article_id, branch_id: draft.branch_id]
+  defp typed_draft_filter(:doc, draft) do
+    [article_id: draft.article_id, branch_id: draft.branch_id]
+  end
 
   defp typed_draft_filter(_thread, draft), do: [article_id: draft.article_id]
 
-  defp extension_attrs(:doc, draft),
-    do:
-      Map.take(
-        Map.from_struct(draft),
-        ~w(subtitle link_addr template_key cover_url cover_url_dark)a
-      )
+  defp extension_attrs(:doc, draft) do
+    Map.take(
+      Map.from_struct(draft),
+      ~w(subtitle link_addr template_key cover_url cover_url_dark)a
+    )
+  end
 
-  defp extension_attrs(_thread, draft),
-    do: Map.take(Map.from_struct(draft), ~w(copy_right link_addr cover_url cover_url_dark)a)
+  defp extension_attrs(_thread, draft) do
+    Map.take(Map.from_struct(draft), ~w(copy_right link_addr cover_url cover_url_dark)a)
+  end
 
   defp copy_tags(thread, draft, revision) do
     source = "#{thread}_draft_tags"

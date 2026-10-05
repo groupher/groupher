@@ -93,9 +93,11 @@ defmodule GroupherServer.Analysis.Maintenance do
       deleted = delete_batch.()
       total = total + deleted
 
-      if deleted < limit,
-        do: {:halt, {total, false}},
-        else: {:cont, total}
+      if deleted < limit do
+        {:halt, {total, false}}
+      else
+        {:cont, total}
+      end
     end)
     |> case do
       {total, false} -> {total, false}

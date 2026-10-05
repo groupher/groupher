@@ -12,26 +12,33 @@ defmodule GroupherServer.RequestActor.Classifier do
   alias RequestActor.{Classification, Evidence}
 
   @spec classify(Evidence.t()) :: Classification.t()
-  def classify(%Evidence.Delegation{delegation: %{user_actor: user}}),
-    do: classification(:agent, not is_nil(user), :verified, :delegation_credential)
+  def classify(%Evidence.Delegation{delegation: %{user_actor: user}}) do
+    classification(:agent, not is_nil(user), :verified, :delegation_credential)
+  end
 
-  def classify(%Evidence.ServiceCredential{}),
-    do: classification(:agent, false, :verified, :agent_credential)
+  def classify(%Evidence.ServiceCredential{}) do
+    classification(:agent, false, :verified, :agent_credential)
+  end
 
-  def classify(%Evidence.AccountSession{}),
-    do: classification(:human, true, :verified, :account_session)
+  def classify(%Evidence.AccountSession{}) do
+    classification(:human, true, :verified, :account_session)
+  end
 
-  def classify(%Evidence.VerifiedCrawler{}),
-    do: classification(:crawler, false, :verified, :verified_crawler)
+  def classify(%Evidence.VerifiedCrawler{}) do
+    classification(:crawler, false, :verified, :verified_crawler)
+  end
 
-  def classify(%Evidence.SignedAnonymousSession{}),
-    do: classification(:human, false, :probable, :signed_anonymous_session)
+  def classify(%Evidence.SignedAnonymousSession{}) do
+    classification(:human, false, :probable, :signed_anonymous_session)
+  end
 
-  def classify(%Evidence.Unknown{classified_by: :self_reported}),
-    do: classification(:unknown, false, :probable, :self_reported)
+  def classify(%Evidence.Unknown{classified_by: :self_reported}) do
+    classification(:unknown, false, :probable, :self_reported)
+  end
 
-  def classify(%Evidence.Unknown{}),
-    do: classification(:unknown, false, :unknown, :fallback)
+  def classify(%Evidence.Unknown{}) do
+    classification(:unknown, false, :unknown, :fallback)
+  end
 
   defp classification(type, is_authenticated, confidence, classified_by) do
     %Classification{

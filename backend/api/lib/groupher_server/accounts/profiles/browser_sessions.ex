@@ -85,8 +85,9 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
   end
 
   def list_for_ref(current_ref) when is_binary(current_ref) do
-    with {:ok, session} <- active_session(current_ref, DateTime.utc_now()),
-         do: list(session.user, current_ref)
+    with {:ok, session} <- active_session(current_ref, DateTime.utc_now()) do
+      list(session.user, current_ref)
+    end
   end
 
   @doc "Checks that a browser access token still points to an active owned session."
@@ -104,8 +105,9 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
   def active_for_user?(_user_id, _ref), do: false
 
   def revoke_other_for_ref(current_ref) when is_binary(current_ref) do
-    with {:ok, session} <- active_session(current_ref, DateTime.utc_now()),
-         do: revoke_other_sessions(session.user, current_ref)
+    with {:ok, session} <- active_session(current_ref, DateTime.utc_now()) do
+      revoke_other_sessions(session.user, current_ref)
+    end
   end
 
   def revoke_public_for_ref(current_ref, public_ref)
@@ -150,9 +152,11 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
         {:error, ErrorCat.session_revoked()}
 
       %BrowserSession{absolute_expires_at: expires_at} = session ->
-        if DateTime.compare(expires_at, now) == :gt,
-          do: {:ok, session},
-          else: {:error, ErrorCat.session_expired()}
+        if DateTime.compare(expires_at, now) == :gt do
+          {:ok, session}
+        else
+          {:error, ErrorCat.session_expired()}
+        end
 
       nil ->
         {:error, ErrorCat.session_not_found()}

@@ -40,8 +40,9 @@ defmodule GroupherServer.CMS.DocTree.Confirmation do
   defp nullable_json_map?(nil), do: true
   defp nullable_json_map?(value), do: json_map?(value)
 
-  defp json_map?(value) when is_map(value),
-    do: Enum.all?(value, fn {key, item} -> is_binary(key) and json_value?(item) end)
+  defp json_map?(value) when is_map(value) do
+    Enum.all?(value, fn {key, item} -> is_binary(key) and json_value?(item) end)
+  end
 
   defp json_map?(_value), do: false
 

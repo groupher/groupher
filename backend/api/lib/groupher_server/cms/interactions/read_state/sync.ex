@@ -28,8 +28,9 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   """
   @spec add_upvote(struct(), User.t()) :: {:ok, map()} | {:error, term()}
-  def add_upvote(%Comment{} = comment, actor),
-    do: sync_comment_fixed(comment, :upvote, actor, :add)
+  def add_upvote(%Comment{} = comment, actor) do
+    sync_comment_fixed(comment, :upvote, actor, :add)
+  end
 
   def add_upvote(article, actor), do: sync_article_fixed(article, :upvote, actor, :add)
 
@@ -42,8 +43,9 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   """
   @spec remove_upvote(struct(), User.t()) :: {:ok, map()} | {:error, term()}
-  def remove_upvote(%Comment{} = comment, actor),
-    do: sync_comment_fixed(comment, :upvote, actor, :remove)
+  def remove_upvote(%Comment{} = comment, actor) do
+    sync_comment_fixed(comment, :upvote, actor, :remove)
+  end
 
   def remove_upvote(article, actor), do: sync_article_fixed(article, :upvote, actor, :remove)
 
@@ -78,11 +80,13 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   """
   @spec add_emotion(struct(), atom(), User.t()) :: {:ok, map()} | {:error, term()}
-  def add_emotion(%Comment{} = comment, emotion, actor),
-    do: sync_comment_emotion(comment, emotion, actor, :add)
+  def add_emotion(%Comment{} = comment, emotion, actor) do
+    sync_comment_emotion(comment, emotion, actor, :add)
+  end
 
-  def add_emotion(article, emotion, actor),
-    do: sync_article_emotion(article, emotion, actor, :add)
+  def add_emotion(article, emotion, actor) do
+    sync_article_emotion(article, emotion, actor, :add)
+  end
 
   @doc """
   Removes an already-deleted emotion fact.
@@ -93,11 +97,13 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   """
   @spec remove_emotion(struct(), atom(), User.t()) :: {:ok, map()} | {:error, term()}
-  def remove_emotion(%Comment{} = comment, emotion, actor),
-    do: sync_comment_emotion(comment, emotion, actor, :remove)
+  def remove_emotion(%Comment{} = comment, emotion, actor) do
+    sync_comment_emotion(comment, emotion, actor, :remove)
+  end
 
-  def remove_emotion(article, emotion, actor),
-    do: sync_article_emotion(article, emotion, actor, :remove)
+  def remove_emotion(article, emotion, actor) do
+    sync_article_emotion(article, emotion, actor, :remove)
+  end
 
   @doc """
   Applies an already-created report fact.
@@ -108,8 +114,9 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   """
   @spec add_report(struct(), User.t()) :: {:ok, map()} | {:error, term()}
-  def add_report(%Comment{} = comment, actor),
-    do: sync_comment_fixed(comment, :report, actor, :add)
+  def add_report(%Comment{} = comment, actor) do
+    sync_comment_fixed(comment, :report, actor, :add)
+  end
 
   def add_report(article, actor), do: sync_article_fixed(article, :report, actor, :add)
 
@@ -122,8 +129,9 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   """
   @spec remove_report(struct(), User.t()) :: {:ok, map()} | {:error, term()}
-  def remove_report(%Comment{} = comment, actor),
-    do: sync_comment_fixed(comment, :report, actor, :remove)
+  def remove_report(%Comment{} = comment, actor) do
+    sync_comment_fixed(comment, :report, actor, :remove)
+  end
 
   def remove_report(article, actor), do: sync_article_fixed(article, :report, actor, :remove)
 
@@ -159,8 +167,9 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   defp maybe_sync_article_stats(_article, :report), do: :ok
 
-  defp maybe_sync_article_stats(article, _reaction),
-    do: CMS.ArticleStats.apply_interaction_counts(article)
+  defp maybe_sync_article_stats(article, _reaction) do
+    CMS.ArticleStats.apply_interaction_counts(article)
+  end
 
   defp sync_comment_emotion(comment, emotion, %User{} = user, operation)
        when is_atom(emotion) and operation in [:add, :remove] do
@@ -380,15 +389,15 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
     info
   end
 
-  defp projection_conflict_target(:article_id),
-    do: {:unsafe_fragment, "(article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  defp projection_conflict_target(:article_id) do
+    {:unsafe_fragment, "(article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  end
 
   defp projection_conflict_target(target_id_field), do: [target_id_field]
 
-  defp emotion_projection_conflict_target(:article_id),
-    do:
-      {:unsafe_fragment,
-       "(article_id, emotion) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  defp emotion_projection_conflict_target(:article_id) do
+    {:unsafe_fragment, "(article_id, emotion) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  end
 
   defp emotion_projection_conflict_target(target_id_field), do: [target_id_field, :emotion]
 end

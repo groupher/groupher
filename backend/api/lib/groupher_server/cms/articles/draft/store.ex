@@ -200,8 +200,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     end)
   end
 
-  def restore_from_revision(%Article{}, %ArticleRevision{}, %Author{}, _opts),
-    do: {:error, :revision_owner_mismatch}
+  def restore_from_revision(%Article{}, %ArticleRevision{}, %Author{}, _opts) do
+    {:error, :revision_owner_mismatch}
+  end
 
   @doc "Deletes only the mutable workspace while preserving the current Public head."
   @spec discard(Article.t(), keyword()) :: :ok | {:error, term()}
@@ -340,8 +341,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     |> Repo.insert()
   end
 
-  defp first_present(values),
-    do: Enum.find(values, &(is_binary(&1) and String.trim(&1) != ""))
+  defp first_present(values) do
+    Enum.find(values, &(is_binary(&1) and String.trim(&1) != ""))
+  end
 
   defp lock_draft(%Article{thread: :doc, id: article_id}, opts) do
     DocDraft
@@ -415,9 +417,11 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   end
 
   defp put_explicit_nil(target, source, field) do
-    if has_value?(source, field) and is_nil(value(source, field)),
-      do: Map.put(target, field, nil),
-      else: target
+    if has_value?(source, field) and is_nil(value(source, field)) do
+      Map.put(target, field, nil)
+    else
+      target
+    end
   end
 
   defp mark_edited_if_published(%Article{thread: :doc} = article, opts) do
@@ -486,8 +490,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     %ArticleBodyDraft{} |> ArticleBodyDraft.changeset(attrs) |> Repo.insert()
   end
 
-  defp revision_extension(:doc, revision),
-    do: present(Repo.get_by(DocRevision, revision_id: revision.id))
+  defp revision_extension(:doc, revision) do
+    present(Repo.get_by(DocRevision, revision_id: revision.id))
+  end
 
   defp revision_extension(thread, revision) do
     {_draft_model, revision_model} = Map.fetch!(@typed_models, thread)
@@ -614,9 +619,11 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
 
   defp maybe_replace_tags(article, draft, attrs) do
     if Map.has_key?(attrs, :tag_ids) or Map.has_key?(attrs, "tag_ids") or
-         Map.has_key?(attrs, :community_tags) or Map.has_key?(attrs, "community_tags"),
-       do: replace_tags(article, draft, tag_ids(attrs)),
-       else: :ok
+         Map.has_key?(attrs, :community_tags) or Map.has_key?(attrs, "community_tags") do
+      replace_tags(article, draft, tag_ids(attrs))
+    else
+      :ok
+    end
   end
 
   defp replace_tags(article, draft, ids) do
@@ -721,11 +728,11 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     |> Repo.update()
   end
 
-  defp tag_ids(attrs),
-    do:
-      (value(attrs, :tag_ids) || value(attrs, :community_tags) || [])
-      |> Enum.map(&normalize_tag_id/1)
-      |> Enum.uniq()
+  defp tag_ids(attrs) do
+    (value(attrs, :tag_ids) || value(attrs, :community_tags) || [])
+    |> Enum.map(&normalize_tag_id/1)
+    |> Enum.uniq()
+  end
 
   defp normalize_tag_id(id) when is_integer(id), do: id
 
@@ -736,11 +743,13 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     end
   end
 
-  defp has_value?(attrs, key),
-    do: Map.has_key?(attrs, key) or Map.has_key?(attrs, Atom.to_string(key))
+  defp has_value?(attrs, key) do
+    Map.has_key?(attrs, key) or Map.has_key?(attrs, Atom.to_string(key))
+  end
 
-  defp stored_typed_fields(%Article{thread: :doc}, %DocDraft{} = draft),
-    do: Map.take(Map.from_struct(draft), @doc_fields)
+  defp stored_typed_fields(%Article{thread: :doc}, %DocDraft{} = draft) do
+    Map.take(Map.from_struct(draft), @doc_fields)
+  end
 
   defp stored_typed_fields(%Article{thread: :doc}, nil), do: %{}
 
@@ -832,14 +841,14 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   defp maybe_ensure_version(_draft, nil), do: :ok
   defp maybe_ensure_version(draft, expected_version), do: ensure_version(draft, expected_version)
 
-  defp take(attrs, fields),
-    do:
-      Enum.reduce(fields, %{}, fn field, acc ->
-        case value(attrs, field) do
-          nil -> acc
-          item -> Map.put(acc, field, item)
-        end
-      end)
+  defp take(attrs, fields) do
+    Enum.reduce(fields, %{}, fn field, acc ->
+      case value(attrs, field) do
+        nil -> acc
+        item -> Map.put(acc, field, item)
+      end
+    end)
+  end
 
   defp value(attrs, key), do: Map.get(attrs, key) || Map.get(attrs, Atom.to_string(key))
 end

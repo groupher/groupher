@@ -26,3 +26,9 @@
 - `timestamps()` should be used without an explicit type unless there is a specific reason not to. `GroupherServer.Repo` sets `migration_timestamps: [type: :timestamptz]`, so migration timestamps are created as `timestamptz` by default.
 - Date-only fields, such as contribution dates, should remain `:date`; do not convert them to datetime columns.
 - Do not introduce local-time semantics or rely on the database/server timezone. Repo connections set the database session timezone to UTC.
+
+## Elixir Block Style
+
+- Use inline `do:` only when the complete expression fits on one physical line.
+- Once a `def`, `defp`, `defmacro`, `defmacrop`, `if`, `unless`, `case`, or `with` expression wraps, use the full `do ... end` form.
+- Do not split an inline expression after a comma and continue it with `do:` or `else:` on another line.

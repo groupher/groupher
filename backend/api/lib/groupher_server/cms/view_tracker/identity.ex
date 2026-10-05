@@ -59,8 +59,9 @@ defmodule GroupherServer.CMS.ViewTracker.Identity do
          %Classification{type: :human, is_authenticated: true},
          %User{id: user_id},
          _opts
-       ),
-       do: {:ok, tracking_key("user:#{user_id}")}
+       ) do
+    {:ok, tracking_key("user:#{user_id}")}
+  end
 
   defp viewer_tracking_key(%Classification{type: :human}, _viewer, opts) do
     case Keyword.get(opts, :anonymous_session) do
@@ -108,15 +109,18 @@ defmodule GroupherServer.CMS.ViewTracker.Identity do
     end
   end
 
-  defp viewer_tracking_key(_classification, _viewer, _opts),
-    do: {:error, ErrorCat.invalid_actor_type()}
+  defp viewer_tracking_key(_classification, _viewer, _opts) do
+    {:error, ErrorCat.invalid_actor_type()}
+  end
 
-  defp service_credential_id(%{token_id: id}) when is_binary(id) and byte_size(id) > 0,
-    do: {:ok, id}
+  defp service_credential_id(%{token_id: id}) when is_binary(id) and byte_size(id) > 0 do
+    {:ok, id}
+  end
 
   defp service_credential_id(%{subject: subject})
-       when is_binary(subject) and byte_size(subject) > 0,
-       do: {:ok, subject}
+       when is_binary(subject) and byte_size(subject) > 0 do
+    {:ok, subject}
+  end
 
   defp service_credential_id(_credential), do: {:error, ErrorCat.invalid_actor_type()}
 

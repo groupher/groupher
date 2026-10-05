@@ -25,8 +25,9 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
       Effects.run(%{article: article, revision: revision})
   """
   @spec run(%{required(:article) => Article.t()}) :: {:ok, map()} | {:error, term()}
-  def run(%{article: %Article{inner_id: inner_id}} = result) when not is_integer(inner_id),
-    do: {:ok, result}
+  def run(%{article: %Article{inner_id: inner_id}} = result) when not is_integer(inner_id) do
+    {:ok, result}
+  end
 
   def run(%{article: %Article{} = article} = result) do
     with {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(article),

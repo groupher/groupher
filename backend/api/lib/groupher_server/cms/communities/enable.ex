@@ -79,8 +79,9 @@ defmodule GroupherServer.CMS.Communities.Enable do
     end
   end
 
-  def allow_thread(_community, _thread),
-    do: {:error, CommunityErrorCat.custom("invalid thread")}
+  def allow_thread(_community, _thread) do
+    {:error, CommunityErrorCat.custom("invalid thread")}
+  end
 
   @spec allow_emotion(String.t() | nil, scope(), atom(), atom()) ::
           {:ok, atom()} | {:error, CommunityErrorCat.error()}
@@ -95,8 +96,9 @@ defmodule GroupherServer.CMS.Communities.Enable do
     end
   end
 
-  def allow_emotion(_community_slug, _scope, _thread, _emotion),
-    do: {:error, CommunityErrorCat.custom("invalid thread")}
+  def allow_emotion(_community_slug, _scope, _thread, _emotion) do
+    {:error, CommunityErrorCat.custom("invalid thread")}
+  end
 
   @spec allow_comment(map(), term()) ::
           {:ok, map()} | {:error, CommunityErrorCat.error()}
@@ -104,11 +106,13 @@ defmodule GroupherServer.CMS.Communities.Enable do
 
   def allow_comment(%{comments_locked: false} = article, _user), do: done(article)
 
-  def allow_comment(%{comments_locked: true}, _user),
-    do: {:error, GateErrorCat.article_comments_locked()}
+  def allow_comment(%{comments_locked: true}, _user) do
+    {:error, GateErrorCat.article_comments_locked()}
+  end
 
-  def allow_comment(%{meta: %{is_comment_locked: true}}, _user),
-    do: {:error, GateErrorCat.article_comments_locked()}
+  def allow_comment(%{meta: %{is_comment_locked: true}}, _user) do
+    {:error, GateErrorCat.article_comments_locked()}
+  end
 
   def allow_comment(_article, _user), do: {:error, GateErrorCat.article_comments_locked()}
 
@@ -188,13 +192,15 @@ defmodule GroupherServer.CMS.Communities.Enable do
   def thread?(community, thread), do: allow_thread(community, thread)
 
   @doc "Checks whether one emotion is enabled for a resource thread."
-  def emotion?(community, scope, thread, emotion),
-    do: allow_emotion(community, scope, thread, emotion)
+  def emotion?(community, scope, thread, emotion) do
+    allow_emotion(community, scope, thread, emotion)
+  end
 
   @doc "Checks whether comments are enabled for an Article."
   def comment?(article), do: allow_comment(article, nil)
 
   @doc "Returns the enabled emotions for a resource thread."
-  def emotions(community, scope, thread),
-    do: allowed_emotions(community, scope, thread)
+  def emotions(community, scope, thread) do
+    allowed_emotions(community, scope, thread)
+  end
 end

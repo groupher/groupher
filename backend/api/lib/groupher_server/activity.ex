@@ -56,45 +56,55 @@ defmodule GroupherServer.Activity do
           {:ok, struct()} | {:error, ErrorCat.error()}
   def log(resource, action, opts \\ [])
 
-  def log(_resource, action, _opts) when not is_atom(action),
-    do: {:error, ErrorCat.invalid_action()}
+  def log(_resource, action, _opts) when not is_atom(action) do
+    {:error, ErrorCat.invalid_action()}
+  end
 
-  def log(%Community{} = resource, action, opts),
-    do: __MODULE__.Community.log(resource, action, opts)
+  def log(%Community{} = resource, action, opts) do
+    __MODULE__.Community.log(resource, action, opts)
+  end
 
-  def log(%DocTreeNode{} = resource, action, opts),
-    do: __MODULE__.DocTree.log(resource, action, opts)
+  def log(%DocTreeNode{} = resource, action, opts) do
+    __MODULE__.DocTree.log(resource, action, opts)
+  end
 
-  def log(%PressConfig{} = resource, action, opts),
-    do: __MODULE__.Press.log(resource, action, opts)
+  def log(%PressConfig{} = resource, action, opts) do
+    __MODULE__.Press.log(resource, action, opts)
+  end
 
-  def log(%{activity_type: :community} = resource, action, opts),
-    do: __MODULE__.Community.log(resource, action, opts)
+  def log(%{activity_type: :community} = resource, action, opts) do
+    __MODULE__.Community.log(resource, action, opts)
+  end
 
-  def log(%{activity_type: :doc_tree} = resource, action, opts),
-    do: __MODULE__.DocTree.log(resource, action, opts)
+  def log(%{activity_type: :doc_tree} = resource, action, opts) do
+    __MODULE__.DocTree.log(resource, action, opts)
+  end
 
-  def log(%{activity_type: :press} = resource, action, opts),
-    do: __MODULE__.Press.log(resource, action, opts)
+  def log(%{activity_type: :press} = resource, action, opts) do
+    __MODULE__.Press.log(resource, action, opts)
+  end
 
   def log(resource, action, opts), do: Artiment.log(resource, action, opts)
 
   @doc "Lists the safe ArticleLog surface after applying the Article read boundary."
   @spec list_article_logs(struct(), struct() | nil, map()) :: {:ok, map()} | {:error, term()}
-  def list_article_logs(article, actor, filter \\ %{}),
-    do: ArticleLog.list(article, actor, filter)
+  def list_article_logs(article, actor, filter \\ %{}) do
+    ArticleLog.list(article, actor, filter)
+  end
 
   @doc "Lists the Community management surface across Activity streams."
   @spec list_community_logs(Community.t(), struct(), map(), pos_integer()) ::
           {:ok, map()} | {:error, term()}
-  def list_community_logs(community, actor, selection, page \\ 1),
-    do: CommunityLog.list(community, actor, selection, page)
+  def list_community_logs(community, actor, selection, page \\ 1) do
+    CommunityLog.list(community, actor, selection, page)
+  end
 
   @doc "Returns UTC daily CommunityLog counts for the same filter boundary as list_community_logs/3."
   @spec get_community_log_stats(Community.t(), struct(), map()) ::
           {:ok, map()} | {:error, term()}
-  def get_community_log_stats(community, actor, selection),
-    do: CommunityLog.stats(community, actor, selection)
+  def get_community_log_stats(community, actor, selection) do
+    CommunityLog.stats(community, actor, selection)
+  end
 
   @doc "Returns active CommunityLog actions for dashboard filter controls."
   @spec get_community_log_config(Community.t(), struct()) :: {:ok, map()} | {:error, term()}
@@ -103,12 +113,14 @@ defmodule GroupherServer.Activity do
   @doc "Exports the current CommunityLog filter as a bounded JSON or CSV document."
   @spec export_community_logs(Community.t(), struct(), map(), atom()) ::
           {:ok, map()} | {:error, term()}
-  def export_community_logs(community, actor, selection, format),
-    do: CommunityLog.export_logs(community, actor, selection, format)
+  def export_community_logs(community, actor, selection, format) do
+    CommunityLog.export_logs(community, actor, selection, format)
+  end
 
   @doc "Reads one safe CommunityLog event with related parent and child events."
   @spec get_community_log_event(Community.t(), struct(), String.t()) ::
           {:ok, map() | nil} | {:error, term()}
-  def get_community_log_event(community, actor, event_ref),
-    do: CommunityLog.get_event_detail(community, actor, event_ref)
+  def get_community_log_event(community, actor, event_ref) do
+    CommunityLog.get_event_detail(community, actor, event_ref)
+  end
 end

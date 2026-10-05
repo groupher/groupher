@@ -93,8 +93,9 @@ defmodule Helper.Utils do
   def done(nil, :boolean), do: {:ok, false}
   def done(_, :boolean), do: {:ok, true}
 
-  def done(nil, err_msg) when is_binary(err_msg),
-    do: {:error, ErrorCat.custom(err_msg)}
+  def done(nil, err_msg) when is_binary(err_msg) do
+    {:error, ErrorCat.custom(err_msg)}
+  end
 
   def done(nil, err_msg), do: {:error, ErrorCat.custom(err_msg)}
   def done({:ok, _}, with: result), do: {:ok, result}
@@ -103,13 +104,13 @@ defmodule Helper.Utils do
   def done({:ok, result}, :trans), do: result
   def done({:error, reason}, :trans), do: throw({:error, normalize_error(reason)})
 
-  def done(nil, queryable, id),
-    do:
-      {:error,
-       ErrorCat.custom(%{
-         reason: :not_exist,
-         message: not_found_formatter(queryable, id)
-       })}
+  def done(nil, queryable, id) do
+    {:error,
+     ErrorCat.custom(%{
+       reason: :not_exist,
+       message: not_found_formatter(queryable, id)
+     })}
+  end
 
   def done(result, _, _), do: {:ok, result}
 

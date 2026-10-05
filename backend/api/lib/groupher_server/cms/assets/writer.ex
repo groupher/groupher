@@ -333,8 +333,9 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
   defp sync_requested?(_), do: false
 
-  defp removed_cover?(attrs),
-    do: has_attr?(attrs, :cover_edit_info) and is_nil(get_attr(attrs, :cover_edit_info))
+  defp removed_cover?(attrs) do
+    has_attr?(attrs, :cover_edit_info) and is_nil(get_attr(attrs, :cover_edit_info))
+  end
 
   defp sync_body_refs(document, base, attrs, user) do
     case has_attr?(attrs, :asset_refs) do
@@ -465,8 +466,9 @@ defmodule GroupherServer.CMS.Assets.Writer do
     end
   end
 
-  defp create_ref(_, _, _, _, _),
-    do: {:error, AssetErrorCat.custom("asset ref is invalid")}
+  defp create_ref(_, _, _, _, _) do
+    {:error, AssetErrorCat.custom("asset ref is invalid")}
+  end
 
   defp resolve_asset(community_id, input, user) do
     asset_id = get_attr(input, :asset_id)
@@ -599,8 +601,9 @@ defmodule GroupherServer.CMS.Assets.Writer do
     end
   end
 
-  defp base_ref_attrs(community_id, body_draft_id),
-    do: %{community_id: community_id, body_draft_id: body_draft_id}
+  defp base_ref_attrs(community_id, body_draft_id) do
+    %{community_id: community_id, body_draft_id: body_draft_id}
+  end
 
   defp draft_body_id(%{thread: :doc, id: article_id, branch_id: branch_id})
        when is_integer(branch_id) do
@@ -610,8 +613,9 @@ defmodule GroupherServer.CMS.Assets.Writer do
     end
   end
 
-  defp draft_body_id(%Article{thread: :doc}),
-    do: {:error, GateErrorCat.doc_branch_required()}
+  defp draft_body_id(%Article{thread: :doc}) do
+    {:error, GateErrorCat.doc_branch_required()}
+  end
 
   defp draft_body_id(%{id: article_id}) when is_binary(article_id) do
     case Repo.get(ArticleDraft, article_id) do
@@ -620,16 +624,16 @@ defmodule GroupherServer.CMS.Assets.Writer do
     end
   end
 
-  defp draft_body_ids(:doc, article_id),
-    do:
-      from(draft in DocDraft, where: draft.article_id == ^article_id, select: draft.body_draft_id)
+  defp draft_body_ids(:doc, article_id) do
+    from(draft in DocDraft, where: draft.article_id == ^article_id, select: draft.body_draft_id)
+  end
 
-  defp draft_body_ids(_thread, article_id),
-    do:
-      from(draft in ArticleDraft,
-        where: draft.article_id == ^article_id,
-        select: draft.body_draft_id
-      )
+  defp draft_body_ids(_thread, article_id) do
+    from(draft in ArticleDraft,
+      where: draft.article_id == ^article_id,
+      select: draft.body_draft_id
+    )
+  end
 
   defp put_uploader(attrs, %User{id: user_id}), do: Map.put(attrs, :uploader_id, user_id)
   defp put_uploader(attrs, _), do: attrs
@@ -677,8 +681,9 @@ defmodule GroupherServer.CMS.Assets.Writer do
     end
   end
 
-  defp has_attr?(map, key) when is_map(map),
-    do: Map.has_key?(map, key) or Map.has_key?(map, Atom.to_string(key))
+  defp has_attr?(map, key) when is_map(map) do
+    Map.has_key?(map, key) or Map.has_key?(map, Atom.to_string(key))
+  end
 
   defp get_attr(map, key) when is_map(map) do
     case Map.fetch(map, key) do

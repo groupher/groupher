@@ -76,6 +76,7 @@ defmodule GroupherServerWeb.Middleware.ServiceIdentityMiddlewareTest do
     }
   end
 
-  defp error_code(%Absinthe.Resolution{errors: [[message: _message, extensions: %{code: code}]]}),
-    do: code
+  defp error_code(%Absinthe.Resolution{errors: [[message: _message, extensions: %{code: code}]]}) do
+    code
+  end
 end

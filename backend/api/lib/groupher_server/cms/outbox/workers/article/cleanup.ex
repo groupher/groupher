@@ -23,12 +23,18 @@ defmodule GroupherServer.CMS.Outbox.Workers.Article.Cleanup do
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
     case Outbox.execute(event_id, &cleanup/1) do
-      {:ok, _value} -> :ok
-      {:busy, seconds} -> {:snooze, seconds}
+      {:ok, _value} ->
+        :ok
+
+      {:busy, seconds} ->
+        {:snooze, seconds}
+
       {:error, _reason} when job.attempt >= job.max_attempts ->
         _ = Outbox.mark_dead(event_id)
         :ok
-      {:error, reason} -> {:error, reason}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

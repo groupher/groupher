@@ -105,8 +105,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     end
   end
 
-  defp normalize_filters(_),
-    do: {:error, ErrorCat.custom("invalid search filters")}
+  defp normalize_filters(_) do
+    {:error, ErrorCat.custom("invalid search filters")}
+  end
 
   defp normalize_enum_list(nil, _allowed), do: {:ok, []}
 
@@ -118,8 +119,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     end
   end
 
-  defp normalize_enum_list(_, _),
-    do: {:error, ErrorCat.custom("invalid search filter enum")}
+  defp normalize_enum_list(_, _) do
+    {:error, ErrorCat.custom("invalid search filter enum")}
+  end
 
   defp normalize_string_list(nil), do: {:ok, []}
 
@@ -131,8 +133,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     end
   end
 
-  defp normalize_string_list(_),
-    do: {:error, ErrorCat.custom("invalid search filter string")}
+  defp normalize_string_list(_) do
+    {:error, ErrorCat.custom("invalid search filter string")}
+  end
 
   defp validate_text(""), do: {:error, ErrorCat.custom("search text is required")}
   defp validate_text(_text), do: {:ok, :pass}

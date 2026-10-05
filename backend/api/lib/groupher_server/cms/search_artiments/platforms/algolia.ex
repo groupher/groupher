@@ -278,8 +278,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
   defp validate_object_ids(_response, nil), do: {:ok, :pass}
 
   defp validate_object_ids(%{"objectIDs" => object_ids}, expected)
-       when is_list(object_ids) and length(object_ids) == expected,
-       do: {:ok, :pass}
+       when is_list(object_ids) and length(object_ids) == expected do
+    {:ok, :pass}
+  end
 
   defp validate_object_ids(response, expected) do
     {:error,
@@ -296,8 +297,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
     {:error, ErrorCat.search_platform(%{message: "missing Algolia taskID", response: response})}
   end
 
-  defp wait_for_task(_task_id, 0),
-    do: {:error, ErrorCat.search_platform("timed out waiting for Algolia indexing task")}
+  defp wait_for_task(_task_id, 0) do
+    {:error, ErrorCat.search_platform("timed out waiting for Algolia indexing task")}
+  end
 
   defp wait_for_task(task_id, attempts_left) do
     case request(
@@ -388,9 +390,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
   defp log_error(_result, _method, _path), do: :pass
 
   defp parse_response({:ok, %Tesla.Env{status: status, body: body}}) when status in 200..299 do
-    if is_map(body),
-      do: {:ok, body},
-      else: {:error, ErrorCat.search_platform("empty Algolia response")}
+    if is_map(body) do
+      {:ok, body}
+    else
+      {:error, ErrorCat.search_platform("empty Algolia response")}
+    end
   end
 
   defp parse_response({:ok, %Tesla.Env{status: status, body: body}}) do

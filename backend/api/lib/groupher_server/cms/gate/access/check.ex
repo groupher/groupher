@@ -279,8 +279,9 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     {:error, ErrorCat.unexpected_callback_result(callback_result_kind(result))}
   end
 
-  defp callback_result_kind(result) when is_tuple(result),
-    do: %{result_kind: :tuple, tuple_arity: tuple_size(result)}
+  defp callback_result_kind(result) when is_tuple(result) do
+    %{result_kind: :tuple, tuple_arity: tuple_size(result)}
+  end
 
   defp callback_result_kind(result) when is_atom(result), do: %{result_kind: :atom}
   defp callback_result_kind(result) when is_map(result), do: %{result_kind: :map}
@@ -289,17 +290,20 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   defp callback_result_kind(result) when is_number(result), do: %{result_kind: :number}
   defp callback_result_kind(_result), do: %{result_kind: :other}
 
-  defp unsupported_resource,
-    do: {:error, Decision.deny(ErrorCat.unsupported_resource())}
+  defp unsupported_resource do
+    {:error, Decision.deny(ErrorCat.unsupported_resource())}
+  end
 
   defp canonical_resource(resource, community), do: Map.put(resource, :community, community)
   defp context_resource(%ArticleContext{article: article}), do: article
 
-  defp context_resource(%DocContext{doc: doc, doc_branch_state: state}),
-    do: %{doc | comments_locked: state.comments_locked}
+  defp context_resource(%DocContext{doc: doc, doc_branch_state: state}) do
+    %{doc | comments_locked: state.comments_locked}
+  end
 
-  defp article_thread(%{thread: thread}) when thread in @article_threads,
-    do: {:ok, thread}
+  defp article_thread(%{thread: thread}) when thread in @article_threads do
+    {:ok, thread}
+  end
 
   defp article_thread(resource), do: FrontDesk.thread_of(resource)
 
@@ -313,9 +317,11 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   defp parent_article(comment), do: FrontDesk.article_of(comment)
 
   defp with_parent_lock(community, %Article{thread: :doc, id: article_id}, branch_id, fun)
-       when is_integer(branch_id),
-       do: Articles.MutationLock.with_article(community, :doc, branch_id, article_id, fun)
+       when is_integer(branch_id) do
+    Articles.MutationLock.with_article(community, :doc, branch_id, article_id, fun)
+  end
 
-  defp with_parent_lock(community, article, _branch_id, fun),
-    do: Articles.MutationLock.with_article(community, article, fun)
+  defp with_parent_lock(community, article, _branch_id, fun) do
+    Articles.MutationLock.with_article(community, article, fun)
+  end
 end

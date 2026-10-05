@@ -33,9 +33,11 @@ defmodule GroupherServer.CMS.Articles.Commands.ArticleConfirmationCodec do
 
   defp validate_fields(payload, fields) do
     Enum.reduce_while(fields, {:ok, :pass}, fn {key, type}, {:ok, :pass} ->
-      if valid_type?(Map.get(payload, key), type),
-        do: {:cont, {:ok, :pass}},
-        else: {:halt, {:error, key}}
+      if valid_type?(Map.get(payload, key), type) do
+        {:cont, {:ok, :pass}}
+      else
+        {:halt, {:error, key}}
+      end
     end)
   end
 
@@ -44,8 +46,9 @@ defmodule GroupherServer.CMS.Articles.Commands.ArticleConfirmationCodec do
   defp valid_type?(value, :boolean), do: is_boolean(value)
   defp valid_type?(value, :datetime), do: is_binary(value)
 
-  defp valid_type?(value, {:list, type}) when is_list(value),
-    do: Enum.all?(value, &valid_type?(&1, type))
+  defp valid_type?(value, {:list, type}) when is_list(value) do
+    Enum.all?(value, &valid_type?(&1, type))
+  end
 
   defp valid_type?(_value, _type), do: false
 end

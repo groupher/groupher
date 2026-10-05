@@ -117,6 +117,7 @@ defmodule Helper.Transaction do
   defp normalize_error(%Ecto.Changeset{} = changeset), do: changeset
   defp normalize_error({:error, _step, reason, _changes}), do: normalize_error(reason)
 
-  defp normalize_error(reason),
-    do: ErrorCat.custom(%{reason: :transaction_failed, details: reason})
+  defp normalize_error(reason) do
+    ErrorCat.custom(%{reason: :transaction_failed, details: reason})
+  end
 end

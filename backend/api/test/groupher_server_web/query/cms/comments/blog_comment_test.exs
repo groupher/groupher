@@ -81,7 +81,6 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       }
 
       _results = guest_conn |> gq_query(S.Article.q(:article, :blog), variables)
-
     end
 
     test "guest user can get comment participants after comment created",

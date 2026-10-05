@@ -482,13 +482,15 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   # Convert dsb metric DSL types to Absinthe field/arg type AST.
   # Supports list-like types in shared dsb schema definitions.
-  defp to_absinthe_type({:array, inner}, _key),
-    do: quote(do: list_of(unquote(to_absinthe_type(inner, nil))))
+  defp to_absinthe_type({:array, inner}, _key) do
+    quote(do: list_of(unquote(to_absinthe_type(inner, nil))))
+  end
 
   defp to_absinthe_type(:enum, :doc_cover_layout), do: :dsb_doc_cover_layout
 
-  defp to_absinthe_type(:enum, key) when key in [:theme_preset, :theme_preset_base],
-    do: :dsb_theme_preset
+  defp to_absinthe_type(:enum, key) when key in [:theme_preset, :theme_preset_base] do
+    :dsb_theme_preset
+  end
 
   defp to_absinthe_type(:enum, key), do: :"dsb_#{key}"
   defp to_absinthe_type(:rainbow_color, _key), do: :rainbow_color

@@ -99,8 +99,9 @@ defmodule GroupherServer.CMS.ShadowSync do
 
   defp refresh_emotions(item, _opts), do: item
 
-  defp latest_users_key?(key) when is_atom(key),
-    do: key |> Atom.to_string() |> String.starts_with?("latest_")
+  defp latest_users_key?(key) when is_atom(key) do
+    key |> Atom.to_string() |> String.starts_with?("latest_")
+  end
 
   defp latest_users_key?(key) when is_binary(key), do: String.starts_with?(key, "latest_")
   defp latest_users_key?(_key), do: false

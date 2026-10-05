@@ -119,9 +119,11 @@ defmodule GroupherServer.CMS.Outbox do
           Repo.rollback(:outbox_event_dead)
 
         %Event{status: :executing} = event ->
-          if lease_expired?(event, now),
-            do: {:ok, claim_row(event, lock_ref, now)},
-            else: {:busy, remaining_lease(event, now)}
+          if lease_expired?(event, now) do
+            {:ok, claim_row(event, lock_ref, now)}
+          else
+            {:busy, remaining_lease(event, now)}
+          end
 
         %Event{} = event ->
           {:ok, claim_row(event, lock_ref, now)}
@@ -225,7 +227,8 @@ defmodule GroupherServer.CMS.Outbox do
       nil ->
         {:error, :outbox_worker_required}
 
-      worker when is_atom(worker) -> {:ok, worker}
+      worker when is_atom(worker) ->
+        {:ok, worker}
 
       _ ->
         {:error, :outbox_worker_invalid}
@@ -241,8 +244,9 @@ defmodule GroupherServer.CMS.Outbox do
 
   defp normalize_data(%DateTime{} = value), do: DateTime.to_iso8601(value)
 
-  defp normalize_data(data) when is_map(data),
-    do: Map.new(data, fn {key, value} -> {to_string(key), normalize_data(value)} end)
+  defp normalize_data(data) when is_map(data) do
+    Map.new(data, fn {key, value} -> {to_string(key), normalize_data(value)} end)
+  end
 
   defp normalize_data(data) when is_list(data), do: Enum.map(data, &normalize_data/1)
   defp normalize_data(value) when is_atom(value), do: Atom.to_string(value)
@@ -250,11 +254,13 @@ defmodule GroupherServer.CMS.Outbox do
 
   defp lease_expired?(%Event{locked_at: nil}, _now), do: true
 
-  defp lease_expired?(%Event{locked_at: locked_at}, now),
-    do: DateTime.diff(now, locked_at, :second) >= @lease_seconds
+  defp lease_expired?(%Event{locked_at: locked_at}, now) do
+    DateTime.diff(now, locked_at, :second) >= @lease_seconds
+  end
 
-  defp remaining_lease(%Event{locked_at: locked_at}, now),
-    do: max(@lease_seconds - max(DateTime.diff(now, locked_at, :second), 0), 1)
+  defp remaining_lease(%Event{locked_at: locked_at}, now) do
+    max(@lease_seconds - max(DateTime.diff(now, locked_at, :second), 0), 1)
+  end
 
   defp error_code(reason) when is_atom(reason), do: Atom.to_string(reason)
   defp error_code({reason, _}) when is_atom(reason), do: Atom.to_string(reason)

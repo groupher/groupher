@@ -27,6 +27,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   alias Accounts.Model.User
   alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
+
   alias CMS.Model.{
     Article,
     ArticlePublic,
@@ -124,11 +125,13 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     end
   end
 
-  defp inline_mention_type(%{"target_type" => type}) when is_binary(type),
-    do: parse_mention_type(type)
+  defp inline_mention_type(%{"target_type" => type}) when is_binary(type) do
+    parse_mention_type(type)
+  end
 
-  defp inline_mention_type(%{"mentioned_type" => type}) when is_binary(type),
-    do: parse_mention_type(type)
+  defp inline_mention_type(%{"mentioned_type" => type}) when is_binary(type) do
+    parse_mention_type(type)
+  end
 
   defp inline_mention_type(%{"value" => value}) when is_binary(value) do
     case String.split(value, ":", parts: 2) do
@@ -172,8 +175,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp extract_text(%{"text" => text}) when is_binary(text), do: text
 
-  defp extract_text(%{"children" => children}) when is_list(children),
-    do: Enum.map_join(children, " ", &extract_text/1)
+  defp extract_text(%{"children" => children}) when is_list(children) do
+    Enum.map_join(children, " ", &extract_text/1)
+  end
 
   defp extract_text(_), do: ""
 
@@ -373,8 +377,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     |> maybe_put_parent_article(mentioned)
   end
 
-  defp maybe_put_parent_article(mention, %{parent_article: article}),
-    do: Map.put(mention, :parent_article, article)
+  defp maybe_put_parent_article(mention, %{parent_article: article}) do
+    Map.put(mention, :parent_article, article)
+  end
 
   defp maybe_put_parent_article(mention, _), do: mention
 
@@ -583,8 +588,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp parse_thread_slug(_), do: {:error, ErrorCat.invalid_thread()}
 
-  defp site_article_link?(url),
-    do: Enum.any?(@valid_article_prefix, &String.starts_with?(url, &1))
+  defp site_article_link?(url) do
+    Enum.any?(@valid_article_prefix, &String.starts_with?(url, &1))
+  end
 
   defp link_for_comment?(url) do
     with %{query: query} <- URI.parse(url) do

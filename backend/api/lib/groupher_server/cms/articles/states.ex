@@ -99,8 +99,9 @@ defmodule GroupherServer.CMS.Articles.States do
   end
 
   @spec update_edit_status(term()) :: T.domain_res(term())
-  def update_edit_status(%{id: article_id} = content) when is_binary(article_id),
-    do: update_stable_article(content, %{is_edited: true})
+  def update_edit_status(%{id: article_id} = content) when is_binary(article_id) do
+    update_stable_article(content, %{is_edited: true})
+  end
 
   @spec archive(atom()) :: T.domain_res(term())
   def archive(:doc) do
@@ -178,19 +179,23 @@ defmodule GroupherServer.CMS.Articles.States do
 
   @doc "Locks comments in the Article aggregate or one Doc branch state."
   @spec lock_comments(Article.t(), keyword()) :: T.domain_res(term())
-  def lock_comments(%Article{thread: :doc} = article, opts),
-    do: update_doc_branch_state(article, opts, %{comments_locked: true})
+  def lock_comments(%Article{thread: :doc} = article, opts) do
+    update_doc_branch_state(article, opts, %{comments_locked: true})
+  end
 
-  def lock_comments(%Article{} = article, _opts),
-    do: update_stable_article(article, %{comments_locked: true})
+  def lock_comments(%Article{} = article, _opts) do
+    update_stable_article(article, %{comments_locked: true})
+  end
 
   @doc "Unlocks comments in the Article aggregate or one Doc branch state."
   @spec undo_lock_comments(Article.t(), keyword()) :: T.domain_res(term())
-  def undo_lock_comments(%Article{thread: :doc} = article, opts),
-    do: update_doc_branch_state(article, opts, %{comments_locked: false})
+  def undo_lock_comments(%Article{thread: :doc} = article, opts) do
+    update_doc_branch_state(article, opts, %{comments_locked: false})
+  end
 
-  def undo_lock_comments(%Article{} = article, _opts),
-    do: update_stable_article(article, %{comments_locked: false})
+  def undo_lock_comments(%Article{} = article, _opts) do
+    update_stable_article(article, %{comments_locked: false})
+  end
 
   @spec pin(Community.t(), T.article()) :: T.domain_res(T.article())
   def pin(%Community{} = community, article) do
@@ -280,8 +285,9 @@ defmodule GroupherServer.CMS.Articles.States do
     end
   end
 
-  defp update_stable_article(%Article{} = article, attrs),
-    do: article |> Article.changeset(attrs) |> Repo.update()
+  defp update_stable_article(%Article{} = article, attrs) do
+    article |> Article.changeset(attrs) |> Repo.update()
+  end
 
   defp update_doc_branch_state(article, opts, attrs) do
     with branch_id when is_integer(branch_id) <- Keyword.get(opts, :branch_id),

@@ -67,11 +67,13 @@ defmodule GroupherServer.PublicCache.Cloudflare do
     )
   end
 
-  defp response_success(%{status: status, body: %{"success" => true}}) when status in 200..299,
-    do: :ok
+  defp response_success(%{status: status, body: %{"success" => true}}) when status in 200..299 do
+    :ok
+  end
 
-  defp response_success(%{status: status, body: %{success: true}}) when status in 200..299,
-    do: :ok
+  defp response_success(%{status: status, body: %{success: true}}) when status in 200..299 do
+    :ok
+  end
 
   defp response_success(%{status: status}), do: {:error, {:cloudflare_rejected, status}}
 end

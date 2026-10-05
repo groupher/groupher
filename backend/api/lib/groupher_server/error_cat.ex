@@ -79,8 +79,9 @@ defmodule GroupherServer.ErrorCat do
 
   def validate!, do: Validator.validate!(@ranges, @reserved, @catalogs)
 
-  def definition(%Error{namespace: namespace, reason: reason}),
-    do: definition(namespace, reason)
+  def definition(%Error{namespace: namespace, reason: reason}) do
+    definition(namespace, reason)
+  end
 
   def definition(namespace, reason) when is_tuple(namespace) and is_atom(reason) do
     case Registry.find(@catalogs, namespace, reason) do
@@ -156,8 +157,9 @@ defmodule GroupherServer.ErrorCat do
   def custom(details \\ nil), do: reserved_error({:web}, :custom, details)
   def default(details \\ nil), do: reserved_error({:web}, :default, details)
 
-  def gate_unknown(details \\ nil),
-    do: reserved_error({:cms, :gate}, :gate_unknown, details)
+  def gate_unknown(details \\ nil) do
+    reserved_error({:cms, :gate}, :gate_unknown, details)
+  end
 
   defp reserved_error(namespace, reason, details) do
     definition = definition(namespace, reason)

@@ -89,8 +89,9 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
     end
   end
 
-  def unique_copy_title(community, branch, parent_node_id, title),
-    do: unique_value(community, branch, parent_node_id, nil, :title, "#{title} copy", " ")
+  def unique_copy_title(community, branch, parent_node_id, title) do
+    unique_value(community, branch, parent_node_id, nil, :title, "#{title} copy", " ")
+  end
 
   def unique_doc_slug(%Community{} = community, branch, slug) do
     draft_slugs =
@@ -113,9 +114,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
 
     existing = MapSet.union(draft_slugs, public_slugs)
 
-    if MapSet.member?(existing, slug),
-      do: unique_from_set(existing, "#{slug}-copy", "-"),
-      else: slug
+    if MapSet.member?(existing, slug) do
+      unique_from_set(existing, "#{slug}-copy", "-")
+    else
+      slug
+    end
   end
 
   def validate_pending_deleted_identity(
@@ -143,8 +146,9 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
     end)
   end
 
-  defp trim_title(%{title: title} = args) when is_binary(title),
-    do: Map.put(args, :title, String.trim(title))
+  defp trim_title(%{title: title} = args) when is_binary(title) do
+    Map.put(args, :title, String.trim(title))
+  end
 
   defp trim_title(args), do: args
 
@@ -190,8 +194,9 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
     |> Repo.exists?()
   end
 
-  defp pending_deleted_value_exists?(_community, _branch, _group_id, _type, _field, nil),
-    do: false
+  defp pending_deleted_value_exists?(_community, _branch, _group_id, _type, _field, nil) do
+    false
+  end
 
   defp pending_deleted_value_exists?(community, branch, parent_node_id, type, field, value) do
     community
@@ -217,32 +222,37 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
     |> Repo.all()
   end
 
-  defp pending_deleted_node_in_scope?(node, nil, nil),
-    do: is_nil(node["parentNodeId"])
+  defp pending_deleted_node_in_scope?(node, nil, nil) do
+    is_nil(node["parentNodeId"])
+  end
 
-  defp pending_deleted_node_in_scope?(node, nil, type),
-    do: is_nil(node["parentNodeId"]) and node["type"] == to_string(type)
+  defp pending_deleted_node_in_scope?(node, nil, type) do
+    is_nil(node["parentNodeId"]) and node["type"] == to_string(type)
+  end
 
-  defp pending_deleted_node_in_scope?(node, parent_id, :pin),
-    do: node["parentNodeId"] == parent_id and node["type"] == "pin"
+  defp pending_deleted_node_in_scope?(node, parent_id, :pin) do
+    node["parentNodeId"] == parent_id and node["type"] == "pin"
+  end
 
-  defp pending_deleted_node_in_scope?(node, parent_id, _type),
-    do: node["parentNodeId"] == parent_id and node["type"] != "pin"
+  defp pending_deleted_node_in_scope?(node, parent_id, _type) do
+    node["parentNodeId"] == parent_id and node["type"] != "pin"
+  end
 
-  defp where_sibling_scope(query, nil, :tab),
-    do: query |> where([n], is_nil(n.parent_node_id)) |> where([n], n.type == :tab)
+  defp where_sibling_scope(query, nil, :tab) do
+    query |> where([n], is_nil(n.parent_node_id)) |> where([n], n.type == :tab)
+  end
 
-  defp where_sibling_scope(query, parent_node_id, :pin),
-    do:
-      query
-      |> where([n], n.parent_node_id == ^parent_node_id)
-      |> where([n], n.type == :pin)
+  defp where_sibling_scope(query, parent_node_id, :pin) do
+    query
+    |> where([n], n.parent_node_id == ^parent_node_id)
+    |> where([n], n.type == :pin)
+  end
 
-  defp where_sibling_scope(query, parent_node_id, _type),
-    do:
-      query
-      |> where([n], n.parent_node_id == ^parent_node_id)
-      |> where([n], n.type in [:group, :page, :link])
+  defp where_sibling_scope(query, parent_node_id, _type) do
+    query
+    |> where([n], n.parent_node_id == ^parent_node_id)
+    |> where([n], n.type in [:group, :page, :link])
+  end
 
   defp unique_from_set(existing, base, separator) do
     Stream.iterate(0, &(&1 + 1))

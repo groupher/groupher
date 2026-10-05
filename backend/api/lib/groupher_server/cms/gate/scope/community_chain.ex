@@ -106,19 +106,22 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   end
 
   def community_actor(query, :operations, actor)
-      when actor == :operations or actor == %{type: :operations},
-      do: query
+      when actor == :operations or actor == %{type: :operations} do
+    query
+  end
 
-  def community_actor(_query, _mode, _actor),
-    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+  def community_actor(_query, _mode, _actor) do
+    {:error, ErrorCat.scope_policy_actor_mismatch()}
+  end
 
   @doc false
   @spec insights_actor(Ecto.Query.t(), term(), [String.t()]) ::
           Ecto.Query.t() | {:error, ErrorCat.error()}
   def insights_actor(query, actor, granted_community_slugs)
       when is_list(granted_community_slugs) and
-             (actor == :operations or actor == %{type: :operations}),
-      do: query
+             (actor == :operations or actor == %{type: :operations}) do
+    query
+  end
 
   def insights_actor(query, %{id: actor_id}, granted_community_slugs)
       when is_integer(actor_id) and is_list(granted_community_slugs) do
@@ -140,8 +143,9 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     )
   end
 
-  def insights_actor(_query, _actor, _granted_community_slugs),
-    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+  def insights_actor(_query, _actor, _granted_community_slugs) do
+    {:error, ErrorCat.scope_policy_actor_mismatch()}
+  end
 
   defp apply_community_lifecycle(query, :public) do
     from([gate_community: community, gate_community_lifecycle: lifecycle] in query,
@@ -166,8 +170,9 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     )
   end
 
-  defp apply_community_lifecycle(_query, _policy_mode),
-    do: {:error, ErrorCat.unknown_policy_mode()}
+  defp apply_community_lifecycle(_query, _policy_mode) do
+    {:error, ErrorCat.unknown_policy_mode()}
+  end
 
   @doc "Rejects joins and aliases owned by the Gate Scope query."
   @spec reject_conflicting_scope_joins(Ecto.Query.t(), [module()]) ::

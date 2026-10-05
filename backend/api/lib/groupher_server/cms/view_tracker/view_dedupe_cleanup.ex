@@ -63,9 +63,11 @@ defmodule GroupherServer.CMS.ViewTracker.ViewDedupeCleanup do
       total = deleted_rows + deleted
       batches = if deleted > 0, do: batch_count + 1, else: batch_count
 
-      if deleted == 0,
-        do: finish(total, batches, started_at),
-        else: drain(total, batches, started_at)
+      if deleted == 0 do
+        finish(total, batches, started_at)
+      else
+        drain(total, batches, started_at)
+      end
     end
   end
 

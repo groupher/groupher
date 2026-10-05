@@ -20,12 +20,18 @@ defmodule GroupherServer.CMS.Outbox.Workers.Community.Cleanup do
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
     case Outbox.execute(event_id, &cleanup/1) do
-      {:ok, _value} -> :ok
-      {:busy, seconds} -> {:snooze, seconds}
+      {:ok, _value} ->
+        :ok
+
+      {:busy, seconds} ->
+        {:snooze, seconds}
+
       {:error, _reason} when job.attempt >= job.max_attempts ->
         _ = Outbox.mark_dead(event_id)
         :ok
-      {:error, reason} -> {:error, reason}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -37,8 +43,9 @@ defmodule GroupherServer.CMS.Outbox.Workers.Community.Cleanup do
     end
   end
 
-  defp invalidation_type("community.presentation_changed"),
-    do: {:ok, :community_presentation_changed}
+  defp invalidation_type("community.presentation_changed") do
+    {:ok, :community_presentation_changed}
+  end
 
   defp invalidation_type("community.taxonomy_changed"), do: {:ok, :taxonomy_changed}
   defp invalidation_type("doc_tree.changed"), do: {:ok, :doc_tree_changed}

@@ -85,8 +85,9 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     end)
   end
 
-  def add_card(%Community{}, _draft_group_node_id, _actor),
-    do: {:error, AuthErrorCat.account_login()}
+  def add_card(%Community{}, _draft_group_node_id, _actor) do
+    {:error, AuthErrorCat.account_login()}
+  end
 
   defp with_docs_access(%User{} = actor, %Community{} = community, fun) do
     with {:ok, _canonical} <- CMS.Gate.access_check(actor, :manage_docs, community) do
@@ -114,8 +115,9 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     end)
   end
 
-  def remove_card(%Community{}, _draft_group_node_id, _actor),
-    do: {:error, AuthErrorCat.account_login()}
+  def remove_card(%Community{}, _draft_group_node_id, _actor) do
+    {:error, AuthErrorCat.account_login()}
+  end
 
   defp card_result(%DocCoverCard{} = card, published_group, index \\ nil) do
     %{
@@ -553,15 +555,18 @@ defmodule GroupherServer.CMS.DocCover.Writer do
             |> where([card], card.community_id == ^community.id and card.id in ^ids)
             |> Repo.delete_all()
 
-          if count == length(ids),
-            do: {:ok, replacement_index},
-            else: {:error, ErrorCat.custom("Doc Cover Cards changed during replacement.")}
+          if count == length(ids) do
+            {:ok, replacement_index}
+          else
+            {:error, ErrorCat.custom("Doc Cover Cards changed during replacement.")}
+          end
       end
     end
   end
 
-  defp ensure_has_leaves([]),
-    do: {:error, ErrorCat.custom("Publish a doc before adding this group to cover.")}
+  defp ensure_has_leaves([]) do
+    {:error, ErrorCat.custom("Publish a doc before adding this group to cover.")}
+  end
 
   defp ensure_has_leaves(_leaves), do: :ok
 
@@ -652,9 +657,11 @@ defmodule GroupherServer.CMS.DocCover.Writer do
   defp validate_unique_ids(ids, message) do
     normalized_ids = Enum.map(ids, &to_string/1)
 
-    if length(normalized_ids) == length(Enum.uniq(normalized_ids)),
-      do: :ok,
-      else: {:error, ErrorCat.custom(message)}
+    if length(normalized_ids) == length(Enum.uniq(normalized_ids)) do
+      :ok
+    else
+      {:error, ErrorCat.custom(message)}
+    end
   end
 
   # Reindex helpers update one tenant-scoped collection in a single SQL statement.
@@ -722,8 +729,9 @@ defmodule GroupherServer.CMS.DocCover.Writer do
   # that the validated collection changed or escaped its tenant/group scope.
   defp expect_reindexed_rows({:ok, %{num_rows: expected}}, expected, _message), do: :ok
 
-  defp expect_reindexed_rows({:ok, _result}, _expected, message),
-    do: {:error, ErrorCat.custom(message)}
+  defp expect_reindexed_rows({:ok, _result}, _expected, message) do
+    {:error, ErrorCat.custom(message)}
+  end
 
   defp expect_reindexed_rows({:error, reason}, _expected, _message), do: {:error, reason}
 

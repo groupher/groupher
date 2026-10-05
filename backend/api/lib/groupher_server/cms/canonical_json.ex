@@ -22,8 +22,9 @@ defmodule GroupherServer.CMS.CanonicalJSON do
     "{" <> Enum.join(pairs, ",") <> "}"
   end
 
-  def encode(value) when is_list(value),
-    do: "[" <> (value |> Enum.map(&encode/1) |> Enum.join(",")) <> "]"
+  def encode(value) when is_list(value) do
+    "[" <> (value |> Enum.map(&encode/1) |> Enum.join(",")) <> "]"
+  end
 
   def encode(true), do: "true"
   def encode(false), do: "false"

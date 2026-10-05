@@ -16,8 +16,9 @@ defmodule GroupherServer.Messaging do
   alias Messaging.{Inbox, Mentions, Notifications, Notify}
 
   @doc "Stores mention messages derived from an artiment and its parsed mentions."
-  def send_mention(artiment, mentions, from_user),
-    do: Mentions.send(artiment, mentions, from_user)
+  def send_mention(artiment, mentions, from_user) do
+    Mentions.send(artiment, mentions, from_user)
+  end
 
   @doc "Stores a grouped activity notification for its recipient."
   def send_notification(attrs, from_user), do: Notifications.send(attrs, from_user)

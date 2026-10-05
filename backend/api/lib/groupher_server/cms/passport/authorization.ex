@@ -29,8 +29,9 @@ defmodule GroupherServer.CMS.Passport.Authorization do
       #=> {:error, ErrorCat.error_pattern(reason: :unknown_action)}
 
   """
-  def allowed?(passport, community, action),
-    do: Registry.allowed?(passport, community, action)
+  def allowed?(passport, community, action) do
+    Registry.allowed?(passport, community, action)
+  end
 
   @doc """
   Checks an action for one user inside an optional context map.

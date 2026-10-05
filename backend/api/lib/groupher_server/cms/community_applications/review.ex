@@ -235,11 +235,13 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
 
   defp unwrap_nested_transaction({:ok, %{application: application}}), do: application
 
-  defp unwrap_nested_transaction({:error, :claim, %Ecto.Changeset{}, _changes}),
-    do: Repo.rollback(ErrorCat.slug_claimed())
+  defp unwrap_nested_transaction({:error, :claim, %Ecto.Changeset{}, _changes}) do
+    Repo.rollback(ErrorCat.slug_claimed())
+  end
 
-  defp unwrap_nested_transaction({:error, :application, %Ecto.Changeset{}, _changes}),
-    do: Repo.rollback(ErrorCat.active_application_exists())
+  defp unwrap_nested_transaction({:error, :application, %Ecto.Changeset{}, _changes}) do
+    Repo.rollback(ErrorCat.active_application_exists())
+  end
 
   defp unwrap_nested_transaction({:error, _step, reason, _changes}), do: Repo.rollback(reason)
 

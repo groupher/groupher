@@ -17,8 +17,9 @@ defmodule GroupherServer.CMS.Articles.Numbering do
 
   @doc "Assigns the next public inner id, or returns the Article unchanged when already assigned."
   @spec assign_public_inner_id(Article.t()) :: {:ok, Article.t()} | {:error, term()}
-  def assign_public_inner_id(%Article{inner_id: inner_id} = article) when not is_nil(inner_id),
-    do: {:ok, article}
+  def assign_public_inner_id(%Article{inner_id: inner_id} = article) when not is_nil(inner_id) do
+    {:ok, article}
+  end
 
   def assign_public_inner_id(%Article{} = article) do
     with {:ok, _counter} <- ensure_counter(article),

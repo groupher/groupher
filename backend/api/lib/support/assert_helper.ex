@@ -210,18 +210,19 @@ defmodule GroupherServer.Test.AssertHelper do
     end
   end
 
-  defp successful_operation!(%{"errors" => errors}, query),
-    do:
-      flunk("GraphQL operation #{get_operation_name(query)} returned errors: #{inspect(errors)}")
+  defp successful_operation!(%{"errors" => errors}, query) do
+    flunk("GraphQL operation #{get_operation_name(query)} returned errors: #{inspect(errors)}")
+  end
 
-  defp successful_operation!(%{"data" => data}, query) when is_map(data),
-    do: Map.get(data, get_operation_name(query))
+  defp successful_operation!(%{"data" => data}, query) when is_map(data) do
+    Map.get(data, get_operation_name(query))
+  end
 
-  defp successful_operation!(response, query),
-    do:
-      flunk(
-        "GraphQL operation #{get_operation_name(query)} returned invalid response: #{inspect(response)}"
-      )
+  defp successful_operation!(response, query) do
+    flunk(
+      "GraphQL operation #{get_operation_name(query)} returned invalid response: #{inspect(response)}"
+    )
+  end
 
   def mutation_error?(conn, query, variables, opt \\ false)
 

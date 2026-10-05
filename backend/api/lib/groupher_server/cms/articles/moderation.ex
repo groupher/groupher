@@ -194,8 +194,9 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   end
 
   defp invalidate_public_cache(%Article{inner_id: inner_id}, _opts)
-       when not is_integer(inner_id),
-       do: :ok
+       when not is_integer(inner_id) do
+    :ok
+  end
 
   defp invalidate_public_cache(%Article{} = article, opts) do
     operation_id = Keyword.get(opts, :command_id, Ecto.UUID.generate())

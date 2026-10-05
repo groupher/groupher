@@ -177,8 +177,9 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     end
   end
 
-  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,
-    do: Enum.random(min..max)
+  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max do
+    Enum.random(min..max)
+  end
 
   defp random_range(_), do: Enum.random(20..30)
 

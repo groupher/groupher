@@ -82,10 +82,14 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     assert results |> get_in(["meta", "illegalWords"]) == []
 
     {:ok, _} =
-      CMS.Articles.set_illegal(changelog.id, %{
-        illegal_reason: ["some-reason"],
-        illegal_words: ["some-word"]
-      }, :operations)
+      CMS.Articles.set_illegal(
+        changelog.id,
+        %{
+          illegal_reason: ["some-reason"],
+          illegal_words: ["some-word"]
+        },
+        :operations
+      )
 
     results = user_conn |> gq_query(S.Article.q(:article, :changelog), variables)
 

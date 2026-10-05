@@ -10,7 +10,9 @@ defmodule GroupherServer.Test.Analysis.MaintenanceTest do
   setup do
     previous = Application.get_env(:groupher_server, Config, [])
 
-    Application.put_env(:groupher_server, Config,
+    Application.put_env(
+      :groupher_server,
+      Config,
       Keyword.merge(previous,
         metric_event_retention_days: 1,
         hourly_metric_retention_months: 1,

@@ -65,23 +65,27 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
           :ok | {:error, ErrorCat.error()}
   def check_access(%User{} = user, action, article, context)
       when action in @actions and is_map(article) and
-             (is_struct(context, ArticleContext) or is_struct(context, DocContext)),
-      do: check_allowed(user, action, article, context)
+             (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
+    check_allowed(user, action, article, context)
+  end
 
   def check_access(:operations, action, article, context)
       when action in @actions and is_map(article) and
-             (is_struct(context, ArticleContext) or is_struct(context, DocContext)),
-      do: check_allowed(:operations, action, article, context)
+             (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
+    check_allowed(:operations, action, article, context)
+  end
 
   def check_access(:system, :permanently_delete, article, context)
       when is_map(article) and
-             (is_struct(context, ArticleContext) or is_struct(context, DocContext)),
-      do: check_allowed(:operations, :permanently_delete, article, context)
+             (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
+    check_allowed(:operations, :permanently_delete, article, context)
+  end
 
   def check_access(nil, :read, article, context), do: check_allowed(nil, :read, article, context)
 
-  def check_access(nil, action, _article, _context) when action in @actions,
-    do: {:error, ErrorCat.permission_denied()}
+  def check_access(nil, action, _article, _context) when action in @actions do
+    {:error, ErrorCat.permission_denied()}
+  end
 
   def check_access(_user, _action, _article, _context), do: {:error, ErrorCat.unknown_action()}
 
@@ -119,8 +123,9 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     end
   end
 
-  defp moderation_state(_article, %DocContext{doc_branch_state: %{moderation_state: state}}),
-    do: state
+  defp moderation_state(_article, %DocContext{doc_branch_state: %{moderation_state: state}}) do
+    state
+  end
 
   defp moderation_state(article, %ArticleContext{}), do: Map.get(article, :moderation_state)
   defp moderation_state(article, %DocContext{}), do: Map.get(article, :moderation_state)
@@ -151,8 +156,9 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   defp insights_actor?(_actor, _article, _community), do: false
 
   defp doc_branch_allowed(action, %{doc_branch: %{type: type}})
-       when action in @interaction_actions and type != :main,
-       do: {:error, ErrorCat.article_not_mutable()}
+       when action in @interaction_actions and type != :main do
+    {:error, ErrorCat.article_not_mutable()}
+  end
 
   defp doc_branch_allowed(_action, _context), do: :ok
 
@@ -165,38 +171,47 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   defp community(_context), do: {:error, ErrorCat.lifecycle_not_loaded()}
 
   defp action_allowed(:publish, %{state: state}, _article)
-       when state in [:draft_only, :published],
-       do: :ok
+       when state in [:draft_only, :published] do
+    :ok
+  end
 
-  defp action_allowed(:publish, %{state: :archived}, _article),
-    do: {:error, ErrorCat.article_archived()}
+  defp action_allowed(:publish, %{state: :archived}, _article) do
+    {:error, ErrorCat.article_archived()}
+  end
 
-  defp action_allowed(:publish, %{state: :deleted}, _article),
-    do: {:error, ErrorCat.article_deleted()}
+  defp action_allowed(:publish, %{state: :deleted}, _article) do
+    {:error, ErrorCat.article_deleted()}
+  end
 
-  defp action_allowed(:publish, %{state: :destroy}, _article),
-    do: {:error, ErrorCat.article_destroyed()}
+  defp action_allowed(:publish, %{state: :destroy}, _article) do
+    {:error, ErrorCat.article_destroyed()}
+  end
 
   # Editing an existing public Article and updating its editor Draft share the
   # same logical lifecycle. Keep this separate from :publish so both write
   # entry points reject a non-writable ancestor before touching Draft rows.
   defp action_allowed(:edit, %{state: state}, _article)
-       when state in [:draft_only, :published],
-       do: :ok
+       when state in [:draft_only, :published] do
+    :ok
+  end
 
-  defp action_allowed(:edit, %{state: :archived}, _article),
-    do: {:error, ErrorCat.article_archived()}
+  defp action_allowed(:edit, %{state: :archived}, _article) do
+    {:error, ErrorCat.article_archived()}
+  end
 
-  defp action_allowed(:edit, %{state: :deleted}, _article),
-    do: {:error, ErrorCat.article_deleted()}
+  defp action_allowed(:edit, %{state: :deleted}, _article) do
+    {:error, ErrorCat.article_deleted()}
+  end
 
-  defp action_allowed(:edit, %{state: :destroy}, _article),
-    do: {:error, ErrorCat.article_destroyed()}
+  defp action_allowed(:edit, %{state: :destroy}, _article) do
+    {:error, ErrorCat.article_destroyed()}
+  end
 
   defp action_allowed(:discard_draft, %{state: :published}, _article), do: :ok
 
-  defp action_allowed(:discard_draft, _lifecycle, _article),
-    do: {:error, ErrorCat.article_not_mutable()}
+  defp action_allowed(:discard_draft, _lifecycle, _article) do
+    {:error, ErrorCat.article_not_mutable()}
+  end
 
   defp action_allowed(:create_comment, %{state: :published}, article) do
     case Enable.comment?(article) do
@@ -205,78 +220,97 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     end
   end
 
-  defp action_allowed(:create_comment, %{state: :archived}, _article),
-    do: {:error, ErrorCat.ancestor_article_archived()}
+  defp action_allowed(:create_comment, %{state: :archived}, _article) do
+    {:error, ErrorCat.ancestor_article_archived()}
+  end
 
-  defp action_allowed(:create_comment, %{state: :deleted}, _article),
-    do: {:error, ErrorCat.ancestor_article_deleted()}
+  defp action_allowed(:create_comment, %{state: :deleted}, _article) do
+    {:error, ErrorCat.ancestor_article_deleted()}
+  end
 
-  defp action_allowed(:create_comment, %{state: :destroy}, _article),
-    do: {:error, ErrorCat.ancestor_article_destroyed()}
+  defp action_allowed(:create_comment, %{state: :destroy}, _article) do
+    {:error, ErrorCat.ancestor_article_destroyed()}
+  end
 
   # Article interactions are mutation actions, not read-side decoration. Phase
   # 1 deliberately denies both add and remove unless the Article is public and
   # its Community remains writable; a future undo-only policy must be explicit.
   defp action_allowed(action, %{state: :published}, _article)
-       when action in @interaction_actions,
-       do: :ok
+       when action in @interaction_actions do
+    :ok
+  end
 
   defp action_allowed(action, %{state: :archived}, _article)
-       when action in @interaction_actions,
-       do: {:error, ErrorCat.article_archived()}
+       when action in @interaction_actions do
+    {:error, ErrorCat.article_archived()}
+  end
 
   defp action_allowed(action, %{state: :deleted}, _article)
-       when action in @interaction_actions,
-       do: {:error, ErrorCat.article_deleted()}
+       when action in @interaction_actions do
+    {:error, ErrorCat.article_deleted()}
+  end
 
   defp action_allowed(action, %{state: :destroy}, _article)
-       when action in @interaction_actions,
-       do: {:error, ErrorCat.article_destroyed()}
+       when action in @interaction_actions do
+    {:error, ErrorCat.article_destroyed()}
+  end
 
   defp action_allowed(:delete, %{state: state}, _article)
-       when state in [:draft_only, :published],
-       do: :ok
+       when state in [:draft_only, :published] do
+    :ok
+  end
 
-  defp action_allowed(:delete, %{state: :archived}, _article),
-    do: {:error, ErrorCat.article_archived()}
+  defp action_allowed(:delete, %{state: :archived}, _article) do
+    {:error, ErrorCat.article_archived()}
+  end
 
-  defp action_allowed(:delete, %{state: :deleted}, _article),
-    do: {:error, ErrorCat.article_deleted()}
+  defp action_allowed(:delete, %{state: :deleted}, _article) do
+    {:error, ErrorCat.article_deleted()}
+  end
 
-  defp action_allowed(:delete, %{state: :destroy}, _article),
-    do: {:error, ErrorCat.article_destroyed()}
+  defp action_allowed(:delete, %{state: :destroy}, _article) do
+    {:error, ErrorCat.article_destroyed()}
+  end
 
   defp action_allowed(:restore, %{state: :deleted}, _article), do: :ok
 
-  defp action_allowed(:restore, _lifecycle, _article),
-    do: {:error, ErrorCat.article_not_deleted()}
+  defp action_allowed(:restore, _lifecycle, _article) do
+    {:error, ErrorCat.article_not_deleted()}
+  end
 
   defp action_allowed(:permanently_delete, %{state: :deleted}, _article), do: :ok
 
-  defp action_allowed(:permanently_delete, _lifecycle, _article),
-    do: {:error, ErrorCat.article_not_deleted()}
+  defp action_allowed(:permanently_delete, _lifecycle, _article) do
+    {:error, ErrorCat.article_not_deleted()}
+  end
 
   defp action_allowed(:restore_revision_to_draft, %{state: state}, _article)
-       when state in [:draft_only, :published],
-       do: :ok
+       when state in [:draft_only, :published] do
+    :ok
+  end
 
-  defp action_allowed(:restore_revision_to_draft, %{state: :archived}, _article),
-    do: {:error, ErrorCat.article_archived()}
+  defp action_allowed(:restore_revision_to_draft, %{state: :archived}, _article) do
+    {:error, ErrorCat.article_archived()}
+  end
 
-  defp action_allowed(:restore_revision_to_draft, %{state: :deleted}, _article),
-    do: {:error, ErrorCat.article_deleted()}
+  defp action_allowed(:restore_revision_to_draft, %{state: :deleted}, _article) do
+    {:error, ErrorCat.article_deleted()}
+  end
 
-  defp action_allowed(:restore_revision_to_draft, %{state: :destroy}, _article),
-    do: {:error, ErrorCat.article_destroyed()}
+  defp action_allowed(:restore_revision_to_draft, %{state: :destroy}, _article) do
+    {:error, ErrorCat.article_destroyed()}
+  end
 
   defp action_allowed(action, %{state: state}, %{thread: thread})
        when action in [:move, :mirror, :unmirror, :pin, :unpin] and
-              state in [:draft_only, :published] and thread in [:post, :blog, :changelog],
-       do: :ok
+              state in [:draft_only, :published] and thread in [:post, :blog, :changelog] do
+    :ok
+  end
 
   defp action_allowed(action, _lifecycle, _article)
-       when action in [:move, :mirror, :unmirror, :pin, :unpin],
-       do: {:error, ErrorCat.article_not_mutable()}
+       when action in [:move, :mirror, :unmirror, :pin, :unpin] do
+    {:error, ErrorCat.article_not_mutable()}
+  end
 
   defp action_allowed(action, %{state: state}, _article)
        when action in [
@@ -287,8 +321,9 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
               :lock_comments,
               :unlock_comments,
               :moderate
-            ] and state in [:draft_only, :published],
-       do: :ok
+            ] and state in [:draft_only, :published] do
+    :ok
+  end
 
   defp action_allowed(_action, _lifecycle, _article), do: {:error, ErrorCat.article_not_mutable()}
 end

@@ -350,8 +350,9 @@ defmodule GroupherServer.CMS.DocPublishRelease do
          node_type: @tree_node_type_page,
          node_id: id
        })
-       when not is_nil(id),
-       do: [id]
+       when not is_nil(id) do
+    [id]
+  end
 
   defp article_node_ids_from_tree_event(_event), do: []
 

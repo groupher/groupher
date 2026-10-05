@@ -242,8 +242,9 @@ defmodule GroupherServer.PublicCache do
     }
   end
 
-  defp payload(%{__struct__: _} = aggregate),
-    do: aggregate |> Map.from_struct() |> normalize_payload()
+  defp payload(%{__struct__: _} = aggregate) do
+    aggregate |> Map.from_struct() |> normalize_payload()
+  end
 
   defp payload(%{} = aggregate), do: normalize_payload(aggregate)
 
@@ -267,13 +268,15 @@ defmodule GroupherServer.PublicCache do
     }
   end
 
-  defp aggregate_type(%struct{}),
-    do: struct |> Module.split() |> List.last() |> Macro.underscore()
+  defp aggregate_type(%struct{}) do
+    struct |> Module.split() |> List.last() |> Macro.underscore()
+  end
 
   defp aggregate_type(_), do: "article"
 
-  defp aggregate_id(aggregate),
-    do: Map.get(aggregate, :id) || Map.get(aggregate, "id") || Ecto.UUID.generate()
+  defp aggregate_id(aggregate) do
+    Map.get(aggregate, :id) || Map.get(aggregate, "id") || Ecto.UUID.generate()
+  end
 
   defp error_code(reason) when is_atom(reason), do: Atom.to_string(reason)
   defp error_code({reason, _}) when is_atom(reason), do: Atom.to_string(reason)

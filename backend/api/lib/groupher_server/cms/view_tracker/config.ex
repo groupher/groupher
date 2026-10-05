@@ -21,8 +21,9 @@ defmodule GroupherServer.CMS.ViewTracker.Config do
 
   @doc "Returns the delay added after an actor window before dedupe state may be cleaned."
   @spec cleanup_safety_margin_seconds() :: pos_integer()
-  def cleanup_safety_margin_seconds,
-    do: positive_runtime(:cleanup_safety_margin_seconds, 86_400)
+  def cleanup_safety_margin_seconds do
+    positive_runtime(:cleanup_safety_margin_seconds, 86_400)
+  end
 
   @doc "Returns the complete lifetime of one actor's dedupe state."
   @spec dedupe_state_ttl_seconds(:human | :agent) :: pos_integer()
@@ -32,18 +33,21 @@ defmodule GroupherServer.CMS.ViewTracker.Config do
 
   @doc "Returns the maximum rows removed by one cleanup batch."
   @spec cleanup_batch_size() :: pos_integer()
-  def cleanup_batch_size,
-    do: positive_runtime(:cleanup_batch_size, 500)
+  def cleanup_batch_size do
+    positive_runtime(:cleanup_batch_size, 500)
+  end
 
   @doc "Returns the maximum rows removed by one cleanup run."
   @spec cleanup_row_budget() :: pos_integer()
-  def cleanup_row_budget,
-    do: positive_runtime(:cleanup_row_budget, 50_000)
+  def cleanup_row_budget do
+    positive_runtime(:cleanup_row_budget, 50_000)
+  end
 
   @doc "Returns the wall-clock budget for one cleanup run."
   @spec cleanup_time_budget_ms() :: pos_integer()
-  def cleanup_time_budget_ms,
-    do: positive_runtime(:cleanup_time_budget_ms, 25_000)
+  def cleanup_time_budget_ms do
+    positive_runtime(:cleanup_time_budget_ms, 25_000)
+  end
 
   defp runtime do
     Application.get_env(:groupher_server, __MODULE__, [])
@@ -57,6 +61,7 @@ defmodule GroupherServer.CMS.ViewTracker.Config do
 
   defp validate_positive!(_name, value) when is_integer(value) and value > 0, do: value
 
-  defp validate_positive!(name, value),
-    do: raise(ArgumentError, "#{name} must be a positive integer, got: #{inspect(value)}")
+  defp validate_positive!(name, value) do
+    raise(ArgumentError, "#{name} must be a positive integer, got: #{inspect(value)}")
+  end
 end

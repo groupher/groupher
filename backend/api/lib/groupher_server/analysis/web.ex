@@ -363,8 +363,9 @@ defmodule GroupherServer.Analysis.Web do
     end)
   end
 
-  defp visitor_regions(_rows, country_code) when country_code not in @visitor_region_countries,
-    do: []
+  defp visitor_regions(_rows, country_code) when country_code not in @visitor_region_countries do
+    []
+  end
 
   defp visitor_regions(rows, country_code) do
     rows
@@ -419,8 +420,9 @@ defmodule GroupherServer.Analysis.Web do
          %CommunityDashboard{umami_website_id: website_id},
          _provider
        )
-       when is_binary(website_id),
-       do: {:ok, website_id}
+       when is_binary(website_id) do
+    {:ok, website_id}
+  end
 
   defp reload_dashboard(%CommunityDashboard{id: id}) do
     case Repo.get(CommunityDashboard, id) do
@@ -558,17 +560,19 @@ defmodule GroupherServer.Analysis.Web do
     }
   end
 
-  defp metric(value, previous_value),
-    do: %{
+  defp metric(value, previous_value) do
+    %{
       value: value,
       previous_value: previous_value,
       change_rate: change_rate(value, previous_value)
     }
+  end
 
   defp change_rate(_value, previous_value) when previous_value in [0, 0.0], do: nil
 
-  defp change_rate(value, previous_value),
-    do: Float.round((value - previous_value) / previous_value * 100, 2)
+  defp change_rate(value, previous_value) do
+    Float.round((value - previous_value) / previous_value * 100, 2)
+  end
 
   defp rate(_value, 0), do: 0.0
   defp rate(value, total), do: Float.round(value / total, 2)

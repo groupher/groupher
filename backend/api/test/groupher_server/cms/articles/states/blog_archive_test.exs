@@ -9,7 +9,9 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
 
     {:ok, blog_long_ago} = db_insert(:blog, %{title: "last week", inserted_at: @last_year})
     blog_long_ago = Repo.get!(CMS.Model.Article, blog_long_ago.id)
-    {:ok, blog_long_ago} = blog_long_ago |> Ecto.Changeset.change(active_at: @last_year) |> Repo.update()
+
+    {:ok, blog_long_ago} =
+      blog_long_ago |> Ecto.Changeset.change(active_at: @last_year) |> Repo.update()
 
     db_insert_multi(:blog, 5)
 
@@ -33,6 +35,7 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
       archived_blogs = archived_articles(:blog)
 
       archived_blog = archived_blogs |> List.first()
+
       {:error, reason} =
         CMS.Articles.update(
           archived_blog,
@@ -40,6 +43,7 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
           user,
           Ecto.UUID.generate()
         )
+
       assert %ErrorCat.Error{reason: :article_archived} = reason
     end
 

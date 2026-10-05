@@ -97,11 +97,13 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
     end
   end
 
-  defp ensure_active_at(%Article{active_at: %DateTime{}} = article, _published_at),
-    do: {:ok, article}
+  defp ensure_active_at(%Article{active_at: %DateTime{}} = article, _published_at) do
+    {:ok, article}
+  end
 
-  defp ensure_active_at(%Article{} = article, published_at),
-    do: article |> Article.changeset(%{active_at: published_at}) |> Repo.update()
+  defp ensure_active_at(%Article{} = article, published_at) do
+    article |> Article.changeset(%{active_at: published_at}) |> Repo.update()
+  end
 
   defp changed_fields(_article, nil, _draft), do: []
 

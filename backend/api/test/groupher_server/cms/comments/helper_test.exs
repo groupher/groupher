@@ -79,6 +79,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
     test "should return domain error when inner_id allocation fails", ~m(post)a do
       {:error, reason} =
         Numbering.next_inner_id(%{post | id: Ecto.UUID.generate()}, :post_id)
+
       assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
   end

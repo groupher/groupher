@@ -31,8 +31,9 @@ defmodule GroupherServer.CMS.Gate do
   @doc "Builds a read query with a resource-specific Scope Context."
   @spec scope(Ecto.Queryable.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.t()) ::
           Ecto.Query.t() | {:error, ErrorCat.error()}
-  def scope(queryable, actor, action, context),
-    do: Scope.scope(queryable, actor, action, context)
+  def scope(queryable, actor, action, context) do
+    Scope.scope(queryable, actor, action, context)
+  end
 
   @doc "Loads, locks, and checks a resource inside the current mutation transaction."
   defdelegate access_check(user, action, resource), to: Access

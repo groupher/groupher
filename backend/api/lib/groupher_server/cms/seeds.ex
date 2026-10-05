@@ -31,8 +31,9 @@ defmodule GroupherServer.CMS.Seeds do
 
   @doc "Runs `set_category` through the public `Seeds` boundary."
   @spec set_category([atom() | String.t()], atom() | String.t()) :: T.domain_res(:ok)
-  def set_category(communities_names, cat_name),
-    do: Communities.set_category(communities_names, cat_name)
+  def set_category(communities_names, cat_name) do
+    Communities.set_category(communities_names, cat_name)
+  end
 
   @doc "Runs `full_community` through the public `Seeds` boundary."
   @spec full_community(String.t() | atom()) :: T.domain_res(Community.t())
@@ -60,8 +61,9 @@ defmodule GroupherServer.CMS.Seeds do
   def articles(%Community{} = community, thread), do: Articles.mock(community, thread)
 
   @spec articles(Community.t(), atom(), integer()) :: T.domain_res([map()])
-  def articles(%Community{} = community, thread, count),
-    do: Articles.mock(community, thread, count)
+  def articles(%Community{} = community, thread, count) do
+    Articles.mock(community, thread, count)
+  end
 
   # Comment seeds
 

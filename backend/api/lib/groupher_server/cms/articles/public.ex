@@ -46,8 +46,9 @@ defmodule GroupherServer.CMS.Articles.Public do
     |> Repo.insert_or_update()
   end
 
-  def select(%Article{}, %ArticleRevision{}, %Author{}, _opts),
-    do: {:error, :revision_owner_mismatch}
+  def select(%Article{}, %ArticleRevision{}, %Author{}, _opts) do
+    {:error, :revision_owner_mismatch}
+  end
 
   @doc "Loads the current public selection for a stable Article."
   @spec get(Article.t()) :: {:ok, ArticlePublic.t()} | {:error, :not_found}

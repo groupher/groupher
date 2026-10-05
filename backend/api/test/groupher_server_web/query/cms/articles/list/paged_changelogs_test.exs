@@ -400,6 +400,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     test "latest changelog author commented changelog have no effect",
          ~m(guest_conn community changelog_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}
+
       changelog =
         CMS.Model.Article |> Repo.get!(changelog_last_week.id) |> Repo.preload(author: :user)
 

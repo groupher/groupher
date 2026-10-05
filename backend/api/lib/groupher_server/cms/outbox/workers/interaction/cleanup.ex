@@ -95,8 +95,9 @@ defmodule GroupherServer.CMS.Outbox.Workers.Interaction.Cleanup do
 
   defp maybe_sync_search(%Comment{}), do: :ok
 
-  defp maybe_sync_search(%Article{} = article),
-    do: normalize_search(Indexer.enqueue_metrics(article))
+  defp maybe_sync_search(%Article{} = article) do
+    normalize_search(Indexer.enqueue_metrics(article))
+  end
 
   defp normalize_search(:ok), do: :ok
   defp normalize_search({:ok, _}), do: :ok

@@ -92,29 +92,33 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       when type in [
              CMS.DocTree.Const.tree_event(:node_create),
              CMS.DocTree.Const.tree_event(:pin_add)
-           ],
-      do: "created"
+           ] do
+    "created"
+  end
 
   def tree_event_action(%DocTreeEvent{event_type: type})
       when type in [
              CMS.DocTree.Const.tree_event(:node_delete),
              CMS.DocTree.Const.tree_event(:pin_remove)
-           ],
-      do: "deleted"
+           ] do
+    "deleted"
+  end
 
   def tree_event_action(%DocTreeEvent{event_type: type})
       when type in [
              CMS.DocTree.Const.tree_event(:node_move),
              CMS.DocTree.Const.tree_event(:pin_reorder)
-           ],
-      do: "moved"
+           ] do
+    "moved"
+  end
 
   def tree_event_action(%DocTreeEvent{event_type: type})
       when type in [
              CMS.DocTree.Const.tree_event(:group_rename),
              CMS.DocTree.Const.tree_event(:node_rename)
-           ],
-      do: "renamed"
+           ] do
+    "renamed"
+  end
 
   def tree_event_action(%DocTreeEvent{}), do: "modified"
 
@@ -125,8 +129,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       when type in [
              CMS.DocTree.Const.tree_event(:node_create),
              CMS.DocTree.Const.tree_event(:pin_add)
-           ],
-      do: "Added #{node["title"] || node["id"]}"
+           ] do
+    "Added #{node["title"] || node["id"]}"
+  end
 
   def tree_event_label(%DocTreeEvent{
         event_type: type,
@@ -135,8 +140,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       when type in [
              CMS.DocTree.Const.tree_event(:node_delete),
              CMS.DocTree.Const.tree_event(:pin_remove)
-           ],
-      do: "Deleted #{node["title"] || node["id"]}"
+           ] do
+    "Deleted #{node["title"] || node["id"]}"
+  end
 
   def tree_event_label(%DocTreeEvent{
         event_type: type,
@@ -145,8 +151,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       when type in [
              CMS.DocTree.Const.tree_event(:node_move),
              CMS.DocTree.Const.tree_event(:pin_reorder)
-           ],
-      do: "Moved #{payload["title"] || payload["nodeId"]}"
+           ] do
+    "Moved #{payload["title"] || payload["nodeId"]}"
+  end
 
   def tree_event_label(%DocTreeEvent{event_type: type, payload: payload})
       when type in [
@@ -156,8 +163,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     "Renamed #{payload["before"] || payload["title"]} -> #{payload["after"]}"
   end
 
-  def tree_event_label(%DocTreeEvent{payload: payload}),
-    do: "Updated #{payload["title"] || payload["nodeId"]}"
+  def tree_event_label(%DocTreeEvent{payload: payload}) do
+    "Updated #{payload["title"] || payload["nodeId"]}"
+  end
 
   defp doc_change_items(%Community{} = community, branch) do
     drafts =
@@ -278,9 +286,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   defp collect_ancestor_ids(_parents, nil, acc), do: acc
 
   defp collect_ancestor_ids(parents, node_id, acc) do
-    if MapSet.member?(acc, node_id),
-      do: acc,
-      else: collect_ancestor_ids(parents, Map.get(parents, node_id), MapSet.put(acc, node_id))
+    if MapSet.member?(acc, node_id) do
+      acc
+    else
+      collect_ancestor_ids(parents, Map.get(parents, node_id), MapSet.put(acc, node_id))
+    end
   end
 
   defp page_create_event_doc_id(%DocTreeEvent{
@@ -288,8 +298,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
          node_type: @tree_node_type_page,
          doc_id: doc_id
        })
-       when not is_nil(doc_id),
-       do: doc_id
+       when not is_nil(doc_id) do
+    doc_id
+  end
 
   defp page_create_event_doc_id(_event), do: nil
 
@@ -298,8 +309,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
          node_type: @tree_node_type_group,
          node_id: group_node_id
        })
-       when not is_nil(group_node_id),
-       do: group_node_id
+       when not is_nil(group_node_id) do
+    group_node_id
+  end
 
   defp group_create_event_id(_event), do: nil
 
@@ -307,13 +319,15 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
          event_type: CMS.DocTree.Const.tree_event(:node_create),
          node_type: @tree_node_type_tab,
          node_id: tab_node_id
-       }),
-       do: tab_node_id
+       }) do
+    tab_node_id
+  end
 
   defp tab_create_event_id(_event), do: nil
 
-  defp shell_create_event_id(event),
-    do: group_create_event_id(event) || tab_create_event_id(event)
+  defp shell_create_event_id(event) do
+    group_create_event_id(event) || tab_create_event_id(event)
+  end
 
   defp draft_doc_ids(%Community{} = community, branch) do
     DocDraft

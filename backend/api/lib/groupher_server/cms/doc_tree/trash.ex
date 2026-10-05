@@ -407,8 +407,9 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     end
   end
 
-  defp maybe_put_restore_index(data, index) when is_integer(index) and index >= 0,
-    do: Map.put(data, "index", index)
+  defp maybe_put_restore_index(data, index) when is_integer(index) and index >= 0 do
+    Map.put(data, "index", index)
+  end
 
   defp maybe_put_restore_index(data, _index), do: data
 
@@ -453,20 +454,21 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     :ok
   end
 
-  defp where_restore_scope(query, nil, :tab),
-    do: query |> where([node], is_nil(node.parent_node_id)) |> where([node], node.type == :tab)
+  defp where_restore_scope(query, nil, :tab) do
+    query |> where([node], is_nil(node.parent_node_id)) |> where([node], node.type == :tab)
+  end
 
-  defp where_restore_scope(query, parent_node_id, :pin),
-    do:
-      query
-      |> where([node], node.parent_node_id == ^parent_node_id)
-      |> where([node], node.type == :pin)
+  defp where_restore_scope(query, parent_node_id, :pin) do
+    query
+    |> where([node], node.parent_node_id == ^parent_node_id)
+    |> where([node], node.type == :pin)
+  end
 
-  defp where_restore_scope(query, parent_node_id, _type),
-    do:
-      query
-      |> where([node], node.parent_node_id == ^parent_node_id)
-      |> where([node], node.type in [:group, :page, :link])
+  defp where_restore_scope(query, parent_node_id, _type) do
+    query
+    |> where([node], node.parent_node_id == ^parent_node_id)
+    |> where([node], node.type in [:group, :page, :link])
+  end
 
   defp ensure_restore_slots_available(community, branch, items) do
     conflicts? =
@@ -485,9 +487,11 @@ defmodule GroupherServer.CMS.DocTree.Trash do
           |> Repo.exists?()
       end)
 
-    if conflicts?,
-      do: {:error, ErrorCat.custom("A Docs Tree node with the same identity already exists")},
-      else: :ok
+    if conflicts? do
+      {:error, ErrorCat.custom("A Docs Tree node with the same identity already exists")}
+    else
+      :ok
+    end
   end
 
   defp restore_stage_nodes(community, branch, items, stage) do

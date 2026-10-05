@@ -140,25 +140,30 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> validate_link_href(type, href)
   end
 
-  defp validate_title(changeset, type) when type in [:tab, :group, :page, :link, :pin],
-    do: validate_required(changeset, [:title])
+  defp validate_title(changeset, type) when type in [:tab, :group, :page, :link, :pin] do
+    validate_required(changeset, [:title])
+  end
 
   defp validate_title(changeset, _type), do: changeset
 
   defp validate_parent_ref(changeset, :tab, nil), do: changeset
 
   defp validate_parent_ref(changeset, type, parent_node_id)
-       when type in [:group, :page, :link, :pin] and not is_nil(parent_node_id),
-       do: changeset
+       when type in [:group, :page, :link, :pin] and not is_nil(parent_node_id) do
+    changeset
+  end
 
-  defp validate_parent_ref(changeset, _type, _parent_node_id),
-    do: add_error(changeset, :parent_node_id, "node has an invalid docs tree parent")
+  defp validate_parent_ref(changeset, _type, _parent_node_id) do
+    add_error(changeset, :parent_node_id, "node has an invalid docs tree parent")
+  end
 
-  defp validate_doc_id(changeset, :page, nil),
-    do: add_error(changeset, :doc_id, "page nodes require doc_id")
+  defp validate_doc_id(changeset, :page, nil) do
+    add_error(changeset, :doc_id, "page nodes require doc_id")
+  end
 
-  defp validate_doc_id(changeset, :page, doc_id) when not is_nil(doc_id),
-    do: changeset
+  defp validate_doc_id(changeset, :page, doc_id) when not is_nil(doc_id) do
+    changeset
+  end
 
   defp validate_doc_id(changeset, type, doc_id)
        when type in [:tab, :group, :link, :pin] do
@@ -169,8 +174,9 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     end
   end
 
-  defp validate_doc_id(changeset, _type, _doc_id),
-    do: changeset
+  defp validate_doc_id(changeset, _type, _doc_id) do
+    changeset
+  end
 
   defp validate_link_href(changeset, type, href) when type in [:link, :pin] and is_binary(href) do
     if String.trim(href) == "" do
@@ -180,8 +186,9 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     end
   end
 
-  defp validate_link_href(changeset, type, _href) when type in [:link, :pin],
-    do: add_error(changeset, :href, "#{type} nodes require href")
+  defp validate_link_href(changeset, type, _href) when type in [:link, :pin] do
+    add_error(changeset, :href, "#{type} nodes require href")
+  end
 
   defp validate_link_href(changeset, type, href) when type in [:tab, :group, :page] do
     if is_nil(href) or (is_binary(href) and String.trim(href) == "") do

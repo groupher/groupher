@@ -40,15 +40,18 @@ defmodule GroupherServer.CMS.Gate.Access do
   """
   @spec access_check(term(), atom(), term()) ::
           {:ok, term()} | {:error, GroupherServer.CMS.Gate.Decision.t()}
-  def access_check(actor, action, %Community{} = resource),
-    do: Check.community(actor, action, resource)
+  def access_check(actor, action, %Community{} = resource) do
+    Check.community(actor, action, resource)
+  end
 
-  def access_check(actor, action, %Comment{} = resource),
-    do: Check.comment(actor, action, resource)
+  def access_check(actor, action, %Comment{} = resource) do
+    Check.comment(actor, action, resource)
+  end
 
   def access_check(actor, action, %model{} = resource)
-      when model in @article_models,
-      do: Check.article(actor, action, resource)
+      when model in @article_models do
+    Check.article(actor, action, resource)
+  end
 
   def access_check(actor, action, %{id: article_id, thread: :doc, branch_id: branch_id})
       when is_binary(article_id) and is_integer(branch_id) do
@@ -66,8 +69,9 @@ defmodule GroupherServer.CMS.Gate.Access do
     end
   end
 
-  def access_check(_actor, _action, _resource),
-    do: {:error, Decision.deny(ErrorCat.unsupported_resource())}
+  def access_check(_actor, _action, _resource) do
+    {:error, Decision.deny(ErrorCat.unsupported_resource())}
+  end
 
   @doc """
   Runs authorization and a command callback in one aggregate transaction.
@@ -145,8 +149,9 @@ defmodule GroupherServer.CMS.Gate.Access do
     end
   end
 
-  def with_check(_actor, _action, _resource, _callback),
-    do: {:error, ErrorCat.unsupported_resource()}
+  def with_check(_actor, _action, _resource, _callback) do
+    {:error, ErrorCat.unsupported_resource()}
+  end
 
   @doc "Runs one branch-scoped Doc command through the shared Gate transaction and lock."
   @spec with_branch_check(term(), atom(), Article.t(), pos_integer(), (Article.t() -> term())) ::
@@ -165,8 +170,9 @@ defmodule GroupherServer.CMS.Gate.Access do
     end
   end
 
-  defp normalize_decision({:error, %Decision{} = decision}),
-    do: {:error, Decision.primary_error(decision)}
+  defp normalize_decision({:error, %Decision{} = decision}) do
+    {:error, Decision.primary_error(decision)}
+  end
 
   defp normalize_decision(result), do: result
 
@@ -180,9 +186,11 @@ defmodule GroupherServer.CMS.Gate.Access do
   defp parent_article(comment), do: FrontDesk.article_of(comment)
 
   defp transact_parent(community, %Article{thread: :doc} = article, branch_id, fun)
-       when is_integer(branch_id),
-       do: Articles.MutationLock.transact_doc(community, article, branch_id, fun)
+       when is_integer(branch_id) do
+    Articles.MutationLock.transact_doc(community, article, branch_id, fun)
+  end
 
-  defp transact_parent(community, article, _branch_id, fun),
-    do: Articles.MutationLock.transact_article(community, article, fun)
+  defp transact_parent(community, article, _branch_id, fun) do
+    Articles.MutationLock.transact_article(community, article, fun)
+  end
 end

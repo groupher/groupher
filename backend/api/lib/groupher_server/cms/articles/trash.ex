@@ -52,11 +52,13 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   @doc "Returns whether one stable Article currently belongs to Trash."
   @spec trashed_article?(map()) :: boolean()
-  def trashed_article?(%{article_id: article_id}) when is_binary(article_id),
-    do: Repo.exists?(from(item in TrashedArticle, where: item.article_id == ^article_id))
+  def trashed_article?(%{article_id: article_id}) when is_binary(article_id) do
+    Repo.exists?(from(item in TrashedArticle, where: item.article_id == ^article_id))
+  end
 
-  def trashed_article?(%Article{id: article_id}),
-    do: Repo.exists?(from(item in TrashedArticle, where: item.article_id == ^article_id))
+  def trashed_article?(%Article{id: article_id}) do
+    Repo.exists?(from(item in TrashedArticle, where: item.article_id == ^article_id))
+  end
 
   def trashed_article?(_article), do: false
 
@@ -99,13 +101,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
           {:ok, TrashedArticle.t()} | {:error, term()}
   def trash(article, actor, opts \\ [])
 
-  def trash(%{article_id: article_id}, actor, opts) when is_binary(article_id),
-    do: trash(Repo.get(Article, article_id), actor, opts)
+  def trash(%{article_id: article_id}, actor, opts) when is_binary(article_id) do
+    trash(Repo.get(Article, article_id), actor, opts)
+  end
 
-  def trash(%Article{thread: :doc}, _actor, _opts),
-    do:
-      {:error,
-       CMS.Articles.ErrorCat.custom("Doc Trash is owned by the branch-scoped Docs Tree lifecycle")}
+  def trash(%Article{thread: :doc}, _actor, _opts) do
+    {:error,
+     CMS.Articles.ErrorCat.custom("Doc Trash is owned by the branch-scoped Docs Tree lifecycle")}
+  end
 
   def trash(%Article{} = article, actor, opts) do
     CMS.Gate.Access.with_check(actor, :delete, article, fn canonical ->
@@ -116,8 +119,9 @@ defmodule GroupherServer.CMS.Articles.Trash do
     end)
   end
 
-  def trash(_article, _actor, _opts),
-    do: {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+  def trash(_article, _actor, _opts) do
+    {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+  end
 
   @doc "Restores one ordinary Article membership or delegates branch-local Doc restore."
   @spec restore(Ecto.UUID.t() | TrashedArticle.t() | TrashedDocArticle.t(), term(), keyword()) ::
@@ -333,8 +337,9 @@ defmodule GroupherServer.CMS.Articles.Trash do
     )
   end
 
-  defp activity_source(opts),
-    do: Activity.Const.normalize_source(Keyword.get(opts, :source, :api))
+  defp activity_source(opts) do
+    Activity.Const.normalize_source(Keyword.get(opts, :source, :api))
+  end
 
   defp activity_actor(nil), do: :system
   defp activity_actor(:operations), do: :system

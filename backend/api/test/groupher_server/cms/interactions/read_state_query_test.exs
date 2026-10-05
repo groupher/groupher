@@ -274,6 +274,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
     end
   end
 
-  defp select_query?(query),
-    do: query |> String.trim_leading() |> String.starts_with?("SELECT")
+  defp select_query?(query) do
+    query |> String.trim_leading() |> String.starts_with?("SELECT")
+  end
 end

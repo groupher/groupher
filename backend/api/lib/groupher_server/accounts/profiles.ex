@@ -48,8 +48,9 @@ defmodule GroupherServer.Accounts.Profiles do
 
   @doc "Runs `signin_oauth` through the public `Profiles` boundary."
   @spec signin_oauth(map(), map()) :: T.domain_res(map())
-  def signin_oauth(provider, browser_session_metadata \\ %{}),
-    do: Oauth.signin_oauth(provider, browser_session_metadata)
+  def signin_oauth(provider, browser_session_metadata \\ %{}) do
+    Oauth.signin_oauth(provider, browser_session_metadata)
+  end
 
   @doc "Runs `refresh_browser_session` through the public `Profiles` boundary."
   def refresh_browser_session(ref), do: BrowserSessions.refresh(ref)
@@ -61,16 +62,19 @@ defmodule GroupherServer.Accounts.Profiles do
   def browser_sessions_for_ref(current_ref), do: BrowserSessions.list_for_ref(current_ref)
 
   @doc "Runs `revoke_browser_session_public` through the public `Profiles` boundary."
-  def revoke_browser_session_public(current_ref, public_ref),
-    do: BrowserSessions.revoke_public_for_ref(current_ref, public_ref)
+  def revoke_browser_session_public(current_ref, public_ref) do
+    BrowserSessions.revoke_public_for_ref(current_ref, public_ref)
+  end
 
   @doc "Runs `revoke_other_browser_sessions` through the public `Profiles` boundary."
-  def revoke_other_browser_sessions(%User{} = user, current_ref),
-    do: BrowserSessions.revoke_other_sessions(user, current_ref)
+  def revoke_other_browser_sessions(%User{} = user, current_ref) do
+    BrowserSessions.revoke_other_sessions(user, current_ref)
+  end
 
   @doc "Runs `revoke_other_browser_sessions_for_ref` through the public `Profiles` boundary."
-  def revoke_other_browser_sessions_for_ref(current_ref),
-    do: BrowserSessions.revoke_other_for_ref(current_ref)
+  def revoke_other_browser_sessions_for_ref(current_ref) do
+    BrowserSessions.revoke_other_for_ref(current_ref)
+  end
 
   @doc "Runs `link_oauth` through the public `Profiles` boundary."
   @spec link_oauth(String.t(), map()) :: T.domain_res(User.t())
@@ -90,8 +94,9 @@ defmodule GroupherServer.Accounts.Profiles do
 
   @doc "Runs `unlink_oauth_identity` through the public `Profiles` boundary."
   @spec unlink_oauth_identity(String.t(), String.t()) :: T.domain_res(map())
-  def unlink_oauth_identity(login, public_ref),
-    do: Oauth.unlink_oauth_identity(login, public_ref)
+  def unlink_oauth_identity(login, public_ref) do
+    Oauth.unlink_oauth_identity(login, public_ref)
+  end
 
   @doc "Runs `default_subscribed_communities` through the public `Profiles` boundary."
   @spec default_subscribed_communities(map()) :: T.domain_res(T.paged_data())
@@ -99,6 +104,7 @@ defmodule GroupherServer.Accounts.Profiles do
 
   @doc "Runs `subscribed_communities` through the public `Profiles` boundary."
   @spec subscribed_communities(User.t(), map()) :: T.domain_res(T.paged_data())
-  def subscribed_communities(%User{} = user, filter),
-    do: List.subscribed_communities(user, filter)
+  def subscribed_communities(%User{} = user, filter) do
+    List.subscribed_communities(user, filter)
+  end
 end

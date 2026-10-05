@@ -482,8 +482,9 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
-  defp find_group_in_thread(_, _, _, _),
-    do: invalid_domain_tag("tag group required")
+  defp find_group_in_thread(_, _, _, _) do
+    invalid_domain_tag("tag group required")
+  end
 
   defp find_group_in_thread(%Community{} = community, thread, group_id)
        when not is_nil(group_id) do
@@ -685,8 +686,9 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
   defp expect_updated_rows({:ok, %{num_rows: expected}}, expected), do: {:ok, :pass}
 
-  defp expect_updated_rows({:ok, _result}, _expected),
-    do: invalid_domain_tag("reindex target changed")
+  defp expect_updated_rows({:ok, _result}, _expected) do
+    invalid_domain_tag("reindex target changed")
+  end
 
   defp expect_updated_rows({:error, reason}, _expected), do: {:error, reason}
 

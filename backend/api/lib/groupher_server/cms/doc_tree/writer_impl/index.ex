@@ -76,8 +76,9 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
       touch_updated_at?: false
     )
 
-    if old_parent_node_id != parent_node_id,
-      do: normalize_sibling_indexes(community, branch, old_parent_node_id, node.type)
+    if old_parent_node_id != parent_node_id do
+      normalize_sibling_indexes(community, branch, old_parent_node_id, node.type)
+    end
 
     :ok
   end
@@ -178,8 +179,9 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
     |> min(length(nodes))
   end
 
-  defp canonical_index(nodes, _type, requested_index),
-    do: requested_index |> default_index(length(nodes)) |> max(0) |> min(length(nodes))
+  defp canonical_index(nodes, _type, requested_index) do
+    requested_index |> default_index(length(nodes)) |> max(0) |> min(length(nodes))
+  end
 
   defp default_index(nil, fallback), do: fallback
   defp default_index(index, _fallback), do: index
@@ -245,19 +247,20 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
     :ok
   end
 
-  defp where_sibling_scope(query, nil, :tab),
-    do: query |> where([n], is_nil(n.parent_node_id)) |> where([n], n.type == :tab)
+  defp where_sibling_scope(query, nil, :tab) do
+    query |> where([n], is_nil(n.parent_node_id)) |> where([n], n.type == :tab)
+  end
 
-  defp where_sibling_scope(query, parent_node_id, :pin),
-    do:
-      query
-      |> where([n], n.parent_node_id == ^parent_node_id)
-      |> where([n], n.type == :pin)
+  defp where_sibling_scope(query, parent_node_id, :pin) do
+    query
+    |> where([n], n.parent_node_id == ^parent_node_id)
+    |> where([n], n.type == :pin)
+  end
 
   defp where_sibling_scope(query, parent_node_id, type)
-       when type in [:group, :page, :link] or is_nil(type),
-       do:
-         query
-         |> where([n], n.parent_node_id == ^parent_node_id)
-         |> where([n], n.type in [:group, :page, :link])
+       when type in [:group, :page, :link] or is_nil(type) do
+    query
+    |> where([n], n.parent_node_id == ^parent_node_id)
+    |> where([n], n.type in [:group, :page, :link])
+  end
 end

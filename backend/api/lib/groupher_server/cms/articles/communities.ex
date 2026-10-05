@@ -244,8 +244,9 @@ defmodule GroupherServer.CMS.Articles.Communities do
     |> Repo.one()
   end
 
-  defp ensure_different_home(%Article{community_id: community_id}, %Community{id: community_id}),
-    do: {:error, :already_home}
+  defp ensure_different_home(%Article{community_id: community_id}, %Community{id: community_id}) do
+    {:error, :already_home}
+  end
 
   defp ensure_different_home(%Article{}, %Community{}), do: :ok
 

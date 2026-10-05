@@ -63,11 +63,13 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
   defp plain_blocks(nodes), do: Enum.map(nodes, &block_to_plain/1)
 
   defp block_to_html(%{"type" => type} = node)
-       when type in ["h1", "h2", "h3", "h4", "h5", "h6"],
-       do: wrap_html(type, node, inline_html(node))
+       when type in ["h1", "h2", "h3", "h4", "h5", "h6"] do
+    wrap_html(type, node, inline_html(node))
+  end
 
-  defp block_to_html(%{"type" => "blockquote"} = node),
-    do: wrap_html("blockquote", node, inline_html(node))
+  defp block_to_html(%{"type" => "blockquote"} = node) do
+    wrap_html("blockquote", node, inline_html(node))
+  end
 
   defp block_to_html(%{"type" => "callout"} = node) do
     icon = node |> Map.get("icon", "") |> escape_html()
@@ -88,13 +90,15 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
     )
   end
 
-  defp block_to_html(%{"children" => _children} = node),
-    do: wrap_html("p", node, inline_html(node))
+  defp block_to_html(%{"children" => _children} = node) do
+    wrap_html("p", node, inline_html(node))
+  end
 
   defp block_to_html(_node), do: ""
 
-  defp block_to_plain(%{"children" => children}) when is_list(children),
-    do: children |> Enum.map_join("", &inline_plain/1) |> String.trim()
+  defp block_to_plain(%{"children" => children}) when is_list(children) do
+    children |> Enum.map_join("", &inline_plain/1) |> String.trim()
+  end
 
   defp block_to_plain(_node), do: ""
 
@@ -103,8 +107,9 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
     ~s(<span data-mention="#{escaped}">@#{escaped}</span>)
   end
 
-  defp inline_html(%{"children" => children}) when is_list(children),
-    do: Enum.map_join(children, "", &inline_html/1)
+  defp inline_html(%{"children" => children}) when is_list(children) do
+    Enum.map_join(children, "", &inline_html/1)
+  end
 
   defp inline_html(%{"text" => text} = node) when is_binary(text) do
     text
@@ -119,8 +124,9 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
   defp inline_plain(%{"type" => "mention", "value" => value}) when is_binary(value), do: value
   defp inline_plain(%{"text" => text}) when is_binary(text), do: text
 
-  defp inline_plain(%{"children" => children}) when is_list(children),
-    do: Enum.map_join(children, "", &inline_plain/1)
+  defp inline_plain(%{"children" => children}) when is_list(children) do
+    Enum.map_join(children, "", &inline_plain/1)
+  end
 
   defp inline_plain(_node), do: ""
 

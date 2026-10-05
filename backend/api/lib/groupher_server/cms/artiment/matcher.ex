@@ -106,8 +106,9 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
           {:ok, interaction_info()} | {:error, ErrorCat.error()}
   def match_interaction(%Article{thread: thread}), do: stable_interaction_info(thread)
 
-  def match_interaction(%{id: id, thread: thread}) when is_binary(id),
-    do: stable_interaction_info(thread)
+  def match_interaction(%{id: id, thread: thread}) when is_binary(id) do
+    stable_interaction_info(thread)
+  end
 
   def match_interaction(%Comment{}), do: match_interaction(:comment)
   def match_interaction(Comment), do: match_interaction(:comment)

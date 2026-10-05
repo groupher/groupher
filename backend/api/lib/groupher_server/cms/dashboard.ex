@@ -28,11 +28,13 @@ defmodule GroupherServer.CMS.Dashboard do
 
   @doc "Runs `save_custom_theme_preset` through the public `Dashboard` boundary."
   @spec save_custom_theme_preset(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
-  def save_custom_theme_preset(%Community{} = community, args),
-    do: ThemePresets.save_custom(community, args)
+  def save_custom_theme_preset(%Community{} = community, args) do
+    ThemePresets.save_custom(community, args)
+  end
 
   @doc "Runs `select_theme_preset` through the public `Dashboard` boundary."
   @spec select_theme_preset(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
-  def select_theme_preset(%Community{} = community, args),
-    do: ThemePresets.select(community, args)
+  def select_theme_preset(%Community{} = community, args) do
+    ThemePresets.select(community, args)
+  end
 end

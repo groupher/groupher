@@ -93,8 +93,9 @@ defmodule GroupherServer.CMS.Outbox.Workers.Comment.Cleanup do
     end
   end
 
-  defp enqueue_comment_job("comment.updated", comment, _actor, _community),
-    do: enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end)
+  defp enqueue_comment_job("comment.updated", comment, _actor, _community) do
+    enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end)
+  end
 
   defp enqueue(type, key, fun), do: Jobs.enqueue_best_effort(type, key, fun)
 

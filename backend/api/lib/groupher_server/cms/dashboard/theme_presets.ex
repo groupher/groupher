@@ -83,8 +83,9 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
       struct(Layout, Layout.default())
   end
 
-  defp validate_custom_save(%{theme_preset: :custom, theme_preset_base: :custom}),
-    do: {:error, "saveCustomThemePreset requires a read-only themePresetBase"}
+  defp validate_custom_save(%{theme_preset: :custom, theme_preset_base: :custom}) do
+    {:error, "saveCustomThemePreset requires a read-only themePresetBase"}
+  end
 
   defp validate_custom_save(%{theme_preset: :custom}), do: :ok
 

@@ -287,8 +287,9 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
     end
   end
 
-  defp build_item_attrs(_documents, _target_tree, _source_info),
-    do: {:error, ErrorCat.custom("source documents must be a list")}
+  defp build_item_attrs(_documents, _target_tree, _source_info) do
+    {:error, ErrorCat.custom("source documents must be a list")}
+  end
 
   defp insert_items(job, attrs) do
     Enum.reduce_while(attrs, :ok, fn attrs, :ok ->
@@ -364,9 +365,11 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
         job.target_tree == Map.fetch!(input, :target_tree) and
         persisted_items == requested_items
 
-    if same?,
-      do: :ok,
-      else: {:error, ErrorCat.custom("previewRef is already bound to another intent")}
+    if same? do
+      :ok
+    else
+      {:error, ErrorCat.custom("previewRef is already bound to another intent")}
+    end
   end
 
   defp counts(target_tree) do

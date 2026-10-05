@@ -47,9 +47,11 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
       completed_at = System.monotonic_time()
       observations = Process.get(@observer_key, [])
 
-      if is_nil(previous),
-        do: Process.delete(@observer_key),
-        else: Process.put(@observer_key, previous)
+      if is_nil(previous) do
+        Process.delete(@observer_key)
+      else
+        Process.put(@observer_key, previous)
+      end
 
       Enum.each(observations, fn {acquired_at, metadata} ->
         emit_hold(completed_at - acquired_at, metadata)
@@ -61,11 +63,13 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   @spec with_article(Community.t(), struct(), (-> term())) ::
           {:ok, term()} | {:error, term()}
   def with_article(%Community{} = community, %Article{thread: thread, id: article_id}, fun)
-      when thread in @article_threads and is_function(fun, 0),
-      do: lock(key(community, thread, article_id), fun)
+      when thread in @article_threads and is_function(fun, 0) do
+    lock(key(community, thread, article_id), fun)
+  end
 
-  def with_article(%Community{}, %Article{thread: :doc}, _fun),
-    do: {:error, ErrorCat.doc_branch_required()}
+  def with_article(%Community{}, %Article{thread: :doc}, _fun) do
+    {:error, ErrorCat.doc_branch_required()}
+  end
 
   @doc """
   Starts the strict aggregate transaction used by canonical commands.
@@ -82,11 +86,13 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   @spec transact_article(Community.t(), struct(), (-> {:ok, term()} | {:error, term()})) ::
           {:ok, term()} | {:error, term()}
   def transact_article(%Community{} = community, %Article{thread: thread, id: article_id}, fun)
-      when thread in @article_threads and is_function(fun, 0),
-      do: transact_lock(key(community, thread, article_id), fun)
+      when thread in @article_threads and is_function(fun, 0) do
+    transact_lock(key(community, thread, article_id), fun)
+  end
 
-  def transact_article(%Community{}, %Article{thread: :doc}, _fun),
-    do: {:error, ErrorCat.doc_branch_required()}
+  def transact_article(%Community{}, %Article{thread: :doc}, _fun) do
+    {:error, ErrorCat.doc_branch_required()}
+  end
 
   @doc "Starts a strict branch-scoped transaction for one stable Doc Article."
   @spec transact_doc(Community.t(), Article.t(), pos_integer(), (-> {:ok, term()}
@@ -105,8 +111,9 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   @doc "Locks one ordinary Article by its stable logical identity."
   @spec with_article(Community.t(), T.thread(), Ecto.UUID.t(), (-> term())) ::
           {:ok, term()} | {:error, term()}
-  def with_article(%Community{}, :doc, _article_id, _fun),
-    do: {:error, ErrorCat.doc_branch_required()}
+  def with_article(%Community{}, :doc, _article_id, _fun) do
+    {:error, ErrorCat.doc_branch_required()}
+  end
 
   def with_article(%Community{} = community, thread, article_id, fun)
       when thread in @article_threads and is_binary(article_id) and
@@ -133,8 +140,9 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   @doc "Locks several ordinary Articles using stable key ordering."
   @spec with_articles(Community.t(), T.thread(), [Ecto.UUID.t()], (-> term())) ::
           {:ok, term()} | {:error, term()}
-  def with_articles(%Community{}, :doc, _article_ids, _fun),
-    do: {:error, ErrorCat.doc_branch_required()}
+  def with_articles(%Community{}, :doc, _article_ids, _fun) do
+    {:error, ErrorCat.doc_branch_required()}
+  end
 
   def with_articles(%Community{} = community, thread, article_ids, fun)
       when thread in @article_threads and is_list(article_ids) and

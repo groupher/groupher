@@ -23,16 +23,20 @@ defmodule GroupherServer.CMS.Command.Confirmation do
 
   @spec required_keys(map(), [String.t()]) :: T.result(:pass, :missing_confirmation_field)
   def required_keys(payload, keys) when is_map(payload) and is_list(keys) do
-    if Enum.all?(keys, &Map.has_key?(payload, &1)),
-      do: {:ok, :pass},
-      else: {:error, :missing_confirmation_field}
+    if Enum.all?(keys, &Map.has_key?(payload, &1)) do
+      {:ok, :pass}
+    else
+      {:error, :missing_confirmation_field}
+    end
   end
 
   @spec strict_keys(map(), [String.t()]) :: T.result(:pass, :unknown_confirmation_field)
   def strict_keys(payload, keys) when is_map(payload) and is_list(keys) do
-    if Map.keys(payload) |> Enum.sort() == Enum.sort(keys),
-      do: {:ok, :pass},
-      else: {:error, :unknown_confirmation_field}
+    if Map.keys(payload) |> Enum.sort() == Enum.sort(keys) do
+      {:ok, :pass}
+    else
+      {:error, :unknown_confirmation_field}
+    end
   end
 
   @spec json_safe?(term()) :: boolean()
@@ -49,8 +53,9 @@ defmodule GroupherServer.CMS.Command.Confirmation do
   @spec valid_data_keys?(map(), nil | [String.t()]) :: boolean()
   def valid_data_keys?(_data, nil), do: true
 
-  def valid_data_keys?(data, keys) when is_map(data) and is_list(keys),
-    do: Map.keys(data) |> Enum.sort() == Enum.sort(keys)
+  def valid_data_keys?(data, keys) when is_map(data) and is_list(keys) do
+    Map.keys(data) |> Enum.sort() == Enum.sort(keys)
+  end
 
   @spec valid_data_schema?(map(), [String.t()] | nil, term()) :: boolean()
   def valid_data_schema?(data, data_keys, field_types)
@@ -79,14 +84,17 @@ defmodule GroupherServer.CMS.Command.Confirmation do
   def valid_type?(value, :map), do: is_map(value) and not is_struct(value)
   def valid_type?(value, :json), do: json_safe?(value)
 
-  def valid_type?(value, {:doc_tree_result, variant}) when is_map(value),
-    do: GroupherServer.CMS.DocTree.Confirmation.valid_payload?(variant, value)
+  def valid_type?(value, {:doc_tree_result, variant}) when is_map(value) do
+    GroupherServer.CMS.DocTree.Confirmation.valid_payload?(variant, value)
+  end
 
-  def valid_type?(value, {:nullable, type}),
-    do: is_nil(value) or valid_type?(value, type)
+  def valid_type?(value, {:nullable, type}) do
+    is_nil(value) or valid_type?(value, type)
+  end
 
-  def valid_type?(value, {:list, type}) when is_list(value),
-    do: Enum.all?(value, &valid_type?(&1, type))
+  def valid_type?(value, {:list, type}) when is_list(value) do
+    Enum.all?(value, &valid_type?(&1, type))
+  end
 
   def valid_type?(_value, {:list, _type}), do: false
   def valid_type?(value, {:one_of, values}), do: value in values

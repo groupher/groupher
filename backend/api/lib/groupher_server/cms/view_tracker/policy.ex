@@ -41,16 +41,18 @@ defmodule GroupherServer.CMS.ViewTracker.Policy do
          actor_confidence: confidence,
          viewer_tracking_key: key
        })
-       when confidence in [:verified, :probable] and is_binary(key),
-       do: true
+       when confidence in [:verified, :probable] and is_binary(key) do
+    true
+  end
 
   defp allowed_actor?(%{
          actor_type: :agent,
          actor_confidence: :verified,
          viewer_tracking_key: key
        })
-       when is_binary(key),
-       do: true
+       when is_binary(key) do
+    true
+  end
 
   defp allowed_actor?(_identity), do: false
 end

@@ -121,22 +121,25 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
 
   def validate_target(community, branch, %{type: type}, parent_node_id)
       when type in [:page, :link] do
-    with {:ok, parent} <- group_parent(community, branch, parent_node_id),
-         do: {:ok, parent.node_id}
+    with {:ok, parent} <- group_parent(community, branch, parent_node_id) do
+      {:ok, parent.node_id}
+    end
   end
 
-  def validate_target(_community, _branch, _node, _parent_node_id),
-    do: {:error, ErrorCat.custom("invalid docs tree target")}
+  def validate_target(_community, _branch, _node, _parent_node_id) do
+    {:error, ErrorCat.custom("invalid docs tree target")}
+  end
 
-  defp reject_cycle(_community, _branch, %{node_id: node_id}, %{node_id: node_id}),
-    do: {:error, ErrorCat.custom("a group can not be its own parent")}
+  defp reject_cycle(_community, _branch, %{node_id: node_id}, %{node_id: node_id}) do
+    {:error, ErrorCat.custom("a group can not be its own parent")}
+  end
 
   defp reject_cycle(community, branch, node, parent) do
-    if descendant?(community, branch, node.node_id, parent.node_id),
-      do:
-        {:error,
-         ErrorCat.custom("a group can not move below one of its descendants")},
-      else: :ok
+    if descendant?(community, branch, node.node_id, parent.node_id) do
+      {:error, ErrorCat.custom("a group can not move below one of its descendants")}
+    else
+      :ok
+    end
   end
 
   defp validate_new_child_depth(community, branch, parent) do
@@ -162,9 +165,9 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
 
   defp validate_max_depth(depth) when depth <= @max_depth, do: :ok
 
-  defp validate_max_depth(_depth),
-    do:
-      {:error, ErrorCat.custom("Docs Tree exceeds maximum depth of #{@max_depth}")}
+  defp validate_max_depth(_depth) do
+    {:error, ErrorCat.custom("Docs Tree exceeds maximum depth of #{@max_depth}")}
+  end
 
   defp node_depth(placements, node_id) do
     placements

@@ -191,8 +191,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     collect_ancestors(nodes, page.parent_node_id, [], MapSet.new())
   end
 
-  defp collect_ancestors(_nodes, nil, ancestors, _seen),
-    do: {:ok, ancestors}
+  defp collect_ancestors(_nodes, nil, ancestors, _seen) do
+    {:ok, ancestors}
+  end
 
   defp collect_ancestors(nodes, node_id, ancestors, seen) do
     cond do
@@ -267,17 +268,20 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     })
   end
 
-  defp maybe_sync_cover(_community, _published_group, _published_page, false),
-    do: {:ok, :skipped}
+  defp maybe_sync_cover(_community, _published_group, _published_page, false) do
+    {:ok, :skipped}
+  end
 
-  defp maybe_sync_cover(_community, nil, _published_page, true),
-    do: {:ok, :skipped}
+  defp maybe_sync_cover(_community, nil, _published_page, true) do
+    {:ok, :skipped}
+  end
 
   defp maybe_sync_cover(
          %Community{} = community,
          %DocTreeNode{} = group,
          %DocTreeNode{} = page,
          true
-       ),
-       do: Sync.sync_published_page(community, group, page)
+       ) do
+    Sync.sync_published_page(community, group, page)
+  end
 end

@@ -217,8 +217,9 @@ defmodule GroupherServer.CMS.Command.Receipt.Store do
   defp canonical_input(%NaiveDateTime{} = value), do: {:ok, NaiveDateTime.to_iso8601(value)}
   defp canonical_input(%Date{} = value), do: {:ok, Date.to_iso8601(value)}
 
-  defp canonical_input(value) when is_binary(value) or is_number(value) or is_boolean(value),
-    do: {:ok, value}
+  defp canonical_input(value) when is_binary(value) or is_number(value) or is_boolean(value) do
+    {:ok, value}
+  end
 
   defp canonical_input(value) when is_atom(value), do: {:ok, Atom.to_string(value)}
 
@@ -230,9 +231,11 @@ defmodule GroupherServer.CMS.Command.Receipt.Store do
     |> Enum.reduce_while(%{}, fn {key, value}, acc ->
       with {:ok, canonical_key} <- canonical_key(key),
            {:ok, normalized} <- canonical_input(value) do
-        if Map.has_key?(acc, canonical_key),
-          do: {:halt, {:error, :invalid_intent_params}},
-          else: {:cont, Map.put(acc, canonical_key, normalized)}
+        if Map.has_key?(acc, canonical_key) do
+          {:halt, {:error, :invalid_intent_params}}
+        else
+          {:cont, Map.put(acc, canonical_key, normalized)}
+        end
       else
         {:error, reason} -> {:halt, {:error, reason}}
       end
@@ -265,8 +268,9 @@ defmodule GroupherServer.CMS.Command.Receipt.Store do
 
   defp expires_at, do: DateTime.add(DateTime.utc_now(), @receipt_ttl_seconds, :second)
 
-  defp identity_expires_at,
-    do: DateTime.add(DateTime.utc_now(), @identity_ttl_seconds, :second)
+  defp identity_expires_at do
+    DateTime.add(DateTime.utc_now(), @identity_ttl_seconds, :second)
+  end
 
   defp same_intent?(%CommandReceipt{} = receipt, attrs) do
     receipt.command == attrs.command and
@@ -276,9 +280,11 @@ defmodule GroupherServer.CMS.Command.Receipt.Store do
   end
 
   defp conflict_or_expired(receipt, attrs) do
-    if same_intent?(receipt, attrs),
-      do: ErrorCat.command_result_expired(),
-      else: conflict_error(receipt, attrs)
+    if same_intent?(receipt, attrs) do
+      ErrorCat.command_result_expired()
+    else
+      conflict_error(receipt, attrs)
+    end
   end
 
   defp conflict_error(receipt, attrs) do
@@ -304,12 +310,15 @@ defmodule GroupherServer.CMS.Command.Receipt.Store do
     %{different_fields: different_fields}
   end
 
-  defp result_expired?(%DateTime{} = expires_at),
-    do: DateTime.compare(expires_at, DateTime.utc_now()) == :lt
+  defp result_expired?(%DateTime{} = expires_at) do
+    DateTime.compare(expires_at, DateTime.utc_now()) == :lt
+  end
 
-  defp identity_expired?(%CommandReceipt{identity_expires_at: nil} = receipt),
-    do: result_expired?(receipt.expires_at)
+  defp identity_expired?(%CommandReceipt{identity_expires_at: nil} = receipt) do
+    result_expired?(receipt.expires_at)
+  end
 
-  defp identity_expired?(%CommandReceipt{identity_expires_at: expires_at}),
-    do: DateTime.compare(expires_at, DateTime.utc_now()) == :lt
+  defp identity_expired?(%CommandReceipt{identity_expires_at: expires_at}) do
+    DateTime.compare(expires_at, DateTime.utc_now()) == :lt
+  end
 end

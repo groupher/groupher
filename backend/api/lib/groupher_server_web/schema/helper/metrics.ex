@@ -12,7 +12,6 @@ defmodule GroupherServerWeb.Schema.Helper.Metrics do
   use Absinthe.Schema.Notation
   import GroupherServerWeb.Schema.Helper.Fields
 
-
   scalar :big_int, name: "BigInt" do
     description("""
     The `BigInt` scalar represents integer values outside GraphQL Int's safe
@@ -64,8 +63,9 @@ defmodule GroupherServerWeb.Schema.Helper.Metrics do
 
   defp parse_big_int(%Absinthe.Blueprint.Input.Integer{value: value}), do: {:ok, value}
 
-  defp parse_big_int(%Absinthe.Blueprint.Input.String{value: value}),
-    do: parse_big_int_value(value)
+  defp parse_big_int(%Absinthe.Blueprint.Input.String{value: value}) do
+    parse_big_int_value(value)
+  end
 
   defp parse_big_int(%Absinthe.Blueprint.Input.Null{}), do: {:ok, nil}
   defp parse_big_int(value) when is_integer(value), do: {:ok, value}

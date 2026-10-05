@@ -104,8 +104,9 @@ defmodule Helper.PermissionRegistry do
           get_in(rules, [community, to_string(requirement.context), grant]) == true)}
   end
 
-  defp allowed_without_god?(_rules, _community, %{scope: :context}),
-    do: {:error, ErrorCat.community_required()}
+  defp allowed_without_god?(_rules, _community, %{scope: :context}) do
+    {:error, ErrorCat.community_required()}
+  end
 
   defp allowed_without_god?(_rules, _community, _requirement), do: {:ok, false}
 
@@ -130,11 +131,12 @@ defmodule Helper.PermissionRegistry do
   Returns all known grants for CMS split by global and context scopes.
   TODO: refactor later
   """
-  def all_rules(:cms),
-    do: %{
+  def all_rules(:cms) do
+    %{
       general: PermissionConfig.grants_for("global"),
       community: PermissionConfig.grants_for("cms")
     }
+  end
 
   @doc """
   Returns all known grants encoded as JSON maps with false defaults.
@@ -205,8 +207,9 @@ defmodule Helper.PermissionRegistry do
 
   def normalize_rules(nil), do: empty_rules()
 
-  def normalize_rules(_),
-    do: raise(ArgumentError, "invalid passport rules shape, expected global/community maps")
+  def normalize_rules(_) do
+    raise(ArgumentError, "invalid passport rules shape, expected global/community maps")
+  end
 
   @doc """
   Returns whether a permission key is known in either scope.
@@ -223,8 +226,9 @@ defmodule Helper.PermissionRegistry do
   Returns whether a key is valid for global scope.
   """
   @spec valid_global_permission?(String.t()) :: boolean()
-  def valid_global_permission?(permission) when is_binary(permission),
-    do: valid_context_permission?("global", permission)
+  def valid_global_permission?(permission) when is_binary(permission) do
+    valid_context_permission?("global", permission)
+  end
 
   def valid_global_permission?(_), do: false
 
@@ -232,8 +236,9 @@ defmodule Helper.PermissionRegistry do
   Returns whether a key is valid for the given scope context.
   """
   @spec valid_context_permission?(String.t() | atom(), String.t()) :: boolean()
-  def valid_context_permission?(context, permission) when is_atom(context),
-    do: valid_context_permission?(to_string(context), permission)
+  def valid_context_permission?(context, permission) when is_atom(context) do
+    valid_context_permission?(to_string(context), permission)
+  end
 
   def valid_context_permission?(context, permission)
       when is_binary(context) and is_binary(permission) do
@@ -293,8 +298,9 @@ defmodule Helper.PermissionRegistry do
     end)
   end
 
-  defp normalize_context(_, _),
-    do: raise(ArgumentError, "invalid passport rules shape, expected configured context maps")
+  defp normalize_context(_, _) do
+    raise(ArgumentError, "invalid passport rules shape, expected configured context maps")
+  end
 
   defp normalize_community_rules(map) when is_map(map) do
     map
@@ -314,8 +320,9 @@ defmodule Helper.PermissionRegistry do
     end)
   end
 
-  defp normalize_community_rules(_),
-    do: raise(ArgumentError, "invalid passport rules shape, expected community context maps")
+  defp normalize_community_rules(_) do
+    raise(ArgumentError, "invalid passport rules shape, expected community context maps")
+  end
 
   defp normalize_global_rules(%{"global" => global} = rules) do
     base = %{"global" => normalize_context("global", global)}

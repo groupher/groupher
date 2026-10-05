@@ -139,8 +139,9 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
 
   @doc "Links a verified identity and returns the canonical account projection."
   def link_oauth_identity(login, provider) do
-    with {:ok, _user} <- link_oauth(login, provider),
-         do: linked_oauth_accounts(login)
+    with {:ok, _user} <- link_oauth(login, provider) do
+      linked_oauth_accounts(login)
+    end
   end
 
   @doc "Unlinks one owned binding by its opaque public reference."
@@ -417,26 +418,30 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     Enum.any?(errors, fn {_field, {_message, opts}} -> opts[:constraint] == constraint_name end)
   end
 
-  defp oauth_identity_already_linked_error,
-    do: [
+  defp oauth_identity_already_linked_error do
+    [
       message: "oauth identity already linked",
       code: AuthContract.oauth_identity_already_linked()
     ]
+  end
 
-  defp oauth_provider_already_linked_error,
-    do: [
+  defp oauth_provider_already_linked_error do
+    [
       message: "oauth provider already linked",
       code: AuthContract.oauth_provider_already_linked()
     ]
+  end
 
-  defp oauth_binding_not_found_error,
-    do: [message: "oauth binding not found", code: AuthContract.oauth_binding_not_found()]
+  defp oauth_binding_not_found_error do
+    [message: "oauth binding not found", code: AuthContract.oauth_binding_not_found()]
+  end
 
-  defp oauth_last_login_method_error,
-    do: [
+  defp oauth_last_login_method_error do
+    [
       message: "can not delete last oauth provider",
       code: AuthContract.oauth_last_login_method()
     ]
+  end
 
   defp update_social_ifneed(%User{} = user, %{social: attrs}) do
     attrs = Map.merge(%{user_id: user.id}, attrs)
@@ -466,15 +471,19 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     {:ok, user}
   end
 
-  defp register_oauth_result({:error, :create_user, %Ecto.Changeset{} = result, _steps}),
-    do: {:error, result}
+  defp register_oauth_result({:error, :create_user, %Ecto.Changeset{} = result, _steps}) do
+    {:error, result}
+  end
 
-  defp register_oauth_result({:error, :create_user, _result, _steps}),
-    do: {:error, "Accounts create_user internal error"}
+  defp register_oauth_result({:error, :create_user, _result, _steps}) do
+    {:error, "Accounts create_user internal error"}
+  end
 
-  defp register_oauth_result({:error, :create_profile, _result, _steps}),
-    do: {:error, "Accounts create_profile internal error"}
+  defp register_oauth_result({:error, :create_profile, _result, _steps}) do
+    {:error, "Accounts create_profile internal error"}
+  end
 
-  defp register_oauth_result({:error, :update_profile_social, _result, _steps}),
-    do: {:error, "Accounts update_profile_social error"}
+  defp register_oauth_result({:error, :update_profile_social, _result, _steps}) do
+    {:error, "Accounts update_profile_social error"}
+  end
 end

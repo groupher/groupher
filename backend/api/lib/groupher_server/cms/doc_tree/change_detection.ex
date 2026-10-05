@@ -28,8 +28,9 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
       true
   """
   @spec draft_content_changed?(DocDraft.t() | nil, ArticleRevision.t() | nil) :: boolean()
-  def draft_content_changed?(%DocDraft{} = draft, %ArticleRevision{} = public_revision),
-    do: draft.content_hash != public_revision.content_hash
+  def draft_content_changed?(%DocDraft{} = draft, %ArticleRevision{} = public_revision) do
+    draft.content_hash != public_revision.content_hash
+  end
 
   def draft_content_changed?(%DocDraft{}, nil), do: true
   def draft_content_changed?(_, _), do: false

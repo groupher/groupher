@@ -67,6 +67,7 @@ defmodule GroupherServer.CMS.Articles.ContentFingerprint do
 
   defp background(nil), do: nil
 
-  defp background(%CoverBackground{} = background),
-    do: Map.take(Map.from_struct(background), @background_fields)
+  defp background(%CoverBackground{} = background) do
+    Map.take(Map.from_struct(background), @background_fields)
+  end
 end

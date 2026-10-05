@@ -35,8 +35,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
 
   """
   @spec add(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def add(artiment, %User{} = actor, command_id \\ nil),
-    do: mutate(artiment, actor, :add, command_id)
+  def add(artiment, %User{} = actor, command_id \\ nil) do
+    mutate(artiment, actor, :add, command_id)
+  end
 
   @doc """
   Removes an upvote as an idempotent set-state command.
@@ -47,8 +48,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
 
   """
   @spec remove(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def remove(artiment, %User{} = actor, command_id \\ nil),
-    do: mutate(artiment, actor, :remove, command_id)
+  def remove(artiment, %User{} = actor, command_id \\ nil) do
+    mutate(artiment, actor, :remove, command_id)
+  end
 
   defp mutate(input, actor, operation, command_id) do
     with {:ok, info} <- Matcher.match_interaction(input) do
@@ -185,8 +187,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
     {:ok, put_reaction_metadata(input, command_id, outcome)}
   end
 
-  defp present_reaction({:ok, data}, input, command_id) when is_map(data),
-    do: present_reaction({:ok, %Confirmation{data: data}}, input, command_id)
+  defp present_reaction({:ok, data}, input, command_id) when is_map(data) do
+    present_reaction({:ok, %Confirmation{data: data}}, input, command_id)
+  end
 
   defp present_reaction(error, _input, _command_id), do: error
 
@@ -268,10 +271,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
     end
   end
 
-  defp article_conflict_target(:article_id),
-    do:
-      {:unsafe_fragment,
-       "(user_id, article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  defp article_conflict_target(:article_id) do
+    {:unsafe_fragment, "(user_id, article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  end
 
   defp article_conflict_target(foreign_key), do: [:user_id, foreign_key]
 end

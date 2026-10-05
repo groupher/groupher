@@ -146,8 +146,10 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
     |> Enum.uniq()
   end
 
-  defp valid_requirement?(%{owner_fallback: true} = requirement) when map_size(requirement) == 1,
-    do: true
+  defp valid_requirement?(%{owner_fallback: true} = requirement)
+       when map_size(requirement) == 1 do
+    true
+  end
 
   defp valid_requirement?(%{scope: scope} = requirement) when scope in [:global, :context] do
     is_binary(requirement[:grant]) or is_binary(requirement[:grant_by_thread])

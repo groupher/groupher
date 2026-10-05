@@ -64,8 +64,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
     end
   end
 
-  def doc(_community, _resource, _branch_id),
-    do: {:error, ErrorCat.gate_resource_mismatch()}
+  def doc(_community, _resource, _branch_id) do
+    {:error, ErrorCat.gate_resource_mismatch()}
+  end
 
   @doc """
   Loads the canonical Community lifecycle and builds its typed Access Context.
@@ -119,11 +120,13 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   end
 
   def article(%Community{} = community, :doc, %{community_id: community_id})
-      when community_id == community.id,
-      do: {:error, ErrorCat.doc_branch_required()}
+      when community_id == community.id do
+    {:error, ErrorCat.doc_branch_required()}
+  end
 
-  def article(_community, _thread, _resource),
-    do: {:error, ErrorCat.gate_resource_mismatch()}
+  def article(_community, _thread, _resource) do
+    {:error, ErrorCat.gate_resource_mismatch()}
+  end
 
   @doc """
   Reloads a Comment together with its canonical parent and lifecycle facts.
@@ -156,16 +159,19 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   end
 
   defp parent_context(community, :doc, %Article{thread: :doc} = article, branch_id)
-       when is_integer(branch_id),
-       do: doc(community, article, branch_id)
+       when is_integer(branch_id) do
+    doc(community, article, branch_id)
+  end
 
-  defp parent_context(community, thread, article, _branch_id),
-    do: article(community, thread, article)
+  defp parent_context(community, thread, article, _branch_id) do
+    article(community, thread, article)
+  end
 
   defp parent_resource(%ArticleContext{article: article}), do: article
 
-  defp parent_resource(%DocContext{doc: doc, doc_branch_state: state}),
-    do: %{doc | comments_locked: state.comments_locked}
+  defp parent_resource(%DocContext{doc: doc, doc_branch_state: state}) do
+    %{doc | comments_locked: state.comments_locked}
+  end
 
   defp parent_lifecycle(%ArticleContext{article_lifecycle: lifecycle}), do: lifecycle
   defp parent_lifecycle(%DocContext{doc_lifecycle: lifecycle}), do: lifecycle

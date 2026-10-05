@@ -86,8 +86,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Diff do
         %Article{} = article,
         %ArticleDraft{} = draft,
         %ArticleRevision{} = revision
-      ),
-      do: changed_fields(article, draft, revision)
+      ) do
+    changed_fields(article, draft, revision)
+  end
 
   defp unpublished?(nil, _public), do: false
   defp unpublished?(%ArticleDraft{}, nil), do: true
@@ -117,11 +118,13 @@ defmodule GroupherServer.CMS.Articles.Draft.Diff do
   defp ensure_content_change([]), do: [:content_hash]
   defp ensure_content_change(fields), do: fields
 
-  defp body_hash(%{body_draft_id: body_draft_id}),
-    do: Repo.get!(ArticleBodyDraft, body_draft_id).body_hash
+  defp body_hash(%{body_draft_id: body_draft_id}) do
+    Repo.get!(ArticleBodyDraft, body_draft_id).body_hash
+  end
 
-  defp body_hash(%ArticleRevision{body_snapshot_id: snapshot_id}),
-    do: Repo.get!(ArticleBodySnapshot, snapshot_id).body_hash
+  defp body_hash(%ArticleRevision{body_snapshot_id: snapshot_id}) do
+    Repo.get!(ArticleBodySnapshot, snapshot_id).body_hash
+  end
 
   defp typed_fields(%Article{thread: :doc}, %DocDraft{} = draft, %ArticleRevision{} = revision) do
     draft_values = Map.take(Map.from_struct(draft), @doc_typed_fields)

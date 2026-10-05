@@ -80,8 +80,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   Both argument orders are supported because the publish pipeline and tests
   use different pipeline-friendly call shapes.
   """
-  def apply_tree_events(events, %Community{} = community, branch),
-    do: apply_tree_events(community, branch, events)
+  def apply_tree_events(events, %Community{} = community, branch) do
+    apply_tree_events(community, branch, events)
+  end
 
   def apply_tree_events(%Community{} = community, branch, events) do
     events
@@ -238,8 +239,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
     end
   end
 
-  defp ensure_public_parent(_community, _branch, _node),
-    do: {:error, ErrorCat.custom("Navigation parent is required.")}
+  defp ensure_public_parent(_community, _branch, _node) do
+    {:error, ErrorCat.custom("Navigation parent is required.")}
+  end
 
   defp public_attrs_from_event_node(
          %Community{} = community,
@@ -424,21 +426,22 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
     :ok
   end
 
-  defp where_sibling_scope(query, nil, @tree_node_type_tab),
-    do: query |> where([n], is_nil(n.parent_node_id)) |> where([n], n.type == :tab)
+  defp where_sibling_scope(query, nil, @tree_node_type_tab) do
+    query |> where([n], is_nil(n.parent_node_id)) |> where([n], n.type == :tab)
+  end
 
-  defp where_sibling_scope(query, parent_node_id, @tree_node_type_pin),
-    do:
-      query
-      |> where([n], n.parent_node_id == ^parent_node_id)
-      |> where([n], n.type == :pin)
+  defp where_sibling_scope(query, parent_node_id, @tree_node_type_pin) do
+    query
+    |> where([n], n.parent_node_id == ^parent_node_id)
+    |> where([n], n.type == :pin)
+  end
 
   defp where_sibling_scope(query, parent_node_id, type)
-       when type in [:group, :page, :link],
-       do:
-         query
-         |> where([n], n.parent_node_id == ^parent_node_id)
-         |> where([n], n.type in [:group, :page, :link])
+       when type in [:group, :page, :link] do
+    query
+    |> where([n], n.parent_node_id == ^parent_node_id)
+    |> where([n], n.type in [:group, :page, :link])
+  end
 
   defp field_atom(field) do
     case Map.fetch(@event_public_fields, field) do

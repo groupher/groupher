@@ -68,8 +68,9 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     end
   end
 
-  def mock(_slug, _opts),
-    do: {:error, ErrorCat.custom("full_community mock opts must be a keyword list")}
+  def mock(_slug, _opts) do
+    {:error, ErrorCat.custom("full_community mock opts must be a keyword list")}
+  end
 
   @spec delete(String.t() | atom()) :: T.domain_res(:ok)
   def delete(slug) do
@@ -227,8 +228,9 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     end
   end
 
-  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,
-    do: Enum.random(min..max)
+  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max do
+    Enum.random(min..max)
+  end
 
   defp random_range(_), do: 10
 

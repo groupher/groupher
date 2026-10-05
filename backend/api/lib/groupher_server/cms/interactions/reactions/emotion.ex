@@ -34,8 +34,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   """
   @spec add(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def add(artiment, emotion, %User{} = actor, command_id \\ nil),
-    do: mutate(artiment, emotion, actor, :add, command_id)
+  def add(artiment, emotion, %User{} = actor, command_id \\ nil) do
+    mutate(artiment, emotion, actor, :add, command_id)
+  end
 
   @doc """
   Removes an emotion as an idempotent set-state command.
@@ -46,8 +47,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   """
   @spec remove(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def remove(artiment, emotion, %User{} = actor, command_id \\ nil),
-    do: mutate(artiment, emotion, actor, :remove, command_id)
+  def remove(artiment, emotion, %User{} = actor, command_id \\ nil) do
+    mutate(artiment, emotion, actor, :remove, command_id)
+  end
 
   defp mutate(input, emotion, actor, operation, command_id) when is_atom(emotion) do
     with {:ok, info} <- Matcher.match_interaction(input) do
@@ -76,8 +78,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     end
   end
 
-  defp mutate(_input, emotion, _actor, _operation, _command_id),
-    do: {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
+  defp mutate(_input, emotion, _actor, _operation, _command_id) do
+    {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
+  end
 
   defp emotion_action(
          %{
@@ -120,8 +123,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     end
   end
 
-  defp enqueue_effect(_canonical, _actor, _operation, _emotion, _command_id, :unchanged),
-    do: :ok
+  defp enqueue_effect(_canonical, _actor, _operation, _emotion, _command_id, :unchanged) do
+    :ok
+  end
 
   defp enqueue_effect(canonical, actor, operation, emotion, command_id, :changed) do
     CMS.Outbox.send(%{
@@ -148,8 +152,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     Enable.emotion?(comment.community.slug, :comment, comment.thread, emotion)
   end
 
-  defp allow_emotion(_article, _info, emotion) when emotion in @reserved_article_emotions,
-    do: {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
+  defp allow_emotion(_article, _info, emotion) when emotion in @reserved_article_emotions do
+    {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
+  end
 
   defp allow_emotion(article, info, emotion) do
     Enable.emotion?(article.community.slug, :article, info.artiment, emotion)
@@ -186,8 +191,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     {:ok, put_reaction_metadata(input, command_id, outcome)}
   end
 
-  defp present_reaction({:ok, data}, input, command_id) when is_map(data),
-    do: present_reaction({:ok, %Confirmation{data: data}}, input, command_id)
+  defp present_reaction({:ok, data}, input, command_id) when is_map(data) do
+    present_reaction({:ok, %Confirmation{data: data}}, input, command_id)
+  end
 
   defp present_reaction(error, _input, _command_id), do: error
 
@@ -293,11 +299,12 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   defp author_user_id(%{author: %{user_id: user_id}}), do: user_id
   defp author_user_id(%{author_id: author_id}), do: Repo.get!(Author, author_id).user_id
 
-  defp emotion_conflict_target(:article_id),
-    do:
-      {:unsafe_fragment,
-       "(user_id, article_id, emotion) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  defp emotion_conflict_target(:article_id) do
+    {:unsafe_fragment,
+     "(user_id, article_id, emotion) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  end
 
-  defp emotion_conflict_target(foreign_key),
-    do: {:unsafe_fragment, "(user_id, #{foreign_key}, emotion) WHERE #{foreign_key} IS NOT NULL"}
+  defp emotion_conflict_target(foreign_key) do
+    {:unsafe_fragment, "(user_id, #{foreign_key}, emotion) WHERE #{foreign_key} IS NOT NULL"}
+  end
 end

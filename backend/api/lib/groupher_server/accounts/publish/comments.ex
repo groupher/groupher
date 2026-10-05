@@ -16,9 +16,11 @@ defmodule GroupherServer.Accounts.Publish.Comments do
 
   alias GroupherServer.CMS
 
-  def paged(user, filter, actor \\ nil),
-    do: CMS.Comments.paged_published_comments(user, filter, actor)
+  def paged(user, filter, actor \\ nil) do
+    CMS.Comments.paged_published_comments(user, filter, actor)
+  end
 
-  def paged(user, thread, filter, actor),
-    do: CMS.Comments.paged_published_comments(user, thread, filter, actor)
+  def paged(user, thread, filter, actor) do
+    CMS.Comments.paged_published_comments(user, thread, filter, actor)
+  end
 end

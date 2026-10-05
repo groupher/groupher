@@ -433,9 +433,11 @@ defmodule GroupherServer.CMS.ArticleStats do
       {:ok, ids} ->
         ids = ids |> Enum.uniq() |> Enum.reverse()
 
-        if length(ids) <= 100,
-          do: {:ok, ids},
-          else: {:error, ArticleErrorCat.article_not_found("too many article ids")}
+        if length(ids) <= 100 do
+          {:ok, ids}
+        else
+          {:error, ArticleErrorCat.article_not_found("too many article ids")}
+        end
 
       :error ->
         {:error, ArticleErrorCat.article_not_found("invalid article ids")}
@@ -454,8 +456,9 @@ defmodule GroupherServer.CMS.ArticleStats do
   defp article_community_slug(%{community: %{slug: slug}}), do: slug
   defp article_community_slug(_article), do: nil
 
-  defp preload_stats_communities(articles, community_ref) when is_binary(community_ref),
-    do: articles
+  defp preload_stats_communities(articles, community_ref) when is_binary(community_ref) do
+    articles
+  end
 
   defp preload_stats_communities(articles, _community_ref) do
     if Enum.all?(articles, &match?(%Article{}, &1)) do
@@ -609,8 +612,9 @@ defmodule GroupherServer.CMS.ArticleStats do
     end
   end
 
-  defp interaction_projection_conflict_target(:article_id),
-    do: {:unsafe_fragment, "(article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  defp interaction_projection_conflict_target(:article_id) do
+    {:unsafe_fragment, "(article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  end
 
   defp interaction_projection_conflict_target(foreign_key), do: [foreign_key]
 

@@ -360,8 +360,9 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
     })
   end
 
-  defp select_emotion_viewer_state(query, nil),
-    do: select_merge(query, %{viewer_has_reacted: false})
+  defp select_emotion_viewer_state(query, nil) do
+    select_merge(query, %{viewer_has_reacted: false})
+  end
 
   defp select_emotion_viewer_state(query, user_id) do
     select_merge(query, [info], %{

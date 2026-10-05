@@ -98,9 +98,11 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishConfirmation do
     allowed = ~w(title digest slug body_hash typed_fields tags cover_edit content_hash)a
     allowed_strings = Enum.map(allowed, &Atom.to_string/1)
 
-    if Enum.all?(fields, &(&1 in allowed_strings)),
-      do: {:ok, Enum.map(fields, &String.to_existing_atom/1)},
-      else: {:error, :invalid_changed_fields}
+    if Enum.all?(fields, &(&1 in allowed_strings)) do
+      {:ok, Enum.map(fields, &String.to_existing_atom/1)}
+    else
+      {:error, :invalid_changed_fields}
+    end
   rescue
     ArgumentError -> {:error, :invalid_changed_fields}
   end

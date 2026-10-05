@@ -18,21 +18,27 @@ defmodule GroupherServer.CMS.Gate.Scope.Query do
   alias CMS.Model.{Article, Comment, Community}
 
   @doc "Builds a resource Scope query selected by root schema and Context type."
-  def build(query, actor, action, Community, %CommunityContext{} = context),
-    do: CMS.Gate.Scope.Community.scope(query, actor, action, context)
+  def build(query, actor, action, Community, %CommunityContext{} = context) do
+    CMS.Gate.Scope.Community.scope(query, actor, action, context)
+  end
 
-  def build(query, actor, action, Article, %ArticleContext{} = context),
-      do: CMS.Gate.Scope.Article.scope(query, actor, action, context)
+  def build(query, actor, action, Article, %ArticleContext{} = context) do
+    CMS.Gate.Scope.Article.scope(query, actor, action, context)
+  end
 
-  def build(query, actor, action, Article, %DocContext{} = context),
-    do: CMS.Gate.Scope.Article.scope(query, actor, action, context)
+  def build(query, actor, action, Article, %DocContext{} = context) do
+    CMS.Gate.Scope.Article.scope(query, actor, action, context)
+  end
 
-  def build(query, actor, action, Comment, %CommentContext{} = context),
-    do: CMS.Gate.Scope.Comment.scope(query, actor, action, context)
+  def build(query, actor, action, Comment, %CommentContext{} = context) do
+    CMS.Gate.Scope.Comment.scope(query, actor, action, context)
+  end
 
-  def build(_query, _actor, _action, _root, context) when not is_struct(context),
-    do: {:error, ErrorCat.scope_context_missing()}
+  def build(_query, _actor, _action, _root, context) when not is_struct(context) do
+    {:error, ErrorCat.scope_context_missing()}
+  end
 
-  def build(_query, _actor, _action, _root, _context),
-    do: {:error, ErrorCat.scope_root_mismatch()}
+  def build(_query, _actor, _action, _root, _context) do
+    {:error, ErrorCat.scope_root_mismatch()}
+  end
 end

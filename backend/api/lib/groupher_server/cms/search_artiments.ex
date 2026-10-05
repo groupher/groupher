@@ -25,8 +25,9 @@ defmodule GroupherServer.CMS.SearchArtiments do
 
   @doc "Runs `upsert` through the public `SearchArtiments` boundary."
   @spec upsert([Artiment.t()], keyword()) :: T.done()
-  def upsert(artiments, opts \\ []) when is_list(artiments),
-    do: platform().upsert(artiments, opts)
+  def upsert(artiments, opts \\ []) when is_list(artiments) do
+    platform().upsert(artiments, opts)
+  end
 
   @doc "Runs `delete` through the public `SearchArtiments` boundary."
   @spec delete([String.t()]) :: T.done()

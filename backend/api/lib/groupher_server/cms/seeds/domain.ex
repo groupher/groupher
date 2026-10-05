@@ -67,8 +67,9 @@ defmodule GroupherServer.CMS.Seeds.Domain do
     end
   end
 
-  def community(_slug, _type),
-    do: {:error, ErrorCat.custom("unknown community type")}
+  def community(_slug, _type) do
+    {:error, ErrorCat.custom("unknown community type")}
+  end
 
   @spec set_category([atom() | String.t()], atom() | String.t()) :: T.domain_res(:ok)
   def set_category(communities_names, cat_name) when is_list(communities_names) do

@@ -493,16 +493,18 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     end)
   end
 
-  defp dedupe_state_upsert_query?(query),
-    do: String.contains?(query, ~s[INSERT INTO "cms"."article_view_dedupe_states"])
+  defp dedupe_state_upsert_query?(query) do
+    String.contains?(query, ~s[INSERT INTO "cms"."article_view_dedupe_states"])
+  end
 
-  defp article_stats_upsert_query?(query),
-    do: String.contains?(query, ~s[INSERT INTO "cms"."article_stats"])
+  defp article_stats_upsert_query?(query) do
+    String.contains?(query, ~s[INSERT INTO "cms"."article_stats"])
+  end
 
-  defp article_stats_select_query?(query),
-    do:
-      String.starts_with?(query, "SELECT") and
-        String.contains?(query, ~s[FROM "cms"."article_stats"])
+  defp article_stats_select_query?(query) do
+    String.starts_with?(query, "SELECT") and
+      String.contains?(query, ~s[FROM "cms"."article_stats"])
+  end
 
   defp key_share_query?(query), do: String.contains?(query, "FOR KEY SHARE")
 end

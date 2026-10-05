@@ -95,8 +95,9 @@ defmodule GroupherServer.CMS.Gate.Decision do
 
   @doc "Builds an allowed Decision with the supplied internal context."
   @spec allow(map()) :: t()
-  def allow(context \\ %{}),
-    do: %__MODULE__{allowed: true, context: context, primary: nil, violations: []}
+  def allow(context \\ %{}) do
+    %__MODULE__{allowed: true, context: context, primary: nil, violations: []}
+  end
 
   @doc "Builds a denied Decision from one or more internal reasons."
   @spec deny(ErrorCat.error() | [ErrorCat.error()], map()) :: t()
@@ -152,8 +153,9 @@ defmodule GroupherServer.CMS.Gate.Decision do
     end
   end
 
-  defp source(reason) when reason in [:permission_denied, :unknown_action],
-    do: :authorization
+  defp source(reason) when reason in [:permission_denied, :unknown_action] do
+    :authorization
+  end
 
   defp source(reason)
        when reason in [
@@ -170,8 +172,9 @@ defmodule GroupherServer.CMS.Gate.Decision do
               :comment_destroyed,
               :lifecycle_not_found,
               :lifecycle_not_loaded
-            ],
-       do: :lifecycle
+            ] do
+    :lifecycle
+  end
 
   defp source(:article_comments_locked), do: :policy
   defp source(:solution_not_supported), do: :policy
@@ -181,8 +184,9 @@ defmodule GroupherServer.CMS.Gate.Decision do
   defp source(:scope_policy_actor_mismatch), do: :scope
   defp source(_reason), do: :resource
 
-  defp retryable?(reason) when reason in [:lifecycle_not_loaded, :doc_branch_required],
-    do: true
+  defp retryable?(reason) when reason in [:lifecycle_not_loaded, :doc_branch_required] do
+    true
+  end
 
   defp retryable?(_reason), do: false
 
@@ -191,8 +195,9 @@ defmodule GroupherServer.CMS.Gate.Decision do
               :ancestor_community_not_writable,
               :ancestor_article_archived,
               :article_archived
-            ],
-       do: [:read_only_notice]
+            ] do
+    [:read_only_notice]
+  end
 
   defp actions(reason)
        when reason in [
@@ -203,8 +208,9 @@ defmodule GroupherServer.CMS.Gate.Decision do
               :comment_deleted,
               :comment_destroyed,
               :resource_not_found
-            ],
-       do: [:return_to_list]
+            ] do
+    [:return_to_list]
+  end
 
   defp actions(:permission_denied), do: [:show_permission_notice]
   defp actions(:lifecycle_not_loaded), do: [:retry]

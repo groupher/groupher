@@ -45,12 +45,12 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   @doc "Checks Community admission using the default loaded lifecycle context."
   @spec check_access(User.t() | nil, atom(), Community.t()) ::
           :ok | {:error, ErrorCat.error()}
-  def check_access(user, action, community),
-    do:
-      check_access(user, action, community, %CommunityContext{
-        community: community,
-        community_lifecycle: Map.get(community, :lifecycle)
-      })
+  def check_access(user, action, community) do
+    check_access(user, action, community, %CommunityContext{
+      community: community,
+      community_lifecycle: Map.get(community, :lifecycle)
+    })
+  end
 
   @doc "Checks Community admission against an explicitly typed Access Context."
   @spec check_access(User.t() | nil, atom(), Community.t(), CommunityContext.t()) ::
@@ -115,18 +115,18 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       passport_allowed?(user, community, Const.passport_action(:community_request_destroy))
   end
 
-  defp command_relation_allowed?(user, community, _action),
-    do:
-      base_command_relation_allowed?(user, community) or
-        passport_allowed?(user, community, Const.passport_action(:community_update))
+  defp command_relation_allowed?(user, community, _action) do
+    base_command_relation_allowed?(user, community) or
+      passport_allowed?(user, community, Const.passport_action(:community_update))
+  end
 
   defp management_relation_allowed?(:operations, _community), do: true
   defp management_relation_allowed?(%{type: :operations}, _community), do: true
 
-  defp management_relation_allowed?(%User{} = user, community),
-    do:
-      owner?(user, community) or moderator?(user, community) or god?(user) or
-        root?(user, community) or docs_member?(user, community)
+  defp management_relation_allowed?(%User{} = user, community) do
+    owner?(user, community) or moderator?(user, community) or god?(user) or
+      root?(user, community) or docs_member?(user, community)
+  end
 
   defp management_relation_allowed?(_user, _community), do: false
 
@@ -135,10 +135,10 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp docs_member?(%User{}, %Community{}), do: true
   defp docs_member?(_, _), do: false
 
-  defp base_command_relation_allowed?(%User{} = user, community),
-    do:
-      owner?(user, community) or moderator?(user, community) or god?(user) or
-        root?(user, community)
+  defp base_command_relation_allowed?(%User{} = user, community) do
+    owner?(user, community) or moderator?(user, community) or god?(user) or
+      root?(user, community)
+  end
 
   defp base_command_relation_allowed?(_user, _community), do: false
 
@@ -151,8 +151,9 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   end
 
   defp moderator?(%User{id: user_id}, %Community{meta: %{moderators_ids: ids}})
-       when is_list(ids),
-       do: user_id in ids
+       when is_list(ids) do
+    user_id in ids
+  end
 
   defp moderator?(_, _), do: false
 

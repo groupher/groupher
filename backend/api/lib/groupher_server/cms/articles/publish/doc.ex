@@ -206,8 +206,9 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
   defp valid_slug(slug), do: if(Slug.valid?(slug), do: :ok, else: {:error, :invalid_slug})
 
   defp invalidate_public_cache(%Article{inner_id: inner_id}, _branch_id, _first?, _opts)
-       when not is_integer(inner_id),
-       do: {:ok, :not_public_path}
+       when not is_integer(inner_id) do
+    {:ok, :not_public_path}
+  end
 
   defp invalidate_public_cache(article, branch_id, first_publish?, opts) do
     with %DocBranch{type: :main} <- Repo.get(DocBranch, branch_id),

@@ -129,18 +129,22 @@ defmodule GroupherServer.CMS.Communities.Passport do
     end
   end
 
-  defp validate_erase_path(["global", permission]) when is_binary(permission),
-    do: {:ok, ["global", permission]}
+  defp validate_erase_path(["global", permission]) when is_binary(permission) do
+    {:ok, ["global", permission]}
+  end
 
   defp validate_erase_path([community, "cms", permission])
-       when is_binary(community) and is_binary(permission),
-       do: {:ok, [community, "cms", permission]}
+       when is_binary(community) and is_binary(permission) do
+    {:ok, [community, "cms", permission]}
+  end
 
-  defp validate_erase_path([community, "cms"]) when is_binary(community),
-    do: {:ok, [community, "cms"]}
+  defp validate_erase_path([community, "cms"]) when is_binary(community) do
+    {:ok, [community, "cms"]}
+  end
 
-  defp validate_erase_path([community]) when is_binary(community) and community != "global",
-    do: {:ok, [community]}
+  defp validate_erase_path([community]) when is_binary(community) and community != "global" do
+    {:ok, [community]}
+  end
 
   defp validate_erase_path(_), do: {:error, ErrorCat.invalid_passport_shape()}
 

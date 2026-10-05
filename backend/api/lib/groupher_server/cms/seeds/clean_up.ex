@@ -35,8 +35,9 @@ defmodule GroupherServer.CMS.Seeds.CleanUp do
   end
 
   @spec articles(Community.t(), atom()) :: T.domain_res(:ok)
-  def articles(%Community{} = community, _thread),
-    do: CMS.Seeds.FullCommunity.delete(community.slug)
+  def articles(%Community{} = community, _thread) do
+    CMS.Seeds.FullCommunity.delete(community.slug)
+  end
 
   def articles(_, _), do: {:error, ErrorCat.custom("community is required")}
 end

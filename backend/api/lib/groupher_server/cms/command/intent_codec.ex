@@ -136,8 +136,9 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     ]
   end
 
-  defp stable_digest_term(value) when is_list(value),
-    do: ["$list", Enum.map(value, &stable_digest_term/1)]
+  defp stable_digest_term(value) when is_list(value) do
+    ["$list", Enum.map(value, &stable_digest_term/1)]
+  end
 
   defp stable_digest_term(value), do: ["$value", value]
 
@@ -195,8 +196,9 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
   defp canonical(%NaiveDateTime{} = value), do: {:ok, NaiveDateTime.to_iso8601(value)}
   defp canonical(%Date{} = value), do: {:ok, Date.to_iso8601(value)}
 
-  defp canonical(value) when is_binary(value) or is_number(value) or is_boolean(value),
-    do: {:ok, value}
+  defp canonical(value) when is_binary(value) or is_number(value) or is_boolean(value) do
+    {:ok, value}
+  end
 
   defp canonical(value) when is_atom(value), do: {:ok, Atom.to_string(value)}
   defp canonical(_value), do: {:error, :invalid_intent_params}

@@ -58,8 +58,9 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
 
   @doc "Reads one Comment under a structured Article path."
   @spec read(map(), integer() | String.t(), keyword()) :: T.domain_res(Comment.t())
-  def read(article_path, inner_id, opts) when is_map(article_path) and is_list(opts),
-    do: read(article_path, inner_id, nil, opts)
+  def read(article_path, inner_id, opts) when is_map(article_path) and is_list(opts) do
+    read(article_path, inner_id, nil, opts)
+  end
 
   defp load_internal(comment_id, _view) do
     with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
@@ -74,7 +75,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
     with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
            ArticlePath.parse(article_path),
          {:ok, inner_id} <- parse_comment_inner_id(inner_id),
-           {:ok, article} <-
+         {:ok, article} <-
            Article.read(
              %{community: community, thread: thread, inner_id: article_inner_id},
              actor,
@@ -86,14 +87,17 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
     end
   end
 
-  defp load_public_comment(query, view) when view in [:default, :with_author],
-    do: ORM.find_by(Comment, query, preload: :author)
+  defp load_public_comment(query, view) when view in [:default, :with_author] do
+    ORM.find_by(Comment, query, preload: :author)
+  end
 
-  defp load_public_comment(_query, _view),
-    do: {:error, CommentErrorCat.not_exist("unsupported Comment read view")}
+  defp load_public_comment(_query, _view) do
+    {:error, CommentErrorCat.not_exist("unsupported Comment read view")}
+  end
 
-  defp stable_comment_query(%{id: article_id}, thread, inner_id) when is_binary(article_id),
-    do: %{thread: thread, inner_id: inner_id, article_id: article_id}
+  defp stable_comment_query(%{id: article_id}, thread, inner_id) when is_binary(article_id) do
+    %{thread: thread, inner_id: inner_id, article_id: article_id}
+  end
 
   defp stable_comment_query(article, thread, inner_id) do
     {:ok, info} = match(thread)
@@ -126,8 +130,9 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
 
   defp parse_comment_inner_id(_), do: {:error, CommentErrorCat.not_exist("comment not found")}
 
-  defp parse_comment_path(%{article: article_path, inner_id: inner_id}),
-    do: {:ok, article_path, inner_id}
+  defp parse_comment_path(%{article: article_path, inner_id: inner_id}) do
+    {:ok, article_path, inner_id}
+  end
 
   defp parse_comment_path(_), do: {:error, CommentErrorCat.not_exist("comment not found")}
 
