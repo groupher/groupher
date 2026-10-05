@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   alias CMS.ContentImport.Threads.Doc.{Validator, Writer}
   alias CMS.Docs.Branch
   alias CMS.DocTree
-  alias CMS.DocTree.{Reader, Revision}
+  alias CMS.DocTree.{Revision, State}
   alias CMS.Model.{DocLifecycle, DocTreeNode}
 
   @job_query """
@@ -623,7 +623,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              ])
 
     assert {:ok, branch} = Branch.resolve(community, Branch.main_slug())
-    assert {:ok, state} = Reader.ensure_draft_state(community, branch_id: branch.id)
+    assert {:ok, state} = State.ensure_draft_state(community, branch_id: branch.id)
     assert {:ok, _state} = Revision.bump_tree_draft(community, state)
 
     assert {:error,

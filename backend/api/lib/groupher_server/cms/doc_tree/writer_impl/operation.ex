@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
   alias CMS.ErrorCat
 
   alias CMS.Docs.Branch
-  alias CMS.DocTree.{Reader, Revision}
+  alias CMS.DocTree.{Query, Revision, State}
   alias CMS.Model.{Community, DocsSiteState, DocTreeNode}
   alias Helper.Transaction
 
@@ -56,8 +56,8 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
     with {:ok, branch} <- Branch.resolve(community, args) do
       Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
         with {:ok, _canonical} <- CMS.Gate.access_check(actor, :manage_docs, community),
-             {:ok, _site_state} <- Reader.ensure_site_state(community, branch_id: branch.id),
-             {:ok, state} <- Reader.ensure_draft_state(community, branch_id: branch.id),
+             {:ok, _site_state} <- State.ensure_site_state(community, branch_id: branch.id),
+             {:ok, state} <- State.ensure_draft_state(community, branch_id: branch.id),
              :ok <- revision_check(state, Map.get(args, :base_revision)) do
           fun.(branch, state)
         else
@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
             {:ok,
              %{
                revision: state.tree_lock_version,
-               tree_state: Reader.tree_state(community, state),
+               tree_state: Query.tree_state(community, state),
                conflict: true,
                affected_nodes: []
              }}
@@ -77,28 +77,31 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
     end
   end
 
-  def bump_revision(%Community{} = community, %DocsSiteState{} = state, event_count),
-    do: Revision.bump_tree_draft(community, state, staged_event_delta: event_count)
+  def bump_revision(%Community{} = community, %DocsSiteState{} = state, event_count) do
+    Revision.bump_tree_draft(community, state, staged_event_delta: event_count)
+  end
 
   def payload(%Community{} = community, %DocsSiteState{} = state, node, affected \\ []) do
     %{
       revision: state.tree_lock_version,
-      tree_state: Reader.tree_state(community, state),
+      tree_state: Query.tree_state(community, state),
       node: map_node(node),
-      affected_nodes: Enum.map(affected, &Reader.to_map/1),
+      affected_nodes: Enum.map(affected, &Query.to_map/1),
       conflict: false
     }
   end
 
-  defp revision_check(%DocsSiteState{}, nil),
-    do: {:error, ErrorCat.custom("base_revision is required")}
+  defp revision_check(%DocsSiteState{}, nil) do
+    {:error, ErrorCat.custom("base_revision is required")}
+  end
 
   defp revision_check(%DocsSiteState{} = state, revision)
-       when revision == state.tree_lock_version,
-       do: :ok
+       when revision == state.tree_lock_version do
+    :ok
+  end
 
   defp revision_check(%DocsSiteState{} = state, _revision), do: {:conflict, state}
 
   defp map_node(nil), do: nil
-  defp map_node(%DocTreeNode{} = node), do: Reader.to_map(node)
+  defp map_node(%DocTreeNode{} = node), do: Query.to_map(node)
 end

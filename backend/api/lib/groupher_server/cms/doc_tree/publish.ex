@@ -42,11 +42,12 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     Selection
   }
 
+  alias CMS.DocTree.State
+
   alias CMS.{
     ErrorCat,
     DocPublishRelease,
-    Docs.Branch,
-    DocTree.Reader
+    Docs.Branch
   }
 
   alias CMS.Model.{
@@ -117,7 +118,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp publish_changes_locked(community, branch, args, user, sync_cover?) do
     with {:ok, _canonical} <- CMS.Gate.access_check(user, :manage_docs, community),
-         {:ok, state} <- Reader.ensure_draft_state(community, branch_id: branch.id),
+         {:ok, state} <- State.ensure_draft_state(community, branch_id: branch.id),
          :ok <- verify_checklist_revision(state, args) do
       prepare_publish_flow(community, branch, args, user, sync_cover?)
     else
@@ -176,8 +177,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          _selection,
          _user,
          _sync_cover?
-       ),
-       do: publish_payload(true, nil, current_checklist)
+       ) do
+    publish_payload(true, nil, current_checklist)
+  end
 
   defp execute_publish_flow(
          @publish_flow_restore,
@@ -439,8 +441,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          _args,
          _doc_checklist_item_ids,
          tree_checklist_item_ids
-       ),
-       do: tree_checklist_item_ids
+       ) do
+    tree_checklist_item_ids
+  end
 
   defp tree_selection_omitted?(args) do
     Selection.tree_selection_omitted?(args)

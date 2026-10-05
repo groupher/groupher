@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   alias CMS.Docs.Branch
   alias CMS.{DocTree, ErrorCat}
   alias CMS.DocTree.Import, as: DocTreeImport
-  alias CMS.DocTree.Reader, as: DocTreeReader
+  alias CMS.DocTree.State, as: DocTreeState
   alias CMS.Model.{Article, Community, DocDraft, DocPublic, TrashAction, TrashedDocArticle}
   alias Helper.Transaction
 
@@ -77,8 +77,9 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
     end
   end
 
-  defp apply_locked(_community, job),
-    do: Repo.rollback(ErrorCat.content_import_job_not_ready(job.status))
+  defp apply_locked(_community, job) do
+    Repo.rollback(ErrorCat.content_import_job_not_ready(job.status))
+  end
 
   defp apply_to_main_draft(community, branch, actor, job) do
     with :ok <-
@@ -150,7 +151,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
     |> Enum.map(& &1.target_ref)
     |> trashed_action_refs(community, branch)
     |> Enum.reduce_while(:ok, fn action_ref, :ok ->
-      with {:ok, state} <- DocTreeReader.ensure_draft_state(community, branch_id: branch.id),
+      with {:ok, state} <- DocTreeState.ensure_draft_state(community, branch_id: branch.id),
            {:ok, %{conflict: false}} <-
              DocTree.restore_trash_item(community, action_ref, %{
                actor_id: actor.id,

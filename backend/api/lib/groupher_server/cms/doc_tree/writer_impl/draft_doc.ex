@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
   alias Accounts.Model.User
   alias CMS.Articles.Draft.Store
   alias CMS.Artiment.BodyBag
-  alias CMS.DocTree.{Reader, Revision}
+  alias CMS.DocTree.{Revision, State}
   alias CMS.Model.{Article, Community, DocDraft}
   alias Helper.Validator.Slug
 
@@ -48,7 +48,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
   """
   def update(%Community{} = community, branch, doc_id, args, %User{} = user) do
     with :ok <- validate_update_attrs(args),
-         {:ok, site_state} <- Reader.ensure_site_state(community, branch_id: branch.id),
+         {:ok, site_state} <- State.ensure_site_state(community, branch_id: branch.id),
          {:ok, draft} <- CMS.Docs.update_draft(doc_id, branch.id, args, user),
          {:ok, _state} <- Revision.bump_site_draft(community, site_state) do
       {:ok, draft}
@@ -108,9 +108,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
   end
 
   defp validate_update_attrs(%{title: _title} = attrs) do
-    if Map.has_key?(attrs, :slug),
-      do: :ok,
-      else: {:error, ErrorCat.custom("slug is required when updating a Doc title")}
+    if Map.has_key?(attrs, :slug) do
+      :ok
+    else
+      {:error, ErrorCat.custom("slug is required when updating a Doc title")}
+    end
   end
 
   defp validate_update_attrs(_attrs), do: :ok
