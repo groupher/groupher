@@ -58,8 +58,6 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   def call(resolution, :article), do: fetch_article(resolution, [])
 
-  def call(resolution, :article_insights), do: fetch_article_insights(resolution)
-
   def call(resolution, {:article_editor, opts}) do
     fetch_article_editor(resolution, List.wrap(opts))
   end
@@ -98,31 +96,6 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         |> handle_absinthe_error("invalid article input", ErrorCat.code(ErrorCat.custom()))
     end
   end
-
-  defp fetch_article_insights(%{arguments: arguments, context: context} = resolution) do
-    with {:ok, arguments} <- ArticlePath.parse_arguments(arguments),
-         article_path <- arguments.article_path,
-         actor <- Map.get(context, :cur_user),
-         grants <- article_insight_grants(actor),
-         {:ok, article} <-
-           CMS.FrontDesk.article_insights(article_path, actor,
-             passport_granted_community_slugs: grants
-           ) do
-      %{resolution | arguments: Map.put(arguments, :article, article)}
-    else
-      {:error, err_msg} ->
-        resolution
-        |> handle_absinthe_error(
-          ArticleErrorCat.not_exist(error_details(err_msg)),
-          ErrorCat.code(ArticleErrorCat.not_exist())
-        )
-    end
-  end
-
-  defp article_insight_grants(nil), do: []
-
-  defp article_insight_grants(actor),
-    do: GroupherServer.Analysis.ArticleInsights.passport_granted_community_slugs(actor)
 
   defp do_fetch_article(
          %{
@@ -183,7 +156,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   defp fetch_editor_article(%Community{id: community_id} = community, :doc, article_id) do
     with {:ok, %CMS.Model.Article{community_id: ^community_id, thread: :doc} = article} <-
-           CMS.FrontDesk.article(article_id, mode: :internal, view: :with_author),
+           FrontDesk.article(article_id, mode: :internal, view: :with_author),
          {:ok, branch} <- CMS.Docs.Branch.resolve(community, nil) do
       {:ok, article, branch.id}
     else
@@ -192,7 +165,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   end
 
   defp fetch_editor_article(%Community{id: community_id}, thread, article_id) do
-    case CMS.FrontDesk.article(article_id, mode: :internal, view: :with_author) do
+    case FrontDesk.article(article_id, mode: :internal, view: :with_author) do
       {:ok, %CMS.Model.Article{community_id: ^community_id, thread: ^thread} = article} ->
         {:ok, article, nil}
 
@@ -314,13 +287,13 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
-  defp fetch_users(resolution),
-    do:
-      resolution
-      |> handle_absinthe_error(
-        "users not found",
-        ErrorCat.code(ProfileErrorCat.not_exist("users not found"))
-      )
+  defp fetch_users(resolution) do
+    resolution
+    |> handle_absinthe_error(
+      "users not found",
+      ErrorCat.code(ProfileErrorCat.not_exist("users not found"))
+    )
+  end
 
   defp load_users(users) do
     users =
@@ -345,8 +318,9 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   defp load_user(_), do: {:error, "user not found"}
 
-  defp error_details(%ErrorCat.Error{details: %{message: message}}) when is_binary(message),
-    do: message
+  defp error_details(%ErrorCat.Error{details: %{message: message}}) when is_binary(message) do
+    message
+  end
 
   defp error_details(%ErrorCat.Error{details: details}) when is_binary(details), do: details
   defp error_details(details) when is_binary(details), do: details

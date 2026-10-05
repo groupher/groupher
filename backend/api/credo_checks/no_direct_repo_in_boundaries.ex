@@ -7,7 +7,7 @@ defmodule GroupherServer.Credo.Check.NoDirectRepoInBoundaries do
     explanations: [
       check: """
       Transport, command orchestration, and public facade modules must not call
-      Repo directly. Reads go through FrontDesk/Reader boundaries; writes and
+      Repo directly. Reads go through FrontDesk/Query boundaries; writes and
       transactions belong to Writer/Store modules.
       """
     ]
@@ -69,7 +69,7 @@ defmodule GroupherServer.Credo.Check.NoDirectRepoInBoundaries do
     format_issue(
       context,
       message:
-        "Direct Repo access is forbidden in transport, command, and facade boundaries; use FrontDesk/Reader or move persistence into Writer/Store.",
+        "Direct Repo access is forbidden in transport, command, and facade boundaries; use FrontDesk/Query or move persistence into Writer/Store.",
       trigger: trigger,
       line_no: meta[:line],
       column: meta[:column]

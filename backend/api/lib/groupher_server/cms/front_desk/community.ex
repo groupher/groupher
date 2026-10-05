@@ -19,6 +19,8 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
   alias CMS.ErrorCat
 
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
+  alias CMS.Gate
   alias CMS.Model.{Community, CommunityTag}
   alias Helper.{ORM, T}
 
@@ -36,7 +38,7 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
 
     with :ok <- validate_view(view),
          {:ok, context} <- scope_context(policy_mode),
-         %Ecto.Query{} = query <- CMS.Gate.scope(Community, actor, :read, context),
+         %Ecto.Query{} = query <- Gate.scope(Community, actor, :read, context),
          %Ecto.Query{} = query <- where_ref(query, ref),
          query <- preload(query, [:dashboard, :lifecycle, moderators: [:community, :user]]),
          {:ok, community} <- query |> Repo.one() |> done(),
@@ -45,19 +47,21 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
     end
   end
 
-  defp where_ref(query, id) when is_integer(id),
-    do: where(query, [community], community.id == ^id)
+  defp where_ref(query, id) when is_integer(id) do
+    where(query, [community], community.id == ^id)
+  end
 
-  defp where_ref(query, slug) when is_binary(slug),
-    do: where(query, [community], community.slug == ^slug or community.aka == ^slug)
+  defp where_ref(query, slug) when is_binary(slug) do
+    where(query, [community], community.slug == ^slug or community.aka == ^slug)
+  end
 
   defp where_ref(_query, _ref), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
 
   defp scope_context(policy_mode) do
-    if policy_mode in CMS.Communities.Lifecycle.read_modes() do
+    if policy_mode in CMS.Communities.Lifecycle.read_policy_modes() do
       {:ok, CommunityContext.new(policy_mode)}
     else
-      {:error, CMS.Gate.ErrorCat.unknown_policy_mode()}
+      {:error, GateErrorCat.unknown_policy_mode()}
     end
   end
 

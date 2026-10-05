@@ -16,7 +16,9 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
   alias Analysis.MetricEvent
   alias RequestActor.Classification
   alias CMS.Artiment.{Matcher, Threads}
-  alias CMS.FrontDesk
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.FrontDesk.Article, as: ArticleFrontDesk
+  alias CMS.Model.{Article, Community}
   alias CMS.ViewTracker.{ErrorCat, Identity, Policy, ViewCounter}
   alias CMS.ViewTracker.Model.{ViewDedupeState, ViewerState}
 
@@ -41,7 +43,7 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
          {:ok, read_purpose} <- read_purpose(opts),
          {:ok, identity} <- Identity.resolve(viewer, classification, opts) do
       Repo.transaction(fn ->
-        case FrontDesk.lock_article_for_view_tracking(article) do
+        case lock_article_for_view_tracking(article) do
           {:ok, locked, community, received_at} ->
             process(locked, community, thread, viewer, identity, read_purpose, received_at)
 
@@ -56,8 +58,9 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
     end
   end
 
-  def track(_article, _viewer, _classification, _opts),
-    do: {:error, ErrorCat.invalid_actor_type()}
+  def track(_article, _viewer, _classification, _opts) do
+    {:error, ErrorCat.invalid_actor_type()}
+  end
 
   @doc """
   Deletes all view-owned state for a permanently deleted physical Article.
@@ -216,4 +219,26 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
 
   defp transaction_result({:ok, result}), do: {:ok, result}
   defp transaction_result({:error, reason}), do: {:error, reason}
+
+  defp lock_article_for_view_tracking(%{id: article_id, thread: thread} = projection)
+       when is_binary(article_id) and thread in [:post, :blog, :changelog, :doc] do
+    received_at = DateTime.utc_now(:second)
+
+    with %Article{} = locked <-
+           Article
+           |> where([article], article.id == ^article_id)
+           |> lock("FOR KEY SHARE")
+           |> Repo.one(),
+         %Community{} = community <- Repo.get(Community, locked.community_id),
+         {:ok, current} <-
+           ArticleFrontDesk.read_stable(community, thread, locked.inner_id, nil, []) do
+      {:ok, Map.merge(current, Map.take(projection, [:branch_id])), community, received_at}
+    else
+      _ -> {:error, ArticleErrorCat.article_not_found("article not found")}
+    end
+  end
+
+  defp lock_article_for_view_tracking(_projection) do
+    {:error, ArticleErrorCat.article_not_found("article not found")}
+  end
 end

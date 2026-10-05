@@ -39,7 +39,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:is_authenticated, :boolean)
 
       middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :article_insights)
       resolve(&R.CMS.article_insights/3)
     end
 

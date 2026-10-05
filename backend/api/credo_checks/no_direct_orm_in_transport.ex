@@ -5,7 +5,8 @@ defmodule GroupherServer.Credo.Check.NoDirectOrmInTransport do
     id: "GRPH002",
     base_priority: :high,
     explanations: [
-      check: "Transport modules must use a named FrontDesk or Reader API instead of calling ORM directly."
+      check:
+        "Transport modules must use a named FrontDesk, Query, or Store API instead of calling ORM directly."
     ]
 
   @protected_paths [~r{/lib/groupher_server_web/}]
@@ -57,7 +58,8 @@ defmodule GroupherServer.Credo.Check.NoDirectOrmInTransport do
   defp issue_for(context, meta, trigger) do
     format_issue(
       context,
-      message: "Direct ORM access is forbidden in transport boundaries; use FrontDesk or a named Reader.",
+      message:
+        "Direct ORM access is forbidden in transport boundaries; use FrontDesk or a named Query/Store.",
       trigger: trigger,
       line_no: meta[:line],
       column: meta[:column]

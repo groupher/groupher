@@ -53,8 +53,8 @@ with {:ok, target_comment} <- CMS.Comments.fetch_comment(comment_id) do
       acc + 1
     end)
 
-  {:ok, article} = CMS.FrontDesk.article_of(target_comment)
-  {:ok, thread} = CMS.FrontDesk.thread_of(target_comment)
+  {:ok, article} = GroupherServer.FrontDesk.article_of(target_comment)
+  {:ok, thread} = GroupherServer.FrontDesk.thread_of(target_comment)
 
   allowed_emotions =
     Enum.filter(supported_comment_emotions, fn emotion ->

@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.ViewTracker do
   @moduledoc """
   Synchronous Article effective-view owner.
 
-      Article Reader -> ViewTracker transaction -> ArticleStats
+      Article Query -> ViewTracker transaction -> ArticleStats
       Article response -> ViewTracker.viewer_states/2
   """
 

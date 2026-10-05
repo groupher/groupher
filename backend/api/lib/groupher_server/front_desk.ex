@@ -14,7 +14,6 @@ defmodule GroupherServer.FrontDesk do
         -> domain / infrastructure boundary
   """
 
-  alias __MODULE__.Cache
   alias GroupherServer.{Accounts, CMS}
   alias CMS.FrontDesk, as: CMSFrontDesk
 
@@ -27,7 +26,7 @@ defmodule GroupherServer.FrontDesk do
   def community(ref, actor, opts), do: CMSFrontDesk.community(ref, actor, opts)
 
   @doc "Loads a User through the shared User cache by id or public login."
-  def user(login) when is_binary(login), do: Cache.user(login)
+  def user(login) when is_binary(login), do: Accounts.FrontDesk.user(login)
   def user(id) when is_integer(id), do: Accounts.FrontDesk.user(id)
 
   @doc "Loads a User with an explicit internal mode."
@@ -44,34 +43,31 @@ defmodule GroupherServer.FrontDesk do
   def fresh_user(login) when is_binary(login), do: Accounts.FrontDesk.fresh_user(login)
 
   @doc "Returns the cache revalidation boundary used after domain writes."
-  def revalidate, do: __MODULE__.Revalidate
+  def revalidate, do: Accounts.FrontDesk.Revalidate
 
   @doc "Loads a comment from its public comment path."
   def comment(comment_path) when is_map(comment_path), do: CMSFrontDesk.comment(comment_path)
+  def comment(comment_ref), do: CMSFrontDesk.comment(comment_ref)
 
   @doc "Loads a comment with an explicit mode/view or Article path and inner id."
   def comment(comment_ref, opts) when is_list(opts), do: CMSFrontDesk.comment(comment_ref, opts)
 
-  def comment(comment_path, actor) when is_map(comment_path) and is_map(actor),
-    do: CMSFrontDesk.comment(comment_path, actor)
+  def comment(comment_path, actor) when is_map(comment_path) and is_map(actor) do
+    CMSFrontDesk.comment(comment_path, actor)
+  end
 
-  def comment(article_path, inner_id), do: CMSFrontDesk.comment(article_path, inner_id)
-
-  def comment(article_path, inner_id, opts)
-      when is_map(article_path) and (is_integer(inner_id) or is_binary(inner_id)) and
-             is_list(opts),
-      do: CMSFrontDesk.comment(article_path, inner_id, opts)
-
-  def comment(comment_path, actor, opts) when is_map(comment_path) and is_map(actor),
-    do: CMSFrontDesk.comment(comment_path, actor, opts)
+  def comment(comment_path, actor, opts) when is_map(comment_path) and is_map(actor) do
+    CMSFrontDesk.comment(comment_path, actor, opts)
+  end
 
   @doc "Loads an Article from a public ArticlePath or internal id."
   def article(article_path) when is_map(article_path), do: CMSFrontDesk.article(article_path)
   def article(article_id) when is_binary(article_id), do: CMSFrontDesk.article(article_id)
   def article(article_ref, opts) when is_list(opts), do: CMSFrontDesk.article(article_ref, opts)
 
-  def article(article_path, actor) when is_map(article_path),
-    do: CMSFrontDesk.article(article_path, actor)
+  def article(article_path, actor) when is_map(article_path) do
+    CMSFrontDesk.article(article_path, actor)
+  end
 
   def article(article_path, actor, opts), do: CMSFrontDesk.article(article_path, actor, opts)
 

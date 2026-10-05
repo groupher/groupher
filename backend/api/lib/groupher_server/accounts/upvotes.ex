@@ -15,11 +15,10 @@ defmodule GroupherServer.Accounts.Upvotes do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, FrontDesk, Repo}
 
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
   alias Accounts.Model.User
-  alias CMS.FrontDesk
   alias CMS.Model.{ArticleStats, ArticleUpvote}
   alias Helper.{ORM, QueryBuilder}
 
@@ -30,8 +29,9 @@ defmodule GroupherServer.Accounts.Upvotes do
     load_articles(where_query, filter)
   end
 
-  def paged_articles(%User{}, %{thread: _thread}),
-    do: {:error, ProfileErrorCat.custom("invalid thread")}
+  def paged_articles(%User{}, %{thread: _thread}) do
+    {:error, ProfileErrorCat.custom("invalid thread")}
+  end
 
   def paged_articles(%User{id: user_id}, filter) do
     where_query = dynamic([a], a.user_id == ^user_id)
@@ -69,7 +69,9 @@ defmodule GroupherServer.Accounts.Upvotes do
                 upvotes_count: if(stats, do: stats.upvotes_count, else: 0)
               }
             ]
-          {:error, _reason} -> []
+
+          {:error, _reason} ->
+            []
         end
       end)
 

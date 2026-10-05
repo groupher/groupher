@@ -14,18 +14,19 @@ defmodule GroupherServer.Accounts.FrontDesk do
   require GroupherServer.Accounts.Profiles.ErrorCat
 
   alias GroupherServer.Accounts
-  alias GroupherServer.FrontDesk.Cache, as: RootCache
+  alias __MODULE__.Cache
 
   alias Accounts.Model.User
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
-  alias Helper.{Cache, ORM}
+  alias Helper.Cache, as: CacheStore
+  alias Helper.ORM
 
   @cache_pool :user_login
 
   @doc "Runs `userid` through the public `FrontDesk` boundary."
   @spec userid(String.t()) :: {:ok, integer()} | {:error, any()}
   def userid(login) when is_binary(login) do
-    case Cache.get(@cache_pool, login) do
+    case CacheStore.get(@cache_pool, login) do
       {:ok, user_id} -> {:ok, user_id}
       {:error, _} -> cache_userid(login)
     end
@@ -34,7 +35,7 @@ defmodule GroupherServer.Accounts.FrontDesk do
   @doc "Runs `user` through the public `FrontDesk` boundary."
   @spec user(integer() | String.t()) :: {:ok, User.t()} | {:error, any()}
   def user(id) when is_integer(id), do: fetch_user_by_id(id)
-  def user(login) when is_binary(login), do: RootCache.user(login)
+  def user(login) when is_binary(login), do: Cache.user(login)
 
   @doc "Reads the current User row, bypassing the full User cache."
   @spec fresh_user(integer() | String.t()) :: {:ok, User.t()} | {:error, any()}
@@ -52,7 +53,7 @@ defmodule GroupherServer.Accounts.FrontDesk do
   defp cache_userid(login) do
     case ORM.find_by(User, %{login: login}) do
       {:ok, user} ->
-        Cache.put(@cache_pool, login, user.id)
+        CacheStore.put(@cache_pool, login, user.id)
         {:ok, user.id}
 
       {:error, ProfileErrorCat.error_pattern(details: %{reason: :not_exist, message: message})} ->

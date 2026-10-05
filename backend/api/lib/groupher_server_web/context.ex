@@ -27,7 +27,7 @@ defmodule GroupherServerWeb.Context do
   import Plug.Conn
   # import Ecto.Query, only: [first: 1]
 
-  alias GroupherServer.{Accounts, Auth, CMS, RequestActor}
+  alias GroupherServer.{Accounts, Auth, CMS, FrontDesk, RequestActor}
 
   alias Accounts.Model.User
   alias Accounts.Profiles.BrowserSessions
@@ -54,14 +54,17 @@ defmodule GroupherServerWeb.Context do
     Absinthe.Plug.put_options(conn, context: context)
   end
 
-  defp put_request_actor(%{service_auth_failure: code} = context, _conn),
-    do: Map.put(context, :request_actor_failure, code)
+  defp put_request_actor(%{service_auth_failure: code} = context, _conn) do
+    Map.put(context, :request_actor_failure, code)
+  end
 
-  defp put_request_actor(%{delegation_auth_failure: code} = context, _conn),
-    do: Map.put(context, :request_actor_failure, code)
+  defp put_request_actor(%{delegation_auth_failure: code} = context, _conn) do
+    Map.put(context, :request_actor_failure, code)
+  end
 
-  defp put_request_actor(%{service_actor: _actor, auth_failure: code} = context, _conn),
-    do: Map.put(context, :request_actor_failure, code)
+  defp put_request_actor(%{service_actor: _actor, auth_failure: code} = context, _conn) do
+    Map.put(context, :request_actor_failure, code)
+  end
 
   defp put_request_actor(context, conn) do
     opts = request_actor_input(context)
@@ -77,8 +80,9 @@ defmodule GroupherServerWeb.Context do
   defp request_actor_input(%{service_actor: credential}), do: [service_credential: credential]
   defp request_actor_input(%{cur_user: user}), do: [account_session: user]
 
-  defp request_actor_input(%{anonymous_session: session}),
-    do: [anonymous_session: session]
+  defp request_actor_input(%{anonymous_session: session}) do
+    [anonymous_session: session]
+  end
 
   defp request_actor_input(_context), do: []
 
@@ -116,8 +120,9 @@ defmodule GroupherServerWeb.Context do
     end
   end
 
-  defp authorize_context(context, credential, _conn),
-    do: authorize_user_context(context, credential)
+  defp authorize_context(context, credential, _conn) do
+    authorize_user_context(context, credential)
+  end
 
   defp maybe_bind_delegated_actor(%{service_actor: service, cur_user: user} = context) do
     Map.put_new(context, :delegated_actor, %{service_actor: service, user_actor: user})
@@ -125,8 +130,9 @@ defmodule GroupherServerWeb.Context do
 
   defp maybe_bind_delegated_actor(context), do: context
 
-  defp service_auth_failure_code(ErrorCat.error_pattern(reason: :jwks_unavailable)),
-    do: AuthContract.service_jwks_unavailable()
+  defp service_auth_failure_code(ErrorCat.error_pattern(reason: :jwks_unavailable)) do
+    AuthContract.service_jwks_unavailable()
+  end
 
   defp service_auth_failure_code(_reason), do: AuthContract.service_token_invalid()
 
@@ -201,8 +207,9 @@ defmodule GroupherServerWeb.Context do
 
   defp delegation_auth_failure_code(:token_expired), do: AuthContract.token_expired()
 
-  defp delegation_auth_failure_code(ProfileErrorCat.error_pattern(reason: :session_revoked)),
-    do: AuthContract.session_revoked()
+  defp delegation_auth_failure_code(ProfileErrorCat.error_pattern(reason: :session_revoked)) do
+    AuthContract.session_revoked()
+  end
 
   defp delegation_auth_failure_code(_reason), do: AuthContract.token_invalid()
 
@@ -210,8 +217,9 @@ defmodule GroupherServerWeb.Context do
   # Browser cookies must satisfy the V1 issuer/audience/type/session claims.
   # External bearer-token contracts retain their own Guardian verification path.
   # --------------------------------------------------
-  defp get_token_from(%Plug.Conn{cookies: %{"groupher-auth.token" => token}}),
-    do: {:browser, token}
+  defp get_token_from(%Plug.Conn{cookies: %{"groupher-auth.token" => token}}) do
+    {:browser, token}
+  end
 
   defp get_token_from(%Plug.Conn{} = conn) do
     case get_req_header(conn, "authorization") do
@@ -243,7 +251,7 @@ defmodule GroupherServerWeb.Context do
   end
 
   defp load_user(%{id: id}) when is_integer(id) do
-    case Accounts.FrontDesk.fresh_user(id) do
+    case FrontDesk.fresh_user(id) do
       {:ok, user} ->
         check_passport(user)
 

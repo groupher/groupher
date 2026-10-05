@@ -1,16 +1,16 @@
-defmodule GroupherServer.FrontDesk.Revalidate do
+defmodule GroupherServer.Accounts.FrontDesk.Revalidate do
   @moduledoc """
-  Revalidate cached FrontDesk resources.
+  Accounts-owned User cache revalidation boundary.
 
   Business position:
 
-      Resolver / context
-        -> FrontDesk
-        -> Revalidate
-        -> cache / Repo
+      Root FrontDesk
+        -> Accounts.FrontDesk.Revalidate
+        -> Accounts.FrontDesk.fresh_user/1
+        -> User cache
   """
 
-  alias GroupherServer.FrontDesk
+  alias GroupherServer.Accounts.FrontDesk
   alias FrontDesk.Cache
 
   @spec user(String.t()) :: {:ok, any()} | {:error, any()}

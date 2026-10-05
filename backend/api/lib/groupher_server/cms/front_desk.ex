@@ -22,11 +22,10 @@ defmodule GroupherServer.CMS.FrontDesk do
     Relation
   }
 
-  alias CMS.FrontDesk.Comment, as: CommentReader
+  alias CMS.FrontDesk.Comment, as: CommentFrontDesk
   alias CMS.Comments.ErrorCat, as: CommentsErrorCat
 
   alias CMS.Helper.ArticlePath
-  alias CMS.Model.Community, as: CommunityModel
   alias CMS.Model.CommunityTag
   alias Helper.T
 
@@ -38,25 +37,21 @@ defmodule GroupherServer.CMS.FrontDesk do
   def community(ref, actor, opts), do: Community.read(ref, actor, opts)
 
   @doc "Reads one Comment from a structured public path in the default public mode."
-  def comment(comment_path) when is_map(comment_path), do: CommentReader.read(comment_path)
+  def comment(comment_path) when is_map(comment_path), do: CommentFrontDesk.read(comment_path)
   def comment(_comment_id), do: {:error, CommentsErrorCat.not_exist("comment path required")}
 
   @doc "Reads one Comment with an explicit mode/view or Article path and inner id."
-  def comment(comment_path_or_id, opts) when is_list(opts),
-    do: CommentReader.read(comment_path_or_id, opts)
+  def comment(comment_path_or_id, opts) when is_list(opts) do
+    CommentFrontDesk.read(comment_path_or_id, opts)
+  end
 
-  def comment(comment_path, actor) when is_map(comment_path) and is_map(actor),
-    do: CommentReader.read(comment_path, actor, [])
+  def comment(comment_path, actor) when is_map(comment_path) and is_map(actor) do
+    CommentFrontDesk.read(comment_path, actor, [])
+  end
 
-  def comment(article_path, inner_id), do: CommentReader.read(article_path, inner_id, nil, [])
-
-  def comment(article_path, inner_id, opts)
-      when is_map(article_path) and (is_integer(inner_id) or is_binary(inner_id)) and
-             is_list(opts),
-      do: CommentReader.read(article_path, inner_id, nil, opts)
-
-  def comment(comment_path, actor, opts) when is_map(comment_path) and is_map(actor),
-    do: CommentReader.read(comment_path, actor, opts)
+  def comment(comment_path, actor, opts) when is_map(comment_path) and is_map(actor) do
+    CommentFrontDesk.read(comment_path, actor, opts)
+  end
 
   @doc "Reads one Community Tag by database id."
   @spec community_tag(T.id()) :: T.domain_res(CommunityTag.t())
@@ -90,25 +85,4 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   @spec article(ArticlePath.t(), term(), keyword()) :: {:ok, struct()} | {:error, map()}
   def article(article_path, actor, opts), do: Article.read(article_path, actor, opts)
-
-  @doc "Reads one Article projection anchored to an immutable Revision."
-  @spec article_revision(String.t(), String.t(), CommunityModel.t(), keyword()) ::
-          {:ok, map()} | {:error, term()}
-  def article_revision(article_id, revision_id, community, opts \\ [])
-      when is_binary(article_id) and is_binary(revision_id) and is_list(opts),
-      do: Article.read_revision(article_id, revision_id, community, opts)
-
-  @doc "Builds a revision projection from already-loaded command action parts."
-  def article_revision_parts(article, community, revision, opts \\ []),
-    do: Article.article_revision_parts(article, community, revision, opts)
-
-  @doc "Loads one public canonical Article for an explicit ViewTracker request."
-  def article_for_view_tracking(article_path), do: Article.read_for_view_tracking(article_path)
-
-  @doc "Locks and revalidates one physical Article inside the ViewTracker transaction."
-  def lock_article_for_view_tracking(article), do: Article.lock_for_view_tracking(article)
-
-  @doc "Reads one Article through the actor-aware Article Insights scope."
-  def article_insights(article_path, actor, opts \\ []),
-    do: Article.read_insights(article_path, actor, opts)
 end

@@ -42,9 +42,9 @@ defmodule GroupherServer.Test.Credo.NoDirectOrmInTransportTest do
     assert length(issues) == 1
   end
 
-  test "allows ORM inside an owning Reader" do
+  test "allows ORM inside an owning Store" do
     source = """
-    defmodule GroupherServer.CMS.Articles.Reader do
+    defmodule GroupherServer.CMS.Articles.Store do
       alias Helper.ORM
 
       def load(id), do: ORM.find(GroupherServer.CMS.Model.Article, id)
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.Credo.NoDirectOrmInTransportTest do
 
     issues =
       source
-      |> to_source_file("lib/groupher_server/cms/articles/reader.ex")
+      |> to_source_file("lib/groupher_server/cms/articles/store.ex")
       |> run_check(NoDirectOrmInTransport)
 
     assert issues == []

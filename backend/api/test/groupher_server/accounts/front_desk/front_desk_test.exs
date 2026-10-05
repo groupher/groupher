@@ -81,5 +81,9 @@ defmodule GroupherServer.Test.Accounts.FrontDesk do
     end
   end
 
+  test "comment lookup fails closed for a non-path reference" do
+    assert {:error, _reason} = FrontDesk.comment(123)
+  end
+
   defp user_scope(login), do: "user:#{login}"
 end

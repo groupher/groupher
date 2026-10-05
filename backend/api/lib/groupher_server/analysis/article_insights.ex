@@ -13,9 +13,13 @@ defmodule GroupherServer.Analysis.ArticleInsights do
   alias GroupherServer.{Analysis, CMS, Repo, RequestActor}
   alias Analysis.{Const, Model.ArticleHourlyMetric}
   alias RequestActor.Const, as: RequestActorConst
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Artiment.Matcher
   alias CMS.Gate
-  alias CMS.Gate.Context.Scope.{Article, Doc}
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias CMS.Helper.ArticlePath
+  alias CMS.Model.Article, as: ArticleModel
   @default_hours 48
   @max_buckets 720
 
@@ -25,7 +29,7 @@ defmodule GroupherServer.Analysis.ArticleInsights do
 
   def trend(%{id: _id} = article, viewer, opts) when is_list(opts) do
     with {:ok, article_type} <- article_type(article),
-         :ok <- authorize(article, viewer, article_type, opts),
+         :ok <- authorize_if_needed(article, viewer, article_type, opts),
          {:ok, metrics} <- requested_metrics(opts),
          {:ok, actor_types} <- requested_actor_types(opts),
          {:ok, is_authenticated} <- requested_authentication(opts),
@@ -37,6 +41,23 @@ defmodule GroupherServer.Analysis.ArticleInsights do
   end
 
   def trend(_article, _viewer, _opts), do: {:error, :invalid_article_insights_request}
+
+  @doc "Resolves a public Article path through the Insights Gate scope and returns its trend."
+  @spec trend_by_path(ArticlePath.t(), term(), keyword()) :: {:ok, map()} | {:error, term()}
+  def trend_by_path(article_path, viewer, opts \\ [])
+
+  def trend_by_path(article_path, viewer, opts) when is_list(opts) do
+    with {:ok, path} <- ArticlePath.parse(article_path),
+         {:ok, article} <- resolve_article(path, viewer, opts) do
+      trend(article, viewer, Keyword.put(opts, :skip_authorize, true))
+    else
+      {:error, _reason} = error -> error
+    end
+  end
+
+  def trend_by_path(_article_path, _viewer, _opts) do
+    {:error, :invalid_article_insights_request}
+  end
 
   @doc "Returns the current closed metric vocabulary for Article Insights."
   def metrics, do: Const.metrics()
@@ -54,9 +75,11 @@ defmodule GroupherServer.Analysis.ArticleInsights do
       {slug, rules}, acc when is_map(rules) ->
         cms = Map.get(rules, "cms", %{})
 
-        if Map.get(rules, "root") == true or Map.get(cms, "article.insights.read") == true,
-          do: [slug | acc],
-          else: acc
+        if Map.get(rules, "root") == true or Map.get(cms, "article.insights.read") == true do
+          [slug | acc]
+        else
+          acc
+        end
 
       _, acc ->
         acc
@@ -75,14 +98,54 @@ defmodule GroupherServer.Analysis.ArticleInsights do
     end
   end
 
+  defp authorize_if_needed(article, viewer, article_type, opts) do
+    if Keyword.get(opts, :skip_authorize, false) do
+      :ok
+    else
+      authorize(article, viewer, article_type, opts)
+    end
+  end
+
   defp authorize(article, viewer, :doc, opts) do
-    context = Doc.insights(passport_opts(opts))
+    context = DocScope.insights(passport_opts(opts))
     authorize_with_scope(article, viewer, context)
   end
 
   defp authorize(article, viewer, article_type, opts) do
-    context = Article.insights(article_type, passport_opts(opts))
+    context = ArticleScope.insights(article_type, passport_opts(opts))
     authorize_with_scope(article, viewer, context)
+  end
+
+  defp resolve_article(%{community: community, thread: thread, inner_id: inner_id}, viewer, opts) do
+    with {inner_id, ""} <- Integer.parse(to_string(inner_id)),
+         %Ecto.Query{} = query <- insights_scope(thread, viewer, opts),
+         query <-
+           from([article, gate_community: community_row] in query,
+             where:
+               article.thread == ^thread and article.inner_id == ^inner_id and
+                 (community_row.slug == ^community or community_row.aka == ^community)
+           ),
+         %ArticleModel{} = article <- Repo.one(query) do
+      {:ok, article}
+    else
+      nil -> {:error, ArticleErrorCat.article_not_found("article not found")}
+      :error -> {:error, ArticleErrorCat.article_not_found("article not found")}
+      {:error, _reason} = error -> error
+      _ -> {:error, ArticleErrorCat.article_not_found("article not found")}
+    end
+  end
+
+  defp insights_scope(:doc, viewer, opts) do
+    scope_query(DocScope.insights(passport_opts(opts)), viewer)
+  end
+
+  defp insights_scope(thread, viewer, opts) do
+    scope_query(ArticleScope.insights(thread, passport_opts(opts)), viewer)
+  end
+
+  defp scope_query(context, viewer) do
+    scope_actor = if global_god?(viewer), do: :operations, else: viewer
+    Gate.scope(ArticleModel, scope_actor, :read_insights, context)
   end
 
   defp authorize_with_scope(article, viewer, context) do
@@ -105,9 +168,11 @@ defmodule GroupherServer.Analysis.ArticleInsights do
 
     case Gate.scope(article.__struct__, scope_actor, :read_insights, context) do
       %Ecto.Query{} = query ->
-        if Repo.exists?(from(row in query, where: row.id == ^article.id)),
-          do: :ok,
-          else: {:error, :insights_not_authorized}
+        if Repo.exists?(from(row in query, where: row.id == ^article.id)) do
+          :ok
+        else
+          {:error, :insights_not_authorized}
+        end
 
       {:error, _reason} = error ->
         error
@@ -138,9 +203,11 @@ defmodule GroupherServer.Analysis.ArticleInsights do
   defp requested_metrics(opts) do
     metrics = Keyword.get(opts, :metrics, Const.metrics())
 
-    if is_list(metrics) and Enum.all?(metrics, &(&1 in Const.metrics())),
-      do: {:ok, Enum.uniq(metrics)},
-      else: {:error, :invalid_insights_metric}
+    if is_list(metrics) and Enum.all?(metrics, &(&1 in Const.metrics())) do
+      {:ok, Enum.uniq(metrics)}
+    else
+      {:error, :invalid_insights_metric}
+    end
   end
 
   defp requested_actor_types(opts) do

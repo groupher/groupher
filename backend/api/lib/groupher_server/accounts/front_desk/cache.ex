@@ -1,16 +1,17 @@
-defmodule GroupherServer.FrontDesk.Cache do
+defmodule GroupherServer.Accounts.FrontDesk.Cache do
   @moduledoc """
-  Cache helpers for the public FrontDesk facade.
+  Accounts-owned cache helpers for the User FrontDesk boundary.
 
   Business position:
 
-      Resolver / context
-        -> FrontDesk
-        -> Cache
+      Root FrontDesk / Accounts caller
+        -> Accounts.FrontDesk
+        -> Accounts.FrontDesk.Cache
         -> cache / Repo
   """
 
-  alias GroupherServer.{Accounts, FrontDesk}
+  alias GroupherServer.Accounts
+  alias GroupherServer.Accounts.FrontDesk
 
   alias Accounts.Model.User
   alias Helper.Cache
@@ -21,7 +22,7 @@ defmodule GroupherServer.FrontDesk.Cache do
   def user(login) when is_binary(login) do
     case Cache.get(@pool, user_scope(login)) do
       {:ok, %User{} = user} -> {:ok, user}
-      _ -> FrontDesk.revalidate().user(login)
+      _ -> FrontDesk.Revalidate.user(login)
     end
   end
 

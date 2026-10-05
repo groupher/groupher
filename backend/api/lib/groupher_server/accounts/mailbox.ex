@@ -21,11 +21,11 @@ defmodule GroupherServer.Accounts.Mailbox do
   import Helper.ErrorHandler, only: [not_found_formatter: 2]
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, ErrorCat, FrontDesk, Messaging, Repo}
+  alias GroupherServer.{Accounts, ErrorCat, Messaging, Repo}
 
   alias Accounts.Model.{Embeds, User}
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
-  alias FrontDesk.Cache, as: FrontDeskCache
+  alias Accounts.FrontDesk.Cache, as: FrontDeskCache
   alias Helper.Constant.DBPrefix
 
   @default_status Embeds.UserMailbox.default_status()

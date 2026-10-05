@@ -12,7 +12,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
           +--> per-thread counts in folder meta
   """
 
-  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
+  import GroupherServer.FrontDesk, only: [thread_of: 1]
   import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
 
@@ -277,8 +277,9 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   defp result({:ok, %{rm_from_collect_folder: result}}), do: {:ok, result}
   defp result({:error, _step, reason, _steps}), do: {:error, reason}
 
-  defp collect_payload({:ok, folder}, command_id),
-    do: {:ok, %{folder: folder, command_id: command_id}}
+  defp collect_payload({:ok, folder}, command_id) do
+    {:ok, %{folder: folder, command_id: command_id}}
+  end
 
   defp collect_payload({:error, _reason} = error, _command_id), do: error
 

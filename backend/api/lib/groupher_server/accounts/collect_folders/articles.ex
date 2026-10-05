@@ -17,10 +17,9 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
 
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, FrontDesk, Repo}
   alias Accounts.CollectFolders.ErrorCat
   alias Accounts.Model.{CollectFolder, User}
-  alias CMS.FrontDesk
   alias Helper.{ORM, T}
 
   @spec paged(T.id(), map()) :: T.domain_res(T.paged_data())

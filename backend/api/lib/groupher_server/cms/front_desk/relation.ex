@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
 
       CMS.FrontDesk facade / FrontDesk readers
         -> FrontDesk.Relation
-        -> Repo / owning Reader
+        -> Repo / owning Query
   """
 
   alias GroupherServer.{Accounts, CMS, Repo}
@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
-  alias CMS.FrontDesk.Article, as: ArticleReader
+  alias CMS.FrontDesk.Article, as: ArticleFrontDesk
   alias CMS.Model.{Article, Comment}
 
   @doc "Returns the author of an Article or Comment."
@@ -28,8 +28,9 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
   end
 
   @spec author_of(map()) :: {:ok, User.t()} | {:error, map()}
-  def author_of(%{article_id: article_id, author: %User{} = author}) when is_binary(article_id),
-    do: {:ok, author}
+  def author_of(%{article_id: article_id, author: %User{} = author}) when is_binary(article_id) do
+    {:ok, author}
+  end
 
   def author_of(article) do
     case Ecto.assoc_loaded?(article.author) do
@@ -49,7 +50,7 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
          %CMS.Model.Article{} = article <- Repo.get(CMS.Model.Article, article_id),
          %CMS.Model.Community{} = community <- Repo.get(CMS.Model.Community, comment.community_id),
          {:ok, projection} <-
-           ArticleReader.read(
+           ArticleFrontDesk.read(
              %{community: community.slug, thread: thread, inner_id: article.inner_id},
              nil,
              []
@@ -66,19 +67,22 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
 
   @doc "Returns the canonical thread of a Comment or Article projection."
   @spec thread_of(Comment.t() | map()) :: {:ok, atom()} | {:error, map()}
-  def thread_of(%Comment{thread: thread}) when is_atom(thread) and not is_nil(thread),
-    do: Threads.to_atom(thread)
+  def thread_of(%Comment{thread: thread}) when is_atom(thread) and not is_nil(thread) do
+    Threads.to_atom(thread)
+  end
 
   def thread_of(%Article{thread: thread}) when is_atom(thread), do: Threads.to_atom(thread)
 
   def thread_of(%{article_id: article_id, thread: thread})
-      when is_binary(article_id) and is_atom(thread),
-      do: Threads.to_atom(thread)
+      when is_binary(article_id) and is_atom(thread) do
+    Threads.to_atom(thread)
+  end
 
   def thread_of(%{article_id: article_id}) when is_binary(article_id), do: {:ok, :doc}
 
-  def thread_of(%{meta: %{thread: thread}}) when is_atom(thread) and not is_nil(thread),
-    do: Threads.to_atom(thread)
+  def thread_of(%{meta: %{thread: thread}}) when is_atom(thread) and not is_nil(thread) do
+    Threads.to_atom(thread)
+  end
 
   def thread_of(_), do: {:error, ErrorCat.custom("invalid article")}
 
