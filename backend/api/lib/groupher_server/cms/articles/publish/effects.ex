@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
   alias GroupherServer.{Activity, CMS, Repo}
   alias CMS.Articles.Writer
   alias CMS.FrontDesk
-  alias CMS.Model.{Article, Author, Community}
+  alias CMS.Model.{Article, Author, Community, DocBranch}
   alias Helper.Later
 
   @doc """
@@ -25,11 +25,21 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
       Effects.run(%{article: article, revision: revision})
   """
   @spec run(%{required(:article) => Article.t()}) :: {:ok, map()} | {:error, term()}
+  def run(%{article: %Article{thread: :doc}, version: %{branch_id: branch_id}} = result) do
+    case Repo.get(DocBranch, branch_id) do
+      %DocBranch{type: :main} -> run_public_effects(result)
+      %DocBranch{} -> {:ok, result}
+      nil -> {:error, :branch_not_found}
+    end
+  end
+
   def run(%{article: %Article{inner_id: inner_id}} = result) when not is_integer(inner_id) do
     {:ok, result}
   end
 
-  def run(%{article: %Article{} = article} = result) do
+  def run(%{article: %Article{}} = result), do: run_public_effects(result)
+
+  defp run_public_effects(%{article: %Article{} = article} = result) do
     with {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(article),
          %Community{} = community <- Repo.get(Community, article.community_id),
          {:ok, public} <- public_projection(article, community),

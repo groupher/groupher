@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.Model.{Article, Community, DocDraft, DocTreeEvent, DocTreeNode}
+  alias CMS.Model.{Article, Community, DocPublic, DocTreeEvent, DocTreeNode}
   alias Helper.ORM
 
   @doc_tree_json_key_type CMS.DocTree.Const.doc_tree_json_key(:type)
@@ -250,17 +250,17 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
        ) do
     doc_id = node[@doc_tree_json_key_doc_id]
 
-    draft_exists? =
-      DocDraft
-      |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
+    public_exists? =
+      DocPublic
+      |> join(:inner, [public], article in Article, on: article.id == public.article_id)
       |> where(
-        [draft, article],
-        draft.article_id == ^doc_id and draft.branch_id == ^branch.id and
+        [public, article],
+        public.article_id == ^doc_id and public.branch_id == ^branch.id and
           article.community_id == ^community.id
       )
       |> Repo.exists?()
 
-    case draft_exists? do
+    case public_exists? do
       true ->
         {:ok,
          %{

@@ -176,6 +176,66 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert Repo.aggregate(CMS.Outbox.Event, :count) == 0
   end
 
+  test "publish waits for an in-flight autosave and preserves its newer Draft" do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = db_insert(:community)
+    {:ok, author} = CMS.Articles.Writer.ensure_author_exists(user)
+
+    {:ok, %{article: article, draft: draft}} =
+      Store.create(
+        community,
+        :post,
+        %{
+          title: "Before autosave",
+          digest: "digest",
+          body_bag: mock_body_bag(mock_rich_text("body"))
+        },
+        author
+      )
+
+    parent = self()
+
+    autosave =
+      Task.async(fn ->
+        Repo.transaction(fn ->
+          locked =
+            ArticleDraft
+            |> where([candidate], candidate.article_id == ^article.id)
+            |> lock("FOR UPDATE")
+            |> Repo.one!()
+
+          send(parent, :draft_locked)
+
+          receive do
+            :commit_autosave ->
+              locked
+              |> Ecto.Changeset.change(%{
+                title: "Saved concurrently",
+                version: locked.version + 1
+              })
+              |> Repo.update!()
+          end
+        end)
+      end)
+
+    assert_receive :draft_locked
+
+    publish =
+      Task.async(fn ->
+        Target.publish(article, author,
+          expected_draft_version: draft.version,
+          expected_lifecycle_version: 1
+        )
+      end)
+
+    assert Task.yield(publish, 100) == nil
+    send(autosave.pid, :commit_autosave)
+    assert {:ok, {:ok, %ArticleDraft{version: 2}}} = Task.yield(autosave, 5_000)
+    assert {:ok, {:error, :draft_version_conflict}} = Task.yield(publish, 5_000)
+
+    assert {:ok, %ArticleDraft{title: "Saved concurrently", version: 2}} = Store.get(article)
+  end
+
   test "Doc publish allocates durable branch versions and restore creates a new Draft" do
     {:ok, user} = db_insert(:user)
     {:ok, community} = db_insert(:community)
@@ -288,6 +348,57 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert public.article_id == article.id
     assert {:ok, ^public} = CMS.Articles.read_editor(article.id, user, [])
     assert {:ok, false} = CMS.Articles.has_unpublished_changes(article.id, user, [])
+  end
+
+  test "stable Draft creation replays one command without duplicating the aggregate" do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = db_insert(:community)
+    command_id = Ecto.UUID.generate()
+
+    attrs = %{
+      title: "Idempotent draft",
+      digest: "digest",
+      body_bag: mock_body_bag(mock_rich_text("draft body"))
+    }
+
+    assert {:ok, first} =
+             CMS.Articles.create_stable_draft(
+               community,
+               :post,
+               attrs,
+               user,
+               command_id: command_id
+             )
+
+    assert {:ok, replayed} =
+             CMS.Articles.create_stable_draft(
+               community,
+               :post,
+               attrs,
+               user,
+               command_id: command_id
+             )
+
+    assert replayed.article.id == first.article.id
+    assert replayed.draft.article_id == first.draft.article_id
+    assert Repo.aggregate(Article, :count) == 1
+    assert Repo.aggregate(ArticleDraft, :count) == 1
+  end
+
+  test "Revision cleanup locks only candidate revisions" do
+    assert {:ok, 0} = CMS.Articles.Revision.Cleanup.run()
+  end
+
+  test "non-main Doc publish effects do not touch the public main projection" do
+    {community, doc, _attrs, user} = mock_article(:doc)
+
+    assert {:ok, preview} =
+             CMS.Docs.Branch.create_preview(community, %{slug: "effects-preview"}, user)
+
+    article = Repo.get!(Article, doc.article_id)
+    result = %{article: article, version: %{branch_id: preview.id}}
+
+    assert {:ok, ^result} = CMS.Articles.Publish.Effects.run(result)
   end
 
   test "move reassigns the public path and drops the source Community relationship" do

@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Articles.Commands.PermanentlyDeleteTrashed do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
+  alias CMS.Articles.ErrorCat, as: ArticlesErrorCat
   alias CMS.Articles.Trash, as: TrashAgg
   alias CMS.Command
   alias CMS.Model.{TrashedArticle, TrashedDocArticle}
@@ -39,35 +40,39 @@ defmodule GroupherServer.CMS.Articles.Commands.PermanentlyDeleteTrashed do
   end
 
   defp execute_command(item_or_id, actor, command_id, opts) do
-    case resolve_item(item_or_id) do
-      {:ok, item} ->
-        delete_command(item, actor, command_id, opts)
-        |> present_confirmation()
+    with {:ok, community_id} <- command_community_id(opts) do
+      case resolve_item(item_or_id) do
+        {:ok, item} ->
+          with :ok <- ensure_community(item, community_id) do
+            delete_command(item, actor, command_id, community_id, opts)
+            |> present_confirmation()
+          end
 
-      {:error, _reason} ->
-        %Command{
-          actor: actor,
-          command_id: command_id,
-          operation: :article_permanently_delete,
-          target: {:article_trash, Keyword.get(opts, :community_id)},
-          params: %{item_id: item_or_id, opts: canonical_opts(opts)}
-        }
-        |> Command.execute(
-          action: fn _command ->
-            {:error, CMS.Articles.ErrorCat.article_not_found("trash item not found")}
-          end,
-          confirmation: Confirmation
-        )
-        |> present_confirmation()
+        {:error, _reason} ->
+          %Command{
+            actor: actor,
+            command_id: command_id,
+            operation: :article_permanently_delete,
+            target: {:article_trash, community_id},
+            params: %{item_id: item_or_id, opts: canonical_opts(opts)}
+          }
+          |> Command.execute(
+            action: fn _command ->
+              {:error, ArticlesErrorCat.article_not_found("trash item not found")}
+            end,
+            confirmation: Confirmation
+          )
+          |> present_confirmation()
+      end
     end
   end
 
-  defp delete_command(item, actor, command_id, opts) do
+  defp delete_command(item, actor, command_id, community_id, opts) do
     %Command{
       actor: actor,
       command_id: command_id,
       operation: :article_permanently_delete,
-      target: {:article_trash, item.community_id},
+      target: {:article_trash, community_id},
       params: %{item_id: item.hash_id, opts: canonical_opts(opts)}
     }
     |> Command.execute(
@@ -86,4 +91,14 @@ defmodule GroupherServer.CMS.Articles.Commands.PermanentlyDeleteTrashed do
   defp present_confirmation({:ok, %Confirmation{}}), do: {:ok, %{done: true}}
   defp present_confirmation(error), do: error
   defp canonical_opts(opts), do: opts |> Keyword.delete(:command_id) |> Map.new()
+
+  defp command_community_id(opts) do
+    case Keyword.get(opts, :community_id) do
+      community_id when is_integer(community_id) -> {:ok, community_id}
+      _ -> {:error, :community_id_required}
+    end
+  end
+
+  defp ensure_community(%{community_id: community_id}, community_id), do: :ok
+  defp ensure_community(_item, _community_id), do: {:error, :community_mismatch}
 end

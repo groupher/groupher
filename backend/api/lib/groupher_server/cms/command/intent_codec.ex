@@ -19,6 +19,8 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
 
   @policies %{
     article_create: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
+    article_create_draft:
+      {:fields, %{"thread" => :raw, "attrs" => :digest_each, "opts" => :digest_each}},
     article_update: :digest_each,
     article_publish: :digest_each,
     article_replace_asset: :digest_each,

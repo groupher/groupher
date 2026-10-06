@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
 
     Repo.transaction(fn ->
       with {:ok, locked_article} <- lock_article(article.id),
-           {:ok, draft} <- Store.get(locked_article),
+           {:ok, draft} <- Store.get_for_update(locked_article),
            :ok <- validate_version(draft.version, expected_version),
            {:ok, lifecycle} <- Lifecycle.lock(locked_article),
            :ok <- validate_lifecycle_version(lifecycle.version, expected_lifecycle_version),

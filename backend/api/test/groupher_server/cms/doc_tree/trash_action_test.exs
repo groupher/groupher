@@ -75,7 +75,8 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     assert {:ok, restored} =
              CMS.DocTree.restore_trash_item(community, trash_item.id, %{
                base_revision: deleted.revision,
-               actor_id: user.id
+               actor_id: user.id,
+               actor: user
              })
 
     assert restored.node.id == page.node.id

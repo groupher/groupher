@@ -92,6 +92,11 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     if result, do: {:ok, result}, else: {:error, :not_found}
   end
 
+  @doc "Locks and loads the current ordinary or branch-scoped Draft for publication."
+  @spec get_for_update(Article.t(), keyword()) ::
+          {:ok, ArticleDraft.t() | DocDraft.t()} | {:error, :draft_not_found}
+  def get_for_update(%Article{} = article, opts \\ []), do: lock_draft(article, opts)
+
   @doc "Applies an optimistic autosave to Draft, body, typed fields, and tags in one transaction."
   @spec update(Article.t(), map(), Author.t(), keyword()) ::
           {:ok, ArticleDraft.t() | DocDraft.t()} | {:error, term()}
@@ -100,6 +105,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
 
     Repo.transaction(fn ->
       with :ok <- validate_cover(attrs),
+           {:ok, article} <- lock_article(article.id),
            {:ok, draft} <- lock_draft(article, opts),
            :ok <- ensure_version(draft, expected_version),
            {:ok, body_draft} <- update_body(draft, attrs, article.thread),
@@ -362,6 +368,16 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> present()
+  end
+
+  defp lock_article(article_id) do
+    case Article
+         |> where([article], article.id == ^article_id)
+         |> lock("FOR UPDATE")
+         |> Repo.one() do
+      %Article{} = article -> {:ok, article}
+      nil -> {:error, :article_not_found}
+    end
   end
 
   defp present(nil), do: {:error, :draft_not_found}

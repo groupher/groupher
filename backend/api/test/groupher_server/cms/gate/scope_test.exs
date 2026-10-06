@@ -74,6 +74,18 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     {threaded_sql, threaded_params} = to_sql(threaded)
     assert threaded_sql =~ "thread"
     assert "post" in threaded_params
+
+    doc =
+      Comment
+      |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:doc, branch_policy: :main))
+
+    {doc_sql, _doc_params} = to_sql(doc)
+    assert doc_sql =~ ~s(JOIN "cms"."doc_branches")
+    assert doc_sql =~ ~s("type" = 'main')
+
+    {all_sql, _all_params} = to_sql(contextless)
+    assert all_sql =~ ~s(JOIN "cms"."doc_branches")
+    assert all_sql =~ ~s("type" = 'main')
   end
 
   test "Comment rejects an unknown thread and Document requires a thread" do

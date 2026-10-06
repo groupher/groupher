@@ -348,9 +348,33 @@ defmodule GroupherServer.Test.ActivityTest do
     assert doc_draft.branch_id
     assert {:ok, _} = Activity.list_article_logs(doc_draft, doc_user)
     assert {:error, _} = Activity.list_article_logs(doc_draft, nil)
+    {:ok, stranger} = db_insert(:user)
+    assert {:error, _} = Activity.list_article_logs(doc_draft, stranger)
 
     assert {:ok, _trashed} = CMS.Articles.trash(post, user)
     assert {:error, _} = Activity.list_article_logs(post, nil)
+  end
+
+  test "ArticleLog keeps ordinary Drafts owner-scoped" do
+    {community, _published, _attrs, user} = mock_article(:post)
+    {:ok, stranger} = db_insert(:user)
+
+    assert {:ok, %{article: article}} =
+             CMS.Articles.create_stable_draft(
+               community,
+               :post,
+               %{
+                 title: "Draft log",
+                 digest: "digest",
+                 body_bag: mock_body_bag(mock_rich_text("draft"))
+               },
+               user
+             )
+
+    assert {:ok, draft} = CMS.Articles.read_draft(article.id, user)
+    assert {:ok, %{entries: []}} = Activity.list_article_logs(draft, user)
+    assert {:error, _} = Activity.list_article_logs(draft, stranger)
+    assert {:error, _} = Activity.list_article_logs(draft, nil)
   end
 
   test "business state rolls back when its Activity append fails" do

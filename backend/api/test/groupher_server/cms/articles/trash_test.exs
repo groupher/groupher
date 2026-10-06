@@ -46,6 +46,18 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     refute Repo.get(TrashAction, item.trash_action_id)
   end
 
+  test "restore receipt replays after the Trash membership is gone" do
+    {community, post, _attrs, user} = mock_article(:post)
+    assert {:ok, item} = CMS.Articles.trash(post, user)
+    command_id = Ecto.UUID.generate()
+    opts = [command_id: command_id, community_id: community.id]
+
+    assert {:ok, first} = CMS.Articles.restore_trashed(item.hash_id, user, opts)
+    refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
+    assert {:ok, replayed} = CMS.Articles.restore_trashed(item.hash_id, user, opts)
+    assert replayed.id == first.id
+  end
+
   test "Trash excludes Posts from scalar, grouped and multi-status Kanban lists" do
     {community, post, _attrs, user} = mock_article(:post)
     assert {:ok, post} = CMS.Articles.set_status(post.id, :todo, user)
@@ -139,6 +151,21 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
     assert {:ok, %{entries: []}} =
              CMS.Articles.list_trashed(community, %{thread: :post, page: 1, size: 20})
+  end
+
+  test "permanent-delete receipt replays after the aggregate is gone" do
+    {community, post, _attrs, user} = mock_article(:post)
+    assert {:ok, item} = CMS.Articles.trash(post, user)
+    command_id = Ecto.UUID.generate()
+    opts = [command_id: command_id, community_id: community.id]
+
+    assert {:ok, %{done: true}} =
+             CMS.Articles.permanently_delete_trashed(item.hash_id, user, opts)
+
+    refute Repo.get(CMS.Model.Article, post.article_id)
+
+    assert {:ok, %{done: true}} =
+             CMS.Articles.permanently_delete_trashed(item.hash_id, user, opts)
   end
 
   test "permanent delete rejects a stale emotion request and leaves no orphan projections" do

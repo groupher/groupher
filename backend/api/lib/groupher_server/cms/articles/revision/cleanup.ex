@@ -33,26 +33,40 @@ defmodule GroupherServer.CMS.Articles.Revision.Cleanup do
     batch_size = Keyword.get(opts, :batch_size, @default_batch_size)
 
     Repo.transaction(fn ->
+      public_reference =
+        from(public in ArticlePublic,
+          where: public.revision_id == parent_as(:revision).id,
+          select: 1
+        )
+
+      draft_reference =
+        from(draft in ArticleDraft,
+          where: draft.base_revision_id == parent_as(:revision).id,
+          select: 1
+        )
+
+      doc_draft_reference =
+        from(draft in DocDraft,
+          where:
+            draft.base_revision_id == parent_as(:revision).id or
+              draft.source_revision_id == parent_as(:revision).id,
+          select: 1
+        )
+
+      branch_version_reference =
+        from(version in DocBranchVersion,
+          where: version.revision_id == parent_as(:revision).id,
+          select: 1
+        )
+
       revisions =
         ArticleRevision
+        |> from(as: :revision)
         |> where([revision], revision.cleanup_after <= ^now)
-        |> join(:left, [revision], public in ArticlePublic, on: public.revision_id == revision.id)
-        |> join(:left, [revision], draft in ArticleDraft,
-          on: draft.base_revision_id == revision.id
-        )
-        |> join(:left, [revision], doc_draft in DocDraft,
-          on:
-            doc_draft.base_revision_id == revision.id or
-              doc_draft.source_revision_id == revision.id
-        )
-        |> join(:left, [revision], version in DocBranchVersion,
-          on: version.revision_id == revision.id
-        )
-        |> where(
-          [_revision, public, draft, doc_draft, version],
-          is_nil(public.article_id) and is_nil(draft.article_id) and is_nil(doc_draft.id) and
-            is_nil(version.id)
-        )
+        |> where(not exists(public_reference))
+        |> where(not exists(draft_reference))
+        |> where(not exists(doc_draft_reference))
+        |> where(not exists(branch_version_reference))
         |> order_by([revision], asc: revision.cleanup_after, asc: revision.id)
         |> limit(^batch_size)
         |> lock("FOR UPDATE SKIP LOCKED")

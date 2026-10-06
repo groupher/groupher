@@ -16,9 +16,12 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreTrashItem do
     clean_args = Support.drop_command_id(args)
     domain_args = canonical_args(clean_args)
 
-    case Support.option(args, :actor) do
-      %User{} = actor -> execute_command(community, id, args, domain_args, actor)
-      _ -> Trash.restore(community, id, clean_args)
+    case {Support.option(args, :actor), Support.option(args, :command_id)} do
+      {%User{} = actor, command_id} when is_binary(command_id) ->
+        execute_command(community, id, args, domain_args, actor)
+
+      _ ->
+        Trash.restore(community, id, clean_args)
     end
   end
 

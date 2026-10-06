@@ -174,6 +174,16 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       {:ok, legacy_event} = ORM.find(CMS.Model.DocTreeEvent, legacy_event.id)
       assert legacy_event.status == CMS.DocTree.Const.tree_event_status(:published)
+
+      assert {:ok, public_node} =
+               ORM.find_by(CMS.Model.DocTreeNode,
+                 community_id: community.id,
+                 branch_id: legacy_event.branch_id,
+                 stage: CMS.Const.stage(:public),
+                 node_id: page_payload.node.id
+               )
+
+      assert public_node.doc_id == page_payload.node.doc_id
     end
 
     test "tree-only publish does not auto-publish doc-bound page creates",

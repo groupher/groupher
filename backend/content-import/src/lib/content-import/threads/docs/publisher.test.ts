@@ -78,7 +78,7 @@ describe('runPreviewDocBulkImport', () => {
       skipped: [],
       status: 'ready',
     })
-    mocks.applyDocImport.mockResolvedValue({ firstImportedDocRef: 'doc-1', status: 'completed' })
+    mocks.applyDocImport.mockResolvedValue({ firstImportedDocId: 'doc-1', status: 'completed' })
   })
 
   it('publishes and stages only the selected source refs', async () => {

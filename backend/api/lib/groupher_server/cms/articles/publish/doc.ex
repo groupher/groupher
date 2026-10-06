@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
   def publish(%Article{thread: :doc} = article, branch_id, %Author{} = actor, opts) do
     Repo.transaction(fn ->
       with {:ok, article} <- lock_article(article.id),
-           {:ok, draft} <- Store.get(article, branch_id: branch_id),
+           {:ok, draft} <- Store.get_for_update(article, branch_id: branch_id),
            :ok <- valid_slug(draft.slug),
            :ok <- same_version(draft.version, Keyword.fetch!(opts, :expected_draft_version)),
            {:ok, lifecycle} <- lock_lifecycle(article.id, branch_id),

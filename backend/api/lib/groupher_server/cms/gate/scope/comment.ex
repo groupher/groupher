@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
   alias Accounts.Model.User
   alias CMS.Gate.{ErrorCat, Scope.Policy}
   alias CMS.Gate.Scope.{ArticleSchema, CommunityChain}
-  alias CMS.Model.{ArticleLifecycle, CommentLifecycle, DocLifecycle}
+  alias CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
 
   @behaviour Policy
 
@@ -84,8 +84,12 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       on:
         doc_lifecycle.article_id == comment.article_id and
           doc_lifecycle.branch_id == comment.branch_id,
+      join: doc_branch in DocBranch,
+      as: :gate_doc_branch,
+      on: doc_branch.id == comment.branch_id,
       where: lifecycle.state != :destroy,
-      where: doc_lifecycle.state in [:published, :archived]
+      where: doc_lifecycle.state in [:published, :archived],
+      where: doc_branch.type == :main
     )
   end
 
@@ -105,10 +109,14 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       on:
         doc_lifecycle.article_id == comment.article_id and
           doc_lifecycle.branch_id == comment.branch_id and comment.thread == ^:doc,
+      left_join: doc_branch in DocBranch,
+      as: :gate_doc_branch,
+      on: doc_branch.id == comment.branch_id and comment.thread == ^:doc,
       where: lifecycle.state != :destroy,
       where:
         (comment.thread != ^:doc and article_lifecycle.state in [:published, :archived]) or
-          (comment.thread == ^:doc and doc_lifecycle.state in [:published, :archived])
+          (comment.thread == ^:doc and doc_lifecycle.state in [:published, :archived] and
+             doc_branch.type == :main)
     )
   end
 
