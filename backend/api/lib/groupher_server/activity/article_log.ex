@@ -15,7 +15,7 @@ defmodule GroupherServer.Activity.ArticleLog do
   alias CMS.Gate
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias CMS.Model.{Article, ArticleDraft}
+  alias CMS.Model.{Article, ArticleDraft, DocDraft}
   alias Helper.ORM
 
   @page_size 20
@@ -61,6 +61,19 @@ defmodule GroupherServer.Activity.ArticleLog do
       nil ->
         {:error, ArticlesErrorCat.not_exist("Article")}
     end
+  end
+
+  defp authorize_read(%DocDraft{article_id: article_id, branch_id: branch_id}, actor) do
+    authorize_scoped(
+      article_id,
+      actor,
+      :read_draft,
+      DocContext.draft(branch_id, :owner_management)
+    )
+  end
+
+  defp authorize_read(%Article{id: article_id, thread: thread}, actor) when thread != :doc do
+    authorize_scoped(article_id, actor, :read, ArticleContext.public(thread))
   end
 
   defp authorize_read(article, actor) do

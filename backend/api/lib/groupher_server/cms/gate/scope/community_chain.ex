@@ -39,7 +39,8 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     :gate_article_lifecycle,
     :gate_comment_lifecycle,
     :gate_community,
-    :gate_community_lifecycle
+    :gate_community_lifecycle,
+    :gate_doc_branch
   ]
 
   @doc false

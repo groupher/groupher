@@ -277,6 +277,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
              )
 
     assert result.version.version_number == 1
+    assert result.branch_type == :main
     assert Repo.get!(Article, article.id).inner_id == 1
     assert result.public.branch_version_id == result.version.id
 
@@ -389,14 +390,10 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert {:ok, 0} = CMS.Articles.Revision.Cleanup.run()
   end
 
-  test "non-main Doc publish effects do not touch the public main projection" do
-    {community, doc, _attrs, user} = mock_article(:doc)
-
-    assert {:ok, preview} =
-             CMS.Docs.Branch.create_preview(community, %{slug: "effects-preview"}, user)
-
+  test "non-main Doc publish effects use the committed branch type" do
+    {_community, doc, _attrs, _user} = mock_article(:doc)
     article = Repo.get!(Article, doc.article_id)
-    result = %{article: article, version: %{branch_id: preview.id}}
+    result = %{article: article, branch_type: :preview}
 
     assert {:ok, ^result} = CMS.Articles.Publish.Effects.run(result)
   end

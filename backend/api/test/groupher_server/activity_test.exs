@@ -335,6 +335,9 @@ defmodule GroupherServer.Test.ActivityTest do
     assert Enum.take(restored_ids, 2) == [newer.event_ref, older.event_ref]
     refute Enum.any?(entries, &(&1.action in [:trashed, :permanently_deleted]))
 
+    stable_article = Repo.get!(CMS.Model.Article, post.article_id)
+    assert {:ok, _} = Activity.list_article_logs(stable_article, nil)
+
     {_doc_community, doc, _doc_attrs, doc_user} = mock_article(:doc)
 
     assert {:ok, doc_draft} =
@@ -347,8 +350,18 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert doc_draft.branch_id
     assert {:ok, _} = Activity.list_article_logs(doc_draft, doc_user)
+
+    raw_doc_draft =
+      Repo.get_by!(CMS.Model.DocDraft,
+        article_id: doc.article_id,
+        branch_id: doc.branch_id
+      )
+
+    assert {:ok, _} = Activity.list_article_logs(raw_doc_draft, doc_user)
+    assert {:error, _} = Activity.list_article_logs(raw_doc_draft, nil)
     assert {:error, _} = Activity.list_article_logs(doc_draft, nil)
     {:ok, stranger} = db_insert(:user)
+    assert {:error, _} = Activity.list_article_logs(raw_doc_draft, stranger)
     assert {:error, _} = Activity.list_article_logs(doc_draft, stranger)
 
     assert {:ok, _trashed} = CMS.Articles.trash(post, user)

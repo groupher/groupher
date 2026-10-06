@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
   alias GroupherServer.{Activity, CMS, Repo}
   alias CMS.Articles.Writer
   alias CMS.FrontDesk
-  alias CMS.Model.{Article, Author, Community, DocBranch}
+  alias CMS.Model.{Article, Author, Community}
   alias Helper.Later
 
   @doc """
@@ -22,16 +22,14 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
 
   ## Examples
 
-      Effects.run(%{article: article, revision: revision})
+      Effects.run(%{article: article, branch_type: :main, revision: revision})
   """
   @spec run(%{required(:article) => Article.t()}) :: {:ok, map()} | {:error, term()}
-  def run(%{article: %Article{thread: :doc}, version: %{branch_id: branch_id}} = result) do
-    case Repo.get(DocBranch, branch_id) do
-      %DocBranch{type: :main} -> run_public_effects(result)
-      %DocBranch{} -> {:ok, result}
-      nil -> {:error, :branch_not_found}
-    end
-  end
+  def run(%{article: %Article{thread: :doc}, branch_type: :main} = result),
+    do: run_public_effects(result)
+
+  def run(%{article: %Article{thread: :doc}, branch_type: _branch_type} = result),
+    do: {:ok, result}
 
   def run(%{article: %Article{inner_id: inner_id}} = result) when not is_integer(inner_id) do
     {:ok, result}

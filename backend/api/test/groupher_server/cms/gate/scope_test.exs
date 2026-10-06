@@ -130,6 +130,13 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
              CMS.Gate.scope(comment_query, nil, :read, CommentContext.all_public())
   end
 
+  test "Comment scope rejects caller-owned Doc branch bindings" do
+    query = from(comment in Comment, as: :gate_doc_branch)
+
+    assert {:error, %ErrorCat.Error{reason: :scope_binding_conflict}} =
+             CMS.Gate.scope(query, nil, :read, CommentContext.all_public())
+  end
+
   test "scope composes after select, distinct, and group_by" do
     query =
       Comment
