@@ -14,8 +14,6 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.Comment), nil, :read, context)
   """
 
-  require GroupherServer.CMS.Docs.Const
-
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Accounts, CMS}
@@ -27,7 +25,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   @behaviour Policy
 
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
 
   @actions [:read, :list]
 
@@ -64,8 +62,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   defp maybe_filter_thread(query, %{thread: :all}), do: query
 
-  defp maybe_filter_thread(query, %{thread: thread}),
-    do: where(query, [comment], comment.thread == ^thread)
+  defp maybe_filter_thread(query, %{thread: thread}) do
+    where(query, [comment], comment.thread == ^thread)
+  end
 
   defp maybe_filter_thread(query, _context), do: query
 
@@ -80,19 +79,17 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
       on: lifecycle.comment_id == comment.id,
-      join: branch in DocBranch,
-      as: :gate_doc_branch,
-      on:
-        branch.community_id == comment.community_id and
-          branch.type == ^CMS.Docs.Const.doc_branch_type(:main),
       join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
-        doc_lifecycle.community_id == comment.community_id and
-          doc_lifecycle.branch_id == branch.id and
-          doc_lifecycle.article_hash_id == comment.article_hash_id,
+        doc_lifecycle.article_id == comment.article_id and
+          doc_lifecycle.branch_id == comment.branch_id,
+      join: doc_branch in DocBranch,
+      as: :gate_doc_branch,
+      on: doc_branch.id == comment.branch_id,
       where: lifecycle.state != :destroy,
-      where: doc_lifecycle.state in [:published, :archived]
+      where: doc_lifecycle.state in [:published, :archived],
+      where: doc_branch.type == :main
     )
   end
 
@@ -106,26 +103,20 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       on: lifecycle.comment_id == comment.id,
       left_join: article_lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
-      on:
-        article_lifecycle.community_id == comment.community_id and
-          article_lifecycle.thread == comment.thread and
-          article_lifecycle.article_hash_id == comment.article_hash_id and
-          comment.thread != ^:doc,
-      left_join: branch in DocBranch,
-      as: :gate_doc_branch,
-      on:
-        branch.community_id == comment.community_id and
-          branch.type == ^CMS.Docs.Const.doc_branch_type(:main) and comment.thread == ^:doc,
+      on: article_lifecycle.article_id == comment.article_id and comment.thread != ^:doc,
       left_join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
-        doc_lifecycle.community_id == comment.community_id and
-          doc_lifecycle.branch_id == branch.id and
-          doc_lifecycle.article_hash_id == comment.article_hash_id and comment.thread == ^:doc,
+        doc_lifecycle.article_id == comment.article_id and
+          doc_lifecycle.branch_id == comment.branch_id and comment.thread == ^:doc,
+      left_join: doc_branch in DocBranch,
+      as: :gate_doc_branch,
+      on: doc_branch.id == comment.branch_id and comment.thread == ^:doc,
       where: lifecycle.state != :destroy,
       where:
         (comment.thread != ^:doc and article_lifecycle.state in [:published, :archived]) or
-          (comment.thread == ^:doc and doc_lifecycle.state in [:published, :archived])
+          (comment.thread == ^:doc and doc_lifecycle.state in [:published, :archived] and
+             doc_branch.type == :main)
     )
   end
 
@@ -136,10 +127,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       on: lifecycle.comment_id == comment.id,
       join: article_lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
-      on:
-        article_lifecycle.community_id == comment.community_id and
-          article_lifecycle.thread == comment.thread and
-          article_lifecycle.article_hash_id == comment.article_hash_id,
+      on: article_lifecycle.article_id == comment.article_id,
       where: lifecycle.state != :destroy,
       where: article_lifecycle.state in [:published, :archived]
     )

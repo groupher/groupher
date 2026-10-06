@@ -211,6 +211,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
   end
 
   test "cleanup drains more than one batch in a single run" do
+    {_community, post, _attrs, _user} = mock_article(:post)
     old_config = Application.get_env(:groupher_server, CMS.ViewTracker.Config)
 
     Application.put_env(:groupher_server, CMS.ViewTracker.Config,
@@ -227,9 +228,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     stale = DateTime.add(DateTime.utc_now(:second), -60, :second)
 
     Repo.insert_all(ViewDedupeState, [
-      dedupe_attrs(1, stale, "one"),
-      dedupe_attrs(2, stale, "two"),
-      dedupe_attrs(3, stale, "three")
+      dedupe_attrs(post.article_id, stale, "one"),
+      dedupe_attrs(post.article_id, stale, "two"),
+      dedupe_attrs(post.article_id, stale, "three")
     ])
 
     assert %{
@@ -241,6 +242,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
   end
 
   test "cleanup stops safely at its row budget and resumes on the next run" do
+    {_community, post, _attrs, _user} = mock_article(:post)
     old_config = Application.get_env(:groupher_server, CMS.ViewTracker.Config)
 
     Application.put_env(:groupher_server, CMS.ViewTracker.Config,
@@ -257,9 +259,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     stale = DateTime.add(DateTime.utc_now(:second), -60, :second)
 
     Repo.insert_all(ViewDedupeState, [
-      dedupe_attrs(1, stale, "one"),
-      dedupe_attrs(2, stale, "two"),
-      dedupe_attrs(3, stale, "three")
+      dedupe_attrs(post.article_id, stale, "one"),
+      dedupe_attrs(post.article_id, stale, "two"),
+      dedupe_attrs(post.article_id, stale, "three")
     ])
 
     assert %{deleted_rows: 2, budget_exhausted: true, remaining_expired_rows: 1} =
@@ -327,12 +329,11 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     assert hd(stats_reads) =~ ~s["cms"."article_emotion_counts"]
   end
 
-  test "ArticleStats owner writes reject missing counts instead of persisting zero" do
+  test "ArticleStats derives comment counts from the stable Article aggregate" do
     {_community, post, _attrs, _user} = mock_article(:post)
-    partial = %{post | comments_count: nil}
+    article = Repo.get!(CMS.Model.Article, post.article_id)
 
-    assert {:error, {:invalid_owner_count, :comments_count}} =
-             CMS.ArticleStats.apply_comment_counts(partial)
+    assert :ok = CMS.ArticleStats.apply_comment_counts(article)
 
     assert {:ok, %{comments_count: 0, comments_revision: 0}} =
              CMS.ArticleStats.fetch(:post, post.id)
@@ -340,6 +341,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
 
   test "ArticleStats rebuilds advance the repaired owner revision" do
     {_community, post, _attrs, _user} = mock_article(:post)
+    article = Repo.get!(CMS.Model.Article, post.article_id)
 
     from(stats in ArticleStats,
       where: stats.thread == :post and stats.article_id == ^post.id
@@ -348,8 +350,8 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
       set: [comments_count: 9, upvotes_count: 9, comments_revision: 0, interaction_revision: 0]
     )
 
-    assert :ok = CMS.ArticleStats.rebuild_comment_fields(post)
-    assert :ok = CMS.ArticleStats.rebuild_interaction_fields(post)
+    assert :ok = CMS.ArticleStats.rebuild_comment_fields(article)
+    assert :ok = CMS.ArticleStats.rebuild_interaction_fields(article)
 
     assert {:ok,
             %{
@@ -362,6 +364,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
 
   test "ArticleStats snapshot default and every owner update use database clock" do
     {_community, post, _attrs, user} = mock_article(:post)
+    article = Repo.get!(CMS.Model.Article, post.article_id)
 
     %{rows: [[default_expression]]} =
       Repo.query!("""
@@ -375,10 +378,10 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     assert String.contains?(default_expression, "clock_timestamp()")
 
     {_result, comment_queries} =
-      capture_repo_queries(fn -> CMS.ArticleStats.apply_comment_counts(post) end)
+      capture_repo_queries(fn -> CMS.ArticleStats.apply_comment_counts(article) end)
 
     {_result, interaction_queries} =
-      capture_repo_queries(fn -> CMS.ArticleStats.apply_interaction_counts(post) end)
+      capture_repo_queries(fn -> CMS.ArticleStats.apply_interaction_counts(article) end)
 
     {_result, view_queries} =
       capture_repo_queries(fn ->
@@ -430,8 +433,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
 
   defp delete_physical_article(post) do
     Repo.transaction(fn ->
-      {:ok, _deleted} = Repo.delete(post)
-      :ok = ViewTracker.delete_article_state(:post, post.id)
+      article = Repo.get!(CMS.Model.Article, post.article_id)
+      {:ok, _deleted} = Repo.delete(article)
+      :ok = ViewTracker.delete_article_state(:post, post.article_id)
     end)
   end
 
@@ -489,16 +493,18 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     end)
   end
 
-  defp dedupe_state_upsert_query?(query),
-    do: String.contains?(query, ~s[INSERT INTO "cms"."article_view_dedupe_states"])
+  defp dedupe_state_upsert_query?(query) do
+    String.contains?(query, ~s[INSERT INTO "cms"."article_view_dedupe_states"])
+  end
 
-  defp article_stats_upsert_query?(query),
-    do: String.contains?(query, ~s[INSERT INTO "cms"."article_stats"])
+  defp article_stats_upsert_query?(query) do
+    String.contains?(query, ~s[INSERT INTO "cms"."article_stats"])
+  end
 
-  defp article_stats_select_query?(query),
-    do:
-      String.starts_with?(query, "SELECT") and
-        String.contains?(query, ~s[FROM "cms"."article_stats"])
+  defp article_stats_select_query?(query) do
+    String.starts_with?(query, "SELECT") and
+      String.contains?(query, ~s[FROM "cms"."article_stats"])
+  end
 
   defp key_share_query?(query), do: String.contains?(query, "FOR KEY SHARE")
 end

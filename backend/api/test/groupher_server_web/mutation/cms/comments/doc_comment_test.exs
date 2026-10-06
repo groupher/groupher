@@ -247,8 +247,13 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
       assert result["innerId"] == to_string(doc.inner_id)
 
-      {:ok, doc} = ORM.find(Doc, doc.id)
-      assert doc.meta.is_comment_locked
+      state =
+        Repo.get_by!(CMS.Model.DocBranchState,
+          article_id: doc.article_id,
+          branch_id: doc.branch_id
+        )
+
+      assert state.comments_locked
     end
 
     test "unauth user fails", ~m(guest_conn community doc)a do
@@ -262,9 +267,9 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              )
     end
 
-    test "can undo lock a doc's comment", ~m(community doc)a do
-      {:ok, _} = CMS.Articles.lock_comments(doc)
-      {:ok, doc} = ORM.find(Doc, doc.id)
+    test "can undo lock a doc's comment", ~m(community doc user)a do
+      {:ok, _} = CMS.Articles.lock_comments(doc.id, user, branch_id: doc.branch_id)
+      {:ok, doc} = read_article(community, :doc, doc.inner_id)
       assert doc.meta.is_comment_locked
 
       variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
@@ -275,7 +280,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
       assert result["innerId"] == to_string(doc.inner_id)
 
-      {:ok, doc} = ORM.find(Doc, doc.id)
+      {:ok, doc} = read_article(community, :doc, doc.inner_id)
       assert not doc.meta.is_comment_locked
     end
 

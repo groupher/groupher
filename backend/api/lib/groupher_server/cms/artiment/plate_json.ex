@@ -20,7 +20,6 @@ defmodule GroupherServer.CMS.Artiment.PlateJSON do
   alias GroupherServer.CMS
   alias CMS.ErrorCat
 
-
   @doc "Decodes a persisted Plate JSON root list without deriving content formats."
   @spec decode(String.t()) :: {:ok, list()} | {:error, term()}
   def decode(body) when is_binary(body) do

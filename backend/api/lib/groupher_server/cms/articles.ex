@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Articles do
       Post / Blog / Changelog
                     |
                     v
-      article_hash_id + ArticleLifecycle
+      stable article_id + ArticleLifecycle
                     |
           +---------+----------+
           |                    |
@@ -20,228 +20,343 @@ defmodule GroupherServer.CMS.Articles do
 
   alias __MODULE__.{
     Commands,
-    Draft,
-    List,
+    Communities,
+    Query,
     Moderation,
-    Publish,
-    Reader,
+    Store,
     States,
     Trash
   }
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
   alias Helper.T
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.Const
-  alias CMS.Model.Community
+  alias CMS.Communities, as: CommunityFacade
+  alias CMS.FrontDesk
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
+  alias CMS.Model.{Article, Author, Community}
+  alias CMS.Outbox
 
-  # Read
-  @doc "Runs `read` through the public `Articles` boundary."
-  @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
-  def read(%Community{} = community, thread, inner_id),
-    do: Reader.read(community, thread, inner_id)
+  alias __MODULE__.Draft.Store, as: TargetDraft
+  alias __MODULE__.Draft.Diff, as: TargetDiff
 
-  @spec read(Community.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
-  def read(%Community{} = community, thread, inner_id, %User{} = user) do
-    Reader.read(community, thread, inner_id, user)
+  @doc "Resolves a bounded batch of public ArticlePaths in one Article-owned query."
+  def resolve_paths(paths), do: __MODULE__.PathResolver.resolve(paths)
+
+  @doc "Moves a stable ordinary Article to a new home Community through Gate."
+  @spec move(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
+          {:ok, Article.t()} | {:error, term()}
+  def move(%Community{} = community, article_id, tag_ids, %User{} = actor) do
+    with_article(article_id, actor, :move, fn article ->
+      old_inner_id = article.inner_id
+
+      with {:ok, %Community{} = source} <-
+             FrontDesk.community(article.community_id, mode: :internal),
+           {:ok, moved} <- Communities.move(article, community),
+           {:ok, relation} <-
+             Store.home_relation(moved.id),
+           {:ok, _relation} <- Communities.replace_tags(relation, tag_ids),
+           {:ok, _source} <- CommunityFacade.update_count_field(source, article.thread),
+           {:ok, _destination} <- CommunityFacade.update_count_field(community, article.thread),
+           :ok <- invalidate_move(source, old_inner_id, community, moved, Ecto.UUID.generate()),
+           {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(moved) do
+        {:ok, moved}
+      end
+    end)
   end
 
-  # List
+  @doc "Mirrors a stable ordinary Article into another Community through Gate."
+  @spec mirror(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
+          {:ok, CMS.Model.ArticleCommunity.t()} | {:error, term()}
+  def mirror(%Community{} = community, article_id, tag_ids, %User{} = actor) do
+    with_article(article_id, actor, :mirror, fn article ->
+      with {:ok, relation} <- Communities.mirror(article, community),
+           {:ok, relation} <- Communities.replace_tags(relation, tag_ids),
+           :ok <- invalidate_community_scope(community, article) do
+        {:ok, relation}
+      end
+    end)
+  end
+
+  @doc "Removes a stable ordinary Article mirror from a Community through Gate."
+  @spec unmirror(Community.t(), Ecto.UUID.t(), User.t()) ::
+          {:ok, :done} | {:error, term()}
+  def unmirror(%Community{} = community, article_id, %User{} = actor) do
+    with_article(article_id, actor, :unmirror, fn article ->
+      with {:ok, :done} <- Communities.unmirror(article, community),
+           :ok <- invalidate_community_scope(community, article) do
+        {:ok, :done}
+      end
+    end)
+  end
+
+  @doc "Pins a stable ordinary Article in one of its Communities through Gate."
+  @spec pin(Community.t(), Ecto.UUID.t(), User.t()) ::
+          {:ok, CMS.Model.PinnedArticle.t()} | {:error, term()}
+  def pin(%Community{} = community, article_id, %User{} = actor) do
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{thread: :doc}} ->
+        {:error, :unsupported_for_doc}
+
+      {:ok, %Article{} = article} ->
+        CMS.Gate.Access.with_check(actor, :pin, article, fn canonical ->
+          with :ok <- ensure_pin_capacity(community.id, canonical.thread) do
+            Communities.pin(canonical, community)
+          end
+        end)
+
+      {:error, _} ->
+        {:error, GateErrorCat.resource_not_found()}
+    end
+  end
+
+  @doc "Removes a Community-local stable Article pin through Gate."
+  @spec undo_pin(Community.t(), Ecto.UUID.t(), User.t()) :: {:ok, :done} | {:error, term()}
+  def undo_pin(%Community{} = community, article_id, %User{} = actor) do
+    with_article(article_id, actor, :unpin, &Communities.unpin(&1, community))
+  end
+
+  defp with_article(article_id, actor, action, callback) when is_binary(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{} = article} -> CMS.Gate.Access.with_check(actor, action, article, callback)
+      {:error, _} -> {:error, GateErrorCat.resource_not_found()}
+    end
+  end
+
+  defp ensure_pin_capacity(community_id, thread) do
+    if Communities.pin_capacity_available?(community_id, thread) do
+      :ok
+    else
+      {:error, CMS.Articles.ErrorCat.too_much_pinned_article("too much pinned article")}
+    end
+  end
+
+  defp invalidate_move(source, old_inner_id, destination, moved, command_id) do
+    with :ok <- invalidate_community_scope(source, %{moved | inner_id: old_inner_id}, command_id),
+         :ok <- invalidate_community_scope(destination, moved, Ecto.UUID.generate()) do
+      :ok
+    end
+  end
+
+  defp invalidate_community_scope(_community, %{inner_id: inner_id})
+       when not is_integer(inner_id) do
+    :ok
+  end
+
+  defp invalidate_community_scope(%Community{} = community, article) do
+    invalidate_community_scope(community, article, Ecto.UUID.generate())
+  end
+
+  defp invalidate_community_scope(%Community{} = community, article, command_id) do
+    case Outbox.send(%{
+           event: "article.visibility_changed",
+           worker: CMS.Outbox.Workers.Article.Cleanup,
+           resource_type: "article",
+           resource_id: article.id,
+           command_id: command_id,
+           data: %{
+             community: community.slug,
+             community_id: community.id,
+             thread: article.thread,
+             inner_id: article.inner_id,
+             article_id: article.id
+           }
+         }) do
+      {:ok, _event} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  # Query
 
   @doc "Runs `page` through the public `Articles` boundary."
   @spec page(T.thread(), map()) :: T.domain_res(T.paged_data())
-  def page(thread, filter), do: List.page(thread, filter)
+  def page(thread, filter), do: Query.page(thread, filter)
 
   @spec page(T.thread(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def page(thread, filter, %User{} = user), do: List.page(thread, filter, user)
+  def page(thread, filter, %User{} = user), do: Query.page(thread, filter, user)
 
   @doc "Runs `grouped_kanban` through the public `Articles` boundary."
   @spec grouped_kanban(Community.t()) :: T.domain_res(term())
-  def grouped_kanban(%Community{} = community), do: List.grouped_kanban(community)
+  def grouped_kanban(%Community{} = community), do: Query.grouped_kanban(community)
 
   @doc "Returns paged kanban from the `Articles` read boundary."
   @spec paged_kanban(Community.t(), map()) :: T.domain_res(term())
-  def paged_kanban(%Community{} = community, filter), do: List.paged_kanban(community, filter)
+  def paged_kanban(%Community{} = community, filter), do: Query.paged_kanban(community, filter)
 
   @doc "Returns paged published from the `Articles` read boundary."
   @spec paged_published(T.thread(), map(), User.t()) :: T.domain_res(T.paged_data())
   def paged_published(thread, filter, %User{} = user) do
-    List.paged_published(thread, filter, user, nil)
+    Query.paged_published(thread, filter, user, nil)
   end
 
   @spec paged_published(T.thread(), map(), User.t(), User.t() | nil) ::
           T.domain_res(T.paged_data())
   def paged_published(thread, filter, %User{} = target_user, actor) do
-    List.paged_published(thread, filter, target_user, actor)
+    Query.paged_published(thread, filter, target_user, actor)
   end
 
   @doc "Runs `count_published` through the public `Articles` boundary."
   @spec count_published(T.thread(), User.t()) :: T.domain_res(non_neg_integer())
-  def count_published(thread, %User{} = user),
-    do: List.count_published(thread, user)
+  def count_published(thread, %User{} = user) do
+    Query.count_published(thread, user)
+  end
 
   # Write
 
   @doc "Creates and immediately publishes an Article through the shared lifecycle."
   @spec create(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
           T.domain_res(T.article())
-  def create(community, thread, attrs, %User{} = user, opts \\ []),
-    do: Commands.Create.create(community, thread, attrs, user, opts)
-
-  @doc "Updates through the actor-less domain path by deriving the actor from the Article author; this is not a transport entrypoint."
-  @spec update(T.article(), map()) :: T.domain_res(T.article())
-  def update(article, attrs), do: Publish.update(article, attrs)
+  def create(community, thread, attrs, %User{} = user, opts \\ []) do
+    Commands.Create.execute(community, thread, attrs, user, opts)
+  end
 
   @doc "Updates an Article through the authenticated idempotent command boundary."
   @spec update(T.article(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(T.article())
-  def update(article, attrs, %User{} = user, command_id),
-    do: Commands.Update.update(article, attrs, user, command_id)
+  def update(article, attrs, %User{} = user, command_id) do
+    Commands.Update.execute(article, attrs, user, command_id)
+  end
 
   # Shared Article Draft lifecycle
 
-  @doc "Creates a branch-local draft for any Article thread."
-  @spec create_draft(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
-          T.domain_res(T.article())
-  def create_draft(community, thread, attrs, %User{} = user, opts \\ []),
-    do: Commands.Draft.create(community, thread, attrs, user, opts)
-
-  @doc "Reads a Draft through one typed :read_draft Scope query."
-  @spec read_draft(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
-          T.domain_res(T.article())
-  def read_draft(%Community{} = community, thread, article_hash_id, opts \\ []) do
-    opts = draft_read_opts(opts)
-
-    Draft.read(community, thread, article_hash_id, opts)
+  @doc "Creates the stable Article aggregate and its first mutable Draft workspace."
+  @spec create_stable_draft(Community.t(), T.thread(), map(), User.t() | Author.t(), keyword()) ::
+          {:ok, map()} | {:error, term()}
+  def create_stable_draft(%Community{} = community, thread, attrs, actor, opts \\ []) do
+    Commands.CreateStableDraft.execute(community, thread, attrs, actor, opts)
   end
 
-  @doc "Reads the official main/public Article head by stable logical identity."
-  @spec read_public(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
-          T.domain_res(T.article())
-  def read_public(%Community{} = community, thread, article_hash_id, opts \\ []) do
-    Draft.read_public(community, thread, article_hash_id, opts)
+  @doc "Reads the current mutable workspace by stable Article UUID and actor."
+  @spec read_draft(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, struct()} | {:error, term()}
+  def read_draft(article_id, %User{} = actor) when is_binary(article_id) do
+    read_draft(article_id, actor, [])
   end
 
-  @doc "Reads the Article head shown by the editor; this is a content-head lookup, not a rich-text editor implementation."
-  @spec read_editor_head(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
-          T.domain_res(T.article())
-  def read_editor_head(%Community{} = community, thread, article_hash_id, opts \\ []) do
-    Draft.read_editor_head(community, thread, article_hash_id, opts)
-  end
-
-  @doc "Compatibility alias for `read_editor_head/4`; use the explicit head name in new code."
-  @spec read_editor(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
-          T.domain_res(T.article())
-  def read_editor(%Community{} = community, thread, article_hash_id, opts \\ []) do
-    read_editor_head(community, thread, article_hash_id, opts)
-  end
-
-  @doc "Creates the editable Draft from main/public when needed, then applies an update."
-  @spec update_draft(
-          Community.t(),
-          T.thread(),
-          T.article(),
-          map(),
-          User.t(),
-          keyword() | map()
-        ) ::
-          T.domain_res(T.article())
-  def update_draft(community, thread, target, attrs, user, opts \\ [])
-
-  def update_draft(%Community{} = community, thread, article, attrs, %User{} = user, opts)
-      when is_struct(article) do
-    Commands.Draft.update(community, thread, article, attrs, user, opts)
-  end
-
-  @spec update_draft(Community.t(), T.thread(), Ecto.UUID.t(), map(), User.t(), keyword() | map()) ::
-          T.domain_res(T.article())
-  def update_draft(community, thread, article_hash_id, attrs, %User{} = user, opts),
-    do: Commands.Draft.update(community, thread, article_hash_id, attrs, user, opts)
-
-  @doc "Compares the current Draft with Public without creating history."
-  def draft_diff(community, thread, article_hash_id, opts \\ []) do
-    __MODULE__.DraftDiff.compare_current(community, thread, article_hash_id, opts)
-  end
-
-  @doc "Returns the Article-level unpublished-change fact."
-  def has_unpublished_changes(community, thread, article_hash_id, opts \\ []) do
-    __MODULE__.DraftDiff.has_unpublished_changes(community, thread, article_hash_id, opts)
-  end
-
-  defp option(opts, key, default \\ nil)
-  defp option(opts, key, default) when is_list(opts), do: Keyword.get(opts, key, default)
-  defp option(opts, key, default) when is_map(opts), do: Map.get(opts, key, default)
-  defp option(_opts, _key, default), do: default
-
-  defp draft_read_opts(opts) do
-    if is_nil(option(opts, :actor)) or not is_nil(option(opts, :policy_mode)) do
-      opts
-    else
-      put_option(opts, :policy_mode, :owner_management)
+  def read_draft(article_id, %User{} = actor, opts) when is_binary(article_id) do
+    with {:ok, article} <- stable_article(article_id),
+         {:ok, canonical} <- CMS.Gate.Access.access_check(actor, :edit, article) do
+      TargetDraft.get(canonical, opts)
     end
   end
 
-  defp put_option(opts, key, value) when is_list(opts), do: Keyword.put(opts, key, value)
-  defp put_option(opts, key, value) when is_map(opts), do: Map.put(opts, key, value)
-  defp put_option(_opts, key, value), do: [{key, value}]
-
-  @doc "Publishes one ordinary Article Draft and returns its public Article."
-  @spec publish_draft(
-          Community.t(),
-          T.thread(),
-          T.article(),
-          User.t(),
-          keyword() | map()
-        ) ::
-          T.domain_res(%{article: T.article(), snapshot: nil})
-  def publish_draft(community, thread, target, user, opts \\ [])
-
-  def publish_draft(%Community{} = community, thread, article, %User{} = user, opts)
-      when is_struct(article) do
-    Commands.Publish.publish(community, thread, article, user, opts)
+  @doc "Reads the editor head, preferring Draft and falling back to the public projection."
+  @spec read_editor(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, struct()} | {:error, term()}
+  def read_editor(article_id, %User{} = actor, opts) when is_binary(article_id) do
+    with {:ok, article} <- stable_article(article_id),
+         {:ok, canonical} <- CMS.Gate.Access.access_check(actor, :edit, article) do
+      case TargetDraft.get(canonical, opts) do
+        {:ok, draft} -> {:ok, draft}
+        {:error, :not_found} -> stable_public(canonical, opts)
+      end
+    end
   end
 
-  @spec publish_draft(Community.t(), T.thread(), Ecto.UUID.t(), User.t(), keyword() | map()) ::
-          T.domain_res(%{article: T.article(), snapshot: nil})
-  def publish_draft(community, thread, article_hash_id, %User{} = user, opts),
-    do: Commands.Publish.publish(community, thread, article_hash_id, user, opts)
+  @doc "Returns whether a stable Article Draft differs from its selected Public Revision."
+  @spec has_unpublished_changes(Ecto.UUID.t(), User.t(), keyword()) ::
+          {:ok, boolean()} | {:error, term()}
+  def has_unpublished_changes(article_id, %User{} = actor, _opts)
+      when is_binary(article_id) do
+    with {:ok, article} <- stable_article(article_id),
+         :ok <- ordinary_article(article),
+         {:ok, canonical} <- CMS.Gate.Access.access_check(actor, :edit, article) do
+      TargetDiff.unpublished?(canonical)
+    end
+  end
+
+  @doc "Returns a transient Draft-versus-Public diff for one stable Article."
+  @spec draft_diff(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def draft_diff(article_id, %User{} = actor, _opts) when is_binary(article_id) do
+    with {:ok, article} <- stable_article(article_id),
+         :ok <- ordinary_article(article),
+         {:ok, canonical} <- CMS.Gate.Access.access_check(actor, :edit, article) do
+      TargetDiff.compare(canonical)
+    end
+  end
+
+  @doc "Autosaves stable Article content with an optimistic Draft version guard."
+  @spec update_draft(Ecto.UUID.t(), map(), User.t() | Author.t(), keyword()) ::
+          {:ok, struct()} | {:error, term()}
+  def update_draft(article_id, attrs, actor, opts) when is_binary(article_id) do
+    Commands.UpdateDraft.execute(article_id, attrs, actor, opts)
+  end
+
+  @doc "Discards only the mutable workspace of a published stable Article."
+  @spec discard_draft(Ecto.UUID.t(), User.t(), keyword()) ::
+          {:ok, :done} | {:error, term()}
+  def discard_draft(article_id, %User{} = actor, opts) when is_binary(article_id) do
+    Commands.DiscardDraft.execute(article_id, actor, opts)
+  end
+
+  @doc "Publishes an ordinary stable Article Draft with atomic first-publish finalization."
+  @spec publish(Ecto.UUID.t() | Article.t(), User.t() | Author.t(), keyword()) ::
+          {:ok, map()} | {:error, term()}
+  def publish(%Article{} = article, actor, opts) do
+    Commands.Publish.execute(article, actor, opts)
+  end
+
+  def publish(article_id, actor, opts) when is_binary(article_id) do
+    with {:ok, %Article{} = article} <- stable_article(article_id) do
+      publish(article, actor, opts)
+    end
+  end
+
+  defp stable_article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{} = article} -> {:ok, article}
+      {:error, _} -> {:error, :article_not_found}
+    end
+  end
+
+  defp ordinary_article(%Article{thread: :doc}), do: {:error, :doc_branch_required}
+  defp ordinary_article(%Article{}), do: :ok
+
+  defp stable_public(%Article{thread: :doc, id: article_id}, opts) do
+    branch_id = Keyword.fetch!(opts, :branch_id)
+
+    case CMS.Docs.Store.public(article_id, branch_id) do
+      {:ok, %CMS.Model.DocPublic{} = public} -> {:ok, public}
+      {:error, _} -> {:error, :not_found}
+    end
+  end
+
+  defp stable_public(%Article{id: article_id}, _opts) do
+    case Store.public(article_id) do
+      {:ok, %CMS.Model.ArticlePublic{} = public} -> {:ok, public}
+      {:error, _} -> {:error, :not_found}
+    end
+  end
 
   # Lifecycle
 
   @doc "Moves one logical Article into Trash without deleting its aggregate."
   @spec trash(T.article(), User.t() | nil, keyword()) ::
           T.domain_res(CMS.Model.TrashedArticle.t())
-  def trash(article, actor, opts \\ []), do: Commands.Trash.trash(article, actor, opts)
+  def trash(article, actor, opts \\ []), do: Commands.Trash.execute(article, actor, opts)
 
   @doc "Restores one logical Article from Trash."
-  @spec restore_trashed(Ecto.UUID.t() | CMS.Model.TrashedArticle.t(), User.t() | nil, keyword()) ::
+  @spec restore_trashed(Ecto.UUID.t(), User.t() | nil, keyword()) ::
           T.domain_res(T.article())
-  def restore_trashed(item_or_ref, actor, opts \\ []),
-    do: Commands.Trash.restore(item_or_ref, actor, opts)
-
-  @doc "Permanently removes one standalone trashed Article aggregate."
-  @spec permanently_delete_trashed(
-          Ecto.UUID.t() | CMS.Model.TrashedArticle.t(),
-          User.t() | nil,
-          keyword()
-        ) :: T.domain_res(map())
-  def permanently_delete_trashed(item_or_ref, actor, opts \\ []) do
-    Commands.Trash.permanently_delete(item_or_ref, actor, opts)
+  def restore_trashed(trash_item_id, actor, opts \\ []) when is_binary(trash_item_id) do
+    Commands.RestoreTrashed.execute(trash_item_id, actor, opts)
   end
 
   @doc "Permanently removes one standalone trashed Article aggregate."
-  @spec permanently_delete(
-          Ecto.UUID.t() | CMS.Model.TrashedArticle.t() | CMS.Model.TrashedDocArticle.t(),
+  @spec permanently_delete_trashed(
+          Ecto.UUID.t(),
           User.t() | nil,
           keyword()
         ) :: T.domain_res(map())
-  def permanently_delete(item_or_ref, actor, opts \\ []),
-    do: Commands.Trash.permanently_delete(item_or_ref, actor, opts)
+  def permanently_delete_trashed(trash_item_id, actor, opts \\ [])
+      when is_binary(trash_item_id) do
+    Commands.PermanentlyDeleteTrashed.execute(trash_item_id, actor, opts)
+  end
 
   @doc "Lists current Article Trash memberships for a Community."
   @spec list_trashed(Community.t(), map()) :: T.domain_res(map())
   def list_trashed(%Community{} = community, filter \\ %{}), do: Trash.list(community, filter)
 
-  @doc "Gets one current Article Trash membership by public ref."
+  @doc "Gets one current Article Trash membership by its opaque Trash id."
   @spec get_trashed(Ecto.UUID.t()) :: T.domain_res(CMS.Model.TrashedArticle.t())
   def get_trashed(ref), do: Trash.get(ref)
 
@@ -249,23 +364,51 @@ defmodule GroupherServer.CMS.Articles do
   @spec archive(T.thread()) :: T.domain_res(term())
   def archive(thread), do: States.archive(thread)
 
-  @doc "Runs `sink` through the public `Articles` boundary."
-  @spec sink(T.article()) :: T.domain_res(T.article())
-  def sink(article), do: States.sink(article)
+  @doc "Sinks one stable Article through the shared Gate and aggregate lock."
+  @spec sink(Ecto.UUID.t(), User.t(), keyword()) :: T.domain_res(term())
+  def sink(article_id, %User{} = actor, opts \\ []) do
+    change_sink(article_id, actor, :sink, opts)
+  end
 
-  @doc "Runs `undo_sink` through the public `Articles` boundary."
-  @spec undo_sink(T.article()) :: T.domain_res(T.article())
-  def undo_sink(article), do: States.undo_sink(article)
+  @doc "Restores one sunk stable Article through the shared Gate and aggregate lock."
+  @spec undo_sink(Ecto.UUID.t(), User.t(), keyword()) :: T.domain_res(term())
+  def undo_sink(article_id, %User{} = actor, opts \\ []) do
+    change_sink(article_id, actor, :undo_sink, opts)
+  end
+
+  defp change_sink(article_id, actor, action, opts) do
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{thread: :doc} = article} ->
+        branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
+
+        CMS.Gate.Access.with_branch_check(actor, action, article, branch_id, fn canonical ->
+          apply(States, action, [canonical, [branch_id: branch_id]])
+        end)
+
+      {:ok, %Article{} = article} ->
+        CMS.Gate.Access.with_check(actor, action, article, fn canonical ->
+          apply(States, action, [canonical, opts])
+        end)
+
+      {:error, _} ->
+        {:error, GateErrorCat.resource_not_found()}
+    end
+  end
 
   # Meta
 
-  @doc "Runs `set_cat` through the public `Articles` boundary."
-  @spec set_cat(T.article(), Const.cat_enum() | nil) :: T.domain_res(T.article())
-  def set_cat(article, cat), do: States.set_cat(article, cat)
+  @doc "Sets the stable Post category through the shared Gate and aggregate lock."
+  @spec set_cat(Ecto.UUID.t(), Const.cat_enum() | nil, User.t()) :: T.domain_res(Article.t())
+  def set_cat(article_id, cat, %User{} = actor) do
+    with_article(article_id, actor, :set_category, &States.set_cat(&1, cat))
+  end
 
-  @doc "Runs `set_status` through the public `Articles` boundary."
-  @spec set_status(T.article(), Const.status_enum() | nil) :: T.domain_res(T.article())
-  def set_status(article, status), do: States.set_status(article, status)
+  @doc "Sets the stable Post Kanban status through the shared Gate and aggregate lock."
+  @spec set_status(Ecto.UUID.t(), Const.status_enum() | nil, User.t()) ::
+          T.domain_res(Article.t())
+  def set_status(article_id, status, %User{} = actor) do
+    with_article(article_id, actor, :set_status, &States.set_status(&1, status))
+  end
 
   @doc "Updates active timestamp through the `Articles` write boundary."
   @spec update_active_timestamp(T.thread(), T.article()) :: T.domain_res(T.article())
@@ -275,88 +418,103 @@ defmodule GroupherServer.CMS.Articles do
 
   # Moderation
 
-  @doc "Runs `set_illegal` through the public `Articles` boundary."
-  @spec set_illegal(T.thread(), T.id(), map()) :: T.domain_res(T.article())
-  def set_illegal(thread, id, attrs),
-    do: Moderation.set_illegal(thread, id, attrs)
+  @doc "Marks one stable Article illegal through Gate; Doc callers pass `branch_id` in opts."
+  @spec set_illegal(Ecto.UUID.t(), map(), User.t() | :operations, keyword()) ::
+          T.domain_res(term())
+  def set_illegal(article_id, attrs, actor, opts \\ []) do
+    moderate(article_id, :illegal, attrs, actor, opts)
+  end
 
-  @spec set_illegal(T.article(), map()) :: T.domain_res(T.article())
-  def set_illegal(article, attrs), do: Moderation.set_illegal(article, attrs)
+  @doc "Clears illegal state through Gate; Doc callers pass `branch_id` in opts."
+  @spec unset_illegal(Ecto.UUID.t(), map(), User.t() | :operations, keyword()) ::
+          T.domain_res(term())
+  def unset_illegal(article_id, attrs, actor, opts \\ []) do
+    moderate(article_id, :legal, attrs, actor, opts)
+  end
 
-  @doc "Runs `unset_illegal` through the public `Articles` boundary."
-  @spec unset_illegal(T.thread(), T.id(), map()) :: T.domain_res(T.article())
-  def unset_illegal(thread, id, attrs),
-    do: Moderation.unset_illegal(thread, id, attrs)
+  @doc "Marks one stable Article audit-failed through Gate."
+  @spec set_audit_failed(Ecto.UUID.t(), map(), User.t() | :operations, keyword()) ::
+          T.domain_res(term())
+  def set_audit_failed(article_id, attrs, actor, opts \\ []) do
+    moderate(article_id, :audit_failed, attrs, actor, opts)
+  end
 
-  @spec unset_illegal(T.article(), map()) :: T.domain_res(T.article())
-  def unset_illegal(article, attrs), do: Moderation.unset_illegal(article, attrs)
+  defp moderate(article_id, state, attrs, actor, opts) do
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{thread: :doc} = article} ->
+        branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
 
-  @doc "Runs `set_audit_failed` through the public `Articles` boundary."
-  @spec set_audit_failed(T.article(), map()) :: T.domain_res(T.article())
-  def set_audit_failed(article, state), do: Moderation.set_audit_failed(article, state)
+        CMS.Gate.Access.with_branch_check(actor, :moderate, article, branch_id, fn canonical ->
+          Moderation.set_state(canonical, state, attrs, branch_id: branch_id)
+        end)
+
+      {:ok, %Article{} = article} ->
+        CMS.Gate.Access.with_check(actor, :moderate, article, fn canonical ->
+          Moderation.set_state(canonical, state, attrs, opts)
+        end)
+
+      {:error, _} ->
+        {:error, GateErrorCat.resource_not_found()}
+    end
+  end
+
+  defp main_branch_id(community_id) do
+    case CMS.Docs.Store.branch(community_id, :main) do
+      {:ok, %{id: branch_id}} -> branch_id
+      {:error, _} -> nil
+    end
+  end
 
   @doc "Returns paged audit failed from the `Articles` read boundary."
   @spec paged_audit_failed(T.thread(), map()) :: T.domain_res(T.paged_data())
-  def paged_audit_failed(thread, filter),
-    do: Moderation.paged_audit_failed(thread, filter)
-
-  # Placement
-
-  @doc "Runs `pin` through the public `Articles` boundary."
-  @spec pin(Community.t(), T.article()) :: T.domain_res(T.article())
-  def pin(%Community{} = community, article), do: States.pin(community, article)
-
-  @doc "Runs `undo_pin` through the public `Articles` boundary."
-  @spec undo_pin(Community.t(), T.article()) :: T.domain_res(T.article())
-  def undo_pin(%Community{} = community, article), do: States.undo_pin(community, article)
-
-  @doc "Runs `mirror` through the public `Articles` boundary."
-  @spec mirror(Community.t(), T.article()) :: T.domain_res(T.article())
-  def mirror(%Community{} = community, article), do: States.mirror(community, article)
-
-  @spec mirror(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def mirror(%Community{} = community, article, article_ids) do
-    States.mirror(community, article, article_ids)
+  def paged_audit_failed(thread, filter) do
+    Moderation.paged_audit_failed(thread, filter)
   end
 
-  @doc "Runs `unmirror` through the public `Articles` boundary."
-  @spec unmirror(Community.t(), T.article()) :: T.domain_res(T.article())
-  def unmirror(%Community{} = community, article), do: States.unmirror(community, article)
-
-  @doc "Runs `move` through the public `Articles` boundary."
-  @spec move(Community.t(), T.article()) :: T.domain_res(T.article())
-  def move(%Community{} = community, article), do: States.move(community, article)
-
-  @spec move(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def move(%Community{} = community, article, article_ids) do
-    States.move(community, article, article_ids)
+  @doc "Moves one stable ordinary Article to the configured blackhole Community."
+  @spec move_to_blackhole(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
+          {:ok, Article.t()} | {:error, term()}
+  def move_to_blackhole(%Community{} = community, article_id, tag_ids, %User{} = actor) do
+    move(community, article_id, tag_ids, actor)
   end
 
-  @doc "Runs `move_to_blackhole` through the public `Articles` boundary."
-  @spec move_to_blackhole(Community.t(), T.article()) :: T.domain_res(T.article())
-  def move_to_blackhole(%Community{} = community, article),
-    do: States.move_to_blackhole(community, article)
-
-  @spec move_to_blackhole(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def move_to_blackhole(%Community{} = community, article, article_ids) do
-    States.move_to_blackhole(community, article, article_ids)
+  @doc "Mirrors one stable ordinary Article into the requested home Community."
+  @spec mirror_to_home(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
+          {:ok, CMS.Model.ArticleCommunity.t()} | {:error, term()}
+  def mirror_to_home(%Community{} = community, article_id, tag_ids, %User{} = actor) do
+    mirror(community, article_id, tag_ids, actor)
   end
 
-  @doc "Runs `mirror_to_home` through the public `Articles` boundary."
-  @spec mirror_to_home(Community.t(), T.article()) :: T.domain_res(T.article())
-  def mirror_to_home(%Community{} = community, article),
-    do: States.mirror_to_home(community, article)
-
-  @spec mirror_to_home(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def mirror_to_home(%Community{} = community, article, article_ids) do
-    States.mirror_to_home(community, article, article_ids)
+  @doc "Locks comments on one stable Article through the shared Gate and aggregate lock."
+  @spec lock_comments(Ecto.UUID.t(), User.t(), keyword()) :: T.domain_res(term())
+  def lock_comments(article_id, %User{} = actor, opts \\ []) do
+    change_comment_lock(article_id, actor, :lock_comments, opts)
   end
 
-  @doc "Runs `lock_comments` through the public `Articles` boundary."
-  @spec lock_comments(T.article()) :: T.domain_res(T.article())
-  def lock_comments(article), do: States.lock_comments(article)
+  @doc "Unlocks comments on one stable Article through the shared Gate and aggregate lock."
+  @spec undo_lock_comments(Ecto.UUID.t(), User.t(), keyword()) :: T.domain_res(term())
+  def undo_lock_comments(article_id, %User{} = actor, opts \\ []) do
+    change_comment_lock(article_id, actor, :unlock_comments, opts)
+  end
 
-  @doc "Runs `undo_lock_comments` through the public `Articles` boundary."
-  @spec undo_lock_comments(T.article()) :: T.domain_res(T.article())
-  def undo_lock_comments(article), do: States.undo_lock_comments(article)
+  defp change_comment_lock(article_id, actor, action, opts) do
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{thread: :doc} = article} ->
+        branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
+
+        CMS.Gate.Access.with_branch_check(actor, action, article, branch_id, fn canonical ->
+          command = if action == :lock_comments, do: :lock_comments, else: :undo_lock_comments
+          apply(States, command, [canonical, [branch_id: branch_id]])
+        end)
+
+      {:ok, %Article{} = article} ->
+        CMS.Gate.Access.with_check(actor, action, article, fn canonical ->
+          command = if action == :lock_comments, do: :lock_comments, else: :undo_lock_comments
+          apply(States, command, [canonical, opts])
+        end)
+
+      {:error, _} ->
+        {:error, GateErrorCat.resource_not_found()}
+    end
+  end
 end

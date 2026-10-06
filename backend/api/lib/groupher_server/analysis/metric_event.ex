@@ -12,15 +12,15 @@ defmodule GroupherServer.Analysis.MetricEvent do
   alias CMS.Artiment.Matcher
 
   @doc "Appends an Article action using the non-visitor `all` dimension."
-  @spec append_article_action(struct(), Ecto.UUID.t(), atom(), keyword()) ::
+  @spec append_article_action(map(), Ecto.UUID.t(), atom(), keyword()) ::
           :ok | {:error, term()}
   def append_article_action(article, operation_id, metric, opts \\ [])
 
-  def append_article_action(article, operation_id, metric, opts) when is_struct(article) do
+  def append_article_action(%{id: _id} = article, operation_id, metric, opts) do
     with {:ok, %{artiment: article_type}} <- Matcher.match_interaction(article),
          true <- article_type in CMS.Artiment.Threads.article_enums(),
          true <- metric in Const.metrics(),
-         true <- is_integer(Map.get(article, :id)) do
+         {:ok, _article_id} <- cast_article_id(Map.get(article, :id)) do
       append(%{
         operation_id: operation_id,
         community_id: Map.get(article, :community_id),
@@ -37,8 +37,9 @@ defmodule GroupherServer.Analysis.MetricEvent do
     end
   end
 
-  def append_article_action(_article, _operation_id, _metric, _opts),
-    do: {:error, :invalid_article_metric}
+  def append_article_action(_article, _operation_id, _metric, _opts) do
+    {:error, :invalid_article_metric}
+  end
 
   @doc "Appends one metric fact; duplicate producer retries are successful no-ops."
   @spec append(map()) :: :ok | {:error, term()}
@@ -101,4 +102,8 @@ defmodule GroupherServer.Analysis.MetricEvent do
   end
 
   defp validate(_attrs), do: {:error, :invalid_metric_event}
+
+  defp cast_article_id(id) when is_integer(id) and id > 0, do: {:ok, id}
+  defp cast_article_id(id) when is_binary(id), do: Ecto.UUID.cast(id)
+  defp cast_article_id(_id), do: :error
 end

@@ -12,7 +12,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   require GroupherServer.Accounts.Profiles.ErrorCat
 
   import ShortMaps
-  alias GroupherServer.{Accounts, Auth, CMS, Repo}
+  alias GroupherServer.{Accounts, Auth, CMS}
   alias GroupherServerWeb.Resolvers.{ArticleInteractionPayload, ArticleStatsPayload}
   alias Accounts.Profiles.ErrorCat
 
@@ -80,8 +80,9 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def revoke_browser_session(_root, %{browser_session_ref: ref}, _info) do
-    with {:ok, _result} <- Accounts.Profiles.revoke_browser_session(ref),
-         do: {:ok, %{done: true}}
+    with {:ok, _result} <- Accounts.Profiles.revoke_browser_session(ref) do
+      {:ok, %{done: true}}
+    end
   end
 
   def browser_sessions(_root, %{browser_session_ref: ref}, _info) do
@@ -102,8 +103,9 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
     with {:ok, _result} <-
            ref
            |> Accounts.Profiles.revoke_other_browser_sessions_for_ref()
-           |> browser_session_result(),
-         do: {:ok, %{done: true}}
+           |> browser_session_result() do
+      {:ok, %{done: true}}
+    end
   end
 
   defp browser_session_result({:error, reason}) do
@@ -211,7 +213,13 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   defp present_collect({:ok, result}, article, user) do
-    article = Repo.preload(article, :community)
+    article =
+      if is_struct(article) do
+        {:ok, article} = CMS.Articles.Store.with_community(article)
+        article
+      else
+        article
+      end
 
     # These post-commit readers can observe different concurrent revisions.
     # Each payload keeps the revision attached to the state it actually read.

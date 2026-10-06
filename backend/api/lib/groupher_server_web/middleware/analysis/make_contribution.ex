@@ -36,14 +36,16 @@ defmodule GroupherServerWeb.Middleware.Analysis.MakeContribution do
       true ->
         if :user in threads, do: Analysis.make_contribution(%User{id: cur_user.id})
 
-        if :community in threads,
-          do: Analysis.make_contribution(arguments.community)
+        if :community in threads do
+          Analysis.make_contribution(arguments.community)
+        end
 
       false ->
         if :user == threads, do: Analysis.make_contribution(%User{id: cur_user.id})
 
-        if :community == threads,
-          do: Analysis.make_contribution(arguments.community)
+        if :community == threads do
+          Analysis.make_contribution(arguments.community)
+        end
     end
 
     resolution

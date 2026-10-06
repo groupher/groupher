@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
   alias CMS.Passport.ErrorCat, as: PassportErrorCat
 
   alias GroupherServer.CMS
-  alias CMS.Model.{ArticleEmotionCount, ArticleStats, Post, TrashedArticle}
+  alias CMS.Model.{Article, ArticleEmotionCount, ArticleStats, TrashedArticle}
 
   setup do
     {community, post, _, owner} = mock_article(:post)
@@ -23,11 +23,11 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     trashed = gq_mutation(owner_conn, S.Article.m(:trash_article), variables)
 
     assert trashed["thread"] == "POST"
-    assert trashed["articleRef"] == post.article_hash_id
+    assert trashed["articleId"] == post.id
     assert trashed["article"]["innerId"] == to_string(post.inner_id)
     assert trashed["scheduledPermanentDeletionAt"]
-    assert Repo.get(Post, post.id)
-    assert {:error, _} = CMS.Articles.read(community, :post, post.inner_id)
+    assert Repo.get(Article, post.id)
+    assert {:error, _} = read_article(community, :post, post.inner_id)
 
     rule_conn =
       simu_conn(:user, cms: %{community.slug => %{"post.restore" => true}})
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
       })
 
     assert restored["innerId"] == to_string(post.inner_id)
-    assert {:ok, _} = CMS.Articles.read(community, :post, post.inner_id)
+    assert {:ok, _} = read_article(community, :post, post.inner_id)
 
     replayed =
       gq_mutation(rule_conn, S.Article.m(:restore_trashed_article), %{
@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
              ErrorCat.code(PassportErrorCat.passport())
            )
 
-    assert {:ok, _} = CMS.Articles.read(community_b, :post, post_b.inner_id)
+    assert {:ok, _} = read_article(community_b, :post, post_b.inner_id)
   end
 
   test "permanent deletion removes content but leaves the item queryable until that action",
@@ -152,7 +152,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
       })
 
     assert result["done"]
-    refute Repo.get(Post, post.id)
+    refute Repo.get(Article, post.id)
     refute Repo.get_by(ArticleStats, thread: :post, article_id: post.id)
     refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.id)
     refute Repo.get_by(TrashedArticle, hash_id: trashed["id"])

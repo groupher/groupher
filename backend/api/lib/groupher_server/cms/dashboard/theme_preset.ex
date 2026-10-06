@@ -478,8 +478,9 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
     end
   end
 
-  def validate_overwrite(_),
-    do: {:error, ErrorCat.custom("theme overwrite must be a map")}
+  def validate_overwrite(_) do
+    {:error, ErrorCat.custom("theme overwrite must be a map")}
+  end
 
   @doc """
   Merge incoming Custom overwrite into the existing saved overwrite.
@@ -531,10 +532,9 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   defp normalize_preset(_), do: :default
 
   defp validate_section(_section, section_overwrite, _allowed_keys, _acc)
-       when not is_map(section_overwrite),
-       do:
-         {:halt,
-          {:error, ErrorCat.custom("theme overwrite section must be a map")}}
+       when not is_map(section_overwrite) do
+    {:halt, {:error, ErrorCat.custom("theme overwrite section must be a map")}}
+  end
 
   defp validate_section(section, section_overwrite, allowed_keys, acc) do
     section_overwrite
@@ -612,9 +612,11 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
   defp valid_hex_color?(value), do: Regex.match?(~r/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, value)
 
-  defp invalid_key(key),
-    do: {:error, ErrorCat.custom("invalid theme overwrite key: #{inspect(key)}")}
+  defp invalid_key(key) do
+    {:error, ErrorCat.custom("invalid theme overwrite key: #{inspect(key)}")}
+  end
 
-  defp invalid_value(key),
-    do: {:error, ErrorCat.custom("invalid theme overwrite value: #{key}")}
+  defp invalid_value(key) do
+    {:error, ErrorCat.custom("invalid theme overwrite value: #{key}")}
+  end
 end

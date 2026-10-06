@@ -81,7 +81,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       unchanged = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
       assert unchanged["articleStats"]["upvotesCount"] == 1
 
-      {:ok, current_post} = CMS.FrontDesk.article(community, :post, post.inner_id)
+      {:ok, current_post} = read_article(community, :post, post.inner_id)
       counts = CMS.Interactions.counts([current_post])
       assert counts[{:post, current_post.id}].upvotes_count == 1
     end

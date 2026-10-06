@@ -17,15 +17,15 @@ defmodule GroupherServer.CMS.Press.ConfigWriter do
   alias Activity.EventRef
   alias Accounts.Model.User
   alias CMS.Model.{Community, PressConfig}
-  alias CMS.Press.{Invalidation, Reader}
+  alias CMS.Press.{Invalidation, Query}
   alias Helper.Later
 
   @doc "Updates persisted Press config and records the changed fields."
   @spec update(Community.t() | String.t(), map(), User.t() | nil) ::
           {:ok, PressConfig.t()} | {:error, term()}
   def update(community, attrs, actor) do
-    with {:ok, community} <- Reader.internal_community(community),
-         {:ok, current} <- Reader.config(community) do
+    with {:ok, community} <- Query.internal_community(community),
+         {:ok, current} <- Query.config(community) do
       attrs = normalize_attrs(attrs)
 
       operation_ref =

@@ -30,16 +30,18 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
 
     test "can set cat of a post", ~m(user community post_attrs)a do
       {:ok, kanban} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, post} = CMS.Articles.set_cat(kanban, @article_cat.idea)
+      {:ok, post} = CMS.Articles.set_cat(kanban.article_id, @article_cat.idea, user)
+      state = Repo.get!(CMS.Model.PostState, post.id)
 
-      assert post.cat == @article_cat.idea
+      assert state.cat == @article_cat.idea
     end
 
     test "can set status of a post", ~m(user community post_attrs)a do
       {:ok, kanban} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, post} = CMS.Articles.set_status(kanban, @article_status.todo)
+      {:ok, post} = CMS.Articles.set_status(kanban.article_id, @article_status.todo, user)
+      state = Repo.get!(CMS.Model.PostState, post.id)
 
-      assert post.status == @article_status.todo
+      assert state.status == @article_status.todo
     end
 
     test "can create kanban post with valid attrs", ~m(user2 community post_attrs)a do

@@ -30,30 +30,6 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
     """
   end
 
-  def m(:checkpoint_snapshot) do
-    """
-    mutation($community: String!, $id: ID!, $commandId: ID!) {
-      checkpointDocDraftSnapshot(community: $community, id: $id, commandId: $commandId) {
-        id
-        thread
-        stage
-        action
-        articleHashId
-        title
-        slug
-        subtitle
-        digest
-        documentJson
-        versionHash
-        revisionNumber
-        author {
-          login
-        }
-      }
-    }
-    """
-  end
-
   def m(:publish_changes) do
     """
     mutation($community: String!, $input: DocPublishChangesInput, $commandId: ID!) {
@@ -65,23 +41,6 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
         }
         scope {
           totalCount
-        }
-      }
-    }
-    """
-  end
-
-  def m(:restore_snapshot) do
-    """
-    mutation($community: String!, $id: ID!, $snapshotId: ID!, $commandId: ID!) {
-      restoreDocDraftSnapshot(community: $community, id: $id, snapshotId: $snapshotId, commandId: $commandId) {
-        id
-        title
-        subtitle
-        slug
-        digest
-        document {
-          json
         }
       }
     }
@@ -111,32 +70,6 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
           markdown
           markdownToc
           html
-        }
-      }
-    }
-    """
-  end
-
-  def q(:draft_snapshots) do
-    """
-    query($community: String!, $id: ID!, $stage: DocSnapshotStage) {
-      docDraftSnapshots(community: $community, id: $id, stage: $stage) {
-        id
-        thread
-        stage
-        action
-        articleHashId
-        title
-        slug
-        subtitle
-        digest
-        documentJson
-        versionHash
-        revisionNumber
-        schemaVersion
-        insertedAt
-        author {
-          login
         }
       }
     }

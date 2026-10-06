@@ -11,8 +11,6 @@ defmodule GroupherServer.Support.Factory do
         -> Factory
         -> endpoint / fixture / Repo
   """
-  require GroupherServer.CMS.Const
-
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
@@ -23,19 +21,12 @@ defmodule GroupherServer.Support.Factory do
 
   alias CMS.Model.{
     Author,
-    Blog,
     Category,
-    Changelog,
     Comment,
     Community,
     CommunityTag,
-    CommunityTagGroup,
-    Doc,
-    Post
+    CommunityTagGroup
   }
-
-  alias CMS.Docs.Branch
-  alias Helper.ORM
 
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
   @default_emotions CMS.Model.Embeds.CommentEmotion.default_emotions()
@@ -193,7 +184,21 @@ defmodule GroupherServer.Support.Factory do
   # not use changeset because in test we may insert some attrs which not in schema
   # like: views, insert/update ... to test filter-sort,when ...
   # """
-  def db_insert(factory_name, attributes \\ []) do
+  @doc "Inserts a fixture; Article threads use the production stable Draft/Publish boundary."
+  def db_insert(factory_name, attributes \\ [])
+
+  def db_insert(factory_name, attributes) when factory_name in [:post, :blog, :changelog, :doc] do
+    attrs = attributes |> Enum.into(%{})
+    community = Map.get(attrs, :community) || elem(db_insert(:community), 1)
+    user = get_in(attrs, [:author, :user]) || elem(db_insert(:user), 1)
+
+    public_attrs =
+      mock_attrs(factory_name, attrs) |> Map.drop([:author, :community, :communities])
+
+    CMS.Articles.create(community, factory_name, public_attrs, user)
+  end
+
+  def db_insert(factory_name, attributes) do
     db_insert_with_retry(factory_name, attributes, 3)
   end
 
@@ -230,42 +235,7 @@ defmodule GroupherServer.Support.Factory do
 
   defp maybe_put_default_tag_group(record), do: record
 
-  defp maybe_put_default_article_community(%{__struct__: model} = article)
-       when model in [Post, Blog, Changelog, Doc] do
-    community =
-      case article.community_id do
-        nil ->
-          {:ok, community} = db_insert(:community)
-          community
-
-        community_id ->
-          GroupherServer.Repo.get!(Community, community_id)
-      end
-
-    %{article | community_id: community.id, community: community}
-  end
-
   defp maybe_put_default_article_community(record), do: record
-
-  defp maybe_put_default_doc_branch(%Doc{branch_id: nil} = article) do
-    {:ok, branch} = Branch.resolve(article.community, Branch.main_slug())
-
-    %{
-      article
-      | article_hash_id: article.article_hash_id || Ecto.UUID.generate(),
-        branch_id: branch.id,
-        stage: article.stage || CMS.Const.stage(:public)
-    }
-  end
-
-  defp maybe_put_default_doc_branch(%{__struct__: model} = article)
-       when model in [Post, Blog, Changelog] do
-    %{
-      article
-      | article_hash_id: article.article_hash_id || Ecto.UUID.generate(),
-        stage: article.stage || CMS.Const.stage(:public)
-    }
-  end
 
   defp maybe_put_default_doc_branch(record), do: record
 
@@ -276,38 +246,6 @@ defmodule GroupherServer.Support.Factory do
   end
 
   defp ensure_community_lifecycle(result), do: result
-
-  defp ensure_article_lifecycle({:ok, %{__struct__: model} = article} = result)
-       when model in [Post, Blog, Changelog] do
-    {:ok, %{thread: thread}} = match(article)
-
-    state =
-      if article.stage == CMS.Const.stage(:public), do: :published, else: :draft_only
-
-    with {:ok, _lifecycle} <-
-           CMS.Articles.Lifecycle.ensure_created(
-             article.community_id,
-             thread,
-             article.article_hash_id,
-             state: state
-           ) do
-      result
-    end
-  end
-
-  defp ensure_article_lifecycle({:ok, %Doc{} = article} = result) do
-    state = if article.stage == CMS.Const.stage(:public), do: :published, else: :draft_only
-
-    with {:ok, _lifecycle} <-
-           CMS.Docs.Lifecycle.ensure_created(
-             article.community_id,
-             article.branch_id,
-             article.article_hash_id,
-             state: state
-           ) do
-      result
-    end
-  end
 
   defp ensure_article_lifecycle(result), do: result
 
@@ -455,14 +393,16 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_article(thread, preload: []), do: mock_article(thread)
 
+  @doc "Creates one stable Article projection; requested public relations are already materialized."
   def mock_article(thread, preload: preload) do
     {community, article, attrs, user} = mock_article(thread)
 
-    with {:ok, info} <- match(thread) do
-      {:ok, preload_article} = ORM.find(info.model, article.id, preload: preload)
-
-      {community, preload_article, attrs, user}
-    end
+    # Stable Article creation already returns the public projection with its
+    # canonical author, community, lifecycle, tags and community placements.
+    # The historical helper reloaded a thread-specific physical row here; that
+    # would incorrectly cast the stable UUID to the removed integer identity.
+    _requested_relations = preload
+    {community, article, attrs, user}
   end
 
   def mock_article(thread, %Community{} = community, %User{} = user) do

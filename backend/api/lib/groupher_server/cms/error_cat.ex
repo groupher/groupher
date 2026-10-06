@@ -37,9 +37,18 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:not_searchable, code: 4528)
   error(:search_platform, code: 4529, retryable: true)
   error(:command_id_conflict, code: 4530)
-  error(:command_resolution_pending, code: 4531, retryable: true)
+
+  error(:command_resolution_pending,
+    code: 4531,
+    retryable: true,
+    actions: [:retry, :reconcile]
+  )
+
   error(:command_id_required, code: 4532)
   error(:command_id_invalid, code: 4535)
   error(:unsupported_command_resource, code: 4533)
-  error(:command_result_unavailable, code: 4534)
+  error(:command_result_unavailable, code: 4534, actions: [:reconcile])
+  error(:command_result_expired, code: 4536, actions: [:reconcile])
+  error(:command_invalid_result, code: 4537)
+  error(:invalid_command_intent, code: 4538)
 end

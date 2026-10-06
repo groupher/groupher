@@ -34,9 +34,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
-      {:ok, found} = ORM.find(Changelog, changelog.id, preload: :communities)
-
-      assoc_communities = found.communities |> Enum.map(& &1.id)
+      assoc_communities = CMS.Articles.Communities.communities(changelog) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
     end
 
@@ -90,9 +88,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
-      {:ok, found} = ORM.find(Changelog, changelog.id, preload: :communities)
-
-      assoc_communities = found.communities |> Enum.map(& &1.id)
+      assoc_communities = CMS.Articles.Communities.communities(changelog) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
       assert community2.id in assoc_communities
     end
@@ -116,9 +112,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables2)
 
-      {:ok, found} = ORM.find(Changelog, changelog.id, preload: :communities)
-
-      assoc_communities = found.communities |> Enum.map(& &1.id)
+      assoc_communities = CMS.Articles.Communities.communities(changelog) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
       assert community2.id in assoc_communities
 
@@ -126,8 +120,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       rule_conn |> gq_mutation(S.Article.m(:unmirror_article), variables)
-      {:ok, found} = ORM.find(Changelog, changelog.id, preload: :communities)
-      assoc_communities = found.communities |> Enum.map(& &1.id)
+      assoc_communities = CMS.Articles.Communities.communities(changelog) |> Enum.map(& &1.id)
       assert community2.id not in assoc_communities
       assert community3.id in assoc_communities
     end
@@ -144,10 +137,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_to_home), variables)
 
-      {:ok, changelog} =
-        ORM.find(Changelog, changelog.id, preload: [:communities, :community_tags])
-
-      assert exist_in?(home_community, changelog.communities)
+      assert exist_in?(home_community, CMS.Articles.Communities.communities(changelog))
     end
 
     test "auth user can move changelog to blackhole", ~m(community blackhole changelog)a do
@@ -160,10 +150,8 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       rule_conn |> gq_mutation(S.Article.m(:move_to_blackhole), variables)
 
-      {:ok, changelog} =
-        ORM.find(Changelog, changelog.id, preload: [:community, :communities, :community_tags])
-
-      assert changelog.community.id == blackhole.id
+      changelog = Repo.get!(CMS.Model.Article, changelog.id)
+      assert changelog.community_id == blackhole.id
     end
 
     test "auth user can move changelog to other community",
@@ -178,16 +166,14 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
-      {:ok, found} =
-        ORM.find(Changelog, changelog.id, preload: [:community, :communities])
-
-      assoc_communities = found.communities |> Enum.map(& &1.id)
+      found = Repo.get!(CMS.Model.Article, changelog.id)
+      assoc_communities = CMS.Articles.Communities.communities(found) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
 
       passport_rules = %{"changelog.community.move" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      pre_community_id = found.community.id
+      pre_community_id = found.community_id
 
       article_tag_attrs = mock_attrs(:community_tag)
       {:ok, user} = db_insert(:user)
@@ -203,11 +189,10 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       rule_conn |> gq_mutation(S.Article.m(:move_article), variables)
 
-      {:ok, found} =
-        ORM.find(Changelog, changelog.id, preload: [:community, :communities, :community_tags])
-
-      assoc_communities = found.communities |> Enum.map(& &1.id)
-      assoc_article_tags = found.community_tags |> Enum.map(& &1.id)
+      found = Repo.get!(CMS.Model.Article, changelog.id)
+      assoc_communities = CMS.Articles.Communities.communities(found) |> Enum.map(& &1.id)
+      {:ok, tags} = CMS.Articles.Communities.tags(found, community2)
+      assoc_article_tags = Enum.map(tags, & &1.id)
 
       assert pre_community_id not in assoc_communities
       assert community2.id in assoc_communities
@@ -215,7 +200,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
 
       assert article_tag.id in assoc_article_tags
 
-      assert found.community.id == community2.id
+      assert found.community_id == community2.id
     end
   end
 end

@@ -66,8 +66,7 @@ defmodule GroupherServer.CMS.Trash do
         permanently_delete_article_action(action, actor, opts)
 
       true ->
-        {:error,
-         ErrorCat.custom("Unsupported Trash action type: #{action.root_type}")}
+        {:error, ErrorCat.custom("Unsupported Trash action type: #{action.root_type}")}
     end
   end
 

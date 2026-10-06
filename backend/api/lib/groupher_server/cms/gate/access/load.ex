@@ -16,7 +16,6 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Artiment.Matcher
   alias CMS.Gate.Access.Load.Queries
   alias CMS.Gate.Context.Access.Article, as: ArticleContext
   alias CMS.Gate.Context.Access.Comment, as: CommentContext
@@ -27,14 +26,47 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
 
   alias CMS.Model.{
     ArticleLifecycle,
+    Article,
     CommentLifecycle,
     Community,
     CommunityLifecycle,
     DocBranch,
-    DocLifecycle
+    DocLifecycle,
+    PostState
   }
 
   @article_threads Config.ordinary_article_threads()
+
+  @doc "Loads one stable Doc Article and its branch-scoped lifecycle authority."
+  def doc(
+        %Community{id: community_id} = community,
+        %Article{community_id: community_id, thread: :doc} = resource,
+        branch_id
+      ) do
+    with %Article{} = canonical <- Queries.resource(Article, resource.id),
+         canonical <- preload_article_author(canonical),
+         %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
+         %DocBranch{} = doc_branch <- Queries.doc_branch(community.id, branch_id),
+         %DocLifecycle{} = doc_lifecycle <- Queries.doc_lifecycle(canonical.id, branch_id),
+         %CMS.Model.DocBranchState{} = doc_branch_state <-
+           Queries.doc_branch_state(canonical.id, branch_id) do
+      {:ok,
+       %DocContext{
+         doc: canonical,
+         community: %{community | lifecycle: community_lifecycle},
+         community_lifecycle: community_lifecycle,
+         doc_branch: doc_branch,
+         doc_lifecycle: doc_lifecycle,
+         doc_branch_state: doc_branch_state
+       }}
+    else
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
+    end
+  end
+
+  def doc(_community, _resource, _branch_id) do
+    {:error, ErrorCat.gate_resource_mismatch()}
+  end
 
   @doc """
   Loads the canonical Community lifecycle and builds its typed Access Context.
@@ -66,51 +98,15 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   closed with a declared Gate error.
   """
   def article(
-        %Community{} = community,
-        :doc,
-        %{community_id: community_id, branch_id: branch_id, article_hash_id: hash_id} = resource
-      )
-      when community_id == community.id and not is_nil(branch_id) do
-    with {:ok, %{model: model}} <- Matcher.match_interaction(:doc),
-         canonical when not is_nil(canonical) <- Queries.resource(model, resource.id),
-         canonical <- preload_author(canonical),
-         true <- same_doc_identity?(canonical, resource),
-         %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
-         %DocBranch{} = doc_branch <- Queries.doc_branch(community.id, branch_id),
-         %DocLifecycle{} = doc_lifecycle <-
-           Queries.doc_lifecycle(community.id, branch_id, hash_id) do
-      {:ok,
-       %DocContext{
-         doc: canonical,
-         community: %{community | lifecycle: community_lifecycle},
-         community_lifecycle: community_lifecycle,
-         doc_branch: doc_branch,
-         doc_lifecycle: doc_lifecycle
-       }}
-    else
-      nil -> {:error, ErrorCat.lifecycle_not_found()}
-      false -> {:error, ErrorCat.gate_resource_mismatch()}
-      {:error, _reason} = error -> error
-    end
-  end
-
-  def article(%Community{} = community, :doc, %{community_id: community_id})
-      when community_id == community.id,
-      do: {:error, ErrorCat.doc_branch_required()}
-
-  def article(
-        %Community{} = community,
+        %Community{id: community_id} = community,
         thread,
-        %{community_id: community_id, article_hash_id: hash_id} = resource
+        %Article{community_id: community_id, thread: thread} = resource
       )
-      when thread in @article_threads and community_id == community.id do
-    with {:ok, %{model: model}} <- Matcher.match_interaction(thread),
-         canonical when not is_nil(canonical) <- Queries.resource(model, resource.id),
-         canonical <- preload_author(canonical),
-         true <- same_article_identity?(canonical, resource),
+      when thread in @article_threads do
+    with %Article{} = canonical <- Queries.resource(Article, resource.id),
+         canonical <- preload_article_author(canonical),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
-         %ArticleLifecycle{} = article_lifecycle <-
-           Queries.article_lifecycle(community.id, thread, hash_id) do
+         %ArticleLifecycle{} = article_lifecycle <- Queries.article_lifecycle(canonical.id) do
       {:ok,
        %ArticleContext{
          article: canonical,
@@ -120,13 +116,17 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
        }}
     else
       nil -> {:error, ErrorCat.lifecycle_not_found()}
-      false -> {:error, ErrorCat.gate_resource_mismatch()}
-      {:error, _reason} = error -> error
     end
   end
 
-  def article(_community, _thread, _resource),
-    do: {:error, ErrorCat.gate_resource_mismatch()}
+  def article(%Community{} = community, :doc, %{community_id: community_id})
+      when community_id == community.id do
+    {:error, ErrorCat.doc_branch_required()}
+  end
+
+  def article(_community, _thread, _resource) do
+    {:error, ErrorCat.gate_resource_mismatch()}
+  end
 
   @doc """
   Reloads a Comment together with its canonical parent and lifecycle facts.
@@ -138,7 +138,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   def comment(%Community{} = community, thread, article, %Comment{} = comment) do
     with canonical when not is_nil(canonical) <- Queries.resource(Comment, comment.id),
          true <- same_comment_identity?(canonical, comment, article, community, thread),
-         {:ok, parent_context} <- article(community, thread, article),
+         {:ok, parent_context} <- parent_context(community, thread, article, comment.branch_id),
          %CommentLifecycle{} = comment_lifecycle <- Queries.comment_lifecycle(canonical.id) do
       {:ok,
        %CommentContext{
@@ -158,13 +158,25 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
     end
   end
 
+  defp parent_context(community, :doc, %Article{thread: :doc} = article, branch_id)
+       when is_integer(branch_id) do
+    doc(community, article, branch_id)
+  end
+
+  defp parent_context(community, thread, article, _branch_id) do
+    article(community, thread, article)
+  end
+
   defp parent_resource(%ArticleContext{article: article}), do: article
-  defp parent_resource(%DocContext{doc: doc}), do: doc
+
+  defp parent_resource(%DocContext{doc: doc, doc_branch_state: state}) do
+    %{doc | comments_locked: state.comments_locked}
+  end
 
   defp parent_lifecycle(%ArticleContext{article_lifecycle: lifecycle}), do: lifecycle
   defp parent_lifecycle(%DocContext{doc_lifecycle: lifecycle}), do: lifecycle
 
-  defp preload_author(resource), do: Repo.preload(resource, author: :user)
+  defp preload_article_author(resource), do: Repo.preload(resource, author: :user)
 
   defp article_author_user_id(parent_context) do
     case parent_resource(parent_context) do
@@ -174,26 +186,22 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
     end
   end
 
-  defp article_cat(parent_context), do: Map.get(parent_resource(parent_context), :cat)
+  defp article_cat(parent_context) do
+    case parent_resource(parent_context) do
+      %Article{id: article_id, thread: :post} ->
+        case Repo.get(PostState, article_id) do
+          %PostState{cat: cat} -> cat
+          nil -> nil
+        end
 
-  defp same_article_identity?(canonical, input) do
-    canonical.community_id == input.community_id and
-      canonical.article_hash_id == input.article_hash_id
-  end
-
-  defp same_doc_identity?(canonical, input) do
-    same_article_identity?(canonical, input) and canonical.branch_id == input.branch_id
+      resource ->
+        Map.get(resource, :cat)
+    end
   end
 
   defp same_comment_identity?(canonical, input, article, community, thread) do
-    case Matcher.match_interaction(thread) do
-      {:ok, %{foreign_key: foreign_key}} ->
-        canonical.community_id == community.id and canonical.thread == thread and
-          canonical.article_hash_id == article.article_hash_id and
-          Map.get(canonical, foreign_key) == article.id and canonical.id == input.id
-
-      _ ->
-        false
-    end
+    canonical.community_id == community.id and canonical.thread == thread and
+      canonical.article_id == article.id and canonical.branch_id == input.branch_id and
+      canonical.id == input.id
   end
 end

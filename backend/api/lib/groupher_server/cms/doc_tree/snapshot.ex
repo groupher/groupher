@@ -45,8 +45,9 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       %{"version" => 3, "tabs" => tabs}
   """
   @spec draft_json(Community.t(), keyword() | map()) :: map()
-  def draft_json(%Community{} = community, opts \\ []),
-    do: stage_json(community, opts, CMS.Const.stage(:draft))
+  def draft_json(%Community{} = community, opts \\ []) do
+    stage_json(community, opts, CMS.Const.stage(:draft))
+  end
 
   @doc """
   Returns canonical public-tree JSON for one community.
@@ -57,8 +58,9 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       %{"version" => 3, "tabs" => tabs}
   """
   @spec published_json(Community.t(), keyword() | map()) :: map()
-  def published_json(%Community{} = community, opts \\ []),
-    do: stage_json(community, opts, CMS.Const.stage(:public))
+  def published_json(%Community{} = community, opts \\ []) do
+    stage_json(community, opts, CMS.Const.stage(:public))
+  end
 
   @doc """
   Returns canonical JSON from a pre-filtered node list.
@@ -103,7 +105,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       "type" => to_string(node.type),
       "title" => node.title,
       "parentNodeId" => node.parent_node_id,
-      CMS.DocTree.Const.doc_tree_json_key(:doc_id) => article_ref_id(node),
+      CMS.DocTree.Const.doc_tree_json_key(:doc_id) => article_id(node),
       "href" => node.href,
       "marker" => node.marker,
       "badge" => node.badge,
@@ -176,9 +178,11 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
     end
   end
 
-  defp article_ref_id(%DocTreeNode{stage: CMS.Const.stage(:draft)} = node),
-    do: node.doc_id && to_string(node.doc_id)
+  defp article_id(%DocTreeNode{stage: CMS.Const.stage(:draft)} = node) do
+    node.doc_id && to_string(node.doc_id)
+  end
 
-  defp article_ref_id(%DocTreeNode{stage: CMS.Const.stage(:public)} = node),
-    do: node.doc_id && to_string(node.doc_id)
+  defp article_id(%DocTreeNode{stage: CMS.Const.stage(:public)} = node) do
+    node.doc_id && to_string(node.doc_id)
+  end
 end

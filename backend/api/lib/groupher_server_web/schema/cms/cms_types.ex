@@ -21,7 +21,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Ecto.Query, warn: false, except: [union: 2]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, FrontDesk}
   alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
   alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
@@ -29,7 +29,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   alias CMS.Model.{Community, CoverBackground}
   alias CMS.Passport.Registry
   alias GroupherServerWeb.Schema
-  alias Helper.ORM
 
   import_types(Schema.CMS.Metrics)
 
@@ -371,7 +370,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :trashed_article do
     field(:id, non_null(:id), resolve: fn item, _, _ -> {:ok, item.hash_id} end)
     field(:thread, non_null(:thread))
-    field(:article_ref, non_null(:id), resolve: fn item, _, _ -> {:ok, item.article_hash_id} end)
+    field(:article_id, non_null(:id))
     field(:article, :article)
     field(:deleted_by, :user, resolve: dataloader(CMS, :deleted_by))
     field(:deleted_at, non_null(:datetime))
@@ -603,11 +602,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:public)
   end
 
-  enum :doc_snapshot_stage do
-    value(:draft)
-    value(:public)
-  end
-
   enum :doc_branch_type do
     value(:main)
     value(:preview)
@@ -616,14 +610,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   enum :doc_branch_status do
     value(:active)
     value(:archived)
-  end
-
-  enum :doc_snapshot_action do
-    value(:checkpoint)
-    value(:publish)
-    value(:fork)
-    value(:promote)
-    value(:restore)
   end
 
   object :doc_branch do
@@ -923,36 +909,77 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :doc_draft do
     field(:id, :id)
-    field(:doc_id, :id, resolve: fn draft, _, _ -> {:ok, draft.article_hash_id} end)
+
+    field(:doc_id, :id,
+      resolve: fn draft, _, _ ->
+        {:ok, Map.get(draft, :article_id)}
+      end
+    )
+
+    field(:branch_id, non_null(:id))
     field(:version, non_null(:integer))
+    field(:content_hash, :string)
+    field(:base_revision_id, :id)
     field(:title, :string)
     field(:subtitle, :string)
     field(:slug, :string)
     field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
-    field(:stage, :doc_snapshot_stage)
+    field(:stage, :article_stage)
     field(:digest, :string)
-    field(:author, :user, resolve: dataloader(CMS, :author))
+    field(:author, :user)
     timestamp_fields()
 
     field(:document, :article_document,
       resolve: fn draft, _, _ ->
-        document = Repo.preload(draft, :document).document
-        {:ok, document}
+        case Map.get(draft, :document) do
+          nil ->
+            CMS.Articles.Store.body_draft(draft.body_draft_id)
+
+          document ->
+            {:ok, document}
+        end
       end
     )
   end
 
   object :article_draft do
-    field(:id, non_null(:id), resolve: fn draft, _, _ -> {:ok, draft.article_hash_id} end)
-    field(:thread, non_null(:thread), resolve: fn draft, _, _ -> {:ok, draft.meta.thread} end)
+    field(:id, non_null(:id), resolve: fn draft, _, _ -> {:ok, draft.article_id} end)
+
+    field(:thread, non_null(:thread),
+      resolve: fn draft, _, _ ->
+        article =
+          case Map.get(draft, :article) do
+            %CMS.Model.Article{} = article ->
+              article
+
+            _not_loaded ->
+              {:ok, article} = FrontDesk.article(draft.article_id, mode: :internal)
+              article
+          end
+
+        {:ok, article.thread}
+      end
+    )
+
     field(:version, non_null(:integer))
-    field(:stage, non_null(:article_stage))
+    field(:content_hash, non_null(:string))
+    field(:base_revision_id, :id)
+    field(:stage, non_null(:article_stage), resolve: fn _, _, _ -> {:ok, :draft} end)
     field(:title, non_null(:string))
     field(:digest, :string)
     field(:slug, :string)
     field(:subtitle, :string)
     field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
-    field(:document, :article_document, resolve: dataloader(CMS, :document))
+
+    field(:document, :article_document,
+      resolve: fn draft, _, _ ->
+        case CMS.Articles.Store.body_draft(draft.body_draft_id) do
+          {:ok, body_draft} -> {:ok, body_draft}
+          {:error, _reason} -> {:ok, nil}
+        end
+      end
+    )
+
     timestamp_fields()
   end
 
@@ -967,7 +994,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :move_doc_to_draft_payload do
     field(:doc_id, :id)
-    field(:stage, :doc_snapshot_stage)
+    field(:stage, :article_stage)
     field(:publish_state, :doc_tree_node_publish_state)
     field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
@@ -1055,7 +1082,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     timestamp_fields()
   end
 
-  object :article_document_asset_ref do
+  object :article_asset_ref do
     field(:id, :id)
     field(:thread, :thread)
     field(:article_id, :id)
@@ -1179,7 +1206,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:meta, :json)
   end
 
-  input_object :article_document_asset_ref_input do
+  input_object :article_asset_ref_input do
     field(:asset_id, :id)
     field(:asset, :community_asset_input)
     field(:usage, :article_document_asset_usage)
@@ -1220,30 +1247,33 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:body_hash, :string)
     field(:schema_version, :integer)
 
-    field(:asset_refs, list_of(:article_document_asset_ref),
-      resolve: dataloader(CMS, :asset_refs)
-    )
+    field(:asset_refs, list_of(:article_asset_ref), resolve: dataloader(CMS, :asset_refs))
   end
 
-  object :doc_snapshot do
-    field(:id, :id, resolve: fn snapshot, _, _ -> {:ok, snapshot.hash_id} end)
-    field(:thread, :thread, resolve: fn _snapshot, _, _ -> {:ok, :doc} end)
-    field(:stage, :doc_snapshot_stage)
-    field(:action, :doc_snapshot_action)
-    field(:article_hash_id, :string)
+  object :doc_branch_version_content do
     field(:title, :string)
     field(:slug, :string)
     field(:subtitle, :string)
     field(:digest, :string)
+    field(:link_addr, :string)
+    field(:template_key, :string)
+    field(:body_hash, :string)
     field(:document_json, :string)
-    field(:version_hash, :string)
-    field(:revision_number, :integer)
+    field(:plain_text, :string)
     field(:schema_version, :integer)
-    field(:data, :json)
-    field(:message, :string)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
-    field(:author, :user, resolve: dataloader(CMS, :author))
-    timestamp_fields()
+  end
+
+  object :doc_branch_version_view do
+    field(:id, non_null(:id), resolve: fn row, _, _ -> {:ok, row.version.id} end)
+    field(:revision_id, non_null(:id), resolve: fn row, _, _ -> {:ok, row.revision.id} end)
+
+    field(:version_number, non_null(:integer),
+      resolve: fn row, _, _ -> {:ok, row.version.version_number} end
+    )
+
+    field(:published_at, :datetime, resolve: fn row, _, _ -> {:ok, row.version.published_at} end)
+    field(:message, :string, resolve: fn row, _, _ -> {:ok, row.version.message} end)
+    field(:content, non_null(:doc_branch_version_content))
   end
 
   object :post do
@@ -1863,13 +1893,25 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :artiment_mention do
     field(:id, :id)
     field(:mentioner_type, :mention_type)
-    field(:mentioner_id, :id)
+
+    field(:mentioner_id, :id,
+      resolve: fn mention, _, _ ->
+        {:ok, mention.mentioner_article_id || mention.mentioner_id}
+      end
+    )
+
     field(:mentioner_community_id, :id)
     field(:mentioner_url, :string)
 
     field(:mentioned_scope, :mention_scope)
     field(:mentioned_type, :mention_type)
-    field(:mentioned_id, :id)
+
+    field(:mentioned_id, :id,
+      resolve: fn mention, _, _ ->
+        {:ok, mention.mentioned_article_id || mention.mentioned_id}
+      end
+    )
+
     field(:mentioned_community_id, :id)
     field(:mentioned_url, :string)
     field(:mentioned_url_hash, :string)
@@ -1925,8 +1967,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     pagination_fields()
   end
 
-  object :paged_article_document_asset_refs do
-    field(:entries, list_of(:article_document_asset_ref))
+  object :paged_article_asset_refs do
+    field(:entries, list_of(:article_asset_ref))
     pagination_fields()
   end
 
@@ -1972,7 +2014,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:type, non_null(:search_artiment_type))
     field(:community_ref, non_null(:string))
     field(:thread, non_null(:thread))
-    field(:article_ref, non_null(:id))
+    field(:article_id, non_null(:id))
+    field(:indexed_revision_id, non_null(:id))
     field(:title, non_null(:string))
     field(:digest, :string)
     field(:locator, non_null(:search_article_locator))
@@ -1992,7 +2035,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:type, non_null(:search_artiment_type))
     field(:community_ref, non_null(:string))
     field(:thread, non_null(:thread))
-    field(:article_ref, non_null(:id))
+    field(:article_id, non_null(:id))
     field(:digest, :string)
     field(:locator, non_null(:search_comment_locator))
     field(:author_ref, :string)
@@ -2079,22 +2122,25 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     end
   end
 
-  defp moderator_community_slug(%{community: %Community{slug: slug}}) when is_binary(slug),
-    do: {:ok, slug}
+  defp moderator_community_slug(%{community: %Community{slug: slug}}) when is_binary(slug) do
+    {:ok, slug}
+  end
 
   defp moderator_community_slug(%{community_id: community_id}) when not is_nil(community_id) do
-    with {:ok, community} <- ORM.find(Community, community_id) do
+    with {:ok, community} <- FrontDesk.community(community_id, mode: :internal) do
       {:ok, community.slug}
     end
   end
 
-  defp moderator_community_slug(_),
-    do: {:error, CommunityErrorCat.not_exist("community not found")}
+  defp moderator_community_slug(_) do
+    {:error, CommunityErrorCat.not_exist("community not found")}
+  end
 
   defp moderator_user_id(%{user_id: user_id}) when not is_nil(user_id), do: {:ok, user_id}
 
-  defp moderator_user_id(%{user: %Accounts.Model.User{id: user_id}}) when not is_nil(user_id),
-    do: {:ok, user_id}
+  defp moderator_user_id(%{user: %Accounts.Model.User{id: user_id}}) when not is_nil(user_id) do
+    {:ok, user_id}
+  end
 
   defp moderator_user_id(_), do: {:error, AuthErrorCat.not_exist("user not found")}
 

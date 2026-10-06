@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.DocTree.{Reader, Revision}
+  alias CMS.DocTree.{Revision, State}
   alias CMS.Model.{Community, DocBranch, DocTreeNode}
 
   @insert_batch_size 500
@@ -67,7 +67,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
   def apply(%Community{} = community, %DocBranch{} = branch, tree, items_by_target)
       when is_map(tree) and is_map(items_by_target) do
     with namespace when is_binary(namespace) and namespace != "" <- Map.get(tree, "branchSlug"),
-         {:ok, state} <- Reader.ensure_draft_state(community, branch_id: branch.id),
+         {:ok, state} <- State.ensure_draft_state(community, branch_id: branch.id),
          {:ok, attrs} <-
            flatten_tabs(
              community,
@@ -122,8 +122,9 @@ defmodule GroupherServer.CMS.DocTree.Import do
     |> reverse_attrs()
   end
 
-  defp flatten_tabs(_community, _branch, _namespace, _tabs, _items_by_target),
-    do: {:error, ErrorCat.custom("imported Doc tree tabs are invalid")}
+  defp flatten_tabs(_community, _branch, _namespace, _tabs, _items_by_target) do
+    {:error, ErrorCat.custom("imported Doc tree tabs are invalid")}
+  end
 
   defp flatten_children(
          community,
@@ -197,8 +198,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
           {:cont, {:ok, [child_attrs | attrs]}}
 
         _ ->
-          {:halt,
-           {:error, ErrorCat.custom("imported Doc tree child type is invalid")}}
+          {:halt, {:error, ErrorCat.custom("imported Doc tree child type is invalid")}}
       end
     end)
   end
@@ -211,8 +211,9 @@ defmodule GroupherServer.CMS.DocTree.Import do
          _children,
          _items_by_target,
          _attrs
-       ),
-       do: {:error, ErrorCat.custom("imported Doc tree pages are invalid")}
+       ) do
+    {:error, ErrorCat.custom("imported Doc tree pages are invalid")}
+  end
 
   defp flatten_pins(community, branch, namespace, tab_id, pins, attrs) when is_list(pins) do
     pins
@@ -234,8 +235,9 @@ defmodule GroupherServer.CMS.DocTree.Import do
     end)
   end
 
-  defp flatten_pins(_community, _branch, _namespace, _tab_id, _pins, _attrs),
-    do: {:error, ErrorCat.custom("imported Doc tree pins are invalid")}
+  defp flatten_pins(_community, _branch, _namespace, _tab_id, _pins, _attrs) do
+    {:error, ErrorCat.custom("imported Doc tree pins are invalid")}
+  end
 
   defp base_attrs(%Community{} = community, branch, source, type, source_node_id, index) do
     %{
@@ -296,8 +298,9 @@ defmodule GroupherServer.CMS.DocTree.Import do
 
   defp empty_index_key?(nil), do: true
 
-  defp empty_index_key?(key) when is_tuple(key),
-    do: key |> Tuple.to_list() |> Enum.any?(&is_nil/1)
+  defp empty_index_key?(key) when is_tuple(key) do
+    key |> Tuple.to_list() |> Enum.any?(&is_nil/1)
+  end
 
   defp empty_index_key?(_key), do: false
 
@@ -321,13 +324,15 @@ defmodule GroupherServer.CMS.DocTree.Import do
   end
 
   defp existing_structural_node_id(indexes, %{type: type} = attrs)
-       when type in [:group, :link, :pin],
-       do: existing_child_id(indexes, attrs)
+       when type in [:group, :link, :pin] do
+    existing_child_id(indexes, attrs)
+  end
 
   defp existing_structural_node_id(_indexes, _attrs), do: nil
 
-  defp existing_child_id(indexes, attrs),
-    do: indexes.by_parent_title[{attrs.parent_node_id, attrs.type, attrs.title}]
+  defp existing_child_id(indexes, attrs) do
+    indexes.by_parent_title[{attrs.parent_node_id, attrs.type, attrs.title}]
+  end
 
   defp upsert_nodes([]), do: {:ok, []}
 

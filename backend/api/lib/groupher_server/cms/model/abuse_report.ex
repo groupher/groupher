@@ -18,31 +18,24 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
   use Accessible
 
   import Ecto.Changeset
-  import GroupherServer.CMS.Helper.Macros
-
-  import GroupherServer.CMS.Helper.Constraints,
-    only: [articles_at_most_one_ref_constraint: 2, articles_foreign_key_constraint: 1]
-
   alias __MODULE__
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Comment, Embeds}
+  alias CMS.Model.{Article, Comment, DocBranch, Embeds}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-
-  @threads CMS.Artiment.Config.threads()
 
   # @required_fields ~w(comment_id user_id received_user_id)a
   @optional_fields ~w(comment_id account_id operate_user_id deal_with report_cases_count)a
   @update_fields ~w(operate_user_id deal_with report_cases_count)a
 
-  @article_fields @threads |> Enum.map(&:"#{&1}_id")
-
   @type t :: %AbuseReport{}
   schema "abuse_reports" do
     belongs_to(:comment, Comment, foreign_key: :comment_id)
     belongs_to(:account, User, foreign_key: :account_id)
+    belongs_to(:article, Article, type: Ecto.UUID)
+    belongs_to(:branch, DocBranch)
 
     embeds_many(:report_cases, Embeds.AbuseReportCase, on_replace: :delete)
     field(:report_cases_count, :integer, default: 0)
@@ -51,24 +44,23 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
 
     field(:deal_with, :string)
 
-    article_belongs_to_fields()
     timestamps(type: :utc_datetime)
   end
 
   @doc false
   def changeset(%AbuseReport{} = struct, attrs) do
     struct
-    |> cast(attrs, @optional_fields ++ @article_fields)
+    |> cast(attrs, [:article_id, :branch_id] ++ @optional_fields)
     |> cast_embed(:report_cases, required: true, with: &Embeds.AbuseReportCase.changeset/2)
-    |> articles_foreign_key_constraint
-    |> articles_at_most_one_ref_constraint(:abuse_reports)
+    |> foreign_key_constraint(:article_id)
+    |> foreign_key_constraint(:branch_id)
   end
 
   def update_changeset(%AbuseReport{} = struct, attrs) do
     struct
-    |> cast(attrs, @update_fields ++ @article_fields)
+    |> cast(attrs, [:article_id, :branch_id] ++ @update_fields)
     |> cast_embed(:report_cases, required: true, with: &Embeds.AbuseReportCase.changeset/2)
-    |> articles_foreign_key_constraint
-    |> articles_at_most_one_ref_constraint(:abuse_reports)
+    |> foreign_key_constraint(:article_id)
+    |> foreign_key_constraint(:branch_id)
   end
 end

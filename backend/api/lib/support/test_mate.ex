@@ -28,11 +28,9 @@ defmodule GroupherServer.TestMate do
       import Helper.Utils,
         only: [camelize_map_key: 1, camelize_map_key: 2, get_config: 2]
 
-      import GroupherServer.CMS.FrontDesk, only: [preload_author: 1]
-
       import ShortMaps
 
-      alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
+      alias GroupherServer.{Accounts, CMS, ErrorCat, FrontDesk, Repo}
 
       alias CMS.Model.{
         Author,
@@ -71,6 +69,25 @@ defmodule GroupherServer.TestMate do
           inner_id: article.inner_id,
           thread: thread |> to_string() |> String.upcase()
         }
+      end
+
+      @doc "Reads an Article through the production ArticlePath-only FrontDesk contract."
+      def read_article(article_path), do: FrontDesk.article(article_path)
+
+      def read_article(article_path, actor) when is_map(article_path),
+        do: FrontDesk.article(article_path, actor)
+
+      def read_article(community, thread, inner_id),
+        do: read_article(community, thread, inner_id, [])
+
+      def read_article(%Community{slug: slug}, thread, inner_id, actor_or_opts),
+        do: read_article(slug, thread, inner_id, actor_or_opts)
+
+      def read_article(community, thread, inner_id, actor_or_opts) when is_binary(community) do
+        article_path = %{community: community, thread: thread, inner_id: inner_id}
+
+        actor = if is_list(actor_or_opts), do: nil, else: actor_or_opts
+        FrontDesk.article(article_path, actor)
       end
 
       def comment_path(%Community{} = community, article, thread, %Comment{} = comment) do

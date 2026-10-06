@@ -143,8 +143,9 @@ defmodule GroupherServer.CMS.Seeds.Comments do
     end)
   end
 
-  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,
-    do: Enum.random(min..max)
+  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max do
+    Enum.random(min..max)
+  end
 
   defp random_range(_), do: 23
 

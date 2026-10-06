@@ -23,7 +23,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   require GroupherServer.CMS.ErrorCat
 
   import Helper.Utils, only: [handle_absinthe_error: 3]
-  alias GroupherServer.{Accounts, CMS, ErrorCat, FrontDesk, Repo}
+  alias GroupherServer.{Accounts, CMS, ErrorCat, FrontDesk}
 
   alias Accounts.Model.User
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
@@ -57,8 +57,6 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   def call(resolution, {:article, opts}), do: fetch_article(resolution, List.wrap(opts))
 
   def call(resolution, :article), do: fetch_article(resolution, [])
-
-  def call(resolution, :article_insights), do: fetch_article_insights(resolution)
 
   def call(resolution, {:article_editor, opts}) do
     fetch_article_editor(resolution, List.wrap(opts))
@@ -99,41 +97,14 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
-  defp fetch_article_insights(%{arguments: arguments, context: context} = resolution) do
-    with {:ok, arguments} <- ArticlePath.parse_arguments(arguments),
-         article_path <- arguments.article_path,
-         actor <- Map.get(context, :cur_user),
-         grants <- article_insight_grants(actor),
-         {:ok, article} <-
-           CMS.FrontDesk.article_insights(article_path, actor,
-             passport_granted_community_slugs: grants
-           ) do
-      %{resolution | arguments: Map.put(arguments, :article, article)}
-    else
-      {:error, err_msg} ->
-        resolution
-        |> handle_absinthe_error(
-          ArticleErrorCat.not_exist(error_details(err_msg)),
-          ErrorCat.code(ArticleErrorCat.not_exist())
-        )
-    end
-  end
-
-  defp article_insight_grants(nil), do: []
-
-  defp article_insight_grants(actor),
-    do: GroupherServer.Analysis.ArticleInsights.passport_granted_community_slugs(actor)
-
   defp do_fetch_article(
          %{
            arguments: %{article_path: article_path} = arguments
          } =
            resolution,
-         opts
+         _opts
        ) do
-    preload = Keyword.get(opts, :preload, author: :user)
-
-    case FrontDesk.article(article_path, preload: preload) do
+    case FrontDesk.article(article_path) do
       {:ok, article} ->
         updated_arguments =
           arguments
@@ -153,17 +124,16 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   defp fetch_article_editor(
          %{
-           arguments: %{community: %Community{} = community, id: article_hash_id} = arguments
+           arguments: %{community: %Community{} = community, id: article_id} = arguments
          } = resolution,
          opts
        ) do
     with {:ok, thread} <- Keyword.fetch(opts, :thread),
-         {:ok, article} <- CMS.Articles.read_editor_head(community, thread, article_hash_id) do
-      article = Repo.preload(article, author: :user)
-
+         {:ok, article, branch_id} <- fetch_editor_article(community, thread, article_id) do
       updated_arguments =
         arguments
         |> Map.put(:article, article)
+        |> maybe_put_branch_id(branch_id)
         |> maybe_put_article_passport_is_owner(article, resolution)
 
       %{resolution | arguments: updated_arguments}
@@ -183,6 +153,29 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         )
     end
   end
+
+  defp fetch_editor_article(%Community{id: community_id} = community, :doc, article_id) do
+    with {:ok, %CMS.Model.Article{community_id: ^community_id, thread: :doc} = article} <-
+           FrontDesk.article(article_id, mode: :internal, view: :with_author),
+         {:ok, branch} <- CMS.Docs.Branch.resolve(community, nil) do
+      {:ok, article, branch.id}
+    else
+      _ -> {:error, ArticleErrorCat.not_exist("stable Doc not found")}
+    end
+  end
+
+  defp fetch_editor_article(%Community{id: community_id}, thread, article_id) do
+    case FrontDesk.article(article_id, mode: :internal, view: :with_author) do
+      {:ok, %CMS.Model.Article{community_id: ^community_id, thread: ^thread} = article} ->
+        {:ok, article, nil}
+
+      _ ->
+        {:error, ArticleErrorCat.not_exist("stable Article not found")}
+    end
+  end
+
+  defp maybe_put_branch_id(arguments, nil), do: arguments
+  defp maybe_put_branch_id(arguments, branch_id), do: Map.put(arguments, :branch_id, branch_id)
 
   defp fetch_comment(%{arguments: %{comment: comment_path} = arguments} = resolution) do
     case fetch_comment_by_path(comment_path) do
@@ -210,7 +203,14 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   defp maybe_put_article_passport_is_owner(arguments, article, %{
          context: %{cur_user: %{id: user_id}}
        }) do
-    Map.put(arguments, :passport_is_owner, article.author.user.id == user_id)
+    author_id =
+      case article.author do
+        %{user: %{id: id}} -> id
+        %{id: id} -> id
+        _ -> nil
+      end
+
+    Map.put(arguments, :passport_is_owner, author_id == user_id)
   end
 
   defp maybe_put_article_passport_is_owner(arguments, _article, _resolution), do: arguments
@@ -287,13 +287,13 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
-  defp fetch_users(resolution),
-    do:
-      resolution
-      |> handle_absinthe_error(
-        "users not found",
-        ErrorCat.code(ProfileErrorCat.not_exist("users not found"))
-      )
+  defp fetch_users(resolution) do
+    resolution
+    |> handle_absinthe_error(
+      "users not found",
+      ErrorCat.code(ProfileErrorCat.not_exist("users not found"))
+    )
+  end
 
   defp load_users(users) do
     users =
@@ -318,8 +318,9 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   defp load_user(_), do: {:error, "user not found"}
 
-  defp error_details(%ErrorCat.Error{details: %{message: message}}) when is_binary(message),
-    do: message
+  defp error_details(%ErrorCat.Error{details: %{message: message}}) when is_binary(message) do
+    message
+  end
 
   defp error_details(%ErrorCat.Error{details: details}) when is_binary(details), do: details
   defp error_details(details) when is_binary(details), do: details

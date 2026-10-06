@@ -21,20 +21,24 @@ defmodule GroupherServer.PublicCache.Tags do
   def community(community), do: "community[#{community}]"
 
   @doc "Builds an article-list tag."
-  def article_list(community, thread),
-    do: "#{community(community)}-thread[#{thread_name(thread)}]-articles"
+  def article_list(community, thread) do
+    "#{community(community)}-thread[#{thread_name(thread)}]-articles"
+  end
 
   @doc "Builds an article-detail tag."
-  def article_detail(community, thread, inner_id),
-    do: "#{community(community)}-thread[#{thread_name(thread)}]-article[#{inner_id}]"
+  def article_detail(community, thread, inner_id) do
+    "#{community(community)}-thread[#{thread_name(thread)}]-article[#{inner_id}]"
+  end
 
   @doc "Builds an article-comments tag."
-  def comments(community, thread, inner_id),
-    do: "#{article_detail(community, thread, inner_id)}-comments"
+  def comments(community, thread, inner_id) do
+    "#{article_detail(community, thread, inner_id)}-comments"
+  end
 
   @doc "Builds a thread-tags tag."
-  def tags(community, thread),
-    do: "#{community(community)}-thread[#{thread_name(thread)}]-tags"
+  def tags(community, thread) do
+    "#{community(community)}-thread[#{thread_name(thread)}]-tags"
+  end
 
   @doc "Builds a documentation-tree tag."
   def doc_tree(community), do: "#{community(community)}-doc-tree"

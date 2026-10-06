@@ -85,8 +85,9 @@ defmodule GroupherServer.CMS.Seeds.Tags do
          target_count,
          current_count
        )
-       when current_count >= target_count,
-       do: :ok
+       when current_count >= target_count do
+    :ok
+  end
 
   defp ensure_tags_count(
          community,
@@ -147,8 +148,9 @@ defmodule GroupherServer.CMS.Seeds.Tags do
     }
   end
 
-  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,
-    do: Enum.random(min..max)
+  defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max do
+    Enum.random(min..max)
+  end
 
   defp random_range(_), do: 10
 

@@ -254,15 +254,14 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   defp action_doc_ids(%TrashAction{} = action, branch) do
     TrashedDocArticle
     |> where([item], item.trash_action_id == ^action.id and item.branch_id == ^branch.id)
-    |> select([item], item.article_hash_id)
+    |> select([item], item.article_id)
     |> Repo.all()
   end
 
   defp load_actor(args) do
     case Map.get(args, :actor_id) do
       nil ->
-        {:error,
-         ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
+        {:error, ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
 
       actor_id ->
         case Repo.get(User, actor_id) do
@@ -270,8 +269,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
             {:ok, actor}
 
           nil ->
-            {:error,
-             ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
+            {:error, ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
         end
     end
   end
@@ -402,18 +400,16 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
       {_type, nil} ->
         {:error,
-         ErrorCat.custom(
-           "The selected restore parent does not exist in every restored stage."
-         )}
+         ErrorCat.custom("The selected restore parent does not exist in every restored stage.")}
 
       _ ->
-        {:error,
-         ErrorCat.custom("The selected node can not parent this Docs Tree item.")}
+        {:error, ErrorCat.custom("The selected node can not parent this Docs Tree item.")}
     end
   end
 
-  defp maybe_put_restore_index(data, index) when is_integer(index) and index >= 0,
-    do: Map.put(data, "index", index)
+  defp maybe_put_restore_index(data, index) when is_integer(index) and index >= 0 do
+    Map.put(data, "index", index)
+  end
 
   defp maybe_put_restore_index(data, _index), do: data
 
@@ -458,20 +454,21 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     :ok
   end
 
-  defp where_restore_scope(query, nil, :tab),
-    do: query |> where([node], is_nil(node.parent_node_id)) |> where([node], node.type == :tab)
+  defp where_restore_scope(query, nil, :tab) do
+    query |> where([node], is_nil(node.parent_node_id)) |> where([node], node.type == :tab)
+  end
 
-  defp where_restore_scope(query, parent_node_id, :pin),
-    do:
-      query
-      |> where([node], node.parent_node_id == ^parent_node_id)
-      |> where([node], node.type == :pin)
+  defp where_restore_scope(query, parent_node_id, :pin) do
+    query
+    |> where([node], node.parent_node_id == ^parent_node_id)
+    |> where([node], node.type == :pin)
+  end
 
-  defp where_restore_scope(query, parent_node_id, _type),
-    do:
-      query
-      |> where([node], node.parent_node_id == ^parent_node_id)
-      |> where([node], node.type in [:group, :page, :link])
+  defp where_restore_scope(query, parent_node_id, _type) do
+    query
+    |> where([node], node.parent_node_id == ^parent_node_id)
+    |> where([node], node.type in [:group, :page, :link])
+  end
 
   defp ensure_restore_slots_available(community, branch, items) do
     conflicts? =
@@ -490,11 +487,11 @@ defmodule GroupherServer.CMS.DocTree.Trash do
           |> Repo.exists?()
       end)
 
-    if conflicts?,
-      do:
-        {:error,
-         ErrorCat.custom("A Docs Tree node with the same identity already exists")},
-      else: :ok
+    if conflicts? do
+      {:error, ErrorCat.custom("A Docs Tree node with the same identity already exists")}
+    else
+      :ok
+    end
   end
 
   defp restore_stage_nodes(community, branch, items, stage) do

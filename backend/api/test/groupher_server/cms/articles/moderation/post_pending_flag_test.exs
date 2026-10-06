@@ -6,9 +6,6 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
 
   @total_count 35
 
-  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
@@ -37,7 +34,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
         CMS.Communities.create_tag(community, :post, mock_attrs(:community_tag), user)
 
       assert {:ok, _post} = CMS.Communities.set_tag(post_m, tag.id)
-      assert {:ok, _post} = CMS.Articles.set_audit_failed(post_m, %{})
+      assert {:ok, _post} = CMS.Articles.set_audit_failed(post_m.article_id, %{}, :operations)
 
       assert {:ok, %{entries: entries}} =
                CMS.Articles.paged_audit_failed(:post, %{
@@ -52,24 +49,35 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
 
     test "pending post can not be read", ~m(post_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(post_m),
           :post,
           post_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:post, post_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          post_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations
+        )
 
-      {:ok, post_m} = ORM.find(CMS.Model.Post, post_m.id)
-      assert post_m.pending == @audit_illegal
+      stable = Repo.get!(CMS.Model.Article, post_m.article_id)
+      assert stable.moderation_state == :illegal
+
+      assert Enum.all?(
+               CMS.Model.ArticleCommunity
+               |> Repo.all()
+               |> Enum.filter(&(&1.article_id == post_m.article_id)),
+               &(not &1.visible)
+             )
 
       {:error, reason} =
-        CMS.Articles.read(
+        read_article(
           article_community(post_m),
           :post,
           post_m.inner_id
@@ -83,17 +91,21 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, _} =
-        CMS.Articles.read(article_community(post), :post, post.inner_id)
+        read_article(article_community(post), :post, post.inner_id)
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:post, post.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          post.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations
+        )
 
       {:ok, post_read} =
-        CMS.Articles.read(
+        read_article(
           article_community(post),
           :post,
           post.inner_id,
@@ -105,7 +117,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       {:ok, user2} = db_insert(:user)
 
       {:error, reason} =
-        CMS.Articles.read(
+        read_article(
           article_community(post),
           :post,
           post.inner_id,
@@ -117,29 +129,33 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
 
     test "pending post can set/unset pending", ~m(post_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(post_m),
           :post,
           post_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:post, post_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          post_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations
+        )
 
-      {:ok, post_m} = ORM.find(CMS.Model.Post, post_m.id)
-      assert post_m.pending == @audit_illegal
+      stable = Repo.get!(CMS.Model.Article, post_m.article_id)
+      assert stable.moderation_state == :illegal
 
-      {:ok, _} = CMS.Articles.unset_illegal(:post, post_m.id, %{})
+      {:ok, _} = CMS.Articles.unset_illegal(post_m.article_id, %{}, :operations)
 
-      {:ok, post_m} = ORM.find(CMS.Model.Post, post_m.id)
-      assert post_m.pending == @audit_legal
+      stable = Repo.get!(CMS.Model.Article, post_m.article_id)
+      assert stable.moderation_state == :legal
 
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(post_m),
           :post,
           post_m.inner_id
@@ -148,68 +164,55 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
 
     test "pending post's meta should have info", ~m(post_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(post_m),
           :post,
           post_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:post, post_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"],
-          illegal_articles: ["/post/#{post_m.id}"]
-        })
+        CMS.Articles.set_illegal(
+          post_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"],
+            illegal_articles: ["/post/#{post_m.id}"]
+          },
+          :operations
+        )
 
-      {:ok, post_m} = ORM.find(CMS.Model.Post, post_m.id)
-      assert post_m.pending == @audit_illegal
-      assert not post_m.meta.is_legal
-      assert post_m.meta.illegal_reason == ["some-reason"]
-      assert post_m.meta.illegal_words == ["some-word"]
+      stable = Repo.get!(CMS.Model.Article, post_m.article_id)
+      assert stable.moderation_state == :illegal
+      assert stable.illegal_reason == ["some-reason"]
+      assert stable.illegal_words == ["some-word"]
 
-      post_m = Repo.preload(post_m, :author)
-      {:ok, user} = ORM.find(User, post_m.author.user_id)
+      stable = Repo.preload(stable, author: :user)
+      user = stable.author.user
       assert user.meta.has_illegal_articles
       assert user.meta.illegal_articles == ["/post/#{post_m.id}"]
 
       {:ok, _} =
-        CMS.Articles.unset_illegal(:post, post_m.id, %{
-          is_legal: true,
-          illegal_reason: [],
-          illegal_words: [],
-          illegal_articles: ["/post/#{post_m.id}"]
-        })
+        CMS.Articles.unset_illegal(
+          post_m.article_id,
+          %{
+            is_legal: true,
+            illegal_reason: [],
+            illegal_words: [],
+            illegal_articles: ["/post/#{post_m.id}"]
+          },
+          :operations
+        )
 
-      {:ok, post_m} = ORM.find(CMS.Model.Post, post_m.id)
-      assert post_m.pending == @audit_legal
-      assert post_m.meta.is_legal
-      assert post_m.meta.illegal_reason == []
-      assert post_m.meta.illegal_words == []
+      stable = Repo.get!(CMS.Model.Article, post_m.article_id)
+      assert stable.moderation_state == :legal
+      assert stable.illegal_reason == []
+      assert stable.illegal_words == []
 
-      post_m = Repo.preload(post_m, :author)
-      {:ok, user} = ORM.find(User, post_m.author.user_id)
+      stable = Repo.preload(stable, author: :user)
+      user = stable.author.user
       assert not user.meta.has_illegal_articles
       assert user.meta.illegal_articles == []
     end
   end
-
-  # alias CMS.Delegate.Hooks
-
-  # test "can audit paged audit failed posts", ~m(post_m)a do
-  #   {:ok, post} = ORM.find(CMS.Model.Post, post_m.id)
-
-  #   {:ok, post} = CMS.set_article_audit_failed(post, %{})
-
-  #   {:ok, result} = CMS.paged_audit_failed_articles(:post, %{page: 1, size: 20})
-  #   assert result |> is_valid_pagination?(:raw)
-  #   assert result.total_count == 1
-
-  #   Enum.map(result.entries, fn post ->
-  #     Hooks.Audition.handle(post)
-  #   end)
-
-  #   {:ok, result} = CMS.paged_audit_failed_articles(:post, %{page: 1, size: 20})
-  #   assert result.total_count == 0
-  # end
 end

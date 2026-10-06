@@ -77,8 +77,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
     end
   end
 
-  def put_tree_checklist_item_ids(selection, tree_checklist_item_ids),
-    do: %{selection | tree_checklist_item_ids: tree_checklist_item_ids}
+  def put_tree_checklist_item_ids(selection, tree_checklist_item_ids) do
+    %{selection | tree_checklist_item_ids: tree_checklist_item_ids}
+  end
 
   def flow(
         current_checklist,
@@ -128,8 +129,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
     end
   end
 
-  defp checklist_item_ids_from(nil, items),
-    do: {:ok, items |> Enum.filter(& &1.selectable) |> Enum.map(& &1.id)}
+  defp checklist_item_ids_from(nil, items) do
+    {:ok, items |> Enum.filter(& &1.selectable) |> Enum.map(& &1.id)}
+  end
 
   defp checklist_item_ids_from(checklist_item_ids, items) when is_list(checklist_item_ids) do
     by_id = Map.new(items, &{&1.id, &1})
@@ -141,19 +143,21 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
     |> Result.map_while_ok(&selected_checklist_item_id(&1, by_id))
   end
 
-  defp checklist_item_ids_from(_checklist_item_ids, _items),
-    do: {:error, ErrorCat.custom("Selected publish item ids must be a list.")}
+  defp checklist_item_ids_from(_checklist_item_ids, _items) do
+    {:error, ErrorCat.custom("Selected publish item ids must be a list.")}
+  end
 
-  defp selected_checklist_item_id(id, by_id),
-    do: selectable_checklist_item_id(id, Map.get(by_id, id))
+  defp selected_checklist_item_id(id, by_id) do
+    selectable_checklist_item_id(id, Map.get(by_id, id))
+  end
 
-  defp selectable_checklist_item_id(_id, nil),
-    do: {:error, ErrorCat.custom("Selected publish item no longer exists.")}
+  defp selectable_checklist_item_id(_id, nil) do
+    {:error, ErrorCat.custom("Selected publish item no longer exists.")}
+  end
 
-  defp selectable_checklist_item_id(_id, %{selectable: false, disabled_reason: reason}),
-    do:
-      {:error,
-       ErrorCat.custom(reason || "Selected publish item is not available.")}
+  defp selectable_checklist_item_id(_id, %{selectable: false, disabled_reason: reason}) do
+    {:error, ErrorCat.custom(reason || "Selected publish item is not available.")}
+  end
 
   defp selectable_checklist_item_id(id, _item), do: {:ok, id}
 
@@ -169,26 +173,26 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
     if MapSet.disjoint?(tree_checklist_item_id_set, restore_tree_checklist_item_id_set) do
       :ok
     else
-      {:error,
-       ErrorCat.custom(
-         "Tree publish items can not be both published and restored."
-       )}
+      {:error, ErrorCat.custom("Tree publish items can not be both published and restored.")}
     end
   end
 
   defp publish_flow(%{total_count: 0}, [], [], []), do: {:ok, @publish_flow_noop}
 
-  defp publish_flow(_checklist, [], [], []),
-    do: {:error, ErrorCat.custom("No publish changes selected.")}
+  defp publish_flow(_checklist, [], [], []) do
+    {:error, ErrorCat.custom("No publish changes selected.")}
+  end
 
-  defp publish_flow(_checklist, [], [], _restore_tree_checklist_item_ids),
-    do: {:ok, @publish_flow_restore}
+  defp publish_flow(_checklist, [], [], _restore_tree_checklist_item_ids) do
+    {:ok, @publish_flow_restore}
+  end
 
   defp publish_flow(
          _checklist,
          _doc_checklist_item_ids,
          _tree_checklist_item_ids,
          _restore_tree_checklist_item_ids
-       ),
-       do: {:ok, @publish_flow_publish}
+       ) do
+    {:ok, @publish_flow_publish}
+  end
 end

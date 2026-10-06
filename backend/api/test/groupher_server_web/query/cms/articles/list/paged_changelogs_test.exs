@@ -21,28 +21,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, changelog_last_week} =
-      ORM.update(changelog, %{title: "last week", inserted_at: @last_week, active_at: @last_week},
-        strict: false
-      )
+    {:ok, changelog_last_week} = backdate(changelog, @last_week)
 
     {_, changelog, _, _} = mock_article(:changelog)
 
-    {:ok, changelog_last_month} =
-      ORM.update(
-        changelog,
-        %{title: "last month", inserted_at: @last_month, active_at: @last_month},
-        strict: false
-      )
+    {:ok, changelog_last_month} = backdate(changelog, @last_month)
 
     {community, changelog, _, user} = mock_article(:changelog, community, user)
 
-    {:ok, changelog_last_year} =
-      ORM.update(changelog, %{title: "last year", inserted_at: @last_year, active_at: @last_year},
-        strict: false
-      )
+    {:ok, changelog_last_year} = backdate(changelog, @last_year)
 
-    db_insert_multi(:changelog, @today_count)
+    Enum.each(1..@today_count, fn _index -> mock_article(:changelog) end)
 
     guest_conn = simu_conn(:guest)
 
@@ -367,7 +356,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       entries = results["entries"]
       first_changelog = entries |> List.first()
-      assert first_changelog["innerId"] !== to_string(changelog_last_week.inner_id)
+      refute matches_article?(first_changelog, community, changelog_last_week)
 
       Process.sleep(2000)
 
@@ -385,7 +374,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       entries = results["entries"]
       first_changelog = entries |> List.first()
 
-      assert first_changelog["innerId"] == to_string(changelog_last_week.inner_id)
+      assert matches_article?(first_changelog, community, changelog_last_week)
     end
 
     test "comment on very old changelog have no effect",
@@ -405,13 +394,15 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       entries = results["entries"]
       first_changelog = entries |> List.first()
 
-      assert first_changelog["innerId"] !== to_string(changelog_last_year.inner_id)
+      refute matches_article?(first_changelog, community, changelog_last_year)
     end
 
     test "latest changelog author commented changelog have no effect",
          ~m(guest_conn community changelog_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}
-      {:ok, changelog} = ORM.find(Changelog, changelog_last_week.id, preload: [author: :user])
+
+      changelog =
+        CMS.Model.Article |> Repo.get!(changelog_last_week.id) |> Repo.preload(author: :user)
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -426,12 +417,31 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       entries = results["entries"]
       first_changelog = entries |> List.first()
 
-      assert first_changelog["innerId"] !== to_string(changelog_last_week.inner_id)
+      refute matches_article?(first_changelog, community, changelog_last_week)
     end
   end
 
   defp track_view(article, user) do
     assert {:ok, %{tracked: true}} =
              track_article_view(article, user, read_purpose: :public_read)
+  end
+
+  defp matches_article?(entry, community, article) do
+    entry["innerId"] == to_string(article.inner_id) and
+      Enum.any?(entry["communities"], &(&1["slug"] == community.slug))
+  end
+
+  defp backdate(article, timestamp) do
+    stable_article = Repo.get!(CMS.Model.Article, article.id)
+
+    case stable_article
+         |> Ecto.Changeset.change(%{inserted_at: timestamp, active_at: timestamp})
+         |> Repo.update() do
+      {:ok, _stable_article} ->
+        {:ok, Map.merge(article, %{inserted_at: timestamp, active_at: timestamp})}
+
+      error ->
+        error
+    end
   end
 end

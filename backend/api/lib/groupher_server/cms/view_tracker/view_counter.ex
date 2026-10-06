@@ -72,8 +72,9 @@ defmodule GroupherServer.CMS.ViewTracker.ViewCounter do
     end
   end
 
-  defp current_stats(true, thread, article_id),
-    do: CMS.ArticleStats.increment_views(thread, article_id)
+  defp current_stats(true, thread, article_id) do
+    CMS.ArticleStats.increment_views(thread, article_id)
+  end
 
   defp current_stats(false, thread, article_id), do: CMS.ArticleStats.fetch(thread, article_id)
 end

@@ -3,8 +3,8 @@ defmodule GroupherServer.CMS.Gate.Context.Access do
   Union type for Gate-owned mutation admission facts.
 
   Access contexts are constructed only by Gate resource loaders and consumed by
-  resource access policies. Readers and writers do not construct or persist
-  them.
+  resource access policies. Query/loaders and writers do not construct or
+  persist them.
 
       Gate.access_check
         -> resource loader

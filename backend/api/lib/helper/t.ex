@@ -10,7 +10,7 @@ defmodule Helper.T do
   """
   alias GroupherServer.{Accounts, CMS, ErrorCat}
   alias Accounts.Model.User
-  alias CMS.Model.{Blog, Changelog, Doc, Post}
+  alias CMS.Model.Article
 
   @type error :: ErrorCat.Error.t()
 
@@ -59,11 +59,7 @@ defmodule Helper.T do
           total_pages: integer()
         }
 
-  @type article ::
-          Post.t()
-          | Blog.t()
-          | Doc.t()
-          | Changelog.t()
+  @type article :: Article.t() | map()
 
   @type article_common :: %{
           id: integer(),

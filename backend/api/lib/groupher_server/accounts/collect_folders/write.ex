@@ -12,7 +12,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
           +--> per-thread counts in folder meta
   """
 
-  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
+  import GroupherServer.FrontDesk, only: [thread_of: 1]
   import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
 
@@ -21,6 +21,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   alias Accounts.CollectFolders.ErrorCat
   alias Accounts.Model.{CollectFolder, Embeds, User}
   alias CMS.{Command}
+  alias CMS.Accounts.CollectFolders.WriteConfirmation, as: Confirmation
   alias CMS.Model.ArticleCollect
   alias Helper.{Datetime, Multi, ORM, T}
 
@@ -86,16 +87,29 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
 
   @doc "Adds folder membership through the retry-safe CMS Command boundary."
   @spec add_payload(T.article(), T.id(), User.t(), String.t() | nil) :: T.domain_res(map())
+  def add_payload(article, folder_id, %User{} = user, nil) do
+    add_new(article, folder_id, user)
+    |> collect_payload(nil)
+  end
+
   def add_payload(article, folder_id, %User{} = user, command_id) do
-    with {:ok, command_id} <- Command.resolve_command_id(command_id) do
-      Command.update_user(user, command_id,
-        command: :collect_add,
-        resource: article,
-        input: %{folder_id: folder_id},
-        recovery: fn _receipt -> ORM.find(CollectFolder, folder_id) end
-      )
-      |> Command.run(fn _context -> add_new(article, folder_id, user) end)
-      |> collect_payload(command_id)
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :collect_add,
+      target: article,
+      params: %{folder_id: folder_id}
+    }
+
+    with {:ok, %Confirmation{data: data}} <-
+           Command.execute(command,
+             action: fn _context ->
+               confirmation(add_new(article, folder_id, user), article, folder_id, :add)
+             end,
+             confirmation: Confirmation
+           ),
+         {:ok, folder} <- ORM.find(CollectFolder, data["folder_id"]) do
+      collect_payload({:ok, folder}, command_id)
     end
   end
 
@@ -139,16 +153,29 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
 
   @doc "Removes folder membership through the retry-safe CMS Command boundary."
   @spec remove_payload(T.article(), T.id(), User.t(), String.t() | nil) :: T.domain_res(map())
+  def remove_payload(article, folder_id, %User{} = user, nil) do
+    remove_new(article, folder_id, user)
+    |> collect_payload(nil)
+  end
+
   def remove_payload(article, folder_id, %User{} = user, command_id) do
-    with {:ok, command_id} <- Command.resolve_command_id(command_id) do
-      Command.update_user(user, command_id,
-        command: :collect_remove,
-        resource: article,
-        input: %{folder_id: folder_id},
-        recovery: fn _receipt -> ORM.find(CollectFolder, folder_id) end
-      )
-      |> Command.run(fn _context -> remove_new(article, folder_id, user) end)
-      |> collect_payload(command_id)
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :collect_remove,
+      target: article,
+      params: %{folder_id: folder_id}
+    }
+
+    with {:ok, %Confirmation{data: data}} <-
+           Command.execute(command,
+             action: fn _context ->
+               confirmation(remove_new(article, folder_id, user), article, folder_id, :remove)
+             end,
+             confirmation: Confirmation
+           ),
+         {:ok, folder} <- ORM.find(CollectFolder, data["folder_id"]) do
+      collect_payload({:ok, folder}, command_id)
     end
   end
 
@@ -231,7 +258,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   defp update_folder_meta(thread, collects, folder) do
     total_count = length(collects)
     last_updated = Datetime.today() |> Datetime.to_datetime()
-    thread_count = Enum.filter(collects, &(not is_nil(Map.get(&1, :"#{thread}_id")))) |> length()
+    thread_count = Enum.count(collects, &(&1.thread == thread))
 
     meta =
       folder.meta
@@ -250,8 +277,23 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   defp result({:ok, %{rm_from_collect_folder: result}}), do: {:ok, result}
   defp result({:error, _step, reason, _steps}), do: {:error, reason}
 
-  defp collect_payload({:ok, folder}, command_id),
-    do: {:ok, %{folder: folder, command_id: command_id}}
+  defp collect_payload({:ok, folder}, command_id) do
+    {:ok, %{folder: folder, command_id: command_id}}
+  end
 
   defp collect_payload({:error, _reason} = error, _command_id), do: error
+
+  defp confirmation({:ok, folder}, article, folder_id, operation) do
+    {:ok,
+     %Confirmation{
+       data: %{
+         "folder_id" => to_string(folder_id),
+         "article_id" => to_string(article.id),
+         "operation" => Atom.to_string(operation),
+         "total_count" => folder.total_count
+       }
+     }}
+  end
+
+  defp confirmation(error, _article, _folder_id, _operation), do: error
 end

@@ -45,7 +45,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
 
   defmacro article_asset_args do
     quote do
-      arg(:asset_refs, list_of(:article_document_asset_ref_input))
+      arg(:asset_refs, list_of(:article_asset_ref_input))
     end
   end
 

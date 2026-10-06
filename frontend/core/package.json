@@ -86,6 +86,7 @@
     "@types/sanitize-html": "^2.16.1",
     "@vitejs/plugin-react": "^6.1.1",
     "@webgpu/types": "0.1.72",
+    "fake-indexeddb": "^6.2.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwindcss": "4.3.3",

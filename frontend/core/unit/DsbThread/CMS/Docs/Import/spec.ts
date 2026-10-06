@@ -101,7 +101,7 @@ export type TContentImportJob = {
   tree: { tabs: TImportTreeTab[] }
   badSmells: Array<{ code?: string; level?: string; message?: string }>
   targetBranch: string
-  firstImportedDocRef?: string | null
+  firstImportedDocId?: string | null
   failedItems: TContentImportIssue[]
   skipped: TContentImportIssue[]
 }

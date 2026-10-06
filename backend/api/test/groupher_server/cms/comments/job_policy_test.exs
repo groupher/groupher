@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
   import ExUnit.CaptureLog
 
   alias GroupherServer.{CMS, Jobs}
-  alias CMS.Model.{Comment, Post}
+  alias CMS.Model.{ArticleStats, Comment}
   alias CMS.Comments.JobPolicy
   alias CMS.Gate.Access
   alias Jobs.Comments, as: CommentsJob
@@ -41,8 +41,10 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
       )
     end
 
-    assert Repo.aggregate(from(comment in Comment, where: comment.post_id == ^post.id), :count) ==
-             0
+    assert Repo.aggregate(
+             from(comment in Comment, where: comment.article_id == ^post.article_id),
+             :count
+           ) == 0
   end
 
   test "required audition enqueue failure rolls back reply creation and counters" do
@@ -63,11 +65,15 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
       CMS.Comments.reply_comment(parent.id, mock_comment("reply"), actor)
     end
 
-    assert Repo.aggregate(from(comment in Comment, where: comment.post_id == ^post.id), :count) ==
-             1
+    assert Repo.aggregate(
+             from(comment in Comment, where: comment.article_id == ^post.article_id),
+             :count
+           ) == 1
 
     assert Repo.get!(Comment, parent.id).replies_count == 0
-    assert Repo.get!(Post, post.id).comments_count == 1
+
+    assert Repo.get_by!(ArticleStats, article_id: post.article_id, thread: :post).comments_count ==
+             1
   end
 
   test "required audition enqueue failure rolls back comment update" do
@@ -129,25 +135,26 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
     assert Repo.get!(Comment, comment.id).body_html =~ "before"
   end
 
-  test "optional mention enqueue failure preserves a committed comment" do
+  test "comment effects are durably recorded after the comment commits" do
     {community, post, _, actor} = mock_article(:post, preload: [author: :user])
-    reject_job_kind(:sync_mentions)
 
-    log =
-      capture_log(fn ->
-        assert {:ok, %Comment{} = comment} =
-                 CMS.Comments.create_comment(
-                   community,
-                   :post,
-                   post.inner_id,
-                   mock_comment(),
-                   actor
-                 )
+    assert {:ok, %Comment{} = comment} =
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               post.inner_id,
+               mock_comment(),
+               actor
+             )
 
-        assert Repo.get!(Comment, comment.id)
-      end)
+    assert Repo.get!(Comment, comment.id)
 
-    assert log =~ "optional job enqueue failed job=sync_mentions"
+    assert %CMS.Outbox.Event{status: :pending} =
+             Repo.get_by!(CMS.Outbox.Event,
+               event: "comment.created",
+               resource_type: "comment",
+               resource_id: to_string(comment.id)
+             )
   end
 
   test "participant repair enqueue failure preserves a successful read" do
@@ -162,7 +169,13 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                actor
              )
 
-    assert {:ok, _} = ORM.update(post, %{comments_participants_count: 99})
+    stats = Repo.get_by!(ArticleStats, article_id: post.article_id, thread: :post)
+
+    assert {:ok, _} =
+             stats
+             |> Ecto.Changeset.change(comments_participants_count: 99)
+             |> Repo.update()
+
     reject_job_kind(:reconcile_comments_participants)
 
     log =
@@ -174,7 +187,11 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
       end)
 
     assert log =~ "optional job enqueue failed job=reconcile_comments_participants"
-    assert Repo.get!(Post, post.id).comments_participants_count == 99
+
+    assert Repo.get_by!(ArticleStats,
+             article_id: post.article_id,
+             thread: :post
+           ).comments_participants_count == 99
   end
 
   defp reject_job_kind(kind) when is_atom(kind) do

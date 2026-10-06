@@ -237,8 +237,9 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   end
 
   if Mix.env() == :test do
-    def run_sections_for_test(sections, timeout \\ @config.timeout + 1_000),
-      do: run_sections(sections, timeout)
+    def run_sections_for_test(sections, timeout \\ @config.timeout + 1_000) do
+      run_sections(sections, timeout)
+    end
   end
 
   defp run_sections(sections, timeout \\ @config.timeout + 1_000) do
@@ -326,8 +327,9 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     |> parse_active()
   end
 
-  defp dimension_metrics(request, range, dimension),
-    do: dimension_metrics(request, range, dimension, @config.metrics_limit)
+  defp dimension_metrics(request, range, dimension) do
+    dimension_metrics(request, range, dimension, @config.metrics_limit)
+  end
 
   defp dimension_metrics(%{client: client, website_id: website_id}, range, dimension, limit) do
     client
@@ -413,8 +415,9 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   defp fetch_required_config(_value), do: {:error, ErrorCat.not_configured()}
 
   defp parse_stats({:ok, %Tesla.Env{status: status, body: body}})
-       when status in 200..299 and is_map(body),
-       do: {:ok, normalize_stats(body)}
+       when status in 200..299 and is_map(body) do
+    {:ok, normalize_stats(body)}
+  end
 
   defp parse_stats({:ok, %Tesla.Env{status: status, body: body}}) when status in 200..299 do
     Logger.warning("Umami stats returned unexpected body: #{inspect_body(body)}")
@@ -447,8 +450,9 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     end
   end
 
-  defp parse_website_id(body),
-    do: {:error, ErrorCat.unexpected_external_response(body_kind(body))}
+  defp parse_website_id(body) do
+    {:error, ErrorCat.unexpected_external_response(body_kind(body))}
+  end
 
   defp parse_website_rows({:ok, %Tesla.Env{status: status, body: body}})
        when status in 200..299 do
@@ -773,8 +777,9 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
 
   defp non_negative_int(value) when is_integer(value) and value >= 0, do: {:ok, value}
 
-  defp non_negative_int(value) when is_float(value) and value >= 0,
-    do: {:ok, trunc(value)}
+  defp non_negative_int(value) when is_float(value) and value >= 0 do
+    {:ok, trunc(value)}
+  end
 
   defp non_negative_int(value) when is_binary(value) do
     case Integer.parse(value) do

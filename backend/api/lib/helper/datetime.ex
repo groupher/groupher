@@ -113,8 +113,9 @@ defmodule Helper.Datetime do
   @spec shift(DateTime.t(), shift_opts()) :: DateTime.t()
   def shift(%Date{} = date, opts), do: Date.shift(date, normalize_shift_opts(opts))
 
-  def shift(%DateTime{} = datetime, opts),
-    do: DateTime.shift(datetime, normalize_shift_opts(opts))
+  def shift(%DateTime{} = datetime, opts) do
+    DateTime.shift(datetime, normalize_shift_opts(opts))
+  end
 
   @doc """
   Returns the start of the UTC day.

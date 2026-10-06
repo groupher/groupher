@@ -33,3 +33,21 @@ is_authenticated
 
 来源或验证方式使用独立字段表达，例如 `classified_by = account_session | signed_anonymous_id |
 agent_credential | delegation_credential | verified_crawler | self_reported | fallback`。
+
+## Elixir 折行使用完整 block
+
+Elixir 的 inline `do:` 只用于完整表达式能放在同一物理行的情况。`def`、`defp`、`defmacro`、
+`defmacrop`、`if`、`unless`、`case` 或 `with` 一旦折行，统一改用完整的 `do ... end`：
+
+```elixir
+# 正确：单行 inline
+def published?(article), do: article.stage == :published
+
+# 正确：折行 block
+def publish(article, actor, opts) do
+  Commands.Publish.execute(article, actor, opts)
+end
+```
+
+禁止把表达式在逗号后折行，再在下一行书写 `do:` 或 `else:`。该规则由
+`GroupherServer.Credo.Check.NoWrappedInlineDo` 在 CI 中强制执行。

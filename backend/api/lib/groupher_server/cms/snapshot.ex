@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Snapshot do
       GraphQL resolver / job / CMS caller
         -> CMS.Snapshot
         -> Snapshot.Projection | Snapshot.Refresh
-        -> Snapshot.Reader | Snapshot.Cache
+        -> Snapshot.Query | Snapshot.Cache
 
   The facade preserves relation membership and offers stale-first reads by
   default. Internal modules own projection, authority reads, cache policy, and
@@ -24,8 +24,9 @@ defmodule GroupherServer.CMS.Snapshot do
   def users(nil, _opts), do: nil
   def users([], _opts), do: []
 
-  def users(simple_users, opts) when is_list(simple_users),
-    do: Projection.resolve_many(:user, nil, simple_users, opts)
+  def users(simple_users, opts) when is_list(simple_users) do
+    Projection.resolve_many(:user, nil, simple_users, opts)
+  end
 
   @doc "Refreshes nested simple user snapshot fields inside a list of items."
   @spec users_in([map()] | nil, [atom() | [atom()]], keyword()) :: [map()] | nil
@@ -33,8 +34,9 @@ defmodule GroupherServer.CMS.Snapshot do
   def users_in(nil, _fields, _opts), do: nil
   def users_in([], _fields, _opts), do: []
 
-  def users_in(items, fields, opts) when is_list(items) and is_list(fields),
-    do: Projection.resolve_in(:user, nil, items, fields, opts)
+  def users_in(items, fields, opts) when is_list(items) and is_list(fields) do
+    Projection.resolve_in(:user, nil, items, fields, opts)
+  end
 
   @doc "Refreshes article display snapshots for one CMS thread."
   @spec articles(atom(), [map()] | nil, keyword()) :: [map()] | nil
@@ -43,8 +45,9 @@ defmodule GroupherServer.CMS.Snapshot do
   def articles(_thread, [], _opts), do: []
 
   def articles(thread, article_snapshots, opts)
-      when is_atom(thread) and is_list(article_snapshots),
-      do: Projection.resolve_many(:article, thread, article_snapshots, opts)
+      when is_atom(thread) and is_list(article_snapshots) do
+    Projection.resolve_many(:article, thread, article_snapshots, opts)
+  end
 
   @doc "Refreshes nested article snapshot fields inside a list of items."
   @spec articles_in(atom(), [map()] | nil, [atom() | [atom()]], keyword()) :: [map()] | nil
@@ -53,8 +56,9 @@ defmodule GroupherServer.CMS.Snapshot do
   def articles_in(_thread, [], _fields, _opts), do: []
 
   def articles_in(thread, items, fields, opts)
-      when is_atom(thread) and is_list(items) and is_list(fields),
-      do: Projection.resolve_in(:article, thread, items, fields, opts)
+      when is_atom(thread) and is_list(items) and is_list(fields) do
+    Projection.resolve_in(:article, thread, items, fields, opts)
+  end
 
   @doc "Refreshes comment display snapshots for one CMS thread."
   @spec comments(atom(), [map()] | nil, keyword()) :: [map()] | nil
@@ -63,8 +67,9 @@ defmodule GroupherServer.CMS.Snapshot do
   def comments(_thread, [], _opts), do: []
 
   def comments(thread, comment_snapshots, opts)
-      when is_atom(thread) and is_list(comment_snapshots),
-      do: Projection.resolve_many(:comment, thread, comment_snapshots, opts)
+      when is_atom(thread) and is_list(comment_snapshots) do
+    Projection.resolve_many(:comment, thread, comment_snapshots, opts)
+  end
 
   @doc "Refreshes nested comment snapshot fields inside a list of items."
   @spec comments_in(atom(), [map()] | nil, [atom() | [atom()]], keyword()) :: [map()] | nil
@@ -73,8 +78,9 @@ defmodule GroupherServer.CMS.Snapshot do
   def comments_in(_thread, [], _fields, _opts), do: []
 
   def comments_in(thread, items, fields, opts)
-      when is_atom(thread) and is_list(items) and is_list(fields),
-      do: Projection.resolve_in(:comment, thread, items, fields, opts)
+      when is_atom(thread) and is_list(items) and is_list(fields) do
+    Projection.resolve_in(:comment, thread, items, fields, opts)
+  end
 
   @doc "Enqueues a best-effort batch refresh for later snapshot reads."
   @spec refresh_async(snapshot_kind(), term(), keyword()) :: {:ok, :pass}

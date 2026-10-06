@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       assert payload["interactionState"]["viewerHasCollected"]
 
       {:ok, article_collect} =
-        ArticleCollect |> ORM.find_by(%{post_id: post.id, user_id: user.id})
+        ArticleCollect |> ORM.find_by(%{article_id: post.id, user_id: user.id})
 
       folder_in_article_collect = article_collect.collect_folders |> List.first()
 
@@ -129,7 +129,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       assert payload["interactionState"]["viewerHasCollected"]
 
       {:ok, article_collect} =
-        ArticleCollect |> ORM.find_by(%{blog_id: blog.id, user_id: user.id})
+        ArticleCollect |> ORM.find_by(%{article_id: blog.id, user_id: user.id})
 
       folder_in_article_collect = article_collect.collect_folders |> List.first()
 

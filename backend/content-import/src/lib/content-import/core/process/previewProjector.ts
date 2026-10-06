@@ -24,13 +24,22 @@ export type TPreviewProcessProjection = {
 const DEFAULT_ANALYSIS_ERROR = 'Repository analysis failed.'
 const STEP_FAILURE_PREFIX = /^Step "[^"]+" failed(?: after \d+ retries)?: /u
 
+const errorMessage = (cause: unknown): string | undefined => {
+  if (cause instanceof Error) return cause.message
+  if (typeof cause === 'string') return cause
+  if (typeof cause === 'object' && cause !== null && 'message' in cause) {
+    return typeof cause.message === 'string' ? cause.message : undefined
+  }
+  return undefined
+}
+
 const failedRunMessage = async (run: ReturnType<typeof getRun>): Promise<string> => {
   try {
     await run.returnValue
     return DEFAULT_ANALYSIS_ERROR
   } catch (error) {
     if (!WorkflowRunFailedError.is(error)) return DEFAULT_ANALYSIS_ERROR
-    return error.cause.message.replace(STEP_FAILURE_PREFIX, '') || DEFAULT_ANALYSIS_ERROR
+    return errorMessage(error.cause)?.replace(STEP_FAILURE_PREFIX, '') || DEFAULT_ANALYSIS_ERROR
   }
 }
 

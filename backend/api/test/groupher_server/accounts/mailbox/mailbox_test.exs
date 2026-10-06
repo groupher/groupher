@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
 
   use GroupherServer.TestMate, async: false
   alias GroupherServer.{Accounts, FrontDesk, Messaging}
-  alias FrontDesk.Cache, as: FrontDeskCache
+  alias Accounts.FrontDesk.Cache, as: FrontDeskCache
   alias Messaging.Model.{Mention, Notification}
 
   @default_mailbox_status Accounts.Model.Embeds.UserMailbox.default_status()

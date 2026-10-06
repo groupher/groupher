@@ -22,16 +22,18 @@ defmodule GroupherServer.Accounts.CollectFolders do
   def paged(%User{id: user_id}, filter), do: List.page(user_id, filter)
 
   @spec paged(User.t(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def paged(%User{id: user_id}, filter, %User{} = cur_user),
-    do: List.page(user_id, filter, cur_user)
+  def paged(%User{id: user_id}, filter, %User{} = cur_user) do
+    List.page(user_id, filter, cur_user)
+  end
 
   @doc "Returns paged articles from the `CollectFolders` read boundary."
   @spec paged_articles(T.id(), map()) :: T.domain_res(T.paged_data())
   def paged_articles(folder_id, filter), do: Articles.paged(folder_id, filter)
 
   @spec paged_articles(T.id(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def paged_articles(folder_id, filter, %User{} = cur_user),
-    do: Articles.paged(folder_id, filter, cur_user)
+  def paged_articles(folder_id, filter, %User{} = cur_user) do
+    Articles.paged(folder_id, filter, cur_user)
+  end
 
   @doc "Runs `create` through the public `CollectFolders` boundary."
   @spec create(map(), User.t()) :: T.domain_res(term())
@@ -50,14 +52,16 @@ defmodule GroupherServer.Accounts.CollectFolders do
   def add(article, folder_id, %User{} = user), do: Write.add(article, folder_id, user)
 
   @doc "Runs retry-safe collect membership addition and returns its mutation payload."
-  def add_payload(article, folder_id, %User{} = user, command_id),
-    do: Write.add_payload(article, folder_id, user, command_id)
+  def add_payload(article, folder_id, %User{} = user, command_id) do
+    Write.add_payload(article, folder_id, user, command_id)
+  end
 
   @doc "Runs `remove` through the public `CollectFolders` boundary."
   @spec remove(T.article(), T.id(), User.t()) :: T.domain_res(T.article())
   def remove(article, folder_id, %User{} = user), do: Write.remove(article, folder_id, user)
 
   @doc "Runs retry-safe collect membership removal and returns its mutation payload."
-  def remove_payload(article, folder_id, %User{} = user, command_id),
-    do: Write.remove_payload(article, folder_id, user, command_id)
+  def remove_payload(article, folder_id, %User{} = user, command_id) do
+    Write.remove_payload(article, folder_id, user, command_id)
+  end
 end

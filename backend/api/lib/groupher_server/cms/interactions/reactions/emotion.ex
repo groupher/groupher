@@ -16,11 +16,12 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
   alias CMS.Communities.Enable
-  alias CMS.{Events, Gate, Command}
+  alias CMS.{Gate, Command}
   alias CMS.Interactions.{Config, ErrorCat, ReadState}
+  alias CMS.Interactions.Reactions.EmotionConfirmation, as: Confirmation
   alias CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
   alias Analysis.MetricEvent
-  alias Helper.{Later, T}
+  alias Helper.T
 
   @reserved_article_emotions [:upvote, :collect]
 
@@ -33,8 +34,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   """
   @spec add(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def add(artiment, emotion, %User{} = actor, command_id \\ nil),
-    do: mutate(artiment, emotion, actor, :add, command_id)
+  def add(artiment, emotion, %User{} = actor, command_id \\ nil) do
+    mutate(artiment, emotion, actor, :add, command_id)
+  end
 
   @doc """
   Removes an emotion as an idempotent set-state command.
@@ -45,49 +47,103 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   """
   @spec remove(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def remove(artiment, emotion, %User{} = actor, command_id \\ nil),
-    do: mutate(artiment, emotion, actor, :remove, command_id)
+  def remove(artiment, emotion, %User{} = actor, command_id \\ nil) do
+    mutate(artiment, emotion, actor, :remove, command_id)
+  end
 
   defp mutate(input, emotion, actor, operation, command_id) when is_atom(emotion) do
-    with {:ok, command_id} <- Command.resolve_command_id(command_id),
-         {:ok, info} <- Matcher.match_interaction(input) do
-      Command.update_user(actor, command_id,
-        command: emotion_command(operation),
-        resource: input,
-        input: %{operation: operation, emotion: emotion},
-        recovery: fn receipt -> {:ok, {input, recovery_outcome(receipt)}} end,
-        after_commit: fn
-          {canonical, :changed} ->
-            if match?(%Comment{}, canonical) do
-              Later.run(
-                {Events, :emit, [:subscribe_community, %{target: canonical, user: actor}]}
-              )
-            end
+    with {:ok, info} <- Matcher.match_interaction(input) do
+      context = %{
+        actor: actor,
+        target: input,
+        params: %{operation: operation, emotion: emotion},
+        command_id: command_id || Ecto.UUID.generate()
+      }
 
-            :ok
+      result =
+        if is_nil(command_id) do
+          execute_without_receipt(&emotion_action(&1, info), context)
+        else
+          %Command{
+            actor: actor,
+            command_id: command_id,
+            operation: emotion_command(operation),
+            target: input,
+            params: %{operation: operation, emotion: emotion}
+          }
+          |> Command.execute(action: &emotion_action(&1, info), confirmation: Confirmation)
+        end
 
-          _ ->
-            :ok
-        end
-      )
-      |> Command.run(fn %{resource: input} ->
-        with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
-             {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
-             {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
-             :ok <- sync_state(canonical, emotion, actor, operation, change),
-             :ok <- record_metric(canonical, operation, change, command_id) do
-          {:ok, {canonical, change}, %{outcome: change}}
-        end
-      end)
-      |> present_reaction(command_id)
+      present_reaction(result, input, command_id)
     end
   end
 
-  defp mutate(_input, emotion, _actor, _operation, _command_id),
-    do: {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
+  defp mutate(_input, emotion, _actor, _operation, _command_id) do
+    {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
+  end
 
-  defp recovery_outcome(%{outcome: "unchanged"}), do: :unchanged
-  defp recovery_outcome(_receipt), do: :changed
+  defp emotion_action(
+         %{
+           actor: actor,
+           target: input,
+           params: %{operation: operation, emotion: emotion},
+           command_id: command_id
+         },
+         info
+       ) do
+    with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
+         {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
+         {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
+         :ok <- sync_state(canonical, emotion, actor, operation, change),
+         :ok <- record_metric(canonical, operation, change, command_id),
+         :ok <- enqueue_effect(canonical, actor, operation, emotion, command_id, change) do
+      {:ok,
+       %Confirmation{
+         data: %{
+           "target_id" => to_string(canonical.id),
+           "target_type" => interaction_resource_type(canonical),
+           "operation" => Atom.to_string(operation),
+           "emotion" => Atom.to_string(emotion),
+           "outcome" => Atom.to_string(change)
+         }
+       }}
+    end
+  end
+
+  defp execute_without_receipt(action, context) do
+    Repo.transaction(fn ->
+      case action.(context) do
+        {:ok, %Confirmation{data: data}} -> {:ok, data}
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> case do
+      {:ok, {:ok, data}} -> {:ok, data}
+      other -> other
+    end
+  end
+
+  defp enqueue_effect(_canonical, _actor, _operation, _emotion, _command_id, :unchanged) do
+    :ok
+  end
+
+  defp enqueue_effect(canonical, actor, operation, emotion, command_id, :changed) do
+    CMS.Outbox.send(%{
+      event: "interaction.emotion_changed",
+      worker: CMS.Outbox.Workers.Interaction.Cleanup,
+      resource_type: interaction_resource_type(canonical),
+      resource_id: canonical.id,
+      command_id: command_id,
+      data: %{actor_id: actor.id, operation: operation, emotion: emotion}
+    })
+    |> case do
+      {:ok, _event} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp interaction_resource_type(%Comment{}), do: "comment"
+  defp interaction_resource_type(_article), do: "article"
 
   defp emotion_command(:add), do: :emotion_add
   defp emotion_command(:remove), do: :emotion_remove
@@ -96,8 +152,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     Enable.emotion?(comment.community.slug, :comment, comment.thread, emotion)
   end
 
-  defp allow_emotion(_article, _info, emotion) when emotion in @reserved_article_emotions,
-    do: {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
+  defp allow_emotion(_article, _info, emotion) when emotion in @reserved_article_emotions do
+    {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
+  end
 
   defp allow_emotion(article, info, emotion) do
     Enable.emotion?(article.community.slug, :article, info.artiment, emotion)
@@ -129,10 +186,16 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     end
   end
 
-  defp present_reaction({:ok, {canonical, outcome}}, command_id),
-    do: {:ok, put_reaction_metadata(canonical, command_id, outcome)}
+  defp present_reaction({:ok, %Confirmation{data: data}}, input, command_id) do
+    outcome = if data["outcome"] == "unchanged", do: :unchanged, else: :changed
+    {:ok, put_reaction_metadata(input, command_id, outcome)}
+  end
 
-  defp present_reaction(error, _command_id), do: error
+  defp present_reaction({:ok, data}, input, command_id) when is_map(data) do
+    present_reaction({:ok, %Confirmation{data: data}}, input, command_id)
+  end
+
+  defp present_reaction(error, _input, _command_id), do: error
 
   defp put_reaction_metadata(canonical, command_id, outcome) do
     canonical
@@ -194,9 +257,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
       }
       |> Map.put(info.foreign_key, article.id)
 
-    conflict_target =
-      {:unsafe_fragment,
-       "(user_id, #{info.foreign_key}, emotion) WHERE #{info.foreign_key} IS NOT NULL"}
+    conflict_target = emotion_conflict_target(info.foreign_key)
 
     insert_fact(ArticleUserEmotion, attrs, conflict_target)
   end
@@ -237,4 +298,13 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   defp author_user_id(%{author: %{user_id: user_id}}), do: user_id
   defp author_user_id(%{author_id: author_id}), do: Repo.get!(Author, author_id).user_id
+
+  defp emotion_conflict_target(:article_id) do
+    {:unsafe_fragment,
+     "(user_id, article_id, emotion) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  end
+
+  defp emotion_conflict_target(foreign_key) do
+    {:unsafe_fragment, "(user_id, #{foreign_key}, emotion) WHERE #{foreign_key} IS NOT NULL"}
+  end
 end

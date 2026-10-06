@@ -25,8 +25,8 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   @spec follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()
   def follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
-         {:ok, user} <- FrontDesk.live_user(user.login),
-         {:ok, target_user} <- FrontDesk.live_user(follower.login) do
+         {:ok, user} <- FrontDesk.fresh_user(user.login),
+         {:ok, target_user} <- FrontDesk.fresh_user(follower.login) do
       Multi.new()
       |> Multi.insert(
         :create_follower,
@@ -63,8 +63,8 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   @spec undo_follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()
   def undo_follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
-         {:ok, user} <- FrontDesk.live_user(user.login),
-         {:ok, target_user} <- FrontDesk.live_user(follower.login) do
+         {:ok, user} <- FrontDesk.fresh_user(user.login),
+         {:ok, target_user} <- FrontDesk.fresh_user(follower.login) do
       Multi.new()
       |> Multi.run(:delete_follower, fn _, _ ->
         ORM.findby_delete!(UserFollower, %{user_id: target_user.id, follower_id: user.id})

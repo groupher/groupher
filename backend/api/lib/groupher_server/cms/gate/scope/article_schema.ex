@@ -10,27 +10,23 @@ defmodule GroupherServer.CMS.Gate.Scope.ArticleSchema do
 
   Examples:
 
-      iex> {:ok, GroupherServer.CMS.Model.Post} = fetch(:post)
-      iex> {:ok, :post} = thread_for(GroupherServer.CMS.Model.Post)
+      iex> {:ok, GroupherServer.CMS.Model.Article} = fetch(:post)
   """
 
   alias GroupherServer.CMS
 
-  alias CMS.Artiment.Matcher
   alias CMS.Gate.{Config, ErrorCat}
+  alias CMS.Model.Article
 
   @article_threads Config.article_threads()
 
   @doc "Returns the canonical Article schema for a resource thread."
   @spec fetch(atom()) :: {:ok, module()} | {:error, ErrorCat.error()}
   def fetch(thread) when is_atom(thread) do
-    case Matcher.match_interaction(thread) do
-      {:ok, %{artiment: artiment, model: model}}
-      when artiment in @article_threads ->
-        {:ok, model}
-
-      _ ->
-        {:error, ErrorCat.scope_context_missing()}
+    if thread in @article_threads do
+      {:ok, Article}
+    else
+      {:error, ErrorCat.scope_context_missing()}
     end
   end
 
@@ -38,13 +34,6 @@ defmodule GroupherServer.CMS.Gate.Scope.ArticleSchema do
 
   @doc "Returns the resource thread represented by a canonical Article schema."
   @spec thread_for(module()) :: {:ok, atom()} | {:error, ErrorCat.error()}
-  def thread_for(schema) when is_atom(schema) do
-    case Matcher.match_interaction(schema) do
-      {:ok, %{artiment: artiment}} when artiment in @article_threads ->
-        {:ok, artiment}
-
-      _ ->
-        {:error, ErrorCat.scope_root_mismatch()}
-    end
-  end
+  def thread_for(Article), do: {:error, ErrorCat.scope_context_missing()}
+  def thread_for(_schema), do: {:error, ErrorCat.scope_root_mismatch()}
 end

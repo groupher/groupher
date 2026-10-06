@@ -15,12 +15,12 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
-  alias CMS.{Events, Gate, FrontDesk, Interactions, Command}
+  alias CMS.{Gate, Interactions, Command}
   alias Interactions.{Config, ErrorCat, ReadState}
+  alias CMS.Interactions.Reactions.UpvoteConfirmation, as: Confirmation
   alias CMS.Model.{ArticleUpvote, Author, Comment, CommentUpvote}
-  alias CMS.SearchArtiments.Indexer
   alias Analysis.MetricEvent
-  alias Helper.{Later, T}
+  alias Helper.T
 
   @article_threads Config.article_threads()
 
@@ -35,8 +35,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
 
   """
   @spec add(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def add(artiment, %User{} = actor, command_id \\ nil),
-    do: mutate(artiment, actor, :add, command_id)
+  def add(artiment, %User{} = actor, command_id \\ nil) do
+    mutate(artiment, actor, :add, command_id)
+  end
 
   @doc """
   Removes an upvote as an idempotent set-state command.
@@ -47,42 +48,76 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
 
   """
   @spec remove(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def remove(artiment, %User{} = actor, command_id \\ nil),
-    do: mutate(artiment, actor, :remove, command_id)
+  def remove(artiment, %User{} = actor, command_id \\ nil) do
+    mutate(artiment, actor, :remove, command_id)
+  end
 
   defp mutate(input, actor, operation, command_id) do
-    with {:ok, command_id} <- Command.resolve_command_id(command_id),
-         {:ok, info} <- Matcher.match_interaction(input) do
-      Command.update_user(actor, command_id,
-        command: upvote_command(operation),
-        resource: input,
-        input: %{operation: operation},
-        recovery: fn receipt -> {:ok, {input, recovery_outcome(receipt)}} end,
-        after_commit: fn
-          {canonical, :changed} ->
-            emit(canonical, operation, actor)
-            maybe_sync_search(canonical)
-            :ok
+    with {:ok, info} <- Matcher.match_interaction(input) do
+      context = %{
+        actor: actor,
+        target: input,
+        params: %{operation: operation},
+        command_id: command_id || Ecto.UUID.generate()
+      }
 
-          _ ->
-            :ok
+      result =
+        if is_nil(command_id) do
+          execute_without_receipt(&upvote_action(&1, info), context)
+        else
+          %Command{
+            actor: actor,
+            command_id: command_id,
+            operation: upvote_command(operation),
+            target: input,
+            params: %{operation: operation}
+          }
+          |> Command.execute(action: &upvote_action(&1, info), confirmation: Confirmation)
         end
-      )
-      |> Command.run(fn %{resource: input} ->
-        with {:ok, canonical} <- Gate.access_check(actor, :upvote, input),
-             {:ok, change} <- change_fact(canonical, info, actor, operation),
-             :ok <- sync_state(canonical, actor, operation, change),
-             :ok <- record_metric(canonical, operation, change, command_id),
-             :ok <- maybe_achieve(canonical, actor, operation, change) do
-          {:ok, {canonical, change}, %{outcome: change}}
-        end
-      end)
-      |> present_reaction(command_id)
+
+      present_reaction(result, input, command_id)
     end
   end
 
-  defp recovery_outcome(%{outcome: "unchanged"}), do: :unchanged
-  defp recovery_outcome(_receipt), do: :changed
+  defp upvote_action(
+         %{
+           actor: actor,
+           target: input,
+           params: %{operation: operation},
+           command_id: command_id
+         },
+         info
+       ) do
+    with {:ok, canonical} <- Gate.access_check(actor, :upvote, input),
+         {:ok, change} <- change_fact(canonical, info, actor, operation),
+         :ok <- sync_state(canonical, actor, operation, change),
+         :ok <- record_metric(canonical, operation, change, command_id),
+         :ok <- maybe_achieve(canonical, actor, operation, change),
+         :ok <- enqueue_effect(canonical, operation, actor, command_id, change) do
+      {:ok,
+       %Confirmation{
+         data: %{
+           "target_id" => to_string(canonical.id),
+           "target_type" => interaction_resource_type(canonical),
+           "operation" => Atom.to_string(operation),
+           "outcome" => Atom.to_string(change)
+         }
+       }}
+    end
+  end
+
+  defp execute_without_receipt(action, context) do
+    Repo.transaction(fn ->
+      case action.(context) do
+        {:ok, %Confirmation{data: data}} -> {:ok, data}
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> case do
+      {:ok, {:ok, data}} -> {:ok, data}
+      other -> other
+    end
+  end
 
   defp upvote_command(:add), do: :upvote_add
   defp upvote_command(:remove), do: :upvote_remove
@@ -124,33 +159,45 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
     end
   end
 
+  defp enqueue_effect(_canonical, _operation, _actor, _command_id, :unchanged), do: :ok
+
+  defp enqueue_effect(canonical, operation, actor, command_id, :changed) do
+    CMS.Outbox.send(%{
+      event: "interaction.upvote_changed",
+      worker: CMS.Outbox.Workers.Interaction.Cleanup,
+      resource_type: interaction_resource_type(canonical),
+      resource_id: canonical.id,
+      command_id: command_id,
+      data: %{actor_id: actor.id, operation: operation}
+    })
+    |> case do
+      {:ok, _event} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp interaction_resource_type(%Comment{}), do: "comment"
+  defp interaction_resource_type(_article), do: "article"
+
   defp author_user(%{author: %{user_id: user_id}}), do: %User{id: user_id}
   defp author_user(%{author_id: author_id}), do: %User{id: Repo.get!(Author, author_id).user_id}
 
-  defp present_reaction({:ok, {canonical, outcome}}, command_id),
-    do: {:ok, put_reaction_metadata(canonical, command_id, outcome)}
+  defp present_reaction({:ok, %Confirmation{data: data}}, input, command_id) do
+    outcome = if data["outcome"] == "unchanged", do: :unchanged, else: :changed
+    {:ok, put_reaction_metadata(input, command_id, outcome)}
+  end
 
-  defp present_reaction(error, _command_id), do: error
+  defp present_reaction({:ok, data}, input, command_id) when is_map(data) do
+    present_reaction({:ok, %Confirmation{data: data}}, input, command_id)
+  end
+
+  defp present_reaction(error, _input, _command_id), do: error
 
   defp put_reaction_metadata(canonical, command_id, outcome) do
     canonical
     |> Map.put(:command_id, command_id)
     |> Map.put(:reaction_outcome, outcome)
   end
-
-  defp emit(canonical, :add, actor) do
-    Later.run({Events, :emit, [:notify_upvote, %{target: canonical, from_user: actor}]})
-
-    target = if match?(%Comment{}, canonical), do: canonical, else: canonical.community
-    Later.run({Events, :emit, [:subscribe_community, %{target: target, user: actor}]})
-  end
-
-  defp emit(canonical, :remove, actor) do
-    Later.run({Events, :emit, [:notify_undo_upvote, %{target: canonical, from_user: actor}]})
-  end
-
-  defp maybe_sync_search(%Comment{}), do: :ok
-  defp maybe_sync_search(article), do: Indexer.enqueue_metrics(article)
 
   @doc """
   Returns paged users for an already-scoped Article upvote set.
@@ -164,7 +211,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   def users(article, filter) when is_map(filter) do
     case Matcher.match_interaction(article) do
       {:ok, %{artiment: artiment}} when artiment in @article_threads ->
-        FrontDesk.load_reaction_users(ArticleUpvote, article, filter)
+        Interactions.ReactionUsers.load(ArticleUpvote, article, filter)
 
       _ ->
         {:error, ErrorCat.unsupported_artiment("upvoted_users only supports Article")}
@@ -192,7 +239,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       %{user_id: actor.id, thread: info.artiment}
       |> Map.put(info.foreign_key, article.id)
 
-    insert_fact(ArticleUpvote, attrs, [:user_id, info.foreign_key])
+    insert_fact(ArticleUpvote, attrs, article_conflict_target(info.foreign_key))
   end
 
   defp change_fact(article, info, actor, :remove) do
@@ -223,4 +270,10 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       _ -> {:error, ErrorCat.interaction_state_conflict("multiple upvote facts deleted")}
     end
   end
+
+  defp article_conflict_target(:article_id) do
+    {:unsafe_fragment, "(user_id, article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  end
+
+  defp article_conflict_target(foreign_key), do: [:user_id, foreign_key]
 end

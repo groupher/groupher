@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.Model.{Community, Doc, DocTreeNode, TrashedDocTreeNode}
+  alias CMS.Model.{Article, Community, DocDraft, DocPublic, DocTreeNode, TrashedDocTreeNode}
   alias Helper.Validator.Slug
 
   # Explicit slugs are user input and win over title-derived slugs; title is
@@ -89,22 +89,36 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
     end
   end
 
-  def unique_copy_title(community, branch, parent_node_id, title),
-    do: unique_value(community, branch, parent_node_id, nil, :title, "#{title} copy", " ")
+  def unique_copy_title(community, branch, parent_node_id, title) do
+    unique_value(community, branch, parent_node_id, nil, :title, "#{title} copy", " ")
+  end
 
   def unique_doc_slug(%Community{} = community, branch, slug) do
-    existing =
-      Doc
-      |> where([d], d.community_id == ^community.id)
-      |> where([d], d.branch_id == ^branch.id)
-      |> where([d], d.stage == CMS.Const.stage(:draft))
-      |> select([d], d.slug)
+    draft_slugs =
+      DocDraft
+      |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
+      |> where([draft, article], article.community_id == ^community.id)
+      |> where([draft], draft.branch_id == ^branch.id)
+      |> select([draft], draft.slug)
       |> Repo.all()
       |> MapSet.new()
 
-    if MapSet.member?(existing, slug),
-      do: unique_from_set(existing, "#{slug}-copy", "-"),
-      else: slug
+    public_slugs =
+      DocPublic
+      |> join(:inner, [public], article in Article, on: article.id == public.article_id)
+      |> where([public, article], article.community_id == ^community.id)
+      |> where([public], public.branch_id == ^branch.id)
+      |> select([public], public.slug)
+      |> Repo.all()
+      |> MapSet.new()
+
+    existing = MapSet.union(draft_slugs, public_slugs)
+
+    if MapSet.member?(existing, slug) do
+      unique_from_set(existing, "#{slug}-copy", "-")
+    else
+      slug
+    end
   end
 
   def validate_pending_deleted_identity(
@@ -125,18 +139,16 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
              Map.get(attrs, field)
            ) do
         {:halt,
-         {:error,
-          ErrorCat.custom(
-            "A trashed tree item with this title is pending restore."
-          )}}
+         {:error, ErrorCat.custom("A trashed tree item with this title is pending restore.")}}
       else
         {:cont, :ok}
       end
     end)
   end
 
-  defp trim_title(%{title: title} = args) when is_binary(title),
-    do: Map.put(args, :title, String.trim(title))
+  defp trim_title(%{title: title} = args) when is_binary(title) do
+    Map.put(args, :title, String.trim(title))
+  end
 
   defp trim_title(args), do: args
 
@@ -182,8 +194,9 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
     |> Repo.exists?()
   end
 
-  defp pending_deleted_value_exists?(_community, _branch, _group_id, _type, _field, nil),
-    do: false
+  defp pending_deleted_value_exists?(_community, _branch, _group_id, _type, _field, nil) do
+    false
+  end
 
   defp pending_deleted_value_exists?(community, branch, parent_node_id, type, field, value) do
     community
@@ -209,32 +222,37 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
     |> Repo.all()
   end
 
-  defp pending_deleted_node_in_scope?(node, nil, nil),
-    do: is_nil(node["parentNodeId"])
+  defp pending_deleted_node_in_scope?(node, nil, nil) do
+    is_nil(node["parentNodeId"])
+  end
 
-  defp pending_deleted_node_in_scope?(node, nil, type),
-    do: is_nil(node["parentNodeId"]) and node["type"] == to_string(type)
+  defp pending_deleted_node_in_scope?(node, nil, type) do
+    is_nil(node["parentNodeId"]) and node["type"] == to_string(type)
+  end
 
-  defp pending_deleted_node_in_scope?(node, parent_id, :pin),
-    do: node["parentNodeId"] == parent_id and node["type"] == "pin"
+  defp pending_deleted_node_in_scope?(node, parent_id, :pin) do
+    node["parentNodeId"] == parent_id and node["type"] == "pin"
+  end
 
-  defp pending_deleted_node_in_scope?(node, parent_id, _type),
-    do: node["parentNodeId"] == parent_id and node["type"] != "pin"
+  defp pending_deleted_node_in_scope?(node, parent_id, _type) do
+    node["parentNodeId"] == parent_id and node["type"] != "pin"
+  end
 
-  defp where_sibling_scope(query, nil, :tab),
-    do: query |> where([n], is_nil(n.parent_node_id)) |> where([n], n.type == :tab)
+  defp where_sibling_scope(query, nil, :tab) do
+    query |> where([n], is_nil(n.parent_node_id)) |> where([n], n.type == :tab)
+  end
 
-  defp where_sibling_scope(query, parent_node_id, :pin),
-    do:
-      query
-      |> where([n], n.parent_node_id == ^parent_node_id)
-      |> where([n], n.type == :pin)
+  defp where_sibling_scope(query, parent_node_id, :pin) do
+    query
+    |> where([n], n.parent_node_id == ^parent_node_id)
+    |> where([n], n.type == :pin)
+  end
 
-  defp where_sibling_scope(query, parent_node_id, _type),
-    do:
-      query
-      |> where([n], n.parent_node_id == ^parent_node_id)
-      |> where([n], n.type in [:group, :page, :link])
+  defp where_sibling_scope(query, parent_node_id, _type) do
+    query
+    |> where([n], n.parent_node_id == ^parent_node_id)
+    |> where([n], n.type in [:group, :page, :link])
+  end
 
   defp unique_from_set(existing, base, separator) do
     Stream.iterate(0, &(&1 + 1))

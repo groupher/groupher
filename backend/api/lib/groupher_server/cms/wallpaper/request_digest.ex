@@ -42,8 +42,9 @@ defmodule GroupherServer.CMS.Wallpaper.RequestDigest do
     })
   end
 
-  def canonical(%{request_digest_version: version}),
-    do: {:error, {:unsupported_request_digest_version, version}}
+  def canonical(%{request_digest_version: version}) do
+    {:error, {:unsupported_request_digest_version, version}}
+  end
 
   def canonical(_input), do: {:error, {:unsupported_request_digest_version, nil}}
 end

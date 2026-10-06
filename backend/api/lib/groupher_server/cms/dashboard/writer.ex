@@ -24,14 +24,13 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
   section helpers.
   """
 
-  alias GroupherServer.{CMS, PublicCache, Repo}
+  alias GroupherServer.{CMS, Repo}
 
   alias CMS.Communities.ErrorCat
   alias CMS.ErrorCat, as: CmsErrorCat
   alias CMS.Dashboard.{BaseInfo, SectionPayload}
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORM, T, Transaction}
-  alias PublicCache.Const, as: PublicCacheConst
 
   @default_dashboard CommunityDashboard.default()
 
@@ -41,8 +40,9 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
     update(community, key, SectionPayload.section_args(key, args))
   end
 
-  def update(%Community{}, _args),
-    do: {:error, ErrorCat.invalid_dsb_section()}
+  def update(%Community{}, _args) do
+    {:error, ErrorCat.invalid_dsb_section()}
+  end
 
   @doc "Updates one explicit dashboard section, including base-info synchronization."
   @spec update(Community.t(), atom(), map() | list() | boolean()) ::
@@ -100,8 +100,9 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
     end)
   end
 
-  def replace_section(%CommunityDashboard{}, :content_shadow, _args),
-    do: {:error, CmsErrorCat.custom("invalid dashboard content shadow")}
+  def replace_section(%CommunityDashboard{}, :content_shadow, _args) do
+    {:error, CmsErrorCat.custom("invalid dashboard content shadow")}
+  end
 
   def replace_section(%CommunityDashboard{} = community_dashboard, key, args) do
     with {:ok, section_payload} <- SectionPayload.prepare(community_dashboard, key, args) do
@@ -119,13 +120,15 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
   defp invalidate_public_presentation(community_id) do
     community = Repo.get!(Community, community_id)
 
-    case PublicCache.invalidate_now(
-           PublicCacheConst.community_presentation_changed(),
-           %{community: community.slug, community_id: community.id},
-           causation_id: Ecto.UUID.generate(),
-           aggregate_type: "community"
-         ) do
-      {:ok, _invalidation} -> :ok
+    case CMS.Outbox.send(%{
+           event: "community.presentation_changed",
+           worker: CMS.Outbox.Workers.Community.Cleanup,
+           resource_type: "community",
+           resource_id: community.id,
+           command_id: Ecto.UUID.generate(),
+           data: %{community: community.slug, community_id: community.id}
+         }) do
+      {:ok, _event} -> :ok
       {:error, reason} -> {:error, reason}
     end
   end

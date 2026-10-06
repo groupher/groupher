@@ -64,7 +64,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     created = Enum.find(result["entries"], &(&1["action"] == "created"))
     assert created["id"]
     assert created["subject"]["type"] == "post"
-    assert created["subject"]["ref"] == post.article_hash_id
+    assert created["subject"]["ref"] == post.article_id
     assert created["payload"] == %{}
     refute Map.has_key?(created, "metadata")
     refute Map.has_key?(created, "source")
@@ -89,11 +89,14 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     assert results |> get_in(["meta", "illegalWords"]) == []
 
     {:ok, _} =
-      CMS.Articles.set_illegal(:post, post.id, %{
-        is_legal: false,
-        illegal_reason: ["some-reason"],
-        illegal_words: ["some-word"]
-      })
+      CMS.Articles.set_illegal(
+        post.id,
+        %{
+          illegal_reason: ["some-reason"],
+          illegal_words: ["some-word"]
+        },
+        :operations
+      )
 
     results = user_conn |> gq_query(S.Article.q(:article, :post), variables)
 

@@ -6,9 +6,6 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
 
   @total_count 35
 
-  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
-
   setup do
     {:ok, user} = db_insert(:user)
 
@@ -37,24 +34,28 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
   describe "[pending changelogs flags]" do
     test "pending changelog can not be read", ~m(changelog_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(changelog_m),
           :changelog,
           changelog_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:changelog, changelog_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          changelog_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations
+        )
 
-      {:ok, changelog_m} = ORM.find(Changelog, changelog_m.id)
-      assert changelog_m.pending == @audit_illegal
+      stable = Repo.get!(CMS.Model.Article, changelog_m.article_id)
+      assert stable.moderation_state == :illegal
 
       {:error, reason} =
-        CMS.Articles.read(
+        read_article(
           article_community(changelog_m),
           :changelog,
           changelog_m.inner_id
@@ -68,21 +69,25 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(changelog),
           :changelog,
           changelog.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:changelog, changelog.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          changelog.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations
+        )
 
       {:ok, changelog_read} =
-        CMS.Articles.read(
+        read_article(
           article_community(changelog),
           :changelog,
           changelog.inner_id,
@@ -94,7 +99,7 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
       {:ok, user2} = db_insert(:user)
 
       {:error, reason} =
-        CMS.Articles.read(
+        read_article(
           article_community(changelog),
           :changelog,
           changelog.inner_id,
@@ -106,29 +111,33 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
 
     test "pending changelog can set/unset pending", ~m(changelog_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(changelog_m),
           :changelog,
           changelog_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:changelog, changelog_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          changelog_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations
+        )
 
-      {:ok, changelog_m} = ORM.find(Changelog, changelog_m.id)
-      assert changelog_m.pending == @audit_illegal
+      stable = Repo.get!(CMS.Model.Article, changelog_m.article_id)
+      assert stable.moderation_state == :illegal
 
-      {:ok, _} = CMS.Articles.unset_illegal(:changelog, changelog_m.id, %{})
+      {:ok, _} = CMS.Articles.unset_illegal(changelog_m.article_id, %{}, :operations)
 
-      {:ok, changelog_m} = ORM.find(Changelog, changelog_m.id)
-      assert changelog_m.pending == @audit_legal
+      stable = Repo.get!(CMS.Model.Article, changelog_m.article_id)
+      assert stable.moderation_state == :legal
 
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(changelog_m),
           :changelog,
           changelog_m.inner_id
@@ -137,47 +146,53 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
 
     test "pending changelog's meta should have info", ~m(changelog_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(changelog_m),
           :changelog,
           changelog_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:changelog, changelog_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"],
-          illegal_articles: ["/changelog/#{changelog_m.id}"]
-        })
+        CMS.Articles.set_illegal(
+          changelog_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"],
+            illegal_articles: ["/changelog/#{changelog_m.id}"]
+          },
+          :operations
+        )
 
-      {:ok, changelog_m} = ORM.find(Changelog, changelog_m.id)
-      assert changelog_m.pending == @audit_illegal
-      assert not changelog_m.meta.is_legal
-      assert changelog_m.meta.illegal_reason == ["some-reason"]
-      assert changelog_m.meta.illegal_words == ["some-word"]
+      stable = Repo.get!(CMS.Model.Article, changelog_m.article_id)
+      assert stable.moderation_state == :illegal
+      assert stable.illegal_reason == ["some-reason"]
+      assert stable.illegal_words == ["some-word"]
 
-      changelog_m = Repo.preload(changelog_m, :author)
-      {:ok, user} = ORM.find(User, changelog_m.author.user_id)
+      stable = Repo.preload(stable, author: :user)
+      user = stable.author.user
       assert user.meta.has_illegal_articles
       assert user.meta.illegal_articles == ["/changelog/#{changelog_m.id}"]
 
       {:ok, _} =
-        CMS.Articles.unset_illegal(:changelog, changelog_m.id, %{
-          is_legal: true,
-          illegal_reason: [],
-          illegal_words: [],
-          illegal_articles: ["/changelog/#{changelog_m.id}"]
-        })
+        CMS.Articles.unset_illegal(
+          changelog_m.article_id,
+          %{
+            is_legal: true,
+            illegal_reason: [],
+            illegal_words: [],
+            illegal_articles: ["/changelog/#{changelog_m.id}"]
+          },
+          :operations
+        )
 
-      {:ok, changelog_m} = ORM.find(Changelog, changelog_m.id)
-      assert changelog_m.pending == @audit_legal
-      assert changelog_m.meta.is_legal
-      assert changelog_m.meta.illegal_reason == []
-      assert changelog_m.meta.illegal_words == []
+      stable = Repo.get!(CMS.Model.Article, changelog_m.article_id)
+      assert stable.moderation_state == :legal
+      assert stable.illegal_reason == []
+      assert stable.illegal_words == []
 
-      changelog_m = Repo.preload(changelog_m, :author)
-      {:ok, user} = ORM.find(User, changelog_m.author.user_id)
+      stable = Repo.preload(stable, author: :user)
+      user = stable.author.user
       assert not user.meta.has_illegal_articles
       assert user.meta.illegal_articles == []
     end

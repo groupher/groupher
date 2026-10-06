@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Interactions do
   @moduledoc """
   Public product boundary for Artiment interactions.
 
-      GraphQL / service Reader
+      GraphQL / service Query
         -> CMS.Interactions
         -> Reaction / ReadState / Scope
         -> authoritative facts and derived read state
@@ -173,7 +173,7 @@ defmodule GroupherServer.CMS.Interactions do
 
   ## Examples
 
-      CMS.Interactions.scope(Post, order: :upvotes)
+      CMS.Interactions.scope(CMS.Model.Article, thread: :post, order: :upvotes)
 
   """
   @spec scope(Ecto.Queryable.t(), keyword()) ::

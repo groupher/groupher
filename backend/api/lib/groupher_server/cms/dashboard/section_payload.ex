@@ -146,8 +146,9 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
     end
   end
 
-  def prepare(%CommunityDashboard{}, :third_party_analytics, _args),
-    do: {:error, ErrorCat.custom("invalid third-party analytics config")}
+  def prepare(%CommunityDashboard{}, :third_party_analytics, _args) do
+    {:error, ErrorCat.custom("invalid third-party analytics config")}
+  end
 
   # Replace-style sections are already the final payload.
   def prepare(%CommunityDashboard{}, _key, args), do: {:ok, args}

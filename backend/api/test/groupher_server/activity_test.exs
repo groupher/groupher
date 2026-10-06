@@ -22,8 +22,8 @@ defmodule GroupherServer.Test.ActivityTest do
     {_community, post, _attrs, user} = mock_article(:post)
     {_blog_community, blog, _attrs, _blog_user} = mock_article(:blog)
 
-    assert Repo.get_by!(PostLog, post_ref: post.article_hash_id, action: :created)
-    assert Repo.get_by!(BlogLog, blog_ref: blog.article_hash_id, action: :created)
+    assert Repo.get_by!(PostLog, article_id: post.article_id, action: :created)
+    assert Repo.get_by!(BlogLog, article_id: blog.article_id, action: :created)
 
     assert {:error, _} = Activity.log(post, :released, actor: user)
 
@@ -78,12 +78,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     snapshot_operation_ref = Ecto.UUID.generate()
 
-    changing_resource = %{
-      thread: :post,
-      community_id: post.community_id,
-      article_hash_id: Ecto.UUID.generate(),
-      title: "title before retry"
-    }
+    changing_resource = %{post | title: "title before retry"}
 
     assert {:ok, stable} =
              Activity.log(changing_resource, :created,
@@ -144,25 +139,23 @@ defmodule GroupherServer.Test.ActivityTest do
   end
 
   test "authenticated Gate denials append a denied Activity fact" do
-    {community, post, _attrs, _owner} = mock_article(:post)
+    {_community, post, _attrs, _owner} = mock_article(:post)
     {:ok, stranger} = db_insert(:user)
     command_id = Ecto.UUID.generate()
 
+    article = Repo.get!(CMS.Model.Article, post.article_id)
+    lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: article.id)
+
     assert {:ok, _lifecycle} =
-             CMS.Articles.Lifecycle.transition(
-               community.id,
-               :post,
-               post.article_hash_id,
-               :archived
-             )
+             CMS.Articles.Lifecycle.transition(article, :archived, lifecycle.version)
 
-    assert {:error, %CMS.Gate.Decision{primary: %{reason: :article_archived}}} =
+    assert {:error, %ErrorCat.Error{reason: :article_archived}} =
              CMS.Articles.trash(post, stranger, command_id: command_id)
 
-    assert {:error, %CMS.Gate.Decision{primary: %{reason: :article_archived}}} =
+    assert {:error, %ErrorCat.Error{reason: :article_archived}} =
              CMS.Articles.trash(post, stranger, command_id: command_id)
 
-    denied = Repo.get_by!(PostLog, post_ref: post.article_hash_id, action: :trashed)
+    denied = Repo.get_by!(PostLog, article_id: post.article_id, action: :trashed)
     assert denied.outcome == :denied
     assert denied.denial_code == "article_archived"
     assert denied.actor_type == :user
@@ -171,7 +164,7 @@ defmodule GroupherServer.Test.ActivityTest do
     assert 1 ==
              PostLog
              |> Repo.all()
-             |> Enum.count(&(&1.post_ref == post.article_hash_id && &1.action == :trashed))
+             |> Enum.count(&(&1.article_id == post.article_id && &1.action == :trashed))
   end
 
   test "handler registry, Comment routing and surface contracts fail closed" do
@@ -226,13 +219,13 @@ defmodule GroupherServer.Test.ActivityTest do
 
     comment = %Comment{
       thread: :post,
-      article_hash_id: post.article_hash_id,
+      article_id: post.article_id,
       community_id: post.community_id,
       inner_id: 42
     }
 
     assert {:ok, log} = Activity.log(comment, :comment_pinned, actor: user)
-    assert log.post_ref == post.article_hash_id
+    assert log.article_id == post.article_id
     assert log.subject_type == "comment"
     assert log.subject_ref == "42"
 
@@ -300,7 +293,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert created.subject == %{
              type: :post,
-             ref: post.article_hash_id,
+             ref: post.article_id,
              title: post.title,
              inner_id: post.inner_id
            }
@@ -342,23 +335,59 @@ defmodule GroupherServer.Test.ActivityTest do
     assert Enum.take(restored_ids, 2) == [newer.event_ref, older.event_ref]
     refute Enum.any?(entries, &(&1.action in [:trashed, :permanently_deleted]))
 
-    {doc_community, doc, _doc_attrs, doc_user} = mock_article(:doc)
+    stable_article = Repo.get!(CMS.Model.Article, post.article_id)
+    assert {:ok, _} = Activity.list_article_logs(stable_article, nil)
+
+    {_doc_community, doc, _doc_attrs, doc_user} = mock_article(:doc)
 
     assert {:ok, doc_draft} =
-             CMS.Articles.update_draft(
-               doc_community,
-               :doc,
-               doc.article_hash_id,
+             CMS.Docs.update_draft(
+               doc.article_id,
+               doc.branch_id,
                %{title: "branch-scoped draft", expected_version: doc.version},
                doc_user
              )
 
     assert doc_draft.branch_id
     assert {:ok, _} = Activity.list_article_logs(doc_draft, doc_user)
+
+    raw_doc_draft =
+      Repo.get_by!(CMS.Model.DocDraft,
+        article_id: doc.article_id,
+        branch_id: doc.branch_id
+      )
+
+    assert {:ok, _} = Activity.list_article_logs(raw_doc_draft, doc_user)
+    assert {:error, _} = Activity.list_article_logs(raw_doc_draft, nil)
     assert {:error, _} = Activity.list_article_logs(doc_draft, nil)
+    {:ok, stranger} = db_insert(:user)
+    assert {:error, _} = Activity.list_article_logs(raw_doc_draft, stranger)
+    assert {:error, _} = Activity.list_article_logs(doc_draft, stranger)
 
     assert {:ok, _trashed} = CMS.Articles.trash(post, user)
     assert {:error, _} = Activity.list_article_logs(post, nil)
+  end
+
+  test "ArticleLog keeps ordinary Drafts owner-scoped" do
+    {community, _published, _attrs, user} = mock_article(:post)
+    {:ok, stranger} = db_insert(:user)
+
+    assert {:ok, %{article: article}} =
+             CMS.Articles.create_stable_draft(
+               community,
+               :post,
+               %{
+                 title: "Draft log",
+                 digest: "digest",
+                 body_bag: mock_body_bag(mock_rich_text("draft"))
+               },
+               user
+             )
+
+    assert {:ok, draft} = CMS.Articles.read_draft(article.id, user)
+    assert {:ok, %{entries: []}} = Activity.list_article_logs(draft, user)
+    assert {:error, _} = Activity.list_article_logs(draft, stranger)
+    assert {:error, _} = Activity.list_article_logs(draft, nil)
   end
 
   test "business state rolls back when its Activity append fails" do
@@ -386,7 +415,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
   test "database CHECK constraints reject invalid Activity action and source" do
     {_community, post, _attrs, _user} = mock_article(:post)
-    log = Repo.get_by!(PostLog, post_ref: post.article_hash_id, action: :created)
+    log = Repo.get_by!(PostLog, article_id: post.article_id, action: :created)
 
     declared_constraints =
       %PostLog{}
@@ -494,7 +523,7 @@ defmodule GroupherServer.Test.ActivityTest do
                  %{
                    thread: thread,
                    community_id: community.id,
-                   article_hash_id: Ecto.UUID.generate(),
+                   id: Ecto.UUID.generate(),
                    title: "#{thread} activity"
                  },
                  :created,
@@ -502,14 +531,14 @@ defmodule GroupherServer.Test.ActivityTest do
                )
     end
 
-    second_blog_ref = Ecto.UUID.generate()
+    second_blog_id = Ecto.UUID.generate()
 
     assert {:ok, second_blog} =
              Activity.log(
                %{
                  thread: :blog,
                  community_id: community.id,
-                 article_hash_id: second_blog_ref,
+                 id: second_blog_id,
                  title: "second blog activity"
                },
                :created,
@@ -551,7 +580,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert Enum.any?(
              result.entries,
-             &(&1.action == :created and &1.resource.ref == post.article_hash_id)
+             &(&1.action == :created and &1.resource.ref == post.article_id)
            )
 
     assert result.entries |> Enum.take(8) |> Enum.map(& &1.resource.type) == [

@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
   require Logger
 
   alias GroupherServer.CMS
+  alias Helper.T
 
   alias CMS.{ErrorCat, SearchArtiments}
   alias SearchArtiments.{Artiment, Config, Query, Result}
@@ -36,7 +37,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
       Algolia.upsert([artiment], wait_for_task: true)
 
   """
-  def upsert([], _opts), do: :ok
+  def upsert([], _opts), do: {:ok, :pass}
 
   def upsert(artiments, opts) when is_list(artiments) do
     requests =
@@ -51,7 +52,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
   end
 
   @impl true
-  def delete([]), do: :ok
+  def delete([]), do: {:ok, :pass}
 
   def delete(refs) when is_list(refs) do
     requests =
@@ -65,7 +66,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
   end
 
   @impl true
-  def update_metrics([]), do: :ok
+  def update_metrics([]), do: {:ok, :pass}
 
   def update_metrics(updates) when is_list(updates) do
     requests =
@@ -111,7 +112,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
   end
 
   @doc "Applies the index settings required by Search Artiments."
-  @spec configure_index() :: :ok | {:error, term()}
+  @spec configure_index() :: T.done()
   def configure_index do
     settings = %{
       "searchableAttributes" => ["unordered(title)", "unordered(plainText)"],
@@ -119,7 +120,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
         "filterOnly(type)",
         "filterOnly(thread)",
         "filterOnly(communityRef)",
-        "filterOnly(articleRef)",
+        "filterOnly(articleId)",
         "filterOnly(authorRef)",
         "filterOnly(locale)"
       ],
@@ -168,7 +169,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
   defp filters(query) do
     [
       equality("communityRef", query.scope[:community_ref]),
-      equality("articleRef", query.scope[:article_ref]),
+      equality("articleId", query.scope[:article_id]),
       any_of("type", Enum.map(Query.types(query), &encode_enum/1)),
       any_of("thread", Enum.map(Query.threads(query), &encode_enum/1)),
       any_of("authorRef", query.filters[:author_refs]),
@@ -242,13 +243,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
     result =
       case request(method, path, body, :admin_api_key, false) do
         {:ok, response} when is_map(response) ->
-          with :ok <- validate_object_ids(response, Keyword.get(opts, :expected_object_ids)),
+          with {:ok, :pass} <-
+                 validate_object_ids(response, Keyword.get(opts, :expected_object_ids)),
                {:ok, task_id} <- fetch_task_id(response) do
             maybe_wait_for_task(task_id, Keyword.get(opts, :wait_for_task, false))
           end
-
-        :ok ->
-          {:error, ErrorCat.search_platform("empty Algolia admin response")}
 
         error ->
           error
@@ -273,14 +272,15 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
       %{platform: :algolia, index: index_name(), task_id: task_id, status: :accepted}
     )
 
-    :ok
+    {:ok, :pass}
   end
 
-  defp validate_object_ids(_response, nil), do: :ok
+  defp validate_object_ids(_response, nil), do: {:ok, :pass}
 
   defp validate_object_ids(%{"objectIDs" => object_ids}, expected)
-       when is_list(object_ids) and length(object_ids) == expected,
-       do: :ok
+       when is_list(object_ids) and length(object_ids) == expected do
+    {:ok, :pass}
+  end
 
   defp validate_object_ids(response, expected) do
     {:error,
@@ -297,8 +297,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
     {:error, ErrorCat.search_platform(%{message: "missing Algolia taskID", response: response})}
   end
 
-  defp wait_for_task(_task_id, 0),
-    do: {:error, ErrorCat.search_platform("timed out waiting for Algolia indexing task")}
+  defp wait_for_task(_task_id, 0) do
+    {:error, ErrorCat.search_platform("timed out waiting for Algolia indexing task")}
+  end
 
   defp wait_for_task(task_id, attempts_left) do
     case request(
@@ -309,7 +310,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
            false
          ) do
       {:ok, %{"status" => "published"}} ->
-        :ok
+        {:ok, :pass}
 
       {:ok, %{"status" => "notPublished"}} ->
         Process.sleep(@task_poll_interval)
@@ -386,10 +387,14 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
     )
   end
 
-  defp log_error(_result, _method, _path), do: :ok
+  defp log_error(_result, _method, _path), do: :pass
 
   defp parse_response({:ok, %Tesla.Env{status: status, body: body}}) when status in 200..299 do
-    if is_map(body), do: {:ok, body}, else: :ok
+    if is_map(body) do
+      {:ok, body}
+    else
+      {:error, ErrorCat.search_platform("empty Algolia response")}
+    end
   end
 
   defp parse_response({:ok, %Tesla.Env{status: status, body: body}}) do

@@ -15,7 +15,7 @@ defmodule GroupherServer.Test.ConnSimulator do
   import Phoenix.ConnTest, only: [build_conn: 0]
   import Plug.Conn, only: [put_req_header: 3]
 
-  import GroupherServer.CMS.FrontDesk, only: [author_of: 1]
+  import GroupherServer.FrontDesk, only: [article_author: 1]
 
   alias GroupherServer.{Accounts, CMS}
 
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.ConnSimulator do
 
   @doc "Builds an authenticated connection from content ownership, a User, or Passport rules."
   def simu_conn(:owner, content) do
-    with {:ok, author} <- author_of(content) do
+    with {:ok, author} <- article_author(content) do
       token = gen_jwt_token(id: author.id)
 
       build_conn() |> put_req_header("authorization", token)
@@ -91,11 +91,13 @@ defmodule GroupherServer.Test.ConnSimulator do
     end
   end
 
-  defp normalize_passport_rules(%{"global" => _global, "cms" => _cms} = rules),
-    do: rules |> migrate_legacy_passport_rules() |> sanitize_passport_rules()
+  defp normalize_passport_rules(%{"global" => _global, "cms" => _cms} = rules) do
+    rules |> migrate_legacy_passport_rules() |> sanitize_passport_rules()
+  end
 
-  defp normalize_passport_rules(%{"global" => _global} = rules),
-    do: sanitize_passport_rules(rules)
+  defp normalize_passport_rules(%{"global" => _global} = rules) do
+    sanitize_passport_rules(rules)
+  end
 
   defp normalize_passport_rules(rules) when is_map(rules) do
     if Enum.all?(rules, fn {_k, v} -> is_map(v) end) do
@@ -119,9 +121,11 @@ defmodule GroupherServer.Test.ConnSimulator do
                                                                      acc ->
       cleaned_rules = filter_community_rule_map(community_rules)
 
-      if cleaned_rules == %{},
-        do: acc,
-        else: Map.put(acc, to_string(community), cleaned_rules)
+      if cleaned_rules == %{} do
+        acc
+      else
+        Map.put(acc, to_string(community), cleaned_rules)
+      end
     end)
   end
 

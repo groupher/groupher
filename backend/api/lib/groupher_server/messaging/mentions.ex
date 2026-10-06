@@ -22,7 +22,7 @@ defmodule GroupherServer.Messaging.Mentions do
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
-  import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
+  import GroupherServer.FrontDesk, only: [thread_of: 1]
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS, Messaging, Repo}

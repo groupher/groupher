@@ -16,34 +16,24 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
   use Ecto.Schema
 
   import Ecto.Changeset
-  import GroupherServer.CMS.Helper.Macros
-
-  import GroupherServer.CMS.Helper.Constraints,
-    only: [
-      articles_emotion_unique_key_constraint: 1,
-      articles_exactly_one_ref_constraint: 2,
-      articles_foreign_key_constraint: 1
-    ]
-
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
+  alias CMS.Model.{Article, DocBranch}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @supported_emotions CMS.Artiment.Config.emotions()
-  @threads CMS.Artiment.Config.threads()
-
-  @required_fields ~w(user_id received_user_id emotion)a
-  @optional_fields Enum.map(@threads, &:"#{&1}_id")
+  @required_fields ~w(user_id received_user_id emotion article_id)a
+  @optional_fields ~w(branch_id)a
 
   @type t :: %__MODULE__{}
   schema "articles_users_emotions" do
     belongs_to(:received_user, User, foreign_key: :received_user_id)
     belongs_to(:user, User, foreign_key: :user_id)
+    belongs_to(:article, Article, type: Ecto.UUID)
+    belongs_to(:branch, DocBranch)
 
     field(:emotion, :string)
-    article_belongs_to_fields()
-
     timestamps(type: :utc_datetime)
   end
 
@@ -56,9 +46,11 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
     |> validate_inclusion(:emotion, Enum.map(@supported_emotions, &to_string/1))
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:received_user_id)
-    |> articles_emotion_unique_key_constraint()
-    |> articles_foreign_key_constraint()
-    |> articles_exactly_one_ref_constraint(:articles_users_emotions)
+    |> foreign_key_constraint(:article_id)
+    |> foreign_key_constraint(:branch_id)
+    |> unique_constraint([:user_id, :article_id, :branch_id, :emotion],
+      name: :articles_users_emotions_user_stable_article_emotion_index
+    )
   end
 
   def update_changeset(struct, attrs), do: changeset(struct, attrs)

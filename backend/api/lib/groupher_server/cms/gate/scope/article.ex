@@ -20,14 +20,22 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.Gate.ErrorCat
   alias CMS.Gate.Scope.{ArticleSchema, CommunityChain, Policy}
-  alias CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
+
+  alias CMS.Model.{
+    ArticleDraft,
+    ArticleLifecycle,
+    ArticlePublic,
+    Author,
+    DocBranch,
+    DocDraft,
+    DocLifecycle,
+    DocPublic
+  }
 
   @behaviour Policy
 
   @public_lifecycle_states [:published, :archived]
   @draft_lifecycle_states [:draft_only, :published, :archived]
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
-
   @actions [:read, :read_draft, :list, :read_insights]
   @management_policy_modes [
     :owner_management,
@@ -66,7 +74,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     with {:ok, expected_schema} <- ArticleSchema.fetch(thread),
          true <- root_schema(query) == expected_schema,
          %Ecto.Query{} = query <- base_scope(query, thread, :public, branch_id) do
-      where(query, [article, ...], article.pending == ^@audit_illegal)
+      where(query, [article, ...], article.moderation_state == ^:illegal)
     else
       false -> {:error, ErrorCat.scope_root_mismatch()}
       {:error, _reason} = error -> error
@@ -78,8 +86,8 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   defp base_scope(query, :doc, policy_mode, branch_id) do
     with %Ecto.Query{} = query <- CommunityChain.article(query, policy_mode) do
       query
-      |> doc_lifecycle_scope(branch_id)
       |> doc_branch_scope(branch_id, policy_mode)
+      |> doc_lifecycle_scope(branch_id)
     end
   end
 
@@ -94,9 +102,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
       from([article, ...] in query,
         join: branch in DocBranch,
         as: :gate_doc_branch,
-        on:
-          branch.id == article.branch_id and branch.community_id == article.community_id and
-            branch.id == ^branch_id
+        on: branch.community_id == article.community_id and branch.id == ^branch_id
       )
 
     case policy_mode do
@@ -116,47 +122,58 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
       join: branch in DocBranch,
       as: :gate_doc_branch,
       on:
-        branch.id == article.branch_id and branch.community_id == article.community_id and
+        branch.community_id == article.community_id and
           branch.type == ^CMS.Docs.Const.doc_branch_type(:main)
     )
   end
 
-  defp doc_branch_scope(_query, _branch_id, _policy_mode),
-    do: {:error, ErrorCat.scope_context_missing()}
+  defp doc_branch_scope(_query, _branch_id, _policy_mode) do
+    {:error, ErrorCat.scope_context_missing()}
+  end
 
   defp policy_mode(%ArticleContext{policy_mode: mode}, :read_draft)
-       when mode in @management_policy_modes,
-       do: {:ok, mode}
+       when mode in @management_policy_modes do
+    {:ok, mode}
+  end
 
   defp policy_mode(%DocContext{policy_mode: mode}, :read_draft)
-       when mode in @management_policy_modes,
-       do: {:ok, mode}
+       when mode in @management_policy_modes do
+    {:ok, mode}
+  end
 
-  defp policy_mode(%ArticleContext{policy_mode: :insights_management}, :read_insights),
-    do: {:ok, :insights_management}
+  defp policy_mode(%ArticleContext{policy_mode: :insights_management}, :read_insights) do
+    {:ok, :insights_management}
+  end
 
-  defp policy_mode(%DocContext{policy_mode: :insights_management}, :read_insights),
-    do: {:ok, :insights_management}
+  defp policy_mode(%DocContext{policy_mode: :insights_management}, :read_insights) do
+    {:ok, :insights_management}
+  end
 
-  defp policy_mode(%ArticleContext{policy_mode: :insights_management}, _action),
-    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+  defp policy_mode(%ArticleContext{policy_mode: :insights_management}, _action) do
+    {:error, ErrorCat.scope_policy_actor_mismatch()}
+  end
 
-  defp policy_mode(%DocContext{policy_mode: :insights_management}, _action),
-    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+  defp policy_mode(%DocContext{policy_mode: :insights_management}, _action) do
+    {:error, ErrorCat.scope_policy_actor_mismatch()}
+  end
 
-  defp policy_mode(%ArticleContext{}, :read_insights),
-    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+  defp policy_mode(%ArticleContext{}, :read_insights) do
+    {:error, ErrorCat.scope_policy_actor_mismatch()}
+  end
 
-  defp policy_mode(%DocContext{}, :read_insights),
-    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+  defp policy_mode(%DocContext{}, :read_insights) do
+    {:error, ErrorCat.scope_policy_actor_mismatch()}
+  end
 
   defp policy_mode(%ArticleContext{policy_mode: mode}, _action)
-       when mode in [:public | @management_policy_modes],
-       do: {:ok, mode}
+       when mode in [:public | @management_policy_modes] do
+    {:ok, mode}
+  end
 
   defp policy_mode(%DocContext{policy_mode: mode}, _action)
-       when mode in [:public | @management_policy_modes],
-       do: {:ok, mode}
+       when mode in [:public | @management_policy_modes] do
+    {:ok, mode}
+  end
 
   defp policy_mode(_context, _action), do: {:error, ErrorCat.scope_context_missing()}
 
@@ -165,35 +182,42 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   defp stage(%ArticleContext{}, :read_draft), do: {:error, ErrorCat.scope_context_missing()}
   defp stage(%DocContext{}, :read_draft), do: {:error, ErrorCat.scope_context_missing()}
 
-  defp stage(%ArticleContext{policy_mode: :insights_management, stage: :public}, :read_insights),
-    do: {:ok, :public}
+  defp stage(%ArticleContext{policy_mode: :insights_management, stage: :public}, :read_insights) do
+    {:ok, :public}
+  end
 
-  defp stage(%ArticleContext{policy_mode: :insights_management}, :read_insights),
-    do: {:error, ErrorCat.scope_context_missing()}
+  defp stage(%ArticleContext{policy_mode: :insights_management}, :read_insights) do
+    {:error, ErrorCat.scope_context_missing()}
+  end
 
-  defp stage(%DocContext{policy_mode: :insights_management, stage: :public}, :read_insights),
-    do: {:ok, :public}
+  defp stage(%DocContext{policy_mode: :insights_management, stage: :public}, :read_insights) do
+    {:ok, :public}
+  end
 
-  defp stage(%DocContext{policy_mode: :insights_management}, :read_insights),
-    do: {:error, ErrorCat.scope_context_missing()}
+  defp stage(%DocContext{policy_mode: :insights_management}, :read_insights) do
+    {:error, ErrorCat.scope_context_missing()}
+  end
 
-  defp stage(%ArticleContext{stage: stage}, _action) when stage in [:public, :draft],
-    do: {:ok, stage}
+  defp stage(%ArticleContext{stage: stage}, _action) when stage in [:public, :draft] do
+    {:ok, stage}
+  end
 
-  defp stage(%DocContext{stage: stage}, _action) when stage in [:public, :draft],
-    do: {:ok, stage}
+  defp stage(%DocContext{stage: stage}, _action) when stage in [:public, :draft] do
+    {:ok, stage}
+  end
 
   defp stage(_context, _action), do: {:error, ErrorCat.scope_context_missing()}
 
-  defp branch_id(%DocContext{branch_id: branch_id}, :doc) when is_integer(branch_id),
-    do: {:ok, branch_id}
+  defp branch_id(%DocContext{branch_id: branch_id}, :doc) when is_integer(branch_id) do
+    {:ok, branch_id}
+  end
 
   defp branch_id(%DocContext{branch_policy: :main}, :doc), do: {:ok, :main}
   defp branch_id(%DocContext{}, :doc), do: {:error, ErrorCat.scope_context_missing()}
   defp branch_id(%ArticleContext{}, _thread), do: {:ok, nil}
 
   defp apply_stage(query, :public, actor, _policy_mode, context) do
-    query = from([article, ...] in query, where: article.stage == ^:public)
+    query = public_head_scope(query, context)
 
     query =
       from([article, ...] in query,
@@ -203,16 +227,15 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     {:ok, public_article(query, actor, context)}
   end
 
-  defp apply_stage(_query, :draft, _actor, :public, _context),
-    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+  defp apply_stage(_query, :draft, _actor, :public, _context) do
+    {:error, ErrorCat.scope_policy_actor_mismatch()}
+  end
 
-  defp apply_stage(query, :draft, _actor, _policy_mode, _context) do
+  defp apply_stage(query, :draft, _actor, _policy_mode, context) do
     {:ok,
-     from(article in query,
-       where:
-         article.stage == ^:draft and
-           as(:gate_article_lifecycle).state in ^@draft_lifecycle_states
-     )}
+     query
+     |> draft_head_scope(context)
+     |> where([_article, ...], as(:gate_article_lifecycle).state in ^@draft_lifecycle_states)}
   end
 
   defp apply_actor_policy(query, :public, :public, _context), do: {:ok, query}
@@ -239,9 +262,8 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     from(article in query,
       join: lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
-      on:
-        lifecycle.community_id == article.community_id and lifecycle.thread == ^thread and
-          lifecycle.article_hash_id == article.article_hash_id
+      on: lifecycle.article_id == article.id,
+      where: article.thread == ^thread
     )
   end
 
@@ -249,9 +271,8 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     from(article in query,
       join: lifecycle in DocLifecycle,
       as: :gate_article_lifecycle,
-      on:
-        lifecycle.community_id == article.community_id and lifecycle.branch_id == ^branch_id and
-          lifecycle.article_hash_id == article.article_hash_id
+      on: lifecycle.article_id == article.id and lifecycle.branch_id == ^branch_id,
+      where: article.thread == ^:doc
     )
   end
 
@@ -259,10 +280,8 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     from(article in query,
       join: lifecycle in DocLifecycle,
       as: :gate_article_lifecycle,
-      on:
-        lifecycle.community_id == article.community_id and
-          lifecycle.branch_id == article.branch_id and
-          lifecycle.article_hash_id == article.article_hash_id
+      on: lifecycle.article_id == article.id and lifecycle.branch_id == as(:gate_doc_branch).id,
+      where: article.thread == ^:doc
     )
   end
 
@@ -275,8 +294,18 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     end
   end
 
-  defp resolve_thread(%Ecto.Query{from: %{source: {_source, schema}}}, _context),
-    do: ArticleSchema.thread_for(schema)
+  defp resolve_thread(%Ecto.Query{from: %{source: {_source, schema}}}, %DocContext{}) do
+    with {:ok, expected_schema} <- ArticleSchema.fetch(:doc),
+         true <- expected_schema == schema do
+      {:ok, :doc}
+    else
+      _ -> {:error, ErrorCat.scope_root_mismatch()}
+    end
+  end
+
+  defp resolve_thread(%Ecto.Query{from: %{source: {_source, schema}}}, _context) do
+    ArticleSchema.thread_for(schema)
+  end
 
   defp root_schema(%Ecto.Query{from: %{source: {_source, schema}}}), do: schema
   defp root_schema(_query), do: nil
@@ -288,14 +317,48 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
 
     from(article in query,
       where:
-        article.pending != ^@audit_illegal or
+        article.moderation_state != ^:illegal or
           article.author_id in subquery(author_ids)
     )
   end
 
   defp public_article(query, _actor, _context) do
     from(article in query,
-      where: article.pending != ^@audit_illegal
+      where: article.moderation_state != ^:illegal
+    )
+  end
+
+  defp public_head_scope(query, %DocContext{}) do
+    from([article, ...] in query,
+      join: public in DocPublic,
+      as: :gate_article_public,
+      on:
+        public.article_id == article.id and public.branch_id == as(:gate_doc_branch).id and
+          public.visible == true
+    )
+  end
+
+  defp public_head_scope(query, %ArticleContext{}) do
+    from(article in query,
+      join: public in ArticlePublic,
+      as: :gate_article_public,
+      on: public.article_id == article.id and public.visible == true
+    )
+  end
+
+  defp draft_head_scope(query, %ArticleContext{}) do
+    from(article in query,
+      join: draft in ArticleDraft,
+      as: :gate_article_draft,
+      on: draft.article_id == article.id
+    )
+  end
+
+  defp draft_head_scope(query, %DocContext{}) do
+    from([article, ...] in query,
+      join: draft in DocDraft,
+      as: :gate_doc_draft,
+      on: draft.article_id == article.id and draft.branch_id == as(:gate_doc_branch).id
     )
   end
 end

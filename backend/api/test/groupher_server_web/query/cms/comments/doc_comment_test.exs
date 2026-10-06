@@ -82,7 +82,6 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       }
 
       _results = guest_conn |> gq_query(S.Article.q(:article, :doc), variables)
-
     end
 
     test "guest user can get comment participants after comment created",
@@ -505,7 +504,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       page_size = 12
       thread = :doc
 
-      author_user = doc.author.user
+      author_user = doc.author
 
       all_comments =
         Enum.reduce(0..total_count, [], fn i, acc ->
@@ -744,7 +743,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       page_size = 10
       thread = :doc
 
-      author_user = doc.author.user
+      author_user = doc.author
 
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, thread, doc.inner_id, mock_comment(), user)

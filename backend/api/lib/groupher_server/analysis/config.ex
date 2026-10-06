@@ -40,8 +40,9 @@ defmodule GroupherServer.Analysis.Config do
   @doc "Returns how many seconds a saturated retention Job snoozes before continuing."
   def retention_snooze_seconds, do: positive!(:retention_snooze_seconds)
 
-  defp value(key),
-    do: Application.get_env(:groupher_server, __MODULE__, []) |> Keyword.get(key, @defaults[key])
+  defp value(key) do
+    Application.get_env(:groupher_server, __MODULE__, []) |> Keyword.get(key, @defaults[key])
+  end
 
   defp positive!(key) do
     case value(key) do

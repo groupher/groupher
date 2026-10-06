@@ -178,8 +178,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
     end
   end
 
-  defp reported_by?(report, user_id),
-    do: Enum.any?(report.report_cases, &(reporter_user_id(&1) == user_id))
+  defp reported_by?(report, user_id) do
+    Enum.any?(report.report_cases, &(reporter_user_id(&1) == user_id))
+  end
 
   defp reporter_user_id(%{user: %{user_id: user_id}}), do: user_id
   defp reporter_user_id(_case), do: nil

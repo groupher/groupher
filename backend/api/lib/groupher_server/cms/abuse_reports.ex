@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.AbuseReports do
         -> Repo / external boundary
   """
 
-  alias __MODULE__.{List, Report}
+  alias __MODULE__.{Query, Report}
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.AbuseReports do
 
   @doc "Returns paged reports from the `AbuseReports` read boundary."
   @spec paged_reports(map()) :: T.domain_res(T.paged_data())
-  def paged_reports(filter), do: List.paged_reports(filter)
+  def paged_reports(filter), do: Query.paged_reports(filter)
 
   @doc "Runs `account` through the public `AbuseReports` boundary."
   @spec account(User.t(), String.t(), map(), User.t()) :: T.domain_res(User.t())

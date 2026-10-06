@@ -23,17 +23,15 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
   revision counters. This module owns the article-content side of docs writes.
   """
 
-  require GroupherServer.CMS.Const
-
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Articles.Draft
+  alias CMS.Articles.Draft.Store
   alias CMS.Artiment.BodyBag
-  alias CMS.DocTree.{Reader, Revision}
-  alias CMS.Model.{Community, Doc}
+  alias CMS.DocTree.{Revision, State}
+  alias CMS.Model.{Article, Community, DocDraft}
   alias Helper.Validator.Slug
 
   @doc """
@@ -45,20 +43,13 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
   ## Examples
 
       DraftDoc.update(community, branch, doc_id, %{title: "New title", slug: "new-title"}, user)
-      #=> {:ok, %Doc{stage: :draft}}
+      #=> {:ok, %CMS.Model.DocDraft{}}
 
   """
   def update(%Community{} = community, branch, doc_id, args, %User{} = user) do
     with :ok <- validate_update_attrs(args),
-         {:ok, site_state} <- Reader.ensure_site_state(community, branch_id: branch.id),
-         {:ok, draft} <-
-           Draft.update_or_create_from_public(
-             community,
-             :doc,
-             doc_id,
-             Map.put(args, :branch_id, branch.id),
-             user
-           ),
+         {:ok, site_state} <- State.ensure_site_state(community, branch_id: branch.id),
+         {:ok, draft} <- CMS.Docs.update_draft(doc_id, branch.id, args, user),
          {:ok, _state} <- Revision.bump_site_draft(community, site_state) do
       {:ok, draft}
     end
@@ -73,18 +64,18 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
 
   def ensure(%Community{} = community, branch, args, %User{} = user) do
     with {:ok, draft} <- create_default_doc_draft(community, branch, args, user) do
-      {:ok, Map.put(args, :doc_id, draft.article_hash_id)}
+      {:ok, Map.put(args, :doc_id, draft.article_id)}
     end
   end
 
   def validate(_community, _branch, nil), do: :ok
 
   def validate(%Community{} = community, branch, doc_id) do
-    Doc
-    |> where([d], d.community_id == ^community.id)
-    |> where([d], d.branch_id == ^branch.id)
-    |> where([d], d.stage == CMS.Const.stage(:draft))
-    |> where([d], d.article_hash_id == ^doc_id)
+    DocDraft
+    |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
+    |> where([draft, article], article.community_id == ^community.id)
+    |> where([draft], draft.branch_id == ^branch.id)
+    |> where([draft], draft.article_id == ^doc_id)
     |> Repo.exists?()
     |> case do
       true -> :ok
@@ -96,17 +87,17 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
     title = Map.get(args, :title, "Untitled")
     slug = Map.get(args, :slug) || normalize_doc_slug(title)
 
-    Draft.create(
-      community,
-      :doc,
-      %{
-        branch_id: branch.id,
-        title: title,
-        slug: slug,
-        body_bag: BodyBag.empty_doc()
-      },
-      user
-    )
+    with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user),
+         {:ok, %{draft: draft}} <-
+           Store.create(
+             community,
+             :doc,
+             %{title: title, slug: slug, body_bag: BodyBag.empty_doc()},
+             author,
+             branch_id: branch.id
+           ) do
+      {:ok, draft}
+    end
   end
 
   defp normalize_doc_slug(slug) do
@@ -117,9 +108,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
   end
 
   defp validate_update_attrs(%{title: _title} = attrs) do
-    if Map.has_key?(attrs, :slug),
-      do: :ok,
-      else: {:error, ErrorCat.custom("slug is required when updating a Doc title")}
+    if Map.has_key?(attrs, :slug) do
+      :ok
+    else
+      {:error, ErrorCat.custom("slug is required when updating a Doc title")}
+    end
   end
 
   defp validate_update_attrs(_attrs), do: :ok

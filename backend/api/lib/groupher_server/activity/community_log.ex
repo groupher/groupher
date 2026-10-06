@@ -200,8 +200,9 @@ defmodule GroupherServer.Activity.CommunityLog do
     end
   end
 
-  def export_logs(_community, _actor, _filter, _format),
-    do: {:error, ErrorCat.invalid_pagination()}
+  def export_logs(_community, _actor, _filter, _format) do
+    {:error, ErrorCat.invalid_pagination()}
+  end
 
   @doc "Reads one safe CommunityLog event by its public event reference."
   def get_event(%Community{} = community, actor, event_ref) do
@@ -229,13 +230,15 @@ defmodule GroupherServer.Activity.CommunityLog do
 
   defp related_event(_community, _actor, nil), do: {:ok, nil}
 
-  defp related_event(community, actor, event_ref),
-    do: get_event(community, actor, event_ref)
+  defp related_event(community, actor, event_ref) do
+    get_event(community, actor, event_ref)
+  end
 
   defp related_children(_community, _actor, nil), do: {:ok, %{entries: []}}
 
-  defp related_children(community, actor, event_ref),
-    do: list(community, actor, %{filter: %{parent_event_ref: event_ref}}, 1)
+  defp related_children(community, actor, event_ref) do
+    list(community, actor, %{filter: %{parent_event_ref: event_ref}}, 1)
+  end
 
   def handlers, do: @handlers
 
@@ -304,8 +307,9 @@ defmodule GroupherServer.Activity.CommunityLog do
     {total_count, entries}
   end
 
-  defp page(handlers, community_id, filter),
-    do: page(handlers, community_id, filter, @page_size)
+  defp page(handlers, community_id, filter) do
+    page(handlers, community_id, filter, @page_size)
+  end
 
   defp daily_counts([], _community_id, _filter), do: {0, %{}}
 
@@ -346,7 +350,7 @@ defmodule GroupherServer.Activity.CommunityLog do
            parent_event_ref,
            action,
            source,
-           #{stream_field} AS stream_ref,
+           #{stream_field}::text AS stream_ref,
            stream_snapshot,
            subject_type,
            subject_ref,
@@ -499,9 +503,11 @@ defmodule GroupherServer.Activity.CommunityLog do
   defp normalize_filter(_filter, _mode), do: {:error, ErrorCat.invalid_pagination()}
 
   defp validate_filter_keys(filter) do
-    if Map.keys(filter) -- @supported_filter_keys == [],
-      do: :ok,
-      else: {:error, ErrorCat.invalid_pagination()}
+    if Map.keys(filter) -- @supported_filter_keys == [] do
+      :ok
+    else
+      {:error, ErrorCat.invalid_pagination()}
+    end
   end
 
   defp positive_page(page) when is_integer(page) and page > 0, do: {:ok, page}
@@ -518,9 +524,11 @@ defmodule GroupherServer.Activity.CommunityLog do
       value ->
         values = list_value(value)
 
-        if Enum.all?(values, &(&1 in known)),
-          do: {:ok, values},
-          else: {:error, ErrorCat.invalid_pagination()}
+        if Enum.all?(values, &(&1 in known)) do
+          {:ok, values}
+        else
+          {:error, ErrorCat.invalid_pagination()}
+        end
     end
   end
 
@@ -534,9 +542,11 @@ defmodule GroupherServer.Activity.CommunityLog do
       actions = Enum.map(values, &safe_existing_atom/1)
       visible = @handlers |> Enum.flat_map(& &1.surface_actions(:community_log)) |> MapSet.new()
 
-      if Enum.all?(actions, &(&1 in visible)),
-        do: {:ok, actions},
-        else: {:error, ErrorCat.invalid_pagination()}
+      if Enum.all?(actions, &(&1 in visible)) do
+        {:ok, actions}
+      else
+        {:error, ErrorCat.invalid_pagination()}
+      end
     end
   end
 
@@ -549,9 +559,11 @@ defmodule GroupherServer.Activity.CommunityLog do
       categories = Enum.map(list_value(value), &safe_existing_atom/1)
       known = [:content, :publishing, :lifecycle, :engagement, :moderation, :community]
 
-      if Enum.all?(categories, &(&1 in known)),
-        do: {:ok, categories},
-        else: {:error, ErrorCat.invalid_pagination()}
+      if Enum.all?(categories, &(&1 in known)) do
+        {:ok, categories}
+      else
+        {:error, ErrorCat.invalid_pagination()}
+      end
     end
   end
 
@@ -569,9 +581,11 @@ defmodule GroupherServer.Activity.CommunityLog do
   defp normalize_enum_list(value, known) do
     values = Enum.map(list_value(value), &safe_existing_atom/1)
 
-    if Enum.all?(values, &(&1 in known)),
-      do: {:ok, values},
-      else: {:error, ErrorCat.invalid_pagination()}
+    if Enum.all?(values, &(&1 in known)) do
+      {:ok, values}
+    else
+      {:error, ErrorCat.invalid_pagination()}
+    end
   end
 
   defp normalize_declared_text_list(nil, _known), do: {:ok, nil}
@@ -579,9 +593,11 @@ defmodule GroupherServer.Activity.CommunityLog do
   defp normalize_declared_text_list(value, known) do
     values = list_value(value) |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
 
-    if values != [] and Enum.all?(values, &(&1 in known)),
-      do: {:ok, Enum.uniq(values)},
-      else: {:error, ErrorCat.invalid_pagination()}
+    if values != [] and Enum.all?(values, &(&1 in known)) do
+      {:ok, Enum.uniq(values)}
+    else
+      {:error, ErrorCat.invalid_pagination()}
+    end
   end
 
   defp normalize_source(nil), do: {:ok, nil}
@@ -589,15 +605,18 @@ defmodule GroupherServer.Activity.CommunityLog do
   defp normalize_source(source) do
     source = if is_binary(source), do: safe_existing_atom(source), else: source
 
-    if source in GroupherServer.Activity.Const.source_values(),
-      do: {:ok, source},
-      else: {:error, ErrorCat.invalid_pagination()}
+    if source in GroupherServer.Activity.Const.source_values() do
+      {:ok, source}
+    else
+      {:error, ErrorCat.invalid_pagination()}
+    end
   end
 
   defp normalize_datetime(nil), do: {:ok, nil}
 
-  defp normalize_datetime(%DateTime{} = datetime),
-    do: {:ok, DateTime.shift_zone!(datetime, @utc)}
+  defp normalize_datetime(%DateTime{} = datetime) do
+    {:ok, DateTime.shift_zone!(datetime, @utc)}
+  end
 
   defp normalize_datetime(_), do: {:error, ErrorCat.invalid_pagination()}
 
@@ -608,9 +627,11 @@ defmodule GroupherServer.Activity.CommunityLog do
   defp validate_time_window(_mode, %DateTime{} = occurred_after, %DateTime{} = occurred_before) do
     seconds = DateTime.diff(occurred_before, occurred_after)
 
-    if seconds > 0 and seconds <= @max_time_window_days * 86_400,
-      do: :ok,
-      else: {:error, ErrorCat.invalid_pagination()}
+    if seconds > 0 and seconds <= @max_time_window_days * 86_400 do
+      :ok
+    else
+      {:error, ErrorCat.invalid_pagination()}
+    end
   end
 
   defp validate_time_window(_mode, _after, _before), do: {:error, ErrorCat.invalid_pagination()}
@@ -763,18 +784,19 @@ defmodule GroupherServer.Activity.CommunityLog do
 
   defp add_array_condition(conditions, params, next, nil), do: {conditions, params, next}
 
-  defp add_array_condition(conditions, params, next, actions),
-    do:
-      {[" AND action = ANY($#{next}::text[])" | conditions],
-       [Enum.map(actions, &to_string/1) | params], next + 1}
+  defp add_array_condition(conditions, params, next, actions) do
+    {[" AND action = ANY($#{next}::text[])" | conditions],
+     [Enum.map(actions, &to_string/1) | params], next + 1}
+  end
 
-  defp add_text_array_condition(conditions, params, next, nil, _field),
-    do: {conditions, params, next}
+  defp add_text_array_condition(conditions, params, next, nil, _field) do
+    {conditions, params, next}
+  end
 
-  defp add_text_array_condition(conditions, params, next, values, field),
-    do:
-      {[" AND #{field} = ANY($#{next}::text[])" | conditions],
-       [Enum.map(values, &to_string/1) | params], next + 1}
+  defp add_text_array_condition(conditions, params, next, values, field) do
+    {[" AND #{field} = ANY($#{next}::text[])" | conditions],
+     [Enum.map(values, &to_string/1) | params], next + 1}
+  end
 
   defp add_condition(conditions, params, next, nil, _template), do: {conditions, params, next}
 
@@ -796,8 +818,9 @@ defmodule GroupherServer.Activity.CommunityLog do
     end)
   end
 
-  defp encode_export(entries, :json, manifest),
-    do: Jason.encode!(%{manifest: manifest, entries: entries})
+  defp encode_export(entries, :json, manifest) do
+    Jason.encode!(%{manifest: manifest, entries: entries})
+  end
 
   defp encode_export(entries, :csv, _manifest) do
     header =
@@ -837,9 +860,11 @@ defmodule GroupherServer.Activity.CommunityLog do
   defp csv_cell(value) do
     value = to_string(value)
 
-    if String.contains?(value, [",", "\"", "\n"]),
-      do: "\"#{String.replace(value, "\"", "\"\"")}\"",
-      else: value
+    if String.contains?(value, [",", "\"", "\n"]) do
+      "\"#{String.replace(value, "\"", "\"\"")}\""
+    else
+      value
+    end
   end
 
   defp list_value(value) when is_list(value), do: Enum.map(value, &to_string/1)

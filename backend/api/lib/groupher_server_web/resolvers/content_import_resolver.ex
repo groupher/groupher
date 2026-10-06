@@ -73,32 +73,37 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
   end
 
   @doc "Returns the current public Job projection."
-  def job(_root, %{community: %Community{} = community, job_ref: job_ref}, _info),
-    do: Jobs.get(community, job_ref)
+  def job(_root, %{community: %Community{} = community, job_ref: job_ref}, _info) do
+    Jobs.get(community, job_ref)
+  end
 
   @doc "Applies a ready Job through the atomic Docs Writer."
-  def apply(_root, %{community: %Community{} = community, job_ref: job_ref}, _info),
-    do: Writer.apply(community, job_ref)
+  def apply(_root, %{community: %Community{} = community, job_ref: job_ref}, _info) do
+    Writer.apply(community, job_ref)
+  end
 
   @doc "Stages one bounded batch of BodyBags or terminal per-item outcomes."
   def stage(
         _root,
         %{community: %Community{} = community, job_ref: job_ref, items: items},
         _info
-      ),
-      do: Staging.stage(community, job_ref, Enum.map(items, &stringify_keys/1))
+      ) do
+    Staging.stage(community, job_ref, Enum.map(items, &stringify_keys/1))
+  end
 
   @doc "Records a workflow-level terminal failure on an unfinished Job."
   def fail(
         _root,
         %{community: %Community{} = community, job_ref: job_ref, code: code, message: message},
         _info
-      ),
-      do: Jobs.fail(community, job_ref, code, message)
+      ) do
+    Jobs.fail(community, job_ref, code, message)
+  end
 
   @doc "Cancels an unfinished Job and discards its staged BodyBags."
-  def cancel(_root, %{community: %Community{} = community, job_ref: job_ref}, _info),
-    do: Jobs.cancel(community, job_ref)
+  def cancel(_root, %{community: %Community{} = community, job_ref: job_ref}, _info) do
+    Jobs.cancel(community, job_ref)
+  end
 
   defp stringify_keys(map) do
     Map.new(map, fn {key, value} ->

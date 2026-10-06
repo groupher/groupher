@@ -6,11 +6,14 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
   alias GroupherServer.{CMS, ErrorCat}
   alias CMS.Comments.{InteractionResponse, Numbering, Replies}
   alias CMS.Communities.Enable
+  alias CMS.Model.Article
   alias ErrorCat.Error
+  alias GroupherServer.Repo
   alias Helper.ORM
 
   setup do
     {community, post, _, user} = mock_article(:post, preload: [author: :user])
+    post = Repo.get!(Article, post.id)
     {:ok, user2} = db_insert(:user)
 
     {:ok, ~m(community user user2 post)a}
@@ -22,8 +25,8 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       assert floor == 1
 
       # 验证 article 的 next_floor 字段已更新
-      {:ok, updated_post} = ORM.find(post.__struct__, post.id)
-      assert updated_post.meta.next_floor == 1
+      updated_post = Repo.reload(post)
+      assert updated_post.next_floor == 2
     end
 
     test "should increment floor number for subsequent comments", ~m(post)a do
@@ -32,19 +35,17 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       assert floor1 == 1
 
       # 第二条评论
-      {:ok, updated_post} = ORM.find(post.__struct__, post.id)
+      updated_post = Repo.reload(post)
       {:ok, floor2} = Numbering.next_floor(updated_post, :post_id)
       assert floor2 == 2
 
       # 验证 article 的 next_floor 字段已更新
-      {:ok, updated_post2} = ORM.find(post.__struct__, post.id)
-      assert updated_post2.meta.next_floor == 2
+      updated_post2 = Repo.reload(post)
+      assert updated_post2.next_floor == 3
     end
 
     test "should return domain error when next_floor allocation fails", ~m(post)a do
-      post = put_in(post.meta.__struct__, nil)
-
-      {:error, reason} = Numbering.next_floor(post, :post_id)
+      assert {:error, reason} = Numbering.next_floor(%{post | id: Ecto.UUID.generate()}, :post_id)
       assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
   end
@@ -54,31 +55,31 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       {:ok, inner_id} = Numbering.next_inner_id(post, :post_id)
       assert inner_id == 1
 
-      {:ok, updated_post} = ORM.find(post.__struct__, post.id)
-      assert updated_post.meta.next_comment_inner_id == 1
+      updated_post = Repo.reload(post)
+      assert updated_post.next_comment_inner_id == 2
     end
 
     test "should increment comment inner_id independently from floor", ~m(post)a do
       {:ok, inner_id} = Numbering.next_inner_id(post, :post_id)
       assert inner_id == 1
 
-      {:ok, updated_post} = ORM.find(post.__struct__, post.id)
+      updated_post = Repo.reload(post)
       {:ok, floor} = Numbering.next_floor(updated_post, :post_id)
       assert floor == 1
 
-      {:ok, updated_post} = ORM.find(post.__struct__, post.id)
+      updated_post = Repo.reload(post)
       {:ok, inner_id} = Numbering.next_inner_id(updated_post, :post_id)
       assert inner_id == 2
 
-      {:ok, updated_post} = ORM.find(post.__struct__, post.id)
-      assert updated_post.meta.next_comment_inner_id == 2
-      assert updated_post.meta.next_floor == 1
+      updated_post = Repo.reload(post)
+      assert updated_post.next_comment_inner_id == 3
+      assert updated_post.next_floor == 2
     end
 
     test "should return domain error when inner_id allocation fails", ~m(post)a do
-      post = put_in(post.meta.__struct__, nil)
+      {:error, reason} =
+        Numbering.next_inner_id(%{post | id: Ecto.UUID.generate()}, :post_id)
 
-      {:error, reason} = Numbering.next_inner_id(post, :post_id)
       assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
   end
@@ -155,7 +156,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
     test "should return false if article is comment locked", ~m(post user)a do
       _ = user
       # 锁定评论
-      {:ok, locked_post} = CMS.Articles.lock_comments(post)
+      {:ok, locked_post} = CMS.Articles.lock_comments(post.id, user)
       assert {:error, %Error{reason: :article_comments_locked}} = Enable.comment?(locked_post)
     end
   end

@@ -16,48 +16,41 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
   use Ecto.Schema
 
   import Ecto.Changeset
-  import GroupherServer.CMS.Helper.Macros
-
-  import GroupherServer.CMS.Helper.Constraints,
-    only: [
-      articles_exactly_one_ref_constraint: 2,
-      articles_foreign_key_constraint: 1,
-      articles_thread_matches_ref_constraint: 2,
-      articles_upvote_unique_key_constraint: 1
-    ]
-
   alias __MODULE__
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
+  alias CMS.Model.{Article, DocBranch}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @threads CMS.Artiment.Config.threads()
-
-  @required_fields ~w(user_id)a
-  @optional_fields ~w(thread)a
-  @article_fields @threads |> Enum.map(&:"#{&1}_id")
+  @required_fields ~w(user_id article_id thread)a
+  @optional_fields ~w(branch_id)a
 
   @type t :: %ArticleUpvote{}
   schema "article_upvotes" do
     # for user-center to filter
     field(:thread, Ecto.Enum, values: Threads.article_enums())
     belongs_to(:user, User, foreign_key: :user_id)
+    belongs_to(:article, Article, type: Ecto.UUID)
+    belongs_to(:branch, DocBranch)
 
-    article_belongs_to_fields()
     timestamps(type: :utc_datetime)
   end
 
   @doc false
   def changeset(%ArticleUpvote{} = article_upvote, attrs) do
     article_upvote
-    |> cast(attrs, @optional_fields ++ @required_fields ++ @article_fields)
+    |> cast(
+      attrs,
+      @required_fields ++ @optional_fields
+    )
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:user_id)
-    |> articles_upvote_unique_key_constraint
-    |> articles_foreign_key_constraint
-    |> articles_exactly_one_ref_constraint(:article_upvotes)
-    |> articles_thread_matches_ref_constraint(:article_upvotes)
+    |> foreign_key_constraint(:article_id)
+    |> foreign_key_constraint(:branch_id)
+    |> unique_constraint([:user_id, :article_id, :branch_id],
+      name: :article_upvotes_user_stable_article_index
+    )
   end
 end

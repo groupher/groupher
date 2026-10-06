@@ -15,13 +15,13 @@ defmodule GroupherServer.Test.CMS.Events.EventsTest do
 
   describe "emit/3" do
     test "routes notify_upvote event", ~m(post user2)a do
-      {:ok, post} = preload_author(post)
+      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id)
       {:ok, article} = CMS.Interactions.upvote(post, user2)
 
       {:ok, _} = Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, post.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
     end

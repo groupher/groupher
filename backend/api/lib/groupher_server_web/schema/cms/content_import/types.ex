@@ -129,7 +129,7 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport.Types do
     field(:tree, non_null(:json))
     field(:bad_smells, non_null(:json))
     field(:target_branch, non_null(:string))
-    field(:first_imported_doc_ref, :id)
+    field(:first_imported_doc_id, :id)
   end
 
   input_object :content_import_skip_input do
@@ -152,7 +152,7 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport.Types do
   object :content_import_apply_result do
     field(:job_ref, non_null(:id))
     field(:status, non_null(:content_import_job_status))
-    field(:first_imported_doc_ref, :id)
+    field(:first_imported_doc_id, :id)
     field(:target_branch, non_null(:string))
     field(:counts, non_null(:json))
     field(:failed_items, non_null(:json))

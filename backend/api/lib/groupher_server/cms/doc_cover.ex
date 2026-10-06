@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.DocCover do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.DocCover.{Reader, Sync, Writer}
+  alias CMS.DocCover.{Query, Sync, Writer}
   alias CMS.Model.{Community, DocCoverCard, DocCoverPinnedDoc, DocTreeNode}
   alias Helper.T
 
@@ -41,30 +41,34 @@ defmodule GroupherServer.CMS.DocCover do
       :public     -> public docs route
       :dashboard  -> dashboard editor route
   """
-  @spec read(Community.t(), Reader.view(), User.t() | nil) :: T.domain_res(map())
-  def read(%Community{} = community, view \\ :public, actor \\ nil),
-    do: Reader.read(community, view, actor)
+  @spec read(Community.t(), Query.view(), User.t() | nil) :: T.domain_res(map())
+  def read(%Community{} = community, view \\ :public, actor \\ nil) do
+    Query.read(community, view, actor)
+  end
 
   @doc """
   Adds one published Group as a Cover Card by draft node id.
   """
   @spec add_card(Community.t(), T.id(), User.t()) :: T.domain_res(map())
-  def add_card(%Community{} = community, draft_group_node_id, %User{} = actor),
-    do: Writer.add_card(community, draft_group_node_id, actor)
+  def add_card(%Community{} = community, draft_group_node_id, %User{} = actor) do
+    Writer.add_card(community, draft_group_node_id, actor)
+  end
 
   @doc """
   Removes one Cover Card by draft Group node id.
   """
   @spec remove_card(Community.t(), T.id(), User.t()) :: T.domain_res(map())
-  def remove_card(%Community{} = community, draft_group_node_id, %User{} = actor),
-    do: Writer.remove_card(community, draft_group_node_id, actor)
+  def remove_card(%Community{} = community, draft_group_node_id, %User{} = actor) do
+    Writer.remove_card(community, draft_group_node_id, actor)
+  end
 
   @doc """
   Reorders Cover Cards by Card ids.
   """
   @spec reorder_cards(Community.t(), list(T.id()), User.t()) :: T.domain_res(map())
-  def reorder_cards(%Community{} = community, ids, %User{} = actor),
-    do: Writer.reorder_cards(community, ids, actor)
+  def reorder_cards(%Community{} = community, ids, %User{} = actor) do
+    Writer.reorder_cards(community, ids, actor)
+  end
 
   @doc """
   Updates appearance for one Cover Card.
@@ -92,15 +96,17 @@ defmodule GroupherServer.CMS.DocCover do
   Removes one pinned cover item by draft page id.
   """
   @spec unpin_doc(Community.t(), T.id(), User.t()) :: T.domain_res(DocCoverPinnedDoc.t())
-  def unpin_doc(%Community{} = community, draft_node_id, %User{} = actor),
-    do: Writer.unpin_doc(community, draft_node_id, actor)
+  def unpin_doc(%Community{} = community, draft_node_id, %User{} = actor) do
+    Writer.unpin_doc(community, draft_node_id, actor)
+  end
 
   @doc """
   Reorders the complete pinned-doc collection by public node identifier.
   """
   @spec reorder_pinned_docs(Community.t(), list(T.id()), User.t()) :: T.domain_res(map())
-  def reorder_pinned_docs(%Community{} = community, node_ids, %User{} = actor),
-    do: Writer.reorder_pinned_docs(community, node_ids, actor)
+  def reorder_pinned_docs(%Community{} = community, node_ids, %User{} = actor) do
+    Writer.reorder_pinned_docs(community, node_ids, actor)
+  end
 
   @doc "Updates the Light/Dark appearance for one pinned card."
   @spec update_pinned_doc_appearance(Community.t(), T.id(), map(), User.t()) ::

@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
       trashArticle(article: $article, commandId: $commandId) {
         id
         thread
-        articleRef
+        articleId
         article {
           innerId
           title
@@ -437,6 +437,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     mutation($title: String!, $bodyBag: ArtimentBodyBagInput!, $community: String!, $commandId: ID!) {
       #{operation}(title: $title, bodyBag: $bodyBag, community: $community, commandId: $commandId) {
         innerId
+        version
         title
         document {
           json
@@ -451,8 +452,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:update_document, operation) do
     """
-    mutation($article: ArticlePathInput!, $title: String, $bodyBag: ArtimentBodyBagInput, $commandId: ID!) {
-      #{operation}(article: $article, title: $title, bodyBag: $bodyBag, commandId: $commandId) {
+    mutation($article: ArticlePathInput!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput, $commandId: ID!) {
+      #{operation}(article: $article, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag, commandId: $commandId) {
         innerId
         title
         document {
@@ -582,7 +583,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         entries {
           id
           thread
-          articleRef
+          articleId
           mentionedByCount
           article {
             innerId
@@ -882,7 +883,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
               title
               communityRef
               thread
-              articleRef
+              articleId
+              indexedRevisionId
               locator {
                 community
                 thread

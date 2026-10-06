@@ -3,11 +3,11 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
   Change helpers shared by docs tree projections.
 
   Tree structure changes are event-driven and belong to the Tree footer. Article
-  content changes compare the draft Doc and the latest public snapshot:
+  content changes compare the mutable Doc Draft and selected public Revision:
 
-      version_hash(docs(stage=draft))
+      doc_drafts.content_hash
                     !=
-      doc_snapshots(stage=public).version_hash
+      article_revisions.content_hash
 
   Business position:
 
@@ -17,35 +17,32 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
         -> Repo / published projection
   """
 
-  alias GroupherServer.CMS
-
-  alias CMS.Docs.Snapshot
-  alias CMS.Model.{Doc, DocSnapshot}
+  alias GroupherServer.CMS.Model.{ArticleRevision, DocDraft}
 
   @doc """
   Returns whether a draft doc version differs from its public version.
 
   ## Examples
 
-      iex> ChangeDetection.draft_content_changed?(draft, public_snapshot)
+      iex> ChangeDetection.draft_content_changed?(draft, public_revision)
       true
   """
-  @spec draft_content_changed?(Doc.t() | nil, DocSnapshot.t() | nil) :: boolean()
-  def draft_content_changed?(%Doc{} = draft, %DocSnapshot{} = public_snapshot) do
-    Snapshot.version_hash(draft) != public_snapshot.version_hash
+  @spec draft_content_changed?(DocDraft.t() | nil, ArticleRevision.t() | nil) :: boolean()
+  def draft_content_changed?(%DocDraft{} = draft, %ArticleRevision{} = public_revision) do
+    draft.content_hash != public_revision.content_hash
   end
 
-  def draft_content_changed?(%Doc{}, nil), do: true
+  def draft_content_changed?(%DocDraft{}, nil), do: true
   def draft_content_changed?(_, _), do: false
 
   @doc """
-  Returns the complete version hash shape stored by `DocSnapshot`.
+  Returns the canonical content fingerprint persisted by the Draft.
 
   ## Examples
 
-      iex> ChangeDetection.version_hash(draft) == public_snapshot.version_hash
+      iex> ChangeDetection.version_hash(draft) == public_revision.content_hash
       true
   """
-  @spec version_hash(Doc.t()) :: String.t()
-  def version_hash(%Doc{} = draft), do: Snapshot.version_hash(draft)
+  @spec version_hash(DocDraft.t()) :: String.t()
+  def version_hash(%DocDraft{} = draft), do: draft.content_hash
 end

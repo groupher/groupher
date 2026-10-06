@@ -7,7 +7,7 @@ defmodule GroupherServer.Activity.Model.BlogLog do
 
   use GroupherServer.Activity.Model.Base,
     table: "blog_logs",
-    stream_field: :blog_ref,
+    stream_field: :article_id,
     actions: [
       :created,
       :title_changed,

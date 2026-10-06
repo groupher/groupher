@@ -25,6 +25,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     CommentLifecycle,
     CommunityLifecycle,
     DocBranch,
+    DocBranchState,
     DocLifecycle
   }
 
@@ -51,29 +52,22 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     |> Repo.one()
   end
 
-  @doc """
-  Loads an Article lifecycle row under `FOR UPDATE` for mutation admission.
-  """
-  def article_lifecycle(community_id, thread, article_hash_id) do
+  @doc "Loads the Lifecycle keyed by one stable Article under `FOR UPDATE`."
+  @spec article_lifecycle(Ecto.UUID.t()) :: ArticleLifecycle.t() | nil
+  def article_lifecycle(article_id) do
     ArticleLifecycle
-    |> where(
-      [lifecycle],
-      lifecycle.community_id == ^community_id and lifecycle.thread == ^thread and
-        lifecycle.article_hash_id == ^article_hash_id
-    )
+    |> where([lifecycle], lifecycle.article_id == ^article_id)
     |> lock("FOR UPDATE")
     |> Repo.one()
   end
 
-  @doc """
-  Loads a branch-specific Doc lifecycle row under `FOR UPDATE`.
-  """
-  def doc_lifecycle(community_id, branch_id, article_hash_id) do
+  @doc "Loads a branch Lifecycle keyed by one stable Doc Article under `FOR UPDATE`."
+  @spec doc_lifecycle(Ecto.UUID.t(), pos_integer()) :: DocLifecycle.t() | nil
+  def doc_lifecycle(article_id, branch_id) do
     DocLifecycle
     |> where(
       [lifecycle],
-      lifecycle.community_id == ^community_id and lifecycle.branch_id == ^branch_id and
-        lifecycle.article_hash_id == ^article_hash_id
+      lifecycle.article_id == ^article_id and lifecycle.branch_id == ^branch_id
     )
     |> lock("FOR UPDATE")
     |> Repo.one()
@@ -86,6 +80,15 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     DocBranch
     |> where([branch], branch.community_id == ^community_id and branch.id == ^branch_id)
     |> lock("FOR SHARE")
+    |> Repo.one()
+  end
+
+  @doc "Loads branch-scoped Doc runtime facts under `FOR UPDATE`."
+  @spec doc_branch_state(Ecto.UUID.t(), pos_integer()) :: DocBranchState.t() | nil
+  def doc_branch_state(article_id, branch_id) do
+    DocBranchState
+    |> where([state], state.article_id == ^article_id and state.branch_id == ^branch_id)
+    |> lock("FOR UPDATE")
     |> Repo.one()
   end
 

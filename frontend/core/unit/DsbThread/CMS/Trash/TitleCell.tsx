@@ -13,7 +13,7 @@ const TitleCell: FC<TProps> = ({ item }) => {
   const s = useSalon()
   const article = item.article
 
-  if (!article) return <div className={s.missingTitle}>{item.articleRef}</div>
+  if (!article) return <div className={s.missingTitle}>{item.articleId}</div>
 
   return (
     <div className={s.titleCell}>

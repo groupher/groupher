@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
   use GroupherServer.TestMate
 
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
-  alias CMS.Model.ArticleStats
+  alias CMS.Model.{Article, ArticleStats}
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
 
   @page_size GroupherServerWeb.Config.page_size()
@@ -21,26 +21,15 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, blog_last_week} =
-      ORM.update(blog, %{title: "last week", inserted_at: @last_week, active_at: @last_week},
-        strict: false
-      )
+    blog_last_week = set_article_times(blog, @last_week)
 
     {_, blog, _, _} = mock_article(:blog)
 
-    {:ok, blog_last_month} =
-      ORM.update(
-        blog,
-        %{title: "last month", inserted_at: @last_month, active_at: @last_month},
-        strict: false
-      )
+    blog_last_month = set_article_times(blog, @last_month)
 
     {community, blog, _, user} = mock_article(:blog, community, user)
 
-    {:ok, blog_last_year} =
-      ORM.update(blog, %{title: "last year", inserted_at: @last_year, active_at: @last_year},
-        strict: false
-      )
+    blog_last_year = set_article_times(blog, @last_year)
 
     db_insert_multi(:blog, @today_count)
 
@@ -48,6 +37,15 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
     {:ok,
      ~m(guest_conn user user2 user3 blog_last_week blog_last_month blog_last_year community)a}
+  end
+
+  defp set_article_times(article, timestamp) do
+    article.id
+    |> then(&Repo.get!(Article, &1))
+    |> Ecto.Changeset.change(inserted_at: timestamp, active_at: timestamp)
+    |> Repo.update!()
+
+    article
   end
 
   describe "[query paged_blogs filter pagination]" do
@@ -354,8 +352,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
   describe "[paged blogs active_at]" do
     test "latest commented blog should appear on top",
-         ~m(guest_conn community blog_last_week user2)a do
-      variables = %{filter: %{page: 1, size: 20}}
+         ~m(guest_conn community blog_last_week user user2)a do
+      {:ok, _current_blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
+      variables = %{filter: %{page: 1, size: 20, community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
       entries = results["entries"]
       first_blog = entries |> List.first()
@@ -382,7 +381,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
     test "comment on very old blog have no effect",
          ~m(guest_conn community blog_last_year user2)a do
-      variables = %{filter: %{page: 1, size: 20}}
+      variables = %{filter: %{page: 1, size: 20, community: community.slug}}
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -401,9 +400,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
     end
 
     test "latest blog author commented blog have no effect",
-         ~m(guest_conn community blog_last_week)a do
-      variables = %{filter: %{page: 1, size: 20}}
-      {:ok, blog} = ORM.find(Blog, blog_last_week.id, preload: [author: :user])
+         ~m(guest_conn community blog_last_week user)a do
+      {:ok, _current_blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
+      variables = %{filter: %{page: 1, size: 20, community: community.slug}}
+
+      blog =
+        blog_last_week.id
+        |> then(&Repo.get!(Article, &1))
+        |> Repo.preload(author: :user)
 
       {:ok, _} =
         CMS.Comments.create_comment(

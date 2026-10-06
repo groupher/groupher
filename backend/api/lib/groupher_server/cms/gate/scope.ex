@@ -32,8 +32,9 @@ defmodule GroupherServer.CMS.Gate.Scope do
     Query.build(query, actor, action, root_schema(query), context)
   end
 
-  def scope(_queryable, _actor, _action, _context),
-    do: {:error, ErrorCat.scope_context_missing()}
+  def scope(_queryable, _actor, _action, _context) do
+    {:error, ErrorCat.scope_context_missing()}
+  end
 
   defp root_schema(%Ecto.Query{from: %{source: {_source, schema}}}), do: schema
   defp root_schema(_query), do: nil

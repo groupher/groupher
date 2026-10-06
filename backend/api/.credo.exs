@@ -41,7 +41,13 @@
       # If you create your own checks, you must specify the source files for
       # them here, so they can be loaded by Credo before running the analysis.
       #
-      requires: [],
+      requires: [
+        "credo_checks/no_direct_repo_in_boundaries.ex",
+        "credo_checks/no_direct_orm_in_transport.ex",
+        "credo_checks/no_direct_domain_front_desk.ex",
+        "credo_checks/no_external_effects_in_commands.ex",
+        "credo_checks/no_wrapped_inline_do.ex"
+      ],
       #
       # If you want to enforce a style guide and need a more traditional linting
       # experience, you can change `strict` to `true` below:
@@ -90,6 +96,11 @@
           # set this value to 0 (zero).
           #
           {Credo.Check.Design.TagTODO, [exit_status: 2]},
+          {GroupherServer.Credo.Check.NoDirectRepoInBoundaries, [exit_status: 2]},
+          {GroupherServer.Credo.Check.NoDirectOrmInTransport, [exit_status: 2]},
+          {GroupherServer.Credo.Check.NoDirectDomainFrontDesk, [exit_status: 2]},
+          {GroupherServer.Credo.Check.NoExternalEffectsInCommands, [exit_status: 2]},
+          {GroupherServer.Credo.Check.NoWrappedInlineDo, [exit_status: 2]},
 
           #
           ## Readability Checks

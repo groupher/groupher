@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Accounts.FrontDesk do
       assert cached_user.id == user.id
     end
 
-    test "live_user bypasses default user cache" do
+    test "fresh_user bypasses default user cache" do
       {:ok, user} = db_insert(:user)
       {:ok, _cached_user} = FrontDesk.user(user.login)
 
@@ -48,8 +48,12 @@ defmodule GroupherServer.Test.Accounts.FrontDesk do
       assert {:ok, cached_user} = FrontDesk.user(user.login)
       assert cached_user.nickname != "new nickname"
 
-      assert {:ok, live_user} = FrontDesk.live_user(user.login)
-      assert live_user.nickname == "new nickname"
+      assert {:ok, fresh_user} = FrontDesk.fresh_user(user.login)
+      assert fresh_user.nickname == "new nickname"
+      assert fresh_user.meta != nil
+
+      assert {:ok, fresh_by_id} = FrontDesk.fresh_user(user.id)
+      assert fresh_by_id.id == user.id
     end
 
     test "revalidate.user refreshes default user cache" do
@@ -75,6 +79,10 @@ defmodule GroupherServer.Test.Accounts.FrontDesk do
       assert {:ok, cached_user} = Cache.get(@user_cache_pool, user_scope(user.login))
       assert cached_user.id == user.id
     end
+  end
+
+  test "comment lookup fails closed for a non-path reference" do
+    assert {:error, _reason} = FrontDesk.comment(123)
   end
 
   defp user_scope(login), do: "user:#{login}"

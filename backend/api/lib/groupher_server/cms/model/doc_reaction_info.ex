@@ -9,7 +9,5 @@ defmodule GroupherServer.CMS.Model.DocReactionInfo do
 
   use GroupherServer.CMS.Model.Interaction.ReactionInfo,
     table: "doc_reaction_infos",
-    target: :doc,
-    target_schema: GroupherServer.CMS.Model.Doc,
     collection?: true
 end

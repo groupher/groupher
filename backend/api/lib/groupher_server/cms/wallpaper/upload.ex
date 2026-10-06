@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
   alias Accounts.Model.User
   alias CMS.Assets.Capability
   alias CMS.Model.{Community, CommunityWallpaper}
-  alias CMS.Wallpaper.{ErrorCat, Reader, RequestDigest, Settings}
+  alias CMS.Wallpaper.{ErrorCat, Query, RequestDigest, Settings}
 
   @request_digest_version RequestDigest.active_version()
   @batch_ttl_seconds 15 * 60
@@ -103,9 +103,11 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
   defp ensure_current_version(community_id, version) do
     state = Repo.get_by(CommunityWallpaper, community_id: community_id)
 
-    if Reader.state_version(state) == version,
-      do: :ok,
-      else: {:error, ErrorCat.wallpaper_publish_version_conflict()}
+    if Query.state_version(state) == version do
+      :ok
+    else
+      {:error, ErrorCat.wallpaper_publish_version_conflict()}
+    end
   end
 
   defp validate_publish_metadata(version, key) do
@@ -121,8 +123,9 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
     end
   end
 
-  defp ensure_renderable(%{"type" => "none"}),
-    do: {:error, ErrorCat.wallpaper_upload_images_invalid()}
+  defp ensure_renderable(%{"type" => "none"}) do
+    {:error, ErrorCat.wallpaper_upload_images_invalid()}
+  end
 
   defp ensure_renderable(_), do: :ok
 
@@ -168,14 +171,17 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
 
       nil ->
         if is_integer(get(image, :size_bytes)) and get(image, :size_bytes) > 0 and
-             valid_string?(get(image, :checksum)),
-           do: :ok,
-           else: {:error, image_error_details(target.profile, :metadata, :valid, image)}
+             valid_string?(get(image, :checksum)) do
+          :ok
+        else
+          {:error, image_error_details(target.profile, :metadata, :valid, image)}
+        end
     end
   end
 
-  defp validate_image(_image, target),
-    do: {:error, image_error_details(target.profile, :entry, :map, nil)}
+  defp validate_image(_image, target) do
+    {:error, image_error_details(target.profile, :entry, :map, nil)}
+  end
 
   defp image_error_details(profile, field, expected, actual) do
     %{
@@ -242,8 +248,9 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
   defp new_snapshot_ref, do: {:ok, "wsnap_" <> Utils.uid(24)}
   defp valid_string?(value), do: is_binary(value) and value != ""
 
-  defp get(map, key) when is_map(map) and is_atom(key),
-    do: Map.get(map, key) || Map.get(map, Atom.to_string(key))
+  defp get(map, key) when is_map(map) and is_atom(key) do
+    Map.get(map, key) || Map.get(map, Atom.to_string(key))
+  end
 
   defp get(_map, _key), do: nil
 end

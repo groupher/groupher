@@ -25,25 +25,20 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.backlog)
+      set_post_state(post, @article_cat.idea, @article_status.backlog, user)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.todo)
+      set_post_state(post, @article_cat.idea, @article_status.todo, user)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.bug)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.wip)
+      set_post_state(post, @article_cat.bug, @article_status.wip, user)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.done)
+      set_post_state(post, @article_cat.idea, @article_status.done, user)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.bug)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.reject_dup)
+      set_post_state(post, @article_cat.bug, @article_status.reject_dup, user)
 
       variables = %{community: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -72,16 +67,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
         })
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.backlog)
+      set_post_state(post, @article_cat.idea, @article_status.backlog, user)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.todo)
+      set_post_state(post, @article_cat.idea, @article_status.todo, user)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.bug)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.reject_dup)
+      set_post_state(post, @article_cat.bug, @article_status.reject_dup, user)
 
       variables = %{community: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -99,16 +91,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     @query S.Article.q(:paged_kanban_posts)
     test "can get paged kanban posts", ~m(guest_conn user community post_attrs)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.todo)
+      set_post_state(post, @article_cat.idea, @article_status.todo, user)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.bug)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.wip)
+      set_post_state(post, @article_cat.bug, @article_status.wip, user)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
-      {:ok, _} = CMS.Articles.set_status(post, @article_status.done)
+      set_post_state(post, @article_cat.idea, @article_status.done, user)
 
       variables = %{
         community: community.slug,
@@ -120,5 +109,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
       assert results["totalCount"] == 1
       assert results["entries"] |> Enum.at(0) |> Map.get("status") == "WIP"
     end
+  end
+
+  defp set_post_state(post, cat, status, user) do
+    assert {:ok, _} = CMS.Articles.set_cat(post.id, cat, user)
+    assert {:ok, _} = CMS.Articles.set_status(post.id, status, user)
   end
 end

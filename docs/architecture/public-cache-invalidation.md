@@ -210,6 +210,12 @@ comment upvoted/reported/reacted
 
 ## 7. 跨语言 Public Cache contract
 
+stable Article 改造不改变本节 wire protocol。内部 invalidation/outbox 可以 stable
+`article_id` 作为 durable target，但 response tag 与 Cloudflare purge tag 继续使用
+`community + thread + inner_id`，不得输出 UUID article tag。首次 Publish 必须先分配
+`inner_id` 再写 outbox；move 必须把 old/new wire scope 一起固化到 invalidation，worker
+不能在旧 route 已失效后仅靠 Article 当前状态反查旧 tag。
+
 Phoenix 生成 purge tag，Community 生成 response tag；两端必须消费同一个语言无关 contract。沿用现有
 `packages/contracts` 的共享目录，不建立第二套 contract 系统：
 

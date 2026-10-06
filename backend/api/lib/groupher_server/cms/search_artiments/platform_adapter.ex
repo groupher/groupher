@@ -11,11 +11,12 @@ defmodule GroupherServer.CMS.SearchArtiments.PlatformAdapter do
   """
 
   alias GroupherServer.CMS
+  alias Helper.T
 
   alias CMS.SearchArtiments.{Artiment, Query, Result}
 
-  @callback upsert([Artiment.t()], keyword()) :: :ok | {:error, term()}
-  @callback delete([String.t()]) :: :ok | {:error, term()}
-  @callback update_metrics([{String.t(), map()}]) :: :ok | {:error, term()}
-  @callback search(Query.t()) :: {:ok, Result.t()} | {:error, term()}
+  @callback upsert([Artiment.t()], keyword()) :: T.done()
+  @callback delete([String.t()]) :: T.done()
+  @callback update_metrics([{String.t(), map()}]) :: T.done()
+  @callback search(Query.t()) :: T.domain_res(Result.t())
 end

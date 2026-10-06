@@ -56,21 +56,25 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
     end
   end
 
-  def check_access(nil, action, _comment, _context) when action in @actions,
-    do: {:error, ErrorCat.permission_denied()}
+  def check_access(nil, action, _comment, _context) when action in @actions do
+    {:error, ErrorCat.permission_denied()}
+  end
 
   def check_access(_user, _action, _comment, _context), do: {:error, ErrorCat.unknown_action()}
 
   defp article_mutable(%{article_lifecycle: %{state: :published}}), do: :ok
 
-  defp article_mutable(%{article_lifecycle: %{state: :archived}}),
-    do: {:error, ErrorCat.ancestor_article_archived()}
+  defp article_mutable(%{article_lifecycle: %{state: :archived}}) do
+    {:error, ErrorCat.ancestor_article_archived()}
+  end
 
-  defp article_mutable(%{article_lifecycle: %{state: :deleted}}),
-    do: {:error, ErrorCat.ancestor_article_deleted()}
+  defp article_mutable(%{article_lifecycle: %{state: :deleted}}) do
+    {:error, ErrorCat.ancestor_article_deleted()}
+  end
 
-  defp article_mutable(%{article_lifecycle: %{state: :destroy}}),
-    do: {:error, ErrorCat.ancestor_article_destroyed()}
+  defp article_mutable(%{article_lifecycle: %{state: :destroy}}) do
+    {:error, ErrorCat.ancestor_article_destroyed()}
+  end
 
   defp article_mutable(_context), do: {:error, ErrorCat.lifecycle_not_loaded()}
 
@@ -82,11 +86,13 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
 
   defp comment_mutable(%{comment_lifecycle: %CommentLifecycle{state: :visible}}), do: :ok
 
-  defp comment_mutable(%{comment_lifecycle: %CommentLifecycle{state: :deleted}}),
-    do: {:error, ErrorCat.comment_deleted()}
+  defp comment_mutable(%{comment_lifecycle: %CommentLifecycle{state: :deleted}}) do
+    {:error, ErrorCat.comment_deleted()}
+  end
 
-  defp comment_mutable(%{comment_lifecycle: %CommentLifecycle{state: :destroy}}),
-    do: {:error, ErrorCat.comment_destroyed()}
+  defp comment_mutable(%{comment_lifecycle: %CommentLifecycle{state: :destroy}}) do
+    {:error, ErrorCat.comment_destroyed()}
+  end
 
   defp comment_mutable(_context), do: {:error, ErrorCat.lifecycle_not_loaded()}
 
@@ -106,14 +112,17 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
   end
 
   defp action_allowed(_user, action, %{article_cat: :qa})
-       when action in @solution_actions,
-       do: {:error, ErrorCat.permission_denied()}
+       when action in @solution_actions do
+    {:error, ErrorCat.permission_denied()}
+  end
 
   defp action_allowed(_user, action, _context)
-       when action in @solution_actions,
-       do: {:error, ErrorCat.solution_not_supported()}
+       when action in @solution_actions do
+    {:error, ErrorCat.solution_not_supported()}
+  end
 
   defp action_allowed(_user, action, _context)
-       when action in [:edit, :delete, :upvote, :emotion, :report, :pin],
-       do: :ok
+       when action in [:edit, :delete, :upvote, :emotion, :report, :pin] do
+    :ok
+  end
 end

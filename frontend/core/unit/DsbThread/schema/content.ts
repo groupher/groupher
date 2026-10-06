@@ -8,7 +8,7 @@ export const trashedPosts = graphql(`
       entries {
         id
         thread
-        articleRef
+        articleId
         deletedAt
         scheduledPermanentDeletionAt
         mentionedByCount

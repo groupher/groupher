@@ -90,8 +90,9 @@ defmodule GroupherServer.PublicCache.PurgeWorker do
 
   defp terminal_failure?({:error, reason}), do: terminal_failure?(reason)
 
-  defp terminal_failure?({:cloudflare_rejected, status}) when status in [400, 401, 403, 422],
-    do: true
+  defp terminal_failure?({:cloudflare_rejected, status}) when status in [400, 401, 403, 422] do
+    true
+  end
 
   defp terminal_failure?(reason)
        when reason in [
@@ -100,8 +101,9 @@ defmodule GroupherServer.PublicCache.PurgeWorker do
               :invalid_cache_scope,
               :invalid_cache_tag,
               :too_many_cache_tags
-            ],
-       do: true
+            ] do
+    true
+  end
 
   defp terminal_failure?({:invalid_contract, _}), do: true
   defp terminal_failure?(_reason), do: false

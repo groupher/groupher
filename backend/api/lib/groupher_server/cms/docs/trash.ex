@@ -14,13 +14,17 @@ defmodule GroupherServer.CMS.Docs.Trash do
   alias CMS.Articles.Trash
 
   alias CMS.Model.{
-    ArticleDocument,
+    Article,
     Community,
-    Doc,
+    DocBranchState,
+    DocBranchVersion,
+    DocDraft,
     DocBranch,
     DocLifecycle,
+    DocPublic,
     TrashAction,
-    TrashedDocArticle
+    TrashedDocArticle,
+    TrashedDocTreeNode
   }
 
   alias Helper.ORM
@@ -34,8 +38,9 @@ defmodule GroupherServer.CMS.Docs.Trash do
       #=> {:ok, %TrashAction{}}
 
   """
-  def create_action(community, actor, attrs),
-    do: Trash.create_action(community, actor, attrs)
+  def create_action(community, actor, attrs) do
+    Trash.create_action(community, actor, attrs)
+  end
 
   @doc """
   Attaches many docs to one trash action inside a branch.
@@ -57,8 +62,8 @@ defmodule GroupherServer.CMS.Docs.Trash do
         actor,
         opts \\ []
       ) do
-    Enum.reduce_while(Enum.uniq(doc_ids), {:ok, []}, fn article_hash_id, {:ok, items} ->
-      case attach_one(action, community, branch, article_hash_id, actor, opts) do
+    Enum.reduce_while(Enum.uniq(doc_ids), {:ok, []}, fn article_id, {:ok, items} ->
+      case attach_one(action, community, branch, article_id, actor, opts) do
         {:ok, item} -> {:cont, {:ok, [item | items]}}
         error -> {:halt, error}
       end
@@ -69,17 +74,19 @@ defmodule GroupherServer.CMS.Docs.Trash do
     end
   end
 
+  @doc "Attaches one stable Doc Article to a branch-local Trash action."
   def attach(
         %TrashAction{} = action,
         %Community{} = community,
         %DocBranch{} = branch,
-        article_hash_id,
+        article_id,
         actor,
         opts \\ []
       ) do
-    attach_one(action, community, branch, article_hash_id, actor, opts)
+    attach_one(action, community, branch, article_id, actor, opts)
   end
 
+  @doc "Restores every stable Doc Article membership owned by one Trash action."
   def restore_action_articles(
         %TrashAction{} = action,
         %Community{} = community,
@@ -87,12 +94,14 @@ defmodule GroupherServer.CMS.Docs.Trash do
         actor,
         opts \\ []
       ) do
+    opts = Keyword.put(opts, :group_action, true)
+
     TrashedDocArticle
     |> where(
       [item],
       item.trash_action_id == ^action.id and item.branch_id == ^branch.id
     )
-    |> order_by([item], asc: item.article_hash_id)
+    |> order_by([item], asc: item.article_id)
     |> lock("FOR UPDATE")
     |> Repo.all()
     |> Enum.reduce_while({:ok, []}, fn item, {:ok, docs} ->
@@ -107,6 +116,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
     end
   end
 
+  @doc "Permanently deletes every branch-local Doc membership owned by one Trash action."
   def permanently_delete_action_articles(
         %TrashAction{} = action,
         %Community{} = community,
@@ -114,12 +124,14 @@ defmodule GroupherServer.CMS.Docs.Trash do
         actor,
         opts \\ []
       ) do
+    opts = Keyword.put(opts, :group_action, true)
+
     TrashedDocArticle
     |> where(
       [item],
       item.trash_action_id == ^action.id and item.branch_id == ^branch.id
     )
-    |> order_by([item], asc: item.article_hash_id)
+    |> order_by([item], asc: item.article_id)
     |> lock("FOR UPDATE")
     |> Repo.all()
     |> Enum.reduce_while({:ok, :done}, fn item, {:ok, :done} ->
@@ -130,30 +142,30 @@ defmodule GroupherServer.CMS.Docs.Trash do
     end)
   end
 
-  defp attach_one(action, community, branch, article_hash_id, actor, opts) do
+  defp attach_one(action, community, branch, article_id, actor, opts) do
     case Repo.get_by(TrashedDocArticle,
            community_id: community.id,
            branch_id: branch.id,
-           article_hash_id: article_hash_id
+           article_id: article_id
          ) do
       %TrashedDocArticle{} = item ->
         {:ok, item}
 
       nil ->
-        with {:ok, doc} <- representative_doc(community, branch, article_hash_id),
-             {:ok, restore_state} <- restore_state(community, branch, article_hash_id),
+        with {:ok, doc} <- representative_doc(community, branch, article_id),
+             {:ok, restore_state} <- restore_state(branch, article_id),
              {:ok, item} <-
                ORM.create(TrashedDocArticle, %{
                  trash_action_id: action.id,
                  community_id: community.id,
                  branch_id: branch.id,
-                 article_hash_id: article_hash_id,
+                 article_id: article_id,
                  restore_state: restore_state,
                  deleted_by_id: actor_id(actor),
                  deleted_at: action.deleted_at
                }),
              {:ok, _lifecycle} <-
-               Lifecycle.transition(community.id, branch.id, article_hash_id, :deleted),
+               Lifecycle.transition(article_id, branch.id, :deleted),
              {:ok, _activity} <-
                maybe_activity(:trashed, doc, actor, action, action.deleted_at, opts) do
           {:ok, item}
@@ -161,109 +173,122 @@ defmodule GroupherServer.CMS.Docs.Trash do
     end
   end
 
-  defp restore(%TrashedDocArticle{} = item, community, branch, actor, opts) do
-    with {:ok, doc} <- representative_doc(community, branch, item.article_hash_id),
-         {:ok, _canonical} <- CMS.Gate.access_check(actor, :restore, doc),
-         {:ok, lifecycle} <-
-           Lifecycle.transition(
-             community.id,
-             branch.id,
-             item.article_hash_id,
-             item.restore_state
-           ),
-         {:ok, _} <- Repo.delete(item),
-         {:ok, action} <- load_action(item.trash_action_id),
-         {:ok, _activity} <-
-           maybe_activity(:restored, doc, actor, action, lifecycle.changed_at, opts) do
-      {:ok, doc}
+  @doc "Restores one branch-scoped Doc Trash membership."
+  @spec restore(TrashedDocArticle.t(), Community.t(), DocBranch.t(), term(), keyword()) ::
+          {:ok, Article.t()} | {:error, term()}
+  def restore(%TrashedDocArticle{} = item, community, branch, actor, opts) do
+    with :ok <- ensure_group_action(item, opts),
+         {:ok, article} <- representative_doc(community, branch, item.article_id) do
+      CMS.Gate.Access.with_branch_check(actor, :restore, article, branch.id, fn canonical ->
+        with {:ok, lifecycle} <-
+               Lifecycle.transition(item.article_id, branch.id, item.restore_state),
+             {:ok, _} <- Repo.delete(item),
+             {:ok, action} <- load_action(item.trash_action_id),
+             {:ok, _activity} <-
+               maybe_activity(:restored, canonical, actor, action, lifecycle.changed_at, opts) do
+          {:ok, canonical}
+        end
+      end)
     end
   end
 
-  defp permanently_delete(%TrashedDocArticle{} = item, community, branch, actor, opts) do
-    with {:ok, doc} <- representative_doc(community, branch, item.article_hash_id),
-         {:ok, docs} <- physical_docs(community, branch, item.article_hash_id),
-         {:ok, lifecycle} <-
-           Lifecycle.transition(community.id, branch.id, item.article_hash_id, :destroy),
-         :ok <- purge_physical_docs(docs),
-         {_, _} <-
-           Repo.delete_all(
-             from(lifecycle in DocLifecycle,
-               where:
-                 lifecycle.community_id == ^community.id and
-                   lifecycle.branch_id == ^branch.id and
-                   lifecycle.article_hash_id == ^item.article_hash_id
-             )
-           ),
-         {:ok, _} <- Repo.delete(item),
-         {:ok, action} <- load_action(item.trash_action_id),
-         {:ok, _activity} <-
-           maybe_activity(
-             :permanently_deleted,
-             doc,
-             actor,
-             action,
-             lifecycle.changed_at,
-             opts
-           ) do
-      {:ok, :done}
-    end
-  end
-
-  defp physical_docs(%Community{} = community, %DocBranch{} = branch, article_hash_id) do
-    docs =
-      Doc
-      |> where(
-        [doc],
-        doc.community_id == ^community.id and doc.branch_id == ^branch.id and
-          doc.article_hash_id == ^article_hash_id
+  @doc "Permanently deletes one branch-scoped Doc aggregate membership."
+  @spec permanently_delete(
+          TrashedDocArticle.t(),
+          Community.t(),
+          DocBranch.t(),
+          term(),
+          keyword()
+        ) :: {:ok, :done} | {:error, term()}
+  def permanently_delete(%TrashedDocArticle{} = item, community, branch, actor, opts) do
+    with :ok <- ensure_group_action(item, opts),
+         {:ok, article} <- representative_doc(community, branch, item.article_id) do
+      CMS.Gate.Access.with_branch_check(
+        actor,
+        :permanently_delete,
+        article,
+        branch.id,
+        fn canonical ->
+          with {:ok, lifecycle} <- Lifecycle.transition(item.article_id, branch.id, :destroy),
+               :ok <- purge_branch(canonical, branch),
+               {:ok, _} <- Repo.delete(item),
+               {:ok, action} <- load_action(item.trash_action_id),
+               {:ok, _activity} <-
+                 maybe_activity(
+                   :permanently_deleted,
+                   canonical,
+                   actor,
+                   action,
+                   lifecycle.changed_at,
+                   opts
+                 ) do
+            {:ok, :done}
+          end
+        end
       )
-      |> order_by([doc], asc: doc.id)
-      |> Repo.all()
-
-    if docs == [],
-      do: {:error, CMS.Articles.ErrorCat.not_exist("physical Doc")},
-      else: {:ok, docs}
-  end
-
-  defp purge_physical_docs(docs) do
-    Enum.reduce_while(docs, :ok, fn doc, :ok ->
-      with {:ok, _} <- CMS.ArtimentMentions.purge_article_comments(doc),
-           {:ok, _} <- CMS.ArtimentMentions.purge(doc),
-           {:ok, _} <- CMS.Assets.cleanup_refs(:doc, doc.id),
-           {:ok, _} <- CMS.Covers.delete_cover_edit_info(doc.cover_edit_info_id),
-           {_, _} <-
-             Repo.delete_all(
-               from(document in ArticleDocument,
-                 where: document.thread == :doc and document.article_id == ^doc.id
-               )
-             ),
-           {:ok, _} <- Repo.delete(doc),
-           :ok <- CMS.ViewTracker.delete_article_state(:doc, doc.id) do
-        {:cont, :ok}
-      else
-        error -> {:halt, error}
-      end
-    end)
-  end
-
-  defp representative_doc(community, branch, article_hash_id) do
-    Doc
-    |> where(
-      [doc],
-      doc.community_id == ^community.id and doc.branch_id == ^branch.id and
-        doc.article_hash_id == ^article_hash_id
-    )
-    |> order_by([doc], desc: doc.stage)
-    |> limit(1)
-    |> Repo.one()
-    |> case do
-      %Doc{} = doc -> {:ok, doc}
-      nil -> {:error, CMS.Articles.ErrorCat.not_exist("logical Doc")}
     end
   end
 
-  defp restore_state(community, branch, article_hash_id) do
-    case Lifecycle.state(community.id, branch.id, article_hash_id) do
+  defp purge_branch(%Article{id: article_id} = article, %DocBranch{id: branch_id}) do
+    Repo.delete_all(
+      from(row in DocDraft, where: row.article_id == ^article_id and row.branch_id == ^branch_id)
+    )
+
+    Repo.delete_all(
+      from(row in DocPublic, where: row.article_id == ^article_id and row.branch_id == ^branch_id)
+    )
+
+    Repo.delete_all(
+      from(row in DocBranchVersion,
+        where: row.article_id == ^article_id and row.branch_id == ^branch_id
+      )
+    )
+
+    Repo.delete_all(
+      from(row in DocBranchState,
+        where: row.article_id == ^article_id and row.branch_id == ^branch_id
+      )
+    )
+
+    Repo.delete_all(
+      from(row in DocLifecycle,
+        where: row.article_id == ^article_id and row.branch_id == ^branch_id
+      )
+    )
+
+    if Repo.exists?(from(row in DocLifecycle, where: row.article_id == ^article_id)) do
+      :ok
+    else
+      case Repo.delete(article) do
+        {:ok, _article} -> :ok
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  defp ensure_group_action(%TrashedDocArticle{trash_action_id: action_id}, opts) do
+    grouped? =
+      Repo.exists?(from(item in TrashedDocTreeNode, where: item.trash_action_id == ^action_id))
+
+    if grouped? and not Keyword.get(opts, :group_action, false) do
+      {:error, ErrorCat.custom("Trash action must be restored as one group")}
+    else
+      :ok
+    end
+  end
+
+  defp representative_doc(%Community{id: community_id}, branch, article_id) do
+    with %Article{community_id: ^community_id, thread: :doc} = article <-
+           Repo.get(Article, article_id),
+         {:ok, _state} <- Lifecycle.state(article_id, branch.id) do
+      {:ok, Repo.preload(article, author: :user)}
+    else
+      _ -> {:error, CMS.Articles.ErrorCat.not_exist("stable Doc")}
+    end
+  end
+
+  defp restore_state(branch, article_id) do
+    case Lifecycle.state(article_id, branch.id) do
       {:ok, :archived} ->
         {:error, Articles.ErrorCat.archived("Doc is archived, can not be deleted")}
 

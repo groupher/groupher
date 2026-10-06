@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Press.Projection do
 
   Business position:
 
-      Press.Reader
+      Press.Query
         -> Press.Projection
         -> markdown / feed / manifest response
   """
@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Press.Projection do
 
     %{
       community_ref: community.slug,
-      article_ref: article.article_hash_id,
+      article_id: article.article_id,
       article_revision: article_revision(article),
       thread: thread,
       canonical_path: path,
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Press.Projection do
   def feed_item(community, thread, article) do
     article(community, thread, article)
     |> Map.take([
-      :article_ref,
+      :article_id,
       :article_revision,
       :thread,
       :title,
@@ -55,6 +55,8 @@ defmodule GroupherServer.CMS.Press.Projection do
       :author,
       :tags
     ])
+    |> Map.put(:item_id, article.article_id)
+    |> Map.delete(:article_id)
   end
 
   @doc "Projects the latest Docs release as one feed item."
@@ -70,7 +72,7 @@ defmodule GroupherServer.CMS.Press.Projection do
       end)
 
     %{
-      article_ref: "#{community.slug}:docs:#{release.version_slug}",
+      item_id: "#{community.slug}:docs:#{release.version_slug}",
       article_revision: "release-#{release.release_number}",
       thread: :doc,
       title: "#{community.title} Docs update",
@@ -127,7 +129,7 @@ defmodule GroupherServer.CMS.Press.Projection do
   def revision(items, config_revision) do
     value =
       items
-      |> Enum.map_join("|", &"#{&1.article_ref}:#{&1.article_revision}")
+      |> Enum.map_join("|", &"#{&1.item_id}:#{&1.article_revision}")
       |> then(&"#{config_revision}|#{&1}")
 
     :crypto.hash(:sha256, value) |> Base.encode16(case: :lower)
@@ -135,12 +137,14 @@ defmodule GroupherServer.CMS.Press.Projection do
 
   defp author(nil), do: nil
   defp author(%{user: user}) when not is_nil(user), do: user(user)
+  defp author(%{login: _login} = user), do: user(user)
   defp author(_), do: nil
 
   defp user(nil), do: nil
 
-  defp user(user),
-    do: %{login: user.login, name: user.nickname || user.login, avatar: user.avatar}
+  defp user(user) do
+    %{login: user.login, name: user.nickname || user.login, avatar: user.avatar}
+  end
 
   defp tag(tag), do: %{slug: tag.slug, title: tag.title}
 
@@ -149,8 +153,9 @@ defmodule GroupherServer.CMS.Press.Projection do
     "/#{community}/doc/#{article.inner_id}#{slug}"
   end
 
-  defp canonical_path(community, thread, article),
-    do: "/#{community}/#{thread}/#{article.inner_id}"
+  defp canonical_path(community, thread, article) do
+    "/#{community}/#{thread}/#{article.inner_id}"
+  end
 
   defp article_revision(article) do
     body_revision = article.body_hash || article.document.body_hash || "no-body-hash"

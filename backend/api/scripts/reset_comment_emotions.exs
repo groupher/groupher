@@ -47,14 +47,14 @@ with {:ok, target_comment} <- CMS.Comments.fetch_comment(comment_id) do
       {:ok, updated_comment} = ORM.update_embed(comment, :emotions, default_emotions)
 
       if updated_comment.reply_to_id do
-        {:ok, _} = CMS.FrontDesk.sync_embed_replies(updated_comment)
+        {:ok, _} = CMS.Comments.Replies.sync_embed_replies(updated_comment)
       end
 
       acc + 1
     end)
 
-  {:ok, article} = CMS.FrontDesk.article_of(target_comment)
-  {:ok, thread} = CMS.FrontDesk.thread_of(target_comment)
+  {:ok, article} = GroupherServer.FrontDesk.article_of(target_comment)
+  {:ok, thread} = GroupherServer.FrontDesk.thread_of(target_comment)
 
   allowed_emotions =
     Enum.filter(supported_comment_emotions, fn emotion ->

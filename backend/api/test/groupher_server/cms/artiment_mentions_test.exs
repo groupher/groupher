@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
 
   alias GroupherServer.CMS
   alias CMS.ArtimentMentions
-  alias CMS.Model.ArtimentMention
+  alias CMS.Model.{Article, ArtimentMention}
 
   @site_host CMS.ArtimentMentions.Config.site_host()
 
@@ -54,7 +54,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert internal.mentioned_community_id == community.id
       assert internal.mentioned_scope == :internal
       assert internal.mention_case == :inline_mention
-      assert internal.mentioned_id == blog.id
+      assert internal.mentioned_article_id == blog.article_id
       assert length(internal.occurrences) == 2
       assert Enum.all?(internal.occurrences, &(&1["normalized_from"] == "link"))
 
@@ -166,7 +166,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
     end
 
     test "supports cross article mentions among post, blog, and changelog",
-         ~m(community post blog changelog user)a do
+         ~m(post blog changelog user)a do
       blog_body =
         plate_body([
           block("block-blog", [text(~s(<a href="#{@site_host}/post/#{post.id}">post</a>))])
@@ -179,23 +179,21 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
           ])
         ])
 
-      {:ok, blog_draft} =
-        CMS.Articles.update(blog, %{
-          body_bag: mock_body_bag(blog_body),
-          expected_version: blog.version
-        })
+      {:ok, blog} =
+        CMS.Articles.update(
+          blog,
+          %{body_bag: mock_body_bag(blog_body), expected_version: blog.version},
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, changelog_draft} =
-        CMS.Articles.update(changelog, %{
-          body_bag: mock_body_bag(changelog_body),
-          expected_version: changelog.version
-        })
-
-      {:ok, %{article: blog}} =
-        CMS.Articles.publish_draft(community, :blog, blog_draft.article_hash_id, user)
-
-      {:ok, %{article: changelog}} =
-        CMS.Articles.publish_draft(community, :changelog, changelog_draft.article_hash_id, user)
+      {:ok, changelog} =
+        CMS.Articles.update(
+          changelog,
+          %{body_bag: mock_body_bag(changelog_body), expected_version: changelog.version},
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, {1, nil}} = ArtimentMentions.sync(blog)
       {:ok, {1, nil}} = ArtimentMentions.sync(changelog)
@@ -245,14 +243,13 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         )
         |> Jason.encode!()
 
-      {:ok, draft} =
-        CMS.Articles.update(post, %{
-          body_bag: mock_body_bag(self_body),
-          expected_version: post.version
-        })
-
-      {:ok, %{article: post}} =
-        CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
+      {:ok, post} =
+        CMS.Articles.update(
+          post,
+          %{body_bag: mock_body_bag(self_body), expected_version: post.version},
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, :pass} = ArtimentMentions.sync(post)
 
@@ -372,17 +369,19 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
 
       {:ok, {1, nil}} = ArtimentMentions.sync(post)
 
-      {:ok, draft} =
-        CMS.Articles.update(post, %{
-          expected_version: post.version,
-          body_bag:
-            mock_body_bag(
-              plate_body([block("block-b", [text("clean content without mentions")])])
-            )
-        })
-
-      {:ok, %{article: post}} =
-        CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
+      {:ok, post} =
+        CMS.Articles.update(
+          post,
+          %{
+            expected_version: post.version,
+            body_bag:
+              mock_body_bag(
+                plate_body([block("block-b", [text("clean content without mentions")])])
+              )
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, :pass} = ArtimentMentions.sync(post)
 
@@ -411,7 +410,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
 
       assert result.total_count == 1
       assert mention.mentioner_type == :post
-      assert mention.mentioner_id == post.id
+      assert mention.mentioner_article_id == post.article_id
       assert mention.mentioner_community_id == community.id
       assert mention.mentioned_community_id == community.id
     end
@@ -435,7 +434,9 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert result.total_count == 1
 
       {:ok, trash_item} = CMS.Articles.trash(post, user)
-      {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(trash_item, user)
+
+      {:ok, %{done: true}} =
+        CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
 
       {:ok, result} = ArtimentMentions.mentioned_by(:blog, blog.id, %{page: 1, size: 10})
       assert result.total_count == 0
@@ -586,16 +587,35 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
   end
 
   defp insert_incoming_mentions(community, post, count, timestamp) do
+    target = Repo.get!(Article, post.article_id)
+    mentioner_ids = Enum.map(1..count, fn _index -> Ecto.UUID.generate() end)
+
+    Repo.insert_all(
+      Article,
+      Enum.map(mentioner_ids, fn article_id ->
+        %{
+          id: article_id,
+          community_id: community.id,
+          author_id: target.author_id,
+          thread: :blog,
+          moderation_state: :legal,
+          inserted_at: timestamp,
+          updated_at: timestamp
+        }
+      end)
+    )
+
     rows =
-      Enum.map(1..count, fn index ->
+      Enum.with_index(mentioner_ids, 1)
+      |> Enum.map(fn {mentioner_id, index} ->
         %{
           mentioner_type: :blog,
-          mentioner_id: 10_000 + index,
+          mentioner_article_id: mentioner_id,
           mentioner_community_id: community.id,
           mentioner_url: "#{@site_host}/blog/#{10_000 + index}",
           mentioned_scope: :internal,
           mentioned_type: :post,
-          mentioned_id: post.id,
+          mentioned_article_id: post.article_id,
           mentioned_community_id: community.id,
           mentioned_url: "#{@site_host}/post/#{post.id}",
           mention_case: :inline_mention,
@@ -617,7 +637,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
     |> where(
       [mention],
       mention.mentioned_scope == :internal and mention.mentioned_type == :post and
-        mention.mentioned_id == ^post.id
+        mention.mentioned_article_id == ^post.article_id
     )
     |> order_by([mention], asc: mention.id)
     |> Repo.all()

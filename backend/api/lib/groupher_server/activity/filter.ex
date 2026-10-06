@@ -159,9 +159,11 @@ defmodule GroupherServer.Activity.Filter do
   def resolve(_, _), do: {:error, ErrorCat.invalid_pagination()}
 
   defp validate_selection_keys(selection) do
-    if Map.keys(selection) -- [:preset_key, :filter] == [],
-      do: :ok,
-      else: {:error, ErrorCat.invalid_pagination()}
+    if Map.keys(selection) -- [:preset_key, :filter] == [] do
+      :ok
+    else
+      {:error, ErrorCat.invalid_pagination()}
+    end
   end
 
   defp fetch_preset(nil), do: {:ok, nil}
@@ -320,9 +322,11 @@ defmodule GroupherServer.Activity.Filter do
         matching = Enum.filter(active_actions, &(&1.action == action))
 
         Enum.flat_map(required_outcomes, fn outcome ->
-          if Enum.any?(matching, &(outcome in &1.outcomes)),
-            do: [],
-            else: [%{action: action, outcome: outcome, reason: :producer_not_active}]
+          if Enum.any?(matching, &(outcome in &1.outcomes)) do
+            []
+          else
+            [%{action: action, outcome: outcome, reason: :producer_not_active}]
+          end
         end)
       end)
 
@@ -331,6 +335,7 @@ defmodule GroupherServer.Activity.Filter do
 
   defp preset_context(nil, _preset), do: nil
 
-  defp preset_context(key, preset),
-    do: %{key: key, question_key: preset.question_key}
+  defp preset_context(key, preset) do
+    %{key: key, question_key: preset.question_key}
+  end
 end

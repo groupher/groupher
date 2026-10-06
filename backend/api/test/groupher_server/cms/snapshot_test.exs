@@ -148,11 +148,17 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
     end
 
     test "default articles keep stale snapshots on cache miss" do
-      {_community, post, _attrs, _user} = mock_article(:post)
+      {_community, post, _attrs, user} = mock_article(:post)
 
       snapshot = %{id: post.id, title: "old article title", thread: :post}
 
-      {:ok, _updated_post} = ORM.update(post, %{title: "new article title"})
+      {:ok, _updated_post} =
+        CMS.Articles.update(
+          post,
+          %{title: "new article title", expected_version: post.version},
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert [%{title: "old article title"}] = Snapshot.articles(:post, [snapshot])
     end
@@ -162,7 +168,7 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
 
       snapshots = [
         %{id: post.id, title: "old title"},
-        %{id: 123_456, title: "old missing title"}
+        %{id: Ecto.UUID.generate(), title: "old missing title"}
       ]
 
       assert [fresh, missing] = Snapshot.articles(:post, snapshots, mode: :blocking)
@@ -173,11 +179,17 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
     end
 
     test "blocking articles expose title changes immediately" do
-      {_community, post, _attrs, _user} = mock_article(:post)
+      {_community, post, _attrs, user} = mock_article(:post)
 
       snapshot = %{id: post.id, title: "old article title", thread: :post}
 
-      {:ok, _updated_post} = ORM.update(post, %{title: "new article title"})
+      {:ok, _updated_post} =
+        CMS.Articles.update(
+          post,
+          %{title: "new article title", expected_version: post.version},
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert [%{title: "new article title"}] =
                Snapshot.articles(:post, [snapshot], mode: :blocking)
@@ -219,12 +231,17 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment("fresh"), user)
 
-      snapshot = %{id: comment.id, body_digest: "old digest", article_id: post.id, thread: :post}
+      snapshot = %{
+        id: comment.id,
+        body_digest: "old digest",
+        article_id: post.article_id,
+        thread: :post
+      }
 
       assert [%{body_digest: "old digest"}] = Snapshot.comments(:post, [snapshot])
       assert [fresh] = Snapshot.comments(:post, [snapshot], mode: :blocking)
       assert fresh.body_digest == comment.body
-      assert fresh.article_id == post.id
+      assert fresh.article_id == post.article_id
     end
 
     test "comments use character length when building digest" do

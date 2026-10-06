@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Gate do
   Examples:
 
       iex> context = CMS.Gate.Context.Scope.Article.public(:post)
-      iex> {:ok, query} = CMS.Gate.scope(GroupherServer.CMS.Model.Post, nil, :read, context)
+      iex> {:ok, query} = CMS.Gate.scope(GroupherServer.CMS.Model.Article, nil, :read, context)
       iex> %Ecto.Query{} = query
 
       iex> {:ok, _community} = CMS.Gate.access_check(actor, :update, community)
@@ -31,8 +31,9 @@ defmodule GroupherServer.CMS.Gate do
   @doc "Builds a read query with a resource-specific Scope Context."
   @spec scope(Ecto.Queryable.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.t()) ::
           Ecto.Query.t() | {:error, ErrorCat.error()}
-  def scope(queryable, actor, action, context),
-    do: Scope.scope(queryable, actor, action, context)
+  def scope(queryable, actor, action, context) do
+    Scope.scope(queryable, actor, action, context)
+  end
 
   @doc "Loads, locks, and checks a resource inside the current mutation transaction."
   defdelegate access_check(user, action, resource), to: Access

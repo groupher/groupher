@@ -107,15 +107,19 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
 
   defp normalize_error(CommunityErrorCat.error_pattern() = error), do: error
 
-  defp normalize_error(%Ecto.Changeset{} = changeset),
-    do: WebErrorCat.changeset(changeset)
+  defp normalize_error(%Ecto.Changeset{} = changeset) do
+    WebErrorCat.changeset(changeset)
+  end
 
-  defp normalize_error({reason, message}) when is_atom(reason) and is_binary(message),
-    do: CommunityErrorCat.not_exist(message)
+  defp normalize_error({reason, message}) when is_atom(reason) and is_binary(message) do
+    CommunityErrorCat.not_exist(message)
+  end
 
-  defp normalize_error(reason) when is_atom(reason),
-    do: CommunityErrorCat.custom("community subscription failed: #{reason}")
+  defp normalize_error(reason) when is_atom(reason) do
+    CommunityErrorCat.custom("community subscription failed: #{reason}")
+  end
 
-  defp normalize_error(error),
-    do: CommunityErrorCat.custom("community subscription failed: #{inspect(error)}")
+  defp normalize_error(error) do
+    CommunityErrorCat.custom("community subscription failed: #{inspect(error)}")
+  end
 end

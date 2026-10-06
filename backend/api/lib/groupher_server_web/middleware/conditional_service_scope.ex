@@ -17,11 +17,13 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScope do
   alias Auth.Contract, as: AuthContract
 
   @impl Absinthe.Middleware
-  def call(%{context: %{delegation_auth_failure: code}} = resolution, _opts),
-    do: reject(resolution, "delegated user identity could not be verified", code)
+  def call(%{context: %{delegation_auth_failure: code}} = resolution, _opts) do
+    reject(resolution, "delegated user identity could not be verified", code)
+  end
 
-  def call(%{context: %{service_auth_failure: code}} = resolution, _opts),
-    do: reject(resolution, "service identity could not be verified", code)
+  def call(%{context: %{service_auth_failure: code}} = resolution, _opts) do
+    reject(resolution, "service identity could not be verified", code)
+  end
 
   def call(%{context: %{request_actor_failure: code}} = resolution, _opts) do
     reject(
@@ -59,6 +61,7 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScope do
   defp normalize_failure_code(code) when is_binary(code) or is_integer(code), do: code
   defp normalize_failure_code(_code), do: AuthContract.service_token_invalid()
 
-  defp reject(resolution, message, code),
-    do: handle_absinthe_error(resolution, message, code)
+  defp reject(resolution, message, code) do
+    handle_absinthe_error(resolution, message, code)
+  end
 end

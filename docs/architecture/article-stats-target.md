@@ -1,7 +1,10 @@
 # ArticleStats 目标架构
 
 > 状态：ArticleStats 持久化公共投影、三类 owner revision、排序索引、typed emotion 行表及 GraphQL/SSR/Query
-> 边界已在本地落地；canonical 全局 Article identity 仍是独立的长期方案，不属于 emotion direct cutover。
+> 边界已在本地落地；本文原先的 canonical Article 长期候选已被
+> [Article Revision / Draft 目标架构](../feature/article/revision-draft-target.md) 吸收。
+> 当前 stats runtime 仍使用 physical identity，后续随该 direct cutover 一次性切换，
+> 不再维护第二套 canonical Article 方案。
 >
 > 本文是本次 ArticleStats 改造的最终目标，不是后续可选优化。实现不保留旧字段、旧 Query key、双读或兼容层。
 > 本文从长期维护、读取性能和扩展能力出发，定义本次按目标直接切换的 Article 公共计数架构。
@@ -53,12 +56,13 @@ scoped Article query
 - owner revision 没有全部进入 ArticleStats，客户端无法证明每个公共 count 已经追上 mutation receipt；
 - thread 对应不同物理 Article 表，ViewTracker 等多态投影无法建立统一 Article 外键。
 
-typed emotion 投影已经基于现有 `(thread, article_id)` identity 落地。canonical Article identity 若未来实施，是另一项独立
-迁移；它不再是 emotion cutover 的前置条件。
+typed emotion 投影已经基于现有 `(thread, article_id)` identity 落地。canonical Article identity
+现已并入 Revision / Draft 目标方案；它仍不是已完成 emotion direct cutover 的前置条件，
+但后续 stable identity cutover 会统一替换本文的 physical identity。
 
-## 3. Canonical Article identity（长期候选方案）
+## 3. Canonical Article identity（已并入 Revision / Draft 目标方案）
 
-本节描述长期候选物理模型，不代表当前仓库存在 `cms.articles` 或全局 FK。当前仍使用 `(thread, article_id)` 作为
+本节描述已被 Revision / Draft 目标方案吸收的物理方向，不代表当前 runtime 已完成切换。当前仍使用 `(thread, article_id)` 作为
 ArticleStats、typed emotion rows 和各 owner state 的内部 identity；公共 GraphQL locator 仍是
 `community + thread + innerId`。
 
@@ -78,7 +82,8 @@ cms.articles
 UNIQUE (community_id, thread, inner_id)
 ```
 
-thread 专属内容继续放在各自模型中。Post/Blog/Changelog 可以一对一关联 canonical Article；Doc 必须先明确 branch 粒度：
+thread 专属内容继续放在各自模型中。Post/Blog/Changelog 一对一关联 canonical Article；
+Doc 的 stable identity 跨 branch 共享，但 stats/runtime facts 按 `article_id + branch_id` 隔离：
 
 ```text
 cms.articles
@@ -90,10 +95,10 @@ cms.articles
        └─ branch B physical row（若 canonical 表示跨 branch logical Doc）
 ```
 
-当前合同不采用这层 canonical：不同 Doc branch 的 `docs.id` 各自拥有 stats。若未来 canonical 表示跨 branch logical Doc，
-`cms.docs.article_id` 必须是一对多，views/interactions/comments 的 owner facts、删除和 revision 都要一起迁移为聚合语义；不能一边
-共享 canonical stats，一边继续让某个 branch 的物理 projection 覆盖整行。若产品仍要求 branch 独立计数，则 canonical identity 也
-必须 branch-scoped。该选择是实施 §3 前必须解决的产品合同，不在当前 direct cutover 中暗含答案。
+当前 runtime 仍由不同 Doc branch 的 physical `docs.id` 各自拥有 stats。stable identity
+cutover 后，Doc views/interactions/comments/stats 的 owner key 改为
+`article_id + branch_id`；删除 preview branch 不影响 main。不能只把 canonical id 合并后
+继续用一行 article-global stats 覆盖所有 branch。
 
 Comments、Interactions、ViewTracker 和 ArticleStats 都只引用 `articles.id`：
 
@@ -335,8 +340,8 @@ one page response
 Gate scope 必须组合进同一条 SQL；不能先把全部可见 Article id 物化到应用层。当前 FrontDesk 按 thread dispatch 到
 `cms.posts`、`cms.blogs`、`cms.changelogs` 或 `cms.docs`，再以 `(thread, physical article_id)` 连接 ArticleStats。查询应允许
 planner 从 ArticleStats 排序索引驱动，再通过对应 physical thread 表过滤 community、生命周期和可见性。读取不执行
-`COUNT(*)`，不查询 interaction facts，也不按 Article 循环加载 count。若未来实施 §3，才把四个 physical scope 改成
-canonical Article scope。
+`COUNT(*)`，不查询 interaction facts，也不按 Article 循环加载 count。Revision / Draft
+stable identity cutover 实施 §3 时，再把四个 physical scope 一次性改成 canonical Article scope。
 
 ### 6.2 详情页 SSR、CDN 与 hydration
 
@@ -587,9 +592,9 @@ ViewTracker.Config
 - public/private hydration 边界；
 - owner 与 ArticleStats 的权威方向。
 
-## 8. 长期候选方案相对当前架构的取舍
+## 8. Stable identity 目标方案相对当前架构的取舍
 
-| 维度                | 当前架构                                                                     | canonical 候选架构                                                             |
+| 维度                | 当前架构                                                                     | stable identity 目标架构                                                       |
 | ------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | Article identity    | `thread + physical article_id`，跨多个 Article 表                            | 一个全局 `articles.id`，其他领域使用 FK                                        |
 | 公共读取            | `cms.article_stats` 单行投影                                                 | canonical Article + ArticleStats 单一读取投影                                  |
@@ -633,7 +638,7 @@ ArticleStats 反向覆盖领域 owner
 
 ## 10. Direct-cutover 目标验收条件
 
-以下第一条和涉及全局 FK 的条目属于长期候选方案验收，不代表当前实现。typed emotion 与公共读取验收同时遵守
+以下第一条和涉及全局 FK 的条目属于 Revision / Draft stable identity 目标验收，不代表当前 runtime 已实现。typed emotion 与公共读取验收同时遵守
 `article-emotion-counts.md` 和 `article-stats-and-public-cache.md`。
 
 - Article、Comments、Interactions、ViewTracker、ArticleStats 都通过同一个 `articles.id` 定位；

@@ -3,13 +3,12 @@ defmodule GroupherServer.Test.CMS.DocTree.ChangeDetection do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS
-  alias CMS.DocTree.ChangeDetection
-  alias CMS.Model.Doc
+  alias GroupherServer.CMS.DocTree.ChangeDetection
+  alias GroupherServer.CMS.Model.DocDraft
 
   describe "[doc tree change detection]" do
-    test "treats missing public snapshot as changed" do
-      draft = %Doc{body_hash: "body-hash", title: "Draft", digest: "Draft", subtitle: "Intro"}
+    test "treats missing public Revision as changed" do
+      draft = %DocDraft{content_hash: "body-hash"}
 
       assert ChangeDetection.draft_content_changed?(draft, nil)
     end

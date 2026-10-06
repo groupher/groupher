@@ -71,7 +71,10 @@ export const docDraft = graphql(`
     docDraft(community: $community, id: $id) {
       id
       docId
+      branchId
       version
+      contentHash
+      baseRevisionId
       title
       subtitle
       slug
@@ -94,27 +97,51 @@ export const docDraft = graphql(`
   }
 `)
 
-export const docDraftSnapshots = graphql(`
-  query docDraftSnapshots($community: String!, $id: ID!, $stage: DocSnapshotStage) {
-    docDraftSnapshots(community: $community, id: $id, stage: $stage) {
+export const docBranchVersions = graphql(`
+  query docBranchVersions($docId: ID!, $branchId: ID!) {
+    docBranchVersions(docId: $docId, branchId: $branchId) {
       id
-      thread
-      stage
-      action
-      articleHashId
+      revisionId
+      versionNumber
+      publishedAt
+      message
+      content {
+        title
+        slug
+        subtitle
+        digest
+        documentJson
+        bodyHash
+        schemaVersion
+      }
+    }
+  }
+`)
+
+export const restoreDocRevisionToDraft = graphql(`
+  mutation restoreDocRevisionToDraft(
+    $commandId: ID!
+    $docId: ID!
+    $branchId: ID!
+    $revisionId: ID!
+    $expectedVersion: Int
+  ) {
+    restoreDocRevisionToDraft(
+      commandId: $commandId
+      docId: $docId
+      branchId: $branchId
+      revisionId: $revisionId
+      expectedVersion: $expectedVersion
+    ) {
+      docId
+      branchId
+      version
+      baseRevisionId
       title
-      slug
       subtitle
-      digest
-      documentJson
-      versionHash
-      revisionNumber
-      schemaVersion
-      insertedAt
-      author {
-        login
-        nickname
-        avatar
+      slug
+      document {
+        json
       }
     }
   }
@@ -205,32 +232,6 @@ export const updateDocDraft = graphql(`
   }
 `)
 
-export const checkpointDocDraftSnapshot = graphql(`
-  mutation checkpointDocDraftSnapshot($community: String!, $id: ID!, $commandId: ID!) {
-    checkpointDocDraftSnapshot(community: $community, id: $id, commandId: $commandId) {
-      id
-      thread
-      stage
-      action
-      articleHashId
-      title
-      slug
-      subtitle
-      documentJson
-      digest
-      versionHash
-      revisionNumber
-      schemaVersion
-      insertedAt
-      author {
-        login
-        nickname
-        avatar
-      }
-    }
-  }
-`)
-
 export const publishDocChanges = graphql(`
   mutation publishDocChanges(
     $community: String!
@@ -285,41 +286,6 @@ export const moveDocTreeSubtreeToDraft = graphql(`
   mutation moveDocTreeSubtreeToDraft($community: String!, $nodeId: ID!, $commandId: ID!) {
     moveDocTreeSubtreeToDraft(community: $community, nodeId: $nodeId, commandId: $commandId) {
       done
-    }
-  }
-`)
-
-export const restoreDocDraftSnapshot = graphql(`
-  mutation restoreDocDraftSnapshot(
-    $community: String!
-    $id: ID!
-    $snapshotId: ID!
-    $commandId: ID!
-  ) {
-    restoreDocDraftSnapshot(
-      community: $community
-      id: $id
-      snapshotId: $snapshotId
-      commandId: $commandId
-    ) {
-      id
-      title
-      subtitle
-      slug
-      digest
-      insertedAt
-      updatedAt
-      author {
-        login
-        nickname
-        avatar
-      }
-      document {
-        json
-        markdown
-        markdownToc
-        html
-      }
     }
   }
 `)
@@ -476,15 +442,14 @@ export default {
   docPublishChecklist,
   docTreeTrashItems,
   docDraft,
-  docDraftSnapshots,
+  docBranchVersions,
   createDocTreeNode,
   updateDocTreeNode,
   updateDocDraft,
-  checkpointDocDraftSnapshot,
   publishDocChanges,
   moveDocToDraft,
   moveDocTreeSubtreeToDraft,
-  restoreDocDraftSnapshot,
+  restoreDocRevisionToDraft,
   deleteDocTreeNode,
   restoreDocTreeTrashItem,
   duplicateDocTreeNode,

@@ -41,6 +41,7 @@ export type TDocDraftAuthor = {
 
 export type TDocDraftInfo = {
   id: string
+  branchId: string
   title: string
   subtitle: string
   slug: string

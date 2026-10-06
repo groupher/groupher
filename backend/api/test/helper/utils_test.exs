@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
   alias GroupherServer.CMS
 
   alias CMS.Communities.ErrorCat
-  alias CMS.Model.Post
+  alias CMS.Model.Comment
   alias Helper.Utils
 
   describe "map atom value up upcase str" do
@@ -208,8 +208,8 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
 
   describe "[others]" do
     test "module_to_atom should work" do
-      assert :post == Post |> Utils.module_to_atom()
-      assert :post == %Post{} |> Utils.module_to_atom()
+      assert :comment == Comment |> Utils.module_to_atom()
+      assert :comment == %Comment{} |> Utils.module_to_atom()
 
       # invalid case
       assert nil == "whatever" |> Utils.module_to_atom()

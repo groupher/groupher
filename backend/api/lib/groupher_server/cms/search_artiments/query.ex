@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
   """
 
   alias GroupherServer.CMS
+  alias Helper.T
   alias CMS.ErrorCat
 
   alias CMS.SearchArtiments.{Artiment, Config}
@@ -56,7 +57,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
       #=> {:error, ErrorCat.custom("search text is required")}
 
   """
-  @spec new(map()) :: {:ok, t()} | {:error, term()}
+  @spec new(map()) :: T.domain_res(t())
   def new(attrs) when is_map(attrs) do
     text = attrs |> Map.get(:text, "") |> String.trim()
     page = positive_integer(Map.get(attrs, :page), 1)
@@ -64,8 +65,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     sort = Map.get(attrs, :sort, :relevance)
     scope = normalize_scope(Map.get(attrs, :scope, %{}))
 
-    with :ok <- validate_text(text),
-         :ok <- validate_sort(sort),
+    with {:ok, :pass} <- validate_text(text),
+         {:ok, :pass} <- validate_sort(sort),
          {:ok, filters} <- normalize_filters(Map.get(attrs, :filters, %{})) do
       {:ok,
        %__MODULE__{
@@ -88,7 +89,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
 
   defp normalize_scope(scope) when is_map(scope) do
     scope
-    |> Map.take([:community_ref, :article_ref])
+    |> Map.take([:community_ref, :article_id])
     |> Enum.reject(fn {_key, value} -> not is_binary(value) or value == "" end)
     |> Map.new()
   end
@@ -104,8 +105,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     end
   end
 
-  defp normalize_filters(_),
-    do: {:error, ErrorCat.custom("invalid search filters")}
+  defp normalize_filters(_) do
+    {:error, ErrorCat.custom("invalid search filters")}
+  end
 
   defp normalize_enum_list(nil, _allowed), do: {:ok, []}
 
@@ -117,8 +119,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     end
   end
 
-  defp normalize_enum_list(_, _),
-    do: {:error, ErrorCat.custom("invalid search filter enum")}
+  defp normalize_enum_list(_, _) do
+    {:error, ErrorCat.custom("invalid search filter enum")}
+  end
 
   defp normalize_string_list(nil), do: {:ok, []}
 
@@ -130,13 +133,14 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     end
   end
 
-  defp normalize_string_list(_),
-    do: {:error, ErrorCat.custom("invalid search filter string")}
+  defp normalize_string_list(_) do
+    {:error, ErrorCat.custom("invalid search filter string")}
+  end
 
   defp validate_text(""), do: {:error, ErrorCat.custom("search text is required")}
-  defp validate_text(_text), do: :ok
+  defp validate_text(_text), do: {:ok, :pass}
 
-  defp validate_sort(sort) when sort in @sorts, do: :ok
+  defp validate_sort(sort) when sort in @sorts, do: {:ok, :pass}
   defp validate_sort(_sort), do: {:error, ErrorCat.custom("invalid search sort")}
 
   defp positive_integer(value, _default) when is_integer(value) and value > 0, do: value

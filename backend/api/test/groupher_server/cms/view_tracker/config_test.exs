@@ -8,9 +8,11 @@ defmodule GroupherServer.Test.CMS.ViewTracker.ConfigTest do
     original = Application.get_env(:groupher_server, Config)
 
     on_exit(fn ->
-      if is_nil(original),
-        do: Application.delete_env(:groupher_server, Config),
-        else: Application.put_env(:groupher_server, Config, original)
+      if is_nil(original) do
+        Application.delete_env(:groupher_server, Config)
+      else
+        Application.put_env(:groupher_server, Config, original)
+      end
     end)
 
     :ok

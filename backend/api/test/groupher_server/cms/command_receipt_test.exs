@@ -1,16 +1,83 @@
+defmodule GroupherServer.Test.CMS.BadConfirmation do
+  @behaviour GroupherServer.CMS.Command.ConfirmationCodec
+
+  defstruct [:value]
+
+  @impl true
+  def operations, do: [:upvote_add]
+
+  @impl true
+  def encode(%__MODULE__{}, _operation) do
+    {:ok, %{"schema_version" => 1, "operation" => "wrong.operation", "value" => true}}
+  end
+
+  @impl true
+  def decode(_payload, _operation), do: {:error, :invalid}
+end
+
+defmodule GroupherServer.Test.CMS.OversizedConfirmation do
+  @behaviour GroupherServer.CMS.Command.ConfirmationCodec
+
+  defstruct [:value]
+
+  @impl true
+  def operations, do: [:upvote_add]
+
+  @impl true
+  def encode(%__MODULE__{value: value}, :upvote_add) do
+    {:ok, %{"schema_version" => 1, "operation" => "upvote.add", "value" => value}}
+  end
+
+  @impl true
+  def decode(%{"value" => value}, :upvote_add), do: {:ok, %__MODULE__{value: value}}
+  def decode(_payload, _operation), do: {:error, :invalid}
+end
+
+defmodule GroupherServer.Test.CMS.ReceiptConfirmation do
+  @behaviour GroupherServer.CMS.Command.ConfirmationCodec
+
+  defstruct [:value]
+
+  @impl true
+  def operations, do: [:article_update, :article_trash]
+
+  @impl true
+  def encode(%__MODULE__{value: value}, operation) do
+    {:ok,
+     %{
+       "schema_version" => 1,
+       "operation" => GroupherServer.CMS.Command.operation_tag(operation),
+       "value" => value
+     }}
+  end
+
+  @impl true
+  def decode(%{"value" => value}, _operation), do: {:ok, %__MODULE__{value: value}}
+  def decode(_payload, _operation), do: {:error, :invalid}
+end
+
 defmodule GroupherServer.Test.CMS.CommandReceiptTest do
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
 
   alias GroupherServer.CMS
-  alias CMS.{Command, CommandReceipt}
-  alias CMS.CommandReceipt.Store
-  alias CMS.DocTree.CommandReplay
+  alias CMS.Command
+  alias CMS.Command.IntentCodec
+  alias CMS.Command.Receipt, as: CommandReceipt
+  alias CMS.Command.Receipt.Store
+  alias CMS.Interactions.Reactions.UpvoteConfirmation, as: UpvoteConfirmation
+  alias GroupherServer.Test.CMS.BadConfirmation
+  alias GroupherServer.Test.CMS.OversizedConfirmation
+  alias GroupherServer.Test.CMS.ReceiptConfirmation
 
-  test "replays the same user command and rejects a different fingerprint" do
+  import ExUnit.CaptureLog
+
+  test "replays the same user command and rejects different intent params" do
     {_community, post, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()
+    {:ok, first_params} = IntentCodec.encode(:article_update, %{body: "first"})
+    {:ok, different_params} = IntentCodec.encode(:article_update, %{body: "different"})
 
     assert {:ok, {:ok, :new, receipt}} =
              Repo.transaction(fn ->
@@ -21,8 +88,13 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                    "article.update",
                    "post",
                    post.id,
-                   %{body: "first"}
+                   first_params
                  )
+
+               {:ok, receipt} =
+                 Store.finalize(receipt, %{
+                   confirmation: %{"schema_version" => 1, "operation" => "article.update"}
+                 })
 
                {:ok, :new, receipt}
              end)
@@ -35,13 +107,20 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                  "article.update",
                  "post",
                  post.id,
-                 %{body: "first"}
+                 first_params
                )
              end)
 
     assert recovered.id == receipt.id
+    assert receipt.intent_params["body"]["__redacted__"]
+    assert receipt.intent_params["body"]["bytes"] == 7
 
-    assert {:ok, {:error, %ErrorCat.Error{reason: :command_id_conflict}}} =
+    assert {:ok,
+            {:error,
+             %ErrorCat.Error{
+               reason: :command_id_conflict,
+               details: %{different_fields: ["body"]}
+             }}} =
              Repo.transaction(fn ->
                Store.claim(
                  Integer.to_string(user.id),
@@ -49,9 +128,268 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                  "article.update",
                  "post",
                  post.id,
-                 %{body: "different"}
+                 different_params
                )
              end)
+  end
+
+  test "Confirmation command executes once, stores JSON, and replays the decoded value" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+    parent = self()
+
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :upvote_add,
+      target: post,
+      params: %{operation: :add}
+    }
+
+    action = fn _context ->
+      send(parent, :action_called)
+
+      {:ok,
+       %UpvoteConfirmation{
+         data: %{
+           "operation" => "add",
+           "outcome" => "changed",
+           "target_id" => to_string(post.id),
+           "target_type" => "article"
+         }
+       }}
+    end
+
+    assert {:ok, first} =
+             Command.execute(command, action: action, confirmation: UpvoteConfirmation)
+
+    assert_receive :action_called
+
+    assert {:ok, second} =
+             Command.execute(command,
+               action: fn _ ->
+                 send(parent, :must_not_execute)
+                 {:error, :unexpected}
+               end,
+               confirmation: UpvoteConfirmation
+             )
+
+    assert first == second
+    refute_receive :must_not_execute
+
+    receipt =
+      Repo.get_by!(CMS.Model.CommandReceipt,
+        initiator_type: "user",
+        initiator_key: to_string(user.id),
+        command_id: command_id
+      )
+
+    assert receipt.confirmation["operation"] == "upvote.add"
+  end
+
+  test "rejects legacy action context tuples and does not finalize the receipt" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :upvote_add,
+      target: post,
+      params: %{operation: :add}
+    }
+
+    assert {:error, %ErrorCat.Error{reason: :command_invalid_result}} =
+             Command.execute(command,
+               action: fn _context ->
+                 {:ok,
+                  %UpvoteConfirmation{
+                    data: %{
+                      "operation" => "add",
+                      "outcome" => "changed",
+                      "target_id" => to_string(post.id),
+                      "target_type" => "article"
+                    }
+                  }, %{source: :action}}
+               end,
+               confirmation: UpvoteConfirmation
+             )
+
+    refute Repo.exists?(
+             from(receipt in CMS.Model.CommandReceipt,
+               where:
+                 receipt.initiator_type == "user" and
+                   receipt.initiator_key == ^to_string(user.id) and
+                   receipt.command_id == ^command_id
+             )
+           )
+
+    assert_raise ArgumentError, ~r/unsupported options/, fn ->
+      Command.execute(command,
+        action: fn _ -> {:error, :must_not_execute} end,
+        confirmation: UpvoteConfirmation,
+        present: fn _, _ -> {:ok, :legacy} end
+      )
+    end
+  end
+
+  test "recovers the decoded Confirmation without a presenter" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :upvote_add,
+      target: post,
+      params: %{operation: :add}
+    }
+
+    action = fn _context ->
+      {:ok,
+       %UpvoteConfirmation{
+         data: %{
+           "operation" => "add",
+           "outcome" => "changed",
+           "target_id" => to_string(post.id),
+           "target_type" => "article"
+         }
+       }}
+    end
+
+    assert {:ok, %UpvoteConfirmation{}} =
+             Command.execute(command,
+               action: action,
+               confirmation: UpvoteConfirmation
+             )
+
+    assert {:ok, %UpvoteConfirmation{}} =
+             Command.execute(command,
+               action: fn _ -> flunk("recovery must not execute the action") end,
+               confirmation: UpvoteConfirmation
+             )
+  end
+
+  test "rejects an oversized Confirmation before finalizing the receipt" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :upvote_add,
+      target: post,
+      params: %{operation: :add}
+    }
+
+    assert {:error, %ErrorCat.Error{reason: :command_invalid_result}} =
+             Command.execute(command,
+               action: fn _ ->
+                 {:ok, %OversizedConfirmation{value: String.duplicate("x", 1_048_600)}}
+               end,
+               confirmation: OversizedConfirmation
+             )
+
+    refute Repo.exists?(
+             from(receipt in CMS.Model.CommandReceipt,
+               where:
+                 receipt.initiator_type == "user" and
+                   receipt.initiator_key == ^to_string(user.id) and
+                   receipt.command_id == ^command_id
+             )
+           )
+  end
+
+  test "does not log Confirmation contents when recovery decoding fails" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+    secret = "draft-secret-that-must-not-reach-logs"
+    {:ok, intent_params} = IntentCodec.encode(:upvote_add, %{operation: :add})
+
+    assert {:ok, {:ok, :new, receipt}} =
+             Repo.transaction(fn ->
+               Store.claim(
+                 to_string(user.id),
+                 command_id,
+                 "upvote.add",
+                 "article",
+                 post.id,
+                 intent_params
+               )
+             end)
+
+    assert {:ok, _finalized} =
+             Repo.transaction(fn ->
+               Store.finalize(receipt, %{
+                 confirmation: %{"operation" => "upvote.add", "secret" => secret}
+               })
+             end)
+
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :upvote_add,
+      target: post,
+      params: %{operation: :add}
+    }
+
+    log =
+      capture_log(fn ->
+        assert {:error, %ErrorCat.Error{reason: :command_result_unavailable}} =
+                 Command.execute(command,
+                   action: fn _ -> {:error, :must_not_execute} end,
+                   confirmation: UpvoteConfirmation
+                 )
+      end)
+
+    assert log =~ "confirmation_bytes"
+    refute log =~ secret
+  end
+
+  test "unsupported Confirmation configuration fails before claim as an internal contract error" do
+    {_community, post, _attrs, user} = mock_article(:post)
+
+    command = %Command{
+      actor: user,
+      command_id: Ecto.UUID.generate(),
+      operation: :unsupported_operation,
+      target: post,
+      params: %{operation: :add}
+    }
+
+    assert {:error, %ErrorCat.Error{reason: :command_invalid_result}} =
+             Command.execute(command,
+               action: fn _ -> {:error, :must_not_execute} end,
+               confirmation: UpvoteConfirmation
+             )
+  end
+
+  test "first execution rejects an encoder that emits the wrong operation tag" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :upvote_add,
+      target: post,
+      params: %{operation: :add}
+    }
+
+    assert {:error, %ErrorCat.Error{reason: :command_invalid_result}} =
+             Command.execute(command,
+               action: fn _ -> {:ok, %BadConfirmation{value: true}} end,
+               confirmation: BadConfirmation
+             )
+
+    refute Repo.exists?(
+             from(receipt in CMS.Model.CommandReceipt,
+               where:
+                 receipt.initiator_type == "user" and
+                   receipt.initiator_key == ^to_string(user.id) and
+                   receipt.command_id == ^command_id
+             )
+           )
   end
 
   test "failed transaction rolls back the receipt claim" do
@@ -99,111 +437,84 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     assert Keyword.has_key?(changeset.errors, :command_id)
   end
 
-  test "runs and replays a user command with a composite string target" do
-    {_community, _post, _attrs, user} = mock_article(:post)
-    command_id = Ecto.UUID.generate()
+  test "intent params canonicalize keyword order and reject structs" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    first_id = Ecto.UUID.generate()
+    second_id = Ecto.UUID.generate()
 
-    assert {:ok, _result} =
-             CommandReceipt.run_internal(
-               user,
-               command_id,
-               "article.update_draft",
-               "article",
-               "community:post:article-key",
-               %{expected_version: 3, title: "first"},
-               fn -> {:ok, %{id: "article-key"}} end,
-               fn _receipt -> {:ok, %{id: "article-key"}} end
-             )
-
-    assert {:ok, _result} =
-             CommandReceipt.run_internal(
-               user,
-               command_id,
-               "article.update_draft",
-               "article",
-               "community:post:article-key",
-               %{expected_version: 3, title: "first"},
-               fn -> {:error, :must_not_execute_on_replay} end,
-               fn _receipt -> {:ok, %{id: "article-key"}} end
-             )
-  end
-
-  test "CMS.Command keeps declaration data out of the callback arguments" do
-    {_community, _post, _attrs, user} = mock_article(:post)
-    command_id = Ecto.UUID.generate()
-
-    command =
-      Command.create_user(user, command_id,
-        command: :article_update_draft,
-        resource: :article,
-        owner: "community",
-        input: %{title: "first"},
-        recovery: fn _receipt -> {:ok, %{id: "article-key"}} end
-      )
-
-    assert {:ok, %{id: "article-key"}} =
-             Command.run(command, fn %{actor: ^user, input: %{title: "first"}} ->
-               {:ok, %{id: "article-key"}}
+    assert {:ok, {:ok, :new, _}} =
+             Repo.transaction(fn ->
+               Store.claim(
+                 to_string(user.id),
+                 first_id,
+                 "article.update",
+                 "post",
+                 post.id,
+                 title: "first",
+                 expected_version: 3
+               )
              end)
 
-    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).command ==
-             "article.update_draft"
-
-    assert {:ok, %{id: "article-key"}} =
-             Command.run(command, fn _context -> {:error, :must_not_execute_on_replay} end)
-  end
-
-  test "create_user derives a stable owner target without a synthetic collection" do
-    {community, _post, _attrs, user} = mock_article(:post)
-    command_id = Ecto.UUID.generate()
-
-    command =
-      Command.create_user(user, command_id,
-        command: :article_create,
-        resource: :article,
-        owner: community,
-        input: %{title: "first"},
-        recovery: fn _receipt -> {:ok, %{id: "article-key"}} end
-      )
-
-    assert {:ok, %{id: "article-key"}} =
-             Command.run(command, fn %{owner: ^community, input: %{title: "first"}} ->
-               {:ok, %{id: "article-key"}}
+    assert {:ok, {:ok, :new, _}} =
+             Repo.transaction(fn ->
+               Store.claim(
+                 to_string(user.id),
+                 second_id,
+                 "article.update",
+                 "post",
+                 post.id,
+                 expected_version: 3,
+                 title: "first"
+               )
              end)
 
-    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).target_type == "article"
-
-    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).target_key ==
-             to_string(community.id)
+    assert {:ok, {:error, :invalid_intent_params}} =
+             Repo.transaction(fn ->
+               Store.claim(
+                 to_string(user.id),
+                 Ecto.UUID.generate(),
+                 "article.update",
+                 "post",
+                 post.id,
+                 %{draft: %CMS.Model.Article{}}
+               )
+             end)
   end
 
-  test "CMS.Command encodes command atoms at the Receipt boundary" do
-    {community, _post, _attrs, user} = mock_article(:post)
-    command_id = Ecto.UUID.generate()
+  test "IntentCodec persists authored fields only as digests, including future field names" do
+    assert {:ok, encoded} =
+             IntentCodec.encode(:article_update, %{
+               description: "private description",
+               content_json: %{"secret" => true}
+             })
 
-    command =
-      Command.create_user(user, command_id,
-        command: :doc_tree_create_tab,
-        resource: :doc_tree,
-        owner: community,
-        input: %{title: "Docs"},
-        recovery: fn _receipt -> {:ok, %{id: "tree-1"}} end
-      )
+    assert encoded["description"]["__redacted__"]
+    assert encoded["content_json"]["__redacted__"]
+    refute inspect(encoded) =~ "private description"
+    refute inspect(encoded) =~ "secret"
+  end
 
-    assert {:ok, %{id: "tree-1"}} =
-             Command.run(command, fn %{input: %{title: "Docs"}} ->
-               {:ok, %{id: "tree-1"}}
-             end)
+  test "IntentCodec digest is stable across nested map construction order" do
+    assert {:ok, first} =
+             IntentCodec.encode(:article_create, %{
+               thread: :post,
+               attrs: Map.new([{:title, "same"}, {:meta, %{b: 2, a: 1}}])
+             })
 
-    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).command ==
-             "doc.tree.create_tab"
+    assert {:ok, second} =
+             IntentCodec.encode(:article_create, %{
+               attrs: Map.new([{:meta, %{a: 1, b: 2}}, {:title, "same"}]),
+               thread: :post
+             })
+
+    assert first == second
   end
 
   test "a nil command id cannot bypass the receipt boundary" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
     assert {:error, %ErrorCat.Error{reason: :command_id_required}} =
-             CommandReceipt.run_internal(
+             CommandReceipt.execute(
                user,
                nil,
                "article.update",
@@ -211,15 +522,15 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                "1",
                %{},
                fn -> {:ok, %{id: "post-1"}} end,
-               fn _receipt -> {:ok, %{id: "post-1"}} end
+               ReceiptConfirmation
              )
   end
 
-  test "the nine-argument receipt entry treats nil command id as missing" do
+  test "the receipt entry treats nil command id as missing" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
     assert {:error, %ErrorCat.Error{reason: :command_id_required}} =
-             CommandReceipt.run_internal(
+             CommandReceipt.execute(
                user,
                nil,
                "article.update",
@@ -227,8 +538,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                "1",
                %{},
                fn -> {:ok, %{id: "post-1"}} end,
-               fn _receipt -> {:ok, %{id: "post-1"}} end,
-               fn _result -> :ok end
+               ReceiptConfirmation
              )
   end
 
@@ -237,7 +547,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
     for command_id <- [42, false, [], %{}, "", "not-a-uuid"] do
       assert {:error, %ErrorCat.Error{reason: :command_id_invalid}} =
-               CommandReceipt.run_internal(
+               CommandReceipt.execute(
                  user,
                  command_id,
                  "article.update",
@@ -245,21 +555,21 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                  "1",
                  %{},
                  fn -> {:ok, %{id: "post-1"}} end,
-                 fn _receipt -> {:ok, %{id: "post-1"}} end
+                 ReceiptConfirmation
                )
     end
 
     assert {:error, %ErrorCat.Error{reason: :command_id_invalid}} =
-             CommandReceipt.resolve_command_id(%{command_id: ""})
+             CommandReceipt.validate_command_id(%{command_id: ""})
   end
 
   test "invalid callbacks remain programming errors instead of command id errors" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
     assert_raise ArgumentError,
-                 "command receipt callbacks must be execute/0, recovery/1 and after_commit/1 functions",
+                 "command receipt callbacks must be execute/0 and a confirmation module",
                  fn ->
-                   CommandReceipt.run_internal(
+                   CommandReceipt.execute(
                      user,
                      Ecto.UUID.generate(),
                      "article.update",
@@ -267,120 +577,23 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                      "1",
                      %{},
                      :not_an_execute_callback,
-                     fn _receipt -> {:ok, %{id: "post-1"}} end
+                     ReceiptConfirmation
                    )
                  end
   end
 
-  test "internal command id resolution accepts only a direct id" do
+  test "command id validation requires one direct UUID" do
     command_id = Ecto.UUID.generate()
 
-    assert {:ok, ^command_id} = CommandReceipt.resolve_command_id(command_id)
+    assert {:ok, ^command_id} = CommandReceipt.validate_command_id(command_id)
 
-    assert {:ok, generated} = CommandReceipt.resolve_command_id(nil)
-    assert {:ok, ^generated} = Ecto.UUID.cast(generated)
+    assert {:error, %ErrorCat.Error{reason: :command_id_required}} =
+             CommandReceipt.validate_command_id(nil)
 
     for invalid <- [42, false, [], %{}, "not-a-uuid"] do
       assert {:error, %ErrorCat.Error{reason: :command_id_invalid}} =
-               CommandReceipt.resolve_command_id(invalid)
+               CommandReceipt.validate_command_id(invalid)
     end
-  end
-
-  test "unchanged outcomes are replayable completed commands" do
-    {_community, _post, _attrs, user} = mock_article(:post)
-    command_id = Ecto.UUID.generate()
-
-    assert {:ok, _result} =
-             CommandReceipt.run_internal(
-               user,
-               command_id,
-               "upvote_remove",
-               "post",
-               "1",
-               nil,
-               fn -> {:ok, %{id: "post-1"}, %{outcome: :unchanged}} end,
-               fn _receipt -> {:ok, %{id: "post-1"}} end
-             )
-
-    assert Repo.get_by(CMS.Model.CommandReceipt,
-             initiator_type: "user",
-             initiator_key: to_string(user.id),
-             command_id: command_id
-           ).outcome == "unchanged"
-
-    assert {:ok, _result} =
-             CommandReceipt.run_internal(
-               user,
-               command_id,
-               "upvote_remove",
-               "post",
-               "1",
-               nil,
-               fn -> {:error, :must_not_execute_on_replay} end,
-               fn _receipt -> {:ok, %{id: "post-1"}} end
-             )
-  end
-
-  test "persists a versioned replay payload for tree-shaped results" do
-    {_community, _post, _attrs, user} = mock_article(:post)
-    command_id = Ecto.UUID.generate()
-
-    result = %{
-      revision: 4,
-      tree_state: %{has_unpublished_changes: true},
-      node: %{id: "page-1", type: :page},
-      affected_nodes: [%{id: "page-1", type: :page}],
-      conflict: false
-    }
-
-    assert {:ok, _result} =
-             CommandReceipt.run_internal(
-               user,
-               command_id,
-               "doc.tree.update_node",
-               "doc_tree",
-               "community:1:page-1",
-               %{base_revision: 3, title: "Intro"},
-               fn -> {:ok, result, CommandReplay.tree_metadata(result, "community:1:page-1")} end,
-               fn receipt ->
-                 assert receipt.result_payload["schema_version"] == 1
-                 assert receipt.result_payload["node"]["type"] == "page"
-                 assert receipt.result_payload["tree_state"]["has_unpublished_changes"] == true
-                 assert receipt.result_payload["conflict"] == false
-                 {:ok, result}
-               end
-             )
-
-    assert {:ok, _result} =
-             CommandReceipt.run_internal(
-               user,
-               command_id,
-               "doc.tree.update_node",
-               "doc_tree",
-               "community:1:page-1",
-               %{base_revision: 3, title: "Intro"},
-               fn -> {:error, :must_not_execute_on_replay} end,
-               fn receipt ->
-                 assert receipt.result_payload["affected_nodes"] != []
-                 {:ok, result}
-               end
-             )
-  end
-
-  test "tree conflict replay accepts results without a node" do
-    result = %{revision: 5, tree_state: %{}, affected_nodes: [], conflict: true}
-    metadata = CommandReplay.tree_metadata(result, "community:1:page-1")
-
-    receipt = %{
-      result_key: metadata.result_key,
-      result_payload: metadata.result_payload
-    }
-
-    assert metadata.result_payload["node"] == nil
-    assert metadata.result_payload["conflict"] == true
-
-    assert {:ok, %{node: nil, conflict: true, revision: 5}} =
-             CommandReplay.replay_tree(receipt)
   end
 
   test "failed command execution rolls back its receipt claim" do
@@ -388,15 +601,15 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     command_id = Ecto.UUID.generate()
 
     assert {:error, :denied} =
-             CommandReceipt.run_internal(
+             CommandReceipt.execute(
                user,
                command_id,
-               "article.delete",
+               "article.trash",
                "post",
                post.id,
-               nil,
+               %{},
                fn -> {:error, :denied} end,
-               fn _receipt -> {:error, :must_not_replay} end
+               ReceiptConfirmation
              )
 
     refute Repo.exists?(
@@ -409,21 +622,21 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
            )
   end
 
-  test "expired receipt is reclaimed for a new execution" do
+  test "receipt is reclaimed after the identity window expires" do
     {_community, _post, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()
     input = %{body: "same command after expiry"}
 
     assert {:ok, _result} =
-             CommandReceipt.run_internal(
+             CommandReceipt.execute(
                user,
                command_id,
                "article.update",
                "post",
                "1",
                input,
-               fn -> {:ok, %{id: "post-1"}} end,
-               fn _receipt -> {:ok, %{id: "post-1"}} end
+               fn -> {:ok, %ReceiptConfirmation{value: %{"id" => "post-1"}}} end,
+               ReceiptConfirmation
              )
 
     from(receipt in CMS.Model.CommandReceipt,
@@ -432,18 +645,23 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
           receipt.initiator_key == ^to_string(user.id) and
           receipt.command_id == ^command_id
     )
-    |> Repo.update_all(set: [expires_at: DateTime.add(DateTime.utc_now(), -1, :second)])
+    |> Repo.update_all(
+      set: [
+        expires_at: DateTime.add(DateTime.utc_now(), -1, :second),
+        identity_expires_at: DateTime.add(DateTime.utc_now(), -1, :second)
+      ]
+    )
 
     assert {:ok, _result} =
-             CommandReceipt.run_internal(
+             CommandReceipt.execute(
                user,
                command_id,
                "article.update",
                "post",
                "1",
                input,
-               fn -> {:ok, %{id: "post-1"}} end,
-               fn _receipt -> {:error, :must_not_replay} end
+               fn -> {:ok, %ReceiptConfirmation{value: %{"id" => "post-1"}}} end,
+               ReceiptConfirmation
              )
   end
 
@@ -455,7 +673,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     task_fun = fn ->
       receive do
         :start ->
-          CommandReceipt.run_internal(
+          CommandReceipt.execute(
             user,
             command_id,
             "article.update",
@@ -465,9 +683,9 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
             fn ->
               Agent.update(executions, &(&1 + 1))
               Process.sleep(100)
-              {:ok, %{id: "post-1"}}
+              {:ok, %ReceiptConfirmation{value: %{"id" => "post-1"}}}
             end,
-            fn _receipt -> {:ok, %{id: "post-1"}} end
+            ReceiptConfirmation
           )
       end
     end
@@ -486,14 +704,96 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     assert Agent.get(executions, & &1) == 1
   end
 
+  test "same intent params after result expiry returns expired without executing" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+    {:ok, intent_params} = IntentCodec.encode(:upvote_add, %{operation: :add})
+
+    assert {:ok, {:ok, :new, receipt}} =
+             Repo.transaction(fn ->
+               Store.claim(
+                 to_string(user.id),
+                 command_id,
+                 "upvote.add",
+                 "article",
+                 post.id,
+                 intent_params
+               )
+             end)
+
+    Repo.update_all(
+      from(receipt in CMS.Model.CommandReceipt, where: receipt.id == ^receipt.id),
+      set: [
+        expires_at: DateTime.add(DateTime.utc_now(), -1, :second),
+        identity_expires_at: DateTime.add(DateTime.utc_now(), 60, :second)
+      ]
+    )
+
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :upvote_add,
+      target: post,
+      params: %{operation: :add}
+    }
+
+    assert {:error, %ErrorCat.Error{reason: :command_result_expired, actions: [:reconcile]}} =
+             Command.execute(command,
+               action: fn _ -> flunk("expired result must not execute") end,
+               confirmation: UpvoteConfirmation
+             )
+
+    assert Repo.get(CMS.Model.CommandReceipt, receipt.id)
+  end
+
+  test "different intent params after result expiry remains a command conflict" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+    {:ok, intent_params} = IntentCodec.encode(:upvote_add, %{operation: :add})
+
+    assert {:ok, {:ok, :new, receipt}} =
+             Repo.transaction(fn ->
+               Store.claim(
+                 to_string(user.id),
+                 command_id,
+                 "upvote.add",
+                 "article",
+                 post.id,
+                 intent_params
+               )
+             end)
+
+    Repo.update_all(
+      from(row in CMS.Model.CommandReceipt, where: row.id == ^receipt.id),
+      set: [
+        expires_at: DateTime.add(DateTime.utc_now(), -1, :second),
+        identity_expires_at: DateTime.add(DateTime.utc_now(), 60, :second)
+      ]
+    )
+
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :upvote_add,
+      target: post,
+      params: %{operation: :remove}
+    }
+
+    assert {:error, %ErrorCat.Error{reason: :command_id_conflict}} =
+             Command.execute(command,
+               action: fn _ -> flunk("conflicting result must not execute") end,
+               confirmation: UpvoteConfirmation
+             )
+  end
+
   test "a competing claim times out with command_resolution_pending" do
     user = %User{id: 9_999_999}
     command_id = Ecto.UUID.generate()
     parent = self()
 
-    run = fn execute, replay ->
+    run = fn execute ->
       Ecto.Adapters.SQL.Sandbox.unboxed_run(Repo, fn ->
-        CommandReceipt.run_internal(
+        CommandReceipt.execute(
           user,
           command_id,
           "article.update",
@@ -501,31 +801,32 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
           "timeout-post",
           %{body: "same"},
           execute,
-          replay
+          ReceiptConfirmation
         )
       end)
     end
 
     first =
       Task.async(fn ->
-        run.(
-          fn ->
-            send(parent, :claim_owned)
-            Process.sleep(5_000)
-            {:ok, %{id: "post-1"}}
-          end,
-          fn _receipt -> {:ok, %{id: "post-1"}} end
-        )
+        run.(fn ->
+          send(parent, :claim_owned)
+          Process.sleep(5_000)
+          {:ok, %ReceiptConfirmation{value: %{"id" => "post-1"}}}
+        end)
       end)
 
     assert_receive :claim_owned, 1_000
 
     second =
       Task.async(fn ->
-        run.(fn -> {:error, :must_not_execute} end, fn _receipt -> {:ok, %{id: "post-1"}} end)
+        run.(fn -> {:error, :must_not_execute} end)
       end)
 
-    assert {:error, %ErrorCat.Error{reason: :command_resolution_pending}} =
+    assert {:error,
+            %ErrorCat.Error{
+              reason: :command_resolution_pending,
+              actions: [:retry, :reconcile]
+            }} =
              Task.await(second, 6_000)
 
     assert {:ok, _result} = Task.await(first, 6_000)
@@ -553,10 +854,9 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
           initiator_key: "1",
           command_id: expired_key,
           command: "article.update",
-          target_type: "post",
-          target_key: "1",
-          payload_fingerprint: "expired",
-          outcome: "changed",
+          resource_type: "post",
+          resource_id: "1",
+          intent_params: %{"title" => "expired"},
           expires_at: DateTime.add(DateTime.utc_now(), -1, :second)
         })
       )
@@ -568,10 +868,9 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
           initiator_key: "1",
           command_id: active_key,
           command: "article.update",
-          target_type: "post",
-          target_key: "1",
-          payload_fingerprint: "active",
-          outcome: "changed",
+          resource_type: "post",
+          resource_id: "1",
+          intent_params: %{"title" => "active"},
           expires_at: DateTime.add(DateTime.utc_now(), 60, :second)
         })
       )
@@ -579,5 +878,32 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     assert CommandReceipt.prune_expired() == 1
     assert Repo.get(CMS.Model.CommandReceipt, expired.id) == nil
     assert Repo.get(CMS.Model.CommandReceipt, active.id)
+  end
+
+  test "compacts expired results while retaining an identity tombstone" do
+    command_id = Ecto.UUID.generate()
+
+    receipt =
+      Repo.insert!(
+        CMS.Model.CommandReceipt.changeset(%CMS.Model.CommandReceipt{}, %{
+          initiator_type: "user",
+          initiator_key: "1",
+          command_id: command_id,
+          command: "article.update",
+          resource_type: "post",
+          resource_id: "1",
+          intent_params: %{"title" => "expired-result"},
+          confirmation: %{"schema_version" => 1, "body" => "sensitive"},
+          expires_at: DateTime.add(DateTime.utc_now(), -1, :second),
+          identity_expires_at: DateTime.add(DateTime.utc_now(), 60, :second)
+        })
+      )
+
+    assert Store.prune_expired() == 1
+
+    compacted = Repo.get(CMS.Model.CommandReceipt, receipt.id)
+    assert compacted
+    assert compacted.confirmation == nil
+    assert compacted.identity_expires_at
   end
 end

@@ -9,7 +9,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
   alias CMS.Communities.Lifecycle
   alias CMS.Docs.Branch
   alias CMS.DocTree.Events
-  alias CMS.Gate.Context.Scope.Doc, as: DocContext
 
   describe "[doc publish release]" do
     setup do
@@ -58,7 +57,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       initial = CMS.DocTree.publish_checklist(community)
 
       {:ok, current} =
-        CMS.Articles.read_editor(community, :doc, page_payload.node.doc_id)
+        CMS.Docs.read_editor_head(community, page_payload.node.doc_id)
 
       assert {:ok, _draft} =
                CMS.DocTree.update_draft(
@@ -122,7 +121,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                  command_id: command_id
                )
 
-      assert immediate_replay.article_hash_id == draft.article_hash_id
+      assert immediate_replay.article_id == draft.article_id
       assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
 
       assert {:ok, published_replay} =
@@ -133,7 +132,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                  command_id: command_id
                )
 
-      assert published_replay.article_hash_id == draft.article_hash_id
+      assert published_replay.article_id == draft.article_id
       assert published_replay.stage == :public
     end
 
@@ -175,6 +174,16 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       {:ok, legacy_event} = ORM.find(CMS.Model.DocTreeEvent, legacy_event.id)
       assert legacy_event.status == CMS.DocTree.Const.tree_event_status(:published)
+
+      assert {:ok, public_node} =
+               ORM.find_by(CMS.Model.DocTreeNode,
+                 community_id: community.id,
+                 branch_id: legacy_event.branch_id,
+                 stage: CMS.Const.stage(:public),
+                 node_id: page_payload.node.id
+               )
+
+      assert public_node.doc_id == page_payload.node.doc_id
     end
 
     test "tree-only publish does not auto-publish doc-bound page creates",
@@ -331,22 +340,16 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       assert {:ok, ^release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
 
-      public_scope =
-        CMS.Gate.scope(CMS.Model.Doc, nil, :read, DocContext.public_branch(branch.id))
-        |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
+      [release_article] = Repo.preload(release, :articles).articles
+      article = Repo.get!(CMS.Model.Article, release_article.doc_id)
 
-      refute Repo.exists?(public_scope)
+      assert is_nil(article.inner_id)
 
-      dashboard_scope =
-        CMS.Gate.scope(
-          CMS.Model.Doc,
-          :operations,
-          :read,
-          DocContext.public_branch(branch.id, policy_mode: :operations)
-        )
-        |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
-
-      assert Repo.exists?(dashboard_scope)
+      assert Repo.exists?(
+               from(public in CMS.Model.DocPublic,
+                 where: public.article_id == ^article.id and public.branch_id == ^branch.id
+               )
+             )
     end
 
     test "does not create a release when publish checklist is empty", ~m(user community)a do
@@ -440,17 +443,13 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
         )
 
       {:ok, first_doc} =
-        ORM.find_by(CMS.Model.Doc,
-          community_id: community.id,
-          stage: :draft,
-          article_hash_id: page_payload.node.doc_id
+        ORM.find_by(CMS.Model.DocDraft,
+          article_id: page_payload.node.doc_id
         )
 
       {:ok, second_doc} =
-        ORM.find_by(CMS.Model.Doc,
-          community_id: community.id,
-          stage: :draft,
-          article_hash_id: second_page_payload.node.doc_id
+        ORM.find_by(CMS.Model.DocDraft,
+          article_id: second_page_payload.node.doc_id
         )
 
       assert first_doc.slug == "install"
@@ -553,7 +552,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
         })
 
       {:ok, current} =
-        CMS.Articles.read_editor(community, :doc, page_payload.node.doc_id)
+        CMS.Docs.read_editor_head(community, page_payload.node.doc_id)
 
       {:ok, _draft} =
         CMS.DocTree.update_draft(

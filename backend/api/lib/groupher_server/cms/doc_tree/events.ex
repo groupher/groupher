@@ -690,21 +690,25 @@ defmodule GroupherServer.CMS.DocTree.Events do
     }
   end
 
-  defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :create),
-    do: CMS.DocTree.Const.tree_event(:pin_add)
+  defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :create) do
+    CMS.DocTree.Const.tree_event(:pin_add)
+  end
 
-  defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :delete),
-    do: CMS.DocTree.Const.tree_event(:pin_remove)
+  defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :delete) do
+    CMS.DocTree.Const.tree_event(:pin_remove)
+  end
 
-  defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :move),
-    do: CMS.DocTree.Const.tree_event(:pin_reorder)
+  defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :move) do
+    CMS.DocTree.Const.tree_event(:pin_reorder)
+  end
 
   defp node_event_type(%DocTreeNode{}, :create), do: CMS.DocTree.Const.tree_event(:node_create)
   defp node_event_type(%DocTreeNode{}, :delete), do: CMS.DocTree.Const.tree_event(:node_delete)
   defp node_event_type(%DocTreeNode{}, :move), do: CMS.DocTree.Const.tree_event(:node_move)
 
-  defp update_event_type(%DocTreeNode{type: @tree_node_type_pin}, _fallback),
-    do: CMS.DocTree.Const.tree_event(:pin_update)
+  defp update_event_type(%DocTreeNode{type: @tree_node_type_pin}, _fallback) do
+    CMS.DocTree.Const.tree_event(:pin_update)
+  end
 
   defp update_event_type(%DocTreeNode{}, fallback), do: fallback
 

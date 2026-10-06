@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Model.Interaction.ReactionInfo do
   @moduledoc """
-  Generates the fixed-reaction schema shared by physical Artiment models.
+  Generates fixed-reaction projections keyed by stable Article identity.
 
       concrete ReactionInfo model
         -> shared Ecto fields and constraints
@@ -10,11 +10,41 @@ defmodule GroupherServer.CMS.Model.Interaction.ReactionInfo do
   @doc "Generates a fixed-reaction Ecto model from table and target options."
   defmacro __using__(opts) do
     table = Keyword.fetch!(opts, :table)
-    target = Keyword.fetch!(opts, :target)
-    target_schema = Keyword.fetch!(opts, :target_schema)
     collection? = Keyword.fetch!(opts, :collection?)
-    target_id = String.to_atom("#{target}_id")
-    unique_index = String.to_atom("#{table}_#{target_id}_index")
+    target = Keyword.get(opts, :target, :article)
+    unique_index = String.to_atom("#{table}_stable_article_index")
+
+    owner_fields =
+      if target == :comment do
+        quote do
+          belongs_to(:comment, Model.Comment)
+        end
+      else
+        quote do
+          belongs_to(:article, Model.Article, type: Ecto.UUID)
+          belongs_to(:branch, Model.DocBranch)
+        end
+      end
+
+    owner_changeset =
+      if target == :comment do
+        quote do
+          struct
+          |> cast(attrs, [:comment_id])
+          |> validate_required([:comment_id])
+          |> foreign_key_constraint(:comment_id)
+          |> unique_constraint(:comment_id)
+        end
+      else
+        quote do
+          struct
+          |> cast(attrs, [:article_id, :branch_id])
+          |> validate_required([:article_id])
+          |> foreign_key_constraint(:article_id)
+          |> foreign_key_constraint(:branch_id)
+          |> unique_constraint([:article_id, :branch_id], name: unquote(unique_index))
+        end
+      end
 
     collection_fields =
       if collection? do
@@ -36,10 +66,8 @@ defmodule GroupherServer.CMS.Model.Interaction.ReactionInfo do
       alias Helper.Constant.DBPrefix
 
       @schema_prefix DBPrefix.cms()
-      @target_id unquote(target_id)
-
       schema unquote(table) do
-        belongs_to(unquote(target), unquote(target_schema), foreign_key: unquote(target_id))
+        unquote(owner_fields)
 
         field(:upvoted_user_ids, Model.Interaction.RoaringBitmap)
         field(:reported_user_ids, Model.Interaction.RoaringBitmap)
@@ -53,11 +81,7 @@ defmodule GroupherServer.CMS.Model.Interaction.ReactionInfo do
 
       @doc false
       def changeset(struct, attrs) do
-        struct
-        |> cast(attrs, [@target_id])
-        |> validate_required([@target_id])
-        |> foreign_key_constraint(@target_id)
-        |> unique_constraint(@target_id, name: unquote(unique_index))
+        unquote(owner_changeset)
       end
     end
   end

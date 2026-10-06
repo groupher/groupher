@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
   Assembles Comment API response fields from Interaction viewer state and the
   separate Article-author relation state.
 
-      Comments Reader -> InteractionResponse -> Comment API response
+      Comments Query -> InteractionResponse -> Comment API response
   """
 
   import Ecto.Query, warn: false

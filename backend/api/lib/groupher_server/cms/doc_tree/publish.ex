@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
                  v
           publish_changes/3
                  |
-                 ├─ docs + ArticleDocument
+                 ├─ DocDraft + ArticleBodyDraft
                  ├─ doc_tree_nodes(stage=public)
                  └─ doc_publish_releases
                       ├─ tree_snapshot_id -> doc_tree_snapshots
@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, PublicCache, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
 
@@ -42,22 +42,21 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     Selection
   }
 
+  alias CMS.DocTree.State
+
   alias CMS.{
     ErrorCat,
     DocPublishRelease,
-    Docs.Branch,
-    DocTree.Reader
+    Docs.Branch
   }
 
   alias CMS.Model.{
     Community,
-    Doc,
     DocTreeEvent,
     DocTreeNode
   }
 
   alias Helper.{T, Transaction}
-  alias PublicCache.Const, as: PublicCacheConst
 
   @publish_flow_noop CMS.DocTree.Const.doc_publish_flow(:noop)
   @publish_flow_publish CMS.DocTree.Const.doc_publish_flow(:publish)
@@ -119,7 +118,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp publish_changes_locked(community, branch, args, user, sync_cover?) do
     with {:ok, _canonical} <- CMS.Gate.access_check(user, :manage_docs, community),
-         {:ok, state} <- Reader.ensure_draft_state(community, branch_id: branch.id),
+         {:ok, state} <- State.ensure_draft_state(community, branch_id: branch.id),
          :ok <- verify_checklist_revision(state, args) do
       prepare_publish_flow(community, branch, args, user, sync_cover?)
     else
@@ -178,8 +177,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          _selection,
          _user,
          _sync_cover?
-       ),
-       do: publish_payload(true, nil, current_checklist)
+       ) do
+    publish_payload(true, nil, current_checklist)
+  end
 
   defp execute_publish_flow(
          @publish_flow_restore,
@@ -233,17 +233,17 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   the same `doc_id`. The public row is left untouched — it stays served until
   the next publish overwrites it.
 
-  Content is copied from the public `ArticleDocument` as one validated BodyBag.
+  Content is copied from the public immutable body snapshot as one validated BodyBag.
   Derived fields and `body_hash` are preserved without running an Elixir
   serializer. The caller's `user` is recorded as the draft author for audit.
 
   ## Examples
 
       iex> Publish.move_doc_to_draft(community, draft_node.node_id, user)
-      {:ok, %Doc{stage: CMS.Const.stage(:draft), article_hash_id: "a1b2c3d4-..."}}
+      {:ok, %{article_id: "a1b2c3d4-...", stage: CMS.Const.stage(:draft)}}
   """
   @spec move_doc_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
-          T.domain_res(Doc.t())
+          T.domain_res(CMS.Model.DocDraft.t())
   def move_doc_to_draft(%Community{} = community, node_id, %User{} = user, opts \\ []) do
     with {:ok, branch} <- Branch.resolve(community, opts) do
       DocPublisher.move_doc_to_draft(community, branch, node_id, user)
@@ -374,13 +374,15 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp invalidate_doc_tree(community) do
-    case PublicCache.invalidate_now(
-           PublicCacheConst.doc_tree_changed(),
-           %{community: community.slug, community_id: community.id},
-           causation_id: Ecto.UUID.generate(),
-           aggregate_type: "community"
-         ) do
-      {:ok, _invalidation} -> :ok
+    case CMS.Outbox.send(%{
+           event: "doc_tree.changed",
+           worker: CMS.Outbox.Workers.Community.Cleanup,
+           resource_type: "community",
+           resource_id: community.id,
+           command_id: Ecto.UUID.generate(),
+           data: %{community: community.slug, community_id: community.id}
+         }) do
+      {:ok, _event} -> :ok
       {:error, reason} -> {:error, reason}
     end
   end
@@ -397,7 +399,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
     Result.map_while_ok(doc_checklist_item_ids, fn checklist_item_id ->
       with %{doc_id: _doc_id} = item <- Map.get(items, checklist_item_id),
-           {:ok, snapshot} <-
+           {:ok, published} <-
              DocPublisher.publish_doc_draft(
                community,
                branch,
@@ -405,7 +407,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
                user,
                sync_cover?
              ) do
-        {:ok, %{snapshot: snapshot, checklist_item: item}}
+        {:ok, %{published: published, checklist_item: item}}
       else
         nil ->
           {:error, ErrorCat.custom("Selected docs publish item no longer exists.")}
@@ -439,8 +441,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          _args,
          _doc_checklist_item_ids,
          tree_checklist_item_ids
-       ),
-       do: tree_checklist_item_ids
+       ) do
+    tree_checklist_item_ids
+  end
 
   defp tree_selection_omitted?(args) do
     Selection.tree_selection_omitted?(args)
@@ -456,10 +459,10 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     if length(events) != length(tree_checklist_item_ids) do
       {:error, ErrorCat.custom("Selected tree publish item no longer exists.")}
     else
-      doc_snapshots =
-        DocPublishRelease.doc_snapshots_before_tree_events(community, branch, events)
+      branch_versions =
+        DocPublishRelease.branch_versions_before_tree_events(community, branch, events)
 
-      {:ok, %{events: events, doc_snapshots: doc_snapshots}}
+      {:ok, %{events: events, branch_versions: branch_versions}}
     end
   end
 

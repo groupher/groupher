@@ -9,7 +9,5 @@ defmodule GroupherServer.CMS.Model.ChangelogReactionInfo do
 
   use GroupherServer.CMS.Model.Interaction.ReactionInfo,
     table: "changelog_reaction_infos",
-    target: :changelog,
-    target_schema: GroupherServer.CMS.Model.Changelog,
     collection?: true
 end

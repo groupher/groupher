@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
-    {:ok, user_conn: simu_conn(:user, user), community: community}
+    {:ok, user: user, user_conn: simu_conn(:user, user), community: community}
   end
 
   test "default Post creation publishes through the revision lifecycle", context do
@@ -21,27 +21,21 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
       })
 
     {:ok, public_post} =
-      CMS.FrontDesk.article(context.community, :post, result["innerId"])
+      read_article(context.community, :post, result["innerId"])
 
     assert public_post.stage == :public
 
-    context.user_conn
-    |> gq_mutation(S.Article.m(:update_article, :post), %{
-      article: %{inner_id: result["innerId"], community: context.community.slug, thread: "POST"},
-      expectedVersion: public_post.version,
-      title: "Republished Post",
-      body: mock_rich_text("republished post")
-    })
+    updated =
+      context.user_conn
+      |> gq_mutation(S.Article.m(:update_article, :post), %{
+        article: %{inner_id: result["innerId"], community: context.community.slug, thread: "POST"},
+        expectedVersion: public_post.version,
+        title: "Republished Post",
+        body: mock_rich_text("republished post")
+      })
 
-    {:ok, draft} = CMS.Articles.read_draft(context.community, :post, public_post.article_hash_id)
-    assert draft.title == "Republished Post"
-
-    {:ok, actor} = CMS.FrontDesk.author_of(public_post)
-
-    {:ok, %{article: published, snapshot: nil}} =
-      CMS.Articles.publish_draft(context.community, :post, public_post.article_hash_id, actor)
-
-    assert published.title == "Republished Post"
+    assert updated["title"] == "Republished Post"
+    assert {:error, :not_found} = CMS.Articles.read_draft(public_post.id, context.user)
   end
 
   test "Post Draft stays private until its explicit publish mutation", context do
@@ -55,7 +49,8 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
 
     assert draft["stage"] == "DRAFT"
     assert draft["thread"] == "POST"
-    assert {:error, _} = CMS.Articles.read_public(context.community, :post, draft["id"])
+    assert {:ok, stored_draft} = CMS.Articles.read_draft(draft["id"], context.user)
+    assert stored_draft.title == "Post Draft"
 
     updated =
       context.user_conn
@@ -126,10 +121,9 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
            )
 
     assert {:ok, stored_draft} =
-             CMS.Articles.read_draft(context.community, :post, draft["id"])
+             CMS.Articles.read_draft(draft["id"], context.user)
 
     assert stored_draft.title == "Author Post Draft"
-    assert {:error, _} = CMS.Articles.read_public(context.community, :post, draft["id"])
   end
 
   test "only the public Post author can start its first Draft", context do
@@ -142,7 +136,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
       })
 
     {:ok, public_post} =
-      CMS.FrontDesk.article(context.community, :post, published["innerId"])
+      read_article(context.community, :post, published["innerId"])
 
     privileged_non_author =
       simu_conn(:user,
@@ -153,7 +147,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
 
     variables = %{
       community: context.community.slug,
-      id: public_post.article_hash_id,
+      id: public_post.id,
       expectedVersion: public_post.version,
       title: "First Post Draft",
       body: mock_rich_text("unauthorized first draft")
@@ -168,7 +162,16 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
 
     owner_draft =
       context.user_conn
-      |> gq_mutation(S.Article.m(:update_article_draft, :post), variables)
+      |> gq_mutation(S.Article.m(:update_article, :post), %{
+        article: %{
+          inner_id: public_post.inner_id,
+          community: context.community.slug,
+          thread: "POST"
+        },
+        expectedVersion: public_post.version,
+        title: variables.title,
+        body: variables.body
+      })
 
     assert owner_draft["title"] == "First Post Draft"
   end

@@ -85,19 +85,17 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
       if delete_restore_event?(event) do
         {:cont, :ok}
       else
-        {:halt,
-         {:error,
-          ErrorCat.custom("Only deleted tree publish items can be restored.")}}
+        {:halt, {:error, ErrorCat.custom("Only deleted tree publish items can be restored.")}}
       end
     end)
   end
 
-  defp delete_restore_event?(%DocTreeEvent{event_type: type}),
-    do:
-      type in [
-        CMS.DocTree.Const.tree_event(:node_delete),
-        CMS.DocTree.Const.tree_event(:pin_remove)
-      ]
+  defp delete_restore_event?(%DocTreeEvent{event_type: type}) do
+    type in [
+      CMS.DocTree.Const.tree_event(:node_delete),
+      CMS.DocTree.Const.tree_event(:pin_remove)
+    ]
+  end
 
   defp restore_tree_delete_events(%Community{} = community, branch, events) do
     Result.map_while_ok(events, &restore_tree_delete_event(community, branch, &1))
@@ -123,8 +121,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
     {:ok, [node | pages]}
   end
 
-  defp restore_nodes_from_delete_event(_event),
-    do: {:error, ErrorCat.custom("Deleted tree item can not be restored.")}
+  defp restore_nodes_from_delete_event(_event) do
+    {:error, ErrorCat.custom("Deleted tree item can not be restored.")}
+  end
 
   defp restore_draft_nodes(%Community{} = community, branch, nodes) do
     Result.map_while_ok(nodes, &restore_draft_node(community, branch, &1))

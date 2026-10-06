@@ -131,8 +131,9 @@ defmodule Helper.ContentThumbnail do
   defp flatten_text(nodes) when is_list(nodes), do: Enum.map_join(nodes, "", &flatten_text/1)
   defp flatten_text(%{"text" => value}) when is_binary(value), do: value
 
-  defp flatten_text(%{"type" => "mention", "value" => value}) when is_binary(value),
-    do: "@#{value}"
+  defp flatten_text(%{"type" => "mention", "value" => value}) when is_binary(value) do
+    "@#{value}"
+  end
 
   defp flatten_text(%{"children" => children}) when is_list(children), do: flatten_text(children)
   defp flatten_text(_), do: ""
@@ -144,8 +145,9 @@ defmodule Helper.ContentThumbnail do
   defp list_nodes(node), do: [node]
 
   defp maybe_put_aspect_ratio(block, %{"width" => width, "height" => height})
-       when is_number(width) and is_number(height) and height > 0,
-       do: Map.put(block, "aspectRatio", width / height)
+       when is_number(width) and is_number(height) and height > 0 do
+    Map.put(block, "aspectRatio", width / height)
+  end
 
   defp maybe_put_aspect_ratio(block, _node), do: block
 end

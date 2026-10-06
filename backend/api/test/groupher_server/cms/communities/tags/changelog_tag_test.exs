@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Model.CommunityTag
+  alias CMS.Model.{Article, CommunityTag}
 
   setup do
     {community, changelog, changelog_attrs, user} = mock_article(:changelog)
@@ -85,19 +85,19 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
       {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag2.id)
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :community_tags)
+      {:ok, changelog} = read_article(community, :changelog, changelog.inner_id)
       assert exist_in?(article_tag, changelog.community_tags)
       assert exist_in?(article_tag2, changelog.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :community_tags)
+      {:ok, changelog} = read_article(community, :changelog, changelog.inner_id)
       assert not exist_in?(article_tag, changelog.community_tags)
       assert exist_in?(article_tag2, changelog.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag2.id)
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :community_tags)
+      {:ok, changelog} = read_article(community, :changelog, changelog.inner_id)
       assert not exist_in?(article_tag, changelog.community_tags)
       assert not exist_in?(article_tag2, changelog.community_tags)
     end
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
         Map.merge(changelog_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
       {:ok, created} = CMS.Articles.create(community, :changelog, changelog_with_tags, user)
-      {:ok, changelog} = ORM.find(Changelog, created.id, preload: :community_tags)
+      {:ok, changelog} = read_article(community, :changelog, created.inner_id)
 
       assert exist_in?(article_tag, changelog.community_tags)
       assert exist_in?(article_tag2, changelog.community_tags)
@@ -202,10 +202,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       {:ok, old_changelog} =
         CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
 
-      from(c in Changelog, where: c.id == ^old_changelog.id)
+      from(article in Article, where: article.id == ^old_changelog.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
-
-      {:ok, old_changelog} = ORM.find(Changelog, old_changelog.id, preload: :community_tags)
 
       {:ok, _changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
       {:ok, _old_changelog} = CMS.Communities.set_tag(old_changelog, article_tag.id)

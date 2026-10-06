@@ -171,9 +171,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
       Repo.transaction(fn ->
         case input |> get(:community_id) |> normalize_id() do
           nil ->
-            Repo.rollback(
-              ErrorCat.custom("community asset storage quota exceeded")
-            )
+            Repo.rollback(ErrorCat.custom("community asset storage quota exceeded"))
 
           community_id ->
             lock_community!(community_id)
@@ -215,8 +213,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
         {:error, ErrorCat.custom("asset is larger than v1 upload limit")}
 
       checksum_sha256 != nil and not base64_sha256?(checksum_sha256) ->
-        {:error,
-         ErrorCat.custom("checksum_sha256 must be a base64 SHA-256 digest")}
+        {:error, ErrorCat.custom("checksum_sha256 must be a base64 SHA-256 digest")}
 
       not valid_thread?(thread) ->
         {:error, ErrorCat.custom("asset thread is invalid")}
@@ -301,8 +298,9 @@ defmodule GroupherServer.CMS.Assets.Upload do
     end
   end
 
-  defp ensure_capacity(_, _),
-    do: {:error, ErrorCat.custom("community asset storage quota exceeded")}
+  defp ensure_capacity(_, _) do
+    {:error, ErrorCat.custom("community asset storage quota exceeded")}
+  end
 
   defp normalize_id(value) when is_integer(value), do: value
 
@@ -337,8 +335,9 @@ defmodule GroupherServer.CMS.Assets.Upload do
     "communities/#{community_slug}/wallpaper-generated/#{batch_ref}/#{asset_uid}/original"
   end
 
-  defp pad2(value) when is_integer(value),
-    do: value |> Integer.to_string() |> String.pad_leading(2, "0")
+  defp pad2(value) when is_integer(value) do
+    value |> Integer.to_string() |> String.pad_leading(2, "0")
+  end
 
   defp asset_type_from_mime("image/" <> _), do: :image
   defp asset_type_from_mime(_), do: :file

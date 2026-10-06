@@ -4,8 +4,8 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
   @moduletag timeout: 300_000
 
   alias GroupherServer.CMS
-  alias CMS.Articles.Trash
   alias CMS.Seeds.LiteHome
+  alias CMS.Model.{Article, ArticleCommunity, ArticleLifecycle, PostState}
 
   describe "[lite home seeds]" do
     test "resets home with minimal main and dashboard data" do
@@ -18,16 +18,22 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
       assert community.dashboard.enable.changelog == true
       assert community.dashboard.enable.doc == false
 
-      assert count(Post, community.id) == 4
-      assert count(Changelog, community.id) == 3
-      assert count(Doc, community.id) == 0
+      assert count(:post, community.id) == 4
+      assert count(:changelog, community.id) == 3
+      assert count(:doc, community.id) == 0
       assert seeded_community.seed_summary.kanban_posts == 4
 
       kanban_posts =
         Repo.all(
-          from(p in Post,
-            join: community in assoc(p, :communities),
-            where: community.id == ^community.id and not is_nil(p.status)
+          from(article in Article,
+            join: relation in ArticleCommunity,
+            on: relation.article_id == article.id,
+            join: state in PostState,
+            on: state.article_id == article.id,
+            where:
+              relation.community_id == ^community.id and article.thread == :post and
+                not is_nil(state.status),
+            select: state
           )
         )
 
@@ -36,70 +42,77 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
       assert {:ok, %{todo: %{entries: [_ | _]}}} = CMS.Articles.grouped_kanban(community)
 
+      post = article_by_title!(community.id, "一次线上故障复盘记录")
+
       {1, _} =
-        Post
-        |> join(:inner, [post], community in assoc(post, :communities))
-        |> where(
-          [post, community],
-          community.id == ^community.id and post.title == "一次线上故障复盘记录"
-        )
+        from(state in PostState, where: state.article_id == ^post.id)
         |> Repo.update_all(set: [status: nil])
 
       assert kanban_count(community.id) == 3
 
       {:ok, community} = LiteHome.seed()
 
-      assert count(Post, community.id) == 4
-      assert count(Changelog, community.id) == 3
-      assert count(Doc, community.id) == 0
-      assert count(Post, community.id) == community.seed_summary.posts
+      assert count(:post, community.id) == 4
+      assert count(:changelog, community.id) == 3
+      assert count(:doc, community.id) == 0
+      assert count(:post, community.id) == community.seed_summary.posts
       assert kanban_count(community.id) == 4
       assert community.seed_summary.kanban_posts == 4
 
-      post =
-        Repo.one!(
-          from(p in Post,
-            join: community in assoc(p, :communities),
-            where: community.id == ^community.id and p.title == "一次线上故障复盘记录"
-          )
-        )
+      post = article_by_title!(community.id, "一次线上故障复盘记录")
 
       assert {:ok, _trash_item} = CMS.Articles.trash(post, :operations)
-      assert count(Post, community.id) == 3
+      assert count(:post, community.id) == 3
 
       {:ok, community} = LiteHome.seed()
 
-      assert count(Post, community.id) == 4
+      assert count(:post, community.id) == 4
       assert community.seed_summary.posts == 4
     end
   end
 
   defp kanban_count(community_id) do
-    {:ok, total_count} =
-      Post
-      |> Trash.not_trashed_scope(:post)
-      |> join(:inner, [post], community in assoc(post, :communities))
-      |> where([post, community], community.id == ^community_id and not is_nil(post.status))
-      |> ORM.count()
-
-    total_count
+    Article
+    |> join(:inner, [article], relation in ArticleCommunity,
+      on: relation.article_id == article.id
+    )
+    |> join(:inner, [article], lifecycle in ArticleLifecycle,
+      on: lifecycle.article_id == article.id and lifecycle.state in [:published, :archived]
+    )
+    |> join(:inner, [article], state in PostState,
+      on: state.article_id == article.id and not is_nil(state.status)
+    )
+    |> where(
+      [article, relation],
+      article.thread == :post and relation.community_id == ^community_id
+    )
+    |> Repo.aggregate(:count, :id)
   end
 
-  defp count(schema, community_id) do
-    thread =
-      case schema do
-        Post -> :post
-        Changelog -> :changelog
-        Doc -> :doc
-      end
+  defp count(thread, community_id) do
+    Article
+    |> join(:inner, [article], relation in ArticleCommunity,
+      on: relation.article_id == article.id
+    )
+    |> join(:inner, [article], lifecycle in ArticleLifecycle,
+      on: lifecycle.article_id == article.id and lifecycle.state in [:published, :archived]
+    )
+    |> where(
+      [article, relation],
+      article.thread == ^thread and relation.community_id == ^community_id
+    )
+    |> Repo.aggregate(:count, :id)
+  end
 
-    {:ok, total_count} =
-      schema
-      |> Trash.not_trashed_scope(thread)
-      |> join(:inner, [item], community in assoc(item, :communities))
-      |> where([_item, community], community.id == ^community_id)
-      |> ORM.count()
-
-    total_count
+  defp article_by_title!(community_id, title) do
+    Article
+    |> join(:inner, [article], public in CMS.Model.ArticlePublic,
+      on: public.article_id == article.id
+    )
+    |> where(
+      [article, public],
+      article.community_id == ^community_id and article.thread == :post and public.title == ^title
+    )
+    |> Repo.one!()
   end
 end

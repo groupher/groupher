@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   @moduledoc """
   Publishes one docs article draft and its public tree shell.
 
-      docs(stage=draft) + ArticleDocument
+      DocDraft + ArticleBodyDraft
           |
           v
           CMS.Docs.publish_draft
@@ -29,11 +29,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
 
   alias CMS.DocCover.Sync
   alias Accounts.Model.User
-  alias CMS.Articles.{Draft, MutationLock}
-  alias CMS.Artiment.BodyBag
+  alias CMS.Articles.Draft.Store
   alias CMS.DocTree.Events
-  alias CMS.Gate.Decision
-  alias CMS.Model.{ArticleDocument, Community, Doc, DocTreeNode}
+  alias CMS.Model.{Article, Community, DocTreeNode}
   alias Helper.{ORM, T}
 
   @tree_node_type_tab CMS.DocTree.Const.tree_node_type(:tab)
@@ -56,23 +54,31 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
         user,
         true
       )
-      #=> {:ok, %DocSnapshot{}}
+      #=> {:ok, %{version: %DocBranchVersion{}, revision: %ArticleRevision{}}}
 
   """
   def publish_doc_draft(
         %Community{} = community,
         branch,
-        %{doc_id: doc_id, page_node_id: page_node_id},
+        %{
+          doc_id: doc_id,
+          page_node_id: page_node_id,
+          draft_version: draft_version,
+          lifecycle_version: lifecycle_version
+        },
         %User{} = user,
         sync_cover?
       ) do
     with {:ok, page} <- find_publish_page(community, branch, doc_id, page_node_id),
          {:ok, ancestors} <- ancestor_chain(community, branch, page),
-         {:ok, snapshot} <-
-           CMS.Docs.publish_draft(community, doc_id, user, branch_id: branch.id),
+         {:ok, published} <-
+           CMS.Docs.publish_branch(doc_id, branch.id, user,
+             expected_draft_version: draft_version,
+             expected_lifecycle_version: lifecycle_version
+           ),
          {:ok, public_ancestors} <- upsert_public_ancestors(community, branch, ancestors),
          {:ok, public_page} <-
-           upsert_public_node(community, branch, page, snapshot.article_hash_id),
+           upsert_public_node(community, branch, page, doc_id),
          {:ok, _sync} <-
            maybe_sync_cover(
              community,
@@ -86,52 +92,23 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
         branch_id: branch.id
       )
 
-      {:ok, snapshot}
+      {:ok, published}
     end
   end
 
-  @spec move_doc_to_draft(Community.t(), term(), T.id(), User.t()) :: T.domain_res(Doc.t())
+  @spec move_doc_to_draft(Community.t(), term(), T.id(), User.t()) ::
+          T.domain_res(CMS.Model.DocDraft.t())
   def move_doc_to_draft(%Community{} = community, branch, node_id, %User{} = user) do
     with {:ok, draft_node} <- find_draft_node(community, branch, node_id),
-         {:ok, public_doc} <-
-           ORM.find_by(Doc,
-             community_id: community.id,
-             branch_id: branch.id,
-             article_hash_id: draft_node.doc_id,
-             stage: CMS.Const.stage(:public)
-           ),
-         {:ok, document} <-
-           ORM.find_by(ArticleDocument, article_id: public_doc.id, thread: :doc) do
-      MutationLock.with_article(community, :doc, branch.id, public_doc.article_hash_id, fn ->
-        case CMS.Gate.access_check(user, :edit, public_doc) do
-          {:ok, canonical_doc} ->
-            read_or_create_draft(community, branch, canonical_doc, document, user)
-
-          {:error, %Decision{} = decision} ->
-            {:error, Decision.primary_error(decision)}
-        end
+         %Article{community_id: community_id, thread: :doc} = article
+         when community_id == community.id <- Repo.get(Article, draft_node.doc_id),
+         {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user) do
+      CMS.Gate.Access.with_branch_check(user, :edit, article, branch.id, fn canonical ->
+        Store.ensure_from_public(canonical, author, branch_id: branch.id)
       end)
-    end
-  end
-
-  defp read_or_create_draft(community, branch, public_doc, document, user) do
-    case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
-      {:ok, draft} ->
-        {:ok, draft}
-
-      {:error, _} ->
-        Draft.create(
-          community,
-          :doc,
-          %{
-            branch_id: branch.id,
-            article_hash_id: public_doc.article_hash_id,
-            title: public_doc.title,
-            slug: public_doc.slug,
-            body_bag: BodyBag.from_document_map(document)
-          },
-          user
-        )
+    else
+      nil -> {:error, ErrorCat.custom("Doc Article not found")}
+      error -> error
     end
   end
 
@@ -214,8 +191,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     collect_ancestors(nodes, page.parent_node_id, [], MapSet.new())
   end
 
-  defp collect_ancestors(_nodes, nil, ancestors, _seen),
-    do: {:ok, ancestors}
+  defp collect_ancestors(_nodes, nil, ancestors, _seen) do
+    {:ok, ancestors}
+  end
 
   defp collect_ancestors(nodes, node_id, ancestors, seen) do
     cond do
@@ -290,17 +268,20 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     })
   end
 
-  defp maybe_sync_cover(_community, _published_group, _published_page, false),
-    do: {:ok, :skipped}
+  defp maybe_sync_cover(_community, _published_group, _published_page, false) do
+    {:ok, :skipped}
+  end
 
-  defp maybe_sync_cover(_community, nil, _published_page, true),
-    do: {:ok, :skipped}
+  defp maybe_sync_cover(_community, nil, _published_page, true) do
+    {:ok, :skipped}
+  end
 
   defp maybe_sync_cover(
          %Community{} = community,
          %DocTreeNode{} = group,
          %DocTreeNode{} = page,
          true
-       ),
-       do: Sync.sync_published_page(community, group, page)
+       ) do
+    Sync.sync_published_page(community, group, page)
+  end
 end

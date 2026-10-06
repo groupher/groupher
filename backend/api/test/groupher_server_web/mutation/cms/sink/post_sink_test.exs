@@ -25,8 +25,8 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       result = rule_conn |> gq_mutation(S.Article.m(:sink_article, :post), variables)
       assert result["innerId"] == to_string(post.inner_id)
 
-      {:ok, post} = ORM.find(Post, post.id)
-      assert post.meta.is_sunk
+      post = Repo.get!(CMS.Model.Article, post.id)
+      assert post.is_sunk
       assert post.active_at == post.inserted_at
     end
 
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
              )
     end
 
-    test "login user can undo sink to a post", ~m(community post)a do
+    test "login user can undo sink to a post", ~m(community post user)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
@@ -51,13 +51,12 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       passport_rules = %{community.slug => %{"post.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      {:ok, _} = CMS.Articles.sink(post)
+      {:ok, _} = CMS.Articles.sink(post.id, user)
 
       updated = rule_conn |> gq_mutation(S.Article.m(:undo_sink_article, :post), variables)
       assert updated["innerId"] == to_string(post.inner_id)
 
-      {:ok, post} = ORM.find(Post, post.id)
-      assert not post.meta.is_sunk
+      refute Repo.get!(CMS.Model.Article, post.id).is_sunk
     end
 
     test "unauth user undo sink a post fails", ~m(guest_conn community post)a do

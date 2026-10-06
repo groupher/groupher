@@ -3,9 +3,8 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.{CMS, PublicCache}
+  alias GroupherServer.CMS
   alias CMS.Model.CommunityDashboard
-  alias PublicCache.Model.Invalidation
 
   @default_dashboard CommunityDashboard.default()
 
@@ -92,7 +91,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     test "base info emits one public presentation invalidation", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
-      before_count = Repo.aggregate(Invalidation, :count)
+      before_count = Repo.aggregate(CMS.Outbox.Event, :count)
 
       assert {:ok, _dashboard} =
                CMS.Dashboard.update(community, :base_info, %{
@@ -100,7 +99,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
                  title: "One invalidation"
                })
 
-      assert Repo.aggregate(Invalidation, :count) == before_count + 1
+      assert Repo.aggregate(CMS.Outbox.Event, :count) == before_count + 1
     end
 
     test "update base info should reject invalid slug format", ~m(community_attrs user)a do

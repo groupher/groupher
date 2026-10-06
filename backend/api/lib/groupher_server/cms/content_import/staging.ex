@@ -50,27 +50,27 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
     end
   end
 
-  def stage(%Community{}, _job_ref, _items),
-    do:
-      {:error, ErrorCat.custom("BodyBag batch must contain between 1 and 4 items")}
+  def stage(%Community{}, _job_ref, _items) do
+    {:error, ErrorCat.custom("BodyBag batch must contain between 1 and 4 items")}
+  end
 
   defp validate_unique_refs(items) do
     refs = Enum.map(items, &value(&1, "external_ref"))
 
-    if Enum.all?(refs, &(is_binary(&1) and &1 != "")) and length(Enum.uniq(refs)) == length(refs),
-      do: :ok,
-      else:
-        {:error,
-         ErrorCat.custom(
-           "BodyBag batch contains an invalid or duplicate externalRef"
-         )}
+    if Enum.all?(refs, &(is_binary(&1) and &1 != "")) and length(Enum.uniq(refs)) == length(refs) do
+      :ok
+    else
+      {:error, ErrorCat.custom("BodyBag batch contains an invalid or duplicate externalRef")}
+    end
   end
 
-  defp ensure_stageable(%Job{status: status}) when status in [:staging, :ready, :completed],
-    do: :ok
+  defp ensure_stageable(%Job{status: status}) when status in [:staging, :ready, :completed] do
+    :ok
+  end
 
-  defp ensure_stageable(job),
-    do: {:error, ErrorCat.custom("ImportJob is not stageable from #{job.status}")}
+  defp ensure_stageable(job) do
+    {:error, ErrorCat.custom("ImportJob is not stageable from #{job.status}")}
+  end
 
   defp stage_items(job, items) do
     Enum.reduce_while(items, :ok, fn input, :ok ->
@@ -225,8 +225,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
         :ok
 
       %StagedBody{} ->
-        {:error,
-         ErrorCat.custom("BodyBag staging changed for an existing externalRef")}
+        {:error, ErrorCat.custom("BodyBag staging changed for an existing externalRef")}
 
       nil ->
         attrs = %{
@@ -245,8 +244,9 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
     end
   end
 
-  defp stage_skip(%Item{content_status: :ready}, _code),
-    do: {:error, ErrorCat.custom("A ready BodyBag cannot be replaced with a skip")}
+  defp stage_skip(%Item{content_status: :ready}, _code) do
+    {:error, ErrorCat.custom("A ready BodyBag cannot be replaced with a skip")}
+  end
 
   defp stage_skip(item, "content_too_large") do
     case item
@@ -264,8 +264,9 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
     end
   end
 
-  defp stage_skip(_item, _code),
-    do: {:error, ErrorCat.custom("Only content_too_large may be skipped")}
+  defp stage_skip(_item, _code) do
+    {:error, ErrorCat.custom("Only content_too_large may be skipped")}
+  end
 
   defp stage_failure(
          %Job{status: :completed},
@@ -278,16 +279,17 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
          code,
          message,
          stage
-       ),
-       do: :ok
+       ) do
+    :ok
+  end
 
-  defp stage_failure(%Job{status: :completed}, _item, _code, _message, _stage),
-    do: {:error, ErrorCat.custom("Completed ImportJob staging payload changed")}
+  defp stage_failure(%Job{status: :completed}, _item, _code, _message, _stage) do
+    {:error, ErrorCat.custom("Completed ImportJob staging payload changed")}
+  end
 
-  defp stage_failure(_job, %Item{content_status: :ready}, _code, _message, _stage),
-    do:
-      {:error,
-       ErrorCat.custom("A ready BodyBag cannot be replaced with a failure")}
+  defp stage_failure(_job, %Item{content_status: :ready}, _code, _message, _stage) do
+    {:error, ErrorCat.custom("A ready BodyBag cannot be replaced with a failure")}
+  end
 
   defp stage_failure(_job, item, code, message, stage)
        when is_binary(code) and byte_size(code) > 0 and is_binary(message) and
@@ -307,12 +309,9 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
     end
   end
 
-  defp stage_failure(_job, _item, _code, _message, _stage),
-    do:
-      {:error,
-       ErrorCat.custom(
-         "A failed staging item requires code, message, and a valid stage"
-       )}
+  defp stage_failure(_job, _item, _code, _message, _stage) do
+    {:error, ErrorCat.custom("A failed staging item requires code, message, and a valid stage")}
+  end
 
   defp lock_item(job_id, external_ref) do
     case Repo.one(

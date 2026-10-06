@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
   `branch_id` and `branch_policy: :main` are mutually exclusive. Public reads
   use the main policy; draft and editor reads name a concrete branch.
 
-      Reader -> Doc scope context -> Gate.scope -> Doc Scope query
+      Query -> Doc scope context -> Gate.scope -> Doc Scope query
 
   Examples:
 
@@ -34,12 +34,14 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
         }
 
   @doc "Builds a public Doc read intent for the official main branch."
-  def public_main(opts \\ []),
-    do: build(:public, Keyword.get(opts, :policy_mode, :public), nil, :main, opts)
+  def public_main(opts \\ []) do
+    build(:public, Keyword.get(opts, :policy_mode, :public), nil, :main, opts)
+  end
 
   @doc "Builds a public Doc read intent for a concrete branch."
-  def public_branch(branch_id, opts \\ []),
-    do: build(:public, Keyword.get(opts, :policy_mode, :public), branch_id, nil, opts)
+  def public_branch(branch_id, opts \\ []) do
+    build(:public, Keyword.get(opts, :policy_mode, :public), branch_id, nil, opts)
+  end
 
   @doc "Builds a management-scoped draft Doc read intent for a branch."
   def draft(branch_id, policy_mode \\ :owner_management, opts \\ []) do

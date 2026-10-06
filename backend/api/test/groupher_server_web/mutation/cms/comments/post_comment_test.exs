@@ -434,8 +434,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert result["innerId"] == to_string(post.inner_id)
 
-      {:ok, post} = ORM.find(Post, post.id)
-      assert post.meta.is_comment_locked
+      post = Repo.get!(CMS.Model.Article, post.id)
+      assert post.comments_locked
     end
 
     test "unauth user fails", ~m(guest_conn community post)a do
@@ -451,9 +451,9 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              )
     end
 
-    test "can undo lock a post's comment", ~m(community post)a do
-      {:ok, _} = CMS.Articles.lock_comments(post)
-      {:ok, post} = ORM.find(Post, post.id)
+    test "can undo lock a post's comment", ~m(community post user)a do
+      {:ok, _} = CMS.Articles.lock_comments(post.id, user)
+      {:ok, post} = read_article(community, :post, post.inner_id)
       assert post.meta.is_comment_locked
 
       variables = %{
@@ -467,7 +467,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert result["innerId"] == to_string(post.inner_id)
 
-      {:ok, post} = ORM.find(Post, post.id)
+      {:ok, post} = read_article(community, :post, post.inner_id)
       assert not post.meta.is_comment_locked
     end
 

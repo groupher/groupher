@@ -8,7 +8,10 @@ import type { TDocDraftInfo } from '../store/spec'
 export type TDocDraftDTO = {
   id: string
   docId?: string | null
+  branchId?: string | null
   version?: number | null
+  contentHash?: string | null
+  baseRevisionId?: string | null
   title?: string | null
   subtitle?: string | null
   slug?: string | null
@@ -46,11 +49,14 @@ export type TSavedDraft = {
   bodyValue: TRichEditorValue
   bodyJson: string
   revisionSignature: string
+  serverContentHash: string
+  baseRevisionId: string | null
 }
 
 export type TDocDraftSource = 'draft' | 'public'
 
 export type TEditorDraftMeta = {
+  branchId: string
   stage?: TArticleStage | null
   insertedAt: string | null
   updatedAt: string | null
@@ -93,4 +99,6 @@ export type TDocDraftSession = {
   slug: string
   subtitle: string
   title: string
+  serverContentHash: string
+  baseRevisionId: string | null
 }

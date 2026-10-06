@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Interactions.Const do
   @moduledoc """
   Canonical order vocabulary accepted by the Interaction query scope.
 
-      Article Reader
+      Article Query
         -> Interactions.Const
         -> Interactions.Scope
         -> Ecto query

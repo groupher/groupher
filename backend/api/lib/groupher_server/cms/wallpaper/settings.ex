@@ -76,8 +76,9 @@ defmodule GroupherServer.CMS.Wallpaper.Settings do
   @doc "Asserts that the Snapshot JSON version and its mirrored database column agree."
   @spec assert_persisted_version!(canonical(), integer()) :: :ok
   def assert_persisted_version!(%{"settingsSchemaVersion" => version}, version)
-      when is_integer(version) and version == @version,
-      do: :ok
+      when is_integer(version) and version == @version do
+    :ok
+  end
 
   def assert_persisted_version!(settings, schema_version) do
     raise ArgumentError,
@@ -87,8 +88,9 @@ defmodule GroupherServer.CMS.Wallpaper.Settings do
   @doc "Asserts that incoming settings use the current supported schema version."
   @spec assert_current_version!(canonical()) :: :ok
   def assert_current_version!(%{"settingsSchemaVersion" => version})
-      when is_integer(version) and version == @version,
-      do: :ok
+      when is_integer(version) and version == @version do
+    :ok
+  end
 
   def assert_current_version!(settings) do
     raise ArgumentError,
@@ -238,13 +240,15 @@ defmodule GroupherServer.CMS.Wallpaper.Settings do
 
   defp valid_gradient_shape?(value) when value in [:circle, :ellipse], do: true
 
-  defp valid_gradient_shape?(value) when is_binary(value),
-    do: value in ["circle", "ellipse"]
+  defp valid_gradient_shape?(value) when is_binary(value) do
+    value in ["circle", "ellipse"]
+  end
 
   defp valid_gradient_shape?(_value), do: false
 
-  defp valid_string_list?(value) when is_list(value),
-    do: value != [] and Enum.all?(value, &is_binary/1)
+  defp valid_string_list?(value) when is_list(value) do
+    value != [] and Enum.all?(value, &is_binary/1)
+  end
 
   defp valid_string_list?(_value), do: false
 
@@ -252,11 +256,13 @@ defmodule GroupherServer.CMS.Wallpaper.Settings do
 
   defp valid_number_list?(_value), do: false
 
-  defp optional_number?(value, key),
-    do: not has_key?(value, key) or is_number_value?(get(value, key))
+  defp optional_number?(value, key) do
+    not has_key?(value, key) or is_number_value?(get(value, key))
+  end
 
-  defp optional_number_list?(value, key),
-    do: not has_key?(value, key) or valid_number_list?(get(value, key))
+  defp optional_number_list?(value, key) do
+    not has_key?(value, key) or valid_number_list?(get(value, key))
+  end
 
   defp is_number_value?(value), do: is_integer(value) or is_float(value)
 
@@ -274,8 +280,9 @@ defmodule GroupherServer.CMS.Wallpaper.Settings do
     Enum.any?(Map.keys(value), &(to_string(&1) == Atom.to_string(key)))
   end
 
-  defp normalize_gradient_renderer(value) when value in [:linear, :radial, :flow, :liquid],
-    do: value
+  defp normalize_gradient_renderer(value) when value in [:linear, :radial, :flow, :liquid] do
+    value
+  end
 
   defp normalize_gradient_renderer(value) when is_binary(value) do
     case value do
@@ -332,8 +339,9 @@ defmodule GroupherServer.CMS.Wallpaper.Settings do
 
   defp normalize_custom_type(value) when value in [:gradient, :picture], do: value
 
-  defp normalize_custom_type(value) when value in [:GRADIENT, :PICTURE],
-    do: value |> Atom.to_string() |> String.downcase() |> String.to_existing_atom()
+  defp normalize_custom_type(value) when value in [:GRADIENT, :PICTURE] do
+    value |> Atom.to_string() |> String.downcase() |> String.to_existing_atom()
+  end
 
   defp normalize_custom_type(value) when is_binary(value) do
     case String.downcase(value) do

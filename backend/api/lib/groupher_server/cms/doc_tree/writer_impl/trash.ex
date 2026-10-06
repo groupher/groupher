@@ -196,9 +196,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
     Enum.reduce_while(rows, :ok, fn row, :ok ->
       changeset = TrashedDocTreeNode.changeset(%TrashedDocTreeNode{}, row)
 
-      if changeset.valid?,
-        do: {:cont, :ok},
-        else: {:halt, {:error, changeset}}
+      if changeset.valid? do
+        {:cont, :ok}
+      else
+        {:halt, {:error, changeset}}
+      end
     end)
   end
 
@@ -220,9 +222,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
       ids ->
         {count, _} = DocTreeNode |> where([node], node.id in ^ids) |> Repo.delete_all()
 
-        if count == length(ids),
-          do: :ok,
-          else: {:error, ErrorCat.custom("Docs Tree changed during Trash")}
+        if count == length(ids) do
+          :ok
+        else
+          {:error, ErrorCat.custom("Docs Tree changed during Trash")}
+        end
     end
   end
 

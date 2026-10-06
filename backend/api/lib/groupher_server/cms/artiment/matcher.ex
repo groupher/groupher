@@ -26,21 +26,18 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
   alias CMS.Model.Embeds.CommentMeta
 
   alias CMS.Model.{
-    Blog,
     BlogEmotionInfo,
     BlogReactionInfo,
-    Changelog,
     ChangelogEmotionInfo,
     ChangelogReactionInfo,
     Comment,
     CommentEmotionInfo,
     CommentReactionInfo,
-    Doc,
     DocEmotionInfo,
     DocReactionInfo,
-    Post,
     PostEmotionInfo,
-    PostReactionInfo
+    PostReactionInfo,
+    Article
   }
 
   @type match_info :: %{
@@ -107,33 +104,27 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
   @doc "Resolves the complete Interaction metadata for an Artiment kind, schema, or struct."
   @spec match_interaction(atom() | struct()) ::
           {:ok, interaction_info()} | {:error, ErrorCat.error()}
-  def match_interaction(%Post{}), do: match_interaction(:post)
-  def match_interaction(Post), do: match_interaction(:post)
+  def match_interaction(%Article{thread: thread}), do: stable_interaction_info(thread)
 
-  def match_interaction(%Blog{}), do: match_interaction(:blog)
-  def match_interaction(Blog), do: match_interaction(:blog)
-
-  def match_interaction(%Changelog{}), do: match_interaction(:changelog)
-  def match_interaction(Changelog), do: match_interaction(:changelog)
-
-  def match_interaction(%Doc{}), do: match_interaction(:doc)
-  def match_interaction(Doc), do: match_interaction(:doc)
+  def match_interaction(%{id: id, thread: thread}) when is_binary(id) do
+    stable_interaction_info(thread)
+  end
 
   def match_interaction(%Comment{}), do: match_interaction(:comment)
   def match_interaction(Comment), do: match_interaction(:comment)
 
   def match_interaction(:post) do
-    interaction_info(:post, Post, PostReactionInfo, PostEmotionInfo, true)
+    interaction_info(:post, Article, PostReactionInfo, PostEmotionInfo, true)
   end
 
   def match_interaction(:blog) do
-    interaction_info(:blog, Blog, BlogReactionInfo, BlogEmotionInfo, true)
+    interaction_info(:blog, Article, BlogReactionInfo, BlogEmotionInfo, true)
   end
 
   def match_interaction(:changelog) do
     interaction_info(
       :changelog,
-      Changelog,
+      Article,
       ChangelogReactionInfo,
       ChangelogEmotionInfo,
       true
@@ -141,7 +132,7 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
   end
 
   def match_interaction(:doc) do
-    interaction_info(:doc, Doc, DocReactionInfo, DocEmotionInfo, true)
+    interaction_info(:doc, Article, DocReactionInfo, DocEmotionInfo, true)
   end
 
   def match_interaction(:comment) do
@@ -154,14 +145,22 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
   thread_query_matches()
 
   defp interaction_info(artiment, model, reaction_info_model, emotion_info_model, collection?) do
+    foreign_key = if artiment == :comment, do: :comment_id, else: :article_id
+
     {:ok,
      %{
        artiment: artiment,
        model: model,
-       foreign_key: :"#{artiment}_id",
+       foreign_key: foreign_key,
        reaction_info_model: reaction_info_model,
        emotion_info_model: emotion_info_model,
        collection?: collection?
      }}
+  end
+
+  defp stable_interaction_info(thread) do
+    with {:ok, info} <- match_interaction(thread) do
+      {:ok, %{info | model: Article, foreign_key: :article_id}}
+    end
   end
 end

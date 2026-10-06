@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ModelTest do
   use GroupherServer.DataCase, async: true
 
   alias GroupherServer.CMS
+
   alias CMS.Model.{
     CommentEmotionInfo,
     CommentReactionInfo,
@@ -19,6 +20,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ModelTest do
   test "reaction and emotion info require their target relation" do
     refute PostReactionInfo.changeset(%PostReactionInfo{}, %{}).valid?
     refute CommentEmotionInfo.changeset(%CommentEmotionInfo{}, %{emotion: "beer"}).valid?
-    refute PostEmotionInfo.changeset(%PostEmotionInfo{}, %{post_id: 1}).valid?
+
+    refute PostEmotionInfo.changeset(%PostEmotionInfo{}, %{article_id: Ecto.UUID.generate()}).valid?
   end
 end

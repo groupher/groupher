@@ -11,6 +11,7 @@
 - [`artiment/`](./artiment)：Artiment 公共命令边界。
 - [`community/`](./community)：Community 成员、计费和产品能力。
 - [`docs/`](./docs)：Docs Tree、Snapshot、Cover 和 ID 模型。
+- [`front-desk/`](./front-desk)：顶层资源单条读取、全局入口与领域委托边界。
 - [`gate/`](./gate)：读取范围、操作准入和 typed context。
 - [`interaction/`](./interaction)：Upvote、Collect、Emotion 与同步读取投影。
 - [`view-tracker/`](./view-tracker)：Article 有效阅读的身份识别、分类、去重与计数。

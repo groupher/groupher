@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       created = user_conn |> gq_mutation(S.Article.m(:create_article, :changelog), variables)
 
       {:ok, changelog} =
-        CMS.FrontDesk.article(community, :changelog, created["innerId"], preload: :community_tags)
+        read_article(community, :changelog, created["innerId"], preload: :community_tags)
 
       assert exist_in?(%{id: community_tag.id}, changelog.community_tags)
     end
@@ -64,7 +64,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       result = user_conn |> gq_mutation(S.Article.m(:create_article, :changelog), variables)
 
       {:ok, changelog} =
-        CMS.FrontDesk.article(community, :changelog, result["innerId"], preload: :document)
+        read_article(community, :changelog, result["innerId"], preload: :document)
 
       body_html = changelog |> get_in([:document, :html])
 
@@ -78,7 +78,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       result = user_conn |> gq_mutation(S.Article.m(:create_article, :changelog), variables)
 
       {:ok, changelog} =
-        CMS.FrontDesk.article(community, :changelog, result["innerId"], preload: :document)
+        read_article(community, :changelog, result["innerId"], preload: :document)
 
       body_html = changelog |> get_in([:document, :html])
 
@@ -220,7 +220,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     end
 
     test "login user with auth passport update a changelog", ~m(community changelog)a do
-      changelog = changelog |> Repo.preload(:communities)
       belongs_community_slug = changelog.communities |> List.first() |> Map.get(:slug)
 
       passport_rules = %{belongs_community_slug => %{"changelog.edit" => true}}

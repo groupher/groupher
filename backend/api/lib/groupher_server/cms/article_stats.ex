@@ -12,15 +12,26 @@ defmodule GroupherServer.CMS.ArticleStats do
                   cms.article_stats
                   cms.article_emotion_counts
 
-  Both projections use the existing physical Article identity
-  `{thread, article_id}`. Public reads aggregate them in one PostgreSQL query.
+  Both projections use the stable Article identity `{thread, article_id}`.
+  Public reads aggregate them in one PostgreSQL query.
   """
 
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.{Matcher, Threads}
-  alias CMS.Model.{ArticleEmotionCount, ArticleStats}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.FrontDesk
+
+  alias CMS.Model.{
+    Article,
+    ArticleCommunity,
+    ArticleEmotionCount,
+    ArticleStats,
+    Comment,
+    CommentLifecycle,
+    Community
+  }
 
   @article_threads Threads.article_enums()
   @article_emotions CMS.Artiment.Config.emotions() -- [:upvote, :collect]
@@ -42,9 +53,9 @@ defmodule GroupherServer.CMS.ArticleStats do
   end
 
   @doc "Atomically increments the ViewTracker-owned counter and returns the complete row."
-  @spec increment_views(atom(), pos_integer()) :: {:ok, map()} | {:error, term()}
+  @spec increment_views(atom(), Ecto.UUID.t()) :: {:ok, map()} | {:error, term()}
   def increment_views(thread, article_id)
-      when thread in @article_threads and is_integer(article_id) and article_id > 0 do
+      when thread in @article_threads and is_binary(article_id) do
     conflict_query =
       from(stats in ArticleStats,
         update: [
@@ -97,6 +108,48 @@ defmodule GroupherServer.CMS.ArticleStats do
             comments_count: comments_count,
             comments_participants_count: participants_count,
             comments_revision: comments_revision
+          }
+        ],
+        on_conflict: conflict_query,
+        conflict_target: @conflict_target
+      )
+
+      :ok
+    end
+  end
+
+  @doc "Refreshes Comment-owned counts and atomically advances the public comments revision."
+  @spec record_comment_change(Article.t()) :: :ok | {:error, term()}
+  def record_comment_change(%Article{} = article) do
+    with {:ok, comments_count} <- owner_count(article, :comments_count),
+         {:ok, participants_count} <- owner_count(article, :comments_participants_count) do
+      now = DateTime.utc_now(:second)
+
+      conflict_query =
+        from(stats in ArticleStats,
+          update: [
+            inc: [comments_revision: 1],
+            set: [
+              comments_count: ^comments_count,
+              comments_participants_count: ^participants_count,
+              snapshot_at: ^now,
+              updated_at: ^now
+            ]
+          ]
+        )
+
+      Repo.insert_all(
+        ArticleStats,
+        [
+          %{
+            thread: article.thread,
+            article_id: article.id,
+            comments_count: comments_count,
+            comments_participants_count: participants_count,
+            comments_revision: 1,
+            snapshot_at: now,
+            inserted_at: now,
+            updated_at: now
           }
         ],
         on_conflict: conflict_query,
@@ -185,6 +238,22 @@ defmodule GroupherServer.CMS.ArticleStats do
 
   @doc "Repairs only Comments-owned fields from the current physical Article row."
   @spec rebuild_comment_fields(struct()) :: :ok | {:error, term()}
+  def rebuild_comment_fields(%Article{id: article_id}) do
+    Repo.transaction(fn ->
+      current =
+        Article
+        |> where([article], article.id == ^article_id)
+        |> lock("FOR UPDATE")
+        |> Repo.one()
+
+      case current do
+        %Article{} -> record_comment_change(current)
+        nil -> Repo.rollback(:article_not_found)
+      end
+    end)
+    |> transaction_result()
+  end
+
   def rebuild_comment_fields(article) when is_struct(article) do
     schema = article.__struct__
 
@@ -236,9 +305,9 @@ defmodule GroupherServer.CMS.ArticleStats do
   end
 
   @doc "Removes both public projections during permanent Article deletion."
-  @spec delete(atom(), pos_integer()) :: :ok
+  @spec delete(atom(), Ecto.UUID.t()) :: :ok
   def delete(thread, article_id)
-      when thread in @article_threads and is_integer(article_id) and article_id > 0 do
+      when thread in @article_threads and is_binary(article_id) do
     Repo.delete_all(
       from(emotion in ArticleEmotionCount,
         where: emotion.thread == ^thread and emotion.article_id == ^article_id
@@ -254,9 +323,9 @@ defmodule GroupherServer.CMS.ArticleStats do
     :ok
   end
 
-  @doc "Returns one complete row by physical Article identity."
-  @spec fetch(atom(), pos_integer()) :: {:ok, map()} | {:error, :article_stats_not_found}
-  def fetch(thread, article_id) when thread in @article_threads and is_integer(article_id) do
+  @doc "Returns one complete row by stable Article identity."
+  @spec fetch(atom(), Ecto.UUID.t()) :: {:ok, map()} | {:error, :article_stats_not_found}
+  def fetch(thread, article_id) when thread in @article_threads and is_binary(article_id) do
     case Map.get(load_snapshots(thread, [article_id]), article_id) do
       nil -> {:error, :article_stats_not_found}
       stats -> {:ok, stats}
@@ -271,6 +340,132 @@ defmodule GroupherServer.CMS.ArticleStats do
     thread
     |> load_snapshots(ids)
     |> Map.new(fn {article_id, stats} -> {{thread, article_id}, stats} end)
+  end
+
+  @doc "Reads public ArticleStats for one Community/thread batch."
+  @spec read_public(String.t(), atom(), [String.t() | integer()]) ::
+          {:ok, [map()]} | {:error, term()}
+  def read_public(community_ref, thread, inner_ids)
+      when is_binary(community_ref) and is_atom(thread) and is_list(inner_ids) do
+    with {:ok, inner_ids} <- normalize_inner_ids(inner_ids),
+         {:ok, stats} <- read_public_batch(community_ref, thread, inner_ids) do
+      {:ok, stats}
+    else
+      {:error, _} = error -> error
+    end
+  end
+
+  @doc "Builds ArticleStats for Articles already authorized by their caller's scope."
+  @spec for_public_articles(atom(), [struct()], String.t() | nil) ::
+          %{optional({atom(), integer()}) => map()} | {:error, term()}
+  def for_public_articles(thread, articles, community_ref \\ nil)
+      when is_atom(thread) and is_list(articles) do
+    articles = preload_stats_communities(articles, community_ref)
+    stats_by_article_id = for_articles(thread, articles)
+
+    with :ok <- ensure_stats_rows(articles, stats_by_article_id, thread) do
+      Map.new(articles, fn article ->
+        stats = Map.fetch!(stats_by_article_id, {thread, article.id})
+        community = community_ref || article_community_slug(article)
+
+        {{thread, article.id}, Map.put(stats, :community, community)}
+      end)
+    end
+  end
+
+  defp read_public_batch(_community_ref, _thread, []), do: {:ok, []}
+
+  defp read_public_batch(community_ref, thread, inner_ids) do
+    case FrontDesk.community(community_ref) do
+      {:ok, %Community{id: community_id}} ->
+        rows =
+          Article
+          |> join(:inner, [article], relation in ArticleCommunity,
+            on: relation.article_id == article.id and relation.visible == true
+          )
+          |> where(
+            [article, relation],
+            article.thread == ^thread and relation.community_id == ^community_id and
+              article.inner_id in ^inner_ids
+          )
+          |> select([article, _relation], article)
+          |> Repo.all()
+
+        stats_by_article_id = for_articles(thread, rows)
+
+        with :ok <- ensure_stats_rows(rows, stats_by_article_id, thread) do
+          stats_by_inner_id =
+            Map.new(rows, fn article ->
+              stats = Map.fetch!(stats_by_article_id, {thread, article.id})
+
+              {to_string(article.inner_id),
+               Map.merge(stats, %{
+                 community: community_ref,
+                 thread: thread,
+                 inner_id: article.inner_id
+               })}
+            end)
+
+          {:ok,
+           Enum.flat_map(inner_ids, fn inner_id ->
+             case Map.fetch(stats_by_inner_id, to_string(inner_id)) do
+               {:ok, stats} -> [stats]
+               :error -> []
+             end
+           end)}
+        end
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
+  defp normalize_inner_ids(inner_ids) do
+    normalized =
+      Enum.reduce_while(inner_ids, {:ok, []}, fn value, {:ok, acc} ->
+        case Integer.parse(to_string(value)) do
+          {id, ""} when id > 0 -> {:cont, {:ok, [id | acc]}}
+          _ -> {:halt, :error}
+        end
+      end)
+
+    case normalized do
+      {:ok, ids} ->
+        ids = ids |> Enum.uniq() |> Enum.reverse()
+
+        if length(ids) <= 100 do
+          {:ok, ids}
+        else
+          {:error, ArticleErrorCat.article_not_found("too many article ids")}
+        end
+
+      :error ->
+        {:error, ArticleErrorCat.article_not_found("invalid article ids")}
+    end
+  end
+
+  defp ensure_stats_rows(articles, stats_by_article_id, thread) do
+    if Enum.all?(articles, &Map.has_key?(stats_by_article_id, {thread, &1.id})) do
+      :ok
+    else
+      {:error, ArticleErrorCat.projection_not_updated()}
+    end
+  end
+
+  defp article_community_slug(%{community: %Ecto.Association.NotLoaded{}}), do: nil
+  defp article_community_slug(%{community: %{slug: slug}}), do: slug
+  defp article_community_slug(_article), do: nil
+
+  defp preload_stats_communities(articles, community_ref) when is_binary(community_ref) do
+    articles
+  end
+
+  defp preload_stats_communities(articles, _community_ref) do
+    if Enum.all?(articles, &match?(%Article{}, &1)) do
+      Repo.preload(articles, :community)
+    else
+      articles
+    end
   end
 
   defp load_snapshots(_thread, []), do: %{}
@@ -355,6 +550,38 @@ defmodule GroupherServer.CMS.ArticleStats do
     end
   end
 
+  defp owner_count(%Article{id: article_id}, :comments_count) do
+    {:ok,
+     Repo.aggregate(
+       from(comment in Comment,
+         join: lifecycle in CommentLifecycle,
+         on: lifecycle.comment_id == comment.id,
+         where: comment.article_id == ^article_id and lifecycle.state == :visible
+       ),
+       :count
+     )}
+  end
+
+  defp owner_count(%Article{id: article_id}, :comments_participants_count) do
+    count =
+      from(comment in Comment,
+        join: lifecycle in CommentLifecycle,
+        on: lifecycle.comment_id == comment.id,
+        where: comment.article_id == ^article_id and lifecycle.state == :visible,
+        select: count(comment.author_id, :distinct)
+      )
+      |> Repo.one()
+
+    {:ok, count}
+  end
+
+  defp owner_count(%Article{id: article_id}, :comments_revision) do
+    count =
+      Repo.aggregate(from(comment in Comment, where: comment.article_id == ^article_id), :count)
+
+    {:ok, count}
+  end
+
   defp owner_count(owner, field) do
     case Map.fetch(owner, field) do
       {:ok, value} when is_integer(value) and value >= 0 -> {:ok, value}
@@ -371,7 +598,7 @@ defmodule GroupherServer.CMS.ArticleStats do
         info.reaction_info_model,
         [%{foreign_key => article.id, inserted_at: now, updated_at: now}],
         on_conflict: :nothing,
-        conflict_target: [foreign_key]
+        conflict_target: interaction_projection_conflict_target(foreign_key)
       )
 
       from(owner in info.reaction_info_model,
@@ -384,6 +611,12 @@ defmodule GroupherServer.CMS.ArticleStats do
       end
     end
   end
+
+  defp interaction_projection_conflict_target(:article_id) do
+    {:unsafe_fragment, "(article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+  end
+
+  defp interaction_projection_conflict_target(foreign_key), do: [foreign_key]
 
   defp transaction_result({:ok, :ok}), do: :ok
   defp transaction_result({:error, reason}), do: {:error, reason}

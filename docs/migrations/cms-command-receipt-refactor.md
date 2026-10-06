@@ -21,7 +21,7 @@ CommandReceipt.run_user_command(
   command,
   target_type,
   target_key,
-  fingerprint_data,
+  intent_params,
   execute,
   replay
 )
@@ -86,7 +86,7 @@ CMS domain Command
 
 - 更新 Transition Contract，移除对 `run_user_command/8` 和 replay callback 的长期冻结；
 - 新增 `docs/architecture/cms-command.md`；
-- 固定首次执行、相同 commandId 重试、不同 fingerprint 冲突、失败回滚和 retention 测试；
+- 固定首次执行、相同 commandId 重试、不同 intent params 冲突、失败回滚和 retention 测试；
 - 盘点所有 `run_user_command/8`、`command_replayed` 和前端消费点。
 
 验收：文档权威边界明确，现有行为测试可重复执行。
@@ -94,8 +94,8 @@ CMS domain Command
 ### Phase 1：建立 `CMS.Command` 内核
 
 - 建立 user-only 公共入口；
-- 将 Receipt、Store、timeout 和 fingerprint 编码收口为内部实现；
-- `command` 直接编码为 Receipt 的文本字段；本次不迁移历史 Receipt，也不提供跨版本 fingerprint 兼容；
+- 将 Receipt、Store、timeout 和 IntentCodec 编码收口为内部实现；
+- `command` 直接编码为 Receipt 的文本字段；本次不迁移历史 Receipt，也不提供 fingerprint 兼容；
 - 定义统一成功结果，不向领域 result 注入 replay 字段；
 - 不保留旧入口或兼容 adapter；Receipt runner 仅作为 `CMS.Command` 的内部实现。
 
@@ -145,8 +145,8 @@ transport 已完成 `commandKey` 到 `commandId` 的直接重命名。本次继�
 
 ### Phase 5：删除旧协议与更新权威文档（completed）
 
-- 删除 `run_user_command/8` 及其旧 facade/迁移 adapter；保留的 `CMS.CommandReceipt` 仅是
-  `CMS.Command` 调用的内部 Receipt facade，当前内部入口为 `run_internal`，不对领域调用方开放；
+- 删除 `run_user_command/8` 及其旧 facade/迁移 adapter；保留的 `CMS.Command.Receipt` 仅是
+  `CMS.Command` 调用的内部 Receipt facade，当前内部入口为 `execute`，不对领域调用方开放；
 - 删除 Runner 对领域 result shape 的嗅探；
 - 复核 Receipt schema、retention job 和 ErrorCat 命名；
 - 将 Transition Contract 从实施描述更新为稳定业务合同；
@@ -161,8 +161,10 @@ Receipt 保留窗口为 24 小时。这个窗口只保证同一发布版本内�
 
 - Receipt 字段统一使用 `command` 与 `command_id`；数据库字段、Ecto schema、Store 参数和领域 opts 不再保留
   `command_name` / `command_key`；
-- `command` 在 Store 边界编码为文本保存，fingerprint 使用当前版本冻结的 command/target/input 组合；
-- 不搬迁历史 Receipt，不提供旧字段 alias、fallback、双读双写或跨版本 fingerprint 兼容；
+- `command` 在 `CMS.Command` 边界编码为文本保存；每个 operation 的 IntentCodec policy 明确哪些标量
+  可诊断存储，正文和动态属性只保存逐字段 digest；
+- contract migration 主动清空历史 Receipt 并删除 legacy 结果列与 fingerprint 列；不提供旧字段
+  alias、fallback 或双读双写。历史 migration 文件仍保留，不改写；
 - 发布时客户端与服务端仍作为同一发布单元切换，混合 GraphQL 字段不属于受支持合同；
 - 内部 adapter 已删除，共享测试已迁移到 `CMS.Command` 内部入口。
 
@@ -200,4 +202,4 @@ git diff --check
 ```
 
 具体领域测试继续负责 Gate、Lifecycle、version、Trash、Release 和 effect 不变量；共享 Command
-测试只负责 identity、fingerprint、事务、结果恢复、冲突与 retention。
+测试只负责 identity、canonical intent params、事务、结果恢复、冲突与 retention。

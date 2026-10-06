@@ -27,7 +27,16 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   alias Accounts.Model.User
   alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
-  alias CMS.Model.Comment
+
+  alias CMS.Model.{
+    Article,
+    ArticlePublic,
+    ArticleRevision,
+    Comment,
+    DocBranch,
+    DocBranchVersion,
+    DocPublic
+  }
 
   @threads Config.threads()
   @valid_article_prefix Config.valid_article_prefixes()
@@ -116,11 +125,13 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     end
   end
 
-  defp inline_mention_type(%{"target_type" => type}) when is_binary(type),
-    do: parse_mention_type(type)
+  defp inline_mention_type(%{"target_type" => type}) when is_binary(type) do
+    parse_mention_type(type)
+  end
 
-  defp inline_mention_type(%{"mentioned_type" => type}) when is_binary(type),
-    do: parse_mention_type(type)
+  defp inline_mention_type(%{"mentioned_type" => type}) when is_binary(type) do
+    parse_mention_type(type)
+  end
 
   defp inline_mention_type(%{"value" => value}) when is_binary(value) do
     case String.split(value, ":", parts: 2) do
@@ -164,8 +175,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp extract_text(%{"text" => text}) when is_binary(text), do: text
 
-  defp extract_text(%{"children" => children}) when is_list(children),
-    do: Enum.map_join(children, " ", &extract_text/1)
+  defp extract_text(%{"children" => children}) when is_list(children) do
+    Enum.map_join(children, " ", &extract_text/1)
+  end
 
   defp extract_text(_), do: ""
 
@@ -321,7 +333,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp resolve_internal_mention(%{type: type, value: value} = candidate, cache)
        when type in @threads do
-    with id when not is_nil(id) <- cast_id(value),
+    with id when not is_nil(id) <- cast_article_id(value),
          articles <- Map.get(cache.articles_by_thread, type, %{}),
          article when not is_nil(article) <- Map.get(articles, id) do
       candidate
@@ -365,8 +377,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     |> maybe_put_parent_article(mentioned)
   end
 
-  defp maybe_put_parent_article(mention, %{parent_article: article}),
-    do: Map.put(mention, :parent_article, article)
+  defp maybe_put_parent_article(mention, %{parent_article: article}) do
+    Map.put(mention, :parent_article, article)
+  end
 
   defp maybe_put_parent_article(mention, _), do: mention
 
@@ -407,7 +420,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
       ids =
         candidates
         |> Enum.filter(&(&1.type == thread))
-        |> Enum.map(&cast_id(&1.value))
+        |> Enum.map(&cast_article_id(&1.value))
         |> Enum.reject(&is_nil/1)
         |> Enum.uniq()
 
@@ -418,16 +431,48 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   defp load_articles(_thread, []), do: %{}
 
   defp load_articles(thread, ids) do
-    case match(thread) do
-      {:ok, info} ->
-        info.model
-        |> where([a], a.id in ^ids)
-        |> Repo.all()
-        |> Map.new(&{&1.id, &1})
+    query =
+      case thread do
+        :doc ->
+          from(article in Article,
+            join: branch in DocBranch,
+            on: branch.community_id == article.community_id and branch.type == :main,
+            join: public in DocPublic,
+            on: public.article_id == article.id and public.branch_id == branch.id,
+            join: version in DocBranchVersion,
+            on: version.id == public.branch_version_id,
+            join: revision in ArticleRevision,
+            on: revision.id == version.revision_id,
+            where: article.id in ^ids and article.thread == :doc,
+            select: %{
+              id: article.id,
+              article_id: article.id,
+              branch_id: branch.id,
+              thread: article.thread,
+              community_id: article.community_id,
+              title: revision.title
+            }
+          )
 
-      _ ->
-        %{}
-    end
+        _ ->
+          from(article in Article,
+            join: public in ArticlePublic,
+            on: public.article_id == article.id,
+            join: revision in ArticleRevision,
+            on: revision.id == public.revision_id,
+            where: article.id in ^ids and article.thread == ^thread,
+            select: %{
+              id: article.id,
+              article_id: article.id,
+              branch_id: nil,
+              thread: article.thread,
+              community_id: article.community_id,
+              title: revision.title
+            }
+          )
+      end
+
+    query |> Repo.all() |> Map.new(&{&1.id, &1})
   end
 
   defp load_comments(candidates) do
@@ -487,6 +532,13 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     end
   end
 
+  defp cast_article_id(value) do
+    case Ecto.UUID.cast(value) do
+      {:ok, id} -> id
+      :error -> nil
+    end
+  end
+
   defp extract_links_from_text(text) do
     hrefs =
       @href_regex
@@ -536,8 +588,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp parse_thread_slug(_), do: {:error, ErrorCat.invalid_thread()}
 
-  defp site_article_link?(url),
-    do: Enum.any?(@valid_article_prefix, &String.starts_with?(url, &1))
+  defp site_article_link?(url) do
+    Enum.any?(@valid_article_prefix, &String.starts_with?(url, &1))
+  end
 
   defp link_for_comment?(url) do
     with %{query: query} <- URI.parse(url) do

@@ -20,22 +20,27 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   `docs/content-import/content-import-architecture.md`.
   """
 
-  require GroupherServer.CMS.Const
-
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Articles.{Draft, Trash}
-  alias CMS.Artiment.Matcher
-  alias CMS.ContentImport.{ImportSourceMapping, Jobs, Persistence.Job, Persistence.Job.Item, Threads.Doc.Validator}
+  alias CMS.Articles.Draft.Store
+
+  alias CMS.ContentImport.{
+    ImportSourceMapping,
+    Jobs,
+    Persistence.Job,
+    Persistence.Job.Item,
+    Threads.Doc.Validator
+  }
+
   alias CMS.ContentImport.Persistence.Job.Body, as: StagedBody
-  alias CMS.Docs.{Branch, Lifecycle}
+  alias CMS.Docs.Branch
   alias CMS.{DocTree, ErrorCat}
   alias CMS.DocTree.Import, as: DocTreeImport
-  alias CMS.DocTree.Reader, as: DocTreeReader
-  alias CMS.Model.{Community, TrashAction, TrashedDocArticle}
+  alias CMS.DocTree.State, as: DocTreeState
+  alias CMS.Model.{Article, Community, DocDraft, DocPublic, TrashAction, TrashedDocArticle}
   alias Helper.Transaction
 
   @doc "Atomically applies all ready items for one community Job."
@@ -72,8 +77,9 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
     end
   end
 
-  defp apply_locked(_community, job),
-    do: Repo.rollback(ErrorCat.content_import_job_not_ready(job.status))
+  defp apply_locked(_community, job) do
+    Repo.rollback(ErrorCat.content_import_job_not_ready(job.status))
+  end
 
   defp apply_to_main_draft(community, branch, actor, job) do
     with :ok <-
@@ -139,13 +145,13 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   # delete keeps the physical Article rows but hides them behind one grouped
   # Trash action, so active Draft reads cannot distinguish that state from a
   # genuinely missing Doc. Restore the owning action before source-wins writes
-  # reuse the mapped article_hash_id.
+  # Reuse the mapped stable Article id.
   defp restore_trashed_targets(community, branch, actor, ready_items) do
     ready_items
     |> Enum.map(& &1.target_ref)
     |> trashed_action_refs(community, branch)
     |> Enum.reduce_while(:ok, fn action_ref, :ok ->
-      with {:ok, state} <- DocTreeReader.ensure_draft_state(community, branch_id: branch.id),
+      with {:ok, state} <- DocTreeState.ensure_draft_state(community, branch_id: branch.id),
            {:ok, %{conflict: false}} <-
              DocTree.restore_trash_item(community, action_ref, %{
                actor_id: actor.id,
@@ -155,8 +161,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
         {:cont, :ok}
       else
         {:ok, %{conflict: true}} ->
-          {:halt,
-           {:error, ErrorCat.custom("The Docs Trash changed during import")}}
+          {:halt, {:error, ErrorCat.custom("The Docs Trash changed during import")}}
 
         {:error, reason} ->
           {:halt, {:error, reason}}
@@ -171,7 +176,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
       [item, action],
       item.community_id == ^community.id and
         item.branch_id == ^branch.id and
-        item.article_hash_id in ^target_refs and action.community_id == ^community.id
+        item.article_id in ^target_refs and action.community_id == ^community.id
     )
     |> order_by([_item, action], asc: action.id)
     |> select([_item, action], action.hash_id)
@@ -182,41 +187,31 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   defp load_target_states(community, branch, items) do
     target_refs = items |> Enum.map(& &1.target_ref) |> Enum.uniq()
 
-    with {:ok, %{model: model}} <- Matcher.match(:doc) do
-      draft_refs =
-        target_refs
-        |> target_refs_by_stage(model, community, branch, CMS.Const.stage(:draft))
-        |> MapSet.new()
+    draft_refs = target_refs_by_stage(DocDraft, community, branch, target_refs) |> MapSet.new()
+    public_refs = target_refs_by_stage(DocPublic, community, branch, target_refs) |> MapSet.new()
 
-      public_refs =
-        target_refs
-        |> target_refs_by_stage(model, community, branch, CMS.Const.stage(:public))
-        |> MapSet.new()
+    states =
+      Map.new(target_refs, fn target_ref ->
+        state =
+          cond do
+            MapSet.member?(draft_refs, target_ref) -> :draft
+            MapSet.member?(public_refs, target_ref) -> :public
+            true -> :missing
+          end
 
-      states =
-        Map.new(target_refs, fn target_ref ->
-          state =
-            cond do
-              MapSet.member?(draft_refs, target_ref) -> :draft
-              MapSet.member?(public_refs, target_ref) -> :public
-              true -> :missing
-            end
+        {target_ref, state}
+      end)
 
-          {target_ref, state}
-        end)
-
-      {:ok, states}
-    end
+    {:ok, states}
   end
 
-  defp target_refs_by_stage(target_refs, model, community, branch, stage) do
+  defp target_refs_by_stage(model, community, branch, target_refs) do
     model
-    |> Trash.not_trashed_scope(:doc)
-    |> where([article], article.article_hash_id in ^target_refs)
-    |> where([article], article.community_id == ^community.id)
-    |> where([article], article.branch_id == ^branch.id)
-    |> where([article], article.stage == ^stage)
-    |> select([article], article.article_hash_id)
+    |> join(:inner, [version], article in Article, on: article.id == version.article_id)
+    |> where([version, article], article.id in ^target_refs)
+    |> where([version, article], article.community_id == ^community.id)
+    |> where([version, _article], version.branch_id == ^branch.id)
+    |> select([version, _article], version.article_id)
     |> Repo.all()
   end
 
@@ -225,7 +220,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
       body = Map.fetch!(bodies, item.external_ref)
 
       attrs = %{
-        article_hash_id: item.target_ref,
+        article_id: item.target_ref,
         body_bag: body.body_bag,
         branch_id: branch.id,
         slug: item.slug,
@@ -247,31 +242,40 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   end
 
   defp write_item(community, target_ref, attrs, actor, branch, state) do
-    with {:ok, _lifecycle} <- Lifecycle.ensure_created(community.id, branch.id, target_ref) do
-      do_write_item(community, target_ref, attrs, actor, branch, state)
-    end
+    do_write_item(community, target_ref, attrs, actor, branch, state)
   end
 
-  defp do_write_item(community, target_ref, attrs, _actor, branch, :draft) do
-    with {:ok, draft} <- Draft.read(community, :doc, target_ref, branch) do
-      Draft.update(community, :doc, target_ref, Map.put(attrs, :expected_version, draft.version))
+  defp do_write_item(_community, target_ref, attrs, actor, branch, :draft) do
+    with %Article{} = article <- Repo.get(Article, target_ref),
+         {:ok, draft} <- Store.get(article, branch_id: branch.id) do
+      CMS.Docs.update_draft(
+        target_ref,
+        branch.id,
+        Map.put(attrs, :expected_version, draft.version),
+        actor
+      )
     end
   end
 
   defp do_write_item(community, target_ref, attrs, actor, branch, :public) do
-    with {:ok, editor} <- Draft.read_editor_head(community, :doc, target_ref, branch) do
-      Draft.update_or_create_from_public(
-        community,
-        :doc,
+    with {:ok, editor} <-
+           CMS.Docs.read_editor_head(community, target_ref, branch_id: branch.id) do
+      CMS.Docs.update_draft(
         target_ref,
+        branch.id,
         Map.put(attrs, :expected_version, editor.version),
         actor
       )
     end
   end
 
-  defp do_write_item(community, _target_ref, attrs, actor, _branch, :missing),
-    do: Draft.create(community, :doc, attrs, actor)
+  defp do_write_item(community, _target_ref, attrs, actor, branch, :missing) do
+    with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(actor),
+         {:ok, %{draft: draft}} <-
+           Store.create(community, :doc, attrs, author, branch_id: branch.id) do
+      {:ok, draft}
+    end
+  end
 
   defp upsert_mappings(job, items, bodies) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
@@ -311,7 +315,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
         "pages" => length(ready_items),
         "tabs" => length(tabs)
       },
-      "firstImportedDocRef" => first_item && first_item.target_ref,
+      "firstImportedDocId" => first_item && first_item.target_ref,
       "targetBranch" => Branch.main_slug(),
       "failedItems" =>
         items

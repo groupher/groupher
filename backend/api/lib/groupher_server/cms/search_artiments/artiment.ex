@@ -17,7 +17,6 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
   alias GroupherServer.CMS
   alias CMS.ErrorCat
 
-
   @type artiment_type :: :article | :comment
   @type thread :: :post | :blog | :changelog | :doc
 
@@ -38,7 +37,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
           type: artiment_type(),
           community_ref: String.t(),
           thread: thread(),
-          article_ref: String.t(),
+          article_id: Ecto.UUID.t(),
+          indexed_revision_id: Ecto.UUID.t() | nil,
           title: String.t() | nil,
           plain_text: String.t(),
           plain_text_truncated: boolean(),
@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
     :type,
     :community_ref,
     :thread,
-    :article_ref,
+    :article_id,
     :plain_text,
     :locator,
     :upvotes_count,
@@ -80,29 +80,27 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
                 :comments_count,
                 :replies_count,
                 :published_at,
+                :indexed_revision_id,
                 plain_text_truncated: false
               ]
 
   @doc """
-  Builds the deterministic search ref for an article artiment.
-
-  The ref is derived from the thread and the article hash id; it is stable
-  across rebuilds and used as the platform object id.
+  Builds the deterministic search object key for a stable Article.
 
   ## Examples
 
-      Artiment.article_ref(:post, "a1b2c3")
-      #=> "ARTICLE:POST:a1b2c3"
+      Artiment.article_key(:post, "550e8400-e29b-41d4-a716-446655440000")
+      #=> "ARTICLE:POST:550e8400-e29b-41d4-a716-446655440000"
 
   """
-  @spec article_ref(thread(), Ecto.UUID.t()) :: String.t()
-  def article_ref(thread, article_hash_id) do
-    "ARTICLE:#{encode_thread(thread)}:#{article_hash_id}"
+  @spec article_key(thread(), Ecto.UUID.t()) :: String.t()
+  def article_key(thread, article_id) do
+    "ARTICLE:#{encode_thread(thread)}:#{article_id}"
   end
 
   @spec comment_ref(thread(), Ecto.UUID.t(), non_neg_integer()) :: String.t()
-  def comment_ref(thread, article_hash_id, comment_inner_id) do
-    "COMMENT:#{encode_thread(thread)}:#{article_hash_id}:#{comment_inner_id}"
+  def comment_ref(thread, article_id, comment_inner_id) do
+    "COMMENT:#{encode_thread(thread)}:#{article_id}:#{comment_inner_id}"
   end
 
   @doc "Serializes the canonical projection into the platform-neutral JSON shape."
@@ -114,7 +112,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
       "type" => encode_type(artiment.type),
       "communityRef" => artiment.community_ref,
       "thread" => encode_thread(artiment.thread),
-      "articleRef" => artiment.article_ref,
+      "articleId" => artiment.article_id,
+      "indexedRevisionId" => artiment.indexed_revision_id,
       "title" => artiment.title,
       "plainText" => artiment.plain_text,
       "plainTextTruncated" => artiment.plain_text_truncated,
@@ -150,7 +149,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
          type: type,
          community_ref: attrs["communityRef"],
          thread: thread,
-         article_ref: attrs["articleRef"],
+         article_id: attrs["articleId"],
+         indexed_revision_id: attrs["indexedRevisionId"],
          title: attrs["title"],
          plain_text: attrs["plainText"] || "",
          plain_text_truncated: attrs["plainTextTruncated"] || false,

@@ -34,10 +34,11 @@ defmodule GroupherServer.CMS.DocPublishRelease do
 
   alias CMS.Model.{
     Community,
+    DocBranchVersion,
+    DocPublic,
     DocPublishRelease,
     DocPublishReleaseArticle,
     DocPublishReleaseTreeEvent,
-    DocSnapshot,
     DocsSiteState,
     DocTreeEvent,
     DocTreeNode
@@ -54,7 +55,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
         branch,
         %User{} = user,
         doc_entries,
-        %{events: tree_events, doc_snapshots: doc_snapshots}
+        %{events: tree_events, branch_versions: branch_versions}
       ) do
     release_number = next_release_number(community, branch)
     tree_json = Snapshot.published_json(community, branch_id: branch.id)
@@ -78,7 +79,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
              published_at: DateTime.utc_now(:second)
            }),
          {:ok, _articles} <-
-           create_release_articles(release, doc_entries, tree_events, doc_snapshots),
+           create_release_articles(release, doc_entries, tree_events, branch_versions),
          {:ok, _events} <- create_release_tree_events(release, tree_events) do
       {:ok, release}
     end
@@ -121,10 +122,10 @@ defmodule GroupherServer.CMS.DocPublishRelease do
     ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id)
   end
 
-  @doc "Captures DocSnapshot membership needed before destructive Tree events run."
-  def doc_snapshots_before_tree_events(%Community{} = community, branch, tree_events) do
+  @doc "Captures branch-version membership before destructive Tree events run."
+  def branch_versions_before_tree_events(%Community{} = community, branch, tree_events) do
     tree_events
-    |> Enum.flat_map(&release_doc_snapshots_before_tree_event(community, branch, &1))
+    |> Enum.flat_map(&release_branch_versions_before_tree_event(community, branch, &1))
     |> Enum.reject(&is_nil/1)
     |> merge_release_article_attrs()
     |> Map.new(&{&1.node_id, Map.delete(&1, :release_id)})
@@ -144,11 +145,11 @@ defmodule GroupherServer.CMS.DocPublishRelease do
          %DocPublishRelease{} = release,
          doc_entries,
          tree_events,
-         doc_snapshots
+         branch_versions
        ) do
     doc_rows = Enum.map(doc_entries, &release_article_attrs_from_doc(release, &1))
 
-    tree_rows = release_article_attrs_from_tree_events(release, tree_events, doc_snapshots)
+    tree_rows = release_article_attrs_from_tree_events(release, tree_events, branch_versions)
 
     (doc_rows ++ tree_rows)
     |> Enum.reject(&is_nil/1)
@@ -166,20 +167,20 @@ defmodule GroupherServer.CMS.DocPublishRelease do
   end
 
   defp release_article_attrs_from_doc(%DocPublishRelease{} = release, %{
-         snapshot: %DocSnapshot{} = snapshot,
+         published: %{version: %DocBranchVersion{} = version, public: %DocPublic{} = public},
          checklist_item: checklist_item
        }) do
     node =
-      public_page_by_doc_id(release.community_id, release.branch_id, snapshot.article_hash_id)
+      public_page_by_doc_id(release.community_id, release.branch_id, version.article_id)
 
     %{
       release_id: release.id,
-      doc_id: snapshot.article_hash_id,
-      snapshot_id: snapshot.id,
+      doc_id: version.article_id,
+      branch_version_id: version.id,
       node_id: node && node.node_id,
       group_node_id: node && node.parent_node_id,
       index: node && node.index,
-      title: snapshot.title,
+      title: public.title,
       actions: [checklist_item.action]
     }
   end
@@ -187,10 +188,10 @@ defmodule GroupherServer.CMS.DocPublishRelease do
   defp release_article_attrs_from_tree_events(
          %DocPublishRelease{} = release,
          tree_events,
-         doc_snapshots
+         branch_versions
        ) do
     snapshot_rows =
-      doc_snapshots
+      branch_versions
       |> Map.values()
       |> Enum.map(&Map.put(&1, :release_id, release.id))
 
@@ -201,16 +202,16 @@ defmodule GroupherServer.CMS.DocPublishRelease do
       |> Enum.map(fn node_id ->
         with %DocTreeNode{doc_id: doc_id} = node when not is_nil(doc_id) <-
                public_page_by_node_id(release.community_id, release.branch_id, node_id),
-             %DocSnapshot{} = snapshot <-
-               latest_public_doc_snapshot(release.community_id, release.branch_id, doc_id) do
+             {%DocBranchVersion{} = version, %DocPublic{} = public} <-
+               latest_public_doc_version(release.community_id, release.branch_id, doc_id) do
           %{
             release_id: release.id,
             doc_id: doc_id,
-            snapshot_id: snapshot.id,
+            branch_version_id: version.id,
             node_id: node.node_id,
             group_node_id: node.parent_node_id,
             index: node.index,
-            title: snapshot.title,
+            title: public.title,
             actions: actions_from_tree_events(tree_events, node.node_id)
           }
         else
@@ -221,7 +222,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
     snapshot_rows ++ current_rows
   end
 
-  defp release_doc_snapshots_before_tree_event(
+  defp release_branch_versions_before_tree_event(
          %Community{} = community,
          branch,
          %DocTreeEvent{
@@ -240,7 +241,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
     )
   end
 
-  defp release_doc_snapshots_before_tree_event(
+  defp release_branch_versions_before_tree_event(
          %Community{} = community,
          branch,
          %DocTreeEvent{
@@ -259,7 +260,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
     end)
   end
 
-  defp release_doc_snapshots_before_tree_event(_community, _branch, _event), do: []
+  defp release_branch_versions_before_tree_event(_community, _branch, _event), do: []
 
   defp release_article_attrs_from_public_node(
          community_id,
@@ -268,15 +269,15 @@ defmodule GroupherServer.CMS.DocPublishRelease do
          actions
        )
        when not is_nil(doc_id) do
-    with %DocSnapshot{} = snapshot <-
-           latest_public_doc_snapshot(community_id, branch_id, doc_id) do
+    with {%DocBranchVersion{} = version, %DocPublic{} = public} <-
+           latest_public_doc_version(community_id, branch_id, doc_id) do
       %{
         doc_id: doc_id,
-        snapshot_id: snapshot.id,
+        branch_version_id: version.id,
         node_id: node.node_id,
         group_node_id: node.parent_node_id,
         index: node.index,
-        title: snapshot.title,
+        title: public.title,
         actions: actions
       }
     end
@@ -332,14 +333,16 @@ defmodule GroupherServer.CMS.DocPublishRelease do
     |> Repo.one()
   end
 
-  defp latest_public_doc_snapshot(community_id, branch_id, doc_id) do
-    DocSnapshot
-    |> where([r], r.community_id == ^community_id)
-    |> where([r], r.branch_id == ^branch_id)
-    |> where([r], r.stage == CMS.Const.stage(:public))
-    |> where([r], r.article_hash_id == ^doc_id)
-    |> order_by([r], desc: r.revision_number, desc: r.id)
-    |> limit(1)
+  defp latest_public_doc_version(community_id, branch_id, doc_id) do
+    DocPublic
+    |> join(:inner, [public], article in CMS.Model.Article, on: article.id == public.article_id)
+    |> join(:inner, [public, _article], version in DocBranchVersion,
+      on: version.id == public.branch_version_id
+    )
+    |> where([public, article, _version], article.community_id == ^community_id)
+    |> where([public, _article, _version], public.branch_id == ^branch_id)
+    |> where([public, _article, _version], public.article_id == ^doc_id)
+    |> select([public, _article, version], {version, public})
     |> Repo.one()
   end
 
@@ -347,8 +350,9 @@ defmodule GroupherServer.CMS.DocPublishRelease do
          node_type: @tree_node_type_page,
          node_id: id
        })
-       when not is_nil(id),
-       do: [id]
+       when not is_nil(id) do
+    [id]
+  end
 
   defp article_node_ids_from_tree_event(_event), do: []
 

@@ -38,11 +38,11 @@ defmodule GroupherServer.CMS.Docs.Branch do
 
   """
   def resolve(%Community{} = community, %DocBranch{} = branch) do
-    if branch.community_id == community.id,
-      do: {:ok, branch},
-      else:
-        {:error,
-         ErrorCat.custom("Doc branch does not belong to the requested scope")}
+    if branch.community_id == community.id do
+      {:ok, branch}
+    else
+      {:error, ErrorCat.custom("Doc branch does not belong to the requested scope")}
+    end
   end
 
   def resolve(%Community{} = community, ref) when is_map(ref) or is_list(ref) do
@@ -56,8 +56,9 @@ defmodule GroupherServer.CMS.Docs.Branch do
   def resolve(%Community{} = community, ""), do: ensure_main(community)
   def resolve(%Community{} = community, @main_slug), do: ensure_main(community)
 
-  def resolve(%Community{} = community, id) when is_integer(id),
-    do: ORM.find_by(DocBranch, id: id, community_id: community.id)
+  def resolve(%Community{} = community, id) when is_integer(id) do
+    ORM.find_by(DocBranch, id: id, community_id: community.id)
+  end
 
   def resolve(%Community{} = community, ref) when is_binary(ref) do
     DocBranch
@@ -71,8 +72,9 @@ defmodule GroupherServer.CMS.Docs.Branch do
     end
   end
 
-  def resolve(_community, _ref),
-    do: {:error, ErrorCat.custom("Doc branch is invalid")}
+  def resolve(_community, _ref) do
+    {:error, ErrorCat.custom("Doc branch is invalid")}
+  end
 
   def branch_id(%Community{} = community, ref) do
     with {:ok, branch} <- resolve(community, ref), do: {:ok, branch.id}
@@ -115,8 +117,9 @@ defmodule GroupherServer.CMS.Docs.Branch do
     end)
   end
 
-  defp option(opts, key) when is_map(opts),
-    do: Map.get(opts, key) || Map.get(opts, Atom.to_string(key))
+  defp option(opts, key) when is_map(opts) do
+    Map.get(opts, key) || Map.get(opts, Atom.to_string(key))
+  end
 
   defp option(opts, key) when is_list(opts), do: Keyword.get(opts, key)
 end

@@ -82,8 +82,9 @@ defmodule GroupherServer.CMS.Model.BgConfigValidator do
     end)
   end
 
-  defp validate_effect_value(field, value) when not is_map(value),
-    do: [{field, "must be an object"}]
+  defp validate_effect_value(field, value) when not is_map(value) do
+    [{field, "must be an object"}]
+  end
 
   defp validate_effect_value(field, value) do
     checks = [
@@ -106,8 +107,9 @@ defmodule GroupherServer.CMS.Model.BgConfigValidator do
     end)
   end
 
-  defp validate_texture_value(field, value) when not is_map(value),
-    do: [{field, "must be an object"}]
+  defp validate_texture_value(field, value) when not is_map(value) do
+    [{field, "must be an object"}]
+  end
 
   defp validate_texture_value(field, value) do
     checks = [
@@ -206,8 +208,9 @@ defmodule GroupherServer.CMS.Model.BgConfigValidator do
   defp optional_number_in_range?(nil, _min, _max), do: true
   defp optional_number_in_range?(value, min, max), do: number_in_range?(value, min, max)
 
-  defp number_in_range?(value, min, max) when is_number(value),
-    do: value >= min and value <= max
+  defp number_in_range?(value, min, max) when is_number(value) do
+    value >= min and value <= max
+  end
 
   defp number_in_range?(_, _, _), do: false
 

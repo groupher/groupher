@@ -72,7 +72,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     FrontDesk
   }
 
-  alias CMS.Model.{ArtimentMention, Comment}
+  alias CMS.Model.{Article, ArtimentMention, Comment}
   alias Helper.{ORM, T}
 
   @threads Config.threads()
@@ -104,17 +104,34 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   context; snapshot construction must not perform queries per occurrence.
   """
   @spec sync(Comment.t() | T.article() | map()) :: sync_result()
+  def sync(%Comment{body: body} = comment) when is_binary(body) do
+    with {:ok, ast} <- PlateJSON.decode(body) do
+      do_sync(comment, ast)
+    end
+  end
+
   def sync(%{body: body} = artiment) when is_binary(body) do
     with {:ok, ast} <- PlateJSON.decode(body),
-         {:ok, artiment} <- FrontDesk.preload_author(artiment) do
+         {:ok, artiment} <- load_article_for_mentions(artiment) do
       do_sync(artiment, ast)
     end
   end
 
   def sync(%{document: _document} = article) do
     with {:ok, ast} <- load_document_ast(article),
-         {:ok, article} <- FrontDesk.preload_author(article) do
+         {:ok, article} <- load_article_for_mentions(article) do
       do_sync(article, ast)
+    end
+  end
+
+  def sync(%{id: article_id, thread: thread})
+      when is_binary(article_id) and thread in [:post, :blog, :changelog, :doc] do
+    with %Article{} <- Repo.get(Article, article_id),
+         {:ok, projection} <- CMS.Articles.Store.load_article_for_mentions(article_id) do
+      sync(projection)
+    else
+      nil -> {:error, ErrorCat.custom(%{reason: :not_exist})}
+      {:error, _reason} = error -> error
     end
   end
 
@@ -126,7 +143,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   """
   @spec purge(Comment.t() | T.article() | map()) :: T.domain_res(term())
   def purge(%Comment{} = comment) do
-    {type, id} = mentioner_identity(comment)
+    {type, %{entity_id: id}} = mentioner_identity(comment)
 
     from(m in ArtimentMention,
       where:
@@ -173,11 +190,10 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   @doc "Deletes Mention rows emitted by an Article that is being permanently deleted."
   @spec purge_outgoing(T.article() | map()) :: T.domain_res(term())
   def purge_outgoing(artiment) do
-    {type, id} = mentioner_identity(artiment)
+    {type, identity} = mentioner_identity(artiment)
 
-    from(m in ArtimentMention,
-      where: m.mentioner_type == ^type and m.mentioner_id == ^id
-    )
+    ArtimentMention
+    |> mentioner_query(type, identity)
     |> ORM.delete_all(:if_exist)
   end
 
@@ -205,16 +221,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   @spec mark_target_state(T.article() | map(), target_state()) :: T.domain_res(:pass)
   def mark_target_state(artiment, state)
       when state in [:active, :trashed, :permanently_deleted] do
-    {type, id} = mentioner_identity(artiment)
+    {type, identity} = mentioner_identity(artiment)
     updated_at = DateTime.utc_now(:second)
     changed_at = DateTime.to_iso8601(updated_at)
 
-    query =
-      ArtimentMention
-      |> where(
-        [m],
-        m.mentioned_scope == :internal and m.mentioned_type == ^type and m.mentioned_id == ^id
-      )
+    query = mentioned_query(ArtimentMention, type, identity)
 
     query
     |> update_target_state(state, changed_at, updated_at)
@@ -269,15 +280,15 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   @doc "Lists Mention facts emitted by one internal Article or Comment."
   @spec mentions(atom(), T.id(), map() | nil) :: T.domain_res(T.paged_data())
-  def mentions(mentioner_type, mentioner_id, nil),
-    do: mentions(mentioner_type, mentioner_id, %{page: 1, size: 20})
+  def mentions(mentioner_type, mentioner_id, nil) do
+    mentions(mentioner_type, mentioner_id, %{page: 1, size: 20})
+  end
 
   def mentions(mentioner_type, mentioner_id, %{page: page, size: size} = filter) do
+    normalized_type = normalize_type(mentioner_type)
+
     ArtimentMention
-    |> where(
-      [m],
-      m.mentioner_type == ^normalize_type(mentioner_type) and m.mentioner_id == ^mentioner_id
-    )
+    |> mentioner_list_query(normalized_type, mentioner_id)
     |> QueryBuilder.filter_pack(Map.merge(filter, %{sort: :asc_inserted}))
     |> ORM.paginator(~m(page size)a)
     |> done()
@@ -285,8 +296,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   @doc "Lists incoming Mention facts for one internal target."
   @spec mentioned_by(atom(), T.id(), map() | nil) :: T.domain_res(T.paged_data())
-  def mentioned_by(mentioned_type, mentioned_id, nil),
-    do: mentioned_by(mentioned_type, mentioned_id, %{page: 1, size: 20})
+  def mentioned_by(mentioned_type, mentioned_id, nil) do
+    mentioned_by(mentioned_type, mentioned_id, %{page: 1, size: 20})
+  end
 
   def mentioned_by(mentioned_type, mentioned_id, %{page: page, size: size} = filter) do
     case normalize_type(mentioned_type) do
@@ -298,16 +310,41 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
       normalized_type ->
         ArtimentMention
-        |> where(
-          [m],
-          m.mentioned_scope == :internal and
-            m.mentioned_type == ^normalized_type and
-            m.mentioned_id == ^mentioned_id
-        )
+        |> mentioned_list_query(normalized_type, mentioned_id)
         |> QueryBuilder.filter_pack(Map.merge(filter, %{sort: :asc_inserted}))
         |> ORM.paginator(~m(page size)a)
         |> done()
     end
+  end
+
+  defp mentioner_list_query(query, type, article_id) when type in @threads do
+    where(
+      query,
+      [m],
+      m.mentioner_type == ^type and m.mentioner_article_id == ^article_id
+    )
+  end
+
+  defp mentioner_list_query(query, type, entity_id) do
+    where(query, [m], m.mentioner_type == ^type and m.mentioner_id == ^entity_id)
+  end
+
+  defp mentioned_list_query(query, type, article_id) when type in @threads do
+    where(
+      query,
+      [m],
+      m.mentioned_scope == :internal and m.mentioned_type == ^type and
+        m.mentioned_article_id == ^article_id
+    )
+  end
+
+  defp mentioned_list_query(query, type, entity_id) do
+    where(
+      query,
+      [m],
+      m.mentioned_scope == :internal and m.mentioned_type == ^type and
+        m.mentioned_id == ^entity_id
+    )
   end
 
   defp do_sync(artiment, ast) do
@@ -331,12 +368,59 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   end
 
   defp delete_by_mentioner(artiment) do
-    {mentioner_type, mentioner_id} = mentioner_identity(artiment)
+    {mentioner_type, identity} = mentioner_identity(artiment)
 
-    from(m in ArtimentMention,
-      where: m.mentioner_type == ^mentioner_type and m.mentioner_id == ^mentioner_id
-    )
+    ArtimentMention
+    |> mentioner_query(mentioner_type, identity)
     |> ORM.delete_all(:if_exist)
+  end
+
+  defp mentioner_query(query, type, %{entity_id: id}) do
+    where(query, [m], m.mentioner_type == ^type and m.mentioner_id == ^id)
+  end
+
+  defp mentioner_query(query, type, %{article_id: article_id, branch_id: nil}) do
+    where(
+      query,
+      [m],
+      m.mentioner_type == ^type and m.mentioner_article_id == ^article_id and
+        is_nil(m.mentioner_branch_id)
+    )
+  end
+
+  defp mentioner_query(query, type, %{article_id: article_id, branch_id: branch_id}) do
+    where(
+      query,
+      [m],
+      m.mentioner_type == ^type and m.mentioner_article_id == ^article_id and
+        m.mentioner_branch_id == ^branch_id
+    )
+  end
+
+  defp mentioned_query(query, type, %{entity_id: id}) do
+    where(
+      query,
+      [m],
+      m.mentioned_scope == :internal and m.mentioned_type == ^type and m.mentioned_id == ^id
+    )
+  end
+
+  defp mentioned_query(query, type, %{article_id: article_id, branch_id: nil}) do
+    where(
+      query,
+      [m],
+      m.mentioned_scope == :internal and m.mentioned_type == ^type and
+        m.mentioned_article_id == ^article_id and is_nil(m.mentioned_branch_id)
+    )
+  end
+
+  defp mentioned_query(query, type, %{article_id: article_id, branch_id: branch_id}) do
+    where(
+      query,
+      [m],
+      m.mentioned_scope == :internal and m.mentioned_type == ^type and
+        m.mentioned_article_id == ^article_id and m.mentioned_branch_id == ^branch_id
+    )
   end
 
   defp insert_mentions([]), do: :pass
@@ -353,18 +437,28 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   end
 
   defp shape(%{artiment: artiment} = mentioner_context, mention) do
-    {mentioner_type, mentioner_id} = mentioner_identity(artiment)
+    {mentioner_type, mentioner_identity} = mentioner_identity(artiment)
     mentioned_at = artiment.updated_at |> DateTime.truncate(:second)
     mentioned_context = mentioned_context(mention)
 
     %{
       mentioner_type: mentioner_type,
-      mentioner_id: mentioner_id,
+      mentioner_id: Map.get(mentioner_identity, :entity_id),
+      mentioner_article_id: Map.get(mentioner_identity, :article_id),
+      mentioner_branch_id: Map.get(mentioner_identity, :branch_id),
       mentioner_community_id: community_id(mentioner_context),
       mentioner_url: artiment_url(mentioner_context),
       mentioned_scope: mention.mentioned_scope,
       mentioned_type: mention.mentioned_type,
-      mentioned_id: Map.get(mention, :mentioned_id),
+      mentioned_id:
+        if(mention.mentioned_type in @threads, do: nil, else: Map.get(mention, :mentioned_id)),
+      mentioned_article_id:
+        if(mention.mentioned_type in @threads, do: Map.get(mention, :mentioned_id), else: nil),
+      mentioned_branch_id:
+        if(mention.mentioned_type in @threads,
+          do: get_in(mention, [:artiment, :branch_id]),
+          else: nil
+        ),
       mentioned_community_id: community_id(mentioned_context),
       mentioned_url: Map.get(mention, :mentioned_url),
       mentioned_url_hash: Map.get(mention, :mentioned_url_hash),
@@ -439,7 +533,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     ]
   end
 
-  defp load_document_ast(article) do
+  defp load_document_ast(%{document: %{json: json}}) when is_binary(json) do
+    PlateJSON.decode(json)
+  end
+
+  defp load_document_ast(article) when is_struct(article) do
     case Repo.preload(article, :document, force: true) |> get_in([:document, :json]) do
       nil -> {:ok, []}
       json when is_binary(json) -> PlateJSON.decode(json)
@@ -447,11 +545,27 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     end
   end
 
-  defp mentioner_identity(%Comment{id: id}), do: {:comment, id}
+  defp load_article_for_mentions(%{id: article_id}) when is_binary(article_id) do
+    CMS.Articles.Store.load_article_for_mentions(article_id)
+  end
+
+  defp load_article_for_mentions(%{article_id: _article_id} = article), do: {:ok, article}
+  defp load_article_for_mentions(article), do: {:ok, article}
+
+  defp mentioner_identity(%Comment{id: id}), do: {:comment, %{entity_id: id}}
+
+  defp mentioner_identity(%Article{id: article_id, thread: thread}) do
+    {thread, %{article_id: article_id, branch_id: nil}}
+  end
+
+  defp mentioner_identity(%{article_id: article_id} = article) when is_binary(article_id) do
+    {:ok, thread} = FrontDesk.thread_of(article)
+    {thread, %{article_id: article_id, branch_id: Map.get(article, :branch_id)}}
+  end
 
   defp mentioner_identity(article) do
     {:ok, thread} = FrontDesk.thread_of(article)
-    {thread, article.id}
+    {thread, %{entity_id: article.id}}
   end
 
   defp artiment_url(%{artiment: %Comment{} = comment, parent_article: article})
@@ -466,15 +580,16 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   defp artiment_url(%{artiment: article}) do
     case FrontDesk.thread_of(article) do
-      {:ok, thread} -> article_url(thread, article.id)
+      {:ok, thread} -> article_url(thread, stable_or_entity_id(article))
       _ -> nil
     end
   end
 
   defp article_url(thread, id), do: Config.article_url(thread, id)
 
-  defp community_id(%{artiment: %Comment{}, parent_article: article}) when is_map(article),
-    do: Map.get(article, :community_id)
+  defp community_id(%{artiment: %Comment{}, parent_article: article}) when is_map(article) do
+    Map.get(article, :community_id)
+  end
 
   defp community_id(%{artiment: %Comment{}}), do: nil
   defp community_id(%{artiment: %{community_id: community_id}}), do: community_id
@@ -482,8 +597,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   defp snapshot(context, mention \\ %{})
 
-  defp snapshot(%{artiment: nil}, %{mentioned_scope: :external, mentioned_url: url}),
-    do: %{url: url}
+  defp snapshot(%{artiment: nil}, %{mentioned_scope: :external, mentioned_url: url}) do
+    %{url: url}
+  end
 
   defp snapshot(%{artiment: nil}, _), do: %{}
 
@@ -511,7 +627,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   defp snapshot(%{artiment: article} = context, _mention) do
     %{
-      id: article.id,
+      id: stable_or_entity_id(article),
       type: article_type(article),
       title: Map.get(article, :title),
       digest: Map.get(article, :digest),
@@ -526,14 +642,16 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     end
   end
 
-  defp mentioning_itself?(%Comment{id: id}, %{mentioned_type: :comment, mentioned_id: id}),
-    do: true
+  defp mentioning_itself?(%Comment{id: id}, %{mentioned_type: :comment, mentioned_id: id}) do
+    true
+  end
 
-  defp mentioning_itself?(%Comment{} = comment, %{mentioned_type: :user, mentioned_id: user_id}),
-    do: comment.author_id == user_id
+  defp mentioning_itself?(%Comment{} = comment, %{mentioned_type: :user, mentioned_id: user_id}) do
+    comment.author_id == user_id
+  end
 
   defp mentioning_itself?(article, %{mentioned_type: :user, mentioned_id: user_id}) do
-    case FrontDesk.author_of(article) do
+    case FrontDesk.article_author(article) do
       {:ok, %{id: ^user_id}} -> true
       _ -> false
     end
@@ -542,12 +660,15 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   defp mentioning_itself?(article, %{mentioned_type: mentioned_type, mentioned_id: id})
        when mentioned_type in @threads do
     case FrontDesk.thread_of(article) do
-      {:ok, ^mentioned_type} -> article.id == id
+      {:ok, ^mentioned_type} -> stable_or_entity_id(article) == id
       _ -> false
     end
   end
 
   defp mentioning_itself?(_, _), do: false
+
+  defp stable_or_entity_id(%{article_id: article_id}) when is_binary(article_id), do: article_id
+  defp stable_or_entity_id(%{id: id}), do: id
 
   defp normalize_type(type) when is_binary(type) do
     normalized = String.downcase(type)

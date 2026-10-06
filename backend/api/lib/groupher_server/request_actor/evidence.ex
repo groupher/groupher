@@ -112,9 +112,11 @@ defmodule GroupherServer.RequestActor.Evidence do
           {:ok, unknown_evidence(opts)}
 
         [%SignedAnonymousSession{} = selected] ->
-          if self_reported_automation?(Keyword.get(opts, :user_agent)),
-            do: {:ok, %Unknown{classified_by: :self_reported}},
-            else: {:ok, selected}
+          if self_reported_automation?(Keyword.get(opts, :user_agent)) do
+            {:ok, %Unknown{classified_by: :self_reported}}
+          else
+            {:ok, selected}
+          end
 
         [selected] ->
           {:ok, selected}
@@ -139,30 +141,37 @@ defmodule GroupherServer.RequestActor.Evidence do
 
   defp build(_key, nil), do: :missing
 
-  defp build(:account_session, %User{} = user),
-    do: {:ok, %AccountSession{user: user}}
+  defp build(:account_session, %User{} = user) do
+    {:ok, %AccountSession{user: user}}
+  end
 
-  defp build(:anonymous_session, %AnonymousSession{} = session),
-    do: {:ok, %SignedAnonymousSession{session: session}}
+  defp build(:anonymous_session, %AnonymousSession{} = session) do
+    {:ok, %SignedAnonymousSession{session: session}}
+  end
 
   defp build(:service_credential, credential) when is_map(credential) do
-    if valid_service_credential?(credential),
-      do: {:ok, %ServiceCredential{credential: credential}},
-      else: :error
+    if valid_service_credential?(credential) do
+      {:ok, %ServiceCredential{credential: credential}}
+    else
+      :error
+    end
   end
 
   defp build(
          :delegation,
          %{service_actor: credential, user_actor: %User{}} = delegation
        ) do
-    if valid_service_credential?(credential),
-      do: {:ok, %Delegation{delegation: delegation}},
-      else: :error
+    if valid_service_credential?(credential) do
+      {:ok, %Delegation{delegation: delegation}}
+    else
+      :error
+    end
   end
 
   defp build(:crawler, %Crawler{family: family} = crawler)
-       when is_binary(family) and byte_size(family) > 0,
-       do: {:ok, %VerifiedCrawler{crawler: crawler}}
+       when is_binary(family) and byte_size(family) > 0 do
+    {:ok, %VerifiedCrawler{crawler: crawler}}
+  end
 
   defp build(_key, _value), do: :error
 
@@ -176,9 +185,11 @@ defmodule GroupherServer.RequestActor.Evidence do
   defp unknown_evidence(opts) do
     user_agent = Keyword.get(opts, :user_agent)
 
-    if self_reported_automation?(user_agent),
-      do: %Unknown{classified_by: :self_reported},
-      else: %Unknown{classified_by: :fallback}
+    if self_reported_automation?(user_agent) do
+      %Unknown{classified_by: :self_reported}
+    else
+      %Unknown{classified_by: :fallback}
+    end
   end
 
   defp self_reported_automation?(user_agent) when is_binary(user_agent) do

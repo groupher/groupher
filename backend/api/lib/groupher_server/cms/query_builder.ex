@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.QueryBuilder do
   alias GroupherServer.CMS
 
   alias CMS.Artiment.{Const, Threads}
+  alias CMS.Model.{ArticleCommunity, ArticleCommunityTag, CommunityTag}
   alias Helper.QueryBuilder, as: GenericQueryBuilder
 
   @article_cat Const.cat_values()
@@ -64,35 +65,19 @@ defmodule GroupherServer.CMS.QueryBuilder do
         query
 
       {:article_tag, tag_name}, query ->
-        from(q in query,
-          join: tag in assoc(q, :community_tags),
-          where: tag.slug == ^tag_name
-        )
+        join_article_tag(query, tag_name)
 
       {:community_tag, tag_name}, query when tag_name in [nil, ""] ->
         query
 
       {:community_tag, tag_name}, query ->
-        from(q in query,
-          join: tag in assoc(q, :community_tags),
-          where: tag.slug == ^tag_name
-        )
+        join_article_tag(query, tag_name)
 
       {:article_tags, tag_names}, query ->
-        from(q in query,
-          join: tag in assoc(q, :community_tags),
-          where: tag.slug in ^tag_names,
-          distinct: q.id,
-          group_by: q.id
-        )
+        join_article_tags(query, tag_names)
 
       {:community_tags, tag_names}, query ->
-        from(q in query,
-          join: tag in assoc(q, :community_tags),
-          where: tag.slug in ^tag_names,
-          distinct: q.id,
-          group_by: q.id
-        )
+        join_article_tags(query, tag_names)
 
       {:cat, nil}, query ->
         query
@@ -117,6 +102,22 @@ defmodule GroupherServer.CMS.QueryBuilder do
     end)
   end
 
+  defp join_article_tag(query, tag_name), do: join_article_tags(query, [tag_name])
+
+  defp join_article_tags(query, tag_names) do
+    from(article in query,
+      join: relation in ArticleCommunity,
+      on: relation.article_id == article.id,
+      join: assignment in ArticleCommunityTag,
+      on: assignment.article_community_id == relation.id,
+      join: tag in CommunityTag,
+      on: tag.id == assignment.tag_id,
+      where: tag.slug in ^tag_names,
+      distinct: article.id,
+      group_by: article.id
+    )
+  end
+
   defp handle_community_relate_logic(queryable, filter) do
     Enum.reduce(filter, queryable, fn
       {:category, category_slug}, query ->
@@ -126,9 +127,11 @@ defmodule GroupherServer.CMS.QueryBuilder do
         )
 
       {:thread, thread}, query ->
-        if is_atom(thread) and thread in @threads,
-          do: from(q in query, where: q.thread == ^thread),
-          else: from(q in query, where: false)
+        if is_atom(thread) and thread in @threads do
+          from(q in query, where: q.thread == ^thread)
+        else
+          from(q in query, where: false)
+        end
 
       {:community_id, community_id}, query ->
         from(q in query,
@@ -154,22 +157,27 @@ defmodule GroupherServer.CMS.QueryBuilder do
   end
 
   defp trans_article_cat(queryable, cat) when is_atom(cat) do
-    if cat in @article_cat,
-      do: where(queryable, [article], article.cat == ^cat),
-      else: where(queryable, [article], article.id == -1)
+    if cat in @article_cat do
+      where(queryable, [article], article.cat == ^cat)
+    else
+      where(queryable, [article], article.id == -1)
+    end
   end
 
   defp trans_article_status(queryable, status) when is_atom(status) do
-    if status in @article_status,
-      do: where(queryable, [article], article.status == ^status),
-      else: where(queryable, [article], article.id == -1)
+    if status in @article_status do
+      where(queryable, [article], article.status == ^status)
+    else
+      where(queryable, [article], article.id == -1)
+    end
   end
 
   defp trans_articles_order(queryable, :upvotes), do: queryable
   defp trans_articles_order(queryable, :comments), do: order_by(queryable, desc: :comments_count)
 
-  defp trans_articles_order(queryable, :views),
-    do: queryable
+  defp trans_articles_order(queryable, :views) do
+    queryable
+  end
 
   defp trans_articles_order(queryable, :publish), do: order_by(queryable, desc: :inserted_at)
   defp trans_articles_order(queryable, _order), do: queryable

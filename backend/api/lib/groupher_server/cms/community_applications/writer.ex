@@ -222,8 +222,9 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
     end
   end
 
-  defp normalize_submit_result({:ok, %{application: application}}, _user_id, _key, _fingerprint),
-    do: {:ok, application}
+  defp normalize_submit_result({:ok, %{application: application}}, _user_id, _key, _fingerprint) do
+    {:ok, application}
+  end
 
   defp normalize_submit_result(
          {:error, :application, %Ecto.Changeset{}, _changes},
@@ -243,8 +244,9 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
     end
   end
 
-  defp normalize_submit_result({:error, :slug_claim, _changeset, _changes}, _, _, _),
-    do: {:error, ErrorCat.slug_claimed()}
+  defp normalize_submit_result({:error, :slug_claim, _changeset, _changes}, _, _, _) do
+    {:error, ErrorCat.slug_claimed()}
+  end
 
   defp normalize_submit_result({:error, _step, reason, _changes}, _, _, _), do: {:error, reason}
 
@@ -274,8 +276,9 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
     |> Base.encode16(case: :lower)
   end
 
-  defp normalize_category(value) when is_atom(value),
-    do: normalize_category(Atom.to_string(value))
+  defp normalize_category(value) when is_atom(value) do
+    normalize_category(Atom.to_string(value))
+  end
 
   defp normalize_category(value) when is_binary(value) do
     Map.get(@categories, value |> String.trim() |> String.upcase())
@@ -283,8 +286,9 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
 
   defp normalize_category(_), do: nil
 
-  defp get(map, key, default \\ nil),
-    do: Map.get(map, key, Map.get(map, Atom.to_string(key), default))
+  defp get(map, key, default \\ nil) do
+    Map.get(map, key, Map.get(map, Atom.to_string(key), default))
+  end
 
   defp normalize_string(value) when is_binary(value) do
     value = String.trim(value)

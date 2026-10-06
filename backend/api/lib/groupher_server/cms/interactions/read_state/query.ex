@@ -33,11 +33,11 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   """
   @spec viewer_state(struct(), User.t() | nil, keyword()) :: map() | {:error, term()}
   def viewer_state(artiment, viewer, opts \\ []) do
-    with {:ok, %{artiment: type}} <- Matcher.match_interaction(artiment),
-         target_id when is_integer(target_id) <- Map.get(artiment, :id),
+    with {:ok, %{artiment: type} = info} <- Matcher.match_interaction(artiment),
+         target_id when is_integer(target_id) or is_binary(target_id) <- Map.get(artiment, :id),
          state when is_map(state) <-
-           type
-           |> viewer_rows([target_id], viewer, opts)
+           info
+           |> viewer_rows(type, [target_id], viewer, opts)
            |> Map.get(target_id) do
       build(state, type, opts)
     else
@@ -58,10 +58,17 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   def viewer_states(artiments, viewer, opts \\ []) when is_list(artiments) do
     with {:ok, typed_artiments} <- match_all(artiments) do
       typed_artiments
-      |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
-      |> Enum.reduce(%{}, fn {type, entries}, acc ->
+      |> Enum.group_by(
+        fn {type, artiment} ->
+          {:ok, info} = Matcher.match_interaction(artiment)
+          {type, info.foreign_key}
+        end,
+        &elem(&1, 1)
+      )
+      |> Enum.reduce(%{}, fn {{type, _identity}, entries}, acc ->
         ids = Enum.map(entries, & &1.id)
-        rows = viewer_rows(type, ids, viewer, opts)
+        {:ok, info} = entries |> hd() |> Matcher.match_interaction()
+        rows = viewer_rows(info, type, ids, viewer, opts)
 
         Enum.reduce(entries, acc, fn artiment, states ->
           Map.put(states, {type, artiment.id}, build(Map.fetch!(rows, artiment.id), type, opts))
@@ -90,16 +97,23 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   def counts(artiments) when is_list(artiments) do
     with {:ok, typed_artiments} <- match_all(artiments) do
       typed_artiments
-      |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
-      |> Enum.reduce(%{}, fn {type, entries}, acc ->
+      |> Enum.group_by(
+        fn {type, artiment} ->
+          {:ok, info} = Matcher.match_interaction(artiment)
+          {type, info.foreign_key}
+        end,
+        &elem(&1, 1)
+      )
+      |> Enum.reduce(%{}, fn {{type, _identity}, entries}, acc ->
         ids = Enum.map(entries, & &1.id)
         projection_type = if type == :comment, do: :comment, else: :article
+        {:ok, info} = entries |> hd() |> Matcher.match_interaction()
 
         emotion_values =
-          emotion_stats_by_target(interaction_info(type), ids, nil, projection_type)
+          emotion_stats_by_target(info, ids, nil, projection_type)
 
-        type
-        |> fixed_counts(ids)
+        info
+        |> fixed_counts_for(ids)
         |> Enum.reduce(acc, fn {id, values}, counts_by_artiment ->
           emotion_counts =
             emotion_values
@@ -116,10 +130,9 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
     end
   end
 
-  defp viewer_rows(thread, target_ids, viewer, opts)
+  defp viewer_rows(info, thread, target_ids, viewer, opts)
        when thread in @supported_threads and is_list(target_ids) do
     target_ids = Enum.uniq(target_ids)
-    info = interaction_info(thread)
     projection_type = if thread == :comment, do: :comment, else: :article
     fixed_by_target = fixed_stats_by_target(info, target_ids, viewer, opts)
     emotions_by_target = emotion_stats_by_target(info, target_ids, viewer, projection_type)
@@ -217,9 +230,6 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   defp reported_count(state) do
     value(state, :reported_count, value(value(state, :meta, %{}), :reported_count, 0))
   end
-
-  defp fixed_counts(thread, target_ids),
-    do: fixed_counts_for(interaction_info(thread), target_ids)
 
   defp fixed_counts_for(info, target_ids) do
     target_ids = Enum.uniq(target_ids)
@@ -350,8 +360,9 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
     })
   end
 
-  defp select_emotion_viewer_state(query, nil),
-    do: select_merge(query, %{viewer_has_reacted: false})
+  defp select_emotion_viewer_state(query, nil) do
+    select_merge(query, %{viewer_has_reacted: false})
+  end
 
   defp select_emotion_viewer_state(query, user_id) do
     select_merge(query, [info], %{
@@ -376,11 +387,6 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   end
 
   defp maybe_select_collection_stats(query, _info, _user_id), do: query
-
-  defp interaction_info(artiment) do
-    {:ok, info} = Matcher.match_interaction(artiment)
-    info
-  end
 
   defp value(data, key, default) when is_map(data), do: Map.get(data, key, default) || default
   defp value(_data, _key, default), do: default

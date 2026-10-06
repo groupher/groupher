@@ -84,8 +84,9 @@ defmodule GroupherServer.CMS.Model.Embeds.User do
   @spec valid?(t()) :: boolean()
   def valid?(%__MODULE__{id: id, login: login, nickname: nickname})
       when not is_nil(id) and is_binary(login) and login != "" and is_binary(nickname) and
-             nickname != "",
-      do: true
+             nickname != "" do
+    true
+  end
 
   def valid?(_), do: false
 

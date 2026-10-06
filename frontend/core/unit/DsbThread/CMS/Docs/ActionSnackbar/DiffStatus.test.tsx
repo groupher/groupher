@@ -20,14 +20,10 @@ vi.mock('~/icons/Merge', () => ({
   default: () => <svg aria-hidden='true' />,
 }))
 
-vi.mock('~/stores/community/hooks', () => ({
-  default: () => ({ slug: 'home' }),
-}))
-
 vi.mock('../Editor/store/hooks', () => ({
   default: () => ({
     bodyValue: mocks.bodyValue,
-    docDraftInfo: { id: 'doc-1' },
+    docDraftInfo: { id: 'doc-1', branchId: '1' },
   }),
 }))
 
@@ -50,18 +46,18 @@ vi.mock('./salon/diff_status', () => ({
 describe('DiffStatus revision loading', () => {
   beforeEach(() => {
     mocks.query.mockReset()
-    mocks.query.mockResolvedValue({ docDraftSnapshots: [] })
+    mocks.query.mockResolvedValue({ docBranchVersions: [] })
   })
 
   it('shares the initial revision queries with the drawer instead of refetching on open', async () => {
     render(<DiffStatus />)
 
-    await waitFor(() => expect(mocks.query).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(mocks.query).toHaveBeenCalledTimes(1))
     expect(screen.queryByTestId('revision-drawer')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'dsb.doc.action.version_history' }))
 
     expect(await screen.findByTestId('revision-drawer')).toHaveTextContent('true')
-    expect(mocks.query).toHaveBeenCalledTimes(2)
+    expect(mocks.query).toHaveBeenCalledTimes(1)
   })
 })

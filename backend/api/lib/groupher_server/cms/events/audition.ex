@@ -83,7 +83,7 @@ defmodule GroupherServer.CMS.Events.Audition do
     audit_res = Map.merge(audit_res, %{illegal_articles: []})
 
     apply_moderation(fn ->
-      CMS.Articles.unset_illegal(article, audit_res)
+      CMS.Articles.unset_illegal(article.id, audit_res, :operations, moderation_opts(article))
     end)
   end
 
@@ -98,7 +98,7 @@ defmodule GroupherServer.CMS.Events.Audition do
 
   def handle_audition_result({:error, %{audit_failed: true} = audit_res}, article) do
     apply_moderation(fn ->
-      CMS.Articles.set_audit_failed(article, audit_res)
+      CMS.Articles.set_audit_failed(article.id, audit_res, :operations, moderation_opts(article))
     end)
   end
 
@@ -120,7 +120,7 @@ defmodule GroupherServer.CMS.Events.Audition do
     audit_res = Map.merge(audit_res, %{illegal_articles: illegal_articles})
 
     apply_moderation(fn ->
-      CMS.Articles.set_illegal(article, audit_res)
+      CMS.Articles.set_illegal(article.id, audit_res, :operations, moderation_opts(article))
     end)
   end
 
@@ -143,5 +143,12 @@ defmodule GroupherServer.CMS.Events.Audition do
   rescue
     # Stale structs are expected in async jobs when target rows were deleted.
     Ecto.StaleEntryError -> {:ok, :pass}
+  end
+
+  defp moderation_opts(article) do
+    case Map.get(article, :branch_id) do
+      branch_id when is_integer(branch_id) -> [branch_id: branch_id]
+      _ -> []
+    end
   end
 end

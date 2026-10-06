@@ -89,7 +89,6 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       }
 
       _results = guest_conn |> gq_query(S.Article.q(:article, :changelog), variables)
-
     end
 
     test "guest user can get comment participants after comment created",
@@ -556,7 +555,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       page_size = 12
       thread = :changelog
 
-      author_user = changelog.author.user
+      author_user = changelog.author
 
       all_comments =
         Enum.reduce(0..total_count, [], fn i, acc ->
@@ -827,7 +826,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       page_size = 10
       thread = :changelog
 
-      author_user = changelog.author.user
+      author_user = changelog.author
 
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)

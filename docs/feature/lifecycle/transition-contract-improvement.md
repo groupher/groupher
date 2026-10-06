@@ -703,7 +703,9 @@ command”在类型上就是两个明确阶段。
 
 ```text
 GraphQL resolver / CMS facade
-  -> CMS.Command.update_user/create_user + CMS.Command.run/2
+  -> authenticated domain command
+       -> %CMS.Command{actor, command_id, operation, target, params}
+       -> CMS.Command.execute/2 with required action/result callbacks
        -> internal Receipt.Key: validate commandId
        -> internal Receipt.Runner: transaction + execute/recovery orchestration
             -> internal Receipt.Store: claim/finalize/prune persistence
@@ -714,6 +716,8 @@ GraphQL resolver / CMS facade
 ```
 
 - `backend/api/lib/groupher_server/cms/command.ex` 是同步 CMS 用户命令的唯一公开边界；Receipt、Key、Runner、Store 都是其内部实现，不进入 GraphQL 或领域 facade 合同。
+- `action` 与 `result` 必须在同一个 `Command.execute/2` 调用中显式成对出现；不保留
+  `update_user/create_user` 构造器、公开 `resolve_command_id` 或 callback fallback。
 - 目标键允许整数或领域组合字符串；`Store` 的 fingerprint 绑定 command、target、input 和 expected version/revision。
 - `backend/api/lib/groupher_server/cms/model/command_receipt.ex` 与 `20260909120000_create_command_receipts.exs` 提供 `cms.command_receipts`、目标索引、唯一身份约束和 24 小时 `expires_at`。
 - `backend/api/lib/groupher_server/jobs/command_receipt_retention.ex` 按批次清理过期行。旧 `interaction_operation_receipts` 不迁移、不双写；`operation_ref` 仍只属于领域 Audit/Activity/transition fact。

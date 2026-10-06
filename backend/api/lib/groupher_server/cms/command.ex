@@ -2,8 +2,8 @@ defmodule GroupherServer.CMS.Command do
   @moduledoc """
   Public boundary for authenticated CMS user commands.
 
-  A command declaration keeps the user intent together: actor, command id,
-  command type, resource and business input. Receipt claim/finalize and the
+  A command request keeps the user intent together: actor, command id,
+  operation, target and business params. Receipt claim/finalize and the
   distinction between a first execution and a recovered result remain inside
   this module and its internal Receipt runner.
 
@@ -12,13 +12,11 @@ defmodule GroupherServer.CMS.Command do
         -> Receipt claim / execute or result recovery
         -> canonical domain result
 
-  Transport and UI callers provide only the normal execution function. A
-  command owner may additionally provide a domain recovery projection when
-  the canonical result cannot be reconstructed by the built-in resource
-  recovery. That projection remains inside this boundary; no replay status is
-  exposed to callers.
+  Callers provide the action and its Confirmation codec together at execution
+  time. The codec persists and recovers the exact command-time result; product
+  projections remain outside this boundary.
 
-  Command atoms are encoded once at this boundary before reaching Receipt.
+  Operation atoms are encoded once at this boundary before reaching Receipt.
   The current release splits the first underscore into the namespace, except
   for the `doc_tree_` prefix, which becomes `doc.tree.` while preserving the
   remainder. For example, `:article_update_draft` becomes
@@ -27,200 +25,206 @@ defmodule GroupherServer.CMS.Command do
   """
 
   alias GroupherServer.{Accounts, CMS}
+  alias Helper.T
 
   alias Accounts.Model.User
-  alias CMS.{CommandReceipt, ErrorCat, FrontDesk}
-  alias CMS.Model.Comment
-
-  @doc "Resolves a transport command id before entering the user command boundary."
-  defdelegate resolve_command_id(value), to: CommandReceipt
+  alias CMS.Command.Receipt, as: CommandReceipt
+  alias CMS.ErrorCat
 
   @type t :: %__MODULE__{
           actor: User.t(),
-          command_id: Ecto.UUID.t() | nil,
-          command: atom(),
-          resource: term(),
-          owner: term(),
-          input: term(),
-          recovery: (term() -> term()) | nil,
-          after_commit: (term() -> term()) | nil
+          command_id: Ecto.UUID.t(),
+          operation: atom(),
+          target: term(),
+          params: term()
         }
 
-  defstruct [
-    :actor,
-    :command_id,
-    :command,
-    :resource,
-    :owner,
-    :input,
-    :recovery,
-    :after_commit
-  ]
+  @type callback_result(value) :: {:ok, value} | {:error, term()}
+  @type action_result(value) :: callback_result(value)
 
-  @doc "Builds an authenticated user command declaration for an existing resource."
-  @spec update_user(User.t(), Ecto.UUID.t(), keyword()) :: t()
-  def update_user(%User{} = actor, command_id, opts) when is_list(opts) do
-    %__MODULE__{
-      actor: actor,
-      command_id: command_id,
-      command: Keyword.fetch!(opts, :command),
-      resource: Keyword.fetch!(opts, :resource),
-      input: Keyword.fetch!(opts, :input),
-      recovery: Keyword.get(opts, :recovery),
-      after_commit: Keyword.get(opts, :after_commit)
-    }
-  end
-
-  @doc "Builds a user command for a create or other logical-scope operation."
-  @spec create_user(User.t(), Ecto.UUID.t() | nil, keyword()) :: t()
-  def create_user(%User{} = actor, command_id, opts) when is_list(opts) do
-    %__MODULE__{
-      actor: actor,
-      command_id: command_id,
-      command: Keyword.fetch!(opts, :command),
-      resource: Keyword.get(opts, :resource),
-      owner: Keyword.get(opts, :owner),
-      input: Keyword.get(opts, :input),
-      recovery: Keyword.get(opts, :recovery),
-      after_commit: Keyword.get(opts, :after_commit)
-    }
-  end
+  @enforce_keys [:actor, :command_id, :operation, :target, :params]
+  defstruct [:actor, :command_id, :operation, :target, :params]
 
   @doc "Runs one user command and returns its canonical domain result."
-  @spec run(t(), (map() -> term())) :: {:ok, term()} | {:error, term()}
-  def run(%__MODULE__{} = command, execute) when is_function(execute, 1) do
-    with {:ok, command_id} <- CommandReceipt.resolve_command_id(command.command_id),
-         :ok <- validate_target(command) do
-      with {:ok, {target_type, target_key}} <- target_identity(command) do
-        context = context(command, command_id)
+  @spec execute(t(), keyword()) :: T.done()
+  def execute(%__MODULE__{} = command, opts) when is_list(opts) do
+    case Keyword.keys(opts) -- [:action, :confirmation] do
+      [] ->
+        :ok
 
-        CommandReceipt.run_internal(
-          command.actor,
-          command_id,
-          encode_command(command.command),
-          target_type,
-          target_key,
-          command.input,
-          fn -> execute.(context) end,
-          &resolve_recovery(command, &1, context),
-          command.after_commit || fn _result -> :ok end
-        )
+      unknown ->
+        raise ArgumentError,
+              "CMS.Command.execute received unsupported options: #{inspect(unknown)}"
+    end
+
+    action = Keyword.fetch!(opts, :action)
+    confirmation = Keyword.fetch!(opts, :confirmation)
+
+    unless is_function(action, 1) and is_atom(confirmation) do
+      raise ArgumentError,
+            "CMS.Command.execute expects action/1 and a confirmation module"
+    end
+
+    command_result =
+      with {:ok, command_id} <- CommandReceipt.validate_command_id(command.command_id),
+           {:ok, :pass} <- validate_target(command),
+           {:ok, :pass} <- validate_confirmation(command.operation, confirmation) do
+        with {:ok, {resource_type, resource_id}} <- target_identity(command) do
+          context = context(command, command_id)
+
+          receipt_args = [
+            command.actor,
+            command_id,
+            operation_tag(command.operation),
+            resource_type,
+            resource_id,
+            command.params,
+            fn -> action.(context) end,
+            confirmation
+          ]
+
+          apply(CommandReceipt, :execute, receipt_args)
+        end
       end
+
+    normalize_command_result(command_result)
+  end
+
+  @doc "Encodes an operation atom into the canonical Receipt/Confirmation tag."
+  @spec operation_tag(atom()) :: String.t()
+  def operation_tag(operation) when is_atom(operation) do
+    operation
+    |> Atom.to_string()
+    |> Macro.underscore()
+    |> String.trim_leading("_")
+    |> case do
+      "doc_tree_" <> rest ->
+        "doc.tree." <> rest
+
+      value ->
+        case String.split(value, "_", parts: 2) do
+          [namespace, name] -> namespace <> "." <> name
+          [name] -> name
+        end
     end
   end
+
+  defp validate_confirmation(operation, module) when is_atom(module) do
+    try do
+      with true <- Code.ensure_loaded?(module),
+           true <- function_exported?(module, :operations, 0),
+           true <- function_exported?(module, :encode, 2),
+           true <- function_exported?(module, :decode, 2),
+           operations when is_list(operations) <- module.operations(),
+           true <- operation in operations do
+        {:ok, :pass}
+      else
+        _ -> {:error, {:invalid_command_result, :confirmation_contract_unavailable}}
+      end
+    rescue
+      _ -> {:error, {:invalid_command_result, :confirmation_contract_unavailable}}
+    end
+  end
+
+  defp normalize_command_result({:error, {:invalid_command_result, _reason}}) do
+    {:error, ErrorCat.command_invalid_result()}
+  end
+
+  defp normalize_command_result({:error, :invalid_intent_params}) do
+    {:error, ErrorCat.invalid_command_intent()}
+  end
+
+  defp normalize_command_result({:ok, _value} = result), do: result
+  defp normalize_command_result({:error, _reason} = result), do: result
+  defp normalize_command_result(_result), do: {:error, ErrorCat.command_invalid_result()}
 
   defp context(command, command_id) do
     command
     |> Map.from_struct()
-    |> Map.take([:actor, :resource, :owner, :input])
+    |> Map.take([:actor, :target, :params])
     |> Map.put(:command_id, command_id)
   end
 
-  defp validate_target(%__MODULE__{resource: resource}) when is_struct(resource), do: :ok
+  defp validate_target(%__MODULE__{target: target}) when is_struct(target), do: {:ok, :pass}
 
-  defp validate_target(%__MODULE__{resource: resource, owner: owner})
-       when not is_nil(resource) and not is_nil(owner),
-       do: :ok
+  defp validate_target(%__MODULE__{target: %{id: id, thread: thread}})
+       when is_binary(id) and thread in [:post, :blog, :changelog, :doc] do
+    {:ok, :pass}
+  end
+
+  defp validate_target(%__MODULE__{target: {type, id}})
+       when (is_atom(type) or is_binary(type)) and (is_binary(id) or is_integer(id)) do
+    {:ok, :pass}
+  end
 
   defp validate_target(_), do: {:error, ErrorCat.unsupported_command_resource()}
 
-  defp encode_command(command) when is_atom(command),
-    do:
-      command
-      |> Atom.to_string()
-      |> Macro.underscore()
-      |> String.replace_prefix("_", "")
-      |> split_command()
+  @doc "Decodes a canonical Receipt operation tag without creating arbitrary atoms."
+  @spec operation_from_tag(String.t()) :: {:ok, atom()} | {:error, :invalid_operation_tag}
+  def operation_from_tag(tag) when is_binary(tag) do
+    candidate =
+      case String.split(tag, ".") do
+        ["doc", "tree", rest] -> "doc_tree_" <> rest
+        [namespace, name] -> namespace <> "_" <> name
+        [name] -> name
+        _ -> nil
+      end
 
-  defp split_command(command) do
-    case command do
-      "doc_tree_" <> rest -> "doc.tree." <> rest
-      _ -> split_command_namespace(command)
+    if is_binary(candidate) do
+      try do
+        operation = String.to_existing_atom(candidate)
+
+        if operation_tag(operation) == tag do
+          {:ok, operation}
+        else
+          {:error, :invalid_operation_tag}
+        end
+      rescue
+        ArgumentError -> {:error, :invalid_operation_tag}
+      end
+    else
+      {:error, :invalid_operation_tag}
     end
   end
 
-  defp split_command_namespace(command) do
-    case String.split(command, "_", parts: 2) do
-      [namespace, name] -> namespace <> "." <> name
-      [name] -> name
-    end
+  def operation_from_tag(_tag), do: {:error, :invalid_operation_tag}
+
+  defp target_identity(%__MODULE__{target: %{id: id, thread: thread}})
+       when is_binary(id) and thread in [:post, :blog, :changelog, :doc] do
+    {:ok, {"article", id}}
   end
 
-  defp target_identity(%__MODULE__{resource: resource}) when is_struct(resource) do
-    build_target_identity(resource, resource_key(resource))
+  defp target_identity(%__MODULE__{target: target}) when is_struct(target) do
+    build_target_identity(target, target_key(target))
   end
 
-  defp target_identity(%__MODULE__{resource: resource, owner: owner}) do
-    build_target_identity(resource, owner_key(owner))
+  defp target_identity(%__MODULE__{target: {type, id}}) do
+    {:ok, {target_type(type), id}}
   end
 
-  defp build_target_identity(resource, key) when is_binary(key) or is_integer(key) do
-    case resource_type(resource) do
+  defp build_target_identity(target, key) when is_binary(key) or is_integer(key) do
+    case target_type(target) do
       type when is_binary(type) -> {:ok, {type, key}}
       _ -> {:error, ErrorCat.unsupported_command_resource()}
     end
   end
 
-  defp build_target_identity(_resource, _key),
-    do: {:error, ErrorCat.unsupported_command_resource()}
-
-  defp resource_type(resource) when is_atom(resource), do: Atom.to_string(resource)
-  defp resource_type(resource) when is_binary(resource), do: resource
-
-  defp resource_type(resource) when is_struct(resource),
-    do: resource.__struct__ |> Module.split() |> List.last() |> Macro.underscore()
-
-  defp resource_type(_resource), do: nil
-
-  defp resource_key(resource) do
-    Map.get(resource, :id) ||
-      Map.get(resource, :article_hash_id) ||
-      Map.get(resource, :hash_id) ||
-      Map.get(resource, :inner_id)
+  defp build_target_identity(_target, _key) do
+    {:error, ErrorCat.unsupported_command_resource()}
   end
 
-  defp owner_key(%{id: id}) when is_integer(id) or is_binary(id), do: id
-  defp owner_key(%{slug: slug}) when is_binary(slug), do: slug
-  defp owner_key(owner) when is_integer(owner), do: owner
-  defp owner_key(owner) when is_binary(owner), do: owner
-  defp owner_key(_owner), do: nil
+  defp target_type(target) when is_atom(target), do: Atom.to_string(target)
+  defp target_type(target) when is_binary(target), do: target
 
-  defp resolve_recovery(%__MODULE__{recovery: recovery}, receipt, _context)
-       when is_function(recovery, 1),
-       do: recovery.(receipt)
-
-  defp resolve_recovery(%__MODULE__{resource: %Comment{} = resource}, receipt, context) do
-    command_id = context.command_id
-
-    with result_key when not is_nil(result_key) <- receipt.result_key,
-         {:ok, comment_id} <- parse_result_key(result_key),
-         {:ok, comment} <- FrontDesk.comment(comment_id),
-         {:ok, article} <- FrontDesk.article_of(comment) do
-      {:ok,
-       comment
-       |> Map.put(:article, %{
-         thread: resource.thread,
-         inner_id: article.inner_id,
-         comments_count: article.comments_count,
-         comments_revision: article.comments_revision
-       })
-       |> Map.put(:command_id, command_id)}
-    else
-      _ -> {:error, ErrorCat.command_result_unavailable()}
-    end
+  defp target_type(target) when is_struct(target) do
+    target.__struct__ |> Module.split() |> List.last() |> Macro.underscore()
   end
 
-  defp resolve_recovery(_command, _receipt, _context),
-    do: {:error, ErrorCat.command_result_unavailable()}
+  defp target_type(_target), do: nil
 
-  defp parse_result_key(key) when is_integer(key), do: {:ok, key}
-
-  defp parse_result_key(key) when is_binary(key) do
-    case Integer.parse(key) do
-      {value, ""} -> {:ok, value}
-      _ -> :error
-    end
+  defp target_key(target) do
+    Map.get(target, :id) ||
+      Map.get(target, :hash_id) ||
+      Map.get(target, :inner_id)
   end
-
-  defp parse_result_key(_), do: :error
 end

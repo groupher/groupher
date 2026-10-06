@@ -75,9 +75,11 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Connection do
 
   defp validate_secret_free_config(changeset) do
     validate_change(changeset, :config, fn :config, config ->
-      if sensitive_key?(config),
-        do: [config: "must not contain credentials or authorization secrets"],
-        else: []
+      if sensitive_key?(config) do
+        [config: "must not contain credentials or authorization secrets"]
+      else
+        []
+      end
     end)
   end
 

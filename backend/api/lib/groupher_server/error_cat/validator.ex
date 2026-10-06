@@ -51,13 +51,14 @@ defmodule GroupherServer.ErrorCat.Validator do
     |> Map.to_list()
     |> Enum.drop(index + 1)
     |> Enum.each(fn {right_namespace, right_range} ->
-      if Range.disjoint?(left_range, right_range),
-        do: :ok,
-        else:
-          raise(ArgumentError,
-            message:
-              "ErrorCat code ranges overlap: #{inspect(left_namespace)} and #{inspect(right_namespace)}"
-          )
+      if Range.disjoint?(left_range, right_range) do
+        :ok
+      else
+        raise(ArgumentError,
+          message:
+            "ErrorCat code ranges overlap: #{inspect(left_namespace)} and #{inspect(right_namespace)}"
+        )
+      end
     end)
   end
 
@@ -164,8 +165,9 @@ defmodule GroupherServer.ErrorCat.Validator do
     end)
   end
 
-  defp validate_reserved!(_ranges, _reserved),
-    do: raise(ArgumentError, "ErrorCat reserved definitions must be a list")
+  defp validate_reserved!(_ranges, _reserved) do
+    raise(ArgumentError, "ErrorCat reserved definitions must be a list")
+  end
 
   defp validate_reserved_definition!(ranges, definition) do
     validate_reserved_shape!(definition)
@@ -185,42 +187,49 @@ defmodule GroupherServer.ErrorCat.Validator do
   end
 
   defp validate_reserved_namespace!(ranges, namespace) do
-    unless Map.has_key?(ranges, namespace),
-      do:
-        raise(
-          ArgumentError,
-          "ErrorCat reserved definition namespace is not registered: #{inspect(namespace)}"
-        )
+    unless Map.has_key?(ranges, namespace) do
+      raise(
+        ArgumentError,
+        "ErrorCat reserved definition namespace is not registered: #{inspect(namespace)}"
+      )
+    end
   end
 
   defp validate_reserved_reason!(reason) when is_atom(reason), do: :ok
 
-  defp validate_reserved_reason!(_),
-    do: raise(ArgumentError, "ErrorCat reserved reason must be an atom")
+  defp validate_reserved_reason!(_) do
+    raise(ArgumentError, "ErrorCat reserved reason must be an atom")
+  end
 
   defp validate_reserved_code!(code) when is_integer(code) and code > 0, do: :ok
 
-  defp validate_reserved_code!(_),
-    do: raise(ArgumentError, "ErrorCat reserved code must be a positive integer")
+  defp validate_reserved_code!(_) do
+    raise(ArgumentError, "ErrorCat reserved code must be a positive integer")
+  end
 
   defp validate_reserved_retryable!(retryable) when is_boolean(retryable), do: :ok
 
-  defp validate_reserved_retryable!(_),
-    do: raise(ArgumentError, "ErrorCat reserved retryable must be boolean")
-
-  defp validate_reserved_actions!(actions) when is_list(actions) do
-    if Enum.all?(actions, &is_atom/1),
-      do: :ok,
-      else: raise(ArgumentError, "ErrorCat reserved actions must be a list of atoms")
+  defp validate_reserved_retryable!(_) do
+    raise(ArgumentError, "ErrorCat reserved retryable must be boolean")
   end
 
-  defp validate_reserved_actions!(_),
-    do: raise(ArgumentError, "ErrorCat reserved actions must be a list of atoms")
+  defp validate_reserved_actions!(actions) when is_list(actions) do
+    if Enum.all?(actions, &is_atom/1) do
+      :ok
+    else
+      raise(ArgumentError, "ErrorCat reserved actions must be a list of atoms")
+    end
+  end
+
+  defp validate_reserved_actions!(_) do
+    raise(ArgumentError, "ErrorCat reserved actions must be a list of atoms")
+  end
 
   defp validate_reserved_message_key!(message_key) when is_binary(message_key), do: :ok
 
-  defp validate_reserved_message_key!(_),
-    do: raise(ArgumentError, "ErrorCat reserved message_key must be a string")
+  defp validate_reserved_message_key!(_) do
+    raise(ArgumentError, "ErrorCat reserved message_key must be a string")
+  end
 
   defp validate_message_keys!(definitions) do
     Enum.each(definitions, fn definition ->
@@ -240,13 +249,15 @@ defmodule GroupherServer.ErrorCat.Validator do
     end
   end
 
-  defp validate_namespace!(namespace),
-    do:
-      raise(ArgumentError, "ErrorCat namespace must be a non-empty tuple: #{inspect(namespace)}")
+  defp validate_namespace!(namespace) do
+    raise(ArgumentError, "ErrorCat namespace must be a non-empty tuple: #{inspect(namespace)}")
+  end
 
-  def default_message_key(namespace, reason),
-    do: namespace_path(namespace) <> "." <> Atom.to_string(reason)
+  def default_message_key(namespace, reason) do
+    namespace_path(namespace) <> "." <> Atom.to_string(reason)
+  end
 
-  def namespace_path(namespace),
-    do: namespace |> Tuple.to_list() |> Enum.map_join(".", &Atom.to_string/1)
+  def namespace_path(namespace) do
+    namespace |> Tuple.to_list() |> Enum.map_join(".", &Atom.to_string/1)
+  end
 end

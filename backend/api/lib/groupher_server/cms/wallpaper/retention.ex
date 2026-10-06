@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Wallpaper.Retention do
     WallpaperSnapshotImage
   }
 
-  alias CMS.Wallpaper.Reader
+  alias CMS.Wallpaper.Query
 
   @publish_receipt_retention_seconds 30 * 24 * 60 * 60
   @snapshot_delete_grace_seconds 2 * 60 * 60
@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.Wallpaper.Retention do
 
     Enum.each(snapshots, fn snapshot ->
       community = Repo.get!(Community, snapshot.community_id)
-      refs = Reader.snapshot_images(snapshot.public_ref) |> Enum.map(& &1.asset_public_ref)
+      refs = Query.snapshot_images(snapshot.public_ref) |> Enum.map(& &1.asset_public_ref)
       CMS.Assets.delete_generated_assets(community, refs)
       Repo.delete!(snapshot)
     end)
@@ -100,7 +100,7 @@ defmodule GroupherServer.CMS.Wallpaper.Retention do
         order_by: [desc: snapshot.history_used_at, desc: snapshot.inserted_at]
       )
       |> Repo.all()
-      |> Enum.filter(&Reader.supported_snapshot?/1)
+      |> Enum.filter(&Query.supported_snapshot?/1)
       |> Enum.map(& &1.public_ref)
 
     keep_refs = (active_refs ++ history_refs) |> Enum.uniq() |> Enum.take(5)

@@ -111,7 +111,7 @@ export type TDocImportBodyStageResult = {
 
 export type TDocImportApplyResult = {
   counts: Record<string, number>
-  firstImportedDocRef?: string | null
+  firstImportedDocId?: string | null
   jobRef: string
   targetBranch: string
   failedItems: TDocImportIssue[]
@@ -193,7 +193,7 @@ const APPLY_DOC_IMPORT = `
     applyDocContentImport(community: $community, jobRef: $jobRef) {
       jobRef
       status
-      firstImportedDocRef
+      firstImportedDocId
       targetBranch
       counts
       failedItems

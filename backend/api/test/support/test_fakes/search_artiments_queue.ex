@@ -32,8 +32,8 @@ defmodule Helper.TestFakes.SearchArtimentsQueue do
       {:sync_article_metrics, thread, article_id} ->
         Indexer.sync_article_metrics(thread, article_id)
 
-      {:delete_article, thread, article_hash_id} ->
-        Indexer.delete_article(thread, article_hash_id)
+      {:delete_article, thread, article_id} ->
+        Indexer.delete_article(thread, article_id)
     end)
   end
 

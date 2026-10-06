@@ -9,7 +9,5 @@ defmodule GroupherServer.CMS.Model.PostReactionInfo do
 
   use GroupherServer.CMS.Model.Interaction.ReactionInfo,
     table: "post_reaction_infos",
-    target: :post,
-    target_schema: GroupherServer.CMS.Model.Post,
     collection?: true
 end

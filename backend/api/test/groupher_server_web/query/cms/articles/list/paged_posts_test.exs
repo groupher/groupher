@@ -26,28 +26,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
     {community, post, _, user} = mock_article(:post)
 
-    {:ok, post_last_week} =
-      ORM.update(post, %{title: "last week", inserted_at: @last_week, active_at: @last_week},
-        strict: false
-      )
+    {:ok, post_last_week} = backdate(post, @last_week)
 
     {_, post, _, _} = mock_article(:post)
 
-    {:ok, post_last_month} =
-      ORM.update(
-        post,
-        %{title: "last month", inserted_at: @last_month, active_at: @last_month},
-        strict: false
-      )
+    {:ok, post_last_month} = backdate(post, @last_month)
 
     {_, post, _, _} = mock_article(:post, community, user)
 
-    {:ok, post_last_year} =
-      ORM.update(post, %{title: "last year", inserted_at: @last_year, active_at: @last_year},
-        strict: false
-      )
+    {:ok, post_last_year} = backdate(post, @last_year)
 
-    db_insert_multi(:post, @today_count)
+    Enum.each(1..@today_count, fn _index -> mock_article(:post) end)
 
     guest_conn = simu_conn(:guest)
 
@@ -121,11 +110,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["innerId"] == to_string(post.inner_id)
     end
 
-    test "should get valid cat & status", ~m(guest_conn post_last_week)a do
+    test "should get valid cat & status", ~m(guest_conn post_last_week user)a do
       variables = %{filter: %{page: 1, size: 20}}
 
-      {:ok, _} = CMS.Articles.set_cat(post_last_week, @article_cat.idea)
-      {:ok, _} = CMS.Articles.set_status(post_last_week, @article_status.wip)
+      {:ok, _} = CMS.Articles.set_cat(post_last_week.id, @article_cat.idea, user)
+      {:ok, _} = CMS.Articles.set_status(post_last_week.id, @article_status.wip, user)
 
       results =
         guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat status"), variables)
@@ -134,9 +123,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["entries"] |> Enum.any?(&(&1["status"] == "WIP"))
     end
 
-    test "should get valid cat & status by filter", ~m(guest_conn post_last_week)a do
-      {:ok, _} = CMS.Articles.set_cat(post_last_week, @article_cat.idea)
-      {:ok, _} = CMS.Articles.set_status(post_last_week, @article_status.wip)
+    test "should get valid cat & status by filter", ~m(guest_conn post_last_week user)a do
+      {:ok, _} = CMS.Articles.set_cat(post_last_week.id, @article_cat.idea, user)
+      {:ok, _} = CMS.Articles.set_status(post_last_week.id, @article_status.wip, user)
 
       variables = %{filter: %{page: 1, size: 20, cat: "IDEA"}}
 
@@ -369,7 +358,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       {:ok, _} = CMS.Interactions.upvote(post, user)
       {:ok, _} = CMS.Interactions.collect(post, user)
-      {:ok, post} = ORM.find(Post, post.id)
       {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user)
 
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
@@ -427,7 +415,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       entries = results["entries"]
       first_post = entries |> List.first()
-      assert first_post["innerId"] !== to_string(post_last_week.inner_id)
+      refute matches_article?(first_post, community, post_last_week)
 
       Process.sleep(1500)
 
@@ -444,7 +432,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       entries = results["entries"]
       first_post = entries |> List.first()
 
-      assert first_post["innerId"] == to_string(post_last_week.inner_id)
+      assert matches_article?(first_post, community, post_last_week)
     end
 
     test "comment on very old post have no effect",
@@ -464,13 +452,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       entries = results["entries"]
       first_post = entries |> List.first()
 
-      assert first_post["innerId"] !== to_string(post_last_year.inner_id)
+      refute matches_article?(first_post, community, post_last_year)
     end
 
     test "latest post author commented post have no effect",
          ~m(guest_conn community post_last_week)a do
       variables = %{filter: %{page: 1, size: 20}}
-      {:ok, post} = ORM.find(Post, post_last_week.id, preload: [author: :user])
+      post = CMS.Model.Article |> Repo.get!(post_last_week.id) |> Repo.preload(author: :user)
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -485,12 +473,25 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       entries = results["entries"]
       first_post = entries |> List.first()
 
-      assert first_post["innerId"] !== to_string(post_last_week.inner_id)
+      refute matches_article?(first_post, community, post_last_week)
     end
   end
 
   defp track_view(article, user) do
     assert {:ok, %{tracked: true}} =
              track_article_view(article, user, read_purpose: :public_read)
+  end
+
+  defp matches_article?(entry, community, article) do
+    entry["innerId"] == to_string(article.inner_id) and
+      Enum.any?(entry["communities"], &(&1["slug"] == community.slug))
+  end
+
+  defp backdate(article, timestamp) do
+    article = Repo.get!(CMS.Model.Article, article.id)
+
+    article
+    |> Ecto.Changeset.change(%{inserted_at: timestamp, active_at: timestamp})
+    |> Repo.update()
   end
 end

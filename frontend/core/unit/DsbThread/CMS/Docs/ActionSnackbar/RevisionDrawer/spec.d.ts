@@ -1,32 +1,37 @@
-import type { TDocSnapshotActionWire, TDocSnapshotStageWire } from '~/const/article'
-
-export type TDocSnapshotStage = TDocSnapshotStageWire
-export type TDocSnapshotAction = TDocSnapshotActionWire
-
-export type TDocSnapshotAuthor = {
+export type TDocBranchRevisionAuthor = {
   login?: string | null
   nickname?: string | null
   avatar?: string | null
 }
 
-export type TDocSnapshot = {
+export type TDocBranchRevision = {
   id: string
-  thread?: string | null
-  stage: TDocSnapshotStage
-  action: TDocSnapshotAction
-  articleHashId?: string | null
+  branchVersionId: string
   title?: string | null
-  slug?: string | null
   subtitle?: string | null
-  digest?: string | null
   documentJson?: string | null
-  versionHash?: string | null
   revisionNumber?: number | null
-  schemaVersion?: number | null
   insertedAt?: string | null
-  author?: TDocSnapshotAuthor | null
+  author?: TDocBranchRevisionAuthor | null
 }
 
-export type TDocDraftSnapshotsPayload = {
-  docDraftSnapshots?: TDocSnapshot[] | null
+export type TDocBranchVersionWire = {
+  id: string
+  revisionId: string
+  versionNumber: number
+  publishedAt?: string | null
+  message?: string | null
+  content: {
+    title?: string | null
+    slug?: string | null
+    subtitle?: string | null
+    digest?: string | null
+    documentJson?: string | null
+    bodyHash?: string | null
+    schemaVersion?: number | null
+  }
+}
+
+export type TDocBranchVersionsPayload = {
+  docBranchVersions?: TDocBranchVersionWire[] | null
 }

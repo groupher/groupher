@@ -12,14 +12,14 @@ defmodule Helper.TestFakes.SearchArtiments do
   def upsert(artiments, _opts \\ []) do
     table = ensure_table()
     Enum.each(artiments, &:ets.insert(table, {&1.ref, &1}))
-    :ok
+    {:ok, :pass}
   end
 
   @impl true
   def delete(refs) do
     table = ensure_table()
     Enum.each(refs, &:ets.delete(table, &1))
-    :ok
+    {:ok, :pass}
   end
 
   @impl true
@@ -45,7 +45,7 @@ defmodule Helper.TestFakes.SearchArtiments do
       end
     end)
 
-    :ok
+    {:ok, :pass}
   end
 
   @impl true
@@ -93,7 +93,7 @@ defmodule Helper.TestFakes.SearchArtiments do
 
   defp matches_scope?(artiment, scope) do
     matches_optional?(artiment.community_ref, scope[:community_ref]) and
-      matches_optional?(artiment.article_ref, scope[:article_ref])
+      matches_optional?(artiment.article_id, scope[:article_id])
   end
 
   defp matches_optional?(_actual, nil), do: true

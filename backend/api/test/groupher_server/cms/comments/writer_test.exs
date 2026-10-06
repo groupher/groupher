@@ -3,8 +3,7 @@ defmodule GroupherServer.Test.CMS.Comments.Writer do
 
   alias GroupherServer.CMS
   alias CMS.Artiment.Const
-  alias CMS.Model.{Comment, Post}
-  alias Helper.ORM
+  alias CMS.Model.Comment
 
   @article_cat Const.cat_map()
 
@@ -12,7 +11,7 @@ defmodule GroupherServer.Test.CMS.Comments.Writer do
     {_community, stale_post, _, actor} = mock_article(:post, preload: [author: :user])
     assert stale_post.cat != @article_cat.qa
 
-    {:ok, _canonical_post} = CMS.Articles.set_cat(stale_post, @article_cat.qa)
+    {:ok, _canonical_post} = CMS.Articles.set_cat(stale_post.id, @article_cat.qa, actor)
 
     assert {:ok, %{is_for_question: true}} =
              CMS.Comments.create_comment(:post, stale_post, mock_comment(), actor)
@@ -24,8 +23,7 @@ defmodule GroupherServer.Test.CMS.Comments.Writer do
     {:ok, %Comment{} = parent} =
       CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), actor)
 
-    {:ok, locked_post} = ORM.find(Post, post.id)
-    {:ok, _} = CMS.Articles.lock_comments(locked_post)
+    {:ok, _} = CMS.Articles.lock_comments(post.id, actor)
 
     assert {:error, %{reason: :article_comments_locked}} =
              CMS.Comments.reply_comment(parent.id, mock_comment(), actor)

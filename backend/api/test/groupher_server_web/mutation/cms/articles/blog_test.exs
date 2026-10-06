@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       created = user_conn |> gq_mutation(S.Article.m(:create_article, :blog), variables)
 
       {:ok, blog} =
-        CMS.FrontDesk.article(community, :blog, created["innerId"], preload: :community_tags)
+        read_article(community, :blog, created["innerId"], preload: :community_tags)
 
       assert exist_in?(%{id: community_tag.id}, blog.community_tags)
     end
@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       result = user_conn |> gq_mutation(S.Article.m(:create_article, :blog), variables)
 
       {:ok, blog} =
-        CMS.FrontDesk.article(community, :blog, result["innerId"], preload: :document)
+        read_article(community, :blog, result["innerId"], preload: :document)
 
       body_html = blog |> get_in([:document, :html])
 
@@ -72,7 +72,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       result = user_conn |> gq_mutation(S.Article.m(:create_article, :blog), variables)
 
       {:ok, blog} =
-        CMS.FrontDesk.article(community, :blog, result["innerId"], preload: :document)
+        read_article(community, :blog, result["innerId"], preload: :document)
 
       body_html = blog |> get_in([:document, :html])
 
@@ -194,7 +194,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     end
 
     test "login user with auth passport update a blog", ~m(community blog)a do
-      blog = blog |> Repo.preload(:communities)
       belongs_community_slug = blog.communities |> List.first() |> Map.get(:slug)
 
       passport_rules = %{belongs_community_slug => %{"blog.edit" => true}}

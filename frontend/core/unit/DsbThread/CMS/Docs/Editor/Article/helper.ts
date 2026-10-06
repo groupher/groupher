@@ -117,11 +117,16 @@ export const composeEmptyEditorDraft = (): TEditorDraft =>
   })
 
 /** Runs the compose saved draft operation at the frontend shared boundary. */
-export const composeSavedDraft = (draft: TEditorDraft): TSavedDraft => ({
+export const composeSavedDraft = (
+  draft: TEditorDraft,
+  server?: { contentHash?: string | null; baseRevisionId?: string | null },
+): TSavedDraft => ({
   bodyValue: draft.bodyValue,
   bodyJson: draft.bodyJson,
   docId: draft.docId,
   revisionSignature: draftSignature(draft),
+  serverContentHash: server?.contentHash || '',
+  baseRevisionId: server?.baseRevisionId || null,
   subtitle: draft.subtitle,
   title: draft.title,
   version: draft.version,
@@ -140,6 +145,7 @@ export const composeEditorDraftMeta = (
   source?: Partial<TEditorDraftMeta> | null,
 ): TEditorDraftMeta => ({
   author: source?.author ?? null,
+  branchId: source?.branchId ?? '',
   insertedAt: source?.insertedAt ?? null,
   stage: source?.stage ?? null,
   updatedAt: source?.updatedAt ?? null,
@@ -195,6 +201,7 @@ export const composeDocDraftInfo = ({
   publishState,
 }: Pick<TEditorDraftStorePatchInput, 'bodyStats' | 'draft' | 'meta' | 'publishState'>) => ({
   author: meta.author,
+  branchId: meta.branchId,
   characterCount: bodyStats.characterCount,
   id: draft.docId,
   insertedAt: meta.insertedAt,
@@ -261,6 +268,7 @@ export const composeLoadedDraftSession = (
     bodyJson: serializeEditorValue(body),
     info: {
       id: draft?.docId || activePage?.docId || '',
+      branchId: draft?.branchId || '',
       title,
       subtitle,
       slug: draft?.slug || '',
@@ -276,5 +284,7 @@ export const composeLoadedDraftSession = (
     slug: draft?.slug || '',
     subtitle,
     title,
+    serverContentHash: draft?.contentHash || '',
+    baseRevisionId: draft?.baseRevisionId || null,
   }
 }

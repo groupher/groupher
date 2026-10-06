@@ -26,9 +26,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   alias CMS.DocTree.Events
 
   alias CMS.Model.{
+    Article,
     Community,
-    Doc,
-    DocSnapshot,
+    DocDraft,
+    DocLifecycle,
+    DocPublic,
     DocsSiteState,
     DocTreeEvent,
     DocTreeNode
@@ -90,29 +92,33 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       when type in [
              CMS.DocTree.Const.tree_event(:node_create),
              CMS.DocTree.Const.tree_event(:pin_add)
-           ],
-      do: "created"
+           ] do
+    "created"
+  end
 
   def tree_event_action(%DocTreeEvent{event_type: type})
       when type in [
              CMS.DocTree.Const.tree_event(:node_delete),
              CMS.DocTree.Const.tree_event(:pin_remove)
-           ],
-      do: "deleted"
+           ] do
+    "deleted"
+  end
 
   def tree_event_action(%DocTreeEvent{event_type: type})
       when type in [
              CMS.DocTree.Const.tree_event(:node_move),
              CMS.DocTree.Const.tree_event(:pin_reorder)
-           ],
-      do: "moved"
+           ] do
+    "moved"
+  end
 
   def tree_event_action(%DocTreeEvent{event_type: type})
       when type in [
              CMS.DocTree.Const.tree_event(:group_rename),
              CMS.DocTree.Const.tree_event(:node_rename)
-           ],
-      do: "renamed"
+           ] do
+    "renamed"
+  end
 
   def tree_event_action(%DocTreeEvent{}), do: "modified"
 
@@ -123,8 +129,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       when type in [
              CMS.DocTree.Const.tree_event(:node_create),
              CMS.DocTree.Const.tree_event(:pin_add)
-           ],
-      do: "Added #{node["title"] || node["id"]}"
+           ] do
+    "Added #{node["title"] || node["id"]}"
+  end
 
   def tree_event_label(%DocTreeEvent{
         event_type: type,
@@ -133,8 +140,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       when type in [
              CMS.DocTree.Const.tree_event(:node_delete),
              CMS.DocTree.Const.tree_event(:pin_remove)
-           ],
-      do: "Deleted #{node["title"] || node["id"]}"
+           ] do
+    "Deleted #{node["title"] || node["id"]}"
+  end
 
   def tree_event_label(%DocTreeEvent{
         event_type: type,
@@ -143,8 +151,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       when type in [
              CMS.DocTree.Const.tree_event(:node_move),
              CMS.DocTree.Const.tree_event(:pin_reorder)
-           ],
-      do: "Moved #{payload["title"] || payload["nodeId"]}"
+           ] do
+    "Moved #{payload["title"] || payload["nodeId"]}"
+  end
 
   def tree_event_label(%DocTreeEvent{event_type: type, payload: payload})
       when type in [
@@ -154,34 +163,43 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     "Renamed #{payload["before"] || payload["title"]} -> #{payload["after"]}"
   end
 
-  def tree_event_label(%DocTreeEvent{payload: payload}),
-    do: "Updated #{payload["title"] || payload["nodeId"]}"
+  def tree_event_label(%DocTreeEvent{payload: payload}) do
+    "Updated #{payload["title"] || payload["nodeId"]}"
+  end
 
   defp doc_change_items(%Community{} = community, branch) do
     drafts =
-      Doc
-      |> where([d], d.community_id == ^community.id)
-      |> where([d], d.branch_id == ^branch.id)
-      |> where([d], d.stage == CMS.Const.stage(:draft))
-      |> order_by([d], asc: d.inserted_at, asc: d.id)
+      DocDraft
+      |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
+      |> join(:inner, [draft, _article], lifecycle in DocLifecycle,
+        on: lifecycle.article_id == draft.article_id and lifecycle.branch_id == draft.branch_id
+      )
+      |> where([draft, article, _lifecycle], article.community_id == ^community.id)
+      |> where([draft, _article, _lifecycle], draft.branch_id == ^branch.id)
+      |> order_by([draft, _article, _lifecycle], asc: draft.inserted_at, asc: draft.id)
+      |> select([draft, _article, lifecycle], {draft, lifecycle.version})
       |> Repo.all()
 
-    drafts_by_doc_id = Map.new(drafts, &{&1.article_hash_id, &1})
+    drafts_by_doc_id =
+      Map.new(drafts, fn {draft, _lifecycle_version} -> {draft.article_id, draft} end)
+
     pages = publish_pages_for_drafts(community, branch, Map.keys(drafts_by_doc_id))
     pages_by_doc_id = Map.new(pages, &{&1.doc_id, &1})
 
-    Enum.map(drafts, fn draft ->
-      page = Map.get(pages_by_doc_id, draft.article_hash_id)
-      public = public_doc_snapshot(community, branch, draft)
+    Enum.map(drafts, fn {draft, lifecycle_version} ->
+      page = Map.get(pages_by_doc_id, draft.article_id)
+      public = public_doc(community, branch, draft.article_id)
       action = if public, do: "modified", else: "created"
       selectable = not is_nil(page)
       disabled_reason = unless selectable, do: "Doc draft is not attached to a tree page."
 
       %{
-        id: "doc:#{draft.article_hash_id}",
-        doc_id: draft.article_hash_id,
+        id: "doc:#{draft.article_id}",
+        doc_id: draft.article_id,
         page_node_id: page && page.node_id,
         title: draft.title,
+        draft_version: draft.version,
+        lifecycle_version: lifecycle_version,
         action: action,
         selected_by_default: selectable,
         selectable: selectable,
@@ -268,9 +286,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   defp collect_ancestor_ids(_parents, nil, acc), do: acc
 
   defp collect_ancestor_ids(parents, node_id, acc) do
-    if MapSet.member?(acc, node_id),
-      do: acc,
-      else: collect_ancestor_ids(parents, Map.get(parents, node_id), MapSet.put(acc, node_id))
+    if MapSet.member?(acc, node_id) do
+      acc
+    else
+      collect_ancestor_ids(parents, Map.get(parents, node_id), MapSet.put(acc, node_id))
+    end
   end
 
   defp page_create_event_doc_id(%DocTreeEvent{
@@ -278,8 +298,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
          node_type: @tree_node_type_page,
          doc_id: doc_id
        })
-       when not is_nil(doc_id),
-       do: doc_id
+       when not is_nil(doc_id) do
+    doc_id
+  end
 
   defp page_create_event_doc_id(_event), do: nil
 
@@ -288,8 +309,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
          node_type: @tree_node_type_group,
          node_id: group_node_id
        })
-       when not is_nil(group_node_id),
-       do: group_node_id
+       when not is_nil(group_node_id) do
+    group_node_id
+  end
 
   defp group_create_event_id(_event), do: nil
 
@@ -297,20 +319,22 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
          event_type: CMS.DocTree.Const.tree_event(:node_create),
          node_type: @tree_node_type_tab,
          node_id: tab_node_id
-       }),
-       do: tab_node_id
+       }) do
+    tab_node_id
+  end
 
   defp tab_create_event_id(_event), do: nil
 
-  defp shell_create_event_id(event),
-    do: group_create_event_id(event) || tab_create_event_id(event)
+  defp shell_create_event_id(event) do
+    group_create_event_id(event) || tab_create_event_id(event)
+  end
 
   defp draft_doc_ids(%Community{} = community, branch) do
-    Doc
-    |> where([d], d.community_id == ^community.id)
-    |> where([d], d.branch_id == ^branch.id)
-    |> where([d], d.stage == CMS.Const.stage(:draft))
-    |> select([d], d.article_hash_id)
+    DocDraft
+    |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
+    |> where([draft, article], article.community_id == ^community.id)
+    |> where([draft, _article], draft.branch_id == ^branch.id)
+    |> select([draft, _article], draft.article_id)
     |> Repo.all()
     |> MapSet.new()
   end
@@ -325,7 +349,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
          }
        ) do
     case draft_or_public_doc(community, branch, doc_id) do
-      %Doc{} -> {true, nil}
+      %Article{} -> {true, nil}
       _ -> {false, "Publish the page content first."}
     end
   end
@@ -333,26 +357,29 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   defp tree_event_select_state(_community, _branch, _event), do: {true, nil}
 
   defp draft_or_public_doc(%Community{} = community, branch, doc_id) do
-    Doc
-    |> where([doc], doc.community_id == ^community.id)
-    |> where([doc], doc.branch_id == ^branch.id)
-    |> where([doc], doc.article_hash_id == ^doc_id)
-    |> where([doc], doc.stage in [CMS.Const.stage(:draft), CMS.Const.stage(:public)])
-    |> order_by([doc], asc: doc.stage)
-    |> limit(1)
-    |> Repo.one()
+    article = Repo.get_by(Article, id: doc_id, community_id: community.id, thread: :doc)
+
+    if article &&
+         (Repo.exists?(
+            from(draft in DocDraft,
+              where: draft.article_id == ^doc_id and draft.branch_id == ^branch.id
+            )
+          ) ||
+            Repo.exists?(
+              from(public in DocPublic,
+                where: public.article_id == ^doc_id and public.branch_id == ^branch.id
+              )
+            )) do
+      article
+    end
   end
 
-  defp public_doc_snapshot(%Community{} = community, branch, %Doc{
-         article_hash_id: article_hash_id
-       }) do
-    DocSnapshot
-    |> where([s], s.community_id == ^community.id)
-    |> where([s], s.branch_id == ^branch.id)
-    |> where([s], s.stage == CMS.Const.stage(:public))
-    |> where([s], s.article_hash_id == ^article_hash_id)
-    |> order_by([s], desc: s.revision_number, desc: s.id)
-    |> limit(1)
+  defp public_doc(%Community{} = community, branch, article_id) do
+    DocPublic
+    |> join(:inner, [public], article in Article, on: article.id == public.article_id)
+    |> where([public, article], article.community_id == ^community.id)
+    |> where([public, _article], public.branch_id == ^branch.id)
+    |> where([public, _article], public.article_id == ^article_id)
     |> Repo.one()
   end
 

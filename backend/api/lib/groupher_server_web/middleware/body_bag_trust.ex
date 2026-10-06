@@ -32,14 +32,15 @@ defmodule GroupherServerWeb.Middleware.BodyBagTrust do
         (actor.audience == "phoenix:content-import-api" and
            MapSet.member?(actor.scopes, "content-import:write"))
 
-    if allowed,
-      do: resolution,
-      else:
-        reject(
-          resolution,
-          "BodyBag requires the content-import audience and write scope",
-          AuthContract.service_scope_forbidden()
-        )
+    if allowed do
+      resolution
+    else
+      reject(
+        resolution,
+        "BodyBag requires the content-import audience and write scope",
+        AuthContract.service_scope_forbidden()
+      )
+    end
   end
 
   def call(

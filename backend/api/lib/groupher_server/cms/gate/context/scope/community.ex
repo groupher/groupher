@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Community do
   still verifies the actor against that mode. It does not load or own a
   Community Lifecycle.
 
-      Reader -> Community scope context -> Gate.scope -> Community Scope query
+      Query -> Community scope context -> Gate.scope -> Community Scope query
 
   Examples:
 
@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Community do
       iex> %__MODULE__{policy_mode: :owner_management} = owner_management()
   """
 
-  @modes [:public, :owner_management, :moderator_management, :operations]
+  @modes [:public, :management, :owner_management, :moderator_management, :operations]
   @enforce_keys [:policy_mode]
   defstruct [:policy_mode]
 
@@ -24,6 +24,8 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Community do
   def public, do: %__MODULE__{policy_mode: :public}
   @doc "Builds an owner-management Community read intent."
   def owner_management, do: %__MODULE__{policy_mode: :owner_management}
+  @doc "Builds a combined owner-or-moderator management read intent."
+  def management, do: %__MODULE__{policy_mode: :management}
   @doc "Builds a moderator-management Community read intent."
   def moderator_management, do: %__MODULE__{policy_mode: :moderator_management}
   @doc "Builds an operations Community read intent."

@@ -8,7 +8,5 @@ defmodule GroupherServer.CMS.Model.DocEmotionInfo do
   """
 
   use GroupherServer.CMS.Model.Interaction.EmotionInfo,
-    table: "doc_emotion_infos",
-    target: :doc,
-    target_schema: GroupherServer.CMS.Model.Doc
+    table: "doc_emotion_infos"
 end

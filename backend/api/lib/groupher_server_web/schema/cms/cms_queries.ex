@@ -39,7 +39,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:is_authenticated, :boolean)
 
       middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :article_insights)
       resolve(&R.CMS.article_insights/3)
     end
 
@@ -335,27 +334,26 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_draft/3)
     end
 
-    @desc "dashboard docs draft revision history"
-    field :doc_draft_snapshots, list_of(:doc_snapshot) do
-      arg(:community, non_null(:string))
-      arg(:id, non_null(:id))
-      arg(:stage, :doc_snapshot_stage)
+    @desc "immutable published versions for one stable Doc branch"
+    field :doc_branch_versions, list_of(:doc_branch_version_view) do
+      arg(:doc_id, non_null(:id))
+      arg(:branch_id, non_null(:id))
       arg(:limit, :integer, default_value: 30)
 
       middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.doc_draft_snapshots/3)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.doc_branch_versions/3)
     end
 
-    @desc "one dashboard docs draft revision"
-    field :doc_draft_snapshot, :doc_snapshot do
-      arg(:community, non_null(:string))
-      arg(:id, non_null(:id))
-      arg(:snapshot_id, non_null(:id))
+    @desc "one immutable published version for a stable Doc branch"
+    field :doc_branch_version, :doc_branch_version_view do
+      arg(:doc_id, non_null(:id))
+      arg(:branch_id, non_null(:id))
+      arg(:branch_version_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.doc_draft_snapshot/3)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.doc_branch_version/3)
     end
 
     @desc "spec community info"
@@ -403,7 +401,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     end
 
     @desc "paged article references for one community asset"
-    field :community_asset_refs, :paged_article_document_asset_refs do
+    field :community_asset_refs, :paged_article_asset_refs do
       arg(:community, non_null(:string))
       arg(:asset_id, non_null(:id))
       arg(:filter, :pagi_filter)

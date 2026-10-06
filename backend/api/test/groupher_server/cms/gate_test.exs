@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.Gate do
   test "draft reads are exposed through Scope rather than Access" do
     assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
              CMS.Gate.scope(
-               CMS.Model.Post,
+               CMS.Model.Article,
                nil,
                :read_draft,
                Article.draft(:post, :owner_management)

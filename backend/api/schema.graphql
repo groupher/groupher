@@ -168,11 +168,11 @@ type RootQueryType {
   "dashboard docs editor document, preferring draft and falling back to public"
   docDraft(community: String!, id: ID!): DocDraft
 
-  "dashboard docs draft revision history"
-  docDraftSnapshots(community: String!, id: ID!, stage: DocSnapshotStage, limit: Int): [DocSnapshot]
+  "immutable published versions for one stable Doc branch"
+  docBranchVersions(docId: ID!, branchId: ID!, limit: Int): [DocBranchVersionView]
 
-  "one dashboard docs draft revision"
-  docDraftSnapshot(community: String!, id: ID!, snapshotId: ID!): DocSnapshot
+  "one immutable published version for a stable Doc branch"
+  docBranchVersion(docId: ID!, branchId: ID!, branchVersionId: ID!): DocBranchVersionView
 
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
@@ -187,7 +187,7 @@ type RootQueryType {
   communityAssetUsage(community: String!): CommunityAssetUsage
 
   "paged article references for one community asset"
-  communityAssetRefs(community: String!, assetId: ID!, filter: PagiFilter): PagedArticleDocumentAssetRefs
+  communityAssetRefs(community: String!, assetId: ID!, filter: PagiFilter): PagedArticleAssetRefs
 
   "service-scoped public-read origin metadata for one community asset"
   communityAssetOriginInfo(publicRef: String!): CommunityAssetOriginInfo
@@ -520,22 +520,22 @@ type RootMutationType {
 
   "create a post"
   createPost(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): Post
 
   "save a new post as a draft"
   createPostDraft(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): ArticleDraft
 
   "update a cms\/post"
   updatePost(
-    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): Post
 
   "save changes to a post draft without publishing"
   updatePostDraft(
-    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): ArticleDraft
 
   "publish an existing post draft"
@@ -585,22 +585,22 @@ type RootMutationType {
 
   "create a blog"
   createBlog(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): Blog
 
   "save a new blog as a draft"
   createBlogDraft(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): ArticleDraft
 
   "update a cms\/blog"
   updateBlog(
-    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): Blog
 
   "save changes to a blog draft without publishing"
   updateBlogDraft(
-    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): ArticleDraft
 
   "publish an existing blog draft"
@@ -644,22 +644,22 @@ type RootMutationType {
 
   "create a changelog"
   createChangelog(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): Changelog
 
   "save a new changelog as a draft"
   createChangelogDraft(
-    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): ArticleDraft
 
   "update a cms\/changelog"
   updateChangelog(
-    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): Changelog
 
   "save changes to a changelog draft without publishing"
   updateChangelogDraft(
-    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]
   ): ArticleDraft
 
   "publish an existing changelog draft"
@@ -884,9 +884,6 @@ type RootMutationType {
     commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, subtitle: String, slug: String, bodyBag: ArtimentBodyBagInput
   ): DocDraft
 
-  "save current docs draft as an article revision checkpoint"
-  checkpointDocDraftSnapshot(commandId: ID!, community: String!, id: ID!): DocSnapshot
-
   "publish selected docs content and tree changes as one release"
   publishDocChanges(commandId: ID!, community: String!, input: DocPublishChangesInput, mode: DocPublishMode): DocPublishChangesPayload
 
@@ -896,8 +893,8 @@ type RootMutationType {
   "create missing article drafts for every published Page in one navigation subtree"
   moveDocTreeSubtreeToDraft(commandId: ID!, community: String!, nodeId: ID!): DoneState
 
-  "restore a docs draft from an article revision"
-  restoreDocDraftSnapshot(commandId: ID!, community: String!, id: ID!, snapshotId: ID!): DocDraft
+  "restore one immutable Doc Revision into its branch Draft workspace"
+  restoreDocRevisionToDraft(commandId: ID!, docId: ID!, branchId: ID!, revisionId: ID!, expectedVersion: Int): DocDraft
 
   "delete a docs tree node"
   deleteDocTreeNode(commandId: ID!, community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
@@ -1094,7 +1091,7 @@ type ContentImportJob {
   tree: Json!
   badSmells: Json!
   targetBranch: String!
-  firstImportedDocRef: ID
+  firstImportedDocId: ID
 }
 
 input ContentImportSkipInput {
@@ -1117,7 +1114,7 @@ input ContentImportBodyInput {
 type ContentImportApplyResult {
   jobRef: ID!
   status: ContentImportJobStatus!
-  firstImportedDocRef: ID
+  firstImportedDocId: ID
   targetBranch: String!
   counts: Json!
   failedItems: Json!
@@ -1453,7 +1450,7 @@ type PressCommunity {
 
 type PressArticle {
   communityRef: String!
-  articleRef: String!
+  articleId: ID!
   articleRevision: String!
   thread: Thread!
   canonicalPath: String!
@@ -1473,7 +1470,7 @@ type PressArticle {
 }
 
 type PressRSSFeedItem {
-  articleRef: String!
+  itemId: String!
   articleRevision: String!
   thread: Thread!
   title: String!
@@ -1809,7 +1806,7 @@ input CommunityApplicationsFilter {
 type TrashedArticle {
   id: ID!
   thread: Thread!
-  articleRef: ID!
+  articleId: ID!
   article: Article
   deletedBy: User
   deletedAt: DateTime!
@@ -1983,19 +1980,6 @@ enum DocTreeNodeType {
 enum ArticleStage {
   DRAFT
   PUBLIC
-}
-
-enum DocSnapshotStage {
-  DRAFT
-  PUBLIC
-}
-
-enum DocSnapshotAction {
-  CHECKPOINT
-  PUBLISH
-  FORK
-  PROMOTE
-  RESTORE
 }
 
 enum DocPublishMode {
@@ -2298,12 +2282,15 @@ type DocCoverPinnedDoc {
 type DocDraft {
   id: ID
   docId: ID
+  branchId: ID!
   version: Int!
+  contentHash: String
+  baseRevisionId: ID
   title: String
   subtitle: String
   slug: String
   commandId: ID
-  stage: DocSnapshotStage
+  stage: ArticleStage
   digest: String
   author: User
   insertedAt: DateTime
@@ -2315,6 +2302,8 @@ type ArticleDraft {
   id: ID!
   thread: Thread!
   version: Int!
+  contentHash: String!
+  baseRevisionId: ID
   stage: ArticleStage!
   title: String!
   digest: String
@@ -2337,7 +2326,7 @@ type DocTreeMutationPayload {
 
 type MoveDocToDraftPayload {
   docId: ID
-  stage: DocSnapshotStage
+  stage: ArticleStage
   publishState: DocTreeNodePublishState
   commandId: ID
 }
@@ -2415,7 +2404,7 @@ type CommunityAsset {
   updatedAt: DateTime
 }
 
-type ArticleDocumentAssetRef {
+type ArticleAssetRef {
   id: ID
   thread: Thread
   articleId: ID
@@ -2539,7 +2528,7 @@ input CommunityAssetUploadCompletionInput {
   meta: Json
 }
 
-input ArticleDocumentAssetRefInput {
+input ArticleAssetRefInput {
   assetId: ID
   asset: CommunityAssetInput
   usage: ArticleDocumentAssetUsage
@@ -2579,29 +2568,29 @@ type ArticleDocument {
   digest: String
   bodyHash: String
   schemaVersion: Int
-  assetRefs: [ArticleDocumentAssetRef]
+  assetRefs: [ArticleAssetRef]
 }
 
-type DocSnapshot {
-  id: ID
-  thread: Thread
-  stage: DocSnapshotStage
-  action: DocSnapshotAction
-  articleHashId: String
+type DocBranchVersionContent {
   title: String
   slug: String
   subtitle: String
   digest: String
+  linkAddr: String
+  templateKey: String
+  bodyHash: String
   documentJson: String
-  versionHash: String
-  revisionNumber: Int
+  plainText: String
   schemaVersion: Int
-  data: Json
+}
+
+type DocBranchVersionView {
+  id: ID!
+  revisionId: ID!
+  versionNumber: Int!
+  publishedAt: DateTime
   message: String
-  commandId: ID
-  author: User
-  insertedAt: DateTime
-  updatedAt: DateTime
+  content: DocBranchVersionContent!
 }
 
 type Post implements Article {
@@ -3460,8 +3449,8 @@ type PagedCommunityAssets {
   pageNumber: Int
 }
 
-type PagedArticleDocumentAssetRefs {
-  entries: [ArticleDocumentAssetRef]
+type PagedArticleAssetRefs {
+  entries: [ArticleAssetRef]
   totalCount: Int
   pageSize: Int
   totalPages: Int
@@ -3525,7 +3514,8 @@ type ArticleSearchArtiment {
   type: SearchArtimentType!
   communityRef: String!
   thread: Thread!
-  articleRef: ID!
+  articleId: ID!
+  indexedRevisionId: ID!
   title: String!
   digest: String
   locator: SearchArticleLocator!
@@ -3545,7 +3535,7 @@ type CommentSearchArtiment {
   type: SearchArtimentType!
   communityRef: String!
   thread: Thread!
-  articleRef: ID!
+  articleId: ID!
   digest: String
   locator: SearchCommentLocator!
   authorRef: String
@@ -3697,7 +3687,7 @@ enum SearchArtimentSort {
 
 input SearchArtimentsScopeInput {
   communityRef: String
-  articleRef: String
+  articleId: ID
 }
 
 input SearchArtimentsFiltersInput {

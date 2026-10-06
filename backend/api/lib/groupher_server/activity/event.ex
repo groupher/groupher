@@ -57,8 +57,8 @@ defmodule GroupherServer.Activity.Event do
   # not general Activity field vocabulary exposed to producers.
   defp surface_fields(:article_log), do: [:actor, :subject, :target, :payload, :occurred_at]
 
-  defp surface_fields(:community_log),
-    do: [
+  defp surface_fields(:community_log) do
+    [
       :resource,
       :actor,
       :on_behalf_of,
@@ -81,6 +81,7 @@ defmodule GroupherServer.Activity.Event do
       :high_risk,
       :message_key
     ]
+  end
 
   @doc "Marks a declared event contract that intentionally has no V1 producer."
   def contract_only(contract), do: Map.put(contract, :producer_status, :contract_only)
@@ -133,8 +134,9 @@ defmodule GroupherServer.Activity.Event do
   end
 
   @doc "Returns the explicit product copy key for an action contract."
-  def presentation(action),
-    do: Map.get(@presentation_keys, action, %{message_key: "activity.unknown"})
+  def presentation(action) do
+    Map.get(@presentation_keys, action, %{message_key: "activity.unknown"})
+  end
 
   def classification(action) do
     %{
@@ -253,11 +255,13 @@ defmodule GroupherServer.Activity.Event do
     |> Enum.map(&elem(&1, 0))
   end
 
-  defp classification(contract, action),
-    do: Map.get(contract, :classification, classification(action))
+  defp classification(contract, action) do
+    Map.get(contract, :classification, classification(action))
+  end
 
-  defp presentation(contract, action),
-    do: Map.get(contract, :presentation, presentation(action))
+  defp presentation(contract, action) do
+    Map.get(contract, :presentation, presentation(action))
+  end
 
   defp public_uuid(nil), do: nil
 
@@ -271,8 +275,9 @@ defmodule GroupherServer.Activity.Event do
   defp public_uuid(value), do: value
 
   defp category_for(action)
-       when action in [:created, :title_changed, :body_updated],
-       do: :content
+       when action in [:created, :title_changed, :body_updated] do
+    :content
+  end
 
   defp category_for(action)
        when action in [
@@ -281,8 +286,9 @@ defmodule GroupherServer.Activity.Event do
               :released,
               :release_rescheduled,
               :release_withdrawn
-            ],
-       do: :publishing
+            ] do
+    :publishing
+  end
 
   defp category_for(action)
        when action in [
@@ -294,8 +300,9 @@ defmodule GroupherServer.Activity.Event do
               :destroy_cancelled,
               :destroyed,
               :lifecycle_reconciled
-            ],
-       do: :lifecycle
+            ] do
+    :lifecycle
+  end
 
   defp category_for(action)
        when action in [
@@ -304,16 +311,19 @@ defmodule GroupherServer.Activity.Event do
               :solution_accepted,
               :solution_replaced,
               :solution_revoked
-            ],
-       do: :engagement
+            ] do
+    :engagement
+  end
 
   defp category_for(action)
-       when action in [:blocker_created, :blocker_released, :blocker_terminated],
-       do: :moderation
+       when action in [:blocker_created, :blocker_released, :blocker_terminated] do
+    :moderation
+  end
 
   defp category_for(action)
-       when action in [:moderation_review_started, :moderation_review_resolved],
-       do: :moderation
+       when action in [:moderation_review_started, :moderation_review_resolved] do
+    :moderation
+  end
 
   defp category_for(_action), do: :community
 
@@ -330,8 +340,9 @@ defmodule GroupherServer.Activity.Event do
     }
   end
 
-  def actor_attrs(:system),
-    do: %{actor_type: :system, actor_ref: "groupher", actor_snapshot: %{name: "Groupher"}}
+  def actor_attrs(:system) do
+    %{actor_type: :system, actor_ref: "groupher", actor_snapshot: %{name: "Groupher"}}
+  end
 
   def actor_attrs(:operations), do: {:error, ErrorCat.invalid_actor()}
   def actor_attrs(nil), do: {:error, ErrorCat.invalid_actor()}
@@ -376,9 +387,11 @@ defmodule GroupherServer.Activity.Event do
     fields = Enum.map(fields, &to_string/1)
     accepted = Enum.map(accepted, &to_string/1)
 
-    if Enum.all?(fields, &(&1 in accepted)),
-      do: {:ok, Enum.uniq(fields)},
-      else: {:error, ErrorCat.undeclared_payload()}
+    if Enum.all?(fields, &(&1 in accepted)) do
+      {:ok, Enum.uniq(fields)}
+    else
+      {:error, ErrorCat.undeclared_payload()}
+    end
   end
 
   defp accepted_changed_fields(_, _), do: {:error, ErrorCat.invalid_payload()}
@@ -406,8 +419,9 @@ defmodule GroupherServer.Activity.Event do
 
   defp accepted_key?(key, accepted) when is_atom(key), do: key in accepted
 
-  defp accepted_key?(key, accepted) when is_binary(key),
-    do: key in Enum.map(accepted, &to_string/1)
+  defp accepted_key?(key, accepted) when is_binary(key) do
+    key in Enum.map(accepted, &to_string/1)
+  end
 
   defp accepted_key?(_, _), do: false
 
@@ -423,13 +437,16 @@ defmodule GroupherServer.Activity.Event do
 
   defp validate_target(%{target_type: type, target_ref: ref}, expected)
        when not is_nil(expected) and not is_nil(ref) do
-    if to_string(type) == to_string(expected),
-      do: :ok,
-      else: {:error, ErrorCat.invalid_target("target type does not match action contract")}
+    if to_string(type) == to_string(expected) do
+      :ok
+    else
+      {:error, ErrorCat.invalid_target("target type does not match action contract")}
+    end
   end
 
-  defp validate_target(_, _),
-    do: {:error, ErrorCat.invalid_target()}
+  defp validate_target(_, _) do
+    {:error, ErrorCat.invalid_target()}
+  end
 
   defp envelope(handler, descriptor, action, opts) do
     source = Keyword.get(opts, :source, :api)
@@ -507,8 +524,9 @@ defmodule GroupherServer.Activity.Event do
          _descriptor,
          _action,
          _sequence
-       ),
-       do: uuid(explicit, :event_ref)
+       ) do
+    uuid(explicit, :event_ref)
+  end
 
   defp uuid_error(:event_ref), do: ErrorCat.invalid_event_ref()
   defp uuid_error(:operation_ref), do: ErrorCat.invalid_operation_ref()
@@ -543,9 +561,11 @@ defmodule GroupherServer.Activity.Event do
   defp actor(log) do
     snapshot = atomize_known(log.actor_snapshot || %{}, [:id, :login, :nickname, :avatar])
 
-    if log.actor_type == :system,
-      do: %{type: :system},
-      else: Map.put(snapshot, :type, :user)
+    if log.actor_type == :system do
+      %{type: :system}
+    else
+      Map.put(snapshot, :type, :user)
+    end
   end
 
   defp on_behalf_of(%{on_behalf_of_type: nil}), do: nil
@@ -555,8 +575,9 @@ defmodule GroupherServer.Activity.Event do
     Map.put(snapshot, :type, log.on_behalf_of_type)
   end
 
-  defp on_behalf_of_attrs(nil),
-    do: {:ok, %{on_behalf_of_type: nil, on_behalf_of_ref: nil, on_behalf_of_snapshot: %{}}}
+  defp on_behalf_of_attrs(nil) do
+    {:ok, %{on_behalf_of_type: nil, on_behalf_of_ref: nil, on_behalf_of_snapshot: %{}}}
+  end
 
   defp on_behalf_of_attrs(actor) do
     case actor_attrs(actor) do
@@ -568,8 +589,9 @@ defmodule GroupherServer.Activity.Event do
     end
   end
 
-  defp occurred_at_allowed?(%DateTime{} = occurred_at),
-    do: DateTime.compare(occurred_at, DateTime.add(DateTime.utc_now(), 60, :second)) != :gt
+  defp occurred_at_allowed?(%DateTime{} = occurred_at) do
+    DateTime.compare(occurred_at, DateTime.add(DateTime.utc_now(), 60, :second)) != :gt
+  end
 
   defp resource(handler, log) do
     ref(

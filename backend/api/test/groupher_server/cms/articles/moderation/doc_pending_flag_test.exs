@@ -6,9 +6,6 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
 
   @total_count 35
 
-  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
-
   setup do
     {:ok, user} = db_insert(:user)
 
@@ -35,24 +32,34 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
   describe "[pending docs flags]" do
     test "pending doc can not be read", ~m(docs_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(docs_m),
           :doc,
           docs_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:doc, docs_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          docs_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations,
+          branch_id: docs_m.branch_id
+        )
 
-      {:ok, docs_m} = ORM.find(Doc, docs_m.id)
-      assert docs_m.pending == @audit_illegal
+      state =
+        Repo.get_by!(CMS.Model.DocBranchState,
+          article_id: docs_m.article_id,
+          branch_id: docs_m.branch_id
+        )
+
+      assert state.moderation_state == :illegal
 
       {:error, reason} =
-        CMS.Articles.read(
+        read_article(
           article_community(docs_m),
           :doc,
           docs_m.inner_id
@@ -66,17 +73,22 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
       {:ok, doc} = CMS.Articles.create(community, :doc, docs_attrs, user)
 
       {:ok, _} =
-        CMS.Articles.read(article_community(doc), :doc, doc.inner_id)
+        read_article(article_community(doc), :doc, doc.inner_id)
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:doc, doc.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          doc.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations,
+          branch_id: doc.branch_id
+        )
 
       {:ok, docs_read} =
-        CMS.Articles.read(
+        read_article(
           article_community(doc),
           :doc,
           doc.inner_id,
@@ -88,7 +100,7 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
       {:ok, user2} = db_insert(:user)
 
       {:error, reason} =
-        CMS.Articles.read(
+        read_article(
           article_community(doc),
           :doc,
           doc.inner_id,
@@ -100,29 +112,47 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
 
     test "pending doc can set/unset pending", ~m(docs_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(docs_m),
           :doc,
           docs_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:doc, docs_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          docs_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations,
+          branch_id: docs_m.branch_id
+        )
 
-      {:ok, docs_m} = ORM.find(Doc, docs_m.id)
-      assert docs_m.pending == @audit_illegal
+      state =
+        Repo.get_by!(CMS.Model.DocBranchState,
+          article_id: docs_m.article_id,
+          branch_id: docs_m.branch_id
+        )
 
-      {:ok, _} = CMS.Articles.unset_illegal(:doc, docs_m.id, %{})
-
-      {:ok, docs_m} = ORM.find(Doc, docs_m.id)
-      assert docs_m.pending == @audit_legal
+      assert state.moderation_state == :illegal
 
       {:ok, _} =
-        CMS.Articles.read(
+        CMS.Articles.unset_illegal(docs_m.article_id, %{}, :operations,
+          branch_id: docs_m.branch_id
+        )
+
+      state =
+        Repo.get_by!(CMS.Model.DocBranchState,
+          article_id: docs_m.article_id,
+          branch_id: docs_m.branch_id
+        )
+
+      assert state.moderation_state == :legal
+
+      {:ok, _} =
+        read_article(
           article_community(docs_m),
           :doc,
           docs_m.inner_id
@@ -131,47 +161,65 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
 
     test "pending doc's meta should have info", ~m(docs_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(docs_m),
           :doc,
           docs_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:doc, docs_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"],
-          illegal_articles: ["/doc/#{docs_m.id}"]
-        })
+        CMS.Articles.set_illegal(
+          docs_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"],
+            illegal_articles: ["/doc/#{docs_m.id}"]
+          },
+          :operations,
+          branch_id: docs_m.branch_id
+        )
 
-      {:ok, docs_m} = ORM.find(Doc, docs_m.id)
-      assert docs_m.pending == @audit_illegal
-      assert not docs_m.meta.is_legal
-      assert docs_m.meta.illegal_reason == ["some-reason"]
-      assert docs_m.meta.illegal_words == ["some-word"]
+      state =
+        Repo.get_by!(CMS.Model.DocBranchState,
+          article_id: docs_m.article_id,
+          branch_id: docs_m.branch_id
+        )
 
-      docs_m = Repo.preload(docs_m, :author)
-      {:ok, user} = ORM.find(User, docs_m.author.user_id)
+      assert state.moderation_state == :illegal
+      assert state.illegal_reason == "some-reason"
+      assert state.illegal_words == ["some-word"]
+
+      stable = Repo.get!(CMS.Model.Article, docs_m.article_id) |> Repo.preload(author: :user)
+      user = stable.author.user
       assert user.meta.has_illegal_articles
       assert user.meta.illegal_articles == ["/doc/#{docs_m.id}"]
 
       {:ok, _} =
-        CMS.Articles.unset_illegal(:doc, docs_m.id, %{
-          is_legal: true,
-          illegal_reason: [],
-          illegal_words: [],
-          illegal_articles: ["/doc/#{docs_m.id}"]
-        })
+        CMS.Articles.unset_illegal(
+          docs_m.article_id,
+          %{
+            is_legal: true,
+            illegal_reason: [],
+            illegal_words: [],
+            illegal_articles: ["/doc/#{docs_m.id}"]
+          },
+          :operations,
+          branch_id: docs_m.branch_id
+        )
 
-      {:ok, docs_m} = ORM.find(Doc, docs_m.id)
-      assert docs_m.pending == @audit_legal
-      assert docs_m.meta.is_legal
-      assert docs_m.meta.illegal_reason == []
-      assert docs_m.meta.illegal_words == []
+      state =
+        Repo.get_by!(CMS.Model.DocBranchState,
+          article_id: docs_m.article_id,
+          branch_id: docs_m.branch_id
+        )
 
-      docs_m = Repo.preload(docs_m, :author)
-      {:ok, user} = ORM.find(User, docs_m.author.user_id)
+      assert state.moderation_state == :legal
+      assert is_nil(state.illegal_reason)
+      assert state.illegal_words == []
+
+      stable = Repo.get!(CMS.Model.Article, docs_m.article_id) |> Repo.preload(author: :user)
+      user = stable.author.user
       assert not user.meta.has_illegal_articles
       assert user.meta.illegal_articles == []
     end

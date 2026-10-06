@@ -77,7 +77,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
           end)
           |> Repo.transaction()
           |> case do
-            {:ok, _} -> Communities.Reader.fetch(community.slug, inc_views: false)
+            {:ok, _} -> FrontDesk.community(community.slug, mode: :internal)
             error -> result(error)
           end
         end)
@@ -121,7 +121,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
          {:ok, _} <- Passport.stamp_passport(rules, target_user) do
       update_passport_item_count(community, target_user, rules)
 
-      Communities.Reader.fetch(community.slug, inc_views: false)
+      FrontDesk.community(community.slug, mode: :internal)
     else
       {:error, CommunityErrorCat.error_pattern(reason: :community_root_only)} ->
         {:error,
@@ -182,7 +182,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
       |> Repo.transaction()
       |> case do
         {:ok, _} ->
-          Communities.Reader.fetch(community_slug, inc_views: false)
+          FrontDesk.community(community_slug, mode: :internal)
 
         error ->
           result(error)
@@ -242,11 +242,13 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     end)
   end
 
-  defp default_passport(:root, community_slug),
-    do: PermissionConfig.default_root_passport(community_slug)
+  defp default_passport(:root, community_slug) do
+    PermissionConfig.default_root_passport(community_slug)
+  end
 
-  defp default_passport(:moderator, community_slug),
-    do: PermissionConfig.default_moderator_passport(community_slug)
+  defp default_passport(:moderator, community_slug) do
+    PermissionConfig.default_moderator_passport(community_slug)
+  end
 
   defp update_passport_item_count(%Community{} = community, %User{} = user, rules) do
     with {:ok, community_moderator} <-
@@ -358,9 +360,11 @@ defmodule GroupherServer.CMS.Communities.Moderator do
       true ->
         passport_community = community_keys |> List.first()
 
-        if passport_community == community_slug,
-          do: {:ok, :match},
-          else: {:error, CommunityErrorCat.passport_community_not_match()}
+        if passport_community == community_slug do
+          {:ok, :match}
+        else
+          {:error, CommunityErrorCat.passport_community_not_match()}
+        end
 
       _ ->
         {:error, CommunityErrorCat.one_community_only()}
@@ -387,17 +391,21 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     end
   end
 
-  defp result({:error, :stamp_passport, %Ecto.Changeset{} = result, _steps}),
-    do: {:error, ErrorCat.changeset(result)}
+  defp result({:error, :stamp_passport, %Ecto.Changeset{} = result, _steps}) do
+    {:error, ErrorCat.changeset(result)}
+  end
 
-  defp result({:error, :stamp_passport, _result, _steps}),
-    do: {:error, CommunityErrorCat.custom("stamp passport error")}
+  defp result({:error, :stamp_passport, _result, _steps}) do
+    {:error, CommunityErrorCat.custom("stamp passport error")}
+  end
 
-  defp result({:error, {:stamp_passport, _user_id}, %Ecto.Changeset{} = result, _steps}),
-    do: {:error, ErrorCat.changeset(result)}
+  defp result({:error, {:stamp_passport, _user_id}, %Ecto.Changeset{} = result, _steps}) do
+    {:error, ErrorCat.changeset(result)}
+  end
 
-  defp result({:error, {:stamp_passport, _user_id}, _result, _steps}),
-    do: {:error, CommunityErrorCat.custom("stamp passport error")}
+  defp result({:error, {:stamp_passport, _user_id}, _result, _steps}) do
+    {:error, CommunityErrorCat.custom("stamp passport error")}
+  end
 
   defp result({:error, _, result, _steps}) do
     {:error, result}

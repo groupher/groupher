@@ -11,12 +11,12 @@ defmodule GroupherServer.CMS.Model.DocLifecycle do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.{Community, DocBranch}
+  alias CMS.Model.{Article, Community, DocBranch}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @states [:draft_only, :published, :archived, :deleted, :destroy]
-  @required_fields ~w(community_id branch_id article_hash_id state version changed_at)a
+  @required_fields ~w(article_id community_id branch_id state version changed_at)a
   @optional_fields ~w(archived_at deleted_at destroyed_at)a
 
   @type state :: :draft_only | :published | :archived | :deleted | :destroy
@@ -24,8 +24,8 @@ defmodule GroupherServer.CMS.Model.DocLifecycle do
 
   schema "doc_lifecycles" do
     belongs_to(:community, Community)
+    belongs_to(:article, Article, type: Ecto.UUID)
     belongs_to(:branch, DocBranch)
-    field(:article_hash_id, Ecto.UUID)
     field(:state, Ecto.Enum, values: @states, default: :draft_only)
     field(:version, :integer, default: 1)
     field(:changed_at, :utc_datetime)
@@ -35,16 +35,17 @@ defmodule GroupherServer.CMS.Model.DocLifecycle do
     timestamps(type: :utc_datetime)
   end
 
+  @doc "Builds the branch-scoped Lifecycle changeset for a stable Doc Article."
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(%__MODULE__{} = lifecycle, attrs) do
     lifecycle
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_inclusion(:state, @states)
     |> validate_number(:version, greater_than: 0)
+    |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:branch_id)
-    |> unique_constraint([:community_id, :branch_id, :article_hash_id],
-      name: :doc_lifecycles_identity_index
-    )
+    |> unique_constraint([:article_id, :branch_id], name: :doc_lifecycles_article_branch_index)
   end
 end

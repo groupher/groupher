@@ -128,11 +128,16 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, changelog} =
-        CMS.FrontDesk.article(community, :changelog, changelog.inner_id, preload: :comments)
+      {:ok, comments} =
+        CMS.Comments.paged_comments(
+          :changelog,
+          changelog.article_id,
+          %{page: 1, size: 20},
+          :replies
+        )
 
-      assert exist_in?(changelog_comment_1, changelog.comments)
-      assert exist_in?(changelog_comment_2, changelog.comments)
+      assert exist_in?(changelog_comment_1, comments.entries)
+      assert exist_in?(changelog_comment_2, comments.entries)
     end
 
     test "comment should have default meta after create", ~m(user changelog community)a do
@@ -161,7 +166,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user2
         )
 
-      {:ok, changelog_after} = ORM.find(Changelog, changelog.id)
+      changelog_after = Repo.get!(CMS.Model.Article, changelog.article_id)
 
       assert not is_nil(changelog.active_at)
       assert changelog_after.active_at > changelog.inserted_at
@@ -171,10 +176,10 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
          ~m(community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-      {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: [author: :user])
+      article_before = Repo.get!(CMS.Model.Article, changelog.article_id)
 
       Process.sleep(1000)
-      author = changelog.author.user
+      author = changelog.author
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -185,10 +190,10 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           author
         )
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :comments)
+      article_after = Repo.get!(CMS.Model.Article, changelog.article_id)
 
-      assert not is_nil(changelog.active_at)
-      assert changelog.active_at == changelog.inserted_at
+      assert not is_nil(article_after.active_at)
+      assert article_after.active_at == article_before.active_at
     end
 
     test "old changelogs will not update active after comment created",
@@ -211,9 +216,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      article = Repo.get!(CMS.Model.Article, changelog.article_id)
 
-      assert changelog.active_at |> DateTime.to_date() == cur_date
+      assert article.active_at |> DateTime.to_date() == cur_date
 
       #####
       inserted_at =
@@ -224,8 +229,12 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       changelog_attrs = mock_attrs(:changelog)
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      {:ok, changelog} =
-        ORM.update(changelog, %{inserted_at: inserted_at, active_at: inserted_at}, strict: false)
+      article = Repo.get!(CMS.Model.Article, changelog.article_id)
+
+      {:ok, _article} =
+        article
+        |> Ecto.Changeset.change(%{inserted_at: inserted_at, active_at: inserted_at})
+        |> Repo.update()
 
       Process.sleep(1000)
 
@@ -238,8 +247,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      assert changelog.active_at |> DateTime.to_unix() !== cur_date
+      article = Repo.get!(CMS.Model.Article, changelog.article_id)
+      assert article.active_at == inserted_at
     end
 
     test "comment can be updated", ~m(community changelog user)a do
@@ -299,9 +308,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.article_id)
 
-      participator = List.first(changelog.comments_participants)
+      participator = List.first(state.participants)
       assert participator.id == user.id
     end
 
@@ -324,9 +333,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.article_id)
 
-      assert 1 == length(changelog.comments_participants)
+      assert 1 == length(state.participants)
     end
 
     test "recent comment user should appear at first of the post participants",
@@ -349,9 +358,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user2
         )
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.article_id)
 
-      participator = List.first(changelog.comments_participants)
+      participator = List.first(state.participants)
 
       assert participator.id == user2.id
     end
@@ -404,7 +413,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, author_user} = ORM.find(User, changelog.author.user.id)
+      author_user = changelog.author
 
       CMS.Interactions.upvote(comment, author_user)
 
@@ -590,8 +599,13 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert comment.is_folded
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      assert changelog.meta.folded_comment_count == 1
+      {:ok, folded} =
+        CMS.Comments.paged_folded_comments(:changelog, changelog.article_id, %{
+          page: 1,
+          size: 20
+        })
+
+      assert folded.total_count == 1
     end
 
     test "user can unfold a comment", ~m(community changelog user)a do
@@ -613,8 +627,13 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert not comment.is_folded
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      assert changelog.meta.folded_comment_count == 0
+      {:ok, folded} =
+        CMS.Comments.paged_folded_comments(:changelog, changelog.article_id, %{
+          page: 1,
+          size: 20
+        })
+
+      assert folded.total_count == 0
     end
   end
 
@@ -638,8 +657,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       assert comment.is_pinned
 
-      {:ok, pined_record} = PinnedComment |> ORM.find_by(%{changelog_id: changelog.id})
-      assert pined_record.changelog_id == changelog.id
+      {:ok, pined_record} = PinnedComment |> ORM.find_by(%{article_id: changelog.article_id})
+      assert pined_record.article_id == changelog.article_id
     end
 
     test "user can unpin a comment", ~m(community user changelog)a do
@@ -1151,14 +1170,14 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      {:ok, stats} = CMS.ArticleStats.fetch(:changelog, changelog.article_id)
 
-      assert changelog.comments_count == 5
+      assert stats.comments_count == 5
 
       {:ok, _} = CMS.Comments.delete_comment(comment, user)
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      assert changelog.comments_count == 4
+      {:ok, stats} = CMS.ArticleStats.fetch(:changelog, changelog.article_id)
+      assert stats.comments_count == 4
     end
 
     test "delete comment still delete pinned record if needed", ~m(community user changelog)a do
@@ -1202,7 +1221,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       assert not comment.is_article_author
 
-      author_user = changelog.author.user
+      author_user = changelog.author
 
       {:ok, comment} =
         CMS.Comments.create_comment(
@@ -1228,7 +1247,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, _} = CMS.Articles.lock_comments(changelog)
+      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user)
 
       {:error, reason} =
         CMS.Comments.create_comment(
@@ -1241,7 +1260,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(changelog)
+      {:ok, _} = CMS.Articles.undo_lock_comments(changelog.id, user)
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -1265,12 +1284,12 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
 
-      {:ok, _} = CMS.Articles.lock_comments(changelog)
+      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user)
 
       {:error, reason} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(changelog)
+      {:ok, _} = CMS.Articles.undo_lock_comments(changelog.id, user)
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
     end
   end

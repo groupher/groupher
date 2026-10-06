@@ -1,60 +1,126 @@
 defmodule GroupherServer.CMS.Articles.Commands.Publish do
   @moduledoc """
-  Runs the idempotent command that publishes an ordinary Article Draft.
+  Publishes an Article revision through the Gate, lifecycle and Receipt boundary.
 
-  Business position:
-
-      CMS.Articles facade
-        -> Commands.Publish
-        -> CMS.Command
-        -> Articles.Publish / Articles.Draft
+      Article publish request
+        -> Gate/version checks and domain writes
+        -> immutable Publish Confirmation
+        -> Receipt encode/decode on retry
   """
 
   alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Articles.{Draft, Publish}
-  alias CMS.Command
-  alias CMS.Model.Community
   alias Helper.T
+  alias CMS.{Articles, Command, FrontDesk}
+  alias Accounts.Model.User
+  alias Articles.RevisionResult
+  alias Articles.Commands.PublishConfirmation
+  alias CMS.Model.{Article, Author, Community}
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
 
-  @doc "Publishes an Article Draft under a stable command id."
-  @spec publish(Community.t(), T.thread(), T.article(), User.t(), keyword() | map()) ::
-          T.domain_res(%{article: T.article(), snapshot: nil})
-  def publish(community, thread, article, %User{} = user, opts) when is_struct(article) do
-    publish(community, thread, article.article_hash_id, user, opts)
-  end
-
-  @spec publish(Community.t(), T.thread(), Ecto.UUID.t(), User.t(), keyword() | map()) ::
-          T.domain_res(%{article: T.article(), snapshot: nil})
-  def publish(community, thread, article_hash_id, %User{} = user, opts) do
-    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
-      opts = drop_command_id(opts)
-
-      Command.create_user(user, command_id,
-        command: :article_publish_draft,
-        resource: :article,
-        owner: community,
-        input: %{thread: thread, article_hash_id: article_hash_id, opts: opts},
-        recovery: fn _receipt ->
-          with {:ok, article} <- Draft.read_public(community, thread, article_hash_id, opts) do
-            {:ok, %{article: article, snapshot: nil}}
-          end
-        end
-      )
-      |> Command.run(fn %{input: %{opts: opts}} ->
-        with {:ok, result} <- Publish.publish(community, thread, article_hash_id, user, opts) do
-          {:ok, result, %{result_key: result.article.article_hash_id}}
-        end
-      end)
+  @doc "Publishes one ordinary Article Draft, using retry-safe recovery when command_id is present."
+  @spec execute(Article.t(), User.t() | Author.t(), keyword()) :: T.domain_res(map())
+  def execute(%Article{} = article, actor, opts) do
+    case Keyword.get(opts, :command_id) do
+      nil -> publish_now(article.id, actor, opts)
+      _command_id -> execute_command(article, actor, opts)
     end
   end
 
-  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
-  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
-  defp drop_command_id(opts), do: opts
+  def execute(_article, _actor, _opts) do
+    {:error, Articles.ErrorCat.invalid_publish_actor()}
+  end
 
-  defp option(opts, key) when is_map(opts), do: Map.get(opts, key)
-  defp option(opts, key) when is_list(opts), do: Keyword.get(opts, key)
-  defp option(_opts, _key), do: nil
+  defp execute_command(%Article{} = article, %User{} = user, opts) do
+    case FrontDesk.community(article.community_id, mode: :internal) do
+      {:ok, %Community{} = community} ->
+        command = %Command{
+          actor: user,
+          command_id: Keyword.get(opts, :command_id),
+          operation: :article_publish,
+          target: article,
+          params: opts |> Keyword.delete(:command_id) |> Map.new()
+        }
+
+        with {:ok, %PublishConfirmation{} = confirmation} <-
+               Command.execute(command,
+                 action: &publish_action/1,
+                 confirmation: PublishConfirmation
+               ) do
+          RevisionResult.build(confirmation, community)
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp execute_command(_article, _actor, _opts) do
+    {:error, Articles.ErrorCat.invalid_publish_actor()}
+  end
+
+  @spec publish_action(map()) :: Command.action_result(PublishConfirmation.t())
+  defp publish_action(%{
+         actor: user,
+         target: %Article{id: article_id},
+         params: params,
+         command_id: command_id
+       }) do
+    publish_opts =
+      params
+      |> Map.to_list()
+      |> Keyword.put(:skip_effects, true)
+      |> Keyword.put(:outbox_command_id, command_id)
+
+    case publish_now(article_id, user, publish_opts) do
+      {:ok, publish_result} ->
+        {:ok,
+         %PublishConfirmation{
+           article_id: article_id,
+           revision_id: publish_result.public.revision_id,
+           publication_version: publish_result.public.publication_version,
+           first_publish?: Map.get(publish_result, :first_publish?, false),
+           changed_fields: Map.get(publish_result, :changed_fields, []),
+           published_by_id: Map.get(publish_result, :published_by_id),
+           published_at: publish_result.public.published_at
+         }}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp publish_now(article_id, actor, opts) do
+    with {:ok, article} <- stable_article(article_id),
+         {:ok, author} <- target_author(actor),
+         {:ok, result} <-
+           CMS.Gate.Access.with_check(actor_user(actor), :publish, article, fn canonical ->
+             Articles.Writer.publish(canonical, author, actor, opts)
+           end),
+         {:ok, result} <- maybe_publish_effects(result, opts) do
+      {:ok, result}
+    end
+  end
+
+  defp maybe_publish_effects(result, _opts), do: {:ok, result}
+
+  defp target_author(%Author{} = author), do: {:ok, author}
+  defp target_author(%User{} = user), do: Articles.Writer.ensure_author_exists(user)
+  defp target_author(_actor), do: {:error, :invalid_actor}
+
+  defp actor_user(%User{} = user), do: user
+  defp actor_user(%Author{user: %User{} = user}), do: user
+
+  defp actor_user(%Author{user_id: user_id}) do
+    case RootFrontDesk.fresh_user(user_id) do
+      {:ok, user} -> user
+      _ -> nil
+    end
+  end
+
+  defp stable_article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{} = article} -> {:ok, article}
+      {:error, _} -> {:error, :article_not_found}
+    end
+  end
 end

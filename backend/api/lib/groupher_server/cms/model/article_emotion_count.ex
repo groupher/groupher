@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Model.ArticleEmotionCount do
 
   schema "article_emotion_counts" do
     field(:thread, Ecto.Enum, values: Threads.article_enums(), primary_key: true)
-    field(:article_id, :id, primary_key: true)
+    field(:article_id, Ecto.UUID, primary_key: true)
     field(:type, Ecto.Enum, values: @emotion_types, primary_key: true)
     field(:count, :integer, default: 0)
 

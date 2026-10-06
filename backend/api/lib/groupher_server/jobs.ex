@@ -107,8 +107,9 @@ defmodule GroupherServer.Jobs do
       Jobs.notify_comment(comment, actor)
   """
   @spec notify_comment(struct(), struct()) :: {:ok, Oban.Job.t() | :pass} | {:error, term()}
-  def notify_comment(comment, actor),
-    do: comments_job(:notify_comment, %{comment: comment, from_user: actor})
+  def notify_comment(comment, actor) do
+    comments_job(:notify_comment, %{comment: comment, from_user: actor})
+  end
 
   @doc """
   Enqueues the notification produced by a reply.
@@ -118,8 +119,9 @@ defmodule GroupherServer.Jobs do
       Jobs.notify_reply(reply_comment, actor)
   """
   @spec notify_reply(struct(), struct()) :: {:ok, Oban.Job.t() | :pass} | {:error, term()}
-  def notify_reply(reply_comment, actor),
-    do: comments_job(:notify_reply, %{reply_comment: reply_comment, from_user: actor})
+  def notify_reply(reply_comment, actor) do
+    comments_job(:notify_reply, %{reply_comment: reply_comment, from_user: actor})
+  end
 
   @doc """
   Enqueues community subscription after a successful comment mutation.
@@ -130,8 +132,9 @@ defmodule GroupherServer.Jobs do
   """
   @spec subscribe_community(struct(), struct()) ::
           {:ok, Oban.Job.t() | :pass} | {:error, term()}
-  def subscribe_community(target, actor),
-    do: comments_job(:subscribe_community, %{target: target, user: actor})
+  def subscribe_community(target, actor) do
+    comments_job(:subscribe_community, %{target: target, user: actor})
+  end
 
   @doc """
   Enqueues repair of an article's persisted comment participant count.

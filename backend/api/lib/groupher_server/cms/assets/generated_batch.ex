@@ -110,8 +110,9 @@ defmodule GroupherServer.CMS.Assets.GeneratedBatch do
     })
   end
 
-  defp upstream_code(%{"error" => %{"code" => code}}) when is_binary(code),
-    do: upstream_code(code)
+  defp upstream_code(%{"error" => %{"code" => code}}) when is_binary(code) do
+    upstream_code(code)
+  end
 
   defp upstream_code(%{"error" => code}) when is_binary(code), do: upstream_code(code)
   defp upstream_code(%{error: %{code: code}}) when is_binary(code), do: upstream_code(code)

@@ -58,9 +58,11 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
     interval = Keyword.get(opts, :interval) || @interval_minutes
     latest_valid_time = Datetime.shift(last_publish_time, minutes: interval)
 
-    if DateTime.before?(latest_valid_time, Datetime.now()),
-      do: {:ok, :interval_check},
-      else: {:error, ErrorCat.throttle_interval()}
+    if DateTime.before?(latest_valid_time, Datetime.now()) do
+      {:ok, :interval_check}
+    else
+      {:error, ErrorCat.throttle_interval()}
+    end
   end
 
   defp hour_limit_check(%PublishThrottle{hour_count: hour_count}, opts) do

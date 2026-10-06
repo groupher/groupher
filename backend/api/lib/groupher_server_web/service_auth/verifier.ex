@@ -131,8 +131,9 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
     if valid, do: :ok, else: {:error, ErrorCat.invalid_claims()}
   end
 
-  defp valid_subject?(subject),
-    do: is_binary(subject) and String.starts_with?(subject, "service:")
+  defp valid_subject?(subject) do
+    is_binary(subject) and String.starts_with?(subject, "service:")
+  end
 
   defp valid_time_claims?(claims, now) do
     is_integer(claims["iat"]) and is_integer(claims["nbf"]) and is_integer(claims["exp"]) and

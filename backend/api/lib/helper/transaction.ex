@@ -28,10 +28,7 @@ defmodule Helper.Transaction do
   """
 
   import Ecto.Query, warn: false
-  alias GroupherServer.{CMS, ErrorCat, Repo}
-  alias CMS.Model.{Blog, Changelog, Doc, Post}
-
-  @article_schemas [Post, Blog, Changelog, Doc]
+  alias GroupherServer.{ErrorCat, Repo}
 
   @spec lock_row(any() | [any()], (any() -> any())) :: {:ok, any()} | {:error, any()}
   def lock_row(queryable, fun) when not is_list(queryable) do
@@ -95,21 +92,6 @@ defmodule Helper.Transaction do
   # Generates consistent sort key for queryable to prevent deadlocks
   defp resource_sort_key(%struct{} = queryable), do: {struct.__schema__(:source), queryable.id}
 
-  # Article locks need author/community preloads; comments also have inner_id and must not match here.
-  defp lock_queryable(%struct{inner_id: _} = article) when struct in @article_schemas do
-    article.__struct__
-    |> where(id: ^article.id)
-    # Preload :community so subscribe_community event handlers get a loaded struct.
-    |> preload([:community, :communities, author: :user])
-    |> lock("FOR UPDATE")
-    |> Repo.one!()
-  rescue
-    Ecto.NoResultsError ->
-      throw(
-        {:error, ErrorCat.custom(%{reason: :resource_not_found, resource: article.__struct__})}
-      )
-  end
-
   # Generic queryable locking
   defp lock_queryable(queryable) do
     queryable.__struct__
@@ -135,6 +117,7 @@ defmodule Helper.Transaction do
   defp normalize_error(%Ecto.Changeset{} = changeset), do: changeset
   defp normalize_error({:error, _step, reason, _changes}), do: normalize_error(reason)
 
-  defp normalize_error(reason),
-    do: ErrorCat.custom(%{reason: :transaction_failed, details: reason})
+  defp normalize_error(reason) do
+    ErrorCat.custom(%{reason: :transaction_failed, details: reason})
+  end
 end

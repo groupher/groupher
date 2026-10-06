@@ -20,13 +20,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
   describe "[upvote notify]" do
     test "upvote hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = preload_author(blog)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, article} = CMS.Interactions.upvote(blog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -34,13 +34,14 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       assert notify.action == "UPVOTE"
       assert notify.article_id == blog.id
       assert notify.thread == :blog
-      assert notify.user_id == blog.author.user.id
+      assert notify.user_id == blog.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
     test "upvote hook should work on blog comment", ~m(user2 blog comment)a do
       {:ok, comment} = CMS.Interactions.upvote(comment, user2)
-      {:ok, comment} = preload_author(comment)
+      {:ok, comment_author} = CMS.Comments.Query.Reconcile.load_comment_author(comment.id)
+      comment = %{comment | author: comment_author}
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
@@ -59,7 +60,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
     end
 
     test "undo upvote hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = preload_author(blog)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, article} = CMS.Interactions.upvote(blog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
@@ -68,7 +69,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -81,7 +82,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
       Events.emit(:notify_undo_upvote, %{target: comment, from_user: user2})
 
-      {:ok, comment} = preload_author(comment)
+      {:ok, comment_author} = CMS.Comments.Query.Reconcile.load_comment_author(comment.id)
+      comment = %{comment | author: comment_author}
 
       {:ok, notifications} =
         Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
@@ -92,13 +94,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
   describe "[collect notify]" do
     test "collect hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = preload_author(blog)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, _} = CMS.Interactions.collect(blog, user2)
       Events.emit(:notify_collect, %{article: blog, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -106,12 +108,12 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       assert notify.action == "COLLECT"
       assert notify.article_id == blog.id
       assert notify.thread == :blog
-      assert notify.user_id == blog.author.user.id
+      assert notify.user_id == blog.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
     test "undo collect hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = preload_author(blog)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, _} = CMS.Interactions.upvote(blog, user2)
       Events.emit(:notify_collect, %{article: blog, from_user: user2})
@@ -120,7 +122,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_undo_collect, %{article: blog, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -129,7 +131,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
   describe "[comment notify]" do
     test "blog author should get notify after some one comment on it",
          ~m(user2 community blog)a do
-      {:ok, blog} = preload_author(blog)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)
@@ -137,7 +139,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -145,13 +147,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       assert notify.action == "COMMENT"
       assert notify.thread == :blog
       assert notify.article_id == blog.id
-      assert notify.user_id == blog.author.user.id
+      assert notify.user_id == blog.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
     test "blog comment author should get notify after some one reply it",
          ~m(user2 user3 community blog)a do
-      {:ok, blog} = preload_author(blog)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)

@@ -80,11 +80,11 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, blog_comment_2} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, blog} =
-        CMS.FrontDesk.article(community, :blog, blog.inner_id, preload: :comments)
+      {:ok, comments} =
+        CMS.Comments.paged_comments(:blog, blog.article_id, %{page: 1, size: 20}, :replies)
 
-      assert exist_in?(blog_comment_1, blog.comments)
-      assert exist_in?(blog_comment_2, blog.comments)
+      assert exist_in?(blog_comment_1, comments.entries)
+      assert exist_in?(blog_comment_2, comments.entries)
     end
 
     test "comment should have default meta after create", ~m(user blog community)a do
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)
 
-      {:ok, blog_after} = ORM.find(Blog, blog.id)
+      blog_after = Repo.get!(CMS.Model.Article, blog.article_id)
 
       assert not is_nil(blog.active_at)
       assert blog_after.active_at > blog.inserted_at
@@ -111,10 +111,10 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
          ~m(community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
-      {:ok, blog} = ORM.find(Blog, blog.id, preload: [author: :user])
+      article_before = Repo.get!(CMS.Model.Article, blog.article_id)
 
       Process.sleep(1000)
-      author = blog.author.user
+      author = blog.author
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -125,10 +125,10 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
           author
         )
 
-      {:ok, blog} = ORM.find(Blog, blog.id, preload: :comments)
+      article_after = Repo.get!(CMS.Model.Article, blog.article_id)
 
-      assert not is_nil(blog.active_at)
-      assert blog.active_at == blog.inserted_at
+      assert not is_nil(article_after.active_at)
+      assert article_after.active_at == article_before.active_at
     end
 
     test "old blogs will not update active after comment created",
@@ -145,9 +145,9 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
+      article = Repo.get!(CMS.Model.Article, blog.article_id)
 
-      assert blog.active_at |> DateTime.to_date() == cur_date
+      assert article.active_at |> DateTime.to_date() == cur_date
 
       #####
       inserted_at =
@@ -158,16 +158,20 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       blog_attrs = mock_attrs(:blog)
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
-      {:ok, blog} =
-        ORM.update(blog, %{inserted_at: inserted_at, active_at: inserted_at}, strict: false)
+      article = Repo.get!(CMS.Model.Article, blog.article_id)
+
+      {:ok, _article} =
+        article
+        |> Ecto.Changeset.change(%{inserted_at: inserted_at, active_at: inserted_at})
+        |> Repo.update()
 
       Process.sleep(1000)
 
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
-      assert blog.active_at |> DateTime.to_unix() !== cur_date
+      article = Repo.get!(CMS.Model.Article, blog.article_id)
+      assert article.active_at == inserted_at
     end
 
     test "comment can be updated", ~m(community blog user)a do
@@ -203,9 +207,9 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
+      {:ok, state} = CMS.Comments.comments_state(:blog, blog.article_id)
 
-      participator = List.first(blog.comments_participants)
+      participator = List.first(state.participants)
       assert participator.id == user.id
     end
 
@@ -216,9 +220,9 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
+      {:ok, state} = CMS.Comments.comments_state(:blog, blog.article_id)
 
-      assert 1 == length(blog.comments_participants)
+      assert 1 == length(state.participants)
     end
 
     test "recent comment user should appear at first of the post participants",
@@ -229,9 +233,9 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
+      {:ok, state} = CMS.Comments.comments_state(:blog, blog.article_id)
 
-      participator = List.first(blog.comments_participants)
+      participator = List.first(state.participants)
 
       assert participator.id == user2.id
     end
@@ -266,7 +270,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, author_user} = ORM.find(User, blog.author.user.id)
+      author_user = blog.author
 
       CMS.Interactions.upvote(comment, author_user)
 
@@ -400,8 +404,10 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert comment.is_folded
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
-      assert blog.meta.folded_comment_count == 1
+      {:ok, folded} =
+        CMS.Comments.paged_folded_comments(:blog, blog.article_id, %{page: 1, size: 20})
+
+      assert folded.total_count == 1
     end
 
     test "user can unfold a comment", ~m(community blog user)a do
@@ -417,8 +423,10 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert not comment.is_folded
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
-      assert blog.meta.folded_comment_count == 0
+      {:ok, folded} =
+        CMS.Comments.paged_folded_comments(:blog, blog.article_id, %{page: 1, size: 20})
+
+      assert folded.total_count == 0
     end
   end
 
@@ -436,8 +444,8 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       assert comment.is_pinned
 
-      {:ok, pined_record} = PinnedComment |> ORM.find_by(%{blog_id: blog.id})
-      assert pined_record.blog_id == blog.id
+      {:ok, pined_record} = PinnedComment |> ORM.find_by(%{article_id: blog.article_id})
+      assert pined_record.article_id == blog.article_id
     end
 
     test "user can unpin a comment", ~m(community user blog)a do
@@ -825,14 +833,14 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
+      {:ok, stats} = CMS.ArticleStats.fetch(:blog, blog.article_id)
 
-      assert blog.comments_count == 5
+      assert stats.comments_count == 5
 
       {:ok, _} = CMS.Comments.delete_comment(comment, user)
 
-      {:ok, blog} = ORM.find(Blog, blog.id)
-      assert blog.comments_count == 4
+      {:ok, stats} = CMS.ArticleStats.fetch(:blog, blog.article_id)
+      assert stats.comments_count == 4
     end
 
     test "delete comment still delete pinned record if needed", ~m(community user blog)a do
@@ -870,7 +878,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       assert not comment.is_article_author
 
-      author_user = blog.author.user
+      author_user = blog.author
 
       {:ok, comment} =
         CMS.Comments.create_comment(
@@ -890,14 +898,14 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Articles.lock_comments(blog)
+      {:ok, _} = CMS.Articles.lock_comments(blog.id, user)
 
       {:error, reason} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(blog)
+      {:ok, _} = CMS.Articles.undo_lock_comments(blog.id, user)
 
       {:ok, _} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
@@ -908,12 +916,12 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
-      {:ok, _} = CMS.Articles.lock_comments(blog)
+      {:ok, _} = CMS.Articles.lock_comments(blog.id, user)
 
       {:error, reason} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(blog)
+      {:ok, _} = CMS.Articles.undo_lock_comments(blog.id, user)
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
     end
   end

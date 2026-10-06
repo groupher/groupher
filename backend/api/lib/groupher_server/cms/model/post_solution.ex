@@ -3,10 +3,10 @@ defmodule GroupherServer.CMS.Model.PostSolution do
   Authoritative accepted-answer relation for one Post.
 
   This row is the single current fact used to distinguish accept, replace and
-  revoke transitions. Comment/Post response fields are virtual Reader
+  revoke transitions. Comment/Post response fields are virtual Query
   projections; pin and workflow status remain independent domains.
 
-      Comments Command -> PostSolution authority -> batched Reader projections
+      Comments Command -> PostSolution authority -> batched Query projections
   """
 
   use Ecto.Schema
@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Model.PostSolution do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Model.{Comment, Post}
+  alias CMS.Model.{Article, Comment}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Model.PostSolution do
   @type t :: %__MODULE__{}
 
   schema "post_solutions" do
-    belongs_to(:post, Post)
+    belongs_to(:article, Article, type: Ecto.UUID)
     belongs_to(:comment, Comment)
     belongs_to(:accepted_by, User)
     field(:accepted_at, :utc_datetime)
@@ -43,14 +43,14 @@ defmodule GroupherServer.CMS.Model.PostSolution do
   @spec changeset(t(), map()) :: Ecto.Changeset.t(t())
   def changeset(solution, attrs) do
     solution
-    |> cast(attrs, [:post_id, :comment_id, :accepted_by_id, :accepted_at])
-    |> validate_required([:post_id, :comment_id, :accepted_by_id, :accepted_at])
-    |> unique_constraint(:post_id)
+    |> cast(attrs, [:article_id, :comment_id, :accepted_by_id, :accepted_at])
+    |> validate_required([:article_id, :comment_id, :accepted_by_id, :accepted_at])
+    |> unique_constraint(:article_id)
     |> unique_constraint(:comment_id)
-    |> foreign_key_constraint(:post_id)
+    |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:comment_id)
     |> foreign_key_constraint(:comment_id,
-      name: :post_solutions_comment_belongs_to_post_fkey,
+      name: :post_solutions_comment_belongs_to_article_fkey,
       message: "must belong to the selected post"
     )
     |> foreign_key_constraint(:accepted_by_id)

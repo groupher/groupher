@@ -51,11 +51,13 @@ defmodule GroupherServer.CMS.CommunityApplications.Policy do
   end
 
   @doc "Converts a denied policy result into its declared Community ErrorCat value."
-  def denial_error(%{allowed: false, reason_code: :active_application_exists}),
-    do: ErrorCat.active_application_exists()
+  def denial_error(%{allowed: false, reason_code: :active_application_exists}) do
+    ErrorCat.active_application_exists()
+  end
 
-  def denial_error(%{allowed: false, reason_code: :apply_not_allowed}),
-    do: ErrorCat.apply_not_allowed()
+  def denial_error(%{allowed: false, reason_code: :apply_not_allowed}) do
+    ErrorCat.apply_not_allowed()
+  end
 
   defp blocking_application?(user_id) do
     statuses = CommunityApplication.blocking_statuses()

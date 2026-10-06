@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.CMS
-  alias CMS.Model.Community
+  alias CMS.Model.{Article, Community}
   alias GroupherServerWeb.Resolvers.CMS, as: ResolverCMS
 
   test "viewer batch resolvers return empty lists without an authenticated session" do
@@ -161,7 +161,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
 
   test "returns Article read state with complete emotion vocabulary" do
     {_community, post, _attrs, user} = mock_article(:post)
-    post = Repo.preload(post, author: :user)
+    post = Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
 
     assert {:ok, _} = CMS.Interactions.upvote(post, user)
     assert {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
@@ -178,7 +178,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
 
   test "anonymous state has fixed false viewer flags" do
     {_community, post, _attrs, user} = mock_article(:post)
-    post = Repo.preload(post, author: :user)
+    post = Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
     assert {:ok, _} = CMS.Interactions.upvote(post, user)
 
     assert %{upvotes_count: 1, viewer_has_upvoted: false} =
@@ -274,6 +274,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
     end
   end
 
-  defp select_query?(query),
-    do: query |> String.trim_leading() |> String.starts_with?("SELECT")
+  defp select_query?(query) do
+    query |> String.trim_leading() |> String.starts_with?("SELECT")
+  end
 end

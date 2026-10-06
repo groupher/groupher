@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
   end
 
   test "ViewTracker events enter Article Insights with actor filtering" do
-    {_community, article, _attrs, user} = mock_article(:post)
+    {community, article, _attrs, user} = mock_article(:post)
     now = DateTime.utc_now(:second)
     from = DateTime.from_unix!(div(DateTime.to_unix(now), 3600) * 3600)
     to = DateTime.add(from, 3600, :second)
@@ -61,6 +61,18 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     assert [%{metrics: %{article_view: %{value: 1}}}] = result.items
     assert result.policy_versions == [1]
     refute result.has_mixed_policy
+
+    assert {:ok, path_result} =
+             ArticleInsights.trend_by_path(
+               %{community: community.slug, thread: :post, inner_id: article.inner_id},
+               user,
+               from: from,
+               to: to,
+               metrics: [:article_view],
+               actor_types: [:human]
+             )
+
+    assert [%{metrics: %{article_view: %{value: 1}}}] = path_result.items
   end
 
   test "view dimensions do not filter non-view metrics and ranges are bounded" do

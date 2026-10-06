@@ -7,8 +7,8 @@ defmodule GroupherServer.Activity.Model.DocLog do
 
   use GroupherServer.Activity.Model.Base,
     table: "doc_logs",
-    stream_field: :doc_ref,
-    extra_fields: [branch_ref: :string],
+    stream_field: :article_id,
+    extra_fields: [branch_id: :id],
     actions: [
       :created,
       :title_changed,

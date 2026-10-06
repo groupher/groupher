@@ -14,7 +14,6 @@ defmodule GroupherServer.CMS.Comments.States do
   require GroupherServer.CMS.Comments.ErrorCat
 
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
@@ -57,7 +56,7 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   def pin(comment_id, %User{} = user, opts) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal),
          {:ok, result} <- pin(comment, user, opts) do
       {:ok, result}
     end
@@ -84,7 +83,7 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   def undo_pin(comment_id, %User{} = user, opts) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal),
          {:ok, result} <- undo_pin(comment, user, opts) do
       {:ok, result}
     end
@@ -94,7 +93,7 @@ defmodule GroupherServer.CMS.Comments.States do
   def fold(%Comment{} = comment, %User{} = _user), do: do_fold_comment(comment, true)
 
   def fold(comment_id, %User{} = _user) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       do_fold_comment(comment, true)
     end
   end
@@ -104,54 +103,25 @@ defmodule GroupherServer.CMS.Comments.States do
 
   @spec unfold(T.id(), User.t()) :: T.domain_res(Comment.t())
   def unfold(comment_id, %User{} = _user) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       do_fold_comment(comment, false)
     end
   end
 
   @doc false
   @spec fold_for_report(Comment.t()) :: T.domain_res(Comment.t())
-  def fold_for_report(%Comment{} = comment) do
-    with {:ok, folded_comment} <- ORM.update(comment, %{is_folded: true}),
-         {:ok, thread} <- FrontDesk.thread_of(comment),
-         {:ok, article} <- FrontDesk.article_of(comment),
-         {:ok, %{total_count: total_count}} <-
-           CMS.Comments.List.paged_folded_comments(thread, article.id, %{page: 1, size: 1}),
-         {:ok, _article} <-
-           ORM.update_meta(article, Map.put(article.meta, :folded_comment_count, total_count)) do
-      {:ok, folded_comment}
-    end
-  end
+  def fold_for_report(%Comment{} = comment), do: ORM.update(comment, %{is_folded: true})
 
   defp do_fold_comment(%Comment{} = comment, is_folded) when is_boolean(is_folded) do
-    Multi.new()
-    |> Multi.run(:fold_comment, fn _, _ ->
-      comment |> ORM.update(%{is_folded: is_folded})
-    end)
-    |> Multi.run(:update_article_fold_count, fn _, _ ->
-      {:ok, thread} = FrontDesk.thread_of(comment)
-      {:ok, article} = FrontDesk.article_of(comment)
-
-      {:ok, %{total_count: total_count}} =
-        CMS.Comments.List.paged_folded_comments(thread, article.id, %{page: 1, size: 1})
-
-      meta = article.meta |> Map.put(:folded_comment_count, total_count)
-      article |> ORM.update_meta(meta)
-    end)
-    |> Repo.transaction()
-    |> result()
+    ORM.update(comment, %{is_folded: is_folded})
   end
 
   defp pin_unlocked(%Comment{} = comment, article, user, opts) do
     with {:ok, comment} <- maybe_existing_pinned_comment(comment),
-         {:ok, thread} <- FrontDesk.thread_of(comment),
-         {:ok, info} <- match(thread) do
+         {:ok, thread} <- FrontDesk.thread_of(comment) do
       Multi.new()
       |> Multi.run(:checked_pined_comments_count, fn _, _ ->
-        pined_comments_query =
-          from(p in PinnedComment,
-            where: field(p, ^info.foreign_key) == ^article.id
-          )
+        pined_comments_query = pinned_comments_query(article, comment.branch_id, thread)
 
         check_pined_comments_count(pined_comments_query)
       end)
@@ -159,7 +129,7 @@ defmodule GroupherServer.CMS.Comments.States do
         ORM.update(comment, %{is_pinned: true})
       end)
       |> Multi.run(:add_pined_comment, fn _, _ ->
-        attrs = %{comment_id: comment.id} |> Map.put(info.foreign_key, article.id)
+        attrs = pinned_comment_attrs(article, comment, thread)
 
         PinnedComment |> ORM.create(attrs)
       end)
@@ -169,6 +139,22 @@ defmodule GroupherServer.CMS.Comments.States do
       |> Repo.transaction()
       |> result()
     end
+  end
+
+  defp pinned_comments_query(%{id: article_id}, nil, _thread) do
+    from(pin in PinnedComment,
+      where: pin.article_id == ^article_id and is_nil(pin.branch_id)
+    )
+  end
+
+  defp pinned_comments_query(%{id: article_id}, branch_id, _thread) do
+    from(pin in PinnedComment,
+      where: pin.article_id == ^article_id and pin.branch_id == ^branch_id
+    )
+  end
+
+  defp pinned_comment_attrs(%{id: article_id}, comment, _thread) do
+    %{comment_id: comment.id, article_id: article_id, branch_id: comment.branch_id}
   end
 
   defp undo_pin_unlocked(%Comment{} = comment, article, user, opts) do
@@ -228,17 +214,21 @@ defmodule GroupherServer.CMS.Comments.States do
   defp result({:ok, %{update_comment_flag: result}}), do: {:ok, result}
   defp result({:ok, %{fold_comment: result}}), do: {:ok, result}
 
-  defp result({:error, ErrorCat.error_pattern(reason: :already_pinned, details: result)}),
-    do: {:ok, result}
+  defp result({:error, ErrorCat.error_pattern(reason: :already_pinned, details: result)}) do
+    {:ok, result}
+  end
 
-  defp result({:error, :update_comment_flag, _result, _steps}),
-    do: {:error, ErrorCat.update_fails()}
+  defp result({:error, :update_comment_flag, _result, _steps}) do
+    {:error, ErrorCat.update_fails()}
+  end
 
-  defp result({:error, :add_pined_comment, _result, _steps}),
-    do: {:error, ErrorCat.create_fails()}
+  defp result({:error, :add_pined_comment, _result, _steps}) do
+    {:error, ErrorCat.create_fails()}
+  end
 
-  defp result({:error, :remove_pined_comment, _result, _steps}),
-    do: {:error, ErrorCat.delete_fails()}
+  defp result({:error, :remove_pined_comment, _result, _steps}) do
+    {:error, ErrorCat.delete_fails()}
+  end
 
   defp result({:error, _, result, _steps}), do: {:error, result}
 end
