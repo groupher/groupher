@@ -3,20 +3,20 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
 
   alias GroupherServer.CMS
   alias CMS.Model.{Article, Community}
-  alias GroupherServerWeb.Resolvers.CMS, as: ResolverCMS
+  alias GroupherServerWeb.Resolvers.CMS.{Comments, Interactions, ViewTracker}
 
   test "viewer batch resolvers return empty lists without an authenticated session" do
     info = %{context: %{cur_user: nil}}
 
     assert {:ok, []} =
-             ResolverCMS.article_viewer_states(
+             ViewTracker.article_viewer_states(
                nil,
                %{paths: [%{community: "home", thread: "POST", inner_id: "1"}]},
                info
              )
 
     assert {:ok, []} =
-             ResolverCMS.comment_viewer_states(
+             Comments.comment_viewer_states(
                nil,
                %{
                  article: %{community: "home", thread: "POST", inner_id: "1"},
@@ -36,11 +36,11 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
         %{community: community.slug, thread: :post, inner_id: to_string(article.inner_id)}
       end)
 
-    assert {:ok, viewer_states} = ResolverCMS.article_viewer_states(nil, %{paths: paths}, info)
+    assert {:ok, viewer_states} = ViewTracker.article_viewer_states(nil, %{paths: paths}, info)
     assert Enum.map(viewer_states, & &1.inner_id) == [second.inner_id, first.inner_id]
 
     assert {:ok, interaction_states} =
-             ResolverCMS.article_interaction_states(nil, %{paths: paths}, info)
+             Interactions.article_interaction_states(nil, %{paths: paths}, info)
 
     assert Enum.map(interaction_states, & &1.inner_id) == [second.inner_id, first.inner_id]
   end
@@ -56,12 +56,12 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
 
     {_one, one_queries} =
       capture_queries(fn ->
-        ResolverCMS.article_interaction_states(nil, %{paths: [path.(first)]}, info)
+        Interactions.article_interaction_states(nil, %{paths: [path.(first)]}, info)
       end)
 
     {_many, many_queries} =
       capture_queries(fn ->
-        ResolverCMS.article_interaction_states(
+        Interactions.article_interaction_states(
           nil,
           %{paths: [path.(first), path.(second)]},
           info
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
 
     {_one, one_queries} =
       capture_queries(fn ->
-        ResolverCMS.comment_viewer_states(
+        Comments.comment_viewer_states(
           nil,
           %{article: article, comment_inner_ids: [to_string(first.inner_id)]},
           info
@@ -95,7 +95,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
 
     {_many, many_queries} =
       capture_queries(fn ->
-        ResolverCMS.comment_viewer_states(
+        Comments.comment_viewer_states(
           nil,
           %{
             article: article,
@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
                 %{comment_inner_id: "999999", comment: nil}
               ]
             }} =
-             ResolverCMS.comment_reconcile_states(
+             Comments.comment_reconcile_states(
                nil,
                %{
                  article: %{community: community.slug, thread: :post, inner_id: post.inner_id},
@@ -149,7 +149,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
     refs = Enum.map(1..101, &to_string/1)
 
     assert {:error, "viewer batch cannot contain more than 100 paths"} =
-             ResolverCMS.comment_reconcile_states(
+             Comments.comment_reconcile_states(
                nil,
                %{
                  article: %{community: "home", thread: "POST", inner_id: "1"},

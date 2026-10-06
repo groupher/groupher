@@ -18,7 +18,7 @@ defmodule GroupherServerWeb.Schema.CMS.Press.Mutations do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "dashboard.rss.update")
-      resolve(&R.CMS.update_press_config/3)
+      resolve(&R.CMS.Press.update_press_config/3)
     end
   end
 end

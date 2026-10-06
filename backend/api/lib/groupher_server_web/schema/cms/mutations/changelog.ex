@@ -30,7 +30,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
       middleware(M.BodyBagTrust)
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.create_changelog/3)
+      resolve(&R.CMS.Articles.create_changelog/3)
       middleware(M.Analysis.MakeContribution, for: [:user, :community])
     end
 
@@ -49,7 +49,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
       middleware(M.Authorize, :login)
       middleware(M.BodyBagTrust)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.create_changelog_draft/3)
+      resolve(&R.CMS.Articles.create_changelog_draft/3)
     end
 
     @desc "update a cms/changelog"
@@ -71,7 +71,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
       middleware(M.Passport, action: "changelog.update", thread: :changelog)
       middleware(M.FrontDesk, {:article, thread: :changelog})
 
-      resolve(&R.CMS.update_article/3)
+      resolve(&R.CMS.Articles.update_article/3)
     end
 
     @desc "save changes to a changelog draft without publishing"
@@ -94,7 +94,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, {:article_editor, thread: :changelog})
       middleware(M.Passport, action: "changelog.draft.update")
-      resolve(&R.CMS.update_changelog_draft/3)
+      resolve(&R.CMS.Articles.update_changelog_draft/3)
     end
 
     @desc "publish an existing changelog draft"
@@ -110,7 +110,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, {:article_editor, thread: :changelog})
       middleware(M.Passport, action: "changelog.draft.publish")
-      resolve(&R.CMS.publish_changelog_draft/3)
+      resolve(&R.CMS.Articles.publish_changelog_draft/3)
       middleware(M.Analysis.MakeContribution, for: [:user, :community])
     end
 

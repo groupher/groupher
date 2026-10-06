@@ -20,7 +20,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, {:article, preload: [[author: :user], :community]})
-      resolve(&R.CMS.create_comment/3)
+      resolve(&R.CMS.Comments.create_comment/3)
       middleware(M.Analysis.MakeContribution, for: :user)
     end
 
@@ -34,7 +34,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
       middleware(M.FrontDesk, :comment)
       middleware(M.Passport, action: "comment.update")
 
-      resolve(&R.CMS.update_comment/3)
+      resolve(&R.CMS.Comments.update_comment/3)
     end
 
     @desc "delete a comment"
@@ -46,7 +46,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
       middleware(M.FrontDesk, :comment)
       middleware(M.Passport, action: "comment.delete")
 
-      resolve(&R.CMS.delete_comment/3)
+      resolve(&R.CMS.Comments.delete_comment/3)
     end
 
     @desc "reply to a comment"
@@ -57,7 +57,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.reply_comment/3)
+      resolve(&R.CMS.Comments.reply_comment/3)
       middleware(M.Analysis.MakeContribution, for: :user)
     end
 
@@ -68,7 +68,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.upvote_comment/3)
+      resolve(&R.CMS.Comments.upvote_comment/3)
     end
 
     @desc "undo upvote to a comment"
@@ -78,7 +78,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.undo_upvote_comment/3)
+      resolve(&R.CMS.Comments.undo_upvote_comment/3)
     end
 
     @desc "report a comment"
@@ -89,7 +89,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.report_comment/3)
+      resolve(&R.CMS.Comments.report_comment/3)
     end
 
     @desc "undo report a comment"
@@ -98,7 +98,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.undo_report_comment/3)
+      resolve(&R.CMS.Comments.undo_report_comment/3)
     end
 
     @desc "emotion to a comment"
@@ -109,7 +109,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.emotion_to_comment/3)
+      resolve(&R.CMS.Comments.emotion_to_comment/3)
     end
 
     @desc "undo emotion to a comment"
@@ -120,7 +120,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.undo_emotion_to_comment/3)
+      resolve(&R.CMS.Comments.undo_emotion_to_comment/3)
     end
 
     @desc "accept a comment as a QA post's current solution"
@@ -129,7 +129,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.accept_solution/3)
+      resolve(&R.CMS.Comments.accept_solution/3)
     end
 
     @desc "revoke a comment when it is a QA post's current solution"
@@ -138,7 +138,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.revoke_solution/3)
+      resolve(&R.CMS.Comments.revoke_solution/3)
     end
 
     @desc "pin a comment"
@@ -149,7 +149,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
       middleware(M.FrontDesk, :comment)
       middleware(M.Passport, action: "comment.pin")
 
-      resolve(&R.CMS.pin_comment/3)
+      resolve(&R.CMS.Comments.pin_comment/3)
     end
 
     @desc "undo pin a comment"
@@ -160,7 +160,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
       middleware(M.FrontDesk, :comment)
       middleware(M.Passport, action: "comment.undo_pin")
 
-      resolve(&R.CMS.undo_pin_comment/3)
+      resolve(&R.CMS.Comments.undo_pin_comment/3)
     end
   end
 end

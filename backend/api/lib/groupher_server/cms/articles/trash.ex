@@ -216,6 +216,19 @@ defmodule GroupherServer.CMS.Articles.Trash do
     end
   end
 
+  @doc "Gets one Trash membership and verifies its public Community/thread scope."
+  @spec get_in_scope(Ecto.UUID.t(), pos_integer(), atom()) ::
+          {:ok, TrashedArticle.t() | TrashedDocArticle.t()} | {:error, term()}
+  def get_in_scope(hash_id, community_id, thread)
+      when is_integer(community_id) and is_atom(thread) do
+    with {:ok, item} <- get(hash_id),
+         true <- item.community_id == community_id and item.thread == thread do
+      {:ok, item}
+    else
+      _ -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
+    end
+  end
+
   @doc "Lists ordinary stable Article Trash memberships for one Community."
   @spec list(Community.t(), map()) :: {:ok, map()}
   def list(%Community{} = community, filter \\ %{}) do

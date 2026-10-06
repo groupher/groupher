@@ -33,19 +33,17 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
   def execute(item_or_id, actor, opts), do: TrashAgg.restore(item_or_id, actor, opts)
 
   defp restore_now(item_or_id, actor, opts) do
-    with {:ok, item} <- resolve_item(item_or_id) do
+    with {:ok, item} <- resolve_item(item_or_id, opts) do
       TrashAgg.restore(item, actor, opts)
     end
   end
 
   defp execute_command(item_or_id, actor, command_id, opts) do
     with {:ok, community_id} <- command_community_id(opts) do
-      case resolve_item(item_or_id) do
+      case resolve_item(item_or_id, opts) do
         {:ok, item} ->
-          with :ok <- ensure_community(item, community_id) do
-            restore_command(item, actor, command_id, community_id, opts)
-            |> present_confirmation()
-          end
+          restore_command(item, actor, command_id, community_id, opts)
+          |> present_confirmation()
 
         {:error, _reason} ->
           %Command{
@@ -84,12 +82,38 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
     )
   end
 
-  defp resolve_item(%TrashedArticle{} = item), do: {:ok, item}
-  defp resolve_item(item_id), do: TrashAgg.get(item_id)
+  defp resolve_item(%TrashedArticle{} = item, opts) do
+    case scope(opts) do
+      :unscoped -> {:ok, item}
+      {:community, community_id} -> ensure_scope(item, community_id, nil)
+      {:ok, community_id, thread} -> ensure_scope(item, community_id, thread)
+      {:error, _reason} = error -> error
+    end
+  end
 
-  defp present_confirmation({:ok, %Confirmation{data: %{"article_id" => article_id}}}) do
+  defp resolve_item(item_id, opts) do
+    case scope(opts) do
+      :unscoped ->
+        TrashAgg.get(item_id)
+
+      {:community, community_id} ->
+        with {:ok, item} <- TrashAgg.get(item_id) do
+          ensure_scope(item, community_id, nil)
+        end
+
+      {:ok, community_id, thread} ->
+        TrashAgg.get_in_scope(item_id, community_id, thread)
+
+      {:error, _reason} = error ->
+        error
+    end
+  end
+
+  defp present_confirmation(
+         {:ok, %Confirmation{data: %{"article_id" => article_id, "command_id" => command_id}}}
+       ) do
     case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{} = article} -> {:ok, article}
+      {:ok, %Article{} = article} -> {:ok, Map.put(article, :command_id, command_id)}
       {:error, _reason} -> {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
@@ -104,6 +128,27 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
     end
   end
 
-  defp ensure_community(%{community_id: community_id}, community_id), do: :ok
-  defp ensure_community(_item, _community_id), do: {:error, :community_mismatch}
+  defp scope(opts) do
+    case {Keyword.get(opts, :community_id), Keyword.get(opts, :thread)} do
+      {nil, nil} ->
+        :unscoped
+
+      {community_id, nil} when is_integer(community_id) ->
+        {:community, community_id}
+
+      {community_id, thread} when is_integer(community_id) and is_atom(thread) ->
+        {:ok, community_id, thread}
+
+      _ ->
+        {:error, ArticlesErrorCat.not_exist("TrashedArticle")}
+    end
+  end
+
+  defp ensure_scope(item, community_id, thread) do
+    if item.community_id == community_id and (is_nil(thread) or item.thread == thread) do
+      {:ok, item}
+    else
+      {:error, ArticlesErrorCat.not_exist("TrashedArticle")}
+    end
+  end
 end

@@ -259,15 +259,31 @@ defmodule GroupherServer.CMS.Communities do
     Members.members(type, community, filters)
   end
 
+  def members(type, community_ref, filters) do
+    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
+      Members.members(type, community, filters)
+    end
+  end
+
   @spec members(atom(), Community.t(), map(), User.t()) :: T.domain_res(T.paged_data())
   def members(type, %Community{} = community, filters, %User{} = user) do
     Members.members(type, community, filters, user)
+  end
+
+  def members(type, community_ref, filters, %User{} = user) do
+    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
+      Members.members(type, community, filters, user)
+    end
   end
 
   # Category
   @doc "Creates category through the `Communities` write boundary."
   @spec create_category(map(), User.t()) :: T.domain_res(Category.t())
   def create_category(attrs, %User{} = user), do: Categories.create(attrs, user)
+
+  @doc "Returns paged categories through the Communities read boundary."
+  @spec paged_categories(map()) :: T.domain_res(T.paged_data())
+  def paged_categories(filter), do: Query.page_categories(filter)
 
   @doc "Updates category through the `Communities` write boundary."
   @spec update_category(String.t(), map()) :: T.domain_res(Category.t())
@@ -286,16 +302,34 @@ defmodule GroupherServer.CMS.Communities do
     Categories.set(community, category)
   end
 
+  @spec set_category(Community.t(), T.id()) :: T.domain_res(Community.t())
+  def set_category(%Community{} = community, category_id) do
+    with {:ok, category} <- ORM.find(Category, category_id) do
+      Categories.set(community, category)
+    end
+  end
+
   @doc "Runs `unset_category` through the public `Communities` boundary."
   @spec unset_category(Community.t(), Category.t()) :: T.domain_res(Community.t())
   def unset_category(%Community{} = community, %Category{} = category) do
     Categories.unset(community, category)
   end
 
+  @spec unset_category(Community.t(), T.id()) :: T.domain_res(Community.t())
+  def unset_category(%Community{} = community, category_id) do
+    with {:ok, category} <- ORM.find(Category, category_id) do
+      Categories.unset(community, category)
+    end
+  end
+
   # Passport
   @doc "Returns passport through the `Communities` boundary."
   @spec get_passport(User.t()) :: T.domain_res(map())
   def get_passport(%User{} = user), do: Passport.get_passport(user)
+
+  def get_passport(%{id: user_id}) when is_integer(user_id) do
+    Passport.get_passport(%User{id: user_id})
+  end
 
   @doc "Runs `stamp_passport` through the public `Communities` boundary."
   @spec stamp_passport(map(), User.t()) :: T.domain_res(map())
@@ -399,6 +433,12 @@ defmodule GroupherServer.CMS.Communities do
     Tags.create(community, thread, attrs, user)
   end
 
+  def create_tag(community_ref, thread, attrs, %User{} = user) do
+    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
+      Tags.create(community, thread, attrs, user)
+    end
+  end
+
   @doc "Updates tag through the `Communities` write boundary."
   @spec update_tag(T.id(), map()) :: T.domain_res(CommunityTag.t())
   def update_tag(id, attrs), do: Tags.update(id, attrs)
@@ -409,6 +449,12 @@ defmodule GroupherServer.CMS.Communities do
     Tags.create_group(community, thread, attrs)
   end
 
+  def create_tag_group(community_ref, thread, attrs) do
+    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
+      Tags.create_group(community, thread, attrs)
+    end
+  end
+
   @doc "Updates tag group through the `Communities` write boundary."
   @spec update_tag_group(Community.t(), atom(), T.id(), map()) ::
           T.domain_res(CommunityTagGroup.t())
@@ -416,11 +462,39 @@ defmodule GroupherServer.CMS.Communities do
     Tags.update_group(community, thread, id, attrs)
   end
 
+  def update_tag_group(community_ref, thread, id, attrs) do
+    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
+      Tags.update_group(community, thread, id, attrs)
+    end
+  end
+
   @doc "Removes tag group through the `Communities` boundary."
   @spec delete_tag_group(Community.t(), atom(), T.id()) :: T.domain_res(CommunityTagGroup.t())
   def delete_tag_group(%Community{} = community, thread, id) do
     Tags.delete_group(community, thread, id)
   end
+
+  def delete_tag_group(community_ref, thread, id) do
+    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
+      Tags.delete_group(community, thread, id)
+    end
+  end
+
+  @doc "Returns a tag group's title through the Communities read boundary."
+  @spec tag_group_title(T.id()) :: {:ok, String.t() | nil}
+  def tag_group_title(group_id) do
+    case FrontDesk.community_tag_group(group_id) do
+      {:ok, group} -> {:ok, group.title}
+      {:error, _reason} -> {:ok, nil}
+    end
+  end
+
+  @doc "Returns tag-group titles keyed by id for GraphQL batch resolution."
+  @spec tag_group_titles([T.id()]) :: map()
+  def tag_group_titles(group_ids), do: Tags.group_titles(group_ids)
+
+  @spec tag_group_titles(keyword(), [T.id()]) :: map()
+  def tag_group_titles(_batch_opts, group_ids), do: Tags.group_titles(group_ids)
 
   @doc "Removes tag through the `Communities` boundary."
   @spec delete_tag(T.id()) :: T.domain_res(CommunityTag.t())

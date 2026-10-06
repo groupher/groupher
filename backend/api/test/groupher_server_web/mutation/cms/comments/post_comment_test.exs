@@ -62,6 +62,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       replay =
         user_conn |> gq_mutation(S.Comment.m(:create_comment_with_command_id), variables)
 
+      assert replay == first
       assert replay["commandId"] == variables.commandId
       assert replay["comment"]["innerId"] == first["comment"]["innerId"]
 
@@ -85,6 +86,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       first = user_conn |> gq_mutation(S.Comment.m(:reply_comment_with_command_id), variables)
       replay = user_conn |> gq_mutation(S.Comment.m(:reply_comment_with_command_id), variables)
 
+      assert replay == first
       assert replay["commandId"] == variables.commandId
       assert replay["comment"]["innerId"] == first["comment"]["innerId"]
 
@@ -141,6 +143,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       replay =
         owner_conn |> gq_mutation(S.Comment.m(:update_comment_with_command_id), variables)
 
+      assert replay == first
       assert replay["commandId"] == variables.commandId
       assert replay["comment"]["bodyHtml"] == first["comment"]["bodyHtml"]
       assert replay["comment"]["bodyHtml"] |> String.contains?(~s(idempotent update))
@@ -191,6 +194,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       replay =
         owner_conn |> gq_mutation(S.Comment.m(:delete_comment_with_command_id), variables)
 
+      assert replay == first
       assert first["commandId"] == variables.commandId
       assert replay["commandId"] == variables.commandId
       assert replay["comment"]["innerId"] == first["comment"]["innerId"]

@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
       with :ok <- validate_cover(attrs),
            {:ok, body_bag} <- cast_body(attrs, thread),
            {:ok, article} <- insert_article(community, thread, author, attrs),
-           {:ok, _community_relation} <- insert_home_community(article),
+           {:ok, _community_relation} <- insert_community_relation(article),
            {:ok, _lifecycle} <- insert_lifecycle(article, opts),
            {:ok, _branch_state} <- insert_branch_state(article, opts),
            {:ok, _post_state} <- insert_post_state(article, attrs),
@@ -819,12 +819,11 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     |> Repo.insert()
   end
 
-  defp insert_home_community(%Article{} = article) do
+  defp insert_community_relation(%Article{} = article) do
     %ArticleCommunity{}
     |> ArticleCommunity.changeset(%{
       article_id: article.id,
       community_id: article.community_id,
-      role: :home,
       visible: true
     })
     |> Repo.insert()

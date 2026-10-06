@@ -71,7 +71,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert draft.version == 1
 
-    assert %ArticleCommunity{role: :home, community_id: community_id} =
+    assert %ArticleCommunity{community_id: community_id} =
              Repo.get_by!(ArticleCommunity, article_id: article.id)
 
     assert community_id == community.id
@@ -428,7 +428,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert moved.community_id == destination.id
     assert moved.inner_id == 1
 
-    assert %ArticleCommunity{community_id: destination_id, role: :home} =
+    assert %ArticleCommunity{community_id: destination_id} =
              Repo.get_by!(ArticleCommunity, article_id: moved.id)
 
     assert destination_id == destination.id
@@ -464,13 +464,19 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
         user
       )
 
-    assert {:ok, %ArticleCommunity{role: :mirror} = mirror} =
+    assert {:ok, %ArticleCommunity{} = mirror} =
              CMS.Articles.mirror(mirror_community, article.id, [], user)
 
     assert mirror.community_id == mirror_community.id
 
-    assert Repo.get_by!(ArticleCommunity, article_id: article.id, role: :home).community_id ==
+    assert Repo.get_by!(ArticleCommunity,
+             article_id: article.id,
+             community_id: source.id
+           ).community_id ==
              source.id
+
+    assert {:error, :current_path_placement} =
+             CMS.Articles.unmirror(source, article.id, user)
 
     assert {:ok, :done} = CMS.Articles.unmirror(mirror_community, article.id, user)
 

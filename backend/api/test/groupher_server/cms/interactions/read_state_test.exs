@@ -18,6 +18,25 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     PostReactionInfo
   }
 
+  test "article_state maps one already-read private state without IO" do
+    article = %{community: "home", thread: :post, inner_id: 42}
+
+    assert CMS.Interactions.ReadState.article_state(article, %{
+             interaction_revision: nil,
+             viewer_has_upvoted: nil,
+             viewer_has_collected: true,
+             viewer_emotion: :beer
+           }) == %{
+             community: "home",
+             thread: :post,
+             inner_id: 42,
+             interaction_revision: 0,
+             viewer_has_upvoted: false,
+             viewer_has_collected: true,
+             viewer_emotion: :beer
+           }
+  end
+
   test "upvote count is materialized in the projection and decremented on undo" do
     {_community, post, _attrs, user} = mock_article(:post)
 

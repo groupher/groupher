@@ -24,6 +24,16 @@ defmodule GroupherServer.CMS.Communities.Tags do
   alias CMS.Model.{Article, ArticleCommunity, Community, CommunityTag, CommunityTagGroup}
   alias Helper.{Datetime, Multi, ORM, T}
 
+  @doc "Returns tag-group titles keyed by id in one query."
+  @spec group_titles([T.id()]) :: map()
+  def group_titles(ids) when is_list(ids) do
+    CommunityTagGroup
+    |> where([group], group.id in ^Enum.uniq(ids))
+    |> select([group], {group.id, group.title})
+    |> Repo.all()
+    |> Map.new()
+  end
+
   @doc """
   create a community tag
   """

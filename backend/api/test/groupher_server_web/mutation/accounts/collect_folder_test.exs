@@ -151,6 +151,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       first = user_conn |> gq_mutation(@query, variables)
       replay = user_conn |> gq_mutation(@query, variables)
 
+      assert replay == first
       assert first["commandId"] == command_id
       assert replay["commandId"] == command_id
       assert replay["folder"]["totalCount"] == 1
@@ -197,6 +198,27 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       assert result["folder"]["totalCount"] == 0
       assert result["articleStats"]["collectsCount"] == 0
       refute result["interactionState"]["viewerHasCollected"]
+    end
+
+    test "remove command replay returns the same committed collect state",
+         ~m(user user_conn community post)a do
+      {:ok, folder} = Accounts.CollectFolders.create(%{title: "folder_title"}, user)
+      {:ok, _folder} = Accounts.CollectFolders.add(post, folder.id, user)
+
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        folderId: folder.id,
+        commandId: Ecto.UUID.generate()
+      }
+
+      first = user_conn |> gq_mutation(@query, variables)
+      replay = user_conn |> gq_mutation(@query, variables)
+
+      assert replay == first
+      assert replay["commandId"] == variables.commandId
+      assert replay["folder"]["totalCount"] == 0
+      assert replay["articleStats"]["collectsCount"] == 0
+      refute replay["interactionState"]["viewerHasCollected"]
     end
   end
 end

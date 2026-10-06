@@ -22,8 +22,11 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
   alias CMS.Comments.InteractionResponse
   alias CMS.FrontDesk
   alias CMS.Gate.Context.Scope.Comment, as: CommentContext
+  alias CMS.Helper.{ArticlePath, EmotionFormatter}
   alias CMS.Model.Comment
   alias Helper.{ORM, T}
+
+  @batch_size 100
 
   @doc """
   Fetches one comment through the FrontDesk read boundary.
@@ -63,7 +66,8 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
           T.domain_res([Comment.t()])
   def reconcile_comments(thread, article, inner_ids, viewer)
       when is_atom(thread) and is_list(inner_ids) do
-    with {:ok, inner_ids} <- parse_inner_ids(inner_ids) do
+    with :ok <- validate_batch(inner_ids),
+         {:ok, inner_ids} <- parse_inner_ids(inner_ids) do
       comments =
         Comment
         |> CMS.Gate.scope(viewer, :read, comment_scope(thread))
@@ -76,6 +80,73 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
         |> Repo.all()
 
       InteractionResponse.many(comments, viewer)
+    end
+  end
+
+  @doc """
+  Returns the viewer-owned Comment projection for one public Article path.
+
+  Missing or unreadable Comment ids are omitted. Anonymous transport behavior
+  is intentionally decided by the caller; this query accepts an authenticated
+  viewer because every returned field is private viewer state.
+  """
+  @spec viewer_states(map(), [integer() | String.t()], User.t()) ::
+          T.domain_res([map()])
+  def viewer_states(article_path, inner_ids, %User{} = viewer) when is_list(inner_ids) do
+    with :ok <- validate_batch(inner_ids),
+         {:ok, {thread, article}} <- resolve_article(article_path),
+         {:ok, comments} <- reconcile_comments(thread, article, inner_ids, viewer) do
+      {:ok,
+       Enum.map(comments, fn comment ->
+         %{
+           inner_id: comment.inner_id,
+           viewer_has_upvoted: comment.viewer_has_upvoted,
+           viewer_has_reported: comment.viewer_has_reported,
+           emotions: viewer_emotions(comment)
+         }
+       end)}
+    end
+  end
+
+  @doc """
+  Returns the complete Comment reconciliation read model for one public
+  Article path.
+
+  Entry order follows the input ids and missing or unreadable Comments are
+  represented by a `nil` Comment. Article aggregate revision and Comment
+  interaction revision remain independently observed owner revisions.
+  """
+  @spec reconcile_states(map(), [integer() | String.t()], User.t() | nil) ::
+          T.domain_res(map())
+  def reconcile_states(article_path, inner_ids, viewer) when is_list(inner_ids) do
+    with :ok <- validate_batch(inner_ids),
+         {:ok, {thread, article}} <- resolve_article(article_path),
+         {:ok, comments} <- reconcile_comments(thread, article, inner_ids, viewer) do
+      stats =
+        CMS.ArticleStats.for_articles(thread, [article])
+        |> Map.get({thread, article.id}, %{})
+
+      comments_by_inner_id = Map.new(comments, &{to_string(&1.inner_id), &1})
+
+      entries =
+        Enum.map(inner_ids, fn inner_id ->
+          comment =
+            comments_by_inner_id
+            |> Map.get(to_string(inner_id))
+            |> attach_article(article)
+
+          %{comment_inner_id: inner_id, comment: comment}
+        end)
+
+      {:ok,
+       %{
+         article: %{
+           inner_id: article.inner_id,
+           comments_count: Map.get(stats, :comments_count, 0),
+           comments_revision: Map.get(stats, :comments_revision, 0)
+         },
+         entries: entries
+       }}
     end
   end
 
@@ -103,6 +174,27 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
 
   defp comment_scope(:doc), do: CommentContext.for_thread(:doc, branch_policy: :main)
   defp comment_scope(thread), do: CommentContext.for_thread(thread)
+
+  defp resolve_article(article_path) do
+    with {:ok, %{thread: thread} = article_path} <- ArticlePath.parse(article_path),
+         {:ok, article} <- FrontDesk.article(article_path) do
+      {:ok, {thread, article}}
+    end
+  end
+
+  defp viewer_emotions(comment) do
+    comment
+    |> EmotionFormatter.format(:comment)
+    |> Enum.map(fn emotion ->
+      %{type: emotion.type, viewer_has_reacted: emotion.viewer_has_reacted}
+    end)
+  end
+
+  defp attach_article(nil, _article), do: nil
+  defp attach_article(comment, article), do: Map.put(comment, :article, article)
+
+  defp validate_batch(values) when length(values) <= @batch_size, do: :ok
+  defp validate_batch(_values), do: {:error, "viewer batch cannot contain more than 100 paths"}
 
   defp parse_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
 

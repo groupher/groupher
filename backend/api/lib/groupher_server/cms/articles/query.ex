@@ -101,7 +101,12 @@ defmodule GroupherServer.CMS.Articles.Query do
     base =
       if is_binary(community_ref),
         do: where(base, [_article, _relation, community], community.slug == ^community_ref),
-        else: where(base, [_article, relation, _community], relation.role == :home)
+        else:
+          where(
+            base,
+            [article, relation, _community],
+            relation.community_id == article.community_id
+          )
 
     base =
       base

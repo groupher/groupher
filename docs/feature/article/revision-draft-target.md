@@ -1,6 +1,9 @@
 # Article Revision / Draft 目标架构
 
-> 状态：implemented；本地实现与验证已完成，生产 cutover、全量重建和线上 smoke 仍待验收。
+> 状态：implemented with known contract drift；Revision / Draft 主链已实现，
+> Article Community placement 的 `home | mirror` role 已移除；公共路径与 Community-local
+> Kanban 仍需按 [community-placement.md](./community-placement.md) 对齐。生产 cutover、
+> 全量重建和线上 smoke 仍待验收。
 >
 > 本文定义的 stable Article、mutable Draft、immutable Revision、ArticlePublic、
 > DocBranchVersion 与 LocalDraftHistory 已替代 Gate V3 的 Article 内容 head、
@@ -34,7 +37,10 @@ Stable Article identity
 5. 不创建 `DraftProjection`。编辑器和管理后台直接读取 Draft。
 6. 公共列表、详情和搜索不扫描 Revision 历史；它们读取 `ArticlePublic` 及必要的 thread-specific Projection。
 7. 普通 Article 没有 Branch。只有 Doc 使用 `DocBranch`、branch-scoped Draft/Public、`DocBranchVersion`、Tree 和 Release；不预设尚未落地的 fork/promote 历史图。
-8. `move` 改变 Article 的 home community：在目标社区重新分配 `inner_id`，旧社区 public route 立即失效且不保留 redirect；`mirror` 不改变 home community 或 canonical public route。
+8. Article 与 Community 是平级的多对多 placement；`mirror` 只创建普通关系，
+   不持久化 `home | mirror` role。Move 如保留，只是添加目标 placement 并移除来源
+   placement。公共路径和编号规则按 [Article Community Placement](./community-placement.md)
+   第 5 节单独确认，不能从特殊 home relation 推导。
 9. PublicCache 的 durable internal target 使用 stable `article_id`，跨语言 wire tag 继续使用 `community + thread + inner_id`，不得改成 UUID tag。
 10. Doc 的内容发布、审核、编辑标志、运行状态和 Trash 均保持 branch-scoped；只有 stable identity、作者和明确的 aggregate-level abuse block 属于 article-global。
 11. Revision 公共表只保存共享版本内容；Post、Changelog、Doc 的专属字段分别进入强类型扩展表，不使用通用 `_data` 或 `_addon` JSONB。
@@ -336,7 +342,9 @@ cms.articles
 - `article.id` 直接承担当前 `article_hash_id` 的稳定 UUID 语义；旧的产品行 bigint id 和 `article_hash_id` 名称不进入目标模型；
 - 需要暴露 stable UUID 的 API 字段和参数明确命名为 `article_id`；公共 URL 仍可使用
   community + thread + `inner_id`；
-- `UNIQUE(community_id, thread, inner_id) WHERE inner_id IS NOT NULL`；
+- public `inner_id` 的 owner 与唯一性范围由
+  [`community-placement.md`](./community-placement.md) §5 的路径合同决定；在完成该决策前，
+  不以 `Article.community_id` 或特殊 home relation 推导唯一性；
 - `thread` 是产品判别信息，不意味着所有产品内容合并到一张 JSON 表。
 
 普通 Article 的 `moderation_state` 是唯一审核状态来源；不再同时保留 `pending` 与
@@ -355,7 +363,8 @@ article-global 字段。普通 Article 暂不为它们新建总括表；字段�
 | 当前字段/关系                                        | 目标权威来源                                                                                           | `ArticlePublic` 中的角色                                                    |
 | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
 | `title/digest/slug/body`                             | Draft → Revision                                                                                       | Publish 时投影                                                              |
-| `cat/status`                                         | stable `PostState` operational fields                                                                  | 直接更新并刷新 Projection；不创建 Draft/Revision                            |
+| `cat`                                                | stable Post-specific category                                                                          | 直接更新并刷新 Projection；不创建 Draft/Revision                            |
+| Kanban membership/status                             | Community-local Kanban state under `ArticleCommunity`（目标合同；当前实现仍在 `PostState.status`）     | 查询当前 Community placement；不创建 Draft/Revision                         |
 | `copy_right/link_addr`                               | typed Draft → typed Revision                                                                           | Publish 时投影                                                              |
 | `cover_url/cover_url_dark`                           | Draft/Revision 的 immutable asset relation                                                             | Publish 时投影 URL/thumbnail                                                |
 | content tags                                         | Draft relation → revision-scoped relation                                                              | 通过当前 `ArticlePublic.revision_id` join，不复制第二套 Public tag relation |
@@ -367,9 +376,9 @@ article-global 字段。普通 Article 暂不为它们新建总括表；字段�
 | `upvoted_user_ids/reported_count`                    | typed `*_reaction_infos` 等 ReadState Projection（RoaringBitmap + count），按 stable `article_id` 重建 | viewer/management projection                                                |
 | `is_edited`                                          | stable Article 的单调标志                                                                              | 可投影；与 `has_unpublished_changes` 不同                                   |
 | `PinnedArticle`                                      | stable `article_id` 的 community relation                                                              | public list join/projection                                                 |
-| mirrored communities / community relation            | stable `article_id` 的 community relations                                                             | public list join/projection                                                 |
+| Community placements                                 | stable `article_id` 的 `ArticleCommunity` relations                                                    | public list join/projection                                                 |
 | `PostSolution`                                       | stable Article ↔ Comment relation                                                                      | Post detail projection                                                      |
-| `inner_id`                                           | stable Article                                                                                         | public route/list key                                                       |
+| public `inner_id`                                    | placement/path 合同待决，见 [`community-placement.md`](./community-placement.md) §5                    | public route/list key                                                       |
 
 `ArticlePublic` 因而包含两类列：
 
@@ -378,7 +387,8 @@ Revision-derived content projection
   title / digest / slug / cover / body summary ...
 
 Operational public projection
-  cat / status / moderation visibility / active_at / community relation flags ...
+  cat / Community-local Kanban status / moderation visibility / active_at /
+  community placement flags ...
 ```
 
 第一类可从 Revision 重建；第二类从 stable Article、ArticleStats 和 article-community facts
@@ -388,87 +398,70 @@ tags 是多值 immutable relation，不作为 `ArticlePublic` scalar/json 列复
 在各自 read model 中投影 tags。只有真实性能数据证明这条 indexed join 是热点时，才另行
 设计 Public tag projection，不在本次目标模型中预建第二套关系。
 
-Post 的即时分类/工作流状态使用 typed stable table，不塞进通用 Article：
+Post 的即时内容分类不塞进通用 Article。当前实现把 `cat/status` 合并在
+`cms.post_states`，目标合同应拆开 Post-global category 与 Community-local Kanban state：
 
 ```text
-cms.post_states
+Post category
 ├── article_id  PK / FK -> articles
-├── cat
-├── status
-└── updated_at
+└── cat
+
+ArticleCommunity
+└── KanbanState?  PK / FK -> article_communities
+    ├── status
+    └── rank
 ```
 
-`cat/status` 可在存在 Draft 时直接修改，不进入内容版本历史。`set_cat`
-仍在同一事务内联动 Comment question flag；两者都必须刷新 Public
-Projection、cache/search 和 Activity。content tags 和 cover 是内容关系：它们先写 Draft，
-Publish 后进入 Revision，Doc Restore 时一起恢复。community relation tags 是运营呈现关系，
-由 move/mirror/unmirror 直接维护，不创建 Revision。
+`cat` 与 Kanban status 都可在存在 Draft 时直接修改，不进入内容版本历史。`set_cat`
+仍在同一事务内联动 Comment question flag；两者都必须刷新对应的 Public
+Projection、cache/search 和 Activity。Kanban 状态必须按当前 Community placement 修改，
+不能通过 stable `article_id` 全局影响其他 mirror Community。content tags 和 cover 是内容
+关系：它们先写 Draft，Publish 后进入 Revision，Doc Restore 时一起恢复。Community-local
+tags 是运营呈现关系，跟随具体 placement，不创建 Revision。
 
 `is_edited` 表示“已发布 Article 曾发生后续 Draft 写入”，不是“当前存在 Draft”或
 “已经发布第二版”。首次发布前保持 `false`；对已发布 Article 首次成功创建或更新
 后续 Draft 时，在同一事务内单调置为 `true`。之后 Publish、Discard 或再次编辑都不
 重置它。
 
-### 5.1.2 Community change 与 article-community relation 不变量
+### 5.1.2 Article Community placement 不变量
 
-`Article.community_id` 表示当前 home community，不是不可变 origin。`move` 是改变
-home community 的领域命令，`mirror` 只是增加可见 community relation；两者不能共用一套模糊
-的 community relation 更新。这里的 move、mirror、unmirror、mirror-to-home 和
-move-to-blackhole 只适用于普通 Article；Doc 在 branch/tree 中的位置变化继续由
-`CMS.DocTree` / `CMS.Docs` 命令处理，不进入 Article community relation API。
+Article 与 Community 的完整关系合同由
+[`community-placement.md`](./community-placement.md) 定义。本节只记录 Revision 架构需要
+遵守的边界：
 
 ```text
-move A -> B
-  -> lock Article + A/B community counters
-  -> remove A home relation and A community relation tags
-  -> set Article.community_id = B
-  -> allocate a new B-scoped inner_id
-  -> create B home relation and B community relation tags
-  -> rebuild Public/Search/Feed/Press projections
-  -> enqueue purge for both old and new wire cache scopes
-
-mirror A -> B
-  -> keep Article.community_id + inner_id + canonical URL in A
-  -> create B mirror relation + B community relation tags
-  -> B list/card links to the canonical A URL
+Article
+├── ArticleCommunity(article, community-a)
+├── ArticleCommunity(article, community-b)
+└── ArticleCommunity(article, community-c)
 ```
 
-不变量：
+- 所有 placement 平级；`home` 是普通 Community 名称，不是关系角色；
+- `mirror` 是创建 placement 的命令，不持久化 `role = mirror`；
+- `unmirror` 删除指定 placement 及其 Community-local 数据，不删除共享 Article；
+- Move 如保留，只是原子地添加目标 placement 并移除来源 placement；
+- Revision tags 只表达内容 tags；Community-local tags 使用
+  `ArticleCommunityTag(article_community_id, tag_id)`；
+- `PinnedArticle`、KanbanState 等 Community-local 事实引用 `article_community_id`；
+- Article Lifecycle、Moderation 和目标 Community Lifecycle 继续作为独立可见性输入；
+- public `inner_id`、URL、redirect/tombstone 和 cache wire scope 的归属必须先完成 placement
+  路径合同，不能继续从特殊 `home relation` 推导。
 
-- `move` 后 stable `article.id`、Revision、comments 和 runtime facts 不变；
-- `move` 必须从 B 的 community/thread counter 分配新 `inner_id`，不能把 A 的序号直接带入 B；
-- A 的旧 public URL 在 commit 后立即失效，不保留 redirect 或 route tombstone；
-- 因旧 URL 不再可解析，move command 必须在同一事务保存 old/new public scope，供 commit 后的 CDN/PublicCache、Search、Feed 和 Press 清理使用；worker 不能只靠新状态反查旧 scope；
-- `mirror` 不重新分配 `inner_id`，不产生目标社区的第二个 detail URL；
-- Revision tags 只表达内容 tags；每个社区自己的 tags 属于 `ArticleCommunityTag(article_community_id, tag_id)`，不写入 `*_revision_tags`；
-- home/mirror 可见性由 article-community relation 与目标 Community Lifecycle 共同决定；Article/Doc Lifecycle 仍决定 aggregate 或 branch 是否可公开；
-- `unmirror` 只删除目标 mirror relation 与 community relation tags，不修改 Revision 或 home community；
-- `pinned_articles` 引用 article-community relation；move 删除 A home relation 时 A 的 pin 随 relation
-  cascade 删除，不迁移到 B，目标社区如需置顶必须重新执行 pin；
-- `move_to_blackhole` 使用与 move 相同的重新编号和失效协议，并删除所有非 blackhole community relations。
-- 普通 Article 的 aggregate moderation 是所有 community relations 的上层可见性约束：illegal、
-  audit-failed 或不可公开 Lifecycle 必须覆盖每个 relation 的 `visible`；
-  `article_community.visible = false` 只隐藏该社区，不反向改变 Article moderation 或其他 community relations。
-
-目标模型因此需要显式 article-community relation owner，例如：
+目标最小关系是：
 
 ```text
 cms.article_communities
 ├── id
 ├── article_id
 ├── community_id
-├── role              home | mirror
-├── visible
 └── timestamps
 
-cms.article_community_tags
-├── article_community_id
-└── tag_id
+UNIQUE(article_id, community_id)
 ```
 
-同一 Article 必须恰好有一个 `home` community relation；`articles.community_id` 与该 relation
-保持一致。是否把 home relation 物化为 row 可以在 migration 细化，但领域合同和唯一性
-不能省略。
+当前实现已移除 `role = home | mirror` 与 home partial unique index；`Article.community_id`
+仍是现有公共路径/编号流程的临时锚点，围绕它编排的 Move 仍属于待收口实现偏差，不是目标合同。
 
 ### 5.1.3 Doc article-global 与 branch-scoped facts
 
@@ -770,7 +763,7 @@ Draft(version=13)
 首次发布不再把 Draft row 改成 Public row。稳定 identity 已由 `Article` 提供。
 
 `first-publish finalization` 是 Publish 事务的显式步骤，包括分配
-`inner_id`、community mirror、tag stats 激活、community/user publish count 与
+`inner_id`、创建作者社区 placement、tag stats 激活、community/user publish count 与
 counter、`PublishRateLimit.record` 以及 `ArticleStats.initialize`。缩略图在生成
 `ArticleBodySnapshot` 时编译，再投影到 `ArticlePublic`。管理员通知等非原子
 副作用在 commit 后执行；所有 publish 入口都必须经过同一 command/receipt recovery
@@ -1497,9 +1490,13 @@ CMS.Articles.permanently_delete(trash_item_id, actor, opts \\ [])
 CMS.Articles.list_trashed(community, filter \\ %{})
 CMS.Articles.get_trashed(trash_item_id)
 
-# stable Post workflow/classification state; does not create Revision
+# stable Post category; does not create Revision
 CMS.Articles.set_cat(article_id, cat, actor)
-CMS.Articles.set_status(article_id, status, actor)
+
+# Community-local Kanban state; does not create Revision
+CMS.Kanban.add_post(community, article_id, status, actor)
+CMS.Kanban.move_post(community, article_id, status, actor)
+CMS.Kanban.remove_post(community, article_id, actor)
 
 # stable Article operation state; does not create Revision
 CMS.Articles.sink(article_id, actor)
@@ -1513,14 +1510,12 @@ CMS.Articles.set_illegal(article_id, attrs, actor)
 CMS.Articles.unset_illegal(article_id, attrs, actor)
 CMS.Articles.set_audit_failed(article_id, attrs, actor)
 
-# article-community relations; does not create Revision
+# article-community placements; does not create Revision
 CMS.Articles.pin(community, article_id, actor)
 CMS.Articles.undo_pin(community, article_id, actor)
 CMS.Articles.mirror(community, article_id, target_ids, actor)
 CMS.Articles.unmirror(community, article_id, actor)
 CMS.Articles.move(community, article_id, target_ids, actor)
-CMS.Articles.move_to_blackhole(community, article_id, target_ids, actor)
-CMS.Articles.mirror_to_home(community, article_id, target_ids, actor)
 
 # maintenance
 CMS.Articles.archive(thread)
@@ -1564,17 +1559,23 @@ update published Article
   = ensure Draft + update_draft
   != mutate ArticlePublic
 
-set_cat / set_status
-  = update stable PostState directly
+set_cat
+  = update stable Post category directly
   = allowed whether or not a content Draft exists
   = refresh ArticlePublic projection / cache / search when needed
   != create Draft or Revision
   != publish or overwrite the user's existing Draft
+
+add_post / move_post / remove_post
+  = create / update / delete current ArticleCommunity's KanbanState
+  = never update another Community placement of the same Article
+  != create Draft or Revision
 ```
 
-`cat/status` 定义为 Post 的即时分类/工作流状态，而不是可恢复的文章
-内容。因此看板拖拽或管理员切换分类不会制造一个发布版本，也不会因为
-用户已有 Draft 而被拒绝。`set_cat` 必须在同一事务中保留现有语义：
+Post category 和 Community-local Kanban status 都是即时运营状态，而不是可恢复的文章
+内容。因此看板拖拽或管理员切换分类不会制造一个发布版本，也不会因为用户已有 Draft
+而被拒绝。KanbanState 是否存在表达当前 placement 是否进入 Kanban，存在时 status 必填。
+`set_cat` 必须在同一事务中保留现有语义：
 `cat == :qa` 时设置关联 Comment `question` flag，离开 `:qa` 时清除。
 `update` 仍然是内容 Draft 路径。
 
@@ -1838,8 +1839,9 @@ Permanently Delete 可删除整个 aggregate，不受这个安全期约束。
 
 - 新建 stable `cms.articles`、Draft、Revision、typed Revision、`DocBranchVersion`、
   `cms.doc_branch_version_counters`、`cms.article_body_drafts`、
-  `cms.article_body_snapshots`、`cms.post_states`、`cms.doc_branch_states`、
-  `cms.article_communities`、`cms.article_community_tags`、ArticlePublic/DocPublic/Projection 表；
+  `cms.article_body_snapshots`、Post category、`cms.doc_branch_states`、
+  `cms.article_communities`、`cms.article_community_tags`、Community-local Kanban state、
+  ArticlePublic/DocPublic/Projection 表；
 - 当前 Post/Blog/Changelog/Doc 表中的 `stage`、运行时 identity 和版本字段拆到新 owner；
 - 删除 `cms.posts`、`cms.blogs`、`cms.changelogs`、`cms.docs` 旧内容表；不重命名、不复用为 Projection，也不留下第二套 authority；
 - 删除/替换 `cms.article_documents` 与 `article_document_asset_refs`：可变部分进 ArticleBodyDraft，不可变部分进 ArticleBodySnapshot，asset ref 分别按 Draft/Revision ownership 重建；
@@ -1910,13 +1912,13 @@ Permanently Delete 可删除整个 aggregate，不受这个安全期约束。
 | post_solutions                                                                      | stable Post `article_id + comment_id`                     | 两端 FK；Comment 必须属于同一 Article                               |
 | pinned_articles                                                                     | `article_community_id`                                    | article-community relation 删除时 cascade                           |
 | communities_join_posts/blogs/changelogs/docs                                        | `article_communities`                                     | 直接替换，不保留第二套 community membership                         |
-| article_community_tags                                                              | article-community relation + tag                          | move/unmirror 删除对应社区关系                                      |
+| article_community_tags                                                              | article-community placement + tag                         | placement 删除时 cascade                                            |
 | artiment_mentions                                                                   | stable article + optional branch + comment                | source owner 删除时清理                                             |
 | abuse_reports                                                                       | stable article/comment target                             | 保留 actor/audit snapshot；target 删除策略显式定义                  |
 | messaging.notifications                                                             | stable UUID + thread + optional branch/comment            | 不再用无 FK physical bigint；保留展示 snapshot                      |
 | Activity V3                                                                         | stable `article_id` + optional branch                     | 不长期引用可清理 Revision                                           |
 | CommandReceipt                                                                      | stable article result key                                 | cutover 清空旧 receipt；新 recovery 返回 canonical DTO              |
-| PublicCache invalidations                                                           | stable article target + immutable old/new wire scopes     | move 同时 purge old/new；首发布先分配 inner_id                      |
+| PublicCache invalidations                                                           | stable article target + immutable affected wire scopes    | placement/path 变化清理全部受影响 scope；编号规则待路径合同确认     |
 | Search/Press/Feed work payload                                                      | stable article id + desired/current revision id           | worker 执行时重载 Public；cutover 全量重建                          |
 | asset refs                                                                          | Draft 或 Revision owner                                   | Draft discard、Revision cleanup、root delete 各自清理               |
 | doc_branch_states                                                                   | `article_id + branch_id`                                  | branch runtime 权威；branch permanent delete 清理                   |
@@ -2067,8 +2069,8 @@ no mixed old/new database authority
 
 1. 锁定目标 schema、invariants、GraphQL contract 和 public DTO；
 2. 建立 stable Article、Draft、Revision、DocBranchVersion、
-   `doc_branch_version_counters`、ArticleBodyDraft/ArticleBodySnapshot、`post_states`、
-   `doc_branch_states`、`article_communities`、`article_community_tags`、
+   `doc_branch_version_counters`、ArticleBodyDraft/ArticleBodySnapshot、Post category、
+   `doc_branch_states`、`article_communities`、`article_community_tags`、Kanban state、
    `post_draft_tags`、`blog_draft_tags`、`changelog_draft_tags`、`doc_draft_tags`、
    `post_revision_tags`、`blog_revision_tags`、`changelog_revision_tags`、
    `doc_revision_tags`、ArticlePublic/DocPublic；
@@ -2132,8 +2134,10 @@ Doc Tree/Release 和 join tables；不得依赖 migration 恰好按文件名排�
 
 必须覆盖 create/publish/republish/discard、trash/restore/destroy、move/mirror/unmirror、
 single import、Docs bulk import、Doc branch publish/release/restore、comment/interactions、
-cache tag 和 Search indexed revision。move smoke 需确认目标社区重新分配 `inner_id`、旧 URL
-不可读、old/new cache scope 都被 purge。
+cache tag 和 Search indexed revision。move/mirror/unmirror smoke 必须按
+[`community-placement.md`](./community-placement.md) §5 最终确定的路径与编号合同，验证每个
+受影响 Community 的 URL、redirect/tombstone、编号和 cache scope；在该合同确定前不得预设
+目标 Community 一定重新分配 `inner_id`，也不得预设旧 URL 一定立即失效。
 
 先恢复 worker 并观察 dead-letter/drift，再恢复公共读取，最后恢复写入。出现旧 payload、
 orphan relation、Search physical ref、cache tag contract mismatch 或 Doc Release 不可复现时，
@@ -2177,10 +2181,12 @@ orphan relation、Search physical ref、cache tag contract mismatch 或 Doc Rele
     派生 usage 与内容增删改在同一 IndexedDB transaction 内更新。
 21. `local_draft_usage` 只保存非空 scope；workspace/account 内容清空时必须删除对应零值
     usage row。usage store 必须能按 `account_id` 定位账号全部 workspace rows。
-22. 一个 Article 恰好有一个 home community relation；`Article.community_id` 与该 relation
-    的 community 一致，且同一目标社区至多一个 relation。
-23. move 必须原子锁定源/目标社区 counter、重新分配目标 `inner_id` 并保存 old/new wire
-    scope；stable `article.id`、Revision 和普通 Article runtime facts 不变。
+22. ArticleCommunity placement 全部平级；同一 `article_id + community_id` 至多一条关系，
+    不存在 `home | mirror` role 或唯一 home relation。
+23. mirror/add、unmirror/remove 与可选 Move 必须原子维护 placement 及其 Community-local
+    关系；stable `article.id`、Revision 和普通 Article runtime facts 不变。路径合同落地前，
+    unmirror/remove 不得删除当前 `Article.community_id` 路径锚点 placement；路径编号和
+    affected wire scopes 按 placement 路径合同处理。
 24. Doc 内容 moderation、edited/active/comment state 的唯一权威是
     `DocBranchState(article_id, branch_id)`；Doc Trash 同样包含 `branch_id`。只有明确的
     aggregate abuse block 可以跨 branch 生效，`DocPublic` 不得成为这些事实的第二权威。
@@ -2211,11 +2217,14 @@ orphan relation、Search physical ref、cache tag contract mismatch 或 Doc Rele
 10. Doc Release 能凭精确引用的 DocBranchVersion + Tree Snapshot 重建当次站点。
 11. illegal/audit-failed 变化同步更新 public visibility、tag stats、cache 和 Search，不创建 Revision。
 12. 评论活动更新 `active_at` 后，公共排序 Projection 与 stable Article 一致。
-13. Article community relation 的 pin、mirror、move、sink、comment lock 不创建 Revision，且仍能通过原产品入口完成；这里的 pin 仅表示文章置顶，与 Revision 保留无关。
+13. Article community placement 的 pin、mirror/add、unmirror/remove 与可选 Move 不创建
+    Revision，且仍能通过原产品入口完成；路径合同落地前删除当前路径 placement 必须被拒绝。
+    这里的 pin 仅表示文章置顶，与 Revision 保留无关。
 14. branch A 的 DocBranchVersion 不出现在 branch B 的 RevisionDrawer；创建
     preview branch 时只从 source branch Public 初始化 Draft。
-15. 无论是否存在未发布 Draft，`set_cat/set_status` 都只更新 stable PostState，
-    不创建/发布 Revision；`set_cat` 同步保留 Comment question flag 语义。
+15. 无论是否存在未发布 Draft，`set_cat` 与 Community-local Kanban status 都不创建或发布
+    Revision；`set_cat` 同步保留 Comment question flag 语义，Kanban status 只修改当前
+    `ArticleCommunity` 下的状态，不影响其他 Community placement。
 16. Trash 后 Draft 被保留但不可编辑；restore 后同一 Draft 恢复可编辑；只有 permanently delete 删除它。
 17. 普通 Article 编辑发布继续写入 Activity V3 的 `title_changed/body_updated`，
     Activity 不因旧 Revision 被 Cleanup 而悬空。
@@ -2245,18 +2254,20 @@ orphan relation、Search physical ref、cache tag contract mismatch 或 Doc Rele
 27. logout 通过 `account_id` 索引删除账号全部内容与 usage rows；Permanently Delete 使用内容
     删除过程中收集的精确 `workspace_key` 清理 workspace usage，并更新或重建 account usage，
     不依赖扫描整个 usage store。
-28. move 到新 home community 时 stable `article.id` 不变，但必须从目标社区 counter 分配新
-    `inner_id`；旧社区 URL 立即失效且无 redirect。move 的副作用同时清理 old scope 并刷新
-    new scope；mirror 不改变 home community、`inner_id` 或 canonical URL。
+28. mirror/add、unmirror/remove 或可选 Move 不改变 stable `article.id`。每个受影响
+    Community 的 URL、redirect/tombstone、编号和 PublicCache scope 按
+    `community-placement.md` §5 最终路径合同处理，不从关系创建方式推导 canonical URL。
 29. Doc preview branch 的 moderation、编辑、active/comment state 或 Trash 不改变 main branch
     对应事实；aggregate abuse block 除外。
 30. PublicCache wire tag 始终使用 `community + thread + inner_id`；stable UUID 只作为内部
-    invalidation target。首发布必须先完成 `inner_id` 分配再写 invalidation outbox。
-31. 普通 Article move 删除源 home community relation 时，源社区 pin 随 relation 删除且不会迁移到
-    目标社区；mirror/unmirror 不影响 home relation 的 pin。
+    invalidation target。任何产生可读 placement/path 的命令，都必须按最终路径合同先完成
+    `inner_id` 分配再写 invalidation outbox。
+31. 删除任意 ArticleCommunity placement 时，该 Community 的 pin、tags 和其他
+    Community-local 事实随关系清理；其他 Community placement 不受影响。
 32. 普通 Article illegal/audit-failed 或 Lifecycle 不可公开时，所有 community relations 都不可见；
     单独关闭一个 `article_community.visible` 不改变 Article moderation 或其他 community relations。
-33. Article community relation 的 move/mirror API 拒绝 Doc；Doc 的位置变化只能通过 branch/tree command。
+33. Article community placement 的 add/remove/Move API 拒绝 Doc；Doc 的位置变化只能通过
+    branch/tree command。
 
 ### 架构验收
 

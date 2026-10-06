@@ -15,9 +15,10 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
+  alias CMS.Articles
   alias CMS.Artiment.Matcher
   alias CMS.Helper.EmotionFormatter
-  alias CMS.Interactions.{Config, DefaultViewerState, ErrorCat, Reactions}
+  alias CMS.Interactions.{Config, DefaultViewerState, ErrorCat, Reactions, ReadState}
   alias CMS.Model.Interaction.RoaringBitmap
 
   @article_threads Config.article_threads()
@@ -74,6 +75,31 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
           Map.put(states, {type, artiment.id}, build(Map.fetch!(rows, artiment.id), type, opts))
         end)
       end)
+    end
+  end
+
+  @doc """
+  Resolves public Article paths and returns the ordered private Interaction
+  projection used to reconcile confirmed writes.
+
+  Invalid or non-visible paths are omitted by the Article path reader.
+  """
+  @spec article_states_for_paths([map()], User.t(), keyword()) ::
+          {:ok, [map()]} | {:error, term()}
+  def article_states_for_paths(paths, %User{} = viewer, opts \\ []) when is_list(paths) do
+    with {:ok, resolved} <- Articles.resolve_paths(paths),
+         states when is_map(states) <-
+           viewer_states(Enum.map(resolved, & &1.article), viewer, opts) do
+      {:ok,
+       Enum.map(resolved, fn %{path: path, article: article} ->
+         {:ok, %{artiment: type}} = Matcher.match_interaction(article)
+         state = Map.fetch!(states, {type, article.id})
+
+         ReadState.article_state(
+           %{community: path.community, thread: path.thread, inner_id: article.inner_id},
+           state
+         )
+       end)}
     end
   end
 

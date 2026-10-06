@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.Communities.Categories do
   end
 
   @spec update(String.t(), map()) :: T.domain_res(term())
-  def update(community_slug, ~m(%Category id title)a) do
+  def update(community_slug, ~m(id title)a) do
     with {:ok, community} <- ORM.find_by(Community, slug: community_slug),
          {:ok, category} <- ORM.find(Category, id),
          true <- category_in_community?(community.id, category.id) do
@@ -67,7 +67,7 @@ defmodule GroupherServer.CMS.Communities.Categories do
     end
   end
 
-  def update(~m(%Category id title)a) do
+  def update(~m(id title)a) do
     with {:ok, category} <- ORM.find(Category, id) do
       category |> ORM.update(~m(title)a)
     end

@@ -24,7 +24,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
         scope: "view:track"
       )
 
-      resolve(&R.CMS.track_article_view/3)
+      resolve(&R.CMS.ViewTracker.track_article_view/3)
     end
 
     @desc "Move one logical Article into Trash"
@@ -35,7 +35,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "article.trash")
       middleware(M.FrontDesk, :article)
-      resolve(&R.CMS.trash_article/3)
+      resolve(&R.CMS.Articles.trash_article/3)
     end
 
     @desc "Restore one logical Article from Trash"
@@ -48,7 +48,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "article.restore")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.restore_trashed_article/3)
+      resolve(&R.CMS.Articles.restore_trashed_article/3)
     end
 
     @desc "Permanently delete one standalone Article aggregate from Trash"
@@ -61,7 +61,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "article.permanent_delete")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.permanently_delete_trashed_article/3)
+      resolve(&R.CMS.Articles.permanently_delete_trashed_article/3)
     end
 
     @desc "Permanently delete one complete Trash action"
@@ -74,7 +74,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "article.permanent_delete")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.permanently_delete_trash_action/3)
+      resolve(&R.CMS.Articles.permanently_delete_trash_action/3)
     end
 
     @desc "set category to a community"
@@ -86,7 +86,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Passport, action: "category.set")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.set_category/3)
+      resolve(&R.CMS.Communities.set_category/3)
     end
 
     @desc "unset category to a community"
@@ -98,7 +98,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Passport, action: "category.unset")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.unset_category/3)
+      resolve(&R.CMS.Communities.unset_category/3)
     end
 
     @desc "subscribe a community so it can appear in sidebar"
@@ -108,7 +108,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.subscribe_community/3)
+      resolve(&R.CMS.Communities.subscribe_community/3)
     end
 
     @desc "unsubscribe a community"
@@ -118,7 +118,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.unsubscribe_community/3)
+      resolve(&R.CMS.Communities.unsubscribe_community/3)
     end
 
     @desc "set a community_tag to content"
@@ -130,7 +130,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Passport, action: "community_tag.set")
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.CMS.set_community_tag/3)
+      resolve(&R.CMS.Communities.set_community_tag/3)
     end
 
     @desc "unset a tag to content"
@@ -142,7 +142,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Passport, action: "community_tag.unset")
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.CMS.unset_community_tag/3)
+      resolve(&R.CMS.Communities.unset_community_tag/3)
     end
 
     @desc "reindex tags in given group"
@@ -155,7 +155,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.reindex")
 
-      resolve(&R.CMS.reindex_community_tags/3)
+      resolve(&R.CMS.Communities.reindex_community_tags/3)
     end
 
     @desc "reindex tags across groups"
@@ -167,7 +167,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.reindex")
 
-      resolve(&R.CMS.reindex_community_tags_across_groups/3)
+      resolve(&R.CMS.Communities.reindex_community_tags_across_groups/3)
     end
 
     @desc "reindex tag groups"
@@ -179,7 +179,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.reindex")
 
-      resolve(&R.CMS.reindex_community_tag_groups/3)
+      resolve(&R.CMS.Communities.reindex_community_tag_groups/3)
     end
 
     @desc "mirror article to other community"
@@ -193,7 +193,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.FrontDesk, :target_community)
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.CMS.mirror_article/3)
+      resolve(&R.CMS.Articles.mirror_article/3)
     end
 
     @desc "unmirror article for community"
@@ -206,7 +206,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.FrontDesk, :target_community)
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.CMS.unmirror_article/3)
+      resolve(&R.CMS.Articles.unmirror_article/3)
     end
 
     @desc "move article to other community"
@@ -220,10 +220,10 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.FrontDesk, :target_community)
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.CMS.move_article/3)
+      resolve(&R.CMS.Articles.move_article/3)
     end
 
-    @desc "mirror article to home community"
+    @desc "legacy: add article placement to the Community with slug home"
     field :mirror_to_home, :article do
       arg(:article, non_null(:article_path_input))
       arg(:community_tags, list_of(:id), default_value: [])
@@ -233,10 +233,10 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.FrontDesk, target_community: :home)
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.CMS.mirror_to_home/3)
+      resolve(&R.CMS.Articles.mirror_to_home/3)
     end
 
-    @desc "move article to other community"
+    @desc "legacy: move article to the Community with slug blackhole"
     field :move_to_blackhole, :article do
       arg(:article, non_null(:article_path_input))
       arg(:community_tags, list_of(:id), default_value: [])
@@ -246,7 +246,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.FrontDesk, target_community: :blackhole)
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.CMS.move_to_blackhole/3)
+      resolve(&R.CMS.Articles.move_to_blackhole/3)
     end
   end
 end

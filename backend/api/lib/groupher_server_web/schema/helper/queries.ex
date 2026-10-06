@@ -31,7 +31,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
 
           middleware(M.PageSizeProof)
           middleware(M.FrontDesk, :user)
-          resolve(&R.Accounts.paged_published_articles/3)
+          resolve(&R.Accounts.Profiles.paged_published_articles/3)
         end
       end
     end)
@@ -51,7 +51,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
           arg(:article, non_null(:article_path_input))
 
           resolve(fn root, args, info ->
-            R.CMS.read_article(root, args, info, thread: unquote(thread))
+            R.CMS.Articles.read_article(root, args, info, thread: unquote(thread))
           end)
         end
 
@@ -61,7 +61,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
           arg(:filter, non_null(unquote(:"paged_#{plural(thread)}_filter")))
 
           middleware(M.PageSizeProof, default_sort: :desc_active)
-          resolve(&R.CMS.paged_articles/3)
+          resolve(&R.CMS.Articles.paged_articles/3)
         end
       end
     end)

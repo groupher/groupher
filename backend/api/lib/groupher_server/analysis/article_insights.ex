@@ -59,6 +59,24 @@ defmodule GroupherServer.Analysis.ArticleInsights do
     {:error, :invalid_article_insights_request}
   end
 
+  @doc "Normalizes the public Insights filter and derives viewer Passport scope."
+  @spec trend_by_public_filter(ArticlePath.t(), term(), map()) ::
+          {:ok, map()} | {:error, term()}
+  def trend_by_public_filter(article_path, viewer, filter) when is_map(filter) do
+    opts =
+      [
+        from: Map.get(filter, :from),
+        to: Map.get(filter, :to),
+        metrics: Map.get(filter, :metrics),
+        actor_types: Map.get(filter, :actor_types),
+        is_authenticated: Map.get(filter, :is_authenticated),
+        passport_granted_community_slugs: passport_granted_community_slugs(viewer)
+      ]
+      |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+
+    trend_by_path(article_path, viewer, opts)
+  end
+
   @doc "Returns the current closed metric vocabulary for Article Insights."
   def metrics, do: Const.metrics()
 

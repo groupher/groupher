@@ -26,6 +26,8 @@ defmodule GroupherServer.CMS.DocTree do
   own display lane. Every node uses the same staged Tree workflow.
   """
 
+  require GroupherServer.CMS.Const
+
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
@@ -71,7 +73,7 @@ defmodule GroupherServer.CMS.DocTree do
   @doc "Creates one recursive navigation node using its declared node type."
   @spec create_node(Community.t(), map(), User.t() | nil) :: T.domain_res(map())
   def create_node(%Community{} = community, args, user \\ nil) do
-    Commands.CreateNode.execute(community, args, user)
+    Commands.CreateNode.execute(community, with_actor(args, user), user)
   end
 
   @doc """
@@ -107,6 +109,28 @@ defmodule GroupherServer.CMS.DocTree do
           T.domain_res(CMS.Model.DocDraft.t())
   def move_doc_to_draft(%Community{} = community, id, %User{} = user, opts \\ []) do
     Commands.MoveDocToDraft.execute(community, id, user, opts)
+  end
+
+  @doc "Moves one public Docs page to Draft and returns its stable mutation payload."
+  @spec move_doc_to_draft_result(Community.t(), T.id(), User.t(), keyword() | map()) ::
+          T.domain_res(map())
+  def move_doc_to_draft_result(%Community{} = community, id, %User{} = user, opts \\ []) do
+    with {:ok, draft} <- move_doc_to_draft(community, id, user, opts) do
+      {:ok,
+       %{
+         doc_id: draft.article_id,
+         stage: draft.stage,
+         publish_state: %{
+           status: CMS.Const.stage(:draft),
+           published: true,
+           published_before: true,
+           has_draft: true,
+           public_doc_id: draft.article_id,
+           has_unpublished_changes: false
+         },
+         command_id: Map.get(draft, :command_id)
+       }}
+    end
   end
 
   @doc """
@@ -166,6 +190,10 @@ defmodule GroupherServer.CMS.DocTree do
     Commands.UpdateNode.execute(community, id, args)
   end
 
+  def update_node(%Community{} = community, id, args, %User{} = actor) do
+    Commands.UpdateNode.execute(community, id, with_actor(args, actor))
+  end
+
   @doc """
   Updates the draft content associated with a docs page.
   """
@@ -192,6 +220,10 @@ defmodule GroupherServer.CMS.DocTree do
     Commands.DeleteNode.execute(community, id, args)
   end
 
+  def delete_node(%Community{} = community, id, args, %User{} = actor) do
+    Commands.DeleteNode.execute(community, id, with_actor(args, actor))
+  end
+
   @doc """
   Duplicates a Group subtree, Page, or Link in the draft tree.
   """
@@ -200,12 +232,20 @@ defmodule GroupherServer.CMS.DocTree do
     Commands.DuplicateNode.execute(community, id, args)
   end
 
+  def duplicate_node(%Community{} = community, id, args, %User{} = actor) do
+    Commands.DuplicateNode.execute(community, id, with_actor(args, actor))
+  end
+
   @doc """
   Moves a draft tree node to a new parent/index.
   """
   @spec move_node(Community.t(), T.id(), map()) :: T.domain_res(map())
   def move_node(%Community{} = community, id, args) do
     Commands.MoveNode.execute(community, id, args)
+  end
+
+  def move_node(%Community{} = community, id, args, %User{} = actor) do
+    Commands.MoveNode.execute(community, id, with_actor(args, actor))
   end
 
   @doc """
@@ -221,4 +261,14 @@ defmodule GroupherServer.CMS.DocTree do
   def restore_trash_item(%Community{} = community, id, args) do
     Commands.RestoreTrashItem.execute(community, id, args)
   end
+
+  def restore_trash_item(%Community{} = community, id, args, %User{} = actor) do
+    Commands.RestoreTrashItem.execute(community, id, with_actor(args, actor))
+  end
+
+  defp with_actor(attrs, %User{} = actor) do
+    attrs |> Map.put(:actor_id, actor.id) |> Map.put(:actor, actor)
+  end
+
+  defp with_actor(attrs, _actor), do: attrs
 end

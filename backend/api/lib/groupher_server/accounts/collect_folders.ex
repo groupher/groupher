@@ -11,7 +11,7 @@ defmodule GroupherServer.Accounts.CollectFolders do
         -> Repo
   """
 
-  alias __MODULE__.{Articles, List, Write}
+  alias __MODULE__.{Articles, CommandResult, List, Write}
   alias GroupherServer.Accounts
 
   alias Accounts.Model.User
@@ -56,6 +56,13 @@ defmodule GroupherServer.Accounts.CollectFolders do
     Write.add_payload(article, folder_id, user, command_id)
   end
 
+  @doc "Adds collect membership and returns the complete Accounts-owned command result."
+  def add_result(article, folder_id, %User{} = user, command_id) do
+    article
+    |> Write.add_payload(folder_id, user, command_id)
+    |> CommandResult.build(article, user)
+  end
+
   @doc "Runs `remove` through the public `CollectFolders` boundary."
   @spec remove(T.article(), T.id(), User.t()) :: T.domain_res(T.article())
   def remove(article, folder_id, %User{} = user), do: Write.remove(article, folder_id, user)
@@ -63,5 +70,12 @@ defmodule GroupherServer.Accounts.CollectFolders do
   @doc "Runs retry-safe collect membership removal and returns its mutation payload."
   def remove_payload(article, folder_id, %User{} = user, command_id) do
     Write.remove_payload(article, folder_id, user, command_id)
+  end
+
+  @doc "Removes collect membership and returns the complete Accounts-owned command result."
+  def remove_result(article, folder_id, %User{} = user, command_id) do
+    article
+    |> Write.remove_payload(folder_id, user, command_id)
+    |> CommandResult.build(article, user)
   end
 end

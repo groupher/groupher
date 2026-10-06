@@ -237,7 +237,11 @@ defmodule GroupherServer.CMS.Articles.States do
   def move(%Community{} = target_community, article, community_tag_ids \\ []) do
     with {:ok, stable} <- stable_article(article),
          {:ok, moved} <- ArticleCommunities.move(stable, target_community),
-         relation <- Repo.get_by!(CMS.Model.ArticleCommunity, article_id: moved.id, role: :home),
+         relation <-
+           Repo.get_by!(CMS.Model.ArticleCommunity,
+             article_id: moved.id,
+             community_id: moved.community_id
+           ),
          {:ok, _relation} <- ArticleCommunities.replace_tags(relation, community_tag_ids) do
       {:ok, Map.merge(article, %{community_id: moved.community_id, inner_id: moved.inner_id})}
     end

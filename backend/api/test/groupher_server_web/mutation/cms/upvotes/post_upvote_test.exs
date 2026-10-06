@@ -103,6 +103,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
         user_conn
         |> gq_mutation(S.Article.m(:upvote_article_with_command_id, :post), variables)
 
+      assert replay == first
       assert first["commandId"] == command_id
       assert replay["commandId"] == command_id
       assert replay["reactionOutcome"] == "CHANGED"
@@ -130,6 +131,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
         user_conn
         |> gq_mutation(S.Article.m(:upvote_article_with_command_id, :post), variables)
 
+      assert replay == first
       assert first["reactionOutcome"] == "UNCHANGED"
       assert replay["reactionOutcome"] == "UNCHANGED"
       assert replay["articleStats"]["upvotesCount"] == first["articleStats"]["upvotesCount"]

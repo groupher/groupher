@@ -59,9 +59,9 @@ defmodule GroupherServer.CMS.Articles.Store do
   @doc "Loads one Article revision row."
   def revision(revision_id), do: ORM.find(ArticleRevision, revision_id)
 
-  @doc "Loads the home Community relation for one Article."
-  def home_relation(article_id) do
-    ORM.find_by(ArticleCommunity, article_id: article_id, role: :home)
+  @doc "Loads one Article placement for a Community."
+  def relation(article_id, community_id) do
+    ORM.find_by(ArticleCommunity, article_id: article_id, community_id: community_id)
   end
 
   defp community(community_id), do: ORM.find(Community, community_id)

@@ -24,6 +24,11 @@ defmodule GroupherServer.CMS.ViewTracker do
   @spec viewer_states([struct()], User.t() | nil, keyword()) :: map() | {:error, term()}
   defdelegate viewer_states(articles, viewer, opts \\ []), to: Query
 
+  @doc "Resolves public Article paths and returns ordered private viewer state."
+  @spec viewer_states_for_paths([map()], User.t(), keyword()) ::
+          {:ok, [map()]} | {:error, term()}
+  defdelegate viewer_states_for_paths(paths, viewer, opts \\ []), to: Query
+
   @doc "Deletes all ViewTracker state during permanent Article deletion."
   @spec delete_article_state(atom(), pos_integer()) :: :ok
   defdelegate delete_article_state(thread, article_id), to: Record

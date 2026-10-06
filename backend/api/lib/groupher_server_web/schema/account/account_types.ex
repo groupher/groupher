@@ -90,12 +90,12 @@ defmodule GroupherServerWeb.Schema.Account.Types do
 
     field(:passport_string, :string) do
       middleware(M.Authorize, :login)
-      resolve(&R.Accounts.get_passport_string/3)
+      resolve(&R.Accounts.Passport.get_passport_string/3)
     end
 
     field(:passport, :json) do
       middleware(M.Authorize, :login)
-      resolve(&R.Accounts.get_passport/3)
+      resolve(&R.Accounts.Passport.get_passport/3)
     end
 
     field(:subscribed_communities_count, :integer)
@@ -120,7 +120,7 @@ defmodule GroupherServerWeb.Schema.Account.Types do
     @desc "Mailbox unread counters and empty state for the current viewer."
     field :mailbox, :mailbox_status do
       middleware(M.Authorize, :login)
-      resolve(&R.Accounts.mailbox_status/3)
+      resolve(&R.Accounts.Mailbox.mailbox_status/3)
     end
 
     timestamp_fields()

@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Comments do
   """
 
   alias __MODULE__.{
+    CommandResult,
     InteractionResponse,
     Query,
     Moderation,
@@ -107,6 +108,18 @@ defmodule GroupherServer.CMS.Comments do
           T.domain_res([Comment.t()])
   def reconcile_comments(thread, article, inner_ids, viewer) do
     Reconcile.reconcile_comments(thread, article, inner_ids, viewer)
+  end
+
+  @doc "Returns private Comment viewer state for one public Article path."
+  @spec viewer_states(map(), [integer() | String.t()], User.t()) :: T.domain_res([map()])
+  def viewer_states(article_path, inner_ids, %User{} = viewer) do
+    Reconcile.viewer_states(article_path, inner_ids, viewer)
+  end
+
+  @doc "Returns an ordered Comment reconciliation read model."
+  @spec reconcile_states(map(), [integer() | String.t()], User.t() | nil) :: T.domain_res(map())
+  def reconcile_states(article_path, inner_ids, viewer) do
+    Reconcile.reconcile_states(article_path, inner_ids, viewer)
   end
 
   @doc """
@@ -333,6 +346,15 @@ defmodule GroupherServer.CMS.Comments do
     Writer.create(thread, article, body, user, command_id)
   end
 
+  @doc "Creates a Comment and returns its stable post-commit mutation result."
+  @spec create_comment_result(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(map())
+  def create_comment_result(thread, article, body, %User{} = user, command_id \\ nil) do
+    thread
+    |> Writer.create(article, body, user, command_id)
+    |> CommandResult.build()
+  end
+
   @doc """
   Rejects an unauthenticated Comment update.
 
@@ -362,6 +384,15 @@ defmodule GroupherServer.CMS.Comments do
     UpdateComment.execute(comment, body, user, command_id)
   end
 
+  @doc "Updates a Comment and returns its stable post-commit mutation result."
+  @spec update_comment_result(Comment.t(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(map())
+  def update_comment_result(%Comment{} = comment, body, %User{} = user, command_id \\ nil) do
+    comment
+    |> UpdateComment.execute(body, user, command_id)
+    |> CommandResult.build()
+  end
+
   @doc """
   Rejects an unauthenticated Comment deletion.
 
@@ -389,6 +420,14 @@ defmodule GroupherServer.CMS.Comments do
           T.domain_res(DeleteComment.result())
   def delete_comment(%Comment{} = comment, %User{} = user, command_id) do
     DeleteComment.execute(comment, user, command_id)
+  end
+
+  @doc "Deletes a Comment and returns its stable post-commit mutation result."
+  @spec delete_comment_result(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(map())
+  def delete_comment_result(%Comment{} = comment, %User{} = user, command_id \\ nil) do
+    comment
+    |> DeleteComment.execute(user, command_id)
+    |> CommandResult.build()
   end
 
   @doc """
@@ -462,6 +501,23 @@ defmodule GroupherServer.CMS.Comments do
   def reply_comment_payload(comment_id, body, %User{} = user, command_id) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       Writer.reply(comment, body, user, command_id)
+    end
+  end
+
+  @doc "Replies to a Comment and returns its stable post-commit mutation result."
+  @spec reply_comment_result(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(map())
+  def reply_comment_result(comment_or_id, body, user, command_id \\ nil)
+
+  def reply_comment_result(%Comment{} = comment, body, %User{} = user, command_id) do
+    comment
+    |> Writer.reply(body, user, command_id)
+    |> CommandResult.build()
+  end
+
+  def reply_comment_result(comment_id, body, %User{} = user, command_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
+      reply_comment_result(comment, body, user, command_id)
     end
   end
 

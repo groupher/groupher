@@ -112,6 +112,16 @@ defmodule GroupherServer.Analysis.Web do
     end
   end
 
+  @doc "Returns the nullable Dashboard active-visitors field without swallowing provider failures."
+  @spec active_for_dashboard(Community.t()) ::
+          {:ok, %{visitors: non_neg_integer()} | nil} | {:error, term()}
+  def active_for_dashboard(%Community{} = community) do
+    case active(community) do
+      {:ok, payload} -> {:ok, payload}
+      {:error, reason} -> normalize_active_error(reason)
+    end
+  end
+
   @doc """
   Returns one selected page breakdown dimension.
   """
@@ -592,6 +602,13 @@ defmodule GroupherServer.Analysis.Web do
 
   defp error_reason(ErrorCat.error_pattern(reason: reason)), do: reason
   defp error_reason(reason), do: reason
+
+  defp normalize_active_error(reason) do
+    case error_reason(reason) do
+      unavailable when unavailable in [:not_configured, :dashboard_not_found] -> {:ok, nil}
+      _provider_or_domain_error -> {:error, reason}
+    end
+  end
 
   defp error_code(:not_configured), do: "not_configured"
   defp error_code({:http_error, _status}), do: "provider_http_error"

@@ -93,6 +93,31 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @spec can_apply(User.t()) :: map()
   def can_apply(%User{} = user), do: Policy.can_apply(user)
 
+  @doc "Returns the complete application state consumed by the Apply product."
+  @spec state(User.t()) :: T.domain_res(map())
+  def state(%User{} = user) do
+    with {:ok, current} <- Query.current(user),
+         {:ok, latest_failed} <- Query.latest_failed(user) do
+      policy = Policy.can_apply(user)
+
+      {:ok,
+       %{
+         can_apply: %{policy | reason_code: stringify(policy.reason_code)},
+         current_application: current,
+         latest_failed_application: latest_failed
+       }}
+    end
+  end
+
+  @doc "Normalizes public reviewer filters and returns the authorized review queue."
+  @spec review_queue_by_public_filter(map(), User.t()) :: T.domain_res(map())
+  def review_queue_by_public_filter(filter, %User{} = reviewer) do
+    with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)),
+         {:ok, filter} <- normalize_public_filter(filter) do
+      Query.review_queue(filter)
+    end
+  end
+
   @doc "Runs `submit` through the public `CommunityApplications` boundary."
   @spec submit(map(), User.t(), String.t()) :: T.domain_res(term())
   def submit(attrs, %User{} = user, idempotency_key) do
@@ -150,4 +175,28 @@ defmodule GroupherServer.CMS.CommunityApplications do
   def mark_creation_failed(public_ref, operation_ref, reason) do
     Review.mark_creation_failed(public_ref, operation_ref, reason)
   end
+
+  defp normalize_public_filter(filter) do
+    with {:ok, filter} <- put_actor_id(filter, :applicant_ref, :applicant_id),
+         {:ok, filter} <- put_actor_id(filter, :reviewer_ref, :reviewer_id) do
+      {:ok, filter}
+    end
+  end
+
+  defp put_actor_id(filter, public_key, id_key) do
+    case Map.get(filter, public_key) do
+      nil ->
+        {:ok, filter}
+
+      public_ref ->
+        case GroupherServer.FrontDesk.user(public_ref) do
+          {:ok, user} -> {:ok, Map.put(filter, id_key, user.id)}
+          {:error, reason} -> {:error, reason}
+        end
+    end
+  end
+
+  defp stringify(nil), do: nil
+  defp stringify(value) when is_atom(value), do: Atom.to_string(value)
+  defp stringify(value), do: to_string(value)
 end

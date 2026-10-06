@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Model.ArticleCommunityTag do
   @moduledoc """
   Assigns one Community-local tag to an Article Community relationship.
 
-      ArticleCommunity(home | mirror) + CommunityTag
+      ArticleCommunity(article, community) + CommunityTag
         -> community-specific Article presentation
 
   These tags are operational Community metadata and never become immutable

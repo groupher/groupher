@@ -3,13 +3,11 @@ defmodule GroupherServer.CMS.Articles.Communities do
   Owns Community membership commands for stable ordinary Articles.
 
       stable Article
-        -> one home ArticleCommunity
-        -> zero or more mirror ArticleCommunities
+        -> zero or more peer ArticleCommunity placements
 
-  Moving replaces the home relationship and allocates a fresh public number
-  in the destination Community. Mirroring never changes stable Article
-  identity or the canonical home path. Docs use their tree and branch commands
-  instead of this module.
+  Mirror is an insertion command, not a persisted relationship role. Move is
+  an add-destination/remove-source composition while the public path contract
+  is finalized. Docs use their tree and branch commands instead of this module.
   """
 
   import Ecto.Query
@@ -41,20 +39,20 @@ defmodule GroupherServer.CMS.Articles.Communities do
     count < Community.max_pinned_article_count_per_thread()
   end
 
-  @doc "Moves an ordinary Article home to another Community and assigns a new public number."
+  @doc "Adds an ordinary Article to a destination and removes its source placement."
   @spec move(Article.t(), Community.t()) :: {:ok, Article.t()} | {:error, term()}
   def move(%Article{thread: thread} = article, %Community{} = destination)
       when thread in @ordinary_threads do
     Repo.transaction(fn ->
       with %Article{} = article <- lock_article(article.id),
-           :ok <- ensure_different_home(article, destination),
-           {_, _} <- delete_community_relation(article.id, destination.id),
-           {_, _} <- delete_home_relation(article.id),
+           source_community_id = article.community_id,
+           :ok <- ensure_different_community(article, destination),
            {:ok, article} <-
              article
              |> Article.changeset(%{community_id: destination.id, inner_id: nil})
              |> Repo.update(),
-           {:ok, _relation} <- insert_relation(article, destination, :home),
+           {:ok, _relation} <- upsert_relation(article, destination),
+           {_, _} <- delete_source_placement(article.id, source_community_id, destination.id),
            {:ok, article} <- Numbering.assign_public_inner_id(article) do
         article
       else
@@ -66,14 +64,13 @@ defmodule GroupherServer.CMS.Articles.Communities do
 
   def move(%Article{thread: :doc}, %Community{}), do: {:error, :unsupported_for_doc}
 
-  @doc "Adds an ordinary Article to another Community without changing its home path."
+  @doc "Adds an ordinary Article to a Community without changing stable identity."
   @spec mirror(Article.t(), Community.t()) :: {:ok, ArticleCommunity.t()} | {:error, term()}
   def mirror(%Article{thread: thread} = article, %Community{} = community)
       when thread in @ordinary_threads do
     Repo.transaction(fn ->
       with %Article{} = article <- lock_article(article.id),
-           :ok <- ensure_not_home(article.id, community.id),
-           {:ok, relation} <- upsert_mirror(article, community) do
+           {:ok, relation} <- upsert_relation(article, community) do
         relation
       else
         nil -> Repo.rollback(:article_not_found)
@@ -84,19 +81,22 @@ defmodule GroupherServer.CMS.Articles.Communities do
 
   def mirror(%Article{thread: :doc}, %Community{}), do: {:error, :unsupported_for_doc}
 
-  @doc "Removes one mirror relationship while preserving the Article and its home relationship."
+  @doc "Removes one Community placement while preserving the Article and other placements."
   @spec unmirror(Article.t(), Community.t()) :: {:ok, :done} | {:error, term()}
   def unmirror(%Article{thread: thread} = article, %Community{} = community)
       when thread in @ordinary_threads do
-    case Repo.delete_all(
-           from(relation in ArticleCommunity,
-             where:
-               relation.article_id == ^article.id and relation.community_id == ^community.id and
-                 relation.role == :mirror
-           )
-         ) do
-      {0, _} -> {:error, :mirror_not_found}
-      {_count, _} -> {:ok, :done}
+    if article.community_id == community.id do
+      {:error, :current_path_placement}
+    else
+      case Repo.delete_all(
+             from(relation in ArticleCommunity,
+               where:
+                 relation.article_id == ^article.id and relation.community_id == ^community.id
+             )
+           ) do
+        {0, _} -> {:error, :article_community_not_found}
+        {_count, _} -> {:ok, :done}
+      end
     end
   end
 
@@ -205,7 +205,7 @@ defmodule GroupherServer.CMS.Articles.Communities do
     end
   end
 
-  @doc "Lists every home or mirror Community currently exposing an Article."
+  @doc "Lists every Community currently exposing an Article."
   @spec communities(Article.t() | %{required(:id) => Ecto.UUID.t()}) :: [Community.t()]
   def communities(%{id: article_id}) when is_binary(article_id) do
     Community
@@ -213,7 +213,7 @@ defmodule GroupherServer.CMS.Articles.Communities do
       on: relation.community_id == community.id
     )
     |> where([_community, relation], relation.article_id == ^article_id)
-    |> order_by([community, relation], asc: relation.role, asc: community.id)
+    |> order_by([community, _relation], asc: community.id)
     |> Repo.all()
   end
 
@@ -244,55 +244,29 @@ defmodule GroupherServer.CMS.Articles.Communities do
     |> Repo.one()
   end
 
-  defp ensure_different_home(%Article{community_id: community_id}, %Community{id: community_id}) do
-    {:error, :already_home}
+  defp ensure_different_community(%Article{community_id: community_id}, %Community{
+         id: community_id
+       }) do
+    {:error, :already_in_community}
   end
 
-  defp ensure_different_home(%Article{}, %Community{}), do: :ok
+  defp ensure_different_community(%Article{}, %Community{}), do: :ok
 
-  defp ensure_not_home(article_id, community_id) do
-    query =
+  defp delete_source_placement(article_id, source_community_id, destination_community_id) do
+    Repo.delete_all(
       from(relation in ArticleCommunity,
         where:
-          relation.article_id == ^article_id and relation.community_id == ^community_id and
-            relation.role == :home
-      )
-
-    if Repo.exists?(query), do: {:error, :already_home}, else: :ok
-  end
-
-  defp delete_home_relation(article_id) do
-    Repo.delete_all(
-      from(relation in ArticleCommunity,
-        where: relation.article_id == ^article_id and relation.role == :home
+          relation.article_id == ^article_id and
+            relation.community_id == ^source_community_id and
+            relation.community_id != ^destination_community_id
       )
     )
   end
 
-  defp delete_community_relation(article_id, community_id) do
-    Repo.delete_all(
-      from(relation in ArticleCommunity,
-        where: relation.article_id == ^article_id and relation.community_id == ^community_id
-      )
-    )
-  end
-
-  defp insert_relation(article, community, role) do
-    %ArticleCommunity{}
-    |> ArticleCommunity.changeset(%{
-      article_id: article.id,
-      community_id: community.id,
-      role: role,
-      visible: article.moderation_state != :illegal
-    })
-    |> Repo.insert()
-  end
-
-  defp upsert_mirror(article, community) do
+  defp upsert_relation(article, community) do
     attrs = %{
       article_id: article.id,
       community_id: community.id,
-      role: :mirror,
       visible: article.moderation_state != :illegal
     }
 

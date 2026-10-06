@@ -26,7 +26,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "audit.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.export_community_activity/3)
+      resolve(&R.CMS.Activity.export_community_activity/3)
     end
 
     @desc "update base info in dashboard"
@@ -41,7 +41,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update seo in dashboard"
@@ -56,7 +56,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "Publishes one current-theme Wallpaper Snapshot"
@@ -68,7 +68,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.Passport, action: "community.update")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.publish_wallpaper/3)
+      resolve(&R.CMS.Wallpaper.publish_wallpaper/3)
     end
 
     @desc "Updates the Dashboard-owned content surface shadow"
@@ -80,7 +80,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.Passport, action: "community.update")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard_content_shadow/3)
+      resolve(&R.CMS.Dashboard.update_dashboard_content_shadow/3)
     end
 
     @desc "Prepares the generated images for one current-theme Wallpaper save"
@@ -92,7 +92,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.Passport, action: "community.update")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.prepare_wallpaper_upload/3)
+      resolve(&R.CMS.Wallpaper.prepare_wallpaper_upload/3)
     end
 
     @desc "Restores one retained Wallpaper Snapshot"
@@ -104,7 +104,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.Passport, action: "community.update")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.restore_wallpaper_snapshot/3)
+      resolve(&R.CMS.Wallpaper.restore_wallpaper_snapshot/3)
     end
 
     @desc "update enable in dashboard"
@@ -119,7 +119,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.PublishThrottle, interval: 3, hour_limit: 100, day_limit: 100)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update thread-specific emotion settings in dashboard"
@@ -140,7 +140,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.PublishThrottle, interval: 3, hour_limit: 100, day_limit: 100)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update layout in dashboard"
@@ -160,7 +160,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "save custom theme preset in dashboard"
@@ -176,7 +176,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.save_custom_theme_preset/3)
+      resolve(&R.CMS.Dashboard.save_custom_theme_preset/3)
     end
 
     @desc "select read-only theme preset in dashboard"
@@ -190,7 +190,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.select_theme_preset/3)
+      resolve(&R.CMS.Dashboard.select_theme_preset/3)
     end
 
     @desc "update rss in dashboard"
@@ -207,7 +207,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update name alias in dashboard"
@@ -222,7 +222,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update header links in dashboard"
@@ -237,7 +237,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update footer links in dashboard"
@@ -251,7 +251,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update footer oneline links in dashboard"
@@ -263,7 +263,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update social links in dashboard"
@@ -278,7 +278,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update media reports in dashboard"
@@ -292,7 +292,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update third-party analytics integrations in dashboard"
@@ -305,7 +305,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
 
     @desc "update docs FAQ in dashboard"
@@ -320,7 +320,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.Dashboard.update_dashboard/3)
     end
   end
 end

@@ -44,7 +44,11 @@ defmodule GroupherServer.CMS.Articles do
   @doc "Resolves a bounded batch of public ArticlePaths in one Article-owned query."
   def resolve_paths(paths), do: __MODULE__.PathResolver.resolve(paths)
 
-  @doc "Moves a stable ordinary Article to a new home Community through Gate."
+  @doc "Loads the Article's current path Community needed by cross-owner result readers."
+  @spec load_community(struct()) :: {:ok, struct()} | {:error, term()}
+  def load_community(article), do: Store.with_community(article)
+
+  @doc "Moves a stable ordinary Article to a destination Community through Gate."
   @spec move(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
           {:ok, Article.t()} | {:error, term()}
   def move(%Community{} = community, article_id, tag_ids, %User{} = actor) do
@@ -54,8 +58,7 @@ defmodule GroupherServer.CMS.Articles do
       with {:ok, %Community{} = source} <-
              FrontDesk.community(article.community_id, mode: :internal),
            {:ok, moved} <- Communities.move(article, community),
-           {:ok, relation} <-
-             Store.home_relation(moved.id),
+           {:ok, relation} <- Store.relation(moved.id, moved.community_id),
            {:ok, _relation} <- Communities.replace_tags(relation, tag_ids),
            {:ok, _source} <- CommunityFacade.update_count_field(source, article.thread),
            {:ok, _destination} <- CommunityFacade.update_count_field(community, article.thread),
@@ -79,7 +82,7 @@ defmodule GroupherServer.CMS.Articles do
     end)
   end
 
-  @doc "Removes a stable ordinary Article mirror from a Community through Gate."
+  @doc "Removes a stable ordinary Article placement from a Community through Gate."
   @spec unmirror(Community.t(), Ecto.UUID.t(), User.t()) ::
           {:ok, :done} | {:error, term()}
   def unmirror(%Community{} = community, article_id, %User{} = actor) do
@@ -227,6 +230,25 @@ defmodule GroupherServer.CMS.Articles do
     Commands.CreateStableDraft.execute(community, thread, attrs, actor, opts)
   end
 
+  @doc "Creates a stable Article Draft and returns the editor mutation payload."
+  @spec create_stable_draft_result(Community.t(), T.thread(), map(), User.t(), keyword()) ::
+          T.domain_res(map())
+  def create_stable_draft_result(
+        %Community{} = community,
+        thread,
+        attrs,
+        %User{} = actor,
+        opts \\ []
+      ) do
+    with {:ok, result} <- create_stable_draft(community, thread, attrs, actor, opts) do
+      __MODULE__.DraftResult.build(result)
+    end
+  end
+
+  @doc "Returns version-owned cover editor state when the viewer owns the Article."
+  @spec cover_edit_info(map(), User.t() | nil) :: {:ok, map() | nil}
+  def cover_edit_info(article, viewer), do: __MODULE__.CoverEdit.read(article, viewer)
+
   @doc "Reads the current mutable workspace by stable Article UUID and actor."
   @spec read_draft(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, struct()} | {:error, term()}
   def read_draft(article_id, %User{} = actor) when is_binary(article_id) do
@@ -360,6 +382,13 @@ defmodule GroupherServer.CMS.Articles do
   @spec get_trashed(Ecto.UUID.t()) :: T.domain_res(CMS.Model.TrashedArticle.t())
   def get_trashed(ref), do: Trash.get(ref)
 
+  @doc "Gets one current Trash membership inside its public Community/thread scope."
+  @spec get_trashed(Ecto.UUID.t(), Community.t(), atom()) ::
+          T.domain_res(CMS.Model.TrashedArticle.t())
+  def get_trashed(ref, %Community{id: community_id}, thread) do
+    Trash.get_in_scope(ref, community_id, thread)
+  end
+
   @doc "Runs `archive` through the public `Articles` boundary."
   @spec archive(T.thread()) :: T.domain_res(term())
   def archive(thread), do: States.archive(thread)
@@ -408,6 +437,20 @@ defmodule GroupherServer.CMS.Articles do
           T.domain_res(Article.t())
   def set_status(article_id, status, %User{} = actor) do
     with_article(article_id, actor, :set_status, &States.set_status(&1, status))
+  end
+
+  @doc "Updates Post category and returns the caller-facing canonical projection shape."
+  def set_cat_result(article, cat, %User{} = actor) do
+    with {:ok, updated} <- set_cat(article.id, cat, actor) do
+      __MODULE__.ActionResult.merge(article, updated, %{cat: cat})
+    end
+  end
+
+  @doc "Updates Post status and returns the caller-facing canonical projection shape."
+  def set_status_result(article, status, %User{} = actor) do
+    with {:ok, updated} <- set_status(article.id, status, actor) do
+      __MODULE__.ActionResult.merge(article, updated, %{status: status})
+    end
   end
 
   @doc "Updates active timestamp through the `Articles` write boundary."
@@ -478,7 +521,7 @@ defmodule GroupherServer.CMS.Articles do
     move(community, article_id, tag_ids, actor)
   end
 
-  @doc "Mirrors one stable ordinary Article into the requested home Community."
+  @doc "Legacy alias for adding one stable ordinary Article placement."
   @spec mirror_to_home(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
           {:ok, CMS.Model.ArticleCommunity.t()} | {:error, term()}
   def mirror_to_home(%Community{} = community, article_id, tag_ids, %User{} = actor) do
@@ -495,6 +538,34 @@ defmodule GroupherServer.CMS.Articles do
   @spec undo_lock_comments(Ecto.UUID.t(), User.t(), keyword()) :: T.domain_res(term())
   def undo_lock_comments(article_id, %User{} = actor, opts \\ []) do
     change_comment_lock(article_id, actor, :unlock_comments, opts)
+  end
+
+  @doc "Locks comments and returns the caller-facing canonical projection shape."
+  def lock_comments_result(article, %User{} = actor) do
+    with {:ok, updated} <- lock_comments(article.id, actor, branch_opts(article)) do
+      __MODULE__.ActionResult.merge(article, updated)
+    end
+  end
+
+  @doc "Unlocks comments and returns the caller-facing canonical projection shape."
+  def undo_lock_comments_result(article, %User{} = actor) do
+    with {:ok, updated} <- undo_lock_comments(article.id, actor, branch_opts(article)) do
+      __MODULE__.ActionResult.merge(article, updated)
+    end
+  end
+
+  @doc "Sinks an Article and returns the caller-facing canonical projection shape."
+  def sink_result(article, %User{} = actor) do
+    with {:ok, updated} <- sink(article.id, actor, branch_opts(article)) do
+      __MODULE__.ActionResult.merge(article, updated)
+    end
+  end
+
+  @doc "Restores a sunk Article and returns the caller-facing canonical projection shape."
+  def undo_sink_result(article, %User{} = actor) do
+    with {:ok, updated} <- undo_sink(article.id, actor, branch_opts(article)) do
+      __MODULE__.ActionResult.merge(article, updated)
+    end
   end
 
   defp change_comment_lock(article_id, actor, action, opts) do
@@ -515,6 +586,13 @@ defmodule GroupherServer.CMS.Articles do
 
       {:error, _} ->
         {:error, GateErrorCat.resource_not_found()}
+    end
+  end
+
+  defp branch_opts(article) do
+    case Map.get(article, :branch_id) do
+      branch_id when is_integer(branch_id) -> [branch_id: branch_id]
+      _ -> []
     end
   end
 end

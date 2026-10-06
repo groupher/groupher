@@ -11,7 +11,7 @@ defmodule GroupherServer.Accounts.Profiles do
         -> Repo
   """
 
-  alias __MODULE__.{BrowserSessions, List, Oauth, Subscribe, UserRead}
+  alias __MODULE__.{BrowserSessions, List, Oauth, SessionState, Subscribe, UserRead}
   alias GroupherServer.Accounts
 
   alias Accounts.Model.User
@@ -27,6 +27,10 @@ defmodule GroupherServer.Accounts.Profiles do
     digest = :crypto.hash(:sha256, "groupher:user:" <> to_string(id))
     "user:" <> Base.url_encode64(digest, padding: false)
   end
+
+  @doc "Bootstraps account defaults and returns the authenticated session state."
+  @spec session_state(User.t()) :: T.domain_res(map())
+  def session_state(%User{} = user), do: SessionState.bootstrap(user)
 
   @spec read_user(User.t(), User.t()) :: T.domain_res(User.t())
   def read_user(%User{} = user, %User{} = cur_user), do: UserRead.read_user(user, cur_user)

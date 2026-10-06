@@ -3,12 +3,11 @@ defmodule GroupherServer.CMS.Model.ArticleCommunity do
   Stores one Article's visibility relationship with one Community.
 
       stable Article
-        -> ArticleCommunity(home | mirror)
+        -> ArticleCommunity(article, community)
         -> community visibility, tags, and pin ownership
 
-  Exactly one relationship per Article is the home relationship. Mirror rows
-  expose the same Article in another Community without creating another public
-  Article identity or URL.
+  Every row is a peer placement. Product commands may call an insertion a
+  mirror, but the relationship itself does not have a home/mirror role.
   """
 
   use Ecto.Schema
@@ -19,8 +18,7 @@ defmodule GroupherServer.CMS.Model.ArticleCommunity do
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @roles [:home, :mirror]
-  @required_fields ~w(article_id community_id role)a
+  @required_fields ~w(article_id community_id)a
   @optional_fields ~w(visible)a
 
   @type t :: %__MODULE__{}
@@ -28,12 +26,11 @@ defmodule GroupherServer.CMS.Model.ArticleCommunity do
   schema "article_communities" do
     belongs_to(:article, Article, type: Ecto.UUID)
     belongs_to(:community, Community)
-    field(:role, Ecto.Enum, values: @roles)
     field(:visible, :boolean, default: true)
     timestamps(type: :utc_datetime)
   end
 
-  @doc "Builds the home or mirror Community relationship for a stable Article."
+  @doc "Builds one peer Community placement for a stable Article."
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(%__MODULE__{} = relation, attrs) do
     relation
@@ -42,6 +39,5 @@ defmodule GroupherServer.CMS.Model.ArticleCommunity do
     |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:community_id)
     |> unique_constraint([:article_id, :community_id])
-    |> unique_constraint(:article_id, name: :article_communities_home_index)
   end
 end

@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
   alias Activity.Model.CommunityLog
   alias CMS.Communities.Jobs.Setup
   alias CMS.CommunityApplications.Jobs.CreateCommunity
-  alias GroupherServerWeb.Resolvers.CMS, as: ResolverCMS
+  alias GroupherServerWeb.Resolvers.CMS.CommunityApplications, as: ResolverCMS
 
   alias CMS.Model.{
     Community,

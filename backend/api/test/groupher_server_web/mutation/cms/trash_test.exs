@@ -43,6 +43,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
       })
 
     assert restored["innerId"] == to_string(post.inner_id)
+    assert restored["commandId"] == command_id
     assert {:ok, _} = read_article(community, :post, post.inner_id)
 
     replayed =
@@ -53,7 +54,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
         commandId: command_id
       })
 
-    assert replayed["innerId"] == restored["innerId"]
+    assert replayed == restored
   end
 
   test "Trash requires login and either ownership or the thread grant",
@@ -152,6 +153,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
       })
 
     assert result["done"]
+    assert result["commandId"] == command_id
     refute Repo.get(Article, post.id)
     refute Repo.get_by(ArticleStats, thread: :post, article_id: post.id)
     refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.id)
@@ -165,6 +167,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
         commandId: command_id
       })
 
-    assert replayed["done"]
+    assert replayed == result
   end
 end

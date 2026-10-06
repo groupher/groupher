@@ -26,7 +26,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, :article_log_filter)
 
       middleware(M.FrontDesk, :article)
-      resolve(&R.CMS.article_logs/3)
+      resolve(&R.CMS.Activity.article_logs/3)
     end
 
     @desc "Hourly business metrics for one readable Article"
@@ -39,7 +39,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:is_authenticated, :boolean)
 
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.article_insights/3)
+      resolve(&R.CMS.Analysis.article_insights/3)
     end
 
     @desc "Current public Article headline stats for one Community/thread batch"
@@ -48,7 +48,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:thread, non_null(:thread))
       arg(:inner_ids, non_null(list_of(non_null(:id))))
 
-      resolve(&R.CMS.article_stats/3)
+      resolve(&R.CMS.ArticleStats.article_stats/3)
     end
 
     @desc "Safe Community Activity timeline across readable resource streams"
@@ -60,7 +60,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "audit.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.community_activity/3)
+      resolve(&R.CMS.Activity.community_activity/3)
     end
 
     @desc "UTC daily Community Activity counts for the timeline overview"
@@ -71,7 +71,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "audit.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.community_activity_stats/3)
+      resolve(&R.CMS.Activity.community_activity_stats/3)
     end
 
     @desc "Active Community Activity actions available to the current manager"
@@ -81,7 +81,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "audit.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.community_activity_config/3)
+      resolve(&R.CMS.Activity.community_activity_config/3)
     end
 
     @desc "Reads one safe Community Activity event by event reference"
@@ -92,20 +92,20 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "audit.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.community_activity_event/3)
+      resolve(&R.CMS.Activity.community_activity_event/3)
     end
 
     @desc "Current user's Apply admission state and blocking application"
     field :community_application_state, non_null(:community_application_state) do
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.community_application_state/3)
+      resolve(&R.CMS.CommunityApplications.community_application_state/3)
     end
 
     @desc "One Community Application owned by the current user"
     field :community_application, :community_application do
       arg(:ref, non_null(:id))
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.community_application/3)
+      resolve(&R.CMS.CommunityApplications.community_application/3)
     end
 
     @desc "Reviewer-scoped detail for any Community Application"
@@ -113,7 +113,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:ref, non_null(:id))
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.review")
-      resolve(&R.CMS.review_community_application/3)
+      resolve(&R.CMS.CommunityApplications.review_community_application/3)
     end
 
     @desc "Reviewer-scoped Community Application queue"
@@ -123,14 +123,14 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:first, :integer, default_value: 20)
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.review")
-      resolve(&R.CMS.paged_community_applications/3)
+      resolve(&R.CMS.CommunityApplications.paged_community_applications/3)
     end
 
     @desc "Server-trusted origin metadata for an Application Logo"
     field :community_application_logo_origin_info, :application_logo_origin_info do
       arg(:public_ref, non_null(:id))
       middleware(M.ServiceScope, audience: "phoenix:assets-api", scope: "assets:origin:read")
-      resolve(&R.CMS.community_application_logo_origin_info/3)
+      resolve(&R.CMS.CommunityApplications.community_application_logo_origin_info/3)
     end
 
     @desc "Current Article Trash memberships"
@@ -143,7 +143,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Passport, action: "article.trash.read")
       middleware(M.FrontDesk, :community)
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.trashed_articles/3)
+      resolve(&R.CMS.Articles.trashed_articles/3)
     end
 
     @desc "One current Article Trash membership"
@@ -155,7 +155,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "article.trash.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.trashed_article/3)
+      resolve(&R.CMS.Articles.trashed_article/3)
     end
 
     @desc "Built-in community Web Analysis summary"
@@ -166,7 +166,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_web_summary/3)
+      resolve(&R.CMS.Analysis.analysis_web_summary/3)
     end
 
     @desc "Public Umami website id for built-in community Analysis tracking"
@@ -174,7 +174,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:community, non_null(:string))
 
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_tracking_website_id/3)
+      resolve(&R.CMS.Analysis.analysis_tracking_website_id/3)
     end
 
     @desc "Public visitor distribution for an enabled community About page"
@@ -182,7 +182,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:community, non_null(:string))
 
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_visitor_location_map/3)
+      resolve(&R.CMS.Analysis.analysis_visitor_location_map/3)
     end
 
     @desc "Built-in community Analysis Trends summary and chart"
@@ -193,7 +193,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_trends_overview/3)
+      resolve(&R.CMS.Analysis.analysis_trends_overview/3)
     end
 
     @desc "Current active visitors for the built-in community Analysis"
@@ -203,7 +203,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_active_visitors/3)
+      resolve(&R.CMS.Analysis.analysis_active_visitors/3)
     end
 
     @desc "One built-in community Analysis page dimension"
@@ -215,7 +215,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_trend_pages/3)
+      resolve(&R.CMS.Analysis.analysis_trend_pages/3)
     end
 
     @desc "One built-in community Analysis source dimension"
@@ -227,7 +227,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_trend_sources/3)
+      resolve(&R.CMS.Analysis.analysis_trend_sources/3)
     end
 
     @desc "One built-in community Analysis environment dimension"
@@ -239,7 +239,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_trend_environment/3)
+      resolve(&R.CMS.Analysis.analysis_trend_environment/3)
     end
 
     @desc "One built-in community Analysis location dimension"
@@ -251,7 +251,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_trend_location/3)
+      resolve(&R.CMS.Analysis.analysis_trend_location/3)
     end
 
     @desc "UTC weekly traffic cells for built-in community Analysis"
@@ -262,7 +262,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_trend_traffic/3)
+      resolve(&R.CMS.Analysis.analysis_trend_traffic/3)
     end
 
     @desc "dashboard theme preset registry"
@@ -283,7 +283,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.doc_tree/3)
+      resolve(&R.CMS.Docs.doc_tree/3)
     end
 
     @desc "public community docs side tree"
@@ -291,7 +291,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:community, non_null(:string))
 
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.doc_public_tree/3)
+      resolve(&R.CMS.Docs.doc_public_tree/3)
     end
 
     @desc "dashboard docs unified publish checklist"
@@ -300,7 +300,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.doc_publish_checklist/3)
+      resolve(&R.CMS.Docs.doc_publish_checklist/3)
     end
 
     @desc "dashboard docs trash items"
@@ -310,7 +310,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.doc_tree_trash_items/3)
+      resolve(&R.CMS.Docs.doc_tree_trash_items/3)
     end
 
     @desc "public community docs cover"
@@ -320,7 +320,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.doc_cover/3)
+      resolve(&R.CMS.Docs.doc_cover/3)
     end
 
     @desc "dashboard docs editor document, preferring draft and falling back to public"
@@ -331,7 +331,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.doc_draft/3)
+      resolve(&R.CMS.Docs.doc_draft/3)
     end
 
     @desc "immutable published versions for one stable Doc branch"
@@ -342,7 +342,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.doc_branch_versions/3)
+      resolve(&R.CMS.Docs.doc_branch_versions/3)
     end
 
     @desc "one immutable published version for a stable Doc branch"
@@ -353,7 +353,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.doc_branch_version/3)
+      resolve(&R.CMS.Docs.doc_branch_version/3)
     end
 
     @desc "spec community info"
@@ -363,7 +363,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:slug, non_null(:string))
       arg(:inc_views, :boolean, default_value: true)
 
-      resolve(&R.CMS.community/3)
+      resolve(&R.CMS.Communities.community/3)
     end
 
     @desc "paged assets owned by a community"
@@ -375,7 +375,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.paged_community_assets/3)
+      resolve(&R.CMS.Assets.paged_community_assets/3)
     end
 
     @desc "community asset filter stats and storage quota"
@@ -387,7 +387,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.community_asset_stats/3)
+      resolve(&R.CMS.Assets.community_asset_stats/3)
     end
 
     @desc "community asset storage usage"
@@ -397,7 +397,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.community_asset_usage/3)
+      resolve(&R.CMS.Assets.community_asset_usage/3)
     end
 
     @desc "paged article references for one community asset"
@@ -410,7 +410,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.community_asset_refs/3)
+      resolve(&R.CMS.Assets.community_asset_refs/3)
     end
 
     @desc "service-scoped public-read origin metadata for one community asset"
@@ -418,7 +418,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:public_ref, non_null(:string))
 
       middleware(M.ServiceScope, audience: "phoenix:assets-api", scope: "assets:origin:read")
-      resolve(&R.CMS.community_asset_origin_info/3)
+      resolve(&R.CMS.Assets.community_asset_origin_info/3)
     end
 
     @desc "Service-scoped check for a successfully published Wallpaper Batch"
@@ -430,13 +430,13 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
         scope: "assets:generated-batch:reconcile"
       )
 
-      resolve(&R.CMS.wallpaper_batch_published/3)
+      resolve(&R.CMS.Assets.wallpaper_batch_published/3)
     end
 
     @desc "Get all passport rules available to the current user."
     field :all_passport_rules, :all_rules do
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.all_passport_rules/3)
+      resolve(&R.CMS.Passport.all_passport_rules/3)
     end
 
     @desc "Check whether a community name is available."
@@ -444,7 +444,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:slug, non_null(:string))
 
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.check_community_name/3)
+      resolve(&R.CMS.Communities.check_community_name/3)
     end
 
     @desc "communities with pagination info"
@@ -452,7 +452,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, non_null(:communities_filter))
 
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.paged_communities/3)
+      resolve(&R.CMS.Communities.paged_communities/3)
     end
 
     @desc "paged subscribers of a community"
@@ -461,7 +461,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, :pagi_filter)
 
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.paged_community_subscribers/3)
+      resolve(&R.CMS.Communities.paged_community_subscribers/3)
     end
 
     @desc "paged subscribers of a community"
@@ -470,7 +470,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, :pagi_filter)
 
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.paged_community_moderators/3)
+      resolve(&R.CMS.Communities.paged_community_moderators/3)
     end
 
     @desc "get all categories"
@@ -478,7 +478,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, :pagi_filter)
 
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.paged_categories/3)
+      resolve(&R.CMS.Communities.paged_categories/3)
     end
 
     @desc "get community tag groups"
@@ -486,7 +486,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
 
-      resolve(&R.CMS.community_tag_groups/3)
+      resolve(&R.CMS.Communities.community_tag_groups/3)
     end
 
     @desc "get community tag stats by community, thread and slug"
@@ -495,7 +495,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:thread, non_null(:thread))
       arg(:slug, non_null(:string))
 
-      resolve(&R.CMS.community_tag_stats/3)
+      resolve(&R.CMS.Communities.community_tag_stats/3)
     end
 
     @desc "got basic comments state"
@@ -504,21 +504,21 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:freshkey, :string)
 
       middleware(M.FrontDesk, :article)
-      resolve(&R.CMS.comments_state/3)
+      resolve(&R.CMS.Comments.comments_state/3)
     end
 
     @desc "Reads current viewer state for up to 100 canonical Article paths; anonymous requests return an empty list"
     field :article_viewer_states, non_null(list_of(non_null(:viewer_article_state))) do
       arg(:paths, non_null(list_of(non_null(:article_path_input))))
 
-      resolve(&R.CMS.article_viewer_states/3)
+      resolve(&R.CMS.ViewTracker.article_viewer_states/3)
     end
 
     @desc "Reads the current private Article interaction projection for confirmed-write reconciliation"
     field :article_interaction_states, non_null(list_of(non_null(:article_interaction_state))) do
       arg(:paths, non_null(list_of(non_null(:article_path_input))))
 
-      resolve(&R.CMS.article_interaction_states/3)
+      resolve(&R.CMS.Interactions.article_interaction_states/3)
     end
 
     @desc "Reads current viewer state for up to 100 canonical Comment references; anonymous requests return an empty list"
@@ -526,7 +526,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:article, non_null(:article_path_input))
       arg(:comment_inner_ids, non_null(list_of(non_null(:id))))
 
-      resolve(&R.CMS.comment_viewer_states/3)
+      resolve(&R.CMS.Comments.comment_viewer_states/3)
     end
 
     @desc "Reads up to 100 Comment projections for confirmed-write reconciliation in one request"
@@ -534,7 +534,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:article, non_null(:article_path_input))
       arg(:comment_inner_ids, non_null(list_of(non_null(:id))))
 
-      resolve(&R.CMS.comment_reconcile_states/3)
+      resolve(&R.CMS.Comments.comment_reconcile_states/3)
     end
 
     @desc "got spec comment by ref"
@@ -542,7 +542,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:comment, non_null(:comment_path_input))
 
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.one_comment/3)
+      resolve(&R.CMS.Comments.one_comment/3)
     end
 
     @desc "get paged article comments"
@@ -553,7 +553,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.FrontDesk, :article)
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.paged_comments/3)
+      resolve(&R.CMS.Comments.paged_comments/3)
     end
 
     @desc "get paged article comments participants"
@@ -563,7 +563,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.FrontDesk, :article)
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.paged_comments_participants/3)
+      resolve(&R.CMS.Comments.paged_comments_participants/3)
     end
 
     @desc "get paged replies of a comment"
@@ -573,14 +573,14 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.PageSizeProof)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.paged_comment_replies/3)
+      resolve(&R.CMS.Comments.paged_comment_replies/3)
     end
 
     @desc "paged reports list"
     field :paged_abuse_reports, :paged_reports do
       arg(:filter, non_null(:report_filter))
 
-      resolve(&R.CMS.paged_reports/3)
+      resolve(&R.CMS.Reporting.paged_reports/3)
     end
 
     @desc "mentions created by an artiment"
@@ -589,7 +589,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, :pagi_filter)
 
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.mentions/3)
+      resolve(&R.CMS.ArtimentMentions.mentions/3)
     end
 
     @desc "artiments mentioning an internal target"
@@ -598,7 +598,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, :pagi_filter)
 
       middleware(M.PageSizeProof)
-      resolve(&R.CMS.mentioned_by/3)
+      resolve(&R.CMS.ArtimentMentions.mentioned_by/3)
     end
 
     @desc "search communities by title"
@@ -606,7 +606,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:title, non_null(:string))
       arg(:category, :string)
 
-      resolve(&R.CMS.search_communities/3)
+      resolve(&R.CMS.Search.search_communities/3)
     end
 
     @desc "kanban posts grouped by backlog/todo/wip/done/rejected"
@@ -614,7 +614,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:community, non_null(:string))
 
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.grouped_kanban_posts/3)
+      resolve(&R.CMS.Articles.grouped_kanban_posts/3)
     end
 
     @desc "get open graph info by url"
@@ -622,7 +622,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:url, non_null(:string))
 
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.open_graph_info/3)
+      resolve(&R.CMS.OpenGraph.open_graph_info/3)
     end
 
     @desc "paged kanban posts by status"
@@ -631,18 +631,18 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, non_null(:paged_kanban_posts_filter))
 
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.paged_kanban_posts/3)
+      resolve(&R.CMS.Articles.paged_kanban_posts/3)
     end
 
     @desc "Search Article and Comment content through the unified Artiment index"
     field :search_artiments, non_null(:paged_search_artiments) do
       arg(:query, non_null(:search_artiments_query_input))
 
-      resolve(&R.CMS.search_artiments/3)
+      resolve(&R.CMS.Search.search_artiments/3)
     end
 
-    article_reacted_users_query(:upvote, &R.CMS.upvoted_users/3)
-    article_reacted_users_query(:collect, &R.CMS.collected_users/3)
+    article_reacted_users_query(:upvote, &R.CMS.Interactions.upvoted_users/3)
+    article_reacted_users_query(:collect, &R.CMS.Interactions.collected_users/3)
 
     article_queries()
   end

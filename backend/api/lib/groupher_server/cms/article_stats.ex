@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.ArticleStats do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.{Matcher, Threads}
+  alias CMS.Articles
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.FrontDesk
 
@@ -36,6 +37,32 @@ defmodule GroupherServer.CMS.ArticleStats do
   @article_threads Threads.article_enums()
   @article_emotions CMS.Artiment.Config.emotions() -- [:upvote, :collect]
   @conflict_target [:thread, :article_id]
+
+  @doc """
+  Reads one fully located public ArticleStats result for a canonical Article.
+
+  This is the shared post-commit read contract used by owning command result
+  builders. It preserves the revision and snapshot observed by ArticleStats and
+  never synthesizes a missing projection row.
+  """
+  @spec for_article(struct()) :: {:ok, map()} | {:error, term()}
+  def for_article(article) when is_struct(article) do
+    with {:ok, article} <- Articles.load_community(article),
+         {:ok, %{artiment: thread}} <- Matcher.match_interaction(article),
+         stats when is_map(stats) <-
+           for_public_articles(thread, [article], article.community.slug),
+         {:ok, article_stats} <- Map.fetch(stats, {thread, article.id}) do
+      {:ok,
+       Map.merge(article_stats, %{
+         community: article.community.slug,
+         thread: thread,
+         inner_id: article.inner_id
+       })}
+    else
+      {:error, _reason} = error -> error
+      _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
+    end
+  end
 
   @doc "Creates the zero-valued public row on first publish without overwriting an existing row."
   @spec initialize(struct()) :: :ok | {:error, term()}
