@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.{Draft, Draft.Store, Lifecycle, Numbering, Public, Revision}
-  alias CMS.Model.{Article, ArticlePublic, Author, Community}
+  alias CMS.Model.{Article, ArticleCommunity, ArticlePublic, Author, Community}
 
   @doc "Publishes one ordinary Draft after validating the caller-observed Draft version."
   @spec publish(Article.t(), Author.t(), keyword()) ::
@@ -40,7 +40,9 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
            current_public <- Repo.get(ArticlePublic, locked_article.id),
            first_publish? <- is_nil(current_public),
            changed_fields <- changed_fields(locked_article, current_public, draft),
-           {:ok, locked_article} <- Numbering.assign_public_inner_id(locked_article),
+           {:ok, relation} <- ensure_relation(locked_article),
+           {:ok, relation} <- Numbering.assign_relation_inner_id(relation),
+           locked_article <- %{locked_article | inner_id: relation.inner_id},
            {:ok, locked_article} <- ensure_active_at(locked_article, published_at),
            {:ok, revision} <- Revision.create(locked_article, draft),
            {:ok, public} <-
@@ -72,6 +74,13 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
     |> case do
       %Article{} = article -> {:ok, article}
       nil -> {:error, :article_not_found}
+    end
+  end
+
+  defp ensure_relation(%Article{} = article) do
+    case Repo.get_by(ArticleCommunity, article_id: article.id, community_id: article.community_id) do
+      %ArticleCommunity{} = relation -> {:ok, relation}
+      nil -> {:error, :article_community_not_found}
     end
   end
 

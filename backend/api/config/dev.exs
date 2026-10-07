@@ -7,11 +7,15 @@ import Config
 # watchers to your application. For example, we use it
 # with brunch.io to recompile .js and .css sources.
 config :groupher_server, GroupherServerWeb.Endpoint,
-  http: [port: String.to_integer(System.get_env("PORT") || "7001")],
+  http: [port: String.to_integer(System.get_env("PORT", "4001"))],
   debug_errors: true,
   code_reloader: true,
+  server: true,
   check_origin: false,
-  watchers: []
+  watchers: [
+    esbuild: {Esbuild, :install_and_run, [:groupher_server, ~w(--sourcemap=inline --watch)]},
+    tailwind: {Tailwind, :install_and_run, [:groupher_server, ~w(--watch)]}
+  ]
 
 # ## SSL Support
 #
@@ -39,25 +43,33 @@ config :phoenix, :stacktrace_depth, 20
 # You can generate a new secret by running:
 # mix phx.gen.secret
 config :groupher_server, GroupherServerWeb.Endpoint,
-  secret_key_base: System.get_env("SECRET_KEY_BASE")
+  secret_key_base:
+    System.get_env(
+      "SECRET_KEY_BASE",
+      "0iBUiKYT+sUJxPPD3+aUyOPlsvl/Uk9K9VFBTzoC+zc8PEKQfW4Ay4SH7piuXpVA"
+    )
 
 config :groupher_server, Helper.Guardian,
   issuer: "groupher_server",
-  secret_key: System.get_env("PHX_JWT_SECRET")
+  secret_key: System.get_env("PHX_JWT_SECRET", "hello")
 
 config :groupher_server, Helper.Guardian.BrowserAccess,
   issuer: "groupher:phoenix",
-  secret_key: System.get_env("PHX_JWT_SECRET")
+  secret_key: System.get_env("PHX_JWT_SECRET", "hello")
 
-# should use RDS 内网地址
 config :groupher_server, GroupherServer.Repo,
   adapter: Ecto.Adapters.Postgres,
-  username: System.get_env("DB_USERNAME"),
-  password: System.get_env("DB_PASSWORD"),
-  database: System.get_env("DB_NAME" || "cps_server_dev"),
-  hostname: System.get_env("DB_HOST"),
-  port: String.to_integer(System.get_env("DB_PORT") || "3433"),
-  pool_size: String.to_integer(System.get_env("DB_POOL_SIZE") || "20")
+  username: System.get_env("DB_USERNAME", "postgres"),
+  password: System.get_env("DB_PASSWORD", "postgres"),
+  database: System.get_env("DB_NAME", "groupher_server_dev"),
+  hostname: System.get_env("DB_HOST", "localhost"),
+  port: String.to_integer(System.get_env("DB_PORT", "5432")),
+  pool_size: String.to_integer(System.get_env("DB_POOL_SIZE", "50")),
+  queue_target: 5_000
+
+config :groupher_server, :assets_hub,
+  capability_secret:
+    System.get_env("ASSETS_HUB_CAPABILITY_SECRET", "local-assets-hub-capability-secret")
 
 config :groupher_server, :github_oauth,
   client_id: System.get_env("OAUTH_GITHUB_CLIENT_ID"),

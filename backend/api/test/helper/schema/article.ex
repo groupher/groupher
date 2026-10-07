@@ -61,16 +61,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
-  def m(:move_to_blackhole) do
-    """
-    mutation($article: ArticlePathInput!, $communityTags: [ID]) {
-      moveToBlackhole(article: $article, communityTags: $communityTags) {
-        innerId
-      }
-    }
-    """
-  end
-
   def m(:move_article) do
     """
     mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID]) {
@@ -98,16 +88,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           innerId
         }
       }
-    """
-  end
-
-  def m(:mirror_to_home) do
-    """
-    mutation($article: ArticlePathInput!, $communityTags: [ID]) {
-      mirrorToHome(article: $article, communityTags: $communityTags) {
-        innerId
-      }
-    }
     """
   end
 

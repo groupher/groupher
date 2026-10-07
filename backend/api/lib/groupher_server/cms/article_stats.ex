@@ -413,23 +413,24 @@ defmodule GroupherServer.CMS.ArticleStats do
           |> where(
             [article, relation],
             article.thread == ^thread and relation.community_id == ^community_id and
-              article.inner_id in ^inner_ids
+              relation.inner_id in ^inner_ids
           )
-          |> select([article, _relation], article)
+          |> select([article, relation], %{article: article, inner_id: relation.inner_id})
           |> Repo.all()
 
-        stats_by_article_id = for_articles(thread, rows)
+        articles = Enum.map(rows, & &1.article)
+        stats_by_article_id = for_articles(thread, articles)
 
-        with :ok <- ensure_stats_rows(rows, stats_by_article_id, thread) do
+        with :ok <- ensure_stats_rows(articles, stats_by_article_id, thread) do
           stats_by_inner_id =
-            Map.new(rows, fn article ->
+            Map.new(rows, fn %{article: article, inner_id: inner_id} ->
               stats = Map.fetch!(stats_by_article_id, {thread, article.id})
 
-              {to_string(article.inner_id),
+              {to_string(inner_id),
                Map.merge(stats, %{
                  community: community_ref,
                  thread: thread,
-                 inner_id: article.inner_id
+                 inner_id: inner_id
                })}
             end)
 

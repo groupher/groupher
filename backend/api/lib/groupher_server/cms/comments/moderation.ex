@@ -38,6 +38,8 @@ defmodule GroupherServer.CMS.Comments.Moderation do
 
   """
   @spec set_illegal(T.id(), map()) :: T.domain_res(Comment.t())
+  def set_illegal(%Comment{} = comment, audit_state), do: do_set_illegal(comment, audit_state)
+
   def set_illegal(comment_id, audit_state) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       do_set_illegal(comment, audit_state)
@@ -72,6 +74,8 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   end
 
   @spec unset_illegal(T.id(), map()) :: T.domain_res(Comment.t())
+  def unset_illegal(%Comment{} = comment, audit_state), do: do_unset_illegal(comment, audit_state)
+
   def unset_illegal(comment_id, audit_state) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       do_unset_illegal(comment, audit_state)

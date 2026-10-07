@@ -39,9 +39,78 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
     test "can set status of a post", ~m(user community post_attrs)a do
       {:ok, kanban} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, post} = CMS.Articles.set_status(kanban.article_id, @article_status.todo, user)
-      state = Repo.get!(CMS.Model.PostState, post.id)
+
+      relation =
+        Repo.get_by!(CMS.Model.ArticleCommunity,
+          article_id: post.id,
+          community_id: community.id
+        )
+
+      state = Repo.get!(CMS.Model.KanbanState, relation.id)
 
       assert state.status == @article_status.todo
+    end
+
+    test "kanban status is scoped to each Article Community placement",
+         ~m(user community post_attrs)a do
+      {:ok, kanban} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, mirror_community} = mock_community(user)
+
+      assert {:ok, _relation} =
+               CMS.Articles.mirror(mirror_community, kanban.article_id, [], user)
+
+      {:ok, article} = CMS.FrontDesk.article(kanban.article_id, mode: :internal)
+
+      assert {:ok, _} =
+               CMS.Kanban.add_post(community, article, @article_status.todo, user)
+
+      assert {:ok, _} =
+               CMS.Kanban.add_post(
+                 mirror_community,
+                 article,
+                 @article_status.todo,
+                 user
+               )
+
+      assert {:ok, _} =
+               CMS.Kanban.move_post(
+                 mirror_community,
+                 article,
+                 @article_status.done,
+                 user
+               )
+
+      source_relation =
+        Repo.get_by!(CMS.Model.ArticleCommunity,
+          article_id: kanban.article_id,
+          community_id: community.id
+        )
+
+      mirror_relation =
+        Repo.get_by!(CMS.Model.ArticleCommunity,
+          article_id: kanban.article_id,
+          community_id: mirror_community.id
+        )
+
+      assert Repo.get!(CMS.Model.KanbanState, source_relation.id).status == @article_status.todo
+      assert Repo.get!(CMS.Model.KanbanState, mirror_relation.id).status == @article_status.done
+    end
+
+    test "can remove a post from one Community-local Kanban",
+         ~m(user community post_attrs)a do
+      {:ok, kanban} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, article} = CMS.FrontDesk.article(kanban.article_id, mode: :internal)
+
+      assert {:ok, _} = CMS.Kanban.add_post(community, article, @article_status.todo, user)
+      assert {:ok, _} = CMS.Kanban.remove_post(community, article, user)
+
+      relation =
+        Repo.get_by!(CMS.Model.ArticleCommunity,
+          article_id: kanban.article_id,
+          community_id: community.id
+        )
+
+      refute Repo.get(CMS.Model.KanbanState, relation.id)
     end
 
     test "can create kanban post with valid attrs", ~m(user2 community post_attrs)a do

@@ -1,6 +1,7 @@
-# Article Community Placement
+# Article Community
 
-> 状态：target contract；placement role normalization 已实现，公共路径与 Kanban 仍待对齐。
+> 状态：ArticleCommunity relation normalization、Community-local Kanban、公共路径编号切换与
+> legacy GraphQL cleanup 已实现。
 >
 > 本文是 Article 与 Community 关系的唯一产品合同。Revision、Draft、Lifecycle、
 > Moderation、Kanban 等文档只能引用本文，不能重新定义一套 `home` / `mirror` 关系角色。
@@ -46,12 +47,12 @@ Article 与 Community 是多对多关系，并且同一篇 Article 在不同 Com
 
 ```text
 Article A
-├── Community A placement
+├── Community A ArticleCommunity
 │   ├── tags: product, urgent
 │   ├── pinned: false
 │   └── kanban: todo
 │
-└── Community B placement
+└── Community B ArticleCommunity
     ├── tags: frontend
     ├── pinned: true
     └── kanban: wip
@@ -63,7 +64,7 @@ Article A
 ArticleCommunity
 ├── ArticleCommunityTag     0..N
 ├── PinnedArticle           0..1
-└── KanbanState             0..1（目标能力，尚未实现）
+└── KanbanState             0..1（已实现）
 ```
 
 这层关系提供三个能力：
@@ -94,10 +95,9 @@ unmirror(article, community)
   -> cascade Community-local tags / pin / kanban state
 ```
 
-删除 placement 不删除 Article、Revision、Comment、Interaction 或其他共享事实。
+删除 ArticleCommunity 关系不删除 Article、Revision、Comment、Interaction 或其他共享事实。
 
-当前路径合同尚未确定时，若目标 Community 等于 `Article.community_id`，命令返回
-`current_path_placement`，拒绝删除这个临时路径锚点；路径合同落地后再重新评估该守卫。
+如果 Article 已发布，至少必须保留一条 ArticleCommunity 关系；最后一条关系不能被删除。
 
 ### 3.3 Move
 
@@ -105,22 +105,22 @@ unmirror(article, community)
 
 ```text
 move(article, source, destination)
-  -> add destination placement
-  -> remove source placement
+  -> add destination ArticleCommunity
+  -> remove source ArticleCommunity
 ```
 
-添加目标 placement 与移除来源 placement 必须在同一事务内原子完成；任一步失败都不得留下
-双 placement 或零 placement 的中间状态。
+添加目标关系与移除来源关系必须在同一事务内原子完成；任一步失败都不得留下双关系或零
+关系的中间状态。
 
 `move` 不查找或替换特殊的 `home` relation。也可以在产品层只暴露“添加到社区”和
 “从社区移除”，不再提供独立 Move 概念。
 
 这些命令的 actor/action admission 仍由 CMS Gate 负责；关系唯一性、两端 Community
-存在性和关联数据清理由 Article Community placement owner 负责。
+存在性和关联数据清理由 ArticleCommunity owner 负责。
 
 ## 4. 可见性边界
 
-Placement membership、Article Lifecycle、Moderation 和 Community Lifecycle 是不同事实：
+ArticleCommunity membership、Article Lifecycle、Moderation 和 Community Lifecycle 是不同事实：
 
 ```text
 ArticleCommunity exists
@@ -130,14 +130,17 @@ ArticleCommunity exists
   -> Article can appear in that Community
 ```
 
-如果产品需要“保留 placement，但仅在某个 Community 暂时隐藏”，可以在
+如果产品需要“保留 ArticleCommunity 关系，但仅在某个 Community 暂时隐藏”，可以在
 `ArticleCommunity` 上保留明确的 Community-local visibility 字段。否则，关系存在性本身
 足以表达 membership。
 
-不得把 Article-global moderation 复制成每条 placement 的独立权威；读取时组合权威事实，
+不得把 Article-global moderation 复制成每条 ArticleCommunity 关系的独立权威；读取时组合权威事实，
 或把冗余字段明确标注为可重建 Projection。
 
 ## 5. 公共路径与编号：待决合同
+
+当前采用的修复方向见 [`article-community-inner-id-fix.md`](./article-community-inner-id-fix.md)：
+公共 `inner_id` 归属 `ArticleCommunity`，每个 Community 关系独立编号。
 
 去掉特殊 `home` relation 后，公共路径不能再通过“home community”隐式定义。实现前必须
 单独确认以下产品规则：
@@ -145,7 +148,7 @@ ArticleCommunity exists
 1. 同一 Article 在不同 Community 中是否共享 `inner_id`；
 2. 还是每条 `ArticleCommunity` 分配 Community/thread-local `inner_id`；
 3. mirror 页面使用当前 Community 路径，还是跳转到一个与 Community 无关的稳定路径；
-4. 移除 placement 后，该 Community 下的旧路径是否立即失效或保留 redirect/tombstone。
+4. 移除 ArticleCommunity 关系后，该 Community 下的旧路径是否立即失效或保留 redirect/tombstone。
 
 在该决策完成前，文档和代码都不得使用 `home community`、`canonical home path` 或
 `home relation` 代替正式的路径合同。
@@ -166,28 +169,40 @@ status、rank、Subtask、Dependency 和 Schedule。KanbanState 不是第二个 
 
 ## 7. 当前实现偏差
 
-截至本文修订时，当前实现仍与目标合同存在以下偏差：
+ArticleCommunity relation normalization、Community-local Kanban、公共路径编号切换和旧 GraphQL
+mutation 清理已经落地：
 
-- `Article.community_id` 仍承担现有公共路径与编号的当前 Community 锚点；
-- `move` 为兼容现有路径/编号流程，仍会更新 `Article.community_id` 并重新编号；
-- GraphQL 旧 mutation `mirror_to_home` / `move_to_blackhole` 仍暴露，但现在分别只是
-  普通 placement add 和普通 Move；它们的名称与旧语义不一致，必须移除或改名；
-- 在路径合同落地前，`unmirror` 拒绝删除与 `Article.community_id` 相同的当前路径 placement；
-- Kanban `PostState.status` 仍以 `article_id` 为全局作用域，mirror Community 不能拥有独立状态。
+- `ArticleCommunity.inner_id` 是 Community-local 公共编号的唯一来源；
+- `Article.community_id` / `Article.inner_id` 不再由 mirror、move 或 publish 写入；
+- `move` 只组合添加目标关系与移除来源关系，不承担特殊 home 语义；
+- `unmirror` 不再依赖 `current_path_placement`，但已发布 Article 不能删除到零关系。
 
-这些是待修复实现，不是需要继续兼容的产品合同。项目没有历史数据要求，实施时直接切换
-到最终模型，不增加双写、shadow read、backfill 或长期兼容层。
+已完成的实现约束：
+
+- GraphQL 旧 mutation `mirror_to_home` / `move_to_blackhole` 已移除；调用方使用
+  `mirror_article` / `move_article`，不再通过 `home` / `blackhole` 特殊名称表达关系；
+- Kanban 状态读写已迁到 `KanbanState.article_community_id`，不同 Community 的 mirror
+  状态互不影响；
+- `CMS.Kanban.add_post/move_post/remove_post` 与 ArticleCommunity-scoped Gate 已实现；GraphQL
+  `set_post_status` 通过当前 ArticlePath 的 ArticleCommunity 关系写入状态；
+- 项目没有历史数据要求，后续路径合同实施直接切换，不增加双写、shadow read、backfill
+  或长期兼容层。
 
 ## 8. 实施验收
 
 后续实现至少需要同时覆盖：
 
-- 部署并验证 placement role normalization migration；
-- 验证 create/mirror/unmirror/move 关系命令的原子性和级联清理；
-- 验证 `unmirror` 不能删除当前路径 placement；
-- 移除或重命名 `mirror_to_home` / `move_to_blackhole` GraphQL mutation，并更新 Passport、前端和测试；
-- 重新确认并实现第 5 节的路径与编号合同；
-- 让 List、Detail、Count、Tag、Pin、Search、Feed、Press 和 PublicCache 统一从 placement 读取；
-- 将 Community-local Kanban 状态迁到 `article_community_id` 作用域；
-- 更新 Gate Context、GraphQL contract、前端 cache identity、测试和源级文档；
-- 验证移除一个 placement 不会删除共享 Article 或影响其他 Community placement。
+- [已实现] 部署并验证 ArticleCommunity relation normalization migration；
+- [已实现] 验证 create/mirror/unmirror/move 关系命令的原子性和级联清理；
+- [已实现] 验证已发布 Article 至少保留一条 ArticleCommunity 关系；
+- [已实现] 移除 `mirror_to_home` / `move_to_blackhole` GraphQL mutation，并清理对应
+  Passport action、测试和文案；
+- [已实现] 暴露 `CMS.Kanban` 的 add/move/remove command facade，并让 Gate 按目标
+  `ArticleCommunity` 的 Community lifecycle 做 admission；
+- [已实现] 统一从 ArticleCommunity 关系读取公共路径与编号；
+- 让 List、Detail、Count、Tag、Pin、Search、Feed、Press 和 PublicCache 统一从 ArticleCommunity 关系读取；
+- [已实现] 验证 Community-local Kanban 状态始终按 `article_community_id` 读写，且不同
+  mirror Community 的状态互不影响；
+- [已实现] 更新 GraphQL contract、前端 cache identity、测试和源级文档；Gate 的 Kanban
+  command scope 已按目标 ArticleCommunity 关系接入；
+- [已实现] 验证移除一个 ArticleCommunity 关系不会删除共享 Article 或影响其他 Community 关系。

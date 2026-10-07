@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
   alias GroupherServer.CMS
   alias CMS.Seeds.LiteHome
-  alias CMS.Model.{Article, ArticleCommunity, ArticleLifecycle, PostState}
+  alias CMS.Model.{Article, ArticleCommunity, ArticleLifecycle, KanbanState}
 
   describe "[lite home seeds]" do
     test "resets home with minimal main and dashboard data" do
@@ -28,8 +28,8 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
           from(article in Article,
             join: relation in ArticleCommunity,
             on: relation.article_id == article.id,
-            join: state in PostState,
-            on: state.article_id == article.id,
+            join: state in KanbanState,
+            on: state.article_community_id == relation.id,
             where:
               relation.community_id == ^community.id and article.thread == :post and
                 not is_nil(state.status),
@@ -45,8 +45,12 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
       post = article_by_title!(community.id, "一次线上故障复盘记录")
 
       {1, _} =
-        from(state in PostState, where: state.article_id == ^post.id)
-        |> Repo.update_all(set: [status: nil])
+        from(state in KanbanState,
+          join: relation in ArticleCommunity,
+          on: relation.id == state.article_community_id,
+          where: relation.article_id == ^post.id and relation.community_id == ^community.id
+        )
+        |> Repo.delete_all()
 
       assert kanban_count(community.id) == 3
 
@@ -79,8 +83,8 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
     |> join(:inner, [article], lifecycle in ArticleLifecycle,
       on: lifecycle.article_id == article.id and lifecycle.state in [:published, :archived]
     )
-    |> join(:inner, [article], state in PostState,
-      on: state.article_id == article.id and not is_nil(state.status)
+    |> join(:inner, [article, relation], state in KanbanState,
+      on: state.article_community_id == relation.id
     )
     |> where(
       [article, relation],

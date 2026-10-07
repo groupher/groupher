@@ -24,10 +24,12 @@ defmodule GroupherServer.CMS.Articles.States do
 
   alias CMS.Model.{
     Article,
+    ArticleCommunity,
     Community,
     DocBranch,
     DocBranchState,
     PinnedArticle,
+    KanbanState,
     PostState
   }
 
@@ -59,15 +61,44 @@ defmodule GroupherServer.CMS.Articles.States do
     end
   end
 
-  @doc "Sets the immediate Kanban status of a stable Post projection."
-  def set_status(%Article{id: article_id, thread: :post} = article, status) do
-    with %PostState{} = state <- Repo.get(PostState, article_id),
-         {:ok, _state} <- state |> PostState.changeset(%{status: status}) |> Repo.update() do
+  @doc "Sets the Community-local Kanban status of a stable Post projection."
+  def set_status(%Article{} = article, status),
+    do: set_status(article, status, article.community_id)
+
+  @spec set_status(Article.t(), Const.status_enum() | nil, pos_integer()) ::
+          T.domain_res(Article.t())
+  def set_status(%Article{thread: :post} = article, status, community_id)
+      when is_integer(community_id) do
+    with %ArticleCommunity{} = relation <-
+           Repo.get_by(ArticleCommunity, article_id: article.id, community_id: community_id),
+         {:ok, _state} <- put_kanban_state(relation, status) do
       {:ok, article}
     else
-      nil -> {:error, ErrorCat.article_not_found("article not found")}
+      nil -> {:error, ErrorCat.article_not_found("article community not found")}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  def set_status(%Article{}, _status, _community_id) do
+    {:error, ErrorCat.article_not_found("post not found")}
+  end
+
+  defp put_kanban_state(%ArticleCommunity{id: article_community_id}, nil) do
+    Repo.delete_all(
+      from(state in KanbanState, where: state.article_community_id == ^article_community_id)
+    )
+
+    {:ok, :removed}
+  end
+
+  defp put_kanban_state(%ArticleCommunity{id: article_community_id}, status) do
+    %KanbanState{}
+    |> KanbanState.changeset(%{article_community_id: article_community_id, status: status})
+    |> Repo.insert(
+      on_conflict: [set: [status: status, updated_at: DateTime.utc_now(:second)]],
+      conflict_target: [:article_community_id],
+      returning: true
+    )
   end
 
   @spec update_active_timestamp(atom(), term()) :: T.domain_res(term())
@@ -237,26 +268,20 @@ defmodule GroupherServer.CMS.Articles.States do
   def move(%Community{} = target_community, article, community_tag_ids \\ []) do
     with {:ok, stable} <- stable_article(article),
          {:ok, moved} <- ArticleCommunities.move(stable, target_community),
-         relation <-
-           Repo.get_by!(CMS.Model.ArticleCommunity,
-             article_id: moved.id,
-             community_id: moved.community_id
-           ),
+         {:ok, relation} <- relation_for_move(moved.id, target_community.id),
          {:ok, _relation} <- ArticleCommunities.replace_tags(relation, community_tag_ids) do
-      {:ok, Map.merge(article, %{community_id: moved.community_id, inner_id: moved.inner_id})}
+      {:ok, article}
     end
   end
 
-  @spec mirror_to_home(Community.t(), T.article()) :: T.domain_res(T.article())
-  @spec mirror_to_home(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def mirror_to_home(%Community{} = home_community, article, community_tag_ids \\ []) do
-    mirror(home_community, article, community_tag_ids)
-  end
-
-  @spec move_to_blackhole(Community.t(), T.article()) :: T.domain_res(T.article())
-  @spec move_to_blackhole(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def move_to_blackhole(%Community{} = blackhole, article, community_tag_ids \\ []) do
-    move(blackhole, article, community_tag_ids)
+  defp relation_for_move(article_id, community_id) do
+    case Repo.get_by(CMS.Model.ArticleCommunity,
+           article_id: article_id,
+           community_id: community_id
+         ) do
+      %CMS.Model.ArticleCommunity{} = relation -> {:ok, relation}
+      nil -> {:error, ErrorCat.article_not_found("article community not found")}
+    end
   end
 
   defp in_active_period?(thread, article) do

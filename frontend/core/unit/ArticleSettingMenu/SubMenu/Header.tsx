@@ -76,19 +76,6 @@ const Header: FC<TProps> = ({ type }) => {
       break
     }
 
-    case SUB_MENU.MIRROR: {
-      Content = (
-        <>
-          <SlugSVG className={s.icon} />
-          镜像到 Groupher
-          <div className='grow' />
-          <InfoSVG className={s.questionIcon} />
-        </>
-      )
-
-      break
-    }
-
     case SUB_MENU.TAGS: {
       Content = (
         <>

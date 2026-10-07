@@ -35,6 +35,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
     DocBranchState,
     DocLifecycle,
     DocRevision,
+    KanbanState,
     PinnedArticle,
     PostState
   }
@@ -182,7 +183,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
       meta: Map.fetch!(anchor, :meta)
     }
     |> Map.merge(stable_revision_extension(article.thread, revision.id))
-    |> Map.merge(stable_operational_extension(article))
+    |> Map.merge(stable_operational_extension(article, community.id))
     |> ArticleResult.from_map()
   end
 
@@ -197,14 +198,27 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
     |> Enum.take(10)
   end
 
-  defp stable_operational_extension(%Article{thread: :post, id: article_id}) do
-    case Repo.get(PostState, article_id) do
-      %PostState{} = state -> %{cat: state.cat, status: state.status}
-      nil -> %{cat: nil, status: nil}
-    end
+  defp stable_operational_extension(%Article{thread: :post, id: article_id}, community_id) do
+    cat =
+      case Repo.get(PostState, article_id) do
+        %PostState{cat: cat} -> cat
+        nil -> nil
+      end
+
+    status =
+      Repo.one(
+        from(relation in ArticleCommunity,
+          left_join: state in KanbanState,
+          on: state.article_community_id == relation.id,
+          where: relation.article_id == ^article_id and relation.community_id == ^community_id,
+          select: state.status
+        )
+      )
+
+    %{cat: cat, status: status}
   end
 
-  defp stable_operational_extension(%Article{}), do: %{}
+  defp stable_operational_extension(%Article{}, _community_id), do: %{}
 
   defp stable_meta(%Article{thread: :doc} = article, branch_id) when is_integer(branch_id) do
     case Repo.get_by(DocBranchState, article_id: article.id, branch_id: branch_id) do

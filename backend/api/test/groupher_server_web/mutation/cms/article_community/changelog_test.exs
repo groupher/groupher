@@ -12,14 +12,11 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
     {:ok, community2} = mock_community(user)
     {:ok, community3} = mock_community(user)
 
-    {:ok, blackhole} = mock_community(user, %{slug: "blackhole"})
-
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
     owner_conn = simu_conn(:owner, changelog)
 
-    {:ok,
-     ~m(user_conn guest_conn owner_conn community community2 community3 blackhole changelog user)a}
+    {:ok, ~m(user_conn guest_conn owner_conn community community2 community3 changelog user)a}
   end
 
   describe "[mirror/unmirror/move changelog to/from community]" do
@@ -123,35 +120,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       assoc_communities = CMS.Articles.Communities.communities(changelog) |> Enum.map(& &1.id)
       assert community2.id not in assoc_communities
       assert community3.id in assoc_communities
-    end
-
-    test "auth user can mirror changelog home", ~m(user community changelog)a do
-      {:ok, home_community} = mock_community(user, %{slug: "home"})
-
-      variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
-      }
-
-      passport_rules = %{"homemirror" => true}
-      rule_conn = simu_conn(:user, cms: passport_rules)
-
-      rule_conn |> gq_mutation(S.Article.m(:mirror_to_home), variables)
-
-      assert exist_in?(home_community, CMS.Articles.Communities.communities(changelog))
-    end
-
-    test "auth user can move changelog to blackhole", ~m(community blackhole changelog)a do
-      variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
-      }
-
-      passport_rules = %{"blackeye" => true}
-      rule_conn = simu_conn(:user, cms: passport_rules)
-
-      rule_conn |> gq_mutation(S.Article.m(:move_to_blackhole), variables)
-
-      changelog = Repo.get!(CMS.Model.Article, changelog.id)
-      assert changelog.community_id == blackhole.id
     end
 
     test "auth user can move changelog to other community",

@@ -222,31 +222,5 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
       resolve(&R.CMS.Articles.move_article/3)
     end
-
-    @desc "legacy: add article placement to the Community with slug home"
-    field :mirror_to_home, :article do
-      arg(:article, non_null(:article_path_input))
-      arg(:community_tags, list_of(:id), default_value: [])
-
-      middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "article.mirror_home")
-      middleware(M.FrontDesk, target_community: :home)
-      middleware(M.FrontDesk, :article)
-
-      resolve(&R.CMS.Articles.mirror_to_home/3)
-    end
-
-    @desc "legacy: move article to the Community with slug blackhole"
-    field :move_to_blackhole, :article do
-      arg(:article, non_null(:article_path_input))
-      arg(:community_tags, list_of(:id), default_value: [])
-
-      middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "article.move_blackhole")
-      middleware(M.FrontDesk, target_community: :blackhole)
-      middleware(M.FrontDesk, :article)
-
-      resolve(&R.CMS.Articles.move_to_blackhole/3)
-    end
   end
 end

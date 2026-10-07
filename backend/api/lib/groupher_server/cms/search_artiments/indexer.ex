@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   alias CMS.{ErrorCat, SearchArtiments}
   alias CMS.FrontDesk
   alias CMS.SearchArtiments.{Artiment, Config, Projection}
-  alias CMS.Model.{Article, Community}
+  alias CMS.Model.{Article, ArticleCommunity, Community}
 
   @article_threads Config.article_threads()
 
@@ -188,12 +188,17 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
 
   defp public_article(thread, article_id) do
     with %Article{thread: ^thread} = article <- Repo.get(Article, article_id),
+         %ArticleCommunity{inner_id: inner_id} <-
+           Repo.get_by(ArticleCommunity,
+             article_id: article.id,
+             community_id: article.community_id
+           ),
          %Community{} = community <- Repo.get(Community, article.community_id),
          {:ok, public} <-
            FrontDesk.article(%{
              community: community.slug,
              thread: thread,
-             inner_id: article.inner_id
+             inner_id: inner_id
            }) do
       {:ok, public}
     else

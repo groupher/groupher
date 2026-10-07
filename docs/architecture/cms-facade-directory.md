@@ -1,13 +1,13 @@
 # CMS Facade 与实现目录收口
 
-> 状态：F1–F7 已实施，公开 API 保持不变；整体验证记录见 §6.3。
+> 状态：F1–F13 已实施，公开 API 保持不变；实施验证记录见 §6.3。
 >
 > 范围：`backend/api/lib/groupher_server/cms` 下的公开 Context/facade 与同名实现目录。
 > 本文只调整内部文件职责，不改变 GraphQL、Job 或领域调用方使用的公开 API。
 
 相关文档：
 
-- [CMS Query V2](./cms-query-v2.md)：取代本文 §2.2 的 Reader 统一命名决策，冻结 Query、Store/Facts 与 FrontDesk 边界；
+- [CMS Query V2](./cms-query-v2.md)：冻结 Query、Store/Facts 与 FrontDesk 边界；
 - [Backend Rules](../rules/be.md)：后端模块所有权和 facade 约束；
 - [Command：复杂领域操作的组织边界](../feature/artiment/command.md)：Command、Writer、Gate、Lifecycle 与事务职责；
 - [Groupher Action Matrix 与 Transition Contract](../feature/lifecycle/transition-contract-improvement.md)：`commandId`、`CMS.Command.Receipt` 和具体 action 的执行合同；
@@ -34,7 +34,7 @@ projection、cache 和外部副作用由同名目录下的 owner 模块承担。
 
 ```text
 CMS.Comments
-  -> Comments.Reader / Writer / Commands / States / Moderation
+  -> Comments.Query / Writer / Commands / States / Moderation
 
 CMS.Command.Receipt
   -> CMS.Command.Receipt.Key / Runner / Store
@@ -76,28 +76,22 @@ CMS.Wallpaper.publish(...)
 
 不得为了移动内部实现，要求 GraphQL resolver、Job 或领域调用方改用子模块。
 
-### 2.2 读取模块统一命名为 Reader
+### 2.2 读取模块统一命名为 Query
 
-> 历史决策：本节记录 F1–F7 实施时的目录命名基线。后续 Reader/List 收口以
-> [CMS Query V2](./cms-query-v2.md) 为准；新代码不再以本节为依据新增 `Reader`。
+> 历史 F1–F7 文档曾使用 `Reader`。该命名已经被 [CMS Query V2](./cms-query-v2.md)
+> 取代；新代码和后续审计统一使用 `Query`、`Store/Facts` 或具名 read owner。
 
-CMS 当前已有 7 个 `reader.ex` 和 9 个 `writer.ex`，已经形成稳定配对：
+读取职责按以下规则判断：
 
 ```text
-Reader / Writer
-reader.ex / writer.ex
+single resource       -> CMS.FrontDesk
+list/search/aggregate -> CMS.<Domain>.Query
+persisted facts       -> CMS.<Domain>.Store / Facts
+projection/cache      -> owning Projection / Cache
 ```
 
-因此后续统一使用：
-
-```elixir
-CMS.Press.Reader
-CMS.Wallpaper.Reader
-CMS.Snapshot.Reader
-```
-
-不引入 `Read`，也不在同一 domain 中同时保留 `Read` 和 `Reader`。本文不要求重命名现有
-`Articles.Reader`、`Assets.Reader`、`Comments.Reader` 等模块。
+不得新增 `*.Reader`、`*.List` 或 Reader/Query 双轨兼容层。历史段落、旧目录名和旧测试名称如仍
+出现 `Reader`，只能作为迁移记录理解，不能作为新实现的命名依据。
 
 ### 2.3 复杂操作使用 commands/ 目录
 
@@ -137,32 +131,61 @@ Command 不复制底层 Writer，也不建立通用 Command Bus、DSL 或 callba
 
 ## 3. 当前审计结果
 
-本次检查覆盖 `cms/*.ex` 的 34 个顶层模块及其中 23 个同名目录。
+本次检查覆盖 `cms/*.ex` 的全部顶层模块、同名目录、Query V2、Command/Receipt、资源加载规则，
+以及 GraphQL、Job 和领域生产调用者。之前只列 F1–F7 七个模块的表格不完整，尤其遗漏了
+`CMS.Docs` 和 `CMS.Communities.request_destroy/3`。
 
-| 优先级 | 顶层模块        | 当前问题                                                                                          | 目标                                                 |
-| ------ | --------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| P1     | `CMS.Wallpaper` | 读取、upload、publish transaction、restore、receipt replay、retention 集中在约 968 行中           | facade + Reader/Upload/Publisher/Retention           |
-| P1     | `CMS.Press`     | 配置写入、Activity、HTTP invalidation、public query 和 projection 集中在约 637 行中               | facade + Reader/Projection/ConfigWriter/Invalidation |
-| P2     | `CMS.Articles`  | facade 内包含 create/update/draft/publish/trash 的 receipt 和 replay 编排                         | action 下沉到 `articles/commands/`                   |
-| P2     | `CMS.DocTree`   | facade 内包含 node/publish/trash 的 receipt 和 replay 编排                                        | action 下沉到 `doc_tree/commands/`                   |
-| P2     | `CMS.Assets`    | `delete_generated_assets/2` 直接查询并循环删除，Application upload 删除也在 facade 构造持久化对象 | 下沉到现有 `Assets.Deletion`                         |
-| P2     | `CMS.FrontDesk` | Community/Article/Comment/Tag/Relation/Reaction 查询与一个 Comment 写同步混在单文件               | 保持 API，内部按职责目录化                           |
-| P2     | `CMS.Snapshot`  | cache、authority read、projection、nested patch 和 refresh job 集中在约 500 行中                  | facade + Reader/Cache/Projection/Refresh             |
+### 3.1 本轮收口项
 
-以下是确认不属于 facade 目录错误的代表性模块，并非对全部 34 个顶层文件的穷举清单：
+| 优先级 | 顶层模块          | 当前问题                                                                            | 目标                                                      |
+| ------ | ----------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| F8     | `CMS.Docs`        | editor head、draft update、publish、restore、materialization 已移出 facade          | `Docs.Editor` + `Docs.Commands.*` + `Docs.BranchVersions` |
+| F9     | `CMS.Communities` | `request_destroy/3` 已移除 facade 内的 Command/Gate/Lifecycle 编排                  | `Communities.Commands.RequestDestroy`                     |
+| F10    | `CMS.Articles`    | archive/sink/status/category/comment-lock/moderation 已移入具体 Commands            | `Articles.Commands.*`                                     |
+| F11    | `CMS.Comments`    | create/reply/pin/fold/moderation 已移入具体 Commands；ID 兼容入口先解析再进入 owner | `Comments.Commands.*`                                     |
+| F12    | `CMS.Assets`      | 剩余入口逐项审计为一到两步 Writer delegate，无需虚构 Commands                       | `Assets.Writer` / `Assets.Deletion` / existing owners     |
+| F13    | `CMS.Command`     | execute contract 已收紧为 typed Confirmation action result                          | `CMS.Command` + `Receipt`                                 |
 
-- `CMS.Comments` 虽然公开函数多，但主要负责路由到 Reader、Writer、Commands、States 和 Moderation；
-- `CMS.Communities` 主要负责领域入口、admission 和子模块路由，没有把 Repo 实现堆在 facade；
-- `CMS.CommunityApplications`、`CMS.DocCover`、`CMS.AbuseReports`、`CMS.Dashboard`、
-  `CMS.Search`、`CMS.Seeds`、`CMS.Interactions`、`CMS.Gate`、`CMS.Passport` 和
-  `CMS.Policy` 的当前边界可以保留；
-- `CMS.DocPublishRelease` 和 `CMS.Covers` 是明确的领域实现模块，后续可以因文件复杂度拆分，
-  但不属于“伪装成 facade”的同一问题。
+已完成的 F1–F7 实施结果：
 
-本次也检查了 `CMS.Trash`、`CMS.Docs`、`CMS.ShadowSync`、`CMS.Events`、`CMS.Marker`、
-`CMS.QueryBuilder` 和 `CMS.ErrorCat`。它们分别是跨 Trash action 协调、领域入口、projection
-同步或基础支撑模块；当前不纳入本次 facade 目录整改。未列出的顶层文件不能据此自动归入问题域，
-需要按 §2.4 的职责标准单独判断。
+| 模块            | 当前状态                                                       |
+| --------------- | -------------------------------------------------------------- |
+| `CMS.Wallpaper` | 已拆为 Query、Upload、Publisher、Retention                     |
+| `CMS.Press`     | 已拆为 Query、Projection、ConfigWriter、Invalidation           |
+| `CMS.DocTree`   | 已有 Commands、Query、Writer、Publish、Trash                   |
+| `CMS.FrontDesk` | 已按 Article、Comment、Community、Relation 等内部 owner 拆分   |
+| `CMS.Snapshot`  | 已拆为 Query、Cache、Projection、Refresh                       |
+| `CMS.Assets`    | Deletion 与 ReplaceUse 已完成，其他简单 Writer 入口待审计      |
+| `CMS.Kanban`    | 本轮已完成 Commands、Query 和 canonical Article/Community 入口 |
+
+### 3.2 本轮实施边界
+
+`CMS.Docs` 的 `read_editor_head/3`、`update_draft/4`、`publish_branch/4` 和
+`restore_revision_to_draft/5` 现在分别经过 `Docs.Editor` 与具体 Commands；facade 只保留稳定入口和
+轻量 BranchVersions delegate。
+
+`CMS.Communities.request_destroy/3` 现在由 `Communities.Commands.RequestDestroy` 拥有 action、
+Confirmation、Gate、Lifecycle 和 receipt result，顶层只保留 delegate。
+
+`CMS.Articles` 的 Kanban `set_status/4`、普通 `set_status/3`、sink、moderation 和 comment lock
+现在都进入具体 command owner；projection map 的兼容入口在 command boundary 只解析一次 canonical Article。
+
+`CMS.Comments` 的 ID overload 作为现有可信内部兼容入口保留；struct 入口是 Commands 的主要合同，
+facade 不再把已加载 struct 降级为 ID 后交给 Writer/States/Moderation。
+
+### 3.3 已审计且刻意保留的 owner
+
+以下模块当前不因“文件内有 Repo/Ecto/helper”而纳入 facade 迁移：
+
+- 基础设施：`CMS.Command`、`CMS.Outbox`、`CMS.QueryBuilder`、`CMS.ErrorCat`、`CMS.CanonicalJson`、`CMS.Hash`、`CMS.Const`；
+- 领域实现：`CMS.ArticleStats`、`CMS.DocPublishRelease`、`CMS.Trash`、`CMS.ShadowSync`、`CMS.Marker`；
+- 稳定 facade：`CMS.AbuseReports`、`CMS.CommunityApplications`、`CMS.DocCover`、`CMS.Dashboard`、
+  `CMS.Events`、`CMS.Gate`、`CMS.Interactions`、`CMS.Passport`、`CMS.Policy`、`CMS.Search`、
+  `CMS.SearchArtiments`、`CMS.Seeds`、`CMS.ViewTracker`、`CMS.ArtimentMentions`。
+
+`CMS.Command` 不是普通产品 facade。它拥有 commandId、operation tag、target identity、
+Confirmation contract 和 Receipt 执行边界，不能因为模块名或 helper 较多就机械拆分；后续只需
+单独审计其 typespec 与 Command V3 文档一致性。
 
 ## 4. 目标目录
 
@@ -187,7 +210,90 @@ CMS.Assets.delete_generated_assets(community, public_refs)
 CMS.Assets.delete_application_upload_object(upload)
 ```
 
-### 4.2 Articles Commands
+### 4.2 Docs Commands 与 Projection
+
+`CMS.Docs` 不是纯路由 facade。目标目录如下：
+
+```text
+docs.ex
+  -> Docs.Query / BranchVersions
+  -> Docs.Commands.UpdateDraft
+  -> Docs.Commands.PublishBranch
+  -> Docs.Commands.RestoreRevisionToDraft
+  -> Docs.DraftResult / Projection
+```
+
+具体职责：
+
+- `read_editor_head/3`：由 Query 和 DraftResult/Projection 承担 branch、lifecycle 和
+  draft/public materialization；
+- `update_draft/4`：由 `Commands.UpdateDraft` 承担版本冲突、Gate、draft 初始化和写入；
+- `publish_branch/4`：由 `Commands.PublishBranch` 承担 Gate、发布和 PublishEffects；
+- `restore_revision_to_draft/5`：由 `Commands.RestoreRevisionToDraft` 承担 Gate 和 restore；
+- `list_branch_versions/3`、`get_branch_version/3`、`diff_versions/4`：可以继续作为轻量
+  facade delegate 到 `Docs.BranchVersions`。
+
+`stable_doc/1`、actor normalization 和结果 materialization 不应继续作为 `docs.ex` 的私有业务
+算法。公开 Doc API 的参数和返回形状保持不变。
+
+### 4.3 Communities RequestDestroy
+
+```text
+communities.ex
+  -> Communities.Commands.RequestDestroy
+       -> CMS.Command
+       -> Gate / Lifecycle / Confirmation
+```
+
+`CMS.Communities.request_destroy/3` 只保留公开入口。Command、Gate、Lifecycle、Confirmation 和
+receipt result projection 全部归入具体 action；字符串/ID 兼容入口 `request_destroy/2` 仍按现有
+Lifecycle 合同保留，不能与 authenticated command 入口混为一谈。
+
+### 4.4 Articles 与 Comments 延迟写入口
+
+Articles 尚未收口的动作包括：
+
+```text
+archive
+sink / undo_sink
+set_cat / set_status
+update_active_timestamp
+lock_comments / undo_lock_comments
+set_illegal / unset_illegal / set_audit_failed
+```
+
+这些动作应逐个进入 `Articles.Commands.<Action>`，由具体 use-case 拥有 Gate、States、Moderation、
+commandId 和结果重读。Kanban 专用 `set_status/4` 已完成，不代表普通 `set_status/3` 已完成。
+
+Comments 尚未完成统一审计的动作包括：
+
+```text
+create_comment* / reply_comment*
+pin_comment / undo_pin_comment
+fold_comment / unfold_comment
+set_comment_illegal / unset_comment_illegal
+set_comment_audit_failed / paged_audit_failed_comments
+```
+
+其中 `update_comment`、`delete_comment` 已经使用具体 Commands；其余入口需要决定是进入
+`Comments.Commands.*`，还是明确保留为一到两步的 domain owner delegate。公开写入口不得把已加载
+struct 降级为 ID 后再由底层重复加载；仅可信内部兼容入口可以在单独合同中保留。
+
+### 4.5 Assets 剩余 Writer 入口审计
+
+`Assets.Deletion` 和 `Assets.Commands.ReplaceUse` 已完成。以下入口仍需逐项确认是否保持简单
+Writer delegate，或下沉为具名 use-case：
+
+```text
+register / register_to_community
+delete / archive / restore
+link_refs / copy_refs / cleanup_refs
+```
+
+不得因为存在 `Assets.Writer` 就自动判定所有入口已完成；需要逐个核对资源形态、事务边界、
+commandId 和生产调用者。
+
+### 4.6 Articles Commands
 
 ```text
 articles.ex
@@ -230,7 +336,7 @@ permanently_delete_trashed -> permanently_delete
 - denied Activity 的事务外写入属于具体 Trash command，不移回共享 `CMS.Command.Receipt.Runner`；
 - `Articles` facade 继续暴露现有函数，调用方不引用 `Commands.*`。
 
-### 4.3 DocTree Commands
+### 4.7 DocTree Commands
 
 ```text
 doc_tree.ex
@@ -272,14 +378,14 @@ Commands.Trash
   `CMS.DocTree.Trash.permanently_delete_action/3`。该路径当前不使用 receipt/replay，不在 F3
   范围内，也不为此新增 `CMS.DocTree` 公开入口。
 
-### 4.4 Press
+### 4.8 Press
 
 ```text
 press.ex                        # public facade
 
 press/
 ├── config.ex                  # 已存在：静态 thread contract
-├── reader.ex                  # article/feed/manifest authority reads
+├── query.ex                   # article/feed/manifest authority reads
 ├── projection.ex              # article/feed/community/config projection
 ├── config_writer.ex           # persisted config + Activity
 └── invalidation.ex            # Press HTTP cache invalidation
@@ -288,13 +394,13 @@ press/
 ```text
 CMS.Press
   ├── config/update_config -> ConfigWriter
-  ├── article/feed/manifest -> Reader -> Projection
+  ├── article/feed/manifest -> Query -> Projection
   └── invalidate           -> Invalidation
 ```
 
 `Config` 继续只表示 Press-owned 静态配置，不把数据库中的 `PressConfig` 写入逻辑塞入该模块。
 
-### 4.5 Wallpaper
+### 4.9 Wallpaper
 
 ```text
 wallpaper.ex                    # public facade
@@ -303,7 +409,7 @@ wallpaper/
 ├── error_cat.ex               # 已存在
 ├── request_digest.ex          # 已存在
 ├── settings.ex                # 已存在
-├── reader.ex                  # wallpaper/settings/history
+├── query.ex                   # wallpaper/settings/history
 ├── upload.ex                  # targets + prepare_upload
 ├── publisher.ex               # publish + restore + receipt replay
 └── retention.ex               # reconcile_lifecycle
@@ -311,7 +417,7 @@ wallpaper/
 
 ```text
 CMS.Wallpaper
-  ├── wallpaper/settings/history -> Reader
+  ├── wallpaper/settings/history -> Query
   ├── prepare_upload             -> Upload
   ├── publish/restore            -> Publisher
   └── reconcile_lifecycle        -> Retention
@@ -320,7 +426,7 @@ CMS.Wallpaper
 不建立 Wallpaper 通用 `Store`。各模块拥有自己的查询和事务，避免 `Store` 再次成为无业务语义的
 数据库 helper 集合。
 
-### 4.6 FrontDesk
+### 4.10 FrontDesk
 
 FrontDesk V2 已直接切换。以下目录只描述当前资源 facade 与稳定关系，
 不再保留 V1 的通用 lookup、reaction-users 或写操作转发：
@@ -355,13 +461,13 @@ front_desk/
 - `live_user`、CMS 层 `revalidate_user/1` 已删除。User cache refresh 统一使用根
   `GroupherServer.FrontDesk.revalidate().user/1`；
 - 通用 `get/get_by/preload` 与 `CMS.FrontDesk.Lookup` 已删除，不保留兼容 wrapper；内部行读取归
-  owning Reader、Store、Gate Loader 或 maintenance owner；
+  owning Query、Store、Gate Loader 或 maintenance owner；
 - `community_tags/1` 已删除且不新增替代 wrapper；batch、list、stats、reaction-users 等读取归各自
   owning facade，不进入 FrontDesk。
 
 以上边界以 [FrontDesk V2](../feature/front-desk/v2.md) 的 mode、single-resource 和 surface 处置表为准。
 
-### 4.7 Snapshot
+### 4.11 Snapshot
 
 保留 User、Article、Comment 三种 Snapshot 合同，即使其中一部分当前只有测试调用。
 
@@ -369,7 +475,7 @@ front_desk/
 snapshot.ex                     # public facade
 
 snapshot/
-├── reader.ex                   # authority DB query + typed summary/unavailable result
+├── query.ex                    # authority DB query + typed summary/unavailable result
 ├── cache.ex                    # cache key/get/put/TTL
 ├── projection.ex               # mode orchestration + flat/nested patch
 └── refresh.ex                  # enqueue + perform_refresh
@@ -387,7 +493,7 @@ Snapshot.Projection
        |                       v
        |                Snapshot.Refresh
        |
-       +-- blocking ----> Snapshot.Reader
+       +-- blocking ----> Snapshot.Query
                                |
                                v
                          Snapshot.Cache
@@ -403,7 +509,7 @@ refresh_async/perform_refresh
 ```
 
 `ShadowSync` 继续作为 reaction-facing projection boundary，不把 reaction 字段遍历逻辑塞入
-`Snapshot.Reader`。文件和模块保持在 CMS 根目录的 `shadow_sync.ex` / `CMS.ShadowSync`，F7 不将其
+`Snapshot.Query`。文件和模块保持在 CMS 根目录的 `shadow_sync.ex` / `CMS.ShadowSync`，F7 不将其
 顺手移动到 `snapshot/`。
 
 ## 5. 执行顺序
@@ -411,7 +517,7 @@ refresh_async/perform_refresh
 每个 phase 独立完成、独立验证，不把多个大型 facade 放进同一个 diff。
 
 ```text
-F0  冻结 Reader/Writer、commands/ 和 facade API 规则
+F0  冻结 Query/Writer、commands/ 和 facade API 规则
  |
  v
 F1  Assets 小范围下沉
@@ -429,24 +535,51 @@ F5  Wallpaper                  # 与 Press 分开，独立批次
 F6  FrontDesk 内部目录化
 
 F7  Snapshot 四模块拆分
+ |
+ v
+F8  Docs facade 收口
+ |
+ v
+F9  Communities.RequestDestroy command-entry 收口
+ |
+ v
+F10 Articles 延迟写动作审计与 Commands 收口
+ |
+ v
+F11 Comments 写入口与资源加载合同审计
+ |
+ v
+F12 Assets 剩余 Writer 入口审计
+ |
+ v
+F13 CMS.Command 类型合同与文档一致性审计
 ```
 
 实施结果：
 
 ```text
-[x] F0  冻结公开 API、Reader/Writer、commands/ 与 Gate/Lifecycle 边界
+[x] F0  冻结公开 API、Query/Writer、commands/ 与 Gate/Lifecycle 边界
 [x] F1  Assets.Deletion 承接删除实现
 [x] F2  Articles.Commands.{Create,Update,Draft,Publish,Trash}
 [x] F3  DocTree.Commands.{Node,Publish,Trash}
-[x] F4  Press.{Reader,Projection,ConfigWriter,Invalidation}
-[x] F5  Wallpaper.{Reader,Upload,Publisher,Retention}
+[x] F4  Press.{Query,Projection,ConfigWriter,Invalidation}
+[x] F5  Wallpaper.{Query,Upload,Publisher,Retention}
 [x] F6  FrontDesk 按 Article/Comment/Community/Lookup/Relation/ReactionUsers 拆分
-[x] F7  Snapshot.{Reader,Cache,Projection,Refresh}
+[x] F7  Snapshot.{Query,Cache,Projection,Refresh}
+[x] F8  Docs facade 收口
+[x] F9  Communities.Commands.RequestDestroy
+[x] F10 Articles 延迟写动作
+[x] F11 Comments 写入口与资源加载合同
+[x] F12 Assets 剩余 Writer 入口审计
+[x] F13 CMS.Command 类型合同与文档一致性
 ```
 
 实现过程中没有新增 GraphQL operation，也没有要求 resolver、Job 或领域调用方改用内部子模块。
 `CMS.Articles`、`CMS.DocTree`、`CMS.Press`、`CMS.Wallpaper`、`CMS.FrontDesk` 和
 `CMS.Snapshot` 仍是稳定入口。
+
+F1–F13 已完成。后续新增 CMS 写入口必须直接进入具体 Commands 或已有明确 owner，不得重新把完整 action
+编排放回顶层 facade。
 
 依赖说明：
 
@@ -462,8 +595,7 @@ F7  Snapshot 四模块拆分
 - GraphQL resolver、Job 和领域调用方继续只调用顶层 facade；
 - facade 公开函数名称、参数默认值、返回形状和 ErrorCat 不变；
 - 新实现模块位于 owner 的同名目录，不建立跨领域 `Utils` 或通用 mutation framework；
-- `Reader/Writer` 命名统一、不出现新的 `Read` 是 F1–F7 的历史验收标准；后续读侧命名与
-  `Reader` 收口以 [CMS Query V2](./cms-query-v2.md) 为准；
+- `Query/Writer` 命名和 Query V2 规则适用于新代码；不得新增 `Reader`、`List` 或双轨兼容层；
 - action module 使用 `commands/<action>.ex`，不创建大而模糊的 `Commands.Write`；
 - facade 不再拥有 Ecto query、Repo transaction、HTTP 调用、cache 或长 private algorithm；
 - 领域 Command 可以调用共享 `CMS.Command.Receipt`，但共享 Runner 不吸收领域 Gate、Lifecycle、Activity
@@ -483,7 +615,7 @@ mix test <owner context focused tests>
 还需验证：
 
 - facade 合同测试覆盖原公开入口；
-- implementation 测试直接测试对应 Reader、Commands、Publisher 或 Projection；
+- implementation 测试直接测试对应 Query、Commands、Publisher 或 Projection；
 - Command phase 覆盖 execute、replay、fingerprint conflict、Gate denial 和 rollback；
 - 纯目录移动不能通过改测试期望掩盖行为变化；
 - `git diff --check` 通过，并确认没有吸收工作区其他功能改动。
@@ -492,25 +624,42 @@ mix test <owner context focused tests>
 
 各 phase 完成后执行了 warnings-as-errors 编译和 owner-focused tests：
 
-| Phase                | Focused tests | 结果   |
-| -------------------- | ------------: | ------ |
-| F1 Assets            |            21 | passed |
-| F2 Articles Commands |           280 | passed |
-| F3 DocTree Commands  |            84 | passed |
-| F4 Press             |             9 | passed |
-| F5 Wallpaper         |            12 | passed |
-| F6 FrontDesk         |           246 | passed |
-| F7 Snapshot          |            16 | passed |
+| Phase                |                   Focused tests | 结果   |
+| -------------------- | ------------------------------: | ------ |
+| F1 Assets            |                              21 | passed |
+| F2 Articles Commands |                             280 | passed |
+| F3 DocTree Commands  |                              84 | passed |
+| F4 Press             |                               9 | passed |
+| F5 Wallpaper         |                              12 | passed |
+| F6 FrontDesk         |                             246 | passed |
+| F7 Snapshot          |                              16 | passed |
+| F8 Docs              | compile + facade contract audit | passed |
+| F9 Communities       |                              58 | passed |
+| F10 Articles         |                              14 | passed |
+| F11 Comments         |                              17 | passed |
+| F12 Assets           |           compile + owner audit | passed |
+| F13 CMS.Command      |   compile + type contract audit | passed |
 
 这些数字记录每个 phase 当时执行的测试集合，集合之间可能重叠，不能相加当作唯一测试数。
 
-最终整体验证：
+本轮最终验证：
 
 ```text
 mix compile --warnings-as-errors  passed
-mix test                          2156 passed, 0 failures, 1 excluded
 git diff --check                  passed
 ```
+
+本轮 focused tests：
+
+```text
+Communities lifecycle / Gate / GraphQL      58 passed
+Articles Kanban / status                    14 passed
+Comments solution / command                 17 passed
+```
+
+当前工作区同时包含 ArticleCommunity placement 与 migration 的既有改动；Docs/DocTree 综合测试中
+仍有 `stable_article_not_found`、placement 迁移相关失败，属于该工作区的独立基线问题，不由本轮
+facade 收口引入，也不能把它们伪装成全量通过。
 
 `pnpm docs:check` 已覆盖到本次新增模块，当前全仓检查通过。此前阻塞检查的
 `Assets.Endpoints` 与 `CanonicalJSON` 源码文档缺口已经在后续 source-documentation 清理中修复；
@@ -528,7 +677,7 @@ git diff --check                  passed
 
 ## 8. 完成标准
 
-全部 phase 完成后，目录应直接表达调用关系：
+F1–F13 已完成，目录现在可以宣称 CMS facade 这一轮收口：
 
 ```text
 GraphQL / Job / domain caller
@@ -539,7 +688,7 @@ GraphQL / Job / domain caller
       +-------+------------------+
       |       |                  |
       v       v                  v
-   Reader   Commands          Projection/Cache
+   Query    Commands          Projection/Cache
               |
               v
        Writer/Lifecycle/Gate

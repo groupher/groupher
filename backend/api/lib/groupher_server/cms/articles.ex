@@ -24,7 +24,6 @@ defmodule GroupherServer.CMS.Articles do
     Query,
     Moderation,
     Store,
-    States,
     Trash
   }
 
@@ -53,16 +52,14 @@ defmodule GroupherServer.CMS.Articles do
           {:ok, Article.t()} | {:error, term()}
   def move(%Community{} = community, article_id, tag_ids, %User{} = actor) do
     with_article(article_id, actor, :move, fn article ->
-      old_inner_id = article.inner_id
-
       with {:ok, %Community{} = source} <-
              FrontDesk.community(article.community_id, mode: :internal),
            {:ok, moved} <- Communities.move(article, community),
-           {:ok, relation} <- Store.relation(moved.id, moved.community_id),
+           {:ok, relation} <- Store.relation(moved.id, community.id),
            {:ok, _relation} <- Communities.replace_tags(relation, tag_ids),
            {:ok, _source} <- CommunityFacade.update_count_field(source, article.thread),
            {:ok, _destination} <- CommunityFacade.update_count_field(community, article.thread),
-           :ok <- invalidate_move(source, old_inner_id, community, moved, Ecto.UUID.generate()),
+           :ok <- invalidate_move(source, relation, community, relation, Ecto.UUID.generate()),
            {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(moved) do
         {:ok, moved}
       end
@@ -76,13 +73,13 @@ defmodule GroupherServer.CMS.Articles do
     with_article(article_id, actor, :mirror, fn article ->
       with {:ok, relation} <- Communities.mirror(article, community),
            {:ok, relation} <- Communities.replace_tags(relation, tag_ids),
-           :ok <- invalidate_community_scope(community, article) do
+           :ok <- invalidate_community_scope(community, relation) do
         {:ok, relation}
       end
     end)
   end
 
-  @doc "Removes a stable ordinary Article placement from a Community through Gate."
+  @doc "Removes a stable ordinary ArticleCommunity relation from a Community through Gate."
   @spec unmirror(Community.t(), Ecto.UUID.t(), User.t()) ::
           {:ok, :done} | {:error, term()}
   def unmirror(%Community{} = community, article_id, %User{} = actor) do
@@ -135,9 +132,10 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
-  defp invalidate_move(source, old_inner_id, destination, moved, command_id) do
-    with :ok <- invalidate_community_scope(source, %{moved | inner_id: old_inner_id}, command_id),
-         :ok <- invalidate_community_scope(destination, moved, Ecto.UUID.generate()) do
+  defp invalidate_move(source, source_relation, destination, destination_relation, command_id) do
+    with :ok <- invalidate_community_scope(source, source_relation, command_id),
+         :ok <-
+           invalidate_community_scope(destination, destination_relation, Ecto.UUID.generate()) do
       :ok
     end
   end
@@ -151,24 +149,33 @@ defmodule GroupherServer.CMS.Articles do
     invalidate_community_scope(community, article, Ecto.UUID.generate())
   end
 
-  defp invalidate_community_scope(%Community{} = community, article, command_id) do
+  defp invalidate_community_scope(
+         %Community{} = community,
+         %{article_id: article_id, inner_id: inner_id},
+         command_id
+       )
+       when is_integer(inner_id) do
     case Outbox.send(%{
            event: "article.visibility_changed",
            worker: CMS.Outbox.Workers.Article.Cleanup,
            resource_type: "article",
-           resource_id: article.id,
+           resource_id: article_id,
            command_id: command_id,
            data: %{
              community: community.slug,
              community_id: community.id,
-             thread: article.thread,
-             inner_id: article.inner_id,
-             article_id: article.id
+             thread: relation_thread(article_id),
+             inner_id: inner_id,
+             article_id: article_id
            }
          }) do
       {:ok, _event} -> :ok
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp relation_thread(article_id) do
+    Communities.thread_for_article(article_id)
   end
 
   # Query
@@ -391,37 +398,18 @@ defmodule GroupherServer.CMS.Articles do
 
   @doc "Runs `archive` through the public `Articles` boundary."
   @spec archive(T.thread()) :: T.domain_res(term())
-  def archive(thread), do: States.archive(thread)
+  def archive(thread), do: Commands.Archive.execute(thread)
 
   @doc "Sinks one stable Article through the shared Gate and aggregate lock."
   @spec sink(Ecto.UUID.t(), User.t(), keyword()) :: T.domain_res(term())
   def sink(article_id, %User{} = actor, opts \\ []) do
-    change_sink(article_id, actor, :sink, opts)
+    Commands.StateChange.execute(:sink, article_id, actor, opts)
   end
 
   @doc "Restores one sunk stable Article through the shared Gate and aggregate lock."
   @spec undo_sink(Ecto.UUID.t(), User.t(), keyword()) :: T.domain_res(term())
   def undo_sink(article_id, %User{} = actor, opts \\ []) do
-    change_sink(article_id, actor, :undo_sink, opts)
-  end
-
-  defp change_sink(article_id, actor, action, opts) do
-    case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{thread: :doc} = article} ->
-        branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
-
-        CMS.Gate.Access.with_branch_check(actor, action, article, branch_id, fn canonical ->
-          apply(States, action, [canonical, [branch_id: branch_id]])
-        end)
-
-      {:ok, %Article{} = article} ->
-        CMS.Gate.Access.with_check(actor, action, article, fn canonical ->
-          apply(States, action, [canonical, opts])
-        end)
-
-      {:error, _} ->
-        {:error, GateErrorCat.resource_not_found()}
-    end
+    Commands.StateChange.execute(:undo_sink, article_id, actor, opts)
   end
 
   # Meta
@@ -429,14 +417,27 @@ defmodule GroupherServer.CMS.Articles do
   @doc "Sets the stable Post category through the shared Gate and aggregate lock."
   @spec set_cat(Ecto.UUID.t(), Const.cat_enum() | nil, User.t()) :: T.domain_res(Article.t())
   def set_cat(article_id, cat, %User{} = actor) do
-    with_article(article_id, actor, :set_category, &States.set_cat(&1, cat))
+    Commands.StateChange.set_category(article_id, cat, actor)
   end
 
   @doc "Sets the stable Post Kanban status through the shared Gate and aggregate lock."
   @spec set_status(Ecto.UUID.t(), Const.status_enum() | nil, User.t()) ::
           T.domain_res(Article.t())
   def set_status(article_id, status, %User{} = actor) do
-    with_article(article_id, actor, :set_status, &States.set_status(&1, status))
+    Commands.StateChange.set_status(article_id, status, actor)
+  end
+
+  @doc "Sets a Post's Kanban status in one explicit ArticleCommunity relation."
+  @spec set_status(Ecto.UUID.t(), Const.status_enum() | nil, User.t(), integer()) ::
+          T.domain_res(Article.t())
+  def set_status(article_id, status, %User{} = actor, community_id)
+      when is_integer(community_id) do
+    with {:ok, %Article{} = article} <- FrontDesk.article(article_id, mode: :internal),
+         {:ok, %Community{} = community} <- FrontDesk.community(community_id, mode: :internal) do
+      set_status_in_community(article, status, actor, community)
+    else
+      {:error, _reason} -> {:error, GateErrorCat.resource_not_found()}
+    end
   end
 
   @doc "Updates Post category and returns the caller-facing canonical projection shape."
@@ -448,15 +449,42 @@ defmodule GroupherServer.CMS.Articles do
 
   @doc "Updates Post status and returns the caller-facing canonical projection shape."
   def set_status_result(article, status, %User{} = actor) do
-    with {:ok, updated} <- set_status(article.id, status, actor) do
+    result =
+      case Map.get(article, :community_id) do
+        community_id when is_integer(community_id) ->
+          with {:ok, %Community{} = community} <-
+                 FrontDesk.community(community_id, mode: :internal) do
+            set_status_in_community(article, status, actor, community)
+          else
+            {:error, _reason} -> {:error, GateErrorCat.resource_not_found()}
+          end
+
+        _ ->
+          set_status(article.id, status, actor)
+      end
+
+    with {:ok, updated} <- result do
       __MODULE__.ActionResult.merge(article, updated, %{status: status})
     end
+  end
+
+  defp set_status_in_community(
+         %Article{} = article,
+         status,
+         %User{} = actor,
+         %Community{} = community
+       ) do
+    Commands.StateChange.set_status_in_community(article, status, actor, community)
+  end
+
+  defp set_status_in_community(article, status, %User{} = actor, %Community{} = community) do
+    Commands.StateChange.set_status_in_community(article, status, actor, community)
   end
 
   @doc "Updates active timestamp through the `Articles` write boundary."
   @spec update_active_timestamp(T.thread(), T.article()) :: T.domain_res(T.article())
   def update_active_timestamp(thread, article) do
-    States.update_active_timestamp(thread, article)
+    Commands.StateChange.update_active_timestamp(thread, article)
   end
 
   # Moderation
@@ -465,47 +493,21 @@ defmodule GroupherServer.CMS.Articles do
   @spec set_illegal(Ecto.UUID.t(), map(), User.t() | :operations, keyword()) ::
           T.domain_res(term())
   def set_illegal(article_id, attrs, actor, opts \\ []) do
-    moderate(article_id, :illegal, attrs, actor, opts)
+    Commands.Moderate.execute(article_id, :illegal, attrs, actor, opts)
   end
 
   @doc "Clears illegal state through Gate; Doc callers pass `branch_id` in opts."
   @spec unset_illegal(Ecto.UUID.t(), map(), User.t() | :operations, keyword()) ::
           T.domain_res(term())
   def unset_illegal(article_id, attrs, actor, opts \\ []) do
-    moderate(article_id, :legal, attrs, actor, opts)
+    Commands.Moderate.execute(article_id, :legal, attrs, actor, opts)
   end
 
   @doc "Marks one stable Article audit-failed through Gate."
   @spec set_audit_failed(Ecto.UUID.t(), map(), User.t() | :operations, keyword()) ::
           T.domain_res(term())
   def set_audit_failed(article_id, attrs, actor, opts \\ []) do
-    moderate(article_id, :audit_failed, attrs, actor, opts)
-  end
-
-  defp moderate(article_id, state, attrs, actor, opts) do
-    case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{thread: :doc} = article} ->
-        branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
-
-        CMS.Gate.Access.with_branch_check(actor, :moderate, article, branch_id, fn canonical ->
-          Moderation.set_state(canonical, state, attrs, branch_id: branch_id)
-        end)
-
-      {:ok, %Article{} = article} ->
-        CMS.Gate.Access.with_check(actor, :moderate, article, fn canonical ->
-          Moderation.set_state(canonical, state, attrs, opts)
-        end)
-
-      {:error, _} ->
-        {:error, GateErrorCat.resource_not_found()}
-    end
-  end
-
-  defp main_branch_id(community_id) do
-    case CMS.Docs.Store.branch(community_id, :main) do
-      {:ok, %{id: branch_id}} -> branch_id
-      {:error, _} -> nil
-    end
+    Commands.Moderate.execute(article_id, :audit_failed, attrs, actor, opts)
   end
 
   @doc "Returns paged audit failed from the `Articles` read boundary."
@@ -514,30 +516,16 @@ defmodule GroupherServer.CMS.Articles do
     Moderation.paged_audit_failed(thread, filter)
   end
 
-  @doc "Moves one stable ordinary Article to the configured blackhole Community."
-  @spec move_to_blackhole(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
-          {:ok, Article.t()} | {:error, term()}
-  def move_to_blackhole(%Community{} = community, article_id, tag_ids, %User{} = actor) do
-    move(community, article_id, tag_ids, actor)
-  end
-
-  @doc "Legacy alias for adding one stable ordinary Article placement."
-  @spec mirror_to_home(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
-          {:ok, CMS.Model.ArticleCommunity.t()} | {:error, term()}
-  def mirror_to_home(%Community{} = community, article_id, tag_ids, %User{} = actor) do
-    mirror(community, article_id, tag_ids, actor)
-  end
-
   @doc "Locks comments on one stable Article through the shared Gate and aggregate lock."
   @spec lock_comments(Ecto.UUID.t(), User.t(), keyword()) :: T.domain_res(term())
   def lock_comments(article_id, %User{} = actor, opts \\ []) do
-    change_comment_lock(article_id, actor, :lock_comments, opts)
+    Commands.CommentLock.execute(article_id, actor, :lock_comments, opts)
   end
 
   @doc "Unlocks comments on one stable Article through the shared Gate and aggregate lock."
   @spec undo_lock_comments(Ecto.UUID.t(), User.t(), keyword()) :: T.domain_res(term())
   def undo_lock_comments(article_id, %User{} = actor, opts \\ []) do
-    change_comment_lock(article_id, actor, :unlock_comments, opts)
+    Commands.CommentLock.execute(article_id, actor, :undo_lock_comments, opts)
   end
 
   @doc "Locks comments and returns the caller-facing canonical projection shape."
@@ -565,27 +553,6 @@ defmodule GroupherServer.CMS.Articles do
   def undo_sink_result(article, %User{} = actor) do
     with {:ok, updated} <- undo_sink(article.id, actor, branch_opts(article)) do
       __MODULE__.ActionResult.merge(article, updated)
-    end
-  end
-
-  defp change_comment_lock(article_id, actor, action, opts) do
-    case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{thread: :doc} = article} ->
-        branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
-
-        CMS.Gate.Access.with_branch_check(actor, action, article, branch_id, fn canonical ->
-          command = if action == :lock_comments, do: :lock_comments, else: :undo_lock_comments
-          apply(States, command, [canonical, [branch_id: branch_id]])
-        end)
-
-      {:ok, %Article{} = article} ->
-        CMS.Gate.Access.with_check(actor, action, article, fn canonical ->
-          command = if action == :lock_comments, do: :lock_comments, else: :undo_lock_comments
-          apply(States, command, [canonical, opts])
-        end)
-
-      {:error, _} ->
-        {:error, GateErrorCat.resource_not_found()}
     end
   end
 

@@ -153,6 +153,28 @@ defmodule GroupherServer.CMS.Gate.Access do
     {:error, ErrorCat.unsupported_resource()}
   end
 
+  @doc "Runs an ordinary Article command against an explicit ArticleCommunity relation."
+  @spec with_community_check(
+          term(),
+          atom(),
+          Community.t(),
+          Article.t(),
+          (Article.t() -> {:ok, term()} | {:error, term()})
+        ) :: {:ok, term()} | {:error, term()}
+  def with_community_check(
+        actor,
+        action,
+        %Community{} = community,
+        %Article{} = article,
+        callback
+      )
+      when is_function(callback, 1) do
+    Articles.MutationLock.transact_article(community, article, fn ->
+      Check.with_authorized_placement(actor, action, {community, article}, callback)
+    end)
+    |> normalize_decision()
+  end
+
   @doc "Runs one branch-scoped Doc command through the shared Gate transaction and lock."
   @spec with_branch_check(term(), atom(), Article.t(), pos_integer(), (Article.t() -> term())) ::
           {:ok, term()} | {:error, term()}

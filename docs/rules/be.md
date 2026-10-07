@@ -44,6 +44,12 @@
 - 全局错误 struct 由 `GroupherServer.ErrorCat.Domain` 封装；需要模式匹配时使用领域 catalog 提供的 `ErrorCat.error_pattern(...)`。领域 `ErrorCat.custom/1` 只是在边界内转发 reserved custom 的过渡 wrapper，不得作为新领域的默认错误。
 - 进行 ErrorCat 改造时，同步收紧 `Helper.T.domain_res/1` 等类型契约和相关测试，不保留 atom error 的隐性兼容面。
 
+## 业务返回形状与分支
+
+- 业务层函数和内部业务 helper 统一返回 `{:ok, value}` 或 `{:error, reason}`；不要用裸 `:ok`、`:error`、`nil`、`false` 或字符串表示正常业务结果。
+- 只有协议、回调或框架明确要求其他返回形状时，才保留例外；离开该协议边界后必须恢复为标准 tagged tuple。
+- 单个查询后的二分支优先使用 `case`；`with` 用于两个或更多有依赖关系的 tagged-tuple 步骤。
+
 ## 建议补充方向
 
 - 模块边界与目录约定；当前 CMS facade 的整改决策与执行顺序见

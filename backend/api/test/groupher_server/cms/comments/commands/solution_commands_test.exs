@@ -6,7 +6,16 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
   alias GroupherServer.{Activity, CMS, Repo}
   alias Activity.Model.PostLog
   alias CMS.Comments.Lifecycle
-  alias CMS.Model.{Article, Comment, CommentLifecycle, PinnedComment, PostSolution, PostState}
+
+  alias CMS.Model.{
+    Article,
+    ArticleCommunity,
+    Comment,
+    CommentLifecycle,
+    KanbanState,
+    PinnedComment,
+    PostSolution
+  }
 
   @article_cat CMS.Artiment.Const.cat_map()
   @article_status CMS.Artiment.Const.status_map()
@@ -26,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
   end
 
   test "accept is idempotent and does not alter workflow status or pin", context do
-    ~m(post actor first)a = context
+    ~m(community post actor first)a = context
     {:ok, _article} = CMS.Articles.set_status(post.article_id, @article_status.wip, actor)
     {:ok, pinned} = CMS.Comments.pin_comment(first.id, actor)
     assert pinned.is_pinned
@@ -36,7 +45,11 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
     assert Repo.get_by!(PostSolution, article_id: post.article_id).comment_id == first.id
     assert Repo.get_by!(PinnedComment, comment_id: first.id)
-    assert Repo.get!(PostState, post.article_id).status == @article_status.wip
+
+    relation =
+      Repo.get_by!(ArticleCommunity, article_id: post.article_id, community_id: community.id)
+
+    assert Repo.get!(KanbanState, relation.id).status == @article_status.wip
 
     assert Repo.aggregate(
              from(log in PostLog,
@@ -48,14 +61,18 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
   end
 
   test "revoke without a current solution is side-effect-free", context do
-    ~m(post actor first)a = context
+    ~m(community post actor first)a = context
     {:ok, _} = CMS.Articles.set_status(post.article_id, @article_status.done, actor)
     {:ok, _} = CMS.Comments.pin_comment(first.id, actor)
 
     assert {:ok, %{is_solution: false}} = CMS.Comments.revoke_solution(first.id, actor)
     refute Repo.get_by(PostSolution, article_id: post.article_id)
     assert Repo.get_by!(PinnedComment, comment_id: first.id)
-    assert Repo.get!(PostState, post.article_id).status == @article_status.done
+
+    relation =
+      Repo.get_by!(ArticleCommunity, article_id: post.article_id, community_id: community.id)
+
+    assert Repo.get!(KanbanState, relation.id).status == @article_status.done
     refute Repo.get_by(PostLog, article_id: post.article_id, action: :solution_revoked)
   end
 

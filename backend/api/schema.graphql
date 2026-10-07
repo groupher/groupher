@@ -512,12 +512,6 @@ type RootMutationType {
   "move article to other community"
   moveArticle(article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
 
-  "mirror article to home community"
-  mirrorToHome(article: ArticlePathInput!, communityTags: [ID]): Article
-
-  "move article to other community"
-  moveToBlackhole(article: ArticlePathInput!, communityTags: [ID]): Article
-
   "create a post"
   createPost(
     commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleAssetRefInput]

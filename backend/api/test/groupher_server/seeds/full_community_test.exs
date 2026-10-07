@@ -12,7 +12,16 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   alias CMS.Dashboard.Fields, as: Dashboard
   alias Helper.ORM
 
-  alias CMS.Model.{Article, ArticlePublic, Comment, Community, DocPublic, PostState}
+  alias CMS.Model.{
+    Article,
+    ArticleCommunity,
+    ArticlePublic,
+    Comment,
+    Community,
+    DocPublic,
+    KanbanState,
+    PostState
+  }
 
   describe "[full community seeds]" do
     test "seeds full community data including about dashboard" do
@@ -47,10 +56,14 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
           from(article in Article,
             join: state in PostState,
             on: state.article_id == article.id,
+            join: relation in ArticleCommunity,
+            on: relation.article_id == article.id and relation.community_id == ^community.id,
+            left_join: kanban in KanbanState,
+            on: kanban.article_community_id == relation.id,
             join: public in ArticlePublic,
             on: public.article_id == article.id,
             where: article.community_id == ^community.id and article.thread == :post,
-            select: %{id: article.id, cat: state.cat, status: state.status, title: public.title}
+            select: %{id: article.id, cat: state.cat, status: kanban.status, title: public.title}
           )
         )
 

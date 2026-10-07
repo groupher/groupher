@@ -398,7 +398,7 @@ defmodule GroupherServer.Support.Factory do
     {community, article, attrs, user} = mock_article(thread)
 
     # Stable Article creation already returns the public projection with its
-    # canonical author, community, lifecycle, tags and community placements.
+    # canonical author, community, lifecycle, tags and ArticleCommunity relations.
     # The historical helper reloaded a thread-specific physical row here; that
     # would incorrectly cast the stable UUID to the removed integer identity.
     _requested_relations = preload

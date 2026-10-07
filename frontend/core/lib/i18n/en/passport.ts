@@ -26,8 +26,6 @@ export default {
   'passport.stacked.community_mirror': 'Mirror communities',
   'passport.rule.god': 'God',
   'passport.rule.root': 'Root',
-  'passport.rule.blackeye': 'Blackeye',
-  'passport.rule.homemirror': 'Mirror to home',
   'passport.rule.system_notification.publish': 'Publish system notifications',
   'passport.rule.stamp_passport': 'Grant permissions',
   'passport.rule.community.create': 'Create communities',

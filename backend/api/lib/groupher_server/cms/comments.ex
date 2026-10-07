@@ -9,22 +9,27 @@ defmodule GroupherServer.CMS.Comments do
         -> CMS.Comments
              -> Store / Query          -> batched response projection
              -> Commands.<Action>      -> canonical aggregate transaction
-             -> Writer create/reply    -> canonical aggregate transaction
-             -> States / Moderation    -> focused domain operation
+             -> Writer / States / Moderation owners
   """
 
   alias __MODULE__.{
     CommandResult,
     InteractionResponse,
     Query,
-    Moderation,
-    States,
-    Writer
+    Moderation
   }
 
   alias __MODULE__.Query.Reconcile, as: Reconcile
 
-  alias __MODULE__.Commands.{DeleteComment, UpdateComment}
+  alias __MODULE__.Commands.{
+    CreateComment,
+    DeleteComment,
+    Moderate,
+    ReplyComment,
+    StateChange,
+    UpdateComment
+  }
+
   alias __MODULE__.Solution
   alias GroupherServer.{Accounts, CMS}
 
@@ -328,7 +333,7 @@ defmodule GroupherServer.CMS.Comments do
              user
            ),
          {:ok, %{comment: comment}} <-
-           Writer.create(thread, article, body, user, command_id) do
+           CreateComment.execute(thread, article, body, user, command_id) do
       {:ok, comment}
     end
   end
@@ -343,15 +348,14 @@ defmodule GroupherServer.CMS.Comments do
   @spec create_comment_payload(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(map())
   def create_comment_payload(thread, article, body, %User{} = user, command_id \\ nil) do
-    Writer.create(thread, article, body, user, command_id)
+    CreateComment.execute(thread, article, body, user, command_id)
   end
 
   @doc "Creates a Comment and returns its stable post-commit mutation result."
   @spec create_comment_result(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(map())
   def create_comment_result(thread, article, body, %User{} = user, command_id \\ nil) do
-    thread
-    |> Writer.create(article, body, user, command_id)
+    CreateComment.execute(thread, article, body, user, command_id)
     |> CommandResult.build()
   end
 
@@ -495,12 +499,12 @@ defmodule GroupherServer.CMS.Comments do
   def reply_comment_payload(comment_or_id, body, user, command_id \\ nil)
 
   def reply_comment_payload(%Comment{} = comment, body, %User{} = user, command_id) do
-    Writer.reply(comment, body, user, command_id)
+    ReplyComment.execute(comment, body, user, command_id)
   end
 
   def reply_comment_payload(comment_id, body, %User{} = user, command_id) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
-      Writer.reply(comment, body, user, command_id)
+      ReplyComment.execute(comment, body, user, command_id)
     end
   end
 
@@ -511,7 +515,7 @@ defmodule GroupherServer.CMS.Comments do
 
   def reply_comment_result(%Comment{} = comment, body, %User{} = user, command_id) do
     comment
-    |> Writer.reply(body, user, command_id)
+    |> ReplyComment.execute(body, user, command_id)
     |> CommandResult.build()
   end
 
@@ -539,8 +543,14 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.pin_comment(comment, actor)
   """
   @spec pin_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
-  def pin_comment(%Comment{} = comment, %User{} = user), do: States.pin(comment, user)
-  def pin_comment(comment_id, %User{} = user), do: States.pin(comment_id, user)
+  def pin_comment(%Comment{} = comment, %User{} = user),
+    do: StateChange.execute(:pin, comment, user)
+
+  def pin_comment(comment_id, %User{} = user) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
+      pin_comment(comment, user)
+    end
+  end
 
   @doc """
   Rejects an unauthenticated unpin operation.
@@ -560,8 +570,14 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.undo_pin_comment(comment, actor)
   """
   @spec undo_pin_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
-  def undo_pin_comment(%Comment{} = comment, %User{} = user), do: States.undo_pin(comment, user)
-  def undo_pin_comment(comment_id, %User{} = user), do: States.undo_pin(comment_id, user)
+  def undo_pin_comment(%Comment{} = comment, %User{} = user),
+    do: StateChange.execute(:undo_pin, comment, user)
+
+  def undo_pin_comment(comment_id, %User{} = user) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
+      undo_pin_comment(comment, user)
+    end
+  end
 
   @doc """
   Folds one Comment for an authorized actor.
@@ -571,8 +587,14 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.fold_comment(comment, actor)
   """
   @spec fold_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
-  def fold_comment(%Comment{} = comment, %User{} = user), do: States.fold(comment, user)
-  def fold_comment(comment_id, %User{} = user), do: States.fold(comment_id, user)
+  def fold_comment(%Comment{} = comment, %User{} = user),
+    do: StateChange.execute(:fold, comment, user)
+
+  def fold_comment(comment_id, %User{} = user) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
+      fold_comment(comment, user)
+    end
+  end
 
   @doc """
   Restores one folded Comment for an authorized actor.
@@ -582,8 +604,14 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.unfold_comment(comment, actor)
   """
   @spec unfold_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
-  def unfold_comment(%Comment{} = comment, %User{} = user), do: States.unfold(comment, user)
-  def unfold_comment(comment_id, %User{} = user), do: States.unfold(comment_id, user)
+  def unfold_comment(%Comment{} = comment, %User{} = user),
+    do: StateChange.execute(:unfold, comment, user)
+
+  def unfold_comment(comment_id, %User{} = user) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
+      unfold_comment(comment, user)
+    end
+  end
 
   @doc """
   Applies an illegal-content moderation state to a Comment.
@@ -594,7 +622,7 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec set_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   def set_comment_illegal(comment_id, attrs) do
-    Moderation.set_illegal(comment_id, attrs)
+    Moderate.execute(:set_illegal, comment_id, attrs)
   end
 
   @doc """
@@ -606,7 +634,7 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec unset_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   def unset_comment_illegal(comment_id, attrs) do
-    Moderation.unset_illegal(comment_id, attrs)
+    Moderate.execute(:unset_illegal, comment_id, attrs)
   end
 
   @doc """
@@ -628,6 +656,6 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec set_comment_audit_failed(Comment.t(), term()) :: T.domain_res(Comment.t())
   def set_comment_audit_failed(comment, state) do
-    Moderation.set_audit_failed(comment, state)
+    Moderate.execute(:set_audit_failed, comment, state)
   end
 end

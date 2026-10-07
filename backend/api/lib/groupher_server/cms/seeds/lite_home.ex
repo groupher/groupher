@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Articles.Trash
-  alias CMS.Model.{Article, ArticlePublic, Community, PostState}
+  alias CMS.Model.{Article, ArticleCommunity, ArticlePublic, Community, KanbanState}
   alias CMS.Seeds.{Communities, FullCommunity}
   alias CMS.Seeds.Helper, as: SeedHelper
   alias Helper.{ORM, T}
@@ -191,10 +191,11 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
     Repo.aggregate(
       from(post in active_posts,
-        join: state in PostState,
-        on: state.article_id == post.id,
-        where:
-          post.community_id == ^community_id and post.thread == :post and not is_nil(state.status)
+        join: relation in ArticleCommunity,
+        on: relation.article_id == post.id,
+        join: state in KanbanState,
+        on: state.article_community_id == relation.id,
+        where: relation.community_id == ^community_id and post.thread == :post
       ),
       :count
     )

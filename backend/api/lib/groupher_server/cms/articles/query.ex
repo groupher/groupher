@@ -43,6 +43,7 @@ defmodule GroupherServer.CMS.Articles.Query do
     DocBranchState,
     DocLifecycle,
     DocPublic,
+    KanbanState,
     PinnedArticle,
     PostState
   }
@@ -89,13 +90,14 @@ defmodule GroupherServer.CMS.Articles.Query do
     base =
       from(article in Article,
         join: relation in ArticleCommunity,
+        as: :article_relation,
         on: relation.article_id == article.id and relation.visible == true,
         join: community in Community,
         on: community.id == relation.community_id,
         where:
-          article.thread == ^thread and article.inner_id > 0 and
+          article.thread == ^thread and relation.inner_id > 0 and
             article.moderation_state == :legal,
-        select: %{inner_id: article.inner_id, community: community.slug}
+        select: %{inner_id: relation.inner_id, community: community.slug}
       )
 
     base =
@@ -104,8 +106,8 @@ defmodule GroupherServer.CMS.Articles.Query do
         else:
           where(
             base,
-            [article, relation, _community],
-            relation.community_id == article.community_id
+            [_article, _relation, _community],
+            true
           )
 
     base =
@@ -163,20 +165,28 @@ defmodule GroupherServer.CMS.Articles.Query do
         Helper.QueryBuilder.filter_pack(query, %{when: window})
 
       {:cat, cat}, query when is_atom(cat) ->
-        stable_post_state_filter(query, :cat, cat)
+        stable_post_category_filter(query, cat)
 
       {:status, status}, query when is_atom(status) ->
-        stable_post_state_filter(query, :status, status)
+        stable_kanban_status_filter(query, status)
 
       _, query ->
         query
     end)
   end
 
-  defp stable_post_state_filter(query, field, value) do
+  defp stable_post_category_filter(query, value) do
     query
     |> join(:inner, [article, ...], state in PostState, on: state.article_id == article.id)
-    |> where([_article, ..., state], field(state, ^field) == ^value)
+    |> where([_article, ..., state], state.cat == ^value)
+  end
+
+  defp stable_kanban_status_filter(query, value) do
+    query
+    |> join(:inner, [_article, relation, ...], state in KanbanState,
+      on: state.article_community_id == relation.id
+    )
+    |> where([_article, _relation, ..., state], state.status == ^value)
   end
 
   defp stable_tag_filter(query, tags) do
@@ -212,7 +222,7 @@ defmodule GroupherServer.CMS.Articles.Query do
         order_by(query, [article, ...],
           desc: as(:stable_public).published_at,
           desc: article.inserted_at,
-          desc: article.inner_id,
+          desc: as(:article_relation).inner_id,
           desc: article.id
         )
 
@@ -268,8 +278,8 @@ defmodule GroupherServer.CMS.Articles.Query do
 
   defp stable_public_join(query, :doc) do
     query
-    |> join(:inner, [article, _relation, _community], branch in DocBranch,
-      on: branch.community_id == article.community_id and branch.type == :main
+    |> join(:inner, [_article, relation, _community], branch in DocBranch,
+      on: branch.community_id == relation.community_id and branch.type == :main
     )
     |> join(:inner, [article, _relation, _community, branch], state in DocBranchState,
       as: :stable_doc_state,
@@ -378,8 +388,8 @@ defmodule GroupherServer.CMS.Articles.Query do
       from(article in Article,
         join: relation in ArticleCommunity,
         on: relation.article_id == article.id,
-        join: state in PostState,
-        on: state.article_id == article.id,
+        join: state in KanbanState,
+        on: state.article_community_id == relation.id,
         join: public in ArticlePublic,
         on: public.article_id == article.id and public.visible == true,
         join: lifecycle in ArticleLifecycle,
@@ -389,7 +399,7 @@ defmodule GroupherServer.CMS.Articles.Query do
             relation.community_id == ^community.id and relation.visible == true and
             lifecycle.state in [:published, :archived] and state.status in ^statuses,
         order_by: [desc: public.published_at],
-        select: article.inner_id
+        select: relation.inner_id
       )
 
     total_count = Repo.aggregate(exclude(base, :order_by), :count)
@@ -428,13 +438,18 @@ defmodule GroupherServer.CMS.Articles.Query do
       query =
         query
         |> join(:inner, [article, ...], author in assoc(article, :author), as: :published_author)
-        |> join(:inner, [article, ...], community in assoc(article, :community),
+        |> join(:inner, [article, ...], relation in ArticleCommunity,
+          on: relation.article_id == article.id and relation.visible == true,
+          as: :published_relation
+        )
+        |> join(:inner, [_article, ...], community in Community,
+          on: community.id == as(:published_relation).community_id,
           as: :published_community
         )
         |> where([_article, ...], as(:published_author).user_id == ^target_user.id)
         |> order_by([article, ...], desc: article.active_at, desc: article.inserted_at)
         |> select([article, ...], %{
-          inner_id: article.inner_id,
+          inner_id: as(:published_relation).inner_id,
           community: as(:published_community).slug
         })
 

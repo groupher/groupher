@@ -52,8 +52,6 @@ defmodule Helper.PermissionConfig do
     threaded_grants(["community.mirror", "community.unmirror", "community.move"]) ++
       [
         "god",
-        "blackeye",
-        "homemirror",
         "system_notification.publish",
         "stamp_passport",
         "community.create",
@@ -165,8 +163,6 @@ defmodule Helper.PermissionConfig do
         scope: :global,
         grant: "community.application.retry_setup"
       },
-      "article.mirror_home" => %{scope: :global, grant: "homemirror"},
-      "article.move_blackhole" => %{scope: :global, grant: "blackeye"},
       "article.mirror" => %{scope: :global, grant_by_thread: "community.mirror"},
       "article.unmirror" => %{scope: :global, grant_by_thread: "community.unmirror"},
       "article.move" => %{scope: :global, grant_by_thread: "community.move"},

@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Communities do
 
       GraphQL resolver / job
         -> CMS facade
-        -> Communities
+        -> Communities.Query / Writer / Commands / Lifecycle
         -> Repo / external boundary
   """
 
@@ -25,17 +25,16 @@ defmodule GroupherServer.CMS.Communities do
     Subscribe,
     Tags,
     TagStats,
-    Writer
+    Writer,
+    Commands
   }
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.{Command, Passport}
+  alias CMS.Passport
   alias CMS.Communities.{ErrorCat, Lifecycle}
   alias CMS.FrontDesk
-  alias CMS.Gate
   alias CMS.Model.{Category, Community, CommunityTag, CommunityTagGroup}
-  alias CMS.Communities.RequestDestroyConfirmation, as: Confirmation
   alias Helper.{ORM, T}
 
   @default_fetch_opts [inc_views: true]
@@ -188,44 +187,7 @@ defmodule GroupherServer.CMS.Communities do
   @doc "Runs an authenticated destroy request behind the command receipt boundary."
   @spec request_destroy(Community.t(), User.t(), keyword()) :: T.domain_res(Community.t())
   def request_destroy(%Community{} = community, %User{} = actor, opts) do
-    command = %Command{
-      actor: actor,
-      command_id: Keyword.get(opts, :command_id),
-      operation: :community_request_destroy,
-      target: community,
-      params: opts |> Keyword.delete(:command_id) |> Map.new()
-    }
-
-    with {:ok, confirmation} <-
-           Command.execute(command, action: &request_destroy_action/1, confirmation: Confirmation) do
-      FrontDesk.community(confirmation.data["community_slug"], mode: :internal)
-    end
-  end
-
-  defp request_destroy_action(%{
-         actor: actor,
-         target: community,
-         params: opts,
-         command_id: command_id
-       }) do
-    opts = Map.to_list(opts)
-
-    with {:ok, canonical} <-
-           Gate.access_check(actor, :request_destroy, community),
-         {:ok, _blocker} <-
-           Lifecycle.request_destroy(
-             canonical.slug,
-             Keyword.put(opts, :operation_ref, command_id)
-           ) do
-      {:ok,
-       %Confirmation{
-         data: %{
-           "community_id" => to_string(canonical.id),
-           "community_slug" => canonical.slug,
-           "operation_ref" => command_id
-         }
-       }}
-    end
+    Commands.RequestDestroy.execute(community, actor, opts)
   end
 
   @doc "Runs `restore` through the public `Communities` boundary."

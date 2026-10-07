@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
 
   alias CMS.Model.{
     Article,
+    ArticleCommunity,
     ArticleBodySnapshot,
     ArticleRevision,
     Author,
@@ -197,7 +198,17 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
   end
 
   defp maybe_assign_public_inner_id(article, %DocBranch{type: :main}) do
-    Numbering.assign_public_inner_id(article)
+    with %ArticleCommunity{} = relation <-
+           Repo.get_by(ArticleCommunity,
+             article_id: article.id,
+             community_id: article.community_id
+           ),
+         {:ok, relation} <- Numbering.assign_relation_inner_id(relation) do
+      {:ok, %{article | inner_id: relation.inner_id}}
+    else
+      nil -> {:error, :article_community_not_found}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp maybe_assign_public_inner_id(article, %DocBranch{}), do: {:ok, article}

@@ -168,7 +168,10 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
              )
 
     assert result.first_publish?
-    assert result.article.inner_id == 1
+
+    assert Repo.get_by!(ArticleCommunity, article_id: article.id, community_id: community.id).inner_id ==
+             1
+
     assert result.public.article_id == article.id
     assert result.public.revision_id == result.revision.id
     assert {:error, :not_found} = Store.get(article)
@@ -278,7 +281,10 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert result.version.version_number == 1
     assert result.branch_type == :main
-    assert Repo.get!(Article, article.id).inner_id == 1
+
+    assert Repo.get_by!(ArticleCommunity, article_id: article.id, community_id: community.id).inner_id ==
+             1
+
     assert result.public.branch_version_id == result.version.id
 
     assert {:ok, [%{version: %DocBranchVersion{id: _version_id}}]} =
@@ -425,8 +431,9 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert pin.article_community_id
     assert {:ok, moved} = CMS.Articles.move(destination, published.id, [], user)
     assert moved.id == published.id
-    assert moved.community_id == destination.id
-    assert moved.inner_id == 1
+
+    assert Repo.get_by!(ArticleCommunity, article_id: moved.id, community_id: destination.id).inner_id ==
+             1
 
     assert %ArticleCommunity{community_id: destination_id} =
              Repo.get_by!(ArticleCommunity, article_id: moved.id)
@@ -443,8 +450,8 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
       |> Repo.all()
       |> Enum.map(&{&1["community"], &1["inner_id"]})
 
-    assert {source.slug, published.inner_id} in scopes
-    assert {destination.slug, moved.inner_id} in scopes
+    assert {source.slug, 1} in scopes
+    assert {destination.slug, 1} in scopes
   end
 
   test "mirror is Community-local and Doc rejects ordinary Article Community commands" do
@@ -475,8 +482,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
            ).community_id ==
              source.id
 
-    assert {:error, :current_path_placement} =
-             CMS.Articles.unmirror(source, article.id, user)
+    assert {:ok, :done} = CMS.Articles.unmirror(source, article.id, user)
 
     assert {:ok, :done} = CMS.Articles.unmirror(mirror_community, article.id, user)
 
@@ -499,6 +505,32 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert {:error, _reason} = CMS.Articles.move(mirror_community, doc.id, [], user)
     assert {:error, _reason} = CMS.Articles.mirror(mirror_community, doc.id, [], user)
     assert {:error, _reason} = CMS.Articles.unmirror(mirror_community, doc.id, user)
+  end
+
+  test "published Articles must retain at least one Community relation" do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = db_insert(:community)
+
+    {:ok, %{article: article, draft: draft}} =
+      CMS.Articles.create_stable_draft(
+        community,
+        :post,
+        %{
+          title: "Keep one relation",
+          digest: "digest",
+          body_bag: mock_body_bag(mock_rich_text("body"))
+        },
+        user
+      )
+
+    assert {:ok, %{article: published}} =
+             CMS.Articles.publish(article.id, user,
+               expected_draft_version: draft.version,
+               expected_lifecycle_version: 1
+             )
+
+    assert {:error, :published_article_requires_community} =
+             CMS.Articles.unmirror(community, published.id, user)
   end
 
   test "FrontDesk resolves ArticlePath to the selected stable public revision" do

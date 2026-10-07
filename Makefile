@@ -111,14 +111,14 @@ be.install:
 	cd ./backend/api && mix deps.get
 
 be.start:
-	cd ./backend/api && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=mock mix phx.server
+	cd ./backend/api && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=dev mix phx.server
 
 # Dev Hub owns the full managed runtime environment. Credential fallbacks are
 # allow-listed by Dev Hub before this entrypoint is invoked.
 be.start.managed:
-	cd ./backend/api && MIX_ENV=mock mix phx.server
+	cd ./backend/api && MIX_ENV=dev mix phx.server
 
-# generate graphql schema (SDL) and link it for the mock server
+# generate graphql schema (SDL) and link it for the local frontend server
 be.gen.schema:
 	cd ./backend/api && mix absinthe.schema.sdl schema.graphql && cd - \
 	&& rm -f ./frontend/mock-server/schema.graphql \
@@ -140,35 +140,19 @@ be.watch.wip:
 be.watch.wip2:
 	cd ./backend/api && mix test --listen-on-stdin --stale --only wip2
 
-be.mock.start: 
-	cd ./backend/api && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=mock mix phx.server
-
 be.migrate:
-	cd ./backend/api && mix ecto.migrate && cd -
+	cd ./backend/api && MIX_ENV=dev mix ecto.migrate && cd -
 
 be.migrate.prod:
 	cd ./backend/api && MIX_ENV=prod mix ecto.migrate && cd -
-
-be.migrate.mock:
-	cd ./backend/api && MIX_ENV=mock mix ecto.migrate && cd -
-
-be.migrate.dev:
-	cd ./backend/api && MIX_ENV=dev mix ecto.migrate && cd -
 
 be.migrate.test:
 	cd ./backend/api && MIX_ENV=test mix ecto.migrate && cd -
 
 be.rollback:
-	cd ./backend/api && mix ecto.rollback && cd -
-
-be.rollback.mock:
-	cd ./backend/api && MIX_ENV=mock mix ecto.rollback && cd -
+	cd ./backend/api && MIX_ENV=dev mix ecto.rollback && cd -
 be.rollback.test:
 	cd ./backend/api && MIX_ENV=test mix ecto.rollback && cd -
-
-be.rollback.dev:
-	cd ./backend/api && MIX_ENV=dev mix ecto.rollback && cd -
-
 
 be.deploy:
 	cd ./backend/api && flyctl deploy && cd -

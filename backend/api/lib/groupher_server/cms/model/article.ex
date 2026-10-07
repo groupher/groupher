@@ -32,6 +32,7 @@ defmodule GroupherServer.CMS.Model.Article do
     belongs_to(:community, Community, type: :id)
     belongs_to(:author, Author, type: :id)
     field(:thread, Ecto.Enum, values: @threads)
+    # Deprecated compatibility projection; public numbering belongs to ArticleCommunity.
     field(:inner_id, :integer)
     field(:moderation_state, Ecto.Enum, values: @moderation_states, default: :legal)
     field(:illegal_reason, {:array, :string}, default: [])
@@ -56,8 +57,5 @@ defmodule GroupherServer.CMS.Model.Article do
     |> validate_number(:next_comment_inner_id, greater_than: 0)
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:author_id)
-    |> unique_constraint([:community_id, :thread, :inner_id],
-      name: :articles_public_inner_id_index
-    )
   end
 end

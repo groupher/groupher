@@ -245,6 +245,29 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     end
   end
 
+  @doc "Authorizes an ordinary Article operation against an explicit ArticleCommunity relation."
+  @spec with_authorized_placement(term(), atom(), tuple(), (Article.t() -> term())) ::
+          {:ok, term()} | {:error, term()}
+  def with_authorized_placement(actor, action, {community, article}, callback)
+      when is_function(callback, 1) do
+    with {:ok, thread} <- article_thread(article),
+         {:ok, context} <- Load.article_in_community(community, thread, article),
+         %Decision{allowed: true} = decision <-
+           Decision.from_result(
+             Policy.Article.check_access(actor, action, context_resource(context), context),
+             context
+           ) do
+      decision.context
+      |> context_resource()
+      |> canonical_resource(decision.context.community)
+      |> callback.()
+      |> normalize_callback_result()
+    else
+      %Decision{} = decision -> {:error, decision}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+    end
+  end
+
   @doc "Authorizes one stable Doc Article in an explicit branch inside an existing lock."
   @spec with_authorized_doc(term(), atom(), tuple(), (Article.t() -> term())) ::
           {:ok, term()} | {:error, term()}

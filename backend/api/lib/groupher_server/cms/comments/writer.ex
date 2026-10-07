@@ -104,6 +104,25 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
+  def create(thread, %{article_id: article_id} = projection, body, %User{} = user, command_id)
+      when is_binary(article_id) do
+    with %Article{thread: ^thread} = article <- Repo.get(Article, article_id),
+         {:ok, info} <- CMS.Artiment.Matcher.match_interaction(article) do
+      do_create(
+        thread,
+        article,
+        body,
+        user,
+        info,
+        command_id,
+        Map.get(projection, :branch_id)
+      )
+    else
+      nil -> {:error, CmsErrorCat.custom("article not found")}
+      {:error, _reason} = error -> error
+    end
+  end
+
   defp do_create(thread, article, body, %User{} = user, info, command_id, branch_id \\ nil) do
     article = Repo.preload(article, [[author: :user], :community])
 
@@ -243,6 +262,13 @@ defmodule GroupherServer.CMS.Comments.Writer do
     {:error, CmsErrorCat.command_result_unavailable()}
   end
 
+  defp replay_article(article) when is_struct(article) do
+    case Repo.get(article.__struct__, article.id) do
+      nil -> {:error, CmsErrorCat.command_result_unavailable()}
+      canonical -> {:ok, Repo.preload(canonical, [[author: :user], :community])}
+    end
+  end
+
   defp replay_article(%{id: article_id}) when is_binary(article_id) do
     with %Article{} = stable <- Repo.get(Article, article_id),
          %Community{} = community <- Repo.get(Community, stable.community_id) do
@@ -253,13 +279,6 @@ defmodule GroupherServer.CMS.Comments.Writer do
       })
     else
       _ -> {:error, CmsErrorCat.command_result_unavailable()}
-    end
-  end
-
-  defp replay_article(article) when is_struct(article) do
-    case Repo.get(article.__struct__, article.id) do
-      nil -> {:error, CmsErrorCat.command_result_unavailable()}
-      canonical -> {:ok, Repo.preload(canonical, [[author: :user], :community])}
     end
   end
 

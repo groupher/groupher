@@ -43,7 +43,8 @@ runtime。Dev Gateway 还可以保留 HMR、开发资产和 referer 分流等本
 
 ## 日常本地流程
 
-使用 Dev Hub 或现有的 Makefile 命令。
+使用 Dev Hub 或现有的 Makefile 命令。Phoenix 本地运行统一使用 `MIX_ENV=dev`，连接
+`localhost:5432/groupher_server_dev`；`test` 使用独立的 SQL Sandbox 数据库。
 
 ```bash
 make dev

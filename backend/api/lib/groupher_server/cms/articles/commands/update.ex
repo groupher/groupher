@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   the current canonical public DTO instead of retaining a physical content row.
   """
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Articles.Draft.Store, as: DraftStore
   alias CMS.Articles.RevisionResult
@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   alias CMS.Articles.Publish.Target
   alias CMS.Command
   alias CMS.FrontDesk
-  alias CMS.Model.{Article, ArticleLifecycle, Community}
+  alias CMS.Model.{Article, ArticleCommunity, ArticleLifecycle, Community}
   alias CMS.Articles.Commands.RevisionConfirmation, as: Confirmation
 
   @doc "Updates and republishes one stable Article using optimistic content versioning."
@@ -58,7 +58,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
        ) do
     with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user),
          {:ok, %{public: public}} <-
-           update_and_publish(article, attrs, author, user, community) do
+           update_and_publish(article, attrs, author, user, community),
+         %ArticleCommunity{inner_id: inner_id} when is_integer(inner_id) <-
+           Repo.get_by(ArticleCommunity, article_id: article.id, community_id: community.id) do
       with {:ok, revision_id} <- required_revision_id(public),
            {:ok, publication_version} <- required_publication_version(public),
            {:ok, published_at} <- required_published_at(public) do
@@ -68,7 +70,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
            revision_id: revision_id,
            community_id: community.id,
            author_id: article.author_id,
-           inner_id: article.inner_id,
+           inner_id: inner_id,
            thread: article.thread,
            publication_version: publication_version,
            published_at: published_at,
@@ -144,12 +146,18 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
 
   defp public_projection(article_id, community) do
     case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{inner_id: inner_id, thread: thread}} when is_integer(inner_id) ->
-        FrontDesk.article(%{
-          community: community.slug,
-          thread: thread,
-          inner_id: inner_id
-        })
+      {:ok, %Article{thread: thread}} ->
+        case Repo.get_by(ArticleCommunity, article_id: article_id, community_id: community.id) do
+          %ArticleCommunity{inner_id: inner_id} when is_integer(inner_id) ->
+            FrontDesk.article(%{
+              community: community.slug,
+              thread: thread,
+              inner_id: inner_id
+            })
+
+          _ ->
+            {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+        end
 
       _ ->
         {:error, CMS.Articles.ErrorCat.projection_not_updated()}

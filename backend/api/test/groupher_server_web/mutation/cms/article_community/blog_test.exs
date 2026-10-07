@@ -12,14 +12,11 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
     {:ok, community2} = mock_community(user)
     {:ok, community3} = mock_community(user)
 
-    {:ok, blackhole} = mock_community(user, %{slug: "blackhole"})
-
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
     owner_conn = simu_conn(:owner, blog)
 
-    {:ok,
-     ~m(user_conn guest_conn owner_conn community community2 community3 blackhole blog user)a}
+    {:ok, ~m(user_conn guest_conn owner_conn community community2 community3 blog user)a}
   end
 
   describe "[mirror/unmirror/move blog to/from community]" do
@@ -130,37 +127,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Blog do
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community2.id not in assoc_communities
       assert community3.id in assoc_communities
-    end
-
-    test "auth user can mirror blog home", ~m(user community blog)a do
-      {:ok, home_community} = mock_community(user, %{slug: "home"})
-
-      variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
-      }
-
-      passport_rules = %{"homemirror" => true}
-      rule_conn = simu_conn(:user, cms: passport_rules)
-
-      rule_conn |> gq_mutation(S.Article.m(:mirror_to_home), variables)
-
-      blog = %{communities: CMS.Articles.Communities.communities(blog)}
-
-      assert exist_in?(home_community, blog.communities)
-    end
-
-    test "auth user can move blog to blackhole", ~m(community blackhole blog)a do
-      variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
-      }
-
-      passport_rules = %{"blackeye" => true}
-      rule_conn = simu_conn(:user, cms: passport_rules)
-
-      rule_conn |> gq_mutation(S.Article.m(:move_to_blackhole), variables)
-
-      blog = Repo.get!(CMS.Model.Article, blog.id)
-      assert blog.community_id == blackhole.id
     end
 
     test "auth user can move blog to other community", ~m(community community2 blog)a do

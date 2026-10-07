@@ -1,8 +1,8 @@
 defmodule GroupherServer.CMS.Model.PostState do
   @moduledoc """
-  Stable operational Post classification that does not create content Revisions.
+  Stable Article-global Post classification that does not create content Revisions.
 
-      Kanban / moderation -> PostState -> ArticlePublic refresh
+      Post category / moderation -> PostState -> ArticlePublic refresh
   """
 
   use Ecto.Schema
@@ -21,7 +21,6 @@ defmodule GroupherServer.CMS.Model.PostState do
   schema "post_states" do
     belongs_to(:article, Article, primary_key: true)
     field(:cat, Ecto.Enum, values: Const.cat_values())
-    field(:status, Ecto.Enum, values: Const.status_values())
     timestamps(type: :utc_datetime)
   end
 
@@ -29,7 +28,7 @@ defmodule GroupherServer.CMS.Model.PostState do
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(%__MODULE__{} = state, attrs) do
     state
-    |> cast(attrs, [:article_id, :cat, :status])
+    |> cast(attrs, [:article_id, :cat])
     |> validate_required([:article_id])
     |> foreign_key_constraint(:article_id)
   end

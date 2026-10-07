@@ -336,34 +336,34 @@ Accounts resolver 函数拆入 `Profiles`、`Sessions`、`Relationships`、`Mail
 业务逻辑迁出后，再按稳定 GraphQL 领域拆分。以下映射覆盖当前 resolver 中的函数家族；小型纯转发
 模块可以在实施时合并，但不得重新回到一个跨领域 CMS 总入口：
 
-| 现有函数家族                                                                                                               | 目标 resolver module                                         |
-| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `me`、profile、publish、search                                                                                             | `Resolvers.Accounts.Profiles`                                |
-| browser session、OAuth identity                                                                                            | `Resolvers.Accounts.Sessions`                                |
-| fans、collect folders/entries                                                                                              | `Resolvers.Accounts.Relationships`                           |
-| mailbox                                                                                                                    | `Resolvers.Accounts.Mailbox`                                 |
-| `get_passport`、`get_passport_string`、`get_all_rules`                                                                     | `Resolvers.Accounts.Passport`                                |
-| `all_passport_rules`                                                                                                       | `Resolvers.CMS.Passport`                                     |
-| Content Import，包括其 scoped Passport check                                                                               | `Resolvers.ContentImport`                                    |
-| `command_id` 等通用 command payload field                                                                                  | `Resolvers.CMS.CommandPayload`                               |
-| Article logs、Community Activity                                                                                           | `Resolvers.CMS.Activity`                                     |
-| Article Insights、Web Analysis                                                                                             | `Resolvers.CMS.Analysis`                                     |
-| ArticleStats fields/read                                                                                                   | `Resolvers.CMS.ArticleStats`                                 |
-| `track_article_view`、`article_viewer_states`                                                                              | `Resolvers.CMS.ViewTracker`                                  |
-| Community Application query/mutation/field                                                                                 | `Resolvers.CMS.CommunityApplications`                        |
-| Community core、moderator、subscription、Category、Tag                                                                     | `Resolvers.CMS.Communities`                                  |
-| Asset                                                                                                                      | `Resolvers.CMS.Assets`                                       |
-| Dashboard config/theme                                                                                                     | `Resolvers.CMS.Dashboard`                                    |
-| Wallpaper                                                                                                                  | `Resolvers.CMS.Wallpaper`                                    |
-| Press config/article/feed/manifest                                                                                         | `Resolvers.CMS.Press`                                        |
-| DocTree、DocCover、Doc Draft/Version/Publish                                                                               | `Resolvers.CMS.Docs`                                         |
-| Article read/write/draft/trash/Kanban，以及 `move_to_blackhole`、`sink_article`、`lock_article_comments` 等 Article action | `Resolvers.CMS.Articles`                                     |
-| Comment read/write/replies/solution/pin/reconcile                                                                          | `Resolvers.CMS.Comments`                                     |
-| Article/Comment upvote、emotion、report、private state                                                                     | `Resolvers.CMS.Interactions`                                 |
-| `paged_reports` 及相关 projection                                                                                          | `Resolvers.CMS.Reporting`                                    |
-| `mentions`、`mentioned_by`、trashed mention fields                                                                         | `Resolvers.CMS.ArtimentMentions`                             |
-| CMS Community/Artiment search                                                                                              | `Resolvers.CMS.Search`                                       |
-| OpenGraph info                                                                                                             | `Resolvers.CMS.OpenGraph`，或后续确认的 platform Web adapter |
+| 现有函数家族                                                                                          | 目标 resolver module                                         |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `me`、profile、publish、search                                                                        | `Resolvers.Accounts.Profiles`                                |
+| browser session、OAuth identity                                                                       | `Resolvers.Accounts.Sessions`                                |
+| fans、collect folders/entries                                                                         | `Resolvers.Accounts.Relationships`                           |
+| mailbox                                                                                               | `Resolvers.Accounts.Mailbox`                                 |
+| `get_passport`、`get_passport_string`、`get_all_rules`                                                | `Resolvers.Accounts.Passport`                                |
+| `all_passport_rules`                                                                                  | `Resolvers.CMS.Passport`                                     |
+| Content Import，包括其 scoped Passport check                                                          | `Resolvers.ContentImport`                                    |
+| `command_id` 等通用 command payload field                                                             | `Resolvers.CMS.CommandPayload`                               |
+| Article logs、Community Activity                                                                      | `Resolvers.CMS.Activity`                                     |
+| Article Insights、Web Analysis                                                                        | `Resolvers.CMS.Analysis`                                     |
+| ArticleStats fields/read                                                                              | `Resolvers.CMS.ArticleStats`                                 |
+| `track_article_view`、`article_viewer_states`                                                         | `Resolvers.CMS.ViewTracker`                                  |
+| Community Application query/mutation/field                                                            | `Resolvers.CMS.CommunityApplications`                        |
+| Community core、moderator、subscription、Category、Tag                                                | `Resolvers.CMS.Communities`                                  |
+| Asset                                                                                                 | `Resolvers.CMS.Assets`                                       |
+| Dashboard config/theme                                                                                | `Resolvers.CMS.Dashboard`                                    |
+| Wallpaper                                                                                             | `Resolvers.CMS.Wallpaper`                                    |
+| Press config/article/feed/manifest                                                                    | `Resolvers.CMS.Press`                                        |
+| DocTree、DocCover、Doc Draft/Version/Publish                                                          | `Resolvers.CMS.Docs`                                         |
+| Article read/write/draft/trash/Kanban，以及 `sink_article`、`lock_article_comments` 等 Article action | `Resolvers.CMS.Articles`                                     |
+| Comment read/write/replies/solution/pin/reconcile                                                     | `Resolvers.CMS.Comments`                                     |
+| Article/Comment upvote、emotion、report、private state                                                | `Resolvers.CMS.Interactions`                                 |
+| `paged_reports` 及相关 projection                                                                     | `Resolvers.CMS.Reporting`                                    |
+| `mentions`、`mentioned_by`、trashed mention fields                                                    | `Resolvers.CMS.ArtimentMentions`                             |
+| CMS Community/Artiment search                                                                         | `Resolvers.CMS.Search`                                       |
+| OpenGraph info                                                                                        | `Resolvers.CMS.OpenGraph`，或后续确认的 platform Web adapter |
 
 原 `ArticleInteractionPayload` 与 `ArticleStatsPayload` 已在 R1 删除；R4 不为它们创建兼容 wrapper。
 

@@ -101,11 +101,16 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     )
     |> where(
       [article, relation],
-      article.thread == ^thread and article.inner_id == ^inner_id and
+      article.thread == ^thread and relation.inner_id == ^inner_id and
         relation.community_id == ^community_id
     )
     |> preload([article, _relation], author: :user)
+    |> select([article, relation], %{article: article, inner_id: relation.inner_id})
     |> Repo.one()
+    |> case do
+      %{article: article, inner_id: inner_id} -> %{article | inner_id: inner_id}
+      other -> other
+    end
   end
 
   defp stable_article_visible(%Article{thread: :doc} = article, _community_id, actor) do

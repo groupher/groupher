@@ -12,14 +12,11 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
     {:ok, community2} = mock_community(user)
     {:ok, community3} = mock_community(user)
 
-    {:ok, blackhole} = mock_community(user, %{slug: "blackhole"})
-
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
     owner_conn = simu_conn(:owner, post)
 
-    {:ok,
-     ~m(user_conn guest_conn owner_conn community community2 community3 blackhole post user)a}
+    {:ok, ~m(user_conn guest_conn owner_conn community community2 community3 post user)a}
   end
 
   describe "[mirror/unmirror/move post to/from community]" do
@@ -138,36 +135,6 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       assert community3.id in assoc_communities
     end
 
-    test "auth user can mirror post home", ~m(community post user)a do
-      {:ok, home_community} = mock_community(user, %{slug: "home"})
-
-      variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
-      }
-
-      passport_rules = %{"homemirror" => true}
-      rule_conn = simu_conn(:user, cms: passport_rules)
-
-      rule_conn |> gq_mutation(S.Article.m(:mirror_to_home), variables)
-
-      post = %{communities: CMS.Articles.Communities.communities(post)}
-
-      assert exist_in?(home_community, post.communities)
-    end
-
-    test "auth user can move post to blackhole", ~m(community blackhole post)a do
-      variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
-      }
-
-      passport_rules = %{"blackeye" => true}
-      rule_conn = simu_conn(:user, cms: passport_rules)
-
-      rule_conn |> gq_mutation(S.Article.m(:move_to_blackhole), variables)
-      post = Repo.get!(CMS.Model.Article, post.id)
-      assert post.community_id == blackhole.id
-    end
-
     test "auth user can move post to other community", ~m(community community2 post)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -207,11 +174,11 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
       assert pre_community_id not in assoc_communities
       assert community2.id in assoc_communities
-      assert community2.id == found.community_id
+      assert pre_community_id == found.community_id
 
       assert article_tag.id in assoc_article_tags
 
-      assert found.community_id == community2.id
+      assert found.community_id == pre_community_id
     end
 
     test "mirror article with invalid thread is rejected without crash",

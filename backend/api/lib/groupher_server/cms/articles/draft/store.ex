@@ -36,6 +36,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     DocBranchState,
     DocRevision,
     DocLifecycle,
+    KanbanState,
     PostDraft,
     PostState,
     PostRevision
@@ -62,10 +63,11 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
       with :ok <- validate_cover(attrs),
            {:ok, body_bag} <- cast_body(attrs, thread),
            {:ok, article} <- insert_article(community, thread, author, attrs),
-           {:ok, _community_relation} <- insert_community_relation(article),
+           {:ok, community_relation} <- insert_community_relation(article),
            {:ok, _lifecycle} <- insert_lifecycle(article, opts),
            {:ok, _branch_state} <- insert_branch_state(article, opts),
            {:ok, _post_state} <- insert_post_state(article, attrs),
+           {:ok, _kanban_state} <- insert_kanban_state(article, community_relation, attrs),
            {:ok, body_draft} <- insert_body(body_bag),
            :ok <- save_cover_edit(body_draft.id, attrs),
            {:ok, draft} <- insert_draft(article, body_draft, author, attrs, opts),
@@ -263,13 +265,30 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     %PostState{}
     |> PostState.changeset(%{
       article_id: article_id,
-      cat: value(attrs, :cat),
-      status: value(attrs, :status)
+      cat: value(attrs, :cat)
     })
     |> Repo.insert()
   end
 
   defp insert_post_state(%Article{}, _attrs), do: {:ok, nil}
+
+  defp insert_kanban_state(
+         %Article{thread: :post},
+         %ArticleCommunity{id: article_community_id},
+         attrs
+       ) do
+    case value(attrs, :status) do
+      nil ->
+        {:ok, nil}
+
+      status ->
+        %KanbanState{}
+        |> KanbanState.changeset(%{article_community_id: article_community_id, status: status})
+        |> Repo.insert()
+    end
+  end
+
+  defp insert_kanban_state(%Article{}, %ArticleCommunity{}, _attrs), do: {:ok, nil}
 
   defp cast_body(attrs, thread) do
     body = Map.get(attrs, :body_bag) || Map.get(attrs, "body_bag")

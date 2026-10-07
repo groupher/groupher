@@ -47,11 +47,15 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
     with {:stable, article_id} when is_binary(article_id) <-
            {:stable, comment.article_id},
          {:ok, thread} <- thread_of(comment),
-         %CMS.Model.Article{} = article <- Repo.get(CMS.Model.Article, article_id),
          %CMS.Model.Community{} = community <- Repo.get(CMS.Model.Community, comment.community_id),
+         %CMS.Model.ArticleCommunity{inner_id: inner_id} <-
+           Repo.get_by(CMS.Model.ArticleCommunity,
+             article_id: article_id,
+             community_id: comment.community_id
+           ),
          {:ok, projection} <-
            ArticleFrontDesk.read(
-             %{community: community.slug, thread: thread, inner_id: article.inner_id},
+             %{community: community.slug, thread: thread, inner_id: inner_id},
              nil,
              []
            ) do

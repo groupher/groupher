@@ -27,6 +27,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   alias CMS.Model.{
     ArticleLifecycle,
     Article,
+    ArticleCommunity,
     CommentLifecycle,
     Community,
     CommunityLifecycle,
@@ -125,6 +126,34 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   end
 
   def article(_community, _thread, _resource) do
+    {:error, ErrorCat.gate_resource_mismatch()}
+  end
+
+  @doc "Loads an ordinary Article against an explicit ArticleCommunity relation."
+  def article_in_community(
+        %Community{} = community,
+        thread,
+        %Article{thread: thread} = resource
+      )
+      when thread in @article_threads do
+    with %Article{} = canonical <- Queries.resource(Article, resource.id),
+         %ArticleCommunity{} <- Queries.article_community(canonical.id, community.id),
+         canonical <- preload_article_author(canonical),
+         %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
+         %ArticleLifecycle{} = article_lifecycle <- Queries.article_lifecycle(canonical.id) do
+      {:ok,
+       %ArticleContext{
+         article: canonical,
+         community: %{community | lifecycle: community_lifecycle},
+         community_lifecycle: community_lifecycle,
+         article_lifecycle: article_lifecycle
+       }}
+    else
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
+    end
+  end
+
+  def article_in_community(_community, _thread, _resource) do
     {:error, ErrorCat.gate_resource_mismatch()}
   end
 

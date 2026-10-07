@@ -210,18 +210,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     CMS.Articles.move(target_community, article.id, community_tags, user)
   end
 
-  def mirror_to_home(_root, ~m(target_community article community_tags)a, %{
-        context: %{cur_user: user}
-      }) do
-    CMS.Articles.mirror_to_home(target_community, article.id, community_tags, user)
-  end
-
-  def move_to_blackhole(_root, ~m(target_community article community_tags)a, %{
-        context: %{cur_user: user}
-      }) do
-    CMS.Articles.move_to_blackhole(target_community, article.id, community_tags, user)
-  end
-
   defp do_read_article(
          %{community: community, thread: thread, inner_id: inner_id},
          %{context: context}

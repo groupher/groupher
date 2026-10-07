@@ -12,11 +12,11 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   canonical public result; it never guesses an old Draft/Public physical row.
   """
 
-  alias GroupherServer.{Accounts, Activity, CMS}
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.{Articles, Communities, Command, Docs}
   alias CMS.FrontDesk
-  alias CMS.Model.{Article, Community}
+  alias CMS.Model.{Article, ArticleCommunity, Community}
   alias CMS.Articles.RevisionResult
   alias CMS.Articles.Commands.RevisionConfirmation, as: Confirmation
   alias Helper.T
@@ -66,6 +66,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
 
   defp confirmation_from_public(public, community, command_id) do
     with {:ok, %Article{} = article} <- FrontDesk.article(public.article_id, mode: :internal),
+         %ArticleCommunity{inner_id: inner_id} when is_integer(inner_id) <-
+           Repo.get_by(ArticleCommunity, article_id: article.id, community_id: community.id),
          published_at when is_struct(published_at, DateTime) <- Map.get(public, :inserted_at),
          publication_version when is_integer(publication_version) <-
            Map.get(public, :publication_version, Map.get(public, :version, 1)) do
@@ -75,7 +77,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
          revision_id: public.revision_id,
          community_id: community.id,
          author_id: article.author_id,
-         inner_id: article.inner_id,
+         inner_id: inner_id,
          thread: article.thread,
          publication_version: publication_version,
          published_at: published_at,
@@ -120,17 +122,18 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     end
   end
 
-  defp public_projection(%Article{inner_id: inner_id, thread: thread}, community)
-       when is_integer(inner_id) do
-    FrontDesk.article(%{
-      community: community.slug,
-      thread: thread,
-      inner_id: inner_id
-    })
-  end
+  defp public_projection(%Article{thread: thread, id: article_id}, community) do
+    case Repo.get_by(ArticleCommunity, article_id: article_id, community_id: community.id) do
+      %ArticleCommunity{inner_id: inner_id} when is_integer(inner_id) ->
+        FrontDesk.article(%{
+          community: community.slug,
+          thread: thread,
+          inner_id: inner_id
+        })
 
-  defp public_projection(_article, _community) do
-    {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+      _ ->
+        {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+    end
   end
 
   defp sync_community_tags(community, article, attrs) do

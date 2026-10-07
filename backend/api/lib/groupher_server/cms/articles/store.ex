@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.Articles.Store do
   @doc "Loads one Article revision row."
   def revision(revision_id), do: ORM.find(ArticleRevision, revision_id)
 
-  @doc "Loads one Article placement for a Community."
+  @doc "Loads one ArticleCommunity relation for a Community."
   def relation(article_id, community_id) do
     ORM.find_by(ArticleCommunity, article_id: article_id, community_id: community_id)
   end
@@ -67,7 +67,14 @@ defmodule GroupherServer.CMS.Articles.Store do
   defp community(community_id), do: ORM.find(Community, community_id)
 
   @doc "Ensures an Article has the Community association needed by an effect."
-  def with_community(%Article{} = article), do: {:ok, Repo.preload(article, :community)}
+  def with_community(%Article{} = article) do
+    article = Repo.preload(article, :community)
+
+    case relation(article.id, article.community_id) do
+      {:ok, %ArticleCommunity{inner_id: inner_id}} -> {:ok, %{article | inner_id: inner_id}}
+      {:error, _reason} -> {:ok, article}
+    end
+  end
 
   def with_community(%ArticleResult{community: %Community{}} = article), do: {:ok, article}
 
@@ -86,9 +93,10 @@ defmodule GroupherServer.CMS.Articles.Store do
 
   defp load_public_article(article_id) do
     with {:ok, article} <- article(article_id),
-         {:ok, community} <- community(article.community_id) do
+         {:ok, community} <- community(article.community_id),
+         {:ok, relation} <- relation(article.id, community.id) do
       PublicArticleFrontDesk.read(
-        %{community: community.slug, thread: article.thread, inner_id: article.inner_id},
+        %{community: community.slug, thread: article.thread, inner_id: relation.inner_id},
         nil,
         []
       )

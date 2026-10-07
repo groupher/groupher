@@ -6,7 +6,6 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import EditSVG from '~/icons/EditPen'
 import LockSVG from '~/icons/LockLight'
 import MergeSVG from '~/icons/Merge'
-import ArticleMirror from '~/icons/MirrorShoe'
 import SlugSVG from '~/icons/Slug'
 import DeleteSVG from '~/icons/Trash'
 
@@ -92,12 +91,6 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
             <ArchivedSVG className={s.icon} />
             <div className={s.menuTitle}>归档</div>
           </div>
-          <button type='button' className={s.menuItem} onClick={() => openSubMenu(SUB_MENU.MIRROR)}>
-            <ArticleMirror className={s.icon} />
-            <div className={s.menuTitle}>镜像:Groupher</div>
-            <div className='grow' />
-            <ArrowSVG className={cn(s.icon, 'rotate-180')} />
-          </button>
           <div className={cn(s.menuItem, s.menuItemDanger)}>
             <DeleteSVG className={s.icon} />
             删除

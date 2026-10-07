@@ -63,8 +63,8 @@ defmodule GroupherServer.CMS.Articles.PathResolver do
 
           community.id
           |> public_articles(thread, inner_ids)
-          |> Enum.reduce(acc, fn article, group_acc ->
-            Map.put(group_acc, {community_ref, thread, article.inner_id}, article)
+          |> Enum.reduce(acc, fn %{inner_id: inner_id} = resolved, group_acc ->
+            Map.put(group_acc, {community_ref, thread, inner_id}, resolved)
           end)
         else
           _ -> acc
@@ -78,8 +78,11 @@ defmodule GroupherServer.CMS.Articles.PathResolver do
               path.thread,
               normalize_path_inner_id(path.inner_id)
             }) do
-         nil -> []
-         article -> [%{path: path, article: article}]
+         nil ->
+           []
+
+         %{article: article} = resolved ->
+           [%{path: path, article: article, relation: resolved.relation}]
        end
      end)}
   end
@@ -98,7 +101,7 @@ defmodule GroupherServer.CMS.Articles.PathResolver do
       join: relation in ArticleCommunity,
       on: relation.article_id == article.id,
       join: branch in CMS.Model.DocBranch,
-      on: branch.community_id == article.community_id and branch.type == :main,
+      on: branch.community_id == ^community_id and branch.type == :main,
       join: lifecycle in DocLifecycle,
       on: lifecycle.article_id == article.id and lifecycle.branch_id == branch.id,
       join: state in DocBranchState,
@@ -107,10 +110,15 @@ defmodule GroupherServer.CMS.Articles.PathResolver do
       on: public.article_id == article.id and public.branch_id == branch.id,
       where:
         relation.community_id == ^community_id and relation.visible == true and
-          article.thread == :doc and article.inner_id in ^inner_ids and
+          article.thread == :doc and relation.inner_id in ^inner_ids and
           lifecycle.state in [:published, :archived] and state.moderation_state == :legal and
           public.visible == true,
-      select: %{article: article, branch_id: branch.id}
+      select: %{
+        article: article,
+        relation: relation,
+        inner_id: relation.inner_id,
+        branch_id: branch.id
+      }
     )
     |> Repo.all()
     |> Enum.map(&Map.put(&1.article, :branch_id, &1.branch_id))
@@ -126,10 +134,10 @@ defmodule GroupherServer.CMS.Articles.PathResolver do
       on: public.article_id == article.id,
       where:
         relation.community_id == ^community_id and relation.visible == true and
-          article.thread == ^thread and article.inner_id in ^inner_ids and
+          article.thread == ^thread and relation.inner_id in ^inner_ids and
           lifecycle.state in [:published, :archived] and article.moderation_state == :legal and
           public.visible == true,
-      select: article
+      select: %{article: article, relation: relation, inner_id: relation.inner_id}
     )
     |> Repo.all()
   end

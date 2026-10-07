@@ -91,12 +91,12 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
          states when is_map(states) <-
            viewer_states(Enum.map(resolved, & &1.article), viewer, opts) do
       {:ok,
-       Enum.map(resolved, fn %{path: path, article: article} ->
+       Enum.map(resolved, fn %{path: path, article: article, relation: relation} ->
          {:ok, %{artiment: type}} = Matcher.match_interaction(article)
          state = Map.fetch!(states, {type, article.id})
 
          ReadState.article_state(
-           %{community: path.community, thread: path.thread, inner_id: article.inner_id},
+           %{community: path.community, thread: path.thread, inner_id: relation.inner_id},
            state
          )
        end)}

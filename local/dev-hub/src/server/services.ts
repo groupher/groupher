@@ -339,7 +339,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
   {
     id: 'phoenix',
     name: 'Phoenix',
-    description: 'GraphQL API in mock mode',
+    description: 'GraphQL API in local development mode',
     group: 'backend',
     monogram: 'PX',
     technologies: ['phoenix', 'elixir', 'absinthe', 'postgresql'],
@@ -347,7 +347,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     config: {
       kind: 'elixir-config',
       root: fromRoot('backend/api/config'),
-      environment: 'mock',
+      environment: 'dev',
     },
     command: 'make',
     args: ['be.start.managed'],
@@ -415,7 +415,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     args: ['be.press.start'],
     env: {
       DB_HOST: 'localhost',
-      DB_NAME: 'groupher_server_mock',
+      DB_NAME: 'groupher_server_dev',
       DB_PASSWORD: 'postgres',
       DB_PORT: '5432',
       DB_USERNAME: 'postgres',

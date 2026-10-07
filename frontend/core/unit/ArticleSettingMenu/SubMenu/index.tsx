@@ -4,7 +4,6 @@ import { SUB_MENU } from '../constant'
 import type { TSubMenu } from '../spec'
 import CatSetting from './CatSetting'
 import Header from './Header'
-import Mirror2Home from './Mirror2Home'
 import useSalon from './salon'
 import SlugSetting from './SlugSetting'
 import StatusSetting from './StatusSetting'
@@ -39,11 +38,6 @@ const SubMenu: FC<TProps> = ({ closeSubMenu, subMenuType }) => {
 
     case SUB_MENU.SLUG: {
       Content = SlugSetting
-      break
-    }
-
-    case SUB_MENU.MIRROR: {
-      Content = Mirror2Home
       break
     }
 
