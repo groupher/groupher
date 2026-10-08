@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Communities.Creation do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Ecto.Multi
   alias Accounts.Model.User
-  alias CMS.Communities.{ErrorCat, Jobs, Lifecycle, NamePolicy, SlugClaims, Writer}
+  alias CMS.Communities.{ErrorCat, Jobs, Lifecycle, NamePolicy, SlugClaims, CreationPersist}
   alias CMS.CommunityApplications.Transitions
 
   alias CMS.Model.{
@@ -106,7 +106,7 @@ defmodule GroupherServer.CMS.Communities.Creation do
   end
 
   defp create_core(application, upload, user) do
-    Writer.create_core(
+    CreationPersist.create_core(
       %{
         title: application.title,
         slug: application.slug,

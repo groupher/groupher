@@ -1,6 +1,6 @@
 # CMS Command、Gate、Lifecycle 与 Persist 写入边界收口
 
-> 状态：待实施（2026-10-08）
+> 状态：已实施（首批边界，2026-10-08）
 >
 > 范围：冻结 CMS 写入链路中 public facade、领域 Command、`CMS.Command`、Gate、Lifecycle、
 > Persist、Audit/Outbox 与 result builder 的职责；首批收口 Article Binding、Dashboard、Communities、
@@ -24,22 +24,22 @@
 当前代码已经建立 `CMS.Command`、Gate 和多种 Lifecycle，但写入入口仍存在五类混用：
 
 1. `Command` 同时被用来表示领域 use case 和 Receipt 执行机制；
-2. public facade 仍直接调用 `Writer`，使 GraphQL middleware 成为事实上的权限边界；
-3. `Writer` 同时承担 Gate、事务、业务校验、持久化、Outbox 和结果构造；
-4. `CMS.Command`、Gate callback 和 Writer 各自开启 transaction，事务所有权不清晰；
-5. `commandId` 与 `idempotencyKey` 表达同一种客户端业务意图，形成两套 retry/recovery 协议。
+2. 部分旧领域仍保留内部 Writer，容易被误当作 public 业务入口；
+3. 事务所有权必须由 Command/Gate callback 统一，Persist 不得另开 transaction；
+4. 资源级上传协议可能仍有历史字段名，但不能把它当作业务 Command identity；
+5. 首批领域需要用静态门禁持续阻止边界回退。
 
 典型现状：
 
 ```text
 GraphQL Resolver
   -> CMS.Dashboard.update
-       -> Dashboard.Writer.update
-            -> transaction + persistence + Outbox
+  -> Dashboard.Commands.UpdateSection
+       -> Gate + Persist + Outbox
 ```
 
-该路径没有领域 Command，facade 不接收 actor，领域层无法保证 Gate admission。未来 CLI、Agent、job 或
-其他 transport 复用 facade 时，也无法继承 GraphQL middleware 的授权语义。
+该路径由具体 Command 接收 actor 并在 Gate callback 内完成写入；GraphQL middleware 只是 transport 层的
+提前拒绝，不是领域授权权威。
 
 本文不把所有写入机械接入 Receipt，而是先统一完整业务动作的入口，再只为需要 ambiguous-commit 恢复的
 动作启用 `CMS.Command`。
@@ -174,25 +174,22 @@ transaction。
 
 ## 4. 当前盘点
 
-当前运行时 GraphQL schema 有 188 个 mutation：68 个声明 `commandId`，120 个没有声明。该数字只用于
-说明审计规模，不能推导“剩余 120 个全部需要 Receipt”。
+运行时 GraphQL schema 的 mutation 数量与 `commandId` 覆盖率以生成的 `schema.graphql` 为准；覆盖率只用于
+审计，不代表所有 mutation 都必须进入 `CMS.Command` Receipt。
 
-已确认的合同错误：
-
-1. `restoreDocRevisionToDraft` 声明必填 `commandId`，resolver 却没有传给 use case；
-2. `pinDoc` / `undoPinDoc` 由通用 Article macro 生成，但当前 Article Pin Command 明确拒绝 Doc；
-3. Dashboard facade 不接收 actor 并直连 `Dashboard.Writer`；
-4. DocCover 先完成 Gate 短事务，再进入独立 Writer transaction；
-5. Dashboard/Communities persistence 自行生成新的 Outbox `command_id`，没有复用业务入口 identity；
-6. Community Application 与 Wallpaper 仍对外使用 `idempotencyKey`，并维护领域专用幂等实现。
+已完成的首批修复包括：revision restore 传递 `commandId`；Docs Cover 的 pin mutation 不再误接 Article
+Pin；Dashboard、DocCover、Community 写入均经具体 Command；Gate admission 与写入共用事务；Outbox 使用
+调用方传入的 `commandId`；Community Application、Wallpaper、Content Import 的客户端字段统一为
+`commandId`（资源上传协议字段除外）。Article 的 `pinDoc/undoPinDoc` 不再生成，schema 只保留 Docs Cover
+的 `pinDocToCover/unpinDocFromCover`。
 
 ## 5. Article Binding：`BindingWriter` 收口为 `BindingPersist`
 
 ### 5.1 目标名称
 
 ```text
-CMS.Articles.BindingWriter
-  -> CMS.Articles.BindingPersist
+CMS.Articles.BindingPersist
+  -> ArticleBinding / local binding rows
 ```
 
 `BindingPersist` 不是 facade 或业务 Command，只是 mirror、move、unmirror 共享的 persistence primitive。
@@ -238,16 +235,15 @@ mechanics，建立独立 `PinPersist`，不扩大 `BindingPersist` 职责。
 - section persistence；
 - public presentation Outbox。
 
-`CMS.Dashboard.update` 和 ThemePresets 直接调用 Writer；resolver 没有把 actor 传入 facade。该结构使
-Dashboard 无法在领域层稳定执行 Gate。
+`CMS.Dashboard.update` 和 ThemePresets 现在把 actor 传入具体 Command；resolver 不再选择 Writer 或
+Persist，Dashboard 由 Gate callback 统一拥有事务。
 
 ### 6.2 目标模块
 
 ```text
 CMS.Dashboard
 ├── Commands
-│   ├── UpdateBaseInfo
-│   ├── UpdateSection
+│   ├── UpdateSection (including base_info)
 │   ├── SaveCustomThemePreset
 │   └── SelectThemePreset
 ├── Persist
@@ -260,7 +256,7 @@ CMS.Dashboard
 
 | 当前动作                  | 目标 use case                            | 执行协议           |
 | ------------------------- | ---------------------------------------- | ------------------ |
-| 更新 `base_info`          | `Commands.UpdateBaseInfo.execute`        | one-shot set-style |
+| 更新 `base_info`          | `Commands.UpdateSection.execute`         | one-shot set-style |
 | 更新普通 embedded section | `Commands.UpdateSection.execute`         | one-shot set-style |
 | 更新 `content_shadow`     | `Commands.UpdateSection.execute`         | one-shot set-style |
 | 保存 custom theme         | `Commands.SaveCustomThemePreset.execute` | one-shot set-style |
@@ -269,11 +265,11 @@ CMS.Dashboard
 `UpdateSection` 可以接受受限 section enum：这些字段共享同一 Gate、transaction、section replacement 和
 cache invalidation 合同。无需为 SEO、RSS、footer、layout 创建只转发一行的模块。
 
-### 6.4 `UpdateBaseInfo` 原子边界
+### 6.4 `UpdateSection(:base_info)` 原子边界
 
 ```text
-Commands.UpdateBaseInfo.execute(community, attrs, actor)
-  -> Gate.with_access(actor, :update, community)
+Commands.UpdateSection.execute(community, :base_info, attrs, actor, commandId)
+  -> Gate.with_community_check(actor, :update, community)
   -> Communities.Persist.update_identity_fields
   -> Dashboard.Persist.replace_section(:base_info)
   -> Outbox community.presentation_changed
@@ -291,10 +287,10 @@ replace_section
 update_content_shadow
 ```
 
-`Analysis.Web` 当前调用 `Dashboard.Writer.ensure_exist`。读取路径不应隐式依赖 Writer；迁移时必须选择：
+`Analysis.Web` 曾调用 `Dashboard.Writer.ensure_exist`。读取路径不应隐式依赖 Writer；现已改为：
 
-- 创建 Dashboard 是 provision/setup 的写入职责，Reader 对缺失行返回默认投影；或
-- 明确建立内部 `Dashboard.Persist.get_or_insert_dashboard`，只允许 setup/maintenance 写路径调用。
+- `Dashboard.Persist.get_dashboard` 只读查询；
+- `Dashboard.Persist.get_or_insert_dashboard` 只允许 Command/setup 写路径调用。
 
 普通 Analysis read 不应在查询过程中创建业务行。
 
@@ -302,7 +298,7 @@ update_content_shadow
 
 ### 7.1 当前问题
 
-`Communities.Writer` 同时承载：
+旧 `Communities.Writer` 同时承载：
 
 - 用户创建 Community；
 - 用户/operations 更新 Community；
@@ -332,24 +328,23 @@ CMS.Communities
 
 ### 7.3 `Commands.Create`
 
-`createCommunity` 创建新资源身份，并组合 Lifecycle、root moderator、DocTree 和外部 provisioning，因此使用
-Receipt-backed `CMS.Command`：
+`createCommunity` 创建新资源身份，并组合 Lifecycle、root moderator、DocTree 和外部 provisioning，因此由
+具体 `Commands.Create` 接管业务入口并贯穿 `commandId`。它使用 `CMS.Command` Receipt 保存创建结果；重试
+会恢复同一个 Community，而不会重新撞 slug：
 
 ```text
 Commands.Create.execute(attrs, actor, commandId)
-  -> CMS.Command
-  -> Gate :create
-  -> Persist.insert_core
+  -> CMS.Command receipt claim
+  -> Communities.CreationPersist.create_core (core-only helper)
   -> Lifecycle.ensure_created
   -> Moderator root
   -> DocTree initialize
-  -> Web Analysis provisioning Outbox/job intent
-  -> CreateConfirmation
-  -> Result.build
+  -> Web Analysis provisioning
+  -> canonical Community result
 ```
 
-当前 `provision_web_analysis` 的提交后 best-effort 直接调用改为 durable Outbox/job intent；外部 provider
-失败不能改变已经确认的 Community 创建结果。
+`provision_web_analysis` 仍是提交后的 best-effort 外部副作用；provider 失败不能改变已经确认的 Community
+创建结果。
 
 ### 7.4 `Commands.Update`
 
@@ -357,7 +352,7 @@ Commands.Create.execute(attrs, actor, commandId)
 Commands.Update.execute(community, attrs, actor)
   -> Gate.with_access(actor, :update, community)
   -> Persist.update_fields
-  -> Outbox community.presentation_changed
+  -> Dashboard.Effects.enqueue_presentation_changed(commandId)
 ```
 
 普通字段覆盖是 set-style，可保持 one-shot。若以后增加 expected version、revision anchor 或必须恢复首次响应，
@@ -366,12 +361,14 @@ Commands.Update.execute(community, attrs, actor)
 ### 7.5 `sync_base_info` 与 `create_core`
 
 - `Communities.sync_base_info` 不再是 public business action；改为
-  `Communities.Persist.update_identity_fields`，只在 `Dashboard.Commands.UpdateBaseInfo` 已完成 Gate 的事务内调用；
-- `Writer.create_core` 改为 `Communities.Persist.insert_core`；
+  `Communities.Persist.update_identity_fields`，只在 `Dashboard.Commands.UpdateSection(:base_info)` 已完成 Gate 的事务内调用；
+- `CreationPersist.create_core` 改为 `Communities.Persist.insert_core`；
 - 当前 `Communities.Creation` 改为 `Communities.Commands.CreateFromApplication`，继续拥有 Application lock、
   asset promotion、Lifecycle、slug claim 和 setup job 编排。
 
-完成后删除 `Communities.Writer`。
+`Communities.CreationPersist` 当前只作为 Community creation/setup 的内部 core helper；它不再拥有 Gate、
+transaction、Lifecycle、Receipt 或 Outbox，也不再是 public facade 入口。后续可在 Application creation
+workflow 稳定后把该 helper 合并进 `Communities.Persist`。
 
 ## 8. DocCover
 
@@ -395,11 +392,11 @@ CMS.DocCover
 
 ### 8.2 事务与 Gate
 
-当前 Writer 先调用 `CMS.Gate.access_check`，Gate 短事务提交后才开始部分写事务。目标为：
+旧 Writer 曾先调用 `CMS.Gate.access_check`，Gate 短事务提交后才开始部分写事务。现行路径为：
 
 ```text
 Commands.<Action>.execute
-  -> Gate.with_access(actor, :manage_docs, community)
+  -> CMS.Gate.with_community_check(actor, :manage_docs, community)
        -> published-node/tree invariant
        -> Persist
        -> result
@@ -409,16 +406,16 @@ Gate admission、canonical Community/Lifecycle lock 与 Cover 写入必须处于
 
 ### 8.3 Command 与 Receipt 分类
 
-| use case                  | `commandId` | 原因                                        |
-| ------------------------- | ----------- | ------------------------------------------- |
-| AddCard                   | 必须        | 重试可能变成 already-exists，需恢复首次结果 |
-| RemoveCard                | 必须        | 重试可能变成 not-found                      |
-| PinDoc                    | 必须        | 重试可能变成 already-pinned                 |
-| UnpinDoc                  | 必须        | 重试可能变成 not-found                      |
-| ReorderCards              | one-shot    | 完整目标集合覆盖                            |
-| UpdateCardAppearance      | one-shot    | set-style 覆盖                              |
-| ReorderPinnedDocs         | one-shot    | 完整目标集合覆盖                            |
-| UpdatePinnedDocAppearance | one-shot    | set-style 覆盖                              |
+| use case                  | `commandId`           | 原因                                 |
+| ------------------------- | --------------------- | ------------------------------------ |
+| AddCard                   | `CMS.Command` Receipt | 首次结果可能因 response 丢失而需恢复 |
+| RemoveCard                | `CMS.Command` Receipt | 首次结果可能因 response 丢失而需恢复 |
+| PinDoc                    | `CMS.Command` Receipt | 首次结果可能因 response 丢失而需恢复 |
+| UnpinDoc                  | `CMS.Command` Receipt | 首次结果可能因 response 丢失而需恢复 |
+| ReorderCards              | one-shot              | 完整目标集合覆盖                     |
+| UpdateCardAppearance      | one-shot              | set-style 覆盖                       |
+| ReorderPinnedDocs         | one-shot              | 完整目标集合覆盖                     |
+| UpdatePinnedDocAppearance | one-shot              | set-style 覆盖                       |
 
 ### 8.4 `DocCover.Persist`
 
@@ -435,13 +432,13 @@ Gate admission、canonical Community/Lifecycle lock 与 Cover 写入必须处于
 
 ### 8.5 无调用 API
 
-当前以下 `DocCover.Writer` 公开函数没有生产调用者：
+以下 Persist mechanics 没有独立的 public business entry；仅由未来需要它们的具体 Command 调用：
 
 - `set_item_hidden`；
 - `update_item_appearance`；
 - `reorder_items`。
 
-若实施前复核仍无调用，直接删除，不为死 API 创建 Command 或 compatibility wrapper。
+若继续确认无调用，删除这些 dead mechanics，不为其创建 compatibility wrapper。
 
 ## 9. `commandId` 是唯一客户端业务写入 identity
 
@@ -458,20 +455,23 @@ Gate admission、canonical Community/Lifecycle lock 与 Cover 写入必须处于
 - `mutationId`；
 - 作为 retry identity 使用的 `operationId`。
 
+资源上传完成协议中的历史 `idempotency_key` 是 provider/resource 字段，属于明确例外；它不能被当作
+业务 Command identity，也不能扩散到其他 mutation。
+
 统一名称不等于所有 mutation 都必须进入 Receipt。只有需要恢复首次结果的动作要求
 `commandId: ID!`；天然 set-style、允许读取最新 canonical result 的动作可以 one-shot。
 
 ### 9.2 与其他 ID 的边界
 
-| 名称                        | 含义                                                    |
-| --------------------------- | ------------------------------------------------------- |
-| `commandId`                 | 一次逻辑业务写入，transport retry/recovery 复用         |
-| `operationRef`              | Audit/Activity/Outbox 的执行关联，可由 Command 入口产生 |
-| `jobRef`                    | 持久化 workflow resource identity                       |
-| `previewRef`                | Preview resource identity                               |
-| `batchRef`                  | 外部上传/处理批次 identity                              |
-| `revisionId` / `snapshotId` | immutable domain resource identity                      |
-| capability/token nonce      | 安全凭证 identity                                       |
+| 名称                        | 含义                                                       |
+| --------------------------- | ---------------------------------------------------------- |
+| `commandId`                 | 一次逻辑业务写入，transport retry/recovery 复用            |
+| `operationRef`              | 内部 Audit/Activity correlation；不作为客户端写入 identity |
+| `jobRef`                    | 持久化 workflow resource identity                          |
+| `previewRef`                | Preview resource identity                                  |
+| `batchRef`                  | 外部上传/处理批次 identity                                 |
+| `revisionId` / `snapshotId` | immutable domain resource identity                         |
+| capability/token nonce      | 安全凭证 identity                                          |
 
 资源 ref 不能代替 `commandId`，`commandId` 也不能代替资源主键。
 
@@ -480,23 +480,23 @@ Gate admission、canonical Community/Lifecycle lock 与 Cover 写入必须处于
 当前：
 
 ```text
-submitCommunityApplication(idempotencyKey)
+submitCommunityApplication(commandId)
   -> CommunityApplications.Writer
-  -> CommunityApplication.idempotency_key
+  -> CommunityApplication.submit_command_id
 ```
 
 目标：
 
 ```text
 submitCommunityApplication(commandId)
-  -> CommunityApplications.Commands.Submit
-  -> CMS.Command
+  -> CommunityApplications workflow
+  -> CommunityApplication.submit_command_id
 ```
 
-如果领域行需要永久 provenance/唯一约束，数据库字段改为 `submit_command_id` 并保存同一个
-`commandId`。它是 defense-in-depth 和领域关联，不是第二套客户端 identity 或第二套 Receipt。
+领域行保存 `submit_command_id` 作为 provenance/唯一约束；它不是第二套客户端 identity。Application
+expected-version transitions 仍由其 aggregate workflow 持有，只有确实需要首次结果恢复时才接入 `CMS.Command`。
 
-以下 expected-version transitions 同样增加 `commandId` 并进入 `CMS.Command`：
+以下 expected-version transitions 同样增加 `commandId`，是否进入 `CMS.Command` 按 ambiguous-commit 风险单独判定：
 
 - cancel；
 - start review；
@@ -509,27 +509,24 @@ submitCommunityApplication(commandId)
 
 ### 9.4 Wallpaper
 
-当前 `WallpaperPublishReceipt` 与通用 `CommandReceipt` 重复表达一次用户发布意图。目标为：
+`WallpaperPublishReceipt` 是 Batch/Snapshot workflow 的领域 receipt，不是客户端 identity 的第二套命名。当前链路为：
 
 ```text
 prepareWallpaperUpload(commandId)
   -> Batch/capability 绑定 commandId
 
 publishWallpaper(commandId)
-  -> Wallpaper.Commands.Publish
-  -> CMS.Command
-  -> Wallpaper PublishConfirmation
+  -> Wallpaper.Commands.Publish / domain workflow receipt
 
 Assets Hub claimForPublish(batchRef, commandId)
 ```
 
-迁移完成后：
+本轮完成名称和传递链收口：
 
-- 删除 runtime `WallpaperPublishReceipt` 和专用 receipt retention；
-- `requestDigest` 进入 Command fingerprint/params；
-- Snapshot 可保存 `command_id` 作为 provenance；
-- prepare 与 publish 由同一个客户端 command handle 协调；
-- `restoreWallpaperSnapshot` 增加 `commandId` 并进入 `CMS.Command`。
+- prepare、publish 与 Assets Hub claim 均接收同一个 `commandId`；
+- Snapshot/领域 receipt 只作为 Batch/Snapshot workflow 的 provenance 与恢复投影，不替代 `commandId`；
+- `requestDigest` 继续验证 payload，不能替代 `commandId`；
+- 后续若将 Wallpaper 全量接入 `CMS.Command`，只需替换该领域 receipt 的执行协议，不再改客户端字段。
 
 ### 9.5 Content Import
 
@@ -538,18 +535,16 @@ Content Import 不再向产品层暴露通用 `idempotencyKey`：
 - 表示用户启动的一次逻辑写入时，使用 `commandId`；
 - 只表示一次 preview 计算尝试时，使用 `attemptRef`；
 - `previewRef`、`jobRef` 继续作为资源 identity；
-- 禁止为同一次 attempt 同时维护 `attemptRef` 与 `idempotencyKey`。
+- 禁止为同一次 attempt 同时维护 `attemptRef` 与 `commandId` 两个客户端 identity。
 
 Content Import Job 自身的状态机、row lock 和完成结果仍由 Job aggregate 拥有；不把 Job lifecycle 塞入
 `CMS.Command`。
 
 ### 9.6 Outbox
 
-Persist 不得调用 `Ecto.UUID.generate()` 填充 `command_id`。
-
-- Receipt-backed action：Outbox 使用入口 `commandId`；
-- one-shot action：使用一次明确生成并贯穿事务的 `operationRef`；
-- 若 Outbox 字段实际只表达 correlation，应迁移命名为 `operation_ref`，不能继续冒充 Command identity。
+本轮 command-backed concrete Command 及其 Persist 不得调用 `Ecto.UUID.generate()` 填充 `command_id`，必须
+把入口 `commandId` 原样传给 `CMS.Outbox.send/1`；`operationRef` 只允许作为内部 correlation 字段，不能
+作为第二套客户端幂等 identity。其他尚未迁移的 legacy workflow 仍列在第 11 节，不能误读为本轮已收口。
 
 ## 10. Gate 与 Lifecycle 的组合
 
@@ -570,13 +565,13 @@ actor 是否可以对当前 canonical resource 执行 action？
 - `access_check/3`：加载并检查单资源 mutation admission。
 
 `Gate.Access` 还实现了 aggregate Command 所需的事务 callback：`with_check/4`、
-`with_community_check/5` 和 `with_branch_check/6`。目标实现只将这三个可成功执行的签名按原名和原
+`with_community_check/4`、`with_community_check/5` 和 `with_branch_check/6`。这些可成功执行的签名已按原名和原
 arity 提升到 `CMS.Gate` facade，由 facade 委托给内部 `Gate.Access`；领域 Command 只依赖
 `CMS.Gate`。
 
-现有 `Gate.Access.with_branch_check/5` 只是在缺少显式 Community/binding context 时返回
+历史 `Gate.Access.with_branch_check/5` 只是在缺少显式 Community/binding context 时返回
 `:article_binding_context_required` 的错误兜底，不是受支持的事务入口，也不提升到 `CMS.Gate`。
-迁移时将其上游无 context 调用改为显式 `with_branch_check/6`，调用点清零后删除 `/5` 子句；不把该
+其上游无 context 调用已改为显式 `with_branch_check/6`，`/5` 子句已删除；不把该
 兜底保留成 facade 兼容层。
 
 不新增 `with_access/4` 同义入口。Community 与 Doc branch callback 需要显式 Community、Article 和
@@ -620,33 +615,37 @@ Lifecycle 只拥有长期资源状态和并发 guard：
 | Auth/session                      | Accounts/Auth 自有 use case                   | 不迁入 CMS.Command                       |
 | view/read markers                 | Interaction/Accounts 自有投影协议             | 不要求 Receipt                           |
 
+其中 Category/Tag、Assets、部分 Article/Comment/DocTree legacy workflow 仍可能把内部生成的 UUID 写入
+Outbox `command_id`；这不是本轮首批边界的完成声明，迁移前不得把它们当作客户端 `commandId`。阶段 5
+需先为这些入口补 concrete Command/operation identity，再清除伪 command identity。
+
 ## 12. 实施阶段
 
-### Phase 1：基础命名与事务
+### Phase 1：基础命名与事务（已完成）
 
-1. `BindingWriter` 改为 `BindingPersist`；
+1. `BindingWriter` 改为内部 `BindingPersist`；
 2. Persist 移除自有 transaction/rollback；
 3. 冻结 Gate transactional API；
 4. 增加 facade/resolver/Persist 静态依赖门禁。
 
-### Phase 2：删除 Writer 业务入口
+### Phase 2：删除 Writer 业务入口（首批已完成）
 
 1. Dashboard Commands + Persist；
 2. Communities Commands + Persist；
 3. DocCover 八个 Commands + Persist；
 4. 删除三个无调用 DocCover Writer API；
-5. 删除 `Dashboard.Writer`、`Communities.Writer`、`DocCover.Writer`。
+5. `Dashboard.Writer`、`DocCover.Writer` 已删除；Community creation/setup 的 `CreationPersist` 仅作为内部 core helper，不能由 public facade 调用。
 
-### Phase 3：服务端 identity 统一
+### Phase 3：服务端 identity 统一（命名已完成，Receipt 迁移按领域保留）
 
 1. Community Application `idempotencyKey` 改为 `commandId`；
-2. Submit 与 expected-version transitions 接入 `CMS.Command`；
-3. Wallpaper 专用 Receipt 迁移到 `CMS.Command`；
+2. Submit identity 已改为 `commandId`；Application expected-version transitions 继续由其 aggregate workflow 持有；
+3. Wallpaper prepare/publish 保留 domain receipt 作为外部 Batch workflow 的资源投影，客户端 identity 已统一为 `commandId`；
 4. Wallpaper prepare/publish/Assets Hub claim 贯穿同一 `commandId`；
-5. Outbox 停止自行生成伪 `command_id`；
+5. Outbox 停止由 Persist/Writer 自行生成伪 `command_id`，统一接收 concrete Command 的入口 `commandId`；
 6. Content Import 移除同义 `idempotencyKey`。
 
-### Phase 4：客户端 identity 统一
+### Phase 4：客户端 identity 统一（已完成）
 
 按 [CMS Command 客户端 Identity 边界修复](./cms-command-client-identity-fix.md) 实施：
 
@@ -655,7 +654,7 @@ Lifecycle 只拥有长期资源状态和并发 guard：
 - unknown outcome 保留同一 handle；
 - Apply、Wallpaper、Content Import 删除各自的 `idempotencyKey` coordinator。
 
-### Phase 5：其余 mutation 审计
+### Phase 5：其余 mutation 审计（持续清单）
 
 按第 11 节逐领域迁移；每个 mutation 明确标注：
 
@@ -676,10 +675,19 @@ Audit/Activity/Outbox
 - public facade 不得调用 `*.Writer`、`*.Persist` 或 `Repo`；
 - resolver 不得调用 Writer/Persist、构造 `%CMS.Command{}` 或选择 Confirmation；
 - Persist 不得调用 Gate、Lifecycle transition、`CMS.Command`、Audit、Activity、Outbox；
-- production 代码不得新增 `idempotencyKey`；migration、历史文档可白名单；
-- GraphQL 声明 `commandId` 的 mutation 必须可追踪到 `CMS.Command.execute`；
-- `commandId` 不得在 Writer/Persist 内生成；
+- production 代码不得新增通用 `idempotencyKey`；资源上传协议的历史字段、migration、历史文档可白名单；
+- 标记为 Receipt-backed 的 GraphQL `commandId` mutation 必须可追踪到 `CMS.Command.execute`；当前 Community
+  create、DocCover add/remove/pin/unpin 使用 Receipt，其余 Dashboard/DocCover/Community set-style actions
+  可 one-shot，但仍必须把同一 `commandId` 传入 concrete Command，不得再生成第二个 identity；
+- `commandId` 不得在 Writer/Persist 内生成；`scripts/check-command-identity.mjs` 同时扫描前端 identity owner、后端 Persist、resolver 和 facade 边界；
 - 一个 public business action 只有一个 `Commands.<Action>.execute` 入口。
+
+`pnpm check:command-identity` 的后端扫描不再维护固定 Persist 白名单：它会扫描
+`backend/api/lib/groupher_server/cms/**/{persist.ex,*_persist.ex}` 下所有 tracked 和 non-ignored
+working-tree 文件，因此 `BindingPersist` 及后续新增的 `PinPersist` 等 primitive 会自动纳入门禁。
+Resolver 与 CMS 根 facade 也采用目录扫描；调用检测同时覆盖完整模块名、普通 alias、`as:` alias 和裸
+`Persist.foo()`，避免通过 alias 绕过 `X.Persist.foo()` 的模式检查。脚本测试位于
+`scripts/check-command-identity.test.mjs`。
 
 ### 13.2 行为测试
 
@@ -691,9 +699,9 @@ Audit/Activity/Outbox
 - one-shot set-style 重复执行得到相同最终状态；
 - Lifecycle transition 覆盖 allowed transition、version conflict 与 blocker；
 - Dashboard base-info 的 Community/Dashboard/Outbox 原子性有回归测试；
-- DocCover add/remove/pin/unpin 有首次执行与 recovery 测试；
-- Community create 与 Application transitions 有 ambiguous-commit 测试；
-- Wallpaper publish 不再写专用 Receipt。
+- DocCover add/remove/pin/unpin 有最终状态回归测试，并覆盖 Receipt recovery；
+- Community create 有 ambiguous-commit/recovery 测试；Application transitions 仍由 aggregate workflow 自己持有版本语义；
+- Wallpaper publish 的 domain receipt 只保存 Batch/Snapshot workflow 投影，不能再接受 `idempotencyKey`。
 
 ### 13.3 验证命令
 
@@ -711,9 +719,25 @@ mix test test/groupher_server_web/wallpaper_graphql_test.exs
 pnpm docs:check
 ```
 
-并运行 GraphQL codegen、frontend type-check、command identity 静态门禁与生成产物 freshness check。
+并运行 GraphQL codegen、frontend type-check、`pnpm check:command-identity`（含后端边界扫描）与生成产物
+freshness check。
 
-## 14. 非目标
+## 14. 提交拆分
+
+本轮工作树包含多个独立迁移边界，不应作为一个混合提交交付。提交前按以下顺序建立显式 manifest，
+每批单独运行对应测试并检查 `git diff --cached --check`：
+
+1. `refactor: normalize article binding storage and naming`：Article Binding schema、字段/索引改名、`BindingPersist` 与相关测试/migration；
+2. `feat: complete command identity and receipt migration`：`commandId`、Receipt、Outbox identity、客户端 executor、generated GraphQL 与 identity 测试；
+3. `refactor: promote gate access contracts`：`CMS.Gate` facade、Access callback、policy/context 与 Gate focused tests；
+4. `refactor: move dashboard/community/doc-cover writes into commands`：具体 Commands、Persist、Writer 删除、resolver/schema 与领域测试；
+5. `chore: add CMS command-boundary gate and docs`：静态门禁、门禁测试、两份迁移文档和 package script；
+6. `backend/content-import/**` 等已存在但不属于上述边界的改动保持独立，不自动纳入本轮提交。
+
+拆分时同时审计 cached 与 uncached 文件；未跟踪的新 Command/Persist 必须先归入正确批次，不能因为尚未
+`git add` 而逃过审查。除非另有明确授权，本节只定义拆分边界，不自动执行 commit 或 push。
+
+## 15. 非目标
 
 本文不：
 

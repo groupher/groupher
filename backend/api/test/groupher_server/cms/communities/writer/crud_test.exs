@@ -20,6 +20,16 @@ defmodule GroupherServer.Test.CMS.Communities.Writer do
       assert community.locale == "en"
     end
 
+    test "create community replays the canonical row for the same command id", ~m(user)a do
+      command_id = Ecto.UUID.generate()
+      community_attrs = mock_attrs(:community)
+
+      assert {:ok, first} = CMS.Communities.create(community_attrs, user, command_id)
+      assert {:ok, replayed} = CMS.Communities.create(community_attrs, user, command_id)
+      assert replayed.id == first.id
+      assert replayed.slug == first.slug
+    end
+
     test "create community should reject invalid slug format", ~m(user)a do
       community_attrs = mock_attrs(:community, %{slug: "Invalid Slug"})
 

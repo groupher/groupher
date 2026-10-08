@@ -1,8 +1,8 @@
-defmodule GroupherServer.CMS.DocCover.Writer do
+defmodule GroupherServer.CMS.DocCover.Persist do
   @moduledoc """
   Write operations for the save-immediate docs cover.
 
-      dashboard action(draft id)
+      command callback(draft id)
                 |
                 v
       doc_tree_nodes(stage=draft, node_id)
@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
       GraphQL resolver / job
         -> CMS facade
-        -> Writer
+        -> Persist
         -> Repo / external boundary
   """
 
@@ -29,11 +29,8 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
-
-  alias Accounts.Model.User
-  alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
   alias CMS.DocCover.Sync, as: CoverSync
   alias CMS.DocTree.ChangeDetection
   alias CMS.DocTree.Publish, as: DocTreePublish
@@ -61,63 +58,43 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   Existing ancestor Cards reject the operation. Existing descendant Cards are
   replaced atomically and the new parent Card takes their earliest position.
+
+  ## Examples
+
+      Persist.add_card(community, group_node_id)
+      #=> {:ok, %{id: card_id}}
   """
-  @spec add_card(Community.t(), T.id(), User.t()) :: T.domain_res(map())
-  def add_card(%Community{} = community, draft_group_node_id, %User{} = actor) do
-    with_docs_access(actor, community, fn ->
-      Repo.transaction(fn ->
-        with {:ok, published_group} <- resolve_published_group(community, draft_group_node_id),
-             {:ok, leaves} <- published_leaves_for_group(community, draft_group_node_id),
-             {:ok, _} <- ensure_has_leaves(leaves),
-             {:ok, replacement_index} <-
-               replace_descendant_cards(community, published_group),
-             {:ok, cover_card} <-
-               CoverSync.ensure_cover_card(community, published_group),
-             {:ok, _} <- place_cover_card(community, cover_card, replacement_index) do
-          card_result(cover_card, published_group, replacement_index)
-        else
-          {:error, reason} -> Repo.rollback(reason)
-        end
-      end)
-      |> case do
-        {:ok, cover_card} -> {:ok, cover_card}
-        {:error, reason} -> {:error, reason}
-      end
-    end)
-  end
-
-  def add_card(%Community{}, _draft_group_node_id, _actor) do
-    {:error, AuthErrorCat.account_login()}
-  end
-
-  defp with_docs_access(%User{} = actor, %Community{} = community, fun) do
-    with {:ok, _canonical} <- CMS.Gate.access_check(actor, :manage_docs, community) do
-      fun.()
+  @spec add_card(Community.t(), T.id()) :: T.domain_res(map())
+  def add_card(%Community{} = community, draft_group_node_id) do
+    with {:ok, published_group} <- resolve_published_group(community, draft_group_node_id),
+         {:ok, leaves} <- published_leaves_for_group(community, draft_group_node_id),
+         {:ok, _} <- ensure_has_leaves(leaves),
+         {:ok, replacement_index} <- replace_descendant_cards(community, published_group),
+         {:ok, cover_card} <- CoverSync.ensure_cover_card(community, published_group),
+         {:ok, _} <- place_cover_card(community, cover_card, replacement_index) do
+      {:ok, card_result(cover_card, published_group, replacement_index)}
     end
   end
 
   @doc """
   Removes one cover card by draft source node id.
-  """
-  @spec remove_card(Community.t(), T.id(), User.t()) :: T.domain_res(map())
-  def remove_card(%Community{} = community, draft_group_node_id, %User{} = actor) do
-    with_docs_access(actor, community, fn ->
-      with {:ok, published_source} <-
-             resolve_published_group(community, draft_group_node_id),
-           {:ok, cover_card} <-
-             ORM.find_by(
-               DocCoverCard,
-               community_id: community.id,
-               group_node_id: published_source.id
-             ),
-           {:ok, _deleted} <- ORM.delete(cover_card) do
-        {:ok, card_result(cover_card, published_source)}
-      end
-    end)
-  end
 
-  def remove_card(%Community{}, _draft_group_node_id, _actor) do
-    {:error, AuthErrorCat.account_login()}
+  ## Examples
+
+      Persist.remove_card(community, group_node_id)
+      #=> {:ok, %{id: card_id}}
+  """
+  @spec remove_card(Community.t(), T.id()) :: T.domain_res(map())
+  def remove_card(%Community{} = community, draft_group_node_id) do
+    with {:ok, published_source} <- resolve_published_group(community, draft_group_node_id),
+         {:ok, cover_card} <-
+           ORM.find_by(DocCoverCard,
+             community_id: community.id,
+             group_node_id: published_source.id
+           ),
+         {:ok, _deleted} <- ORM.delete(cover_card) do
+      {:ok, card_result(cover_card, published_source)}
+    end
   end
 
   defp card_result(%DocCoverCard{} = card, published_group, index \\ nil) do
@@ -132,114 +109,120 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   @doc """
   Updates cover-local visibility for one published page.
+
+  ## Examples
+
+      Persist.set_item_hidden(community, item_id, true)
+      #=> {:ok, %DocCoverItem{}}
   """
-  @spec set_item_hidden(Community.t(), T.id(), boolean(), User.t()) ::
+  @spec set_item_hidden(Community.t(), T.id(), boolean()) ::
           T.domain_res(DocCoverItem.t())
-  def set_item_hidden(%Community{} = community, cover_item_id, hidden, %User{} = actor)
+  def set_item_hidden(%Community{} = community, cover_item_id, hidden)
       when is_boolean(hidden) do
-    with_docs_access(actor, community, fn ->
-      with {:ok, item} <-
-             ORM.find_by(DocCoverItem, id: cover_item_id, community_id: community.id) do
-        ORM.update(item, %{hidden: hidden})
-      end
-    end)
+    with {:ok, item} <- ORM.find_by(DocCoverItem, id: cover_item_id, community_id: community.id) do
+      ORM.update(item, %{hidden: hidden})
+    end
   end
 
   @doc """
   Updates cover-local appearance for one cover card.
+
+  ## Examples
+
+      Persist.update_card_appearance(community, card_id, %{light: %{}})
+      #=> {:ok, %DocCoverCard{}}
   """
-  @spec update_card_appearance(Community.t(), T.id(), map(), User.t()) ::
+  @spec update_card_appearance(Community.t(), T.id(), map()) ::
           T.domain_res(DocCoverCard.t())
   def update_card_appearance(
         %Community{} = community,
         cover_card_id,
-        appearance,
-        %User{} = actor
+        appearance
       )
       when is_map(appearance) do
-    with_docs_access(actor, community, fn ->
-      with {:ok, group} <-
-             ORM.find_by(DocCoverCard, id: cover_card_id, community_id: community.id) do
-        ORM.update(group, %{appearance: appearance})
-      end
-    end)
+    with {:ok, group} <- ORM.find_by(DocCoverCard, id: cover_card_id, community_id: community.id) do
+      ORM.update(group, %{appearance: appearance})
+    end
   end
 
   @doc """
   Updates cover-local appearance for one cover item.
+
+  ## Examples
+
+      Persist.update_item_appearance(community, item_id, %{light: %{}})
+      #=> {:ok, %DocCoverItem{}}
   """
-  @spec update_item_appearance(Community.t(), T.id(), map(), User.t()) ::
+  @spec update_item_appearance(Community.t(), T.id(), map()) ::
           T.domain_res(DocCoverItem.t())
   def update_item_appearance(
         %Community{} = community,
         cover_item_id,
-        appearance,
-        %User{} = actor
+        appearance
       )
       when is_map(appearance) do
-    with_docs_access(actor, community, fn ->
-      with {:ok, item} <-
-             ORM.find_by(DocCoverItem, id: cover_item_id, community_id: community.id) do
-        ORM.update(item, %{appearance: appearance})
-      end
-    end)
+    with {:ok, item} <- ORM.find_by(DocCoverItem, id: cover_item_id, community_id: community.id) do
+      ORM.update(item, %{appearance: appearance})
+    end
   end
 
   @doc """
   Reorders cover cards by cover card ids.
+
+  ## Examples
+
+      Persist.reorder_cards(community, card_ids)
+      #=> {:ok, %{done: true}}
   """
-  @spec reorder_cards(Community.t(), list(T.id()), User.t()) :: T.domain_res(map())
-  def reorder_cards(%Community{} = community, ids, %User{} = actor) when is_list(ids) do
-    with_docs_access(actor, community, fn ->
-      transact_done(fn ->
-        with {:ok, _} <-
-               validate_unique_ids(ids, "Doc cover card order contains duplicate cards."),
-             groups_by_id <- cover_cards_by_id(community, ids),
-             {:ok, groups} <- ordered_cover_cards(groups_by_id, community, ids),
-             {:ok, _} <- batch_reindex_groups(community, groups) do
-          {:ok, :pass}
-        end
-      end)
-    end)
+  @spec reorder_cards(Community.t(), list(T.id())) :: T.domain_res(map())
+  def reorder_cards(%Community{} = community, ids) when is_list(ids) do
+    with {:ok, _} <- validate_unique_ids(ids, "Doc cover card order contains duplicate cards."),
+         groups_by_id <- cover_cards_by_id(community, ids),
+         {:ok, groups} <- ordered_cover_cards(groups_by_id, community, ids),
+         {:ok, _} <- batch_reindex_groups(community, groups) do
+      {:ok, %{done: true}}
+    end
   end
 
   @doc """
   Reorders cover items inside one cover card by cover item ids.
+
+  ## Examples
+
+      Persist.reorder_items(community, card_id, item_ids)
+      #=> {:ok, %{done: true}}
   """
-  @spec reorder_items(Community.t(), T.id(), list(T.id()), User.t()) :: T.domain_res(map())
-  def reorder_items(%Community{} = community, cover_card_id, ids, %User{} = actor)
+  @spec reorder_items(Community.t(), T.id(), list(T.id())) :: T.domain_res(map())
+  def reorder_items(%Community{} = community, cover_card_id, ids)
       when is_list(ids) do
-    with_docs_access(actor, community, fn ->
-      transact_done(fn ->
-        with {:ok, cover_card} <-
-               ORM.find_by(DocCoverCard, id: cover_card_id, community_id: community.id),
-             {:ok, _} <-
-               validate_unique_ids(ids, "Doc cover item order contains duplicate items."),
-             items_by_id <- cover_items_by_id(community, cover_card, ids),
-             {:ok, items} <- ordered_cover_items(items_by_id, community, cover_card, ids),
-             {:ok, _} <- batch_reindex_items(community, cover_card, items) do
-          {:ok, :pass}
-        end
-      end)
-    end)
+    with {:ok, cover_card} <- ORM.find_by(DocCoverCard, id: cover_card_id, community_id: community.id),
+         {:ok, _} <- validate_unique_ids(ids, "Doc cover item order contains duplicate items."),
+         items_by_id <- cover_items_by_id(community, cover_card, ids),
+         {:ok, items} <- ordered_cover_items(items_by_id, community, cover_card, ids),
+         {:ok, _} <- batch_reindex_items(community, cover_card, items) do
+      {:ok, %{done: true}}
+    end
   end
 
   @doc """
   Pins one clean published page to the top cover area.
-  """
-  @spec pin_doc(Community.t(), T.id(), User.t()) :: T.domain_res(DocCoverPinnedDoc.t())
-  def pin_doc(%Community{} = community, draft_node_id, %User{} = actor) do
-    with_docs_access(actor, community, fn ->
-      with {:ok, page} <- resolve_published_page(community, draft_node_id) do
-        case ORM.find_by(DocCoverPinnedDoc, community_id: community.id, node_id: page.id) do
-          {:ok, pinned_doc} ->
-            {:ok, pinned_doc}
 
-          {:error, _} ->
-            create_pinned_doc(community, page)
-        end
+  ## Examples
+
+      Persist.pin_doc(community, page_node_id)
+      #=> {:ok, %DocCoverPinnedDoc{}}
+  """
+  @spec pin_doc(Community.t(), T.id()) :: T.domain_res(DocCoverPinnedDoc.t())
+  def pin_doc(%Community{} = community, draft_node_id) do
+    with {:ok, page} <- resolve_published_page(community, draft_node_id) do
+      case ORM.find_by(DocCoverPinnedDoc, community_id: community.id, node_id: page.id) do
+        {:ok, pinned_doc} ->
+          {:ok, pinned_doc}
+
+        {:error, _} ->
+          create_pinned_doc(community, page)
       end
-    end)
+    end
   end
 
   defp create_pinned_doc(community, page) do
@@ -259,43 +242,46 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   @doc """
   Removes one pinned cover doc by draft page id.
+
+  ## Examples
+
+      Persist.unpin_doc(community, page_node_id)
+      #=> {:ok, %DocCoverPinnedDoc{}}
   """
-  @spec unpin_doc(Community.t(), T.id(), User.t()) :: T.domain_res(DocCoverPinnedDoc.t())
-  def unpin_doc(%Community{} = community, draft_node_id, %User{} = actor) do
-    with_docs_access(actor, community, fn ->
-      with {:ok, page} <- resolve_published_page(community, draft_node_id),
-           {:ok, pinned_doc} <-
-             ORM.find_by(DocCoverPinnedDoc, community_id: community.id, node_id: page.id) do
-        ORM.delete(pinned_doc)
-      end
-    end)
+  @spec unpin_doc(Community.t(), T.id()) :: T.domain_res(DocCoverPinnedDoc.t())
+  def unpin_doc(%Community{} = community, draft_node_id) do
+    with {:ok, page} <- resolve_published_page(community, draft_node_id),
+         {:ok, pinned_doc} <-
+           ORM.find_by(DocCoverPinnedDoc, community_id: community.id, node_id: page.id) do
+      ORM.delete(pinned_doc)
+    end
   end
 
   @doc """
   Reorders the complete pinned-doc collection by public node identifier.
+
+  ## Examples
+
+      Persist.reorder_pinned_docs(community, node_ids)
+      #=> {:ok, :pass}
   """
-  @spec reorder_pinned_docs(Community.t(), list(T.id()), User.t()) :: T.domain_res(map())
-  def reorder_pinned_docs(%Community{} = community, node_ids, %User{} = actor)
+  @spec reorder_pinned_docs(Community.t(), list(T.id())) :: T.domain_res(map())
+  def reorder_pinned_docs(%Community{} = community, node_ids)
       when is_list(node_ids) do
-    with_docs_access(actor, community, fn ->
-      transact_done(fn ->
-        pinned_docs =
-          DocCoverPinnedDoc
-          |> where([p], p.community_id == ^community.id)
-          |> lock("FOR UPDATE")
-          |> preload(:node)
-          |> Repo.all()
+    pinned_docs =
+      DocCoverPinnedDoc
+      |> where([p], p.community_id == ^community.id)
+      |> lock("FOR UPDATE")
+      |> preload(:node)
+      |> Repo.all()
 
-        current_ids = Enum.map(pinned_docs, & &1.node.node_id)
+    current_ids = Enum.map(pinned_docs, & &1.node.node_id)
 
-        with {:ok, _} <- validate_complete_node_set(node_ids, current_ids) do
-          pinned_by_node_id = Map.new(pinned_docs, &{&1.node.node_id, &1})
-          pinned_docs = Enum.map(node_ids, &Map.fetch!(pinned_by_node_id, to_string(&1)))
-
-          reindex_pinned_docs(community, pinned_docs)
-        end
-      end)
-    end)
+    with {:ok, _} <- validate_complete_node_set(node_ids, current_ids) do
+      pinned_by_node_id = Map.new(pinned_docs, &{&1.node.node_id, &1})
+      ordered = Enum.map(node_ids, &Map.fetch!(pinned_by_node_id, to_string(&1)))
+      reindex_pinned_docs(community, ordered)
+    end
   end
 
   defp reindex_pinned_docs(community, pinned_docs) do
@@ -305,24 +291,28 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     end
   end
 
-  @doc "Updates the Light/Dark appearance for one pinned card."
-  @spec update_pinned_doc_appearance(Community.t(), T.id(), map(), User.t()) ::
+  @doc """
+  Updates the Light/Dark appearance for one pinned card.
+
+  ## Examples
+
+      Persist.update_pinned_doc_appearance(community, page_node_id, appearance)
+      #=> {:ok, %DocCoverPinnedDoc{}}
+  """
+  @spec update_pinned_doc_appearance(Community.t(), T.id(), map()) ::
           T.domain_res(DocCoverPinnedDoc.t())
   def update_pinned_doc_appearance(
         %Community{} = community,
         draft_node_id,
-        appearance,
-        %User{} = actor
+        appearance
       )
       when is_map(appearance) do
-    with_docs_access(actor, community, fn ->
-      with {:ok, page} <- resolve_published_page(community, draft_node_id),
-           {:ok, pinned_doc} <-
-             ORM.find_by(DocCoverPinnedDoc, community_id: community.id, node_id: page.id),
-           {:ok, appearance} <- normalize_appearance(appearance) do
-        ORM.update(pinned_doc, %{appearance: appearance})
-      end
-    end)
+    with {:ok, page} <- resolve_published_page(community, draft_node_id),
+         {:ok, pinned_doc} <-
+           ORM.find_by(DocCoverPinnedDoc, community_id: community.id, node_id: page.id),
+         {:ok, appearance} <- normalize_appearance(appearance) do
+      ORM.update(pinned_doc, %{appearance: appearance})
+    end
   end
 
   defp ensure_clean_published(%Community{} = community, page) do
@@ -745,19 +735,6 @@ defmodule GroupherServer.CMS.DocCover.Writer do
   # before the records are converted into reindex columns.
   defp reverse_result({:ok, records}), do: {:ok, Enum.reverse(records)}
   defp reverse_result(error), do: error
-
-  defp transact_done(fun) do
-    Repo.transaction(fn ->
-      case fun.() do
-        {:ok, _items} -> %{done: true}
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
-    |> case do
-      {:ok, payload} -> {:ok, payload}
-      {:error, reason} -> {:error, reason}
-    end
-  end
 
   defp next_pinned_index(%Community{} = community) do
     DocCoverPinnedDoc

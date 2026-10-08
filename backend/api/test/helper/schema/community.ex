@@ -13,8 +13,8 @@ defmodule GroupherServer.Test.Helper.Schema.Community do
 
   def m(:create_community) do
     """
-    mutation($title: String!, $desc: String!, $logo: String!, $slug: String!, $locale: String) {
-          createCommunity(title: $title, desc: $desc, logo: $logo, slug: $slug, locale: $locale) {
+    mutation($title: String!, $desc: String!, $logo: String!, $slug: String!, $locale: String, $commandId: ID!) {
+          createCommunity(title: $title, desc: $desc, logo: $logo, slug: $slug, locale: $locale, commandId: $commandId) {
             slug
             title
             desc
@@ -29,8 +29,8 @@ defmodule GroupherServer.Test.Helper.Schema.Community do
 
   def m(:update_community) do
     """
-    mutation($community: String!, $title: String, $desc: String, $logo: String) {
-          updateCommunity(community: $community, title: $title, desc: $desc, logo: $logo) {
+    mutation($community: String!, $commandId: ID!, $title: String, $desc: String, $logo: String) {
+          updateCommunity(community: $community, commandId: $commandId, title: $title, desc: $desc, logo: $logo) {
             slug
             title
             desc

@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:save_custom_theme_preset) do
     """
-    mutation($community: String!, $themePreset: DsbThemePreset!, $themePresetBase: DsbThemePreset!, $themeOverwrite: Json) {
-          saveCustomThemePreset(community: $community, themePreset: $themePreset, themePresetBase: $themePresetBase, themeOverwrite: $themeOverwrite) {
+    mutation($community: String!, $commandId: ID!, $themePreset: DsbThemePreset!, $themePresetBase: DsbThemePreset!, $themeOverwrite: Json) {
+          saveCustomThemePreset(community: $community, commandId: $commandId, themePreset: $themePreset, themePresetBase: $themePresetBase, themeOverwrite: $themeOverwrite) {
             layout {
                 themePreset
                 themePresetBase
@@ -21,8 +21,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:select_theme_preset) do
     """
-    mutation($community: String!, $themePreset: DsbThemePreset!) {
-          selectThemePreset(community: $community, themePreset: $themePreset) {
+    mutation($community: String!, $commandId: ID!, $themePreset: DsbThemePreset!) {
+          selectThemePreset(community: $community, commandId: $commandId, themePreset: $themePreset) {
             layout {
                 themePreset
                 themePresetBase
@@ -76,8 +76,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_content_shadow) do
     """
-    mutation($community: String!, $enabled: Boolean!) {
-      updateDashboardContentShadow(community: $community, enabled: $enabled) {
+    mutation($community: String!, $commandId: ID!, $enabled: Boolean!) {
+      updateDashboardContentShadow(community: $community, commandId: $commandId, enabled: $enabled) {
         contentShadow
       }
     }
@@ -86,8 +86,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_base_info) do
     """
-    mutation($community: String!, $homepage: String, $locale: String, $title: String, $slug: String, $desc: String, $introduction: String, $logo: String, $favicon: String, $city: String, $techstack: String) {
-          updateDashboardBaseInfo(community: $community, homepage: $homepage, locale: $locale, title: $title, slug: $slug, desc: $desc, introduction: $introduction, logo: $logo, favicon: $favicon, city: $city, techstack: $techstack) {
+    mutation($community: String!, $commandId: ID!, $homepage: String, $locale: String, $title: String, $slug: String, $desc: String, $introduction: String, $logo: String, $favicon: String, $city: String, $techstack: String) {
+          updateDashboardBaseInfo(community: $community, commandId: $commandId, homepage: $homepage, locale: $locale, title: $title, slug: $slug, desc: $desc, introduction: $introduction, logo: $logo, favicon: $favicon, city: $city, techstack: $techstack) {
             baseInfo {
               title
               locale
@@ -100,8 +100,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_seo) do
     """
-    mutation($community: String!, $ogTitle: String, $ogDescription: String, $seoEnable: Boolean) {
-          updateDashboardSeo(community: $community, ogTitle: $ogTitle, ogDescription: $ogDescription, seoEnable: $seoEnable) {
+    mutation($community: String!, $commandId: ID!, $ogTitle: String, $ogDescription: String, $seoEnable: Boolean) {
+          updateDashboardSeo(community: $community, commandId: $commandId, ogTitle: $ogTitle, ogDescription: $ogDescription, seoEnable: $seoEnable) {
             seo {
               seoEnable
             }
@@ -112,8 +112,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_enable) do
     """
-    mutation($community: String!, $post: Boolean, $changelog: Boolean) {
-          updateDashboardEnable(community: $community, post: $post, changelog: $changelog) {
+    mutation($community: String!, $commandId: ID!, $post: Boolean, $changelog: Boolean) {
+          updateDashboardEnable(community: $community, commandId: $commandId, post: $post, changelog: $changelog) {
             enable {
               post
               changelog
@@ -125,9 +125,10 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_thread_emotions) do
     """
-    mutation($community: String!, $post: [EmotionType!], $postComment: [EmotionType!], $docComment: [EmotionType!]) {
+    mutation($community: String!, $commandId: ID!, $post: [EmotionType!], $postComment: [EmotionType!], $docComment: [EmotionType!]) {
           updateDashboardThreadEmotions(
             community: $community
+            commandId: $commandId
             post: $post
             postComment: $postComment
             docComment: $docComment
@@ -144,8 +145,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_layout) do
     """
-    mutation($community: String!, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
-          updateDashboardLayout(community: $community, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
+    mutation($community: String!, $commandId: ID!, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
+          updateDashboardLayout(community: $community, commandId: $commandId, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
             layout {
               kanbanBoards
               footerLayout
@@ -164,8 +165,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_rss) do
     """
-    mutation($community: String!, $rssFeedType: DsbRssFeedType, $rssFeedCount: Int) {
-          updateDashboardRss(community: $community, rssFeedType: $rssFeedType, rssFeedCount: $rssFeedCount) {
+    mutation($community: String!, $commandId: ID!, $rssFeedType: DsbRssFeedType, $rssFeedCount: Int) {
+          updateDashboardRss(community: $community, commandId: $commandId, rssFeedType: $rssFeedType, rssFeedCount: $rssFeedCount) {
             rss {
               rssFeedType
               rssFeedCount
@@ -177,8 +178,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_name_alias) do
     """
-    mutation($community: String!, $nameAlias: [DsbAliasMap]) {
-          updateDashboardNameAlias(community: $community, nameAlias: $nameAlias) {
+    mutation($community: String!, $commandId: ID!, $nameAlias: [DsbAliasMap]) {
+          updateDashboardNameAlias(community: $community, commandId: $commandId, nameAlias: $nameAlias) {
             nameAlias {
               slug
               name
@@ -192,8 +193,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_header_links) do
     """
-    mutation($community: String!, $headerLinks: [DsbLinkMap]) {
-          updateDashboardHeaderLinks(community: $community, headerLinks: $headerLinks) {
+    mutation($community: String!, $commandId: ID!, $headerLinks: [DsbLinkMap]) {
+          updateDashboardHeaderLinks(community: $community, commandId: $commandId, headerLinks: $headerLinks) {
             headerLinks {
               id
               type
@@ -212,8 +213,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_footer_links) do
     """
-    mutation($community: String!, $footerLinks: [DsbLinkMap]) {
-          updateDashboardFooterLinks(community: $community, footerLinks: $footerLinks) {
+    mutation($community: String!, $commandId: ID!, $footerLinks: [DsbLinkMap]) {
+          updateDashboardFooterLinks(community: $community, commandId: $commandId, footerLinks: $footerLinks) {
             footerLinks {
               id
               type
@@ -231,9 +232,10 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_footer_oneline_links) do
     """
-    mutation($community: String!, $footerOnelineLinks: [DsbLinkChildMap]) {
+    mutation($community: String!, $commandId: ID!, $footerOnelineLinks: [DsbLinkChildMap]) {
           updateDashboardFooterOnelineLinks(
             community: $community,
+            commandId: $commandId,
             footerOnelineLinks: $footerOnelineLinks
           ) {
             footerOnelineLinks {
@@ -252,8 +254,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_social_links) do
     """
-    mutation($community: String!, $socialLinks: [DsbSocialLinkMap]) {
-          updateDashboardSocialLinks(community: $community, socialLinks: $socialLinks) {
+    mutation($community: String!, $commandId: ID!, $socialLinks: [DsbSocialLinkMap]) {
+          updateDashboardSocialLinks(community: $community, commandId: $commandId, socialLinks: $socialLinks) {
             socialLinks {
               type
               link
@@ -265,8 +267,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_media_reports) do
     """
-    mutation($community: String!, $mediaReports: [DsbMediaReportMap]) {
-          updateDashboardMediaReports(community: $community, mediaReports: $mediaReports) {
+    mutation($community: String!, $commandId: ID!, $mediaReports: [DsbMediaReportMap]) {
+          updateDashboardMediaReports(community: $community, commandId: $commandId, mediaReports: $mediaReports) {
             mediaReports {
               title
               url
@@ -278,8 +280,8 @@ defmodule GroupherServer.Test.Helper.Schema.Dsb do
 
   def m(:update_dashboard_doc_faq) do
     """
-    mutation($community: String!, $docFaq: DsbDocFaqInput!) {
-          updateDashboardDocFaq(community: $community, docFaq: $docFaq) {
+    mutation($community: String!, $commandId: ID!, $docFaq: DsbDocFaqInput!) {
+          updateDashboardDocFaq(community: $community, commandId: $commandId, docFaq: $docFaq) {
             docFaq {
               title
               desc

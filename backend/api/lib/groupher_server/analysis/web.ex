@@ -22,7 +22,7 @@ defmodule GroupherServer.Analysis.Web do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.Dashboard.Writer
+  alias CMS.Dashboard.Persist
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{Cache, Transaction}
 
@@ -398,7 +398,7 @@ defmodule GroupherServer.Analysis.Web do
     end
   end
 
-  defp dashboard_for(%Community{} = community), do: Writer.ensure_exist(community)
+  defp dashboard_for(%Community{} = community), do: Persist.get_dashboard(community)
 
   defp ensure_runtime_configured do
     case Config.runtime().api_token do
