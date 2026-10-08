@@ -25,7 +25,6 @@ defmodule GroupherServer.CMS.Communities do
     Subscribe,
     Tags,
     TagStats,
-    Writer,
     Commands
   }
 
@@ -33,6 +32,8 @@ defmodule GroupherServer.CMS.Communities do
   alias Accounts.Model.User
   alias CMS.Passport
   alias CMS.Communities.{ErrorCat, Lifecycle}
+  alias CMS.Communities.Commands.Create, as: CreateCommand
+  alias CMS.Communities.Commands.Update, as: UpdateCommand
   alias CMS.FrontDesk
   alias CMS.Model.{Category, Community, CommunityTag, CommunityTagGroup}
   alias Helper.{ORM, T}
@@ -140,19 +141,23 @@ defmodule GroupherServer.CMS.Communities do
   # Write
   @doc "Runs `create` through the public `Communities` boundary."
   @spec create(map(), User.t()) :: T.domain_res(Community.t())
-  def create(args, %User{} = user), do: Writer.create(args, user)
+  def create(args, %User{} = user), do: create(args, user, Ecto.UUID.generate())
+
+  @doc "Creates a Community through the explicit command boundary."
+  @spec create(map(), User.t(), Ecto.UUID.t()) :: T.domain_res(Community.t())
+  def create(args, %User{} = user, command_id), do: CreateCommand.execute(args, user, command_id)
 
   @doc "Runs `update` through the public `Communities` boundary."
   @spec update(Community.t(), map(), User.t() | :operations) :: T.domain_res(Community.t())
   def update(%Community{} = community, args, actor) do
-    Writer.update(community, args, actor)
+    update(community, args, actor, Ecto.UUID.generate())
   end
 
-  @doc "Synchronizes base info through the `Communities` boundary."
-  @spec sync_base_info(Community.t(), map(), User.t() | :operations) ::
+  @doc "Updates Community fields with the caller-provided command identity."
+  @spec update(Community.t(), map(), User.t() | :operations, Ecto.UUID.t()) ::
           T.domain_res(Community.t())
-  def sync_base_info(%Community{} = community, args, actor) do
-    Writer.sync_base_info(community, args, actor)
+  def update(%Community{} = community, args, actor, command_id) do
+    UpdateCommand.execute(community, args, actor, command_id)
   end
 
   @doc "Creates from application through the `Communities` write boundary."
