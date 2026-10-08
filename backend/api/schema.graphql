@@ -504,13 +504,13 @@ type RootMutationType {
   reindexCommunityTagGroups(community: String!, thread: Thread, groups: [ReindexCommunityTagGroupInput]): Done
 
   "mirror article to other community"
-  mirrorArticle(article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
+  mirrorArticle(commandId: ID!, article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
 
   "unmirror article for community"
-  unmirrorArticle(article: ArticlePathInput!, targetCommunity: String!): Article
+  unmirrorArticle(commandId: ID!, article: ArticlePathInput!, targetCommunity: String!): Article
 
   "move article to other community"
-  moveArticle(article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
+  moveArticle(commandId: ID!, article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
 
   "create a post"
   createPost(
@@ -548,10 +548,10 @@ type RootMutationType {
   undoUpvotePost(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to post"
-  pinPost(article: ArticlePathInput!): Post
+  pinPost(article: ArticlePathInput!, commandId: ID!): Post
 
   "undo pin to post"
-  undoPinPost(article: ArticlePathInput!): Post
+  undoPinPost(article: ArticlePathInput!, commandId: ID!): Post
 
   "emotion to post"
   emotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
@@ -607,10 +607,10 @@ type RootMutationType {
   undoUpvoteBlog(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to blog"
-  pinBlog(article: ArticlePathInput!): Blog
+  pinBlog(article: ArticlePathInput!, commandId: ID!): Blog
 
   "undo pin to blog"
-  undoPinBlog(article: ArticlePathInput!): Blog
+  undoPinBlog(article: ArticlePathInput!, commandId: ID!): Blog
 
   "emotion to blog"
   emotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
@@ -668,10 +668,10 @@ type RootMutationType {
   undoUpvoteChangelog(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to changelog"
-  pinChangelog(article: ArticlePathInput!): Changelog
+  pinChangelog(article: ArticlePathInput!, commandId: ID!): Changelog
 
   "undo pin to changelog"
-  undoPinChangelog(article: ArticlePathInput!): Changelog
+  undoPinChangelog(article: ArticlePathInput!, commandId: ID!): Changelog
 
   "emotion to changelog"
   emotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
@@ -704,10 +704,10 @@ type RootMutationType {
   undoUpvoteDoc(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to doc"
-  pinDoc(article: ArticlePathInput!): Doc
+  pinDoc(article: ArticlePathInput!, commandId: ID!): Doc
 
   "undo pin to doc"
-  undoPinDoc(article: ArticlePathInput!): Doc
+  undoPinDoc(article: ArticlePathInput!, commandId: ID!): Doc
 
   "emotion to doc"
   emotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult

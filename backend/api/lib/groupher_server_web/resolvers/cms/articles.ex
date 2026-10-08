@@ -174,15 +174,17 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     CMS.Articles.get_trashed(id, community, thread)
   end
 
-  def pin_article(_root, ~m(article article_path)a, %{context: %{cur_user: user}}) do
+  def pin_article(_root, ~m(article article_path command_id)a, %{context: %{cur_user: user}}) do
     with {:ok, community} <- article_path_community(article_path) do
-      CMS.Articles.pin(community, article.id, user)
+      CMS.Articles.pin(community, article.id, user, command_id)
     end
   end
 
-  def undo_pin_article(_root, ~m(article article_path)a, %{context: %{cur_user: user}}) do
+  def undo_pin_article(_root, ~m(article article_path command_id)a, %{
+        context: %{cur_user: user}
+      }) do
     with {:ok, community} <- article_path_community(article_path) do
-      CMS.Articles.undo_pin(community, article.id, user)
+      CMS.Articles.undo_pin(community, article.id, user, command_id)
     end
   end
 
@@ -194,20 +196,34 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     CMS.Articles.undo_sink_result(article, user)
   end
 
-  def mirror_article(_root, ~m(target_community article community_tags)a, %{
+  def mirror_article(_root, ~m(target_community article community_tags command_id)a, %{
         context: %{cur_user: user}
       }) do
-    CMS.Articles.mirror(target_community, article.id, community_tags, user)
+    CMS.Articles.mirror(
+      target_community,
+      article.id,
+      community_tags,
+      user,
+      article.community,
+      command_id
+    )
   end
 
-  def unmirror_article(_root, ~m(target_community article)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.unmirror(target_community, article.id, user)
-  end
-
-  def move_article(_root, ~m(target_community article community_tags)a, %{
+  def unmirror_article(_root, ~m(target_community article command_id)a, %{
         context: %{cur_user: user}
       }) do
-    CMS.Articles.move(target_community, article.id, community_tags, user)
+    CMS.Articles.unmirror(target_community, article.id, user, command_id)
+  end
+
+  def move_article(_root, ~m(target_community article community_tags command_id)a, %{
+        context: %{cur_user: user}
+      }) do
+    with %Community{} = source <- Map.get(article, :community),
+         %Community{} = destination <- target_community do
+      CMS.Articles.move(source, destination, article.id, community_tags, user, command_id)
+    else
+      _ -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
+    end
   end
 
   defp do_read_article(
@@ -239,7 +255,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
 
   defp update_article_draft(
          _root,
-         %{article: article} = args,
+         %{article: article, community: %Community{} = community} = args,
          %{context: %{cur_user: user}}
        ) do
     CMS.Articles.update_draft(
@@ -248,18 +264,20 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
       |> Map.drop([:community, :thread, :id, :article, :passport_is_owner])
       |> Map.put(:cur_user, user),
       user,
-      expected_version: args[:expected_version]
+      expected_version: args[:expected_version],
+      community: community
     )
   end
 
   defp publish_article_draft(
          _root,
-         %{article: article} = args,
+         %{article: article, community: %Community{} = community} = args,
          %{context: %{cur_user: user}}
        ) do
     CMS.Articles.publish(article, user,
       expected_draft_version: args[:expected_version],
       expected_lifecycle_version: args[:expected_lifecycle_version],
+      community: community,
       command_id: args[:command_id]
     )
   end

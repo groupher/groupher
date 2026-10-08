@@ -5,10 +5,10 @@ defmodule GroupherServer.CMS.Docs.Commands.UpdateDraft do
       Doc draft -> Gate/version checks -> draft write -> tagged result
   """
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Docs.Editor
-  alias CMS.Model.Author
+  alias CMS.Model.{Author, Community, DocBranch}
 
   @spec execute(Ecto.UUID.t(), pos_integer(), map(), User.t() | Author.t()) ::
           {:ok, map()} | {:error, term()}
@@ -19,8 +19,9 @@ defmodule GroupherServer.CMS.Docs.Commands.UpdateDraft do
     with {:ok, article} <- Editor.stable_doc(doc_id),
          {:ok, author} <- Editor.target_author(actor),
          {:ok, user} <- Editor.actor_user(actor),
+         {:ok, community} <- branch_community(branch_id),
          {:ok, draft} <-
-           CMS.Gate.Access.with_branch_check(user, :edit, article, branch_id, fn canonical ->
+           CMS.Gate.Access.with_branch_check(user, :edit, community, article, branch_id, fn canonical ->
              with {:ok, expected_draft_version} <-
                     Editor.ensure_editable_draft(
                       canonical,
@@ -34,7 +35,20 @@ defmodule GroupherServer.CMS.Docs.Commands.UpdateDraft do
                )
              end
            end) do
-      Editor.materialize_draft(draft, article)
+      Editor.materialize_draft(draft, article, community)
+    end
+  end
+
+  defp branch_community(branch_id) do
+    case Repo.get(DocBranch, branch_id) do
+      %DocBranch{community_id: community_id} ->
+        case Repo.get(Community, community_id) do
+          %Community{} = community -> {:ok, community}
+          _ -> {:error, :article_binding_not_found}
+        end
+
+      _ ->
+        {:error, :article_binding_not_found}
     end
   end
 end

@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              CommunityPolicy.check_access(user, :read_draft, community)
   end
 
-  test "community command actions use the manage relation preflight" do
+  test "community command actions use the manage binding preflight" do
     {:ok, owner} = db_insert(:user)
     {:ok, other_user} = db_insert(:user)
     {:ok, community} = mock_community(owner)
@@ -51,8 +51,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     community = %{community | lifecycle: lifecycle}
 
-    assert :ok = CommunityPolicy.check_access(owner, :restore, community)
-    assert :ok = CommunityPolicy.check_access(owner, :schedule_destroy, community)
+    assert {:ok, :pass} = CommunityPolicy.check_access(owner, :restore, community)
+    assert {:ok, :pass} = CommunityPolicy.check_access(owner, :schedule_destroy, community)
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CommunityPolicy.check_access(other_user, :destroy, community)
@@ -78,10 +78,10 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     community = %{community | lifecycle: lifecycle}
 
-    assert :ok = CommunityPolicy.check_access(nil, :read, community)
-    assert :ok = CommunityPolicy.check_access(owner, :read, community)
+    assert {:ok, :pass} = CommunityPolicy.check_access(nil, :read, community)
+    assert {:ok, :pass} = CommunityPolicy.check_access(owner, :read, community)
 
-    assert :ok =
+    assert {:ok, :pass} =
              CommunityPolicy.check_access(
                owner,
                :read,
@@ -205,7 +205,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     }
 
     for action <- [:upvote, :emotion, :collect] do
-      assert :ok =
+      assert {:ok, :pass} =
                ArticlePolicy.check_access(
                  user,
                  action,

@@ -25,14 +25,14 @@ defmodule GroupherServer.CMS.Outbox.Workers.Interaction.Cleanup do
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
     case CMS.Outbox.execute(event_id, &cleanup/1) do
       {:ok, _value} ->
-        :ok
+        {:ok, :pass}
 
       {:busy, seconds} ->
         {:snooze, seconds}
 
       {:error, _reason} when job.attempt >= job.max_attempts ->
         _ = CMS.Outbox.mark_dead(event_id)
-        :ok
+        {:ok, :pass}
 
       {:error, reason} ->
         {:error, reason}
@@ -42,22 +42,22 @@ defmodule GroupherServer.CMS.Outbox.Workers.Interaction.Cleanup do
   defp cleanup(event) do
     with {:ok, target} <- load_target(event.resource_type, event.resource_id),
          {:ok, actor} <- load_actor(event.data["actor_id"]),
-         :ok <- emit_event(event.event, target, actor, event.data),
-         :ok <- maybe_sync_search(target) do
+         {:ok, _} <- emit_event(event.event, target, actor, event.data),
+         {:ok, _} <- maybe_sync_search(target) do
       {:ok, :delivered}
     end
   end
 
   defp load_target("article", id) do
     case Repo.get(Article, id) do
-      %Article{} = article -> {:ok, Repo.preload(article, :community)}
+      %Article{} = article -> {:ok, article}
       nil -> {:error, :interaction_target_not_found}
     end
   end
 
   defp load_target("comment", id) do
     case Repo.get(Comment, id) do
-      %Comment{} = comment -> {:ok, Repo.preload(comment, :community)}
+      %Comment{} = comment -> {:ok, comment}
       nil -> {:error, :interaction_target_not_found}
     end
   end
@@ -76,31 +76,31 @@ defmodule GroupherServer.CMS.Outbox.Workers.Interaction.Cleanup do
   defp emit_event("interaction.upvote_changed", target, actor, _data) do
     Later.run({Events, :emit, [:notify_upvote, %{target: target, from_user: actor}]})
     Later.run({Events, :emit, [:subscribe_community, %{target: target, user: actor}]})
-    :ok
+    {:ok, :pass}
   end
 
   defp emit_event("interaction.emotion_changed", %Comment{} = target, actor, _data) do
     Later.run({Events, :emit, [:subscribe_community, %{target: target, user: actor}]})
-    :ok
+    {:ok, :pass}
   end
 
   defp emit_event("interaction.collect_changed", target, actor, data) do
     operation = if data["operation"] == "add", do: :add, else: :remove
     event = if operation == :add, do: :notify_collect, else: :notify_undo_collect
     Later.run({Events, :emit, [event, %{article: target, from_user: actor}]})
-    :ok
+    {:ok, :pass}
   end
 
-  defp emit_event(_event, _target, _actor, _data), do: :ok
+  defp emit_event(_event, _target, _actor, _data), do: {:ok, :pass}
 
-  defp maybe_sync_search(%Comment{}), do: :ok
+  defp maybe_sync_search(%Comment{}), do: {:ok, :pass}
 
   defp maybe_sync_search(%Article{} = article) do
     normalize_search(Indexer.enqueue_metrics(article))
   end
 
-  defp normalize_search(:ok), do: :ok
-  defp normalize_search({:ok, _}), do: :ok
+  defp normalize_search(:ok), do: {:ok, :pass}
+  defp normalize_search({:ok, _}), do: {:ok, :pass}
   defp normalize_search({:error, reason}), do: {:error, reason}
-  defp normalize_search(_), do: :ok
+  defp normalize_search(_), do: {:ok, :pass}
 end

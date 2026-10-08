@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.Query.Upvotes.PostUpvote do
       {:ok, _} = CMS.Interactions.upvote(post, user2)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         filter: %{page: 1, size: 20}
       }
 

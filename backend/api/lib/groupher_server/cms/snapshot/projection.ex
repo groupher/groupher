@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Snapshot.Projection do
   @moduledoc """
-  Patches denormalized snapshot fields without changing relation membership.
+  Patches denormalized snapshot fields without changing binding membership.
 
       CMS.Snapshot facade
         -> Snapshot.Projection

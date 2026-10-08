@@ -55,8 +55,8 @@ defmodule GroupherServer.CMS.Press.Query do
       when thread in @threads do
     with {:ok, community} <- public_community(community_ref),
          {:ok, config} <- config(community),
-         :ok <- validate_enabled(config, :markdown_enabled),
-         :ok <- validate_thread_enabled(community, thread),
+         {:ok, _} <- validate_enabled(config, :markdown_enabled),
+         {:ok, _} <- validate_thread_enabled(community, thread),
          {:ok, article} <- current_article(community, thread, inner_id) do
       {:ok, Projection.article(community, thread, article)}
     end
@@ -68,7 +68,7 @@ defmodule GroupherServer.CMS.Press.Query do
   def community_rss_feed(community, opts) do
     with {:ok, community} <- public_community(community),
          {:ok, config} <- config(community),
-         :ok <- validate_enabled(config, :feed_enabled) do
+         {:ok, _} <- validate_enabled(config, :feed_enabled) do
       requested_threads = option(opts, :threads, config.feed_threads)
       threads = selected_threads(community, requested_threads)
       limit = bounded_limit(option(opts, :limit, config.feed_count), config.feed_count)
@@ -82,9 +82,9 @@ defmodule GroupherServer.CMS.Press.Query do
   def thread_rss_feed(community, thread, opts) when thread in @threads do
     with {:ok, community} <- public_community(community),
          {:ok, config} <- config(community),
-         :ok <- validate_enabled(config, :feed_enabled),
-         :ok <- validate_feed_thread(config, thread),
-         :ok <- validate_thread_enabled(community, thread) do
+         {:ok, _} <- validate_enabled(config, :feed_enabled),
+         {:ok, _} <- validate_feed_thread(config, thread),
+         {:ok, _} <- validate_thread_enabled(community, thread) do
       limit = bounded_limit(option(opts, :limit, config.feed_count), config.feed_count)
       items = feed_items(community, [thread], limit)
 
@@ -117,7 +117,7 @@ defmodule GroupherServer.CMS.Press.Query do
   defp current_article(community, :doc, inner_id) do
     with {:ok, article} <-
            FrontDesk.article(%{community: community.slug, thread: :doc, inner_id: inner_id}),
-         :ok <- validate_stable_public_doc(article) do
+         {:ok, _} <- validate_stable_public_doc(article, community) do
       {:ok, article}
     else
       {:error, _reason} = error -> error
@@ -128,10 +128,10 @@ defmodule GroupherServer.CMS.Press.Query do
     FrontDesk.article(%{community: community.slug, thread: thread, inner_id: inner_id})
   end
 
-  defp validate_stable_public_doc(article) do
+  defp validate_stable_public_doc(article, community) do
     visible =
       DocTreeNode
-      |> where([node], node.community_id == ^article.community_id)
+      |> where([node], node.community_id == ^community.id)
       |> where([node], node.branch_id == ^article.branch_id)
       |> where([node], node.stage == ^CMS.Const.stage(:public))
       |> where([node], node.type == :page)
@@ -139,7 +139,7 @@ defmodule GroupherServer.CMS.Press.Query do
       |> Repo.exists?()
 
     if visible do
-      :ok
+      {:ok, :pass}
     else
       {:error, CMS.Articles.ErrorCat.not_exist("Published Doc")}
     end
@@ -185,7 +185,7 @@ defmodule GroupherServer.CMS.Press.Query do
     case CMS.Articles.page(thread, %{community: community.slug, page: 1, size: limit}) do
       {:ok, %{entries: entries}} ->
         if thread == :doc do
-          Enum.filter(entries, &stable_public_doc?/1)
+          Enum.filter(entries, &stable_public_doc?(&1, community))
         else
           entries
         end
@@ -195,7 +195,8 @@ defmodule GroupherServer.CMS.Press.Query do
     end
   end
 
-  defp stable_public_doc?(article), do: validate_stable_public_doc(article) == :ok
+  defp stable_public_doc?(article, community),
+    do: match?({:ok, _}, validate_stable_public_doc(article, community))
 
   defp public_community(%Community{id: id}), do: public_community_by_id(id)
 
@@ -252,7 +253,7 @@ defmodule GroupherServer.CMS.Press.Query do
 
   defp validate_feed_thread(config, thread) do
     if to_string(thread) in config.feed_threads do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom("Press Feed thread is disabled")}
     end
@@ -260,7 +261,7 @@ defmodule GroupherServer.CMS.Press.Query do
 
   defp validate_thread_enabled(community, thread) do
     if thread_enabled?(community, thread) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom("Community thread is disabled")}
     end
@@ -273,7 +274,7 @@ defmodule GroupherServer.CMS.Press.Query do
 
   defp validate_enabled(config, field) do
     if Map.get(config, field) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom("Press output is disabled")}
     end

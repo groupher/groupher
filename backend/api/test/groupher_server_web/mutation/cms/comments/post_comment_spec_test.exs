@@ -13,7 +13,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       CMS.Articles.set_cat(
         post.id,
         GroupherServer.CMS.Artiment.Const.cat_map().qa,
-        user
+        user,
+        community.id
       )
 
     guest_conn = simu_conn(:guest)
@@ -30,7 +31,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          post_author
+        )
 
       questioner_conn = simu_conn(:user, post_author)
 
@@ -48,7 +55,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          post_author
+        )
 
       variables = %{comment: comment_path(community, post, :post, comment)}
 
@@ -73,7 +86,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          post_author
+        )
 
       {:ok, comment} = CMS.Comments.accept_solution(comment.id, post_author)
 
@@ -92,7 +111,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       post_author = post.author.user
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          post_author
+        )
 
       variables = %{comment: comment_path(community, post, :post, comment)}
 

@@ -50,10 +50,10 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
         with {:ok, canonical} <- Gate.access_check(actor, :collect, input),
              {:ok, %{collection?: true} = info} <- Matcher.match_interaction(canonical),
              {:ok, change} <- change_fact(canonical, info, actor, operation),
-             :ok <- sync_state(canonical, actor, operation, change),
-             :ok <- record_metric(canonical, operation, change),
-             :ok <- sync_achievement(canonical, operation, change),
-             :ok <- enqueue_effect(canonical, actor, operation, change) do
+             {:ok, _} <- sync_state(canonical, actor, operation, change),
+             {:ok, _} <- record_metric(canonical, operation, change),
+             {:ok, _} <- sync_achievement(canonical, operation, change),
+             {:ok, _} <- enqueue_effect(canonical, actor, operation, change) do
           {canonical, change}
         else
           {:ok, %{collection?: false}} ->
@@ -67,7 +67,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
     |> normalize_result()
   end
 
-  defp sync_state(_canonical, _actor, _operation, :unchanged), do: :ok
+  defp sync_state(_canonical, _actor, _operation, :unchanged), do: {:ok, :pass}
 
   defp sync_state(canonical, actor, operation, :changed) do
     result =
@@ -76,23 +76,23 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
         else: ReadState.remove_collect(canonical, actor)
 
     case result do
-      {:ok, _projection} -> :ok
+      {:ok, _projection} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp record_metric(_article, _operation, :unchanged), do: :ok
+  defp record_metric(_article, _operation, :unchanged), do: {:ok, :pass}
 
   defp record_metric(article, operation, :changed) do
     metric = if operation == :add, do: :collect_added, else: :collect_removed
 
     case MetricEvent.append_article_action(article, Ecto.UUID.generate(), metric) do
-      :ok -> :ok
+      {:ok, _} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp sync_achievement(_article, _operation, :unchanged), do: :ok
+  defp sync_achievement(_article, _operation, :unchanged), do: {:ok, :pass}
 
   defp sync_achievement(article, operation, :changed) do
     achievement_operation = if operation == :add, do: :inc, else: :dec
@@ -102,7 +102,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
            achievement_operation,
            :collect
          ) do
-      {:ok, _achievement} -> :ok
+      {:ok, _achievement} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
@@ -110,7 +110,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
   defp author_user(%{author: %{user_id: user_id}}), do: %User{id: user_id}
   defp author_user(%{author_id: author_id}), do: %User{id: Repo.get!(Author, author_id).user_id}
 
-  defp enqueue_effect(_article, _actor, _operation, :unchanged), do: :ok
+  defp enqueue_effect(_article, _actor, _operation, :unchanged), do: {:ok, :pass}
 
   defp enqueue_effect(article, actor, operation, :changed) do
     case CMS.Outbox.send(%{
@@ -121,7 +121,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
            command_id: Ecto.UUID.generate(),
            data: %{actor_id: actor.id, operation: operation}
          }) do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end

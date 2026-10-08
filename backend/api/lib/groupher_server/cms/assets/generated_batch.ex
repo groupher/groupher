@@ -48,7 +48,7 @@ defmodule GroupherServer.CMS.Assets.GeneratedBatch do
   end
 
   @doc "Deletes generated assets after a publish claim becomes an orphan."
-  @spec delete_claim(String.t(), String.t()) :: :ok | {:error, term()}
+  @spec delete_claim(String.t(), String.t()) :: {:ok, :pass} | {:error, term()}
   def delete_claim(batch_ref, publish_capability)
       when is_binary(batch_ref) and is_binary(publish_capability) do
     with {:ok, endpoint} <- endpoint(),
@@ -63,7 +63,7 @@ defmodule GroupherServer.CMS.Assets.GeneratedBatch do
            ),
          true <- response.status in 200..299 do
       case response.body do
-        %{"ok" => true} -> :ok
+        %{"ok" => true} -> {:ok, :pass}
         body -> {:error, cleanup_error(body)}
       end
     else

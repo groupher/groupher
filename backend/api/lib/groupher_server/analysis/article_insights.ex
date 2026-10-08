@@ -29,7 +29,7 @@ defmodule GroupherServer.Analysis.ArticleInsights do
 
   def trend(%{id: _id} = article, viewer, opts) when is_list(opts) do
     with {:ok, article_type} <- article_type(article),
-         :ok <- authorize_if_needed(article, viewer, article_type, opts),
+         {:ok, _} <- authorize_if_needed(article, viewer, article_type, opts),
          {:ok, metrics} <- requested_metrics(opts),
          {:ok, actor_types} <- requested_actor_types(opts),
          {:ok, is_authenticated} <- requested_authentication(opts),
@@ -118,7 +118,7 @@ defmodule GroupherServer.Analysis.ArticleInsights do
 
   defp authorize_if_needed(article, viewer, article_type, opts) do
     if Keyword.get(opts, :skip_authorize, false) do
-      :ok
+      {:ok, :pass}
     else
       authorize(article, viewer, article_type, opts)
     end
@@ -140,7 +140,7 @@ defmodule GroupherServer.Analysis.ArticleInsights do
          query <-
            from([article, gate_community: community_row] in query,
              where:
-               article.thread == ^thread and article.inner_id == ^inner_id and
+               article.thread == ^thread and as(:gate_article_binding).inner_id == ^inner_id and
                  (community_row.slug == ^community or community_row.aka == ^community)
            ),
          %ArticleModel{} = article <- Repo.one(query) do
@@ -176,7 +176,7 @@ defmodule GroupherServer.Analysis.ArticleInsights do
 
   defp authorize_stable(article, viewer) do
     case Gate.access_check(viewer, :read_insights, article) do
-      {:ok, _canonical} -> :ok
+      {:ok, _canonical} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -187,7 +187,7 @@ defmodule GroupherServer.Analysis.ArticleInsights do
     case Gate.scope(article.__struct__, scope_actor, :read_insights, context) do
       %Ecto.Query{} = query ->
         if Repo.exists?(from(row in query, where: row.id == ^article.id)) do
-          :ok
+          {:ok, :pass}
         else
           {:error, :insights_not_authorized}
         end

@@ -9,18 +9,20 @@ defmodule GroupherServer.CMS.Docs.Editor do
   alias GroupherServer.FrontDesk, as: RootFrontDesk
   alias Accounts.Model.User
   alias CMS.Docs.Store, as: DocStore
+  alias CMS.Articles.Bindings
   alias CMS.FrontDesk
   alias CMS.Model.{Article, Author, Community, DocPublic}
 
   @spec read_head(Community.t(), term(), keyword()) :: {:ok, map()} | {:error, term()}
   def read_head(%Community{id: community_id} = community, doc_id, opts) do
     with {:ok, branch} <- CMS.Docs.Branch.resolve(community, opts),
-         {:ok, %Article{community_id: ^community_id} = article} <- stable_doc(doc_id),
+         {:ok, %Article{} = article} <- stable_doc(doc_id),
+         {:ok, %{community: %Community{id: ^community_id}}} <- Bindings.get(article, community),
          {:ok, state} <- CMS.Docs.Lifecycle.state(article.id, branch.id),
          true <- state in [:draft_only, :published, :archived] do
       case CMS.Articles.Draft.Store.get(article, branch_id: branch.id) do
-        {:ok, draft} -> materialize_draft(draft, article)
-        {:error, :not_found} -> materialize_public(article, branch.id)
+        {:ok, draft} -> materialize_draft(draft, article, community)
+        {:error, :not_found} -> materialize_public(article, branch.id, community)
       end
     else
       false -> {:error, :doc_not_readable}
@@ -86,15 +88,16 @@ defmodule GroupherServer.CMS.Docs.Editor do
     end
   end
 
-  @spec materialize_draft(struct(), Article.t()) :: {:ok, map()} | {:error, term()}
-  def materialize_draft(draft, %Article{} = article) do
-    with {:ok, body} <- DocStore.body_draft(draft.body_draft_id),
+  @spec materialize_draft(struct(), Article.t(), Community.t()) :: {:ok, map()} | {:error, term()}
+  def materialize_draft(draft, %Article{} = article, %Community{} = community) do
+    with {:ok, %{community: community}} <- Bindings.get(article, community),
+         {:ok, body} <- DocStore.body_draft(draft.body_draft_id),
          {:ok, author} <- DocStore.author(draft.updated_by_id) do
       {:ok,
        %{
          id: draft.id,
          article_id: draft.article_id,
-         community_id: article.community_id,
+         community_id: community.id,
          thread: :doc,
          branch_id: draft.branch_id,
          stage: :draft,
@@ -113,9 +116,10 @@ defmodule GroupherServer.CMS.Docs.Editor do
     end
   end
 
-  @spec materialize_public(Article.t(), pos_integer()) :: {:ok, map()} | {:error, term()}
-  def materialize_public(%Article{id: article_id, community_id: community_id}, branch_id) do
-    with {:ok, %DocPublic{} = public} <- DocStore.public(article_id, branch_id),
+  @spec materialize_public(Article.t(), pos_integer(), Community.t()) :: {:ok, map()} | {:error, term()}
+  def materialize_public(%Article{id: article_id} = article, branch_id, %Community{} = community) do
+    with {:ok, %{community: community}} <- Bindings.get(article, community),
+         {:ok, %DocPublic{} = public} <- DocStore.public(article_id, branch_id),
          {:ok, version} <- DocStore.branch_version(public.branch_version_id),
          {:ok, revision} <- DocStore.revision(version.revision_id),
          {:ok, extension} <- DocStore.revision_extension(revision.id),
@@ -125,7 +129,7 @@ defmodule GroupherServer.CMS.Docs.Editor do
        %{
          id: public.id,
          article_id: article_id,
-         community_id: community_id,
+         community_id: community.id,
          thread: :doc,
          branch_id: branch_id,
          stage: :public,

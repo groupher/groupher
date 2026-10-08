@@ -13,6 +13,6 @@ defmodule GroupherServer.Jobs.ViewDedupeCleanup do
   @impl Oban.Worker
   def perform(%Oban.Job{}) do
     _ = ViewTracker.cleanup_expired()
-    :ok
+    {:ok, :pass}
   end
 end

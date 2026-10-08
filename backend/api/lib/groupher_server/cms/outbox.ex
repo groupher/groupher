@@ -85,7 +85,7 @@ defmodule GroupherServer.CMS.Outbox do
         set: [status: :dead, updated_at: now, last_error_at: now]
       )
 
-    if updated == 1, do: :ok, else: {:error, :stale_event}
+    if updated == 1, do: {:ok, :pass}, else: {:error, :stale_event}
   end
 
   @doc false
@@ -101,7 +101,7 @@ defmodule GroupherServer.CMS.Outbox do
         set: [status: :dead, updated_at: now, last_error_at: now]
       )
 
-    if updated == 1, do: :ok, else: {:error, :stale_lock}
+    if updated == 1, do: {:ok, :pass}, else: {:error, :stale_lock}
   end
 
   defp claim(event_id, lock_ref) do
@@ -139,7 +139,7 @@ defmodule GroupherServer.CMS.Outbox do
     case action.(event) do
       {:ok, value} ->
         case complete(event.id, lock_ref) do
-          :ok -> {:ok, value}
+          {:ok, _} -> {:ok, value}
           {:error, reason} -> {:error, reason}
         end
 
@@ -176,7 +176,7 @@ defmodule GroupherServer.CMS.Outbox do
         ]
       )
 
-    if updated == 1, do: :ok, else: {:error, :stale_lock}
+    if updated == 1, do: {:ok, :pass}, else: {:error, :stale_lock}
   end
 
   defp fail(event_id, lock_ref, reason) do
@@ -199,7 +199,7 @@ defmodule GroupherServer.CMS.Outbox do
         ]
       )
 
-    if updated == 1, do: :ok, else: {:error, :stale_lock}
+    if updated == 1, do: {:ok, :pass}, else: {:error, :stale_lock}
   end
 
   defp claim_row(event, lock_ref, now) do

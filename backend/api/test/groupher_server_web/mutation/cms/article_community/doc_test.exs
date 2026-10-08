@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
+defmodule GroupherServer.Test.Mutation.ArticleBinding.Doc do
   @moduledoc false
 
   use GroupherServer.TestMate
@@ -7,18 +7,31 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Doc do
     test "Doc rejects ordinary Article move and mirror commands" do
       {community, doc, _, user} = mock_article(:doc)
       {:ok, destination} = mock_community(user)
-      article = Repo.get!(CMS.Model.Article, doc.id)
 
       assert {:error, :unsupported_for_doc} =
-               CMS.Articles.Communities.move(article, destination)
+               CMS.Articles.move(
+                 community,
+                 destination,
+                 doc.id,
+                 [],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       assert {:error, :unsupported_for_doc} =
-               CMS.Articles.Communities.mirror(article, destination)
+               CMS.Articles.mirror(
+                 destination,
+                 doc.id,
+                 [],
+                 user,
+                 community,
+                 Ecto.UUID.generate()
+               )
 
       assert {:error, :unsupported_for_doc} =
-               CMS.Articles.Communities.unmirror(article, destination)
+               CMS.Articles.unmirror(destination, doc.id, user, Ecto.UUID.generate())
 
-      assert article.community_id == community.id
+      assert community.id == community.id
     end
   end
 end

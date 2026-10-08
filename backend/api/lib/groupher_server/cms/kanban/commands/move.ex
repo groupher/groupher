@@ -1,11 +1,11 @@
 defmodule GroupherServer.CMS.Kanban.Commands.Move do
   @moduledoc """
-  Moves an existing Community-local Kanban Article between statuses.
+    Moves an existing Community-local Kanban Article between statuses.
 
-      ArticleCommunity relation
-        -> Gate admission
-        -> KanbanState status update
-"""
+        ArticleBinding binding
+          -> Gate admission
+          -> KanbanState status update
+  """
 
   alias GroupherServer.CMS
   alias CMS.Articles.States

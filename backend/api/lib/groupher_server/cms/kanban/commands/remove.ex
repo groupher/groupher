@@ -1,11 +1,11 @@
 defmodule GroupherServer.CMS.Kanban.Commands.Remove do
   @moduledoc """
-  Removes an Article from a Community-local Kanban while preserving its ArticleCommunity relation.
+    Removes an Article from a Community-local Kanban while preserving its ArticleBinding binding.
 
-      ArticleCommunity relation
-        -> Gate admission
-        -> delete KanbanState
-"""
+        ArticleBinding binding
+          -> Gate admission
+          -> delete KanbanState
+  """
 
   alias GroupherServer.CMS
   alias CMS.Articles.States

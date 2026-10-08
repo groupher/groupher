@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
     view = Keyword.get(opts, :view, :default)
     {policy_mode, actor} = effective_policy(mode, actor)
 
-    with :ok <- validate_view(view),
+    with {:ok, _} <- validate_view(view),
          {:ok, context} <- scope_context(policy_mode),
          %Ecto.Query{} = query <- Gate.scope(Community, actor, :read, context),
          %Ecto.Query{} = query <- where_ref(query, ref),
@@ -68,7 +68,7 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
   defp effective_policy(:internal, _actor), do: {:operations, :operations}
   defp effective_policy(mode, actor), do: {mode, actor}
 
-  defp validate_view(:default), do: :ok
+  defp validate_view(:default), do: {:ok, :pass}
   defp validate_view(_view), do: {:error, ErrorCat.custom(%{reason: :unsupported_read_view})}
 
   @doc "Reads one Community Tag by database id."

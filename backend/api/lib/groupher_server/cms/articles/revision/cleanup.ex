@@ -81,7 +81,7 @@ defmodule GroupherServer.CMS.Articles.Revision.Cleanup do
     end)
   end
 
-  defp delete_orphan_bodies([]), do: :ok
+  defp delete_orphan_bodies([]), do: {:ok, :pass}
 
   defp delete_orphan_bodies(body_ids) do
     ArticleBodySnapshot
@@ -90,7 +90,7 @@ defmodule GroupherServer.CMS.Articles.Revision.Cleanup do
     |> where([_body, revision], is_nil(revision.id))
     |> Repo.delete_all()
 
-    :ok
+    {:ok, :pass}
   end
 
   defp revision_background_ids([]), do: []
@@ -118,7 +118,7 @@ defmodule GroupherServer.CMS.Articles.Revision.Cleanup do
     |> Enum.uniq()
   end
 
-  defp delete_orphan_cover_backgrounds([]), do: :ok
+  defp delete_orphan_cover_backgrounds([]), do: {:ok, :pass}
 
   defp delete_orphan_cover_backgrounds(background_ids) do
     from(background in CoverBackground,
@@ -141,6 +141,6 @@ defmodule GroupherServer.CMS.Articles.Revision.Cleanup do
     )
     |> Repo.delete_all()
 
-    :ok
+    {:ok, :pass}
   end
 end

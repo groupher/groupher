@@ -51,9 +51,9 @@ defmodule GroupherServer.CMS.Communities.Setup do
     with {:ok, community} <- fetch_community(community_ref),
          {:ok, application} <- fetch_application(community.id),
          {:ok, user} <- fetch_user(application.user_id),
-         :ok <- ensure_root(community, user),
+         {:ok, _} <- ensure_root(community, user),
          {:ok, _state} <- CMS.DocTree.initialize(community),
-         :ok <- ensure_analysis(community) do
+         {:ok, _} <- ensure_analysis(community) do
       activate(community, application, operation_ref)
     end
   end
@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
   @spec retry(String.t(), User.t(), integer()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
   def retry(application_ref, %User{} = reviewer, expected_version) do
-    with :ok <-
+    with {:ok, _} <-
            review_authorized?(reviewer, Const.passport_action(:community_application_retry_setup)) do
       operation_ref = Ecto.UUID.generate()
       now = DateTime.utc_now(:second)
@@ -246,10 +246,10 @@ defmodule GroupherServer.CMS.Communities.Setup do
            where: moderator.community_id == ^community.id and moderator.user_id == ^user.id
          )
        ) do
-      :ok
+      {:ok, :pass}
     else
       case Moderator.add_root(community, user) do
-        {:ok, _} -> :ok
+        {:ok, _} -> {:ok, :pass}
         {:error, reason} -> {:error, reason}
       end
     end
@@ -257,8 +257,8 @@ defmodule GroupherServer.CMS.Communities.Setup do
 
   defp ensure_analysis(community) do
     case Analysis.Web.provision_community(community) do
-      {:ok, _} -> :ok
-      {:error, ErrorCat.error_pattern(reason: :not_configured)} -> :ok
+      {:ok, _} -> {:ok, :pass}
+      {:error, ErrorCat.error_pattern(reason: :not_configured)} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -303,7 +303,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
 
   defp review_authorized?(reviewer, action) do
     case Passport.check(reviewer, action, %{}) do
-      {:ok, true} -> :ok
+      {:ok, true} -> {:ok, :pass}
       _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end

@@ -29,6 +29,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
 
   alias CMS.Model.{
+    ArticleBinding,
     Article,
     ArticlePublic,
     ArticleRevision,
@@ -435,8 +436,10 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
       case thread do
         :doc ->
           from(article in Article,
+            join: binding in ArticleBinding,
+            on: binding.article_id == article.id,
             join: branch in DocBranch,
-            on: branch.community_id == article.community_id and branch.type == :main,
+            on: branch.community_id == binding.community_id and branch.type == :main,
             join: public in DocPublic,
             on: public.article_id == article.id and public.branch_id == branch.id,
             join: version in DocBranchVersion,
@@ -449,13 +452,15 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
               article_id: article.id,
               branch_id: branch.id,
               thread: article.thread,
-              community_id: article.community_id,
+              community_id: binding.community_id,
               title: revision.title
             }
           )
 
         _ ->
           from(article in Article,
+            join: binding in ArticleBinding,
+            on: binding.article_id == article.id,
             join: public in ArticlePublic,
             on: public.article_id == article.id,
             join: revision in ArticleRevision,
@@ -466,7 +471,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
               article_id: article.id,
               branch_id: nil,
               thread: article.thread,
-              community_id: article.community_id,
+              community_id: binding.community_id,
               title: revision.title
             }
           )

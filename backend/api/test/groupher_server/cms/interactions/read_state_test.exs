@@ -250,7 +250,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
 
     zero_article = Repo.get!(Article, zero.article_id)
 
-    assert :ok = CMS.ArticleStats.apply_interaction_counts(zero_article)
+    assert {:ok, :pass} = CMS.ArticleStats.apply_interaction_counts(zero_article)
     Repo.delete_all(from(stats in CMS.Model.ArticleStats, where: stats.article_id == ^absent.id))
 
     assert {:ok, _} = CMS.Interactions.upvote(positive, user)

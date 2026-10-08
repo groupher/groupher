@@ -39,9 +39,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
   @spec add(struct(), String.t(), term(), User.t()) :: T.domain_res(struct())
   def add(artiment, reason, attrs, %User{} = actor) do
     mutate(artiment, actor, fn canonical, info ->
-      with {:ok, report} <- add_fact(info, canonical.id, reason, attrs, actor),
+      with {:ok, report} <- add_fact(info, canonical, reason, attrs, actor),
            {:ok, _projection} <- ReadState.add_report(canonical, actor),
-           :ok <- maybe_fold_comment(canonical, report, actor) do
+           {:ok, _} <- maybe_fold_comment(canonical, report, actor) do
         canonical
       end
     end)
@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
   def remove(artiment, %User{} = actor) do
     mutate(artiment, actor, fn canonical, info ->
       with {:ok, changed?} <- remove_fact(info, canonical.id, actor),
-           :ok <- maybe_remove_state(canonical, actor, changed?) do
+           {:ok, _} <- maybe_remove_state(canonical, actor, changed?) do
         canonical
       end
     end)
@@ -82,11 +82,11 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
   defp normalize_command({:error, _reason} = error), do: error
   defp normalize_command(result), do: {:ok, result}
 
-  defp maybe_remove_state(_canonical, _actor, false), do: :ok
+  defp maybe_remove_state(_canonical, _actor, false), do: {:ok, :pass}
 
   defp maybe_remove_state(canonical, actor, true) do
     case ReadState.remove_report(canonical, actor) do
-      {:ok, _projection} -> :ok
+      {:ok, _projection} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
@@ -94,16 +94,18 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
   defp maybe_fold_comment(%Comment{} = comment, report, _actor)
        when report.report_cases_count >= @report_threshold_for_fold do
     case CommentStates.fold_for_report(comment) do
-      {:ok, _comment} -> :ok
+      {:ok, _comment} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp maybe_fold_comment(_artiment, _report, _actor), do: :ok
+  defp maybe_fold_comment(_artiment, _report, _actor), do: {:ok, :pass}
 
-  defp add_fact(info, content_id, reason, attrs, actor) do
+  defp add_fact(info, canonical, reason, attrs, actor) do
+    content_id = canonical.id
+
     with {:ok, report} <- load_report(info, content_id) do
-      add_case(report, info, content_id, reason, attrs, actor)
+      add_case(report, info, canonical, reason, attrs, actor)
     end
   end
 
@@ -127,17 +129,18 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
     end
   end
 
-  defp add_case(nil, info, content_id, reason, attrs, actor) do
+  defp add_case(nil, info, canonical, reason, attrs, actor) do
     params =
       %{report_cases_count: 1, report_cases: [case_params(reason, attrs, actor)]}
-      |> Map.put(info.foreign_key, content_id)
+      |> Map.put(info.foreign_key, canonical.id)
+      |> maybe_put_community_id(canonical)
 
     %AbuseReport{}
     |> AbuseReport.changeset(params)
     |> Repo.insert()
   end
 
-  defp add_case(%AbuseReport{} = report, _info, _content_id, reason, attrs, actor) do
+  defp add_case(%AbuseReport{} = report, _info, _canonical, reason, attrs, actor) do
     if reported_by?(report, actor.id) do
       {:error, ErrorCat.already_reported("user #{actor.id} already reported")}
     else
@@ -184,6 +187,18 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
 
   defp reporter_user_id(%{user: %{user_id: user_id}}), do: user_id
   defp reporter_user_id(_case), do: nil
+
+  defp maybe_put_community_id(params, %{community: %{id: community_id}})
+       when is_integer(community_id) do
+    Map.put(params, :community_id, community_id)
+  end
+
+  defp maybe_put_community_id(params, %Comment{community_id: community_id})
+       when is_integer(community_id) do
+    Map.put(params, :community_id, community_id)
+  end
+
+  defp maybe_put_community_id(params, _canonical), do: params
 
   defp case_params(reason, attrs, actor) do
     %{

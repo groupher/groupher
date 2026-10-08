@@ -50,7 +50,7 @@ defmodule GroupherServer.ErrorCatTest do
   end
 
   test "global validation covers ranges, codes, and reserved codes" do
-    assert :ok = ErrorCat.validate!()
+    assert {:ok, :pass} = ErrorCat.validate!()
     assert ErrorCat.code(WebErrorCat.pagination()) == 4002
     assert ErrorCat.code(ErrorCat.custom()) == 4001
     assert ErrorCat.code(ErrorCat.gate_unknown()) == 4699

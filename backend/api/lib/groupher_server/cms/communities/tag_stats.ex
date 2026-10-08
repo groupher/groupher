@@ -22,8 +22,8 @@ defmodule GroupherServer.CMS.Communities.TagStats do
 
   alias CMS.Model.{
     Article,
-    ArticleCommunity,
-    ArticleCommunityTag,
+    ArticleBinding,
+    ArticleBindingTag,
     Community,
     CommunityTag,
     CommunityTagStat
@@ -167,13 +167,13 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   defp base_rebuild_query(%CommunityTag{thread: thread} = tag) do
     Article
     |> Trash.not_trashed_scope(thread)
-    |> join(:inner, [article], relation in ArticleCommunity,
-      on: relation.article_id == article.id and relation.community_id == ^tag.community_id
+    |> join(:inner, [article], binding in ArticleBinding,
+      on: binding.article_id == article.id and binding.community_id == ^tag.community_id
     )
-    |> join(:inner, [_article, relation], assignment in ArticleCommunityTag,
-      on: assignment.article_community_id == relation.id
+    |> join(:inner, [_article, binding], assignment in ArticleBindingTag,
+      on: assignment.article_binding_id == binding.id
     )
-    |> where([article, _relation, assignment], assignment.tag_id == ^tag.id)
+    |> where([article, _binding, assignment], assignment.tag_id == ^tag.id)
     |> where(
       [article, ...],
       article.thread == ^thread and article.moderation_state != ^@audit_illegal
@@ -344,14 +344,20 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   end
 
   defp valid_article_tag_pair?(article, %CommunityTag{} = tag) do
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
-      case thread == tag.thread and Map.get(article, :community_id) == tag.community_id do
+    with %Community{} = community <- Repo.get(Community, tag.community_id),
+         {:ok, thread} <- FrontDesk.thread_of(article),
+         {:ok, %{community: %{id: community_id}}} <-
+           CMS.Articles.Bindings.get(article, community) do
+      case thread == tag.thread and community_id == tag.community_id do
         true ->
           done(true)
 
         false ->
           {:error, ErrorCat.invalid_domain_tag("article and tag not in same community or thread")}
       end
+    else
+      nil -> {:error, ErrorCat.invalid_domain_tag("tag community not found")}
+      {:error, _reason} = error -> error
     end
   end
 

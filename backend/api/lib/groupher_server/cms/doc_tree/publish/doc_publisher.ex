@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   alias Accounts.Model.User
   alias CMS.Articles.Draft.Store
   alias CMS.DocTree.Events
-  alias CMS.Model.{Article, Community, DocTreeNode}
+  alias CMS.Model.{Article, ArticleBinding, Community, DocTreeNode}
   alias Helper.{ORM, T}
 
   @tree_node_type_tab CMS.DocTree.Const.tree_node_type(:tab)
@@ -100,12 +100,20 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
           T.domain_res(CMS.Model.DocDraft.t())
   def move_doc_to_draft(%Community{} = community, branch, node_id, %User{} = user) do
     with {:ok, draft_node} <- find_draft_node(community, branch, node_id),
-         %Article{community_id: community_id, thread: :doc} = article
-         when community_id == community.id <- Repo.get(Article, draft_node.doc_id),
+         %Article{thread: :doc} = article <- Repo.get(Article, draft_node.doc_id),
+         %ArticleBinding{} <-
+           Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id),
          {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user) do
-      CMS.Gate.Access.with_branch_check(user, :edit, article, branch.id, fn canonical ->
-        Store.ensure_from_public(canonical, author, branch_id: branch.id)
-      end)
+      CMS.Gate.Access.with_branch_check(
+        user,
+        :edit,
+        community,
+        article,
+        branch.id,
+        fn canonical ->
+          Store.ensure_from_public(canonical, author, branch_id: branch.id)
+        end
+      )
     else
       nil -> {:error, ErrorCat.custom("Doc Article not found")}
       error -> error

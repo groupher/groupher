@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Snapshot.Refresh do
         -> Snapshot.Cache
 
   Refresh is best-effort for enqueueing and never changes the caller's source
-  relation set.
+  binding set.
   """
 
   alias GroupherServer.CMS
@@ -28,7 +28,8 @@ defmodule GroupherServer.CMS.Snapshot.Refresh do
   end
 
   @doc "Loads and caches a batch immediately for the snapshot refresh job."
-  @spec perform_refresh(snapshot_kind(), term(), keyword()) :: :ok | {:error, term()}
+  @spec perform_refresh(snapshot_kind(), term(), keyword()) ::
+          {:ok, :pass} | {:error, term()}
   def perform_refresh(:user, ids, opts) when is_list(ids) do
     :user
     |> Query.load_summaries(nil, ids)
@@ -49,12 +50,12 @@ defmodule GroupherServer.CMS.Snapshot.Refresh do
     |> Cache.put_summaries(:comment, thread, opts)
   end
 
-  def perform_refresh(_kind, _refs, _opts), do: :ok
+  def perform_refresh(_kind, _refs, _opts), do: {:ok, :pass}
 
   @doc "Enqueues only the cache misses discovered by stale-first projection."
   @spec enqueue_missing(snapshot_kind(), atom() | nil, [term()], keyword()) ::
-          :ok | {:ok, :pass}
-  def enqueue_missing(_kind, _thread, [], _opts), do: :ok
+          {:ok, :pass}
+  def enqueue_missing(_kind, _thread, [], _opts), do: {:ok, :pass}
 
   def enqueue_missing(:user, _thread, ids, opts) do
     refresh_async(:user, Enum.reverse(ids), opts)

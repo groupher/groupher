@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Assets.GC do
 
   @doc "Returns active assets older than the safety window with no authoritative refs."
   def candidates(%Community{id: community_id}, opts \\ []) do
-    with :ok <- Completeness.guard(community_id) do
+    with {:ok, _} <- Completeness.guard(community_id) do
       cutoff =
         DateTime.add(
           DateTime.utc_now(:second),

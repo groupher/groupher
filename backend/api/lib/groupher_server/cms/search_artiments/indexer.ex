@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   alias CMS.{ErrorCat, SearchArtiments}
   alias CMS.FrontDesk
   alias CMS.SearchArtiments.{Artiment, Config, Projection}
-  alias CMS.Model.{Article, ArticleCommunity, Community}
+  alias CMS.Model.{Article, ArticleBinding, Community}
 
   @article_threads Config.article_threads()
 
@@ -64,16 +64,19 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   @spec upsert_article(Artiment.thread(), Ecto.UUID.t()) :: T.done()
   def upsert_article(thread, article_id) do
     case public_article(thread, article_id) do
-      {:ok, article} ->
-        case Projection.Article.project(thread, article) do
-          {:ok, artiment} ->
-            SearchArtiments.upsert([artiment])
-
-          {:error, ErrorCat.error_pattern(reason: :not_searchable)} ->
-            delete_article(thread, article_id)
-
-          {:error, reason} ->
-            {:error, reason}
+      {:ok, articles} ->
+        articles
+        |> Enum.reduce_while({:ok, []}, fn article, {:ok, acc} ->
+          case Projection.Article.project(thread, article) do
+            {:ok, artiment} -> {:cont, {:ok, [artiment | acc]}}
+            {:error, ErrorCat.error_pattern(reason: :not_searchable)} -> {:halt, {:delete, acc}}
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+        end)
+        |> case do
+          {:ok, artiments} -> SearchArtiments.upsert(Enum.reverse(artiments))
+          {:delete, _artiments} -> delete_article(thread, article_id)
+          {:error, reason} -> {:error, reason}
         end
 
       {:error, :not_found} ->
@@ -83,24 +86,37 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
 
   @spec delete_article(Artiment.thread(), Ecto.UUID.t()) :: T.done()
   def delete_article(thread, article_id) do
-    SearchArtiments.delete([Artiment.article_key(thread, article_id)])
+    refs =
+      ArticleBinding
+      |> join(:inner, [binding], community in Community,
+        on: community.id == binding.community_id
+      )
+      |> where([binding, _community], binding.article_id == ^article_id)
+      |> select([_binding, community], community.slug)
+      |> Repo.all()
+      |> Enum.map(&Artiment.article_key(thread, article_id, &1))
+
+    SearchArtiments.delete([Artiment.article_key(thread, article_id) | refs])
   end
 
   @doc "Reloads and partially updates the mutable ranking metrics of one public Article."
   @spec sync_article_metrics(Artiment.thread(), Ecto.UUID.t()) :: T.done()
   def sync_article_metrics(thread, article_id) do
     case public_article(thread, article_id) do
-      {:ok, article} ->
-        counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
+      {:ok, articles} ->
+        metrics =
+          Enum.map(articles, fn article ->
+            counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
 
-        SearchArtiments.update_metrics([
-          {Artiment.article_key(thread, article.id),
-           %{
-             upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
-             comments_count: article.comments_count || 0,
-             updated_at: article.updated_at
-           }}
-        ])
+            {Artiment.article_key(thread, article.id, article.community.slug),
+             %{
+               upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
+               comments_count: article.comments_count || 0,
+               updated_at: article.updated_at
+             }}
+          end)
+
+        SearchArtiments.update_metrics(metrics)
 
       {:error, :not_found} ->
         delete_article(thread, article_id)
@@ -176,7 +192,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     roots
     |> Enum.reduce_while({:ok, []}, fn root, {:ok, acc} ->
       case public_article(thread, root.id) do
-        {:ok, article} -> {:cont, {:ok, [article | acc]}}
+        {:ok, articles} -> {:cont, {:ok, articles ++ acc}}
         {:error, :not_found} -> {:cont, {:ok, acc}}
       end
     end)
@@ -187,20 +203,28 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   end
 
   defp public_article(thread, article_id) do
-    with %Article{thread: ^thread} = article <- Repo.get(Article, article_id),
-         %ArticleCommunity{inner_id: inner_id} <-
-           Repo.get_by(ArticleCommunity,
-             article_id: article.id,
-             community_id: article.community_id
-           ),
-         %Community{} = community <- Repo.get(Community, article.community_id),
-         {:ok, public} <-
-           FrontDesk.article(%{
-             community: community.slug,
-             thread: thread,
-             inner_id: inner_id
-           }) do
-      {:ok, public}
+    with %Article{thread: ^thread} <- Repo.get(Article, article_id) do
+      bindings =
+        ArticleBinding
+        |> join(:inner, [binding], community in Community,
+          on: community.id == binding.community_id
+        )
+        |> where(
+          [binding, _community],
+          binding.article_id == ^article_id and binding.visible == true
+        )
+        |> select([binding, community], {binding.inner_id, community.slug})
+        |> Repo.all()
+
+      articles =
+        Enum.reduce(bindings, [], fn {inner_id, community}, acc ->
+          case FrontDesk.article(%{community: community, thread: thread, inner_id: inner_id}) do
+            {:ok, public} -> [public | acc]
+            {:error, _reason} -> acc
+          end
+        end)
+
+      if articles == [], do: {:error, :not_found}, else: {:ok, Enum.reverse(articles)}
     else
       _ -> {:error, :not_found}
     end

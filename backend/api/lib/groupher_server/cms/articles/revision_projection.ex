@@ -20,13 +20,13 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
-  alias CMS.Articles.ArticleResult
+  alias CMS.Articles.ArticleView
 
   alias CMS.Model.{
     Article,
     ArticleBodySnapshot,
-    ArticleCommunity,
-    ArticleCommunityTag,
+    ArticleBinding,
+    ArticleBindingTag,
     ArticleLifecycle,
     ArticleRevision,
     Community,
@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
 
   @doc "Builds a revision projection from loaded command action parts."
   @spec build(Article.t(), Community.t(), ArticleRevision.t(), keyword()) ::
-          {:ok, ArticleResult.t()} | {:error, term()}
+          {:ok, ArticleView.t()} | {:error, term()}
   def build(
         %Article{} = article,
         %Community{} = community,
@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
 
   @doc false
   @spec build_stable(Article.t(), Community.t(), map(), ArticleRevision.t(), integer() | nil) ::
-          {:ok, ArticleResult.t()} | {:error, term()}
+          {:ok, ArticleView.t()} | {:error, term()}
   def build_stable(
         %Article{} = article,
         %Community{} = community,
@@ -75,7 +75,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
   defp revision_projection(%Article{thread: :doc} = article, community, revision, opts) do
     with %CMS.Model.DocBranch{id: branch_id} <-
            Repo.get_by(CMS.Model.DocBranch,
-             community_id: article.community_id,
+             community_id: community.id,
              type: CMS.Docs.Const.doc_branch_type(:main)
            ),
          %CMS.Model.DocBranchVersion{} = version <-
@@ -151,7 +151,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
       id: article.id,
       article_id: article.id,
       branch_id: Map.get(anchor, :branch_id),
-      inner_id: article.inner_id,
+      inner_id: binding_inner_id(article.id, community.id),
       thread: article.thread,
       stage: :public,
       title: Map.fetch!(anchor, :title),
@@ -163,7 +163,6 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
       author: article.author.user,
       community: community,
       communities: [community],
-      community_id: community.id,
       community_tags: tags,
       comments_participants: stable_comment_participants(article.id),
       moderation_state: article.moderation_state,
@@ -184,7 +183,14 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
     }
     |> Map.merge(stable_revision_extension(article.thread, revision.id))
     |> Map.merge(stable_operational_extension(article, community.id))
-    |> ArticleResult.from_map()
+    |> ArticleView.from_map()
+  end
+
+  defp binding_inner_id(article_id, community_id) do
+    case Repo.get_by(ArticleBinding, article_id: article_id, community_id: community_id) do
+      %ArticleBinding{inner_id: inner_id} -> inner_id
+      _ -> nil
+    end
   end
 
   defp stable_comment_participants(article_id) do
@@ -207,10 +213,10 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
 
     status =
       Repo.one(
-        from(relation in ArticleCommunity,
+        from(binding in ArticleBinding,
           left_join: state in KanbanState,
-          on: state.article_community_id == relation.id,
-          where: relation.article_id == ^article_id and relation.community_id == ^community_id,
+          on: state.article_binding_id == binding.id,
+          where: binding.article_id == ^article_id and binding.community_id == ^community_id,
           select: state.status
         )
       )
@@ -327,25 +333,25 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
 
   defp stable_pinned?(article_id, community_id) do
     PinnedArticle
-    |> join(:inner, [pin], relation in ArticleCommunity,
-      on: relation.id == pin.article_community_id
+    |> join(:inner, [pin], binding in ArticleBinding,
+      on: binding.id == pin.article_binding_id
     )
     |> where(
-      [pin, relation],
-      relation.article_id == ^article_id and relation.community_id == ^community_id
+      [pin, binding],
+      binding.article_id == ^article_id and binding.community_id == ^community_id
     )
     |> Repo.exists?()
   end
 
   defp stable_community_tags(article_id, community_id) do
     CommunityTag
-    |> join(:inner, [tag], assignment in ArticleCommunityTag, on: assignment.tag_id == tag.id)
-    |> join(:inner, [_tag, assignment], relation in ArticleCommunity,
-      on: relation.id == assignment.article_community_id
+    |> join(:inner, [tag], assignment in ArticleBindingTag, on: assignment.tag_id == tag.id)
+    |> join(:inner, [_tag, assignment], binding in ArticleBinding,
+      on: binding.id == assignment.article_binding_id
     )
     |> where(
-      [_tag, _assignment, relation],
-      relation.article_id == ^article_id and relation.community_id == ^community_id
+      [_tag, _assignment, binding],
+      binding.article_id == ^article_id and binding.community_id == ^community_id
     )
     |> order_by([tag], asc: tag.id)
     |> Repo.all()

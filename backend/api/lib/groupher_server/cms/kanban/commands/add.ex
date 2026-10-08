@@ -1,11 +1,11 @@
 defmodule GroupherServer.CMS.Kanban.Commands.Add do
   @moduledoc """
-  Adds a canonical Article to a Community-local Kanban.
+    Adds a canonical Article to a Community-local Kanban.
 
-      Article + Community
-        -> ArticleCommunity relation
-        -> KanbanState
-"""
+        Article + Community
+          -> ArticleBinding binding
+          -> KanbanState
+  """
 
   alias GroupherServer.CMS
   alias CMS.Articles.States

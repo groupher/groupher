@@ -35,7 +35,9 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
       })
 
     assert updated["title"] == "Republished Blog"
-    assert {:error, :not_found} = CMS.Articles.read_draft(public_blog.id, context.user)
+
+    assert {:error, :not_found} =
+             CMS.Articles.read_draft(public_blog.id, context.user, community: context.community)
   end
 
   test "Blog Draft stays private until its explicit publish mutation", context do
@@ -49,7 +51,10 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
 
     assert draft["stage"] == "DRAFT"
     assert draft["thread"] == "BLOG"
-    assert {:ok, stored_draft} = CMS.Articles.read_draft(draft["id"], context.user)
+
+    assert {:ok, stored_draft} =
+             CMS.Articles.read_draft(draft["id"], context.user, community: context.community)
+
     assert stored_draft.title == "Blog Draft"
 
     updated =
@@ -121,7 +126,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
            )
 
     assert {:ok, stored_draft} =
-             CMS.Articles.read_draft(draft["id"], context.user)
+             CMS.Articles.read_draft(draft["id"], context.user, community: context.community)
 
     assert stored_draft.title == "Author Blog Draft"
   end

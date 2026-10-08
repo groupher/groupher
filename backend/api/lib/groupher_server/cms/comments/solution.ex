@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
       resolved Comment
         -> Gate authorization + Post aggregate transaction/lock
         -> accept | replace | revoke
-        -> PostSolution relation + Activity
+        -> PostSolution binding + Activity
 
   The module intentionally groups the closely related accept/revoke actions.
   `revoke_if_current/5` is the narrow reconciliation entry used by the
@@ -48,7 +48,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
     end)
   end
 
-  @doc "Locks and returns the current solution relation for a Post."
+  @doc "Locks and returns the current solution binding for a Post."
   @spec current(Article.t()) :: PostSolution.t() | nil
   def current(%Article{id: article_id, thread: :post}) do
     PostSolution
@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
     |> Repo.one()
   end
 
-  @doc "Revokes a relation only when it points to the supplied Comment."
+  @doc "Revokes a binding only when it points to the supplied Comment."
   @spec revoke_if_current(Article.t(), Comment.t(), User.t(), Ecto.UUID.t(), DateTime.t()) ::
           {:ok, :unchanged | :revoked} | {:error, term()}
   def revoke_if_current(

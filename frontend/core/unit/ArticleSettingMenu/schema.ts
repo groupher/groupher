@@ -43,16 +43,16 @@ const setPostStatus = graphql(`
 `)
 
 const pinPost = graphql(`
-  mutation PinPost($article: ArticlePathInput!) {
-    pinPost(article: $article) {
+  mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {
+    pinPost(article: $article, commandId: $commandId) {
       innerId
     }
   }
 `)
 
 const undoPinPost = graphql(`
-  mutation UndoPinPost($article: ArticlePathInput!) {
-    undoPinPost(article: $article) {
+  mutation UndoPinPost($article: ArticlePathInput!, $commandId: ID!) {
+    undoPinPost(article: $article, commandId: $commandId) {
       innerId
       isPinned
     }

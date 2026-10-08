@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
                CMS.Communities.sync_base_info(community, args, :operations),
              {:ok, community_dashboard} <-
                ORM.replace_dsb_section(community_dashboard, :base_info, section_payload),
-             :ok <- invalidate_public_presentation(updated_community.id) do
+             {:ok, _} <- invalidate_public_presentation(updated_community.id) do
           community_dashboard
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -92,7 +92,7 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
              community_dashboard
              |> Ecto.Changeset.change(%{content_shadow: enabled})
              |> Repo.update(),
-           :ok <- invalidate_public_presentation(community_dashboard.community_id) do
+           {:ok, _} <- invalidate_public_presentation(community_dashboard.community_id) do
         updated
       else
         {:error, reason} -> Repo.rollback(reason)
@@ -108,7 +108,7 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
     with {:ok, section_payload} <- SectionPayload.prepare(community_dashboard, key, args) do
       Repo.transaction(fn ->
         with {:ok, updated} <- ORM.replace_dsb_section(community_dashboard, key, section_payload),
-             :ok <- invalidate_public_presentation(community_dashboard.community_id) do
+             {:ok, _} <- invalidate_public_presentation(community_dashboard.community_id) do
           updated
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -128,7 +128,7 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
            command_id: Ecto.UUID.generate(),
            data: %{community: community.slug, community_id: community.id}
          }) do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end

@@ -22,9 +22,10 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   alias CMS.Model.{
     Article,
-    ArticleCommunity,
-    ArticleCommunityTag,
+    ArticleBinding,
+    ArticleBindingTag,
     ArticlePublic,
+    Community,
     CommunityTag,
     DocBranch,
     DocBranchState,
@@ -67,10 +68,25 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   end
 
   defp update_doc_moderation(article, state, audit_state, opts) do
+    community =
+      Keyword.get(opts, :community) ||
+        case Keyword.get(opts, :community_id) do
+          community_id when is_integer(community_id) -> Repo.get(Community, community_id)
+          _ -> nil
+        end
+
+    if not match?(%Community{}, community) do
+      {:error, :article_binding_context_required}
+    else
+      update_doc_moderation_with_community(article, state, audit_state, opts, community)
+    end
+  end
+
+  defp update_doc_moderation_with_community(article, state, audit_state, opts, community) do
     branch =
       case Keyword.get(opts, :branch_id) do
-        nil -> Repo.get_by(DocBranch, community_id: article.community_id, type: :main)
-        branch_id -> Repo.get_by(DocBranch, id: branch_id, community_id: article.community_id)
+        nil -> Repo.get_by(DocBranch, community_id: community.id, type: :main)
+        branch_id -> Repo.get_by(DocBranch, id: branch_id, community_id: community.id)
       end
 
     with %DocBranch{id: branch_id} <- branch,
@@ -80,9 +96,9 @@ defmodule GroupherServer.CMS.Articles.Moderation do
              branch_state
              |> DocBranchState.changeset(doc_moderation_attrs(state, audit_state))
              |> Repo.update(),
-           :ok <- update_doc_visibility(article.id, branch_id, state),
-           :ok <- update_author_moderation(article, state, audit_state),
-           :ok <- sync_stable_search(article, state) do
+           {:ok, _} <- update_doc_visibility(article.id, branch_id, state),
+           {:ok, _} <- update_author_moderation(article, state, audit_state),
+           {:ok, _} <- sync_stable_search(article, state) do
         {:ok, updated}
       end
     else
@@ -95,11 +111,11 @@ defmodule GroupherServer.CMS.Articles.Moderation do
            article
            |> Article.changeset(stable_moderation_attrs(state, audit_state))
            |> Repo.update(),
-         :ok <- update_public_visibility(article.id, state),
-         :ok <- update_author_moderation(article, state, audit_state),
-         :ok <- rebuild_tag_stats(article.id),
-         :ok <- sync_stable_search(updated, state),
-         :ok <- invalidate_public_cache(updated, opts) do
+         {:ok, _} <- update_public_visibility(article.id, state),
+         {:ok, _} <- update_author_moderation(article, state, audit_state),
+         {:ok, _} <- rebuild_tag_stats(article.id),
+         {:ok, _} <- sync_stable_search(updated, state),
+         {:ok, _} <- invalidate_public_cache(updated, opts) do
       {:ok, updated}
     end
   end
@@ -140,7 +156,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
          }) do
       {:ok, _user} ->
         FrontDesk.revalidate().user(user.login)
-        :ok
+        {:ok, :pass}
 
       {:error, _reason} = error ->
         error
@@ -152,11 +168,11 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     |> where([public], public.article_id == ^article_id)
     |> Repo.update_all(set: [visible: state == :legal, updated_at: DateTime.utc_now(:second)])
 
-    ArticleCommunity
-    |> where([relation], relation.article_id == ^article_id)
+    ArticleBinding
+    |> where([binding], binding.article_id == ^article_id)
     |> Repo.update_all(set: [visible: state == :legal, updated_at: DateTime.utc_now(:second)])
 
-    :ok
+    {:ok, :pass}
   end
 
   defp update_doc_visibility(article_id, branch_id, state) do
@@ -164,20 +180,20 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     |> where([public], public.article_id == ^article_id and public.branch_id == ^branch_id)
     |> Repo.update_all(set: [visible: state == :legal, updated_at: DateTime.utc_now(:second)])
 
-    :ok
+    {:ok, :pass}
   end
 
   defp rebuild_tag_stats(article_id) do
     CommunityTag
-    |> join(:inner, [tag], assignment in ArticleCommunityTag, on: assignment.tag_id == tag.id)
-    |> join(:inner, [_tag, assignment], relation in ArticleCommunity,
-      on: relation.id == assignment.article_community_id
+    |> join(:inner, [tag], assignment in ArticleBindingTag, on: assignment.tag_id == tag.id)
+    |> join(:inner, [_tag, assignment], binding in ArticleBinding,
+      on: binding.id == assignment.article_binding_id
     )
-    |> where([_tag, _assignment, relation], relation.article_id == ^article_id)
+    |> where([_tag, _assignment, binding], binding.article_id == ^article_id)
     |> Repo.all()
-    |> Enum.reduce_while(:ok, fn tag, :ok ->
+    |> Enum.reduce_while({:ok, :pass}, fn tag, {:ok, _} ->
       case TagStats.rebuild(tag) do
-        {:ok, _stat} -> {:cont, :ok}
+        {:ok, _stat} -> {:cont, {:ok, :pass}}
         {:error, _reason} = error -> {:halt, error}
       end
     end)
@@ -185,25 +201,23 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   defp sync_stable_search(article, :legal) do
     _ = Indexer.enqueue_upsert(article)
-    :ok
+    {:ok, :pass}
   end
 
   defp sync_stable_search(article, _state) do
     _ = Indexer.enqueue_delete(article)
-    :ok
-  end
-
-  defp invalidate_public_cache(%Article{inner_id: inner_id}, _opts)
-       when not is_integer(inner_id) do
-    :ok
+    {:ok, :pass}
   end
 
   defp invalidate_public_cache(%Article{} = article, opts) do
     operation_id = Keyword.get(opts, :command_id, Ecto.UUID.generate())
 
-    article
-    |> CMS.Articles.Communities.communities()
-    |> Enum.reduce_while(:ok, fn community, :ok ->
+    {:ok, bindings} = CMS.Articles.Bindings.all(article)
+
+    bindings
+    |> Enum.reduce_while({:ok, :pass}, fn binding, {:ok, _} ->
+      community = binding.community
+
       case CMS.Outbox.send(%{
              event: "article.visibility_changed",
              worker: CMS.Outbox.Workers.Article.Cleanup,
@@ -215,13 +229,20 @@ defmodule GroupherServer.CMS.Articles.Moderation do
                community: community.slug,
                community_id: community.id,
                thread: article.thread,
-               inner_id: article.inner_id,
+               inner_id: binding_inner_id(article.id, community.id),
                article_id: article.id
              }
            }) do
-        {:ok, _event} -> {:cont, :ok}
+        {:ok, _event} -> {:cont, {:ok, :pass}}
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
+  end
+
+  defp binding_inner_id(article_id, community_id) do
+    case Repo.get_by(ArticleBinding, article_id: article_id, community_id: community_id) do
+      %ArticleBinding{inner_id: inner_id} -> inner_id
+      _ -> nil
+    end
   end
 end

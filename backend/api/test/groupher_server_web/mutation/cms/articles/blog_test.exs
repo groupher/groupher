@@ -93,7 +93,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
         expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
         CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
         expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}"),
@@ -150,7 +150,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
         CMS.Communities.create_tag(community, :blog, community_tag_attrs3, user)
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
         expectedVersion: blog.version,
         communityTags: [community_tag.id, community_tag2.id]
       }
@@ -163,7 +163,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
                MapSet.new([to_string(community_tag.id), to_string(community_tag2.id)])
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
         expectedVersion: result["version"],
         communityTags: [community_tag2.id, community_tag3.id]
       }
@@ -181,7 +181,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
         expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -202,7 +202,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
         expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -211,14 +211,14 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       updated_blog =
         rule_conn |> gq_mutation(S.Article.m(:update_article, :blog), variables)
 
-      assert updated_blog["innerId"] == to_string(blog.inner_id)
+      assert updated_blog["innerId"] == to_string(article_inner_id(blog, community))
     end
 
     test "unauth user update blog fails", ~m(user_conn guest_conn community blog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
         expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")

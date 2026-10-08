@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   alias Accounts.Model.User
   alias CMS.Articles.Trash
   alias CMS.Communities.ErrorCat
-  alias CMS.Model.{Article, ArticleCommunity, ArticlePublic, Community, CommunityTag, DocPublic}
+  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Community, CommunityTag, DocPublic}
   alias Helper.{ORM, T, Transaction}
 
   @threads CMS.Communities.Config.threads()
@@ -91,21 +91,21 @@ defmodule GroupherServer.CMS.Communities.Count do
 
       query =
         from(article in active_articles,
-          join: relation in ArticleCommunity,
+          join: binding in ArticleBinding,
           on:
-            relation.article_id == article.id and relation.community_id == ^community.id and
-              relation.visible == true,
+            binding.article_id == article.id and binding.community_id == ^community.id and
+              binding.visible == true,
           where: article.thread == ^thread
         )
 
       query =
         if thread == :doc do
-          from([article, _relation] in query,
+          from([article, _binding] in query,
             join: public in DocPublic,
             on: public.article_id == article.id and public.visible == true
           )
         else
-          from([article, _relation] in query,
+          from([article, _binding] in query,
             join: public in ArticlePublic,
             on: public.article_id == article.id and public.visible == true
           )

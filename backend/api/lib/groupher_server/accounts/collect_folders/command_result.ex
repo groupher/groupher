@@ -17,7 +17,8 @@ defmodule GroupherServer.Accounts.CollectFolders.CommandResult do
   @spec build({:ok, map()} | {:error, term()}, struct(), User.t()) ::
           {:ok, map()} | {:error, term()}
   def build({:ok, result}, article, %User{} = viewer) do
-    with {:ok, article_stats} <- CMS.ArticleStats.for_article(article),
+    with {:ok, article_stats} <-
+           CMS.ArticleStats.for_article(article, Map.get(article, :community)),
          interaction when is_map(interaction) <- CMS.Interactions.viewer_state(article, viewer) do
       {:ok,
        %{

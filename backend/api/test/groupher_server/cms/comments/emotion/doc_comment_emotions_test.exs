@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
             CMS.Comments.create_comment(
               community,
               :doc,
-              doc.inner_id,
+              article_inner_id(doc, community),
               mock_comment(),
               user
             )
@@ -77,7 +77,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
             CMS.Comments.create_comment(
               community,
               :doc,
-              doc.inner_id,
+              article_inner_id(doc, community),
               mock_comment(),
               user
             )
@@ -99,7 +99,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
     test "nested reply should have viewer emotion status in replies mode",
          ~m(community doc user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, reply_comment} =
         CMS.Comments.reply_comment(parent_comment.id, mock_comment("reply_content"), user)
@@ -124,7 +124,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
   describe "[basic article comment emotion]" do
     test "comment has default emotions after created", ~m(community doc user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -134,7 +134,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
 
     test "can make emotion to comment", ~m(community doc user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user2)
@@ -149,7 +149,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
 
     test "can undo emotion to comment", ~m(community doc user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user2)
@@ -173,7 +173,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
 
     test "same user make same emotion to same comment.", ~m(community doc user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
     test "same user different emotions create one record per emotion",
          ~m(community doc user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :heart, user)
@@ -215,7 +215,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
     test "different user can make same emotions on same comment",
          ~m(community doc user user2 user3)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user)
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user2)
@@ -233,7 +233,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentEmotions do
     test "same user can make differcent emotions on same comment",
          ~m(community doc user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)

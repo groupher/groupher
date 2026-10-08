@@ -19,6 +19,7 @@ defmodule GroupherServer.Accounts.Upvotes do
 
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
   alias Accounts.Model.User
+  alias CMS.Articles.Bindings
   alias CMS.Model.{ArticleStats, ArticleUpvote}
   alias Helper.{ORM, QueryBuilder}
 
@@ -39,7 +40,7 @@ defmodule GroupherServer.Accounts.Upvotes do
   end
 
   defp load_articles(where_query, %{page: page, size: size} = filter) do
-    query = from(upvote in ArticleUpvote, preload: [article: :community])
+    query = from(upvote in ArticleUpvote, preload: :article)
 
     paged =
       query
@@ -50,29 +51,32 @@ defmodule GroupherServer.Accounts.Upvotes do
     entries =
       Enum.flat_map(paged.entries, fn upvote ->
         article = upvote.article
+        {:ok, bindings} = Bindings.all(article)
 
-        case FrontDesk.article(%{
-               community: article.community.slug,
-               thread: article.thread,
-               inner_id: article.inner_id
-             }) do
-          {:ok, projection} ->
-            stats = Repo.get_by(ArticleStats, article_id: article.id, thread: article.thread)
+        Enum.flat_map(bindings, fn binding ->
+          case FrontDesk.article(%{
+                 community: binding.community.slug,
+                 thread: article.thread,
+                 inner_id: binding.inner_id
+               }) do
+            {:ok, projection} ->
+              stats = Repo.get_by(ArticleStats, article_id: article.id, thread: article.thread)
 
-            [
-              %{
-                author: projection.author,
-                id: projection.id,
-                inner_id: projection.inner_id,
-                thread: projection.thread,
-                title: projection.title,
-                upvotes_count: if(stats, do: stats.upvotes_count, else: 0)
-              }
-            ]
+              [
+                %{
+                  author: projection.author,
+                  id: projection.id,
+                  inner_id: projection.inner_id,
+                  thread: projection.thread,
+                  title: projection.title,
+                  upvotes_count: if(stats, do: stats.upvotes_count, else: 0)
+                }
+              ]
 
-          {:error, _reason} ->
-            []
-        end
+            {:error, _reason} ->
+              []
+          end
+        end)
       end)
 
     paged |> Map.put(:entries, entries) |> done()

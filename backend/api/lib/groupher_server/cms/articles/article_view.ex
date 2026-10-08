@@ -1,16 +1,16 @@
-defmodule GroupherServer.CMS.Articles.ArticleResult do
+defmodule GroupherServer.CMS.Articles.ArticleView do
   @moduledoc """
-  Typed boundary for the assembled Article projection.
+  Typed boundary for the assembled public Article view.
 
       Article aggregate + immutable revision
           -> projection assembler
-          -> ArticleResult DTO
+          -> ArticleView DTO
           -> transport / GraphQL
 
-  The projection is intentionally a DTO rather than an Ecto schema.  Its
-  immutable content is anchored by `revision_id` and `body_hash`; operational
-  fields remain explicit on the same transport object for compatibility with
-  existing GraphQL resolvers.  Extension fields are preserved as map keys so
+  The view is intentionally a DTO rather than an Ecto schema. Its immutable
+  content is anchored by `revision_id` and `body_hash`; operational fields
+  remain explicit on the same transport object for compatibility with existing
+  GraphQL resolvers. Extension fields are preserved as map keys so
   thread-specific cover fields do not get dropped during assembly.
   """
 
@@ -33,7 +33,6 @@ defmodule GroupherServer.CMS.Articles.ArticleResult do
     :author,
     :community,
     :communities,
-    :community_id,
     :community_tags,
     :comments_participants,
     :moderation_state,
@@ -56,15 +55,15 @@ defmodule GroupherServer.CMS.Articles.ArticleResult do
   defstruct @fields
 
   @doc false
-  def fetch(result, key), do: Map.fetch(result, key)
+  def fetch(view, key), do: Map.fetch(view, key)
 
   @doc false
-  def get_and_update(result, key, fun), do: Map.get_and_update(result, key, fun)
+  def get_and_update(view, key, fun), do: Map.get_and_update(view, key, fun)
 
   @doc false
-  def pop(result, key), do: Map.pop(result, key)
+  def pop(view, key), do: Map.pop(view, key)
 
-  @doc "Marks one assembled projection as the canonical ArticleResult DTO."
+  @doc "Marks one assembled projection as the canonical ArticleView DTO."
   @spec from_map(map()) :: t()
   def from_map(%{} = projection), do: Map.put(projection, :__struct__, __MODULE__)
 end

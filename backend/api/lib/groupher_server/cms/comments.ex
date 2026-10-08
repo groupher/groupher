@@ -563,7 +563,7 @@ defmodule GroupherServer.CMS.Comments do
   def undo_pin_comment(_comment_id), do: {:error, AuthErrorCat.account_login()}
 
   @doc """
-  Removes one Comment's independent pin relation.
+  Removes one Comment's independent pin binding.
 
   ## Examples
 

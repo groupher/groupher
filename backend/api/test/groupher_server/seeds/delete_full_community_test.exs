@@ -88,7 +88,9 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
   defp article_ids(community_id, thread) do
     Repo.all(
       from(article in Article,
-        where: article.community_id == ^community_id and article.thread == ^thread,
+        join: binding in CMS.Model.ArticleBinding,
+        on: binding.article_id == article.id,
+        where: binding.community_id == ^community_id and article.thread == ^thread,
         select: article.id
       )
     )

@@ -19,12 +19,16 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
     variables = %{
-      article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+      article: %{
+        inner_id: article_inner_id(blog, community),
+        community: community.slug,
+        thread: "BLOG"
+      }
     }
 
     results = user_conn |> gq_query(S.Article.q(:article, :blog), variables)
 
-    assert results["innerId"] == to_string(blog.inner_id)
+    assert results["innerId"] == to_string(article_inner_id(blog, community))
     assert get_in(results, ["community", "slug"]) == community.slug
 
     assert is_valid_kv?(results, "title", :string)
@@ -42,12 +46,16 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
     variables = %{
-      article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+      article: %{
+        inner_id: article_inner_id(blog, community),
+        community: community.slug,
+        thread: "BLOG"
+      }
     }
 
     results = guest_conn |> gq_query(S.Article.q(:article, :blog), variables)
 
-    assert results["innerId"] == to_string(blog.inner_id)
+    assert results["innerId"] == to_string(article_inner_id(blog, community))
     assert is_valid_kv?(results, "title", :string)
   end
 
@@ -55,7 +63,11 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
     variables = %{
-      article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+      article: %{
+        inner_id: article_inner_id(blog, community),
+        community: community.slug,
+        thread: "BLOG"
+      }
     }
 
     results = user_conn |> gq_query(S.Article.q(:article, :blog), variables)
@@ -76,7 +88,8 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
           illegal_reason: ["some-reason"],
           illegal_words: ["some-word"]
         },
-        :operations
+        :operations,
+        community: community
       )
 
     results = user_conn |> gq_query(S.Article.q(:article, :blog), variables)
@@ -96,7 +109,11 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
       })
 
     variables = %{
-      article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+      article: %{
+        inner_id: article_inner_id(blog, community),
+        community: community.slug,
+        thread: "BLOG"
+      }
     }
 
     assert guest_conn

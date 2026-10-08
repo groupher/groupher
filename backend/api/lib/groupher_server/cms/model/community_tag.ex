@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
   Ecto schema for tags configured inside a community.
 
   Tags are community-scoped presentation/filter entities. Assignments to content
-  are stored through `ArticleCommunityTag`.
+  are stored through `ArticleBindingTag`.
 
   Business position:
 

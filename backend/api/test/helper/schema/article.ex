@@ -63,8 +63,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:move_article) do
     """
-    mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID]) {
-      moveArticle(article: $article, targetCommunity: $targetCommunity, communityTags: $communityTags) {
+    mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID], $commandId: ID!) {
+      moveArticle(article: $article, targetCommunity: $targetCommunity, communityTags: $communityTags, commandId: $commandId) {
         innerId
       }
     }
@@ -73,8 +73,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:unmirror_article) do
     """
-    mutation($article: ArticlePathInput!, $targetCommunity: String!) {
-      unmirrorArticle(article: $article, targetCommunity: $targetCommunity) {
+    mutation($article: ArticlePathInput!, $targetCommunity: String!, $commandId: ID!) {
+      unmirrorArticle(article: $article, targetCommunity: $targetCommunity, commandId: $commandId) {
         innerId
       }
     }
@@ -83,8 +83,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:mirror_article) do
     """
-    mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID]) {
-        mirrorArticle(article: $article, targetCommunity: $targetCommunity, communityTags: $communityTags) {
+    mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID], $commandId: ID!) {
+        mirrorArticle(article: $article, targetCommunity: $targetCommunity, communityTags: $communityTags, commandId: $commandId) {
           innerId
         }
       }
@@ -209,8 +209,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:pin_article, thread) do
     """
-    mutation($article: ArticlePathInput!){
-      pin#{t(thread)}(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!){
+      pin#{t(thread)}(article: $article, commandId: $commandId) {
         innerId
         isPinned
       }
@@ -220,8 +220,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:undo_pin_article, thread) do
     """
-    mutation($article: ArticlePathInput!){
-      undoPin#{t(thread)}(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!){
+      undoPin#{t(thread)}(article: $article, commandId: $commandId) {
         innerId
         isPinned
       }

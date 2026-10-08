@@ -146,7 +146,7 @@ defmodule GroupherServer.Activity.Event do
   end
 
   def log(handler, resource, action, opts) do
-    with :ok <- validate_action(action),
+    with {:ok, _} <- validate_action(action),
          {:ok, contract} <- fetch_contract(handler, action),
          {:ok, descriptor} <- handler.describe(resource, action, opts),
          {:ok, payload} <-
@@ -159,7 +159,7 @@ defmodule GroupherServer.Activity.Event do
              contract.write.accepted_changed_fields
            ),
          {:ok, outcome} <- validate_outcome(opts, contract),
-         :ok <- validate_target(descriptor, contract.write.target_type),
+         {:ok, _} <- validate_target(descriptor, contract.write.target_type),
          {:ok, envelope} <- envelope(handler, descriptor, action, opts) do
       attrs =
         descriptor
@@ -361,7 +361,7 @@ defmodule GroupherServer.Activity.Event do
 
   def error(message), do: ErrorCat.unsupported_resource(message)
 
-  defp validate_action(action) when is_atom(action), do: :ok
+  defp validate_action(action) when is_atom(action), do: {:ok, :pass}
   defp validate_action(_action), do: {:error, ErrorCat.invalid_action()}
 
   defp fetch_contract(handler, action) do
@@ -433,12 +433,12 @@ defmodule GroupherServer.Activity.Event do
     |> Map.new()
   end
 
-  defp validate_target(%{target_type: nil, target_ref: nil}, nil), do: :ok
+  defp validate_target(%{target_type: nil, target_ref: nil}, nil), do: {:ok, :pass}
 
   defp validate_target(%{target_type: type, target_ref: ref}, expected)
        when not is_nil(expected) and not is_nil(ref) do
     if to_string(type) == to_string(expected) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.invalid_target("target type does not match action contract")}
     end

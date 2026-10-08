@@ -35,7 +35,9 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
       })
 
     assert updated["title"] == "Republished Post"
-    assert {:error, :not_found} = CMS.Articles.read_draft(public_post.id, context.user)
+
+    assert {:error, :not_found} =
+             CMS.Articles.read_draft(public_post.id, context.user, community: context.community)
   end
 
   test "Post Draft stays private until its explicit publish mutation", context do
@@ -49,7 +51,10 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
 
     assert draft["stage"] == "DRAFT"
     assert draft["thread"] == "POST"
-    assert {:ok, stored_draft} = CMS.Articles.read_draft(draft["id"], context.user)
+
+    assert {:ok, stored_draft} =
+             CMS.Articles.read_draft(draft["id"], context.user, community: context.community)
+
     assert stored_draft.title == "Post Draft"
 
     updated =
@@ -121,7 +126,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
            )
 
     assert {:ok, stored_draft} =
-             CMS.Articles.read_draft(draft["id"], context.user)
+             CMS.Articles.read_draft(draft["id"], context.user, community: context.community)
 
     assert stored_draft.title == "Author Post Draft"
   end

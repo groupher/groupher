@@ -48,8 +48,8 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
            {:stable, comment.article_id},
          {:ok, thread} <- thread_of(comment),
          %CMS.Model.Community{} = community <- Repo.get(CMS.Model.Community, comment.community_id),
-         %CMS.Model.ArticleCommunity{inner_id: inner_id} <-
-           Repo.get_by(CMS.Model.ArticleCommunity,
+         %CMS.Model.ArticleBinding{inner_id: inner_id} <-
+           Repo.get_by(CMS.Model.ArticleBinding,
              article_id: article_id,
              community_id: comment.community_id
            ),

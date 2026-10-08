@@ -16,7 +16,11 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
   describe "[changelog sink]" do
     test "login user can sink a changelog", ~m(community changelog)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        }
       }
 
       passport_rules = %{community.slug => %{"changelog.sink" => true}}
@@ -24,7 +28,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
       result = rule_conn |> gq_mutation(S.Article.m(:sink_article, :changelog), variables)
 
-      assert result["innerId"] == to_string(changelog.inner_id)
+      assert result["innerId"] == to_string(article_inner_id(changelog, community))
 
       changelog = Repo.get!(CMS.Model.Article, changelog.id)
       assert changelog.is_sunk
@@ -33,7 +37,11 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
     test "unauth user sink a changelog fails", ~m(guest_conn community changelog)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        }
       }
 
       assert guest_conn
@@ -46,24 +54,32 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
     test "login user can undo sink to a changelog", ~m(community changelog user)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        }
       }
 
       passport_rules = %{community.slug => %{"changelog.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      {:ok, _} = CMS.Articles.sink(changelog.id, user)
+      {:ok, _} = CMS.Articles.sink(changelog.id, user, community: community)
 
       updated = rule_conn |> gq_mutation(S.Article.m(:undo_sink_article, :changelog), variables)
 
-      assert updated["innerId"] == to_string(changelog.inner_id)
+      assert updated["innerId"] == to_string(article_inner_id(changelog, community))
 
       refute Repo.get!(CMS.Model.Article, changelog.id).is_sunk
     end
 
     test "unauth user undo sink a changelog fails", ~m(guest_conn community changelog)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        }
       }
 
       assert guest_conn

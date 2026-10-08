@@ -78,7 +78,8 @@ defmodule GroupherServer.Test.CMS.Communities.Writer do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.Articles.mirror(community2, post.id, [], user)
+      {:ok, _} =
+        CMS.Articles.mirror(community2, post.id, [], user, community, Ecto.UUID.generate())
 
       {:ok, _} =
         CMS.Communities.request_destroy(community.slug, operation_ref: Ecto.UUID.generate())
@@ -98,7 +99,8 @@ defmodule GroupherServer.Test.CMS.Communities.Writer do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.Articles.mirror(community2, post.id, [], user)
+      {:ok, _} =
+        CMS.Articles.mirror(community2, post.id, [], user, community, Ecto.UUID.generate())
 
       {:ok, _} =
         CMS.Communities.request_destroy(community2.slug, operation_ref: Ecto.UUID.generate())

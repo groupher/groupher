@@ -256,7 +256,7 @@ defmodule GroupherServer.CMS.Comments.Query do
            do_paged_comments_participants(thread, thread_query, filters) do
       case stats_value(stats, :comments_participants_count) !== paged_data.total_count do
         true ->
-          :ok =
+          {:ok, _} =
             Jobs.enqueue_best_effort(:reconcile_comments_participants, article.id, fn ->
               Jobs.reconcile_comments_participants(article, paged_data.total_count)
             end)

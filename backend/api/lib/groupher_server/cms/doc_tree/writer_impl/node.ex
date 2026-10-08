@@ -53,7 +53,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
   def navigation_parent(%Community{} = community, branch, parent_node_id) do
     with {:ok, parent} <- find(community, branch, parent_node_id),
          true <- parent.type in [:tab, :group],
-         :ok <- validate_new_child_depth(community, branch, parent) do
+         {:ok, _} <- validate_new_child_depth(community, branch, parent) do
       {:ok, parent}
     else
       false ->
@@ -68,7 +68,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
   def group_parent(%Community{} = community, branch, parent_node_id) do
     with {:ok, parent} <- find(community, branch, parent_node_id),
          true <- parent.type == :group,
-         :ok <- validate_new_child_depth(community, branch, parent) do
+         {:ok, _} <- validate_new_child_depth(community, branch, parent) do
       {:ok, parent}
     else
       false -> {:error, ErrorCat.custom("page and link parents must be a group")}
@@ -113,8 +113,8 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
 
   def validate_target(community, branch, %{type: :group} = node, parent_node_id) do
     with {:ok, parent} <- navigation_parent(community, branch, parent_node_id),
-         :ok <- reject_cycle(community, branch, node, parent),
-         :ok <- validate_moved_subtree_depth(community, branch, node, parent) do
+         {:ok, _} <- reject_cycle(community, branch, node, parent),
+         {:ok, _} <- validate_moved_subtree_depth(community, branch, node, parent) do
       {:ok, parent.node_id}
     end
   end
@@ -138,7 +138,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
     if descendant?(community, branch, node.node_id, parent.node_id) do
       {:error, ErrorCat.custom("a group can not move below one of its descendants")}
     else
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -163,7 +163,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
     end
   end
 
-  defp validate_max_depth(depth) when depth <= @max_depth, do: :ok
+  defp validate_max_depth(depth) when depth <= @max_depth, do: {:ok, :pass}
 
   defp validate_max_depth(_depth) do
     {:error, ErrorCat.custom("Docs Tree exceeds maximum depth of #{@max_depth}")}

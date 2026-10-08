@@ -71,6 +71,11 @@ defmodule GroupherServer.FrontDesk do
 
   def article(article_path, actor, opts), do: CMSFrontDesk.article(article_path, actor, opts)
 
+  @doc "Loads a bounded batch of visible public Articles from ArticlePaths."
+  def articles(article_paths) when is_list(article_paths) do
+    CMSFrontDesk.articles(article_paths)
+  end
+
   @doc "Returns the author of an Article or Comment."
   def article_author(resource), do: CMSFrontDesk.article_author(resource)
 

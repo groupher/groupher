@@ -2,11 +2,11 @@ defmodule GroupherServer.CMS.Kanban do
   @moduledoc """
   Community-local Kanban command facade.
 
-      Community + ArticleCommunity relation
-        -> Gate ArticleCommunity scope
+      Community + ArticleBinding binding
+        -> Gate ArticleBinding scope
         -> KanbanState
 
-  A Kanban row belongs to one `ArticleCommunity`; the same Article can therefore
+  A Kanban row belongs to one `ArticleBinding`; the same Article can therefore
   have independent Kanban membership and status in different Communities.
   """
 
@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Kanban do
     Move.execute(community, article, status, actor)
   end
 
-  @doc "Removes a Post from one Community's Kanban without removing its ArticleCommunity relation."
+  @doc "Removes a Post from one Community's Kanban without removing its ArticleBinding binding."
   @spec remove_post(Community.t(), Article.t(), User.t()) :: T.domain_res(Article.t())
   def remove_post(%Community{} = community, %Article{} = article, %User{} = actor) do
     Remove.execute(community, article, actor)

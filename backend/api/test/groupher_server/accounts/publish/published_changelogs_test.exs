@@ -81,7 +81,7 @@ defmodule GroupherServer.Test.Accounts.Publish.Changelog do
           CMS.Comments.create_comment(
             community,
             :changelog,
-            changelog.inner_id,
+            article_inner_id(changelog, community),
             mock_comment(),
             user
           )

@@ -21,11 +21,11 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
   test "can get basic comments state", ~m(guest_conn user_conn community changelog user)a do
     {:ok, _} =
-      CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(community, :changelog, article_inner_id(changelog, community), mock_comment(), user)
 
     variables = %{
       article: %{
-        inner_id: changelog.inner_id,
+        inner_id: article_inner_id(changelog, community),
         community: community.slug,
         thread: "CHANGELOG"
       }
@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
     thread = :changelog
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
     variables = %{comment: comment_path(community, changelog, :changelog, comment)}
     results = guest_conn |> gq_query(@query, variables)
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
     thread = :changelog
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
     {:ok, _} = CMS.Interactions.upvote(comment, user)
     {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user)
@@ -78,11 +78,11 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       thread = :changelog
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         }
@@ -98,17 +98,17 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+          CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
         acc ++ [comment]
       end)
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user2)
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         }
@@ -135,7 +135,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               thread,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment("comment #{i}"),
               user
             )
@@ -155,7 +155,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -194,7 +194,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               thread,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment("comment #{i}"),
               user
             )
@@ -212,7 +212,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -243,7 +243,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
           CMS.Comments.create_comment(
             community,
             thread,
-            changelog.inner_id,
+            article_inner_id(changelog, community),
             mock_comment("comment #{i}"),
             user
           )
@@ -255,7 +255,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment("parent_comment"),
           user
         )
@@ -268,7 +268,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -304,14 +304,14 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, value} =
-          CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+          CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
         acc ++ [value]
       end)
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -331,26 +331,26 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+          CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
         acc ++ [comment]
       end)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       {:ok, pinned_comment} = CMS.Comments.pin_comment(comment.id, user)
 
       Process.sleep(1000)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment.id, user)
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -376,7 +376,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+          CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
         Process.sleep(1000)
         acc ++ [comment]
@@ -384,7 +384,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -403,21 +403,21 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       thread = :changelog
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       Process.sleep(1000)
 
       {:ok, _comment2} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       Process.sleep(1000)
 
       {:ok, comment3} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -437,21 +437,21 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       thread = :changelog
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       Process.sleep(1000)
 
       {:ok, _comment2} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       Process.sleep(1000)
 
       {:ok, comment3} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -471,28 +471,28 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       thread = :changelog
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       {:ok, _reply_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user)
       {:ok, _reply_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user2)
       Process.sleep(1000)
 
       {:ok, comment2} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       {:ok, _reply_comment} = CMS.Comments.reply_comment(comment2.id, mock_comment(), user)
       {:ok, _reply_comment} = CMS.Comments.reply_comment(comment2.id, mock_comment(), user2)
       Process.sleep(1000)
 
       {:ok, comment3} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       {:ok, _reply_comment} = CMS.Comments.reply_comment(comment3.id, mock_comment(), user)
       {:ok, _reply_comment} = CMS.Comments.reply_comment(comment3.id, mock_comment(), user2)
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -517,7 +517,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               thread,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment("comment #{i}"),
               user
             )
@@ -534,7 +534,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -563,7 +563,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               thread,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment("comment #{i}"),
               user2
             )
@@ -578,7 +578,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           thread,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           author_user
         )
@@ -587,7 +587,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -621,7 +621,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               thread,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment("comment #{i}"),
               user
             )
@@ -639,7 +639,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -690,7 +690,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               thread,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment("comment #{i}"),
               user
             )
@@ -707,7 +707,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -733,7 +733,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               thread,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment("comment #{i}"),
               user
             )
@@ -747,7 +747,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: "CHANGELOG"
         },
@@ -777,7 +777,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
           CMS.Comments.create_comment(
             community,
             :changelog,
-            changelog.inner_id,
+            article_inner_id(changelog, community),
             mock_comment(),
             new_user
           )
@@ -789,7 +789,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -798,14 +798,14 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
 
       variables = %{
         article: %{
-          inner_id: changelog.inner_id,
+          inner_id: article_inner_id(changelog, community),
           community: community.slug,
           thread: thread
         },
@@ -829,7 +829,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       author_user = changelog.author
 
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, thread, changelog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(changelog, community), mock_comment(), user)
 
       Enum.reduce(1..total_count, [], fn i, acc ->
         {:ok, reply_comment} =

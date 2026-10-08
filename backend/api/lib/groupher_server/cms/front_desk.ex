@@ -1,11 +1,12 @@
 defmodule GroupherServer.CMS.FrontDesk do
   @moduledoc """
-  Stable CMS facade for single-resource reads and relationship lookup.
+  Stable CMS facade for single-resource reads, bounded Article path batches,
+  and relationship lookup.
 
   `:public` is the default read mode. `:management` requires an actor and
   delegates actor/resource policy to Gate. `:internal` is reserved for trusted
-  backend command, event, and recovery reads. Batch projections and writes stay
-  in their owning domain facades.
+  backend command, event, and recovery reads. Public Article path batches are
+  owned here; writes stay in their owning domain facades.
 
   Business position:
 
@@ -85,4 +86,8 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   @spec article(ArticlePath.t(), term(), keyword()) :: {:ok, struct()} | {:error, map()}
   def article(article_path, actor, opts), do: Article.read(article_path, actor, opts)
+
+  @doc "Reads a bounded batch of visible public Articles from ArticlePaths."
+  @spec articles([ArticlePath.t()]) :: {:ok, [map()]} | {:error, term()}
+  def articles(article_paths) when is_list(article_paths), do: Article.read_many(article_paths)
 end

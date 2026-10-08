@@ -34,7 +34,11 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
         CMS.Communities.create_tag(community, :post, mock_attrs(:community_tag), user)
 
       assert {:ok, _post} = CMS.Communities.set_tag(post_m, tag.id)
-      assert {:ok, _post} = CMS.Articles.set_audit_failed(post_m.article_id, %{}, :operations)
+
+      assert {:ok, _post} =
+               CMS.Articles.set_audit_failed(post_m.article_id, %{}, :operations,
+                 community: community
+               )
 
       assert {:ok, %{entries: entries}} =
                CMS.Articles.paged_audit_failed(:post, %{
@@ -47,12 +51,12 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       assert Enum.any?(entries, &(&1.id == post_m.id))
     end
 
-    test "pending post can not be read", ~m(post_m)a do
+    test "pending post can not be read", ~m(community post_m)a do
       {:ok, _} =
         read_article(
-          article_community(post_m),
+          article_binding(post_m),
           :post,
-          post_m.inner_id
+          article_inner_id(post_m, community)
         )
 
       {:ok, _} =
@@ -63,14 +67,15 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, post_m.article_id)
       assert stable.moderation_state == :illegal
 
       assert Enum.all?(
-               CMS.Model.ArticleCommunity
+               CMS.Model.ArticleBinding
                |> Repo.all()
                |> Enum.filter(&(&1.article_id == post_m.article_id)),
                &(not &1.visible)
@@ -78,9 +83,9 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
 
       {:error, reason} =
         read_article(
-          article_community(post_m),
+          article_binding(post_m),
           :post,
-          post_m.inner_id
+          article_inner_id(post_m, community)
         )
 
       assert reason |> is_error?({{:cms, :article}, :pending})
@@ -91,7 +96,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, _} =
-        read_article(article_community(post), :post, post.inner_id)
+        read_article(article_binding(post), :post, article_inner_id(post, community))
 
       {:ok, _} =
         CMS.Articles.set_illegal(
@@ -101,14 +106,15 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       {:ok, post_read} =
         read_article(
-          article_community(post),
+          article_binding(post),
           :post,
-          post.inner_id,
+          article_inner_id(post, community),
           user
         )
 
@@ -118,21 +124,21 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
 
       {:error, reason} =
         read_article(
-          article_community(post),
+          article_binding(post),
           :post,
-          post.inner_id,
+          article_inner_id(post, community),
           user2
         )
 
       assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
-    test "pending post can set/unset pending", ~m(post_m)a do
+    test "pending post can set/unset pending", ~m(community post_m)a do
       {:ok, _} =
         read_article(
-          article_community(post_m),
+          article_binding(post_m),
           :post,
-          post_m.inner_id
+          article_inner_id(post_m, community)
         )
 
       {:ok, _} =
@@ -143,31 +149,33 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, post_m.article_id)
       assert stable.moderation_state == :illegal
 
-      {:ok, _} = CMS.Articles.unset_illegal(post_m.article_id, %{}, :operations)
+      {:ok, _} =
+        CMS.Articles.unset_illegal(post_m.article_id, %{}, :operations, community: community)
 
       stable = Repo.get!(CMS.Model.Article, post_m.article_id)
       assert stable.moderation_state == :legal
 
       {:ok, _} =
         read_article(
-          article_community(post_m),
+          article_binding(post_m),
           :post,
-          post_m.inner_id
+          article_inner_id(post_m, community)
         )
     end
 
-    test "pending post's meta should have info", ~m(post_m)a do
+    test "pending post's meta should have info", ~m(community post_m)a do
       {:ok, _} =
         read_article(
-          article_community(post_m),
+          article_binding(post_m),
           :post,
-          post_m.inner_id
+          article_inner_id(post_m, community)
         )
 
       {:ok, _} =
@@ -179,7 +187,8 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
             illegal_words: ["some-word"],
             illegal_articles: ["/post/#{post_m.id}"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, post_m.article_id)
@@ -201,7 +210,8 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
             illegal_words: [],
             illegal_articles: ["/post/#{post_m.id}"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, post_m.article_id)

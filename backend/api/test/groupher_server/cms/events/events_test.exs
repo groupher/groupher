@@ -14,8 +14,8 @@ defmodule GroupherServer.Test.CMS.Events.EventsTest do
   end
 
   describe "emit/3" do
-    test "routes notify_upvote event", ~m(post user2)a do
-      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id)
+    test "routes notify_upvote event", ~m(community post user2)a do
+      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id, community)
       {:ok, article} = CMS.Interactions.upvote(post, user2)
 
       {:ok, _} = Events.emit(:notify_upvote, %{target: article, from_user: user2})

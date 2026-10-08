@@ -58,11 +58,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
-      assert first_changelog["innerId"] > changelog.inner_id
+      assert first_changelog["innerId"] > article_inner_id(changelog, community)
     end
 
     test "upvotes_count order should work",
-         ~m(guest_conn changelog_last_week user user2 user3)a do
+         ~m(guest_conn community changelog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "UPVOTES"}}
 
       {:ok, _} = CMS.Interactions.upvote(changelog_last_week, user)
@@ -72,13 +72,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
 
-      assert first_changelog["innerId"] === to_string(changelog_last_week.inner_id)
+      assert first_changelog["innerId"] ===
+               to_string(article_inner_id(changelog_last_week, community))
     end
 
     test "comments_count order should work",
          ~m(guest_conn community changelog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "COMMENTS"}}
-      changelog_id = changelog_last_week.inner_id
+      changelog_id = article_inner_id(changelog_last_week, community)
 
       {:ok, _} =
         CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user)
@@ -91,7 +92,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
-      assert first_changelog["innerId"] === to_string(changelog_last_week.inner_id)
+
+      assert first_changelog["innerId"] ===
+               to_string(article_inner_id(changelog_last_week, community))
     end
 
     test "views order should work", ~m(guest_conn community user user2 user3)a do
@@ -106,7 +109,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
-      assert first_changelog["innerId"] == to_string(changelog.inner_id)
+      assert first_changelog["innerId"] == to_string(article_inner_id(changelog, community))
     end
 
     test "should get valid article document", ~m(guest_conn community user)a do
@@ -224,7 +227,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert length(results["entries"]) == 3
-      assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(changelog.inner_id)))
+
+      assert results["entries"]
+             |> Enum.any?(&(&1["innerId"] == to_string(article_inner_id(changelog, community))))
     end
 
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
@@ -248,7 +253,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    test "filter sort MOST_VIEWS should work", ~m(guest_conn changelog_last_year)a do
+    test "filter sort MOST_VIEWS should work",
+         ~m(guest_conn community changelog_last_year)a do
       Repo.update_all(
         from(summary in ArticleStats,
           where: summary.thread == :changelog and summary.article_id == ^changelog_last_year.id
@@ -269,7 +275,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       find_changelog = results |> Map.get("entries") |> hd
 
       assert most_views_changelog.article_id == changelog_last_year.id
-      assert find_changelog["innerId"] == to_string(changelog_last_year.inner_id)
+
+      assert find_changelog["innerId"] ==
+               to_string(article_inner_id(changelog_last_year, community))
     end
   end
 
@@ -286,7 +294,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results["totalCount"] == 5
 
       the_changelog =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(changelog.inner_id)))
+        Enum.find(
+          results["entries"],
+          &(&1["innerId"] == to_string(article_inner_id(changelog, community)))
+        )
 
       refute Map.has_key?(the_changelog, "viewerHasViewed")
       refute Map.has_key?(the_changelog, "viewerHasUpvoted")
@@ -302,7 +313,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       the_changelog =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(changelog.inner_id)))
+        Enum.find(
+          results["entries"],
+          &(&1["innerId"] == to_string(article_inner_id(changelog, community)))
+        )
 
       refute Map.has_key?(the_changelog, "viewerHasViewed")
       refute Map.has_key?(the_changelog, "viewerHasUpvoted")
@@ -317,12 +331,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   test: FILTER when [TODAY] [THIS_WEEK] [THIS_MONTH] [THIS_YEAR]
   """
   describe "[query paged_changelogs filter when]" do
-    test "THIS_YEAR option should work", ~m(guest_conn changelog_last_year)a do
+    test "THIS_YEAR option should work", ~m(guest_conn community changelog_last_year)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results["entries"]
-             |> Enum.any?(&(&1["innerId"] != to_string(changelog_last_year.inner_id)))
+             |> Enum.any?(
+               &(&1["innerId"] != to_string(article_inner_id(changelog_last_year, community)))
+             )
     end
 
     test "TODAY option should work", ~m(guest_conn)a do
@@ -341,11 +357,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results |> Map.get("totalCount") >= @today_count
     end
 
-    test "THIS_MONTH option should work", ~m(guest_conn changelog_last_month)a do
+    test "THIS_MONTH option should work", ~m(guest_conn community changelog_last_month)a do
       variables = %{filter: %{when: "THIS_MONTH"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["innerId"] != changelog_last_month.inner_id))
+      assert results["entries"]
+             |> Enum.any?(&(&1["innerId"] != article_inner_id(changelog_last_month, community)))
     end
   end
 
@@ -364,7 +381,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog_last_week.inner_id,
+          article_inner_id(changelog_last_week, community),
           mock_comment(),
           user2
         )
@@ -385,7 +402,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog_last_year.inner_id,
+          article_inner_id(changelog_last_year, community),
           mock_comment(),
           user2
         )
@@ -408,7 +425,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           changelog.author.user
         )
@@ -427,7 +444,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   end
 
   defp matches_article?(entry, community, article) do
-    entry["innerId"] == to_string(article.inner_id) and
+    entry["innerId"] == to_string(article_inner_id(article, community)) and
       Enum.any?(entry["communities"], &(&1["slug"] == community.slug))
   end
 

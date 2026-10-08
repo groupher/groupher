@@ -79,19 +79,19 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
       {:ok, doc} = CMS.Communities.set_tag(doc, article_tag.id)
       {:ok, doc} = CMS.Communities.set_tag(doc, article_tag2.id)
 
-      {:ok, tags} = CMS.Articles.Communities.tags(doc, community)
+      {:ok, tags} = binding_tags(doc, community)
       assert exist_in?(article_tag, tags)
       assert exist_in?(article_tag2, tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
 
-      {:ok, tags} = CMS.Articles.Communities.tags(doc, community)
+      {:ok, tags} = binding_tags(doc, community)
       assert not exist_in?(article_tag, tags)
       assert exist_in?(article_tag2, tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag2.id)
 
-      {:ok, tags} = CMS.Articles.Communities.tags(doc, community)
+      {:ok, tags} = binding_tags(doc, community)
       assert not exist_in?(article_tag, tags)
       assert not exist_in?(article_tag2, tags)
     end
@@ -109,7 +109,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
         Map.merge(doc_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
       {:ok, created} = CMS.Articles.create(community, :doc, doc_with_tags, user)
-      {:ok, tags} = CMS.Articles.Communities.tags(created, community)
+      {:ok, tags} = binding_tags(created, community)
 
       assert exist_in?(article_tag, tags)
       assert exist_in?(article_tag2, tags)

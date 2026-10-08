@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.CMS.Comments.FetcherTest do
   describe "[comment fetcher]" do
     test "fetch_comment returns comment", ~m(community post user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
 
       assert {:ok, fetched} = CMS.Comments.fetch_comment(comment.id)
       assert fetched.id == comment.id
@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.CMS.Comments.FetcherTest do
 
     test "fetch_full_comment returns article info", ~m(community post user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
 
       assert {:ok, info} = CMS.Comments.fetch_full_comment(comment.id)
       assert info.thread == :post

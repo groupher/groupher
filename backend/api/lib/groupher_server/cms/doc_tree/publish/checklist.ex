@@ -27,6 +27,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
 
   alias CMS.Model.{
     Article,
+    ArticleBinding,
     Community,
     DocDraft,
     DocLifecycle,
@@ -171,13 +172,16 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     drafts =
       DocDraft
       |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
+      |> join(:inner, [draft, _article], binding in ArticleBinding,
+        on: binding.article_id == draft.article_id
+      )
       |> join(:inner, [draft, _article], lifecycle in DocLifecycle,
         on: lifecycle.article_id == draft.article_id and lifecycle.branch_id == draft.branch_id
       )
-      |> where([draft, article, _lifecycle], article.community_id == ^community.id)
-      |> where([draft, _article, _lifecycle], draft.branch_id == ^branch.id)
-      |> order_by([draft, _article, _lifecycle], asc: draft.inserted_at, asc: draft.id)
-      |> select([draft, _article, lifecycle], {draft, lifecycle.version})
+      |> where([_draft, _article, binding, _lifecycle], binding.community_id == ^community.id)
+      |> where([draft, _article, _binding, _lifecycle], draft.branch_id == ^branch.id)
+      |> order_by([draft, _article, _binding, _lifecycle], asc: draft.inserted_at, asc: draft.id)
+      |> select([draft, _article, _binding, lifecycle], {draft, lifecycle.version})
       |> Repo.all()
 
     drafts_by_doc_id =
@@ -332,9 +336,12 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   defp draft_doc_ids(%Community{} = community, branch) do
     DocDraft
     |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
-    |> where([draft, article], article.community_id == ^community.id)
-    |> where([draft, _article], draft.branch_id == ^branch.id)
-    |> select([draft, _article], draft.article_id)
+    |> join(:inner, [draft, _article], binding in ArticleBinding,
+      on: binding.article_id == draft.article_id
+    )
+    |> where([_draft, _article, binding], binding.community_id == ^community.id)
+    |> where([draft, _article, _binding], draft.branch_id == ^branch.id)
+    |> select([draft, _article, _binding], draft.article_id)
     |> Repo.all()
     |> MapSet.new()
   end
@@ -357,7 +364,17 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   defp tree_event_select_state(_community, _branch, _event), do: {true, nil}
 
   defp draft_or_public_doc(%Community{} = community, branch, doc_id) do
-    article = Repo.get_by(Article, id: doc_id, community_id: community.id, thread: :doc)
+    article =
+      Article
+      |> join(:inner, [article], binding in ArticleBinding,
+        on: binding.article_id == article.id
+      )
+      |> where(
+        [article, binding],
+        article.id == ^doc_id and binding.community_id == ^community.id
+      )
+      |> where([article, _binding], article.thread == :doc)
+      |> Repo.one()
 
     if article &&
          (Repo.exists?(
@@ -377,9 +394,12 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   defp public_doc(%Community{} = community, branch, article_id) do
     DocPublic
     |> join(:inner, [public], article in Article, on: article.id == public.article_id)
-    |> where([public, article], article.community_id == ^community.id)
-    |> where([public, _article], public.branch_id == ^branch.id)
-    |> where([public, _article], public.article_id == ^article_id)
+    |> join(:inner, [public, _article], binding in ArticleBinding,
+      on: binding.article_id == public.article_id
+    )
+    |> where([_public, _article, binding], binding.community_id == ^community.id)
+    |> where([public, _article, _binding], public.branch_id == ^branch.id)
+    |> where([public, _article, _binding], public.article_id == ^article_id)
     |> Repo.one()
   end
 

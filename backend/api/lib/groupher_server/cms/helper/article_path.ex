@@ -2,9 +2,10 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
   @moduledoc """
   Parse the public article path used by GraphQL and CMS helpers.
 
-  `ArticlePathInput` is a public locator: `community + thread + inner_id`.
-  It is not the article table primary key. Keep this module pure so web
-  middleware can prepare permission context without loading the article.
+  `ArticlePathInput` is the public transport path shape: `community + thread + inner_id`.
+  It is not the article table primary key and this module does not resolve a binding or
+  load an Article. Keep this module pure so shared middleware, resolvers, and FrontDesk
+  can normalize input before the owning boundary performs database lookup.
 
   Examples:
 
@@ -22,10 +23,10 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
 
   Business position:
 
-      GraphQL resolver / job
-        -> CMS facade
-        -> ArticlePath
-        -> Repo / external boundary
+      GraphQL resolver / job / middleware
+        -> ArticlePath parse / validate
+        -> FrontDesk binding lookup
+        -> Article / ArticleView
   """
 
   alias GroupherServer.CMS
@@ -59,10 +60,10 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
   def parse(%{community: community, thread: thread, inner_id: inner_id}, opts) do
     fixed_thread = Keyword.get(opts, :thread)
 
-    with :ok <- validate_community(community),
-         :ok <- validate_inner_id(inner_id),
+    with {:ok, _} <- validate_community(community),
+         {:ok, _} <- validate_inner_id(inner_id),
          {:ok, thread} <- parse_thread(thread),
-         :ok <- validate_fixed_thread(thread, fixed_thread) do
+         {:ok, _} <- validate_fixed_thread(thread, fixed_thread) do
       {:ok, %{community: community, thread: thread, inner_id: inner_id}}
     else
       _ -> {:error, ErrorCat.invalid_article_path()}
@@ -93,20 +94,21 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
     end
   end
 
-  defp validate_community(community) when is_binary(community), do: :ok
+  defp validate_community(community) when is_binary(community), do: {:ok, :pass}
 
   defp validate_community(_), do: :error
 
-  defp validate_inner_id(inner_id) when is_binary(inner_id) or is_integer(inner_id), do: :ok
+  defp validate_inner_id(inner_id) when is_binary(inner_id) or is_integer(inner_id),
+    do: {:ok, :pass}
 
   defp validate_inner_id(_), do: :error
 
-  defp validate_fixed_thread(_thread, nil), do: :ok
+  defp validate_fixed_thread(_thread, nil), do: {:ok, :pass}
 
   defp validate_fixed_thread(thread, fixed_thread) do
     with {:ok, fixed_thread} <- parse_thread(fixed_thread),
          true <- thread == fixed_thread do
-      :ok
+      {:ok, :pass}
     else
       _ -> :error
     end

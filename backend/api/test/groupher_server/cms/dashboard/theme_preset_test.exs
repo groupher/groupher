@@ -125,7 +125,7 @@ defmodule GroupherServer.Test.CMS.Dashboard.ThemePresetTest do
   test "empty custom overwrite still means custom preset was created" do
     custom_preset = ThemePreset.compose_custom_preset(:claude, %{})
 
-    assert ThemePreset.validate_custom_preset(custom_preset) == :ok
+    assert ThemePreset.validate_custom_preset(custom_preset) == {:ok, :pass}
     assert ThemePreset.options(custom_preset) |> Enum.any?(&(&1.value == :custom))
     assert ThemePreset.resolve_custom_preset(custom_preset)["light"]["primaryColor"] == "#c96442"
   end

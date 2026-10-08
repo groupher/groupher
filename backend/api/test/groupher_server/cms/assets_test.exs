@@ -300,7 +300,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       assert (item[:article_id] || item["article_id"]) == post.id
       assert (item[:observed_draft_version] || item["observed_draft_version"]) == 1
-      assert (item[:decision] || item["decision"]) == "permission_denied"
+      assert (item[:decision] || item["decision"]) == "editable"
       locators = item[:usage_locators] || item["usage_locators"]
       assert [%{block_id: "plan-block"}] = locators
     end

@@ -26,6 +26,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
 
   alias CMS.Model.{
     ArticleLifecycle,
+    ArticleBinding,
     CommentLifecycle,
     Community,
     CommunityLifecycle,
@@ -36,6 +37,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   @community_normal CMS.Communities.Const.pending_state(:normal)
   @reserved_aliases [
     :gate_article,
+    :gate_article_binding,
     :gate_article_lifecycle,
     :gate_comment_lifecycle,
     :gate_community,
@@ -46,11 +48,15 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   @doc false
   @spec article(Ecto.Query.t()) :: Ecto.Query.t() | {:error, ErrorCat.error()}
   def article(%Ecto.Query{} = query, policy_mode \\ :public) do
-    with :ok <-
+    with {:ok, _} <-
            reject_conflicting_scope_joins(query, [ArticleLifecycle, Community, CommunityLifecycle]) do
       query =
         from(article in query,
-          join: community in assoc(article, :community),
+          join: binding in ArticleBinding,
+          as: :gate_article_binding,
+          on: binding.article_id == article.id,
+          join: community in Community,
+          on: community.id == binding.community_id,
           as: :gate_community,
           left_join: lifecycle in CommunityLifecycle,
           as: :gate_community_lifecycle,
@@ -64,7 +70,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   @doc false
   @spec direct(Ecto.Query.t()) :: Ecto.Query.t() | {:error, ErrorCat.error()}
   def direct(%Ecto.Query{} = query) do
-    with :ok <-
+    with {:ok, _} <-
            reject_conflicting_scope_joins(query, [
              CommentLifecycle,
              ArticleLifecycle,
@@ -196,7 +202,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     if alias_conflict? or schema_conflict? do
       {:error, ErrorCat.scope_binding_conflict()}
     else
-      :ok
+      {:ok, :pass}
     end
   end
 end

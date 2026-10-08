@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Articles.Response do
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
   alias CMS.Comments.BodyCodec
+  alias CMS.Articles.Bindings
   alias CMS.Model.{Comment, PostSolution}
 
   @doc """
@@ -32,6 +33,7 @@ defmodule GroupherServer.CMS.Articles.Response do
 
       {:ok,
        article
+       |> put_public_inner_id()
        |> merge_public_state(state)
        |> merge_solution(solution_by_post)
        |> CMS.ShadowSync.refresh_article()}
@@ -56,6 +58,7 @@ defmodule GroupherServer.CMS.Articles.Response do
           {:ok, %{artiment: type}} = Matcher.match_interaction(article)
 
           article
+          |> put_public_inner_id()
           |> merge_public_state(Map.fetch!(states, {type, article.id}))
           |> merge_solution(solution_by_post)
         end)
@@ -109,6 +112,13 @@ defmodule GroupherServer.CMS.Articles.Response do
   end
 
   defp merge_solution(article, _solution_by_post), do: article
+
+  defp put_public_inner_id(article) do
+    case Bindings.get(article, Map.get(article, :community)) do
+      {:ok, %{inner_id: inner_id}} -> Map.put(article, :inner_id, inner_id)
+      _ -> article
+    end
+  end
 
   defp merge_public_state(article, state) do
     article

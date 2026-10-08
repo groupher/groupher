@@ -55,11 +55,11 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
     base_version = get(input, :base_version)
     idempotency_key = get(input, :idempotency_key)
 
-    with :ok <- validate_theme(theme),
+    with {:ok, _} <- validate_theme(theme),
          {:ok, settings} <- Settings.normalize(settings_input),
-         :ok <- validate_publish_metadata(base_version, idempotency_key),
-         :ok <- ensure_current_version(community.id, base_version),
-         :ok <- ensure_renderable(settings),
+         {:ok, _} <- validate_publish_metadata(base_version, idempotency_key),
+         {:ok, _} <- ensure_current_version(community.id, base_version),
+         {:ok, _} <- ensure_renderable(settings),
          {:ok, snapshot_ref} <- new_snapshot_ref(),
          {:ok, targets} <- validate_image_input(theme, snapshot_ref, images) do
       issued_at = DateTime.utc_now(:second)
@@ -104,7 +104,7 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
     state = Repo.get_by(CommunityWallpaper, community_id: community_id)
 
     if Query.state_version(state) == version do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.wallpaper_publish_version_conflict()}
     end
@@ -119,7 +119,7 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
         {:error, ErrorCat.wallpaper_publish_idempotency_key_invalid()}
 
       true ->
-        :ok
+        {:ok, :pass}
     end
   end
 
@@ -127,9 +127,9 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
     {:error, ErrorCat.wallpaper_upload_images_invalid()}
   end
 
-  defp ensure_renderable(_), do: :ok
+  defp ensure_renderable(_), do: {:ok, :pass}
 
-  defp validate_theme(theme) when theme in [:light, :dark], do: :ok
+  defp validate_theme(theme) when theme in [:light, :dark], do: {:ok, :pass}
   defp validate_theme(_), do: {:error, ErrorCat.wallpaper_settings_invalid()}
 
   defp validate_image_input(theme, snapshot_ref, images) when is_list(images) do
@@ -151,7 +151,7 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
         image = Map.get(image_by_profile, target.profile)
 
         case validate_image(image, target) do
-          :ok -> {:cont, acc}
+          {:ok, _} -> {:cont, acc}
           {:error, details} -> {:halt, {:error, ErrorCat.wallpaper_upload_image_invalid(details)}}
         end
       end)
@@ -172,7 +172,7 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
       nil ->
         if is_integer(get(image, :size_bytes)) and get(image, :size_bytes) > 0 and
              valid_string?(get(image, :checksum)) do
-          :ok
+          {:ok, :pass}
         else
           {:error, image_error_details(target.profile, :metadata, :valid, image)}
         end

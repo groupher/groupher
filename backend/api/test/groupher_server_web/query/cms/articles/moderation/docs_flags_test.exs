@@ -41,7 +41,8 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
             illegal_words: ["some-word"],
             branch_id: doc_m.branch_id
           },
-          :operations
+          :operations,
+          community: community
         )
 
       state =
@@ -61,7 +62,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
     test "Doc pinning is rejected because Doc navigation is owned by DocTree",
          ~m(community doc_m user)a do
       assert {:error, :unsupported_for_doc} =
-               CMS.Articles.pin(community, doc_m.article_id, user)
+               CMS.Articles.pin(community, doc_m.article_id, user, Ecto.UUID.generate())
     end
   end
 end

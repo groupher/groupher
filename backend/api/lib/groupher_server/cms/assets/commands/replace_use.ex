@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Articles.Draft.Store
+  alias CMS.Articles.Bindings
   alias CMS.Assets.{Query, Writer}
   alias CMS.{Command, ErrorCat}
   alias CMS.FrontDesk
@@ -26,8 +27,8 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
           {:ok, map()} | {:error, term()}
   def execute(article_or_projection, attrs, %User{} = user, command_id) when is_map(attrs) do
     with {:ok, article} <- load_article(article_or_projection),
-         {:ok, %Community{} = community} <-
-           FrontDesk.community(article.community_id, mode: :internal) do
+         {:ok, %{community: %Community{} = community}} <-
+           binding_context(article, article_or_projection) do
       params = Map.drop(attrs, [:command_id, :cur_user])
 
       if is_nil(command_id) do
@@ -83,13 +84,13 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   end
 
   defp replace_in_draft(article, community, attrs, author, user) do
-    CMS.Gate.Access.with_check(user, :edit, article, fn canonical ->
+    CMS.Gate.Access.with_community_check(user, :edit, community, article, fn canonical ->
       with {:ok, draft} <- Store.ensure_from_public(canonical, author),
-           :ok <- expected_version(attrs, draft.version),
+           {:ok, _} <- expected_version(attrs, draft.version),
            {:ok, ref} <- locate_ref(draft, attrs),
            {:ok, target_asset} <- active_asset(community.id, value(attrs, :to_asset_id)),
-           :ok <- same_asset(ref, value(attrs, :from_asset_id)),
-           :ok <- replacement_body_bag_required(ref, attrs),
+           {:ok, _} <- same_asset(ref, value(attrs, :from_asset_id)),
+           {:ok, _} <- replacement_body_bag_required(ref, attrs),
            {:ok, updated_draft} <-
              Store.update(
                canonical,
@@ -136,14 +137,14 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
 
   defp replacement_body_bag_required(%ArticleAssetRef{usage: usage}, _attrs)
        when usage in [:cover, :cover_dark] do
-    :ok
+    {:ok, :pass}
   end
 
   defp replacement_body_bag_required(_ref, attrs) do
     if is_nil(value(attrs, :body_bag)) do
       {:error, :replace_asset_use_body_bag_required}
     else
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -190,7 +191,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     end
   end
 
-  defp same_asset(%ArticleAssetRef{asset_id: asset_id}, asset_id), do: :ok
+  defp same_asset(%ArticleAssetRef{asset_id: asset_id}, asset_id), do: {:ok, :pass}
   defp same_asset(_, _), do: {:error, :asset_use_source_conflict}
 
   defp active_asset(community_id, asset_id) when is_binary(asset_id) or is_integer(asset_id) do
@@ -204,7 +205,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
 
   defp expected_version(attrs, version) do
     case value(attrs, :expected_draft_version) do
-      ^version -> :ok
+      ^version -> {:ok, :pass}
       nil -> {:error, :expected_draft_version_required}
       _ -> {:error, :draft_version_conflict}
     end
@@ -230,6 +231,13 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   end
 
   defp load_article(_), do: {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+
+  defp binding_context(article, %{community: %Community{} = community}) do
+    Bindings.get(article, community)
+  end
+
+  defp binding_context(article, _article_or_projection),
+    do: Bindings.get(article, Map.get(article, :community))
 
   defp usage(attrs) do
     case value(attrs, :usage) do

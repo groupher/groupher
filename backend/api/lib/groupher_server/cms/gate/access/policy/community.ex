@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   @moduledoc """
-  Community access composition across Lifecycle, relations and Passport.
+  Community access composition across Lifecycle, bindings and Passport.
 
   Read/list visibility belongs to Community Scope. Access only checks the
   resource mutation and management actions against the loaded facts.
@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   Example contract:
 
       Access.Policy.Community.check_access(actor, :update, community, %Context.Access.Community{})
-      #=> :ok | {:error, reason}
+      #=> {:ok, :pass} | {:error, reason}
   """
 
   require GroupherServer.CMS.Gate.Const
@@ -44,7 +44,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   @doc "Checks Community admission using the default loaded lifecycle context."
   @spec check_access(User.t() | nil, atom(), Community.t()) ::
-          :ok | {:error, ErrorCat.error()}
+          {:ok, :pass} | {:error, ErrorCat.error()}
   def check_access(user, action, community) do
     check_access(user, action, community, %CommunityContext{
       community: community,
@@ -54,7 +54,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   @doc "Checks Community admission against an explicitly typed Access Context."
   @spec check_access(User.t() | nil, atom(), Community.t(), CommunityContext.t()) ::
-          :ok | {:error, ErrorCat.error()}
+          {:ok, :pass} | {:error, ErrorCat.error()}
   def check_access(_user, action, %Community{} = community, %CommunityContext{} = context)
       when action in @read_actions do
     read_allowed?(community, context)
@@ -63,13 +63,13 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   def check_access(user, action, %Community{} = community, %CommunityContext{} = context)
       when action in @command_actions do
     with {:ok, true} <- lifecycle_allowed(community, :command, context) do
-      relation_allowed(command_relation_allowed?(user, community, action))
+      relation_allowed(command_binding_allowed?(user, community, action))
     end
   end
 
   def check_access(user, :manage_docs, %Community{} = community, %CommunityContext{} = context) do
     case Lifecycle.can_write(community, context) do
-      {:ok, true} -> relation_allowed(management_relation_allowed?(user, community))
+      {:ok, true} -> relation_allowed(management_binding_allowed?(user, community))
       {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
       {:error, reason} -> {:error, reason}
     end
@@ -80,7 +80,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp read_allowed?(%Community{} = community, context) do
     case Lifecycle.can_read(community, context) do
       {:ok, true} ->
-        :ok
+        {:ok, :pass}
 
       {:ok, false} ->
         {:error, ErrorCat.permission_denied()}
@@ -93,7 +93,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
     end
   end
 
-  defp relation_allowed(true), do: :ok
+  defp relation_allowed(true), do: {:ok, :pass}
   defp relation_allowed(false), do: {:error, ErrorCat.permission_denied()}
 
   defp lifecycle_allowed(%Community{} = community, :command, context) do
@@ -106,41 +106,41 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
     end
   end
 
-  defp command_relation_allowed?(nil, _community, _action), do: false
-  defp command_relation_allowed?(:operations, _community, _action), do: true
-  defp command_relation_allowed?(%{type: :operations}, _community, _action), do: true
+  defp command_binding_allowed?(nil, _community, _action), do: false
+  defp command_binding_allowed?(:operations, _community, _action), do: true
+  defp command_binding_allowed?(%{type: :operations}, _community, _action), do: true
 
-  defp command_relation_allowed?(user, community, :request_destroy) do
-    base_command_relation_allowed?(user, community) or
+  defp command_binding_allowed?(user, community, :request_destroy) do
+    base_command_binding_allowed?(user, community) or
       passport_allowed?(user, community, Const.passport_action(:community_request_destroy))
   end
 
-  defp command_relation_allowed?(user, community, _action) do
-    base_command_relation_allowed?(user, community) or
+  defp command_binding_allowed?(user, community, _action) do
+    base_command_binding_allowed?(user, community) or
       passport_allowed?(user, community, Const.passport_action(:community_update))
   end
 
-  defp management_relation_allowed?(:operations, _community), do: true
-  defp management_relation_allowed?(%{type: :operations}, _community), do: true
+  defp management_binding_allowed?(:operations, _community), do: true
+  defp management_binding_allowed?(%{type: :operations}, _community), do: true
 
-  defp management_relation_allowed?(%User{} = user, community) do
+  defp management_binding_allowed?(%User{} = user, community) do
     owner?(user, community) or moderator?(user, community) or god?(user) or
       root?(user, community) or docs_member?(user, community)
   end
 
-  defp management_relation_allowed?(_user, _community), do: false
+  defp management_binding_allowed?(_user, _community), do: false
 
   # Docs editing remains an authenticated-member capability; the explicit Gate
   # action still enforces the Community Lifecycle writable state.
   defp docs_member?(%User{}, %Community{}), do: true
   defp docs_member?(_, _), do: false
 
-  defp base_command_relation_allowed?(%User{} = user, community) do
+  defp base_command_binding_allowed?(%User{} = user, community) do
     owner?(user, community) or moderator?(user, community) or god?(user) or
       root?(user, community)
   end
 
-  defp base_command_relation_allowed?(_user, _community), do: false
+  defp base_command_binding_allowed?(_user, _community), do: false
 
   defp owner?(%User{id: user_id}, %Community{user_id: user_id}), do: true
   defp owner?(_, _), do: false

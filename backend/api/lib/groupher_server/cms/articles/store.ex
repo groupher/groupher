@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Articles.Store do
   alias GroupherServer.CMS.Model.{
     Article,
     ArticleBodyDraft,
-    ArticleCommunity,
+    ArticleBinding,
     ArticleDraft,
     DraftCoverEdit,
     ArticleLifecycle,
@@ -27,22 +27,22 @@ defmodule GroupherServer.CMS.Articles.Store do
   }
 
   alias GroupherServer.CMS.Model.RevisionCoverEdit
-  alias GroupherServer.CMS.Articles.ArticleResult
+  alias GroupherServer.CMS.Articles.Bindings
+  alias GroupherServer.CMS.Articles.ArticleView
   alias GroupherServer.CMS.FrontDesk.Article, as: PublicArticleFrontDesk
 
-  alias GroupherServer.Repo
   alias Helper.ORM
-
-  defp article(id), do: ORM.find(Article, id)
 
   @doc "Loads an Article author by its persisted author id."
   def author(id), do: ORM.find(Author, id)
 
   @doc "Loads the public Article data required to build a notification."
-  def load_article_for_notification(article_id), do: load_public_article(article_id)
+  def load_article_for_notification(article_id, %Community{} = community),
+    do: load_public_article(article_id, community)
 
   @doc "Loads the public Article data required to rebuild Article mentions."
-  def load_article_for_mentions(article_id), do: load_public_article(article_id)
+  def load_article_for_mentions(article_id, %Community{} = community),
+    do: load_public_article(article_id, community)
 
   @doc "Loads one ArticleLifecycle row by stable Article id."
   def lifecycle(article_id), do: ORM.find_by(ArticleLifecycle, article_id: article_id)
@@ -59,31 +59,18 @@ defmodule GroupherServer.CMS.Articles.Store do
   @doc "Loads one Article revision row."
   def revision(revision_id), do: ORM.find(ArticleRevision, revision_id)
 
-  @doc "Loads one ArticleCommunity relation for a Community."
-  def relation(article_id, community_id) do
-    ORM.find_by(ArticleCommunity, article_id: article_id, community_id: community_id)
+  @doc "Loads one ArticleBinding binding for a Community."
+  def binding(article_id, community_id) do
+    ORM.find_by(ArticleBinding, article_id: article_id, community_id: community_id)
   end
-
-  defp community(community_id), do: ORM.find(Community, community_id)
 
   @doc "Ensures an Article has the Community association needed by an effect."
-  def with_community(%Article{} = article) do
-    article = Repo.preload(article, :community)
+  def with_community(%Article{}), do: {:error, :article_binding_context_required}
 
-    case relation(article.id, article.community_id) do
-      {:ok, %ArticleCommunity{inner_id: inner_id}} -> {:ok, %{article | inner_id: inner_id}}
-      {:error, _reason} -> {:ok, article}
-    end
-  end
+  def with_community(%ArticleView{community: %Community{}} = article), do: {:ok, article}
 
-  def with_community(%ArticleResult{community: %Community{}} = article), do: {:ok, article}
-
-  def with_community(%ArticleResult{community_id: community_id} = article) do
-    case Repo.get(Community, community_id) do
-      %Community{} = community -> {:ok, Map.put(article, :community, community)}
-      nil -> {:error, :community_not_found}
-    end
-  end
+  def with_community(%ArticleView{} = _article),
+    do: {:error, :article_binding_context_required}
 
   @doc "Loads one Draft cover edit projection."
   def draft_cover_edit(id), do: ORM.find(DraftCoverEdit, id)
@@ -91,12 +78,11 @@ defmodule GroupherServer.CMS.Articles.Store do
   @doc "Loads one Revision cover edit projection."
   def revision_cover_edit(id), do: ORM.find(RevisionCoverEdit, id)
 
-  defp load_public_article(article_id) do
-    with {:ok, article} <- article(article_id),
-         {:ok, community} <- community(article.community_id),
-         {:ok, relation} <- relation(article.id, community.id) do
+  defp load_public_article(article_id, %Community{} = community) do
+    with {:ok, article} <- ORM.find(Article, article_id),
+         {:ok, %{inner_id: inner_id}} <- Bindings.get(article, community) do
       PublicArticleFrontDesk.read(
-        %{community: community.slug, thread: article.thread, inner_id: relation.inner_id},
+        %{community: community.slug, thread: article.thread, inner_id: inner_id},
         nil,
         []
       )

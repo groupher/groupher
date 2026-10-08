@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Command do
   def execute(%__MODULE__{} = command, opts) when is_list(opts) do
     case Keyword.keys(opts) -- [:action, :confirmation] do
       [] ->
-        :ok
+        {:ok, :pass}
 
       unknown ->
         raise ArgumentError,

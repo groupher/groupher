@@ -101,8 +101,8 @@ type Documents = {
   '\n  mutation UpdatePostFromMenu(\n    $article: ArticlePathInput!\n    $commandId: ID!\n    $expectedVersion: Int!\n    $title: String\n    $communityTags: [ID]\n  ) {\n    updatePost(\n      article: $article\n      commandId: $commandId\n      expectedVersion: $expectedVersion\n      title: $title\n      communityTags: $communityTags\n    ) {\n      innerId\n      title\n      communityTags {\n        ...ArticleMenuTagFields\n      }\n    }\n  }\n': typeof types.UpdatePostFromMenuDocument
   '\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!) {\n    setPostCat(article: $article, cat: $cat) {\n      innerId\n      cat\n    }\n  }\n': typeof types.SetPostCatDocument
   '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!) {\n    setPostStatus(article: $article, status: $status) {\n      innerId\n      status\n    }\n  }\n': typeof types.SetPostStatusDocument
-  '\n  mutation PinPost($article: ArticlePathInput!) {\n    pinPost(article: $article) {\n      innerId\n    }\n  }\n': typeof types.PinPostDocument
-  '\n  mutation UndoPinPost($article: ArticlePathInput!) {\n    undoPinPost(article: $article) {\n      innerId\n      isPinned\n    }\n  }\n': typeof types.UndoPinPostDocument
+  '\n  mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {\n    pinPost(article: $article, commandId: $commandId) {\n      innerId\n    }\n  }\n': typeof types.PinPostDocument
+  '\n  mutation UndoPinPost($article: ArticlePathInput!, $commandId: ID!) {\n    undoPinPost(article: $article, commandId: $commandId) {\n      innerId\n      isPinned\n    }\n  }\n': typeof types.UndoPinPostDocument
   '\n  query CommunityTagGroupsForMenu($community: String!, $thread: Thread) {\n    communityTagGroups(community: $community, thread: $thread) {\n      id\n      title\n      index\n      tags {\n        ...ArticleMenuTagFields\n      }\n    }\n  }\n': typeof types.CommunityTagGroupsForMenuDocument
   '\n  query ChangelogSimpleQuery($article: ArticlePathInput!) {\n    post(article: $article) {\n      innerId\n    }\n  }\n': typeof types.ChangelogSimpleQueryDocument
   '\n  fragment CommentAuthorFields on User {\n    login\n    nickname\n    avatar\n    bio\n    shortbio\n  }\n': typeof types.CommentAuthorFieldsFragmentDoc
@@ -412,9 +412,9 @@ const documents: Documents = {
     types.SetPostCatDocument,
   '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!) {\n    setPostStatus(article: $article, status: $status) {\n      innerId\n      status\n    }\n  }\n':
     types.SetPostStatusDocument,
-  '\n  mutation PinPost($article: ArticlePathInput!) {\n    pinPost(article: $article) {\n      innerId\n    }\n  }\n':
+  '\n  mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {\n    pinPost(article: $article, commandId: $commandId) {\n      innerId\n    }\n  }\n':
     types.PinPostDocument,
-  '\n  mutation UndoPinPost($article: ArticlePathInput!) {\n    undoPinPost(article: $article) {\n      innerId\n      isPinned\n    }\n  }\n':
+  '\n  mutation UndoPinPost($article: ArticlePathInput!, $commandId: ID!) {\n    undoPinPost(article: $article, commandId: $commandId) {\n      innerId\n      isPinned\n    }\n  }\n':
     types.UndoPinPostDocument,
   '\n  query CommunityTagGroupsForMenu($community: String!, $thread: Thread) {\n    communityTagGroups(community: $community, thread: $thread) {\n      id\n      title\n      index\n      tags {\n        ...ArticleMenuTagFields\n      }\n    }\n  }\n':
     types.CommunityTagGroupsForMenuDocument,
@@ -1222,14 +1222,14 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation PinPost($article: ArticlePathInput!) {\n    pinPost(article: $article) {\n      innerId\n    }\n  }\n',
-): (typeof documents)['\n  mutation PinPost($article: ArticlePathInput!) {\n    pinPost(article: $article) {\n      innerId\n    }\n  }\n']
+  source: '\n  mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {\n    pinPost(article: $article, commandId: $commandId) {\n      innerId\n    }\n  }\n',
+): (typeof documents)['\n  mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {\n    pinPost(article: $article, commandId: $commandId) {\n      innerId\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation UndoPinPost($article: ArticlePathInput!) {\n    undoPinPost(article: $article) {\n      innerId\n      isPinned\n    }\n  }\n',
-): (typeof documents)['\n  mutation UndoPinPost($article: ArticlePathInput!) {\n    undoPinPost(article: $article) {\n      innerId\n      isPinned\n    }\n  }\n']
+  source: '\n  mutation UndoPinPost($article: ArticlePathInput!, $commandId: ID!) {\n    undoPinPost(article: $article, commandId: $commandId) {\n      innerId\n      isPinned\n    }\n  }\n',
+): (typeof documents)['\n  mutation UndoPinPost($article: ArticlePathInput!, $commandId: ID!) {\n    undoPinPost(article: $article, commandId: $commandId) {\n      innerId\n      isPinned\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

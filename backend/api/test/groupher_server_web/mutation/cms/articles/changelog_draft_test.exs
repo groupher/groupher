@@ -39,7 +39,11 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
       })
 
     assert updated["title"] == "Republished Changelog"
-    assert {:error, :not_found} = CMS.Articles.read_draft(public_changelog.id, context.user)
+
+    assert {:error, :not_found} =
+             CMS.Articles.read_draft(public_changelog.id, context.user,
+               community: context.community
+             )
   end
 
   test "Changelog Draft stays private until its explicit publish mutation", context do
@@ -54,7 +58,9 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
     assert draft["stage"] == "DRAFT"
     assert draft["thread"] == "CHANGELOG"
 
-    assert {:ok, stored_draft} = CMS.Articles.read_draft(draft["id"], context.user)
+    assert {:ok, stored_draft} =
+             CMS.Articles.read_draft(draft["id"], context.user, community: context.community)
+
     assert stored_draft.title == "Changelog Draft"
 
     updated =
@@ -126,7 +132,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
            )
 
     assert {:ok, stored_draft} =
-             CMS.Articles.read_draft(draft["id"], context.user)
+             CMS.Articles.read_draft(draft["id"], context.user, community: context.community)
 
     assert stored_draft.title == "Author Changelog Draft"
   end

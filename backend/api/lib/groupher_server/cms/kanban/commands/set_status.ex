@@ -1,11 +1,11 @@
 defmodule GroupherServer.CMS.Kanban.Commands.SetStatus do
   @moduledoc """
-  Sets the status of an Article in one explicit ArticleCommunity relation.
+    Sets the status of an Article in one explicit ArticleBinding binding.
 
-      Article + ArticleCommunity relation
-        -> Gate admission
-        -> KanbanState status update
-"""
+        Article + ArticleBinding binding
+          -> Gate admission
+          -> KanbanState status update
+  """
 
   alias GroupherServer.CMS
   alias CMS.Articles.States

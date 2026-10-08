@@ -27,12 +27,12 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocSetTag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
+        article: %{inner_id: article_inner_id(doc, community), community: community.slug, thread: "DOC"},
         communityTagId: community_tag.id
       }
 
       rule_conn |> gq_mutation(S.Article.m(:set_community_tag), variables)
-      {:ok, tags} = CMS.Articles.Communities.tags(doc, community)
+      {:ok, tags} = binding_tags(doc, community)
       assoc_tags = Enum.map(tags, & &1.id)
       assert community_tag.id in assoc_tags
     end
@@ -52,13 +52,13 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocSetTag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
+        article: %{inner_id: article_inner_id(doc, community), community: community.slug, thread: "DOC"},
         communityTagId: community_tag.id
       }
 
       rule_conn |> gq_mutation(S.Article.m(:unset_community_tag), variables)
 
-      {:ok, tags} = CMS.Articles.Communities.tags(doc, community)
+      {:ok, tags} = binding_tags(doc, community)
       assoc_tags = Enum.map(tags, & &1.id)
 
       assert community_tag.id not in assoc_tags

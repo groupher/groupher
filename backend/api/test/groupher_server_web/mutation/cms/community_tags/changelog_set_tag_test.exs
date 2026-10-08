@@ -27,12 +27,12 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         communityTagId: community_tag.id
       }
 
       rule_conn |> gq_mutation(S.Article.m(:set_community_tag), variables)
-      {:ok, tags} = CMS.Articles.Communities.tags(changelog, community)
+      {:ok, tags} = binding_tags(changelog, community)
       assoc_tags = Enum.map(tags, & &1.id)
       assert community_tag.id in assoc_tags
     end
@@ -52,13 +52,13 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         communityTagId: community_tag.id
       }
 
       rule_conn |> gq_mutation(S.Article.m(:unset_community_tag), variables)
 
-      {:ok, tags} = CMS.Articles.Communities.tags(changelog, community)
+      {:ok, tags} = binding_tags(changelog, community)
       assoc_tags = Enum.map(tags, & &1.id)
 
       assert community_tag.id not in assoc_tags

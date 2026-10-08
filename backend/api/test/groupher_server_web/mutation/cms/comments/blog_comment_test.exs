@@ -28,13 +28,19 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(comment))
-      assert result["articleStats"]["innerId"] == to_string(blog.inner_id)
+      assert result["articleStats"]["innerId"] == to_string(article_inner_id(blog, community))
       assert result["articleStats"]["commentsRevision"] == 1
     end
 
     test "login user can reply to a comment", ~m(community blog user user_conn)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       variables = %{
         comment: comment_path(community, blog, :blog, comment),
@@ -51,7 +57,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
     test "only owner can update a exist comment",
          ~m(community blog user guest_conn user_conn owner_conn)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       variables = %{
         comment: comment_path(community, blog, :blog, comment),
@@ -81,7 +93,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
     test "only owner can delete a exist comment",
          ~m(community blog user guest_conn user_conn owner_conn)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       variables = %{comment: comment_path(community, blog, :blog, comment)}
 
@@ -109,7 +127,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
     test "login user can upvote a exist blog comment",
          ~m(community blog user guest_conn user_conn)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       variables = %{comment: comment_path(community, blog, :blog, comment)}
 
@@ -130,7 +154,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
     test "login user can undo upvote a exist blog comment",
          ~m(community blog user guest_conn user_conn)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       variables = %{comment: comment_path(community, blog, :blog, comment)}
       user_conn |> gq_mutation(S.Comment.m(:upvote_comment), variables)
@@ -152,7 +182,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
   describe "[article comment emotion]" do
     test "login user can emotion to a comment", ~m(community blog user user_conn)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       variables = %{comment: comment_path(community, blog, :blog, comment), emotion: "BEER"}
       comment = user_conn |> gq_mutation(S.Comment.m(:emotion_to_comment), variables)
@@ -164,7 +200,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
     test "comment emotion mutation returns sparse emotion array workflow",
          ~m(community blog user user_conn)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       comment_path = comment_path(community, blog, :blog, comment)
 
@@ -190,7 +232,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
     test "login user can undo emotion to a comment", ~m(community blog user owner_conn)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       {:ok, _} = CMS.Interactions.emotion(comment, :beer, user)
 
@@ -203,7 +251,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
     test "comment emotion query reads back sparse array after mutation and undo",
          ~m(community blog user user_conn)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       comment_path = comment_path(community, blog, :blog, comment)
 
@@ -240,7 +294,11 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
   describe "[article comment lock/unlock]" do
     test "can lock a blog's comment", ~m(community blog)a do
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        }
       }
 
       passport_rules = %{community.slug => %{"blog.lock_comment" => true}}
@@ -248,7 +306,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
       result = rule_conn |> gq_mutation(S.Article.m(:lock_comment, :blog), variables)
 
-      assert result["innerId"] == to_string(blog.inner_id)
+      assert result["innerId"] == to_string(article_inner_id(blog, community))
 
       blog = Repo.get!(CMS.Model.Article, blog.id)
       assert blog.comments_locked
@@ -256,7 +314,11 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
     test "unauth user fails", ~m(guest_conn community blog)a do
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        }
       }
 
       assert guest_conn
@@ -268,12 +330,16 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
     end
 
     test "can undo lock a blog's comment", ~m(community blog user)a do
-      {:ok, _} = CMS.Articles.lock_comments(blog.id, user)
-      {:ok, blog} = read_article(community, :blog, blog.inner_id)
+      {:ok, _} = CMS.Articles.lock_comments(blog.id, user, community: community)
+      {:ok, blog} = read_article(community, :blog, article_inner_id(blog, community))
       assert blog.meta.is_comment_locked
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        }
       }
 
       passport_rules = %{community.slug => %{"blog.undo_lock_comment" => true}}
@@ -281,15 +347,19 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
       result = rule_conn |> gq_mutation(S.Article.m(:unlock_comment, :blog), variables)
 
-      assert result["innerId"] == to_string(blog.inner_id)
+      assert result["innerId"] == to_string(article_inner_id(blog, community))
 
-      {:ok, blog} = read_article(community, :blog, blog.inner_id)
+      {:ok, blog} = read_article(community, :blog, article_inner_id(blog, community))
       assert not blog.meta.is_comment_locked
     end
 
     test "unauth user undo fails", ~m(guest_conn community blog)a do
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        }
       }
 
       assert guest_conn
@@ -304,7 +374,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
   describe "[article comment pin/unPin]" do
     test "can pin a blog's comment", ~m(owner_conn community blog user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       variables = %{comment: comment_path(community, blog, :blog, comment)}
       result = owner_conn |> gq_mutation(S.Comment.m(:pin_comment), variables)
@@ -315,7 +391,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
     test "unauth user fails", ~m(guest_conn community blog user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       variables = %{comment: comment_path(community, blog, :blog, comment)}
 
@@ -329,7 +411,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
     test "can undo pin a blog's comment", ~m(owner_conn community blog user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
 
@@ -342,7 +430,13 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
     test "unauth user undo fails", ~m(guest_conn community blog user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user
+        )
 
       {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
       variables = %{comment: comment_path(community, blog, :blog, comment)}

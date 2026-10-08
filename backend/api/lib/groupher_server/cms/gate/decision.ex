@@ -117,14 +117,14 @@ defmodule GroupherServer.CMS.Gate.Decision do
   end
 
   @doc "Converts a policy result into a structured Decision."
-  @spec from_result(:ok | {:error, ErrorCat.error()}, map()) :: t()
-  def from_result(:ok, context), do: allow(context)
+  @spec from_result({:ok, term()} | {:error, ErrorCat.error()}, map()) :: t()
+  def from_result({:ok, _value}, context), do: allow(context)
 
   def from_result({:error, ErrorCat.error_pattern() = error}, context), do: deny(error, context)
 
   @doc "Returns the selected primary reason, or `:ok` for an allowed Decision."
   @spec primary_reason(t()) :: atom()
-  def primary_reason(%__MODULE__{allowed: true}), do: :ok
+  def primary_reason(%__MODULE__{allowed: true}), do: {:ok, :pass}
   def primary_reason(%__MODULE__{primary: %{reason: reason}}), do: reason
 
   @doc "Returns the selected declared ErrorCat value, or nil for an allowed Decision."

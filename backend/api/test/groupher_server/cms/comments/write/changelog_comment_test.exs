@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -67,7 +67,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -85,7 +85,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user2
         )
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user3
         )
@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -123,7 +123,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -145,7 +145,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -161,7 +161,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user2
         )
@@ -185,7 +185,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           author
         )
@@ -211,7 +211,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -242,7 +242,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -256,7 +256,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -274,7 +274,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -283,7 +283,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -303,7 +303,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -319,7 +319,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -328,7 +328,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -344,7 +344,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -353,7 +353,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user2
         )
@@ -372,7 +372,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -390,7 +390,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -408,7 +408,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -428,7 +428,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -445,7 +445,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -469,7 +469,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -484,7 +484,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -505,7 +505,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -526,7 +526,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -546,7 +546,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -586,7 +586,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -613,7 +613,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -643,7 +643,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -666,7 +666,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -684,7 +684,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           CMS.Comments.create_comment(
             community,
             :changelog,
-            changelog.inner_id,
+            article_inner_id(changelog, community),
             mock_comment(),
             user
           )
@@ -696,7 +696,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -735,7 +735,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -770,7 +770,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -792,7 +792,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -822,7 +822,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           CMS.Comments.create_comment(
             community,
             :changelog,
-            changelog.inner_id,
+            article_inner_id(changelog, community),
             mock_comment(),
             new_user
           )
@@ -834,7 +834,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -843,7 +843,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -866,7 +866,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               :changelog,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment(),
               user
             )
@@ -902,7 +902,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           CMS.Comments.create_comment(
             community,
             :changelog,
-            changelog.inner_id,
+            article_inner_id(changelog, community),
             mock_comment(),
             user
           )
@@ -914,7 +914,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -923,7 +923,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -956,7 +956,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           CMS.Comments.create_comment(
             community,
             :changelog,
-            changelog.inner_id,
+            article_inner_id(changelog, community),
             mock_comment(),
             user
           )
@@ -968,7 +968,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -977,7 +977,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -1011,7 +1011,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               :changelog,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment(),
               user
             )
@@ -1055,7 +1055,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               :changelog,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment(),
               user
             )
@@ -1098,7 +1098,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               :changelog,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment(),
               user
             )
@@ -1129,7 +1129,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -1138,7 +1138,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -1147,7 +1147,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -1156,7 +1156,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -1165,7 +1165,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -1189,7 +1189,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
             CMS.Comments.create_comment(
               community,
               :changelog,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment(),
               user
             )
@@ -1214,7 +1214,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user2
         )
@@ -1227,7 +1227,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           author_user
         )
@@ -1242,31 +1242,31 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
 
-      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user)
+      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user, community: community)
 
       {:error, reason} =
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
 
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(changelog.id, user)
+      {:ok, _} = CMS.Articles.undo_lock_comments(changelog.id, user, community: community)
 
       {:ok, _} =
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -1277,19 +1277,19 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
 
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
 
-      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user)
+      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user, community: community)
 
       {:error, reason} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(changelog.id, user)
+      {:ok, _} = CMS.Articles.undo_lock_comments(changelog.id, user, community: community)
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
     end
   end

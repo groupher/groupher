@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Snapshot.Query do
         -> Gate scope / Repo
 
   Query owns visibility-safe database reads and unavailable placeholders. It
-  does not decide cache mode or mutate relation membership.
+  does not decide cache mode or mutate binding membership.
   """
 
   import Ecto.Query, warn: false
@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Snapshot.Query do
   alias CMS.Artiment.Matcher
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias CMS.Model.{Comment, CommentLifecycle}
+  alias CMS.Model.{ArticleBinding, Comment, CommentLifecycle}
 
   @doc "Loads summaries for one snapshot kind and returns them keyed by id."
   @spec load_summaries(:user | :article | :comment, atom() | nil, [term()]) :: map()
@@ -37,10 +37,13 @@ defmodule GroupherServer.CMS.Snapshot.Query do
       {:ok, %{model: model}} ->
         model
         |> CMS.Gate.scope(nil, :list, scope_context(thread))
+        |> join(:inner, [article], binding in ArticleBinding,
+          on: binding.article_id == article.id
+        )
         |> where([article], article.id in ^ids)
-        |> select([article, ...], %{
+        |> select([article, binding, ...], %{
           id: article.id,
-          inner_id: article.inner_id,
+          inner_id: binding.inner_id,
           title: as(:gate_article_public).title,
           slug: as(:gate_article_public).slug,
           thread: article.thread,
@@ -87,7 +90,7 @@ defmodule GroupherServer.CMS.Snapshot.Query do
   defp article_summary(thread, article) do
     %{
       id: article.id,
-      inner_id: article.inner_id,
+      inner_id: Map.get(article, :inner_id),
       title: article.title,
       slug: Map.get(article, :slug),
       thread: thread,

@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
   ## Examples
 
       Index.move_node(community, branch, node, new_parent_node_id, 0)
-      #=> :ok
+      #=> {:ok, :pass}
 
   """
   def move_node(%Community{} = community, branch, %DocTreeNode{} = node, parent_node_id, index) do
@@ -80,7 +80,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
       normalize_sibling_indexes(community, branch, old_parent_node_id, node.type)
     end
 
-    :ok
+    {:ok, :pass}
   end
 
   def ensure_index(attrs, %Community{} = community, branch, parent_node_id) do
@@ -125,7 +125,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
     |> where([n], n.index >= ^(from_index + @temporary_index_offset))
     |> Repo.update_all(inc: [index: 1 - @temporary_index_offset])
 
-    :ok
+    {:ok, :pass}
   end
 
   def normalize_sibling_indexes(%Community{} = community, branch, parent_node_id, type) do
@@ -147,7 +147,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
       updated_at: now
     )
 
-    :ok
+    {:ok, :pass}
   end
 
   def affected_nodes(%Community{} = community, branch, parent_node_id, type) do
@@ -244,7 +244,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
       raise "doc tree reindex updated #{result.num_rows} of #{length(ids)} expected nodes"
     end
 
-    :ok
+    {:ok, :pass}
   end
 
   defp where_sibling_scope(query, nil, :tab) do

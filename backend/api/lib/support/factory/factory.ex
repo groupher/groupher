@@ -156,9 +156,13 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_attrs(thread, attrs), do: mock_meta(thread) |> Map.merge(attrs)
 
-  def article_community(%{community_id: community_id}) do
+  def article_binding(%{community_id: community_id}) do
     GroupherServer.Repo.get!(Community, community_id)
   end
+
+  def article_binding(%{community: %Community{} = community}), do: community
+
+  def article_binding(%{communities: [%Community{} = community | _]}), do: community
 
   # NOTICE: avoid Recursive problem
   # this line of code will cause SERIOUS Recursive problem
@@ -206,7 +210,7 @@ defmodule GroupherServer.Support.Factory do
     try do
       factory_name
       |> mock(attributes)
-      |> maybe_put_default_article_community()
+      |> maybe_put_default_article_binding()
       |> maybe_put_default_doc_branch()
       |> maybe_put_default_tag_group()
       |> GroupherServer.Repo.insert()
@@ -235,7 +239,7 @@ defmodule GroupherServer.Support.Factory do
 
   defp maybe_put_default_tag_group(record), do: record
 
-  defp maybe_put_default_article_community(record), do: record
+  defp maybe_put_default_article_binding(record), do: record
 
   defp maybe_put_default_doc_branch(record), do: record
 
@@ -393,15 +397,15 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_article(thread, preload: []), do: mock_article(thread)
 
-  @doc "Creates one stable Article projection; requested public relations are already materialized."
+  @doc "Creates one stable Article projection; requested public bindings are already materialized."
   def mock_article(thread, preload: preload) do
     {community, article, attrs, user} = mock_article(thread)
 
     # Stable Article creation already returns the public projection with its
-    # canonical author, community, lifecycle, tags and ArticleCommunity relations.
+    # canonical author, community, lifecycle, tags and ArticleBinding bindings.
     # The historical helper reloaded a thread-specific physical row here; that
     # would incorrectly cast the stable UUID to the removed integer identity.
-    _requested_relations = preload
+    _requested_bindings = preload
     {community, article, attrs, user}
   end
 

@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
       report = results["entries"] |> List.first()
 
       assert get_in(report, ["article", "thread"]) == "CHANGELOG"
-      assert get_in(report, ["article", "innerId"]) == to_string(changelog.inner_id)
+      assert get_in(report, ["article", "innerId"]) == to_string(article_inner_id(changelog, community))
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 1
@@ -56,7 +56,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )

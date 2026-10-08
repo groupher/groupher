@@ -343,7 +343,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       [release_article] = Repo.preload(release, :articles).articles
       article = Repo.get!(CMS.Model.Article, release_article.doc_id)
 
-      assert is_nil(article.inner_id)
+      assert is_nil(article_inner_id(article, community))
 
       assert Repo.exists?(
                from(public in CMS.Model.DocPublic,

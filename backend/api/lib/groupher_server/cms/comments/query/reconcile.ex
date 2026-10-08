@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Comments.Query.Reconcile do
   @moduledoc """
-  Bounded reconciliation and internal relation reads for comments.
+  Bounded reconciliation and internal binding reads for comments.
 
   Business position:
 
@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
   alias Accounts.Model.User
   alias CMS.Comments.ErrorCat, as: CommentErrorCat
   alias CMS.Comments.InteractionResponse
+  alias CMS.Articles.Bindings
   alias CMS.FrontDesk
   alias CMS.Gate.Context.Scope.Comment, as: CommentContext
   alias CMS.Helper.{ArticlePath, EmotionFormatter}
@@ -66,7 +67,7 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
           T.domain_res([Comment.t()])
   def reconcile_comments(thread, article, inner_ids, viewer)
       when is_atom(thread) and is_list(inner_ids) do
-    with :ok <- validate_batch(inner_ids),
+    with {:ok, _} <- validate_batch(inner_ids),
          {:ok, inner_ids} <- parse_inner_ids(inner_ids) do
       comments =
         Comment
@@ -93,7 +94,7 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
   @spec viewer_states(map(), [integer() | String.t()], User.t()) ::
           T.domain_res([map()])
   def viewer_states(article_path, inner_ids, %User{} = viewer) when is_list(inner_ids) do
-    with :ok <- validate_batch(inner_ids),
+    with {:ok, _} <- validate_batch(inner_ids),
          {:ok, {thread, article}} <- resolve_article(article_path),
          {:ok, comments} <- reconcile_comments(thread, article, inner_ids, viewer) do
       {:ok,
@@ -119,7 +120,7 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
   @spec reconcile_states(map(), [integer() | String.t()], User.t() | nil) ::
           T.domain_res(map())
   def reconcile_states(article_path, inner_ids, viewer) when is_list(inner_ids) do
-    with :ok <- validate_batch(inner_ids),
+    with {:ok, _} <- validate_batch(inner_ids),
          {:ok, {thread, article}} <- resolve_article(article_path),
          {:ok, comments} <- reconcile_comments(thread, article, inner_ids, viewer) do
       stats =
@@ -138,15 +139,18 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
           %{comment_inner_id: inner_id, comment: comment}
         end)
 
-      {:ok,
-       %{
-         article: %{
-           inner_id: article.inner_id,
-           comments_count: Map.get(stats, :comments_count, 0),
-           comments_revision: Map.get(stats, :comments_revision, 0)
-         },
-         entries: entries
-       }}
+      with {:ok, %{inner_id: inner_id}} <-
+             Bindings.get(article, Map.get(article, :community)) do
+        {:ok,
+         %{
+           article: %{
+             inner_id: inner_id,
+             comments_count: Map.get(stats, :comments_count, 0),
+             comments_revision: Map.get(stats, :comments_revision, 0)
+           },
+           entries: entries
+         }}
+      end
     end
   end
 
@@ -193,7 +197,7 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
   defp attach_article(nil, _article), do: nil
   defp attach_article(comment, article), do: Map.put(comment, :article, article)
 
-  defp validate_batch(values) when length(values) <= @batch_size, do: :ok
+  defp validate_batch(values) when length(values) <= @batch_size, do: {:ok, :pass}
   defp validate_batch(_values), do: {:error, "viewer batch cannot contain more than 100 paths"}
 
   defp parse_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}

@@ -39,10 +39,10 @@ defmodule GroupherServer.Test.CMS.BlogMeta do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
       assert not blog.meta.is_comment_locked
 
-      {:ok, _} = CMS.Articles.lock_comments(blog.id, user)
+      {:ok, _} = CMS.Articles.lock_comments(blog.id, user, community: community)
       assert Repo.get!(CMS.Model.Article, blog.id).comments_locked
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(blog.id, user)
+      {:ok, _} = CMS.Articles.undo_lock_comments(blog.id, user, community: community)
       refute Repo.get!(CMS.Model.Article, blog.id).comments_locked
     end
   end

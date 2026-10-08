@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Articles.Trash
-  alias CMS.Model.{Article, ArticleCommunity, ArticlePublic, Community, KanbanState}
+  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Community, KanbanState}
   alias CMS.Seeds.{Communities, FullCommunity}
   alias CMS.Seeds.Helper, as: SeedHelper
   alias Helper.{ORM, T}
@@ -106,7 +106,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
   defp seed_posts(%Community{} = community) do
     with {:ok, posts} <- seed_articles(community, :post, @post_titles) do
-      set_kanban_statuses(posts)
+      set_kanban_statuses(community, posts)
     end
   end
 
@@ -148,24 +148,33 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   defp existing_articles_by_title(thread, community_id, titles) do
     Article
     |> Trash.not_trashed_scope(thread)
-    |> join(:inner, [article], public in ArticlePublic, on: public.article_id == article.id)
+    |> join(:inner, [article], binding in CMS.Model.ArticleBinding,
+      on: binding.article_id == article.id
+    )
+    |> join(:inner, [article, _binding], public in ArticlePublic,
+      on: public.article_id == article.id
+    )
     |> where(
-      [article, public],
-      article.community_id == ^community_id and article.thread == ^thread and
+      [article, binding, public],
+      binding.community_id == ^community_id and article.thread == ^thread and
         public.title in ^titles
     )
-    |> select([article, public], %{id: article.id, thread: article.thread, title: public.title})
+    |> select([article, _binding, public], %{
+      id: article.id,
+      thread: article.thread,
+      title: public.title
+    })
     |> Repo.all()
     |> Map.new(&{&1.title, &1})
   end
 
-  defp set_kanban_statuses(posts) do
+  defp set_kanban_statuses(%Community{} = community, posts) do
     posts
     |> Enum.zip(Stream.cycle(@post_statuses))
     |> Enum.reduce_while({:ok, []}, fn {post, status}, {:ok, acc} ->
       post = Repo.get!(Article, post.id)
 
-      case CMS.Articles.States.set_status(post, status) do
+      case CMS.Articles.States.set_status(post, status, community.id) do
         {:ok, post} -> {:cont, {:ok, [post | acc]}}
         {:error, reason} -> {:halt, {:error, reason}}
       end
@@ -191,11 +200,11 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
     Repo.aggregate(
       from(post in active_posts,
-        join: relation in ArticleCommunity,
-        on: relation.article_id == post.id,
+        join: binding in ArticleBinding,
+        on: binding.article_id == post.id,
         join: state in KanbanState,
-        on: state.article_community_id == relation.id,
-        where: relation.community_id == ^community_id and post.thread == :post
+        on: state.article_binding_id == binding.id,
+        where: binding.community_id == ^community_id and post.thread == :post
       ),
       :count
     )
@@ -206,7 +215,9 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
     Repo.aggregate(
       from(item in active_articles,
-        where: item.community_id == ^community_id and item.thread == ^thread
+        join: binding in ArticleBinding,
+        on: binding.article_id == item.id,
+        where: binding.community_id == ^community_id and item.thread == ^thread
       ),
       :count
     )

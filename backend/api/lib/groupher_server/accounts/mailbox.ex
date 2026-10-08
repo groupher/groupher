@@ -146,7 +146,7 @@ defmodule GroupherServer.Accounts.Mailbox do
     |> Enum.uniq()
     |> Enum.each(&FrontDeskCache.delete_user/1)
 
-    :ok
+    {:ok, :pass}
   end
 
   defp update_users(user_ids) do

@@ -10,3 +10,11 @@
   迁移到 `CMS.Command`、统一结果恢复并移除产品端 replay 状态。
 - [CMS Command 入口、用例命名与 Elixir block style 修复](./cms-command-entry-and-naming-fix.md)：纠正
   facade/Command 边界，清理重复 use-case 命名，并增加折行 inline `do:` 的仓库约束。
+- [CMS Command、Gate、Lifecycle 与 Persistence 边界](./cms-command-gate-lifecycle-persist-boundary.md)：统一
+  写入入口、授权与状态职责，盘点遗漏的 Command，并收口 Writer/Persist 边界。
+- [CMS Command 客户端 Identity 边界修复](./cms-command-client-identity-fix.md)：保留 GraphQL
+  `commandId`，将创建、retry 复用和 unknown outcome 恢复统一收回 mutation executor。
+- [Backend Business Return Shape 收敛](./backend-business-return-shape.md)：统一业务层
+  `{:ok, value}` / `{:error, reason}` 返回协议，扫描并分批清理裸 `:ok` 与混合 `with` 形状。
+- [Article Binding 命名与存储重构](./article-binding-naming-and-storage.md)：统一
+  `ArticleBinding`、`ArticleView`、`Articles.Bindings` 命名，收拢 FrontDesk 路径边界，并规划物理表重命名。

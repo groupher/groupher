@@ -19,12 +19,16 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
     {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
     variables = %{
-      article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
+      article: %{
+        inner_id: article_inner_id(doc, community),
+        community: community.slug,
+        thread: "DOC"
+      }
     }
 
     results = user_conn |> gq_query(S.Article.q(:article, :doc), variables)
 
-    assert results["innerId"] == to_string(doc.inner_id)
+    assert results["innerId"] == to_string(article_inner_id(doc, community))
     assert get_in(results, ["community", "slug"]) == community.slug
 
     assert is_valid_kv?(results, "title", :string)
@@ -42,12 +46,16 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
     {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
     variables = %{
-      article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
+      article: %{
+        inner_id: article_inner_id(doc, community),
+        community: community.slug,
+        thread: "DOC"
+      }
     }
 
     results = guest_conn |> gq_query(S.Article.q(:article, :doc), variables)
 
-    assert results["innerId"] == to_string(doc.inner_id)
+    assert results["innerId"] == to_string(article_inner_id(doc, community))
     assert is_valid_kv?(results, "title", :string)
   end
 
@@ -55,7 +63,11 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
     {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
     variables = %{
-      article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
+      article: %{
+        inner_id: article_inner_id(doc, community),
+        community: community.slug,
+        thread: "DOC"
+      }
     }
 
     results = user_conn |> gq_query(S.Article.q(:article, :doc), variables)
@@ -77,7 +89,8 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
           illegal_words: ["some-word"]
         },
         :operations,
-        branch_id: doc.branch_id
+        branch_id: doc.branch_id,
+        community: community
       )
 
     results = user_conn |> gq_query(S.Article.q(:article, :doc), variables)
@@ -97,7 +110,11 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
       })
 
     variables = %{
-      article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
+      article: %{
+        inner_id: article_inner_id(doc, community),
+        community: community.slug,
+        thread: "DOC"
+      }
     }
 
     assert guest_conn

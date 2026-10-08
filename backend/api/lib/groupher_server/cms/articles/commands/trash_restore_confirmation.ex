@@ -7,6 +7,10 @@ defmodule GroupherServer.CMS.Articles.Commands.TrashRestoreConfirmation do
 
   use GroupherServer.CMS.Command.ConfirmationDefinition,
     operation: :article_restore,
-    data_keys: ["article_id", "command_id"],
-    field_types: %{"article_id" => :string, "command_id" => :string}
+    data_keys: ["article_id", "community_id", "command_id"],
+    field_types: %{
+      "article_id" => :string,
+      "community_id" => :integer,
+      "command_id" => :string
+    }
 end

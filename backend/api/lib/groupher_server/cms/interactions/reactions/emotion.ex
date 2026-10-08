@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
+  alias CMS.Articles.Bindings
   alias CMS.Communities.Enable
   alias CMS.{Gate, Command}
   alias CMS.Interactions.{Config, ErrorCat, ReadState}
@@ -94,9 +95,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
          {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
          {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
-         :ok <- sync_state(canonical, emotion, actor, operation, change),
-         :ok <- record_metric(canonical, operation, change, command_id),
-         :ok <- enqueue_effect(canonical, actor, operation, emotion, command_id, change) do
+         {:ok, _} <- sync_state(canonical, emotion, actor, operation, change),
+         {:ok, _} <- record_metric(canonical, operation, change, command_id),
+         {:ok, _} <- enqueue_effect(canonical, actor, operation, emotion, command_id, change) do
       {:ok,
        %Confirmation{
          data: %{
@@ -124,7 +125,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   end
 
   defp enqueue_effect(_canonical, _actor, _operation, _emotion, _command_id, :unchanged) do
-    :ok
+    {:ok, :pass}
   end
 
   defp enqueue_effect(canonical, actor, operation, emotion, command_id, :changed) do
@@ -137,7 +138,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
       data: %{actor_id: actor.id, operation: operation, emotion: emotion}
     })
     |> case do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -157,10 +158,16 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   end
 
   defp allow_emotion(article, info, emotion) do
-    Enable.emotion?(article.community.slug, :article, info.artiment, emotion)
+    case Bindings.get(article, Map.get(article, :community)) do
+      {:ok, %{community: community}} ->
+        Enable.emotion?(community.slug, :article, info.artiment, emotion)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
-  defp sync_state(_canonical, _emotion, _actor, _operation, :unchanged), do: :ok
+  defp sync_state(_canonical, _emotion, _actor, _operation, :unchanged), do: {:ok, :pass}
 
   defp sync_state(canonical, emotion, actor, operation, :changed) do
     result =
@@ -169,19 +176,19 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
         else: ReadState.remove_emotion(canonical, emotion, actor)
 
     case result do
-      {:ok, _projection} -> :ok
+      {:ok, _projection} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: :ok
-  defp record_metric(_article, _operation, :unchanged, _operation_id), do: :ok
+  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: {:ok, :pass}
+  defp record_metric(_article, _operation, :unchanged, _operation_id), do: {:ok, :pass}
 
   defp record_metric(article, operation, :changed, operation_id) do
     metric = if operation == :add, do: :emotion_added, else: :emotion_removed
 
     case MetricEvent.append_article_action(article, operation_id, metric) do
-      :ok -> :ok
+      {:ok, _} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end

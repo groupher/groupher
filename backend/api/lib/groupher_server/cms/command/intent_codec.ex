@@ -23,6 +23,23 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
       {:fields, %{"thread" => :raw, "attrs" => :digest_each, "opts" => :digest_each}},
     article_update: :digest_each,
     article_publish: :digest_each,
+    article_mirror:
+      {:fields,
+       %{
+         "source_community_id" => :raw,
+         "destination_community_id" => :raw,
+         "tag_ids" => :digest
+       }},
+    article_move:
+      {:fields,
+       %{
+         "source_community_id" => :raw,
+         "destination_community_id" => :raw,
+         "tag_ids" => :digest
+       }},
+    article_unmirror: {:fields, %{"community_id" => :raw}},
+    article_pin: {:fields, %{"community_id" => :raw}},
+    article_unpin: {:fields, %{"community_id" => :raw}},
     article_replace_asset: :digest_each,
     article_trash: :digest_each,
     article_restore: {:fields, %{"item_id" => :raw, "opts" => :digest_each}},

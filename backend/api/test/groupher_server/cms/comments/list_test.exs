@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.CMS.Comments.QueryList do
              CMS.Comments.create_comment(
                community,
                :post,
-               post.inner_id,
+               article_inner_id(post, community),
                mock_comment(),
                actor
              )

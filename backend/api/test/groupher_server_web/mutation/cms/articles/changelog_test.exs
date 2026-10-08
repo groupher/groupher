@@ -99,7 +99,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         )
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}"),
@@ -176,7 +176,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         )
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         expectedVersion: changelog.version,
         communityTags: [community_tag.id, community_tag2.id]
       }
@@ -189,7 +189,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
                MapSet.new([to_string(community_tag.id), to_string(community_tag2.id)])
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         expectedVersion: result["version"],
         communityTags: [community_tag2.id, community_tag3.id]
       }
@@ -207,7 +207,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -228,7 +228,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -237,14 +237,14 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       updated_changelog =
         rule_conn |> gq_mutation(S.Article.m(:update_article, :changelog), variables)
 
-      assert updated_changelog["innerId"] == to_string(changelog.inner_id)
+      assert updated_changelog["innerId"] == to_string(article_inner_id(changelog, community))
     end
 
     test "unauth user update changelog fails", ~m(user_conn guest_conn community changelog)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")

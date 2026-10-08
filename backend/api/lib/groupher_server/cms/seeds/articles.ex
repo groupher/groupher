@@ -139,7 +139,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     {:ok, Enum.reverse(articles)}
   end
 
-  defp attach_tags(_article, []), do: :ok
+  defp attach_tags(_article, []), do: {:ok, :pass}
 
   defp attach_tags(article, tag_ids) do
     count = Enum.random(1..min(3, length(tag_ids)))

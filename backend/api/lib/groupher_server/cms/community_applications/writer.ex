@@ -108,7 +108,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
 
     Repo.transaction(fn ->
       with {:ok, application} <- lock_owned(public_ref, user.id),
-           :ok <- expected_version(application, expected_version) do
+           {:ok, _} <- expected_version(application, expected_version) do
         Multi.new()
         |> Transitions.add(
           :application,
@@ -262,7 +262,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
     end
   end
 
-  defp expected_version(%{version: version}, version), do: :ok
+  defp expected_version(%{version: version}, version), do: {:ok, :pass}
   defp expected_version(_, _), do: {:error, ErrorCat.application_state_conflict()}
 
   defp unwrap_nested_transaction({:ok, %{application: application}}), do: application

@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
   alias CMS.Articles.Trash, as: TrashAgg
   alias CMS.Command
   alias CMS.FrontDesk
+  alias CMS.Articles.Bindings
   alias CMS.Model.{Article, TrashedArticle, TrashedDocArticle}
   alias CMS.Articles.Commands.TrashRestoreConfirmation, as: Confirmation
 
@@ -75,7 +76,14 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
     |> Command.execute(
       action: fn %{params: %{opts: input}} ->
         with {:ok, article} <- TrashAgg.restore(item, actor, Map.to_list(input)) do
-          {:ok, %Confirmation{data: %{"article_id" => article.id, "command_id" => command_id}}}
+          {:ok,
+           %Confirmation{
+             data: %{
+               "article_id" => article.id,
+               "community_id" => community_id,
+               "command_id" => command_id
+             }
+           }}
         end
       end,
       confirmation: Confirmation
@@ -110,11 +118,24 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
   end
 
   defp present_confirmation(
-         {:ok, %Confirmation{data: %{"article_id" => article_id, "command_id" => command_id}}}
+         {:ok,
+          %Confirmation{
+            data: %{
+              "article_id" => article_id,
+              "community_id" => community_id,
+              "command_id" => command_id
+            }
+          }}
        ) do
-    case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{} = article} -> {:ok, Map.put(article, :command_id, command_id)}
-      {:error, _reason} -> {:error, CMS.ErrorCat.command_result_unavailable()}
+    case {FrontDesk.article(article_id, mode: :internal),
+          FrontDesk.community(community_id, mode: :internal)} do
+      {{:ok, %Article{} = article}, {:ok, community}} ->
+        with {:ok, %{inner_id: inner_id}} <- Bindings.get(article, community) do
+          {:ok, article |> Map.put(:inner_id, inner_id) |> Map.put(:command_id, command_id)}
+        end
+
+      _ ->
+        {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
 

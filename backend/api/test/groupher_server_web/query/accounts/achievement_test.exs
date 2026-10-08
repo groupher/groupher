@@ -103,8 +103,8 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       {:ok, post} = db_insert(:post)
       {:ok, _article_collect} = CMS.Interactions.collect(post, user)
 
-      post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
-      author_user_login = post.author.user.login
+      stable_post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
+      author_user_login = stable_post.author.user.login
 
       variables = %{login: author_user_login}
       results = guest_conn |> gq_query(@query, variables)
@@ -122,8 +122,8 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
         {:ok, _article_collect} = CMS.Interactions.collect(post, user)
       end)
 
-      post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
-      author_user_login = post.author.user.login
+      stable_post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
+      author_user_login = stable_post.author.user.login
 
       user = users |> Enum.shuffle() |> List.first()
       {:ok, _article_collect} = CMS.Interactions.undo_collect(post, user)

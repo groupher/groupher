@@ -17,8 +17,9 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
   alias RequestActor.Classification
   alias CMS.Artiment.{Matcher, Threads}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.Articles.Bindings
   alias CMS.FrontDesk.Article, as: ArticleFrontDesk
-  alias CMS.Model.{Article, Community}
+  alias CMS.Model.{Article, ArticleBinding, Community}
   alias CMS.ViewTracker.{ErrorCat, Identity, Policy, ViewCounter}
   alias CMS.ViewTracker.Model.{ViewDedupeState, ViewerState}
 
@@ -70,7 +71,7 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
   projection for the exact `{thread, article_id}`; it does not delete another
   branch or logical Article identity.
   """
-  @spec delete_article_state(atom(), pos_integer()) :: :ok
+  @spec delete_article_state(atom(), pos_integer()) :: {:ok, :pass}
   def delete_article_state(thread, article_id) do
     delete_by_article(ViewDedupeState, thread, article_id)
     delete_by_article(ViewerState, thread, article_id)
@@ -82,8 +83,8 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
       case ViewCounter.increment_if_needed(article, identity, received_at) do
         {:counted, stats} ->
           operation_id = UUID.generate()
-          :ok = project_viewer_state(identity, thread, article.id, received_at)
-          :ok = append_metric!(operation_id, article, identity, received_at)
+          {:ok, _} = project_viewer_state(identity, thread, article.id, received_at)
+          {:ok, _} = append_metric!(operation_id, article, community, identity, received_at)
           emit_outcome(:counted, identity)
           build_result(article, community, thread, viewer, identity, true, stats)
 
@@ -121,15 +122,15 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
       conflict_target: [:thread, :article_id, :user_id]
     )
 
-    :ok
+    {:ok, :pass}
   end
 
-  defp project_viewer_state(_identity, _thread, _article_id, _received_at), do: :ok
+  defp project_viewer_state(_identity, _thread, _article_id, _received_at), do: {:ok, :pass}
 
-  defp append_metric!(operation_id, article, identity, received_at) do
+  defp append_metric!(operation_id, article, community, identity, received_at) do
     case MetricEvent.append(%{
            operation_id: operation_id,
-           community_id: article.community_id,
+           community_id: community.id,
            article_type: article_thread(article),
            article_id: article.id,
            metric: :article_view,
@@ -139,13 +140,15 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
            policy_version: Policy.version(),
            occurred_at: received_at
          }) do
-      :ok -> :ok
+      {:ok, _} -> {:ok, :pass}
       {:error, reason} -> Repo.rollback(reason)
     end
   end
 
   defp build_result(article, community, thread, viewer, identity, tracked, committed_stats) do
-    with {:ok, stats} <- resolve_stats(committed_stats, thread, article.id),
+    with {:ok, %{inner_id: inner_id}} <-
+           Bindings.get(%{article_id: article.id}, community),
+         {:ok, stats} <- resolve_stats(committed_stats, thread, article.id),
          viewer_state when is_map(viewer_state) <-
            CMS.ViewTracker.Query.viewer_state(article, viewer, actor_type: identity.actor_type) do
       %{
@@ -153,13 +156,13 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
         article_stats:
           Map.merge(stats, %{
             community: community.slug,
-            inner_id: article.inner_id
+            inner_id: inner_id
           }),
         viewer_state:
           Map.merge(viewer_state, %{
             community: community.slug,
             thread: thread,
-            inner_id: article.inner_id
+            inner_id: inner_id
           })
       }
     else
@@ -181,7 +184,7 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
       from(row in schema, where: row.thread == ^thread and row.article_id == ^article_id)
     )
 
-    :ok
+    {:ok, :pass}
   end
 
   defp read_purpose(opts) do
@@ -229,9 +232,10 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
            |> where([article], article.id == ^article_id)
            |> lock("FOR KEY SHARE")
            |> Repo.one(),
-         %Community{} = community <- Repo.get(Community, locked.community_id),
-         {:ok, current} <-
-           ArticleFrontDesk.read_stable(community, thread, locked.inner_id, nil, []) do
+         %Community{} = community <- projection_community(projection),
+         %ArticleBinding{inner_id: inner_id} <-
+           Repo.get_by(ArticleBinding, article_id: locked.id, community_id: community.id),
+         {:ok, current} <- ArticleFrontDesk.read_stable(community, thread, inner_id, nil, []) do
       {:ok, Map.merge(current, Map.take(projection, [:branch_id])), community, received_at}
     else
       _ -> {:error, ArticleErrorCat.article_not_found("article not found")}
@@ -241,4 +245,7 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
   defp lock_article_for_view_tracking(_projection) do
     {:error, ArticleErrorCat.article_not_found("article not found")}
   end
+
+  defp projection_community(%{community: %Community{} = community}), do: community
+  defp projection_community(_projection), do: nil
 end

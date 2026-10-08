@@ -15,10 +15,10 @@ defmodule GroupherServer.CMS.Articles.RevisionResult do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.FrontDesk
-  alias CMS.Articles.Store
+  alias CMS.Articles.{Bindings, Store}
   alias CMS.Articles.RevisionProjection
   alias CMS.Articles.ArticleTransportResult
-  alias CMS.Model.{Article, ArticleCommunity, ArticleRevision, Community}
+  alias CMS.Model.{Article, ArticleBinding, ArticleRevision, Community}
 
   @doc "Builds a stable Article result from a typed confirmation and loaded Community."
   @spec build(map() | struct(), Community.t()) :: {:ok, map()} | {:error, term()}
@@ -26,10 +26,9 @@ defmodule GroupherServer.CMS.Articles.RevisionResult do
     with {:ok, article_id} <- required_binary(confirmation, :article_id),
          {:ok, revision_id} <- required_binary(confirmation, :revision_id),
          {:ok, %Article{} = article} <- FrontDesk.article(article_id, mode: :internal),
-         true <- article.community_id == community.id,
-         %ArticleCommunity{inner_id: inner_id} when is_integer(inner_id) <-
-           Repo.get_by(ArticleCommunity, article_id: article.id, community_id: community.id),
-         article = %{article | inner_id: inner_id},
+         %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) <-
+           Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id),
+         {:ok, _context} <- Bindings.get(%{article_id: article.id}, community),
          {:ok, %ArticleRevision{} = revision} <- Store.revision(revision_id),
          {:ok, result} <-
            RevisionProjection.build(article, community, revision,
@@ -40,7 +39,7 @@ defmodule GroupherServer.CMS.Articles.RevisionResult do
        ArticleTransportResult.decorate(
          result,
          %{
-           article: %{article | inner_id: inner_id},
+           article: article,
            revision: revision,
            community: community,
            confirmation: confirmation

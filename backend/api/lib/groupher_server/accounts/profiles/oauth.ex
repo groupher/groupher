@@ -338,7 +338,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
       strict: false
     )
     |> case do
-      {:ok, _binding} -> :ok
+      {:ok, _binding} -> {:ok, :pass}
       {:error, reason} -> Repo.rollback(reason)
     end
   end

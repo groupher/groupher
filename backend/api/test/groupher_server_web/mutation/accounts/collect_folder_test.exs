@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, folder} = Accounts.CollectFolders.create(args, user)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         folderId: folder.id
       }
 
@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, folder} = Accounts.CollectFolders.create(args, user)
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
         folderId: folder.id
       }
 
@@ -143,7 +143,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       command_id = Ecto.UUID.generate()
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         folderId: folder.id,
         commandId: command_id
       }
@@ -170,7 +170,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, _folder} = Accounts.CollectFolders.add(post, folder.id, user)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         folderId: folder.id
       }
 
@@ -188,7 +188,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, _folder} = Accounts.CollectFolders.add(blog, folder.id, user)
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
         folderId: folder.id
       }
 
@@ -206,7 +206,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       {:ok, _folder} = Accounts.CollectFolders.add(post, folder.id, user)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         folderId: folder.id,
         commandId: Ecto.UUID.generate()
       }

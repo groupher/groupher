@@ -19,12 +19,16 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
     variables = %{
-      article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      article: %{
+        inner_id: article_inner_id(post, community),
+        community: community.slug,
+        thread: "POST"
+      }
     }
 
     results = user_conn |> gq_query(S.Article.q(:article, :post), variables)
 
-    assert results["innerId"] == to_string(post.inner_id)
+    assert results["innerId"] == to_string(article_inner_id(post, community))
     assert get_in(results, ["community", "slug"]) == community.slug
 
     assert is_valid_kv?(results, "title", :string)
@@ -42,19 +46,27 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
     variables = %{
-      article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      article: %{
+        inner_id: article_inner_id(post, community),
+        community: community.slug,
+        thread: "POST"
+      }
     }
 
     results = guest_conn |> gq_query(S.Article.q(:article, :post), variables)
 
-    assert results["innerId"] == to_string(post.inner_id)
+    assert results["innerId"] == to_string(article_inner_id(post, community))
     assert is_valid_kv?(results, "title", :string)
   end
 
   test "anonymous readers receive only the safe Article ArticleLog",
        ~m(guest_conn community post)a do
     variables = %{
-      article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+      article: %{
+        inner_id: article_inner_id(post, community),
+        community: community.slug,
+        thread: "POST"
+      },
       filter: %{page: 1}
     }
 
@@ -74,7 +86,11 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
     variables = %{
-      article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      article: %{
+        inner_id: article_inner_id(post, community),
+        community: community.slug,
+        thread: "POST"
+      }
     }
 
     results = user_conn |> gq_query(S.Article.q(:article, :post), variables)
@@ -95,7 +111,8 @@ defmodule GroupherServer.Test.Query.Articles.Post do
           illegal_reason: ["some-reason"],
           illegal_words: ["some-word"]
         },
-        :operations
+        :operations,
+        community: community
       )
 
     results = user_conn |> gq_query(S.Article.q(:article, :post), variables)
@@ -115,7 +132,11 @@ defmodule GroupherServer.Test.Query.Articles.Post do
       })
 
     variables = %{
-      article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      article: %{
+        inner_id: article_inner_id(post, community),
+        community: community.slug,
+        thread: "POST"
+      }
     }
 
     assert guest_conn

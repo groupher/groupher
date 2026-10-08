@@ -508,7 +508,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     }
 
     case write_audit(lifecycle, operation_ref, "community.blocker_terminated", attrs) do
-      {:ok, _audit} -> :ok
+      {:ok, _audit} -> {:ok, :pass}
       {:error, reason} -> Repo.rollback(reason)
     end
   end
@@ -756,23 +756,23 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   defp blocker_type(%{"blocker_type" => type}), do: type
 
   defp ensure_lifecycle!(nil), do: Repo.rollback(CommunityErrorCat.lifecycle_not_found())
-  defp ensure_lifecycle!(%CommunityLifecycle{}), do: :ok
+  defp ensure_lifecycle!(%CommunityLifecycle{}), do: {:ok, :pass}
 
   defp ensure_not_destroyed!(%CommunityLifecycle{state: :destroy}) do
     Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
   end
 
-  defp ensure_not_destroyed!(%CommunityLifecycle{}), do: :ok
+  defp ensure_not_destroyed!(%CommunityLifecycle{}), do: {:ok, :pass}
 
   defp ensure_expected_version!(%CommunityLifecycle{version: version}, opts) do
     case Keyword.get(opts, :expected_version) do
-      nil -> :ok
-      ^version -> :ok
+      nil -> {:ok, :pass}
+      ^version -> {:ok, :pass}
       _ -> Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
     end
   end
 
-  defp ensure_state_allowed!(_lifecycle, nil), do: :ok
+  defp ensure_state_allowed!(_lifecycle, nil), do: {:ok, :pass}
 
   defp ensure_state_allowed!(%CommunityLifecycle{state: state}, allowed_states)
        when is_list(allowed_states) do
@@ -790,7 +790,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
         Repo.rollback(CommunityErrorCat.archive_recovery_window_active())
 
       true ->
-        :ok
+        {:ok, :pass}
     end
   end
 

@@ -136,9 +136,9 @@ defmodule GroupherServer.Activity.Filter do
     preset_key = Map.get(selection, :preset_key)
     user_filter = Map.get(selection, :filter) || %{}
 
-    with :ok <- validate_selection_keys(selection),
+    with {:ok, _} <- validate_selection_keys(selection),
          {:ok, preset} <- fetch_preset(preset_key),
-         :ok <- validate_user_filter(user_filter, active_actions),
+         {:ok, _} <- validate_user_filter(user_filter, active_actions),
          {:ok, applied_filter, empty?} <- merge_filter(preset, user_filter, active_actions) do
       coverage = coverage(preset, active_actions)
 
@@ -160,7 +160,7 @@ defmodule GroupherServer.Activity.Filter do
 
   defp validate_selection_keys(selection) do
     if Map.keys(selection) -- [:preset_key, :filter] == [] do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.invalid_pagination()}
     end
@@ -200,7 +200,7 @@ defmodule GroupherServer.Activity.Filter do
         {:error, ErrorCat.invalid_pagination()}
 
       true ->
-        :ok
+        {:ok, :pass}
     end
   end
 

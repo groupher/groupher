@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
   describe "business writes keep polymorphic refs consistent" do
     test "create_comment persists only the matching article ref", ~m(community post user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
 

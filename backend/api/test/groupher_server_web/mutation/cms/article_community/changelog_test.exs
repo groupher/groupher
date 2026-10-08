@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
+defmodule GroupherServer.Test.Mutation.ArticleBinding.Changelog do
   @moduledoc false
 
   use GroupherServer.TestMate
@@ -26,19 +26,19 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
-      assoc_communities = CMS.Articles.Communities.communities(changelog) |> Enum.map(& &1.id)
+      assoc_communities = binding_communities(changelog) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
     end
 
     test "unauth user cannot mirror a changelog to a community",
          ~m(user_conn guest_conn community community2 changelog)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         targetCommunity: community2.slug
       }
 
@@ -72,20 +72,20 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         targetCommunity: community3.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
-      assoc_communities = CMS.Articles.Communities.communities(changelog) |> Enum.map(& &1.id)
+      assoc_communities = binding_communities(changelog) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
       assert community2.id in assoc_communities
     end
@@ -96,20 +96,20 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       variables2 = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         targetCommunity: community3.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables2)
 
-      assoc_communities = CMS.Articles.Communities.communities(changelog) |> Enum.map(& &1.id)
+      assoc_communities = binding_communities(changelog) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
       assert community2.id in assoc_communities
 
@@ -117,7 +117,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       rule_conn |> gq_mutation(S.Article.m(:unmirror_article), variables)
-      assoc_communities = CMS.Articles.Communities.communities(changelog) |> Enum.map(& &1.id)
+      assoc_communities = binding_communities(changelog) |> Enum.map(& &1.id)
       assert community2.id not in assoc_communities
       assert community3.id in assoc_communities
     end
@@ -128,20 +128,20 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       found = Repo.get!(CMS.Model.Article, changelog.id)
-      assoc_communities = CMS.Articles.Communities.communities(found) |> Enum.map(& &1.id)
+      assoc_communities = binding_communities(found) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
 
       passport_rules = %{"changelog.community.move" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      pre_community_id = found.community_id
+      pre_community_id = community.id
 
       article_tag_attrs = mock_attrs(:community_tag)
       {:ok, user} = db_insert(:user)
@@ -150,7 +150,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
         CMS.Communities.create_tag(community2, :changelog, article_tag_attrs, user)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         targetCommunity: community2.slug,
         communityTags: [article_tag.id]
       }
@@ -158,17 +158,17 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       rule_conn |> gq_mutation(S.Article.m(:move_article), variables)
 
       found = Repo.get!(CMS.Model.Article, changelog.id)
-      assoc_communities = CMS.Articles.Communities.communities(found) |> Enum.map(& &1.id)
-      {:ok, tags} = CMS.Articles.Communities.tags(found, community2)
+      assoc_communities = binding_communities(found) |> Enum.map(& &1.id)
+      {:ok, tags} = binding_tags(found, community2)
       assoc_article_tags = Enum.map(tags, & &1.id)
 
       assert pre_community_id not in assoc_communities
       assert community2.id in assoc_communities
-      assert community2.id == found.community_id
+      assert community2.id in assoc_communities
 
       assert article_tag.id in assoc_article_tags
 
-      assert found.community_id == community2.id
+      assert community2.id in assoc_communities
     end
   end
 end

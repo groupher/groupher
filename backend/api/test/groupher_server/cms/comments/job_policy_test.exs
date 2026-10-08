@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
       CMS.Comments.create_comment(
         community,
         :post,
-        post.inner_id,
+        article_inner_id(post, community),
         mock_comment(),
         actor
       )
@@ -54,7 +54,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
              CMS.Comments.create_comment(
                community,
                :post,
-               post.inner_id,
+               article_inner_id(post, community),
                mock_comment("parent"),
                actor
              )
@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
              CMS.Comments.create_comment(
                community,
                :post,
-               post.inner_id,
+               article_inner_id(post, community),
                mock_comment("before"),
                actor
              )
@@ -106,7 +106,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
              CMS.Comments.create_comment(
                community,
                :post,
-               post.inner_id,
+               article_inner_id(post, community),
                mock_comment("before"),
                actor
              )
@@ -142,7 +142,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
              CMS.Comments.create_comment(
                community,
                :post,
-               post.inner_id,
+               article_inner_id(post, community),
                mock_comment(),
                actor
              )
@@ -164,7 +164,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
              CMS.Comments.create_comment(
                community,
                :post,
-               post.inner_id,
+               article_inner_id(post, community),
                mock_comment(),
                actor
              )

@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Articles
   alias CMS.Artiment.Matcher
+  alias CMS.FrontDesk
   alias CMS.Helper.EmotionFormatter
   alias CMS.Interactions.{Config, DefaultViewerState, ErrorCat, Reactions, ReadState}
   alias CMS.Model.Interaction.RoaringBitmap
@@ -87,16 +87,16 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   @spec article_states_for_paths([map()], User.t(), keyword()) ::
           {:ok, [map()]} | {:error, term()}
   def article_states_for_paths(paths, %User{} = viewer, opts \\ []) when is_list(paths) do
-    with {:ok, resolved} <- Articles.resolve_paths(paths),
+    with {:ok, resolved} <- FrontDesk.articles(paths),
          states when is_map(states) <-
            viewer_states(Enum.map(resolved, & &1.article), viewer, opts) do
       {:ok,
-       Enum.map(resolved, fn %{path: path, article: article, relation: relation} ->
+       Enum.map(resolved, fn %{path: path, article: article, binding: binding} ->
          {:ok, %{artiment: type}} = Matcher.match_interaction(article)
          state = Map.fetch!(states, {type, article.id})
 
          ReadState.article_state(
-           %{community: path.community, thread: path.thread, inner_id: relation.inner_id},
+           %{community: path.community, thread: path.thread, inner_id: binding.inner_id},
            state
          )
        end)}

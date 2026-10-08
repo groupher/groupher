@@ -345,7 +345,7 @@ defmodule Helper.ORMAtom do
       path = String.split(to_string(key), ".")
 
       case validate_meta_path(queryable, path) do
-        :ok -> {:cont, {:ok, [{path, value} | acc]}}
+        {:ok, :pass} -> {:cont, {:ok, [{path, value} | acc]}}
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
@@ -359,7 +359,7 @@ defmodule Helper.ORMAtom do
     field = String.to_existing_atom(field_name)
 
     if field in meta.__struct__.__schema__(:fields) do
-      :ok
+      {:ok, :pass}
     else
       update_error("meta field path #{field_name} does not exist")
     end

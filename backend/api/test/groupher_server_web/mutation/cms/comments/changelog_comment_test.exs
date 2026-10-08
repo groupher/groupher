@@ -28,7 +28,10 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(comment))
-      assert result["articleStats"]["innerId"] == to_string(changelog.inner_id)
+
+      assert result["articleStats"]["innerId"] ==
+               to_string(article_inner_id(changelog, community))
+
       assert result["articleStats"]["commentsRevision"] == 1
     end
 
@@ -37,7 +40,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -60,7 +63,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -96,7 +99,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -130,7 +133,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -157,7 +160,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -185,7 +188,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -207,7 +210,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -239,7 +242,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -262,7 +265,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -302,7 +305,11 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
   describe "[article comment lock/unlock]" do
     test "can lock a changelog's comment", ~m(community changelog)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        }
       }
 
       passport_rules = %{community.slug => %{"changelog.lock_comment" => true}}
@@ -310,7 +317,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       result = rule_conn |> gq_mutation(S.Article.m(:lock_comment, :changelog), variables)
 
-      assert result["innerId"] == to_string(changelog.inner_id)
+      assert result["innerId"] == to_string(article_inner_id(changelog, community))
 
       changelog = Repo.get!(CMS.Model.Article, changelog.id)
       assert changelog.comments_locked
@@ -318,7 +325,11 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
     test "unauth user fails", ~m(guest_conn community changelog)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        }
       }
 
       assert guest_conn
@@ -330,12 +341,19 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
     end
 
     test "can undo lock a changelog's comment", ~m(community changelog user)a do
-      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user)
-      {:ok, changelog} = read_article(community, :changelog, changelog.inner_id)
+      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user, community: community)
+
+      {:ok, changelog} =
+        read_article(community, :changelog, article_inner_id(changelog, community))
+
       assert changelog.meta.is_comment_locked
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        }
       }
 
       passport_rules = %{community.slug => %{"changelog.undo_lock_comment" => true}}
@@ -343,15 +361,21 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       result = rule_conn |> gq_mutation(S.Article.m(:unlock_comment, :changelog), variables)
 
-      assert result["innerId"] == to_string(changelog.inner_id)
+      assert result["innerId"] == to_string(article_inner_id(changelog, community))
 
-      {:ok, changelog} = read_article(community, :changelog, changelog.inner_id)
+      {:ok, changelog} =
+        read_article(community, :changelog, article_inner_id(changelog, community))
+
       assert not changelog.meta.is_comment_locked
     end
 
     test "unauth user undo fails", ~m(guest_conn community changelog)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        }
       }
 
       assert guest_conn
@@ -369,7 +393,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -386,7 +410,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -406,7 +430,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -425,7 +449,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )

@@ -8,10 +8,11 @@ defmodule GroupherServer.Test.CMS.Comments.Writer do
   @article_cat Const.cat_map()
 
   test "create reloads the canonical Post before deriving question fields" do
-    {_community, stale_post, _, actor} = mock_article(:post, preload: [author: :user])
+    {community, stale_post, _, actor} = mock_article(:post, preload: [author: :user])
     assert stale_post.cat != @article_cat.qa
 
-    {:ok, _canonical_post} = CMS.Articles.set_cat(stale_post.id, @article_cat.qa, actor)
+    {:ok, _canonical_post} =
+      CMS.Articles.set_cat(stale_post.id, @article_cat.qa, actor, community.id)
 
     assert {:ok, %{is_for_question: true}} =
              CMS.Comments.create_comment(:post, stale_post, mock_comment(), actor)
@@ -21,9 +22,15 @@ defmodule GroupherServer.Test.CMS.Comments.Writer do
     {community, post, _, actor} = mock_article(:post, preload: [author: :user])
 
     {:ok, %Comment{} = parent} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), actor)
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment(),
+        actor
+      )
 
-    {:ok, _} = CMS.Articles.lock_comments(post.id, actor)
+    {:ok, _} = CMS.Articles.lock_comments(post.id, actor, community: community)
 
     assert {:error, %{reason: :article_comments_locked}} =
              CMS.Comments.reply_comment(parent.id, mock_comment(), actor)

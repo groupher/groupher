@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
   alias GroupherServer.CMS
   alias CMS.Seeds.LiteHome
-  alias CMS.Model.{Article, ArticleCommunity, ArticleLifecycle, KanbanState}
+  alias CMS.Model.{Article, ArticleBinding, ArticleLifecycle, KanbanState}
 
   describe "[lite home seeds]" do
     test "resets home with minimal main and dashboard data" do
@@ -26,12 +26,12 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
       kanban_posts =
         Repo.all(
           from(article in Article,
-            join: relation in ArticleCommunity,
-            on: relation.article_id == article.id,
+            join: binding in ArticleBinding,
+            on: binding.article_id == article.id,
             join: state in KanbanState,
-            on: state.article_community_id == relation.id,
+            on: state.article_binding_id == binding.id,
             where:
-              relation.community_id == ^community.id and article.thread == :post and
+              binding.community_id == ^community.id and article.thread == :post and
                 not is_nil(state.status),
             select: state
           )
@@ -46,9 +46,9 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
       {1, _} =
         from(state in KanbanState,
-          join: relation in ArticleCommunity,
-          on: relation.id == state.article_community_id,
-          where: relation.article_id == ^post.id and relation.community_id == ^community.id
+          join: binding in ArticleBinding,
+          on: binding.id == state.article_binding_id,
+          where: binding.article_id == ^post.id and binding.community_id == ^community.id
         )
         |> Repo.delete_all()
 
@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
       post = article_by_title!(community.id, "一次线上故障复盘记录")
 
-      assert {:ok, _trash_item} = CMS.Articles.trash(post, :operations)
+      assert {:ok, _trash_item} = CMS.Articles.trash(post, :operations, community: community)
       assert count(:post, community.id) == 3
 
       {:ok, community} = LiteHome.seed()
@@ -77,45 +77,44 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
   defp kanban_count(community_id) do
     Article
-    |> join(:inner, [article], relation in ArticleCommunity,
-      on: relation.article_id == article.id
-    )
+    |> join(:inner, [article], binding in ArticleBinding, on: binding.article_id == article.id)
     |> join(:inner, [article], lifecycle in ArticleLifecycle,
       on: lifecycle.article_id == article.id and lifecycle.state in [:published, :archived]
     )
-    |> join(:inner, [article, relation], state in KanbanState,
-      on: state.article_community_id == relation.id
+    |> join(:inner, [article, binding], state in KanbanState,
+      on: state.article_binding_id == binding.id
     )
     |> where(
-      [article, relation],
-      article.thread == :post and relation.community_id == ^community_id
+      [article, binding],
+      article.thread == :post and binding.community_id == ^community_id
     )
     |> Repo.aggregate(:count, :id)
   end
 
   defp count(thread, community_id) do
     Article
-    |> join(:inner, [article], relation in ArticleCommunity,
-      on: relation.article_id == article.id
-    )
+    |> join(:inner, [article], binding in ArticleBinding, on: binding.article_id == article.id)
     |> join(:inner, [article], lifecycle in ArticleLifecycle,
       on: lifecycle.article_id == article.id and lifecycle.state in [:published, :archived]
     )
     |> where(
-      [article, relation],
-      article.thread == ^thread and relation.community_id == ^community_id
+      [article, binding],
+      article.thread == ^thread and binding.community_id == ^community_id
     )
     |> Repo.aggregate(:count, :id)
   end
 
   defp article_by_title!(community_id, title) do
     Article
+    |> join(:inner, [article], binding in CMS.Model.ArticleBinding,
+      on: binding.article_id == article.id
+    )
     |> join(:inner, [article], public in CMS.Model.ArticlePublic,
       on: public.article_id == article.id
     )
     |> where(
-      [article, public],
-      article.community_id == ^community_id and article.thread == :post and public.title == ^title
+      [article, binding, public],
+      binding.community_id == ^community_id and article.thread == :post and public.title == ^title
     )
     |> Repo.one!()
   end

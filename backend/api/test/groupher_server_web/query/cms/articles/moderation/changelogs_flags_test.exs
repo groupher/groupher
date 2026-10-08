@@ -44,7 +44,8 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       changelog_m = Repo.get!(CMS.Model.Article, changelog_m.article_id)
@@ -67,13 +68,13 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       assert results["pageSize"] == @page_size
       assert results["totalCount"] == @total_count
 
-      {:ok, _} = CMS.Articles.pin(community, changelog_m.article_id, user)
+      {:ok, _} = CMS.Articles.pin(community, changelog_m.article_id, user, Ecto.UUID.generate())
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       entries_first = results["entries"] |> List.first()
 
       assert results["totalCount"] == @total_count
-      assert entries_first["innerId"] == to_string(changelog_m.inner_id)
+      assert entries_first["innerId"] == to_string(article_inner_id(changelog_m, community))
       assert entries_first["isPinned"] == true
     end
 
@@ -84,7 +85,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
       {:ok, changelog} = read_article(community, :changelog, random_id)
-      {:ok, _} = CMS.Articles.pin(community, changelog.article_id, user)
+      {:ok, _} = CMS.Articles.pin(community, changelog.article_id, user, Ecto.UUID.generate())
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
@@ -97,7 +98,10 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
       {:ok, random_changelog} = read_article(community, :changelog, random_id)
-      {:ok, _} = CMS.Articles.pin(community, random_changelog.article_id, user)
+
+      {:ok, _} =
+        CMS.Articles.pin(community, random_changelog.article_id, user, Ecto.UUID.generate())
+
       {:ok, _} = CMS.Articles.trash(random_changelog, user)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)

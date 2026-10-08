@@ -433,8 +433,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
       {:ok, node} = draft_node(community, hd(links).id)
       branch = Repo.get!(DocBranch, node.branch_id)
 
-      {:ok, queries} =
-        capture_repo_queries(fn ->
+      {{:ok, :pass}, queries} =
+         capture_repo_queries(fn ->
           Index.move_node(community, branch, node, parent.node.id, 0)
         end)
 
@@ -738,7 +738,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
   defp public_doc_count(community_id) do
     CMS.Model.DocPublic
     |> join(:inner, [public], article in CMS.Model.Article, on: article.id == public.article_id)
-    |> where([_public, article], article.community_id == ^community_id)
+    |> join(:inner, [_public, article], binding in CMS.Model.ArticleBinding,
+      on: binding.article_id == article.id
+    )
+    |> where([_public, _article, binding], binding.community_id == ^community_id)
     |> Repo.aggregate(:count, :article_id)
   end
 

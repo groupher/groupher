@@ -40,10 +40,10 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       assert not changelog.meta.is_comment_locked
 
-      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user)
+      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user, community: community)
       assert Repo.get!(CMS.Model.Article, changelog.id).comments_locked
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(changelog.id, user)
+      {:ok, _} = CMS.Articles.undo_lock_comments(changelog.id, user, community: community)
       refute Repo.get!(CMS.Model.Article, changelog.id).comments_locked
     end
   end

@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   alias Accounts.Model.User
   alias CMS.{Articles, Communities, Command, Docs}
   alias CMS.FrontDesk
-  alias CMS.Model.{Article, ArticleCommunity, Community}
+  alias CMS.Model.{Article, ArticleBinding, Community}
   alias CMS.Articles.RevisionResult
   alias CMS.Articles.Commands.RevisionConfirmation, as: Confirmation
   alias Helper.T
@@ -66,8 +66,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
 
   defp confirmation_from_public(public, community, command_id) do
     with {:ok, %Article{} = article} <- FrontDesk.article(public.article_id, mode: :internal),
-         %ArticleCommunity{inner_id: inner_id} when is_integer(inner_id) <-
-           Repo.get_by(ArticleCommunity, article_id: article.id, community_id: community.id),
+         %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) <-
+           Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id),
          published_at when is_struct(published_at, DateTime) <- Map.get(public, :inserted_at),
          publication_version when is_integer(publication_version) <-
            Map.get(public, :publication_version, Map.get(public, :version, 1)) do
@@ -92,15 +92,17 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     with {:ok, branch} <- CMS.Docs.Branch.resolve(community, []),
          {:ok, %{article: article, draft: draft}} <-
            Articles.create_stable_draft(community, :doc, attrs, user, branch_id: branch.id),
-         :ok <- sync_community_tags(community, article, attrs),
+         {:ok, _} <- sync_community_tags(community, article, attrs),
          {:ok, _published} <-
            Docs.publish_branch(article.id, branch.id, user,
              expected_draft_version: draft.version,
-             expected_lifecycle_version: 1
+             expected_lifecycle_version: 1,
+             community: community
            ),
          {:ok, %Article{} = published} <- FrontDesk.article(article.id, mode: :internal),
          {:ok, public} <- public_projection(published, community),
-         {:ok, _activity} <- Activity.log(public, :created, actor: user),
+         {:ok, _activity} <-
+           Activity.log(Map.put(public, :community_id, community.id), :created, actor: user),
          {:ok, _community} <- Communities.update_count_field(community, :doc),
          {:ok, _user} <- Accounts.Publish.update_states(user, :doc) do
       {:ok, _throttle} = CMS.Gate.RateLimit.Publish.record(user)
@@ -112,19 +114,24 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     with {:ok, %{article: article, draft: draft}} <-
            Articles.create_stable_draft(community, thread, attrs, user),
          publish_opts =
-           [expected_draft_version: draft.version, expected_lifecycle_version: 1] ++
+           [
+             expected_draft_version: draft.version,
+             expected_lifecycle_version: 1,
+             community: community
+           ] ++
              community_tag_opts(attrs),
          {:ok, %{article: published}} <-
            Articles.publish(article.id, user, publish_opts),
          {:ok, public} <- public_projection(published, community),
-         {:ok, _activity} <- Activity.log(public, :created, actor: user) do
+         {:ok, _activity} <-
+           Activity.log(Map.put(public, :community_id, community.id), :created, actor: user) do
       {:ok, public}
     end
   end
 
   defp public_projection(%Article{thread: thread, id: article_id}, community) do
-    case Repo.get_by(ArticleCommunity, article_id: article_id, community_id: community.id) do
-      %ArticleCommunity{inner_id: inner_id} when is_integer(inner_id) ->
+    case Repo.get_by(ArticleBinding, article_id: article_id, community_id: community.id) do
+      %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) ->
         FrontDesk.article(%{
           community: community.slug,
           thread: thread,
@@ -142,7 +149,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     case Communities.overwrite_tags(community, article.thread, article, %{
            community_tags: tag_ids
          }) do
-      {:ok, _article} -> :ok
+      {:ok, _article} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end

@@ -30,7 +30,8 @@ defmodule GroupherServer.CMS.Interactions.CommandResult do
 
     with command_id when is_binary(command_id) <- command_id,
          reaction_outcome when reaction_outcome in [:changed, :unchanged] <- reaction_outcome,
-         {:ok, article_stats} <- CMS.ArticleStats.for_article(article),
+         {:ok, article_stats} <-
+           CMS.ArticleStats.for_article(article, Map.get(article, :community)),
          interaction when is_map(interaction) <- CMS.Interactions.viewer_state(article, viewer) do
       {:ok,
        %{

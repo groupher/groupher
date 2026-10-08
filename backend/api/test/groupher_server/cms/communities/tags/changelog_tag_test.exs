@@ -85,19 +85,19 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
       {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag2.id)
 
-      {:ok, changelog} = read_article(community, :changelog, changelog.inner_id)
+      {:ok, changelog} = read_article(community, :changelog, article_inner_id(changelog, community))
       assert exist_in?(article_tag, changelog.community_tags)
       assert exist_in?(article_tag2, changelog.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
 
-      {:ok, changelog} = read_article(community, :changelog, changelog.inner_id)
+      {:ok, changelog} = read_article(community, :changelog, article_inner_id(changelog, community))
       assert not exist_in?(article_tag, changelog.community_tags)
       assert exist_in?(article_tag2, changelog.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag2.id)
 
-      {:ok, changelog} = read_article(community, :changelog, changelog.inner_id)
+      {:ok, changelog} = read_article(community, :changelog, article_inner_id(changelog, community))
       assert not exist_in?(article_tag, changelog.community_tags)
       assert not exist_in?(article_tag2, changelog.community_tags)
     end

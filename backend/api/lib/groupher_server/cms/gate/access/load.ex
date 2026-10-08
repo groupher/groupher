@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   alias CMS.Model.{
     ArticleLifecycle,
     Article,
-    ArticleCommunity,
+    ArticleBinding,
     CommentLifecycle,
     Community,
     CommunityLifecycle,
@@ -39,12 +39,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   @article_threads Config.ordinary_article_threads()
 
   @doc "Loads one stable Doc Article and its branch-scoped lifecycle authority."
-  def doc(
-        %Community{id: community_id} = community,
-        %Article{community_id: community_id, thread: :doc} = resource,
-        branch_id
-      ) do
+  def doc(%Community{} = community, %Article{thread: :doc} = resource, branch_id) do
     with %Article{} = canonical <- Queries.resource(Article, resource.id),
+         %ArticleBinding{} <- Queries.article_binding(canonical.id, community.id),
          canonical <- preload_article_author(canonical),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
          %DocBranch{} = doc_branch <- Queries.doc_branch(community.id, branch_id),
@@ -99,12 +96,13 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   closed with a declared Gate error.
   """
   def article(
-        %Community{id: community_id} = community,
+        %Community{} = community,
         thread,
-        %Article{community_id: community_id, thread: thread} = resource
+        %Article{thread: thread} = resource
       )
       when thread in @article_threads do
     with %Article{} = canonical <- Queries.resource(Article, resource.id),
+         %ArticleBinding{} <- Queries.article_binding(canonical.id, community.id),
          canonical <- preload_article_author(canonical),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
          %ArticleLifecycle{} = article_lifecycle <- Queries.article_lifecycle(canonical.id) do
@@ -129,7 +127,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
     {:error, ErrorCat.gate_resource_mismatch()}
   end
 
-  @doc "Loads an ordinary Article against an explicit ArticleCommunity relation."
+  @doc "Loads an ordinary Article against an explicit ArticleBinding binding."
   def article_in_community(
         %Community{} = community,
         thread,
@@ -137,7 +135,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
       )
       when thread in @article_threads do
     with %Article{} = canonical <- Queries.resource(Article, resource.id),
-         %ArticleCommunity{} <- Queries.article_community(canonical.id, community.id),
+         %ArticleBinding{} <- Queries.article_binding(canonical.id, community.id),
          canonical <- preload_article_author(canonical),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
          %ArticleLifecycle{} = article_lifecycle <- Queries.article_lifecycle(canonical.id) do

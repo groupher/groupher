@@ -9,6 +9,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
 
   alias GroupherServer.CMS
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.Community
 
   @viewer_batch_size 100
 
@@ -35,7 +36,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
         %{article: article_path, comment_inner_ids: comment_inner_ids},
         info
       ) do
-    with :ok <- validate_viewer_batch(comment_inner_ids) do
+    with {:ok, :pass} <- validate_viewer_batch(comment_inner_ids) do
       case Map.get(info.context, :cur_user) do
         %User{} = user -> CMS.Comments.viewer_states(article_path, comment_inner_ids, user)
         _ -> {:ok, []}
@@ -48,7 +49,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
         %{article: article_path, comment_inner_ids: comment_inner_ids},
         info
       ) do
-    with :ok <- validate_viewer_batch(comment_inner_ids),
+    with {:ok, :pass} <- validate_viewer_batch(comment_inner_ids),
          viewer <- Map.get(info.context, :cur_user) do
       CMS.Comments.reconcile_states(article_path, comment_inner_ids, viewer)
     end
@@ -88,10 +89,24 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
 
   def create_comment(
         _root,
-        %{article: article, article_path: %{thread: thread}, body: body} = args,
+        %{
+          article: article,
+          article_path: %{community: community_slug, thread: thread},
+          body: body
+        } = args,
         %{context: %{cur_user: user}}
       ) do
-    CMS.Comments.create_comment_result(thread, article, body, user, Map.get(args, :command_id))
+    with {:ok, %Community{} = community} <- CMS.FrontDesk.community(community_slug) do
+      article = article |> Map.delete(:__struct__) |> Map.put(:community, community)
+
+      CMS.Comments.create_comment_result(
+        thread,
+        article,
+        body,
+        user,
+        Map.get(args, :command_id)
+      )
+    end
   end
 
   def update_comment(_root, ~m(body comment)a = args, %{context: %{cur_user: user}}) do
@@ -169,7 +184,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
   end
 
   defp validate_viewer_batch(paths) when is_list(paths) and length(paths) <= @viewer_batch_size do
-    :ok
+    {:ok, :pass}
   end
 
   defp validate_viewer_batch(_paths) do

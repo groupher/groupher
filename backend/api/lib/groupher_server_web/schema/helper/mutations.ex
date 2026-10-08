@@ -96,6 +96,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("pin to #{thread}")
       field unquote(:"pin_#{thread}"), unquote(thread) do
         arg(:article, non_null(:article_path_input))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
 
@@ -112,6 +113,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("undo pin to #{thread}")
       field unquote(:"undo_pin_#{thread}"), unquote(thread) do
         arg(:article, non_null(:article_path_input))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
 

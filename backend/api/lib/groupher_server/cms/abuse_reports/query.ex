@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.AbuseReports.Query do
 
   alias CMS.FrontDesk
   alias CMS.QueryBuilder
-  alias CMS.Model.{AbuseReport, Comment}
+  alias CMS.Model.{AbuseReport, Comment, Community}
   alias Helper.{ORM, T}
 
   @threads CMS.Artiment.Config.threads()
@@ -125,7 +125,7 @@ defmodule GroupherServer.CMS.AbuseReports.Query do
       from(report in AbuseReport,
         join: article in assoc(report, :article),
         where: article.thread == ^thread,
-        preload: [article: :community, operate_user: []]
+        preload: [article: [], operate_user: []]
       )
 
     do_paged_reports(query, thread, filter)
@@ -210,23 +210,31 @@ defmodule GroupherServer.CMS.AbuseReports.Query do
   defp extract_article_info(thread, %AbuseReport{} = report, stats) do
     article = report.article || Map.get(report, thread)
 
-    with {:ok, article} <- public_article(article),
+    with {:ok, article} <- public_article(article, report.community_id),
          {:ok, article} <- article_with_projection_count(article, thread, stats) do
       {:ok, article |> Map.take(@export_article_keys) |> Map.merge(%{thread: thread})}
     end
   end
 
-  defp public_article(%CMS.Model.Article{} = article) do
-    article = Repo.preload(article, :community)
-
-    FrontDesk.article(%{
-      community: article.community.slug,
-      thread: article.thread,
-      inner_id: article.inner_id
-    })
+  defp public_article(%CMS.Model.Article{} = article, community_id)
+       when is_integer(community_id) do
+    with %Community{} = community <- Repo.get(Community, community_id),
+         {:ok, %{inner_id: inner_id}} <- CMS.Articles.Bindings.get(article, community) do
+      FrontDesk.article(%{
+        community: community.slug,
+        thread: article.thread,
+        inner_id: inner_id
+      })
+    else
+      nil -> {:error, :article_binding_not_found}
+      {:error, _reason} = error -> error
+    end
   end
 
-  defp public_article(article), do: {:ok, article}
+  defp public_article(%CMS.Model.Article{}, _community_id),
+    do: {:error, :article_binding_context_required}
+
+  defp public_article(article, _community_id), do: {:ok, article}
 
   defp extract_article_comment_info(%AbuseReport{} = report) do
     keys = [:id, :inner_id, :floor, :upvotes_count, :body_html]

@@ -46,7 +46,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
   def save_custom(%Community{} = community, args) do
     args = Map.drop(args, [:community])
 
-    with :ok <- validate_custom_save(args),
+    with {:ok, _} <- validate_custom_save(args),
          {:ok, community_dashboard} <- Writer.ensure_exist(community),
          current_layout <- current_layout(community_dashboard),
          {:ok, custom_theme_preset} <- merge_custom_theme_preset(current_layout, args),
@@ -87,7 +87,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
     {:error, "saveCustomThemePreset requires a read-only themePresetBase"}
   end
 
-  defp validate_custom_save(%{theme_preset: :custom}), do: :ok
+  defp validate_custom_save(%{theme_preset: :custom}), do: {:ok, :pass}
 
   defp validate_custom_save(_), do: {:error, "saveCustomThemePreset only accepts CUSTOM preset"}
 

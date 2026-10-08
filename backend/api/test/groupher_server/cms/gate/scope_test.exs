@@ -180,7 +180,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     queries = [
       Article
       |> CMS.Gate.scope(nil, :list, ArticleContext.public(:post))
-      |> where([article], article.community_id == ^0)
+      |> where([_article], as(:gate_article_binding).community_id == ^0)
       |> order_by([article], desc: article.active_at)
       |> limit(20),
       Comment
@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     {community, post, _attrs, author} = mock_article(:post, preload: [author: :user])
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), author)
+      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), author)
 
     assert comment.community_id == community.id
 

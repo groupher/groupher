@@ -119,7 +119,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp publish_changes_locked(community, branch, args, user, sync_cover?) do
     with {:ok, _canonical} <- CMS.Gate.access_check(user, :manage_docs, community),
          {:ok, state} <- State.ensure_draft_state(community, branch_id: branch.id),
-         :ok <- verify_checklist_revision(state, args) do
+         {:ok, _} <- verify_checklist_revision(state, args) do
       prepare_publish_flow(community, branch, args, user, sync_cover?)
     else
       {:error, reason} -> Repo.rollback(reason)
@@ -129,8 +129,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp verify_checklist_revision(state, args) do
     case Map.get(args, :expected_checklist_revision) do
-      nil -> :ok
-      revision when revision == state.site_draft_version -> :ok
+      nil -> {:ok, :pass}
+      revision when revision == state.site_draft_version -> {:ok, :pass}
       _ -> {:error, ErrorCat.custom("Docs publish checklist conflict")}
     end
   end
@@ -310,7 +310,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          next_checklist <- checklist(community, branch_id: branch.id),
          {:ok, _state} <-
            DocPublishRelease.mark_site_draft_clean(community, branch, next_checklist) do
-      with :ok <- invalidate_doc_tree(community) do
+      with {:ok, _} <- invalidate_doc_tree(community) do
         {:ok, publish_payload(true, nil, next_checklist)}
       end
     end
@@ -330,13 +330,13 @@ defmodule GroupherServer.CMS.DocTree.Publish do
            restore_tree_checklist_items(community, branch, restore_tree_checklist_item_ids, user),
          {:ok, tree_result} <-
            prepare_tree_checklist_items(community, branch, tree_checklist_item_ids),
-         :ok <-
+         {:ok, _} <-
            reject_doc_tree_delete_overlaps(
              current_checklist.doc_changes,
              doc_checklist_item_ids,
              tree_result.events
            ),
-         :ok <-
+         {:ok, _} <-
            PublicProjection.preapply_tree_delete_events(community, branch, tree_result.events),
          {:ok, doc_revisions} <-
            publish_doc_checklist_items(
@@ -347,7 +347,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
              user,
              sync_cover?
            ),
-         :ok <- PublicProjection.apply_tree_events(community, branch, tree_result.events),
+         {:ok, _} <- PublicProjection.apply_tree_events(community, branch, tree_result.events),
          {:ok, release} <-
            DocPublishRelease.create(community, branch, user, doc_revisions, tree_result),
          next_checklist <- checklist(community, branch_id: branch.id),
@@ -358,7 +358,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
              user,
              next_checklist
            ) do
-      with :ok <- invalidate_doc_tree(community) do
+      with {:ok, _} <- invalidate_doc_tree(community) do
         {:ok, publish_payload(true, release, next_checklist)}
       end
     end
@@ -382,7 +382,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
            command_id: Ecto.UUID.generate(),
            data: %{community: community.slug, community_id: community.id}
          }) do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -502,7 +502,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
     if MapSet.disjoint?(selected_doc_page_node_ids, deleted_node_ids) and
          MapSet.disjoint?(selected_doc_ids, deleted_doc_ids) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom("Selected docs publish item is also selected for tree deletion.")}
     end

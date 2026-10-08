@@ -11,12 +11,12 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     bucket = DateTime.from_unix!(div(DateTime.to_unix(DateTime.utc_now(:second)), 3600) * 3600)
     operation_id = Ecto.UUID.generate()
 
-    assert :ok =
+    assert {:ok, :pass} =
              MetricEventAPI.append_article_action(article, operation_id, :upvote_added,
                occurred_at: bucket
              )
 
-    assert :ok =
+    assert {:ok, :pass} =
              MetricEventAPI.append_article_action(article, operation_id, :upvote_added,
                occurred_at: bucket
              )
@@ -64,7 +64,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
 
     assert {:ok, path_result} =
              ArticleInsights.trend_by_path(
-               %{community: community.slug, thread: :post, inner_id: article.inner_id},
+               %{community: community.slug, thread: :post, inner_id: article_inner_id(article, community)},
                user,
                from: from,
                to: to,
@@ -80,7 +80,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     now = DateTime.utc_now(:second)
     bucket = DateTime.from_unix!(div(DateTime.to_unix(now), 3600) * 3600)
 
-    assert :ok =
+    assert {:ok, :pass} =
              MetricEventAPI.append_article_action(article, Ecto.UUID.generate(), :upvote_added,
                occurred_at: bucket
              )

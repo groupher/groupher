@@ -20,7 +20,6 @@ defmodule GroupherServer.CMS.Articles do
 
   alias __MODULE__.{
     Commands,
-    Communities,
     Query,
     Moderation,
     Store,
@@ -31,151 +30,55 @@ defmodule GroupherServer.CMS.Articles do
   alias Helper.T
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.Const
-  alias CMS.Communities, as: CommunityFacade
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Article, Author, Community}
-  alias CMS.Outbox
 
   alias __MODULE__.Draft.Store, as: TargetDraft
   alias __MODULE__.Draft.Diff, as: TargetDiff
-
-  @doc "Resolves a bounded batch of public ArticlePaths in one Article-owned query."
-  def resolve_paths(paths), do: __MODULE__.PathResolver.resolve(paths)
 
   @doc "Loads the Article's current path Community needed by cross-owner result readers."
   @spec load_community(struct()) :: {:ok, struct()} | {:error, term()}
   def load_community(article), do: Store.with_community(article)
 
-  @doc "Moves a stable ordinary Article to a destination Community through Gate."
-  @spec move(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
+  @doc "Moves a stable ordinary Article between explicit Communities through Gate."
+  @spec move(Community.t(), Community.t(), Ecto.UUID.t(), [T.id()], User.t(), Ecto.UUID.t()) ::
           {:ok, Article.t()} | {:error, term()}
-  def move(%Community{} = community, article_id, tag_ids, %User{} = actor) do
-    with_article(article_id, actor, :move, fn article ->
-      with {:ok, %Community{} = source} <-
-             FrontDesk.community(article.community_id, mode: :internal),
-           {:ok, moved} <- Communities.move(article, community),
-           {:ok, relation} <- Store.relation(moved.id, community.id),
-           {:ok, _relation} <- Communities.replace_tags(relation, tag_ids),
-           {:ok, _source} <- CommunityFacade.update_count_field(source, article.thread),
-           {:ok, _destination} <- CommunityFacade.update_count_field(community, article.thread),
-           :ok <- invalidate_move(source, relation, community, relation, Ecto.UUID.generate()),
-           {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(moved) do
-        {:ok, moved}
-      end
-    end)
+  def move(source, destination, article_id, tag_ids, %User{} = actor, command_id) do
+    Commands.Move.execute(source, destination, article_id, tag_ids, actor, command_id)
   end
 
-  @doc "Mirrors a stable ordinary Article into another Community through Gate."
-  @spec mirror(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
-          {:ok, CMS.Model.ArticleCommunity.t()} | {:error, term()}
-  def mirror(%Community{} = community, article_id, tag_ids, %User{} = actor) do
-    with_article(article_id, actor, :mirror, fn article ->
-      with {:ok, relation} <- Communities.mirror(article, community),
-           {:ok, relation} <- Communities.replace_tags(relation, tag_ids),
-           :ok <- invalidate_community_scope(community, relation) do
-        {:ok, relation}
-      end
-    end)
+  @doc "Mirrors a stable ordinary Article from an explicit source Community into another Community."
+  def mirror(
+        %Community{} = destination,
+        article_id,
+        tag_ids,
+        %User{} = actor,
+        %Community{} = source,
+        command_id
+      ) do
+    Commands.Mirror.execute(destination, article_id, tag_ids, actor, source, command_id)
   end
 
-  @doc "Removes a stable ordinary ArticleCommunity relation from a Community through Gate."
-  @spec unmirror(Community.t(), Ecto.UUID.t(), User.t()) ::
+  @doc "Removes a stable ordinary ArticleBinding binding from a Community through Gate."
+  @spec unmirror(Community.t(), Ecto.UUID.t(), User.t(), Ecto.UUID.t()) ::
           {:ok, :done} | {:error, term()}
-  def unmirror(%Community{} = community, article_id, %User{} = actor) do
-    with_article(article_id, actor, :unmirror, fn article ->
-      with {:ok, :done} <- Communities.unmirror(article, community),
-           :ok <- invalidate_community_scope(community, article) do
-        {:ok, :done}
-      end
-    end)
+  def unmirror(%Community{} = community, article_id, %User{} = actor, command_id) do
+    Commands.Unmirror.execute(community, article_id, actor, command_id)
   end
 
   @doc "Pins a stable ordinary Article in one of its Communities through Gate."
-  @spec pin(Community.t(), Ecto.UUID.t(), User.t()) ::
+  @spec pin(Community.t(), Ecto.UUID.t(), User.t(), Ecto.UUID.t()) ::
           {:ok, CMS.Model.PinnedArticle.t()} | {:error, term()}
-  def pin(%Community{} = community, article_id, %User{} = actor) do
-    case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{thread: :doc}} ->
-        {:error, :unsupported_for_doc}
-
-      {:ok, %Article{} = article} ->
-        CMS.Gate.Access.with_check(actor, :pin, article, fn canonical ->
-          with :ok <- ensure_pin_capacity(community.id, canonical.thread) do
-            Communities.pin(canonical, community)
-          end
-        end)
-
-      {:error, _} ->
-        {:error, GateErrorCat.resource_not_found()}
-    end
+  def pin(%Community{} = community, article_id, %User{} = actor, command_id) do
+    Commands.Pin.execute(community, article_id, actor, command_id)
   end
 
   @doc "Removes a Community-local stable Article pin through Gate."
-  @spec undo_pin(Community.t(), Ecto.UUID.t(), User.t()) :: {:ok, :done} | {:error, term()}
-  def undo_pin(%Community{} = community, article_id, %User{} = actor) do
-    with_article(article_id, actor, :unpin, &Communities.unpin(&1, community))
-  end
-
-  defp with_article(article_id, actor, action, callback) when is_binary(article_id) do
-    case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{} = article} -> CMS.Gate.Access.with_check(actor, action, article, callback)
-      {:error, _} -> {:error, GateErrorCat.resource_not_found()}
-    end
-  end
-
-  defp ensure_pin_capacity(community_id, thread) do
-    if Communities.pin_capacity_available?(community_id, thread) do
-      :ok
-    else
-      {:error, CMS.Articles.ErrorCat.too_much_pinned_article("too much pinned article")}
-    end
-  end
-
-  defp invalidate_move(source, source_relation, destination, destination_relation, command_id) do
-    with :ok <- invalidate_community_scope(source, source_relation, command_id),
-         :ok <-
-           invalidate_community_scope(destination, destination_relation, Ecto.UUID.generate()) do
-      :ok
-    end
-  end
-
-  defp invalidate_community_scope(_community, %{inner_id: inner_id})
-       when not is_integer(inner_id) do
-    :ok
-  end
-
-  defp invalidate_community_scope(%Community{} = community, article) do
-    invalidate_community_scope(community, article, Ecto.UUID.generate())
-  end
-
-  defp invalidate_community_scope(
-         %Community{} = community,
-         %{article_id: article_id, inner_id: inner_id},
-         command_id
-       )
-       when is_integer(inner_id) do
-    case Outbox.send(%{
-           event: "article.visibility_changed",
-           worker: CMS.Outbox.Workers.Article.Cleanup,
-           resource_type: "article",
-           resource_id: article_id,
-           command_id: command_id,
-           data: %{
-             community: community.slug,
-             community_id: community.id,
-             thread: relation_thread(article_id),
-             inner_id: inner_id,
-             article_id: article_id
-           }
-         }) do
-      {:ok, _event} -> :ok
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  defp relation_thread(article_id) do
-    Communities.thread_for_article(article_id)
+  @spec undo_pin(Community.t(), Ecto.UUID.t(), User.t(), Ecto.UUID.t()) ::
+          {:ok, :done} | {:error, term()}
+  def undo_pin(%Community{} = community, article_id, %User{} = actor, command_id) do
+    Commands.Unpin.execute(community, article_id, actor, command_id)
   end
 
   # Query
@@ -258,13 +161,11 @@ defmodule GroupherServer.CMS.Articles do
 
   @doc "Reads the current mutable workspace by stable Article UUID and actor."
   @spec read_draft(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, struct()} | {:error, term()}
-  def read_draft(article_id, %User{} = actor) when is_binary(article_id) do
-    read_draft(article_id, actor, [])
-  end
-
   def read_draft(article_id, %User{} = actor, opts) when is_binary(article_id) do
     with {:ok, article} <- stable_article(article_id),
-         {:ok, canonical} <- CMS.Gate.Access.access_check(actor, :edit, article) do
+         {:ok, community} <- explicit_community(opts),
+         {:ok, canonical} <-
+           CMS.Gate.Access.access_check(actor, :edit, community, article) do
       TargetDraft.get(canonical, opts)
     end
   end
@@ -273,7 +174,9 @@ defmodule GroupherServer.CMS.Articles do
   @spec read_editor(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, struct()} | {:error, term()}
   def read_editor(article_id, %User{} = actor, opts) when is_binary(article_id) do
     with {:ok, article} <- stable_article(article_id),
-         {:ok, canonical} <- CMS.Gate.Access.access_check(actor, :edit, article) do
+         {:ok, community} <- explicit_community(opts),
+         {:ok, canonical} <-
+           CMS.Gate.Access.access_check(actor, :edit, community, article) do
       case TargetDraft.get(canonical, opts) do
         {:ok, draft} -> {:ok, draft}
         {:error, :not_found} -> stable_public(canonical, opts)
@@ -284,21 +187,25 @@ defmodule GroupherServer.CMS.Articles do
   @doc "Returns whether a stable Article Draft differs from its selected Public Revision."
   @spec has_unpublished_changes(Ecto.UUID.t(), User.t(), keyword()) ::
           {:ok, boolean()} | {:error, term()}
-  def has_unpublished_changes(article_id, %User{} = actor, _opts)
+  def has_unpublished_changes(article_id, %User{} = actor, opts)
       when is_binary(article_id) do
     with {:ok, article} <- stable_article(article_id),
-         :ok <- ordinary_article(article),
-         {:ok, canonical} <- CMS.Gate.Access.access_check(actor, :edit, article) do
+         {:ok, _} <- ordinary_article(article),
+         {:ok, community} <- explicit_community(opts),
+         {:ok, canonical} <-
+           CMS.Gate.Access.access_check(actor, :edit, community, article) do
       TargetDiff.unpublished?(canonical)
     end
   end
 
   @doc "Returns a transient Draft-versus-Public diff for one stable Article."
   @spec draft_diff(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def draft_diff(article_id, %User{} = actor, _opts) when is_binary(article_id) do
+  def draft_diff(article_id, %User{} = actor, opts) when is_binary(article_id) do
     with {:ok, article} <- stable_article(article_id),
-         :ok <- ordinary_article(article),
-         {:ok, canonical} <- CMS.Gate.Access.access_check(actor, :edit, article) do
+         {:ok, _} <- ordinary_article(article),
+         {:ok, community} <- explicit_community(opts),
+         {:ok, canonical} <-
+           CMS.Gate.Access.access_check(actor, :edit, community, article) do
       TargetDiff.compare(canonical)
     end
   end
@@ -338,7 +245,23 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   defp ordinary_article(%Article{thread: :doc}), do: {:error, :doc_branch_required}
-  defp ordinary_article(%Article{}), do: :ok
+  defp ordinary_article(%Article{}), do: {:ok, :pass}
+
+  defp explicit_community(opts) do
+    case Keyword.get(opts, :community) do
+      %Community{} = community ->
+        {:ok, community}
+
+      _ ->
+        case Keyword.get(opts, :community_id) do
+          community_id when is_integer(community_id) ->
+            FrontDesk.community(community_id, mode: :internal)
+
+          _ ->
+            {:error, :article_binding_context_required}
+        end
+    end
+  end
 
   defp stable_public(%Article{thread: :doc, id: article_id}, opts) do
     branch_id = Keyword.fetch!(opts, :branch_id)
@@ -415,19 +338,17 @@ defmodule GroupherServer.CMS.Articles do
   # Meta
 
   @doc "Sets the stable Post category through the shared Gate and aggregate lock."
-  @spec set_cat(Ecto.UUID.t(), Const.cat_enum() | nil, User.t()) :: T.domain_res(Article.t())
-  def set_cat(article_id, cat, %User{} = actor) do
-    Commands.StateChange.set_category(article_id, cat, actor)
-  end
-
-  @doc "Sets the stable Post Kanban status through the shared Gate and aggregate lock."
-  @spec set_status(Ecto.UUID.t(), Const.status_enum() | nil, User.t()) ::
+  @spec set_cat(Ecto.UUID.t(), Const.cat_enum() | nil, User.t(), integer()) ::
           T.domain_res(Article.t())
-  def set_status(article_id, status, %User{} = actor) do
-    Commands.StateChange.set_status(article_id, status, actor)
+  def set_cat(article_id, cat, %User{} = actor, community_id) when is_integer(community_id) do
+    with {:ok, %Community{} = community} <- FrontDesk.community(community_id, mode: :internal) do
+      Commands.StateChange.set_category(article_id, cat, actor, community)
+    else
+      {:error, _reason} -> {:error, GateErrorCat.resource_not_found()}
+    end
   end
 
-  @doc "Sets a Post's Kanban status in one explicit ArticleCommunity relation."
+  @doc "Sets a Post's Kanban status in one explicit ArticleBinding binding."
   @spec set_status(Ecto.UUID.t(), Const.status_enum() | nil, User.t(), integer()) ::
           T.domain_res(Article.t())
   def set_status(article_id, status, %User{} = actor, community_id)
@@ -442,25 +363,21 @@ defmodule GroupherServer.CMS.Articles do
 
   @doc "Updates Post category and returns the caller-facing canonical projection shape."
   def set_cat_result(article, cat, %User{} = actor) do
-    with {:ok, updated} <- set_cat(article.id, cat, actor) do
+    with %Community{} = community <- Map.get(article, :community),
+         {:ok, updated} <- set_cat(article.id, cat, actor, community.id) do
       __MODULE__.ActionResult.merge(article, updated, %{cat: cat})
+    else
+      _ -> {:error, :article_binding_context_required}
     end
   end
 
   @doc "Updates Post status and returns the caller-facing canonical projection shape."
   def set_status_result(article, status, %User{} = actor) do
     result =
-      case Map.get(article, :community_id) do
-        community_id when is_integer(community_id) ->
-          with {:ok, %Community{} = community} <-
-                 FrontDesk.community(community_id, mode: :internal) do
-            set_status_in_community(article, status, actor, community)
-          else
-            {:error, _reason} -> {:error, GateErrorCat.resource_not_found()}
-          end
-
-        _ ->
-          set_status(article.id, status, actor)
+      with %Community{} = community <- Map.get(article, :community) do
+        set_status_in_community(article, status, actor, community)
+      else
+        _ -> {:error, :article_binding_context_required}
       end
 
     with {:ok, updated} <- result do
@@ -557,9 +474,15 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   defp branch_opts(article) do
-    case Map.get(article, :branch_id) do
-      branch_id when is_integer(branch_id) -> [branch_id: branch_id]
-      _ -> []
+    branch_opts =
+      case Map.get(article, :branch_id) do
+        branch_id when is_integer(branch_id) -> [branch_id: branch_id]
+        _ -> []
+      end
+
+    case Map.get(article, :community) do
+      %Community{} = community -> Keyword.put(branch_opts, :community, community)
+      _ -> branch_opts
     end
   end
 end

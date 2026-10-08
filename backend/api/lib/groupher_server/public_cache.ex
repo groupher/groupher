@@ -108,7 +108,7 @@ defmodule GroupherServer.PublicCache do
 
     if updated == 1 do
       emit_telemetry(:delivered, %{invalidation_id: id, type: type})
-      :ok
+      {:ok, :pass}
     else
       {:error, :stale_lock}
     end
@@ -143,7 +143,7 @@ defmodule GroupherServer.PublicCache do
         error_code: error_code(reason)
       })
 
-      :ok
+      {:ok, :pass}
     else
       {:error, :stale_lock}
     end

@@ -175,7 +175,7 @@ defmodule GroupherServer.CMS.Assets.Query do
           order_by: [desc: ref.inserted_at, desc: ref.id]
         )
         |> Repo.all()
-        |> Enum.filter(&usage_visible?(&1, actor))
+        |> Enum.filter(&usage_visible?(&1, actor, community))
 
       {:ok,
        Enum.map(rows, fn {ref, article, public, trash} ->
@@ -205,10 +205,13 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
-  defp usage_visible?({ref, article, public, trash}, actor) do
+  defp usage_visible?({ref, article, public, trash}, actor, community) do
     case lifecycle(ref, public, trash) do
       :draft ->
-        match?({:ok, _article}, CMS.Gate.Access.access_check(actor, :edit, article))
+        match?(
+          {:ok, _article},
+          CMS.Gate.Access.access_check(actor, :edit, community, article)
+        )
 
       _lifecycle ->
         true

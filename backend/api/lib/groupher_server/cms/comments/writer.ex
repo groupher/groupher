@@ -81,7 +81,16 @@ defmodule GroupherServer.CMS.Comments.Writer do
           T.domain_res(map())
   def create(thread, %Article{} = article, body, %User{} = user, command_id) do
     with {:ok, info} <- CMS.Artiment.Matcher.match_interaction(article) do
-      do_create(thread, article, body, user, info, command_id)
+      do_create(
+        thread,
+        article,
+        body,
+        user,
+        info,
+        command_id,
+        nil,
+        nil
+      )
     end
   end
 
@@ -96,7 +105,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
         user,
         info,
         command_id,
-        Map.get(projection, :branch_id)
+        Map.get(projection, :branch_id),
+        Map.get(projection, :community)
       )
     else
       nil -> {:error, CmsErrorCat.custom("article not found")}
@@ -115,7 +125,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
         user,
         info,
         command_id,
-        Map.get(projection, :branch_id)
+        Map.get(projection, :branch_id),
+        Map.get(projection, :community)
       )
     else
       nil -> {:error, CmsErrorCat.custom("article not found")}
@@ -123,8 +134,17 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
-  defp do_create(thread, article, body, %User{} = user, info, command_id, branch_id \\ nil) do
-    article = Repo.preload(article, [[author: :user], :community])
+  defp do_create(
+         thread,
+         article,
+         body,
+         %User{} = user,
+         info,
+         command_id,
+         branch_id,
+         community
+       ) do
+    article = Repo.preload(article, author: :user)
 
     if is_nil(command_id) do
       generated_command_id = Ecto.UUID.generate()
@@ -136,7 +156,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
         body,
         user,
         info,
-        generated_command_id
+        generated_command_id,
+        community
       )
       |> then(fn
         {:ok, result} ->
@@ -166,7 +187,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
                    body,
                    user,
                    info,
-                   command_id
+                   command_id,
+                   community
                  ) do
             created_confirmation(result, article)
           end
@@ -199,35 +221,70 @@ defmodule GroupherServer.CMS.Comments.Writer do
     {:error, CmsErrorCat.command_result_unavailable()}
   end
 
-  defp create_with_access(:doc, article, branch_id, body, user, info, command_id)
+  defp create_with_access(:doc, article, branch_id, body, user, info, command_id, community)
        when is_integer(branch_id) do
-    Gate.Access.with_branch_check(user, :create_comment, article, branch_id, fn canonical ->
-      create_new(:doc, Map.put(canonical, :branch_id, branch_id), body, user, info, command_id)
-    end)
+    with %Community{} = community <- community do
+      Gate.Access.with_branch_check(
+        user,
+        :create_comment,
+        community,
+        article,
+        branch_id,
+        fn canonical ->
+          create_new(
+            :doc,
+            Map.put(canonical, :branch_id, branch_id),
+            body,
+            user,
+            info,
+            command_id,
+            community
+          )
+        end
+      )
+    else
+      _ -> {:error, :article_binding_context_required}
+    end
   end
 
-  defp create_with_access(thread, article, _branch_id, body, user, info, command_id) do
-    Gate.Access.with_check(user, :create_comment, article, fn canonical ->
-      create_new(thread, canonical, body, user, info, command_id)
-    end)
+  defp create_with_access(thread, article, _branch_id, body, user, info, command_id, community) do
+    with %Community{} = community <- community do
+      Gate.Access.with_community_check(user, :create_comment, community, article, fn canonical ->
+        create_new(thread, canonical, body, user, info, command_id, community)
+      end)
+    else
+      _ -> {:error, :article_binding_context_required}
+    end
   end
 
-  defp create_new(thread, article, body, %User{} = user, info, command_id) do
-    with {:ok, comment} <- create_comment_record(body, thread, info.foreign_key, article, user),
+  defp create_new(thread, article, body, %User{} = user, info, command_id, community) do
+    with {:ok, comment} <-
+           create_comment_record(body, thread, info.foreign_key, article, community, user),
          {:ok, _lifecycle} <- Lifecycle.ensure_created(comment.id),
          {:ok, counted_article} <- keep_article(article),
          {:ok, projected_comment} <- set_question_flag_ifneed(article, comment),
          {:ok, participant_article} <- add_participant(article, user),
          {:ok, _active_article} <- update_active_timestamp(thread, article, comment),
          {:ok, _job} <- JobPolicy.audition(projected_comment),
-         :ok <- CMS.ArticleStats.record_comment_change(participant_article),
-         :ok <- record_article_metric(counted_article, command_id, :comment_created),
-         {:ok, _invalidation} <- invalidate_public_comments(article, thread, command_id),
-         :ok <- enqueue_comment_effects(projected_comment, article, user, :created, command_id) do
+         {:ok, _} <- CMS.ArticleStats.record_comment_change(participant_article),
+         {:ok, _} <-
+           record_article_metric(counted_article, community, command_id, :comment_created),
+         {:ok, _invalidation} <-
+           invalidate_public_comments(article, community, thread, command_id),
+         {:ok, _} <-
+           enqueue_comment_effects(
+             projected_comment,
+             article,
+             community,
+             user,
+             :created,
+             command_id
+           ) do
       {:ok,
        %{
          comment: projected_comment,
          article: counted_article,
+         community: community,
          command_id: command_id
        }}
     end
@@ -245,11 +302,13 @@ defmodule GroupherServer.CMS.Comments.Writer do
        when is_binary(result_key) do
     with {result_id, ""} <- Integer.parse(result_key),
          %Comment{} = comment <- Repo.get(Comment, result_id),
+         %Community{} = community <- Repo.get(Community, comment.community_id),
          {:ok, canonical_article} <- replay_article(article) do
       {:ok,
        %{
          comment: Repo.preload(comment, reply_to_comment: :author),
          article: canonical_article,
+         community: community,
          command_id: command_id
        }}
     else
@@ -262,24 +321,31 @@ defmodule GroupherServer.CMS.Comments.Writer do
     {:error, CmsErrorCat.command_result_unavailable()}
   end
 
+  defp replay_article(
+         %CMS.Articles.ArticleView{
+           article_id: _article_id,
+           community: %Community{} = community,
+           thread: thread
+         } = result
+       ) do
+    with {:ok, %{inner_id: inner_id}} <- CMS.Articles.Bindings.get(result, community),
+         {:ok, _article} = result <-
+           FrontDesk.article(%{community: community.slug, thread: thread, inner_id: inner_id}) do
+      result
+    else
+      {:error, _reason} = error -> error
+    end
+  end
+
   defp replay_article(article) when is_struct(article) do
     case Repo.get(article.__struct__, article.id) do
       nil -> {:error, CmsErrorCat.command_result_unavailable()}
-      canonical -> {:ok, Repo.preload(canonical, [[author: :user], :community])}
+      canonical -> {:ok, Repo.preload(canonical, author: :user)}
     end
   end
 
   defp replay_article(%{id: article_id}) when is_binary(article_id) do
-    with %Article{} = stable <- Repo.get(Article, article_id),
-         %Community{} = community <- Repo.get(Community, stable.community_id) do
-      FrontDesk.article(%{
-        community: community.slug,
-        thread: stable.thread,
-        inner_id: stable.inner_id
-      })
-    else
-      _ -> {:error, CmsErrorCat.command_result_unavailable()}
-    end
+    {:error, CmsErrorCat.command_result_unavailable()}
   end
 
   @doc """
@@ -362,10 +428,20 @@ defmodule GroupherServer.CMS.Comments.Writer do
   defp reply_new_from_canonical(canonical, article, body, %User{} = user, command_id) do
     with replying_comment <- Repo.preload(canonical, reply_to_comment: :author),
          {:ok, thread} <- FrontDesk.thread_of(replying_comment),
-         article <- Repo.preload(article, [[author: :user], :community]),
+         %Community{} = community <- Repo.get(Community, replying_comment.community_id),
+         article <- Repo.preload(article, author: :user),
          {:ok, info} <- CMS.Artiment.Matcher.match_interaction(article),
          {:ok, result} <-
-           reply_new(replying_comment, body, user, thread, info, article, command_id) do
+           reply_new(
+             replying_comment,
+             body,
+             user,
+             thread,
+             info,
+             article,
+             community,
+             command_id
+           ) do
       {:ok, result}
     end
   end
@@ -377,15 +453,24 @@ defmodule GroupherServer.CMS.Comments.Writer do
          thread,
          info,
          article,
+         community,
          command_id
        ) do
     parent_comment = Replies.root_comment(replying_comment)
 
     with {:ok, replied_comment} <-
-           insert_comment(body, thread, info.foreign_key, article, user, replying_comment),
+           insert_comment(
+             body,
+             thread,
+             info.foreign_key,
+             article,
+             community,
+             user,
+             replying_comment
+           ),
          {:ok, _lifecycle} <- Lifecycle.ensure_created(replied_comment.id),
          {:ok, counted_article} <- keep_article(article),
-         {:ok, _reply_relation} <-
+         {:ok, _reply_binding} <-
            ORM.create(CommentReply, %{
              comment_id: replied_comment.id,
              reply_to_comment_id: replying_comment.id
@@ -397,14 +482,25 @@ defmodule GroupherServer.CMS.Comments.Writer do
          {:ok, _embedded_parent} <- add_replies_ifneed(parent_comment, associated_reply),
          {:ok, _parent} <- ORM.inc(parent_comment, :replies_count),
          {:ok, _job} <- JobPolicy.audition(associated_reply),
-         :ok <- CMS.ArticleStats.apply_comment_counts(participant_article),
-         :ok <- record_article_metric(counted_article, command_id, :comment_created),
-         {:ok, _invalidation} <- invalidate_public_comments(article, thread, command_id),
-         :ok <- enqueue_comment_effects(associated_reply, article, user, :replied, command_id) do
+         {:ok, _} <- CMS.ArticleStats.apply_comment_counts(participant_article),
+         {:ok, _} <-
+           record_article_metric(counted_article, community, command_id, :comment_created),
+         {:ok, _invalidation} <-
+           invalidate_public_comments(article, community, thread, command_id),
+         {:ok, _} <-
+           enqueue_comment_effects(
+             associated_reply,
+             article,
+             community,
+             user,
+             :replied,
+             command_id
+           ) do
       {:ok,
        %{
          comment: associated_reply,
          article: counted_article,
+         community: community,
          command_id: command_id
        }}
     end
@@ -448,15 +544,19 @@ defmodule GroupherServer.CMS.Comments.Writer do
          thread,
          foreign_key,
          article,
+         community,
          %User{id: user_id},
          reply_to_comment \\ nil
        ) do
+    stable_article = struct(Article, Map.from_struct(article))
+
     with {:ok, payload} <- BodyCodec.parse(body),
-         {:ok, inner_id} <- Numbering.next_inner_id(article, foreign_key),
-         {:ok, floor} <- Numbering.next_floor(article, foreign_key) do
+         {:ok, _article_inner_id} <- article_inner_id(article, community),
+         {:ok, inner_id} <- Numbering.next_inner_id(stable_article, foreign_key),
+         {:ok, floor} <- Numbering.next_floor(stable_article, foreign_key) do
       attrs = %{
         author_id: user_id,
-        community_id: article.community_id,
+        community_id: community.id,
         body: payload.json,
         body_html: payload.html,
         emotions: @default_emotions,
@@ -479,8 +579,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
     |> Map.put(:branch_id, Map.get(article, :branch_id))
   end
 
-  defp create_comment_record(body, thread, foreign_key, article, user) do
-    case insert_comment(body, thread, foreign_key, article, user) do
+  defp create_comment_record(body, thread, foreign_key, article, community, user) do
+    case insert_comment(body, thread, foreign_key, article, community, user) do
       {:ok, comment} -> {:ok, comment}
       {:error, details} -> create_comment(details)
     end
@@ -542,43 +642,68 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
-  defp record_article_metric(article, operation_id, metric) do
-    case MetricEvent.append_article_action(article, operation_id, metric) do
-      :ok -> :ok
+  defp record_article_metric(article, community, operation_id, metric) do
+    case MetricEvent.append_article_action(article, operation_id, metric,
+           community_id: community.id
+         ) do
+      {:ok, _} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp invalidate_public_comments(article, thread, command_id) do
-    CMS.Outbox.send(%{
-      event: "comment.changed",
-      worker: CMS.Outbox.Workers.Comment.Cleanup,
-      resource_type: "article",
-      resource_id: article.id,
-      command_id: command_id,
-      data: %{
-        community: article.community.slug,
-        community_id: article.community_id,
-        thread: thread,
-        inner_id: article.inner_id,
-        article_id: article.id
-      }
-    })
-  end
-
-  defp enqueue_comment_effects(comment, article, %User{} = actor, action, command_id) do
-    case CMS.Outbox.send(%{
-           event: "comment.#{action}",
-           worker: CMS.Outbox.Workers.Comment.Cleanup,
-           resource_type: "comment",
-           resource_id: comment.id,
-           command_id: command_id,
-           data: %{article_id: article.id, actor_id: actor.id, community_id: article.community_id}
-         }) do
-      {:ok, _event} -> :ok
-      {:error, reason} -> {:error, reason}
+  defp invalidate_public_comments(article, community, thread, command_id) do
+    with {:ok, inner_id} <- article_inner_id(article, community) do
+      CMS.Outbox.send(%{
+        event: "comment.changed",
+        worker: CMS.Outbox.Workers.Comment.Cleanup,
+        resource_type: "article",
+        resource_id: article.id,
+        command_id: command_id,
+        data: %{
+          community: community.slug,
+          community_id: community.id,
+          thread: thread,
+          inner_id: inner_id,
+          article_id: article.id
+        }
+      })
     end
   end
+
+  defp enqueue_comment_effects(
+         comment,
+         article,
+         community,
+         %User{} = actor,
+         action,
+         command_id
+       ) do
+    with {:ok, _inner_id} <- article_inner_id(article, community),
+         {:ok, _event} <-
+           CMS.Outbox.send(%{
+             event: "comment.#{action}",
+             worker: CMS.Outbox.Workers.Comment.Cleanup,
+             resource_type: "comment",
+             resource_id: comment.id,
+             command_id: command_id,
+             data: %{article_id: article.id, actor_id: actor.id, community_id: community.id}
+           }) do
+      {:ok, :pass}
+    end
+  end
+
+  defp article_inner_id(%Article{} = article, %Community{} = community) do
+    with {:ok, %{inner_id: inner_id}} <-
+           CMS.Articles.Bindings.get(article, community),
+         true <- is_integer(inner_id) do
+      {:ok, inner_id}
+    else
+      _ -> {:error, CmsErrorCat.custom("article binding context required")}
+    end
+  end
+
+  defp article_inner_id(_article, _community),
+    do: {:error, CmsErrorCat.custom("article binding context required")}
 
   defp article_comments_locked(details) do
     {:error, GateErrorCat.article_comments_locked(details)}

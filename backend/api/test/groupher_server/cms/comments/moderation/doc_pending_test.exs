@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocPendingFlag do
   describe "[pending doc comment flags]" do
     test "pending doc comment can set/unset pending", ~m(community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, _} =
         CMS.Comments.set_comment_illegal(comment.id, %{
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocPendingFlag do
 
     test "pending doc-comment's meta should have info", ~m(community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, _} =
         CMS.Comments.set_comment_illegal(comment.id, %{

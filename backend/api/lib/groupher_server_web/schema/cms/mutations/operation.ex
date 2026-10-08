@@ -184,6 +184,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "mirror article to other community"
     field :mirror_article, :article do
+      arg(:command_id, non_null(:id))
       arg(:article, non_null(:article_path_input))
       arg(:target_community, non_null(:string))
       arg(:community_tags, list_of(:id), default_value: [])
@@ -198,6 +199,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "unmirror article for community"
     field :unmirror_article, :article do
+      arg(:command_id, non_null(:id))
       arg(:article, non_null(:article_path_input))
       arg(:target_community, non_null(:string))
 
@@ -211,6 +213,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "move article to other community"
     field :move_article, :article do
+      arg(:command_id, non_null(:id))
       arg(:article, non_null(:article_path_input))
       arg(:target_community, non_null(:string))
       arg(:community_tags, list_of(:id), default_value: [])

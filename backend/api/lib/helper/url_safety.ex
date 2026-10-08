@@ -58,10 +58,10 @@ defmodule Helper.UrlSafety do
     timeout = Keyword.get(opts, :timeout, @default_resolve_timeout)
 
     with {:ok, %URI{} = uri} <- parse_url(url),
-         :ok <- validate_scheme(uri),
+         {:ok, :pass} <- validate_scheme(uri),
          {:ok, host} <- normalize_host(uri.host),
-         :ok <- validate_host(host),
-         :ok <- validate_resolved_ips(host, timeout) do
+         {:ok, :pass} <- validate_host(host),
+         {:ok, :pass} <- validate_resolved_ips(host, timeout) do
       {:ok, URI.to_string(%{uri | host: host})}
     end
   end
@@ -75,7 +75,7 @@ defmodule Helper.UrlSafety do
     end
   end
 
-  defp validate_scheme(%URI{scheme: scheme}) when scheme in ["http", "https"], do: :ok
+  defp validate_scheme(%URI{scheme: scheme}) when scheme in ["http", "https"], do: {:ok, :pass}
   defp validate_scheme(_), do: {:error, ErrorCat.invalid_scheme()}
 
   defp normalize_host(nil), do: {:error, ErrorCat.missing_host()}
@@ -109,12 +109,12 @@ defmodule Helper.UrlSafety do
   defp validate_ip_host(host) do
     case :inet.parse_address(String.to_charlist(host)) do
       {:ok, ip} ->
-        if blocked_ip?(ip), do: {:error, ErrorCat.blocked_ip()}, else: :ok
+        if blocked_ip?(ip), do: {:error, ErrorCat.blocked_ip()}, else: {:ok, :pass}
 
       # `:einval` is the return value of the Erlang address parser, not an
       # application error crossing this module's boundary.
       {:error, :einval} ->
-        :ok
+        {:ok, :pass}
     end
   end
 
@@ -126,11 +126,11 @@ defmodule Helper.UrlSafety do
         if blocked_ips != [] do
           {:error, ErrorCat.blocked_ip()}
         else
-          :ok
+          {:ok, :pass}
         end
 
       _ ->
-        :ok
+        {:ok, :pass}
     end
   end
 

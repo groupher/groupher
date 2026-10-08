@@ -38,16 +38,16 @@ defmodule GroupherServer.Jobs do
         Jobs.notify_comment(comment, actor)
       end)
 
-      #=> :ok
+      #=> {:ok, :pass}
   """
-  @spec enqueue_best_effort(atom(), safe_resource_ref(), (-> term())) :: :ok
+  @spec enqueue_best_effort(atom(), safe_resource_ref(), (-> term())) :: {:ok, :pass}
   def enqueue_best_effort(job_name, resource_ref, enqueue)
       when is_atom(job_name) and
              (is_integer(resource_ref) or is_binary(resource_ref) or is_atom(resource_ref) or
                 is_nil(resource_ref)) and is_function(enqueue, 0) do
     case enqueue.() do
       {:ok, _job} ->
-        :ok
+        {:ok, :pass}
 
       {:error, _reason} ->
         log_best_effort_failure(job_name, resource_ref, :error_result)
@@ -198,6 +198,6 @@ defmodule GroupherServer.Jobs do
       "optional job enqueue failed job=#{job_name} resource_ref=#{resource_ref || "none"} failure=#{failure_kind}"
     )
 
-    :ok
+    {:ok, :pass}
   end
 end

@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   def comment(actor, action, %Comment{} = comment) do
     with {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, article.community_id),
+         %Community{} = community <- Repo.get(Community, comment.community_id),
          {:ok, result} <-
            with_parent_lock(community, article, comment.branch_id, fn ->
              with {:ok, context} <- Load.comment(community, thread, article, comment),
@@ -102,8 +102,19 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       #=> {:ok, canonical_post} | {:error, %Gate.Decision{}}
   """
   def article(actor, action, %model{} = resource) when model in @article_models do
-    with %Community{} = community <- Repo.get(Community, resource.community_id),
-         {:ok, thread} <- article_thread(resource),
+    _ = {actor, action, resource}
+    {:error, Decision.deny(ErrorCat.resource_not_found())}
+  end
+
+  def article(_actor, _action, _resource), do: unsupported_resource()
+
+  @doc "Checks access to an Article under an explicit Community binding context."
+  def article(actor, action, %Article{} = resource, %Community{} = community) do
+    article_with_community(actor, action, resource, community)
+  end
+
+  defp article_with_community(actor, action, %Article{} = resource, %Community{} = community) do
+    with {:ok, thread} <- article_thread(resource),
          {:ok, result} <-
            Articles.MutationLock.with_article(community, resource, fn ->
              with {:ok, context} <- Load.article(community, thread, resource),
@@ -122,41 +133,16 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
              end
            end) do
       {:ok, result}
-    else
-      nil -> {:error, Decision.deny(ErrorCat.resource_not_found())}
-      {:error, %Decision{} = decision} -> {:error, decision}
-      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
-
-  def article(_actor, _action, _resource), do: unsupported_resource()
 
   @doc "Checks access to one stable Doc Article in an explicit branch."
   @spec doc(term(), atom(), Article.t(), pos_integer()) ::
           {:ok, Article.t()} | {:error, Decision.t()}
   def doc(actor, action, %Article{thread: :doc} = resource, branch_id)
       when is_integer(branch_id) do
-    with %Community{} = community <- Repo.get(Community, resource.community_id),
-         {:ok, result} <-
-           Articles.MutationLock.with_article(community, :doc, branch_id, resource.id, fn ->
-             with {:ok, context} <- Load.doc(community, resource, branch_id),
-                  %Decision{allowed: true} <-
-                    Decision.from_result(
-                      Policy.Article.check_access(actor, action, resource, context),
-                      context
-                    ) do
-               {:ok, canonical_resource(context.doc, context.community)}
-             else
-               %Decision{} = decision -> {:error, decision}
-               {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
-             end
-           end) do
-      {:ok, result}
-    else
-      nil -> {:error, Decision.deny(ErrorCat.resource_not_found())}
-      {:error, %Decision{} = decision} -> {:error, decision}
-      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
-    end
+    _ = {actor, action, resource, branch_id}
+    {:error, Decision.deny(ErrorCat.resource_not_found())}
   end
 
   def doc(_actor, _action, _resource, _branch_id), do: unsupported_resource()
@@ -210,11 +196,13 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
              Policy.Comment.check_access(actor, action, context.comment, context),
              context
            ) do
+      parent = canonical_resource(decision.context.article, decision.context.community)
+
       parent =
         if decision.context.article.thread == :doc do
-          Map.put(decision.context.article, :branch_id, decision.context.comment.branch_id)
+          Map.put(parent, :branch_id, decision.context.comment.branch_id)
         else
-          decision.context.article
+          parent
         end
 
       callback.(decision.context.comment, parent)
@@ -245,10 +233,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     end
   end
 
-  @doc "Authorizes an ordinary Article operation against an explicit ArticleCommunity relation."
-  @spec with_authorized_placement(term(), atom(), tuple(), (Article.t() -> term())) ::
+  @doc "Authorizes an ordinary Article operation against an explicit ArticleBinding binding."
+  @spec with_authorized_article_binding(term(), atom(), tuple(), (Article.t() -> term())) ::
           {:ok, term()} | {:error, term()}
-  def with_authorized_placement(actor, action, {community, article}, callback)
+  def with_authorized_article_binding(actor, action, {community, article}, callback)
       when is_function(callback, 1) do
     with {:ok, thread} <- article_thread(article),
          {:ok, context} <- Load.article_in_community(community, thread, article),

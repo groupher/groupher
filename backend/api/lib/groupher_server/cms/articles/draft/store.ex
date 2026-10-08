@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     Article,
     ArticleBodyDraft,
     ArticleBodySnapshot,
-    ArticleCommunity,
+    ArticleBinding,
     ArticleDraft,
     ArticlePublic,
     ArticleRevision,
@@ -60,19 +60,19 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
           | {:error, term()}
   def create(%Community{} = community, thread, attrs, %Author{} = author, opts \\ []) do
     Repo.transaction(fn ->
-      with :ok <- validate_cover(attrs),
+      with {:ok, _} <- validate_cover(attrs),
            {:ok, body_bag} <- cast_body(attrs, thread),
            {:ok, article} <- insert_article(community, thread, author, attrs),
-           {:ok, community_relation} <- insert_community_relation(article),
-           {:ok, _lifecycle} <- insert_lifecycle(article, opts),
+           {:ok, community_binding} <- insert_community_binding(article, community),
+           {:ok, _lifecycle} <- insert_lifecycle(article, community, opts),
            {:ok, _branch_state} <- insert_branch_state(article, opts),
            {:ok, _post_state} <- insert_post_state(article, attrs),
-           {:ok, _kanban_state} <- insert_kanban_state(article, community_relation, attrs),
+           {:ok, _kanban_state} <- insert_kanban_state(article, community_binding, attrs),
            {:ok, body_draft} <- insert_body(body_bag),
-           :ok <- save_cover_edit(body_draft.id, attrs),
+           {:ok, _} <- save_cover_edit(body_draft.id, attrs),
            {:ok, draft} <- insert_draft(article, body_draft, author, attrs, opts),
            {:ok, _typed} <- insert_typed_draft(article, draft, attrs),
-           :ok <- replace_tags(article, draft, tag_ids(attrs)) do
+           {:ok, _} <- replace_tags(article, draft, tag_ids(attrs)) do
         %{article: article, draft: draft}
       else
         {:error, reason} -> Repo.rollback(reason)
@@ -106,17 +106,17 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     expected_version = Keyword.fetch!(opts, :expected_version)
 
     Repo.transaction(fn ->
-      with :ok <- validate_cover(attrs),
+      with {:ok, _} <- validate_cover(attrs),
            {:ok, article} <- lock_article(article.id),
            {:ok, draft} <- lock_draft(article, opts),
-           :ok <- ensure_version(draft, expected_version),
+           {:ok, _} <- ensure_version(draft, expected_version),
            {:ok, body_draft} <- update_body(draft, attrs, article.thread),
            attrs <- maybe_put_body_digest(article, attrs, body_draft),
-           :ok <- save_cover_edit(body_draft.id, attrs),
+           {:ok, _} <- save_cover_edit(body_draft.id, attrs),
            content_hash <- content_hash(article, attrs, body_draft, draft),
            {:ok, draft} <- update_draft_row(draft, attrs, author, content_hash),
            {:ok, _typed} <- update_typed_draft(article, draft, attrs),
-           :ok <- maybe_replace_tags(article, draft, attrs),
+           {:ok, _} <- maybe_replace_tags(article, draft, attrs),
            {:ok, _article} <- mark_edited_if_published(article, opts) do
         draft
       else
@@ -161,9 +161,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
                    |> Keyword.put(:version, public.publication_version)
                  ),
                {:ok, _typed} <- insert_typed_draft(article, draft, attrs),
-               :ok <- copy_revision_cover_edit(revision.id, body.id),
+               {:ok, _} <- copy_revision_cover_edit(revision.id, body.id),
                {:ok, draft} <- set_content_hash(draft, revision.content_hash),
-               :ok <- copy_revision_tags(article, draft, revision) do
+               {:ok, _} <- copy_revision_tags(article, draft, revision) do
             draft
           else
             {:error, reason} -> Repo.rollback(reason)
@@ -183,7 +183,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
       )
       when article_id == article.id do
     Repo.transaction(fn ->
-      with :ok <- discard_existing_workspace(article, opts),
+      with {:ok, _} <- discard_existing_workspace(article, opts),
            {:ok, body} <- snapshot_to_draft(revision),
            {:ok, extension} <- revision_extension(:doc, revision),
            attrs <- revision_attrs(revision, extension),
@@ -198,9 +198,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
                |> Keyword.put(:source_revision_id, revision.id)
              ),
            {:ok, _typed} <- insert_typed_draft(article, draft, attrs),
-           :ok <- copy_revision_cover_edit(revision.id, body.id),
+           {:ok, _} <- copy_revision_cover_edit(revision.id, body.id),
            {:ok, draft} <- set_content_hash(draft, revision.content_hash),
-           :ok <- copy_revision_tags(article, draft, revision) do
+           {:ok, _} <- copy_revision_tags(article, draft, revision) do
         draft
       else
         {:error, reason} -> Repo.rollback(reason)
@@ -213,7 +213,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   end
 
   @doc "Deletes only the mutable workspace while preserving the current Public head."
-  @spec discard(Article.t(), keyword()) :: :ok | {:error, term()}
+  @spec discard(Article.t(), keyword()) :: {:ok, :pass} | {:error, term()}
   def discard(%Article{} = article, opts \\ []) do
     expected_version = Keyword.fetch!(opts, :expected_version)
 
@@ -221,39 +221,39 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
       Repo.transaction(fn ->
         with {:ok, _public, _revision} <- public_revision(article, opts),
              {:ok, draft} <- lock_draft(article, opts),
-             :ok <- ensure_version(draft, expected_version),
-             :ok <- delete_workspace(article, draft) do
-          :ok
+             {:ok, _} <- ensure_version(draft, expected_version),
+             {:ok, _} <- delete_workspace(article, draft) do
+          {:ok, :pass}
         else
           {:error, reason} -> Repo.rollback(reason)
         end
       end)
 
     case result do
-      {:ok, :ok} -> :ok
+      {:ok, {:ok, _}} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
 
   @doc "Removes a known Draft aggregate after Publish has selected its immutable Revision."
-  @spec delete_workspace(Article.t(), ArticleDraft.t() | DocDraft.t()) :: :ok | {:error, term()}
+  @spec delete_workspace(Article.t(), ArticleDraft.t() | DocDraft.t()) ::
+          {:ok, :pass} | {:error, term()}
   def delete_workspace(%Article{} = article, draft) do
-    with :ok <- delete_tags(article, draft),
-         :ok <- delete_typed_draft(article, draft),
+    with {:ok, _} <- delete_tags(article, draft),
+         {:ok, _} <- delete_typed_draft(article, draft),
          {:ok, _draft} <- Repo.delete(draft),
          %ArticleBodyDraft{} = body <- Repo.get(ArticleBodyDraft, draft.body_draft_id),
          {:ok, _body} <- Repo.delete(body) do
-      :ok
+      {:ok, :pass}
     else
       nil -> {:error, :body_draft_not_found}
       {:error, reason} -> {:error, reason}
     end
   end
 
-  defp insert_article(community, thread, author, attrs) do
+  defp insert_article(_community, thread, author, attrs) do
     %Article{id: value(attrs, :article_id)}
     |> Article.changeset(%{
-      community_id: community.id,
       thread: thread,
       author_id: author.id,
       moderation_state: Map.get(attrs, :moderation_state, :legal)
@@ -274,7 +274,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
 
   defp insert_kanban_state(
          %Article{thread: :post},
-         %ArticleCommunity{id: article_community_id},
+         %ArticleBinding{id: article_binding_id},
          attrs
        ) do
     case value(attrs, :status) do
@@ -283,12 +283,12 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
 
       status ->
         %KanbanState{}
-        |> KanbanState.changeset(%{article_community_id: article_community_id, status: status})
+        |> KanbanState.changeset(%{article_binding_id: article_binding_id, status: status})
         |> Repo.insert()
     end
   end
 
-  defp insert_kanban_state(%Article{}, %ArticleCommunity{}, _attrs), do: {:ok, nil}
+  defp insert_kanban_state(%Article{}, %ArticleBinding{}, _attrs), do: {:ok, nil}
 
   defp cast_body(attrs, thread) do
     body = Map.get(attrs, :body_bag) || Map.get(attrs, "body_bag")
@@ -401,7 +401,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
 
   defp present(nil), do: {:error, :draft_not_found}
   defp present(value), do: {:ok, value}
-  defp ensure_version(%{version: version}, version), do: :ok
+  defp ensure_version(%{version: version}, version), do: {:ok, :pass}
   defp ensure_version(_draft, _expected), do: {:error, :draft_version_conflict}
 
   defp update_body(draft, attrs, thread) do
@@ -553,7 +553,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
             from(edit in DraftCoverEdit, where: edit.body_draft_id == ^body_draft_id)
           )
 
-          :ok
+          {:ok, :pass}
 
         cover when is_map(cover) ->
           with {:ok, attrs} <- cover_attrs(cover) do
@@ -561,13 +561,13 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
             edit = Repo.get(DraftCoverEdit, body_draft_id) || %DraftCoverEdit{}
 
             case edit |> DraftCoverEdit.changeset(attrs) |> Repo.insert_or_update() do
-              {:ok, _edit} -> :ok
+              {:ok, _edit} -> {:ok, :pass}
               {:error, reason} -> {:error, reason}
             end
           end
       end
     else
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -578,9 +578,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     raw_background? = raw_cover_background?(cover_edit)
 
     cond do
-      not cover_touched -> :ok
-      is_nil(cover_url) and is_nil(cover_edit) -> :ok
-      is_binary(cover_url) and is_map(cover_edit) and not raw_background? -> :ok
+      not cover_touched -> {:ok, :pass}
+      is_nil(cover_url) and is_nil(cover_edit) -> {:ok, :pass}
+      is_binary(cover_url) and is_map(cover_edit) and not raw_background? -> {:ok, :pass}
       true -> {:error, :invalid_cover_configuration}
     end
   end
@@ -597,7 +597,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   defp copy_revision_cover_edit(revision_id, body_draft_id) do
     case Repo.get(CMS.Model.RevisionCoverEdit, revision_id) do
       nil ->
-        :ok
+        {:ok, :pass}
 
       edit ->
         attrs =
@@ -609,7 +609,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
           |> Map.put(:body_draft_id, body_draft_id)
 
         case %DraftCoverEdit{} |> DraftCoverEdit.changeset(attrs) |> Repo.insert() do
-          {:ok, _edit} -> :ok
+          {:ok, _edit} -> {:ok, :pass}
           {:error, reason} -> {:error, reason}
         end
     end
@@ -657,17 +657,17 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
          Map.has_key?(attrs, :community_tags) or Map.has_key?(attrs, "community_tags") do
       replace_tags(article, draft, tag_ids(attrs))
     else
-      :ok
+      {:ok, :pass}
     end
   end
 
   defp replace_tags(article, draft, ids) do
-    with :ok <- delete_tags(article, draft) do
+    with {:ok, _} <- delete_tags(article, draft) do
       table = "#{article.thread}_draft_tags"
       branch_columns = if article.thread == :doc, do: ", branch_id", else: ""
       branch_values = if article.thread == :doc, do: ", $3", else: ""
 
-      Enum.reduce_while(ids, :ok, fn tag_id, :ok ->
+      Enum.reduce_while(ids, {:ok, :pass}, fn tag_id, {:ok, _} ->
         params =
           [Ecto.UUID.dump!(article.id), tag_id] ++
             if(article.thread == :doc, do: [draft.branch_id], else: [])
@@ -676,7 +676,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
                "INSERT INTO cms.#{table} (article_id, tag_id#{branch_columns}) VALUES ($1, $2#{branch_values})",
                params
              ) do
-          {:ok, _} -> {:cont, :ok}
+          {:ok, _} -> {:cont, {:ok, :pass}}
           {:error, reason} -> {:halt, {:error, reason}}
         end
       end)
@@ -691,7 +691,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
       [Ecto.UUID.dump!(article.id)] ++ if(article.thread == :doc, do: [draft.branch_id], else: [])
 
     case Repo.query("DELETE FROM cms.#{table} WHERE article_id = $1#{branch}", params) do
-      {:ok, _} -> :ok
+      {:ok, _} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -710,23 +710,23 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
            "INSERT INTO cms.#{target} (article_id, tag_id#{branch_column}) SELECT $1, tag_id#{branch_value} FROM cms.#{source} WHERE revision_id = $2",
            params
          ) do
-      {:ok, _} -> :ok
+      {:ok, _} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
 
-  defp delete_typed_draft(%Article{thread: :doc}, _draft), do: :ok
+  defp delete_typed_draft(%Article{thread: :doc}, _draft), do: {:ok, :pass}
 
   defp delete_typed_draft(%Article{thread: thread}, draft) do
     {model, _revision_model} = Map.fetch!(@typed_models, thread)
 
     case Repo.get_by(model, article_id: draft.article_id) do
       nil ->
-        :ok
+        {:ok, :pass}
 
       typed ->
         case Repo.delete(typed) do
-          {:ok, _} -> :ok
+          {:ok, _} -> {:ok, :pass}
           {:error, reason} -> {:error, reason}
         end
     end
@@ -812,11 +812,11 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     Enum.map(rows, fn [tag_id] -> tag_id end)
   end
 
-  defp insert_lifecycle(%Article{thread: :doc} = article, opts) do
+  defp insert_lifecycle(%Article{thread: :doc} = article, community, opts) do
     %DocLifecycle{}
     |> DocLifecycle.changeset(%{
       article_id: article.id,
-      community_id: article.community_id,
+      community_id: community.id,
       branch_id: Keyword.fetch!(opts, :branch_id),
       state: :draft_only,
       version: 1,
@@ -825,11 +825,11 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     |> Repo.insert()
   end
 
-  defp insert_lifecycle(%Article{} = article, _opts) do
+  defp insert_lifecycle(%Article{} = article, community, _opts) do
     %ArticleLifecycle{}
     |> ArticleLifecycle.changeset(%{
       article_id: article.id,
-      community_id: article.community_id,
+      community_id: community.id,
       thread: article.thread,
       state: :draft_only,
       version: 1,
@@ -838,11 +838,11 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     |> Repo.insert()
   end
 
-  defp insert_community_relation(%Article{} = article) do
-    %ArticleCommunity{}
-    |> ArticleCommunity.changeset(%{
+  defp insert_community_binding(%Article{} = article, community) do
+    %ArticleBinding{}
+    |> ArticleBinding.changeset(%{
       article_id: article.id,
-      community_id: article.community_id,
+      community_id: community.id,
       visible: true
     })
     |> Repo.insert()
@@ -863,16 +863,16 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   defp discard_existing_workspace(article, opts) do
     case get(article, opts) do
       {:ok, draft} ->
-        with :ok <- maybe_ensure_version(draft, Keyword.get(opts, :expected_version)) do
+        with {:ok, _} <- maybe_ensure_version(draft, Keyword.get(opts, :expected_version)) do
           delete_workspace(article, draft)
         end
 
       {:error, :not_found} ->
-        :ok
+        {:ok, :pass}
     end
   end
 
-  defp maybe_ensure_version(_draft, nil), do: :ok
+  defp maybe_ensure_version(_draft, nil), do: {:ok, :pass}
   defp maybe_ensure_version(draft, expected_version), do: ensure_version(draft, expected_version)
 
   defp take(attrs, fields) do

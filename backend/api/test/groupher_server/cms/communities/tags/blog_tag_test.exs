@@ -76,19 +76,19 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
       {:ok, blog} = CMS.Communities.set_tag(blog, article_tag.id)
       {:ok, blog} = CMS.Communities.set_tag(blog, article_tag2.id)
 
-      {:ok, blog} = read_article(community, :blog, blog.inner_id)
+      {:ok, blog} = read_article(community, :blog, article_inner_id(blog, community))
       assert exist_in?(article_tag, blog.community_tags)
       assert exist_in?(article_tag2, blog.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
 
-      {:ok, blog} = read_article(community, :blog, blog.inner_id)
+      {:ok, blog} = read_article(community, :blog, article_inner_id(blog, community))
       assert not exist_in?(article_tag, blog.community_tags)
       assert exist_in?(article_tag2, blog.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag2.id)
 
-      {:ok, blog} = read_article(community, :blog, blog.inner_id)
+      {:ok, blog} = read_article(community, :blog, article_inner_id(blog, community))
       assert not exist_in?(article_tag, blog.community_tags)
       assert not exist_in?(article_tag2, blog.community_tags)
     end

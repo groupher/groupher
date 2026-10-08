@@ -40,7 +40,8 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   @spec start(String.t(), User.t(), integer()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
   def start(public_ref, %User{} = reviewer, expected_version) do
-    with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
+    with {:ok, _} <-
+           review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
       transition(public_ref, reviewer, expected_version, :reviewing, %{expires_at: nil}, fn multi,
                                                                                             application,
                                                                                             now ->
@@ -52,7 +53,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   @spec approve(String.t(), User.t(), integer(), map()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
   def approve(public_ref, %User{} = reviewer, expected_version, metadata) do
-    with :ok <-
+    with {:ok, _} <-
            review_authorized?(reviewer, Const.passport_action(:community_application_approve)) do
       operation_ref = Ecto.UUID.generate()
 
@@ -84,7 +85,8 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   @spec reject(String.t(), User.t(), integer(), map()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
   def reject(public_ref, %User{} = reviewer, expected_version, reason) do
-    with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_reject)) do
+    with {:ok, _} <-
+           review_authorized?(reviewer, Const.passport_action(:community_application_reject)) do
       now = DateTime.utc_now(:second)
 
       transition(
@@ -109,7 +111,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   @spec retry_creation(String.t(), User.t(), integer()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
   def retry_creation(public_ref, %User{} = reviewer, expected_version) do
-    with :ok <-
+    with {:ok, _} <-
            review_authorized?(
              reviewer,
              Const.passport_action(:community_application_retry_creation)
@@ -193,7 +195,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
 
     Repo.transaction(fn ->
       with {:ok, application} <- lock(public_ref),
-           :ok <- expected_version(application, expected_version) do
+           {:ok, _} <- expected_version(application, expected_version) do
         Multi.new()
         |> Transitions.add(:application, :event, application, to, attrs, %{
           type: :reviewer,
@@ -230,7 +232,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
     end
   end
 
-  defp expected_version(%{version: version}, version), do: :ok
+  defp expected_version(%{version: version}, version), do: {:ok, :pass}
   defp expected_version(_, _), do: {:error, ErrorCat.application_state_conflict()}
 
   defp unwrap_nested_transaction({:ok, %{application: application}}), do: application
@@ -260,7 +262,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
 
   defp review_authorized?(reviewer, action) do
     case Passport.check(reviewer, action, %{}) do
-      {:ok, true} -> :ok
+      {:ok, true} -> {:ok, :pass}
       _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end

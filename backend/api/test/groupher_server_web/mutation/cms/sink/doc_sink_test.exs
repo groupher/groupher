@@ -15,12 +15,19 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
 
   describe "[doc sink]" do
     test "login user can sink a doc", ~m(community doc)a do
-      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        }
+      }
+
       passport_rules = %{community.slug => %{"doc.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(S.Article.m(:sink_article, :doc), variables)
-      assert result["innerId"] == to_string(doc.inner_id)
+      assert result["innerId"] == to_string(article_inner_id(doc, community))
 
       branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
       state = Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id)
@@ -28,7 +35,13 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
     end
 
     test "unauth user sink a doc fails", ~m(guest_conn community doc)a do
-      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        }
+      }
 
       assert guest_conn
              |> mutation_error?(
@@ -39,24 +52,36 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
     end
 
     test "login user can undo sink to a doc", ~m(community doc user)a do
-      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        }
+      }
 
       passport_rules = %{community.slug => %{"doc.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
-      {:ok, _} = CMS.Articles.sink(doc.id, user, branch_id: branch.id)
+      {:ok, _} = CMS.Articles.sink(doc.id, user, branch_id: branch.id, community: community)
 
       updated = rule_conn |> gq_mutation(S.Article.m(:undo_sink_article, :doc), variables)
 
-      assert updated["innerId"] == to_string(doc.inner_id)
+      assert updated["innerId"] == to_string(article_inner_id(doc, community))
 
       state = Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id)
       refute state.is_sunk
     end
 
     test "unauth user undo sink a doc fails", ~m(guest_conn community doc)a do
-      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        }
+      }
 
       assert guest_conn
              |> mutation_error?(

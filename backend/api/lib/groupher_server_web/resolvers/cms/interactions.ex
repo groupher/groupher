@@ -50,7 +50,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Interactions do
   end
 
   def article_interaction_states(_root, %{paths: paths}, info) do
-    with :ok <- validate_viewer_batch(paths) do
+    with {:ok, :pass} <- validate_viewer_batch(paths) do
       case Map.get(info.context, :cur_user) do
         %User{} = user -> CMS.Interactions.article_states_for_paths(paths, user)
         _ -> {:ok, []}
@@ -67,7 +67,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Interactions do
   end
 
   defp validate_viewer_batch(paths) when is_list(paths) and length(paths) <= @viewer_batch_size do
-    :ok
+    {:ok, :pass}
   end
 
   defp validate_viewer_batch(_paths) do

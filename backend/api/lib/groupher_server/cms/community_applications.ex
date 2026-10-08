@@ -49,7 +49,8 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @doc "Runs `review_queue` through the public `CommunityApplications` boundary."
   @spec review_queue(map(), User.t()) :: T.domain_res(term())
   def review_queue(filter, %User{} = reviewer) do
-    with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
+    with {:ok, _} <-
+           review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
       Query.review_queue(filter)
     end
   end
@@ -57,7 +58,8 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @doc "Runs `review_detail` through the public `CommunityApplications` boundary."
   @spec review_detail(String.t(), User.t()) :: T.domain_res(term())
   def review_detail(public_ref, %User{} = reviewer) do
-    with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
+    with {:ok, _} <-
+           review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
       Query.review_detail(public_ref)
     end
   end
@@ -84,7 +86,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   defp review_authorized?(reviewer, action) do
     case Passport.check(reviewer, action, %{}) do
-      {:ok, true} -> :ok
+      {:ok, true} -> {:ok, :pass}
       _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
@@ -112,7 +114,8 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @doc "Normalizes public reviewer filters and returns the authorized review queue."
   @spec review_queue_by_public_filter(map(), User.t()) :: T.domain_res(map())
   def review_queue_by_public_filter(filter, %User{} = reviewer) do
-    with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)),
+    with {:ok, _} <-
+           review_authorized?(reviewer, Const.passport_action(:community_application_review)),
          {:ok, filter} <- normalize_public_filter(filter) do
       Query.review_queue(filter)
     end

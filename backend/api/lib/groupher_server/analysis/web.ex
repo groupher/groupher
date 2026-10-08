@@ -256,7 +256,7 @@ defmodule GroupherServer.Analysis.Web do
   defp load_visitor_location_map(community, dashboard, range) do
     provider = provider()
 
-    with :ok <- ensure_runtime_configured(),
+    with {:ok, _} <- ensure_runtime_configured(),
          website_id when is_binary(website_id) <- dashboard.umami_website_id do
       community_analysis = AnalysisCommunity.from_community(community, website_id)
       key = "analysis.visitor_location_map.#{website_id}"
@@ -390,8 +390,8 @@ defmodule GroupherServer.Analysis.Web do
   defp percentage_of(value, total), do: Float.round(value / total * 100, 1)
 
   defp prepare_community(%Community{} = community, provider) do
-    with :ok <- ensure_runtime_configured(),
-         :ok <- ensure_persisted_community(community),
+    with {:ok, _} <- ensure_runtime_configured(),
+         {:ok, _} <- ensure_persisted_community(community),
          {:ok, dashboard} <- dashboard_for(community),
          {:ok, website_id} <- ensure_umami_website_id(community, dashboard, provider) do
       {:ok, AnalysisCommunity.from_community(community, website_id)}
@@ -402,12 +402,12 @@ defmodule GroupherServer.Analysis.Web do
 
   defp ensure_runtime_configured do
     case Config.runtime().api_token do
-      token when is_binary(token) and token != "" -> :ok
+      token when is_binary(token) and token != "" -> {:ok, :pass}
       _ -> {:error, ErrorCat.not_configured()}
     end
   end
 
-  defp ensure_persisted_community(%Community{id: id}) when is_integer(id), do: :ok
+  defp ensure_persisted_community(%Community{id: id}) when is_integer(id), do: {:ok, :pass}
   defp ensure_persisted_community(%Community{}), do: {:error, ErrorCat.community_not_persisted()}
 
   defp ensure_umami_website_id(

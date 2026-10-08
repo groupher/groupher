@@ -17,20 +17,20 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
   describe "[post upvote]" do
     test "tmp login user can upvote a post", ~m(user_conn user2_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"}
       }
 
       _created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
       created = user2_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
       assert get_in(created, ["interactionState", "viewerHasUpvoted"])
 
-      assert get_in(created, ["interactionState", "innerId"]) == to_string(post.inner_id)
+      assert get_in(created, ["interactionState", "innerId"]) == to_string(article_inner_id(post, community))
       assert created["articleStats"]["upvotesCount"] == 2
     end
 
     test "login user can upvote a post", ~m(user_conn user2_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"}
       }
 
       _created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
@@ -38,13 +38,13 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
 
       assert get_in(created, ["interactionState", "viewerHasUpvoted"])
 
-      assert get_in(created, ["interactionState", "innerId"]) == to_string(post.inner_id)
+      assert get_in(created, ["interactionState", "innerId"]) == to_string(article_inner_id(post, community))
       assert created["articleStats"]["upvotesCount"] == 2
     end
 
     test "unauth user upvote a post fails", ~m(guest_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"}
       }
 
       assert guest_conn
@@ -59,19 +59,19 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       {:ok, _} = CMS.Interactions.upvote(post, user)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"}
       }
 
       updated = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :post), variables)
 
       refute get_in(updated, ["interactionState", "viewerHasUpvoted"])
-      assert get_in(updated, ["interactionState", "innerId"]) == to_string(post.inner_id)
+      assert get_in(updated, ["interactionState", "innerId"]) == to_string(article_inner_id(post, community))
     end
 
     test "duplicate upvote is idempotent and count does not increase",
          ~m(user_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"}
       }
 
       created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
@@ -81,7 +81,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       unchanged = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
       assert unchanged["articleStats"]["upvotesCount"] == 1
 
-      {:ok, current_post} = read_article(community, :post, post.inner_id)
+      {:ok, current_post} = read_article(community, :post, article_inner_id(post, community))
       counts = CMS.Interactions.counts([current_post])
       assert counts[{:post, current_post.id}].upvotes_count == 1
     end
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       command_id = Ecto.UUID.generate()
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         commandId: command_id
       }
 
@@ -119,7 +119,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       command_id = Ecto.UUID.generate()
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         commandId: command_id
       }
 
@@ -140,17 +140,17 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
     test "undo upvote is idempotent (can undo even if not upvoted)",
          ~m(user_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"}
       }
 
       result = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :post), variables)
 
-      assert get_in(result, ["interactionState", "innerId"]) == to_string(post.inner_id)
+      assert get_in(result, ["interactionState", "innerId"]) == to_string(article_inner_id(post, community))
     end
 
     test "unauth user undo upvote a post fails", ~m(guest_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"}
       }
 
       assert guest_conn

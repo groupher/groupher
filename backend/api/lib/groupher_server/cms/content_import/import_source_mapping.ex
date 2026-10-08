@@ -65,8 +65,8 @@ defmodule GroupherServer.CMS.ContentImport.ImportSourceMapping do
   end
 
   @doc "Batch upserts source mappings while preserving the single-row changeset contract."
-  @spec upsert_all([map()]) :: :ok | {:error, Ecto.Changeset.t()}
-  def upsert_all([]), do: :ok
+  @spec upsert_all([map()]) :: {:ok, :pass} | {:error, Ecto.Changeset.t()}
+  def upsert_all([]), do: {:ok, :pass}
 
   def upsert_all(attrs_list) when is_list(attrs_list) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
@@ -77,7 +77,7 @@ defmodule GroupherServer.CMS.ContentImport.ImportSourceMapping do
         on_conflict: {:replace, @replace_fields}
       )
 
-      :ok
+      {:ok, :pass}
     end
   end
 

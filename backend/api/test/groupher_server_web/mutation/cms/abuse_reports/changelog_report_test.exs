@@ -16,31 +16,31 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
   describe "[changelog report/undo_report]" do
     test "login user can report a changelog", ~m(community changelog user_conn)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         reason: "reason"
       }
 
       article = user_conn |> gq_mutation(S.Article.m(:report_article, :changelog), variables)
-      assert article["innerId"] == to_string(changelog.inner_id)
+      assert article["innerId"] == to_string(article_inner_id(changelog, community))
     end
 
     test "login user can undo report a changelog", ~m(community changelog user_conn)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         reason: "reason"
       }
 
       article = user_conn |> gq_mutation(S.Article.m(:report_article, :changelog), variables)
-      assert article["innerId"] == to_string(changelog.inner_id)
+      assert article["innerId"] == to_string(article_inner_id(changelog, community))
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"}
       }
 
       article =
         user_conn |> gq_mutation(S.Article.m(:undo_report_article, :changelog), variables)
 
-      assert article["innerId"] == to_string(changelog.inner_id)
+      assert article["innerId"] == to_string(article_inner_id(changelog, community))
     end
   end
 end

@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
     assert {:error, :permanent_failure} =
              CMS.Outbox.execute(event.id, fn _event -> {:error, :permanent_failure} end)
 
-    assert :ok = CMS.Outbox.mark_dead(event.id)
+    assert {:ok, :pass} = CMS.Outbox.mark_dead(event.id)
     assert Repo.get!(Event, event.id).status == :dead
     assert {:error, :outbox_event_dead} = CMS.Outbox.execute(event.id, fn _ -> {:ok, :nope} end)
   end

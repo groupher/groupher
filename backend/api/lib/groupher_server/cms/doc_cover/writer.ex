@@ -40,6 +40,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   alias CMS.Model.{
     Article,
+    ArticleBinding,
     ArticleRevision,
     Community,
     DocBranchVersion,
@@ -67,12 +68,12 @@ defmodule GroupherServer.CMS.DocCover.Writer do
       Repo.transaction(fn ->
         with {:ok, published_group} <- resolve_published_group(community, draft_group_node_id),
              {:ok, leaves} <- published_leaves_for_group(community, draft_group_node_id),
-             :ok <- ensure_has_leaves(leaves),
+             {:ok, _} <- ensure_has_leaves(leaves),
              {:ok, replacement_index} <-
                replace_descendant_cards(community, published_group),
              {:ok, cover_card} <-
                CoverSync.ensure_cover_card(community, published_group),
-             :ok <- place_cover_card(community, cover_card, replacement_index) do
+             {:ok, _} <- place_cover_card(community, cover_card, replacement_index) do
           card_result(cover_card, published_group, replacement_index)
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -191,10 +192,11 @@ defmodule GroupherServer.CMS.DocCover.Writer do
   def reorder_cards(%Community{} = community, ids, %User{} = actor) when is_list(ids) do
     with_docs_access(actor, community, fn ->
       transact_done(fn ->
-        with :ok <- validate_unique_ids(ids, "Doc cover card order contains duplicate cards."),
+        with {:ok, _} <-
+               validate_unique_ids(ids, "Doc cover card order contains duplicate cards."),
              groups_by_id <- cover_cards_by_id(community, ids),
              {:ok, groups} <- ordered_cover_cards(groups_by_id, community, ids),
-             :ok <- batch_reindex_groups(community, groups) do
+             {:ok, _} <- batch_reindex_groups(community, groups) do
           {:ok, :pass}
         end
       end)
@@ -211,10 +213,11 @@ defmodule GroupherServer.CMS.DocCover.Writer do
       transact_done(fn ->
         with {:ok, cover_card} <-
                ORM.find_by(DocCoverCard, id: cover_card_id, community_id: community.id),
-             :ok <- validate_unique_ids(ids, "Doc cover item order contains duplicate items."),
+             {:ok, _} <-
+               validate_unique_ids(ids, "Doc cover item order contains duplicate items."),
              items_by_id <- cover_items_by_id(community, cover_card, ids),
              {:ok, items} <- ordered_cover_items(items_by_id, community, cover_card, ids),
-             :ok <- batch_reindex_items(community, cover_card, items) do
+             {:ok, _} <- batch_reindex_items(community, cover_card, items) do
           {:ok, :pass}
         end
       end)
@@ -241,7 +244,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   defp create_pinned_doc(community, page) do
     case ensure_clean_published(community, page) do
-      :ok ->
+      {:ok, _} ->
         ORM.create(DocCoverPinnedDoc, %{
           community_id: community.id,
           node_id: page.id,
@@ -285,7 +288,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
         current_ids = Enum.map(pinned_docs, & &1.node.node_id)
 
-        with :ok <- validate_complete_node_set(node_ids, current_ids) do
+        with {:ok, _} <- validate_complete_node_set(node_ids, current_ids) do
           pinned_by_node_id = Map.new(pinned_docs, &{&1.node.node_id, &1})
           pinned_docs = Enum.map(node_ids, &Map.fetch!(pinned_by_node_id, to_string(&1)))
 
@@ -297,7 +300,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   defp reindex_pinned_docs(community, pinned_docs) do
     case batch_reindex_pinned_docs(community, pinned_docs) do
-      :ok -> {:ok, :pass}
+      {:ok, _} -> {:ok, :pass}
       error -> error
     end
   end
@@ -326,9 +329,12 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     draft =
       DocDraft
       |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
-      |> where([draft, article], article.community_id == ^community.id)
-      |> where([draft, _article], draft.branch_id == ^page.branch_id)
-      |> where([draft, _article], draft.article_id == ^page.doc_id)
+      |> join(:inner, [draft, _article], binding in ArticleBinding,
+        on: binding.article_id == draft.article_id
+      )
+      |> where([_draft, _article, binding], binding.community_id == ^community.id)
+      |> where([draft, _article, _binding], draft.branch_id == ^page.branch_id)
+      |> where([draft, _article, _binding], draft.article_id == ^page.doc_id)
       |> limit(1)
       |> Repo.one()
 
@@ -347,7 +353,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
     if is_nil(draft) or
          not ChangeDetection.draft_content_changed?(draft, public_revision) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom("Publish the latest doc changes before pinning it to cover.")}
     end
@@ -365,7 +371,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
          ErrorCat.custom("Pinned doc order must contain the complete current collection.")}
 
       true ->
-        :ok
+        {:ok, :pass}
     end
   end
 
@@ -395,7 +401,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   defp resolve_published_page(%Community{} = community, draft_node_id) do
     with {:ok, published} <- resolve_published_node(community, draft_node_id),
-         :ok <-
+         {:ok, _} <-
            expect_type(published, @tree_node_type_page, "This doc has not been published yet.") do
       {:ok, published}
     end
@@ -411,7 +417,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     end
   end
 
-  defp expect_type(%DocTreeNode{type: type}, type, _message), do: :ok
+  defp expect_type(%DocTreeNode{type: type}, type, _message), do: {:ok, :pass}
   defp expect_type(_node, _type, message), do: {:error, ErrorCat.custom(message)}
 
   defp published_leaves_for_group(%Community{} = community, draft_group_node_id) do
@@ -503,17 +509,17 @@ defmodule GroupherServer.CMS.DocCover.Writer do
             AND child.stage = $3
         ),
         related_nodes AS (
-          SELECT node_id, 'ancestor' AS relation
+          SELECT node_id, 'ancestor' AS binding
           FROM ancestors
           WHERE node_id != $4
 
           UNION ALL
 
-          SELECT node_id, 'descendant' AS relation
+          SELECT node_id, 'descendant' AS binding
           FROM descendants
           WHERE node_id != $4
         )
-        SELECT card.id, card."index", related.relation
+        SELECT card.id, card."index", related.binding
         FROM related_nodes AS related
         JOIN cms.doc_tree_nodes AS node
           ON node.community_id = $1
@@ -533,7 +539,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
         ]
       )
 
-    if Enum.any?(result.rows, fn [_id, _index, relation] -> relation == "ancestor" end) do
+    if Enum.any?(result.rows, fn [_id, _index, binding] -> binding == "ancestor" end) do
       {:error, ErrorCat.custom("This Group is already represented by an ancestor Cover Card.")}
     else
       descendants = for [id, index, "descendant"] <- result.rows, do: {id, index}
@@ -568,9 +574,9 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     {:error, ErrorCat.custom("Publish a doc before adding this group to cover.")}
   end
 
-  defp ensure_has_leaves(_leaves), do: :ok
+  defp ensure_has_leaves(_leaves), do: {:ok, :pass}
 
-  defp place_cover_card(_community, _cover_card, nil), do: :ok
+  defp place_cover_card(_community, _cover_card, nil), do: {:ok, :pass}
 
   defp place_cover_card(%Community{} = community, cover_card, replacement_index) do
     cards =
@@ -658,7 +664,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     normalized_ids = Enum.map(ids, &to_string/1)
 
     if length(normalized_ids) == length(Enum.uniq(normalized_ids)) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom(message)}
     end
@@ -727,7 +733,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   # A successful batch must update every requested row. Anything less indicates
   # that the validated collection changed or escaped its tenant/group scope.
-  defp expect_reindexed_rows({:ok, %{num_rows: expected}}, expected, _message), do: :ok
+  defp expect_reindexed_rows({:ok, %{num_rows: expected}}, expected, _message), do: {:ok, :pass}
 
   defp expect_reindexed_rows({:ok, _result}, _expected, message) do
     {:error, ErrorCat.custom(message)}

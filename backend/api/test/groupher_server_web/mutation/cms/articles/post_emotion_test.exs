@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
   describe "[post emotion]" do
     test "login user can emotion to a post", ~m(community post user_conn)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         emotion: "BEER"
       }
 
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         emotion: "BEER"
       }
 
@@ -67,7 +67,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
     test "duplicate same emotion counts as 1", ~m(community post user_conn)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         emotion: "BEER"
       }
 
@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     test "different emotions from different users both get counted",
          ~m(community post user_conn user2_conn)a do
       variables_beer = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         emotion: "BEER"
       }
 
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       assert emotion_entry(article["articleStats"]["emotionCounts"], :beer)["count"] == 1
 
       variables_heart = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         emotion: "HEART"
       }
 
@@ -103,7 +103,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       assert beer.count == 1
       assert heart.count == 1
 
-      {:ok, current_post} = read_article(community, :post, post.inner_id)
+      {:ok, current_post} = read_article(community, :post, article_inner_id(post, community))
       counts = CMS.Interactions.counts([current_post])
       emotion_counts = counts[{:post, current_post.id}].emotion_counts
       assert %{type: :beer, count: 1} in emotion_counts
@@ -138,7 +138,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     test "generic Article emotion GraphQL enum excludes UPVOTE",
          ~m(community post user_conn)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         emotion: "UPVOTE"
       }
 
@@ -157,7 +157,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
         })
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         emotion: "BEER"
       }
 

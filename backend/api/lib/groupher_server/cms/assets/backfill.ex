@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Assets.Backfill do
   @doc "Scans the new ownership table and writes a completion receipt only when it is valid."
   def run(%Community{id: community_id}, opts \\ []) do
     case Repo.transaction(fn ->
-           :ok = Completeness.lock_scope(community_id)
+           {:ok, _} = Completeness.lock_scope(community_id)
            {:ok, _pending} = Completeness.mark_pending(community_id)
 
            if invalid_ref_exists?(community_id) do

@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Query.Collects.DocCollect do
       {:ok, _} = CMS.Interactions.collect(doc, user2)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
+        article: %{inner_id: article_inner_id(doc, community), community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: 20}
       }
 

@@ -10,6 +10,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState do
 
   alias __MODULE__.{Query, Sync}
   alias GroupherServer.Accounts
+  alias GroupherServer.CMS.Articles.Bindings
+  alias GroupherServer.CMS.Model.Article
   alias Accounts.Model.User
 
   @doc """
@@ -43,12 +45,23 @@ defmodule GroupherServer.CMS.Interactions.ReadState do
     %{
       community: article.community,
       thread: article.thread,
-      inner_id: article.inner_id,
+      inner_id: article_inner_id(article),
       interaction_revision: interaction.interaction_revision || 0,
       viewer_has_upvoted: interaction.viewer_has_upvoted || false,
       viewer_has_collected: interaction.viewer_has_collected || false,
       viewer_emotion: interaction.viewer_emotion
     }
+  end
+
+  defp article_inner_id(article) when is_map(article) do
+    if Map.get(article, :__struct__) == Article do
+      case Bindings.get(article, Map.get(article, :community)) do
+        {:ok, %{inner_id: inner_id}} -> inner_id
+        _ -> nil
+      end
+    else
+      Map.get(article, :inner_id)
+    end
   end
 
   @doc "Returns public Interaction presentation state for one Artiment."

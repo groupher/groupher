@@ -3,26 +3,27 @@ defmodule GroupherServer.CMS.Kanban.Query do
     Reads Community-local Kanban membership for Kanban commands.
 
         Article + Community
-          -> ArticleCommunity relation
+          -> ArticleBinding binding
           -> KanbanState membership
   """
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Article, ArticleCommunity, Community, KanbanState}
+  alias CMS.Kanban.ErrorCat
+  alias CMS.Model.{Article, ArticleBinding, Community, KanbanState}
 
-  @doc "Returns the existing Kanban state for one ArticleCommunity relation."
+  @doc "Returns the existing Kanban state for one ArticleBinding binding."
   @spec ensure_membership(Article.t(), Community.t()) ::
           {:ok, KanbanState.t()} | {:error, term()}
   def ensure_membership(%Article{} = article, %Community{} = community) do
-    case Repo.get_by(ArticleCommunity, article_id: article.id, community_id: community.id) do
-      %ArticleCommunity{id: article_community_id} ->
-        case Repo.get(KanbanState, article_community_id) do
+    case Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id) do
+      %ArticleBinding{id: article_binding_id} ->
+        case Repo.get(KanbanState, article_binding_id) do
           %KanbanState{} = state -> {:ok, state}
-          nil -> {:error, CMS.Articles.ErrorCat.not_exist("post is not in kanban")}
+          nil -> {:error, ErrorCat.not_in_kanban()}
         end
 
       nil ->
-        {:error, CMS.Articles.ErrorCat.not_exist("post is not in kanban")}
+        {:error, ErrorCat.not_in_kanban()}
     end
   end
 end

@@ -127,7 +127,7 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
             finalized_at: now
           }
 
-          with :ok <- validate_completion(upload, attrs),
+          with {:ok, _} <- validate_completion(upload, attrs),
                {:ok, finalized} <-
                  upload |> CommunityApplicationLogoUpload.changeset(attrs) |> Repo.update() do
             finalized
@@ -220,7 +220,7 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
         {:error, ErrorCat.asset_not_ready()}
 
       true ->
-        :ok
+        {:ok, :pass}
     end
   end
 

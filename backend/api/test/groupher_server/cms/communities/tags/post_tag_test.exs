@@ -266,19 +266,19 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
       {:ok, post} = CMS.Communities.set_tag(post, article_tag2.id)
 
-      {:ok, post} = read_article(community, :post, post.inner_id)
+      {:ok, post} = read_article(community, :post, article_inner_id(post, community))
       assert exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
 
-      {:ok, post} = read_article(community, :post, post.inner_id)
+      {:ok, post} = read_article(community, :post, article_inner_id(post, community))
       assert not exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag2.id)
 
-      {:ok, post} = read_article(community, :post, post.inner_id)
+      {:ok, post} = read_article(community, :post, article_inner_id(post, community))
       assert not exist_in?(article_tag, post.community_tags)
       assert not exist_in?(article_tag2, post.community_tags)
     end
@@ -512,7 +512,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          user
+          user,
+          community: community
         )
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)

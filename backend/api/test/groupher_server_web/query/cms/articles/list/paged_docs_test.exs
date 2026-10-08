@@ -57,11 +57,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
-      assert first_doc["innerId"] > doc.inner_id
+      assert first_doc["innerId"] > article_inner_id(doc, community)
     end
 
     test "upvotes_count order should work",
-         ~m(guest_conn doc_last_week user user2 user3)a do
+         ~m(guest_conn community doc_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "UPVOTES"}}
 
       {:ok, _} = CMS.Interactions.upvote(doc_last_week, user)
@@ -71,13 +71,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
 
-      assert first_doc["innerId"] === to_string(doc_last_week.inner_id)
+      assert first_doc["innerId"] === to_string(article_inner_id(doc_last_week, community))
     end
 
     test "comments_count order should work",
          ~m(guest_conn community doc_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "COMMENTS"}}
-      doc_id = doc_last_week.inner_id
+      doc_id = article_inner_id(doc_last_week, community)
 
       {:ok, _} = CMS.Comments.create_comment(community, :doc, doc_id, mock_comment(), user)
       {:ok, _} = CMS.Comments.create_comment(community, :doc, doc_id, mock_comment(), user2)
@@ -85,7 +85,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
-      assert first_doc["innerId"] === to_string(doc_last_week.inner_id)
+      assert first_doc["innerId"] === to_string(article_inner_id(doc_last_week, community))
     end
 
     test "views order should work", ~m(guest_conn community user user2 user3)a do
@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
-      assert first_doc["innerId"] == to_string(doc.inner_id)
+      assert first_doc["innerId"] == to_string(article_inner_id(doc, community))
     end
 
     test "should get valid article document", ~m(guest_conn community user)a do
@@ -218,7 +218,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
 
       assert length(results["entries"]) == 3
-      assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(doc.inner_id)))
+
+      assert results["entries"]
+             |> Enum.any?(&(&1["innerId"] == to_string(article_inner_id(doc, community))))
     end
 
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
@@ -242,7 +244,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    test "filter sort MOST_VIEWS should work", ~m(guest_conn doc_last_year)a do
+    test "filter sort MOST_VIEWS should work", ~m(guest_conn community doc_last_year)a do
       Repo.update_all(
         from(summary in ArticleStats,
           where: summary.thread == :doc and summary.article_id == ^doc_last_year.id
@@ -263,7 +265,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       find_doc = results |> Map.get("entries") |> hd
 
       assert most_views_doc.article_id == doc_last_year.id
-      assert find_doc["innerId"] == to_string(doc_last_year.inner_id)
+      assert find_doc["innerId"] == to_string(article_inner_id(doc_last_year, community))
     end
   end
 
@@ -280,7 +282,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results["totalCount"] == 5
 
       the_doc =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(doc.inner_id)))
+        Enum.find(
+          results["entries"],
+          &(&1["innerId"] == to_string(article_inner_id(doc, community)))
+        )
 
       refute Map.has_key?(the_doc, "viewerHasViewed")
       refute Map.has_key?(the_doc, "viewerHasUpvoted")
@@ -296,7 +301,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
 
       the_doc =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(doc.inner_id)))
+        Enum.find(
+          results["entries"],
+          &(&1["innerId"] == to_string(article_inner_id(doc, community)))
+        )
 
       refute Map.has_key?(the_doc, "viewerHasViewed")
       refute Map.has_key?(the_doc, "viewerHasUpvoted")
@@ -311,12 +319,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   test: FILTER when [TODAY] [THIS_WEEK] [THIS_MONTH] [THIS_YEAR]
   """
   describe "[query paged_docs filter when]" do
-    test "THIS_YEAR option should work", ~m(guest_conn doc_last_year)a do
+    test "THIS_YEAR option should work", ~m(guest_conn community doc_last_year)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
 
       assert results["entries"]
-             |> Enum.any?(&(&1["innerId"] != to_string(doc_last_year.inner_id)))
+             |> Enum.any?(
+               &(&1["innerId"] != to_string(article_inner_id(doc_last_year, community)))
+             )
     end
 
     test "TODAY option should work", ~m(guest_conn)a do
@@ -335,11 +345,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert results |> Map.get("totalCount") >= @today_count
     end
 
-    test "THIS_MONTH option should work", ~m(guest_conn doc_last_month)a do
+    test "THIS_MONTH option should work", ~m(guest_conn community doc_last_month)a do
       variables = %{filter: %{when: "THIS_MONTH"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["innerId"] != doc_last_month.inner_id))
+      assert results["entries"]
+             |> Enum.any?(&(&1["innerId"] != article_inner_id(doc_last_month, community)))
     end
   end
 
@@ -352,7 +363,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       entries = results["entries"]
       first_doc = entries |> List.first()
-      assert first_doc["innerId"] !== to_string(doc_last_week.inner_id)
+      assert first_doc["innerId"] !== to_string(article_inner_id(doc_last_week, community))
 
       Process.sleep(2000)
 
@@ -360,7 +371,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
         CMS.Comments.create_comment(
           community,
           :doc,
-          doc_last_week.inner_id,
+          article_inner_id(doc_last_week, community),
           mock_comment(),
           user2
         )
@@ -370,7 +381,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       entries = results["entries"]
       first_doc = entries |> List.first()
 
-      assert first_doc["innerId"] == to_string(doc_last_week.inner_id)
+      assert first_doc["innerId"] == to_string(article_inner_id(doc_last_week, community))
     end
 
     test "comment on very old doc have no effect",
@@ -381,7 +392,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
         CMS.Comments.create_comment(
           community,
           :doc,
-          doc_last_year.inner_id,
+          article_inner_id(doc_last_year, community),
           mock_comment(),
           user2
         )
@@ -390,7 +401,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       entries = results["entries"]
       first_doc = entries |> List.first()
 
-      assert first_doc["innerId"] !== to_string(doc_last_year.inner_id)
+      assert first_doc["innerId"] !== to_string(article_inner_id(doc_last_year, community))
     end
 
     test "latest doc author commented doc have no effect",
@@ -405,7 +416,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
         CMS.Comments.create_comment(
           community,
           :doc,
-          doc.inner_id,
+          article_inner_id(doc, community),
           mock_comment(),
           doc.author.user
         )
@@ -414,7 +425,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       entries = results["entries"]
       first_doc = entries |> List.first()
 
-      assert first_doc["innerId"] !== to_string(doc_last_week.inner_id)
+      assert first_doc["innerId"] !== to_string(article_inner_id(doc_last_week, community))
     end
   end
 

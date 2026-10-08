@@ -28,12 +28,12 @@ defmodule GroupherServer.Test.CMS.Press do
       CMS.Press.article(%{
         community: community.slug,
         thread: :post,
-        inner_id: post.inner_id
+        inner_id: article_inner_id(post, community)
       })
 
     assert projection.article_id == post.id
     assert is_binary(projection.markdown)
-    assert projection.canonical_path == "/#{community.slug}/post/#{post.inner_id}"
+    assert projection.canonical_path == "/#{community.slug}/post/#{article_inner_id(post, community)}"
 
     assert Repo.get_by!(ArticleStats, thread: :post, article_id: post.id).views == 0
   end
@@ -56,13 +56,13 @@ defmodule GroupherServer.Test.CMS.Press do
              CMS.Press.article(%{
                community: community.slug,
                thread: :post,
-               inner_id: post.inner_id
+               inner_id: article_inner_id(post, community)
              })
   end
 
   test "Docs Markdown requires membership in the current public main tree" do
     {community, doc, _attrs, _user} = mock_article(:doc)
-    path = %{community: community.slug, thread: :doc, inner_id: doc.inner_id}
+    path = %{community: community.slug, thread: :doc, inner_id: article_inner_id(doc, community)}
 
     assert {:error,
             %ErrorCat.Error{

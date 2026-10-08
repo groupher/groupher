@@ -98,6 +98,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
     "ARTICLE:#{encode_thread(thread)}:#{article_id}"
   end
 
+  @doc "Builds a binding-scoped search object key for one ArticleBinding locator."
+  @spec article_key(thread(), Ecto.UUID.t(), String.t()) :: String.t()
+  def article_key(thread, article_id, community_ref) do
+    "ARTICLE:#{encode_thread(thread)}:#{community_ref}:#{article_id}"
+  end
+
   @spec comment_ref(thread(), Ecto.UUID.t(), non_neg_integer()) :: String.t()
   def comment_ref(thread, article_id, comment_inner_id) do
     "COMMENT:#{encode_thread(thread)}:#{article_id}:#{comment_inner_id}"

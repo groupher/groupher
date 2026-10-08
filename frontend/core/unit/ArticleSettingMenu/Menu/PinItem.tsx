@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import PinSVG from '~/icons/Pin'
 import SpinSVG from '~/icons/Spin'
 import UnPinSVG from '~/icons/UnPin'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import { updateViewingArticle } from '~/signal'
 import useArticle from '~/stores/article/hooks'
 import { toast } from '~/ui/Toaster'
@@ -30,7 +31,10 @@ export default function PinItem() {
       thread: article.meta.thread,
     }
 
-    const action = !pin ? pinPost({ article: articlePath }) : undoPinPost({ article: articlePath })
+    const commandId = createCommandId()
+    const action = !pin
+      ? pinPost({ article: articlePath, commandId })
+      : undoPinPost({ article: articlePath, commandId })
 
     action.then((result) => {
       if (result.error) {

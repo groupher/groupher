@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Model.CommunityInnerIdCounter do
   @moduledoc """
   Owns the next public Article number for one Community.
 
-      lock Community counter -> allocate ArticleCommunity.inner_id -> advance counter
+      lock Community counter -> allocate ArticleBinding.inner_id -> advance counter
   """
 
   use Ecto.Schema

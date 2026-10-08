@@ -43,18 +43,18 @@ defmodule GroupherServer.CMS.Articles.Revision do
   @ordinary_threads ~w(post blog changelog)a
   @retention_days 7
 
-  @doc "Creates one immutable Revision and all thread-owned immutable relations."
+  @doc "Creates one immutable Revision and all thread-owned immutable bindings."
   @spec create(Article.t(), ArticleDraft.t() | DocDraft.t()) ::
           {:ok, ArticleRevision.t()} | {:error, Ecto.Changeset.t() | term()}
   def create(%Article{} = article, draft) do
-    with :ok <- validate_draft_owner(article, draft),
+    with {:ok, _} <- validate_draft_owner(article, draft),
          {:ok, body_draft} <- fetch_body_draft(draft),
          {:ok, body_snapshot} <- materialize_body_snapshot(body_draft),
          {:ok, revision} <- insert_revision(article, draft, body_snapshot),
-         :ok <- copy_asset_refs(body_draft.id, revision.id),
-         :ok <- copy_cover_state(body_draft.id, revision.id),
+         {:ok, _} <- copy_asset_refs(body_draft.id, revision.id),
+         {:ok, _} <- copy_cover_state(body_draft.id, revision.id),
          {:ok, _extension} <- insert_typed_extension(article.thread, draft, revision),
-         :ok <- copy_tags(article.thread, draft, revision) do
+         {:ok, _} <- copy_tags(article.thread, draft, revision) do
       {:ok, revision}
     end
   end
@@ -81,10 +81,12 @@ defmodule GroupherServer.CMS.Articles.Revision do
 
   defp validate_draft_owner(%Article{id: id, thread: thread}, %ArticleDraft{article_id: id})
        when thread in @ordinary_threads do
-    :ok
+    {:ok, :pass}
   end
 
-  defp validate_draft_owner(%Article{id: id, thread: :doc}, %DocDraft{article_id: id}), do: :ok
+  defp validate_draft_owner(%Article{id: id, thread: :doc}, %DocDraft{article_id: id}),
+    do: {:ok, :pass}
+
   defp validate_draft_owner(_article, _draft), do: {:error, :revision_owner_mismatch}
 
   defp fetch_body_draft(%{body_draft_id: body_draft_id}) do
@@ -154,21 +156,21 @@ defmodule GroupherServer.CMS.Articles.Revision do
       end)
 
     case Repo.insert_all(ArticleAssetRef, rows) do
-      {_count, _rows} -> :ok
+      {_count, _rows} -> {:ok, :pass}
     end
   end
 
   defp copy_cover_state(body_draft_id, revision_id) do
-    with :ok <- copy_cover_edit(body_draft_id, revision_id),
-         :ok <- copy_cover_assets(revision_id) do
-      :ok
+    with {:ok, _} <- copy_cover_edit(body_draft_id, revision_id),
+         {:ok, _} <- copy_cover_assets(revision_id) do
+      {:ok, :pass}
     end
   end
 
   defp copy_cover_edit(body_draft_id, revision_id) do
     case Repo.get(DraftCoverEdit, body_draft_id) do
       nil ->
-        :ok
+        {:ok, :pass}
 
       edit ->
         attrs =
@@ -180,7 +182,7 @@ defmodule GroupherServer.CMS.Articles.Revision do
           |> Map.put(:revision_id, revision_id)
 
         case %RevisionCoverEdit{} |> RevisionCoverEdit.changeset(attrs) |> Repo.insert() do
-          {:ok, _edit} -> :ok
+          {:ok, _edit} -> {:ok, :pass}
           {:error, reason} -> {:error, reason}
         end
     end
@@ -192,7 +194,7 @@ defmodule GroupherServer.CMS.Articles.Revision do
       |> where([ref], ref.revision_id == ^revision_id and ref.usage in [:cover, :cover_dark])
       |> Repo.all()
 
-    Enum.reduce_while(refs, :ok, fn ref, :ok ->
+    Enum.reduce_while(refs, {:ok, :pass}, fn ref, {:ok, _} ->
       theme = if ref.usage == :cover_dark, do: :dark, else: :light
 
       case %RevisionCover{}
@@ -202,7 +204,7 @@ defmodule GroupherServer.CMS.Articles.Revision do
              theme: theme
            })
            |> Repo.insert() do
-        {:ok, _cover} -> {:cont, :ok}
+        {:ok, _cover} -> {:cont, {:ok, :pass}}
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
@@ -251,7 +253,7 @@ defmodule GroupherServer.CMS.Articles.Revision do
       params
     )
     |> case do
-      {:ok, _result} -> :ok
+      {:ok, _result} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end

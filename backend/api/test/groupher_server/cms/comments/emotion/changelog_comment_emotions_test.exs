@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
             CMS.Comments.create_comment(
               community,
               :changelog,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment(),
               user
             )
@@ -77,7 +77,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
             CMS.Comments.create_comment(
               community,
               :changelog,
-              changelog.inner_id,
+              article_inner_id(changelog, community),
               mock_comment(),
               user
             )
@@ -102,7 +102,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -149,7 +149,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -170,7 +170,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -200,7 +200,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -254,7 +254,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )
@@ -278,7 +278,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user
         )

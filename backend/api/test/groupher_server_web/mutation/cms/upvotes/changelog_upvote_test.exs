@@ -16,18 +16,18 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
   describe "[changelog upvote]" do
     test "login user can upvote a changelog", ~m(user_conn community changelog)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"}
       }
 
       created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :changelog), variables)
 
       assert get_in(created, ["interactionState", "viewerHasUpvoted"])
-      assert get_in(created, ["interactionState", "innerId"]) == to_string(changelog.inner_id)
+      assert get_in(created, ["interactionState", "innerId"]) == to_string(article_inner_id(changelog, community))
     end
 
     test "unauth user upvote a changelog fails", ~m(guest_conn community changelog)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"}
       }
 
       assert guest_conn
@@ -42,19 +42,19 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
       {:ok, _} = CMS.Interactions.upvote(changelog, user)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"}
       }
 
       updated =
         user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :changelog), variables)
 
       refute get_in(updated, ["interactionState", "viewerHasUpvoted"])
-      assert get_in(updated, ["interactionState", "innerId"]) == to_string(changelog.inner_id)
+      assert get_in(updated, ["interactionState", "innerId"]) == to_string(article_inner_id(changelog, community))
     end
 
     test "unauth user undo upvote a changelog fails", ~m(guest_conn community changelog)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"}
       }
 
       assert guest_conn

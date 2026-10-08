@@ -166,7 +166,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
     end
 
     test "supports cross article mentions among post, blog, and changelog",
-         ~m(post blog changelog user)a do
+         ~m(community post blog changelog user)a do
       blog_body =
         plate_body([
           block("block-blog", [text(~s(<a href="#{@site_host}/post/#{post.id}">post</a>))])
@@ -204,14 +204,14 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert post_mentions.total_count == 1
       post_mention = post_mentions.entries |> List.first()
       assert post_mention.mentioner_type == :blog
-      assert post_mention.mentioner_community_id == post.community_id
-      assert post_mention.mentioned_community_id == post.community_id
+      assert post_mention.mentioner_community_id == community.id
+      assert post_mention.mentioned_community_id == community.id
 
       assert blog_mentions.total_count == 1
       blog_mention = blog_mentions.entries |> List.first()
       assert blog_mention.mentioner_type == :changelog
-      assert blog_mention.mentioner_community_id == blog.community_id
-      assert blog_mention.mentioned_community_id == blog.community_id
+      assert blog_mention.mentioner_community_id == community.id
+      assert blog_mention.mentioned_community_id == community.id
     end
 
     test "ignores self mentions for artiments and authors", ~m(community post_attrs user)a do
@@ -264,7 +264,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         CMS.Comments.create_comment(
           community,
           :post,
-          post.inner_id,
+          article_inner_id(post, community),
           plate_body([
             block("block-a", [text(~s(<a href="#{@site_host}/blog/#{blog.id}">blog</a>))])
           ]),
@@ -306,7 +306,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
             CMS.Comments.create_comment(
               community,
               :blog,
-              blog.inner_id,
+              article_inner_id(blog, community),
               plate_body([block("target-#{index}", [text("target #{index}")])]),
               user
             )
@@ -327,7 +327,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         CMS.Comments.create_comment(
           community,
           :post,
-          post.inner_id,
+          article_inner_id(post, community),
           comment_body.([List.first(target_comments)]),
           user
         )
@@ -595,13 +595,21 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       Enum.map(mentioner_ids, fn article_id ->
         %{
           id: article_id,
-          community_id: community.id,
           author_id: target.author_id,
           thread: :blog,
           moderation_state: :legal,
           inserted_at: timestamp,
           updated_at: timestamp
         }
+      end)
+    )
+
+    now = DateTime.utc_now(:second)
+
+    Repo.insert_all(
+      CMS.Model.ArticleBinding,
+      Enum.map(mentioner_ids, fn article_id ->
+        %{article_id: article_id, community_id: community.id, inner_id: 10_000 + :erlang.phash2(article_id, 1_000), inserted_at: now, updated_at: now}
       end)
     )
 

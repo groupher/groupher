@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert Repo.get(CMS.Model.Article, post_id)
     assert CMS.Articles.Trash.trashed_article?(post)
 
-    assert {:error, _} = read_article(community, :post, post.inner_id)
+    assert {:error, _} = read_article(community, :post, article_inner_id(post, community))
 
     assert {:ok, %{entries: []}} =
              CMS.Articles.page(:post, %{community: community.slug, page: 1, size: 20})
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
     assert {:ok, restored} = CMS.Articles.restore_trashed(item.hash_id, user)
     assert restored.id == post.id
-    assert {:ok, _} = read_article(community, :post, post.inner_id)
+    assert {:ok, _} = read_article(community, :post, article_inner_id(post, community))
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
     refute Repo.get(TrashAction, item.trash_action_id)
   end
@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   test "Trash excludes Posts from scalar, grouped and multi-status Kanban lists" do
     {community, post, _attrs, user} = mock_article(:post)
-    assert {:ok, post} = CMS.Articles.set_status(post.id, :todo, user)
+    assert {:ok, post} = CMS.Articles.set_status(post.id, :todo, user, community.id)
 
     assert {:ok, %{entries: [listed]}} =
              CMS.Articles.paged_kanban(community, %{status: :todo, page: 1, size: 20})
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, %{todo: %{entries: [listed]}}} = CMS.Articles.grouped_kanban(community)
     assert listed.id == post.id
 
-    assert {:ok, _item} = CMS.Articles.trash(post, user)
+    assert {:ok, _item} = CMS.Articles.trash(post, user, community: community)
 
     assert {:ok, %{entries: [], total_count: 0}} =
              CMS.Articles.paged_kanban(community, %{status: :todo, page: 1, size: 20})
@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   end
 
   test "Trash excludes Articles from an author's published list and count" do
-    {_community, post, _attrs, user} = mock_article(:post)
+    {community, post, _attrs, user} = mock_article(:post)
 
     assert {:ok, %{entries: entries}} =
              CMS.Articles.paged_published(:post, %{page: 1, size: 20}, user)
@@ -126,7 +126,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert Enum.any?(entries, &(&1.id == post.id))
     assert {:ok, count_before} = CMS.Articles.count_published(:post, user)
 
-    assert {:ok, _item} = CMS.Articles.trash(post, user)
+    assert {:ok, _item} = CMS.Articles.trash(post, user, community: community)
 
     assert {:ok, %{entries: entries}} =
              CMS.Articles.paged_published(:post, %{page: 1, size: 20}, user)
@@ -137,15 +137,17 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   end
 
   test "Trash excludes Articles from the audit-failed list" do
-    {_community, post, _attrs, user} = mock_article(:post)
-    assert {:ok, post} = CMS.Articles.set_audit_failed(post.id, %{}, :operations)
+    {community, post, _attrs, user} = mock_article(:post)
+
+    assert {:ok, post} =
+             CMS.Articles.set_audit_failed(post.id, %{}, :operations, community: community)
 
     assert {:ok, %{entries: entries}} =
              CMS.Articles.paged_audit_failed(:post, %{page: 1, size: 20})
 
     assert Enum.any?(entries, &(&1.id == post.id))
 
-    assert {:ok, _item} = CMS.Articles.trash(post, user)
+    assert {:ok, _item} = CMS.Articles.trash(post, user, community: community)
 
     assert {:ok, %{entries: entries}} =
              CMS.Articles.paged_audit_failed(:post, %{page: 1, size: 20})
@@ -222,7 +224,13 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
       ])
 
     assert {:ok, comment} =
-             CMS.Comments.create_comment(community, :post, post.inner_id, body, user)
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               article_inner_id(post, community),
+               body,
+               user
+             )
 
     assert {:ok, {1, nil}} = CMS.ArtimentMentions.sync(comment)
     assert Repo.get_by(ArtimentMention, mentioner_type: :comment, mentioner_id: comment.id)

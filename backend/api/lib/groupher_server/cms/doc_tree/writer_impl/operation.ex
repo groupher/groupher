@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
         with {:ok, _canonical} <- CMS.Gate.access_check(actor, :manage_docs, community),
              {:ok, _site_state} <- State.ensure_site_state(community, branch_id: branch.id),
              {:ok, state} <- State.ensure_draft_state(community, branch_id: branch.id),
-             :ok <- revision_check(state, Map.get(args, :base_revision)) do
+             {:ok, _} <- revision_check(state, Map.get(args, :base_revision)) do
           fun.(branch, state)
         else
           {:conflict, state} ->
@@ -97,7 +97,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
 
   defp revision_check(%DocsSiteState{} = state, revision)
        when revision == state.tree_lock_version do
-    :ok
+    {:ok, :pass}
   end
 
   defp revision_check(%DocsSiteState{} = state, _revision), do: {:conflict, state}

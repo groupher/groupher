@@ -157,6 +157,9 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   defp create_top_comment(community, thread, article, user, floor) do
     body = mock_comment("#{FakeData.sentence(12)} #{floor}")
 
-    CMS.Comments.create_comment(community, thread, article.inner_id, body, user)
+    with {:ok, %{inner_id: inner_id}} <-
+           CMS.Articles.Bindings.get(%{article_id: article.id}, community) do
+      CMS.Comments.create_comment(community, thread, inner_id, body, user)
+    end
   end
 end

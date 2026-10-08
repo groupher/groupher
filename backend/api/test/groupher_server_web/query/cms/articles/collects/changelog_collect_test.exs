@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.Query.Collects.ChangelogCollect do
       {:ok, _} = CMS.Interactions.collect(changelog, user2)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
         filter: %{page: 1, size: 20}
       }
 

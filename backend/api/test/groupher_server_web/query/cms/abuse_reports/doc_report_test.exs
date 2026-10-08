@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       report = results["entries"] |> List.first()
 
       assert get_in(report, ["article", "thread"]) == "DOC"
-      assert get_in(report, ["article", "innerId"]) == to_string(doc.inner_id)
+      assert get_in(report, ["article", "innerId"]) == to_string(article_inner_id(doc, community))
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 1
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
 
     test "support comment", ~m(guest_conn community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
 
       {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
 

@@ -74,10 +74,10 @@ defmodule GroupherServer.CMS.Wallpaper.Settings do
   end
 
   @doc "Asserts that the Snapshot JSON version and its mirrored database column agree."
-  @spec assert_persisted_version!(canonical(), integer()) :: :ok
+  @spec assert_persisted_version!(canonical(), integer()) :: {:ok, :pass}
   def assert_persisted_version!(%{"settingsSchemaVersion" => version}, version)
       when is_integer(version) and version == @version do
-    :ok
+    {:ok, :pass}
   end
 
   def assert_persisted_version!(settings, schema_version) do
@@ -86,10 +86,10 @@ defmodule GroupherServer.CMS.Wallpaper.Settings do
   end
 
   @doc "Asserts that incoming settings use the current supported schema version."
-  @spec assert_current_version!(canonical()) :: :ok
+  @spec assert_current_version!(canonical()) :: {:ok, :pass}
   def assert_current_version!(%{"settingsSchemaVersion" => version})
       when is_integer(version) and version == @version do
-    :ok
+    {:ok, :pass}
   end
 
   def assert_current_version!(settings) do

@@ -150,11 +150,11 @@ defmodule GroupherServer.CMS.Press.Projection do
 
   defp canonical_path(community, :doc, article) do
     slug = if Map.get(article, :slug) in [nil, ""], do: nil, else: "/#{article.slug}"
-    "/#{community}/doc/#{article.inner_id}#{slug}"
+    "/#{community}/doc/#{Map.fetch!(article, :inner_id)}#{slug}"
   end
 
   defp canonical_path(community, thread, article) do
-    "/#{community}/#{thread}/#{article.inner_id}"
+    "/#{community}/#{thread}/#{Map.fetch!(article, :inner_id)}"
   end
 
   defp article_revision(article) do

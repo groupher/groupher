@@ -16,18 +16,18 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
   describe "[blog upvote]" do
     test "login user can upvote a blog", ~m(user_conn community blog)a do
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"}
       }
 
       created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :blog), variables)
 
       assert get_in(created, ["interactionState", "viewerHasUpvoted"])
-      assert get_in(created, ["interactionState", "innerId"]) == to_string(blog.inner_id)
+      assert get_in(created, ["interactionState", "innerId"]) == to_string(article_inner_id(blog, community))
     end
 
     test "unauth user upvote a blog fails", ~m(guest_conn community blog)a do
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"}
       }
 
       assert guest_conn
@@ -42,18 +42,18 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
       {:ok, _} = CMS.Interactions.upvote(blog, user)
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"}
       }
 
       updated = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :blog), variables)
 
       refute get_in(updated, ["interactionState", "viewerHasUpvoted"])
-      assert get_in(updated, ["interactionState", "innerId"]) == to_string(blog.inner_id)
+      assert get_in(updated, ["interactionState", "innerId"]) == to_string(article_inner_id(blog, community))
     end
 
     test "unauth user undo upvote a blog fails", ~m(guest_conn community blog)a do
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"}
       }
 
       assert guest_conn

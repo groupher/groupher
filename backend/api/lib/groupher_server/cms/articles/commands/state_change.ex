@@ -5,12 +5,12 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
       state command -> canonical Article -> Gate -> aggregate transition
   """
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.States
   alias CMS.Docs.Store, as: DocStore
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
-  alias CMS.Model.{Article, Community}
+  alias CMS.Model.{Article, Community, DocBranch}
   alias GroupherServer.Accounts.Model.User
 
   @spec execute(atom(), Ecto.UUID.t(), User.t(), keyword()) :: {:ok, term()} | {:error, term()}
@@ -22,23 +22,21 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
     end
   end
 
-  @spec set_category(Ecto.UUID.t(), atom() | nil, User.t()) ::
+  @spec set_category(Ecto.UUID.t(), atom() | nil, User.t(), Community.t()) ::
           {:ok, Article.t()} | {:error, term()}
-  def set_category(article_id, category, %User{} = actor) do
+  def set_category(article_id, category, %User{} = actor, %Community{} = community) do
     with {:ok, %Article{} = article} <- load_article(article_id),
          {:ok, canonical} <-
-           CMS.Gate.Access.with_check(actor, :set_category, article, fn canonical ->
-             States.set_cat(canonical, category)
-           end) do
+           CMS.Gate.Access.with_community_check(
+             actor,
+             :set_category,
+             community,
+             article,
+             fn canonical ->
+               States.set_cat(canonical, category)
+             end
+           ) do
       {:ok, canonical}
-    end
-  end
-
-  @spec set_status(Ecto.UUID.t(), atom() | nil, User.t()) :: {:ok, Article.t()} | {:error, term()}
-  def set_status(article_id, status, %User{} = actor) do
-    with {:ok, %Article{} = article} <- load_article(article_id),
-         {:ok, canonical} <- CMS.Gate.Access.with_check(actor, :set_status, article, &{:ok, &1}) do
-      States.set_status(canonical, status)
     end
   end
 
@@ -71,24 +69,77 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
   def update_active_timestamp(thread, %Article{} = article),
     do: States.update_active_timestamp(thread, article)
 
-  defp admit_and_change(:set_category, article, actor, _opts) do
-    CMS.Gate.Access.with_check(actor, :set_category, article, &States.set_cat(&1, nil))
+  defp admit_and_change(:set_category, article, actor, opts) do
+    with {:ok, community} <- resolve_community(opts, article) do
+      CMS.Gate.Access.with_community_check(
+        actor,
+        :set_category,
+        community,
+        article,
+        &States.set_cat(&1, nil)
+      )
+    end
   end
 
   defp admit_and_change(action, %Article{thread: :doc} = article, actor, opts)
        when action in [:sink, :undo_sink] do
-    branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
+    with {:ok, community} <- resolve_community(opts, article) do
+      branch_id = Keyword.get(opts, :branch_id) || main_branch_id(community.id)
 
-    CMS.Gate.Access.with_branch_check(actor, action, article, branch_id, fn canonical ->
-      apply(States, action, [canonical, [branch_id: branch_id]])
-    end)
+      CMS.Gate.Access.with_branch_check(
+        actor,
+        action,
+        community,
+        article,
+        branch_id,
+        fn canonical ->
+          apply(States, action, [canonical, [branch_id: branch_id]])
+        end
+      )
+    end
   end
 
   defp admit_and_change(action, %Article{} = article, actor, opts)
        when action in [:sink, :undo_sink] do
-    CMS.Gate.Access.with_check(actor, action, article, fn canonical ->
-      apply(States, action, [canonical, opts])
-    end)
+    with {:ok, community} <- resolve_community(opts, article) do
+      CMS.Gate.Access.with_community_check(actor, action, community, article, fn canonical ->
+        apply(States, action, [canonical, opts])
+      end)
+    end
+  end
+
+  defp resolve_community(opts, article) do
+    case Keyword.get(opts, :community) do
+      %Community{} = community ->
+        {:ok, community}
+
+      _ ->
+        case Keyword.get(opts, :community_id) do
+          community_id when is_integer(community_id) ->
+            case Repo.get(Community, community_id) do
+              %Community{} = community -> {:ok, community}
+              _ -> {:error, :article_binding_not_found}
+            end
+
+          _ ->
+            resolve_branch_community(opts, article)
+        end
+    end
+  end
+
+  defp resolve_branch_community(opts, _article) do
+    case Keyword.get(opts, :branch_id) do
+      branch_id when is_integer(branch_id) ->
+        with %DocBranch{community_id: community_id} <- Repo.get(DocBranch, branch_id),
+             %Community{} = community <- Repo.get(Community, community_id) do
+          {:ok, community}
+        else
+          _ -> {:error, :article_binding_not_found}
+        end
+
+      _ ->
+        {:error, :article_binding_context_required}
+    end
   end
 
   defp load_article(article_id) do

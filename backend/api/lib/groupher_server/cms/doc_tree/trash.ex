@@ -163,7 +163,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
              audit: false,
              metadata: %{trash_root_type: current.root_type, trash_root_ref: current.root_ref}
            ),
-         :ok <- delete_tree_memberships(current.id),
+         {:ok, _} <- delete_tree_memberships(current.id),
          {:ok, _activity} <-
            Activity.log(
              %{activity_type: :doc_tree, community_id: community.id, ref: current.root_ref},
@@ -173,14 +173,14 @@ defmodule GroupherServer.CMS.DocTree.Trash do
              source: activity_source(opts),
              metadata: %{doc_count: length(doc_ids)}
            ),
-         :ok <- CMS.Articles.Trash.delete_empty_action(current.id) do
+         {:ok, _} <- CMS.Articles.Trash.delete_empty_action(current.id) do
       {:ok, %{done: true}}
     end
   end
 
   defp restore_action(community, branch, action, items, actor) do
-    with :ok <- shift_root_restore_slots(community, branch, action, items),
-         :ok <- ensure_restore_slots_available(community, branch, items),
+    with {:ok, _} <- shift_root_restore_slots(community, branch, action, items),
+         {:ok, _} <- ensure_restore_slots_available(community, branch, items),
          {:ok, draft_nodes} <- restore_stage_nodes(community, branch, items, :draft),
          {:ok, public_nodes} <- restore_stage_nodes(community, branch, items, :public),
          {:ok, articles} <-
@@ -191,7 +191,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
            ),
          {:ok, events} <-
            record_restore_events(community, branch, items, draft_nodes, public_nodes, actor),
-         :ok <- delete_tree_memberships(action.id),
+         {:ok, _} <- delete_tree_memberships(action.id),
          {:ok, _activity} <-
            Activity.log(
              %{
@@ -206,7 +206,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
              source: :api,
              metadata: %{node_count: length(items), doc_count: length(articles)}
            ),
-         :ok <- CMS.Articles.Trash.delete_empty_action(action.id) do
+         {:ok, _} <- CMS.Articles.Trash.delete_empty_action(action.id) do
       {:ok,
        %{
          articles: articles,
@@ -331,7 +331,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
           {:ok, item}
 
         not is_nil(target_parent_node_id) ->
-          with :ok <-
+          with {:ok, _} <-
                  validate_restore_parent(
                    community,
                    branch,
@@ -390,13 +390,13 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
     case {type, parent} do
       {:pin, %DocTreeNode{type: :tab}} ->
-        :ok
+        {:ok, :pass}
 
       {:group, %DocTreeNode{type: parent_type}} when parent_type in [:tab, :group] ->
-        :ok
+        {:ok, :pass}
 
       {child_type, %DocTreeNode{type: :group}} when child_type in [:page, :link] ->
-        :ok
+        {:ok, :pass}
 
       {_type, nil} ->
         {:error,
@@ -434,7 +434,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
       end
     end)
 
-    :ok
+    {:ok, :pass}
   end
 
   defp shift_restore_slot(community, branch, stage, parent_node_id, type, from_index) do
@@ -451,7 +451,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     |> where([node], node.index >= ^(from_index + 100_000))
     |> Repo.update_all(inc: [index: -99_999])
 
-    :ok
+    {:ok, :pass}
   end
 
   defp where_restore_scope(query, nil, :tab) do
@@ -490,7 +490,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     if conflicts? do
       {:error, ErrorCat.custom("A Docs Tree node with the same identity already exists")}
     else
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -559,7 +559,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     |> where([item], item.trash_action_id == ^action_id)
     |> Repo.delete_all()
 
-    :ok
+    {:ok, :pass}
   end
 
   defp snapshot(item, :draft), do: item.draft_snapshot

@@ -13,14 +13,20 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     {:ok, user3} = db_insert(:user)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(
+        community,
+        :changelog,
+        article_inner_id(changelog, community),
+        mock_comment(),
+        user
+      )
 
     {:ok, ~m(user2 user3 community changelog comment)a}
   end
 
   describe "[upvote notify]" do
-    test "upvote hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+    test "upvote hook should work on changelog", ~m(user2 community changelog)a do
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
       {:ok, article} = CMS.Interactions.upvote(changelog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
@@ -59,8 +65,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    test "undo upvote hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+    test "undo upvote hook should work on changelog", ~m(user2 community changelog)a do
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
       {:ok, article} = CMS.Interactions.upvote(changelog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
@@ -93,8 +99,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
   end
 
   describe "[collect notify]" do
-    test "collect hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+    test "collect hook should work on changelog", ~m(user2 community changelog)a do
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
       {:ok, _} = CMS.Interactions.collect(changelog, user2)
       Events.emit(:notify_collect, %{article: changelog, from_user: user2})
@@ -112,8 +118,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    test "undo collect hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+    test "undo collect hook should work on changelog", ~m(user2 community changelog)a do
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
       {:ok, _} = CMS.Interactions.collect(changelog, user2)
       Events.emit(:notify_collect, %{article: changelog, from_user: user2})
@@ -131,13 +137,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
   describe "[comment notify]" do
     test "changelog author should get notify after some one comment on it",
          ~m(user2 community changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
       {:ok, comment} =
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user2
         )
@@ -159,13 +165,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
 
     test "changelog comment author should get notify after some one reply it",
          ~m(user2 user3 community changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
       {:ok, comment} =
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
           user2
         )

@@ -329,8 +329,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
 
     create_job = application_job(CreateCommunity, approved.public_ref)
     assert application_job_count(CreateCommunity, approved.public_ref) == 1
-    assert :ok = CreateCommunity.perform(job_from(create_job))
-    assert :ok = CreateCommunity.perform(job_from(create_job))
+    assert {:ok, :pass} = CreateCommunity.perform(job_from(create_job))
+    assert {:ok, :pass} = CreateCommunity.perform(job_from(create_job))
 
     setting_up = Repo.get!(CommunityApplication, approved.id)
     assert setting_up.status == :setting_up
@@ -410,8 +410,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
                operation_ref: setup_operation_ref
              )
 
-    assert :ok = Setup.perform(job_from(setup_job))
-    assert :ok = Setup.perform(job_from(setup_job))
+    assert {:ok, :pass} = Setup.perform(job_from(setup_job))
+    assert {:ok, :pass} = Setup.perform(job_from(setup_job))
 
     created = Repo.get!(CommunityApplication, approved.id)
     assert created.status == :created

@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
   alias CMS.Model.{
     Article,
     ArticleBodyDraft,
-    ArticleCommunity,
+    ArticleBinding,
     ArticleDraft,
     ArticlePublic,
     ArticleRevision,
@@ -26,9 +26,8 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
   test "publish materialization keeps stable identity and reuses unchanged body snapshots" do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = db_insert(:community)
     {:ok, author} = CMS.Articles.Writer.ensure_author_exists(user)
-    {:ok, article} = insert_article(community.id, author.id)
+    {:ok, article} = insert_article(author.id)
     {:ok, body} = insert_body("body-v1")
     {:ok, draft} = insert_draft(article.id, body.id, author.id, "Title one", "content-1")
     {:ok, _typed_draft} = insert_post_draft(article.id)
@@ -71,8 +70,8 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert draft.version == 1
 
-    assert %ArticleCommunity{community_id: community_id} =
-             Repo.get_by!(ArticleCommunity, article_id: article.id)
+    assert %ArticleBinding{community_id: community_id} =
+             Repo.get_by!(ArticleBinding, article_id: article.id)
 
     assert community_id == community.id
     assert Repo.aggregate(ArticleRevision, :count) == 0
@@ -86,7 +85,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert {:ok, revision} = Revision.create(article, updated)
     assert {:ok, selected} = Public.select(article, revision, author)
-    assert :ok = Store.discard(article, expected_version: 2)
+    assert {:ok, :pass} = Store.discard(article, expected_version: 2)
     assert {:error, :not_found} = Store.get(article)
     assert Repo.get!(ArticlePublic, article.id).revision_id == selected.revision_id
   end
@@ -106,6 +105,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert {:ok, published} =
              Target.publish(article, author,
+               community: community,
                expected_draft_version: draft.version,
                expected_lifecycle_version: 1
              )
@@ -137,6 +137,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert {:ok, republished} =
              Target.publish(article, author,
+               community: community,
                expected_draft_version: updated.version,
                expected_lifecycle_version: lifecycle.version
              )
@@ -163,13 +164,14 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert {:ok, result} =
              Target.publish(article, author,
+               community: community,
                expected_draft_version: draft.version,
                expected_lifecycle_version: 1
              )
 
     assert result.first_publish?
 
-    assert Repo.get_by!(ArticleCommunity, article_id: article.id, community_id: community.id).inner_id ==
+    assert Repo.get_by!(ArticleBinding, article_id: article.id, community_id: community.id).inner_id ==
              1
 
     assert result.public.article_id == article.id
@@ -226,6 +228,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     publish =
       Task.async(fn ->
         Target.publish(article, author,
+          community: community,
           expected_draft_version: draft.version,
           expected_lifecycle_version: 1
         )
@@ -282,8 +285,19 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert result.version.version_number == 1
     assert result.branch_type == :main
 
-    assert Repo.get_by!(ArticleCommunity, article_id: article.id, community_id: community.id).inner_id ==
+    assert Repo.get_by!(ArticleBinding, article_id: article.id, community_id: community.id).inner_id ==
              1
+
+    doc_binding = Repo.get_by!(ArticleBinding, article_id: article.id, community_id: community.id)
+
+    assert {:ok, [%{article: batch_article, binding: batch_binding, branch_id: branch_id}]} =
+             CMS.FrontDesk.articles([
+               %{community: community.slug, thread: :doc, inner_id: doc_binding.inner_id}
+             ])
+
+    assert batch_article.id == article.id
+    assert batch_binding.id == doc_binding.id
+    assert branch_id == branch.id
 
     assert result.public.branch_version_id == result.version.id
 
@@ -309,7 +323,8 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
                article.id,
                branch.id,
                result.revision.id,
-               author
+               author,
+               community: community
              )
 
     assert restored.source_revision_id == result.revision.id
@@ -337,24 +352,30 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert {:ok, updated} =
              CMS.Articles.update_draft(article.id, %{title: "Updated through Gate"}, user,
+               community: community,
                expected_version: draft.version
              )
 
-    assert {:ok, ^updated} = CMS.Articles.read_draft(article.id, user)
-    assert {:ok, true} = CMS.Articles.has_unpublished_changes(article.id, user, [])
+    assert {:ok, ^updated} = CMS.Articles.read_draft(article.id, user, community: community)
+
+    assert {:ok, true} =
+             CMS.Articles.has_unpublished_changes(article.id, user, community: community)
 
     assert {:ok, %{has_unpublished_changes: true}} =
-             CMS.Articles.draft_diff(article.id, user, [])
+             CMS.Articles.draft_diff(article.id, user, community: community)
 
     assert {:ok, %{public: public}} =
              CMS.Articles.publish(article.id, user,
+               community: community,
                expected_draft_version: updated.version,
                expected_lifecycle_version: 1
              )
 
     assert public.article_id == article.id
-    assert {:ok, ^public} = CMS.Articles.read_editor(article.id, user, [])
-    assert {:ok, false} = CMS.Articles.has_unpublished_changes(article.id, user, [])
+    assert {:ok, ^public} = CMS.Articles.read_editor(article.id, user, community: community)
+
+    assert {:ok, false} =
+             CMS.Articles.has_unpublished_changes(article.id, user, community: community)
   end
 
   test "stable Draft creation replays one command without duplicating the aggregate" do
@@ -423,23 +444,52 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert {:ok, %{article: published}} =
              CMS.Articles.publish(article.id, user,
+               community: source,
                expected_draft_version: draft.version,
                expected_lifecycle_version: 1
              )
 
-    assert {:ok, pin} = CMS.Articles.pin(source, published.id, user)
-    assert pin.article_community_id
-    assert {:ok, moved} = CMS.Articles.move(destination, published.id, [], user)
+    {:ok, %{article: destination_article, draft: destination_draft}} =
+      CMS.Articles.create_stable_draft(
+        destination,
+        :post,
+        %{
+          title: "Destination Article",
+          digest: "destination digest",
+          body_bag: mock_body_bag(mock_rich_text("destination body"))
+        },
+        user
+      )
+
+    assert {:ok, _destination_published} =
+             CMS.Articles.publish(destination_article.id, user,
+               community: destination,
+               expected_draft_version: destination_draft.version,
+               expected_lifecycle_version: 1
+             )
+
+    assert {:ok, pin} = CMS.Articles.pin(source, published.id, user, Ecto.UUID.generate())
+    assert pin.article_binding_id
+
+    move_command_id = Ecto.UUID.generate()
+
+    assert {:ok, moved} =
+             CMS.Articles.move(source, destination, published.id, [], user, move_command_id)
+
+    assert {:ok, replayed_move} =
+             CMS.Articles.move(source, destination, published.id, [], user, move_command_id)
+
     assert moved.id == published.id
+    assert replayed_move.id == published.id
 
-    assert Repo.get_by!(ArticleCommunity, article_id: moved.id, community_id: destination.id).inner_id ==
-             1
+    assert Repo.get_by!(ArticleBinding, article_id: moved.id, community_id: destination.id).inner_id ==
+             2
 
-    assert %ArticleCommunity{community_id: destination_id} =
-             Repo.get_by!(ArticleCommunity, article_id: moved.id)
+    assert %ArticleBinding{community_id: destination_id} =
+             Repo.get_by!(ArticleBinding, article_id: moved.id)
 
     assert destination_id == destination.id
-    refute Repo.get_by(ArticleCommunity, article_id: moved.id, community_id: source.id)
+    refute Repo.get_by(ArticleBinding, article_id: moved.id, community_id: source.id)
     refute Repo.get(PinnedArticle, pin.id)
 
     scopes =
@@ -451,13 +501,70 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
       |> Enum.map(&{&1["community"], &1["inner_id"]})
 
     assert {source.slug, 1} in scopes
-    assert {destination.slug, 1} in scopes
+    assert {destination.slug, 2} in scopes
   end
 
-  test "mirror is Community-local and Doc rejects ordinary Article Community commands" do
+  test "publish always requires an explicit Community" do
+    {:ok, user} = db_insert(:user)
+    {:ok, source} = db_insert(:community)
+    {:ok, destination} = db_insert(:community)
+
+    {:ok, %{article: article, draft: draft}} =
+      CMS.Articles.create_stable_draft(
+        source,
+        :post,
+        %{
+          title: "Publish with binding context",
+          digest: "digest",
+          body_bag: mock_body_bag(mock_rich_text("body"))
+        },
+        user
+      )
+
+    assert {:ok, %{article: published}} =
+             CMS.Articles.publish(article.id, user,
+               community: source,
+               expected_draft_version: draft.version,
+               expected_lifecycle_version: 1
+             )
+
+    assert {:ok, %ArticleBinding{community_id: destination_id}} =
+             CMS.Articles.mirror(
+               destination,
+               published.id,
+               [],
+               user,
+               source,
+               Ecto.UUID.generate()
+             )
+
+    assert destination_id == destination.id
+    assert {:ok, author} = CMS.Articles.Writer.ensure_author_exists(user)
+    assert {:ok, restored} = Store.ensure_from_public(published, author)
+    lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: published.id)
+
+    assert {:error, :article_binding_context_required} =
+             Target.publish(published, author,
+               expected_draft_version: restored.version,
+               expected_lifecycle_version: lifecycle.version
+             )
+
+    assert {:ok, result} =
+             Target.publish(published, author,
+               expected_draft_version: restored.version,
+               expected_lifecycle_version: lifecycle.version,
+               community: destination
+             )
+
+    assert result.community.id == destination.id
+    assert result.binding.community_id == destination.id
+  end
+
+  test "mirror is Community-local and Doc rejects ordinary ArticleBinding commands" do
     {:ok, user} = db_insert(:user)
     {:ok, source} = db_insert(:community)
     {:ok, mirror_community} = db_insert(:community)
+    {:ok, conflicting_community} = db_insert(:community)
 
     {:ok, %{article: article}} =
       CMS.Articles.create_stable_draft(
@@ -471,22 +578,60 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
         user
       )
 
-    assert {:ok, %ArticleCommunity{} = mirror} =
-             CMS.Articles.mirror(mirror_community, article.id, [], user)
+    mirror_command_id = Ecto.UUID.generate()
+
+    assert {:ok, %ArticleBinding{} = mirror} =
+             CMS.Articles.mirror(
+               mirror_community,
+               article.id,
+               [],
+               user,
+               source,
+               mirror_command_id
+             )
+
+    assert {:ok, %ArticleBinding{id: mirror_id}} =
+             CMS.Articles.mirror(
+               mirror_community,
+               article.id,
+               [],
+               user,
+               source,
+               mirror_command_id
+             )
+
+    assert mirror_id == mirror.id
+
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_conflict}} =
+             CMS.Articles.mirror(
+               conflicting_community,
+               article.id,
+               [],
+               user,
+               source,
+               mirror_command_id
+             )
 
     assert mirror.community_id == mirror_community.id
 
-    assert Repo.get_by!(ArticleCommunity,
+    assert Repo.get_by!(ArticleBinding,
              article_id: article.id,
              community_id: source.id
            ).community_id ==
              source.id
 
-    assert {:ok, :done} = CMS.Articles.unmirror(source, article.id, user)
+    source_unmirror_command_id = Ecto.UUID.generate()
 
-    assert {:ok, :done} = CMS.Articles.unmirror(mirror_community, article.id, user)
+    assert {:ok, :done} =
+             CMS.Articles.unmirror(source, article.id, user, source_unmirror_command_id)
 
-    refute Repo.get_by(ArticleCommunity,
+    assert {:ok, :done} =
+             CMS.Articles.unmirror(source, article.id, user, source_unmirror_command_id)
+
+    assert {:ok, :done} =
+             CMS.Articles.unmirror(mirror_community, article.id, user, Ecto.UUID.generate())
+
+    refute Repo.get_by(ArticleBinding,
              article_id: article.id,
              community_id: mirror_community.id
            )
@@ -502,21 +647,27 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
         branch_id: branch.id
       )
 
-    assert {:error, _reason} = CMS.Articles.move(mirror_community, doc.id, [], user)
-    assert {:error, _reason} = CMS.Articles.mirror(mirror_community, doc.id, [], user)
-    assert {:error, _reason} = CMS.Articles.unmirror(mirror_community, doc.id, user)
+    assert {:error, _reason} =
+             CMS.Articles.move(source, mirror_community, doc.id, [], user, Ecto.UUID.generate())
+
+    assert {:error, _reason} =
+             CMS.Articles.mirror(mirror_community, doc.id, [], user, source, Ecto.UUID.generate())
+
+    assert {:error, _reason} =
+             CMS.Articles.unmirror(mirror_community, doc.id, user, Ecto.UUID.generate())
   end
 
-  test "published Articles must retain at least one Community relation" do
+  test "published Articles must retain at least one Community binding" do
     {:ok, user} = db_insert(:user)
     {:ok, community} = db_insert(:community)
+    {:ok, hidden_community} = db_insert(:community)
 
     {:ok, %{article: article, draft: draft}} =
       CMS.Articles.create_stable_draft(
         community,
         :post,
         %{
-          title: "Keep one relation",
+          title: "Keep one binding",
           digest: "digest",
           body_bag: mock_body_bag(mock_rich_text("body"))
         },
@@ -525,12 +676,30 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert {:ok, %{article: published}} =
              CMS.Articles.publish(article.id, user,
+               community: community,
                expected_draft_version: draft.version,
                expected_lifecycle_version: 1
              )
 
+    assert {:ok, _hidden_binding} =
+             %ArticleBinding{}
+             |> ArticleBinding.changeset(%{
+               article_id: published.id,
+               community_id: hidden_community.id,
+               visible: false
+             })
+             |> Repo.insert()
+
+    assert {:ok, :done} =
+             CMS.Articles.unmirror(hidden_community, published.id, user, Ecto.UUID.generate())
+
+    refute Repo.get_by(ArticleBinding,
+             article_id: published.id,
+             community_id: hidden_community.id
+           )
+
     assert {:error, :published_article_requires_community} =
-             CMS.Articles.unmirror(community, published.id, user)
+             CMS.Articles.unmirror(community, published.id, user, Ecto.UUID.generate())
   end
 
   test "FrontDesk resolves ArticlePath to the selected stable public revision" do
@@ -552,27 +721,38 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert {:ok, %{article: published}} =
              Target.publish(article, author,
+               community: community,
                expected_draft_version: draft.version,
                expected_lifecycle_version: 1
              )
+
+    binding =
+      Repo.get_by!(ArticleBinding, article_id: published.id, community_id: community.id)
 
     assert {:ok, public} =
              CMS.FrontDesk.article(%{
                community: community.slug,
                thread: :post,
-               inner_id: published.inner_id
+               inner_id: binding.inner_id
              })
 
     assert public.id == article.id
     assert public.article_id == article.id
     assert public.title == "Stable public title"
     assert public.document.plain_text =~ "stable public body"
+
+    assert {:ok, [%{article: batch_article, binding: batch_binding}]} =
+             CMS.FrontDesk.articles([
+               %{community: community.slug, thread: :post, inner_id: binding.inner_id}
+             ])
+
+    assert batch_article.id == article.id
+    assert batch_binding.id == binding.id
   end
 
-  defp insert_article(community_id, author_id) do
+  defp insert_article(author_id) do
     %Article{}
     |> Article.changeset(%{
-      community_id: community_id,
       author_id: author_id,
       thread: :post,
       moderation_state: :legal

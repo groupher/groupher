@@ -13,14 +13,20 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
     {:ok, user3} = db_insert(:user)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(
+        community,
+        :blog,
+        article_inner_id(blog, community),
+        mock_comment(),
+        user
+      )
 
     {:ok, ~m(user2 user3 community blog comment)a}
   end
 
   describe "[upvote notify]" do
-    test "upvote hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
+    test "upvote hook should work on blog", ~m(user2 community blog)a do
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id, community)
 
       {:ok, article} = CMS.Interactions.upvote(blog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
@@ -59,8 +65,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    test "undo upvote hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
+    test "undo upvote hook should work on blog", ~m(user2 community blog)a do
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id, community)
 
       {:ok, article} = CMS.Interactions.upvote(blog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
@@ -93,8 +99,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
   end
 
   describe "[collect notify]" do
-    test "collect hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
+    test "collect hook should work on blog", ~m(user2 community blog)a do
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id, community)
 
       {:ok, _} = CMS.Interactions.collect(blog, user2)
       Events.emit(:notify_collect, %{article: blog, from_user: user2})
@@ -112,8 +118,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    test "undo collect hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
+    test "undo collect hook should work on blog", ~m(user2 community blog)a do
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id, community)
 
       {:ok, _} = CMS.Interactions.upvote(blog, user2)
       Events.emit(:notify_collect, %{article: blog, from_user: user2})
@@ -131,10 +137,16 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
   describe "[comment notify]" do
     test "blog author should get notify after some one comment on it",
          ~m(user2 community blog)a do
-      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id, community)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user2
+        )
 
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
@@ -153,10 +165,16 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
     test "blog comment author should get notify after some one reply it",
          ~m(user2 user3 community blog)a do
-      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id, community)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user2
+        )
 
       {:ok, replied_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user3)
 

@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
   alias GroupherServer.{Activity, CMS, Repo}
   alias CMS.Articles.Writer
   alias CMS.FrontDesk
-  alias CMS.Model.{Article, Author, Community}
+  alias CMS.Model.{Article, Author}
   alias Helper.Later
 
   @doc """
@@ -31,38 +31,41 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
   def run(%{article: %Article{thread: :doc}, branch_type: _branch_type} = result),
     do: {:ok, result}
 
-  def run(%{article: %Article{inner_id: inner_id}} = result) when not is_integer(inner_id) do
-    {:ok, result}
-  end
-
   def run(%{article: %Article{}} = result), do: run_public_effects(result)
 
-  defp run_public_effects(%{article: %Article{} = article} = result) do
-    with {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(article),
-         %Community{} = community <- Repo.get(Community, article.community_id),
-         {:ok, public} <- public_projection(article, community),
-         :ok <- append_activity(result, public) do
-      Later.run({CMS.Press, :invalidate, [article.community_id]})
+  defp run_public_effects(
+         %{article: %Article{} = article, community: community, binding: %{inner_id: inner_id}} =
+           result
+       ) do
+    with true <- match?(%CMS.Model.Community{}, community),
+         true <- is_integer(inner_id),
+         {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(article),
+         {:ok, public} <- public_projection(article, community, inner_id),
+         {:ok, _} <- append_activity(result, Map.put(public, :community_id, community.id)) do
+      Later.run({CMS.Press, :invalidate, [community.id]})
       Later.run({CMS.Events, :emit, [:sync_mentions, %{artiment: public}]})
       Later.run({CMS.Events, :emit, [:audition, %{artiment: public}]})
       notify_admin_on_first_publish(result, article)
       {:ok, result}
     else
-      nil -> {:error, :community_not_found}
+      false -> {:error, :article_binding_context_required}
       {:error, reason} -> {:error, reason}
     end
   end
 
-  defp notify_admin_on_first_publish(%{first_publish?: true}, %Article{} = article) do
+  defp notify_admin_on_first_publish(
+         %{first_publish?: true, community: community},
+         %Article{} = article
+       ) do
     Later.run(
       {Writer, :notify_admin_new_article,
-       [%{target: Article, id: article.id, thread: article.thread}]}
+       [%{target: Article, id: article.id, thread: article.thread, community: community}]}
     )
   end
 
-  defp notify_admin_on_first_publish(_result, _article), do: :ok
+  defp notify_admin_on_first_publish(_result, _article), do: {:ok, :pass}
 
-  defp public_projection(%Article{inner_id: inner_id, thread: thread}, community)
+  defp public_projection(%Article{thread: thread}, community, inner_id)
        when is_integer(inner_id) do
     FrontDesk.article(%{
       community: community.slug,
@@ -81,17 +84,17 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
                branch_version_id: result.version.id
              }
            ) do
-      :ok
+      {:ok, :pass}
     end
   end
 
-  defp append_activity(%{first_publish?: true}, _public), do: :ok
+  defp append_activity(%{first_publish?: true}, _public), do: {:ok, :pass}
 
   defp append_activity(result, public) do
     with {:ok, actor} <- published_by(result),
-         :ok <- maybe_log_title_change(result, public, actor),
-         :ok <- maybe_log_body_change(result, public, actor) do
-      :ok
+         {:ok, _} <- maybe_log_title_change(result, public, actor),
+         {:ok, _} <- maybe_log_body_change(result, public, actor) do
+      {:ok, :pass}
     end
   end
 
@@ -105,7 +108,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
         )
       )
     else
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -119,7 +122,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
         )
       )
     else
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -130,6 +133,6 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
     end
   end
 
-  defp normalize_activity({:ok, _event}), do: :ok
+  defp normalize_activity({:ok, _event}), do: {:ok, :pass}
   defp normalize_activity({:error, reason}), do: {:error, reason}
 end

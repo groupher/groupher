@@ -2,7 +2,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   @moduledoc """
   Mutations for collect folders and their article membership.
 
-  Folder membership is coordinated with the article collect relation so the
+  Folder membership is coordinated with the article collect binding so the
   account folder, article collect row, and denormalized folder meta stay aligned.
 
       add/remove article

@@ -73,7 +73,7 @@ defmodule GroupherServer.CMS.Passport.Authorization do
 
   def authorize(user, action) do
     case check(user, action, %{}) do
-      {:ok, true} -> :ok
+      {:ok, true} -> {:ok, :pass}
       _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end

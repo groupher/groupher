@@ -1517,11 +1517,11 @@ CMS.Articles.unset_illegal(article_id, attrs, actor)
 CMS.Articles.set_audit_failed(article_id, attrs, actor)
 
 # article-community relations; does not create Revision
-CMS.Articles.pin(community, article_id, actor)
-CMS.Articles.undo_pin(community, article_id, actor)
-CMS.Articles.mirror(community, article_id, target_ids, actor)
-CMS.Articles.unmirror(community, article_id, actor)
-CMS.Articles.move(community, article_id, target_ids, actor)
+CMS.Articles.pin(community, article_id, actor, command_id)
+CMS.Articles.undo_pin(community, article_id, actor, command_id)
+CMS.Articles.mirror(destination, article_id, target_ids, actor, source, command_id)
+CMS.Articles.unmirror(community, article_id, actor, command_id)
+CMS.Articles.move(source, destination, article_id, target_ids, actor, command_id)
 
 # maintenance
 CMS.Articles.archive(thread)

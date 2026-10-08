@@ -28,12 +28,13 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
   }
 
   @doc "Creates a reviewable plan from current usage facts."
-  def create(%Community{id: community_id}, attrs, %User{id: user_id} = user) when is_map(attrs) do
+  def create(%Community{id: community_id} = community, attrs, %User{id: user_id} = user)
+      when is_map(attrs) do
     with {:ok, from_asset} <- active_asset(community_id, value(attrs, :from_asset_id)),
          {:ok, to_asset} <- active_asset(community_id, value(attrs, :to_asset_id)),
          false <- from_asset.id == to_asset.id,
          {:ok, usages} <- Query.usages(%Community{id: community_id}, from_asset.id, user) do
-      items = build_items(usages, user, from_asset, to_asset)
+      items = build_items(usages, community, user, from_asset, to_asset)
 
       %AssetReplacementPlan{}
       |> AssetReplacementPlan.changeset(%{
@@ -97,7 +98,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     article_id = item_value(item, :article_id)
     body_bag = Map.get(body_bags, article_id) || Map.get(body_bags, to_string(article_id))
 
-    with :ok <- live_revision_matches?(item, article_id),
+    with {:ok, _} <- live_revision_matches?(item, article_id),
          {:ok, result} <- apply_locators(plan, item, article_id, body_bag, user) do
       {:ok, result}
     end
@@ -105,6 +106,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
 
   defp apply_locators(plan, item, article_id, body_bag, user) do
     draft_version = item_value(item, :observed_draft_version)
+    community = Repo.get!(Community, plan.community_id)
 
     (item_value(item, :usage_locators) || [])
     |> Enum.reduce_while({:ok, nil, draft_version}, fn locator, {:ok, _last, version} ->
@@ -120,7 +122,12 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
         }
         |> maybe_put_body_bag(body_bag)
 
-      case ReplaceUse.execute(%{article_id: article_id}, attrs, user, attrs.command_id) do
+      case ReplaceUse.execute(
+             %{article_id: article_id, community: community},
+             attrs,
+             user,
+             attrs.command_id
+           ) do
         {:ok, result} ->
           {:cont, {:ok, result, Map.get(result, :draft_version, version)}}
 
@@ -134,14 +141,14 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     end
   end
 
-  defp build_items(usages, user, from_asset, to_asset) do
+  defp build_items(usages, community, user, from_asset, to_asset) do
     usages
     |> Enum.group_by(& &1.article_id)
     |> Enum.map(fn {article_id, refs} ->
       draft = Repo.get_by(ArticleDraft, article_id: article_id)
       public = Repo.get_by(ArticlePublic, article_id: article_id)
       lifecycle = Enum.map(refs, & &1.lifecycle)
-      decision = decision(Repo.get(Article, article_id), draft, lifecycle, user)
+      decision = decision(Repo.get(Article, article_id), draft, lifecycle, community, user)
 
       %{
         article_id: article_id,
@@ -156,18 +163,19 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     end)
   end
 
-  defp decision(article, nil, lifecycle, user) do
+  defp decision(article, nil, lifecycle, community, user) do
     if lifecycle != [] and Enum.all?(lifecycle, &(&1 in [:historical, :trashed])) do
       "historical_only"
     else
-      decision(article, %ArticleDraft{}, lifecycle, user)
+      decision(article, %ArticleDraft{}, lifecycle, community, user)
     end
   end
 
-  defp decision(article, _draft, _lifecycle, user) do
-    case CMS.Gate.Access.with_check(user, :edit, article, fn _ -> :ok end) do
-      :ok -> "editable"
-      {:ok, :ok} -> "editable"
+  defp decision(article, _draft, _lifecycle, community, user) do
+    case CMS.Gate.Access.with_community_check(user, :edit, community, article, fn _ ->
+           {:ok, :pass}
+         end) do
+      {:ok, _} -> "editable"
       _ -> "permission_denied"
     end
   end
@@ -187,7 +195,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
         nil -> nil
       end
 
-    if observed == current, do: :ok, else: {:error, :live_revision_conflict}
+    if observed == current, do: {:ok, :pass}, else: {:error, :live_revision_conflict}
   end
 
   defp put_item_result(item, status, result) do

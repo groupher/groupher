@@ -372,17 +372,17 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   Example:
 
       ThemePreset.validate_custom_preset(%{"basePreset" => "claude", "overwrite" => %{}})
-      #=> :ok
+      #=> {:ok, :pass}
 
   """
-  def validate_custom_preset(nil), do: :ok
+  def validate_custom_preset(nil), do: {:ok, :pass}
 
   def validate_custom_preset(custom_preset) when is_map(custom_preset) do
-    with :ok <- validate_custom_preset_shape(custom_preset),
+    with {:ok, _} <- validate_custom_preset_shape(custom_preset),
          {:ok, base_preset} <- validate_custom_base_preset(custom_preset["basePreset"]),
          true <- base_preset != :custom,
          {:ok, _} <- validate_overwrite(custom_preset["overwrite"]) do
-      :ok
+      {:ok, :pass}
     else
       false -> {:error, "requires a read-only base preset"}
       {:error, ErrorCat.error_pattern(details: reason)} -> {:error, reason}
@@ -407,7 +407,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
         {:error, "overwrite must be a map"}
 
       true ->
-        :ok
+        {:ok, :pass}
     end
   end
 

@@ -24,7 +24,7 @@ defmodule GroupherServer.Jobs.CommandReceiptRetention do
       %{batch_size: @batch_size, max_batches: @max_batches}
     )
 
-    :ok
+    {:ok, :pass}
   end
 
   defp prune_batches(batch, processed) when batch >= @max_batches, do: processed

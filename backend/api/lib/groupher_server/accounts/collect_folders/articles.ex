@@ -18,6 +18,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS, FrontDesk, Repo}
+  alias CMS.Articles.Bindings
   alias Accounts.CollectFolders.ErrorCat
   alias Accounts.Model.{CollectFolder, User}
   alias Helper.{ORM, T}
@@ -49,16 +50,20 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
 
     entries =
       Enum.flat_map(paged.entries, fn collect ->
-        case Repo.get(CMS.Model.Article, collect.article_id) |> Repo.preload(:community) do
+        case Repo.get(CMS.Model.Article, collect.article_id) do
           %CMS.Model.Article{} = article ->
-            case FrontDesk.article(%{
-                   community: article.community.slug,
-                   thread: article.thread,
-                   inner_id: article.inner_id
-                 }) do
-              {:ok, projection} -> [projection]
-              {:error, _reason} -> []
-            end
+            {:ok, bindings} = Bindings.all(article)
+
+            Enum.flat_map(bindings, fn binding ->
+              case FrontDesk.article(%{
+                     community: binding.community.slug,
+                     thread: article.thread,
+                     inner_id: binding.inner_id
+                   }) do
+                {:ok, projection} -> [projection]
+                {:error, _reason} -> []
+              end
+            end)
 
           nil ->
             []

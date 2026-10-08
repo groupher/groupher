@@ -66,7 +66,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
          {:ok, community} <- ORM.fill_meta(community) do
       Repo.transaction(fn ->
         with {:ok, updated} <- ORM.update(community, args),
-             :ok <- invalidate_public_presentation(updated) do
+             {:ok, _} <- invalidate_public_presentation(updated) do
           updated
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -110,7 +110,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
            command_id: Ecto.UUID.generate(),
            data: %{community: community.slug, community_id: community.id}
          }) do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -131,10 +131,10 @@ defmodule GroupherServer.CMS.Communities.Writer do
   defp provision_web_analysis(%Community{} = community) do
     case Analysis.Web.provision_community(community) do
       {:ok, _website_id} ->
-        :ok
+        {:ok, :pass}
 
       {:error, CommunityErrorCat.error_pattern(reason: :not_configured)} ->
-        :ok
+        {:ok, :pass}
 
       {:error, reason} ->
         Logger.warning(
@@ -143,7 +143,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
           reason: inspect(reason)
         )
 
-        :ok
+        {:ok, :pass}
     end
   end
 end

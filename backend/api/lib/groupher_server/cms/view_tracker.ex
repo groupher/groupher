@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.ViewTracker do
   defdelegate viewer_states_for_paths(paths, viewer, opts \\ []), to: Query
 
   @doc "Deletes all ViewTracker state during permanent Article deletion."
-  @spec delete_article_state(atom(), pos_integer()) :: :ok
+  @spec delete_article_state(atom(), pos_integer()) :: {:ok, :pass}
   defdelegate delete_article_state(thread, article_id), to: Record
 
   @doc "Drains expired dedupe state within the configured row and time budgets."

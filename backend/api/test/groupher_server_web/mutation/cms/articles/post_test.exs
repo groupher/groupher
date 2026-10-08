@@ -89,7 +89,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         expectedVersion: post.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -112,7 +112,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
         CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         expectedVersion: post.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}"),
@@ -149,7 +149,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
         CMS.Communities.create_tag(community, :post, community_tag_attrs3, user)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         expectedVersion: post.version,
         communityTags: [community_tag.id, community_tag2.id]
       }
@@ -162,7 +162,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
                MapSet.new([to_string(community_tag.id), to_string(community_tag2.id)])
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         expectedVersion: result["version"],
         communityTags: [community_tag2.id, community_tag3.id]
       }
@@ -180,7 +180,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         expectedVersion: post.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -200,7 +200,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         expectedVersion: post.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -208,14 +208,14 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       updated_post = rule_conn |> gq_mutation(S.Article.m(:update_article, :post), variables)
 
-      assert updated_post["innerId"] == to_string(post.inner_id)
+      assert updated_post["innerId"] == to_string(article_inner_id(post, community))
     end
 
     test "unauth user update post fails", ~m(user_conn guest_conn community post)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
         expectedVersion: post.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -256,7 +256,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: post_b.inner_id, community: community_b.slug, thread: "POST"},
+        article: %{inner_id: article_inner_id(post_b, community_b), community: community_b.slug, thread: "POST"},
         expectedVersion: post_b.version,
         title: "cross-community-update-#{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -269,7 +269,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
                ErrorCat.code(PassportErrorCat.passport())
              )
 
-      {:ok, found} = read_article(community_b, :post, post_b.inner_id)
+      {:ok, found} = read_article(community_b, :post, article_inner_id(post_b, community_b))
       refute found.title == "cross-community-update-#{unique_num}"
     end
   end

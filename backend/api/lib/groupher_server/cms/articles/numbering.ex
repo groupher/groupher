@@ -1,34 +1,34 @@
 defmodule GroupherServer.CMS.Articles.Numbering do
   @moduledoc """
-  Allocates Community-wide public numbers for ArticleCommunity relations.
+  Allocates Community-wide public numbers for ArticleBinding bindings.
 
       Publish / Mirror / Move
         -> lock Community counter
-        -> ArticleCommunity.inner_id
+        -> ArticleBinding.inner_id
   """
 
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{ArticleCommunity, CommunityInnerIdCounter}
+  alias CMS.Model.{ArticleBinding, CommunityInnerIdCounter}
 
-  @doc "Assigns the next Community-wide number to an ArticleCommunity relation."
-  @spec assign_relation_inner_id(ArticleCommunity.t()) ::
-          {:ok, ArticleCommunity.t()} | {:error, term()}
-  def assign_relation_inner_id(%ArticleCommunity{inner_id: inner_id} = relation)
+  @doc "Assigns the next Community-wide number to an ArticleBinding binding."
+  @spec assign_binding_inner_id(ArticleBinding.t()) ::
+          {:ok, ArticleBinding.t()} | {:error, term()}
+  def assign_binding_inner_id(%ArticleBinding{inner_id: inner_id} = binding)
       when is_integer(inner_id) do
-    {:ok, relation}
+    {:ok, binding}
   end
 
-  def assign_relation_inner_id(%ArticleCommunity{} = relation) do
-    with {:ok, _counter} <- ensure_community_counter(relation.community_id),
-         %CommunityInnerIdCounter{} = counter <- lock_community_counter(relation.community_id),
+  def assign_binding_inner_id(%ArticleBinding{} = binding) do
+    with {:ok, _counter} <- ensure_community_counter(binding.community_id),
+         %CommunityInnerIdCounter{} = counter <- lock_community_counter(binding.community_id),
          {:ok, _counter} <- advance_community_counter(counter),
-         {:ok, relation} <-
-           relation
-           |> ArticleCommunity.changeset(%{inner_id: counter.next_inner_id})
+         {:ok, binding} <-
+           binding
+           |> ArticleBinding.changeset(%{inner_id: counter.next_inner_id})
            |> Repo.update() do
-      {:ok, relation}
+      {:ok, binding}
     else
       nil -> {:error, :community_inner_id_counter_not_found}
       {:error, reason} -> {:error, reason}

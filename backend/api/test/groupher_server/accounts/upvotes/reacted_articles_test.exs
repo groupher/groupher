@@ -7,14 +7,13 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
   alias Accounts.Upvotes, as: Accounts
 
   setup do
-    {:ok, user} = db_insert(:user)
-    {:ok, post} = db_insert(:post)
+    {community, post, _attrs, user} = mock_article(:post)
 
-    {:ok, ~m(user post)a}
+    {:ok, ~m(community user post)a}
   end
 
   describe "[user upvoted articles]" do
-    test "user can get paged upvoted common articles", ~m(user post)a do
+    test "user can get paged upvoted common articles", ~m(community user post)a do
       {:ok, _} = CMS.Interactions.upvote(post, user)
 
       filter = %{page: 1, size: 20}
@@ -24,7 +23,7 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
 
       assert articles |> is_valid_pagination?(:raw)
       assert post.id == article_post |> Map.get(:id)
-      assert post.inner_id == article_post |> Map.get(:inner_id)
+      assert article_inner_id(post, community) == article_post |> Map.get(:inner_id)
 
       assert [:author, :id, :inner_id, :thread, :title, :upvotes_count] |> Enum.sort() ==
                article_post |> Map.keys() |> Enum.sort()

@@ -90,10 +90,10 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
        ) do
     with {:ok, canonical} <- Gate.access_check(actor, :upvote, input),
          {:ok, change} <- change_fact(canonical, info, actor, operation),
-         :ok <- sync_state(canonical, actor, operation, change),
-         :ok <- record_metric(canonical, operation, change, command_id),
-         :ok <- maybe_achieve(canonical, actor, operation, change),
-         :ok <- enqueue_effect(canonical, operation, actor, command_id, change) do
+         {:ok, _} <- sync_state(canonical, actor, operation, change),
+         {:ok, _} <- record_metric(canonical, operation, change, command_id),
+         {:ok, _} <- maybe_achieve(canonical, actor, operation, change),
+         {:ok, _} <- enqueue_effect(canonical, operation, actor, command_id, change) do
       {:ok,
        %Confirmation{
          data: %{
@@ -122,7 +122,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   defp upvote_command(:add), do: :upvote_add
   defp upvote_command(:remove), do: :upvote_remove
 
-  defp sync_state(_canonical, _actor, _operation, :unchanged), do: :ok
+  defp sync_state(_canonical, _actor, _operation, :unchanged), do: {:ok, :pass}
 
   defp sync_state(canonical, actor, operation, :changed) do
     result =
@@ -131,35 +131,35 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
         else: ReadState.remove_upvote(canonical, actor)
 
     case result do
-      {:ok, _projection} -> :ok
+      {:ok, _projection} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: :ok
-  defp record_metric(_article, _operation, :unchanged, _operation_id), do: :ok
+  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: {:ok, :pass}
+  defp record_metric(_article, _operation, :unchanged, _operation_id), do: {:ok, :pass}
 
   defp record_metric(article, operation, :changed, operation_id) do
     metric = if operation == :add, do: :upvote_added, else: :upvote_removed
 
     case MetricEvent.append_article_action(article, operation_id, metric) do
-      :ok -> :ok
+      {:ok, _} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp maybe_achieve(%Comment{}, _actor, _operation, _change), do: :ok
-  defp maybe_achieve(_article, _actor, _operation, :unchanged), do: :ok
-  defp maybe_achieve(_article, _actor, :remove, :changed), do: :ok
+  defp maybe_achieve(%Comment{}, _actor, _operation, _change), do: {:ok, :pass}
+  defp maybe_achieve(_article, _actor, _operation, :unchanged), do: {:ok, :pass}
+  defp maybe_achieve(_article, _actor, :remove, :changed), do: {:ok, :pass}
 
   defp maybe_achieve(article, _actor, :add, :changed) do
     case Accounts.Achievements.achieve(author_user(article), :inc, :upvote) do
-      {:ok, _achievement} -> :ok
+      {:ok, _achievement} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp enqueue_effect(_canonical, _operation, _actor, _command_id, :unchanged), do: :ok
+  defp enqueue_effect(_canonical, _operation, _actor, _command_id, :unchanged), do: {:ok, :pass}
 
   defp enqueue_effect(canonical, operation, actor, command_id, :changed) do
     CMS.Outbox.send(%{
@@ -171,7 +171,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       data: %{actor_id: actor.id, operation: operation}
     })
     |> case do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end

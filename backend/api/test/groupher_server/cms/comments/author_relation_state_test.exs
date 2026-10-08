@@ -4,11 +4,11 @@ defmodule GroupherServer.Test.CMS.Comments.AuthorRelationStateTest do
   alias GroupherServer.CMS
   alias CMS.Comments.AuthorRelationState
 
-  test "infers the parent Article author relation in one query" do
+  test "infers the parent Article author binding in one query" do
     {community, post, _attrs, article_author} = mock_article(:post, preload: [author: :user])
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), article_author)
+      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), article_author)
 
     assert {:ok, _} = CMS.Interactions.upvote(comment, article_author)
 

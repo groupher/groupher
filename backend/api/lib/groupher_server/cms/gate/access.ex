@@ -48,15 +48,50 @@ defmodule GroupherServer.CMS.Gate.Access do
     Check.comment(actor, action, resource)
   end
 
+  def access_check(actor, action, %Article{} = resource) do
+    Check.article(actor, action, resource)
+  end
+
   def access_check(actor, action, %model{} = resource)
       when model in @article_models do
     Check.article(actor, action, resource)
   end
 
-  def access_check(actor, action, %{id: article_id, thread: :doc, branch_id: branch_id})
+  def access_check(
+        actor,
+        action,
+        %{
+          id: article_id,
+          thread: :doc,
+          branch_id: branch_id,
+          community: %Community{} = community
+        }
+      )
       when is_binary(article_id) and is_integer(branch_id) do
     case Repo.get(Article, article_id) do
-      %Article{} = article -> Check.doc(actor, action, article, branch_id)
+      %Article{} = article ->
+        with_branch_check(actor, action, community, article, branch_id, fn canonical ->
+          {:ok, canonical}
+        end)
+
+      nil ->
+        {:error, Decision.deny(ErrorCat.resource_not_found())}
+    end
+  end
+
+  def access_check(_actor, _action, %{thread: :doc, branch_id: branch_id})
+      when is_integer(branch_id) do
+    {:error, :article_binding_context_required}
+  end
+
+  def access_check(
+        actor,
+        action,
+        %{id: article_id, thread: thread, community: %Community{} = community}
+      )
+      when is_binary(article_id) and thread in [:post, :blog, :changelog, :doc] do
+    case Repo.get(Article, article_id) do
+      %Article{} = article -> Check.article(actor, action, article, community)
       nil -> {:error, Decision.deny(ErrorCat.resource_not_found())}
     end
   end
@@ -71,6 +106,11 @@ defmodule GroupherServer.CMS.Gate.Access do
 
   def access_check(_actor, _action, _resource) do
     {:error, Decision.deny(ErrorCat.unsupported_resource())}
+  end
+
+  @doc "Checks an Article action against one explicit Community binding."
+  def access_check(actor, action, %Community{} = community, %Article{} = resource) do
+    Check.article(actor, action, resource, community)
   end
 
   @doc """
@@ -101,7 +141,7 @@ defmodule GroupherServer.CMS.Gate.Access do
       when is_function(callback, 1) or is_function(callback, 2) do
     with {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, article.community_id) do
+         %Community{} = community <- Repo.get(Community, comment.community_id) do
       transact_parent(community, article, comment.branch_id, fn ->
         Check.with_authorized(actor, action, {community, thread, article, comment}, callback)
       end)
@@ -115,16 +155,8 @@ defmodule GroupherServer.CMS.Gate.Access do
 
   def with_check(actor, action, %model{} = article, callback)
       when model in @article_models and is_function(callback, 1) do
-    case Repo.get(Community, article.community_id) do
-      %Community{} = community ->
-        Articles.MutationLock.transact_article(community, article, fn ->
-          Check.with_authorized(actor, action, {community, article}, callback)
-        end)
-        |> normalize_decision()
-
-      nil ->
-        {:error, ErrorCat.resource_not_found()}
-    end
+    _ = {actor, action, article, callback}
+    {:error, :article_binding_context_required}
   end
 
   def with_check(
@@ -153,7 +185,7 @@ defmodule GroupherServer.CMS.Gate.Access do
     {:error, ErrorCat.unsupported_resource()}
   end
 
-  @doc "Runs an ordinary Article command against an explicit ArticleCommunity relation."
+  @doc "Runs an ordinary Article command against an explicit ArticleBinding binding."
   @spec with_community_check(
           term(),
           atom(),
@@ -170,7 +202,31 @@ defmodule GroupherServer.CMS.Gate.Access do
       )
       when is_function(callback, 1) do
     Articles.MutationLock.transact_article(community, article, fn ->
-      Check.with_authorized_placement(actor, action, {community, article}, callback)
+      Check.with_authorized_article_binding(actor, action, {community, article}, callback)
+    end)
+    |> normalize_decision()
+  end
+
+  @doc "Runs a branch-scoped command with an explicit ArticleBinding Community."
+  @spec with_branch_check(
+          term(),
+          atom(),
+          Community.t(),
+          Article.t(),
+          pos_integer(),
+          (Article.t() -> term())
+        ) :: {:ok, term()} | {:error, term()}
+  def with_branch_check(
+        actor,
+        action,
+        %Community{} = community,
+        %Article{thread: :doc} = article,
+        branch_id,
+        callback
+      )
+      when is_integer(branch_id) and is_function(callback, 1) do
+    Articles.MutationLock.transact_doc(community, article, branch_id, fn ->
+      Check.with_authorized_doc(actor, action, {community, article, branch_id}, callback)
     end)
     |> normalize_decision()
   end
@@ -180,16 +236,8 @@ defmodule GroupherServer.CMS.Gate.Access do
           {:ok, term()} | {:error, term()}
   def with_branch_check(actor, action, %Article{thread: :doc} = article, branch_id, callback)
       when is_integer(branch_id) and is_function(callback, 1) do
-    case Repo.get(Community, article.community_id) do
-      %Community{} = community ->
-        Articles.MutationLock.transact_doc(community, article, branch_id, fn ->
-          Check.with_authorized_doc(actor, action, {community, article, branch_id}, callback)
-        end)
-        |> normalize_decision()
-
-      nil ->
-        {:error, ErrorCat.resource_not_found()}
-    end
+    _ = {actor, action, article, branch_id, callback}
+    {:error, :article_binding_context_required}
   end
 
   defp normalize_decision({:error, %Decision{} = decision}) do

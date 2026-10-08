@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
       existing_tags = flatten_group_tags(existing_groups)
 
       with {:ok, group_by_title} <- ensure_groups(community, thread, groups, existing_groups),
-           :ok <-
+           {:ok, _} <-
              ensure_tags_count(
                community,
                thread,
@@ -86,7 +86,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
          current_count
        )
        when current_count >= target_count do
-    :ok
+    {:ok, :pass}
   end
 
   defp ensure_tags_count(

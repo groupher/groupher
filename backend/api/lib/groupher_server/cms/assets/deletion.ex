@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   plug(Tesla.Middleware.Timeout, timeout: @timeout)
 
   @doc "Builds the provider-deletion projection for an expired Application upload."
-  @spec delete_application_upload_object(map()) :: :ok
+  @spec delete_application_upload_object(map()) :: {:ok, :pass}
   def delete_application_upload_object(upload) do
     enqueue(%CommunityAsset{
       id: upload.id,
@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   end
 
   @doc "Soft-deletes generated assets and enqueues provider cleanup."
-  @spec delete_generated_assets(Community.t(), [String.t()]) :: :ok
+  @spec delete_generated_assets(Community.t(), [String.t()]) :: {:ok, :pass}
   def delete_generated_assets(%Community{id: community_id} = community, public_refs)
       when is_list(public_refs) do
     public_refs = Enum.filter(public_refs, &is_binary/1)
@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
       _ = Writer.delete(community, asset.id)
     end)
 
-    :ok
+    {:ok, :pass}
   end
 
   @doc """
@@ -72,17 +72,17 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   ## Examples
 
       Deletion.enqueue(%CommunityAsset{id: 1, public_ref: "asset_1"})
-      #=> :ok
+      #=> {:ok, :pass}
 
   """
-  @spec enqueue(CommunityAsset.t()) :: :ok
+  @spec enqueue(CommunityAsset.t()) :: {:ok, :pass}
   def enqueue(%CommunityAsset{} = asset) do
     case deliver(asset) do
-      :ok ->
-        :ok
+      {:ok, _} ->
+        {:ok, :pass}
 
       {:error, ErrorCat.error_pattern(reason: :skipped)} ->
-        :ok
+        {:ok, :pass}
 
       {:error, reason} ->
         Logger.warning(
@@ -90,7 +90,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
             "public_ref=#{asset.public_ref} reason=#{inspect(reason)}"
         )
 
-        :ok
+        {:ok, :pass}
     end
   end
 
@@ -146,7 +146,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
             "public_ref=#{asset.public_ref} duration_ms=#{duration_ms}"
         )
 
-        :ok
+        {:ok, :pass}
 
       {:ok, %Tesla.Env{status: status, body: body}} ->
         {:error,

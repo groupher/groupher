@@ -3692,12 +3692,14 @@ export type SetPostStatusMutation = {
 
 export type PinPostMutationVariables = Exact<{
   article: ArticlePathInput
+  commandId: string | number
 }>
 
 export type PinPostMutation = { pinPost: { innerId: string | null } | null }
 
 export type UndoPinPostMutationVariables = Exact<{
   article: ArticlePathInput
+  commandId: string | number
 }>
 
 export type UndoPinPostMutation = {
@@ -19766,6 +19768,14 @@ export const PinPostDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -19778,6 +19788,11 @@ export const PinPostDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'article' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -19806,6 +19821,14 @@ export const UndoPinPostDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -19818,6 +19841,11 @@ export const UndoPinPostDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'article' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {

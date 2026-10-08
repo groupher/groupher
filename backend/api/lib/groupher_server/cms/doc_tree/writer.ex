@@ -256,9 +256,9 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   def update_node(%Community{} = community, node_id, args) do
     Operation.run(community, args, fn branch, state ->
       with {:ok, node} <- Node.find(community, branch, node_id),
-           :ok <- DraftDoc.validate(community, branch, Map.get(args, :doc_id)),
+           {:ok, _} <- DraftDoc.validate(community, branch, Map.get(args, :doc_id)),
            attrs <- Identity.normalize_title_slug(args),
-           :ok <- Identity.validate_pending_deleted_identity(community, branch, node, attrs),
+           {:ok, _} <- Identity.validate_pending_deleted_identity(community, branch, node, attrs),
            {:ok, updated_node} <- ORM.update(node, attrs),
            events <- Events.update_events(node, updated_node),
            {:ok, event_count} <- EventRecorder.record_tree_events(community, branch, args, events),
@@ -299,11 +299,11 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   def delete_node(%Community{} = community, node_id, args) do
     Operation.run(community, args, fn branch, state ->
       with {:ok, node} <- Node.find(community, branch, node_id),
-           :ok <- validate_delete_node(community, branch, node),
+           {:ok, _} <- validate_delete_node(community, branch, node),
            {:ok, actor} <- load_actor(args, "Docs Trash requires an authenticated actor"),
            parent_id <- node.parent_node_id,
            {:ok, trash_result} <- Trash.trash_subtree(community, branch, node, actor),
-           :ok <- Index.normalize_sibling_indexes(community, branch, parent_id, node.type),
+           {:ok, _} <- Index.normalize_sibling_indexes(community, branch, parent_id, node.type),
            event_delta <- -trash_result.discarded_tree_events,
            {:ok, state} <- Operation.bump_revision(community, state, event_delta) do
         {:ok,
@@ -334,7 +334,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
            true <- node.type in [:group, :page, :link],
            {:ok, duplicated_nodes} <- duplicate_nodes(community, branch, node, args),
            duplicated <- List.first(duplicated_nodes),
-           :ok <-
+           {:ok, _} <-
              Index.normalize_sibling_indexes(
                community,
                branch,
@@ -516,7 +516,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
         index: index
       })
 
-    with :ok <-
+    with {:ok, _} <-
            Index.shift_sibling_indexes(
              community,
              branch,
@@ -557,7 +557,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
              Node.validate_target(community, branch, node, target_parent_node_id),
            old_parent_id <- node.parent_node_id,
            old_index <- node.index,
-           :ok <- Index.move_node(community, branch, node, parent_node_id, target_index),
+           {:ok, _} <- Index.move_node(community, branch, node, parent_node_id, target_index),
            {:ok, node} <- Node.find(community, branch, node.node_id),
            {:ok, event_count} <-
              EventRecorder.record_tree_events(community, branch, args, [
@@ -574,7 +574,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
     end)
   end
 
-  defp validate_delete_node(_community, _branch, _node), do: :ok
+  defp validate_delete_node(_community, _branch, _node), do: {:ok, :pass}
 
   defp load_actor(args, error_message) do
     case Map.get(args, :actor_id) do

@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ReadStateContractTest do
     {community, post, _attrs, user} = mock_article(:post)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
 
     assert {:ok, _} = CMS.Interactions.upvote(post, user)
     assert {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
@@ -73,7 +73,7 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ReadStateContractTest do
     article = %{
       "community" => community.slug,
       "thread" => "POST",
-      "innerId" => Integer.to_string(post.inner_id)
+      "innerId" => Integer.to_string(article_inner_id(post, community))
     }
 
     variables = %{
@@ -88,7 +88,7 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ReadStateContractTest do
                context: %{cur_user: user}
              )
 
-    article_inner_id = Integer.to_string(post.inner_id)
+    article_inner_id = Integer.to_string(article_inner_id(post, community))
     comment_inner_id = Integer.to_string(comment.inner_id)
 
     assert response == %{
@@ -123,7 +123,7 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ReadStateContractTest do
              ],
              "commentReconcileStates" => %{
                "article" => %{
-                 "innerId" => post.inner_id,
+                 "innerId" => article_inner_id(post, community),
                  "commentsRevision" => 1
                },
                "entries" => [
@@ -153,12 +153,12 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ReadStateContractTest do
     {community, post, _attrs, user} = mock_article(:post)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
 
     article = %{
       "community" => community.slug,
       "thread" => "POST",
-      "innerId" => Integer.to_string(post.inner_id)
+      "innerId" => Integer.to_string(article_inner_id(post, community))
     }
 
     variables = %{

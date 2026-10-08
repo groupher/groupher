@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.{Command, FrontDesk, Gate, Comments}
+  alias CMS.Articles.Bindings
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias Comments.{BodyCodec, JobPolicy}
   alias CMS.Model.Comment
@@ -90,11 +91,11 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
     with {:ok, payload} <- BodyCodec.parse(body),
          {:ok, updated} <-
            ORM.update(canonical, %{body: payload.json, body_html: payload.html}),
-         :ok <- CMS.ArticleStats.record_comment_change(article),
+         {:ok, _} <- CMS.ArticleStats.record_comment_change(article),
          {:ok, synced} <- CMS.Comments.Replies.sync_embed_replies(updated),
          {:ok, _} <- JobPolicy.audition(synced),
          {:ok, _invalidation} <- invalidate_public_comments(article, canonical.thread, command_id),
-         :ok <- enqueue_comment_effects(canonical, actor, command_id) do
+         {:ok, _} <- enqueue_comment_effects(canonical, actor, command_id) do
       {:ok, %{comment: synced, article: article, command_id: command_id}}
     end
   end
@@ -110,22 +111,23 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
   end
 
   defp invalidate_public_comments(article, thread, command_id) do
-    {:ok, article} = CMS.Articles.Store.with_community(article)
-
-    CMS.Outbox.send(%{
-      event: "comment.changed",
-      worker: CMS.Outbox.Workers.Comment.Cleanup,
-      resource_type: "article",
-      resource_id: article.id,
-      command_id: command_id,
-      data: %{
-        community: article.community.slug,
-        community_id: article.community_id,
-        thread: thread,
-        inner_id: article.inner_id,
-        article_id: article.id
-      }
-    })
+    with {:ok, %{community: community, inner_id: inner_id}} <-
+           Bindings.get(article, Map.get(article, :community)) do
+      CMS.Outbox.send(%{
+        event: "comment.changed",
+        worker: CMS.Outbox.Workers.Comment.Cleanup,
+        resource_type: "article",
+        resource_id: article.id,
+        command_id: command_id,
+        data: %{
+          community: community.slug,
+          community_id: community.id,
+          thread: thread,
+          inner_id: inner_id,
+          article_id: article.id
+        }
+      })
+    end
   end
 
   defp enqueue_comment_effects(%Comment{} = comment, %User{} = actor, command_id) do
@@ -137,7 +139,7 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
            command_id: command_id,
            data: %{actor_id: actor.id, article_id: comment.article_id}
          }) do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end

@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   alias CMS.Model.{
     Article,
-    ArticleCommunity,
+    ArticleBinding,
     Comment,
     CommentLifecycle,
     KanbanState,
@@ -22,13 +22,27 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   setup do
     {community, post, _, actor} = mock_article(:post, preload: [author: :user])
-    {:ok, _article} = CMS.Articles.set_cat(post.article_id, @article_cat.qa, actor)
+
+    {:ok, _article} =
+      CMS.Articles.set_cat(post.article_id, @article_cat.qa, actor, community.id)
 
     {:ok, first} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment("first"), actor)
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment("first"),
+        actor
+      )
 
     {:ok, second} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment("second"), actor)
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment("second"),
+        actor
+      )
 
     {:ok, outsider} = db_insert(:user)
     {:ok, ~m(community post actor outsider first second)a}
@@ -36,7 +50,10 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   test "accept is idempotent and does not alter workflow status or pin", context do
     ~m(community post actor first)a = context
-    {:ok, _article} = CMS.Articles.set_status(post.article_id, @article_status.wip, actor)
+
+    {:ok, _article} =
+      CMS.Articles.set_status(post.article_id, @article_status.wip, actor, community.id)
+
     {:ok, pinned} = CMS.Comments.pin_comment(first.id, actor)
     assert pinned.is_pinned
 
@@ -46,10 +63,10 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert Repo.get_by!(PostSolution, article_id: post.article_id).comment_id == first.id
     assert Repo.get_by!(PinnedComment, comment_id: first.id)
 
-    relation =
-      Repo.get_by!(ArticleCommunity, article_id: post.article_id, community_id: community.id)
+    binding =
+      Repo.get_by!(ArticleBinding, article_id: post.article_id, community_id: community.id)
 
-    assert Repo.get!(KanbanState, relation.id).status == @article_status.wip
+    assert Repo.get!(KanbanState, binding.id).status == @article_status.wip
 
     assert Repo.aggregate(
              from(log in PostLog,
@@ -62,21 +79,24 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   test "revoke without a current solution is side-effect-free", context do
     ~m(community post actor first)a = context
-    {:ok, _} = CMS.Articles.set_status(post.article_id, @article_status.done, actor)
+
+    {:ok, _} =
+      CMS.Articles.set_status(post.article_id, @article_status.done, actor, community.id)
+
     {:ok, _} = CMS.Comments.pin_comment(first.id, actor)
 
     assert {:ok, %{is_solution: false}} = CMS.Comments.revoke_solution(first.id, actor)
     refute Repo.get_by(PostSolution, article_id: post.article_id)
     assert Repo.get_by!(PinnedComment, comment_id: first.id)
 
-    relation =
-      Repo.get_by!(ArticleCommunity, article_id: post.article_id, community_id: community.id)
+    binding =
+      Repo.get_by!(ArticleBinding, article_id: post.article_id, community_id: community.id)
 
-    assert Repo.get!(KanbanState, relation.id).status == @article_status.done
+    assert Repo.get!(KanbanState, binding.id).status == @article_status.done
     refute Repo.get_by(PostLog, article_id: post.article_id, action: :solution_revoked)
   end
 
-  test "revoke rejects a different comment without changing the relation", context do
+  test "revoke rejects a different comment without changing the binding", context do
     ~m(post actor first second)a = context
     {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
 
@@ -86,7 +106,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert Repo.get_by!(PostSolution, article_id: post.article_id).comment_id == first.id
   end
 
-  test "replace writes one relation and one replacement event", context do
+  test "replace writes one binding and one replacement event", context do
     ~m(post actor first second)a = context
     {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
     {:ok, _} = CMS.Comments.accept_solution(second.id, actor)
@@ -112,7 +132,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert {:error, %{reason: :permission_denied}} =
              CMS.Comments.revoke_solution(first.id, outsider)
 
-    {:ok, _} = CMS.Articles.set_cat(post.article_id, @article_cat.idea, actor)
+    {:ok, _} = CMS.Articles.set_cat(post.article_id, @article_cat.idea, actor, community.id)
 
     assert {:error, %{reason: :solution_not_supported}} =
              CMS.Comments.accept_solution(first.id, actor)
@@ -155,7 +175,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert Repo.get_by!(PostSolution, article_id: post.article_id).comment_id == first.id
   end
 
-  test "deleted and destroyed targets are rejected before relation writes", context do
+  test "deleted and destroyed targets are rejected before binding writes", context do
     ~m(post actor first second)a = context
     {:ok, _} = CMS.Comments.delete_comment(first, actor)
 
@@ -170,7 +190,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     refute Repo.get_by(PostSolution, article_id: post.article_id)
   end
 
-  test "read projections derive comment and post fields from the relation", context do
+  test "read projections derive comment and post fields from the binding", context do
     ~m(post actor first)a = context
     {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
 
@@ -205,7 +225,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert Enum.any?(page.entries, &(&1.id == first.id and &1.is_pinned))
   end
 
-  test "concurrent accepts serialize to one authoritative relation", context do
+  test "concurrent accepts serialize to one authoritative binding", context do
     ~m(post actor first second)a = context
 
     results =
@@ -268,7 +288,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert projected_post.solution_digest == "second"
   end
 
-  test "Comment and Post solution projections use one relation query per batch", context do
+  test "Comment and Post solution projections use one binding query per batch", context do
     ~m(post actor first second)a = context
     {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
 
@@ -306,7 +326,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert {"must belong to the selected post", _meta} = changeset.errors[:comment_id]
   end
 
-  test "physical hard delete cascades the authoritative relation", context do
+  test "physical hard delete cascades the authoritative binding", context do
     ~m(post actor first)a = context
     {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
 

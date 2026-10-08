@@ -174,7 +174,7 @@ defmodule GroupherServer.CMS.Assets do
   end
 
   @doc "Soft-deletes generated asset rows after an abandoned Wallpaper Batch."
-  @spec delete_generated_assets(Community.t(), [String.t()]) :: :ok
+  @spec delete_generated_assets(Community.t(), [String.t()]) :: {:ok, :pass}
   def delete_generated_assets(%Community{} = community, public_refs) do
     Deletion.delete_generated_assets(community, public_refs)
   end

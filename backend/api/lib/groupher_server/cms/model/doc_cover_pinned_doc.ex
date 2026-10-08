@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Model.DocCoverPinnedDoc do
   @moduledoc """
   One top-level pinned docs cover card backed by a published page node.
 
-  Pinned docs are independent from cover groups. Each relation owns its Light
+  Pinned docs are independent from cover groups. Each binding owns its Light
   and Dark card appearance without changing the document's tree membership.
 
   Business position:

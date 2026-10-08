@@ -11,10 +11,13 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.{Draft, Draft.Store, Lifecycle, Numbering, Public, Revision}
-  alias CMS.Model.{Article, ArticleCommunity, ArticlePublic, Author, Community}
+  alias CMS.Articles.{Bindings, Draft, Draft.Store, Lifecycle, Numbering, Public, Revision}
+  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Author, Community}
 
-  @doc "Publishes one ordinary Draft after validating the caller-observed Draft version."
+  @doc "Publishes one ordinary Draft after validating the caller-observed Draft version.
+
+  Pass `:community` (or a persisted `:community_id`); publication never guesses a
+  binding from the stable Article."
   @spec publish(Article.t(), Author.t(), keyword()) ::
           {:ok,
            %{
@@ -30,38 +33,41 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
     expected_lifecycle_version = Keyword.fetch!(opts, :expected_lifecycle_version)
     published_at = DateTime.utc_now(:second)
 
-    Repo.transaction(fn ->
-      with {:ok, locked_article} <- lock_article(article.id),
-           {:ok, draft} <- Store.get_for_update(locked_article),
-           :ok <- validate_version(draft.version, expected_version),
-           {:ok, lifecycle} <- Lifecycle.lock(locked_article),
-           :ok <- validate_lifecycle_version(lifecycle.version, expected_lifecycle_version),
-           :ok <- sync_community_tags(locked_article, opts),
-           current_public <- Repo.get(ArticlePublic, locked_article.id),
-           first_publish? <- is_nil(current_public),
-           changed_fields <- changed_fields(locked_article, current_public, draft),
-           {:ok, relation} <- ensure_relation(locked_article),
-           {:ok, relation} <- Numbering.assign_relation_inner_id(relation),
-           locked_article <- %{locked_article | inner_id: relation.inner_id},
-           {:ok, locked_article} <- ensure_active_at(locked_article, published_at),
-           {:ok, revision} <- Revision.create(locked_article, draft),
-           {:ok, public} <-
-             Public.select(locked_article, revision, actor, published_at: published_at),
-           :ok <- CMS.ArticleStats.initialize(locked_article),
-           {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :published),
-           :ok <- Store.delete_workspace(locked_article, draft) do
-        %{
-          article: locked_article,
-          public: public,
-          revision: revision,
-          first_publish?: first_publish?,
-          changed_fields: changed_fields,
-          published_by_id: actor.id
-        }
-      else
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
+    with {:ok, %{community: community}} <- binding_context(article, opts) do
+      Repo.transaction(fn ->
+        with {:ok, locked_article} <- lock_article(article.id),
+             {:ok, draft} <- Store.get_for_update(locked_article),
+             {:ok, _} <- validate_version(draft.version, expected_version),
+             {:ok, lifecycle} <- Lifecycle.lock(locked_article),
+             {:ok, _} <- validate_lifecycle_version(lifecycle.version, expected_lifecycle_version),
+             {:ok, _} <- sync_community_tags(locked_article, community, opts),
+             current_public <- Repo.get(ArticlePublic, locked_article.id),
+             first_publish? <- is_nil(current_public),
+             changed_fields <- changed_fields(locked_article, current_public, draft),
+             {:ok, binding} <- ensure_binding(locked_article, community),
+             {:ok, binding} <- Numbering.assign_binding_inner_id(binding),
+             {:ok, locked_article} <- ensure_active_at(locked_article, published_at),
+             {:ok, revision} <- Revision.create(locked_article, draft),
+             {:ok, public} <-
+               Public.select(locked_article, revision, actor, published_at: published_at),
+             {:ok, _} <- CMS.ArticleStats.initialize(locked_article),
+             {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :published),
+             {:ok, _} <- Store.delete_workspace(locked_article, draft) do
+          %{
+            article: locked_article,
+            community: community,
+            binding: binding,
+            public: public,
+            revision: revision,
+            first_publish?: first_publish?,
+            changed_fields: changed_fields,
+            published_by_id: actor.id
+          }
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+    end
   end
 
   def publish(%Article{thread: :doc}, %Author{}, _opts), do: {:error, :use_docs_publish}
@@ -77,30 +83,49 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
     end
   end
 
-  defp ensure_relation(%Article{} = article) do
-    case Repo.get_by(ArticleCommunity, article_id: article.id, community_id: article.community_id) do
-      %ArticleCommunity{} = relation -> {:ok, relation}
-      nil -> {:error, :article_community_not_found}
+  defp binding_context(article, opts) do
+    case Keyword.get(opts, :community) do
+      %Community{} = community -> Bindings.get(article, community)
+      nil -> binding_context_by_id(article, Keyword.get(opts, :community_id))
+      _ -> {:error, :article_binding_context_required}
     end
   end
 
-  defp validate_version(version, version), do: :ok
+  defp binding_context_by_id(article, nil),
+    do: Bindings.get(article, Map.get(article, :community))
+
+  defp binding_context_by_id(article, community_id) when is_integer(community_id) do
+    case Repo.get(Community, community_id) do
+      %Community{} = community -> Bindings.get(article, community)
+      _ -> {:error, :article_binding_not_found}
+    end
+  end
+
+  defp binding_context_by_id(_article, _community_id),
+    do: {:error, :article_binding_context_required}
+
+  defp ensure_binding(%Article{} = article, %Community{id: community_id}) do
+    case Repo.get_by(ArticleBinding, article_id: article.id, community_id: community_id) do
+      %ArticleBinding{} = binding -> {:ok, binding}
+      nil -> {:error, :article_binding_not_found}
+    end
+  end
+
+  defp validate_version(version, version), do: {:ok, :pass}
   defp validate_version(_actual, _expected), do: {:error, :draft_version_conflict}
-  defp validate_lifecycle_version(version, version), do: :ok
+  defp validate_lifecycle_version(version, version), do: {:ok, :pass}
   defp validate_lifecycle_version(_actual, _expected), do: {:error, :lifecycle_version_conflict}
 
-  defp sync_community_tags(%Article{} = article, opts) do
+  defp sync_community_tags(%Article{} = article, %Community{} = community, opts) do
     case Keyword.fetch(opts, :community_tags) do
       :error ->
-        :ok
+        {:ok, :pass}
 
       {:ok, tag_ids} ->
-        community = Repo.get!(Community, article.community_id)
-
         case CMS.Communities.overwrite_tags(community, article.thread, article, %{
                community_tags: tag_ids
              }) do
-          {:ok, _article} -> :ok
+          {:ok, _article} -> {:ok, :pass}
           {:error, reason} -> {:error, reason}
         end
     end
