@@ -148,15 +148,15 @@ Command 不复制底层 Writer，也不建立通用 Command Bus、DSL 或 callba
 
 已完成的 F1–F7 实施结果：
 
-| 模块            | 当前状态                                                       |
-| --------------- | -------------------------------------------------------------- |
-| `CMS.Wallpaper` | 已拆为 Query、Upload、Publisher、Retention                     |
-| `CMS.Press`     | 已拆为 Query、Projection、ConfigWriter、Invalidation           |
-| `CMS.DocTree`   | 已有 Commands、Query、Writer、Publish、Trash                   |
-| `CMS.FrontDesk` | 已按 Article、Comment、Community、Relation 等内部 owner 拆分   |
-| `CMS.Snapshot`  | 已拆为 Query、Cache、Projection、Refresh                       |
-| `CMS.Assets`    | Deletion 与 ReplaceUse 已完成，其他简单 Writer 入口待审计      |
-| `CMS.Kanban`    | 本轮已完成 Commands、Query 和 canonical Article/Community 入口 |
+| 模块            | 当前状态                                                            |
+| --------------- | ------------------------------------------------------------------- |
+| `CMS.Wallpaper` | 已拆为 Query、Upload、Publisher、Retention                          |
+| `CMS.Press`     | 已拆为 Query、Projection、ConfigWriter、Invalidation                |
+| `CMS.DocTree`   | 已有 Commands、Query、Writer、Publish、Trash                        |
+| `CMS.FrontDesk` | 已按 Article、Comment、Community、Relation 等内部 owner 拆分        |
+| `CMS.Snapshot`  | 已拆为 Query、Cache、Projection、Refresh                            |
+| `CMS.Assets`    | Deletion 与 ReplaceUse 已完成；其余入口确认保持轻量 Writer delegate |
+| `CMS.Kanban`    | 本轮已完成 Commands、Query 和 canonical Article/Community 入口      |
 
 ### 3.2 本轮实施边界
 
@@ -251,7 +251,7 @@ Lifecycle 合同保留，不能与 authenticated command 入口混为一谈。
 
 ### 4.4 Articles 与 Comments 延迟写入口
 
-Articles 尚未收口的动作包括：
+Articles 的延迟写动作已统一进入现有 concrete command owner：
 
 ```text
 archive
@@ -262,10 +262,11 @@ lock_comments / undo_lock_comments
 set_illegal / unset_illegal / set_audit_failed
 ```
 
-这些动作应逐个进入 `Articles.Commands.<Action>`，由具体 use-case 拥有 Gate、States、Moderation、
-commandId 和结果重读。Kanban 专用 `set_status/4` 已完成，不代表普通 `set_status/3` 已完成。
+这些动作分别由 `Commands.Archive`、`Commands.StateChange`、`Commands.CommentLock`、
+`Commands.Moderate` 和既有 Articles state owner 承担；Kanban 专用 `set_status/4` 与普通
+`set_status/3` 的边界不同，但两者都已通过 concrete command/owner 进入 Gate 和状态写入路径。
 
-Comments 尚未完成统一审计的动作包括：
+Comments 的写入口已统一进入现有 concrete command/state owner：
 
 ```text
 create_comment* / reply_comment*
@@ -275,14 +276,14 @@ set_comment_illegal / unset_comment_illegal
 set_comment_audit_failed / paged_audit_failed_comments
 ```
 
-其中 `update_comment`、`delete_comment` 已经使用具体 Commands；其余入口需要决定是进入
-`Comments.Commands.*`，还是明确保留为一到两步的 domain owner delegate。公开写入口不得把已加载
-struct 降级为 ID 后再由底层重复加载；仅可信内部兼容入口可以在单独合同中保留。
+其中 `update_comment`、`delete_comment`、`create/reply` 使用具体 Commands，pin/fold 使用
+`Comments.Commands.StateChange`，moderation 使用 `Comments.Commands.Moderate`；ID overload
+只在兼容入口解析一次 canonical Comment，不把已加载 struct 降级为 ID。
 
 ### 4.5 Assets 剩余 Writer 入口审计
 
-`Assets.Deletion` 和 `Assets.Commands.ReplaceUse` 已完成。以下入口仍需逐项确认是否保持简单
-Writer delegate，或下沉为具名 use-case：
+`Assets.Deletion` 和 `Assets.Commands.ReplaceUse` 已完成。以下入口已逐项确认保持简单
+Writer delegate；它们不携带独立 commandId、跨步骤 Gate 或额外事务编排：
 
 ```text
 register / register_to_community
@@ -290,8 +291,8 @@ delete / archive / restore
 link_refs / copy_refs / cleanup_refs
 ```
 
-不得因为存在 `Assets.Writer` 就自动判定所有入口已完成；需要逐个核对资源形态、事务边界、
-commandId 和生产调用者。
+资源形态、事务边界、commandId 和生产调用者已核对；需要完整 action 编排的新入口仍必须进入
+`Assets.Commands.*`，不得继续扩展 Writer delegate。
 
 ### 4.6 Articles Commands
 
@@ -664,6 +665,10 @@ facade 收口引入，也不能把它们伪装成全量通过。
 `pnpm docs:check` 已覆盖到本次新增模块，当前全仓检查通过。此前阻塞检查的
 `Assets.Endpoints` 与 `CanonicalJSON` 源码文档缺口已经在后续 source-documentation 清理中修复；
 这两项不属于 F1–F7 的目录重构改动。
+
+Phase 2/3 focused structural gate：`pnpm check:cms-facade-boundary` 已接入 `pnpm docs:check`，
+当前覆盖 10 个产品 facade 和 Docs/Kanban concrete command manifest。该门禁不宣称全量 Credo
+清零；既有 Credo refactoring/readability/design findings 仍由独立后续批次处理。
 
 ## 7. 非目标
 

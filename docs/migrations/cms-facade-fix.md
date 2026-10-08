@@ -1,6 +1,7 @@
 # CMS Facade 边界修复
 
-> 状态：Phase 1 已实施；Phase 2–3 仍待后续审计。
+> 状态：Phase 1–3 已实施。Phase 2 的结构审计与 Phase 3 的 focused 结构门禁已接入仓库检查；全量
+> Credo 存量清理仍作为独立后续批次，不作为本文已完成条件。
 >
 > 范围：`backend/api/lib/groupher_server/cms` 下产品 facade、concrete use case、领域 owner
 > 和 CMS 基础设施之间的职责边界。
@@ -170,9 +171,8 @@ CMS.Articles.ErrorCat.article_not_found("community not found")
 
 ### 2.7 Kanban membership 错误语义
 
-Phase 1 后的 `CMS.Kanban.Query.ensure_membership/2` 仍需要表达“Article placement 不在 Kanban”
-这一业务事实，但不应使用 `article_not_found`。当前已改用 Article context 的通用 `not_exist`
-catalog；后续 Phase 2 仍应评估是否需要建立更明确的 Kanban-owned ErrorCat。
+Phase 1 后的 `CMS.Kanban.Query.ensure_membership/2` 使用 Kanban-owned `ErrorCat.not_in_kanban/0`
+表达“ArticleCommunity 存在但没有 KanbanState”的业务事实，不再复用 Article context 的通用错误。
 
 ## 3. 审计分类
 
@@ -246,15 +246,14 @@ catalog；后续 Phase 2 仍应评估是否需要建立更明确的 Kanban-owned
 
 #### ArticleCommunity naming debt
 
-以下是当前代码中保留的历史命名，不代表存在第二个 Placement 实体；它们列入后续 facade-directory
-审计，暂不在本轮文档收口中改动：
+以下是迁移记录中仍可见的历史命名；运行时代码已完成 ArticleCommunity 边界命名收口，不代表存在
+第二个 Placement 实体：
 
 - `delete_source_placement/3`：ArticleCommunity 关系迁移时的内部删除 helper；
 - `:current_path_placement`：已移除的历史错误 atom，仅保留在迁移记录中；
-- `with_authorized_placement/4`：按 ArticleCommunity 关系执行 Gate admission 的现有函数名。
+- `with_authorized_article_community/4`：按 ArticleCommunity 关系执行 Gate admission 的当前函数名。
 
-后续若重命名这些代码标识，必须同步调用者、测试和错误协议；文档统一不等于本轮已经完成代码 API
-重命名。
+历史迁移文档中的 `with_authorized_placement/4` 仅作为旧版本记录保留；新代码不得恢复该命名。
 
 ### Phase 2：结构审计
 
@@ -276,6 +275,18 @@ catalog；后续 Phase 2 仍应评估是否需要建立更明确的 Kanban-owned
 - transport、GraphQL、Job 不直接调用内部 Writer、Store 或 Command；
 - `CMS.Outbox` 的基础设施入口保留 allowlist 或独立 owner 规则；
 - facade 的公开动作必须有对应合同测试或调用者证据。
+
+当前实施结果：
+
+- 新增 `scripts/check-cms-facade-boundary.mjs`，覆盖 `CMS.Articles`、`Comments`、`Communities`、
+  `Docs`、`Kanban`、`Assets`、`Press`、`Wallpaper`、`Snapshot` 和 `FrontDesk` 产品 facade；检查
+  Repo/Ecto transaction、外部 effect 和 `%CMS.Command{}` 越界依赖。
+- 新增 `scripts/check-cms-facade-boundary.test.mjs`，固定违规与允许的 moduledoc 边界正反例，并验证
+  Docs 与 Kanban concrete command manifest。
+- `check:cms-facade-boundary` 已接入根 `docs:check`；Outbox、Trash、Snapshot projection、ArticleStats
+  等特殊 owner 不纳入产品 facade 清单，继续按各自 owner 规则审计。
+- 当前门禁是 focused structural gate，不等同于全量 Credo 清零。全量 Credo 的既有 refactoring、
+  readability 和 design findings 另行跟踪，不能据此勾选全量 Credo 验收项。
 
 ## 6. 验收标准
 
