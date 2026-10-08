@@ -209,7 +209,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     @create_community_query S.Community.m(:create_community)
     test "create community with valid attrs" do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
-      variables = mock_attrs(:community, %{locale: "zh"})
+      variables = create_community_vars(%{locale: "zh"})
 
       created =
         rule_conn |> gq_mutation(@create_community_query, variables)
@@ -221,9 +221,9 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     test "can create community with some title, different slug" do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
-      variables = mock_attrs(:community, %{title: "elixir", slug: "elixir1"})
+      variables = create_community_vars(%{title: "elixir", slug: "elixir1"})
       rule_conn |> gq_mutation(@create_community_query, variables)
-      variables = mock_attrs(:community, %{title: "elixir", slug: "elixir2"})
+      variables = create_community_vars(%{title: "elixir", slug: "elixir2"})
       rule_conn |> gq_mutation(@create_community_query, variables)
 
       {:ok, community} = Community |> ORM.find_by(%{slug: "elixir1"})
@@ -235,12 +235,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     test "can not create community with some slug" do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
-      variables = mock_attrs(:community, %{title: "elixir1", slug: "elixir"})
+      variables = create_community_vars(%{title: "elixir1", slug: "elixir"})
 
       first = rule_conn |> gq_mutation(@create_community_query, variables)
       assert not is_nil(first)
 
-      variables = mock_attrs(:community, %{title: "elixir2", slug: "elixir"})
+      variables = create_community_vars(%{title: "elixir2", slug: "elixir"})
       assert rule_conn |> mutation_error?(@create_community_query, variables)
     end
 
@@ -268,7 +268,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "unauth user create community fails", ~m(user_conn guest_conn)a do
-      variables = mock_attrs(:community)
+      variables = create_community_vars()
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
@@ -295,7 +295,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     test "create duplicated community fails", %{community: community} do
       variables =
-        mock_attrs(:community, %{
+        create_community_vars(%{
           slug: community.slug,
           title: community.title,
           desc: community.desc
@@ -324,7 +324,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "unauth user delete community fails", ~m(user_conn guest_conn)a do
-      variables = mock_attrs(:community)
+      variables = create_community_vars()
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
@@ -355,6 +355,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert rule_conn
              |> mutation_error?(@request_destroy_community_query, %{community: non_exist_slug()})
     end
+  end
+
+  defp create_community_vars(attrs \\ %{}) do
+    mock_attrs(:community, attrs)
+    |> Map.put(:command_id, Ecto.UUID.generate())
   end
 
   describe "[mutation cms moderators]" do

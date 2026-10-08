@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
                nil,
                %{
                  input: application_attrs(upload, "home"),
-                 idempotency_key: "idem_home_resolver"
+                 command_id: "idem_home_resolver"
                },
                %{context: %{cur_user: user}}
              )

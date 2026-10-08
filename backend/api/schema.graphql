@@ -377,7 +377,7 @@ type RootMutationType {
   completeCommunityApplicationLogoUpload(input: CommunityApplicationLogoCompletionInput!): ApplicationLogoUploadCompletion!
 
   "Submit a new Community Application"
-  submitCommunityApplication(input: CommunityApplicationInput!, idempotencyKey: String!): CommunityApplication!
+  submitCommunityApplication(input: CommunityApplicationInput!, commandId: ID!): CommunityApplication!
 
   "Cancel an owned Community Application"
   cancelCommunityApplication(ref: ID!, expectedVersion: Int!): CommunityApplication!
@@ -398,10 +398,12 @@ type RootMutationType {
   retryCommunitySetup(ref: ID!, expectedVersion: Int!): CommunityApplication!
 
   "create a global community"
-  createCommunity(title: String!, desc: String!, slug: String!, logo: String!, locale: String): Community
+  createCommunity(commandId: ID!, title: String!, desc: String!, slug: String!, logo: String!, locale: String): Community
 
   "update a community"
-  updateCommunity(community: String!, title: String, desc: String, slug: String, logo: String, locale: String): Community
+  updateCommunity(
+    community: String!, commandId: ID!, title: String, desc: String, slug: String, logo: String, locale: String
+  ): Community
 
   "delete a global community"
   requestDestroyCommunity(community: String!, commandId: ID!): Community
@@ -703,12 +705,6 @@ type RootMutationType {
   "undo upvote to doc"
   undoUpvoteDoc(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
-  "pin to doc"
-  pinDoc(article: ArticlePathInput!, commandId: ID!): Doc
-
-  "undo pin to doc"
-  undoPinDoc(article: ArticlePathInput!, commandId: ID!): Doc
-
   "emotion to doc"
   emotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
@@ -782,19 +778,19 @@ type RootMutationType {
 
   "update base info in dashboard"
   updateDashboardBaseInfo(
-    community: String!, dsbSection: DsbSection, favicon: String, title: String, locale: String, logo: String, slug: String, desc: String, introduction: String, homepage: String, city: String, techstack: String
+    community: String!, dsbSection: DsbSection, commandId: ID!, favicon: String, title: String, locale: String, logo: String, slug: String, desc: String, introduction: String, homepage: String, city: String, techstack: String
   ): Dsb
 
   "update seo in dashboard"
   updateDashboardSeo(
-    community: String!, dsbSection: DsbSection, seoEnable: Boolean, ogSiteName: String, ogTitle: String, ogDescription: String, ogUrl: String, ogImage: String, ogLocale: String, ogPublisher: String, twTitle: String, twDescription: String, twUrl: String, twCard: String, twSite: String, twImage: String, twImageWidth: String, twImageHeight: String
+    community: String!, dsbSection: DsbSection, commandId: ID!, seoEnable: Boolean, ogSiteName: String, ogTitle: String, ogDescription: String, ogUrl: String, ogImage: String, ogLocale: String, ogPublisher: String, twTitle: String, twDescription: String, twUrl: String, twCard: String, twSite: String, twImage: String, twImageWidth: String, twImageHeight: String
   ): Dsb
 
   "Publishes one current-theme Wallpaper Snapshot"
   publishWallpaper(community: String!, input: WallpaperPublishInput!): WallpaperPublishResult!
 
   "Updates the Dashboard-owned content surface shadow"
-  updateDashboardContentShadow(community: String!, enabled: Boolean!): Dsb
+  updateDashboardContentShadow(community: String!, enabled: Boolean!, commandId: ID!): Dsb
 
   "Prepares the generated images for one current-theme Wallpaper save"
   prepareWallpaperUpload(community: String!, input: WallpaperUploadPrepareInput!): WallpaperUploadPreparation!
@@ -804,55 +800,63 @@ type RootMutationType {
 
   "update enable in dashboard"
   updateDashboardEnable(
-    community: String!, dsbSection: DsbSection, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean, visitorLocationMap: Boolean
+    community: String!, dsbSection: DsbSection, commandId: ID!, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean, visitorLocationMap: Boolean
   ): Dsb
 
   "update thread-specific emotion settings in dashboard"
   updateDashboardThreadEmotions(
-    community: String!, dsbSection: DsbSection, post: [EmotionType], blog: [EmotionType], changelog: [EmotionType], doc: [EmotionType], postComment: [EmotionType], blogComment: [EmotionType], changelogComment: [EmotionType], docComment: [EmotionType]
+    community: String!, dsbSection: DsbSection, commandId: ID!, post: [EmotionType], blog: [EmotionType], changelog: [EmotionType], doc: [EmotionType], postComment: [EmotionType], blogComment: [EmotionType], changelogComment: [EmotionType], docComment: [EmotionType]
   ): Dsb
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dsbSection: DsbSection, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, overlayDark: Boolean
+    community: String!, dsbSection: DsbSection, commandId: ID!, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, overlayDark: Boolean
   ): Dsb
 
   "save custom theme preset in dashboard"
   saveCustomThemePreset(
-    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeOverwrite: Json
+    community: String!, commandId: ID!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeOverwrite: Json
   ): Dsb
 
   "select read-only theme preset in dashboard"
-  selectThemePreset(community: String!, themePreset: DsbThemePreset!): Dsb
+  selectThemePreset(community: String!, commandId: ID!, themePreset: DsbThemePreset!): Dsb
 
   "update rss in dashboard"
-  updateDashboardRss(community: String!, dsbSection: DsbSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int): Dsb
+  updateDashboardRss(
+    community: String!, dsbSection: DsbSection, commandId: ID!, rssFeedType: DsbRssFeedType, rssFeedCount: Int
+  ): Dsb
 
   "update name alias in dashboard"
-  updateDashboardNameAlias(community: String!, dsbSection: DsbSection, nameAlias: [DsbAliasMap]): Dsb
+  updateDashboardNameAlias(community: String!, dsbSection: DsbSection, commandId: ID!, nameAlias: [DsbAliasMap]): Dsb
 
   "update header links in dashboard"
-  updateDashboardHeaderLinks(community: String!, dsbSection: DsbSection, headerLinks: [DsbLinkMap]): Dsb
+  updateDashboardHeaderLinks(community: String!, dsbSection: DsbSection, commandId: ID!, headerLinks: [DsbLinkMap]): Dsb
 
   "update footer links in dashboard"
-  updateDashboardFooterLinks(community: String!, dsbSection: DsbSection, footerLinks: [DsbLinkMap]): Dsb
+  updateDashboardFooterLinks(community: String!, dsbSection: DsbSection, commandId: ID!, footerLinks: [DsbLinkMap]): Dsb
 
   "update footer oneline links in dashboard"
-  updateDashboardFooterOnelineLinks(community: String!, dsbSection: DsbSection, footerOnelineLinks: [DsbLinkChildMap]): Dsb
+  updateDashboardFooterOnelineLinks(
+    community: String!, dsbSection: DsbSection, commandId: ID!, footerOnelineLinks: [DsbLinkChildMap]
+  ): Dsb
 
   "update social links in dashboard"
-  updateDashboardSocialLinks(community: String!, dsbSection: DsbSection, socialLinks: [DsbSocialLinkMap]): Dsb
+  updateDashboardSocialLinks(
+    community: String!, dsbSection: DsbSection, commandId: ID!, socialLinks: [DsbSocialLinkMap]
+  ): Dsb
 
   "update media reports in dashboard"
-  updateDashboardMediaReports(community: String!, dsbSection: DsbSection, mediaReports: [DsbMediaReportMap]): Dsb
+  updateDashboardMediaReports(
+    community: String!, dsbSection: DsbSection, commandId: ID!, mediaReports: [DsbMediaReportMap]
+  ): Dsb
 
   "update third-party analytics integrations in dashboard"
   updateDashboardThirdPartyAnalytics(
-    community: String!, dsbSection: DsbSection, thirdPartyAnalytics: [DsbThirdPartyAnalyticsInput]
+    community: String!, dsbSection: DsbSection, commandId: ID!, thirdPartyAnalytics: [DsbThirdPartyAnalyticsInput]
   ): Dsb
 
   "update docs FAQ in dashboard"
-  updateDashboardDocFaq(community: String!, dsbSection: DsbSection, docFaq: DsbDocFaqInput!): Dsb
+  updateDashboardDocFaq(community: String!, dsbSection: DsbSection, commandId: ID!, docFaq: DsbDocFaqInput!): Dsb
 
   updatePressConfig(input: UpdatePressConfigInput!): PressConfigPayload
 
@@ -929,28 +933,28 @@ type RootMutationType {
   ): DocTreeMutationPayload
 
   "add a published Group as a Cover Card"
-  addDocCoverCard(community: String!, groupNodeId: ID!): DocCoverCard
+  addDocCoverCard(commandId: ID!, community: String!, groupNodeId: ID!): DocCoverCard
 
   "remove a docs Cover Card"
-  removeDocCoverCard(community: String!, groupNodeId: ID!): DocCoverCard
+  removeDocCoverCard(commandId: ID!, community: String!, groupNodeId: ID!): DocCoverCard
 
   "reorder docs Cover Cards"
-  reorderDocCoverCards(community: String!, ids: [ID!]!): DoneState
+  reorderDocCoverCards(commandId: ID!, community: String!, ids: [ID!]!): DoneState
 
   "update docs Cover Card appearance"
-  updateDocCoverCardAppearance(community: String!, id: ID!, appearance: Json!): DocCoverCard
+  updateDocCoverCardAppearance(commandId: ID!, community: String!, id: ID!, appearance: Json!): DocCoverCard
 
   "pin a published docs page to cover"
-  pinDocToCover(community: String!, nodeId: ID!): DocCoverPinnedDoc!
+  pinDocToCover(commandId: ID!, community: String!, nodeId: ID!): DocCoverPinnedDoc!
 
   "remove a published docs page from cover pins"
-  unpinDocFromCover(community: String!, nodeId: ID!): DocCoverPinnedDoc!
+  unpinDocFromCover(commandId: ID!, community: String!, nodeId: ID!): DocCoverPinnedDoc!
 
   "reorder the complete docs cover pin collection"
-  reorderDocCoverPinnedDocs(community: String!, nodeIds: [ID!]!): DoneState!
+  reorderDocCoverPinnedDocs(commandId: ID!, community: String!, nodeIds: [ID!]!): DoneState!
 
   "update a pinned docs cover card appearance"
-  updatePinnedDocAppearance(community: String!, nodeId: ID!, appearance: Json!): DocCoverPinnedDoc!
+  updatePinnedDocAppearance(commandId: ID!, community: String!, nodeId: ID!, appearance: Json!): DocCoverPinnedDoc!
 
   "create the persistent import Job after a temporary Preview is confirmed"
   startDocContentImport(
@@ -4071,7 +4075,7 @@ input WallpaperPublishInput {
   theme: WallpaperTheme!
   settings: WallpaperSettingsInput!
   baseVersion: Int!
-  idempotencyKey: String!
+  commandId: ID!
   batchRef: String
 }
 
@@ -4088,7 +4092,7 @@ input WallpaperUploadPrepareInput {
   theme: WallpaperTheme!
   settings: WallpaperSettingsInput!
   baseVersion: Int!
-  idempotencyKey: String!
+  commandId: ID!
   images: [WallpaperImageInput!]!
 }
 

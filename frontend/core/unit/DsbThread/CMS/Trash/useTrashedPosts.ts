@@ -4,18 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
-import { createCommandId } from '~/query/mutation/optimistic/execute'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/content'
 
 import { normalizeTrashedPost } from './normalize'
-import type {
-  TPagedTrashedPosts,
-  TPermanentlyDeleteTrashedPostData,
-  TRestoreTrashedPostData,
-  TTrashedPostsData,
-} from './spec'
+import type { TPagedTrashedPosts, TTrashedPostsData } from './spec'
 
 const PAGE_SIZE = 20
 const EMPTY_PAGE: TPagedTrashedPosts = {
@@ -88,10 +83,12 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
       setActiveActionId(id)
 
       try {
-        const data = await browserGraphQLRequest<TRestoreTrashedPostData>(S.restoreTrashedPost, {
-          community,
-          id,
-          commandId: createCommandId(),
+        const data = await executeCommand({
+          request: (variables) => browserGraphQLRequest(S.restoreTrashedPost, variables),
+          variables: {
+            community,
+            id,
+          },
         })
 
         if (!data.restoreTrashedArticle) return false
@@ -114,10 +111,10 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
       setActiveActionId(id)
 
       try {
-        const data = await browserGraphQLRequest<TPermanentlyDeleteTrashedPostData>(
-          S.permanentlyDeleteTrashedPost,
-          { community, id, commandId: createCommandId() },
-        )
+        const data = await executeCommand({
+          request: (variables) => browserGraphQLRequest(S.permanentlyDeleteTrashedPost, variables),
+          variables: { community, id },
+        })
 
         if (!data.permanentlyDeleteTrashedArticle?.done) return false
         toast(t('dsb.cms.trash.permanently_deleted'))

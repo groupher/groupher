@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
   alias CMS.Wallpaper.{RequestDigest, Settings}
 
   defmodule FakeBatchClient do
-    def claim_for_publish(_batch_ref, _idempotency_key) do
+    def claim_for_publish(_batch_ref, _submit_command_id) do
       payload = Application.fetch_env!(:groupher_server, :wallpaper_graphql_batch_payload)
       {:ok, %{"capability" => Capability.sign(payload)}}
     end
@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
         community: community.slug,
         input: %{
           baseVersion: 0,
-          idempotencyKey: "graphql-prepare",
+          commandId: "graphql-prepare",
           images: wallpaper_images(),
           settings: settings_input,
           theme: "LIGHT"
@@ -150,7 +150,7 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
         input: %{
           baseVersion: 0,
           batchRef: batch_ref,
-          idempotencyKey: "graphql-publish",
+          commandId: "graphql-publish",
           settings: %{
             renderConfig: Jason.encode!(render_config()),
             settingsSchemaVersion: 1,
@@ -174,7 +174,7 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
           input: %{
             baseVersion: 0,
             batchRef: batch_ref,
-            idempotencyKey: "graphql-loser",
+            commandId: "graphql-loser",
             settings: %{
               renderConfig: Jason.encode!(render_config()),
               settingsSchemaVersion: 1,
@@ -215,7 +215,7 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
         input: %{
           baseVersion: 1,
           batchRef: nil,
-          idempotencyKey: "graphql-none",
+          commandId: "graphql-none",
           settings: %{settingsSchemaVersion: 1, type: "NONE"},
           theme: "LIGHT"
         }
@@ -229,7 +229,7 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
         input: %{
           baseVersion: 0,
           batchRef: batch_ref,
-          idempotencyKey: "graphql-publish",
+          commandId: "graphql-publish",
           settings: %{
             renderConfig: Jason.encode!(render_config()),
             settingsSchemaVersion: 1,

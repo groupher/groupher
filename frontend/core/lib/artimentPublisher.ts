@@ -1,7 +1,7 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 import { API_ROUTE } from '@groupher/route-contract'
 
-type TSaveDocDraftInput = {
+export type TSaveDocDraftInput = {
   value: TRichEditorValue
   community: string
   id: string

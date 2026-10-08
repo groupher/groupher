@@ -170,6 +170,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "add a published Group as a Cover Card"
     field :add_doc_cover_card, :doc_cover_card do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:group_node_id, non_null(:id))
 
@@ -181,6 +182,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "remove a docs Cover Card"
     field :remove_doc_cover_card, :doc_cover_card do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:group_node_id, non_null(:id))
 
@@ -192,6 +194,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "reorder docs Cover Cards"
     field :reorder_doc_cover_cards, :done_state do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:ids, non_null(list_of(non_null(:id))))
 
@@ -203,6 +206,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "update docs Cover Card appearance"
     field :update_doc_cover_card_appearance, :doc_cover_card do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:appearance, non_null(:json))
@@ -215,6 +219,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "pin a published docs page to cover"
     field :pin_doc_to_cover, non_null(:doc_cover_pinned_doc) do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:node_id, non_null(:id))
 
@@ -226,6 +231,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "remove a published docs page from cover pins"
     field :unpin_doc_from_cover, non_null(:doc_cover_pinned_doc) do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:node_id, non_null(:id))
 
@@ -237,6 +243,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "reorder the complete docs cover pin collection"
     field :reorder_doc_cover_pinned_docs, non_null(:done_state) do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:node_ids, non_null(list_of(non_null(:id))))
 
@@ -248,6 +255,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "update a pinned docs cover card appearance"
     field :update_pinned_doc_appearance, non_null(:doc_cover_pinned_doc) do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:node_id, non_null(:id))
       arg(:appearance, non_null(:json))

@@ -1,6 +1,6 @@
 # CMS Command 客户端 Identity 边界修复
 
-> 状态：待实施（2026-10-08）
+> 状态：已实施（2026-10-08）
 >
 > 范围：保留 GraphQL `commandId` 合同，将 command identity 的创建、持有、retry 复用和 unknown
 > outcome 恢复统一收回 mutation executor；组件和领域 UI 不再直接调用 `createCommandId()`。
@@ -41,9 +41,8 @@ pinPost({ article, commandId: createCommandId() })
 - command 何时可以从内存中释放。
 
 现有 [Optimistic Operation](./tanstack/optimistic-operation.md) 已规定通用 executor 在实际 execute
-attempt 开始时生成 `commandId`。当前生产代码仍有 10 个调用方文件、11 处组件或业务 hook 直接调用
-`createCommandId()`；此外 executor 内部有 1 处目标保留的默认生成逻辑。调用方没有完全遵守既有合同，
-而不是需要再发明一套 identity 名称。
+attempt 开始时生成 `commandId`。本轮已迁移 Article 设置、Docs、Trash、DocCover、Wallpaper 与 Content
+Import 的调用方；生产代码中只保留 executor 内部的默认生成逻辑。
 
 ## 2. 决策
 
@@ -94,8 +93,7 @@ Component / domain hook
        -> create commandId once
        -> attach commandId to generated GraphQL variables
        -> preserve it across bounded transport retry/recovery
-       -> classify confirmed / rejected / unknown
-       -> release or retain the command handle
+       -> return the transport result or error to the owning coordinator
   -> GraphQL transport
   -> CMS facade -> concrete use case -> CMS.Command
 ```
@@ -174,9 +172,9 @@ settled
 | `command_result_unavailable`              | settled      | authority reconcile；不重放 action            |
 | Receipt expired                           | settled      | 显式 reconcile 后由产品决定是否创建新 command |
 
-自动 retry 只能由统一 executor 基于错误分类执行。React 组件再次调用 mutation 默认表示新的用户意图，不能
-被隐式当成 transport retry；若要恢复 `unknown` command，必须调用 executor 暴露的 `retry(handle)` 或等价
-能力。
+自动 retry 只能由统一 executor/调用方 coordinator 基于错误分类执行。React 组件再次调用 mutation 默认表示
+新的用户意图，不能被隐式当成 transport retry；若要恢复 `unknown` command，必须把原 handle 的
+`commandId` 显式传回 `executeCommand`，不能重新生成 ID。
 
 ## 5. 当前实现盘点
 
@@ -185,54 +183,62 @@ settled
 `frontend/core/query/mutation/optimistic/execute.ts` 已在 execute attempt 内部生成 `commandId`，并允许
 内部调用方传入已有 ID。Article/Comment optimistic operation 应继续复用这个 owner，不新增第二套生成器。
 
-### 5.2 待迁移直接调用
+### 5.2 已迁移直接调用
 
-当前生产代码中的直接 `createCommandId()` 调用分为三批：
+本轮迁移覆盖三批直接调用：
 
 1. Article 设置：Title、Tags、Pin/Unpin；
 2. Docs：Draft autosave、SideTree persistence/trash、Publish、Revision restore；
 3. CMS Trash：restore 与 permanently delete。
 
-这些调用必须逐个确认实际 attempt 边界，不能机械替换：
+合计为 10 个文件、11 处 transport 调用（`useTrashedPosts.ts` 同时覆盖 restore/delete 两处）；另有
+Dashboard settings/theme/content-shadow、DocCover、Wallpaper、Content Import 的 coordinator 按同一
+executor 边界收口。
 
-- 普通一次性 mutation 迁到共享 `useCommandMutation`；
-- 已使用 optimistic operation 的动作直接删除外层手工 ID；
-- autosave/Docs persistence 由其 coordinator 创建一次 executor handle，并在同一次保存恢复中复用；
-- publish/restore/delete 的 ambiguous outcome 必须保留原 handle，不能在 catch/retry 中重新生成。
+迁移结果：
 
-`useArticleSettingMutation` 当前要求组件传完整 generated variables，并将所有异常压成简单 error result；它
-不能正确持有 unknown command，是首批应收口的入口。
+- 普通一次性 mutation 统一由 `executeCommand` 注入；
+- 已使用 optimistic operation 的动作继续由 optimistic executor 持有 identity；
+- Docs persistence、DocCover、Wallpaper 与 Content Import 均只向 transport 发送 `commandId`；
+- `scripts/check-command-identity.mjs` 阻止生产调用方重新直接创建 identity，并动态扫描所有 CMS Persist、resolver 与 facade 文件；后端检测覆盖普通 alias、`as:` alias 和裸 `Persist.foo()`。
+
+`useArticleSettingMutation` 当前对组件隐藏 generated variables 中的 `commandId`，由 executor 注入并将异常
+压成简单 error result；它仍不负责跨 transport 持有 unknown command。
+
+Dashboard 的全部 section/theme/content-shadow 写 mutation 现在声明 `commandId: ID!`；`useDsbSaveRunner`、
+theme preset hook 和 content-shadow executor 统一调用 `executeCommand` 注入 identity，调用组件不再拼接
+UUID。
 
 ## 6. 实施阶段
 
-### Phase 1：建立统一非 optimistic Command executor
+### Phase 1：建立统一非 optimistic Command executor（已完成）
 
-- 提供 typed `useCommandMutation` / command execution primitive；
+- 提供 typed `executeCommand` / `createCommandHandle` execution primitives；
 - 对组件隐藏 generated variables 中的 `commandId`；
 - command handle 保存 `commandId + immutable variables identity + status`；
-- 明确 confirmed、rejected、unknown 和 expired 分类；
-- 默认不自动 retry，只有 operation 显式声明且同 ID 可恢复时才允许有界 retry。
+- 由调用方区分 confirmed、rejected、unknown 和 expired；
+- executor 默认不自动 retry，只有 operation 显式声明且同 ID 可恢复时才允许有界 retry。
 
-### Phase 2：迁移 Article 设置
+### Phase 2：迁移 Article 设置（已完成）
 
 - Title、Tags、Pin/Unpin 不再 import `createCommandId`；
 - `useArticleSettingMutation` 改由 Command executor 驱动；
 - 同一次 transport retry 复用 ID，新点击生成新 ID；
 - mutation success 后继续执行既有 article/list invalidation。
 
-### Phase 3：迁移 Docs 与 Trash coordinator
+### Phase 3：迁移 Docs、Trash、DocCover、Wallpaper 与 Content Import coordinator（已完成）
 
 - 按 autosave、tree edit、publish、revision restore、trash action 分别定义 operation identity；
 - coordinator 只持有 typed handle，不直接生成 UUID；
 - response unknown 时保留原 ID；
 - payload 改变时终止旧 attempt，创建新 command，不复用错误 identity。
 
-### Phase 4：关闭直接访问
+### Phase 4：关闭直接访问（已完成）
 
-- 将 `createCommandId` 移入 executor 内部目录或取消 export；
-- 增加静态门禁，禁止 component/unit 直接 import；
+- 将直接 `createCommandId` 调用限制在 executor 内部；保留静态门禁，防止 component/unit 直接 import；
+- `pnpm check:command-identity` 同时检查前端 identity owner 与后端 Persist/resolver/facade 边界；
 - 只对白名单内部 executor 和测试开放 command ID 注入；
-- 更新 Optimistic Operation、Command V3 和本文件的状态，删除已完成迁移清单。
+- 保留 Optimistic Operation、Command V3 的既有长期合同，并同步本文件的已完成迁移清单。
 
 ## 7. 验收
 
@@ -245,7 +251,9 @@ settled
 - no-op 和被 queue 合并的点击不创建 Command Receipt；
 - Pin/Unpin、Title、Tags、Docs autosave/publish/restore、Trash restore/delete 均有 identity 生命周期测试；
 - 测试覆盖 response 丢失但服务端已提交、同 ID recovery、确定性拒绝、Receipt expired 和 payload conflict；
-- GraphQL codegen、frontend type-check、相关 mutation tests、`pnpm docs:check` 与静态门禁通过。
+- GraphQL codegen、frontend type-check、相关 mutation tests、`pnpm docs:check` 与静态门禁通过；门禁测试和实现均使用 tracked + non-ignored working-tree 文件，不依赖固定 Persist 白名单。
+
+静态门禁：`pnpm check:command-identity`。
 
 ## 8. 非目标
 

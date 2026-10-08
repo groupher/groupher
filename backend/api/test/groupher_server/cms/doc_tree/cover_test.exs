@@ -81,7 +81,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       })
 
     assert {:ok, %{done: true}} = publish_all_changes(community, user)
-    assert {:ok, _card} = CMS.DocCover.add_card(community, group.node.id, user)
+    assert {:ok, _card} = CMS.DocCover.add_card(community, group.node.id, user, Ecto.UUID.generate())
     assert {:ok, %{cards: [card]}} = CMS.DocCover.read(community)
 
     assert card.group_node_id == group.node.id
@@ -100,6 +100,17 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
     assert page_href =~ "/install"
     assert nested_href == "https://example.com/runtime"
+  end
+
+  test "receipt-backed cover writes replay the first result for the same command id",
+       ~m(user community group)a do
+    assert {:ok, %{done: true}} = publish_all_changes(community, user)
+
+    command_id = Ecto.UUID.generate()
+    assert {:ok, first_card} = CMS.DocCover.add_card(community, group.node.id, user, command_id)
+    assert {:ok, replayed_card} = CMS.DocCover.add_card(community, group.node.id, user, command_id)
+    assert replayed_card.id == first_card.id
+    assert replayed_card.group_node_id == first_card.group_node_id
   end
 
   test "adding a parent Card atomically replaces selected descendant Cards",
@@ -124,10 +135,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       )
 
     assert {:ok, %{done: true}} = publish_all_changes(community, user)
-    assert {:ok, descendant_card} = CMS.DocCover.add_card(community, nested_group.node.id, user)
+    assert {:ok, descendant_card} = CMS.DocCover.add_card(community, nested_group.node.id, user, Ecto.UUID.generate())
     assert descendant_card.index == 0
 
-    assert {:ok, parent_card} = CMS.DocCover.add_card(community, group.node.id, user)
+    assert {:ok, parent_card} = CMS.DocCover.add_card(community, group.node.id, user, Ecto.UUID.generate())
     assert parent_card.index == 0
 
     assert {:ok, %{cards: [%{group_node_id: group_node_id}]}} = CMS.DocCover.read(community)
@@ -156,10 +167,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       )
 
     assert {:ok, %{done: true}} = publish_all_changes(community, user)
-    assert {:ok, _parent_card} = CMS.DocCover.add_card(community, group.node.id, user)
+    assert {:ok, _parent_card} = CMS.DocCover.add_card(community, group.node.id, user, Ecto.UUID.generate())
 
     assert {:error, %ErrorCat.Error{reason: :custom, details: message}} =
-             CMS.DocCover.add_card(community, nested_group.node.id, user)
+             CMS.DocCover.add_card(community, nested_group.node.id, user, Ecto.UUID.generate())
 
     assert message =~ "ancestor Cover Card"
   end
@@ -172,12 +183,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
               reason: :custom,
               details: "A Cover Card must reference a published Group."
             }} =
-             CMS.DocCover.add_card(community, page.node.id, user)
+             CMS.DocCover.add_card(community, page.node.id, user, Ecto.UUID.generate())
   end
 
   test "pinned docs remain independent from Group Card ancestry", ~m(user community page)a do
     assert {:ok, %{done: true}} = publish_all_changes(community, user)
-    assert {:ok, _pin} = CMS.DocCover.pin_doc(community, page.node.id, user)
+    assert {:ok, _pin} = CMS.DocCover.pin_doc(community, page.node.id, user, Ecto.UUID.generate())
 
     assert {:ok, %{cards: [], pinned_docs: [%{node_id: node_id, doc: %{title: "Install"}}]}} =
              CMS.DocCover.read(community)

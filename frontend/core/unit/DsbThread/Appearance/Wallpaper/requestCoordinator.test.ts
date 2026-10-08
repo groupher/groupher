@@ -1,12 +1,12 @@
-import { resolveWallpaperIdempotencyKey } from './requestCoordinator'
+import { resolveWallpaperCommandId } from './requestCoordinator'
 
-describe('resolveWallpaperIdempotencyKey', () => {
+describe('resolveWallpaperCommandId', () => {
   it('reuses the pending key for the same fingerprint', () => {
-    const pending = { fingerprint: 'same', idempotencyKey: 'old-key' }
+    const pending = { fingerprint: 'same', commandId: 'old-command' }
 
     expect(
-      resolveWallpaperIdempotencyKey({
-        createKey: () => 'new-key',
+      resolveWallpaperCommandId({
+        createKey: () => 'new-command',
         fingerprint: 'same',
         pending,
       }),
@@ -15,21 +15,21 @@ describe('resolveWallpaperIdempotencyKey', () => {
 
   it('creates a new key when the fingerprint changes', () => {
     expect(
-      resolveWallpaperIdempotencyKey({
-        createKey: () => 'new-key',
+      resolveWallpaperCommandId({
+        createKey: () => 'new-command',
         fingerprint: 'next',
-        pending: { fingerprint: 'previous', idempotencyKey: 'old-key' },
+        pending: { fingerprint: 'previous', commandId: 'old-command' },
       }),
-    ).toEqual({ fingerprint: 'next', idempotencyKey: 'new-key' })
+    ).toEqual({ fingerprint: 'next', commandId: 'new-command' })
   })
 
   it('creates a key when no request is pending', () => {
     expect(
-      resolveWallpaperIdempotencyKey({
+      resolveWallpaperCommandId({
         createKey: () => 'first-key',
         fingerprint: 'first',
         pending: null,
       }),
-    ).toEqual({ fingerprint: 'first', idempotencyKey: 'first-key' })
+    ).toEqual({ fingerprint: 'first', commandId: 'first-key' })
   })
 })

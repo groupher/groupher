@@ -4,7 +4,7 @@ import { useCallback } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
-import { createCommandId } from '~/query/mutation/optimistic/execute'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 
@@ -40,11 +40,14 @@ export default function useSideTreePersistence({
       pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
     ): Promise<TDocTreeMutationPayload | null | undefined> => {
       try {
-        const data = await browserGraphQLRequest<TDocTreeMutationData>(schema, {
-          community,
-          commandId: createCommandId(),
-          baseRevision: revisionRef.current,
-          ...variables,
+        const data = await executeCommand({
+          request: (transportVariables) =>
+            browserGraphQLRequest<TDocTreeMutationData>(schema, transportVariables),
+          variables: {
+            community,
+            baseRevision: revisionRef.current,
+            ...variables,
+          },
         })
         const payload = pickPayload(data)
 
@@ -77,7 +80,11 @@ export default function useSideTreePersistence({
       variables: Record<string, unknown>,
     ): Promise<boolean> => {
       try {
-        await browserGraphQLRequest(schema, { community, ...variables })
+        type TCoverVariables = Record<string, unknown> & { commandId: string }
+        await executeCommand<TCoverVariables, unknown>({
+          request: (transportVariables) => browserGraphQLRequest(schema, transportVariables),
+          variables: { community, ...variables } as Omit<TCoverVariables, 'commandId'>,
+        })
         reload()
         return true
       } catch (err) {

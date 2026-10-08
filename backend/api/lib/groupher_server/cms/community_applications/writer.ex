@@ -34,8 +34,8 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
   Submits a community application atomically.
 
   Normalizes the input, checks slug availability and the admission policy,
-  verifies the finalized logo upload and enforces idempotency through
-  `idempotency_key`. On success the application, slug claim, logo attach
+  verifies the finalized logo upload and enforces command identity uniqueness through
+  `submit_command_id`. On success the application, slug claim, logo attach
   and initial event are written in one transaction.
 
   ## Examples
@@ -49,11 +49,11 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
 
   """
   @spec submit(map(), User.t(), String.t()) :: {:ok, CommunityApplication.t()} | {:error, term()}
-  def submit(attrs, %User{} = user, idempotency_key)
-      when is_map(attrs) and is_binary(idempotency_key) do
+  def submit(attrs, %User{} = user, submit_command_id)
+      when is_map(attrs) and is_binary(submit_command_id) do
     with {:ok, normalized} <- normalize_input(attrs),
          fingerprint <- fingerprint(normalized),
-         :miss <- idempotency_lookup(user.id, idempotency_key, fingerprint),
+         :miss <- submit_command_lookup(user.id, submit_command_id, fingerprint),
          {:ok, _slug} <- NamePolicy.check(normalized.slug),
          %{allowed: true} = policy <- Policy.can_apply(user),
          {:ok, upload} <- LogoUploads.fetch_finalized(normalized.logo_asset_ref, user) do
@@ -73,7 +73,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
           locale: normalized.locale,
           apply_category: normalized.apply_category,
           apply_message: normalized.apply_message,
-          idempotency_key: idempotency_key,
+          submit_command_id: submit_command_id,
           input_fingerprint: fingerprint,
           policy_snapshot: policy,
           submitted_at: now,
@@ -88,12 +88,12 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
         Transitions.initial_event_changeset(application, %{
           type: :applicant,
           id: user.id,
-          operation_ref: idempotency_key,
+          operation_ref: submit_command_id,
           occurred_at: now
         })
       end)
       |> Repo.transaction()
-      |> normalize_submit_result(user.id, idempotency_key, fingerprint)
+      |> normalize_submit_result(user.id, submit_command_id, fingerprint)
     else
       {:hit, application} -> {:ok, application}
       {:error, _} = error -> error
@@ -214,11 +214,11 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
     end
   end
 
-  defp idempotency_lookup(user_id, key, fingerprint) do
-    case Repo.get_by(CommunityApplication, user_id: user_id, idempotency_key: key) do
+  defp submit_command_lookup(user_id, key, fingerprint) do
+    case Repo.get_by(CommunityApplication, user_id: user_id, submit_command_id: key) do
       nil -> :miss
       %{input_fingerprint: ^fingerprint} = application -> {:hit, application}
-      _ -> {:error, ErrorCat.idempotency_conflict()}
+      _ -> {:error, ErrorCat.command_identity_conflict()}
     end
   end
 
@@ -232,12 +232,12 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
          key,
          fingerprint
        ) do
-    case idempotency_lookup(user_id, key, fingerprint) do
+    case submit_command_lookup(user_id, key, fingerprint) do
       {:hit, application} ->
         {:ok, application}
 
-      {:error, ErrorCat.error_pattern(reason: :idempotency_conflict)} ->
-        {:error, ErrorCat.idempotency_conflict()}
+      {:error, ErrorCat.error_pattern(reason: :command_identity_conflict)} ->
+        {:error, ErrorCat.command_identity_conflict()}
 
       :miss ->
         {:error, ErrorCat.active_application_exists()}

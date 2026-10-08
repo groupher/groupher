@@ -123,8 +123,8 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   @doc "Runs `submit` through the public `CommunityApplications` boundary."
   @spec submit(map(), User.t(), String.t()) :: T.domain_res(term())
-  def submit(attrs, %User{} = user, idempotency_key) do
-    Writer.submit(attrs, user, idempotency_key)
+  def submit(attrs, %User{} = user, submit_command_id) do
+    Writer.submit(attrs, user, submit_command_id)
   end
 
   @doc "Runs `cancel` through the public `CommunityApplications` boundary."

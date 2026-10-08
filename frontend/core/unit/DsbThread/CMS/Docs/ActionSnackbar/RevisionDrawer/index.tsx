@@ -6,7 +6,7 @@ import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import ArrowSimpleSVG from '~/icons/ArrowSimple'
 import CloseLightSVG from '~/icons/CloseLight'
-import { createCommandId } from '~/query/mutation/optimistic/execute'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import Drawer from '~/ui/Drawer'
 import { SegmentTab } from '~/ui/Switcher'
 import { toast } from '~/ui/Toaster'
@@ -83,11 +83,13 @@ const RevisionDrawer: FC<TProps> = ({
       setRestoringId(revisionId)
 
       try {
-        await browserGraphQLRequest(S.restoreDocRevisionToDraft, {
-          docId: docDraftId,
-          branchId,
-          revisionId,
-          commandId: createCommandId(),
+        await executeCommand({
+          request: (variables) => browserGraphQLRequest(S.restoreDocRevisionToDraft, variables),
+          variables: {
+            docId: docDraftId,
+            branchId,
+            revisionId,
+          },
         })
         toast(t(REVISION_LABEL_KEY.RESTORED))
         reloadDocDraft?.()

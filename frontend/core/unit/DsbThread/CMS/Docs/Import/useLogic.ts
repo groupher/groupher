@@ -20,6 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
+import { createCommandHandle } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 
 import { decodeImportProcess } from '../../ContentImport/ProcessLog/decoder'
@@ -86,7 +87,7 @@ export default function useLogic(): TRet {
   const initialPreviewRef = searchParams.get('preview') || ''
   const [previewRef, setPreviewRef] = useState(initialPreviewRef)
   const [jobRef, setJobRef] = useState(initialJobRef || '')
-  const idempotencyKey = useRef(crypto.randomUUID())
+  const commandId = useRef(createCommandHandle({ scope: 'content-import' }).commandId)
   const [repoUrl, setRepoUrl] = useState('')
   const [preview, setPreview] = useState<TDocImportPreview | null>(null)
   const [job, setJob] = useState<TContentImportJob | null>(null)
@@ -131,7 +132,7 @@ export default function useLogic(): TRet {
       const response = await fetch(DOCS_IMPORT_ROUTE.PREVIEWS, {
         body: JSON.stringify({
           community,
-          idempotencyKey: idempotencyKey.current,
+          commandId: commandId.current,
           repoUrl: repoUrl.trim(),
         }),
         headers: { 'Content-Type': 'application/json' },
@@ -356,7 +357,7 @@ export default function useLogic(): TRet {
       setPreview(null)
       setPreviewRef('')
       setProcess(null)
-      idempotencyKey.current = crypto.randomUUID()
+      commandId.current = createCommandHandle({ scope: 'content-import' }).commandId
       setPhase(PHASE.REPO)
       const url = new URL(window.location.href)
       url.searchParams.delete('job')

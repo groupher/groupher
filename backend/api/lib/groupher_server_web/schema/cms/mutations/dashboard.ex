@@ -75,6 +75,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_content_shadow, :dsb do
       arg(:community, non_null(:string))
       arg(:enabled, non_null(:boolean))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.update")
@@ -126,6 +127,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_thread_emotions, :dsb do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :thread_emotions)
+      arg(:command_id, non_null(:id))
 
       arg(:post, list_of(:emotion_type))
       arg(:blog, list_of(:emotion_type))
@@ -166,6 +168,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     @desc "save custom theme preset in dashboard"
     field :save_custom_theme_preset, :dsb do
       arg(:community, non_null(:string))
+      arg(:command_id, non_null(:id))
       arg(:theme_preset, non_null(:dsb_theme_preset))
       arg(:theme_preset_base, non_null(:dsb_theme_preset))
       arg(:theme_overwrite, :json)
@@ -182,6 +185,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     @desc "select read-only theme preset in dashboard"
     field :select_theme_preset, :dsb do
       arg(:community, non_null(:string))
+      arg(:command_id, non_null(:id))
       arg(:theme_preset, non_null(:dsb_theme_preset))
 
       middleware(M.Authorize, :login)
@@ -214,6 +218,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_name_alias, :dsb do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :name_alias)
+      arg(:command_id, non_null(:id))
 
       arg(:name_alias, list_of(:dsb_alias_map))
 
@@ -229,6 +234,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_header_links, :dsb do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :header_links)
+      arg(:command_id, non_null(:id))
 
       arg(:header_links, list_of(:dsb_link_map))
 
@@ -244,6 +250,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_footer_links, :dsb do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :footer_links)
+      arg(:command_id, non_null(:id))
       arg(:footer_links, list_of(:dsb_link_map))
 
       middleware(M.Authorize, :login)
@@ -258,6 +265,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_footer_oneline_links, :dsb do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :footer_oneline_links)
+      arg(:command_id, non_null(:id))
       arg(:footer_oneline_links, list_of(:dsb_link_child_map))
 
       middleware(M.Authorize, :login)
@@ -270,6 +278,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_social_links, :dsb do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :social_links)
+      arg(:command_id, non_null(:id))
 
       arg(:social_links, list_of(:dsb_social_link_map))
 
@@ -285,6 +294,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_media_reports, :dsb do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :media_reports)
+      arg(:command_id, non_null(:id))
       arg(:media_reports, list_of(:dsb_media_report_map))
 
       middleware(M.Authorize, :login)
@@ -299,6 +309,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_third_party_analytics, :dsb do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :third_party_analytics)
+      arg(:command_id, non_null(:id))
       arg(:third_party_analytics, list_of(:dsb_third_party_analytics_input))
 
       middleware(M.Authorize, :login)
@@ -312,6 +323,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_doc_faq, :dsb do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :doc_faq)
+      arg(:command_id, non_null(:id))
 
       arg(:doc_faq, non_null(:dsb_doc_faq_input))
 

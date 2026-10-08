@@ -48,10 +48,10 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityApplications do
 
   def submit_community_application(
         _root,
-        %{input: input, idempotency_key: idempotency_key},
+        %{input: input, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.CommunityApplications.submit(input, user, idempotency_key) |> application_result()
+    CMS.CommunityApplications.submit(input, user, command_id) |> application_result()
   end
 
   def cancel_community_application(

@@ -5,7 +5,7 @@ import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
-import { createCommandId } from '~/query/mutation/optimistic/execute'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
@@ -16,7 +16,7 @@ import { SAVE_ACTION_LABEL_KEY } from '../constant'
 import { PUBLISH_MODE } from './constant'
 import { getPublishInputAction, hasSelectableChecklistItems } from './helper'
 import type { TDocsPublishMode } from './spec'
-import type { TPublishChangesData, TPublishSelectedInput } from './spec'
+import type { TPublishSelectedInput } from './spec'
 
 const docIdFromChecklistItemId = (id: string): string | null => {
   return id.startsWith('doc:') ? id.slice(4) : null
@@ -81,12 +81,13 @@ export default function usePublishActions({
               ? [currentDocId]
               : []
         const currentDocPublished = currentDocId ? publishedDocIds.includes(currentDocId) : false
-        const commandId = createCommandId()
-        const data = await browserGraphQLRequest<TPublishChangesData>(S.publishDocChanges, {
-          community,
-          commandId,
-          input,
-          mode: 'WITH_COVER_SYNC',
+        const data = await executeCommand({
+          request: (variables) => browserGraphQLRequest(S.publishDocChanges, variables),
+          variables: {
+            community,
+            input,
+            mode: 'WITH_COVER_SYNC',
+          },
         })
         const nextChecklist = data?.publishDocChanges?.checklist ?? null
 

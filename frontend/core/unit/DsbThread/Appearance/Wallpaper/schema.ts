@@ -92,8 +92,8 @@ const publishWallpaper = graphql(`
 `)
 
 const updateDashboardContentShadow = graphql(`
-  mutation UpdateDashboardContentShadow($community: String!, $enabled: Boolean!) {
-    updateDashboardContentShadow(community: $community, enabled: $enabled) {
+  mutation UpdateDashboardContentShadow($community: String!, $enabled: Boolean!, $commandId: ID!) {
+    updateDashboardContentShadow(community: $community, enabled: $enabled, commandId: $commandId) {
       contentShadow
     }
   }

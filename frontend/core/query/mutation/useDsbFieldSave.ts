@@ -143,7 +143,7 @@ export default function useDsbFieldSave(): TRet {
     savedFields: readonly TDsbEditableFieldKey[] = resolveSavedFields(field),
   ): void => {
     save({
-      execute: () => browserGraphQLRequest<unknown>(schema, params),
+      execute: (commandId) => browserGraphQLRequest<unknown>(schema, { ...params, commandId }),
       field,
       savedFields,
       readConfirmed,

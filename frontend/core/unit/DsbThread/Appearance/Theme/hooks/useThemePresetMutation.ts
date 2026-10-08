@@ -7,6 +7,7 @@ import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { dsbKeys } from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type {
   TParseDashboard,
   TResolvedThemePreset,
@@ -72,15 +73,23 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
       submitted: Partial<TDsbFieldMap>
     }) => {
       const data = isCustomPreset
-        ? await browserGraphQLRequest<TThemePresetMutationData>(S.saveCustomThemePreset, {
-            community,
-            themePreset: submitted.themePreset,
-            themePresetBase: submitted.themePresetBase ?? DEFAULT_THEME_PRESET,
-            themeOverwrite: JSON.stringify(submitted.themeOverwrite ?? {}),
+        ? await executeCommand({
+            request: (variables) =>
+              browserGraphQLRequest<TThemePresetMutationData>(S.saveCustomThemePreset, variables),
+            variables: {
+              community,
+              themePreset: submitted.themePreset,
+              themePresetBase: submitted.themePresetBase ?? DEFAULT_THEME_PRESET,
+              themeOverwrite: JSON.stringify(submitted.themeOverwrite ?? {}),
+            },
           })
-        : await browserGraphQLRequest<TThemePresetMutationData>(S.selectThemePreset, {
-            community,
-            themePreset: submitted.themePreset,
+        : await executeCommand({
+            request: (variables) =>
+              browserGraphQLRequest<TThemePresetMutationData>(S.selectThemePreset, variables),
+            variables: {
+              community,
+              themePreset: submitted.themePreset,
+            },
           })
       return { data, submitted }
     },

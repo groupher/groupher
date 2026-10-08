@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         community: community.slug,
         input: %{
           baseVersion: 0,
-          idempotencyKey: "typed-graphql-variants",
+          commandId: "typed-graphql-variants",
           images: images,
           settings: %{
             renderConfig: Jason.encode!(wallpaper_render_config()),
@@ -113,7 +113,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
             input: %{
               baseVersion: 0,
               images: images,
-              idempotencyKey: "invalid-graphql-variant-width",
+              commandId: "invalid-graphql-variant-width",
               settings: %{
                 renderConfig: Jason.encode!(wallpaper_render_config()),
                 settingsSchemaVersion: 1,

@@ -489,7 +489,7 @@ export type WallpaperProfile = 'DESKTOP' | 'PHONE' | 'TABLET' | 'WIDE'
 export type WallpaperPublishInput = {
   baseVersion: number
   batchRef?: string | null | undefined
-  idempotencyKey: string
+  commandId: string | number
   settings: WallpaperSettingsInput
   theme: WallpaperTheme
 }
@@ -513,7 +513,7 @@ export type WallpaperType = 'GRADIENT' | 'NONE' | 'PICTURE' | 'UPLOAD'
 
 export type WallpaperUploadPrepareInput = {
   baseVersion: number
-  idempotencyKey: string
+  commandId: string | number
   images: Array<WallpaperImageInput>
   settings: WallpaperSettingsInput
   theme: WallpaperTheme
@@ -5288,6 +5288,7 @@ export type AnalysisTrendsOverviewQuery = {
 
 export type SaveCustomThemePresetMutationVariables = Exact<{
   community: string
+  commandId: string | number
   themePreset: DsbThemePreset
   themePresetBase: DsbThemePreset
   themeOverwrite?: unknown
@@ -5306,6 +5307,7 @@ export type SaveCustomThemePresetMutation = {
 
 export type SelectThemePresetMutationVariables = Exact<{
   community: string
+  commandId: string | number
   themePreset: DsbThemePreset
 }>
 
@@ -5414,6 +5416,7 @@ export type PublishWallpaperMutation = { publishWallpaper: { version: number } }
 export type UpdateDashboardContentShadowMutationVariables = Exact<{
   community: string
   enabled: boolean
+  commandId: string | number
 }>
 
 export type UpdateDashboardContentShadowMutation = {
@@ -5580,6 +5583,7 @@ export type DashboardAddModeratorsMutation = {
 
 export type UpdateDashboardLayoutMutationVariables = Exact<{
   community: string
+  commandId: string | number
   postLayout?: DsbPostLayout | null | undefined
   kanbanLayout?: DsbKanbanLayout | null | undefined
   kanbanCardLayout?: DsbKanbanCardLayout | null | undefined
@@ -7188,6 +7192,7 @@ export type MoveDocTreeNodeMutation = {
 }
 
 export type AddDocCoverCardMutationVariables = Exact<{
+  commandId: string | number
   community: string
   groupNodeId: string | number
 }>
@@ -7197,6 +7202,7 @@ export type AddDocCoverCardMutation = {
 }
 
 export type RemoveDocCoverCardMutationVariables = Exact<{
+  commandId: string | number
   community: string
   groupNodeId: string | number
 }>
@@ -7206,6 +7212,7 @@ export type RemoveDocCoverCardMutation = {
 }
 
 export type ReorderDocCoverCardsMutationVariables = Exact<{
+  commandId: string | number
   community: string
   ids: Array<string | number> | string | number
 }>
@@ -7213,6 +7220,7 @@ export type ReorderDocCoverCardsMutationVariables = Exact<{
 export type ReorderDocCoverCardsMutation = { reorderDocCoverCards: { done: boolean | null } | null }
 
 export type PinDocToCoverMutationVariables = Exact<{
+  commandId: string | number
   community: string
   nodeId: string | number
 }>
@@ -7222,6 +7230,7 @@ export type PinDocToCoverMutation = {
 }
 
 export type UnpinDocFromCoverMutationVariables = Exact<{
+  commandId: string | number
   community: string
   nodeId: string | number
 }>
@@ -7229,6 +7238,7 @@ export type UnpinDocFromCoverMutationVariables = Exact<{
 export type UnpinDocFromCoverMutation = { unpinDocFromCover: { nodeId: string } }
 
 export type ReorderDocCoverPinnedDocsMutationVariables = Exact<{
+  commandId: string | number
   community: string
   nodeIds: Array<string | number> | string | number
 }>
@@ -7238,6 +7248,7 @@ export type ReorderDocCoverPinnedDocsMutation = {
 }
 
 export type UpdateDocCoverCardAppearanceMutationVariables = Exact<{
+  commandId: string | number
   community: string
   id: string | number
   appearance: unknown
@@ -7248,6 +7259,7 @@ export type UpdateDocCoverCardAppearanceMutation = {
 }
 
 export type UpdatePinnedDocAppearanceMutationVariables = Exact<{
+  commandId: string | number
   community: string
   nodeId: string | number
   appearance: unknown
@@ -7390,6 +7402,7 @@ export type DashboardOpenGraphInfoQuery = {
 
 export type UpdateDashboardBaseInfoMutationVariables = Exact<{
   community: string
+  commandId: string | number
   homepage?: string | null | undefined
   title?: string | null | undefined
   slug?: string | null | undefined
@@ -7415,6 +7428,7 @@ export type UpdateDashboardBaseInfoMutation = {
 
 export type UpdateDashboardMediaReportsMutationVariables = Exact<{
   community: string
+  commandId: string | number
   mediaReports?: Array<DsbMediaReportMap | null | undefined> | DsbMediaReportMap | null | undefined
 }>
 
@@ -7432,6 +7446,7 @@ export type UpdateDashboardMediaReportsMutation = {
 
 export type UpdateDashboardThirdPartyAnalyticsMutationVariables = Exact<{
   community: string
+  commandId: string | number
   thirdPartyAnalytics?:
     | Array<DsbThirdPartyAnalyticsInput | null | undefined>
     | DsbThirdPartyAnalyticsInput
@@ -7455,6 +7470,7 @@ export type UpdateDashboardThirdPartyAnalyticsMutation = {
 
 export type UpdateDashboardSeoMutationVariables = Exact<{
   community: string
+  commandId: string | number
   seoEnable?: boolean | null | undefined
   ogSiteName?: string | null | undefined
   ogTitle?: string | null | undefined
@@ -7479,6 +7495,7 @@ export type UpdateDashboardSeoMutation = {
 
 export type UpdateDashboardEnableMutationVariables = Exact<{
   community: string
+  commandId: string | number
   post?: boolean | null | undefined
   blog?: boolean | null | undefined
   kanban?: boolean | null | undefined
@@ -7516,6 +7533,7 @@ export type UpdateDashboardEnableMutation = {
 
 export type UpdateDashboardSocialLinksMutationVariables = Exact<{
   community: string
+  commandId: string | number
   socialLinks?: Array<DsbSocialLinkMap | null | undefined> | DsbSocialLinkMap | null | undefined
 }>
 
@@ -7527,6 +7545,7 @@ export type UpdateDashboardSocialLinksMutation = {
 
 export type UpdateDashboardNameAliasMutationVariables = Exact<{
   community: string
+  commandId: string | number
   nameAlias?: Array<DsbAliasMap | null | undefined> | DsbAliasMap | null | undefined
 }>
 
@@ -7543,6 +7562,7 @@ export type UpdateDashboardNameAliasMutation = {
 
 export type UpdateDashboardDocFaqMutationVariables = Exact<{
   community: string
+  commandId: string | number
   docFaq: DsbDocFaqInput
 }>
 
@@ -7575,6 +7595,7 @@ export type UpdateDashboardDocFaqMutation = {
 
 export type UpdateDashboardHeaderLinksMutationVariables = Exact<{
   community: string
+  commandId: string | number
   headerLinks?: Array<DsbLinkMap | null | undefined> | DsbLinkMap | null | undefined
 }>
 
@@ -7592,6 +7613,7 @@ export type UpdateDashboardHeaderLinksMutation = {
 
 export type UpdateDashboardFooterLinksMutationVariables = Exact<{
   community: string
+  commandId: string | number
   footerLinks?: Array<DsbLinkMap | null | undefined> | DsbLinkMap | null | undefined
 }>
 
@@ -7609,6 +7631,7 @@ export type UpdateDashboardFooterLinksMutation = {
 
 export type UpdateDashboardFooterOnelineLinksMutationVariables = Exact<{
   community: string
+  commandId: string | number
   footerOnelineLinks?:
     | Array<DsbLinkChildMap | null | undefined>
     | DsbLinkChildMap
@@ -23842,6 +23865,14 @@ export const SaveCustomThemePresetDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'themePreset' } },
           type: {
             kind: 'NonNullType',
@@ -23873,6 +23904,11 @@ export const SaveCustomThemePresetDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -23942,6 +23978,14 @@ export const SelectThemePresetDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'themePreset' } },
           type: {
             kind: 'NonNullType',
@@ -23960,6 +24004,11 @@ export const SelectThemePresetDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -24379,6 +24428,14 @@ export const UpdateDashboardContentShadowDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -24396,6 +24453,11 @@ export const UpdateDashboardContentShadowDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'enabled' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'enabled' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -24979,6 +25041,14 @@ export const UpdateDashboardLayoutDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'postLayout' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'DsbPostLayout' } },
         },
@@ -25135,6 +25205,11 @@ export const UpdateDashboardLayoutDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -28668,6 +28743,14 @@ export const AddDocCoverCardDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28690,6 +28773,11 @@ export const AddDocCoverCardDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'addDocCoverCard' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28725,6 +28813,14 @@ export const RemoveDocCoverCardDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28747,6 +28843,11 @@ export const RemoveDocCoverCardDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'removeDocCoverCard' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28782,6 +28883,14 @@ export const ReorderDocCoverCardsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28810,6 +28919,11 @@ export const ReorderDocCoverCardsDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'reorderDocCoverCards' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28841,6 +28955,14 @@ export const PinDocToCoverDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28863,6 +28985,11 @@ export const PinDocToCoverDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'pinDocToCover' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28898,6 +29025,14 @@ export const UnpinDocFromCoverDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28920,6 +29055,11 @@ export const UnpinDocFromCoverDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'unpinDocFromCover' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28951,6 +29091,14 @@ export const ReorderDocCoverPinnedDocsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28979,6 +29127,11 @@ export const ReorderDocCoverPinnedDocsDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'reorderDocCoverPinnedDocs' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -29013,6 +29166,14 @@ export const UpdateDocCoverCardAppearanceDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -29043,6 +29204,11 @@ export const UpdateDocCoverCardAppearanceDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updateDocCoverCardAppearance' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -29085,6 +29251,14 @@ export const UpdatePinnedDocAppearanceDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -29115,6 +29289,11 @@ export const UpdatePinnedDocAppearanceDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updatePinnedDocAppearance' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -29369,6 +29548,14 @@ export const UpdateDashboardBaseInfoDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'homepage' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
@@ -29429,6 +29616,11 @@ export const UpdateDashboardBaseInfoDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -29526,6 +29718,14 @@ export const UpdateDashboardMediaReportsDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'mediaReports' } },
           type: {
             kind: 'ListType',
@@ -29544,6 +29744,11 @@ export const UpdateDashboardMediaReportsDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -29597,6 +29802,14 @@ export const UpdateDashboardThirdPartyAnalyticsDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'thirdPartyAnalytics' } },
           type: {
             kind: 'ListType',
@@ -29618,6 +29831,11 @@ export const UpdateDashboardThirdPartyAnalyticsDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -29683,6 +29901,14 @@ export const UpdateDashboardSeoDocument = {
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
         {
@@ -29777,6 +30003,11 @@ export const UpdateDashboardSeoDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -29896,6 +30127,14 @@ export const UpdateDashboardEnableDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'post' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
         },
@@ -29971,6 +30210,11 @@ export const UpdateDashboardEnableDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30089,6 +30333,14 @@ export const UpdateDashboardSocialLinksDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'socialLinks' } },
           type: {
             kind: 'ListType',
@@ -30107,6 +30359,11 @@ export const UpdateDashboardSocialLinksDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30157,6 +30414,14 @@ export const UpdateDashboardNameAliasDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'nameAlias' } },
           type: {
             kind: 'ListType',
@@ -30175,6 +30440,11 @@ export const UpdateDashboardNameAliasDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30227,6 +30497,14 @@ export const UpdateDashboardDocFaqDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'docFaq' } },
           type: {
             kind: 'NonNullType',
@@ -30245,6 +30523,11 @@ export const UpdateDashboardDocFaqDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30331,6 +30614,14 @@ export const UpdateDashboardHeaderLinksDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'headerLinks' } },
           type: {
             kind: 'ListType',
@@ -30349,6 +30640,11 @@ export const UpdateDashboardHeaderLinksDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30427,6 +30723,14 @@ export const UpdateDashboardFooterLinksDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'footerLinks' } },
           type: {
             kind: 'ListType',
@@ -30445,6 +30749,11 @@ export const UpdateDashboardFooterLinksDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30523,6 +30832,14 @@ export const UpdateDashboardFooterOnelineLinksDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'footerOnelineLinks' } },
           type: {
             kind: 'ListType',
@@ -30541,6 +30858,11 @@ export const UpdateDashboardFooterOnelineLinksDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',

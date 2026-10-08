@@ -374,15 +374,23 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   defmacro dsb_args(section \\ :layout, opts \\ []) do
     except = Keyword.get(opts, :except, [])
 
-    Dashboard.macro_schema(section)
-    |> Enum.reject(fn [key, _type, _default_v] -> key in except end)
-    |> Enum.map(fn item ->
+    fields =
+      Dashboard.macro_schema(section)
+      |> Enum.reject(fn [key, _type, _default_v] -> key in except end)
+      |> Enum.map(fn item ->
       [key, type, _default_v] = item
 
       quote do
         arg(unquote(key), unquote(to_absinthe_type(type, key)))
       end
-    end)
+      end)
+
+    [
+      quote do
+        arg(:command_id, non_null(:id))
+      end
+      | fields
+    ]
   end
 
   defmacro dsb_fields(section \\ :layout) do

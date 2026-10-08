@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Communities.ErrorCat do
   error(:review_permission_denied, code: 5509)
   error(:asset_not_ready, code: 5510)
   error(:invalid_application_input, code: 5511)
-  error(:idempotency_conflict, code: 5512)
+  error(:command_identity_conflict, code: 5512)
   error(:active_application_exists, code: 5513)
   error(:slug_claimed, code: 5514)
   error(:application_state_conflict, code: 5515)

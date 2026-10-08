@@ -111,8 +111,11 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
     with {:ok, branch_id} <- positive_integer_id(branch_id) do
       opts =
         case args[:expected_version] do
-          version when is_integer(version) -> [expected_version: version]
-          _ -> []
+          version when is_integer(version) ->
+            [expected_version: version, command_id: args[:command_id]]
+
+          _ ->
+            [command_id: args[:command_id]]
         end
 
       CMS.Docs.restore_revision_to_draft(doc_id, branch_id, revision_id, user, opts)
@@ -201,66 +204,66 @@ defmodule GroupherServerWeb.Resolvers.CMS.Docs do
 
   def add_doc_cover_card(
         _root,
-        %{community: community, group_node_id: group_node_id},
+        %{community: community, group_node_id: group_node_id, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.add_card(community, group_node_id, user)
+    CMS.DocCover.add_card(community, group_node_id, user, command_id)
   end
 
   def remove_doc_cover_card(
         _root,
-        %{community: community, group_node_id: group_node_id},
+        %{community: community, group_node_id: group_node_id, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.remove_card(community, group_node_id, user)
+    CMS.DocCover.remove_card(community, group_node_id, user, command_id)
   end
 
   def reorder_doc_cover_cards(
         _root,
-        %{community: community, ids: ids},
+        %{community: community, ids: ids, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.reorder_cards(community, ids, user)
+    CMS.DocCover.reorder_cards(community, ids, user, command_id)
   end
 
   def update_doc_cover_card_appearance(
         _root,
-        %{community: community, id: id, appearance: appearance},
+        %{community: community, id: id, appearance: appearance, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.update_card_appearance(community, id, appearance, user)
+    CMS.DocCover.update_card_appearance(community, id, appearance, user, command_id)
   end
 
   def pin_doc_to_cover(
         _root,
-        %{community: community, node_id: node_id},
+        %{community: community, node_id: node_id, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.pin_doc(community, node_id, user)
+    CMS.DocCover.pin_doc(community, node_id, user, command_id)
   end
 
   def unpin_doc_from_cover(
         _root,
-        %{community: community, node_id: node_id},
+        %{community: community, node_id: node_id, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.unpin_doc(community, node_id, user)
+    CMS.DocCover.unpin_doc(community, node_id, user, command_id)
   end
 
   def reorder_doc_cover_pinned_docs(
         _root,
-        %{community: community, node_ids: node_ids},
+        %{community: community, node_ids: node_ids, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.reorder_pinned_docs(community, node_ids, user)
+    CMS.DocCover.reorder_pinned_docs(community, node_ids, user, command_id)
   end
 
   def update_pinned_doc_appearance(
         _root,
-        %{community: community, node_id: node_id, appearance: appearance},
+        %{community: community, node_id: node_id, appearance: appearance, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.update_pinned_doc_appearance(community, node_id, appearance, user)
+    CMS.DocCover.update_pinned_doc_appearance(community, node_id, appearance, user, command_id)
   end
 
   def delete_doc_tree_node(_root, %{community: community, id: id} = args, _info) do

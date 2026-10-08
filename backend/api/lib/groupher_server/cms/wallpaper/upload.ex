@@ -53,11 +53,11 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
     settings_input = get(input, :settings)
     images = get(input, :images)
     base_version = get(input, :base_version)
-    idempotency_key = get(input, :idempotency_key)
+    command_id = get(input, :command_id)
 
     with {:ok, _} <- validate_theme(theme),
          {:ok, settings} <- Settings.normalize(settings_input),
-         {:ok, _} <- validate_publish_metadata(base_version, idempotency_key),
+         {:ok, _} <- validate_publish_metadata(base_version, command_id),
          {:ok, _} <- ensure_current_version(community.id, base_version),
          {:ok, _} <- ensure_renderable(settings),
          {:ok, snapshot_ref} <- new_snapshot_ref(),
@@ -116,7 +116,7 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
         {:error, ErrorCat.wallpaper_publish_base_version_invalid()}
 
       not is_binary(key) or String.trim(key) == "" ->
-        {:error, ErrorCat.wallpaper_publish_idempotency_key_invalid()}
+        {:error, ErrorCat.wallpaper_publish_command_id_invalid()}
 
       true ->
         {:ok, :pass}

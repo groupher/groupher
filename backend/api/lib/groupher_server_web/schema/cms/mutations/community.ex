@@ -39,7 +39,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     @desc "Submit a new Community Application"
     field :submit_community_application, non_null(:community_application) do
       arg(:input, non_null(:community_application_input))
-      arg(:idempotency_key, non_null(:string))
+      arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.CommunityApplications.submit_community_application/3)
     end
@@ -102,6 +102,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "create a global community"
     field :create_community, :community do
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:desc, non_null(:string))
       arg(:slug, non_null(:string))
@@ -118,6 +119,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     @desc "update a community"
     field :update_community, :community do
       arg(:community, non_null(:string))
+      arg(:command_id, non_null(:id))
       arg(:title, :string)
       arg(:desc, :string)
       arg(:slug, :string)

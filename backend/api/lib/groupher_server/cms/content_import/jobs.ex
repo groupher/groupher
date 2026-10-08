@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
                                           v
                                    atomic Writer apply
 
-  `preview_ref` is the idempotency boundary: a retry may return the existing Job
+  `preview_ref` is the preview resource identity: a retry may return the existing Job
   only when the complete confirmed intent still matches.
 
   See `docs/content-import/content-import-architecture.md` and

@@ -6,6 +6,7 @@ import { clone } from 'ramda'
 import useTrans from '~/hooks/useTrans'
 import { dsbKeys, dsbMutationKeys } from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDsbFieldMap, TParseDashboard } from '~/spec'
 import type { TDsbEditStore } from '~/stores/dsbEdit/spec'
 import { toast } from '~/ui/Toaster'
@@ -14,7 +15,7 @@ import type { TDsbEditableFieldKey, TDsbFieldKey } from '~/unit/DsbThread/spec'
 import type { TDsbConfirmedReader } from './dsb/types'
 
 export type TDsbSaveExecution = {
-  execute: () => Promise<unknown>
+  execute: (commandId: string) => Promise<unknown>
   field: TDsbFieldKey
   submitted: Partial<TDsbFieldMap>
   savedFields: readonly TDsbEditableFieldKey[]
@@ -67,7 +68,11 @@ export default function useDsbSaveRunner({ community, dashboardStore }: TArgs) {
 
   const saveMutation = useMutation({
     mutationKey,
-    mutationFn: (request: TDsbSaveExecution) => request.execute(),
+    mutationFn: (request: TDsbSaveExecution) =>
+      executeCommand<{ commandId: string }, unknown>({
+        request: ({ commandId }) => request.execute(commandId),
+        variables: {},
+      }),
     onSuccess: (data, request) => {
       confirm(request, data)
       toast(t('dsb.appearance.saved'))
