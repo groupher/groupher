@@ -56,7 +56,7 @@ const expiredRecord: TPreviewRecord = {
   community: 'home',
   createdAt: '2020-01-01T00:00:00.000Z',
   expiresAt: '2020-01-01T01:00:00.000Z',
-  idempotencyKey: 'request-1',
+  commandId: 'request-1',
   previewRef: 'prv_01JXYZ123',
   requestedSource: {
     type: 'repo',
@@ -78,7 +78,7 @@ const createRequest = (): Request =>
   new Request('https://example.test/api/docs/import/previews', {
     body: JSON.stringify({
       community: 'home',
-      idempotencyKey: 'request-1',
+      commandId: 'request-1',
       repoUrl: 'https://github.com/acme/docs',
     }),
     headers: { 'Content-Type': 'application/json' },

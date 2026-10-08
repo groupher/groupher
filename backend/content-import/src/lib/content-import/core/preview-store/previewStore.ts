@@ -34,7 +34,7 @@ export type TPreviewRecord = {
   community: string
   createdAt: string
   expiresAt: string
-  idempotencyKey: string
+  commandId: string
   previewRef: string
   requestedSource: {
     type: 'repo'
@@ -156,8 +156,8 @@ export const decodePreviewRecord = (value: unknown): TPreviewRecord => {
     !record.community ||
     typeof record.userRef !== 'string' ||
     !record.userRef ||
-    typeof record.idempotencyKey !== 'string' ||
-    !record.idempotencyKey ||
+    typeof record.commandId !== 'string' ||
+    !record.commandId ||
     !requiredDate(record.createdAt) ||
     !requiredDate(record.expiresAt) ||
     !source ||
@@ -266,7 +266,7 @@ export const sha256Json = (value: unknown): string =>
 
 /** Creates a fresh attempt-scoped PreviewRecord with the fixed Preview TTL. */
 export const createPreviewRecord = (
-  input: Pick<TPreviewRecord, 'community' | 'idempotencyKey' | 'previewRef' | 'userRef'> & {
+  input: Pick<TPreviewRecord, 'community' | 'commandId' | 'previewRef' | 'userRef'> & {
     repoUrl: string
   },
   now = new Date(),
@@ -275,7 +275,7 @@ export const createPreviewRecord = (
   community: input.community,
   createdAt: now.toISOString(),
   expiresAt: new Date(now.getTime() + PREVIEW_TTL_MS).toISOString(),
-  idempotencyKey: input.idempotencyKey,
+  commandId: input.commandId,
   previewRef: input.previewRef,
   requestedSource: { type: 'repo', platform: 'github', repoUrl: input.repoUrl },
   schemaVersion: PREVIEW_RECORD_SCHEMA_VERSION,

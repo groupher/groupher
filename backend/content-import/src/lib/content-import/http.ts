@@ -181,9 +181,9 @@ export const handleCreateDocImportPreview = async (
     const input = await body(request)
     const community = required(input.community, 'community', 128)
     const repoUrl = required(input.repoUrl, 'repoUrl', 2_048)
-    const idempotencyKey =
-      typeof input.idempotencyKey === 'string' && input.idempotencyKey.length <= 128
-        ? input.idempotencyKey
+    const commandId =
+      typeof input.commandId === 'string' && input.commandId.length <= 128
+        ? input.commandId
         : randomUUID()
     if (!(await checkDocImportPassport(community, options))) {
       return json(
@@ -193,7 +193,7 @@ export const handleCreateDocImportPreview = async (
     }
 
     const digest = createHmac('sha256', options.previewSecret)
-      .update(`${options.userRef}\0${community}\0${repoUrl}\0${idempotencyKey}`)
+      .update(`${options.userRef}\0${community}\0${repoUrl}\0${commandId}`)
       .digest('base64url')
     const previewRef = `prv_${digest.slice(0, 40)}`
     const store = getPreviewStore()
@@ -212,7 +212,7 @@ export const handleCreateDocImportPreview = async (
 
     const record = createPreviewRecord({
       community,
-      idempotencyKey,
+      commandId,
       previewRef,
       repoUrl,
       userRef: options.userRef,

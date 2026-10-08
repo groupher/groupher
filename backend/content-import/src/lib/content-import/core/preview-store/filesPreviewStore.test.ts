@@ -60,7 +60,7 @@ describe('FilesPreviewStore', () => {
     const record = createPreviewRecord(
       {
         community: 'home',
-        idempotencyKey: 'request-1',
+        commandId: 'request-1',
         previewRef: 'prv_123456',
         repoUrl: 'https://github.com/acme/docs',
         userRef: 'user-1',
@@ -177,7 +177,7 @@ describe('FilesPreviewStore', () => {
   it('deletes one preview prefix idempotently', async () => {
     const record = createPreviewRecord({
       community: 'home',
-      idempotencyKey: 'request-1',
+      commandId: 'request-1',
       previewRef: 'prv_123456',
       repoUrl: 'https://github.com/acme/docs',
       userRef: 'user-1',
@@ -193,7 +193,7 @@ describe('FilesPreviewStore', () => {
   it('backfills legacy root records once and then lists only the record index prefix', async () => {
     const record = createPreviewRecord({
       community: 'home',
-      idempotencyKey: 'legacy-request',
+      commandId: 'legacy-request',
       previewRef: 'prv_legacy1',
       repoUrl: 'https://github.com/acme/docs',
       userRef: 'user-1',
@@ -215,7 +215,7 @@ describe('FilesPreviewStore', () => {
   it('repairs a directly read legacy record after the one-time backfill marker exists', async () => {
     const record = createPreviewRecord({
       community: 'home',
-      idempotencyKey: 'late-legacy-request',
+      commandId: 'late-legacy-request',
       previewRef: 'prv_legacy2',
       repoUrl: 'https://github.com/acme/docs',
       userRef: 'user-1',
@@ -236,7 +236,7 @@ describe('FilesPreviewStore', () => {
       createPreviewRecord(
         {
           community: 'home',
-          idempotencyKey: `request-${index}`,
+          commandId: `request-${index}`,
           previewRef: `prv_scale_${index}`,
           repoUrl: 'https://github.com/acme/docs',
           userRef: 'user-1',
@@ -268,7 +268,7 @@ describe('FilesPreviewStore', () => {
   it('serializes concurrent local writes and preserves the first immutable value', async () => {
     const record = createPreviewRecord({
       community: 'home',
-      idempotencyKey: 'request-1',
+      commandId: 'request-1',
       previewRef: 'prv_123456',
       repoUrl: 'https://github.com/acme/docs',
       userRef: 'user-1',
