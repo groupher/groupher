@@ -9,7 +9,6 @@ defmodule GroupherServer.CMS.Kanban.Commands.Move do
 
   alias GroupherServer.CMS
   alias CMS.Articles.States
-  alias CMS.Gate.Access
   alias CMS.Kanban.Query
   alias CMS.Model.{Article, Community}
   alias GroupherServer.Accounts.Model.User
@@ -19,7 +18,7 @@ defmodule GroupherServer.CMS.Kanban.Commands.Move do
   def execute(%Community{} = community, %Article{} = article, status, %User{} = actor)
       when is_atom(status) do
     with {:ok, _state} <- Query.ensure_membership(article, community) do
-      Access.with_community_check(actor, :set_status, community, article, fn canonical ->
+    CMS.Gate.with_community_check(actor, :set_status, community, article, fn canonical ->
         States.set_status(canonical, status, community.id)
       end)
     end

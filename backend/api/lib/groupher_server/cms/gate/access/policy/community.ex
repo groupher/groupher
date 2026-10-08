@@ -186,7 +186,16 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       Map.get(user, :cur_passport) ||
         Map.get(user, :cms_passport, %{}) |> Map.get(:rules, %{})
 
-    match?({:ok, true}, Registry.allowed?(passport, slug, action))
+    case Registry.allowed?(passport, slug, action) do
+      {:ok, true} ->
+        true
+
+      _ ->
+        passport
+        |> Registry.normalize_rules()
+        |> get_in([slug, "cms", action])
+        |> Kernel.==(true)
+    end
   rescue
     _ -> false
   end

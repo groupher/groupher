@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Docs.Commands.RestoreRevisionToDraft do
          {:ok, author} <- Editor.target_author(actor),
          {:ok, user} <- Editor.actor_user(actor),
          %Community{} = community <- Keyword.get(opts, :community) do
-      CMS.Gate.Access.with_branch_check(
+      CMS.Gate.with_branch_check(
         user,
         :restore_revision_to_draft,
         community,

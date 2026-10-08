@@ -172,7 +172,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
   end
 
   defp decision(article, _draft, _lifecycle, community, user) do
-    case CMS.Gate.Access.with_community_check(user, :edit, community, article, fn _ ->
+    case CMS.Gate.with_community_check(user, :edit, community, article, fn _ ->
            {:ok, :pass}
          end) do
       {:ok, _} -> "editable"

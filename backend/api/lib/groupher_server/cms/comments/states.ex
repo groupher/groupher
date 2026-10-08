@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Comments.States do
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
   alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias CMS.{Comments.ErrorCat, FrontDesk, Gate}
+  alias CMS.{Comments.ErrorCat, FrontDesk}
   alias CMS.Model.{Comment, PinnedComment}
   alias Helper.{Multi, ORM, T}
 
@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   @doc false
   def pin(%Comment{} = comment, %User{} = user, opts) do
-    Gate.Access.with_check(user, :pin, comment, fn canonical, article ->
+    CMS.Gate.with_check(user, :pin, comment, fn canonical, article ->
       pin_unlocked(canonical, article, user, opts)
     end)
   end
@@ -77,7 +77,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   @doc false
   def undo_pin(%Comment{} = comment, %User{} = user, opts) do
-    Gate.Access.with_check(user, :pin, comment, fn canonical, article ->
+    CMS.Gate.with_check(user, :pin, comment, fn canonical, article ->
       undo_pin_unlocked(canonical, article, user, opts)
     end)
   end

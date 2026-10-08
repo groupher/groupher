@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   alias GroupherServer.{Accounts, Analysis, CMS}
 
   alias Accounts.Model.User
-  alias CMS.{Command, FrontDesk, Gate}
+  alias CMS.{Command, FrontDesk}
   alias CMS.Articles.Bindings
   alias CMS.Comments.{Lifecycle, ErrorCat, Solution}
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   def execute(%Comment{} = comment, %User{} = actor, nil) do
     operation_id = Ecto.UUID.generate()
 
-    Gate.Access.with_check(actor, :delete, comment, fn canonical, article ->
+    CMS.Gate.with_check(actor, :delete, comment, fn canonical, article ->
       delete_new(canonical, article, actor, operation_id)
     end)
   end
@@ -66,7 +66,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   end
 
   defp delete_action(%{actor: actor, target: comment, command_id: command_id}) do
-    Gate.Access.with_check(actor, :delete, comment, fn canonical, article ->
+    CMS.Gate.with_check(actor, :delete, comment, fn canonical, article ->
       with {:ok, result} <- delete_new(canonical, article, actor, command_id) do
         {:ok, confirmation(result)}
       end

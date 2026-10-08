@@ -16,7 +16,6 @@ defmodule GroupherServer.CMS.Comments.Solution do
 
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.Gate
   alias CMS.Comments.ErrorCat
   alias CMS.Model.{Article, Comment, PostSolution}
 
@@ -29,7 +28,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
   """
   @spec accept(Comment.t(), User.t()) :: {:ok, Comment.t()} | {:error, term()}
   def accept(%Comment{} = comment, %User{} = actor) do
-    Gate.Access.with_check(actor, :accept_solution, comment, fn canonical, post ->
+    CMS.Gate.with_check(actor, :accept_solution, comment, fn canonical, post ->
       accept_in_transaction(post, canonical, actor)
     end)
   end
@@ -43,7 +42,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
   """
   @spec revoke(Comment.t(), User.t()) :: {:ok, Comment.t()} | {:error, term()}
   def revoke(%Comment{} = comment, %User{} = actor) do
-    Gate.Access.with_check(actor, :revoke_solution, comment, fn canonical, post ->
+    CMS.Gate.with_check(actor, :revoke_solution, comment, fn canonical, post ->
       revoke_in_transaction(post, canonical, actor)
     end)
   end

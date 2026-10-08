@@ -19,8 +19,8 @@ defmodule GroupherServer.CMS.Assets.GeneratedBatch do
 
   @doc "Claims a complete generated-image Batch for one idempotent publish key."
   @spec claim_for_publish(String.t(), String.t()) :: {:ok, map()} | {:error, term()}
-  def claim_for_publish(batch_ref, idempotency_key)
-      when is_binary(batch_ref) and is_binary(idempotency_key) do
+  def claim_for_publish(batch_ref, command_id)
+      when is_binary(batch_ref) and is_binary(command_id) do
     with {:ok, endpoint} <- endpoint(),
          {:ok, service_token} <-
            Client.token(
@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Assets.GeneratedBatch do
            ),
          {:ok, response} <-
            Req.post("#{endpoint}/generated-batches/#{batch_ref}/claim",
-             json: %{key: idempotency_key},
+             json: %{key: command_id},
              headers: [authorization: "Bearer #{service_token}"],
              receive_timeout: @timeout,
              retry: false
@@ -77,7 +77,7 @@ defmodule GroupherServer.CMS.Assets.GeneratedBatch do
   defp claim_error(reason) do
     case upstream_code(reason) do
       "GENERATED_IMAGE_BATCH_ALREADY_CLAIMED" ->
-        ErrorCat.wallpaper_publish_idempotency_conflict(%{
+        ErrorCat.wallpaper_publish_command_conflict(%{
           message:
             "This wallpaper publish request is already being processed. Retry with the latest version.",
           upstream_code: "GENERATED_IMAGE_BATCH_ALREADY_CLAIMED"

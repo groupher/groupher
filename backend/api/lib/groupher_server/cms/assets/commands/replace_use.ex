@@ -84,7 +84,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   end
 
   defp replace_in_draft(article, community, attrs, author, user) do
-    CMS.Gate.Access.with_community_check(user, :edit, community, article, fn canonical ->
+    CMS.Gate.with_community_check(user, :edit, community, article, fn canonical ->
       with {:ok, draft} <- Store.ensure_from_public(canonical, author),
            {:ok, _} <- expected_version(attrs, draft.version),
            {:ok, ref} <- locate_ref(draft, attrs),

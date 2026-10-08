@@ -104,7 +104,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
          %ArticleBinding{} <-
            Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id),
          {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user) do
-      CMS.Gate.Access.with_branch_check(
+      CMS.Gate.with_branch_check(
         user,
         :edit,
         community,

@@ -163,10 +163,10 @@ defmodule GroupherServer.CMS.Articles do
   @spec read_draft(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, struct()} | {:error, term()}
   def read_draft(article_id, %User{} = actor, opts) when is_binary(article_id) do
     with {:ok, article} <- stable_article(article_id),
-         {:ok, community} <- explicit_community(opts),
-         {:ok, canonical} <-
-           CMS.Gate.Access.access_check(actor, :edit, community, article) do
-      TargetDraft.get(canonical, opts)
+         {:ok, community} <- explicit_community(opts) do
+      CMS.Gate.with_community_check(actor, :edit, community, article, fn canonical ->
+        TargetDraft.get(canonical, opts)
+      end)
     end
   end
 
@@ -174,13 +174,13 @@ defmodule GroupherServer.CMS.Articles do
   @spec read_editor(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, struct()} | {:error, term()}
   def read_editor(article_id, %User{} = actor, opts) when is_binary(article_id) do
     with {:ok, article} <- stable_article(article_id),
-         {:ok, community} <- explicit_community(opts),
-         {:ok, canonical} <-
-           CMS.Gate.Access.access_check(actor, :edit, community, article) do
-      case TargetDraft.get(canonical, opts) do
-        {:ok, draft} -> {:ok, draft}
-        {:error, :not_found} -> stable_public(canonical, opts)
-      end
+         {:ok, community} <- explicit_community(opts) do
+      CMS.Gate.with_community_check(actor, :edit, community, article, fn canonical ->
+        case TargetDraft.get(canonical, opts) do
+          {:ok, draft} -> {:ok, draft}
+          {:error, :not_found} -> stable_public(canonical, opts)
+        end
+      end)
     end
   end
 
@@ -191,10 +191,10 @@ defmodule GroupherServer.CMS.Articles do
       when is_binary(article_id) do
     with {:ok, article} <- stable_article(article_id),
          {:ok, _} <- ordinary_article(article),
-         {:ok, community} <- explicit_community(opts),
-         {:ok, canonical} <-
-           CMS.Gate.Access.access_check(actor, :edit, community, article) do
-      TargetDiff.unpublished?(canonical)
+         {:ok, community} <- explicit_community(opts) do
+      CMS.Gate.with_community_check(actor, :edit, community, article, fn canonical ->
+        TargetDiff.unpublished?(canonical)
+      end)
     end
   end
 
@@ -203,10 +203,10 @@ defmodule GroupherServer.CMS.Articles do
   def draft_diff(article_id, %User{} = actor, opts) when is_binary(article_id) do
     with {:ok, article} <- stable_article(article_id),
          {:ok, _} <- ordinary_article(article),
-         {:ok, community} <- explicit_community(opts),
-         {:ok, canonical} <-
-           CMS.Gate.Access.access_check(actor, :edit, community, article) do
-      TargetDiff.compare(canonical)
+         {:ok, community} <- explicit_community(opts) do
+      CMS.Gate.with_community_check(actor, :edit, community, article, fn canonical ->
+        TargetDiff.compare(canonical)
+      end)
     end
   end
 

@@ -2,9 +2,9 @@ defmodule GroupherServer.CMS.Gate.Access do
   @moduledoc """
   Internal Access facade for single-resource access checks.
 
-  This module owns the public orchestration boundary. Resource-specific loading
-  and policy evaluation remain in `Access.Check`; aggregate commands enter the
-  transaction and lock through `with_check/4`.
+  This module is the internal implementation behind `CMS.Gate`. Resource-specific
+  loading and policy evaluation remain in `Access.Check`; aggregate commands enter
+  the transaction and lock through the facade's `with_*` callbacks.
 
       Simple check
         -> access_check -> short transaction -> Decision
@@ -17,6 +17,8 @@ defmodule GroupherServer.CMS.Gate.Access do
   Resource policies remain separated by resource type beneath `Access.Check`
   and return only `:ok` or `{:error, reason}`.
   """
+
+  import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
 
@@ -108,11 +110,6 @@ defmodule GroupherServer.CMS.Gate.Access do
     {:error, Decision.deny(ErrorCat.unsupported_resource())}
   end
 
-  @doc "Checks an Article action against one explicit Community binding."
-  def access_check(actor, action, %Community{} = community, %Article{} = resource) do
-    Check.article(actor, action, resource, community)
-  end
-
   @doc """
   Runs authorization and a command callback in one aggregate transaction.
 
@@ -166,10 +163,8 @@ defmodule GroupherServer.CMS.Gate.Access do
         callback
       )
       when is_binary(article_id) and is_integer(branch_id) and is_function(callback, 1) do
-    case Repo.get(Article, article_id) do
-      %Article{} = article -> with_branch_check(actor, action, article, branch_id, callback)
-      nil -> {:error, ErrorCat.resource_not_found()}
-    end
+    _ = {actor, action, article_id, branch_id, callback}
+    {:error, :article_binding_context_required}
   end
 
   def with_check(actor, action, %{id: article_id, thread: thread}, callback)
@@ -183,6 +178,37 @@ defmodule GroupherServer.CMS.Gate.Access do
 
   def with_check(_actor, _action, _resource, _callback) do
     {:error, ErrorCat.unsupported_resource()}
+  end
+
+  @doc """
+  Runs authorization and a Community callback in one aggregate transaction.
+
+  ## Examples
+
+      Gate.Access.with_community_check(actor, :update, community, fn canonical ->
+        {:ok, canonical}
+      end)
+  """
+  @spec with_community_check(
+          term(),
+          atom(),
+          Community.t(),
+          (Community.t() -> {:ok, term()} | {:error, term()})
+        ) :: {:ok, term()} | {:error, term()}
+  def with_community_check(actor, action, %Community{id: community_id}, callback)
+      when is_function(callback, 1) do
+    query = from(record in Community, where: record.id == ^community_id, lock: "FOR UPDATE")
+
+    Repo.transact(fn ->
+      case Repo.one(query) do
+        %Community{} = canonical ->
+          Check.with_authorized_community(actor, action, canonical, callback)
+
+        nil ->
+          {:error, ErrorCat.resource_not_found()}
+      end
+    end)
+    |> normalize_decision()
   end
 
   @doc "Runs an ordinary Article command against an explicit ArticleBinding binding."
@@ -229,15 +255,6 @@ defmodule GroupherServer.CMS.Gate.Access do
       Check.with_authorized_doc(actor, action, {community, article, branch_id}, callback)
     end)
     |> normalize_decision()
-  end
-
-  @doc "Runs one branch-scoped Doc command through the shared Gate transaction and lock."
-  @spec with_branch_check(term(), atom(), Article.t(), pos_integer(), (Article.t() -> term())) ::
-          {:ok, term()} | {:error, term()}
-  def with_branch_check(actor, action, %Article{thread: :doc} = article, branch_id, callback)
-      when is_integer(branch_id) and is_function(callback, 1) do
-    _ = {actor, action, article, branch_id, callback}
-    {:error, :article_binding_context_required}
   end
 
   defp normalize_decision({:error, %Decision{} = decision}) do

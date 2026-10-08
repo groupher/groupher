@@ -179,7 +179,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
   def restore(%TrashedDocArticle{} = item, community, branch, actor, opts) do
     with {:ok, _} <- ensure_group_action(item, opts),
          {:ok, article} <- representative_doc(community, branch, item.article_id) do
-      CMS.Gate.Access.with_branch_check(
+      CMS.Gate.with_branch_check(
         actor,
         :restore,
         community,
@@ -210,7 +210,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
   def permanently_delete(%TrashedDocArticle{} = item, community, branch, actor, opts) do
     with {:ok, _} <- ensure_group_action(item, opts),
          {:ok, article} <- representative_doc(community, branch, item.article_id) do
-      CMS.Gate.Access.with_branch_check(
+      CMS.Gate.with_branch_check(
         actor,
         :permanently_delete,
         community,

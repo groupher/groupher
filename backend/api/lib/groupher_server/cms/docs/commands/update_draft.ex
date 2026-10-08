@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Docs.Commands.UpdateDraft do
          {:ok, user} <- Editor.actor_user(actor),
          {:ok, community} <- branch_community(branch_id),
          {:ok, draft} <-
-           CMS.Gate.Access.with_branch_check(user, :edit, community, article, branch_id, fn canonical ->
+           CMS.Gate.with_branch_check(user, :edit, community, article, branch_id, fn canonical ->
              with {:ok, expected_draft_version} <-
                     Editor.ensure_editable_draft(
                       canonical,

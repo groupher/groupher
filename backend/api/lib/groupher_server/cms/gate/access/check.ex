@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
 
   Resource check functions resolve identity, enter the aggregate lock, load
   canonical facts and apply policy. `with_authorized/4` is the lock-internal
-  variant used only after `Gate.Access.with_check/4` owns the transaction.
+  variant used only after `CMS.Gate.with_check/4` owns the transaction.
 
   Business position:
 
@@ -53,6 +53,26 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   end
 
   def community(_actor, _action, _resource), do: unsupported_resource()
+
+  @doc "Authorizes a Community and invokes a callback inside its existing row lock."
+  @spec with_authorized_community(term(), atom(), Community.t(), (Community.t() -> term())) ::
+          {:ok, term()} | {:error, term()}
+  def with_authorized_community(actor, action, %Community{} = community, callback)
+      when is_function(callback, 1) do
+    with {:ok, context} <- Load.community(community),
+         %Decision{allowed: true} = decision <-
+           Decision.from_result(
+             Policy.Community.check_access(actor, action, context.community, context),
+             context
+           ) do
+      decision.context.community
+      |> callback.()
+      |> normalize_callback_result()
+    else
+      %Decision{} = decision -> {:error, decision}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+    end
+  end
 
   @doc """
   Checks access to one Comment under its Article aggregate lock.
@@ -151,7 +171,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   Loads, authorizes and invokes a callback after the caller has acquired the
   aggregate transaction and advisory lock.
 
-  This is the lock-internal primitive used by `Gate.Access.with_check/4`.
+  This is the lock-internal primitive used by `CMS.Gate.with_check/4`.
   Rejections return `{:error, %Gate.Decision{}}`; callback results are limited
   to `{:ok, result}` or `{:error, reason}`.
 

@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.{Command, FrontDesk, Gate, Comments}
+  alias CMS.{Command, FrontDesk, Comments}
   alias CMS.Articles.Bindings
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias Comments.{BodyCodec, JobPolicy}
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
   def execute(%Comment{} = comment, body, %User{} = actor, nil) do
     operation_id = Ecto.UUID.generate()
 
-    Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
+    CMS.Gate.with_check(actor, :edit, comment, fn canonical, article ->
       update_new(canonical, article, body, actor, operation_id)
     end)
   end
@@ -69,7 +69,7 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
          params: body,
          command_id: command_id
        }) do
-    Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
+    CMS.Gate.with_check(actor, :edit, comment, fn canonical, article ->
       with {:ok, result} <- update_new(canonical, article, body, actor, command_id) do
         {:ok, confirmation(result)}
       end

@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Docs.Commands.PublishBranch do
          {:ok, user} <- Editor.actor_user(actor),
          {:ok, community} <- branch_community(branch_id, opts),
          {:ok, result} <-
-           CMS.Gate.Access.with_branch_check(
+           CMS.Gate.with_branch_check(
              user,
              :publish,
              community,

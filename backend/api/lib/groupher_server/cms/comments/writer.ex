@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
         -> GraphQL
         -> CMS.Comments
         -> Writer create/reply
-        -> Gate.Access.with_check
+        -> CMS.Gate.with_check
         -> canonical aggregate transaction + required audition job
         -> commit
         -> best-effort mention / notification / subscription jobs
@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
   alias GroupherServer.{Accounts, Analysis, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.{Comments.ErrorCat, Artiment.Const, Command, FrontDesk, Gate}
+  alias CMS.{Comments.ErrorCat, Artiment.Const, Command, FrontDesk}
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.ErrorCat, as: CmsErrorCat
@@ -224,7 +224,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   defp create_with_access(:doc, article, branch_id, body, user, info, command_id, community)
        when is_integer(branch_id) do
     with %Community{} = community <- community do
-      Gate.Access.with_branch_check(
+      CMS.Gate.with_branch_check(
         user,
         :create_comment,
         community,
@@ -249,7 +249,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
   defp create_with_access(thread, article, _branch_id, body, user, info, command_id, community) do
     with %Community{} = community <- community do
-      Gate.Access.with_community_check(user, :create_comment, community, article, fn canonical ->
+      CMS.Gate.with_community_check(user, :create_comment, community, article, fn canonical ->
         create_new(thread, canonical, body, user, info, command_id, community)
       end)
     else
@@ -359,7 +359,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   @spec reply(Comment.t() | T.id(), String.t(), User.t()) :: T.domain_res(map())
   def reply(comment_or_id, body, %User{} = user), do: reply(comment_or_id, body, user, nil)
 
-  @doc "Creates a reply using an optional idempotency command id."
+  @doc "Creates a reply using an optional command id."
   @spec reply(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(map())
   def reply(%Comment{} = target_comment, body, %User{} = user, command_id) do
     if is_nil(command_id) do
@@ -400,7 +400,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
   defp reply_action(%{actor: user, params: body, command_id: command_id}, target_comment) do
     with {:ok, result} <-
-           Gate.Access.with_check(user, :reply_comment, target_comment, fn canonical, article ->
+           CMS.Gate.with_check(user, :reply_comment, target_comment, fn canonical, article ->
              reply_new_from_canonical(canonical, article, body, user, command_id)
            end) do
       {:ok,
