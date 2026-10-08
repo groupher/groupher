@@ -100,7 +100,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   defp required_published_at(_), do: {:error, :missing_published_at}
 
   defp update_and_publish(article, attrs, author, user, community) do
-    CMS.Gate.Access.with_community_check(user, :edit, community, article, fn canonical ->
+    CMS.Gate.with_community_check(user, :edit, community, article, fn canonical ->
       with {:ok, lifecycle} <- lifecycle(canonical.id),
            {:ok, draft} <- DraftStore.ensure_from_public(canonical, author),
            {:ok, _} <- expected_version(attrs, draft.version),

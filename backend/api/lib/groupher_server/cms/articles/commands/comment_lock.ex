@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
         with {:ok, community} <- resolve_community(opts, article) do
           branch_id = Keyword.get(opts, :branch_id) || main_branch_id(community.id)
 
-          CMS.Gate.Access.with_branch_check(
+          CMS.Gate.with_branch_check(
             actor,
             gate_action,
             community,
@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
 
       {:ok, %Article{} = article} ->
         with {:ok, community} <- resolve_community(opts, article) do
-          CMS.Gate.Access.with_community_check(
+          CMS.Gate.with_community_check(
             actor,
             gate_action,
             community,

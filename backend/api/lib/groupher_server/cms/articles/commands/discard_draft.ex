@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Articles.Commands.DiscardDraft do
   def execute(article_id, %User{} = actor, opts) when is_binary(article_id) do
     with {:ok, article} <- stable_article(article_id),
          {:ok, community} <- explicit_community(opts) do
-      CMS.Gate.Access.with_community_check(
+      CMS.Gate.with_community_check(
         actor,
         :discard_draft,
         community,

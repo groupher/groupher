@@ -118,7 +118,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   def trash(%Article{} = article, actor, opts) do
     with {:ok, community} <- explicit_community(opts) do
-      CMS.Gate.Access.with_community_check(actor, :delete, community, article, fn canonical ->
+      CMS.Gate.with_community_check(actor, :delete, community, article, fn canonical ->
         case Repo.get_by(TrashedArticle, article_id: canonical.id) do
           %TrashedArticle{} = item -> {:ok, item}
           nil -> create_trash_membership(canonical, actor, opts)
@@ -149,7 +149,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
     with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
          %Article{} = article <- Repo.get(Article, item.article_id),
          %Community{} = community <- Repo.get(Community, item.community_id) do
-      CMS.Gate.Access.with_community_check(actor, :restore, community, article, fn canonical ->
+      CMS.Gate.with_community_check(actor, :restore, community, article, fn canonical ->
         with {:ok, lifecycle} <- Lifecycle.lock(canonical),
              {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, item.restore_state),
              {:ok, _deleted} <- Repo.delete(item),
@@ -193,7 +193,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
     with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
          %Article{} = article <- Repo.get(Article, item.article_id),
          %Community{} = community <- Repo.get(Community, item.community_id) do
-      CMS.Gate.Access.with_community_check(
+      CMS.Gate.with_community_check(
         actor,
         :permanently_delete,
         community,

@@ -2,12 +2,12 @@ defmodule GroupherServer.CMS.Articles.Commands.Unmirror do
   @moduledoc """
   Removes one ordinary Article binding while preserving the stable Article.
 
-      CMS.Articles.unmirror -> CMS.Command -> Gate -> BindingWriter -> done
+      CMS.Articles.unmirror -> CMS.Command -> Gate -> BindingPersist -> done
   """
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Articles.{BindingWriter, Store}
+  alias CMS.Articles.{BindingPersist, Store}
   alias CMS.Articles.Commands.{BindingConfirmation, BindingSupport}
   alias CMS.Command
 
@@ -31,9 +31,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Unmirror do
   end
 
   defp unmirror_action(%{actor: actor, target: article, command_id: command_id}, community) do
-    CMS.Gate.Access.with_community_check(actor, :unmirror, community, article, fn canonical ->
+    CMS.Gate.with_community_check(actor, :unmirror, community, article, fn canonical ->
       with {:ok, binding} <- Store.binding(canonical.id, community.id),
-           {:ok, :done} <- BindingWriter.unmirror(canonical, community),
+           {:ok, :done} <- BindingPersist.unmirror(canonical, community),
            {:ok, _} <-
              BindingSupport.invalidate_scope(community, binding, canonical.thread, command_id) do
         {:ok, BindingSupport.confirmation(canonical, community, command_id)}

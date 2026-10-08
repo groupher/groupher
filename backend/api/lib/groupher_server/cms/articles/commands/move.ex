@@ -2,12 +2,12 @@ defmodule GroupherServer.CMS.Articles.Commands.Move do
   @moduledoc """
   Moves an ordinary Article from one explicit Community binding to another.
 
-      CMS.Articles.move -> CMS.Command -> Gate -> BindingWriter -> Article result
+      CMS.Articles.move -> CMS.Command -> Gate -> BindingPersist -> Article result
   """
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Articles.{BindingWriter, Store}
+  alias CMS.Articles.{BindingPersist, Store}
   alias CMS.Articles.Bindings.Tags
   alias CMS.Articles.Commands.{BindingConfirmation, BindingSupport}
   alias CMS.Command
@@ -42,9 +42,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Move do
          source,
          destination
        ) do
-    CMS.Gate.Access.with_community_check(actor, :move, source, article, fn canonical ->
+    CMS.Gate.with_community_check(actor, :move, source, article, fn canonical ->
       with {:ok, source_binding} <- source_binding(source, canonical.id),
-           {:ok, moved} <- BindingWriter.move(canonical, source, destination),
+           {:ok, moved} <- BindingPersist.move(canonical, source, destination),
            {:ok, destination_binding} <- Store.binding(moved.id, destination.id),
            {:ok, _binding} <- Tags.replace(destination_binding, params.tag_ids),
            {:ok, _source} <- CommunityFacade.update_count_field(source, canonical.thread),

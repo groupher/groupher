@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Articles.Commands.UpdateDraft do
     with {:ok, article} <- stable_article(article_id),
          {:ok, author} <- target_author(actor),
          {:ok, community} <- explicit_community(opts) do
-      CMS.Gate.Access.with_community_check(
+      CMS.Gate.with_community_check(
         actor_user(actor),
         :edit,
         community,

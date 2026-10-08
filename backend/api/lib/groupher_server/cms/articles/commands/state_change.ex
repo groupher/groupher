@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
   def set_category(article_id, category, %User{} = actor, %Community{} = community) do
     with {:ok, %Article{} = article} <- load_article(article_id),
          {:ok, canonical} <-
-           CMS.Gate.Access.with_community_check(
+           CMS.Gate.with_community_check(
              actor,
              :set_category,
              community,
@@ -71,7 +71,7 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
 
   defp admit_and_change(:set_category, article, actor, opts) do
     with {:ok, community} <- resolve_community(opts, article) do
-      CMS.Gate.Access.with_community_check(
+      CMS.Gate.with_community_check(
         actor,
         :set_category,
         community,
@@ -86,7 +86,7 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
     with {:ok, community} <- resolve_community(opts, article) do
       branch_id = Keyword.get(opts, :branch_id) || main_branch_id(community.id)
 
-      CMS.Gate.Access.with_branch_check(
+      CMS.Gate.with_branch_check(
         actor,
         action,
         community,
@@ -102,7 +102,7 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
   defp admit_and_change(action, %Article{} = article, actor, opts)
        when action in [:sink, :undo_sink] do
     with {:ok, community} <- resolve_community(opts, article) do
-      CMS.Gate.Access.with_community_check(actor, action, community, article, fn canonical ->
+      CMS.Gate.with_community_check(actor, action, community, article, fn canonical ->
         apply(States, action, [canonical, opts])
       end)
     end

@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Pin do
   end
 
   defp pin_action(%{actor: actor, target: article, command_id: command_id}, community) do
-    CMS.Gate.Access.with_community_check(actor, :pin, community, article, fn canonical ->
+    CMS.Gate.with_community_check(actor, :pin, community, article, fn canonical ->
       with {:ok, :pass} <- ensure_capacity(community.id, canonical.thread),
            {:ok, _pin} <- insert_pin(canonical, community) do
         {:ok, BindingSupport.confirmation(canonical, community, command_id)}

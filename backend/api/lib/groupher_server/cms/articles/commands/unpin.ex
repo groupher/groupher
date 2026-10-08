@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Unpin do
   end
 
   defp unpin_action(%{actor: actor, target: article, command_id: command_id}, community) do
-    CMS.Gate.Access.with_community_check(actor, :unpin, community, article, fn canonical ->
+    CMS.Gate.with_community_check(actor, :unpin, community, article, fn canonical ->
       with {:ok, :done} <- delete_pin(canonical.id, community.id) do
         {:ok, BindingSupport.confirmation(canonical, community, command_id)}
       end

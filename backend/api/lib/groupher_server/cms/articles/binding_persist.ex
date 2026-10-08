@@ -1,6 +1,7 @@
-defmodule GroupherServer.CMS.Articles.BindingWriter do
+defmodule GroupherServer.CMS.Articles.BindingPersist do
   @moduledoc """
-  Owns the transactional persistence mechanics used by Article binding Commands.
+  Owns the persistence mechanics used by Article binding Commands inside the
+  transaction established by Gate or `CMS.Command`.
 
       stable Article
         -> mirror / move / unmirror
@@ -29,7 +30,16 @@ defmodule GroupherServer.CMS.Articles.BindingWriter do
 
   @ordinary_threads [:post, :blog, :changelog]
 
-  @doc "Moves an Article between explicit source and destination Communities atomically."
+  @doc """
+  Moves an Article between explicit source and destination Communities.
+
+  The caller owns the surrounding transaction and aggregate lock.
+
+  ## Examples
+
+      BindingPersist.move(article, source, destination)
+      #=> {:ok, canonical_article} | {:error, reason}
+  """
   @spec move(Article.t(), Community.t(), Community.t()) :: {:ok, Article.t()} | {:error, term()}
   def move(
         %Article{thread: thread} = article,
@@ -37,58 +47,66 @@ defmodule GroupherServer.CMS.Articles.BindingWriter do
         %Community{} = destination
       )
       when thread in @ordinary_threads do
-    Repo.transaction(fn ->
-      with %Article{} = article <- lock_article(article.id),
-           {:ok, :source_matches} <- ensure_source_community(article, source),
-           {:ok, :different_community} <- ensure_different_community(source, destination),
-           {:ok, binding} <- upsert_binding(article, destination),
-           {:ok, _binding} <- Numbering.assign_binding_inner_id(binding),
-           {:ok, _} <- delete_source_local_data(article.id, source_community_id),
-           {:ok, _deleted_count} <-
-             delete_source_binding(article.id, source_community_id, destination.id) do
-        article
-      else
-        nil -> Repo.rollback(:article_not_found)
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
+    with %Article{} = article <- lock_article(article.id),
+         {:ok, :source_matches} <- ensure_source_community(article, source),
+         {:ok, :different_community} <- ensure_different_community(source, destination),
+         {:ok, binding} <- upsert_binding(article, destination),
+         {:ok, _binding} <- Numbering.assign_binding_inner_id(binding),
+         {:ok, _} <- delete_source_local_data(article.id, source_community_id),
+         {:ok, _deleted_count} <-
+           delete_source_binding(article.id, source_community_id, destination.id) do
+      {:ok, article}
+    else
+      nil -> {:error, :article_not_found}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   def move(%Article{thread: :doc}, %Community{}, %Community{}), do: {:error, :unsupported_for_doc}
 
-  @doc "Adds an ordinary Article to a Community without changing stable identity."
+  @doc """
+  Adds an ordinary Article to a Community without changing stable identity.
+
+  ## Examples
+
+      BindingPersist.mirror(article, community)
+      #=> {:ok, %ArticleBinding{}} | {:error, reason}
+  """
   @spec mirror(Article.t(), Community.t()) :: {:ok, ArticleBinding.t()} | {:error, term()}
   def mirror(%Article{thread: thread} = article, %Community{} = community)
       when thread in @ordinary_threads do
-    Repo.transaction(fn ->
-      with %Article{} = article <- lock_article(article.id),
-           {:ok, binding} <- upsert_binding(article, community),
-           {:ok, binding} <- Numbering.assign_binding_inner_id(binding) do
-        binding
-      else
-        nil -> Repo.rollback(:article_not_found)
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
+    with %Article{} = article <- lock_article(article.id),
+         {:ok, binding} <- upsert_binding(article, community),
+         {:ok, binding} <- Numbering.assign_binding_inner_id(binding) do
+      {:ok, binding}
+    else
+      nil -> {:error, :article_not_found}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   def mirror(%Article{thread: :doc}, %Community{}), do: {:error, :unsupported_for_doc}
 
-  @doc "Removes one ArticleBinding while preserving the published Article identity."
+  @doc """
+  Removes one ArticleBinding while preserving the published Article identity.
+
+  ## Examples
+
+      BindingPersist.unmirror(article, community)
+      #=> {:ok, :done} | {:error, reason}
+  """
   @spec unmirror(Article.t(), Community.t()) :: {:ok, :done} | {:error, term()}
   def unmirror(%Article{thread: thread} = article, %Community{} = community)
       when thread in @ordinary_threads do
-    Repo.transaction(fn ->
-      with %Article{} = locked_article <- lock_article(article.id),
-           %ArticleBinding{} = binding <- lock_binding(locked_article.id, community.id),
-           {:ok, :pass} <- ensure_can_remove_published_article(locked_article.id, binding) do
-        Repo.delete!(binding)
-        :done
-      else
-        nil -> Repo.rollback(:article_binding_not_found)
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
+    with %Article{} = locked_article <- lock_article(article.id),
+         %ArticleBinding{} = binding <- lock_binding(locked_article.id, community.id),
+         {:ok, :pass} <- ensure_can_remove_published_article(locked_article.id, binding),
+         {:ok, _deleted} <- Repo.delete(binding) do
+      {:ok, :done}
+    else
+      nil -> {:error, :article_binding_not_found}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   def unmirror(%Article{thread: :doc}, %Community{}), do: {:error, :unsupported_for_doc}

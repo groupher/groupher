@@ -2,12 +2,12 @@ defmodule GroupherServer.CMS.Articles.Commands.Mirror do
   @moduledoc """
   Adds one ordinary Article binding without changing the stable Article identity.
 
-      CMS.Articles.mirror -> CMS.Command -> Gate -> BindingWriter -> binding result
+      CMS.Articles.mirror -> CMS.Command -> Gate -> BindingPersist -> binding result
   """
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Articles.BindingWriter
+  alias CMS.Articles.BindingPersist
   alias CMS.Articles.Bindings.Tags
   alias CMS.Articles.Commands.{BindingConfirmation, BindingSupport}
   alias CMS.Command
@@ -40,8 +40,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Mirror do
          source,
          destination
        ) do
-    CMS.Gate.Access.with_community_check(actor, :mirror, source, article, fn canonical ->
-      with {:ok, binding} <- BindingWriter.mirror(canonical, destination),
+    CMS.Gate.with_community_check(actor, :mirror, source, article, fn canonical ->
+      with {:ok, binding} <- BindingPersist.mirror(canonical, destination),
            {:ok, binding} <- Tags.replace(binding, params.tag_ids),
            {:ok, _} <-
              BindingSupport.invalidate_scope(destination, binding, canonical.thread, command_id) do

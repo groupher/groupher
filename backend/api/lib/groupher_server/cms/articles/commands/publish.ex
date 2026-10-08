@@ -134,7 +134,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
   defp publish_with_gate(article, actor, author, opts) do
     case binding_context(article, opts) do
       {:ok, %{community: %Community{} = community}} ->
-        CMS.Gate.Access.with_community_check(
+        CMS.Gate.with_community_check(
           actor_user(actor),
           :publish,
           community,

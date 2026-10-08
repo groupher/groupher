@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Moderate do
         with {:ok, community} <- resolve_community(opts, article) do
           branch_id = Keyword.get(opts, :branch_id) || main_branch_id(community.id)
 
-          CMS.Gate.Access.with_branch_check(
+          CMS.Gate.with_branch_check(
             actor,
             :moderate,
             community,
@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Moderate do
 
       {:ok, %Article{} = article} ->
         with {:ok, community} <- resolve_community(opts, article) do
-          CMS.Gate.Access.with_community_check(
+          CMS.Gate.with_community_check(
             actor,
             :moderate,
             community,
