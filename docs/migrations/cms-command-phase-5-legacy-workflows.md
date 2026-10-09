@@ -747,8 +747,9 @@ fixture，而不是只有 Tag CRUD：
 和旧 GraphQL Tag CRUD mutation document/variables 改为传入显式 identity，并补上 transport action 与
 领域 `community.update` admission；重跑 §11 四个 aggregate suites 后结果为：`communities` 133/133、
 Assets 22/22、Receipt 26/26、Outbox 10/10，即 **191/191**。`tag_commands_test.exs` 另有 2 个 focused tests，
-也已通过。由此“focused tests 61 passed”应理解为迁移切片的 focused suites，不可替代上述 §11 全量
-命令集；当前两者均有可复现的通过结果。
+也已通过。Reaction upvote GraphQL suite 曾有 5 个旧 direct setup 调用省略 command identity，现已迁移并
+验证 **21/21**；这类 fixture 迁移不应通过恢复 `nil` fallback 解决。由此“focused tests 61 passed”应理解为
+迁移切片的 focused suites，不可替代上述 §11 全量命令集；当前两者均有可复现的通过结果。
 
 扩展的 GraphQL community-tag mutation 目录目前为 **41/41**：Tag CRUD、set/unset（post/blog/changelog/doc）
 和 reindex 均已通过。Doc set/unset 的实现保留 FrontDesk public projection 提供的 main-branch
