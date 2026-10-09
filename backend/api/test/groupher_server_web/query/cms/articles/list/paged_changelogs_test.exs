@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   end
 
   describe "[query paged_changelogs filter pagination]" do
-    test "should get pagination info", ~m(guest_conn user)a do
+    test "should get pagination info", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
@@ -161,7 +161,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Communities.set_tag(changelog, community_tag.id)
+      {:ok, _} = CMS.Communities.set_tag(changelog, community_tag.id, user, Ecto.UUID.generate())
 
       variables = %{filter: %{page: 1, size: 10, community_tag: community_tag.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
@@ -212,7 +212,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              )
     end
 
-    test "request large size fails", ~m(guest_conn user)a do
+    test "request large size fails", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 200}}
 
       assert guest_conn
@@ -223,7 +223,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              )
     end
 
-    test "request 0 or neg-size fails", ~m(guest_conn user)a do
+    test "request 0 or neg-size fails", ~m(guest_conn)a do
       variables_0 = %{filter: %{page: 1, size: 0}}
       variables_neg_1 = %{filter: %{page: 1, size: -1}}
 
@@ -242,7 +242,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              )
     end
 
-    test "pagination should have default page and size arg", ~m(guest_conn user)a do
+    test "pagination should have default page and size arg", ~m(guest_conn)a do
       variables = %{filter: %{}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       assert results |> is_valid_pagination?
@@ -275,7 +275,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert changelog["inserted_at"] == changelog["active_at"]
     end
 
-    test "filter sort should have default :desc_active", ~m(guest_conn user)a do
+    test "filter sort should have default :desc_active", ~m(guest_conn)a do
       variables = %{filter: %{}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       active_timestamps = results["entries"] |> Enum.map(& &1["activeAt"])
@@ -366,7 +366,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   test: FILTER when [TODAY] [THIS_WEEK] [THIS_MONTH] [THIS_YEAR]
   """
   describe "[query paged_changelogs filter when]" do
-    test "THIS_YEAR option should work", ~m(guest_conn community changelog_last_year user)a do
+    test "THIS_YEAR option should work", ~m(guest_conn community changelog_last_year)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
@@ -376,7 +376,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              )
     end
 
-    test "TODAY option should work", ~m(guest_conn user)a do
+    test "TODAY option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "TODAY"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
@@ -385,14 +385,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert results |> Map.get("totalCount") >= expect_count
     end
 
-    test "THIS_WEEK option should work", ~m(guest_conn user)a do
+    test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results |> Map.get("totalCount") >= @today_count
     end
 
-    test "THIS_MONTH option should work", ~m(guest_conn community changelog_last_month user)a do
+    test "THIS_MONTH option should work", ~m(guest_conn community changelog_last_month)a do
       variables = %{filter: %{when: "THIS_MONTH"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 

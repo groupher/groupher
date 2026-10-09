@@ -77,8 +77,9 @@ retry and unknown-outcome behavior
   使用显式 `{:workflow, ref}` identity；
 - Tag/TagGroup GraphQL mutation 已接收必填 `command_id`，taxonomy Outbox 使用同一 command identity 和
   stable effect key；CRUD 已进入 `Commands.*`、Gate、Receipt confirmation，set/unset/reindex 使用
-  Gate-admitted one-shot；旧 `Tags` 仍保留给 seed、查询和兼容 service caller 的事务 fallback，尚未完成
-  `TagPersist` 物理拆分；
+  Gate-admitted one-shot；旧 facade arity 已全部 fail closed，291 个测试/查询调用方显式传递 actor 与
+  identity，seed 和无 branch 的 domain fixture 改走命名的 `Tags` maintenance primitive。旧 `Tags` 仍
+  保留给 seed、查询和兼容 service caller 的事务 fallback，尚未完成 `TagPersist` 物理拆分；
 - Comment create/reply/update/delete 与 Article/Comment report 已收紧为显式 command identity；缺失 identity
   在 facade、Command 和 Writer 边界 fail closed，Report add/remove 使用 Receipt/result builder；旧测试夹具
   已迁移到显式 fixture identity；
@@ -89,12 +90,13 @@ retry and unknown-outcome behavior
 - Analysis Contribution 的 Community 更新属于 maintenance workflow，改走
   `Communities.update_operations/3`，以 `{:workflow, ref}` 写入 presentation Outbox；workflow step ref
   包含贡献计数，避免把内部 job identity 冒充用户 `commandId`，也避免同一日重复贡献时的 Outbox 冲突。
-- Tag/TagGroup 的旧 CRUD convenience arity 已 fail closed：`create/update/delete tag` 与
+- Tag/TagGroup 的旧 CRUD、set/unset/reindex convenience arity 已 fail closed：`create/update/delete tag` 与
   `create/update/delete tag group` 不再在 `CMS.Communities` 内隐式执行。226 个测试/查询夹具已补上
   显式 actor 和 command identity；seed helper 改走命名的 `CMS.Communities.Tags` maintenance path，
   不伪造用户 command。Receipt result builder 同时恢复 marker 的领域规范形状。该切片 focused Tag suites
-  为 **104/104**，与 §11 aggregate 合计仍为 **191/191**。set/unset/reindex 的旧 service arity 和
-  `TagPersist` 物理拆分仍是独立债务，不能由本切片宣称完成。
+  为 **104/104**，与 §11 aggregate 合计仍为 **191/191**。set/unset/reindex 另有 65 个调用方迁移，
+  无 branch 的 Doc domain fixture 保留 `Tags.add/remove` maintenance primitive；`TagPersist` 物理拆分
+  仍是独立债务，不能由本切片宣称完成。
 
 上述切片的 focused compile/gate、Tag/Asset 行为测试、GraphQL codegen 和 frontend type-check 已通过。
 Phase 5.6 清退 facade convenience arity 后，旧测试夹具曾以 168/191 通过，剩余 23 个失败全部为
@@ -104,7 +106,7 @@ convenience arity：77 个测试文件中的 1,167 个调用现在显式传递 f
 312/312，reaction/emotion/read-state 套件为 132/132，资产 GraphQL query 套件为 3/3。
 这些数字证明测试调用方已经跟随 fail-closed 合同迁移；不代表 §6 的其余 mutation family 已迁移或
 verified。Tag CRUD facade arity 切片另有 226 个调用方迁移，focused **104/104** 且 §11 仍为
-**191/191**；set/unset/reindex service arity、`TagPersist` 物理拆分以及 §6 其他 family 仍未收口。
+**191/191**；`TagPersist` 物理拆分以及 §6 其他 family 仍未收口。
 
 ## 3. 分类规则
 

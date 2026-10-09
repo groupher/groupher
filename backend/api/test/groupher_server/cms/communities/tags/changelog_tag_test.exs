@@ -122,8 +122,11 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
-      {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag2.id)
+      {:ok, changelog} =
+        CMS.Communities.set_tag(changelog, article_tag.id, user, Ecto.UUID.generate())
+
+      {:ok, changelog} =
+        CMS.Communities.set_tag(changelog, article_tag2.id, user, Ecto.UUID.generate())
 
       {:ok, changelog} =
         read_article(community, :changelog, article_inner_id(changelog, community))
@@ -233,7 +236,9 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
+      {:ok, changelog} =
+        CMS.Communities.set_tag(changelog, article_tag.id, user, Ecto.UUID.generate())
+
       assert changelog.community_tags |> length == 1
       assert exist_in?(article_tag, changelog.community_tags)
 
@@ -241,12 +246,16 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       assert stat.contents_count == 1
       assert stat.today_contents_count == 1
 
-      {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag2.id)
+      {:ok, changelog} =
+        CMS.Communities.set_tag(changelog, article_tag2.id, user, Ecto.UUID.generate())
+
       assert changelog.community_tags |> length == 2
       assert exist_in?(article_tag, changelog.community_tags)
       assert exist_in?(article_tag2, changelog.community_tags)
 
-      {:ok, changelog} = CMS.Communities.unset_tag(changelog, article_tag.id)
+      {:ok, changelog} =
+        CMS.Communities.unset_tag(changelog, article_tag.id, user, Ecto.UUID.generate())
+
       assert changelog.community_tags |> length == 1
       assert not exist_in?(article_tag, changelog.community_tags)
       assert exist_in?(article_tag2, changelog.community_tags)
@@ -258,7 +267,9 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       assert stat2.contents_count == 1
       assert stat2.today_contents_count == 1
 
-      {:ok, changelog} = CMS.Communities.unset_tag(changelog, article_tag2.id)
+      {:ok, changelog} =
+        CMS.Communities.unset_tag(changelog, article_tag2.id, user, Ecto.UUID.generate())
+
       assert changelog.community_tags |> length == 0
       assert not exist_in?(article_tag, changelog.community_tags)
       assert not exist_in?(article_tag2, changelog.community_tags)
@@ -278,8 +289,11 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
-      {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
+      {:ok, changelog} =
+        CMS.Communities.set_tag(changelog, article_tag.id, user, Ecto.UUID.generate())
+
+      {:ok, changelog} =
+        CMS.Communities.set_tag(changelog, article_tag.id, user, Ecto.UUID.generate())
 
       assert changelog.community_tags |> length == 1
     end
@@ -301,8 +315,11 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       from(article in Article, where: article.id == ^old_changelog.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
 
-      {:ok, _changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
-      {:ok, _old_changelog} = CMS.Communities.set_tag(old_changelog, article_tag.id)
+      {:ok, _changelog} =
+        CMS.Communities.set_tag(changelog, article_tag.id, user, Ecto.UUID.generate())
+
+      {:ok, _old_changelog} =
+        CMS.Communities.set_tag(old_changelog, article_tag.id, user, Ecto.UUID.generate())
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 2

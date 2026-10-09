@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
           Ecto.UUID.generate()
         )
 
-      assert {:ok, _post} = CMS.Communities.set_tag(post_m, tag.id)
+      assert {:ok, _post} = CMS.Communities.set_tag(post_m, tag.id, user, Ecto.UUID.generate())
 
       assert {:ok, _post} =
                CMS.Articles.set_audit_failed(post_m.article_id, %{}, :operations,
@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       assert Enum.any?(entries, &(&1.id == post_m.id))
     end
 
-    test "pending post can not be read", ~m(community post_m user)a do
+    test "pending post can not be read", ~m(community post_m)a do
       {:ok, _} =
         read_article(
           article_binding(post_m),
@@ -139,7 +139,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
-    test "pending post can set/unset pending", ~m(community post_m user)a do
+    test "pending post can set/unset pending", ~m(community post_m)a do
       {:ok, _} =
         read_article(
           article_binding(post_m),

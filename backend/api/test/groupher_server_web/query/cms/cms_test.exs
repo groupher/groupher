@@ -220,9 +220,9 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "guest user can get paged categories", ~m(guest_conn user)a do
       variables = %{filter: %{page: 1, size: 10}}
       valid_attrs = mock_attrs(:category)
-      ~m(title slug user)a = valid_attrs
+      ~m(title slug)a = valid_attrs
 
-      {:ok, _} = CMS.Communities.create_category(~m(title slug user)a, %User{id: user.id})
+      {:ok, _} = CMS.Communities.create_category(~m(title slug)a, %User{id: user.id})
 
       results = guest_conn |> gq_query(@query, variables)
       author = results["entries"] |> List.first() |> Map.get("author")
@@ -234,9 +234,9 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "paged categories containes communities info", ~m(guest_conn user community)a do
       variables = %{filter: %{page: 1, size: 10}}
       valid_attrs = mock_attrs(:category)
-      ~m(title slug user)a = valid_attrs
+      ~m(title slug)a = valid_attrs
 
-      {:ok, category} = CMS.Communities.create_category(~m(title slug user)a, %User{id: user.id})
+      {:ok, category} = CMS.Communities.create_category(~m(title slug)a, %User{id: user.id})
 
       {:ok, _} =
         CMS.Communities.set_category(%Community{id: community.id}, %Category{id: category.id})

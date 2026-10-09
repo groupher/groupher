@@ -536,7 +536,7 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Runs `set_tag` through the public `Communities` boundary."
   @spec set_tag(Ecto.Schema.t(), T.id()) :: T.domain_res(Ecto.Schema.t())
-  def set_tag(article, id), do: Tags.add(article, id)
+  def set_tag(_article, _id), do: {:error, CMS.ErrorCat.command_id_required()}
 
   def set_tag(_article, _id, _command_id), do: {:error, :command_actor_required}
 
@@ -545,7 +545,7 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Runs `unset_tag` through the public `Communities` boundary."
   @spec unset_tag(Ecto.Schema.t(), T.id()) :: T.domain_res(Ecto.Schema.t())
-  def unset_tag(article, id), do: Tags.remove(article, id)
+  def unset_tag(_article, _id), do: {:error, CMS.ErrorCat.command_id_required()}
 
   def unset_tag(_article, _id, _command_id), do: {:error, :command_actor_required}
 
@@ -571,9 +571,8 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Runs `reindex_tags` through the public `Communities` boundary."
   @spec reindex_tags(Community.t() | String.t(), atom(), atom(), list()) :: T.domain_res(atom())
-  def reindex_tags(community, thread, group, tags) do
-    Tags.reindex_in_group(community, thread, group, tags)
-  end
+  def reindex_tags(_community, _thread, _group, _tags),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Rejects command-id-only tag reindex calls without a Gate actor."
   def reindex_tags_in_group(_community, _thread, _group, _tags, _command_id),
@@ -591,9 +590,8 @@ defmodule GroupherServer.CMS.Communities do
       )
 
   @spec reindex_tags(Community.t() | String.t(), atom(), list()) :: T.domain_res(atom())
-  def reindex_tags(community, thread, tags) do
-    Tags.reindex(community, thread, tags)
-  end
+  def reindex_tags(_community, _thread, _tags),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Rejects command-id-only cross-group reindex calls without a Gate actor."
   def reindex_tags_across_groups(_community, _thread, _tags, _command_id),
@@ -611,9 +609,8 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Runs `reindex_tag_groups` through the public `Communities` boundary."
   @spec reindex_tag_groups(Community.t() | String.t(), atom(), list()) :: T.domain_res(atom())
-  def reindex_tag_groups(community, thread, groups) do
-    Tags.reindex_groups(community, thread, groups)
-  end
+  def reindex_tag_groups(_community, _thread, _groups),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   def reindex_tag_groups(_community, _thread, _groups, _command_id),
     do: {:error, :command_actor_required}

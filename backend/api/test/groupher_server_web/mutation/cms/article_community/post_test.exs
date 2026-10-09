@@ -183,7 +183,6 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       pre_community_id = community.id
 
       article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, user} = db_insert(:user)
 
       {:ok, article_tag} =
         CMS.Communities.create_tag(

@@ -37,10 +37,16 @@ defmodule GroupherServer.Test.Query.CMS.CommunityTagGroups do
         )
 
       {:ok, _} =
-        CMS.Communities.reindex_tag_groups(community, :post, [
-          %{id: resources.id, index: 1},
-          %{id: general.id, index: 0}
-        ])
+        CMS.Communities.reindex_tag_groups(
+          community,
+          :post,
+          [
+            %{id: resources.id, index: 1},
+            %{id: general.id, index: 0}
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, resource_tag} =
         CMS.Communities.create_tag(

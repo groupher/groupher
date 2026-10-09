@@ -96,7 +96,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         }
       ]
 
-      CMS.Communities.reindex_tags(community, :post, group1.id, tags_with_index)
+      CMS.Communities.reindex_tags_in_group(
+        community,
+        :post,
+        group1.id,
+        tags_with_index,
+        user,
+        Ecto.UUID.generate()
+      )
 
       {:ok, article_tag1_after} = ORM.find(CommunityTag, article_tag1.id)
       {:ok, article_tag2_after} = ORM.find(CommunityTag, article_tag2.id)
@@ -146,10 +153,16 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         )
 
       assert {:ok, :pass} =
-               CMS.Communities.reindex_tags(community, :post, [
-                 %{id: tag1.id, group_id: group2.id, index: 3},
-                 %{id: tag2.id, group_id: group2.id, index: 4}
-               ])
+               CMS.Communities.reindex_tags_across_groups(
+                 community,
+                 :post,
+                 [
+                   %{id: tag1.id, group_id: group2.id, index: 3},
+                   %{id: tag2.id, group_id: group2.id, index: 4}
+                 ],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, tag1} = ORM.find(CommunityTag, tag1.id)
       {:ok, tag2} = ORM.find(CommunityTag, tag2.id)
@@ -186,9 +199,16 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         )
 
       assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} =
-               CMS.Communities.reindex_tags(community, :post, group.id, [
-                 %{id: tag1.id, index: 9}
-               ])
+               CMS.Communities.reindex_tags_in_group(
+                 community,
+                 :post,
+                 group.id,
+                 [
+                   %{id: tag1.id, index: 9}
+                 ],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, tag1} = ORM.find(CommunityTag, tag1.id)
       {:ok, tag2} = ORM.find(CommunityTag, tag2.id)
@@ -214,10 +234,16 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         CMS.Communities.create_tag(community, :post, attrs, user, Ecto.UUID.generate())
 
       assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} =
-               CMS.Communities.reindex_tags(community, :post, [
-                 %{id: tag.id, group_id: group.id, index: 1},
-                 %{id: tag.id, group_id: group.id, index: 2}
-               ])
+               CMS.Communities.reindex_tags_across_groups(
+                 community,
+                 :post,
+                 [
+                   %{id: tag.id, group_id: group.id, index: 1},
+                   %{id: tag.id, group_id: group.id, index: 2}
+                 ],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, other_community} = mock_community(user)
 
@@ -242,9 +268,15 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         )
 
       assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} =
-               CMS.Communities.reindex_tags(community, :post, [
-                 %{id: other_tag.id, group_id: group.id, index: 8}
-               ])
+               CMS.Communities.reindex_tags_across_groups(
+                 community,
+                 :post,
+                 [
+                   %{id: other_tag.id, group_id: group.id, index: 8}
+                 ],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, tag} = ORM.find(CommunityTag, tag.id)
       {:ok, other_tag} = ORM.find(CommunityTag, other_tag.id)
@@ -273,10 +305,16 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         )
 
       assert {:ok, :pass} =
-               CMS.Communities.reindex_tag_groups(community, :post, [
-                 %{id: group1.id, index: 6},
-                 %{id: group2.id, index: 5}
-               ])
+               CMS.Communities.reindex_tag_groups(
+                 community,
+                 :post,
+                 [
+                   %{id: group1.id, index: 6},
+                   %{id: group2.id, index: 5}
+                 ],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, group1} = ORM.find(CMS.Model.CommunityTagGroup, group1.id)
       {:ok, group2} = ORM.find(CMS.Model.CommunityTagGroup, group2.id)
@@ -445,8 +483,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag2.id)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag2.id, user, Ecto.UUID.generate())
 
       {:ok, post} = read_article(community, :post, article_inner_id(post, community))
       assert exist_in?(article_tag, post.community_tags)
@@ -659,7 +697,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
       assert post.community_tags |> length == 1
       assert exist_in?(article_tag, post.community_tags)
 
@@ -667,12 +705,12 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat.contents_count == 1
       assert stat.today_contents_count == 1
 
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag2.id)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag2.id, user, Ecto.UUID.generate())
       assert post.community_tags |> length == 2
       assert exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
 
-      {:ok, post} = CMS.Communities.unset_tag(post, article_tag.id)
+      {:ok, post} = CMS.Communities.unset_tag(post, article_tag.id, user, Ecto.UUID.generate())
       assert post.community_tags |> length == 1
       assert not exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
@@ -684,7 +722,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat2.contents_count == 1
       assert stat2.today_contents_count == 1
 
-      {:ok, post} = CMS.Communities.unset_tag(post, article_tag2.id)
+      {:ok, post} = CMS.Communities.unset_tag(post, article_tag2.id, user, Ecto.UUID.generate())
       assert post.community_tags |> length == 0
       assert not exist_in?(article_tag, post.community_tags)
       assert not exist_in?(article_tag2, post.community_tags)
@@ -704,8 +742,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       assert post.community_tags |> length == 1
 
@@ -730,8 +768,10 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       from(article in Article, where: article.id == ^old_post.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
 
-      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
-      {:ok, _old_post} = CMS.Communities.set_tag(old_post, article_tag.id)
+      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
+
+      {:ok, _old_post} =
+        CMS.Communities.set_tag(old_post, article_tag.id, user, Ecto.UUID.generate())
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 2
@@ -749,12 +789,12 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 1
 
-      {:ok, trash_item} = CMS.Articles.trash(post, user)
+      {:ok, trash_item} = CMS.Articles.trash(post, user, community: community)
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
       assert stat.today_contents_count == 0
@@ -776,11 +816,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
       command_id = Ecto.UUID.generate()
 
-      {:ok, _} = CMS.Articles.trash(post, user, command_id: command_id)
-      {:ok, _} = CMS.Articles.trash(post, user, command_id: command_id)
+      {:ok, _} =
+        CMS.Articles.trash(post, user, community_id: community.id, command_id: command_id)
+
+      {:ok, _} =
+        CMS.Articles.trash(post, user, community_id: community.id, command_id: command_id)
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
@@ -798,7 +841,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       {:ok, _} =
         CMS.Articles.set_illegal(
@@ -815,7 +858,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
 
-      {:ok, _} = CMS.Articles.trash(post, user)
+      {:ok, _} = CMS.Articles.trash(post, user, community: community)
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
@@ -833,7 +876,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       from(s in CommunityTagStat, where: s.community_tag_id == ^article_tag.id)
       |> Repo.update_all(set: [contents_count: 99, today_contents_count: 99])
@@ -858,8 +901,10 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
       {:ok, old_post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
 
-      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
-      {:ok, _old_post} = CMS.Communities.set_tag(old_post, article_tag.id)
+      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
+
+      {:ok, _old_post} =
+        CMS.Communities.set_tag(old_post, article_tag.id, user, Ecto.UUID.generate())
 
       from(article in Article, where: article.id == ^old_post.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
@@ -883,7 +928,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       from(s in CommunityTagStat, where: s.community_tag_id == ^article_tag.id)
       |> Repo.update_all(set: [today_stat_date: yesterday_date(), today_contents_count: 99])

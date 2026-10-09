@@ -73,8 +73,8 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Communities.set_tag(changelog, community_tag.id)
-      {:ok, _} = CMS.Communities.set_tag(changelog, community_tag2.id)
+      {:ok, _} = CMS.Communities.set_tag(changelog, community_tag.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Communities.set_tag(changelog, community_tag2.id, user, Ecto.UUID.generate())
 
       passport_rules = %{
         community.title => %{

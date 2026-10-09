@@ -69,8 +69,8 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.BlogSetTag do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Communities.set_tag(blog, community_tag.id)
-      {:ok, _} = CMS.Communities.set_tag(blog, community_tag2.id)
+      {:ok, _} = CMS.Communities.set_tag(blog, community_tag.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Communities.set_tag(blog, community_tag2.id, user, Ecto.UUID.generate())
 
       passport_rules = %{
         community.title => %{"community.update" => true, "blog.community_tag.unset" => true}
