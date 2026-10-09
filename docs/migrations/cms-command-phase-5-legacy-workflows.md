@@ -553,20 +553,20 @@ ReplacementPlan
 
 以下是必须逐项完成合同确认的审计队列，不表示每项当前都有 bug，也不预先要求 Receipt：
 
-| family                               | concrete use case                                                                     | 初始协议判断                 | 重点确认                                                                                                     |
-| ------------------------------------ | ------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Article sink/lock/category/status    | `Sink` / `UndoSink` / `LockComments` / `UnlockComments` / `SetCategory` / `SetStatus` | one-shot（已实施）           | action-specific Gate、ArticleBinding/branch scope；不误入 Lifecycle，focused 99/99 已验证                    |
-| Article binding move/mirror          | 现有 `Move` / `Mirror` / `Unmirror`                                                   | Receipt                      | source/destination multi-scope Outbox 必须复用同一 `commandId`（禁止第二个 UUID），仍需 worker/recovery 验收 |
-| Article moderation/visibility        | `Moderate` / visibility workflow                                                      | 按 initiator 分类            | 多 binding effect 已改为 typed/stable identity，仍需确认 workflow 与 Receipt 边界                            |
-| Article/Comment report               | `Report` / `UndoReport`                                                               | Report Receipt；Undo Receipt | duplicate report、Audit/Activity、首次结果；add/remove 均复用 command identity                               |
-| Comment create/reply legacy fallback | 现有 `CreateComment` / `ReplyComment`                                                 | Receipt                      | facade/Writer 的 `nil` identity 已 fail closed；312/312 comment suite 已验证，仍需收口 GraphQL/Receipt 合同  |
-| Comment solution                     | `AcceptSolution` / `RevokeSolution`                                                   | Receipt（已实施）            | canonical comment/article lock、唯一 solution、response recovery                                             |
-| Comment pin                          | `Pin` / `Unpin`                                                                       | Receipt（已实施）            | set-style、thread policy、Activity/association recovery                                                      |
-| Interaction reactions                | `Upvote` / `Emotion` / `Collect` 及 undo                                              | Receipt（Collect 已实施）    | 独立 reaction operation；同一 command id 可由 Accounts 外层 transaction 复用；Metric/Outbox identity 一致    |
-| Moderator                            | `Add` / `AddMany` / `Remove` / `UpdatePassport`                                       | bulk/delete 优先 Receipt     | membership uniqueness、partial failure、Activity                                                             |
-| Activity export                      | `ExportCommunityActivity`                                                             | Receipt 或 export workflow   | artifact/job identity、权限快照、结果恢复                                                                    |
-| Press config                         | `UpdateConfig`                                                                        | Receipt（已实施）            | Community Gate、ConfigWriter transaction owner、Activity operation_ref 同一 `commandId`、response recovery   |
-| DocTree legacy                       | 按真实动作建立 Command                                                                | 逐项判断                     | tree revision、branch lock、owner codec，禁止万能 payload                                                    |
+| family                               | concrete use case                                                                     | 初始协议判断                 | 重点确认                                                                                                              |
+| ------------------------------------ | ------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Article sink/lock/category/status    | `Sink` / `UndoSink` / `LockComments` / `UnlockComments` / `SetCategory` / `SetStatus` | one-shot（已实施）           | action-specific Gate、ArticleBinding/branch scope；不误入 Lifecycle，focused 99/99 已验证                             |
+| Article binding move/mirror          | 现有 `Move` / `Mirror` / `Unmirror`                                                   | Receipt                      | source/destination multi-scope Outbox 必须复用同一 `commandId`（禁止第二个 UUID），仍需 worker/recovery 验收          |
+| Article moderation/visibility        | `Moderate` / visibility workflow                                                      | 按 initiator 分类            | 多 binding effect 已改为 typed/stable identity，仍需确认 workflow 与 Receipt 边界                                     |
+| Article/Comment report               | `Report` / `UndoReport`                                                               | Report Receipt；Undo Receipt | duplicate report、Audit/Activity、首次结果；add/remove 均复用 command identity                                        |
+| Comment create/reply legacy fallback | 现有 `CreateComment` / `ReplyComment`                                                 | Receipt                      | facade/Writer 的 `nil` identity 已 fail closed；312/312 comment suite 已验证，仍需收口 GraphQL/Receipt 合同           |
+| Comment solution                     | `AcceptSolution` / `RevokeSolution`                                                   | Receipt（已实施）            | canonical comment/article lock、唯一 solution、response recovery                                                      |
+| Comment pin                          | `Pin` / `Unpin`                                                                       | Receipt（已实施）            | set-style、thread policy、Activity/association recovery                                                               |
+| Interaction reactions                | `Upvote` / `Emotion` / `Collect` 及 undo                                              | Receipt（已实施）            | 三类动作各自使用 reaction operation；同一 command id 可由 Accounts 外层 transaction 复用；Metric/Outbox identity 一致 |
+| Moderator                            | `Add` / `AddMany` / `Remove` / `UpdatePassport`                                       | bulk/delete 优先 Receipt     | membership uniqueness、partial failure、Activity                                                                      |
+| Activity export                      | `ExportCommunityActivity`                                                             | Receipt 或 export workflow   | artifact/job identity、权限快照、结果恢复                                                                             |
+| Press config                         | `UpdateConfig`                                                                        | Receipt（已实施）            | Community Gate、ConfigWriter transaction owner、Activity operation_ref 同一 `commandId`、response recovery            |
+| DocTree legacy                       | 按真实动作建立 Command                                                                | 逐项判断                     | tree revision、branch lock、owner codec，禁止万能 payload                                                             |
 
 Comment solution/pin 当前实现矩阵为：
 
@@ -689,9 +689,10 @@ projection 的局部 transaction 必须与 user Asset mutation 分开标注。
 1. [ongoing] 按 §6 逐 family 执行 `classified -> migrated -> verified`；
 2. [implemented, verified for current focused suites] 移除 Comment create/reply/update/delete、Upvote/Emotion 的 `nil` command identity fallback；Comment domain suite 312/312 通过，跨目录 fixtures 继续纳入回归清单；
 3. [implemented, verified for current focused suites] Article/Comment Report add/remove 统一使用 concrete command identity、Receipt 与 result builder；GraphQL report mutations 的 `commandId` 已为必填；
-4. [implemented, verified for current focused suites] Collect/undo 进入独立 reaction Receipt operation；Accounts
-   collect-folder 的外层 transaction 复用同一 command id 但不递归 claim，CollectConfirmation 可恢复首次结果；
-   focused collect/reaction suites **29/29**；
+4. [implemented, verified for current focused suites] Upvote/Emotion/Collect 及 undo 均进入独立 reaction
+   Receipt operation；缺失 command identity 在 reaction boundary fail closed。Accounts collect-folder 的外层
+   transaction 复用同一 command id 但不递归 claim，CollectConfirmation 可恢复首次结果；focused
+   collect/reaction suites **29/29**，reaction/emotion/read-state aggregate **132/132**；
 5. [done in this batch] 清退 `CMS.Communities`、`CMS.Dashboard` 在 facade 内生成 UUID 的 convenience arity；所有受影响的 legacy fixture 必须显式传入 actor/command identity；
 6. [done in this batch] seed、maintenance、operations caller 显式提供 workflow/operation identity，不能回退为伪客户端 command；Community contribution 通过 `update_operations/3` 写入 typed workflow Outbox；
 7. [implemented, verified for current focused suites] Comment solution/pin 的四个 GraphQL mutation 增加必填 `commandId`；`SolutionChange` / `StateChange` 使用 Receipt + Confirmation，旧两参数 facade/States arity fail closed；
