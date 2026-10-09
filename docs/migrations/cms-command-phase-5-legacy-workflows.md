@@ -79,7 +79,8 @@ retry and unknown-outcome behavior
   stable effect key；CRUD 已进入 `Commands.*`、Gate、Receipt confirmation，set/unset/reindex 使用
   Gate-admitted one-shot；旧 facade arity 已全部 fail closed，291 个测试/查询调用方显式传递 actor 与
   identity，seed 和无 branch 的 domain fixture 改走命名的 `Tags` maintenance primitive。旧 `Tags` 仍
-  保留给 seed、查询和兼容 service caller 的事务 fallback，尚未完成 `TagPersist` 物理拆分；
+  保留给 seed、查询和兼容 service caller 的事务 fallback，`TagPersist` 已承接 row/batch primitives，
+  但尚未完成 orchestration owner 的物理切换；
 - Comment create/reply/update/delete 与 Article/Comment report 已收紧为显式 command identity；缺失 identity
   在 facade、Command 和 Writer 边界 fail closed，Report add/remove 使用 Receipt/result builder；旧测试夹具
   已迁移到显式 fixture identity；
@@ -96,7 +97,9 @@ retry and unknown-outcome behavior
   不伪造用户 command。Receipt result builder 同时恢复 marker 的领域规范形状。该切片 focused Tag suites
   为 **104/104**，与 §11 aggregate 合计仍为 **191/191**。set/unset/reindex 另有 65 个调用方迁移，
   无 branch 的 Doc domain fixture 保留 `Tags.add/remove` maintenance primitive；`TagPersist` 物理拆分
-  仍是独立债务，不能由本切片宣称完成。
+  现已开始：Tag/TagGroup row insert/update/delete 与 batch reindex SQL 已提取到无 Gate、Outbox、
+  事务和 identity 处理的 `CMS.Communities.TagPersist`；Tags 仍保留 command orchestration、count、
+  taxonomy effect 与 legacy transaction fallback，完整 owner 切换仍是独立债务，不能由本切片宣称完成。
 
 上述切片的 focused compile/gate、Tag/Asset 行为测试、GraphQL codegen 和 frontend type-check 已通过。
 Phase 5.6 清退 facade convenience arity 后，旧测试夹具曾以 168/191 通过，剩余 23 个失败全部为
@@ -106,7 +109,7 @@ convenience arity：77 个测试文件中的 1,167 个调用现在显式传递 f
 312/312，reaction/emotion/read-state 套件为 132/132，资产 GraphQL query 套件为 3/3。
 这些数字证明测试调用方已经跟随 fail-closed 合同迁移；不代表 §6 的其余 mutation family 已迁移或
 verified。Tag CRUD facade arity 切片另有 226 个调用方迁移，focused **104/104** 且 §11 仍为
-**191/191**；`TagPersist` 物理拆分以及 §6 其他 family 仍未收口。
+**191/191**；`TagPersist` orchestration owner 切换以及 §6 其他 family 仍未收口。
 
 ## 3. 分类规则
 
@@ -255,7 +258,7 @@ GraphQL
   是 one-shot，但仍传递入口 command identity 给 taxonomy effect；
 - GraphQL Passport 仍只是 transport 快速拒绝，所有新用户 mutation 在 concrete Command 内再次走 Gate；
 - `Communities.Tags` 仍包含 legacy domain primitives 与兼容 transaction fallback。只有在下一切片提取
-  `TagPersist` 后，才能把物理 persistence owner 从业务 facade 完全移除。
+  `TagPersist` orchestration owner 切换后，才能把物理 persistence owner 从业务 facade 完全移除。
 
 ### 4.1 目标模块
 
@@ -276,11 +279,10 @@ CMS.Communities
   -> CMS.Communities.Tags (legacy primitives)
 ```
 
-下一切片可将最后一项提取为 `CMS.Communities.TagPersist`；本轮先冻结 concrete use case、Gate、
-transaction owner 和 identity，不把尚未存在的模块写成已交付能力。
-
-`TagPersist` 只保留已在事务内调用的 query、lock、insert/update/delete、association 和 batch update。
-read-only 的 group/tag 查询留在 Reader/FrontDesk，不为了目录对称塞进 Persist。
+`TagPersist` 只保留已在外层事务内调用的 query、lock、insert/update/delete、association 和 batch update。
+当前已承接 Tag/TagGroup row mutation 与 reindex SQL；count、taxonomy Outbox、Gate admission 和
+legacy transaction fallback 仍由 `Tags`/concrete Command 编排。read-only 的 group/tag 查询留在
+Reader/FrontDesk，不为了目录对称塞进 Persist。
 
 GraphQL 与 concrete Command 的明确映射为：
 
@@ -585,8 +587,9 @@ resolver 不构造 `%CMS.Command{}`、不选择 one-shot/Receipt、不生成 UUI
 
 ### Phase 5.1：Tag/TagGroup persistence split（当前剩余）
 
-1. 从 `Communities.Tags` 提取 `TagPersist` primitives，保留本轮已冻结的 Commands API；
-2. Persist 删除 compatibility transaction、Gate、Outbox 和 identity 处理；
+1. [in progress] 从 `Communities.Tags` 提取 `TagPersist` primitives，保留本轮已冻结的 Commands API；
+2. [in progress] Persist 已删除 compatibility transaction、Gate、Outbox 和 identity 处理；继续把
+   command orchestration 与 legacy maintenance fallback 从 `Tags` 中分离；
 3. 为 assignment、taxonomy scope、group/member 建立所需 lock helper；
 4. 保持 read API 与 GraphQL 输出不变。
 

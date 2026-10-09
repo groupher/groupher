@@ -19,10 +19,18 @@ defmodule GroupherServer.CMS.Communities.Tags do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.{Communities.ErrorCat, Communities.TagStats, FrontDesk, QueryBuilder}
+
+  alias CMS.{
+    Communities.ErrorCat,
+    Communities.TagPersist,
+    Communities.TagStats,
+    FrontDesk,
+    QueryBuilder
+  }
+
   alias CMS.Articles.Bindings.Tags, as: BindingTags
   alias CMS.Model.{Article, ArticleBinding, Community, CommunityTag, CommunityTagGroup}
-  alias Helper.{Datetime, ORM, T}
+  alias Helper.{ORM, T}
 
   @doc "Returns tag-group titles keyed by id in one query."
   @spec group_titles([T.id()]) :: map()
@@ -65,7 +73,14 @@ defmodule GroupherServer.CMS.Communities.Tags do
           })
           |> Map.drop([:group])
 
-        with {:ok, tag} <- ORM.create(CommunityTag, attrs),
+        with {:ok, tag} <-
+               TagPersist.create_tag(
+                 community,
+                 thread,
+                 Map.drop(attrs, [:author_id, :community_id, :group_id, :thread]),
+                 author.id,
+                 group.id
+               ),
              {:ok, _} <- CMS.Communities.update_count_field(community, :community_tags_count),
              {:ok, _} <- invalidate_taxonomy(community, thread, "tag:create:#{tag.id}", opts) do
           tag
@@ -90,8 +105,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     with {:ok, tag} <- FrontDesk.community_tag(id),
          {:ok, attrs} <- normalize_update_attrs(tag, attrs) do
       transact(fn ->
-        with {:ok, updated} <- ORM.update(tag, attrs),
-             {:ok, updated} <- preload_tag_group({:ok, updated}),
+        with {:ok, updated} <- TagPersist.update_tag(tag, attrs),
              {:ok, _} <-
                invalidate_taxonomy_by_tag(
                  updated,
@@ -117,16 +131,14 @@ defmodule GroupherServer.CMS.Communities.Tags do
     {attrs, opts} = split_identity(attrs, opts)
 
     with {:ok, community} <- ORM.find_by(Community, slug: community.slug) do
-      attrs =
-        attrs
-        |> Map.merge(%{
-          community_id: community.id,
-          thread: thread,
-          index: next_group_index(community, thread)
-        })
-
       transact(fn ->
-        with {:ok, group} <- ORM.create(CommunityTagGroup, attrs),
+        with {:ok, group} <-
+               TagPersist.create_group(
+                 community,
+                 thread,
+                 attrs,
+                 next_group_index(community, thread)
+               ),
              {:ok, _} <-
                invalidate_taxonomy(community, thread, "tag-group:create:#{group.id}", opts),
              {:ok, group} <- preload_group_tags({:ok, group}) do
@@ -152,7 +164,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     with {:ok, community} <- ORM.find_by(Community, slug: community.slug),
          {:ok, group} <- find_group_in_thread(community, thread, id) do
       transact(fn ->
-        with {:ok, updated} <- ORM.update(group, attrs),
+        with {:ok, updated} <- TagPersist.update_group(group, attrs),
              {:ok, _} <-
                invalidate_taxonomy(
                  community,
@@ -160,7 +172,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
                  "tag-group:update:#{updated.id}:#{updated.updated_at}",
                  opts
                ),
-             {:ok, updated} <- preload_group_tags({:ok, updated}) do
+             {:ok, updated} <- {:ok, updated} do
           updated
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -173,7 +185,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     CommunityTagGroup
     |> ORM.find(id)
     |> case do
-      {:ok, group} -> group |> ORM.update(attrs) |> preload_group_tags()
+      {:ok, group} -> TagPersist.update_group(group, attrs)
       error -> error
     end
   end
@@ -201,7 +213,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   end
 
   defp delete_group_and_update_count(community, group) do
-    case ORM.delete(group) do
+    case TagPersist.delete_group(group) do
       {:ok, deleted_group} ->
         case CMS.Communities.update_count_field(community, :community_tags_count) do
           {:ok, _} -> {:ok, deleted_group}
@@ -223,7 +235,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     with {:ok, tag} <- FrontDesk.community_tag(id),
          {:ok, community} <- ORM.find(Community, tag.community_id) do
       transact(fn ->
-        with {:ok, deleted_tag} <- ORM.delete(tag),
+        with {:ok, deleted_tag} <- TagPersist.delete_tag(tag),
              {:ok, _} <- CMS.Communities.update_count_field(community, :community_tags_count),
              {:ok, _} <- invalidate_taxonomy(community, tag.thread, "tag:delete:#{tag.id}", opts) do
           deleted_tag
@@ -651,76 +663,17 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end)
   end
 
-  defp batch_reindex_tags(_community, _thread, [], _include_group?), do: {:ok, :pass}
-
-  defp batch_reindex_tags(%Community{} = community, thread, indexed_tags, include_group?) do
-    ids = Enum.map(indexed_tags, & &1.id)
-    indexes = Enum.map(indexed_tags, & &1.index)
-    now = Datetime.now(:second)
-
-    {query, params} =
-      if include_group? do
-        query = """
-        UPDATE cms.community_tags AS tag
-        SET group_id = updates.group_id,
-            "index" = updates.new_index,
-            updated_at = $6
-        FROM UNNEST($1::bigint[], $2::bigint[], $3::integer[])
-          AS updates(id, group_id, new_index)
-        WHERE tag.id = updates.id
-          AND tag.community_id = $4
-          AND tag.thread = $5
-        """
-
-        {query,
-         [
-           ids,
-           Enum.map(indexed_tags, & &1.group_id),
-           indexes,
-           community.id,
-           Atom.to_string(thread),
-           now
-         ]}
-      else
-        query = """
-        UPDATE cms.community_tags AS tag
-        SET "index" = updates.new_index,
-            updated_at = $5
-        FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
-        WHERE tag.id = updates.id
-          AND tag.community_id = $3
-          AND tag.thread = $4
-        """
-
-        {query, [ids, indexes, community.id, Atom.to_string(thread), now]}
-      end
-
-    query
-    |> Repo.query(params)
-    |> expect_updated_rows(length(ids))
+  defp batch_reindex_tags(community, thread, indexed_tags, include_group?) do
+    TagPersist.batch_reindex_tags(community, thread, indexed_tags, include_group?)
+    |> expect_updated_rows(length(indexed_tags))
   end
 
-  defp batch_reindex_groups(_community, _thread, []), do: {:ok, :pass}
-
-  defp batch_reindex_groups(%Community{} = community, thread, indexed_groups) do
-    ids = Enum.map(indexed_groups, & &1.id)
-    indexes = Enum.map(indexed_groups, & &1.index)
-
-    query = """
-    UPDATE cms.community_tag_groups AS tag_group
-    SET "index" = updates.new_index,
-        updated_at = $5
-    FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
-    WHERE tag_group.id = updates.id
-      AND tag_group.community_id = $3
-      AND tag_group.thread = $4
-    """
-
-    query
-    |> Repo.query([ids, indexes, community.id, Atom.to_string(thread), Datetime.now(:second)])
-    |> expect_updated_rows(length(ids))
+  defp batch_reindex_groups(community, thread, indexed_groups) do
+    TagPersist.batch_reindex_groups(community, thread, indexed_groups)
+    |> expect_updated_rows(length(indexed_groups))
   end
 
+  defp expect_updated_rows({:ok, :pass}, 0), do: {:ok, :pass}
   defp expect_updated_rows({:ok, %{num_rows: expected}}, expected), do: {:ok, :pass}
 
   defp expect_updated_rows({:ok, _result}, _expected) do
@@ -771,12 +724,6 @@ defmodule GroupherServer.CMS.Communities.Tags do
   end
 
   defp preload_group_tags(result), do: result
-
-  defp preload_tag_group({:ok, %CommunityTag{} = tag}) do
-    {:ok, Repo.preload(tag, [:community, :tag_group])}
-  end
-
-  defp preload_tag_group(result), do: result
 
   defp invalidate_taxonomy(%Community{} = community, thread, effect_key, opts) do
     CMS.Outbox.send(%{
