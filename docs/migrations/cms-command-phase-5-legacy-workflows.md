@@ -85,8 +85,11 @@ retry and unknown-outcome behavior
 上述切片的 focused compile/gate、Tag/Asset 行为测试、GraphQL codegen 和 frontend type-check 已通过。
 Phase 5.6 清退 facade convenience arity 后，旧测试夹具曾以 168/191 通过，剩余 23 个失败全部为
 `cms.command_id_required`；本批已将这些夹具改为显式 command identity，并把 §11 四个 aggregate
-suites 跑到 191/191。
-这只证明本节列出的验证边界已收口，不代表 §6 的其余 mutation family 已迁移或 verified。
+suites 跑到 191/191。随后又清理了全测试树中旧的 Comment create/reply 与 Interaction reaction
+convenience arity：77 个测试文件中的 1,167 个调用现在显式传递 fixture identity，评论域套件为
+312/312，reaction/emotion/read-state 套件为 132/132，资产 GraphQL query 套件为 3/3。
+这些数字证明测试调用方已经跟随 fail-closed 合同迁移；不代表 §6 的其余 mutation family 已迁移或
+verified。
 
 ## 3. 分类规则
 
@@ -751,7 +754,10 @@ Assets 22/22、Receipt 26/26、Outbox 10/10，即 **191/191**。`tag_commands_te
 验证 **21/21**；Emotion GraphQL suite 曾有 6 个 direct reaction setup 和 1 个 Dashboard setup 省略
 identity，现已迁移并验证 **14/14**；CMS Interactions ReadState suite 的 16 个 direct reaction setup/并发
 调用也已迁移并验证 **13/13**。这类 fixture 迁移不应通过恢复 `nil` fallback 解决。由此“focused tests 61 passed”应理解为
-迁移切片的 focused suites，不可替代上述 §11 全量命令集；当前两者均有可复现的通过结果。
+迁移切片的 focused suites，不可替代上述 §11 全量命令集；当前 §11 命令集仍为 191/191。扩展到评论
+create/reply 和全测试树 reaction fixture 后，评论域套件为 **312/312**、reaction/emotion/read-state
+套件为 **132/132**、资产 query 套件为 **3/3**；这些结果同样只是调用方迁移证据，不代表 §6 其余
+mutation family 已完成。
 
 扩展的 GraphQL community-tag mutation 目录目前为 **41/41**：Tag CRUD、set/unset（post/blog/changelog/doc）
 和 reindex 均已通过。Doc set/unset 的实现保留 FrontDesk public projection 提供的 main-branch

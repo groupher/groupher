@@ -17,46 +17,46 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
 
   ## Examples
 
-      Reactions.upvote(article, actor)
+      Reactions.upvote(article, actor, command_id)
 
   """
-  @spec upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate upvote(artiment, actor, command_id \\ nil), to: Upvote, as: :add
+  @spec upvote(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate upvote(artiment, actor, command_id), to: Upvote, as: :add
 
   @doc """
   Removes an Artiment upvote idempotently.
 
   ## Examples
 
-      Reactions.undo_upvote(article, actor)
+      Reactions.undo_upvote(article, actor, command_id)
 
   """
-  @spec undo_upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_upvote(artiment, actor, command_id \\ nil), to: Upvote, as: :remove
+  @spec undo_upvote(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_upvote(artiment, actor, command_id), to: Upvote, as: :remove
 
   @doc """
   Applies an emotion idempotently.
 
   ## Examples
 
-      Reactions.emotion(comment, :heart, actor)
+      Reactions.emotion(comment, :heart, actor, command_id)
 
   """
-  @spec emotion(struct(), atom(), User.t(), String.t() | nil) ::
+  @spec emotion(struct(), atom(), User.t(), Ecto.UUID.t()) ::
           {:ok, struct()} | {:error, term()}
-  defdelegate emotion(artiment, emotion, actor, command_id \\ nil), to: Emotion, as: :add
+  defdelegate emotion(artiment, emotion, actor, command_id), to: Emotion, as: :add
 
   @doc """
   Removes an emotion idempotently.
 
   ## Examples
 
-      Reactions.undo_emotion(comment, :heart, actor)
+      Reactions.undo_emotion(comment, :heart, actor, command_id)
 
   """
-  @spec undo_emotion(struct(), atom(), User.t(), String.t() | nil) ::
+  @spec undo_emotion(struct(), atom(), User.t(), Ecto.UUID.t()) ::
           {:ok, struct()} | {:error, term()}
-  defdelegate undo_emotion(artiment, emotion, actor, command_id \\ nil),
+  defdelegate undo_emotion(artiment, emotion, actor, command_id),
     to: Emotion,
     as: :remove
 
@@ -65,22 +65,22 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
 
   ## Examples
 
-      Reactions.collect(article, actor)
+      Reactions.collect(article, actor, command_id)
 
   """
-  @spec collect(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate collect(article, actor, command_id \\ nil), to: Collect, as: :add
+  @spec collect(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate collect(article, actor, command_id), to: Collect, as: :add
 
   @doc """
   Removes an Article collect idempotently.
 
   ## Examples
 
-      Reactions.undo_collect(article, actor)
+      Reactions.undo_collect(article, actor, command_id)
 
   """
-  @spec undo_collect(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_collect(article, actor, command_id \\ nil), to: Collect, as: :remove
+  @spec undo_collect(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_collect(article, actor, command_id), to: Collect, as: :remove
 
   @doc """
   Adds one immutable-reporter report fact.

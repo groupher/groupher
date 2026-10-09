@@ -114,22 +114,22 @@ defmodule GroupherServer.CMS.Interactions do
 
   ## Examples
 
-      CMS.Interactions.collect(article, actor)
+      CMS.Interactions.collect(article, actor, command_id)
 
   """
-  @spec collect(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate collect(article, actor, command_id \\ nil), to: Reactions
+  @spec collect(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate collect(article, actor, command_id), to: Reactions
 
   @doc """
   Removes an Article collect idempotently and returns the canonical Article.
 
   ## Examples
 
-      CMS.Interactions.undo_collect(article, actor)
+      CMS.Interactions.undo_collect(article, actor, command_id)
 
   """
-  @spec undo_collect(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_collect(article, actor, command_id \\ nil), to: Reactions
+  @spec undo_collect(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_collect(article, actor, command_id), to: Reactions
 
   @doc """
   Returns public paged users who collected an already-scoped Article.
@@ -147,17 +147,17 @@ defmodule GroupherServer.CMS.Interactions do
 
   ## Examples
 
-      CMS.Interactions.emotion(comment, :heart, actor)
+      CMS.Interactions.emotion(comment, :heart, actor, command_id)
 
   """
-  @spec emotion(struct(), atom(), User.t(), String.t() | nil) ::
+  @spec emotion(struct(), atom(), User.t(), Ecto.UUID.t()) ::
           {:ok, struct()} | {:error, term()}
-  defdelegate emotion(artiment, emotion, actor, command_id \\ nil), to: Reactions
+  defdelegate emotion(artiment, emotion, actor, command_id), to: Reactions
 
   @doc "Applies an emotion and returns the stable command result."
-  @spec emotion_result(struct(), atom(), User.t(), String.t() | nil) ::
+  @spec emotion_result(struct(), atom(), User.t(), Ecto.UUID.t()) ::
           {:ok, map() | struct()} | {:error, term()}
-  def emotion_result(artiment, emotion, %User{} = actor, command_id \\ nil) do
+  def emotion_result(artiment, emotion, %User{} = actor, command_id) do
     artiment
     |> Reactions.emotion(emotion, actor, command_id)
     |> CommandResult.build(actor)
@@ -168,17 +168,17 @@ defmodule GroupherServer.CMS.Interactions do
 
   ## Examples
 
-      CMS.Interactions.undo_emotion(comment, :heart, actor)
+      CMS.Interactions.undo_emotion(comment, :heart, actor, command_id)
 
   """
-  @spec undo_emotion(struct(), atom(), User.t(), String.t() | nil) ::
+  @spec undo_emotion(struct(), atom(), User.t(), Ecto.UUID.t()) ::
           {:ok, struct()} | {:error, term()}
-  defdelegate undo_emotion(artiment, emotion, actor, command_id \\ nil), to: Reactions
+  defdelegate undo_emotion(artiment, emotion, actor, command_id), to: Reactions
 
   @doc "Removes an emotion and returns the stable command result."
-  @spec undo_emotion_result(struct(), atom(), User.t(), String.t() | nil) ::
+  @spec undo_emotion_result(struct(), atom(), User.t(), Ecto.UUID.t()) ::
           {:ok, map() | struct()} | {:error, term()}
-  def undo_emotion_result(artiment, emotion, %User{} = actor, command_id \\ nil) do
+  def undo_emotion_result(artiment, emotion, %User{} = actor, command_id) do
     artiment
     |> Reactions.undo_emotion(emotion, actor, command_id)
     |> CommandResult.build(actor)
@@ -189,16 +189,16 @@ defmodule GroupherServer.CMS.Interactions do
 
   ## Examples
 
-      CMS.Interactions.upvote(article, actor)
+      CMS.Interactions.upvote(article, actor, command_id)
 
   """
-  @spec upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate upvote(artiment, actor, command_id \\ nil), to: Reactions
+  @spec upvote(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate upvote(artiment, actor, command_id), to: Reactions
 
   @doc "Applies an upvote and returns the stable command result."
-  @spec upvote_result(struct(), User.t(), String.t() | nil) ::
+  @spec upvote_result(struct(), User.t(), Ecto.UUID.t()) ::
           {:ok, map() | struct()} | {:error, term()}
-  def upvote_result(artiment, %User{} = actor, command_id \\ nil) do
+  def upvote_result(artiment, %User{} = actor, command_id) do
     artiment
     |> Reactions.upvote(actor, command_id)
     |> CommandResult.build(actor)
@@ -209,16 +209,16 @@ defmodule GroupherServer.CMS.Interactions do
 
   ## Examples
 
-      CMS.Interactions.undo_upvote(article, actor)
+      CMS.Interactions.undo_upvote(article, actor, command_id)
 
   """
-  @spec undo_upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_upvote(artiment, actor, command_id \\ nil), to: Reactions
+  @spec undo_upvote(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_upvote(artiment, actor, command_id), to: Reactions
 
   @doc "Removes an upvote and returns the stable command result."
-  @spec undo_upvote_result(struct(), User.t(), String.t() | nil) ::
+  @spec undo_upvote_result(struct(), User.t(), Ecto.UUID.t()) ::
           {:ok, map() | struct()} | {:error, term()}
-  def undo_upvote_result(artiment, %User{} = actor, command_id \\ nil) do
+  def undo_upvote_result(artiment, %User{} = actor, command_id) do
     artiment
     |> Reactions.undo_upvote(actor, command_id)
     |> CommandResult.build(actor)

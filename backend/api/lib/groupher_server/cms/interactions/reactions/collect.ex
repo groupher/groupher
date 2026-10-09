@@ -30,8 +30,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
       Reactions.Collect.add(article, actor)
 
   """
-  @spec add(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def add(article, %User{} = actor, command_id \\ nil),
+  @spec add(struct(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def add(article, %User{} = actor, command_id),
     do: mutate(article, actor, :add, command_id)
 
   @doc """
@@ -42,8 +42,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
       Reactions.Collect.remove(article, actor)
 
   """
-  @spec remove(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def remove(article, %User{} = actor, command_id \\ nil),
+  @spec remove(struct(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def remove(article, %User{} = actor, command_id),
     do: mutate(article, actor, :remove, command_id)
 
   defp mutate(input, actor, operation, command_id) do

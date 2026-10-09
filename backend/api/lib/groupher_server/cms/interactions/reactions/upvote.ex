@@ -34,8 +34,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       Reactions.Upvote.add(canonical_input, actor)
 
   """
-  @spec add(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def add(artiment, %User{} = actor, command_id \\ nil) do
+  @spec add(struct(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def add(artiment, %User{} = actor, command_id) do
     mutate(artiment, actor, :add, command_id)
   end
 
@@ -47,8 +47,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       Reactions.Upvote.remove(canonical_input, actor)
 
   """
-  @spec remove(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def remove(artiment, %User{} = actor, command_id \\ nil) do
+  @spec remove(struct(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def remove(artiment, %User{} = actor, command_id) do
     mutate(artiment, actor, :remove, command_id)
   end
 

@@ -34,8 +34,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
       Reactions.Emotion.add(comment, :heart, actor)
 
   """
-  @spec add(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def add(artiment, emotion, %User{} = actor, command_id \\ nil) do
+  @spec add(struct(), atom(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def add(artiment, emotion, %User{} = actor, command_id) do
     mutate(artiment, emotion, actor, :add, command_id)
   end
 
@@ -47,8 +47,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
       Reactions.Emotion.remove(comment, :heart, actor)
 
   """
-  @spec remove(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def remove(artiment, emotion, %User{} = actor, command_id \\ nil) do
+  @spec remove(struct(), atom(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def remove(artiment, emotion, %User{} = actor, command_id) do
     mutate(artiment, emotion, actor, :remove, command_id)
   end
 
