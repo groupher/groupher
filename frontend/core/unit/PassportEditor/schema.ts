@@ -22,8 +22,18 @@ const allPassportRules = graphql(`
 `)
 
 const updateModeratorPassport = graphql(`
-  mutation UpdateModeratorPassport($community: String!, $user: String!, $rules: Json!) {
-    updateModeratorPassport(community: $community, user: $user, rules: $rules) {
+  mutation UpdateModeratorPassport(
+    $commandId: ID!
+    $community: String!
+    $user: String!
+    $rules: Json!
+  ) {
+    updateModeratorPassport(
+      commandId: $commandId
+      community: $community
+      user: $user
+      rules: $rules
+    ) {
       slug
       moderators {
         isRoot
@@ -40,8 +50,8 @@ const updateModeratorPassport = graphql(`
 `)
 
 const removeModerator = graphql(`
-  mutation RemoveModerator($community: String!, $user: String!) {
-    removeModerator(community: $community, user: $user) {
+  mutation RemoveModerator($commandId: ID!, $community: String!, $user: String!) {
+    removeModerator(commandId: $commandId, community: $community, user: $user) {
       slug
       moderators {
         isRoot

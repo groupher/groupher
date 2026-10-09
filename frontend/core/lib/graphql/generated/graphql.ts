@@ -5548,6 +5548,7 @@ export type DashboardSearchUsersQuery = {
 }
 
 export type DashboardAddModeratorMutationVariables = Exact<{
+  commandId: string | number
   community: string
   user: string
 }>
@@ -5568,6 +5569,7 @@ export type DashboardAddModeratorMutation = {
 }
 
 export type DashboardAddModeratorsMutationVariables = Exact<{
+  commandId: string | number
   community: string
   users: Array<string> | string
 }>
@@ -8055,6 +8057,7 @@ export type AllPassportRulesQueryVariables = Exact<{ [key: string]: never }>
 export type AllPassportRulesQuery = { allPassportRulesString: { cms: unknown } | null }
 
 export type UpdateModeratorPassportMutationVariables = Exact<{
+  commandId: string | number
   community: string
   user: string
   rules: unknown
@@ -8077,6 +8080,7 @@ export type UpdateModeratorPassportMutation = {
 }
 
 export type RemoveModeratorMutationVariables = Exact<{
+  commandId: string | number
   community: string
   user: string
 }>
@@ -24964,6 +24968,14 @@ export const DashboardAddModeratorDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -24986,6 +24998,11 @@ export const DashboardAddModeratorDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'addModerator' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -25042,6 +25059,14 @@ export const DashboardAddModeratorsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -25070,6 +25095,11 @@ export const DashboardAddModeratorsDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'addModerators' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -32658,6 +32688,14 @@ export const UpdateModeratorPassportDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -32688,6 +32726,11 @@ export const UpdateModeratorPassportDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updateModeratorPassport' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -32753,6 +32796,14 @@ export const RemoveModeratorDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -32775,6 +32826,11 @@ export const RemoveModeratorDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'removeModerator' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },

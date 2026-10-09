@@ -44,8 +44,8 @@ export const searchUsers = graphql(`
 `)
 
 export const addModerator = graphql(`
-  mutation DashboardAddModerator($community: String!, $user: String!) {
-    addModerator(community: $community, user: $user) {
+  mutation DashboardAddModerator($commandId: ID!, $community: String!, $user: String!) {
+    addModerator(commandId: $commandId, community: $community, user: $user) {
       moderators {
         isRoot
         passportItemCount
@@ -61,8 +61,8 @@ export const addModerator = graphql(`
 `)
 
 export const addModerators = graphql(`
-  mutation DashboardAddModerators($community: String!, $users: [String!]!) {
-    addModerators(community: $community, users: $users) {
+  mutation DashboardAddModerators($commandId: ID!, $community: String!, $users: [String!]!) {
+    addModerators(commandId: $commandId, community: $community, users: $users) {
       moderators {
         isRoot
         passportItemCount

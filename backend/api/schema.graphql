@@ -430,16 +430,16 @@ type RootMutationType {
   updateCategory(community: String!, id: ID!, title: String!): Category
 
   "add a moderator for a community"
-  addModerator(community: String!, user: String!): Community
+  addModerator(commandId: ID!, community: String!, user: String!): Community
 
   "add moderators for a community"
-  addModerators(community: String!, users: [String!]!): Community
+  addModerators(commandId: ID!, community: String!, users: [String!]!): Community
 
   "unset a moderator from a community, the user's passport also deleted"
-  removeModerator(community: String!, user: String!): Community
+  removeModerator(commandId: ID!, community: String!, user: String!): Community
 
   "update cms moderator's title, passport is not effected"
-  updateModeratorPassport(community: String!, user: String!, rules: Json!): Community
+  updateModeratorPassport(commandId: ID!, community: String!, user: String!, rules: Json!): Community
 
   "create a tag"
   createCommunityTag(
