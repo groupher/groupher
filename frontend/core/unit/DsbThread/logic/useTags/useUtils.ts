@@ -7,6 +7,7 @@ import { THREAD } from '~/const/thread'
 import { browserGraphQLRequest } from '~/graphql/client'
 import { Q } from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TColorName, TTag, TTagGroup, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDsbEdit from '~/stores/dsbEdit/hooks'
@@ -45,10 +46,9 @@ export default function useUtils(): TRet {
   const createGroupMutation = useMutation({
     mutationKey: ['dsb', 'tag-group-create', community$.slug],
     mutationFn: ({ title, thread }: { title: string; thread: TThread }) =>
-      browserGraphQLRequest(S.createCommunityTagGroup, {
-        thread,
-        title,
-        community: community$.slug,
+      executeCommand({
+        request: (variables) => browserGraphQLRequest(S.createCommunityTagGroup, variables),
+        variables: { thread, title, community: community$.slug },
       }),
     onSuccess: (_data, { thread }) => {
       invalidateTags(thread)
@@ -63,7 +63,11 @@ export default function useUtils(): TRet {
       layout: null
       groupId: string
       color: TColorName
-    }) => browserGraphQLRequest(S.createCommunityTag, { ...input, community: community$.slug }),
+    }) =>
+      executeCommand({
+        request: (variables) => browserGraphQLRequest(S.createCommunityTag, variables),
+        variables: { ...input, community: community$.slug },
+      }),
     onSuccess: (_data, { thread }) => {
       invalidateTags(thread)
     },
@@ -74,11 +78,14 @@ export default function useUtils(): TRet {
       const title = tag.title.trim()
       const slug = await slugify(title)
       const nextTag = { ...tag, title, slug }
-      await browserGraphQLRequest<unknown, TUpdateCommunityTagVariables>(S.updateCommunityTag, {
-        ...nextTag,
-        id: tag.id,
-        community: community$.slug,
-      } as TUpdateCommunityTagVariables)
+      await executeCommand<TUpdateCommunityTagVariables, unknown>({
+        request: (variables) => browserGraphQLRequest(S.updateCommunityTag, variables),
+        variables: {
+          ...nextTag,
+          id: tag.id,
+          community: community$.slug,
+        } as Omit<TUpdateCommunityTagVariables, 'commandId'>,
+      })
       return { nextTag, thread }
     },
     onSuccess: ({ nextTag, thread }) => {
@@ -94,11 +101,14 @@ export default function useUtils(): TRet {
   const renameGroupMutation = useMutation({
     mutationKey: ['dsb', 'tag-group-update', community$.slug],
     mutationFn: ({ groupId, title, thread }: { groupId: string; title: string; thread: TThread }) =>
-      browserGraphQLRequest(S.updateCommunityTagGroup, {
-        id: groupId,
-        community: community$.slug,
-        thread,
-        title,
+      executeCommand({
+        request: (variables) => browserGraphQLRequest(S.updateCommunityTagGroup, variables),
+        variables: {
+          id: groupId,
+          community: community$.slug,
+          thread,
+          title,
+        },
       }),
     onSuccess: (_data, { thread }) => {
       invalidateTags(thread)

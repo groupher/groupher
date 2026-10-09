@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useDsbTab from '~/hooks/useDsbTab'
 import { patchCommunityConfig } from '~/query'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDsbFieldMap } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import { useDsbEditStore } from '~/stores/dsbEdit/hooks'
@@ -291,15 +292,21 @@ export default function useDsbFieldSave(): TRet {
       save({
         execute: async () => {
           await Promise.all([
-            browserGraphQLRequest(S.reindexCommunityTagGroups, {
-              community,
-              thread: request.thread,
-              groups: [...request.groups],
+            executeCommand({
+              request: (variables) => browserGraphQLRequest(S.reindexCommunityTagGroups, variables),
+              variables: {
+                community,
+                thread: request.thread,
+                groups: [...request.groups],
+              },
             }),
-            browserGraphQLRequest(S.reindexCommunityTags, {
-              community,
-              thread: request.thread,
-              tags: [...request.tags],
+            executeCommand({
+              request: (variables) => browserGraphQLRequest(S.reindexCommunityTags, variables),
+              variables: {
+                community,
+                thread: request.thread,
+                tags: [...request.tags],
+              },
             }),
           ])
         },

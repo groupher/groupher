@@ -1,8 +1,8 @@
 import { graphql } from '~/graphql/authoring'
 
 export const setTag = graphql(`
-  mutation SetCommunityTag($article: ArticlePathInput!, $tagId: ID!) {
-    setCommunityTag(article: $article, communityTagId: $tagId) {
+  mutation SetCommunityTag($article: ArticlePathInput!, $tagId: ID!, $commandId: ID!) {
+    setCommunityTag(article: $article, communityTagId: $tagId, commandId: $commandId) {
       innerId
       title
     }
@@ -10,8 +10,8 @@ export const setTag = graphql(`
 `)
 
 export const unsetTag = graphql(`
-  mutation UnsetCommunityTag($article: ArticlePathInput!, $tagId: ID!) {
-    unsetCommunityTag(article: $article, communityTagId: $tagId) {
+  mutation UnsetCommunityTag($article: ArticlePathInput!, $tagId: ID!, $commandId: ID!) {
+    unsetCommunityTag(article: $article, communityTagId: $tagId, commandId: $commandId) {
       innerId
       title
     }

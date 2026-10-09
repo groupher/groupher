@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import EVENT from '~/const/event'
 import { CHANGE_MODE } from '~/const/mode'
 import { browserGraphQLRequest } from '~/graphql/client'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import { closeDrawer, send } from '~/signal'
 import type { TChangeMode, TColorName, TEditValue, TSelectOption, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -115,7 +116,10 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
     setProcessing(true)
     const { id, thread, community } = tag
 
-    browserGraphQLRequest(S.deleteCommunityTag, { id, community: community.slug, thread })
+    executeCommand({
+      request: (variables) => browserGraphQLRequest(S.deleteCommunityTag, variables),
+      variables: { id, community: community.slug, thread },
+    })
       .then((res) => {
         console.log('## deleteCommunityTag: ', res)
         _handleDone()
@@ -136,16 +140,19 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
       return
     }
 
-    browserGraphQLRequest(S.updateCommunityTag, {
-      id: editingTag.id ?? '',
-      color: editingTag.color as TColorName,
-      title: editingTag.title,
-      layout: editingTag.layout,
-      desc: editingTag.desc,
-      slug: validateSlug(editingTag.slug).value,
-      community: community$.slug,
-      groupId: editingTag.groupId,
-      marker: editingTag.marker,
+    executeCommand({
+      request: (variables) => browserGraphQLRequest(S.updateCommunityTag, variables),
+      variables: {
+        id: editingTag.id ?? '',
+        color: editingTag.color as TColorName,
+        title: editingTag.title,
+        layout: editingTag.layout,
+        desc: editingTag.desc,
+        slug: validateSlug(editingTag.slug).value,
+        community: community$.slug,
+        groupId: editingTag.groupId,
+        marker: editingTag.marker,
+      },
     })
       .then((res) => {
         console.log('## updateCommunityTag: ', res)
@@ -178,7 +185,10 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
       marker: editingTag.marker,
     }
 
-    browserGraphQLRequest(S.createCommunityTag, params)
+    executeCommand({
+      request: (variables) => browserGraphQLRequest(S.createCommunityTag, variables),
+      variables: params,
+    })
       .then((res) => {
         console.log('## createCommunityTag: ', res)
         _handleDone()

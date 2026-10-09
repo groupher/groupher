@@ -15,6 +15,7 @@ export const communityTagGroups = graphql(`
 
 export const updateCommunityTag = graphql(`
   mutation DashboardUpdateCommunityTag(
+    $commandId: ID!
     $id: ID!
     $color: RainbowColor
     $title: String
@@ -25,6 +26,7 @@ export const updateCommunityTag = graphql(`
     $groupId: ID
   ) {
     updateCommunityTag(
+      commandId: $commandId
       id: $id
       color: $color
       title: $title
@@ -53,11 +55,17 @@ export const updateCommunityTag = graphql(`
 
 export const createCommunityTagGroup = graphql(`
   mutation DashboardCreateCommunityTagGroup(
+    $commandId: ID!
     $thread: Thread!
     $title: String!
     $community: String!
   ) {
-    createCommunityTagGroup(thread: $thread, title: $title, community: $community) {
+    createCommunityTagGroup(
+      commandId: $commandId
+      thread: $thread
+      title: $title
+      community: $community
+    ) {
       id
       title
       index
@@ -70,12 +78,19 @@ export const createCommunityTagGroup = graphql(`
 
 export const updateCommunityTagGroup = graphql(`
   mutation DashboardUpdateCommunityTagGroup(
+    $commandId: ID!
     $id: ID!
     $title: String!
     $community: String!
     $thread: Thread
   ) {
-    updateCommunityTagGroup(id: $id, title: $title, community: $community, thread: $thread) {
+    updateCommunityTagGroup(
+      commandId: $commandId
+      id: $id
+      title: $title
+      community: $community
+      thread: $thread
+    ) {
       id
       title
       index
@@ -88,6 +103,7 @@ export const updateCommunityTagGroup = graphql(`
 
 export const createCommunityTag = graphql(`
   mutation DashboardCreateCommunityTag(
+    $commandId: ID!
     $thread: Thread!
     $title: String!
     $slug: String!
@@ -98,6 +114,7 @@ export const createCommunityTag = graphql(`
     $marker: MarkerInput
   ) {
     createCommunityTag(
+      commandId: $commandId
       thread: $thread
       title: $title
       slug: $slug
@@ -114,12 +131,19 @@ export const createCommunityTag = graphql(`
 
 export const reindexTagsInGroup = graphql(`
   mutation DashboardReindexTagsInGroup(
+    $commandId: ID!
     $community: String!
     $thread: Thread
     $groupId: ID!
     $tags: [ReindexTagInput]
   ) {
-    reindexTagsInGroup(community: $community, thread: $thread, groupId: $groupId, tags: $tags) {
+    reindexTagsInGroup(
+      commandId: $commandId
+      community: $community
+      thread: $thread
+      groupId: $groupId
+      tags: $tags
+    ) {
       done
     }
   }
@@ -127,11 +151,17 @@ export const reindexTagsInGroup = graphql(`
 
 export const reindexCommunityTags = graphql(`
   mutation DashboardReindexCommunityTags(
+    $commandId: ID!
     $community: String!
     $thread: Thread
     $tags: [ReindexCommunityTagInput]
   ) {
-    reindexCommunityTags(community: $community, thread: $thread, tags: $tags) {
+    reindexCommunityTags(
+      commandId: $commandId
+      community: $community
+      thread: $thread
+      tags: $tags
+    ) {
       done
     }
   }
@@ -139,11 +169,17 @@ export const reindexCommunityTags = graphql(`
 
 export const reindexCommunityTagGroups = graphql(`
   mutation DashboardReindexCommunityTagGroups(
+    $commandId: ID!
     $community: String!
     $thread: Thread
     $groups: [ReindexCommunityTagGroupInput]
   ) {
-    reindexCommunityTagGroups(community: $community, thread: $thread, groups: $groups) {
+    reindexCommunityTagGroups(
+      commandId: $commandId
+      community: $community
+      thread: $thread
+      groups: $groups
+    ) {
       done
     }
   }

@@ -98,8 +98,8 @@ export const communityAssetRefs = graphql(`
 `)
 
 export const deleteCommunityAsset = graphql(`
-  mutation DeleteCommunityAsset($community: String!, $id: ID!) {
-    deleteCommunityAsset(community: $community, id: $id) {
+  mutation DeleteCommunityAsset($community: String!, $id: ID!, $commandId: ID!) {
+    deleteCommunityAsset(community: $community, id: $id, commandId: $commandId) {
       id
       publicRef
       status

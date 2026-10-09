@@ -1296,6 +1296,7 @@ export type CommentViewerStatesQuery = {
 export type SetCommunityTagMutationVariables = Exact<{
   article: ArticlePathInput
   tagId: string | number
+  commandId: string | number
 }>
 
 export type SetCommunityTagMutation = {
@@ -1310,6 +1311,7 @@ export type SetCommunityTagMutation = {
 export type UnsetCommunityTagMutationVariables = Exact<{
   article: ArticlePathInput
   tagId: string | number
+  commandId: string | number
 }>
 
 export type UnsetCommunityTagMutation = {
@@ -5749,6 +5751,7 @@ export type CommunityAssetRefsQuery = {
 export type DeleteCommunityAssetMutationVariables = Exact<{
   community: string
   id: string | number
+  commandId: string | number
 }>
 
 export type DeleteCommunityAssetMutation = {
@@ -7744,6 +7747,7 @@ export type DashboardCommunityTagGroupsQuery = {
 }
 
 export type DashboardUpdateCommunityTagMutationVariables = Exact<{
+  commandId: string | number
   id: string | number
   color?: RainbowColor | null | undefined
   title?: string | null | undefined
@@ -7773,6 +7777,7 @@ export type DashboardUpdateCommunityTagMutation = {
 }
 
 export type DashboardCreateCommunityTagGroupMutationVariables = Exact<{
+  commandId: string | number
   thread: Thread
   title: string
   community: string
@@ -7807,6 +7812,7 @@ export type DashboardCreateCommunityTagGroupMutation = {
 }
 
 export type DashboardUpdateCommunityTagGroupMutationVariables = Exact<{
+  commandId: string | number
   id: string | number
   title: string
   community: string
@@ -7842,6 +7848,7 @@ export type DashboardUpdateCommunityTagGroupMutation = {
 }
 
 export type DashboardCreateCommunityTagMutationVariables = Exact<{
+  commandId: string | number
   thread: Thread
   title: string
   slug: string
@@ -7857,6 +7864,7 @@ export type DashboardCreateCommunityTagMutation = {
 }
 
 export type DashboardReindexTagsInGroupMutationVariables = Exact<{
+  commandId: string | number
   community: string
   thread?: Thread | null | undefined
   groupId: string | number
@@ -7868,6 +7876,7 @@ export type DashboardReindexTagsInGroupMutation = {
 }
 
 export type DashboardReindexCommunityTagsMutationVariables = Exact<{
+  commandId: string | number
   community: string
   thread?: Thread | null | undefined
   tags?:
@@ -7882,6 +7891,7 @@ export type DashboardReindexCommunityTagsMutation = {
 }
 
 export type DashboardReindexCommunityTagGroupsMutationVariables = Exact<{
+  commandId: string | number
   community: string
   thread?: Thread | null | undefined
   groups?:
@@ -8089,6 +8099,7 @@ export type RichEditorSimpleQueryQueryVariables = Exact<{
 export type RichEditorSimpleQueryQuery = { post: { innerId: string | null } }
 
 export type DeleteCommunityTagMutationVariables = Exact<{
+  commandId: string | number
   id: string | number
   community: string
   thread?: Thread | null | undefined
@@ -8097,6 +8108,7 @@ export type DeleteCommunityTagMutationVariables = Exact<{
 export type DeleteCommunityTagMutation = { deleteCommunityTag: { id: string | null } | null }
 
 export type CreateCommunityTagMutationVariables = Exact<{
+  commandId: string | number
   thread: Thread
   title: string
   slug: string
@@ -8110,6 +8122,7 @@ export type CreateCommunityTagMutationVariables = Exact<{
 export type CreateCommunityTagMutation = { createCommunityTag: { id: string | null } | null }
 
 export type UpdateCommunityTagMutationVariables = Exact<{
+  commandId: string | number
   id: string | number
   color?: RainbowColor | null | undefined
   title?: string | null | undefined
@@ -14176,6 +14189,14 @@ export const SetCommunityTagDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -14193,6 +14214,11 @@ export const SetCommunityTagDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'communityTagId' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'tagId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -14232,6 +14258,14 @@ export const UnsetCommunityTagDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -14249,6 +14283,11 @@ export const UnsetCommunityTagDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'communityTagId' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'tagId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -25767,6 +25806,14 @@ export const DeleteCommunityAssetDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -25784,6 +25831,11 @@ export const DeleteCommunityAssetDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -31270,6 +31322,14 @@ export const DashboardUpdateCommunityTagDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
           type: {
             kind: 'NonNullType',
@@ -31325,6 +31385,11 @@ export const DashboardUpdateCommunityTagDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updateCommunityTag' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },
@@ -31410,6 +31475,14 @@ export const DashboardCreateCommunityTagGroupDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
           type: {
             kind: 'NonNullType',
@@ -31440,6 +31513,11 @@ export const DashboardCreateCommunityTagGroupDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'createCommunityTagGroup' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'thread' },
@@ -31538,6 +31616,14 @@ export const DashboardUpdateCommunityTagGroupDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
           type: {
             kind: 'NonNullType',
@@ -31573,6 +31659,11 @@ export const DashboardUpdateCommunityTagGroupDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updateCommunityTagGroup' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },
@@ -31676,6 +31767,14 @@ export const DashboardCreateCommunityTagDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
           type: {
             kind: 'NonNullType',
@@ -31742,6 +31841,11 @@ export const DashboardCreateCommunityTagDocument = {
             arguments: [
               {
                 kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
                 name: { kind: 'Name', value: 'thread' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
               },
@@ -31804,6 +31908,14 @@ export const DashboardReindexTagsInGroupDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -31839,6 +31951,11 @@ export const DashboardReindexTagsInGroupDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'reindexTagsInGroup' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -31883,6 +32000,14 @@ export const DashboardReindexCommunityTagsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -31910,6 +32035,11 @@ export const DashboardReindexCommunityTagsDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'reindexCommunityTags' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -31949,6 +32079,14 @@ export const DashboardReindexCommunityTagGroupsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -31979,6 +32117,11 @@ export const DashboardReindexCommunityTagGroupsDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'reindexCommunityTagGroups' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -32659,6 +32802,14 @@ export const DeleteCommunityTagDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
           type: {
             kind: 'NonNullType',
@@ -32686,6 +32837,11 @@ export const DeleteCommunityTagDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'deleteCommunityTag' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },
@@ -32720,6 +32876,14 @@ export const CreateCommunityTagDocument = {
       operation: 'mutation',
       name: { kind: 'Name', value: 'CreateCommunityTag' },
       variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
         {
           kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
@@ -32788,6 +32952,11 @@ export const CreateCommunityTagDocument = {
             arguments: [
               {
                 kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
                 name: { kind: 'Name', value: 'thread' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
               },
@@ -32847,6 +33016,14 @@ export const UpdateCommunityTagDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
           type: {
             kind: 'NonNullType',
@@ -32904,6 +33081,11 @@ export const UpdateCommunityTagDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updateCommunityTag' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },
