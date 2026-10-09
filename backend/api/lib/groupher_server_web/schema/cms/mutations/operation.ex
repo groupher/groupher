@@ -79,6 +79,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "set category to a community"
     field :set_category, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:category_id, non_null(:id))
 
@@ -91,6 +92,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "unset category to a community"
     field :unset_category, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:category_id, non_null(:id))
 
@@ -103,6 +105,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "subscribe a community so it can appear in sidebar"
     field :subscribe_community, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
@@ -113,6 +116,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "unsubscribe a community"
     field :unsubscribe_community, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)

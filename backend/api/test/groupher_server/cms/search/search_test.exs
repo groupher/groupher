@@ -3,6 +3,7 @@ defmodule GroupherServer.Test.CMS.Search do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
+  alias CMS.Communities.Categories.Persist, as: CategoriesPersist
   alias CMS.Search
 
   defp create_community!(user, attrs) do
@@ -27,7 +28,7 @@ defmodule GroupherServer.Test.CMS.Search do
       community = create_community!(user, %{title: "cool-pl"})
       {:ok, category} = db_insert(:category, %{slug: "pl"})
 
-      {:ok, _} = CMS.Communities.set_category(community, category)
+      {:ok, _} = CategoriesPersist.set_category(community, category)
 
       {:ok, searched} = Search.community("cool-pl", "pl")
       assert searched.entries |> List.first() |> Map.get(:title) == "cool-pl"

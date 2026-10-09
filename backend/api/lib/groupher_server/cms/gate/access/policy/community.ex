@@ -40,6 +40,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   @read_actions [:read, :list]
   @command_actions [
     :update,
+    :category_create,
+    :category_update,
+    :category_delete,
+    :category_set,
+    :category_unset,
     :request_destroy,
     :restore,
     :schedule_destroy,
@@ -131,10 +136,28 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       passport_allowed?(user, community, Const.passport_action(:community_request_destroy))
   end
 
+  defp command_binding_allowed?(user, community, action)
+       when action in [
+              :category_create,
+              :category_update,
+              :category_delete,
+              :category_set,
+              :category_unset
+            ] do
+    base_command_binding_allowed?(user, community) or
+      passport_allowed?(user, community, category_passport_action(action))
+  end
+
   defp command_binding_allowed?(user, community, _action) do
     base_command_binding_allowed?(user, community) or
       passport_allowed?(user, community, Const.passport_action(:community_update))
   end
+
+  defp category_passport_action(:category_create), do: Const.passport_action(:category_create)
+  defp category_passport_action(:category_update), do: Const.passport_action(:category_update)
+  defp category_passport_action(:category_delete), do: Const.passport_action(:category_delete)
+  defp category_passport_action(:category_set), do: Const.passport_action(:category_set)
+  defp category_passport_action(:category_unset), do: Const.passport_action(:category_unset)
 
   defp management_binding_allowed?(:operations, _community), do: true
   defp management_binding_allowed?(%{type: :operations}, _community), do: true

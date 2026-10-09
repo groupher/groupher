@@ -53,25 +53,38 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
     CMS.Communities.paged_categories(filter)
   end
 
-  def create_category(_root, ~m(community title slug)a, %{context: %{cur_user: user}}) do
-    CMS.Communities.create_category(%{community: community, title: title, slug: slug}, user)
+  def create_category(_root, ~m(community title slug command_id)a, %{context: %{cur_user: user}}) do
+    CMS.Communities.create_category(
+      %{community: community, title: title, slug: slug},
+      user,
+      command_id
+    )
   end
 
-  def delete_category(_root, %{community: community, id: id}, _info) do
-    CMS.Communities.delete_category(community, id)
+  def delete_category(_root, %{community: community, id: id, command_id: command_id}, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Communities.delete_category(community, id, user, command_id)
   end
 
-  def update_category(_root, ~m(community id title)a, %{context: %{cur_user: _}}) do
-    CMS.Communities.update_category(community, %{id: id, title: title})
+  def update_category(_root, ~m(community id title command_id)a, %{context: %{cur_user: user}}) do
+    CMS.Communities.update_category(community, %{id: id, title: title}, user, command_id)
   end
 
-  def set_category(_root, ~m(community category_id)a, %{context: %{cur_user: _}}) do
-    CMS.Communities.set_category(community, category_id)
+  def set_category(_root, ~m(community category_id command_id)a, %{context: %{cur_user: user}}) do
+    with {:ok, community} <- resolve_community(community) do
+      CMS.Communities.set_category(community, category_id, user, command_id)
+    end
   end
 
-  def unset_category(_root, ~m(community category_id)a, %{context: %{cur_user: _}}) do
-    CMS.Communities.unset_category(community, category_id)
+  def unset_category(_root, ~m(community category_id command_id)a, %{context: %{cur_user: user}}) do
+    with {:ok, community} <- resolve_community(community) do
+      CMS.Communities.unset_category(community, category_id, user, command_id)
+    end
   end
+
+  defp resolve_community(%Community{} = community), do: {:ok, community}
+  defp resolve_community(ref), do: CMS.FrontDesk.community(ref, mode: :internal)
 
   def add_moderator(_root, ~m(community user command_id)a, %{context: %{cur_user: cur_user}}) do
     CMS.Communities.add_moderator(community, user, cur_user, command_id)
@@ -215,12 +228,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
     end
   end
 
-  def subscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
-    CMS.Communities.subscribe(community, cur_user)
+  def subscribe_community(_root, ~m(community command_id)a, %{context: %{cur_user: cur_user}}) do
+    CMS.Communities.subscribe(community, cur_user, command_id)
   end
 
-  def unsubscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
-    CMS.Communities.unsubscribe(community, cur_user)
+  def unsubscribe_community(_root, ~m(community command_id)a, %{context: %{cur_user: cur_user}}) do
+    CMS.Communities.unsubscribe(community, cur_user, command_id)
   end
 
   def paged_community_subscribers(_root, ~m(community filter)a, %{context: %{cur_user: cur_user}}) do

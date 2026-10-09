@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Schema.Category do
 
   def m(:create_category) do
     """
-    mutation($community: String!, $title: String!, $slug: String!) {
-          createCategory(community: $community, title: $title, slug: $slug) {
+    mutation($commandId: ID!, $community: String!, $title: String!, $slug: String!) {
+          createCategory(commandId: $commandId, community: $community, title: $title, slug: $slug) {
             id
             title
             author {
@@ -19,8 +19,8 @@ defmodule GroupherServer.Test.Helper.Schema.Category do
 
   def m(:delete_category) do
     """
-    mutation($community: String!, $id: ID!) {
-          deleteCategory(community: $community, id: $id) {
+    mutation($commandId: ID!, $community: String!, $id: ID!) {
+          deleteCategory(commandId: $commandId, community: $community, id: $id) {
             id
           }
         }
@@ -29,8 +29,8 @@ defmodule GroupherServer.Test.Helper.Schema.Category do
 
   def m(:update_category) do
     """
-    mutation($community: String!, $id: ID!, $title: String!) {
-          updateCategory(community: $community, id: $id, title: $title) {
+    mutation($commandId: ID!, $community: String!, $id: ID!, $title: String!) {
+          updateCategory(commandId: $commandId, community: $community, id: $id, title: $title) {
             id
             title
           }
@@ -40,8 +40,8 @@ defmodule GroupherServer.Test.Helper.Schema.Category do
 
   def m(:set_category) do
     """
-    mutation($categoryId: ID! $community: String!) {
-          setCategory(categoryId: $categoryId, community: $community) {
+    mutation($commandId: ID!, $categoryId: ID! $community: String!) {
+          setCategory(commandId: $commandId, categoryId: $categoryId, community: $community) {
             slug
             title
 
@@ -56,8 +56,8 @@ defmodule GroupherServer.Test.Helper.Schema.Category do
 
   def m(:unset_category) do
     """
-    mutation($categoryId: ID! $community: String!) {
-          unsetCategory(categoryId: $categoryId, community: $community) {
+    mutation($commandId: ID!, $categoryId: ID! $community: String!) {
+          unsetCategory(commandId: $commandId, categoryId: $categoryId, community: $community) {
             slug
             title
           }

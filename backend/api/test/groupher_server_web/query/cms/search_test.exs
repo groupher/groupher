@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Query.CMS.Search do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
+  alias CMS.Communities.Categories.Persist, as: CategoriesPersist
   alias CMS.SearchArtiments.Artiment
   alias Helper.TestFakes.SearchArtiments
 
@@ -80,7 +81,7 @@ defmodule GroupherServer.Test.Query.CMS.Search do
       community = create_community!(user, %{title: "cool-pl"})
       {:ok, category} = db_insert(:category, %{slug: "pl"})
 
-      {:ok, _} = CMS.Communities.set_category(community, category)
+      {:ok, _} = CategoriesPersist.set_category(community, category)
 
       variables = %{title: "cool-pl", category: "pl"}
       results = guest_conn |> gq_query(S.Community.q(:search_communities), variables)

@@ -20,13 +20,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
   alias CMS.Gate.Const
   alias CMS.Passport
 
-  alias CMS.CommunityApplications.{
-    LogoUploads,
-    Policy,
-    Query,
-    Review,
-    Writer
-  }
+  alias CMS.CommunityApplications.{Commands, LogoUploads, Policy, Query, Review, Writer}
 
   alias Helper.T
 
@@ -124,38 +118,63 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @doc "Runs `submit` through the public `CommunityApplications` boundary."
   @spec submit(map(), User.t(), String.t()) :: T.domain_res(term())
   def submit(attrs, %User{} = user, submit_command_id) do
-    Writer.submit(attrs, user, submit_command_id)
+    Commands.Submit.execute(attrs, user, submit_command_id)
   end
+
+  @doc "Runs the receipt-backed cancellation Command."
+  @spec cancel(String.t(), User.t(), integer(), Ecto.UUID.t()) :: T.domain_res(term())
+  def cancel(public_ref, %User{} = user, expected_version, command_id),
+    do: Commands.Cancel.execute(public_ref, user, expected_version, command_id)
 
   @doc "Runs `cancel` through the public `CommunityApplications` boundary."
   @spec cancel(String.t(), User.t(), integer()) :: T.domain_res(term())
-  def cancel(public_ref, %User{} = user, expected_version) do
-    Writer.cancel(public_ref, user, expected_version)
-  end
+  def cancel(_public_ref, %User{} = _user, _expected_version),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Runs `start_review` through the public `CommunityApplications` boundary."
   @spec start_review(String.t(), User.t(), integer()) :: T.domain_res(term())
-  def start_review(public_ref, %User{} = reviewer, expected_version) do
-    Review.start(public_ref, reviewer, expected_version)
-  end
+  def start_review(_public_ref, %User{} = _reviewer, _expected_version),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Runs the receipt-backed review-start Command."
+  @spec start_review(String.t(), User.t(), integer(), Ecto.UUID.t()) :: T.domain_res(term())
+  def start_review(public_ref, %User{} = reviewer, expected_version, command_id),
+    do: Commands.Review.start(public_ref, reviewer, expected_version, command_id)
 
   @doc "Runs `approve` through the public `CommunityApplications` boundary."
   @spec approve(String.t(), User.t(), integer(), map()) :: T.domain_res(term())
-  def approve(public_ref, %User{} = reviewer, expected_version, metadata) do
-    Review.approve(public_ref, reviewer, expected_version, metadata)
-  end
+  def approve(_public_ref, %User{} = _reviewer, _expected_version, _metadata),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Runs the receipt-backed approval Command."
+  @spec approve(String.t(), User.t(), integer(), map(), Ecto.UUID.t()) :: T.domain_res(term())
+  def approve(public_ref, %User{} = reviewer, expected_version, metadata, command_id),
+    do: Commands.Review.approve(public_ref, reviewer, expected_version, metadata, command_id)
 
   @doc "Runs `reject` through the public `CommunityApplications` boundary."
   @spec reject(String.t(), User.t(), integer(), map()) :: T.domain_res(term())
-  def reject(public_ref, %User{} = reviewer, expected_version, reason) do
-    Review.reject(public_ref, reviewer, expected_version, reason)
-  end
+  def reject(_public_ref, %User{} = _reviewer, _expected_version, _reason),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Runs the receipt-backed rejection Command."
+  @spec reject(String.t(), User.t(), integer(), map(), Ecto.UUID.t()) :: T.domain_res(term())
+  def reject(public_ref, %User{} = reviewer, expected_version, reason, command_id),
+    do: Commands.Review.reject(public_ref, reviewer, expected_version, reason, command_id)
 
   @doc "Runs `retry_creation` through the public `CommunityApplications` boundary."
   @spec retry_creation(String.t(), User.t(), integer()) :: T.domain_res(term())
-  def retry_creation(public_ref, %User{} = reviewer, expected_version) do
-    Review.retry_creation(public_ref, reviewer, expected_version)
-  end
+  def retry_creation(_public_ref, %User{} = _reviewer, _expected_version),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Runs the receipt-backed creation retry Command."
+  @spec retry_creation(String.t(), User.t(), integer(), Ecto.UUID.t()) :: T.domain_res(term())
+  def retry_creation(public_ref, %User{} = reviewer, expected_version, command_id),
+    do: Commands.Review.retry_creation(public_ref, reviewer, expected_version, command_id)
+
+  @doc "Runs setup retry through the receipt-backed Application Command."
+  @spec retry_setup(String.t(), User.t(), integer(), Ecto.UUID.t()) :: T.domain_res(term())
+  def retry_setup(public_ref, %User{} = reviewer, expected_version, command_id),
+    do: Commands.RetrySetup.execute(public_ref, reviewer, expected_version, command_id)
 
   @doc "Creates logo upload intent through the `CommunityApplications` write boundary."
   @spec create_logo_upload_intent(map(), User.t()) :: T.domain_res(term())

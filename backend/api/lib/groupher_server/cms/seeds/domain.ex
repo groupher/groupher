@@ -26,6 +26,7 @@ defmodule GroupherServer.CMS.Seeds.Domain do
 
   alias GroupherServer.CMS
   alias CMS.ErrorCat
+  alias CMS.Communities.Categories.Persist, as: CategoriesPersist
 
   alias CMS.Seeds.Threads
   alias CMS.Model.{Category, Community}
@@ -79,7 +80,10 @@ defmodule GroupherServer.CMS.Seeds.Domain do
       {:ok, community} = ORM.find_by(Community, %{slug: name})
 
       {:ok, _} =
-        CMS.Communities.set_category(%Community{id: community.id}, %Category{id: category.id})
+        CategoriesPersist.set_category(
+          %Community{id: community.id},
+          %Category{id: category.id}
+        )
     end)
 
     {:ok, :ok}

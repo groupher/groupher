@@ -92,6 +92,45 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.storage_bytes == 128
     end
 
+    test "replays register and archive/restore results for the same command identity",
+         ~m(community user)a do
+      register_command_id = Ecto.UUID.generate()
+      attrs = image_asset_attrs("replay.png", 128)
+
+      assert {:ok, first} =
+               CMS.Assets.register_to_community(community, attrs, user, register_command_id)
+
+      assert {:ok, replayed} =
+               CMS.Assets.register_to_community(community, attrs, user, register_command_id)
+
+      assert replayed.id == first.id
+      assert replayed.command_id == register_command_id
+
+      archive_command_id = Ecto.UUID.generate()
+
+      assert {:ok, archived} =
+               CMS.Assets.archive(community, first.id, user, archive_command_id)
+
+      assert {:ok, archived_replay} =
+               CMS.Assets.archive(community, first.id, user, archive_command_id)
+
+      assert archived_replay.id == archived.id
+      assert archived_replay.status == :archived
+      assert archived_replay.command_id == archive_command_id
+
+      restore_command_id = Ecto.UUID.generate()
+
+      assert {:ok, restored} =
+               CMS.Assets.restore(community, first.id, user, restore_command_id)
+
+      assert {:ok, restored_replay} =
+               CMS.Assets.restore(community, first.id, user, restore_command_id)
+
+      assert restored_replay.id == restored.id
+      assert restored_replay.status == :active
+      assert restored_replay.command_id == restore_command_id
+    end
+
     test "deduplicates registered storage objects when url changes", ~m(community user)a do
       attrs =
         "signed-a.png"

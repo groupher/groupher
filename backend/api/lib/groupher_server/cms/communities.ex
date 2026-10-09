@@ -13,14 +13,12 @@ defmodule GroupherServer.CMS.Communities do
   require GroupherServer.CMS.Communities.ErrorCat
 
   alias __MODULE__.{
-    Categories,
     Count,
     Creation,
     Query,
     NamePolicy,
     Setup,
     SlugClaims,
-    Subscribe,
     Commands
   }
 
@@ -28,6 +26,14 @@ defmodule GroupherServer.CMS.Communities do
   alias Accounts.Model.User
   alias CMS.Passport
   alias CMS.Communities.{ErrorCat, Lifecycle}
+  alias CMS.Communities.Categories.Commands.Create, as: CreateCategoryCommand
+  alias CMS.Communities.Categories.Commands.Delete, as: DeleteCategoryCommand
+  alias CMS.Communities.Categories.Commands.Set, as: SetCategoryCommand
+  alias CMS.Communities.Categories.Commands.Unset, as: UnsetCategoryCommand
+  alias CMS.Communities.Categories.Commands.Update, as: UpdateCategoryCommand
+  alias CMS.Communities.Subscriptions.Commands.Subscribe, as: SubscribeCommand
+  alias CMS.Communities.Subscriptions.Commands.Unsubscribe, as: UnsubscribeCommand
+  alias CMS.Communities.Subscriptions.Setup, as: SubscriptionsSetup
   alias CMS.Communities.Moderators.Commands.Add, as: AddModeratorCommand
   alias CMS.Communities.Moderators.Commands.AddMany, as: AddManyModeratorsCommand
   alias CMS.Communities.Moderators.Commands.Remove, as: RemoveModeratorCommand
@@ -191,8 +197,18 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Runs `retry_setup` through the public `Communities` boundary."
   @spec retry_setup(String.t(), User.t(), integer()) :: T.domain_res(term())
-  def retry_setup(application_ref, %User{} = reviewer, expected_version) do
-    Setup.retry(application_ref, reviewer, expected_version)
+  def retry_setup(_application_ref, %User{} = _reviewer, _expected_version),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Runs setup retry through the receipt-backed Application Command."
+  @spec retry_setup(String.t(), User.t(), integer(), Ecto.UUID.t()) :: T.domain_res(term())
+  def retry_setup(application_ref, %User{} = reviewer, expected_version, command_id) do
+    CMS.CommunityApplications.Commands.RetrySetup.execute(
+      application_ref,
+      reviewer,
+      expected_version,
+      command_id
+    )
   end
 
   @doc "Runs `mark_setup_failed` through the public `Communities` boundary."
@@ -264,50 +280,51 @@ defmodule GroupherServer.CMS.Communities do
   end
 
   # Category
-  @doc "Creates category through the `Communities` write boundary."
+  @doc "Creates category through the receipt-backed Category Command boundary."
   @spec create_category(map(), User.t()) :: T.domain_res(Category.t())
-  def create_category(attrs, %User{} = user), do: Categories.create(attrs, user)
+  def create_category(_attrs, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec create_category(map(), User.t(), Ecto.UUID.t()) :: T.domain_res(Category.t())
+  def create_category(%{community: community} = attrs, %User{} = user, command_id),
+    do: CreateCategoryCommand.execute(community, attrs, user, command_id)
 
   @doc "Returns paged categories through the Communities read boundary."
   @spec paged_categories(map()) :: T.domain_res(T.paged_data())
   def paged_categories(filter), do: Query.page_categories(filter)
 
-  @doc "Updates category through the `Communities` write boundary."
+  @doc "Updates category through the receipt-backed Category Command boundary."
   @spec update_category(String.t(), map()) :: T.domain_res(Category.t())
-  def update_category(community, attrs), do: Categories.update(community, attrs)
+  def update_category(_community, _attrs), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @spec update_category(map()) :: T.domain_res(Category.t())
-  def update_category(attrs), do: Categories.update(attrs)
+  @spec update_category(String.t(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(Category.t())
+  def update_category(community, attrs, %User{} = user, command_id),
+    do: UpdateCategoryCommand.execute(community, attrs, user, command_id)
 
-  @doc "Removes category through the `Communities` boundary."
+  @doc "Removes category through the receipt-backed Category Command boundary."
   @spec delete_category(String.t(), T.id()) :: T.domain_res(Category.t())
-  def delete_category(community, id), do: Categories.delete(community, id)
+  def delete_category(_community, _id), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @doc "Runs `set_category` through the public `Communities` boundary."
-  @spec set_category(Community.t(), Category.t()) :: T.domain_res(Community.t())
-  def set_category(%Community{} = community, %Category{} = category) do
-    Categories.set(community, category)
-  end
+  @spec delete_category(String.t(), T.id(), User.t(), Ecto.UUID.t()) :: T.domain_res(Category.t())
+  def delete_category(community, id, %User{} = user, command_id),
+    do: DeleteCategoryCommand.execute(community, id, user, command_id)
 
+  @doc "Runs `set_category` through the receipt-backed Category Command boundary."
   @spec set_category(Community.t(), T.id()) :: T.domain_res(Community.t())
-  def set_category(%Community{} = community, category_id) do
-    with {:ok, category} <- ORM.find(Category, category_id) do
-      Categories.set(community, category)
-    end
-  end
+  def set_category(%Community{}, _category_id), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @doc "Runs `unset_category` through the public `Communities` boundary."
-  @spec unset_category(Community.t(), Category.t()) :: T.domain_res(Community.t())
-  def unset_category(%Community{} = community, %Category{} = category) do
-    Categories.unset(community, category)
-  end
+  @spec set_category(Community.t(), T.id(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Community.t())
+  def set_category(%Community{} = community, category_id, %User{} = user, command_id),
+    do: SetCategoryCommand.execute(community, category_id, user, command_id)
 
+  @doc "Runs `unset_category` through the receipt-backed Category Command boundary."
   @spec unset_category(Community.t(), T.id()) :: T.domain_res(Community.t())
-  def unset_category(%Community{} = community, category_id) do
-    with {:ok, category} <- ORM.find(Category, category_id) do
-      Categories.unset(community, category)
-    end
-  end
+  def unset_category(%Community{}, _category_id), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec unset_category(Community.t(), T.id(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Community.t())
+  def unset_category(%Community{} = community, category_id, %User{} = user, command_id),
+    do: UnsetCategoryCommand.execute(community, category_id, user, command_id)
 
   # Passport
   @doc "Returns passport through the `Communities` boundary."
@@ -407,27 +424,39 @@ defmodule GroupherServer.CMS.Communities do
         )
 
   # Subscribe
-  @doc "Runs `subscribe` through the public `Communities` boundary."
+  @doc "Rejects the legacy user-mutation arity; callers must provide command_id."
   @spec subscribe(Community.t(), User.t()) :: T.domain_res(Community.t())
-  def subscribe(%Community{} = community, %User{} = user) do
-    Subscribe.subscribe(community, user)
-  end
+  def subscribe(%Community{} = community, %User{} = user), do: reject_command_id(community, user)
 
-  @doc "Runs `unsubscribe` through the public `Communities` boundary."
+  @doc "Runs the receipt-backed user subscription Command."
+  @spec subscribe(Community.t() | String.t(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Community.t())
+  def subscribe(community, %User{} = user, command_id),
+    do: SubscribeCommand.execute(community, user, command_id)
+
+  @doc "Rejects the legacy user-mutation arity; callers must provide command_id."
   @spec unsubscribe(Community.t(), User.t()) :: T.domain_res(Community.t())
-  def unsubscribe(%Community{} = community, %User{} = user) do
-    Subscribe.unsubscribe(community, user)
-  end
+  def unsubscribe(%Community{} = community, %User{} = user),
+    do: reject_command_id(community, user)
+
+  @doc "Runs the receipt-backed user unsubscribe Command."
+  @spec unsubscribe(Community.t() | String.t(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Community.t())
+  def unsubscribe(community, %User{} = user, command_id),
+    do: UnsubscribeCommand.execute(community, user, command_id)
 
   @doc "Runs `subscribe_ifnot` through the public `Communities` boundary."
   @spec subscribe_ifnot(Community.t(), User.t()) :: T.domain_res(Community.t())
   def subscribe_ifnot(%Community{} = community, %User{} = user) do
-    Subscribe.subscribe_ifnot(community, user)
+    SubscriptionsSetup.subscribe_ifnot(community, user)
   end
 
   @doc "Runs `subscribe_default_ifnot` through the public `Communities` boundary."
   @spec subscribe_default_ifnot(User.t()) :: T.domain_res(atom() | Community.t())
-  def subscribe_default_ifnot(%User{} = user), do: Subscribe.subscribe_default_ifnot(user)
+  def subscribe_default_ifnot(%User{} = user),
+    do: SubscriptionsSetup.subscribe_default_ifnot(user)
+
+  defp reject_command_id(_community, _user), do: {:error, CMS.ErrorCat.command_id_required()}
 
   # Count
   @doc "Updates count through the `Communities` write boundary."

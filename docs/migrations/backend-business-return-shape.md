@@ -167,7 +167,7 @@ Comments / Interaction / ViewTracker
 - cms/view_tracker/record.ex
 
 Community / Assets / Docs
-- cms/communities/tags.ex
+- cms/communities/tags/query.ex
 - cms/communities/setup.ex
 - cms/communities/writer.ex
 - cms/assets/*.ex
@@ -201,7 +201,7 @@ R1–R4 为准。
 ```text
 cms/articles/draft/store.ex             38 处
 cms/wallpaper/publisher.ex              20 处
-cms/communities/tags.ex                 18 处
+cms/communities/tags/query.ex            18 处
 cms/article_stats.ex                    17 处
 cms/gate/access/policy/article.ex      17 处
 cms/doc_cover/writer.ex                 15 处
@@ -459,8 +459,8 @@ backend/api/lib/groupher_server/cms/communities/jobs/release_expired_slug_claims
 backend/api/lib/groupher_server/cms/communities/jobs/setup.ex
 backend/api/lib/groupher_server/cms/communities/lifecycle.ex
 backend/api/lib/groupher_server/cms/communities/setup.ex
-backend/api/lib/groupher_server/cms/communities/tag_stats.ex
-backend/api/lib/groupher_server/cms/communities/tags.ex
+backend/api/lib/groupher_server/cms/communities/tags/stats.ex
+backend/api/lib/groupher_server/cms/communities/tags/query.ex
 backend/api/lib/groupher_server/cms/communities/writer.ex
 backend/api/lib/groupher_server/cms/content_import/import_source_mapping.ex
 backend/api/lib/groupher_server/cms/content_import/jobs.ex

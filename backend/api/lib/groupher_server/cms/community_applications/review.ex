@@ -50,12 +50,12 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
     end
   end
 
-  @spec approve(String.t(), User.t(), integer(), map()) ::
+  @spec approve(String.t(), User.t(), integer(), map(), String.t() | nil) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
-  def approve(public_ref, %User{} = reviewer, expected_version, metadata) do
+  def approve(public_ref, %User{} = reviewer, expected_version, metadata, command_id \\ nil) do
     with {:ok, _} <-
            review_authorized?(reviewer, Const.passport_action(:community_application_approve)) do
-      operation_ref = Ecto.UUID.generate()
+      operation_ref = workflow_ref("community_creation", command_id)
 
       transition(
         public_ref,
@@ -108,9 +108,9 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
     end
   end
 
-  @spec retry_creation(String.t(), User.t(), integer()) ::
+  @spec retry_creation(String.t(), User.t(), integer(), String.t() | nil) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
-  def retry_creation(public_ref, %User{} = reviewer, expected_version) do
+  def retry_creation(public_ref, %User{} = reviewer, expected_version, command_id \\ nil) do
     with {:ok, _} <-
            review_authorized?(
              reviewer,
@@ -118,7 +118,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
            ),
          {:ok, application} <- fetch(public_ref),
          {:ok, _slug} <- NamePolicy.check(application.slug, ignore_application_id: application.id) do
-      operation_ref = Ecto.UUID.generate()
+      operation_ref = workflow_ref("community_creation", command_id)
 
       transition(
         public_ref,
@@ -266,4 +266,8 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
       _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
+
+  defp workflow_ref(_kind, command_id) when is_binary(command_id), do: command_id
+
+  defp workflow_ref(_kind, _command_id), do: Ecto.UUID.generate()
 end

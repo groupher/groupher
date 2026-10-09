@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Schema.Community do
 
   def m(:unsubscribe_community) do
     """
-    mutation($community: String!){
-          unsubscribeCommunity(community: $community) {
+    mutation($community: String!, $commandId: ID!){
+          unsubscribeCommunity(community: $community, commandId: $commandId) {
             slug
           }
         }
@@ -51,8 +51,8 @@ defmodule GroupherServer.Test.Helper.Schema.Community do
 
   def m(:subscribe_community) do
     """
-    mutation($community: String!){
-          subscribeCommunity(community: $community) {
+    mutation($community: String!, $commandId: ID!){
+          subscribeCommunity(community: $community, commandId: $commandId) {
             slug
           }
         }

@@ -23,9 +23,11 @@ defmodule GroupherServer.CMS.Gate.Access do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Gate.Access.Check
+  alias CMS.Gate.Access.Policy.Application, as: ApplicationPolicy
   alias CMS.Gate.{Decision, ErrorCat}
   alias CMS.{Articles, FrontDesk}
   alias CMS.Model.{Article, Comment, Community}
+  alias CMS.Model.CommunityApplication
 
   @article_models [Article]
 
@@ -209,6 +211,38 @@ defmodule GroupherServer.CMS.Gate.Access do
       end
     end)
     |> normalize_decision()
+  end
+
+  @doc "Runs Community Application admission and callback in the application lock."
+  def with_application_check(actor, action, %CommunityApplication{id: application_id}, callback)
+      when is_function(callback, 1) do
+    query =
+      from(application in CommunityApplication,
+        where: application.id == ^application_id,
+        lock: "FOR UPDATE"
+      )
+
+    Repo.transact(fn ->
+      case Repo.one(query) do
+        %CommunityApplication{} = canonical ->
+          case ApplicationPolicy.check_access(actor, action, canonical) do
+            {:ok, :pass} -> callback.(canonical)
+            {:error, reason} -> {:error, reason}
+          end
+
+        nil ->
+          {:error, ErrorCat.resource_not_found()}
+      end
+    end)
+  end
+
+  @doc "Runs the create admission for a new Community Application."
+  def with_application_create_check(actor, callback) when is_function(callback, 0) do
+    Repo.transact(fn ->
+      with {:ok, :pass} <- ApplicationPolicy.check_create(actor) do
+        callback.()
+      end
+    end)
   end
 
   @doc "Runs an ordinary Article command against an explicit ArticleBinding binding."

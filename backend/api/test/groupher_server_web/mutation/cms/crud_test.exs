@@ -9,6 +9,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
 
   alias GroupherServer.CMS
+  alias CMS.Communities.Categories.Persist, as: CategoriesPersist
   alias CMS.Model.{Category, CommunityLifecycle, CommunityModerator, Passport}
 
   setup do
@@ -29,6 +30,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     @create_category_query S.Category.m(:create_category)
     test "auth user can create category", ~m(user community)a do
       variables = mock_attrs(:category, %{user_id: user.id, community: community.slug})
+      variables = Map.put(variables, :command_id, Ecto.UUID.generate())
       rule_conn = simu_conn(:user, cms: %{"category.create" => true})
 
       created = rule_conn |> gq_mutation(@create_category_query, variables)
@@ -39,10 +41,10 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     @delete_category_query S.Category.m(:delete_category)
     test "auth user can delete category", ~m(community)a do
       {:ok, category} = db_insert(:category)
-      {:ok, _} = CMS.Communities.set_category(community, category)
+      {:ok, _} = CategoriesPersist.set_category(community, category)
       rule_conn = simu_conn(:user, cms: %{"category.delete" => true})
 
-      variables = %{community: community.slug, id: category.id}
+      variables = %{community: community.slug, id: category.id, command_id: Ecto.UUID.generate()}
       deleted = rule_conn |> gq_mutation(@delete_category_query, variables)
 
       assert deleted["id"] == to_string(category.id)
@@ -50,9 +52,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     @update_category_query S.Category.m(:update_category)
     test "auth user can update  category", ~m(category community)a do
-      {:ok, _} = CMS.Communities.set_category(community, category)
+      {:ok, _} = CategoriesPersist.set_category(community, category)
       rule_conn = simu_conn(:user, cms: %{"category.update" => true})
-      variables = %{community: community.slug, id: category.id, title: "new title"}
+
+      variables = %{
+        community: community.slug,
+        id: category.id,
+        title: "new title",
+        command_id: Ecto.UUID.generate()
+      }
 
       updated = rule_conn |> gq_mutation(@update_category_query, variables)
       assert updated["title"] == "new title"
@@ -60,6 +68,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     test "unauth user create category fails", ~m(user user_conn guest_conn community)a do
       variables = mock_attrs(:category, %{user_id: user.id, community: community.slug})
+      variables = Map.put(variables, :command_id, Ecto.UUID.generate())
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
@@ -85,7 +94,13 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "unauth user update category fails", ~m(category user_conn guest_conn community)a do
-      variables = %{community: community.slug, id: category.id, title: "new title"}
+      variables = %{
+        community: community.slug,
+        id: category.id,
+        title: "new title",
+        command_id: Ecto.UUID.generate()
+      }
+
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
@@ -116,7 +131,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, category} = db_insert(:category)
 
       rule_conn = simu_conn(:user, cms: %{"category.set" => true})
-      variables = %{community: community.slug, categoryId: category.id}
+
+      variables = %{
+        community: community.slug,
+        categoryId: category.id,
+        commandId: Ecto.UUID.generate()
+      }
 
       rule_conn |> gq_mutation(@set_category_query, variables)
 
@@ -135,10 +155,15 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
 
-      {:ok, _} = CMS.Communities.set_category(community, %Category{id: category.id})
+      {:ok, _} = CategoriesPersist.set_category(community, %Category{id: category.id})
 
       rule_conn = simu_conn(:user, cms: %{"category.unset" => true})
-      variables = %{community: community.slug, categoryId: category.id}
+
+      variables = %{
+        community: community.slug,
+        categoryId: category.id,
+        commandId: Ecto.UUID.generate()
+      }
 
       rule_conn |> gq_mutation(@unset_category_query, variables)
 
@@ -159,7 +184,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, category} = db_insert(:category)
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
-      variables = %{community: community.slug, categoryId: category.id}
+
+      variables = %{
+        community: community.slug,
+        categoryId: category.id,
+        commandId: Ecto.UUID.generate()
+      }
 
       assert user_conn
              |> mutation_error?(
@@ -258,7 +288,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     test "update community with empty attrs return the same", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
-      variables = %{community: community.slug}
+      variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
 
       updated = rule_conn |> gq_mutation(@update_community_query, variables)
 
@@ -313,7 +343,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     @request_destroy_community_query S.Community.m(:request_destroy_community)
     test "auth user can request community destruction", ~m(community)a do
-      variables = %{community: community.slug}
+      variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
       rule_conn = simu_conn(:user, cms: %{"community.request_destroy" => true})
 
       archived = rule_conn |> gq_mutation(@request_destroy_community_query, variables)
@@ -563,7 +593,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "login user can subscribe community", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
-      variables = %{community: community.slug}
+      variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
       created = login_conn |> gq_mutation(@subscribe_query, variables)
 
       assert created["slug"] == community.slug
@@ -572,7 +602,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "subscribe should update user's subscribed count.", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
-      variables = %{community: community.slug}
+      variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
       login_conn |> gq_mutation(@subscribe_query, variables)
 
       {:ok, user} = ORM.find(User, user.id)
@@ -582,7 +612,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     test "login user subscribe non-exist community fails", ~m(user)a do
       login_conn = simu_conn(:user, user)
-      variables = %{community: non_exist_slug()}
+      variables = %{community: non_exist_slug(), command_id: Ecto.UUID.generate()}
 
       assert login_conn
              |> mutation_error?(
@@ -593,7 +623,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "guest user subscribe community fails", ~m(guest_conn community)a do
-      variables = %{community: community.slug}
+      variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
 
       assert guest_conn
              |> mutation_error?(
@@ -610,7 +640,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       assert false == cur_subscribers.entries |> Enum.any?(&(&1.id == user.id))
 
-      {:ok, _record} = CMS.Communities.subscribe(community, user)
+      {:ok, _record} = CMS.Communities.Subscriptions.Setup.subscribe(community, user)
 
       {:ok, cur_subscribers} =
         CMS.Communities.members(:subscribers, community, %{page: 1, size: 10})
@@ -618,7 +648,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert true == cur_subscribers.entries |> Enum.any?(&(&1.id == user.id))
       login_conn = simu_conn(:user, user)
 
-      variables = %{community: community.slug}
+      variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
 
       result = login_conn |> gq_mutation(@unsubscribe_query, variables)
 
@@ -632,26 +662,27 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "unsubscribe should update user's subscribed count", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
-      variables = %{community: community.slug}
+      variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
       login_conn |> gq_mutation(@subscribe_query, variables)
 
       {:ok, user} = ORM.find(User, user.id)
       assert user.subscribed_communities_count == 1
 
-      login_conn |> gq_mutation(@unsubscribe_query, variables)
+      unsubscribe_variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
+      login_conn |> gq_mutation(@unsubscribe_query, unsubscribe_variables)
 
       {:ok, user} = ORM.find(User, user.id)
       assert user.subscribed_communities_count == 0
     end
 
     test "other login user unsubscribe community fails", ~m(user_conn community)a do
-      variables = %{community: community.slug}
+      variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
 
       assert user_conn |> mutation_error?(@unsubscribe_query, variables)
     end
 
     test "guest user unsubscribe community fails", ~m(guest_conn community)a do
-      variables = %{community: community.slug}
+      variables = %{community: community.slug, command_id: Ecto.UUID.generate()}
 
       assert guest_conn
              |> mutation_error?(

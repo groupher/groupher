@@ -48,6 +48,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :cancel_community_application, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.CommunityApplications.cancel_community_application/3)
     end
@@ -56,6 +57,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :start_community_application_review, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.review")
       resolve(&R.CMS.CommunityApplications.start_community_application_review/3)
@@ -65,6 +67,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :approve_community_application, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       arg(:note, :string)
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.approve")
@@ -75,6 +78,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :reject_community_application, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       arg(:reason_code, non_null(:string))
       arg(:note, :string)
       middleware(M.Authorize, :login)
@@ -86,6 +90,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :retry_community_creation, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.retry_creation")
       resolve(&R.CMS.CommunityApplications.retry_community_creation/3)
@@ -95,6 +100,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :retry_community_setup, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.retry_setup")
       resolve(&R.CMS.CommunityApplications.retry_community_setup/3)
@@ -198,6 +204,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "create category"
     field :create_category, :category do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:title, non_null(:string))
       arg(:slug, non_null(:string))
@@ -210,6 +217,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "delete category"
     field :delete_category, :category do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 
@@ -221,6 +229,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "update category"
     field :update_category, :category do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:title, non_null(:string))

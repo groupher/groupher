@@ -56,42 +56,66 @@ defmodule GroupherServerWeb.Resolvers.CMS.CommunityApplications do
 
   def cancel_community_application(
         _root,
-        %{ref: public_ref, expected_version: expected_version},
+        %{ref: public_ref, expected_version: expected_version, command_id: command_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.CommunityApplications.cancel(public_ref, user, expected_version) |> application_result()
+    CMS.CommunityApplications.cancel(public_ref, user, expected_version, command_id)
+    |> application_result()
   end
 
   def start_community_application_review(
         _root,
-        %{ref: public_ref, expected_version: expected_version},
+        %{ref: public_ref, expected_version: expected_version, command_id: command_id},
         %{context: %{cur_user: reviewer}}
       ) do
-    CMS.CommunityApplications.start_review(public_ref, reviewer, expected_version)
+    CMS.CommunityApplications.start_review(public_ref, reviewer, expected_version, command_id)
     |> application_result()
   end
 
   def approve_community_application(_root, args, %{context: %{cur_user: reviewer}}) do
     metadata = %{note: Map.get(args, :note)}
 
-    CMS.CommunityApplications.approve(args.ref, reviewer, args.expected_version, metadata)
+    CMS.CommunityApplications.approve(
+      args.ref,
+      reviewer,
+      args.expected_version,
+      metadata,
+      args.command_id
+    )
     |> application_result()
   end
 
   def reject_community_application(_root, args, %{context: %{cur_user: reviewer}}) do
     reason = %{reason_code: args.reason_code, note: Map.get(args, :note)}
 
-    CMS.CommunityApplications.reject(args.ref, reviewer, args.expected_version, reason)
+    CMS.CommunityApplications.reject(
+      args.ref,
+      reviewer,
+      args.expected_version,
+      reason,
+      args.command_id
+    )
     |> application_result()
   end
 
   def retry_community_creation(_root, args, %{context: %{cur_user: reviewer}}) do
-    CMS.CommunityApplications.retry_creation(args.ref, reviewer, args.expected_version)
+    CMS.CommunityApplications.retry_creation(
+      args.ref,
+      reviewer,
+      args.expected_version,
+      args.command_id
+    )
     |> application_result()
   end
 
   def retry_community_setup(_root, args, %{context: %{cur_user: reviewer}}) do
-    CMS.Communities.retry_setup(args.ref, reviewer, args.expected_version) |> application_result()
+    CMS.CommunityApplications.retry_setup(
+      args.ref,
+      reviewer,
+      args.expected_version,
+      args.command_id
+    )
+    |> application_result()
   end
 
   def community_application_logo(application, _args, _info) do

@@ -380,22 +380,22 @@ type RootMutationType {
   submitCommunityApplication(input: CommunityApplicationInput!, commandId: ID!): CommunityApplication!
 
   "Cancel an owned Community Application"
-  cancelCommunityApplication(ref: ID!, expectedVersion: Int!): CommunityApplication!
+  cancelCommunityApplication(ref: ID!, expectedVersion: Int!, commandId: ID!): CommunityApplication!
 
   "Move a submitted Application into review"
-  startCommunityApplicationReview(ref: ID!, expectedVersion: Int!): CommunityApplication!
+  startCommunityApplicationReview(ref: ID!, expectedVersion: Int!, commandId: ID!): CommunityApplication!
 
   "Approve a reviewed Community Application"
-  approveCommunityApplication(ref: ID!, expectedVersion: Int!, note: String): CommunityApplication!
+  approveCommunityApplication(ref: ID!, expectedVersion: Int!, commandId: ID!, note: String): CommunityApplication!
 
   "Reject a reviewed Community Application"
-  rejectCommunityApplication(ref: ID!, expectedVersion: Int!, reasonCode: String!, note: String): CommunityApplication!
+  rejectCommunityApplication(ref: ID!, expectedVersion: Int!, commandId: ID!, reasonCode: String!, note: String): CommunityApplication!
 
   "Retry Community identity creation for a failed Application"
-  retryCommunityCreation(ref: ID!, expectedVersion: Int!): CommunityApplication!
+  retryCommunityCreation(ref: ID!, expectedVersion: Int!, commandId: ID!): CommunityApplication!
 
   "Retry Community setup for a failed Application"
-  retryCommunitySetup(ref: ID!, expectedVersion: Int!): CommunityApplication!
+  retryCommunitySetup(ref: ID!, expectedVersion: Int!, commandId: ID!): CommunityApplication!
 
   "create a global community"
   createCommunity(commandId: ID!, title: String!, desc: String!, slug: String!, logo: String!, locale: String): Community
@@ -421,13 +421,13 @@ type RootMutationType {
   deleteCommunityAsset(community: String!, id: ID!, commandId: ID!): CommunityAsset
 
   "create category"
-  createCategory(community: String!, title: String!, slug: String!): Category
+  createCategory(commandId: ID!, community: String!, title: String!, slug: String!): Category
 
   "delete category"
-  deleteCategory(community: String!, id: ID!): Category
+  deleteCategory(commandId: ID!, community: String!, id: ID!): Category
 
   "update category"
-  updateCategory(community: String!, id: ID!, title: String!): Category
+  updateCategory(commandId: ID!, community: String!, id: ID!, title: String!): Category
 
   "add a moderator for a community"
   addModerator(commandId: ID!, community: String!, user: String!): Community
@@ -479,16 +479,16 @@ type RootMutationType {
   permanentlyDeleteTrashAction(commandId: ID!, id: ID!, community: String!, thread: Thread!): DoneState
 
   "set category to a community"
-  setCategory(community: String!, categoryId: ID!): Community
+  setCategory(commandId: ID!, community: String!, categoryId: ID!): Community
 
   "unset category to a community"
-  unsetCategory(community: String!, categoryId: ID!): Community
+  unsetCategory(commandId: ID!, community: String!, categoryId: ID!): Community
 
   "subscribe a community so it can appear in sidebar"
-  subscribeCommunity(community: String!): Community
+  subscribeCommunity(commandId: ID!, community: String!): Community
 
   "unsubscribe a community"
-  unsubscribeCommunity(community: String!): Community
+  unsubscribeCommunity(commandId: ID!, community: String!): Community
 
   "set a community_tag to content"
   setCommunityTag(commandId: ID!, article: ArticlePathInput!, communityTagId: ID!): Article

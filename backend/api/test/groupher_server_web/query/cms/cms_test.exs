@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
+  alias CMS.Communities.Categories.Persist, as: CategoriesPersist
   alias CMS.Model.Category
 
   defp create_community!(user, attrs \\ %{}) do
@@ -143,7 +144,9 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     @query S.Community.q(:paged_communities)
     test "user can get viewer has subscribed state", ~m(user)a do
       communities = create_communities!(5, user)
-      {:ok, _record} = CMS.Communities.subscribe(communities |> List.first(), user)
+
+      {:ok, _record} =
+        CMS.Communities.Subscriptions.Setup.subscribe(communities |> List.first(), user)
 
       variables = %{filter: %{page: 1, size: 20}}
       user_conn = simu_conn(:user, user)
@@ -183,9 +186,9 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       communityn = communities |> List.last()
       # [community1, community2, _] = communities
 
-      CMS.Communities.set_category(%Community{id: community1.id}, %Category{id: category1.id})
-      CMS.Communities.set_category(%Community{id: community2.id}, %Category{id: category2.id})
-      CMS.Communities.set_category(%Community{id: communityn.id}, %Category{id: category2.id})
+      CategoriesPersist.set_category(%Community{id: community1.id}, %Category{id: category1.id})
+      CategoriesPersist.set_category(%Community{id: community2.id}, %Category{id: category2.id})
+      CategoriesPersist.set_category(%Community{id: communityn.id}, %Category{id: category2.id})
 
       variables = %{filter: %{page: 1, size: 20, category: category1.slug}}
       results = guest_conn |> gq_query(@query, variables)
@@ -222,7 +225,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       valid_attrs = mock_attrs(:category)
       ~m(title slug)a = valid_attrs
 
-      {:ok, _} = CMS.Communities.create_category(~m(title slug)a, %User{id: user.id})
+      {:ok, author} = CMS.Articles.Writer.ensure_author_exists(%User{id: user.id})
+      {:ok, _} = CategoriesPersist.insert_category(~m(title slug)a, %Community{}, author.id)
 
       results = guest_conn |> gq_query(@query, variables)
       author = results["entries"] |> List.first() |> Map.get("author")
@@ -236,10 +240,13 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       valid_attrs = mock_attrs(:category)
       ~m(title slug)a = valid_attrs
 
-      {:ok, category} = CMS.Communities.create_category(~m(title slug)a, %User{id: user.id})
+      {:ok, author} = CMS.Articles.Writer.ensure_author_exists(%User{id: user.id})
+
+      {:ok, category} =
+        CategoriesPersist.insert_category(~m(title slug)a, %Community{}, author.id)
 
       {:ok, _} =
-        CMS.Communities.set_category(%Community{id: community.id}, %Category{id: category.id})
+        CategoriesPersist.set_category(%Community{id: community.id}, %Category{id: category.id})
 
       results = guest_conn |> gq_query(@query, variables)
       contain_communities = results["entries"] |> List.first() |> Map.get("communities")
@@ -341,7 +348,10 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
       cur_user = user
 
-      Enum.each(users, &CMS.Communities.add_moderator(community, &1, cur_user, Ecto.UUID.generate()))
+      Enum.each(
+        users,
+        &CMS.Communities.add_moderator(community, &1, cur_user, Ecto.UUID.generate())
+      )
 
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -359,7 +369,12 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       Enum.each(
         users,
-        &CMS.Communities.add_moderator(community, %User{id: &1.id}, cur_user, Ecto.UUID.generate())
+        &CMS.Communities.add_moderator(
+          community,
+          %User{id: &1.id},
+          cur_user,
+          Ecto.UUID.generate()
+        )
       )
 
       variables = %{community: community.slug, filter: %{page: 1, size: 10}}
@@ -374,7 +389,10 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "guest can get subscribers count of a community", ~m(guest_conn community user)a do
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
 
-      Enum.each(users, &CMS.Communities.subscribe(community, %User{id: &1.id}))
+      Enum.each(
+        users,
+        &CMS.Communities.Subscriptions.Setup.subscribe(community, %User{id: &1.id})
+      )
 
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -390,7 +408,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       Enum.each(
         users,
-        &CMS.Communities.subscribe(community, %User{id: &1.id})
+        &CMS.Communities.Subscriptions.Setup.subscribe(community, %User{id: &1.id})
       )
 
       variables = %{community: community.slug, filter: %{page: 1, size: 10}}
@@ -405,7 +423,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       Enum.each(
         users,
-        &CMS.Communities.subscribe(community, %User{id: &1.id})
+        &CMS.Communities.Subscriptions.Setup.subscribe(community, %User{id: &1.id})
       )
 
       variables = %{community: community.slug, filter: %{page: 1, size: 10}}

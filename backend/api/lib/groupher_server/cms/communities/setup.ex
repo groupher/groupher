@@ -61,10 +61,10 @@ defmodule GroupherServer.CMS.Communities.Setup do
 
   @spec retry(String.t(), User.t(), integer()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
-  def retry(application_ref, %User{} = reviewer, expected_version) do
+  def retry(application_ref, %User{} = reviewer, expected_version, command_id \\ nil) do
     with {:ok, _} <-
            review_authorized?(reviewer, Const.passport_action(:community_application_retry_setup)) do
-      operation_ref = Ecto.UUID.generate()
+      operation_ref = workflow_ref("community_setup", command_id)
       now = DateTime.utc_now(:second)
 
       Repo.transaction(fn ->
@@ -324,4 +324,8 @@ defmodule GroupherServer.CMS.Communities.Setup do
       _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
+
+  defp workflow_ref(_kind, command_id) when is_binary(command_id), do: command_id
+
+  defp workflow_ref(_kind, _command_id), do: Ecto.UUID.generate()
 end

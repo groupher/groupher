@@ -98,6 +98,14 @@ defmodule GroupherServer.CMS.Gate do
   def with_community_check(actor, action, community, callback),
     do: Access.with_community_check(actor, action, community, callback)
 
+  @doc "Runs Community Application admission inside its canonical row lock."
+  def with_application_check(actor, action, application, callback),
+    do: Access.with_application_check(actor, action, application, callback)
+
+  @doc "Runs admission for creating a new Community Application."
+  def with_application_create_check(actor, callback),
+    do: Access.with_application_create_check(actor, callback)
+
   @doc """
   Runs an ordinary Article command against an explicit Community binding.
 
