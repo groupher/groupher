@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
   setup do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     community_tag_attrs = mock_attrs(:community_tag)
 
@@ -37,7 +37,10 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
         groupId: group.id
       }
 
-      passport_rules = %{community.title => %{"doc.community_tag.create" => true}}
+      passport_rules = %{
+        community.title => %{"community.update" => true, "doc.community_tag.create" => true}
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       created = rule_conn |> gq_mutation(@create_tag_query, variables)
@@ -66,7 +69,10 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
         extra: ["menuID", "menuID2"]
       }
 
-      passport_rules = %{community.title => %{"doc.community_tag.create" => true}}
+      passport_rules = %{
+        community.title => %{"community.update" => true, "doc.community_tag.create" => true}
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       created = rule_conn |> gq_mutation(@create_tag_query, variables)
@@ -126,7 +132,10 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
         thread: "DOC"
       }
 
-      passport_rules = %{community.title => %{"doc.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{"community.update" => true, "doc.community_tag.update" => true}
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated = rule_conn |> gq_mutation(@update_tag_query, variables)
@@ -153,7 +162,9 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
 
       rule_conn =
         simu_conn(:user,
-          cms: %{community.title => %{"doc.community_tag.delete" => true}}
+          cms: %{
+            community.title => %{"community.update" => true, "doc.community_tag.delete" => true}
+          }
         )
 
       deleted = rule_conn |> gq_mutation(@delete_tag_query, variables)

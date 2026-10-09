@@ -53,27 +53,17 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   end
 
   defp mutate(input, emotion, actor, operation, command_id) when is_atom(emotion) do
-    with {:ok, info} <- Matcher.match_interaction(input) do
-      context = %{
-        actor: actor,
-        target: input,
-        params: %{operation: operation, emotion: emotion},
-        command_id: command_id || Ecto.UUID.generate()
-      }
-
+    with {:ok, command_id} <- require_command_id(command_id),
+         {:ok, info} <- Matcher.match_interaction(input) do
       result =
-        if is_nil(command_id) do
-          execute_without_receipt(&emotion_action(&1, info), context)
-        else
-          %Command{
-            actor: actor,
-            command_id: command_id,
-            operation: emotion_command(operation),
-            target: input,
-            params: %{operation: operation, emotion: emotion}
-          }
-          |> Command.execute(action: &emotion_action(&1, info), confirmation: Confirmation)
-        end
+        %Command{
+          actor: actor,
+          command_id: command_id,
+          operation: emotion_command(operation),
+          target: input,
+          params: %{operation: operation, emotion: emotion}
+        }
+        |> Command.execute(action: &emotion_action(&1, info), confirmation: Confirmation)
 
       present_reaction(result, input, command_id)
     end
@@ -111,18 +101,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     end
   end
 
-  defp execute_without_receipt(action, context) do
-    Repo.transaction(fn ->
-      case action.(context) do
-        {:ok, %Confirmation{data: data}} -> {:ok, data}
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
-    |> case do
-      {:ok, {:ok, data}} -> {:ok, data}
-      other -> other
-    end
-  end
+  defp require_command_id(command_id) when is_binary(command_id), do: {:ok, command_id}
+  defp require_command_id(_command_id), do: {:error, CMS.ErrorCat.command_id_required()}
 
   defp enqueue_effect(_canonical, _actor, _operation, _emotion, _command_id, :unchanged) do
     {:ok, :pass}

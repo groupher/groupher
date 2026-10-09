@@ -25,7 +25,9 @@ defmodule GroupherServer.CMS.Outbox do
           required(:event) => String.t(),
           required(:resource_type) => String.t(),
           required(:resource_id) => String.t() | integer(),
-          required(:command_id) => Ecto.UUID.t(),
+          optional(:command_id) => String.t(),
+          optional(:identity) => {:command | :workflow, String.t()},
+          optional(:effect_key) => String.t(),
           optional(:contract_version) => pos_integer(),
           optional(:data) => map(),
           required(:worker) => module()
@@ -36,7 +38,7 @@ defmodule GroupherServer.CMS.Outbox do
   def send(attrs) when is_map(attrs) do
     with {:ok, event} <- Map.fetch(attrs, :event),
          {:ok, worker} <- required_worker(attrs),
-         {:ok, command_id} <- required_command_id(attrs),
+         {:ok, {identity_type, command_id}} <- required_identity(attrs),
          {:ok, resource_type} <- Map.fetch(attrs, :resource_type),
          {:ok, resource_id} <- Map.fetch(attrs, :resource_id) do
       event_attrs = %{
@@ -46,6 +48,8 @@ defmodule GroupherServer.CMS.Outbox do
         resource_type: resource_type,
         resource_id: to_string(resource_id),
         command_id: command_id,
+        identity_type: identity_type,
+        effect_key: effect_key(attrs),
         data: normalize_data(Map.get(attrs, :data, %{})),
         status: :pending,
         attempts: 0,
@@ -235,10 +239,33 @@ defmodule GroupherServer.CMS.Outbox do
     end
   end
 
-  defp required_command_id(attrs) do
-    case Ecto.UUID.cast(Map.get(attrs, :command_id)) do
-      {:ok, command_id} -> {:ok, command_id}
+  defp required_identity(attrs) do
+    case Map.fetch(attrs, :identity) do
+      {:ok, {:command, command_id}} -> cast_command_identity(command_id)
+      {:ok, {:workflow, workflow_ref}} -> cast_workflow_identity(workflow_ref)
+      {:ok, _invalid} -> {:error, :outbox_identity_required}
+      :error -> cast_command_identity(Map.get(attrs, :command_id))
+    end
+  end
+
+  defp cast_command_identity(command_id) do
+    case Ecto.UUID.cast(command_id) do
+      {:ok, command_id} -> {:ok, {:command, command_id}}
       :error -> {:error, :outbox_command_id_required}
+    end
+  end
+
+  defp cast_workflow_identity(workflow_ref)
+       when is_binary(workflow_ref) and byte_size(workflow_ref) > 0 do
+    {:ok, {:workflow, workflow_ref}}
+  end
+
+  defp cast_workflow_identity(_workflow_ref), do: {:error, :outbox_workflow_ref_required}
+
+  defp effect_key(attrs) do
+    case Map.get(attrs, :effect_key) do
+      key when is_binary(key) and key != "" -> key
+      _ -> "default"
     end
   end
 

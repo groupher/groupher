@@ -409,7 +409,7 @@ type RootMutationType {
   requestDestroyCommunity(community: String!, commandId: ID!): Community
 
   "register an uploaded asset into the community asset library"
-  registerCommunityAsset(community: String!, asset: CommunityAssetInput!): CommunityAsset
+  registerCommunityAsset(community: String!, asset: CommunityAssetInput!, commandId: ID!): CommunityAsset
 
   "create a short-lived assets-hub upload intent"
   createCommunityAssetUploadIntent(community: String!, file: CommunityAssetUploadFileInput!): CommunityAssetUploadIntent
@@ -418,7 +418,7 @@ type RootMutationType {
   completeCommunityAssetUpload(input: CommunityAssetUploadCompletionInput!): CommunityAsset
 
   "delete an unreferenced community asset from the asset library"
-  deleteCommunityAsset(community: String!, id: ID!): CommunityAsset
+  deleteCommunityAsset(community: String!, id: ID!, commandId: ID!): CommunityAsset
 
   "create category"
   createCategory(community: String!, title: String!, slug: String!): Category
@@ -443,25 +443,25 @@ type RootMutationType {
 
   "create a tag"
   createCommunityTag(
-    title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, groupId: ID!, thread: Thread, extra: [String], marker: MarkerInput
+    commandId: ID!, title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, groupId: ID!, thread: Thread, extra: [String], marker: MarkerInput
   ): CommunityTag
 
   "update a tag"
   updateCommunityTag(
-    id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, groupId: ID, thread: Thread, extra: [String], marker: MarkerInput
+    commandId: ID!, id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, groupId: ID, thread: Thread, extra: [String], marker: MarkerInput
   ): CommunityTag
 
   "create a tag group"
-  createCommunityTagGroup(title: String!, community: String!, thread: Thread): CommunityTagGroup
+  createCommunityTagGroup(commandId: ID!, title: String!, community: String!, thread: Thread): CommunityTagGroup
 
   "update a tag group"
-  updateCommunityTagGroup(id: ID!, community: String!, title: String!, thread: Thread): CommunityTagGroup
+  updateCommunityTagGroup(commandId: ID!, id: ID!, community: String!, title: String!, thread: Thread): CommunityTagGroup
 
   "delete a tag group"
-  deleteCommunityTagGroup(id: ID!, community: String!, thread: Thread): CommunityTagGroup
+  deleteCommunityTagGroup(commandId: ID!, id: ID!, community: String!, thread: Thread): CommunityTagGroup
 
   "delete a tag by thread"
-  deleteCommunityTag(id: ID!, community: String!, thread: Thread): CommunityTag
+  deleteCommunityTag(commandId: ID!, id: ID!, community: String!, thread: Thread): CommunityTag
 
   "Records one visible public Article read through ViewTracker"
   trackArticleView(article: ArticlePathInput!): ArticleViewTrackResult!
@@ -491,19 +491,19 @@ type RootMutationType {
   unsubscribeCommunity(community: String!): Community
 
   "set a community_tag to content"
-  setCommunityTag(article: ArticlePathInput!, communityTagId: ID!): Article
+  setCommunityTag(commandId: ID!, article: ArticlePathInput!, communityTagId: ID!): Article
 
   "unset a tag to content"
-  unsetCommunityTag(article: ArticlePathInput!, communityTagId: ID!): Article
+  unsetCommunityTag(commandId: ID!, article: ArticlePathInput!, communityTagId: ID!): Article
 
   "reindex tags in given group"
-  reindexTagsInGroup(community: String!, thread: Thread, groupId: ID!, tags: [ReindexTagInput]): Done
+  reindexTagsInGroup(commandId: ID!, community: String!, thread: Thread, groupId: ID!, tags: [ReindexTagInput]): Done
 
   "reindex tags across groups"
-  reindexCommunityTags(community: String!, thread: Thread, tags: [ReindexCommunityTagInput]): Done
+  reindexCommunityTags(commandId: ID!, community: String!, thread: Thread, tags: [ReindexCommunityTagInput]): Done
 
   "reindex tag groups"
-  reindexCommunityTagGroups(community: String!, thread: Thread, groups: [ReindexCommunityTagGroupInput]): Done
+  reindexCommunityTagGroups(commandId: ID!, community: String!, thread: Thread, groups: [ReindexCommunityTagGroupInput]): Done
 
   "mirror article to other community"
   mirrorArticle(commandId: ID!, article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article

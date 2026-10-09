@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.ChangelogTagCRUD d
   setup do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     community_tag_attrs = mock_attrs(:community_tag)
 
@@ -37,7 +37,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.ChangelogTagCRUD d
         groupId: group.id
       }
 
-      passport_rules = %{community.title => %{"changelog.community_tag.create" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "changelog.community_tag.create" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       created = rule_conn |> gq_mutation(@create_tag_query, variables)
@@ -66,7 +72,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.ChangelogTagCRUD d
         extra: ["menuID", "menuID2"]
       }
 
-      passport_rules = %{community.title => %{"changelog.community_tag.create" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "changelog.community_tag.create" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       created = rule_conn |> gq_mutation(@create_tag_query, variables)
@@ -126,7 +138,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.ChangelogTagCRUD d
         thread: "CHANGELOG"
       }
 
-      passport_rules = %{community.title => %{"changelog.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "changelog.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated = rule_conn |> gq_mutation(@update_tag_query, variables)
@@ -153,7 +171,12 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.ChangelogTagCRUD d
 
       rule_conn =
         simu_conn(:user,
-          cms: %{community.title => %{"changelog.community_tag.delete" => true}}
+          cms: %{
+            community.title => %{
+              "community.update" => true,
+              "changelog.community_tag.delete" => true
+            }
+          }
         )
 
       deleted = rule_conn |> gq_mutation(@delete_tag_query, variables)

@@ -22,6 +22,16 @@ defmodule GroupherServer.CMS.Assets.ProviderReconciliation do
 
   @doc "Re-enqueues missing provider-delete intents for old soft-deleted assets."
   def enqueue_missing(%Community{id: community_id}, opts \\ []) do
+    workflow_ref = Keyword.get(opts, :workflow_ref)
+
+    if not (is_binary(workflow_ref) and workflow_ref != "") do
+      {:error, :workflow_ref_required}
+    else
+      enqueue_missing_for_workflow(community_id, opts, workflow_ref)
+    end
+  end
+
+  defp enqueue_missing_for_workflow(community_id, opts, workflow_ref) do
     cutoff =
       DateTime.add(
         DateTime.utc_now(:second),
@@ -48,7 +58,8 @@ defmodule GroupherServer.CMS.Assets.ProviderReconciliation do
                worker: CMS.Outbox.Workers.Asset.Cleanup,
                resource_type: "community_asset",
                resource_id: asset.id,
-               command_id: Ecto.UUID.generate(),
+               identity: {:workflow, workflow_ref},
+               effect_key: "asset:#{asset.id}",
                data: %{asset_id: asset.id, public_ref: asset.public_ref}
              }) do
           {:ok, _event} -> {:ok, count + 1}

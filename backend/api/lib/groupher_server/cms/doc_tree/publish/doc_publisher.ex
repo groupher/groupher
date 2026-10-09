@@ -67,15 +67,19 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
           lifecycle_version: lifecycle_version
         },
         %User{} = user,
-        sync_cover?
+        sync_cover?,
+        opts \\ []
       ) do
+    publish_opts =
+      Keyword.merge(
+        [expected_draft_version: draft_version, expected_lifecycle_version: lifecycle_version],
+        opts
+      )
+
     with {:ok, page} <- find_publish_page(community, branch, doc_id, page_node_id),
          {:ok, ancestors} <- ancestor_chain(community, branch, page),
          {:ok, published} <-
-           CMS.Docs.publish_branch(doc_id, branch.id, user,
-             expected_draft_version: draft_version,
-             expected_lifecycle_version: lifecycle_version
-           ),
+           CMS.Docs.publish_branch(doc_id, branch.id, user, publish_opts),
          {:ok, public_ancestors} <- upsert_public_ancestors(community, branch, ancestors),
          {:ok, public_page} <-
            upsert_public_node(community, branch, page, doc_id),

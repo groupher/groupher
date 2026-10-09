@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.Communities.Meta do
 
   describe "[article count meta]" do
     test "created community should have default meta ", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       assert strip_struct(community.meta) ==
                Map.merge(@default_meta, %{moderators_ids: [community.user_id]})
@@ -28,9 +28,10 @@ defmodule GroupherServer.Test.CMS.Communities.Meta do
 
     test "update community should keep default meta", ~m(user)a do
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
-      {:ok, community} = CMS.Communities.update(community, %{title: "new title"}, user)
+      {:ok, community} =
+        CMS.Communities.update(community, %{title: "new title"}, user, Ecto.UUID.generate())
 
       assert strip_struct(community.meta) ==
                Map.merge(@default_meta, %{moderators_ids: [community.user_id]})

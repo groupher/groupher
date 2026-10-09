@@ -103,24 +103,24 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     sync_cover? = Keyword.get(opts, :sync_cover, true)
 
     with {:ok, branch} <- Branch.resolve(community, args) do
-      publish_changes_for_branch(community, branch, args, user, sync_cover?)
+      publish_changes_for_branch(community, branch, args, user, sync_cover?, opts)
     end
   end
 
-  defp publish_changes_for_branch(community, branch, args, user, sync_cover?) do
+  defp publish_changes_for_branch(community, branch, args, user, sync_cover?, opts) do
     Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
       Repo.transaction(fn ->
-        publish_changes_locked(community, branch, args, user, sync_cover?)
+        publish_changes_locked(community, branch, args, user, sync_cover?, opts)
       end)
       |> normalize_transaction_result()
     end)
   end
 
-  defp publish_changes_locked(community, branch, args, user, sync_cover?) do
+  defp publish_changes_locked(community, branch, args, user, sync_cover?, opts) do
     with {:ok, _canonical} <- CMS.Gate.access_check(user, :manage_docs, community),
          {:ok, state} <- State.ensure_draft_state(community, branch_id: branch.id),
          {:ok, _} <- verify_checklist_revision(state, args) do
-      prepare_publish_flow(community, branch, args, user, sync_cover?)
+      prepare_publish_flow(community, branch, args, user, sync_cover?, opts)
     else
       {:error, reason} -> Repo.rollback(reason)
       reason -> Repo.rollback(reason)
@@ -135,7 +135,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     end
   end
 
-  defp prepare_publish_flow(community, branch, args, user, sync_cover?) do
+  defp prepare_publish_flow(community, branch, args, user, sync_cover?, opts) do
     current_checklist = checklist(community, branch_id: branch.id)
 
     with {:ok, selection} <- Selection.from_input(args, current_checklist),
@@ -148,7 +148,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
         current_checklist,
         selection,
         user,
-        sync_cover?
+        sync_cover?,
+        opts
       )
     else
       {:error, reason} -> Repo.rollback(reason)
@@ -176,7 +177,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          current_checklist,
          _selection,
          _user,
-         _sync_cover?
+         _sync_cover?,
+         _opts
        ) do
     publish_payload(true, nil, current_checklist)
   end
@@ -188,13 +190,15 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          _current_checklist,
          selection,
          user,
-         _sync_cover?
+         _sync_cover?,
+         opts
        ) do
     restore_selected_changes(
       community,
       branch,
       selection.restore_tree_checklist_item_ids,
-      user
+      user,
+      opts
     )
     |> rollback_unless_ok()
   end
@@ -206,7 +210,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          current_checklist,
          selection,
          user,
-         sync_cover?
+         sync_cover?,
+         opts
        ) do
     publish_selected_changes(
       community,
@@ -216,7 +221,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       selection.tree_checklist_item_ids,
       selection.restore_tree_checklist_item_ids,
       user,
-      sync_cover?
+      sync_cover?,
+      opts
     )
     |> rollback_unless_ok()
   end
@@ -303,14 +309,15 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          %Community{} = community,
          branch,
          restore_tree_checklist_item_ids,
-         %User{} = user
+         %User{} = user,
+         opts
        ) do
     with {:ok, _events} <-
            restore_tree_checklist_items(community, branch, restore_tree_checklist_item_ids, user),
          next_checklist <- checklist(community, branch_id: branch.id),
          {:ok, _state} <-
            DocPublishRelease.mark_site_draft_clean(community, branch, next_checklist) do
-      with {:ok, _} <- invalidate_doc_tree(community) do
+      with {:ok, _} <- invalidate_doc_tree(community, opts) do
         {:ok, publish_payload(true, nil, next_checklist)}
       end
     end
@@ -324,7 +331,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          tree_checklist_item_ids,
          restore_tree_checklist_item_ids,
          %User{} = user,
-         sync_cover?
+         sync_cover?,
+         opts
        ) do
     with {:ok, _restored_events} <-
            restore_tree_checklist_items(community, branch, restore_tree_checklist_item_ids, user),
@@ -345,7 +353,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
              current_checklist.doc_changes,
              doc_checklist_item_ids,
              user,
-             sync_cover?
+             sync_cover?,
+             opts
            ),
          {:ok, _} <- PublicProjection.apply_tree_events(community, branch, tree_result.events),
          {:ok, release} <-
@@ -358,7 +367,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
              user,
              next_checklist
            ) do
-      with {:ok, _} <- invalidate_doc_tree(community) do
+      with {:ok, _} <- invalidate_doc_tree(community, opts) do
         {:ok, publish_payload(true, release, next_checklist)}
       end
     end
@@ -373,17 +382,38 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     }
   end
 
-  defp invalidate_doc_tree(community) do
-    case CMS.Outbox.send(%{
-           event: "doc_tree.changed",
-           worker: CMS.Outbox.Workers.Community.Cleanup,
-           resource_type: "community",
-           resource_id: community.id,
-           command_id: Ecto.UUID.generate(),
-           data: %{community: community.slug, community_id: community.id}
-         }) do
-      {:ok, _event} -> {:ok, :pass}
-      {:error, reason} -> {:error, reason}
+  defp invalidate_doc_tree(community, opts) do
+    with {:ok, identity} <- outbox_identity(opts),
+         {:ok, _event} <-
+           CMS.Outbox.send(%{
+             event: "doc_tree.changed",
+             worker: CMS.Outbox.Workers.Community.Cleanup,
+             resource_type: "community",
+             resource_id: community.id,
+             identity: identity,
+             effect_key: "doc-tree:#{Keyword.get(opts, :effect_key, "changed")}",
+             data: %{community: community.slug, community_id: community.id}
+           }) do
+      {:ok, :pass}
+    end
+  end
+
+  defp outbox_identity(opts) do
+    case Keyword.get(opts, :causation_id) || Keyword.get(opts, :command_id) do
+      command_id when is_binary(command_id) ->
+        case Ecto.UUID.cast(command_id) do
+          {:ok, command_id} -> {:ok, {:command, command_id}}
+          :error -> {:error, :outbox_command_id_required}
+        end
+
+      nil ->
+        case Keyword.get(opts, :workflow_ref) do
+          workflow_ref when is_binary(workflow_ref) and workflow_ref != "" ->
+            {:ok, {:workflow, workflow_ref}}
+
+          _ ->
+            {:error, :outbox_identity_required}
+        end
     end
   end
 
@@ -393,7 +423,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          checklist_items,
          doc_checklist_item_ids,
          %User{} = user,
-         sync_cover?
+         sync_cover?,
+         opts
        ) do
     items = Map.new(checklist_items, &{&1.id, &1})
 
@@ -405,7 +436,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
                branch,
                item,
                user,
-               sync_cover?
+               sync_cover?,
+               opts
              ) do
         {:ok, %{published: published, checklist_item: item}}
       else

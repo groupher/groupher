@@ -12,6 +12,8 @@
   facade/Command 边界，清理重复 use-case 命名，并增加折行 inline `do:` 的仓库约束。
 - [CMS Command、Gate、Lifecycle 与 Persistence 边界](./cms-command-gate-lifecycle-persist-boundary.md)：统一
   写入入口、授权与状态职责，盘点遗漏的 Command，并收口 Writer/Persist 边界。
+- [CMS Command Phase 5：Legacy Mutation 分类与迁移](./cms-command-phase-5-legacy-workflows.md)：详细分类
+  Tag/TagGroup、Assets 与后续 CMS mutation，冻结 one-shot、Receipt、领域 workflow、Outbox identity 和验收边界。
 - [CMS Command 客户端 Identity 边界修复](./cms-command-client-identity-fix.md)：保留 GraphQL
   `commandId`，将创建、retry 复用和 unknown outcome 恢复统一收回 mutation executor。
 - [Backend Business Return Shape 收敛](./backend-business-return-shape.md)：统一业务层

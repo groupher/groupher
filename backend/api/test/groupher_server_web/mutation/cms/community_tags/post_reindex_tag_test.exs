@@ -37,7 +37,13 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
       {:ok, community_tag4} =
         CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "4"), user)
 
-      passport_rules = %{community.title => %{"post.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
@@ -111,7 +117,13 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
           user
         )
 
-      passport_rules = %{community.title => %{"post.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{

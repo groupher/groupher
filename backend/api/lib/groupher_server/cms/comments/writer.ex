@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
   """
   @spec create(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(map())
-  def create(thread, article, body, %User{} = user), do: create(thread, article, body, user, nil)
+  def create(_thread, _article, _body, %User{}), do: {:error, CmsErrorCat.command_id_required()}
 
   @doc """
   Creates a top-level Comment from an already resolved Article identity.
@@ -147,28 +147,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
     article = Repo.preload(article, author: :user)
 
     if is_nil(command_id) do
-      generated_command_id = Ecto.UUID.generate()
-
-      create_with_access(
-        thread,
-        article,
-        branch_id,
-        body,
-        user,
-        info,
-        generated_command_id,
-        community
-      )
-      |> then(fn
-        {:ok, result} ->
-          with {:ok, confirmation} <- created_confirmation(result, article) do
-            replay_created(confirmation, article, generated_command_id)
-          end
-
-        error ->
-          error
-      end)
-      |> normalize_comments_locked()
+      {:error, CmsErrorCat.command_id_required()}
     else
       %Command{
         actor: user,
@@ -363,15 +342,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   @spec reply(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(map())
   def reply(%Comment{} = target_comment, body, %User{} = user, command_id) do
     if is_nil(command_id) do
-      reply_action(
-        %{actor: user, params: body, command_id: Ecto.UUID.generate()},
-        target_comment
-      )
-      |> then(fn
-        {:ok, confirmation} -> reply_result(confirmation, target_comment)
-        error -> error
-      end)
-      |> normalize_comments_locked()
+      {:error, CmsErrorCat.command_id_required()}
     else
       %Command{
         actor: user,

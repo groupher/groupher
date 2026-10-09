@@ -28,7 +28,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     test "registers community assets and counts active storage once", ~m(community user)a do
       attrs = image_asset_attrs("hero.png", 120)
 
-      {:ok, asset} = CMS.Assets.register_to_community(community, attrs, user)
+      {:ok, asset} =
+        CMS.Assets.register_to_community(community, attrs, user, Ecto.UUID.generate())
 
       assert asset.asset_type == :image
       assert asset.uploader_id == user.id
@@ -42,7 +43,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         CMS.Assets.register_to_community(
           community,
           Map.merge(attrs, %{size_bytes: 256, title: "updated"}),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       assert same_asset.id == asset.id
@@ -63,7 +65,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
             send(parent, {:task_ready, self()})
 
             receive do
-              :go -> CMS.Assets.register_to_community(community, attrs, user)
+              :go ->
+                CMS.Assets.register_to_community(community, attrs, user, Ecto.UUID.generate())
             end
           end)
         end
@@ -95,13 +98,15 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         |> image_asset_attrs(64)
         |> Map.merge(%{storage: "s3", storage_key: "community/assets/signed.png"})
 
-      {:ok, asset} = CMS.Assets.register_to_community(community, attrs, user)
+      {:ok, asset} =
+        CMS.Assets.register_to_community(community, attrs, user, Ecto.UUID.generate())
 
       {:ok, same_asset} =
         CMS.Assets.register_to_community(
           community,
           Map.merge(attrs, %{url: "https://assets.groupher.test/signed-b.png", size_bytes: 96}),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       assert same_asset.id == asset.id
@@ -171,13 +176,28 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     test "linking refs replaces removed assets and keeps retained assets",
          ~m(community post user)a do
       {:ok, asset_a} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("replace-a.png", 10), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("replace-a.png", 10),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, asset_b} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("replace-b.png", 20), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("replace-b.png", 20),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, asset_c} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("replace-c.png", 30), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("replace-c.png", 30),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert {:ok, %{body: refs, cover: []}} =
                CMS.Assets.link_refs(
@@ -225,10 +245,20 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     test "replaces one Draft asset use with a version and source guard",
          ~m(community post user)a do
       {:ok, from_asset} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("one-use-a.png", 10), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("one-use-a.png", 10),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, to_asset} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("one-use-b.png", 20), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("one-use-b.png", 20),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
@@ -240,8 +270,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       draft = Repo.get_by!(ArticleDraft, article_id: post.id)
       body = Repo.get!(ArticleBodyDraft, draft.body_draft_id)
       {:ok, body_bag} = BodyBag.from_document(body)
+      workflow_ref = "asset-replacement:test:#{post.id}"
 
-      assert {:ok, %{draft_version: version}} =
+      assert {:ok, %{draft_version: version, workflow_ref: ^workflow_ref}} =
                CMS.Assets.replace_use(
                  post,
                  %{
@@ -253,7 +284,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                    body_bag: body_bag
                  },
                  user,
-                 nil
+                 {:workflow, workflow_ref}
                )
 
       assert version == draft.version + 1
@@ -272,17 +303,27 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                    body_bag: body_bag
                  },
                  user,
-                 nil
+                 {:workflow, workflow_ref}
                )
     end
 
     test "creates a global replacement plan from observed usage facts",
          ~m(community post user)a do
       {:ok, from_asset} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("plan-a.png", 10), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("plan-a.png", 10),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, to_asset} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("plan-b.png", 20), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("plan-b.png", 20),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
@@ -307,7 +348,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
     test "rejects refs with both asset_id and inline asset", ~m(community post user)a do
       {:ok, asset} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("existing.png", 50), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("existing.png", 50),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert {:error,
               %ErrorCat.Error{
@@ -417,7 +463,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
     test "paginates refs for one asset", ~m(community post user)a do
       {:ok, asset} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("many-refs.png", 70), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("many-refs.png", 70),
+          user,
+          Ecto.UUID.generate()
+        )
 
       asset_refs =
         Enum.map(1..105, fn position ->
@@ -491,7 +542,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         CMS.Assets.register_to_community(
           community,
           image_asset_attrs("quota-full.png", 100 * 1024 * 1024),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       assert {:error,
@@ -511,7 +563,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         CMS.Assets.register_to_community(
           community,
           image_asset_attrs("quota-complete-full.png", 100 * 1024 * 1024),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       assert {:error,
@@ -546,7 +599,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           storage_key: "communities/groupher/assets/2026_07/29_origin_active/original"
         })
 
-      {:ok, asset} = CMS.Assets.register_to_community(community, attrs, user)
+      {:ok, asset} =
+        CMS.Assets.register_to_community(community, attrs, user, Ecto.UUID.generate())
 
       assert {:ok, origin_info} = CMS.Assets.origin_info(asset.public_ref)
       assert origin_info.public_ref == "asset_origin_active"
@@ -561,7 +615,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert origin_info.height == 630
 
       assert {:ok, _receipt} = CMS.Assets.backfill_usage(community)
-      {:ok, deleted_asset} = CMS.Assets.delete(community, asset.id)
+      {:ok, deleted_asset} = CMS.Assets.delete(community, asset.id, user, Ecto.UUID.generate())
       assert deleted_asset.status == :deleted
 
       assert {:error,
@@ -586,15 +640,20 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         CMS.Assets.register_to_community(
           community,
           image_asset_attrs("archive-me.png", 80),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
-      assert {:ok, archived} = CMS.Assets.archive(community, asset.id)
+      assert {:ok, archived} =
+               CMS.Assets.archive(community, asset.id, user, Ecto.UUID.generate())
+
       assert archived.status == :archived
       assert {:ok, %{entries: entries}} = CMS.Assets.page(community, %{page: 1, size: 20})
       refute Enum.any?(entries, &(&1.id == asset.id))
 
-      assert {:ok, restored} = CMS.Assets.restore(community, asset.id)
+      assert {:ok, restored} =
+               CMS.Assets.restore(community, asset.id, user, Ecto.UUID.generate())
+
       assert restored.status == :active
       assert {:ok, %{entries: entries}} = CMS.Assets.page(community, %{page: 1, size: 20})
       assert Enum.any?(entries, &(&1.id == asset.id))
@@ -605,7 +664,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         CMS.Assets.register_to_community(
           community,
           image_asset_attrs("gc-me.png", 80),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       assert {:error, %ErrorCat.Error{details: "asset usage backfill incomplete"}} =
@@ -626,7 +686,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           community,
           image_asset_attrs("provider-owned.png", 80)
           |> Map.merge(%{storage: "r2", storage_key: "owned/original"}),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       provider_page = fn cursor, limit ->
@@ -672,7 +733,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                 reason: :custom,
                 details: "asset is still referenced"
               }} =
-               CMS.Assets.delete(community, ref.asset_id)
+               CMS.Assets.delete(community, ref.asset_id, user, Ecto.UUID.generate())
 
       assert {:ok, %CommunityAsset{}} = ORM.find(CommunityAsset, ref.asset_id)
     end
@@ -731,7 +792,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, _draft} = open_draft(other_post, user)
 
       {:ok, asset} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("shared.png", 90), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("shared.png", 90),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(

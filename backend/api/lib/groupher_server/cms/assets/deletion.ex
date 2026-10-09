@@ -45,10 +45,13 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   end
 
   @doc "Soft-deletes generated assets and enqueues provider cleanup."
-  @spec delete_generated_assets(Community.t(), [String.t()]) :: {:ok, :pass}
-  def delete_generated_assets(%Community{id: community_id} = community, public_refs)
-      when is_list(public_refs) do
+  @spec delete_generated_assets(Community.t(), [String.t()], keyword()) :: {:ok, :pass}
+  def delete_generated_assets(%Community{id: community_id} = community, public_refs, opts \\ [])
+      when is_list(public_refs) and is_list(opts) do
     public_refs = Enum.filter(public_refs, &is_binary/1)
+
+    workflow_ref =
+      Keyword.get(opts, :workflow_ref, retention_workflow_ref(community_id, public_refs))
 
     from(asset in CommunityAsset,
       where:
@@ -57,10 +60,21 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     )
     |> Repo.all()
     |> Enum.each(fn asset ->
-      _ = Writer.delete(community, asset.id)
+      _ =
+        Repo.transaction(fn ->
+          case Writer.delete(community, asset.id, {:workflow, workflow_ref}) do
+            {:ok, deleted} -> deleted
+            {:error, reason} -> Repo.rollback(reason)
+          end
+        end)
     end)
 
     {:ok, :pass}
+  end
+
+  defp retention_workflow_ref(community_id, public_refs) do
+    digest = :crypto.hash(:sha256, :erlang.term_to_binary(Enum.sort(public_refs)))
+    "wallpaper-retention:#{community_id}:#{Base.encode16(digest, case: :lower)}"
   end
 
   @doc """

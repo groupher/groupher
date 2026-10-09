@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Move do
                destination,
                destination_binding,
                canonical.thread,
-               Ecto.UUID.generate()
+               command_id
              ),
            {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(moved) do
         {:ok, BindingSupport.confirmation(canonical, destination, command_id)}

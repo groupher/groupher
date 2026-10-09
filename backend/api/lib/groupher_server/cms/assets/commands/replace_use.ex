@@ -22,38 +22,61 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   alias CMS.Model.{Article, ArticleAssetRef, ArticleDraft, Community, CommunityAsset}
   alias CMS.Assets.Commands.ReplaceUseConfirmation, as: Confirmation
 
-  @doc "Replaces one Draft-owned asset use without mutating an immutable Revision."
-  @spec execute(map() | Article.t(), map(), User.t(), Ecto.UUID.t()) ::
+  @doc "Replaces one Draft-owned asset use without mutating an immutable Revision.
+
+  User retries use a UUID command identity and the Receipt path. ReplacementPlan
+  applies use a stable `{:workflow, step_ref}` identity; it never manufactures a
+  user command id for a locator. A nil identity remains only for the legacy direct
+  service helper and is not a GraphQL mutation path."
+  @spec execute(
+          map() | Article.t(),
+          map(),
+          User.t(),
+          Ecto.UUID.t() | {:workflow, String.t()} | nil
+        ) ::
           {:ok, map()} | {:error, term()}
   def execute(article_or_projection, attrs, %User{} = user, command_id) when is_map(attrs) do
     with {:ok, article} <- load_article(article_or_projection),
          {:ok, %{community: %Community{} = community}} <-
            binding_context(article, article_or_projection) do
-      params = Map.drop(attrs, [:command_id, :cur_user])
+      params = Map.drop(attrs, [:command_id, :cur_user, :step_ref])
 
       if is_nil(command_id) do
         with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user) do
           replace_in_draft(article, community, params, author, user)
         end
       else
-        command = %Command{
-          actor: user,
-          command_id: command_id,
-          operation: :article_replace_asset,
-          target: article,
-          params: params
-        }
+        case command_id do
+          {:workflow, workflow_ref} when is_binary(workflow_ref) and workflow_ref != "" ->
+            with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user),
+                 {:ok, result} <- replace_in_draft(article, community, params, author, user) do
+              {:ok, Map.put(result, :workflow_ref, workflow_ref)}
+            end
 
-        with {:ok, confirmation} <-
-               Command.execute(command,
-                 action: &replace_action(&1, community),
-                 confirmation: Confirmation
-               ) do
-          present_confirmation(confirmation)
+          _ ->
+            execute_command(article, community, params, user, command_id)
         end
       end
     else
       {:error, _reason} = error -> error
+    end
+  end
+
+  defp execute_command(article, community, params, user, command_id) do
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :article_replace_asset,
+      target: article,
+      params: params
+    }
+
+    with {:ok, confirmation} <-
+           Command.execute(command,
+             action: &replace_action(&1, community),
+             confirmation: Confirmation
+           ) do
+      present_confirmation(confirmation)
     end
   end
 

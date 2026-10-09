@@ -164,7 +164,7 @@ defmodule GroupherServer.TestMate do
       def create_empty_docs_community(user) do
         attrs = mock_attrs(:community) |> Map.put(:user, user)
 
-        with {:ok, community} <- CMS.Communities.create(attrs, user),
+        with {:ok, community} <- CMS.Communities.create(attrs, user, Ecto.UUID.generate()),
              {:ok, state} <-
                ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id),
              {:ok, _tab} <-

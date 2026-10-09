@@ -150,6 +150,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :register_community_asset, :community_asset do
       arg(:community, non_null(:string))
       arg(:asset, non_null(:community_asset_input))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.update")
@@ -186,6 +187,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :delete_community_asset, :community_asset do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "asset.upload")
@@ -284,6 +286,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "create a tag"
     field :create_community_tag, :community_tag do
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:slug, non_null(:string))
       arg(:color, non_null(:rainbow_color))
@@ -302,6 +305,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "update a tag"
     field :update_community_tag, :community_tag do
+      arg(:command_id, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:title, :string)
@@ -322,6 +326,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "create a tag group"
     field :create_community_tag_group, :community_tag_group do
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
@@ -334,6 +339,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "update a tag group"
     field :update_community_tag_group, :community_tag_group do
+      arg(:command_id, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:title, non_null(:string))
@@ -347,6 +353,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "delete a tag group"
     field :delete_community_tag_group, :community_tag_group do
+      arg(:command_id, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
@@ -359,6 +366,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "delete a tag by thread"
     field :delete_community_tag, :community_tag do
+      arg(:command_id, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)

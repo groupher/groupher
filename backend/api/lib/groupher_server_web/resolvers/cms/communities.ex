@@ -95,42 +95,60 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
     CMS.Communities.members(:moderators, community, filter)
   end
 
-  def create_community_tag(_root, %{thread: thread, community: community} = args, %{
+  def create_community_tag(
+        _root,
+        %{thread: thread, community: community, command_id: command_id} = args,
+        %{
+          context: %{cur_user: user}
+        }
+      ) do
+    CMS.Communities.create_tag(community, thread, args, user, command_id)
+  end
+
+  def create_community_tag_group(
+        _root,
+        %{thread: thread, community: community, command_id: command_id} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.Communities.create_tag_group(community, thread, args, user, command_id)
+  end
+
+  def update_community_tag(_root, %{id: id, command_id: command_id} = args, %{
         context: %{cur_user: user}
       }) do
-    CMS.Communities.create_tag(community, thread, args, user)
-  end
-
-  def create_community_tag_group(_root, %{thread: thread, community: community} = args, _info) do
-    CMS.Communities.create_tag_group(community, thread, args)
-  end
-
-  def update_community_tag(_root, %{id: id} = args, _info) do
-    CMS.Communities.update_tag(id, args)
+    CMS.Communities.update_tag(id, args, user, command_id)
   end
 
   def update_community_tag_group(
         _root,
-        %{id: id, thread: thread, community: community} = args,
-        _info
+        %{id: id, thread: thread, community: community, command_id: command_id} = args,
+        %{context: %{cur_user: user}}
       ) do
-    CMS.Communities.update_tag_group(community, thread, id, args)
+    CMS.Communities.update_tag_group(community, thread, id, args, user, command_id)
   end
 
-  def delete_community_tag_group(_root, %{id: id, thread: thread, community: community}, _info) do
-    CMS.Communities.delete_tag_group(community, thread, id)
+  def delete_community_tag_group(
+        _root,
+        %{id: id, thread: thread, community: community, command_id: command_id},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.Communities.delete_tag_group(community, thread, id, user, command_id)
   end
 
-  def delete_community_tag(_root, %{id: id}, _info) do
-    CMS.Communities.delete_tag(id)
+  def delete_community_tag(_root, %{id: id, command_id: command_id}, %{context: %{cur_user: user}}) do
+    CMS.Communities.delete_tag(id, user, command_id)
   end
 
-  def set_community_tag(_root, ~m(article community_tag_id)a, _info) do
-    CMS.Communities.set_tag(article, community_tag_id)
+  def set_community_tag(_root, ~m(article community_tag_id command_id)a, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Communities.set_tag(article, community_tag_id, user, command_id)
   end
 
-  def unset_community_tag(_root, ~m(article community_tag_id)a, _info) do
-    CMS.Communities.unset_tag(article, community_tag_id)
+  def unset_community_tag(_root, ~m(article community_tag_id command_id)a, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Communities.unset_tag(article, community_tag_id, user, command_id)
   end
 
   def community_tag_groups(_root, ~m(community thread)a, _info) do
@@ -163,20 +181,36 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
     {:ok, nil}
   end
 
-  def reindex_community_tags(_root, ~m(community thread group_id tags)a, _info) do
-    with {:ok, _} <- CMS.Communities.reindex_tags(community, thread, group_id, tags) do
+  def reindex_community_tags(_root, ~m(community thread group_id tags command_id)a, %{
+        context: %{cur_user: user}
+      }) do
+    with {:ok, _} <-
+           CMS.Communities.reindex_tags_in_group(
+             community,
+             thread,
+             group_id,
+             tags,
+             user,
+             command_id
+           ) do
       {:ok, %{done: true}}
     end
   end
 
-  def reindex_community_tags_across_groups(_root, ~m(community thread tags)a, _info) do
-    with {:ok, _} <- CMS.Communities.reindex_tags(community, thread, tags) do
+  def reindex_community_tags_across_groups(_root, ~m(community thread tags command_id)a, %{
+        context: %{cur_user: user}
+      }) do
+    with {:ok, _} <-
+           CMS.Communities.reindex_tags_across_groups(community, thread, tags, user, command_id) do
       {:ok, %{done: true}}
     end
   end
 
-  def reindex_community_tag_groups(_root, ~m(community thread groups)a, _info) do
-    with {:ok, _} <- CMS.Communities.reindex_tag_groups(community, thread, groups) do
+  def reindex_community_tag_groups(_root, ~m(community thread groups command_id)a, %{
+        context: %{cur_user: user}
+      }) do
+    with {:ok, _} <-
+           CMS.Communities.reindex_tag_groups(community, thread, groups, user, command_id) do
       {:ok, %{done: true}}
     end
   end

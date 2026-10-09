@@ -21,6 +21,8 @@ defmodule GroupherServer.CMS.DocTree.Commands.PublishChanges do
         Publish.publish_changes(community, params, user, publish_opts)
 
       command_id ->
+        publish_opts = Keyword.put(publish_opts, :causation_id, command_id)
+
         %Command{
           actor: user,
           command_id: command_id,

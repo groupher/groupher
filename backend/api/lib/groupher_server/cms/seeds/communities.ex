@@ -84,7 +84,8 @@ defmodule GroupherServer.CMS.Seeds.Communities do
             desc: "#{slug} is awesome!",
             logo: "https://assets.groupher.com/communities/groupher-alpha.png"
           },
-          user
+          user,
+          Ecto.UUID.generate()
         )
     end
   end
@@ -100,7 +101,7 @@ defmodule GroupherServer.CMS.Seeds.Communities do
         about_media_report: true
       })
 
-    CMS.Dashboard.update(community, :enable, enable)
+    CMS.Dashboard.update(community, :enable, enable, :operations, Ecto.UUID.generate())
   end
 
   def get(:pl) do

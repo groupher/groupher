@@ -102,39 +102,39 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
   ## Examples
 
-      Writer.delete(community, asset.id)
+      Writer.delete(community, asset.id, {:command, command_id})
       #=> {:ok, %CommunityAsset{status: :deleted}}
 
       Writer.delete(community, referenced_asset.id)
       #=> {:error, AssetErrorCat.custom("asset is still referenced")}
 
   """
-  @spec delete(Community.t(), T.id()) :: T.domain_res(CommunityAsset.t())
-  def delete(%Community{id: community_id}, asset_id) do
-    Repo.transaction(fn ->
-      with {:ok, asset} <- find_active_asset_for_update(community_id, asset_id),
-           {:ok, _} <- Completeness.guard(community_id),
-           false <- referenced?(asset),
-           {:ok, asset} <-
-             ORM.update(asset, %{
-               status: :deleted,
-               deleted_at: DateTime.utc_now(:second)
-             }),
-           {:ok, _event} <-
-             Outbox.send(%{
-               event: "asset.provider_delete",
-               worker: CMS.Outbox.Workers.Asset.Cleanup,
-               resource_type: "community_asset",
-               resource_id: asset.id,
-               command_id: Ecto.UUID.generate(),
-               data: %{asset_id: asset.id, public_ref: asset.public_ref}
-             }) do
-        asset
-      else
-        true -> Repo.rollback(AssetErrorCat.custom("asset is still referenced"))
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
+  @spec delete(Community.t(), T.id(), {:command | :workflow, String.t()}) ::
+          T.domain_res(CommunityAsset.t())
+  def delete(%Community{id: community_id}, asset_id, identity) do
+    with {:ok, asset} <- find_active_asset_for_update(community_id, asset_id),
+         {:ok, _} <- Completeness.guard(community_id),
+         false <- referenced?(asset),
+         {:ok, asset} <-
+           ORM.update(asset, %{
+             status: :deleted,
+             deleted_at: DateTime.utc_now(:second)
+           }),
+         {:ok, _event} <-
+           Outbox.send(%{
+             event: "asset.provider_delete",
+             worker: CMS.Outbox.Workers.Asset.Cleanup,
+             resource_type: "community_asset",
+             resource_id: asset.id,
+             identity: identity,
+             effect_key: "asset:#{asset.id}",
+             data: %{asset_id: asset.id, public_ref: asset.public_ref}
+           }) do
+      {:ok, asset}
+    else
+      true -> {:error, AssetErrorCat.custom("asset is still referenced")}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @doc "Archives an asset without changing Draft or Revision-owned refs."

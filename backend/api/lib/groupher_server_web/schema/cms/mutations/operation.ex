@@ -123,6 +123,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "set a community_tag to content"
     field :set_community_tag, :article do
+      arg(:command_id, non_null(:id))
       arg(:article, non_null(:article_path_input))
       arg(:community_tag_id, non_null(:id))
 
@@ -135,6 +136,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "unset a tag to content"
     field :unset_community_tag, :article do
+      arg(:command_id, non_null(:id))
       arg(:article, non_null(:article_path_input))
       arg(:community_tag_id, non_null(:id))
 
@@ -147,6 +149,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "reindex tags in given group"
     field :reindex_tags_in_group, :done do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
       arg(:group_id, non_null(:id))
@@ -160,6 +163,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "reindex tags across groups"
     field :reindex_community_tags, :done do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
       arg(:tags, list_of(:reindex_community_tag_input))
@@ -172,6 +176,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "reindex tag groups"
     field :reindex_community_tag_groups, :done do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
       arg(:groups, list_of(:reindex_community_tag_group_input))

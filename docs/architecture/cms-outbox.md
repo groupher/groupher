@@ -79,7 +79,9 @@ cms.outbox_events
   contract_version   positive integer
   resource_type      stable text, e.g. article
   resource_id        stable text
-  command_id         UUID
+  identity_type      command | workflow
+  command_id         text (legacy column name; UUID for command, durable ref for workflow)
+  effect_key         text
   data               bounded JSON map
   status             pending | executing | completed | failed
   attempts           non-negative integer
@@ -95,7 +97,9 @@ cms.outbox_events
 
 命名规则：
 
-- Command Receipt 与 Outbox 都使用 `resource_type`、`resource_id`、`command_id`。
+- Command Receipt 使用客户端 `command_id`；Outbox 使用 typed `identity`，物理 `command_id` 列仅为兼容旧表名。
+- `identity: {:command, id}` 表示用户业务命令；`identity: {:workflow, ref}` 表示维护、上传或批处理 workflow。
+- `effect_key` 区分同一 identity 对多个 scope/resource 产生的独立 effect，不能通过生成第二个 command UUID 绕过唯一键。
 - 不使用 `target_type/target_key`、`aggregate_type/aggregate_id` 或 `causation_id`。
 - `data` 只保存消费所需的最小、版本化事实，不保存完整 Article 或用户私密快照。
 - Event 是可靠执行记录，不是长期 Audit/Activity。
@@ -126,7 +130,8 @@ with {:ok, revision} <- Revision.Writer.insert(article, draft),
          worker: CMS.Outbox.Workers.Article.Cleanup,
          resource_type: "article",
          resource_id: article.id,
-         command_id: command_id,
+         identity: {:command, command_id},
+         effect_key: "article:#{article.id}:published",
          data: %{revision_id: revision.id}
        }) do
   {:ok, {:article, article.id}}

@@ -81,11 +81,16 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
       when not is_integer(inner_id),
       do: {:ok, :pass}
 
+  def invalidate_scope(community, binding, thread, command_id) do
+    invalidate_scope(community, binding, thread, command_id, scope_key(community, binding))
+  end
+
   def invalidate_scope(
         %Community{} = community,
         %{article_id: article_id, inner_id: inner_id},
         thread,
-        command_id
+        command_id,
+        effect_key
       ) do
     case CMS.Outbox.send(%{
            event: "article.visibility_changed",
@@ -93,6 +98,7 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
            resource_type: "article",
            resource_id: article_id,
            command_id: command_id,
+           effect_key: effect_key,
            data: %{
              community: community.slug,
              community_id: community.id,
@@ -103,6 +109,13 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
          }) do
       {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp scope_key(%Community{id: community_id}, binding) do
+    case Map.get(binding, :id) do
+      nil -> "community-inner:#{community_id}:#{Map.get(binding, :inner_id)}"
+      binding_id -> "community-binding:#{community_id}:#{binding_id}"
     end
   end
 end

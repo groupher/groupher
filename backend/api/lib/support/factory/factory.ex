@@ -199,7 +199,9 @@ defmodule GroupherServer.Support.Factory do
     public_attrs =
       mock_attrs(factory_name, attrs) |> Map.drop([:author, :community, :communities])
 
-    CMS.Articles.create(community, factory_name, public_attrs, user)
+    CMS.Articles.create(community, factory_name, public_attrs, user,
+      command_id: Ecto.UUID.generate()
+    )
   end
 
   def db_insert(factory_name, attributes) do
@@ -371,13 +373,13 @@ defmodule GroupherServer.Support.Factory do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
 
-    CMS.Communities.create(community_attrs, user)
+    CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
   end
 
   def mock_community(%User{} = user, attrs \\ %{}) do
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user}) |> Map.merge(attrs)
 
-    CMS.Communities.create(community_attrs, user)
+    CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
   end
 
   @doc """
@@ -387,10 +389,14 @@ defmodule GroupherServer.Support.Factory do
     {:ok, user} = db_insert(:user)
 
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
-    {:ok, article} = CMS.Articles.create(community, thread, with_body_bag(attrs), user)
+
+    {:ok, article} =
+      CMS.Articles.create(community, thread, with_body_bag(attrs), user,
+        command_id: Ecto.UUID.generate()
+      )
 
     {community, article, attrs, user}
   end
@@ -411,7 +417,11 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_article(thread, %Community{} = community, %User{} = user) do
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
-    {:ok, article} = CMS.Articles.create(community, thread, with_body_bag(attrs), user)
+
+    {:ok, article} =
+      CMS.Articles.create(community, thread, with_body_bag(attrs), user,
+        command_id: Ecto.UUID.generate()
+      )
 
     {community, article, attrs, user}
   end

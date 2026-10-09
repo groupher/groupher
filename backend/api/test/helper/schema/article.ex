@@ -93,8 +93,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:set_community_tag) do
     """
-    mutation($article: ArticlePathInput!, $communityTagId: ID!) {
-      setCommunityTag(article: $article, communityTagId: $communityTagId) {
+    mutation($article: ArticlePathInput!, $communityTagId: ID!, $commandId: ID!) {
+      setCommunityTag(article: $article, communityTagId: $communityTagId, commandId: $commandId) {
         innerId
       }
     }
@@ -120,8 +120,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:unset_community_tag) do
     """
-    mutation($article: ArticlePathInput!, $communityTagId: ID!) {
-      unsetCommunityTag(article: $article, communityTagId: $communityTagId) {
+    mutation($article: ArticlePathInput!, $communityTagId: ID!, $commandId: ID!) {
+      unsetCommunityTag(article: $article, communityTagId: $communityTagId, commandId: $commandId) {
         innerId
         title
       }

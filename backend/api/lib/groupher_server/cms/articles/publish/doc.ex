@@ -277,20 +277,23 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
 
   defp invalidate_public_cache(
          article,
-         %DocBranch{type: :main},
+         %DocBranch{type: :main} = branch,
          binding,
          community,
          first_publish?,
          opts
        ) do
     with %ArticleBinding{inner_id: inner_id} <- binding,
-         true <- is_integer(inner_id) do
+         true <- is_integer(inner_id),
+         {:ok, identity} <- outbox_identity(opts) do
       CMS.Outbox.send(%{
         event: if(first_publish?, do: "article.published", else: "article.updated"),
         worker: CMS.Outbox.Workers.Article.Cleanup,
         resource_type: "article",
         resource_id: article.id,
-        command_id: Keyword.get(opts, :causation_id, Ecto.UUID.generate()),
+        identity: identity,
+        effect_key:
+          "article:#{article.id}:#{branch.id}:#{if(first_publish?, do: "published", else: "updated")}",
         data: %{
           community: community.slug,
           community_id: community.id,
@@ -313,5 +316,24 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
          _opts
        ) do
     {:ok, :branch_not_public}
+  end
+
+  defp outbox_identity(opts) do
+    case Keyword.get(opts, :causation_id) || Keyword.get(opts, :command_id) do
+      command_id when is_binary(command_id) ->
+        case Ecto.UUID.cast(command_id) do
+          {:ok, command_id} -> {:ok, {:command, command_id}}
+          :error -> {:error, :outbox_command_id_required}
+        end
+
+      nil ->
+        case Keyword.get(opts, :workflow_ref) do
+          workflow_ref when is_binary(workflow_ref) and workflow_ref != "" ->
+            {:ok, {:workflow, workflow_ref}}
+
+          _ ->
+            {:error, :outbox_identity_required}
+        end
+    end
   end
 end

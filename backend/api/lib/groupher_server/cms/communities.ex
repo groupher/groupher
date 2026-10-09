@@ -34,6 +34,16 @@ defmodule GroupherServer.CMS.Communities do
   alias CMS.Communities.{ErrorCat, Lifecycle}
   alias CMS.Communities.Commands.Create, as: CreateCommand
   alias CMS.Communities.Commands.Update, as: UpdateCommand
+
+  alias CMS.Communities.Commands.{
+    CreateTag,
+    CreateTagGroup,
+    DeleteTag,
+    DeleteTagGroup,
+    UpdateTag,
+    UpdateTagGroup
+  }
+
   alias CMS.FrontDesk
   alias CMS.Model.{Category, Community, CommunityTag, CommunityTagGroup}
   alias Helper.{ORM, T}
@@ -141,7 +151,7 @@ defmodule GroupherServer.CMS.Communities do
   # Write
   @doc "Runs `create` through the public `Communities` boundary."
   @spec create(map(), User.t()) :: T.domain_res(Community.t())
-  def create(args, %User{} = user), do: create(args, user, Ecto.UUID.generate())
+  def create(_args, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Creates a Community through the explicit command boundary."
   @spec create(map(), User.t(), Ecto.UUID.t()) :: T.domain_res(Community.t())
@@ -149,9 +159,7 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Runs `update` through the public `Communities` boundary."
   @spec update(Community.t(), map(), User.t() | :operations) :: T.domain_res(Community.t())
-  def update(%Community{} = community, args, actor) do
-    update(community, args, actor, Ecto.UUID.generate())
-  end
+  def update(_community, _args, _actor), do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Updates Community fields with the caller-provided command identity."
   @spec update(Community.t(), map(), User.t() | :operations, Ecto.UUID.t()) ::
@@ -406,9 +414,24 @@ defmodule GroupherServer.CMS.Communities do
     end
   end
 
+  def create_tag(%Community{} = community, thread, attrs, %User{} = user, command_id) do
+    CreateTag.execute(community, thread, attrs, user, command_id)
+  end
+
+  def create_tag(community_ref, thread, attrs, %User{} = user, command_id) do
+    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
+      CreateTag.execute(community, thread, attrs, user, command_id)
+    end
+  end
+
   @doc "Updates tag through the `Communities` write boundary."
   @spec update_tag(T.id(), map()) :: T.domain_res(CommunityTag.t())
   def update_tag(id, attrs), do: Tags.update(id, attrs)
+
+  def update_tag(_id, _attrs, _command_id), do: {:error, :command_actor_required}
+
+  def update_tag(id, attrs, %User{} = user, command_id),
+    do: UpdateTag.execute(id, attrs, user, command_id)
 
   @doc "Creates tag group through the `Communities` write boundary."
   @spec create_tag_group(Community.t(), atom(), map()) :: T.domain_res(CommunityTagGroup.t())
@@ -419,6 +442,22 @@ defmodule GroupherServer.CMS.Communities do
   def create_tag_group(community_ref, thread, attrs) do
     with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
       Tags.create_group(community, thread, attrs)
+    end
+  end
+
+  def create_tag_group(%Community{}, _thread, _attrs, _command_id),
+    do: {:error, :command_actor_required}
+
+  def create_tag_group(community_ref, _thread, _attrs, _command_id) when is_binary(community_ref),
+    do: {:error, :command_actor_required}
+
+  def create_tag_group(%Community{} = community, thread, attrs, %User{} = user, command_id) do
+    CreateTagGroup.execute(community, thread, attrs, user, command_id)
+  end
+
+  def create_tag_group(community_ref, thread, attrs, %User{} = user, command_id) do
+    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
+      CreateTagGroup.execute(community, thread, attrs, user, command_id)
     end
   end
 
@@ -435,6 +474,23 @@ defmodule GroupherServer.CMS.Communities do
     end
   end
 
+  def update_tag_group(%Community{}, _thread, _id, _attrs, _command_id),
+    do: {:error, :command_actor_required}
+
+  def update_tag_group(community_ref, _thread, _id, _attrs, _command_id)
+      when is_binary(community_ref),
+      do: {:error, :command_actor_required}
+
+  def update_tag_group(%Community{} = community, thread, id, attrs, %User{} = user, command_id) do
+    UpdateTagGroup.execute(community, thread, id, attrs, user, command_id)
+  end
+
+  def update_tag_group(community_ref, thread, id, attrs, %User{} = user, command_id) do
+    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
+      UpdateTagGroup.execute(community, thread, id, attrs, user, command_id)
+    end
+  end
+
   @doc "Removes tag group through the `Communities` boundary."
   @spec delete_tag_group(Community.t(), atom(), T.id()) :: T.domain_res(CommunityTagGroup.t())
   def delete_tag_group(%Community{} = community, thread, id) do
@@ -444,6 +500,22 @@ defmodule GroupherServer.CMS.Communities do
   def delete_tag_group(community_ref, thread, id) do
     with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
       Tags.delete_group(community, thread, id)
+    end
+  end
+
+  def delete_tag_group(%Community{}, _thread, _id, _command_id),
+    do: {:error, :command_actor_required}
+
+  def delete_tag_group(community_ref, _thread, _id, _command_id) when is_binary(community_ref),
+    do: {:error, :command_actor_required}
+
+  def delete_tag_group(%Community{} = community, thread, id, %User{} = user, command_id) do
+    DeleteTagGroup.execute(community, thread, id, user, command_id)
+  end
+
+  def delete_tag_group(community_ref, thread, id, %User{} = user, command_id) do
+    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
+      DeleteTagGroup.execute(community, thread, id, user, command_id)
     end
   end
 
@@ -467,13 +539,27 @@ defmodule GroupherServer.CMS.Communities do
   @spec delete_tag(T.id()) :: T.domain_res(CommunityTag.t())
   def delete_tag(id), do: Tags.delete(id)
 
+  def delete_tag(_id, _command_id), do: {:error, :command_actor_required}
+
+  def delete_tag(id, %User{} = user, command_id), do: DeleteTag.execute(id, user, command_id)
+
   @doc "Runs `set_tag` through the public `Communities` boundary."
   @spec set_tag(Ecto.Schema.t(), T.id()) :: T.domain_res(Ecto.Schema.t())
   def set_tag(article, id), do: Tags.add(article, id)
 
+  def set_tag(_article, _id, _command_id), do: {:error, :command_actor_required}
+
+  def set_tag(article, id, %User{} = user, command_id),
+    do: CMS.Communities.Commands.SetTag.execute(article, id, user, command_id)
+
   @doc "Runs `unset_tag` through the public `Communities` boundary."
   @spec unset_tag(Ecto.Schema.t(), T.id()) :: T.domain_res(Ecto.Schema.t())
   def unset_tag(article, id), do: Tags.remove(article, id)
+
+  def unset_tag(_article, _id, _command_id), do: {:error, :command_actor_required}
+
+  def unset_tag(article, id, %User{} = user, command_id),
+    do: CMS.Communities.Commands.UnsetTag.execute(article, id, user, command_id)
 
   @doc "Runs `set_tags` through the public `Communities` boundary."
   @spec set_tags(Community.t(), atom(), Ecto.Schema.t(), map()) :: T.domain_res(Ecto.Schema.t())
@@ -498,16 +584,58 @@ defmodule GroupherServer.CMS.Communities do
     Tags.reindex_in_group(community, thread, group, tags)
   end
 
+  @doc "Rejects command-id-only tag reindex calls without a Gate actor."
+  def reindex_tags_in_group(_community, _thread, _group, _tags, _command_id),
+    do: {:error, :command_actor_required}
+
+  def reindex_tags_in_group(community, thread, group, tags, %User{} = user, command_id),
+    do:
+      CMS.Communities.Commands.ReindexTagsInGroup.execute(
+        community,
+        thread,
+        group,
+        tags,
+        user,
+        command_id
+      )
+
   @spec reindex_tags(Community.t() | String.t(), atom(), list()) :: T.domain_res(atom())
   def reindex_tags(community, thread, tags) do
     Tags.reindex(community, thread, tags)
   end
+
+  @doc "Rejects command-id-only cross-group reindex calls without a Gate actor."
+  def reindex_tags_across_groups(_community, _thread, _tags, _command_id),
+    do: {:error, :command_actor_required}
+
+  def reindex_tags_across_groups(community, thread, tags, %User{} = user, command_id),
+    do:
+      CMS.Communities.Commands.ReindexTagsAcrossGroups.execute(
+        community,
+        thread,
+        tags,
+        user,
+        command_id
+      )
 
   @doc "Runs `reindex_tag_groups` through the public `Communities` boundary."
   @spec reindex_tag_groups(Community.t() | String.t(), atom(), list()) :: T.domain_res(atom())
   def reindex_tag_groups(community, thread, groups) do
     Tags.reindex_groups(community, thread, groups)
   end
+
+  def reindex_tag_groups(_community, _thread, _groups, _command_id),
+    do: {:error, :command_actor_required}
+
+  def reindex_tag_groups(community, thread, groups, %User{} = user, command_id),
+    do:
+      CMS.Communities.Commands.ReindexTagGroups.execute(
+        community,
+        thread,
+        groups,
+        user,
+        command_id
+      )
 
   @doc "Runs `tag_stats` through the public `Communities` boundary."
   @spec tag_stats(CommunityTag.t() | T.id()) :: T.domain_res(term())

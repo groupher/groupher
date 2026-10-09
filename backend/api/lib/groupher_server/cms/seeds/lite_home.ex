@@ -79,27 +79,39 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
   defp configure_dashboard(%Community{} = community) do
     with {:ok, _} <-
-           CMS.Dashboard.update(community, :enable, %{
-             about: true,
-             about_techstack: true,
-             about_location: true,
-             about_links: true,
-             about_media_report: true,
-             post: true,
-             changelog: true,
-             kanban: true,
-             doc: false
-           }),
+           CMS.Dashboard.update(
+             community,
+             :enable,
+             %{
+               about: true,
+               about_techstack: true,
+               about_location: true,
+               about_links: true,
+               about_media_report: true,
+               post: true,
+               changelog: true,
+               kanban: true,
+               doc: false
+             },
+             :operations,
+             Ecto.UUID.generate()
+           ),
          {:ok, _} <-
-           CMS.Dashboard.update(community, :base_info, %{
-             title: "Home",
-             slug: @slug,
-             desc: "Minimal Groupher smoke-test community",
-             homepage: "https://groupher.com",
-             introduction: "A small seed dataset for validating Main and Dashboard routes.",
-             city: "Shanghai,Singapore",
-             techstack: "Elixir,Phoenix,PostgreSQL,TypeScript,React"
-           }) do
+           CMS.Dashboard.update(
+             community,
+             :base_info,
+             %{
+               title: "Home",
+               slug: @slug,
+               desc: "Minimal Groupher smoke-test community",
+               homepage: "https://groupher.com",
+               introduction: "A small seed dataset for validating Main and Dashboard routes.",
+               city: "Shanghai,Singapore",
+               techstack: "Elixir,Phoenix,PostgreSQL,TypeScript,React"
+             },
+             :operations,
+             Ecto.UUID.generate()
+           ) do
       {:ok, :ok}
     end
   end

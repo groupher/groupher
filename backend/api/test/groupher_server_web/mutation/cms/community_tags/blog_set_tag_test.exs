@@ -22,11 +22,18 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.BlogSetTag do
       {:ok, community_tag} =
         CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
 
-      passport_rules = %{community.title => %{"blog.community_tag.set" => true}}
+      passport_rules = %{
+        community.title => %{"community.update" => true, "blog.community_tag.set" => true}
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         communityTagId: community_tag.id
       }
 
@@ -47,11 +54,18 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.BlogSetTag do
       {:ok, _} = CMS.Communities.set_tag(blog, community_tag.id)
       {:ok, _} = CMS.Communities.set_tag(blog, community_tag2.id)
 
-      passport_rules = %{community.title => %{"blog.community_tag.unset" => true}}
+      passport_rules = %{
+        community.title => %{"community.update" => true, "blog.community_tag.unset" => true}
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         communityTagId: community_tag.id
       }
 

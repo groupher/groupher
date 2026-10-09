@@ -78,13 +78,16 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
 
   defp provision_web_analysis(%Community{} = community) do
     case Analysis.Web.provision_community(community) do
-      {:ok, _website_id} -> {:ok, :provisioned}
+      {:ok, _website_id} ->
+        {:ok, :provisioned}
+
       {:error, _reason} ->
         Logger.warning("Community web analysis provisioning deferred", community_id: community.id)
 
         {:ok, :deferred}
 
-      _ -> {:ok, :deferred}
+      _ ->
+        {:ok, :deferred}
     end
   end
 end

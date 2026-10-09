@@ -110,7 +110,9 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       other_community_attrs = mock_attrs(:community)
-      {:ok, other_community} = CMS.Communities.create(other_community_attrs, user)
+
+      {:ok, other_community} =
+        CMS.Communities.create(other_community_attrs, user, Ecto.UUID.generate())
 
       new_passport_rules = %{
         "global" => %{},
@@ -133,7 +135,9 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       other_community_attrs = mock_attrs(:community)
-      {:ok, other_community} = CMS.Communities.create(other_community_attrs, user)
+
+      {:ok, other_community} =
+        CMS.Communities.create(other_community_attrs, user, Ecto.UUID.generate())
 
       new_passport_rules = %{
         "global" => %{},
@@ -183,7 +187,9 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
          ~m(user user2 community)a do
       cur_user = user
 
-      {:ok, other_community} = CMS.Communities.create(mock_attrs(:community), user)
+      {:ok, other_community} =
+        CMS.Communities.create(mock_attrs(:community), user, Ecto.UUID.generate())
+
       {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
       {:ok, _} = CMS.Communities.add_moderator(other_community, user2, cur_user)
 

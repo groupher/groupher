@@ -42,10 +42,14 @@ defmodule GroupherServerWeb.Resolvers.CMS.Assets do
     {:ok, CMS.Wallpaper.batch_published?(batch_ref)}
   end
 
-  def register_community_asset(_root, %{community: %Community{} = community, asset: asset}, %{
-        context: %{cur_user: user}
-      }) do
-    CMS.Assets.register_to_community(community, asset, user)
+  def register_community_asset(
+        _root,
+        %{community: %Community{} = community, asset: asset} = args,
+        %{
+          context: %{cur_user: user}
+        }
+      ) do
+    CMS.Assets.register_to_community(community, asset, user, Map.get(args, :command_id))
   end
 
   def create_community_asset_upload_intent(
@@ -60,7 +64,11 @@ defmodule GroupherServerWeb.Resolvers.CMS.Assets do
     CMS.Assets.complete_upload(input)
   end
 
-  def delete_community_asset(_root, %{community: %Community{} = community, id: id}, _info) do
-    CMS.Assets.delete(community, id)
+  def delete_community_asset(
+        _root,
+        %{community: %Community{} = community, id: id, command_id: command_id},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.Assets.delete(community, id, user, command_id)
   end
 end

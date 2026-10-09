@@ -68,8 +68,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
       Reactions.collect(article, actor)
 
   """
-  @spec collect(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate collect(article, actor), to: Collect, as: :add
+  @spec collect(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
+  defdelegate collect(article, actor, command_id \\ nil), to: Collect, as: :add
 
   @doc """
   Removes an Article collect idempotently.
@@ -79,8 +79,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
       Reactions.undo_collect(article, actor)
 
   """
-  @spec undo_collect(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_collect(article, actor), to: Collect, as: :remove
+  @spec undo_collect(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_collect(article, actor, command_id \\ nil), to: Collect, as: :remove
 
   @doc """
   Adds one immutable-reporter report fact.

@@ -91,6 +91,27 @@ export const hasDirectPersistCall = (source, file = 'module.ex') => {
   )
 }
 
+/** Detects a boundary that silently manufactures a business command identity.
+ * Infrastructure ids (outbox event ids, leases and workflow operation refs)
+ * are intentionally outside this check; only expressions naming command_id
+ * are considered business command identity fallbacks.
+ * @example
+ * hasDerivedCommandIdentity('command_id: Ecto.UUID.generate()') === true
+ */
+export const hasDerivedCommandIdentity = (source, file = 'module.ex') => {
+  const executable = executableSource(source, file)
+
+  return [
+    /\bcommand_id\s*:\s*Ecto\.UUID\.generate\s*\(/,
+    /\bcommand_id\s*=\s*Ecto\.UUID\.generate\s*\(/,
+    /\bcommand_id\s*\|\|\s*Ecto\.UUID\.generate\s*\(/,
+    /Keyword\.get\([^\n]*:command_id[^\n]*Ecto\.UUID\.generate\s*\(/,
+    /Keyword\.get\([^\n]*"command_id"[^\n]*Ecto\.UUID\.generate\s*\(/,
+    /Map\.get\([^\n]*:command_id[^\n]*Ecto\.UUID\.generate\s*\(/,
+    /Map\.get\([^\n]*"command_id"[^\n]*Ecto\.UUID\.generate\s*\(/,
+  ].some((pattern) => pattern.test(executable))
+}
+
 const files = repositoryFiles()
 const violations = []
 const boundaryViolations = []
@@ -118,11 +139,30 @@ const resolverFiles = files.filter(
   (file) => file.startsWith('backend/api/lib/groupher_server_web/resolvers/cms/') && file.endsWith('.ex'),
 )
 
+const cmsProductionFiles = files.filter(
+  (file) =>
+    (file.startsWith('backend/api/lib/groupher_server/cms/') ||
+      file.startsWith('backend/api/lib/groupher_server_web/resolvers/cms/')) &&
+    file.endsWith('.ex'),
+)
+
+for (const file of cmsProductionFiles) {
+  const source = readFileSync(path.join(repoRoot, file), 'utf8')
+
+  if (hasDerivedCommandIdentity(source, file)) {
+    boundaryViolations.push(`${file}: production CMS code must not manufacture command_id`)
+  }
+}
+
 for (const file of resolverFiles) {
   const source = readFileSync(path.join(repoRoot, file), 'utf8')
 
   if (hasDirectPersistCall(source, file)) {
     boundaryViolations.push(`${file}: resolver must delegate through a CMS facade or concrete Command`)
+  }
+
+  if (hasDerivedCommandIdentity(source, file)) {
+    boundaryViolations.push(`${file}: resolver must not manufacture command_id`)
   }
 }
 
@@ -134,11 +174,15 @@ for (const file of facadeFiles) {
   if (hasDirectPersistCall(source, file)) {
     boundaryViolations.push(`${file}: public facade must not call Persist directly`)
   }
+
+  if (hasDerivedCommandIdentity(source, file)) {
+    boundaryViolations.push(`${file}: public facade must not manufacture command_id`)
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (violations.length > 0) {
-    console.error('Direct command identity creation is restricted to the executor:')
+    console.error('Direct command identity creation is restricted to the explicit command owner:')
     for (const file of violations) console.error(`- ${file}`)
     process.exit(1)
   }

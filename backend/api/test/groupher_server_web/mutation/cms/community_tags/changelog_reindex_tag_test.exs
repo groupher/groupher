@@ -52,7 +52,13 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogReindexTag do
           user
         )
 
-      passport_rules = %{community.title => %{"changelog.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "changelog.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{

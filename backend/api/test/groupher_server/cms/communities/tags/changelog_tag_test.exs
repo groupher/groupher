@@ -85,19 +85,25 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
       {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag2.id)
 
-      {:ok, changelog} = read_article(community, :changelog, article_inner_id(changelog, community))
+      {:ok, changelog} =
+        read_article(community, :changelog, article_inner_id(changelog, community))
+
       assert exist_in?(article_tag, changelog.community_tags)
       assert exist_in?(article_tag2, changelog.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
 
-      {:ok, changelog} = read_article(community, :changelog, article_inner_id(changelog, community))
+      {:ok, changelog} =
+        read_article(community, :changelog, article_inner_id(changelog, community))
+
       assert not exist_in?(article_tag, changelog.community_tags)
       assert exist_in?(article_tag2, changelog.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag2.id)
 
-      {:ok, changelog} = read_article(community, :changelog, article_inner_id(changelog, community))
+      {:ok, changelog} =
+        read_article(community, :changelog, article_inner_id(changelog, community))
+
       assert not exist_in?(article_tag, changelog.community_tags)
       assert not exist_in?(article_tag2, changelog.community_tags)
     end
@@ -125,7 +131,9 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
     test "can not create changelog with other community's community tags",
          ~m(community user changelog_attrs article_tag_attrs article_tag_attrs2)a do
       community2_attrs = mock_attrs(:community)
-      {:ok, community2} = CMS.Communities.create(community2_attrs, user)
+
+      {:ok, community2} =
+        CMS.Communities.create(community2_attrs, user, Ecto.UUID.generate())
 
       {:ok, article_tag} =
         CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)

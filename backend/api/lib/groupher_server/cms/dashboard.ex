@@ -26,8 +26,7 @@ defmodule GroupherServer.CMS.Dashboard do
       #=> {:ok, %CommunityDashboard{}}
   """
   @spec update(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
-  def update(%Community{} = community, args),
-    do: update(community, args, :operations, Ecto.UUID.generate())
+  def update(%Community{}, _args), do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc """
   Updates a dashboard section after the caller supplies its actor context.
@@ -38,16 +37,16 @@ defmodule GroupherServer.CMS.Dashboard do
       #=> {:ok, %CommunityDashboard{}}
   """
   @spec update(Community.t(), map(), term()) :: T.domain_res(CommunityDashboard.t())
-  def update(%Community{} = community, %{dsb_section: _key} = args, actor),
-    do: update(community, args, actor, Ecto.UUID.generate())
+  def update(%Community{}, %{dsb_section: _key}, _actor),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   def update(%Community{}, args, _actor) when is_map(args),
     do: {:error, ErrorCat.invalid_dsb_section()}
 
   @spec update(Community.t(), atom(), map() | list() | boolean()) ::
           T.domain_res(CommunityDashboard.t())
-  def update(%Community{} = community, key, args) when is_atom(key),
-    do: update(community, key, args, :operations, Ecto.UUID.generate())
+  def update(%Community{}, key, _args) when is_atom(key),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Updates one dashboard section with the caller-provided command identity."
   @spec update(Community.t(), map(), term(), Ecto.UUID.t()) ::
@@ -58,8 +57,7 @@ defmodule GroupherServer.CMS.Dashboard do
   @doc false
   @spec update(Community.t(), atom(), map() | list() | boolean(), term()) ::
           T.domain_res(CommunityDashboard.t())
-  def update(%Community{} = community, key, args, actor),
-    do: update(community, key, args, actor, Ecto.UUID.generate())
+  def update(%Community{}, _key, _args, _actor), do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc false
   @spec update(Community.t(), atom(), map() | list() | boolean(), term(), Ecto.UUID.t()) ::
@@ -76,8 +74,8 @@ defmodule GroupherServer.CMS.Dashboard do
       #=> {:ok, %CommunityDashboard{}}
   """
   @spec save_custom_theme_preset(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
-  def save_custom_theme_preset(%Community{} = community, args),
-    do: save_custom_theme_preset(community, args, :operations, Ecto.UUID.generate())
+  def save_custom_theme_preset(%Community{}, _args),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc """
   Saves a custom theme preset after actor admission.
@@ -89,8 +87,8 @@ defmodule GroupherServer.CMS.Dashboard do
   """
   @spec save_custom_theme_preset(Community.t(), map(), term()) ::
           T.domain_res(CommunityDashboard.t())
-  def save_custom_theme_preset(%Community{} = community, args, actor),
-    do: save_custom_theme_preset(community, args, actor, Ecto.UUID.generate())
+  def save_custom_theme_preset(%Community{}, _args, _actor),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Saves a custom theme preset with the caller-provided command identity."
   @spec save_custom_theme_preset(Community.t(), map(), term(), Ecto.UUID.t()) ::
@@ -107,8 +105,8 @@ defmodule GroupherServer.CMS.Dashboard do
       #=> {:ok, %CommunityDashboard{}}
   """
   @spec select_theme_preset(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
-  def select_theme_preset(%Community{} = community, args),
-    do: select_theme_preset(community, args, :operations, Ecto.UUID.generate())
+  def select_theme_preset(%Community{}, _args),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc """
   Selects a theme preset after actor admission.
@@ -120,8 +118,8 @@ defmodule GroupherServer.CMS.Dashboard do
   """
   @spec select_theme_preset(Community.t(), map(), term()) ::
           T.domain_res(CommunityDashboard.t())
-  def select_theme_preset(%Community{} = community, args, actor),
-    do: select_theme_preset(community, args, actor, Ecto.UUID.generate())
+  def select_theme_preset(%Community{}, _args, _actor),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Selects a theme preset with the caller-provided command identity."
   @spec select_theme_preset(Community.t(), map(), term(), Ecto.UUID.t()) ::

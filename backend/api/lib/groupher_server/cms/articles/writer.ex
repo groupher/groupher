@@ -43,7 +43,8 @@ defmodule GroupherServer.CMS.Articles.Writer do
     do_notify_admin_new_article(target, id, thread, community)
   end
 
-  def notify_admin_new_article(%{target: target, id: id, community: community}) when is_atom(target) do
+  def notify_admin_new_article(%{target: target, id: id, community: community})
+      when is_atom(target) do
     do_notify_admin_new_article(target, id, nil, community)
   end
 
@@ -97,43 +98,68 @@ defmodule GroupherServer.CMS.Articles.Writer do
          } = result,
          opts
        ) do
-    command_id = Keyword.get(opts, :outbox_command_id, Ecto.UUID.generate())
+    case outbox_identity(opts) do
+      {:ok, identity} ->
+        with {:ok, cache_event} <-
+               CMS.Outbox.send(%{
+                 event: if(first_publish?, do: "article.published", else: "article.updated"),
+                 worker: CMS.Outbox.Workers.Article.Cleanup,
+                 resource_type: "article",
+                 resource_id: article.id,
+                 identity: identity,
+                 effect_key: "article-cache:#{community.id}:#{inner_id}",
+                 data: %{
+                   community: community.slug,
+                   community_id: community.id,
+                   thread: article.thread,
+                   inner_id: inner_id,
+                   article_id: article.id,
+                   revision_id: public.revision_id
+                 }
+               }),
+             {:ok, projection_event} <-
+               CMS.Outbox.send(%{
+                 event: "article.projections",
+                 worker: CMS.Outbox.Workers.Article.Cleanup,
+                 resource_type: "article",
+                 resource_id: article.id,
+                 identity: identity,
+                 effect_key: "article-projections:#{community.id}:#{inner_id}",
+                 data: %{
+                   first_publish?: first_publish?,
+                   community_id: community.id,
+                   inner_id: inner_id,
+                   changed_fields: Map.get(result, :changed_fields, []),
+                   published_by_id: Map.get(result, :published_by_id),
+                   revision_id: public.revision_id
+                 }
+               }) do
+          {:ok, %{cache: cache_event, projections: projection_event}}
+        else
+          {:error, reason} -> {:error, reason}
+        end
 
-    with {:ok, cache_event} <-
-           CMS.Outbox.send(%{
-             event: if(first_publish?, do: "article.published", else: "article.updated"),
-             worker: CMS.Outbox.Workers.Article.Cleanup,
-             resource_type: "article",
-             resource_id: article.id,
-             command_id: command_id,
-             data: %{
-               community: community.slug,
-               community_id: community.id,
-               thread: article.thread,
-               inner_id: inner_id,
-               article_id: article.id,
-               revision_id: public.revision_id
-             }
-           }),
-         {:ok, projection_event} <-
-           CMS.Outbox.send(%{
-             event: "article.projections",
-             worker: CMS.Outbox.Workers.Article.Cleanup,
-             resource_type: "article",
-             resource_id: article.id,
-             command_id: command_id,
-             data: %{
-               first_publish?: first_publish?,
-               community_id: community.id,
-               inner_id: inner_id,
-               changed_fields: Map.get(result, :changed_fields, []),
-               published_by_id: Map.get(result, :published_by_id),
-               revision_id: public.revision_id
-             }
-           }) do
-      {:ok, %{cache: cache_event, projections: projection_event}}
-    else
-      {:error, reason} -> {:error, reason}
+      _ ->
+        {:error, CMS.ErrorCat.command_id_required()}
+    end
+  end
+
+  defp outbox_identity(opts) do
+    case Keyword.get(opts, :outbox_command_id) do
+      command_id when is_binary(command_id) ->
+        case Ecto.UUID.cast(command_id) do
+          {:ok, command_id} -> {:ok, {:command, command_id}}
+          :error -> {:error, :outbox_command_id_required}
+        end
+
+      _ ->
+        case Keyword.get(opts, :outbox_workflow_ref) do
+          workflow_ref when is_binary(workflow_ref) and workflow_ref != "" ->
+            {:ok, {:workflow, workflow_ref}}
+
+          _ ->
+            {:error, :outbox_identity_required}
+        end
     end
   end
 

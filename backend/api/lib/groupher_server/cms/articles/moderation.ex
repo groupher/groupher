@@ -210,7 +210,13 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   end
 
   defp invalidate_public_cache(%Article{} = article, opts) do
-    operation_id = Keyword.get(opts, :command_id, Ecto.UUID.generate())
+    with {:ok, identity} <- moderation_identity(article, opts) do
+      invalidate_public_cache(article, opts, identity)
+    end
+  end
+
+  defp invalidate_public_cache(%Article{} = article, opts, {identity_type, identity_ref}) do
+    operation_id = Keyword.get(opts, :operation_id, identity_ref)
 
     {:ok, bindings} = CMS.Articles.Bindings.all(article)
 
@@ -223,7 +229,9 @@ defmodule GroupherServer.CMS.Articles.Moderation do
              worker: CMS.Outbox.Workers.Article.Cleanup,
              resource_type: "article",
              resource_id: article.id,
-             command_id: Ecto.UUID.generate(),
+             identity: {identity_type, identity_ref},
+             effect_key:
+               "article-binding:#{binding.id}:#{article.moderation_state}:#{article.updated_at}",
              data: %{
                operation_id: operation_id,
                community: community.slug,
@@ -237,6 +245,22 @@ defmodule GroupherServer.CMS.Articles.Moderation do
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
+  end
+
+  defp moderation_identity(%Article{} = article, opts) do
+    case Keyword.get(opts, :command_id) do
+      command_id when is_binary(command_id) ->
+        {:ok, {:command, command_id}}
+
+      _ ->
+        case Keyword.get(opts, :workflow_ref) do
+          workflow_ref when is_binary(workflow_ref) and workflow_ref != "" ->
+            {:ok, {:workflow, workflow_ref}}
+
+          _ ->
+            {:ok, {:workflow, "article-moderation:#{article.id}:#{article.moderation_state}"}}
+        end
+    end
   end
 
   defp binding_inner_id(article_id, community_id) do

@@ -14,6 +14,13 @@ defmodule GroupherServer.CMS.Docs.Commands.PublishBranch do
   @spec execute(Ecto.UUID.t(), pos_integer(), User.t() | Author.t(), keyword()) ::
           {:ok, map()} | {:error, term()}
   def execute(doc_id, branch_id, actor, opts) when is_binary(doc_id) do
+    opts =
+      Keyword.put_new(
+        opts,
+        :workflow_ref,
+        "doc-publish:#{doc_id}:#{branch_id}:#{Keyword.get(opts, :expected_draft_version, "unknown")}"
+      )
+
     with {:ok, article} <- Editor.stable_doc(doc_id),
          {:ok, author} <- Editor.target_author(actor),
          {:ok, user} <- Editor.actor_user(actor),
@@ -34,7 +41,9 @@ defmodule GroupherServer.CMS.Docs.Commands.PublishBranch do
 
   defp branch_community(branch_id, opts) do
     case Keyword.get(opts, :community) do
-      %Community{} = community -> {:ok, community}
+      %Community{} = community ->
+        {:ok, community}
+
       _ ->
         with %DocBranch{community_id: community_id} <- Repo.get(DocBranch, branch_id),
              %Community{} = community <- Repo.get(Community, community_id) do

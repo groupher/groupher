@@ -118,7 +118,10 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
     test "can not create doc with other community's community tags",
          ~m(community user doc_attrs article_tag_attrs article_tag_attrs2)a do
       community2_attrs = mock_attrs(:community)
-      {:ok, community2} = CMS.Communities.create(community2_attrs, user)
+
+      {:ok, community2} =
+        CMS.Communities.create(community2_attrs, user, Ecto.UUID.generate())
+
       {:ok, article_tag} = CMS.Communities.create_tag(community, :doc, article_tag_attrs, user)
 
       {:ok, article_tag2} =

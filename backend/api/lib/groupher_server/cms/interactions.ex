@@ -117,8 +117,8 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.collect(article, actor)
 
   """
-  @spec collect(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate collect(article, actor), to: Reactions
+  @spec collect(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
+  defdelegate collect(article, actor, command_id \\ nil), to: Reactions
 
   @doc """
   Removes an Article collect idempotently and returns the canonical Article.
@@ -128,8 +128,8 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.undo_collect(article, actor)
 
   """
-  @spec undo_collect(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_collect(article, actor), to: Reactions
+  @spec undo_collect(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_collect(article, actor, command_id \\ nil), to: Reactions
 
   @doc """
   Returns public paged users who collected an already-scoped Article.

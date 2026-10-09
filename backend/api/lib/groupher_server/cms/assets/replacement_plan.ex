@@ -110,6 +110,9 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
 
     (item_value(item, :usage_locators) || [])
     |> Enum.reduce_while({:ok, nil, draft_version}, fn locator, {:ok, _last, version} ->
+      step_ref = item_value(locator, :step_ref) || replacement_step_ref(locator)
+      workflow_ref = "asset-replacement:#{plan.id}:#{article_id}:#{step_ref}"
+
       attrs =
         %{
           expected_draft_version: version,
@@ -118,7 +121,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
           position: item_value(locator, :position),
           from_asset_id: plan.from_asset_id,
           to_asset_id: plan.to_asset_id,
-          command_id: item_value(locator, :command_id)
+          step_ref: step_ref
         }
         |> maybe_put_body_bag(body_bag)
 
@@ -126,7 +129,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
              %{article_id: article_id, community: community},
              attrs,
              user,
-             attrs.command_id
+             {:workflow, workflow_ref}
            ) do
         {:ok, result} ->
           {:cont, {:ok, result, Map.get(result, :draft_version, version)}}
@@ -181,9 +184,16 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
   end
 
   defp locator(ref) do
-    ref
-    |> Map.take([:usage, :block_id, :position, :block_type, :title, :alt, :source])
-    |> Map.put(:command_id, Ecto.UUID.generate())
+    locator = Map.take(ref, [:usage, :block_id, :position, :block_type, :title, :alt, :source])
+
+    locator
+    |> Map.put(:step_ref, replacement_step_ref(locator))
+  end
+
+  defp replacement_step_ref(locator) do
+    locator
+    |> :erlang.term_to_binary()
+    |> Base.url_encode64(padding: false)
   end
 
   defp live_revision_matches?(item, article_id) do

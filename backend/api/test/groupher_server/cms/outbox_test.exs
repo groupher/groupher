@@ -93,6 +93,41 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
     assert {:error, %Ecto.Changeset{}} = CMS.Outbox.send(attrs)
   end
 
+  test "workflow identity is separate from command identity" do
+    assert {:ok, event} =
+             CMS.Outbox.send(%{
+               event: "test.workflow",
+               worker: CMS.Outbox.Workers.Article.Cleanup,
+               resource_type: "asset",
+               resource_id: 42,
+               identity: {:workflow, "reconcile-run-42"},
+               effect_key: "asset:42"
+             })
+
+    assert event.identity_type == :workflow
+    assert event.command_id == "reconcile-run-42"
+    assert event.effect_key == "asset:42"
+  end
+
+  test "one command can own multiple effect scopes without a second uuid" do
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, _source} = CMS.Outbox.send(event_attrs("test.scope", command_id))
+
+    assert {:ok, destination} =
+             CMS.Outbox.send(%{
+               event: "test.scope",
+               worker: CMS.Outbox.Workers.Article.Cleanup,
+               resource_type: "test",
+               resource_id: "destination",
+               identity: {:command, command_id},
+               effect_key: "destination"
+             })
+
+    assert destination.command_id == command_id
+    assert destination.identity_type == :command
+  end
+
   test "a live lease makes a second delivery busy" do
     {:ok, event} = CMS.Outbox.send(event_attrs("test.busy", Ecto.UUID.generate()))
 

@@ -23,11 +23,18 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocSetTag do
       {:ok, community_tag} =
         CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
 
-      passport_rules = %{community.title => %{"doc.community_tag.set" => true}}
+      passport_rules = %{
+        community.title => %{"community.update" => true, "doc.community_tag.set" => true}
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(doc, community), community: community.slug, thread: "DOC"},
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        },
         communityTagId: community_tag.id
       }
 
@@ -48,11 +55,18 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocSetTag do
       {:ok, _} = CMS.Communities.set_tag(doc, community_tag.id)
       {:ok, _} = CMS.Communities.set_tag(doc, community_tag2.id)
 
-      passport_rules = %{community.title => %{"doc.community_tag.unset" => true}}
+      passport_rules = %{
+        community.title => %{"community.update" => true, "doc.community_tag.unset" => true}
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(doc, community), community: community.slug, thread: "DOC"},
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        },
         communityTagId: community_tag.id
       }
 

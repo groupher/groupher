@@ -37,7 +37,13 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.DocReindexTag do
       {:ok, community_tag4} =
         CMS.Communities.create_tag(community, :doc, unique_community_tag_attrs(attrs, "4"), user)
 
-      passport_rules = %{community.title => %{"doc.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "doc.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{

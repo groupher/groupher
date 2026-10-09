@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   alias CMS.{Communities.ErrorCat, Communities.TagStats, FrontDesk, QueryBuilder}
   alias CMS.Articles.Bindings.Tags, as: BindingTags
   alias CMS.Model.{Article, ArticleBinding, Community, CommunityTag, CommunityTagGroup}
-  alias Helper.{Datetime, Multi, ORM, T}
+  alias Helper.{Datetime, ORM, T}
 
   @doc "Returns tag-group titles keyed by id in one query."
   @spec group_titles([T.id()]) :: map()
@@ -39,9 +39,13 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec create(Community.t(), atom(), map(), User.t()) ::
           {:ok, CommunityTag.t()} | {:error, Ecto.Changeset.t()}
-  def create(%Community{} = community, thread, attrs, %User{
-        id: user_id
-      }) do
+  def create(community, thread, attrs, user), do: create(community, thread, attrs, user, [])
+
+  @spec create(Community.t(), atom(), map(), User.t(), keyword()) ::
+          {:ok, CommunityTag.t()} | {:error, Ecto.Changeset.t()}
+  def create(%Community{} = community, thread, attrs, %User{id: user_id}, opts) do
+    {attrs, opts} = split_identity(attrs, opts)
+
     with {:ok, author} <- ensure_author_exists(%User{id: user_id}),
          {:ok, community} <- ORM.find_by(Community, slug: community.slug),
          {:ok, group} <-
@@ -51,8 +55,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
              Map.get(attrs, :group_id),
              Map.get(attrs, :group)
            ) do
-      Multi.new()
-      |> Multi.run(:create_tag, fn _, _ ->
+      transact(fn ->
         attrs =
           Map.merge(attrs, %{
             author_id: author.id,
@@ -62,22 +65,14 @@ defmodule GroupherServer.CMS.Communities.Tags do
           })
           |> Map.drop([:group])
 
-        ORM.create(CommunityTag, attrs)
-      end)
-      |> Multi.run(:update_community_count, fn _, _ ->
-        CMS.Communities.update_count_field(
-          community,
-          :community_tags_count
-        )
-      end)
-      |> Multi.run(:public_cache, fn _, _ ->
-        case invalidate_taxonomy(community, thread) do
-          {:ok, _} -> {:ok, :pass}
-          {:error, reason} -> {:error, reason}
+        with {:ok, tag} <- ORM.create(CommunityTag, attrs),
+             {:ok, _} <- CMS.Communities.update_count_field(community, :community_tags_count),
+             {:ok, _} <- invalidate_taxonomy(community, thread, "tag:create:#{tag.id}", opts) do
+          tag
+        else
+          {:error, reason} -> Repo.rollback(reason)
         end
       end)
-      |> Repo.transaction()
-      |> result()
     end
   end
 
@@ -85,13 +80,24 @@ defmodule GroupherServer.CMS.Communities.Tags do
   update a community tag
   """
   @spec update(T.id(), map()) :: {:ok, CommunityTag.t()} | {:error, Ecto.Changeset.t()}
-  def update(id, attrs) do
+  def update(id, attrs), do: update_with_identity(id, attrs, [])
+
+  def update(id, attrs, opts), do: update_with_identity(id, attrs, opts)
+
+  defp update_with_identity(id, attrs, opts) do
+    {attrs, opts} = split_identity(attrs, opts)
+
     with {:ok, tag} <- FrontDesk.community_tag(id),
          {:ok, attrs} <- normalize_update_attrs(tag, attrs) do
-      Repo.transaction(fn ->
+      transact(fn ->
         with {:ok, updated} <- ORM.update(tag, attrs),
              {:ok, updated} <- preload_tag_group({:ok, updated}),
-             {:ok, _} <- invalidate_taxonomy_by_tag(updated) do
+             {:ok, _} <-
+               invalidate_taxonomy_by_tag(
+                 updated,
+                 "tag:update:#{updated.id}:#{updated.updated_at}",
+                 opts
+               ) do
           updated
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -105,7 +111,11 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec create_group(Community.t(), atom(), map()) ::
           {:ok, CommunityTagGroup.t()} | {:error, Ecto.Changeset.t()}
-  def create_group(%Community{} = community, thread, attrs) do
+  def create_group(community, thread, attrs), do: create_group(community, thread, attrs, [])
+
+  def create_group(%Community{} = community, thread, attrs, opts) do
+    {attrs, opts} = split_identity(attrs, opts)
+
     with {:ok, community} <- ORM.find_by(Community, slug: community.slug) do
       attrs =
         attrs
@@ -115,9 +125,10 @@ defmodule GroupherServer.CMS.Communities.Tags do
           index: next_group_index(community, thread)
         })
 
-      Repo.transaction(fn ->
+      transact(fn ->
         with {:ok, group} <- ORM.create(CommunityTagGroup, attrs),
-             {:ok, _} <- invalidate_taxonomy(community, thread),
+             {:ok, _} <-
+               invalidate_taxonomy(community, thread, "tag-group:create:#{group.id}", opts),
              {:ok, group} <- preload_group_tags({:ok, group}) do
           group
         else
@@ -132,12 +143,23 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec update_group(Community.t(), atom(), T.id(), map()) ::
           {:ok, CommunityTagGroup.t()} | {:error, Ecto.Changeset.t()}
-  def update_group(%Community{} = community, thread, id, attrs) do
+  def update_group(community, thread, id, attrs),
+    do: update_group(community, thread, id, attrs, [])
+
+  def update_group(%Community{} = community, thread, id, attrs, opts) do
+    {attrs, opts} = split_identity(attrs, opts)
+
     with {:ok, community} <- ORM.find_by(Community, slug: community.slug),
          {:ok, group} <- find_group_in_thread(community, thread, id) do
-      Repo.transaction(fn ->
+      transact(fn ->
         with {:ok, updated} <- ORM.update(group, attrs),
-             {:ok, _} <- invalidate_taxonomy(community, thread),
+             {:ok, _} <-
+               invalidate_taxonomy(
+                 community,
+                 thread,
+                 "tag-group:update:#{updated.id}:#{updated.updated_at}",
+                 opts
+               ),
              {:ok, updated} <- preload_group_tags({:ok, updated}) do
           updated
         else
@@ -161,12 +183,15 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec delete_group(Community.t(), atom(), T.id()) ::
           {:ok, CommunityTagGroup.t()} | {:error, Ecto.Changeset.t()}
-  def delete_group(%Community{} = community, thread, id) do
+  def delete_group(community, thread, id), do: delete_group(community, thread, id, [])
+
+  def delete_group(%Community{} = community, thread, id, opts) do
     with {:ok, community} <- ORM.find_by(Community, slug: community.slug),
          {:ok, group} <- find_group_in_thread(community, thread, id) do
-      Repo.transaction(fn ->
+      transact(fn ->
         with {:ok, deleted_group} <- delete_group_and_update_count(community, group),
-             {:ok, _} <- invalidate_taxonomy(community, thread) do
+             {:ok, _} <-
+               invalidate_taxonomy(community, thread, "tag-group:delete:#{group.id}", opts) do
           deleted_group
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -192,38 +217,34 @@ defmodule GroupherServer.CMS.Communities.Tags do
   delete a community tag
   """
   @spec delete(T.id()) :: {:ok, CommunityTag.t()} | {:error, Ecto.Changeset.t()}
-  def delete(id) do
+  def delete(id), do: delete(id, [])
+
+  def delete(id, opts) do
     with {:ok, tag} <- FrontDesk.community_tag(id),
          {:ok, community} <- ORM.find(Community, tag.community_id) do
-      Multi.new()
-      |> Multi.run(:delete_tag, fn _, _ ->
-        ORM.delete(tag)
-      end)
-      |> Multi.run(:update_community_count, fn _, _ ->
-        CMS.Communities.update_count_field(
-          community,
-          :community_tags_count
-        )
-      end)
-      |> Multi.run(:public_cache, fn _, _ ->
-        case invalidate_taxonomy(community, tag.thread) do
-          {:ok, _} -> {:ok, :pass}
-          {:error, reason} -> {:error, reason}
+      transact(fn ->
+        with {:ok, deleted_tag} <- ORM.delete(tag),
+             {:ok, _} <- CMS.Communities.update_count_field(community, :community_tags_count),
+             {:ok, _} <- invalidate_taxonomy(community, tag.thread, "tag:delete:#{tag.id}", opts) do
+          deleted_tag
+        else
+          {:error, reason} -> Repo.rollback(reason)
         end
       end)
-      |> Repo.transaction()
-      |> result()
     end
   end
 
-  defp do_update_tags_assoc(article, tags, opt, community_id) when is_list(tags) do
+  defp do_update_tags_assoc(article, tags, opt, community_id),
+    do: do_update_tags_assoc(article, tags, opt, community_id, [])
+
+  defp do_update_tags_assoc(article, tags, opt, community_id, opts) when is_list(tags) do
     case Ecto.UUID.cast(Map.get(article, :id)) do
-      {:ok, article_id} -> update_stable_tags(article, article_id, tags, opt, community_id)
+      {:ok, article_id} -> update_stable_tags(article, article_id, tags, opt, community_id, opts)
       :error -> {:error, :article_binding_context_required}
     end
   end
 
-  defp update_stable_tags(article, article_id, tags, opt, community_id)
+  defp update_stable_tags(article, article_id, tags, opt, community_id, opts)
        when is_integer(community_id) do
     case Repo.get_by(ArticleBinding, article_id: article_id, community_id: community_id) do
       %ArticleBinding{} = binding ->
@@ -251,7 +272,13 @@ defmodule GroupherServer.CMS.Communities.Tags do
                BindingTags.replace(binding, Enum.map(community_tags, & &1.id)),
              {:ok, _} <- sync_tag_stats(updated_article, Repo.get!(Article, article_id), old_tags),
              {:ok, thread} <- FrontDesk.thread_of(article),
-             {:ok, _} <- invalidate_taxonomy(Repo.get!(Community, community_id), thread) do
+             {:ok, _} <-
+               invalidate_taxonomy(
+                 Repo.get!(Community, community_id),
+                 thread,
+                 "article-tags:#{binding.id}:#{:erlang.phash2(Enum.map(community_tags, & &1.id))}",
+                 opts
+               ) do
           {:ok, updated_article}
         end
 
@@ -260,7 +287,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
-  defp update_stable_tags(_article, _article_id, _tags, _opt, _community_id),
+  defp update_stable_tags(_article, _article_id, _tags, _opt, _community_id, _opts),
     do: {:error, :article_binding_context_required}
 
   defp find_related_tags([], _filter), do: {:ok, []}
@@ -317,9 +344,11 @@ defmodule GroupherServer.CMS.Communities.Tags do
   add a tag to article
   """
   @spec add(Ecto.Schema.t(), T.id()) :: {:ok, Ecto.Schema.t()} | {:error, any()}
-  def add(article, tag_id) do
+  def add(article, tag_id), do: add(article, tag_id, [])
+
+  def add(article, tag_id, opts) do
     with {:ok, tag} <- FrontDesk.community_tag(tag_id) do
-      do_update_tags_assoc(article, [tag], :add, tag.community_id)
+      do_update_tags_assoc(article, [tag], :add, tag.community_id, opts)
     end
   end
 
@@ -327,9 +356,11 @@ defmodule GroupherServer.CMS.Communities.Tags do
   remove a tag from article
   """
   @spec remove(Ecto.Schema.t(), T.id()) :: {:ok, Ecto.Schema.t()} | {:error, any()}
-  def remove(article, tag_id) do
+  def remove(article, tag_id), do: remove(article, tag_id, [])
+
+  def remove(article, tag_id, opts) do
     with {:ok, tag} <- FrontDesk.community_tag(tag_id) do
-      do_update_tags_assoc(article, [tag], :remove, tag.community_id)
+      do_update_tags_assoc(article, [tag], :remove, tag.community_id, opts)
     end
   end
 
@@ -374,58 +405,85 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @doc """
   reindex tags in spec group
   """
-  @spec reindex_in_group(Community.t(), atom(), T.id(), list()) :: {:ok, atom()} | {:error, any()}
+  @spec reindex_in_group(Community.t(), atom(), T.id(), list(), keyword()) ::
+          {:ok, atom()} | {:error, any()}
   def reindex_in_group(%Community{} = community, thread, group_id, indexed_tags) do
-    with {:ok, group_tags} <- find_group_tags(community, thread, group_id),
-         {:ok, indexed_tags} <- normalize_indexed_tags(indexed_tags, false),
-         {:ok, _} <- validate_complete_reindex(group_tags, indexed_tags) do
-      run_batch_reindex(fn ->
-        batch_reindex_tags(community, thread, indexed_tags, false)
-      end)
-    end
+    reindex_in_group(community, thread, group_id, indexed_tags, [])
   end
 
   def reindex_in_group(community, thread, group_id, indexed_tags) do
     with {:ok, community} <- ORM.find_by(Community, slug: community) do
-      reindex_in_group(community, thread, group_id, indexed_tags)
+      reindex_in_group(community, thread, group_id, indexed_tags, [])
+    end
+  end
+
+  def reindex_in_group(%Community{} = community, thread, group_id, indexed_tags, opts) do
+    with {:ok, group_tags} <- find_group_tags(community, thread, group_id),
+         {:ok, indexed_tags} <- normalize_indexed_tags(indexed_tags, false),
+         {:ok, _} <- validate_complete_reindex(group_tags, indexed_tags) do
+      run_batch_reindex(
+        community,
+        thread,
+        "tag:reindex:group:#{group_id}:#{:erlang.phash2(indexed_tags)}",
+        opts,
+        fn -> batch_reindex_tags(community, thread, indexed_tags, false) end
+      )
     end
   end
 
   @doc """
   reindex tags across groups
   """
-  @spec reindex(Community.t(), atom(), list()) :: {:ok, atom()} | {:error, any()}
+  @spec reindex(Community.t(), atom(), list(), keyword()) :: {:ok, atom()} | {:error, any()}
   def reindex(%Community{} = community, thread, indexed_tags) do
-    with {:ok, indexed_tags} <- normalize_indexed_tags(indexed_tags, true),
-         {:ok, _} <- validate_indexed_tags(community, thread, indexed_tags),
-         {:ok, _} <- validate_indexed_tags_groups(community, thread, indexed_tags) do
-      run_batch_reindex(fn ->
-        batch_reindex_tags(community, thread, indexed_tags, true)
-      end)
-    end
+    reindex(community, thread, indexed_tags, [])
   end
 
   def reindex(community, thread, indexed_tags) do
     with {:ok, community} <- ORM.find_by(Community, slug: community) do
-      reindex(community, thread, indexed_tags)
+      reindex(community, thread, indexed_tags, [])
+    end
+  end
+
+  def reindex(%Community{} = community, thread, indexed_tags, opts) do
+    with {:ok, indexed_tags} <- normalize_indexed_tags(indexed_tags, true),
+         {:ok, _} <- validate_indexed_tags(community, thread, indexed_tags),
+         {:ok, _} <- validate_indexed_tags_groups(community, thread, indexed_tags) do
+      run_batch_reindex(
+        community,
+        thread,
+        "tag:reindex:#{:erlang.phash2(indexed_tags)}",
+        opts,
+        fn -> batch_reindex_tags(community, thread, indexed_tags, true) end
+      )
     end
   end
 
   @doc """
   reindex tag groups
   """
-  @spec reindex_groups(Community.t() | String.t(), atom(), list()) ::
+  @spec reindex_groups(Community.t() | String.t(), atom(), list(), keyword()) ::
           {:ok, atom()} | {:error, any()}
   def reindex_groups(%Community{} = community, thread, indexed_groups) do
-    with {:ok, indexed_groups} <- normalize_indexed_tags(indexed_groups, false),
-         {:ok, _} <- validate_indexed_groups(community, thread, indexed_groups) do
-      run_batch_reindex(fn -> batch_reindex_groups(community, thread, indexed_groups) end)
-    end
+    reindex_groups(community, thread, indexed_groups, [])
   end
 
   def reindex_groups(community, thread, indexed_groups) do
     with {:ok, community} <- ORM.find_by(Community, slug: community) do
-      reindex_groups(community, thread, indexed_groups)
+      reindex_groups(community, thread, indexed_groups, [])
+    end
+  end
+
+  def reindex_groups(%Community{} = community, thread, indexed_groups, opts) do
+    with {:ok, indexed_groups} <- normalize_indexed_tags(indexed_groups, false),
+         {:ok, _} <- validate_indexed_groups(community, thread, indexed_groups) do
+      run_batch_reindex(
+        community,
+        thread,
+        "tag:reindex-groups:#{:erlang.phash2(indexed_groups)}",
+        opts,
+        fn -> batch_reindex_groups(community, thread, indexed_groups) end
+      )
     end
   end
 
@@ -578,14 +636,19 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
-  defp run_batch_reindex(update_fun) do
-    Repo.transaction(fn ->
+  defp run_batch_reindex(community, thread, effect_key, opts, update_fun) do
+    transact(fn ->
       case update_fun.() do
-        {:ok, :pass} -> :pass
-        {:error, reason} -> Repo.rollback(reason)
+        {:ok, :pass} ->
+          case invalidate_taxonomy(community, thread, effect_key, opts) do
+            {:ok, _} -> :pass
+            {:error, reason} -> Repo.rollback(reason)
+          end
+
+        {:error, reason} ->
+          Repo.rollback(reason)
       end
     end)
-    |> result()
   end
 
   defp batch_reindex_tags(_community, _thread, [], _include_group?), do: {:ok, :pass}
@@ -715,24 +778,59 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
   defp preload_tag_group(result), do: result
 
-  defp invalidate_taxonomy(%Community{} = community, thread) do
-    case CMS.Outbox.send(%{
-           event: "community.taxonomy_changed",
-           worker: CMS.Outbox.Workers.Community.Cleanup,
-           resource_type: "community",
-           resource_id: community.id,
-           command_id: Ecto.UUID.generate(),
-           data: %{community: community.slug, community_id: community.id, thread: thread}
-         }) do
-      {:ok, _event} -> {:ok, :pass}
-      {:error, reason} -> {:error, reason}
+  defp invalidate_taxonomy(%Community{} = community, thread, effect_key, opts) do
+    CMS.Outbox.send(%{
+      event: "community.taxonomy_changed",
+      worker: CMS.Outbox.Workers.Community.Cleanup,
+      resource_type: "community",
+      resource_id: community.id,
+      identity: taxonomy_identity(community, thread, opts),
+      effect_key: effect_key,
+      data: %{community: community.slug, community_id: community.id, thread: thread}
+    })
+    |> case do
+      {:ok, _event} ->
+        {:ok, :pass}
+
+      {:error, changeset = %Ecto.Changeset{errors: errors}} ->
+        if Enum.any?(errors, fn {field, _error} -> field == :identity_type end) do
+          {:ok, :pass}
+        else
+          {:error, changeset}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
-  defp invalidate_taxonomy_by_tag(tag) do
+  defp invalidate_taxonomy_by_tag(tag, effect_key, opts) do
     community = Repo.get!(Community, tag.community_id)
-    invalidate_taxonomy(community, tag.thread)
+    invalidate_taxonomy(community, tag.thread, effect_key, opts)
   end
+
+  defp taxonomy_identity(%Community{} = community, thread, opts) do
+    case Keyword.get(opts, :command_id) do
+      command_id when is_binary(command_id) ->
+        case Ecto.UUID.cast(command_id) do
+          {:ok, command_id} -> {:command, command_id}
+          :error -> {:workflow, "community-taxonomy:#{community.id}:#{thread}"}
+        end
+
+      _ ->
+        {:workflow, "community-taxonomy:#{community.id}:#{thread}"}
+    end
+  end
+
+  defp split_identity(attrs, opts) when is_map(attrs) do
+    command_id = Map.get(attrs, :command_id) || Map.get(attrs, "command_id")
+    {Map.drop(attrs, [:command_id, "command_id"]), maybe_command_id(opts, command_id)}
+  end
+
+  defp split_identity(attrs, opts), do: {attrs, opts}
+
+  defp maybe_command_id(opts, nil), do: opts
+  defp maybe_command_id(opts, command_id), do: Keyword.put(opts, :command_id, command_id)
 
   defp replace_community_ifneed(filter) when is_map(filter) do
     filter
@@ -748,11 +846,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
     |> Map.new()
   end
 
-  defp result({:ok, %{create_tag: result}}), do: {:ok, result}
-  defp result({:ok, %{delete_tag: result}}), do: {:ok, result}
-  defp result({:ok, result}), do: {:ok, result}
-  defp result({:error, _, result, _steps}), do: {:error, result}
-  defp result({:error, result}), do: {:error, result}
+  # Gate/Command owns the surrounding aggregate transaction for authenticated
+  # mutations. Legacy service callers still get an atomic transaction, but a
+  # nested savepoint is never used when a command already holds the lock.
+  defp transact(fun) when is_function(fun, 0) do
+    if Repo.in_transaction?(), do: {:ok, fun.()}, else: Repo.transact(fn -> {:ok, fun.()} end)
+  end
 
   defp invalid_domain_tag(details), do: {:error, ErrorCat.invalid_domain_tag(details)}
 end

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { hasDirectPersistCall, isPersistFile } from './check-command-identity.mjs'
+import { hasDerivedCommandIdentity, hasDirectPersistCall, isPersistFile } from './check-command-identity.mjs'
 
 test('scans every CMS persist filename, including BindingPersist', () => {
   assert.equal(isPersistFile('backend/api/lib/groupher_server/cms/articles/binding_persist.ex'), true)
@@ -26,4 +26,13 @@ test('ignores Persist wording in Elixir docs and comments', () => {
   `
 
   assert.equal(hasDirectPersistCall(source), false)
+})
+
+test('detects command identity fallbacks but ignores infrastructure ids', () => {
+  assert.equal(hasDerivedCommandIdentity('command_id: Ecto.UUID.generate()'), true)
+  assert.equal(hasDerivedCommandIdentity('command_id = Ecto.UUID.generate()'), true)
+  assert.equal(hasDerivedCommandIdentity('Keyword.get(opts, :command_id, Ecto.UUID.generate())'), true)
+  assert.equal(hasDerivedCommandIdentity('Map.get(attrs, "command_id", Ecto.UUID.generate())'), true)
+  assert.equal(hasDerivedCommandIdentity('id: Ecto.UUID.generate()'), false)
+  assert.equal(hasDerivedCommandIdentity('# command_id: Ecto.UUID.generate()'), false)
 })

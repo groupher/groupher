@@ -23,11 +23,21 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
       {:ok, community_tag} =
         CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
 
-      passport_rules = %{community.title => %{"changelog.community_tag.set" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "changelog.community_tag.set" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         communityTagId: community_tag.id
       }
 
@@ -48,11 +58,21 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
       {:ok, _} = CMS.Communities.set_tag(changelog, community_tag.id)
       {:ok, _} = CMS.Communities.set_tag(changelog, community_tag2.id)
 
-      passport_rules = %{community.title => %{"changelog.community_tag.unset" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "changelog.community_tag.unset" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         communityTagId: community_tag.id
       }
 

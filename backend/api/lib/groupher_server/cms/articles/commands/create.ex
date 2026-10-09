@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
 
     case option(opts, :command_id) do
       nil ->
-        with {:ok, public} <- create_and_publish(community, thread, attrs, user),
+        with {:ok, public} <- create_and_publish(community, thread, attrs, user, nil),
              {:ok, confirmation} <- confirmation_from_public(public, community, nil) do
           RevisionResult.build(confirmation, community)
         end
@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
          community,
          user
        ) do
-    with {:ok, public} <- create_and_publish(community, thread, attrs, user) do
+    with {:ok, public} <- create_and_publish(community, thread, attrs, user, command_id) do
       confirmation_from_public(public, community, command_id)
     end
   end
@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     end
   end
 
-  defp create_and_publish(community, :doc, attrs, user) do
+  defp create_and_publish(community, :doc, attrs, user, command_id) do
     with {:ok, branch} <- CMS.Docs.Branch.resolve(community, []),
          {:ok, %{article: article, draft: draft}} <-
            Articles.create_stable_draft(community, :doc, attrs, user, branch_id: branch.id),
@@ -97,7 +97,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
            Docs.publish_branch(article.id, branch.id, user,
              expected_draft_version: draft.version,
              expected_lifecycle_version: 1,
-             community: community
+             community: community,
+             causation_id: command_id
            ),
          {:ok, %Article{} = published} <- FrontDesk.article(article.id, mode: :internal),
          {:ok, public} <- public_projection(published, community),
@@ -110,14 +111,16 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     end
   end
 
-  defp create_and_publish(community, thread, attrs, user) do
+  defp create_and_publish(community, thread, attrs, user, command_id) do
     with {:ok, %{article: article, draft: draft}} <-
            Articles.create_stable_draft(community, thread, attrs, user),
          publish_opts =
            [
              expected_draft_version: draft.version,
              expected_lifecycle_version: 1,
-             community: community
+             community: community,
+             outbox_command_id: command_id,
+             outbox_workflow_ref: "article-create:#{community.id}:#{article.id}"
            ] ++
              community_tag_opts(attrs),
          {:ok, %{article: published}} <-

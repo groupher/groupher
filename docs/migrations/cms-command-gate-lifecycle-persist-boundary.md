@@ -601,23 +601,28 @@ Lifecycle 只拥有长期资源状态和并发 guard：
 
 首批四个领域完成后，继续按同一规则审计：
 
-| mutation family                   | concrete use case                             | Receipt 判断                             |
-| --------------------------------- | --------------------------------------------- | ---------------------------------------- |
-| Article sink/lock/category/status | 已有 Command，但 generic action dispatch 待拆 | set-style 可 one-shot                    |
-| Article/Comment report            | 拆为 Report/UndoReport Command                | Report 需要；Undo 可 one-shot            |
-| Comment solution                  | 拆为 AcceptSolution/RevokeSolution            | 当前天然幂等，可 one-shot                |
-| Comment pin                       | 拆为 Pin/Unpin                                | 当前天然幂等，可 one-shot                |
-| Category/Tag/TagGroup             | 每个业务动作建立 Command                      | create/delete/reindex 逐项判断           |
-| Moderator                         | Add/AddMany/Remove/UpdatePassport Command     | 批量/删除优先 Receipt                    |
-| Assets                            | Register/Delete/Archive/Restore Command       | capability/service callback 保留资源协议 |
-| Activity export                   | ExportCommunityActivity Command               | 写 Audit 且返回 artifact，使用 Receipt   |
-| Press config                      | UpdateConfig Command                          | set-style one-shot                       |
-| Auth/session                      | Accounts/Auth 自有 use case                   | 不迁入 CMS.Command                       |
-| view/read markers                 | Interaction/Accounts 自有投影协议             | 不要求 Receipt                           |
+| mutation family                   | concrete use case                             | Receipt 判断                              |
+| --------------------------------- | --------------------------------------------- | ----------------------------------------- |
+| Article sink/lock/category/status | 已有 Command，但 generic action dispatch 待拆 | set-style 可 one-shot                     |
+| Article binding move/mirror       | 复核 Move/Mirror/Unmirror effect identity     | Receipt；multi-scope effect 复用同一 id   |
+| Article moderation/visibility     | 拆分 user command 与 moderation workflow      | 按 initiator 分类，不得逐 binding 造 UUID |
+| Article/Comment report            | 拆为 Report/UndoReport Command                | Report 需要；Undo 可 one-shot             |
+| Comment create/reply fallback     | 收紧现有 CreateComment/ReplyComment           | 删除 nil identity 与无 Receipt fallback   |
+| Comment solution                  | 拆为 AcceptSolution/RevokeSolution            | 当前天然幂等，可 one-shot                 |
+| Comment pin                       | 拆为 Pin/Unpin                                | 当前天然幂等，可 one-shot                 |
+| Interaction reactions             | 收紧 Upvote/Emotion/Collect identity          | reactions 逐项确认，不属于 read marker    |
+| Category/Tag/TagGroup             | 每个业务动作建立 Command                      | create/delete/reindex 逐项判断            |
+| Moderator                         | Add/AddMany/Remove/UpdatePassport Command     | 批量/删除优先 Receipt                     |
+| Assets                            | Register/Delete/Archive/Restore Command       | capability/service callback 保留资源协议  |
+| Activity export                   | ExportCommunityActivity Command               | 写 Audit 且返回 artifact，使用 Receipt    |
+| Press config                      | UpdateConfig Command                          | set-style one-shot                        |
+| Auth/session                      | Accounts/Auth 自有 use case                   | 不迁入 CMS.Command                        |
+| view/read markers                 | Interaction/Accounts 自有投影协议             | 不要求 Receipt                            |
 
-其中 Category/Tag、Assets、部分 Article/Comment/DocTree legacy workflow 仍可能把内部生成的 UUID 写入
-Outbox `command_id`；这不是本轮首批边界的完成声明，迁移前不得把它们当作客户端 `commandId`。阶段 5
-需先为这些入口补 concrete Command/operation identity，再清除伪 command identity。
+其中 Article Move/moderation、Comment create/reply fallback、Interaction reactions、Category/Tag、Assets
+和部分 DocTree legacy workflow 仍可能生成第二个 UUID、允许 nil identity，或把内部 UUID 写入 Outbox
+`command_id`；这不是本轮首批边界的完成声明。阶段 5 需先为这些入口补 concrete
+Command/operation/workflow identity，再清除伪 command identity。
 
 ## 12. 实施阶段
 
@@ -636,13 +641,14 @@ Outbox `command_id`；这不是本轮首批边界的完成声明，迁移前不�
 4. 删除三个无调用 DocCover Writer API；
 5. `Dashboard.Writer`、`DocCover.Writer` 已删除；Community creation/setup 的 `CreationPersist` 仅作为内部 core helper，不能由 public facade 调用。
 
-### Phase 3：服务端 identity 统一（命名已完成，Receipt 迁移按领域保留）
+### Phase 3：服务端 identity 统一（命名与首批路径已完成，其余按领域保留）
 
 1. Community Application `idempotencyKey` 改为 `commandId`；
 2. Submit identity 已改为 `commandId`；Application expected-version transitions 继续由其 aggregate workflow 持有；
 3. Wallpaper prepare/publish 保留 domain receipt 作为外部 Batch workflow 的资源投影，客户端 identity 已统一为 `commandId`；
 4. Wallpaper prepare/publish/Assets Hub claim 贯穿同一 `commandId`；
-5. Outbox 停止由 Persist/Writer 自行生成伪 `command_id`，统一接收 concrete Command 的入口 `commandId`；
+5. 首批迁移路径的 Outbox 已停止由 Persist/Writer 自行生成伪 `command_id`，并接收 concrete Command
+   的入口 `commandId`；Phase 5 文档列出的遗留 producer 不属于本项完成范围；
 6. Content Import 移除同义 `idempotencyKey`。
 
 ### Phase 4：客户端 identity 统一（已完成）
@@ -656,7 +662,9 @@ Outbox `command_id`；这不是本轮首批边界的完成声明，迁移前不�
 
 ### Phase 5：其余 mutation 审计（持续清单）
 
-按第 11 节逐领域迁移；每个 mutation 明确标注：
+详细实施合同见
+[CMS Command Phase 5：Legacy Mutation 分类与迁移](./cms-command-phase-5-legacy-workflows.md)。按第 11 节
+逐领域迁移；每个 mutation 明确标注：
 
 ```text
 concrete use case
@@ -679,7 +687,10 @@ Audit/Activity/Outbox
 - 标记为 Receipt-backed 的 GraphQL `commandId` mutation 必须可追踪到 `CMS.Command.execute`；当前 Community
   create、DocCover add/remove/pin/unpin 使用 Receipt，其余 Dashboard/DocCover/Community set-style actions
   可 one-shot，但仍必须把同一 `commandId` 传入 concrete Command，不得再生成第二个 identity；
-- `commandId` 不得在 Writer/Persist 内生成；`scripts/check-command-identity.mjs` 同时扫描前端 identity owner、后端 Persist、resolver 和 facade 边界；
+- `commandId` 不得在 facade、Command、Writer/Persist 或 Outbox producer 内生成；
+- `scripts/check-command-identity.mjs` 当前扫描前端 identity owner、后端 Persist，以及 resolver/facade 的
+  direct-Persist 边界；它尚未覆盖 facade UUID、nil-command fallback 和 producer 派生
+  `command_id`，这些检查按 Phase 5 文档 §9 扩展后才属于已实现门禁；
 - 一个 public business action 只有一个 `Commands.<Action>.execute` 入口。
 
 `pnpm check:command-identity` 的后端扫描不再维护固定 Persist 白名单：它会扫描
@@ -687,7 +698,8 @@ Audit/Activity/Outbox
 working-tree 文件，因此 `BindingPersist` 及后续新增的 `PinPersist` 等 primitive 会自动纳入门禁。
 Resolver 与 CMS 根 facade 也采用目录扫描；调用检测同时覆盖完整模块名、普通 alias、`as:` alias 和裸
 `Persist.foo()`，避免通过 alias 绕过 `X.Persist.foo()` 的模式检查。脚本测试位于
-`scripts/check-command-identity.test.mjs`。
+`scripts/check-command-identity.test.mjs`。这里的“目录扫描”当前只描述 direct-Persist 检查，不代表
+已经扫描 facade 中的 UUID generation。
 
 ### 13.2 行为测试
 
