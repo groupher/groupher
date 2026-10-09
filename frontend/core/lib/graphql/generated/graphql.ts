@@ -3677,6 +3677,7 @@ export type UpdatePostFromMenuMutation = {
 export type SetPostCatMutationVariables = Exact<{
   article: ArticlePathInput
   cat: ArticleCatEnum
+  commandId: string | number
 }>
 
 export type SetPostCatMutation = {
@@ -3686,6 +3687,7 @@ export type SetPostCatMutation = {
 export type SetPostStatusMutationVariables = Exact<{
   article: ArticlePathInput
   status: ArticleStatusEnum
+  commandId: string | number
 }>
 
 export type SetPostStatusMutation = {
@@ -19728,6 +19730,14 @@ export const SetPostCatDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticleCatEnum' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -19745,6 +19755,11 @@ export const SetPostCatDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'cat' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'cat' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -19784,6 +19799,14 @@ export const SetPostStatusDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticleStatusEnum' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -19801,6 +19824,11 @@ export const SetPostStatusDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'status' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'status' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {

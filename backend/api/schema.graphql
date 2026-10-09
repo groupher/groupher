@@ -538,10 +538,10 @@ type RootMutationType {
   publishPostDraft(commandId: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!): Post
 
   "set cat for a post"
-  setPostCat(article: ArticlePathInput!, cat: ArticleCatEnum!): Post
+  setPostCat(article: ArticlePathInput!, cat: ArticleCatEnum!, commandId: ID!): Post
 
   "set status for a post"
-  setPostStatus(article: ArticlePathInput!, status: ArticleStatusEnum!): Post
+  setPostStatus(article: ArticlePathInput!, status: ArticleStatusEnum!, commandId: ID!): Post
 
   "upvote to post"
   upvotePost(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
@@ -568,16 +568,16 @@ type RootMutationType {
   undoReportPost(commandId: ID!, article: ArticlePathInput!): Post
 
   "sink a post"
-  sinkPost(article: ArticlePathInput!): Article
+  sinkPost(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo sink to post"
-  undoSinkPost(article: ArticlePathInput!): Article
+  undoSinkPost(article: ArticlePathInput!, commandId: ID!): Article
 
   "lock comment of a post"
-  lockPostComment(article: ArticlePathInput!): Article
+  lockPostComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo lock to a post"
-  undoLockPostComment(article: ArticlePathInput!): Article
+  undoLockPostComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "create a blog"
   createBlog(
@@ -627,16 +627,16 @@ type RootMutationType {
   undoReportBlog(commandId: ID!, article: ArticlePathInput!): Blog
 
   "sink a blog"
-  sinkBlog(article: ArticlePathInput!): Article
+  sinkBlog(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo sink to blog"
-  undoSinkBlog(article: ArticlePathInput!): Article
+  undoSinkBlog(article: ArticlePathInput!, commandId: ID!): Article
 
   "lock comment of a blog"
-  lockBlogComment(article: ArticlePathInput!): Article
+  lockBlogComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo lock to a blog"
-  undoLockBlogComment(article: ArticlePathInput!): Article
+  undoLockBlogComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "create a changelog"
   createChangelog(
@@ -688,16 +688,16 @@ type RootMutationType {
   undoReportChangelog(commandId: ID!, article: ArticlePathInput!): Changelog
 
   "sink a changelog"
-  sinkChangelog(article: ArticlePathInput!): Article
+  sinkChangelog(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo sink to changelog"
-  undoSinkChangelog(article: ArticlePathInput!): Article
+  undoSinkChangelog(article: ArticlePathInput!, commandId: ID!): Article
 
   "lock comment of a changelog"
-  lockChangelogComment(article: ArticlePathInput!): Article
+  lockChangelogComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo lock to a changelog"
-  undoLockChangelogComment(article: ArticlePathInput!): Article
+  undoLockChangelogComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "upvote to doc"
   upvoteDoc(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
@@ -718,16 +718,16 @@ type RootMutationType {
   undoReportDoc(commandId: ID!, article: ArticlePathInput!): Doc
 
   "sink a doc"
-  sinkDoc(article: ArticlePathInput!): Article
+  sinkDoc(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo sink to doc"
-  undoSinkDoc(article: ArticlePathInput!): Article
+  undoSinkDoc(article: ArticlePathInput!, commandId: ID!): Article
 
   "lock comment of a doc"
-  lockDocComment(article: ArticlePathInput!): Article
+  lockDocComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo lock to a doc"
-  undoLockDocComment(article: ArticlePathInput!): Article
+  undoLockDocComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "write a comment"
   createComment(article: ArticlePathInput!, body: String!, commandId: ID!): ArticleCommentResult

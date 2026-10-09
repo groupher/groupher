@@ -42,12 +42,16 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     do_read_article(%{community: community, thread: thread, inner_id: inner_id}, info)
   end
 
-  def set_post_cat(_root, %{article: article, cat: cat}, %{context: %{cur_user: user}}) do
-    CMS.Articles.set_cat_result(article, cat, user)
+  def set_post_cat(_root, %{article: article, cat: cat, command_id: command_id}, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Articles.set_cat_result(article, cat, user, command_id)
   end
 
-  def set_post_status(_root, %{article: article, status: status}, %{context: %{cur_user: user}}) do
-    CMS.Articles.set_status_result(article, status, user)
+  def set_post_status(_root, %{article: article, status: status, command_id: command_id}, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Articles.set_status_result(article, status, user, command_id)
   end
 
   def paged_articles(_root, ~m(thread filter)a, %{context: %{cur_user: user}}) do
@@ -188,12 +192,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     end
   end
 
-  def sink_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.sink_result(article, user)
+  def sink_article(_root, ~m(article command_id)a, %{context: %{cur_user: user}}) do
+    CMS.Articles.sink_result(article, user, command_id)
   end
 
-  def undo_sink_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.undo_sink_result(article, user)
+  def undo_sink_article(_root, ~m(article command_id)a, %{context: %{cur_user: user}}) do
+    CMS.Articles.undo_sink_result(article, user, command_id)
   end
 
   def mirror_article(_root, ~m(target_community article community_tags command_id)a, %{

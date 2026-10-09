@@ -118,6 +118,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
     field :set_post_cat, :post do
       arg(:article, non_null(:article_path_input))
       arg(:cat, non_null(:article_cat_enum))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "post.set_category", thread: :post)
@@ -130,6 +131,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
     field :set_post_status, :post do
       arg(:article, non_null(:article_path_input))
       arg(:status, non_null(:article_status_enum))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "post.set_status", thread: :post)

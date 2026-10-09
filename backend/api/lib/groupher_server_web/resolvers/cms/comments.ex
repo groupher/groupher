@@ -13,12 +13,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
 
   @viewer_batch_size 100
 
-  def lock_article_comments(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.lock_comments_result(article, user)
+  def lock_article_comments(_root, ~m(article command_id)a, %{context: %{cur_user: user}}) do
+    CMS.Articles.lock_comments_result(article, user, command_id)
   end
 
-  def undo_lock_article_comments(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.undo_lock_comments_result(article, user)
+  def undo_lock_article_comments(_root, ~m(article command_id)a, %{context: %{cur_user: user}}) do
+    CMS.Articles.undo_lock_comments_result(article, user, command_id)
   end
 
   def comments_state(_root, %{article: article, article_path: %{thread: thread}}, %{

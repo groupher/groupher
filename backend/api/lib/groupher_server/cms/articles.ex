@@ -348,6 +348,17 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  @spec set_cat(Ecto.UUID.t(), Const.cat_enum() | nil, User.t(), integer(), Ecto.UUID.t()) ::
+          T.domain_res(Article.t())
+  def set_cat(article_id, cat, %User{} = actor, community_id, command_id)
+      when is_integer(community_id) and is_binary(command_id) do
+    with {:ok, %Community{} = community} <- FrontDesk.community(community_id, mode: :internal) do
+      Commands.SetCategory.execute(article_id, cat, actor, community, command_id)
+    else
+      {:error, _reason} -> {:error, GateErrorCat.resource_not_found()}
+    end
+  end
+
   @doc "Sets a Post's Kanban status in one explicit ArticleBinding binding."
   @spec set_status(Ecto.UUID.t(), Const.status_enum() | nil, User.t(), integer()) ::
           T.domain_res(Article.t())
@@ -356,6 +367,18 @@ defmodule GroupherServer.CMS.Articles do
     with {:ok, %Article{} = article} <- FrontDesk.article(article_id, mode: :internal),
          {:ok, %Community{} = community} <- FrontDesk.community(community_id, mode: :internal) do
       set_status_in_community(article, status, actor, community)
+    else
+      {:error, _reason} -> {:error, GateErrorCat.resource_not_found()}
+    end
+  end
+
+  @spec set_status(Ecto.UUID.t(), Const.status_enum() | nil, User.t(), integer(), Ecto.UUID.t()) ::
+          T.domain_res(Article.t())
+  def set_status(article_id, status, %User{} = actor, community_id, command_id)
+      when is_integer(community_id) and is_binary(command_id) do
+    with {:ok, %Article{} = article} <- FrontDesk.article(article_id, mode: :internal),
+         {:ok, %Community{} = community} <- FrontDesk.community(community_id, mode: :internal) do
+      Commands.SetStatus.execute(article, status, actor, community, command_id)
     else
       {:error, _reason} -> {:error, GateErrorCat.resource_not_found()}
     end
@@ -371,11 +394,33 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  def set_cat_result(article, cat, %User{} = actor, command_id) do
+    with %Community{} = community <- Map.get(article, :community),
+         {:ok, updated} <- set_cat(article.id, cat, actor, community.id, command_id) do
+      __MODULE__.ActionResult.merge(article, updated, %{cat: cat})
+    else
+      _ -> {:error, :article_binding_context_required}
+    end
+  end
+
   @doc "Updates Post status and returns the caller-facing canonical projection shape."
   def set_status_result(article, status, %User{} = actor) do
     result =
       with %Community{} = community <- Map.get(article, :community) do
         set_status_in_community(article, status, actor, community)
+      else
+        _ -> {:error, :article_binding_context_required}
+      end
+
+    with {:ok, updated} <- result do
+      __MODULE__.ActionResult.merge(article, updated, %{status: status})
+    end
+  end
+
+  def set_status_result(article, status, %User{} = actor, command_id) do
+    result =
+      with %Community{} = community <- Map.get(article, :community) do
+        Commands.SetStatus.execute(article, status, actor, community, command_id)
       else
         _ -> {:error, :article_binding_context_required}
       end
@@ -452,9 +497,23 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  def lock_comments_result(article, %User{} = actor, command_id) do
+    with {:ok, updated} <-
+           Commands.LockComments.execute(article.id, actor, branch_opts(article), command_id) do
+      __MODULE__.ActionResult.merge(article, updated)
+    end
+  end
+
   @doc "Unlocks comments and returns the caller-facing canonical projection shape."
   def undo_lock_comments_result(article, %User{} = actor) do
     with {:ok, updated} <- undo_lock_comments(article.id, actor, branch_opts(article)) do
+      __MODULE__.ActionResult.merge(article, updated)
+    end
+  end
+
+  def undo_lock_comments_result(article, %User{} = actor, command_id) do
+    with {:ok, updated} <-
+           Commands.UnlockComments.execute(article.id, actor, branch_opts(article), command_id) do
       __MODULE__.ActionResult.merge(article, updated)
     end
   end
@@ -466,9 +525,23 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
+  def sink_result(article, %User{} = actor, command_id) do
+    with {:ok, updated} <-
+           Commands.Sink.execute(article.id, actor, branch_opts(article), command_id) do
+      __MODULE__.ActionResult.merge(article, updated)
+    end
+  end
+
   @doc "Restores a sunk Article and returns the caller-facing canonical projection shape."
   def undo_sink_result(article, %User{} = actor) do
     with {:ok, updated} <- undo_sink(article.id, actor, branch_opts(article)) do
+      __MODULE__.ActionResult.merge(article, updated)
+    end
+  end
+
+  def undo_sink_result(article, %User{} = actor, command_id) do
+    with {:ok, updated} <-
+           Commands.UndoSink.execute(article.id, actor, branch_opts(article), command_id) do
       __MODULE__.ActionResult.merge(article, updated)
     end
   end

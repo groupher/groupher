@@ -99,8 +99,8 @@ type Documents = {
   '\n  query ArticleEditorPost($article: ArticlePathInput!) {\n    post(article: $article) {\n      innerId\n      version\n      title\n      linkAddr\n      copyRight\n      lifecycle {\n        state\n        version\n        archivedAt\n      }\n      author {\n        ...ArticleEditorAuthorFields\n      }\n      community {\n        ...ArticleEditorCommunityFields\n      }\n      communityTags {\n        ...ArticleEditorTagFields\n      }\n      meta {\n        thread\n        isLegal\n        illegalReason\n        illegalWords\n      }\n      document {\n        json\n      }\n    }\n  }\n': typeof types.ArticleEditorPostDocument
   '\n  fragment ArticleMenuTagFields on CommunityTag {\n    id\n    title\n    layout\n    desc\n    slug\n    color\n    marker {\n      type\n      provider\n      name\n      src\n      unified\n    }\n    thread\n    group\n    groupId\n    index\n    community {\n      slug\n    }\n  }\n': typeof types.ArticleMenuTagFieldsFragmentDoc
   '\n  mutation UpdatePostFromMenu(\n    $article: ArticlePathInput!\n    $commandId: ID!\n    $expectedVersion: Int!\n    $title: String\n    $communityTags: [ID]\n  ) {\n    updatePost(\n      article: $article\n      commandId: $commandId\n      expectedVersion: $expectedVersion\n      title: $title\n      communityTags: $communityTags\n    ) {\n      innerId\n      title\n      communityTags {\n        ...ArticleMenuTagFields\n      }\n    }\n  }\n': typeof types.UpdatePostFromMenuDocument
-  '\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!) {\n    setPostCat(article: $article, cat: $cat) {\n      innerId\n      cat\n    }\n  }\n': typeof types.SetPostCatDocument
-  '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!) {\n    setPostStatus(article: $article, status: $status) {\n      innerId\n      status\n    }\n  }\n': typeof types.SetPostStatusDocument
+  '\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!, $commandId: ID!) {\n    setPostCat(article: $article, cat: $cat, commandId: $commandId) {\n      innerId\n      cat\n    }\n  }\n': typeof types.SetPostCatDocument
+  '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!, $commandId: ID!) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n': typeof types.SetPostStatusDocument
   '\n  mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {\n    pinPost(article: $article, commandId: $commandId) {\n      innerId\n    }\n  }\n': typeof types.PinPostDocument
   '\n  mutation UndoPinPost($article: ArticlePathInput!, $commandId: ID!) {\n    undoPinPost(article: $article, commandId: $commandId) {\n      innerId\n      isPinned\n    }\n  }\n': typeof types.UndoPinPostDocument
   '\n  query CommunityTagGroupsForMenu($community: String!, $thread: Thread) {\n    communityTagGroups(community: $community, thread: $thread) {\n      id\n      title\n      index\n      tags {\n        ...ArticleMenuTagFields\n      }\n    }\n  }\n': typeof types.CommunityTagGroupsForMenuDocument
@@ -408,9 +408,9 @@ const documents: Documents = {
     types.ArticleMenuTagFieldsFragmentDoc,
   '\n  mutation UpdatePostFromMenu(\n    $article: ArticlePathInput!\n    $commandId: ID!\n    $expectedVersion: Int!\n    $title: String\n    $communityTags: [ID]\n  ) {\n    updatePost(\n      article: $article\n      commandId: $commandId\n      expectedVersion: $expectedVersion\n      title: $title\n      communityTags: $communityTags\n    ) {\n      innerId\n      title\n      communityTags {\n        ...ArticleMenuTagFields\n      }\n    }\n  }\n':
     types.UpdatePostFromMenuDocument,
-  '\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!) {\n    setPostCat(article: $article, cat: $cat) {\n      innerId\n      cat\n    }\n  }\n':
+  '\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!, $commandId: ID!) {\n    setPostCat(article: $article, cat: $cat, commandId: $commandId) {\n      innerId\n      cat\n    }\n  }\n':
     types.SetPostCatDocument,
-  '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!) {\n    setPostStatus(article: $article, status: $status) {\n      innerId\n      status\n    }\n  }\n':
+  '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!, $commandId: ID!) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n':
     types.SetPostStatusDocument,
   '\n  mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {\n    pinPost(article: $article, commandId: $commandId) {\n      innerId\n    }\n  }\n':
     types.PinPostDocument,
@@ -1210,14 +1210,14 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!) {\n    setPostCat(article: $article, cat: $cat) {\n      innerId\n      cat\n    }\n  }\n',
-): (typeof documents)['\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!) {\n    setPostCat(article: $article, cat: $cat) {\n      innerId\n      cat\n    }\n  }\n']
+  source: '\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!, $commandId: ID!) {\n    setPostCat(article: $article, cat: $cat, commandId: $commandId) {\n      innerId\n      cat\n    }\n  }\n',
+): (typeof documents)['\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!, $commandId: ID!) {\n    setPostCat(article: $article, cat: $cat, commandId: $commandId) {\n      innerId\n      cat\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!) {\n    setPostStatus(article: $article, status: $status) {\n      innerId\n      status\n    }\n  }\n',
-): (typeof documents)['\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!) {\n    setPostStatus(article: $article, status: $status) {\n      innerId\n      status\n    }\n  }\n']
+  source: '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!, $commandId: ID!) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n',
+): (typeof documents)['\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!, $commandId: ID!) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -544,6 +544,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
   describe "[article comment lock/unlock]" do
     test "can lock a post's comment", ~m(community post)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(post, community),
           community: community.slug,
@@ -564,6 +565,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
     test "unauth user fails", ~m(guest_conn community post)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(post, community),
           community: community.slug,
@@ -585,6 +587,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert post.meta.is_comment_locked
 
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(post, community),
           community: community.slug,
@@ -605,6 +608,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
     test "unauth user undo fails", ~m(guest_conn community post)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(post, community),
           community: community.slug,

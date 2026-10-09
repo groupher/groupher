@@ -16,6 +16,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
   describe "[blog sink]" do
     test "login user can sink a blog", ~m(community blog)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(blog, community),
           community: community.slug,
@@ -36,6 +37,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
 
     test "unauth user sink a blog fails", ~m(guest_conn community blog)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(blog, community),
           community: community.slug,
@@ -53,6 +55,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
 
     test "login user can undo sink to a blog", ~m(community blog user)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(blog, community),
           community: community.slug,
@@ -74,6 +77,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
 
     test "unauth user undo sink a blog fails", ~m(guest_conn community blog)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(blog, community),
           community: community.slug,

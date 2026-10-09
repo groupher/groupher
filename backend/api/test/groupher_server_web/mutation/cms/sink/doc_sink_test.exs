@@ -16,6 +16,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
   describe "[doc sink]" do
     test "login user can sink a doc", ~m(community doc)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(doc, community),
           community: community.slug,
@@ -36,6 +37,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
 
     test "unauth user sink a doc fails", ~m(guest_conn community doc)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(doc, community),
           community: community.slug,
@@ -53,6 +55,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
 
     test "login user can undo sink to a doc", ~m(community doc user)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(doc, community),
           community: community.slug,
@@ -76,6 +79,7 @@ defmodule GroupherServer.Test.Mutation.Sink.DocSink do
 
     test "unauth user undo sink a doc fails", ~m(guest_conn community doc)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(doc, community),
           community: community.slug,

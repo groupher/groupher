@@ -214,6 +214,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("sink a #{thread}")
       field unquote(:"sink_#{thread}"), :article do
         arg(:article, non_null(:article_path_input))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
 
@@ -230,6 +231,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("undo sink to #{thread}")
       field unquote(:"undo_sink_#{thread}"), :article do
         arg(:article, non_null(:article_path_input))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
 
@@ -258,6 +260,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("lock comment of a #{thread}")
       field unquote(:"lock_#{thread}_comment"), :article do
         arg(:article, non_null(:article_path_input))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
 
@@ -274,6 +277,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("undo lock to a #{thread}")
       field unquote(:"undo_lock_#{thread}_comment"), :article do
         arg(:article, non_null(:article_path_input))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
 

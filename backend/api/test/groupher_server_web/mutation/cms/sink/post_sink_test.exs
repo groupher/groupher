@@ -16,6 +16,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
   describe "[post sink]" do
     test "login user can sink a post", ~m(community post)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(post, community),
           community: community.slug,
@@ -36,6 +37,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
 
     test "unauth user sink a post fails", ~m(guest_conn community post)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(post, community),
           community: community.slug,
@@ -53,6 +55,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
 
     test "login user can undo sink to a post", ~m(community post user)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(post, community),
           community: community.slug,
@@ -73,6 +76,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
 
     test "unauth user undo sink a post fails", ~m(guest_conn community post)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(post, community),
           community: community.slug,

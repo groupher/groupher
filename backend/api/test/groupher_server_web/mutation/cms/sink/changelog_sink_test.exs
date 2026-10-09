@@ -16,6 +16,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
   describe "[changelog sink]" do
     test "login user can sink a changelog", ~m(community changelog)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(changelog, community),
           community: community.slug,
@@ -37,6 +38,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
     test "unauth user sink a changelog fails", ~m(guest_conn community changelog)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(changelog, community),
           community: community.slug,
@@ -54,6 +56,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
     test "login user can undo sink to a changelog", ~m(community changelog user)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(changelog, community),
           community: community.slug,
@@ -75,6 +78,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
     test "unauth user undo sink a changelog fails", ~m(guest_conn community changelog)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(changelog, community),
           community: community.slug,

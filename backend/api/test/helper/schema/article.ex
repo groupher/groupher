@@ -49,10 +49,12 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     mutation(
           $article: ArticlePathInput!
           $cat: ArticleCatEnum!
+          $commandId: ID!
         ) {
           setPostCat(
             article: $article
             cat: $cat
+            commandId: $commandId
           ) {
             innerId
             cat
@@ -106,10 +108,12 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     mutation(
           $article: ArticlePathInput!
           $status: ArticleStatusEnum!
+          $commandId: ID!
         ) {
           setPostStatus(
             article: $article
             status: $status
+            commandId: $commandId
           ) {
             innerId
             status
@@ -146,8 +150,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:sink_article, thread) do
     """
-    mutation($article: ArticlePathInput!){
-      sink#{t(thread)}(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!){
+      sink#{t(thread)}(article: $article, commandId: $commandId) {
         innerId
       }
     }
@@ -156,8 +160,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:undo_sink_article, thread) do
     """
-    mutation($article: ArticlePathInput!){
-      undoSink#{t(thread)}(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!){
+      undoSink#{t(thread)}(article: $article, commandId: $commandId) {
         innerId
       }
     }
@@ -166,8 +170,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:lock_comment, thread) do
     """
-    mutation($article: ArticlePathInput!) {
-      lock#{t(thread)}Comment(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!) {
+      lock#{t(thread)}Comment(article: $article, commandId: $commandId) {
         innerId
         title
       }
@@ -177,8 +181,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:unlock_comment, thread) do
     """
-    mutation($article: ArticlePathInput!){
-      undoLock#{t(thread)}Comment(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!){
+      undoLock#{t(thread)}Comment(article: $article, commandId: $commandId) {
         innerId
       }
     }

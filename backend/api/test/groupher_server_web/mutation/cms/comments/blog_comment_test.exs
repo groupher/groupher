@@ -303,6 +303,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
   describe "[article comment lock/unlock]" do
     test "can lock a blog's comment", ~m(community blog)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(blog, community),
           community: community.slug,
@@ -323,6 +324,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
     test "unauth user fails", ~m(guest_conn community blog)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(blog, community),
           community: community.slug,
@@ -344,6 +346,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
       assert blog.meta.is_comment_locked
 
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(blog, community),
           community: community.slug,
@@ -364,6 +367,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
     test "unauth user undo fails", ~m(guest_conn community blog)a do
       variables = %{
+        command_id: Ecto.UUID.generate(),
         article: %{
           inner_id: article_inner_id(blog, community),
           community: community.slug,
