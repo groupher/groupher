@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Assets.Commands.DeleteAsset do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Assets.Commands.DeleteAssetConfirmation, as: Confirmation
-  alias CMS.Assets.Writer
+  alias CMS.Assets.Persist
   alias CMS.Command
   alias CMS.ErrorCat
   alias CMS.Model.{Community, CommunityAsset}
@@ -43,7 +43,17 @@ defmodule GroupherServer.CMS.Assets.Commands.DeleteAsset do
     community = Repo.get!(Community, asset.community_id)
 
     CMS.Gate.with_community_check(actor, :update, community, fn canonical ->
-      with {:ok, deleted} <- Writer.delete(canonical, asset.id, {:command, command_id}) do
+      with {:ok, deleted} <- Persist.delete(canonical, asset.id, {:command, command_id}),
+           {:ok, _event} <-
+             CMS.Outbox.send(%{
+               event: "asset.provider_delete",
+               worker: CMS.Outbox.Workers.Asset.Cleanup,
+               resource_type: "community_asset",
+               resource_id: deleted.id,
+               identity: {:command, command_id},
+               effect_key: "asset:#{deleted.id}",
+               data: %{asset_id: deleted.id, public_ref: deleted.public_ref}
+             }) do
         {:ok,
          %Confirmation{
            data: %{

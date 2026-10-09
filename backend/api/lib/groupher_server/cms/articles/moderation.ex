@@ -250,16 +250,23 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   defp moderation_identity(%Article{} = article, opts) do
     case Keyword.get(opts, :command_id) do
       command_id when is_binary(command_id) ->
-        {:ok, {:command, command_id}}
+        case Ecto.UUID.cast(command_id) do
+          {:ok, command_id} -> {:ok, {:command, command_id}}
+          :error -> workflow_moderation_identity(article, opts)
+        end
 
       _ ->
-        case Keyword.get(opts, :workflow_ref) do
-          workflow_ref when is_binary(workflow_ref) and workflow_ref != "" ->
-            {:ok, {:workflow, workflow_ref}}
+        workflow_moderation_identity(article, opts)
+    end
+  end
 
-          _ ->
-            {:ok, {:workflow, "article-moderation:#{article.id}:#{article.moderation_state}"}}
-        end
+  defp workflow_moderation_identity(article, opts) do
+    case Keyword.get(opts, :workflow_ref) do
+      workflow_ref when is_binary(workflow_ref) and workflow_ref != "" ->
+        {:ok, {:workflow, workflow_ref}}
+
+      _ ->
+        {:ok, {:workflow, "article-moderation:#{article.id}:#{article.moderation_state}"}}
     end
   end
 

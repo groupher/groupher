@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Communities.Tags, as: CommunityTags
+  alias CMS.Communities.TagMaintenance
   alias CMS.Artiment.Threads
   alias CMS.Model.{Category, Community}
   alias CMS.Seeds.{SeedsConfig, Tags}
@@ -50,10 +50,12 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   def create_tags(%Community{} = community, %{slug: slug}, bot, type) do
     {:ok, thread} = Threads.to_atom(slug)
 
-    Enum.each(
-      Tags.get(community, thread, type),
-      &CommunityTags.create(community, thread, &1, bot)
-    )
+    Tags.get(community, thread, type)
+    |> Enum.with_index()
+    |> Enum.each(fn {attrs, index} ->
+      workflow_ref = "seed-helper-tags:#{community.id}:#{thread}:#{index}"
+      TagMaintenance.create(community, thread, attrs, bot, workflow_ref)
+    end)
   end
 
   # create tags end

@@ -61,7 +61,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
              community,
              thread,
              Map.get(attrs, :group_id),
-             Map.get(attrs, :group)
+             Map.get(attrs, :group),
+             opts
            ) do
       transact(fn ->
         attrs =
@@ -246,9 +247,6 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
-  defp do_update_tags_assoc(article, tags, opt, community_id),
-    do: do_update_tags_assoc(article, tags, opt, community_id, [])
-
   defp do_update_tags_assoc(article, tags, opt, community_id, opts) when is_list(tags) do
     case Ecto.UUID.cast(Map.get(article, :id)) do
       {:ok, article_id} -> update_stable_tags(article, article_id, tags, opt, community_id, opts)
@@ -285,7 +283,9 @@ defmodule GroupherServer.CMS.Communities.Tags do
              {:ok, _} <- sync_tag_stats(updated_article, Repo.get!(Article, article_id), old_tags),
              {:ok, thread} <- FrontDesk.thread_of(article),
              {:ok, _} <-
-               invalidate_taxonomy(
+               maybe_invalidate_taxonomy(
+                 old_tags,
+                 community_tags,
                  Repo.get!(Community, community_id),
                  thread,
                  "article-tags:#{binding.id}:#{:erlang.phash2(Enum.map(community_tags, & &1.id))}",
@@ -301,6 +301,17 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
   defp update_stable_tags(_article, _article_id, _tags, _opt, _community_id, _opts),
     do: {:error, :article_binding_context_required}
+
+  defp maybe_invalidate_taxonomy(old_tags, new_tags, community, thread, effect_key, opts) do
+    old_ids = MapSet.new(old_tags, & &1.id)
+    new_ids = MapSet.new(new_tags, & &1.id)
+
+    if old_ids == new_ids do
+      {:ok, :pass}
+    else
+      invalidate_taxonomy(community, thread, effect_key, opts)
+    end
+  end
 
   defp find_related_tags([], _filter), do: {:ok, []}
 
@@ -328,29 +339,32 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec overwrite(Community.t(), atom(), Ecto.Schema.t(), map()) ::
           {:ok, Ecto.Schema.t()} | {:error, any()}
-  def overwrite(%Community{id: cid}, thread, article, %{
-        community_tags: tag_ids
-      }) do
+  def overwrite(community, thread, article, attrs),
+    do: overwrite(community, thread, article, attrs, [])
+
+  @spec overwrite(Community.t(), atom(), Ecto.Schema.t(), map(), keyword()) ::
+          {:ok, Ecto.Schema.t()} | {:error, any()}
+  def overwrite(%Community{id: cid}, thread, article, %{community_tags: tag_ids}, opts) do
     check_filter = %{community_id: cid, thread: thread}
 
     with {:ok, related_tags} <- find_related_tags(tag_ids, check_filter) do
-      do_update_tags_assoc(article, related_tags, :overwrite, cid)
+      do_update_tags_assoc(article, related_tags, :overwrite, cid, opts)
     end
   end
 
-  def set(_, _, article, %{community_tags: []}), do: {:ok, article}
+  def set(community, thread, article, attrs), do: set(community, thread, article, attrs, [])
 
-  def set(%Community{id: cid}, thread, article, %{
-        community_tags: tag_ids
-      }) do
+  def set(_, _, article, %{community_tags: []}, _opts), do: {:ok, article}
+
+  def set(%Community{id: cid}, thread, article, %{community_tags: tag_ids}, opts) do
     check_filter = %{community_id: cid, thread: thread}
 
     with {:ok, related_tags} <- find_related_tags(tag_ids, check_filter) do
-      do_update_tags_assoc(article, related_tags, :add, cid)
+      do_update_tags_assoc(article, related_tags, :add, cid, opts)
     end
   end
 
-  def set(_community, _thread, article, _), do: {:ok, article}
+  def set(_community, _thread, article, _, _opts), do: {:ok, article}
 
   @doc """
   add a tag to article
@@ -499,12 +513,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
-  defp find_group_in_thread(%Community{} = community, thread, group_id, _group_title)
+  defp find_group_in_thread(%Community{} = community, thread, group_id, _group_title, _opts)
        when not is_nil(group_id) do
     find_group_in_thread(community, thread, group_id)
   end
 
-  defp find_group_in_thread(%Community{} = community, thread, _group_id, group_title)
+  defp find_group_in_thread(%Community{} = community, thread, _group_id, group_title, opts)
        when is_binary(group_title) do
     title = String.trim(group_title)
 
@@ -521,12 +535,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
           {:ok, group}
 
         _ ->
-          create_group(community, thread, %{title: title})
+          create_group(community, thread, %{title: title}, opts)
       end
     end
   end
 
-  defp find_group_in_thread(_, _, _, _) do
+  defp find_group_in_thread(_, _, _, _, _opts) do
     invalid_domain_tag("tag group required")
   end
 
@@ -726,28 +740,18 @@ defmodule GroupherServer.CMS.Communities.Tags do
   defp preload_group_tags(result), do: result
 
   defp invalidate_taxonomy(%Community{} = community, thread, effect_key, opts) do
-    CMS.Outbox.send(%{
-      event: "community.taxonomy_changed",
-      worker: CMS.Outbox.Workers.Community.Cleanup,
-      resource_type: "community",
-      resource_id: community.id,
-      identity: taxonomy_identity(community, thread, opts),
-      effect_key: effect_key,
-      data: %{community: community.slug, community_id: community.id, thread: thread}
-    })
-    |> case do
-      {:ok, _event} ->
-        {:ok, :pass}
-
-      {:error, changeset = %Ecto.Changeset{errors: errors}} ->
-        if Enum.any?(errors, fn {field, _error} -> field == :identity_type end) do
-          {:ok, :pass}
-        else
-          {:error, changeset}
-        end
-
-      {:error, reason} ->
-        {:error, reason}
+    with {:ok, identity} <- taxonomy_identity(community, thread, opts),
+         {:ok, _event} <-
+           CMS.Outbox.send(%{
+             event: "community.taxonomy_changed",
+             worker: CMS.Outbox.Workers.Community.Cleanup,
+             resource_type: "community",
+             resource_id: community.id,
+             identity: identity,
+             effect_key: effect_key,
+             data: %{community: community.slug, community_id: community.id, thread: thread}
+           }) do
+      {:ok, :pass}
     end
   end
 
@@ -756,28 +760,46 @@ defmodule GroupherServer.CMS.Communities.Tags do
     invalidate_taxonomy(community, tag.thread, effect_key, opts)
   end
 
-  defp taxonomy_identity(%Community{} = community, thread, opts) do
-    case Keyword.get(opts, :command_id) do
-      command_id when is_binary(command_id) ->
-        case Ecto.UUID.cast(command_id) do
-          {:ok, command_id} -> {:command, command_id}
-          :error -> {:workflow, "community-taxonomy:#{community.id}:#{thread}"}
+  defp taxonomy_identity(%Community{}, _thread, opts) do
+    case Keyword.get(opts, :identity) do
+      {:command, command_id} when is_binary(command_id) ->
+        {:ok, {:command, command_id}}
+
+      {:workflow, workflow_ref} when is_binary(workflow_ref) and workflow_ref != "" ->
+        {:ok, {:workflow, workflow_ref}}
+
+      nil ->
+        case Keyword.get(opts, :command_id) do
+          command_id when is_binary(command_id) ->
+            case Ecto.UUID.cast(command_id) do
+              {:ok, command_id} -> {:ok, {:command, command_id}}
+              :error -> {:error, :invalid_taxonomy_identity}
+            end
+
+          _ ->
+            {:error, :taxonomy_identity_required}
         end
 
       _ ->
-        {:workflow, "community-taxonomy:#{community.id}:#{thread}"}
+        {:error, :invalid_taxonomy_identity}
     end
   end
 
   defp split_identity(attrs, opts) when is_map(attrs) do
     command_id = Map.get(attrs, :command_id) || Map.get(attrs, "command_id")
-    {Map.drop(attrs, [:command_id, "command_id"]), maybe_command_id(opts, command_id)}
+    identity = Map.get(attrs, :identity) || Map.get(attrs, "identity")
+
+    {Map.drop(attrs, [:command_id, "command_id", :identity, "identity"]),
+     opts |> maybe_command_id(command_id) |> maybe_identity(identity)}
   end
 
   defp split_identity(attrs, opts), do: {attrs, opts}
 
   defp maybe_command_id(opts, nil), do: opts
   defp maybe_command_id(opts, command_id), do: Keyword.put(opts, :command_id, command_id)
+
+  defp maybe_identity(opts, nil), do: opts
+  defp maybe_identity(opts, identity), do: Keyword.put(opts, :identity, identity)
 
   defp replace_community_ifneed(filter) when is_map(filter) do
     filter
@@ -793,11 +815,11 @@ defmodule GroupherServer.CMS.Communities.Tags do
     |> Map.new()
   end
 
-  # Gate/Command owns the surrounding aggregate transaction for authenticated
-  # mutations. Legacy service callers still get an atomic transaction, but a
-  # nested savepoint is never used when a command already holds the lock.
+  # Gate/Command or an explicitly named maintenance workflow owns the
+  # surrounding aggregate transaction. Tags never opens a transaction for a
+  # caller, so an unclassified writer cannot silently become an owner.
   defp transact(fun) when is_function(fun, 0) do
-    if Repo.in_transaction?(), do: {:ok, fun.()}, else: Repo.transact(fn -> {:ok, fun.()} end)
+    if Repo.in_transaction?(), do: {:ok, fun.()}, else: {:error, :tag_transaction_required}
   end
 
   defp invalid_domain_tag(details), do: {:error, ErrorCat.invalid_domain_tag(details)}

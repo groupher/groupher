@@ -233,6 +233,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "add a moderator for a community"
     field :add_moderator, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:user, non_null(:string))
 
@@ -246,6 +247,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "add moderators for a community"
     field :add_moderators, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:users, non_null(list_of(non_null(:string))))
 
@@ -259,6 +261,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "unset a moderator from a community, the user's passport also deleted"
     field :remove_moderator, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:user, non_null(:string))
 
@@ -272,6 +275,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "update cms moderator's title, passport is not effected"
     field :update_moderator_passport, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:user, non_null(:string))
       arg(:rules, non_null(:json))

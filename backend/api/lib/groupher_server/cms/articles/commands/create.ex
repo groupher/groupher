@@ -92,7 +92,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     with {:ok, branch} <- CMS.Docs.Branch.resolve(community, []),
          {:ok, %{article: article, draft: draft}} <-
            Articles.create_stable_draft(community, :doc, attrs, user, branch_id: branch.id),
-         {:ok, _} <- sync_community_tags(community, article, attrs),
+         {:ok, _} <- sync_community_tags(community, article, attrs, command_id),
          {:ok, _published} <-
            Docs.publish_branch(article.id, branch.id, user,
              expected_draft_version: draft.version,
@@ -146,12 +146,24 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     end
   end
 
-  defp sync_community_tags(community, article, attrs) do
+  defp sync_community_tags(community, article, attrs, command_id) do
     tag_ids = Map.get(attrs, :community_tags) || Map.get(attrs, "community_tags") || []
 
-    case Communities.overwrite_tags(community, article.thread, article, %{
-           community_tags: tag_ids
-         }) do
+    identity =
+      case Ecto.UUID.cast(command_id) do
+        {:ok, command_id} -> {:command, command_id}
+        :error -> {:workflow, "article-create:#{community.id}:#{article.id}"}
+      end
+
+    case Communities.overwrite_tags(
+           community,
+           article.thread,
+           article,
+           %{
+             community_tags: tag_ids
+           },
+           identity: identity
+         ) do
       {:ok, _article} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end

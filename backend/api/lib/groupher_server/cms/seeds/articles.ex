@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
 
   alias GroupherServer.CMS
 
-  alias CMS.Communities.Tags, as: CommunityTags
+  alias CMS.Communities.TagMaintenance
   alias CMS.Model.Community
   alias Helper.{ORM, T}
   alias CMS.Seeds.{Comments, Config, Tags}
@@ -148,8 +148,10 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     tag_ids
     |> Enum.shuffle()
     |> Enum.take(count)
-    |> Enum.each(fn tag_id ->
-      CommunityTags.add(article, tag_id)
+    |> Enum.with_index()
+    |> Enum.each(fn {tag_id, index} ->
+      workflow_ref = "seed-article-tags:#{article.id}:#{index}"
+      TagMaintenance.add(article, tag_id, workflow_ref)
     end)
   end
 

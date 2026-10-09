@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
-  alias CMS.Assets.{Capability, Writer}
+  alias CMS.Assets.{Capability, Persist}
   alias CMS.Model.{Community, CommunityAsset}
   alias Helper.{T, Utils}
 
@@ -184,7 +184,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
   defp complete_asset(community_id, attrs) do
     with {:ok, _} <- ensure_capacity(community_id, attrs.size_bytes),
-         {:ok, asset} <- Writer.register(%Community{id: community_id}, attrs, nil) do
+         {:ok, asset} <- Persist.register(%Community{id: community_id}, attrs, nil) do
       asset
     else
       {:error, reason} -> Repo.rollback(reason)

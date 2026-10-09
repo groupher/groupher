@@ -137,7 +137,8 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
        context do
     ~m(community post actor outsider first)a = context
 
-    assert {:ok, _community} = CMS.Communities.add_moderator(community, outsider, actor)
+    assert {:ok, _community} =
+             CMS.Communities.add_moderator(community, outsider, actor, Ecto.UUID.generate())
 
     assert {:error, %{reason: :permission_denied}} =
              CMS.Comments.accept_solution(first.id, outsider, Ecto.UUID.generate())

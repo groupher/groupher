@@ -380,7 +380,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       passport_rules = %{community.slug => %{"moderator.set" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
-      variables = %{user: user2.login, community: community.slug}
+      variables = %{
+        user: user2.login,
+        community: community.slug,
+        command_id: Ecto.UUID.generate()
+      }
 
       result = rule_conn |> gq_mutation(@set_moderator_query, variables)
 
@@ -394,7 +398,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       passport_rules = %{community.slug => %{"moderator.set" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
-      variables = %{users: [user2.login, user3.login], community: community.slug}
+      variables = %{
+        users: [user2.login, user3.login],
+        community: community.slug,
+        command_id: Ecto.UUID.generate()
+      }
 
       result = rule_conn |> gq_mutation(@set_moderators_query, variables)
 
@@ -408,7 +416,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       rule_conn = simu_conn(:user, user2, cms: %{"god" => true})
 
-      variables = %{users: [user3.login], community: community.slug}
+      variables = %{
+        users: [user3.login],
+        community: community.slug,
+        command_id: Ecto.UUID.generate()
+      }
 
       result = rule_conn |> gq_mutation(@set_moderators_query, variables)
 
@@ -419,7 +431,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     @unset_moderator_query S.Moderation.m(:remove_moderator)
     test "auth user can unset moderator AND passport from community", ~m(user community user2)a do
       cur_user = user
-      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, Ecto.UUID.generate())
 
       assert {:ok, _} =
                CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
@@ -429,7 +441,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       passport_rules = %{community.slug => %{"moderator.unset" => true}}
       rule_conn = simu_conn(:user, cur_user, cms: passport_rules)
 
-      variables = %{user: user2.login, community: community.slug}
+      variables = %{
+        user: user2.login,
+        community: community.slug,
+        command_id: Ecto.UUID.generate()
+      }
 
       rule_conn |> gq_mutation(@unset_moderator_query, variables)
 
@@ -442,7 +458,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "auth user can update moderator to community", ~m(user user2 community)a do
       cur_user = user
 
-      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, Ecto.UUID.generate())
 
       passport_rules = %{
         "global" => %{},
@@ -465,7 +481,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
           }
         })
 
-      variables = %{user: user2.login, community: community.slug, rules: new_passport_rules}
+      variables = %{
+        user: user2.login,
+        community: community.slug,
+        rules: new_passport_rules,
+        command_id: Ecto.UUID.generate()
+      }
 
       assert rule_conn
              |> mutation_error?(
@@ -495,7 +516,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
           }
         })
 
-      next_variables = %{variables | rules: next_passport_rules}
+      next_variables = %{variables | rules: next_passport_rules, command_id: Ecto.UUID.generate()}
       result = root_rule_conn |> gq_mutation(@update_moderator_query, next_variables)
 
       {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
@@ -511,7 +532,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "unauth user add moderator fails", ~m(user_conn guest_conn user community)a do
-      variables = %{user: user.login, community: community.slug}
+      variables = %{user: user.login, community: community.slug, command_id: Ecto.UUID.generate()}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn

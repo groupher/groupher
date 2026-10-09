@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
 
   alias GroupherServer.{CMS, Repo, ServiceAuth}
 
-  alias CMS.Assets.{ErrorCat, Writer}
+  alias CMS.Assets.{ErrorCat, Persist}
   alias CMS.Model.{Community, CommunityAsset}
   alias ServiceAuth.Client
 
@@ -62,8 +62,19 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     |> Enum.each(fn asset ->
       _ =
         Repo.transaction(fn ->
-          case Writer.delete(community, asset.id, {:workflow, workflow_ref}) do
-            {:ok, deleted} -> deleted
+          with {:ok, deleted} <- Persist.delete(community, asset.id, {:workflow, workflow_ref}),
+               {:ok, _event} <-
+                 CMS.Outbox.send(%{
+                   event: "asset.provider_delete",
+                   worker: CMS.Outbox.Workers.Asset.Cleanup,
+                   resource_type: "community_asset",
+                   resource_id: deleted.id,
+                   identity: {:workflow, workflow_ref},
+                   effect_key: "asset:#{deleted.id}",
+                   data: %{asset_id: deleted.id, public_ref: deleted.public_ref}
+                 }) do
+            deleted
+          else
             {:error, reason} -> Repo.rollback(reason)
           end
         end)

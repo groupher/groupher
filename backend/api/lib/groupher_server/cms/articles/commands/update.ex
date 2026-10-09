@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
        ) do
     with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user),
          {:ok, %{public: public}} <-
-           update_and_publish(article, attrs, author, user, community),
+           update_and_publish(article, attrs, author, user, community, command_id),
          %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) <-
            Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id) do
       with {:ok, revision_id} <- required_revision_id(public),
@@ -99,7 +99,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   defp required_published_at(%{inserted_at: %DateTime{} = value}), do: {:ok, value}
   defp required_published_at(_), do: {:error, :missing_published_at}
 
-  defp update_and_publish(article, attrs, author, user, community) do
+  defp update_and_publish(article, attrs, author, user, community, command_id) do
     CMS.Gate.with_community_check(user, :edit, community, article, fn canonical ->
       with {:ok, lifecycle} <- lifecycle(canonical.id),
            {:ok, draft} <- DraftStore.ensure_from_public(canonical, author),
@@ -112,7 +112,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
                expected_lifecycle_version: lifecycle.version,
                community: community
              ] ++
-               community_tag_opts(attrs),
+               community_tag_opts(attrs) ++ [outbox_command_id: command_id],
            {:ok, %{article: published} = publish_result} <-
              Target.publish(canonical, author, publish_opts),
            {:ok, _effects} <- Effects.run(publish_result),

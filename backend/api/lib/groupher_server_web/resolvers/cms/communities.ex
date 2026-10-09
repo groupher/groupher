@@ -73,22 +73,22 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
     CMS.Communities.unset_category(community, category_id)
   end
 
-  def add_moderator(_root, ~m(community user)a, %{context: %{cur_user: cur_user}}) do
-    CMS.Communities.add_moderator(community, user, cur_user)
+  def add_moderator(_root, ~m(community user command_id)a, %{context: %{cur_user: cur_user}}) do
+    CMS.Communities.add_moderator(community, user, cur_user, command_id)
   end
 
-  def add_moderators(_root, ~m(community users)a, %{context: %{cur_user: cur_user}}) do
-    CMS.Communities.add_moderators(community, users, cur_user)
+  def add_moderators(_root, ~m(community users command_id)a, %{context: %{cur_user: cur_user}}) do
+    CMS.Communities.add_moderators(community, users, cur_user, command_id)
   end
 
-  def remove_moderator(_root, ~m(community user)a, %{context: %{cur_user: cur_user}}) do
-    CMS.Communities.remove_moderator(community, user, cur_user)
+  def remove_moderator(_root, ~m(community user command_id)a, %{context: %{cur_user: cur_user}}) do
+    CMS.Communities.remove_moderator(community, user, cur_user, command_id)
   end
 
-  def update_moderator_passport(_root, ~m(community user rules)a, %{
+  def update_moderator_passport(_root, ~m(community user rules command_id)a, %{
         context: %{cur_user: cur_user}
       }) do
-    CMS.Communities.update_moderator_passport(community, rules, user, cur_user)
+    CMS.Communities.update_moderator_passport(community, rules, user, cur_user, command_id)
   end
 
   def paged_community_moderators(_root, ~m(community filter)a, _info) do

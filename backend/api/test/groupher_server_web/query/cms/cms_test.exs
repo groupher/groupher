@@ -341,7 +341,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
       cur_user = user
 
-      Enum.each(users, &CMS.Communities.add_moderator(community, &1, cur_user))
+      Enum.each(users, &CMS.Communities.add_moderator(community, &1, cur_user, Ecto.UUID.generate()))
 
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -359,7 +359,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
       Enum.each(
         users,
-        &CMS.Communities.add_moderator(community, %User{id: &1.id}, cur_user)
+        &CMS.Communities.add_moderator(community, %User{id: &1.id}, cur_user, Ecto.UUID.generate())
       )
 
       variables = %{community: community.slug, filter: %{page: 1, size: 10}}

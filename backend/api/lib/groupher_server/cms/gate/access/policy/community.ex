@@ -30,6 +30,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   alias CMS.Gate.{Const, ErrorCat}
   alias CMS.Gate.Context.Access.Community, as: CommunityContext
   alias CMS.Model.Community
+  alias CMS.Passport
   alias CMS.Passport.Registry
 
   @read_actions [:read, :list]
@@ -161,9 +162,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp root?(_, _), do: false
 
   defp god?(%User{} = user) do
-    passport =
-      Map.get(user, :cur_passport) ||
-        Map.get(user, :cms_passport, %{}) |> Map.get(:rules, %{})
+    passport = passport_rules(user)
 
     get_in(Registry.normalize_rules(passport), ["global", "god"]) == true
   rescue
@@ -171,9 +170,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   end
 
   defp passport_root?(%User{} = user, slug) when is_binary(slug) do
-    passport =
-      Map.get(user, :cur_passport) ||
-        Map.get(user, :cms_passport, %{}) |> Map.get(:rules, %{})
+    passport = passport_rules(user)
 
     get_in(Registry.normalize_rules(passport), [slug, "root"]) == true
   rescue
@@ -182,9 +179,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   defp passport_allowed?(%User{} = user, %Community{slug: slug}, action)
        when is_binary(slug) do
-    passport =
-      Map.get(user, :cur_passport) ||
-        Map.get(user, :cms_passport, %{}) |> Map.get(:rules, %{})
+    passport = passport_rules(user)
 
     case Registry.allowed?(passport, slug, action) do
       {:ok, true} ->
@@ -198,5 +193,25 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
     end
   rescue
     _ -> false
+  end
+
+  defp passport_rules(%User{} = user) do
+    embedded = Map.get(user, :cur_passport) || Map.get(user, :cms_passport)
+
+    value =
+      case embedded do
+        %{} = passport when not is_struct(passport) and map_size(passport) > 0 ->
+          Map.get(passport, :rules, Map.get(passport, "rules", passport))
+
+        _ ->
+          case Passport.get_passport(user) do
+            {:ok, %{} = passport} -> passport
+            _ -> %{}
+          end
+      end
+
+    value
+  rescue
+    _ -> %{}
   end
 end

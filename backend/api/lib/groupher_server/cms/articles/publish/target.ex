@@ -122,12 +122,39 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
         {:ok, :pass}
 
       {:ok, tag_ids} ->
-        case CMS.Communities.overwrite_tags(community, article.thread, article, %{
-               community_tags: tag_ids
-             }) do
+        case CMS.Communities.overwrite_tags(
+               community,
+               article.thread,
+               article,
+               %{community_tags: tag_ids},
+               identity: community_tag_identity(opts)
+             ) do
           {:ok, _article} -> {:ok, :pass}
           {:error, reason} -> {:error, reason}
         end
+    end
+  end
+
+  defp community_tag_identity(opts) do
+    case Keyword.get(opts, :outbox_command_id) do
+      command_id when is_binary(command_id) ->
+        case Ecto.UUID.cast(command_id) do
+          {:ok, command_id} -> {:command, command_id}
+          :error -> workflow_tag_identity(opts)
+        end
+
+      _ ->
+        workflow_tag_identity(opts)
+    end
+  end
+
+  defp workflow_tag_identity(opts) do
+    case Keyword.get(opts, :outbox_workflow_ref) do
+      workflow_ref when is_binary(workflow_ref) and workflow_ref != "" ->
+        {:workflow, workflow_ref}
+
+      _ ->
+        nil
     end
   end
 

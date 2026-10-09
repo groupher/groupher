@@ -18,7 +18,6 @@ defmodule GroupherServer.CMS.Communities do
     Creation,
     Query,
     Members,
-    Moderator,
     NamePolicy,
     Setup,
     SlugClaims,
@@ -336,34 +335,71 @@ defmodule GroupherServer.CMS.Communities do
   # Moderator
   @doc "Runs `add_moderator` through the public `Communities` boundary."
   @spec add_moderator(Community.t(), User.t(), User.t()) :: T.domain_res(Community.t())
-  def add_moderator(%Community{} = community, %User{} = target_user, %User{} = cur_user) do
-    Moderator.add(community, target_user, cur_user)
+  def add_moderator(%Community{}, %User{}, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec add_moderator(Community.t(), User.t(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Community.t())
+  def add_moderator(
+        %Community{} = community,
+        %User{} = target_user,
+        %User{} = cur_user,
+        command_id
+      ) do
+    CMS.Communities.Commands.Moderator.add(community, target_user, cur_user, command_id)
   end
 
   @doc "Runs `add_moderators` through the public `Communities` boundary."
   @spec add_moderators(Community.t(), list(User.t()), User.t()) :: T.domain_res(Community.t())
-  def add_moderators(
-        %Community{} = community,
-        target_users,
-        %User{} = cur_user
-      )
-      when is_list(target_users) do
-    Moderator.add_many(community, target_users, cur_user)
-  end
+  def add_moderators(%Community{}, _target_users, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec add_moderators(Community.t(), list(User.t()), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Community.t())
+  def add_moderators(%Community{} = community, target_users, %User{} = cur_user, command_id)
+      when is_list(target_users),
+      do:
+        CMS.Communities.Commands.Moderator.add_many(community, target_users, cur_user, command_id)
 
   @doc "Removes moderator through the `Communities` boundary."
   @spec remove_moderator(String.t() | Community.t(), User.t(), User.t()) ::
           T.domain_res(Community.t())
   def remove_moderator(community, %User{} = target_user, %User{} = cur_user) do
-    Moderator.remove(community, target_user, cur_user)
+    _ = {community, target_user, cur_user}
+    {:error, CMS.ErrorCat.command_id_required()}
   end
+
+  def remove_moderator(
+        %Community{} = community,
+        %User{} = target_user,
+        %User{} = cur_user,
+        command_id
+      ),
+      do: CMS.Communities.Commands.Moderator.remove(community, target_user, cur_user, command_id)
 
   @doc "Updates moderator passport through the `Communities` write boundary."
   @spec update_moderator_passport(String.t() | Community.t(), map(), User.t(), User.t()) ::
           T.domain_res(Community.t())
   def update_moderator_passport(community, rules, %User{} = target_user, %User{} = cur_user) do
-    Moderator.update_passport(community, rules, target_user, cur_user)
+    _ = {community, rules, target_user, cur_user}
+    {:error, CMS.ErrorCat.command_id_required()}
   end
+
+  def update_moderator_passport(
+        %Community{} = community,
+        rules,
+        %User{} = target_user,
+        %User{} = cur_user,
+        command_id
+      ),
+      do:
+        CMS.Communities.Commands.Moderator.update_passport(
+          community,
+          rules,
+          target_user,
+          cur_user,
+          command_id
+        )
 
   # Subscribe
   @doc "Runs `subscribe` through the public `Communities` boundary."
@@ -558,11 +594,23 @@ defmodule GroupherServer.CMS.Communities do
     Tags.set(community, thread, article, attrs)
   end
 
+  @spec set_tags(Community.t(), atom(), Ecto.Schema.t(), map(), keyword()) ::
+          T.domain_res(Ecto.Schema.t())
+  def set_tags(%Community{} = community, thread, article, attrs, opts) do
+    Tags.set(community, thread, article, attrs, opts)
+  end
+
   @doc "Runs `overwrite_tags` through the public `Communities` boundary."
   @spec overwrite_tags(Community.t(), atom(), Ecto.Schema.t(), map()) ::
           T.domain_res(Ecto.Schema.t())
   def overwrite_tags(%Community{} = community, thread, article, attrs) do
     Tags.overwrite(community, thread, article, attrs)
+  end
+
+  @spec overwrite_tags(Community.t(), atom(), Ecto.Schema.t(), map(), keyword()) ::
+          T.domain_res(Ecto.Schema.t())
+  def overwrite_tags(%Community{} = community, thread, article, attrs, opts) do
+    Tags.overwrite(community, thread, article, attrs, opts)
   end
 
   @doc "Runs `tag_groups` through the public `Communities` boundary."
