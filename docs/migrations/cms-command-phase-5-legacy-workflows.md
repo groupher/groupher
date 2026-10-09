@@ -337,9 +337,11 @@ result builder 对已删除行返回带 id 的 terminal stub；后续若产品�
 若现有 stats 实现无法证明重复重试不会重复加减，必须先改为“从 old/new 集合求差”或 authoritative
 recompute，不能用 Receipt 掩盖错误的 projection 算法。
 
-当前 public `ArticlePathInput` 没有 branch identity，Doc 的 set/unset 仍会在 Gate admission 返回
-`cms.gate.doc_branch_required`；这不是 commandId fallback，而是 branch-scoped Article/DocTree 合同
-尚未收口，继续列入 §6 的 DocTree/Article family 验收队列。
+当前 public `ArticlePathInput` 没有显式 branch identity；FrontDesk 对公开 Doc path 解析 main branch，
+`SetTag`/`UnsetTag` 会保留这个 `ArticleView.branch_id` 并走 `CMS.Gate.with_branch_check`。因此公开
+Doc set/unset 已完成 main-branch admission；非 main branch 仍需要扩展 ArticlePathInput 和调用方合同，
+继续列入 §6 的 DocTree/Article family 验收队列。不能把缺少显式 branch input 误写成 command identity
+缺失，也不能回退到普通 Article Gate。
 
 ### 4.6 Reindex
 
@@ -748,9 +750,10 @@ Assets 22/22、Receipt 26/26、Outbox 10/10，即 **191/191**。`tag_commands_te
 也已通过。由此“focused tests 61 passed”应理解为迁移切片的 focused suites，不可替代上述 §11 全量
 命令集；当前两者均有可复现的通过结果。
 
-扩展的 GraphQL community-tag mutation 目录目前为 39/41：Tag CRUD、set/unset（post/blog/changelog）
-和 reindex 已通过；Doc set/unset 的 2 个用例仍明确失败于 `doc_branch_required`，属于 branch-scoped
-合同债务，不应被误报成 command identity 已完成。
+扩展的 GraphQL community-tag mutation 目录目前为 **41/41**：Tag CRUD、set/unset（post/blog/changelog/doc）
+和 reindex 均已通过。Doc set/unset 的实现保留 FrontDesk public projection 提供的 main-branch
+identity，并在 `with_branch_check` 内完成 branch-scoped lock、lifecycle 和 policy admission；非 main
+branch 的显式路径参数仍属于 §6 的后续合同债务。
 
 ## 12. 提交拆分
 

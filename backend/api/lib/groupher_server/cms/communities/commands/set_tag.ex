@@ -16,25 +16,36 @@ defmodule GroupherServer.CMS.Communities.Commands.SetTag do
   @spec execute(Article.t() | map(), T.id(), User.t(), Ecto.UUID.t()) :: T.domain_res(Article.t())
   def execute(article, tag_id, %User{} = actor, command_id) do
     with {:ok, command_id} <- TagSupport.command_id(command_id),
-         {:ok, article} <- article_resource(article),
+         {:ok, article, branch_id} <- article_resource(article),
          {:ok, tag} <- FrontDesk.community_tag(tag_id),
          {:ok, %Community{} = community} <- TagSupport.community(tag.community_id) do
-      Gate.with_community_check(actor, :edit, community, article, fn canonical ->
+      with_article_gate(actor, community, article, branch_id, fn canonical ->
         Tags.add(canonical, tag.id, command_id: command_id)
       end)
     end
   end
 
-  defp article_resource(%Article{} = article), do: {:ok, article}
+  defp article_resource(%Article{} = article), do: {:ok, article, nil}
 
-  defp article_resource(%{article: %Article{} = article}), do: {:ok, article}
+  defp article_resource(%{article: %Article{} = article} = resource) do
+    {:ok, article, Map.get(resource, :branch_id)}
+  end
 
-  defp article_resource(%{article_id: article_id}) do
+  defp article_resource(%{article_id: article_id} = resource) do
     case Repo.get(Article, article_id) do
-      %Article{} = article -> {:ok, article}
+      %Article{} = article -> {:ok, article, Map.get(resource, :branch_id)}
       nil -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end
 
   defp article_resource(_article), do: {:error, CMS.Gate.ErrorCat.resource_not_found()}
+
+  defp with_article_gate(actor, community, article, branch_id, callback)
+       when is_integer(branch_id) do
+    Gate.with_branch_check(actor, :edit, community, article, branch_id, callback)
+  end
+
+  defp with_article_gate(actor, community, article, _branch_id, callback) do
+    Gate.with_community_check(actor, :edit, community, article, callback)
+  end
 end
