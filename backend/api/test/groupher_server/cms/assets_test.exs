@@ -291,7 +291,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert [%ArticleAssetRef{asset_id: asset_id}] = article_refs(:post, post.id)
       assert asset_id == to_asset.id
 
-      assert {:error, :draft_version_conflict} =
+      assert {:ok, %{draft_version: ^version, workflow_ref: ^workflow_ref}} =
                CMS.Assets.replace_use(
                  post,
                  %{
@@ -344,6 +344,54 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert (item[:decision] || item["decision"]) == "editable"
       locators = item[:usage_locators] || item["usage_locators"]
       assert [%{block_id: "plan-block"}] = locators
+    end
+
+    test "replacement plan persists step completion and resumes idempotently",
+         ~m(community post user)a do
+      {:ok, from_asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("resume-a.png", 10),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, to_asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("resume-b.png", 20),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      assert {:ok, %{body: [_]}} =
+               CMS.Assets.link_refs(
+                 post,
+                 %{asset_refs: [%{asset_id: from_asset.id, block_id: "resume-block"}]},
+                 community: community
+               )
+
+      assert {:ok, %AssetReplacementPlan{} = plan} =
+               CMS.Assets.create_replacement_plan(
+                 community,
+                 %{from_asset_id: from_asset.id, to_asset_id: to_asset.id},
+                 user
+               )
+
+      draft = Repo.get_by!(ArticleDraft, article_id: post.id)
+      body = Repo.get!(ArticleBodyDraft, draft.body_draft_id)
+      {:ok, body_bag} = BodyBag.from_document(body)
+
+      assert {:ok, %AssetReplacementPlan{status: :completed, apply_run_ref: run_ref} = applied} =
+               CMS.Assets.apply_replacement_plan(plan, user, body_bags: %{post.id => body_bag})
+
+      assert is_binary(run_ref)
+      [item] = applied.items
+      [locator] = item[:usage_locators] || item["usage_locators"]
+      assert (locator[:status] || locator["status"]) == "succeeded"
+
+      assert {:ok, %AssetReplacementPlan{status: :completed, apply_run_ref: ^run_ref}} =
+               CMS.Assets.apply_replacement_plan(applied, user, body_bags: %{post.id => body_bag})
     end
 
     test "rejects refs with both asset_id and inline asset", ~m(community post user)a do

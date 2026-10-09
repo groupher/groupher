@@ -48,10 +48,13 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
       else
         case command_id do
           {:workflow, workflow_ref} when is_binary(workflow_ref) and workflow_ref != "" ->
-            with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user),
-                 {:ok, result} <- replace_in_draft(article, community, params, author, user) do
-              {:ok, Map.put(result, :workflow_ref, workflow_ref)}
-            end
+            replace_with_workflow_recovery(
+              article,
+              community,
+              params,
+              user,
+              workflow_ref
+            )
 
           _ ->
             execute_command(article, community, params, user, command_id)
@@ -59,6 +62,52 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
       end
     else
       {:error, _reason} = error -> error
+    end
+  end
+
+  defp replace_with_workflow_recovery(article, community, params, user, workflow_ref) do
+    case recover_existing_replacement(article, params, workflow_ref) do
+      {:ok, result} ->
+        {:ok, result}
+
+      :not_applied ->
+        with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user),
+             {:ok, result} <- replace_in_draft(article, community, params, author, user) do
+          {:ok, Map.put(result, :workflow_ref, workflow_ref)}
+        end
+    end
+  end
+
+  defp recover_existing_replacement(article, params, workflow_ref) do
+    with {:ok, draft} <- Store.get(article),
+         refs <- Writer.draft_refs(draft.body_draft_id),
+         %ArticleAssetRef{} = ref <- Enum.find(refs, &same_locator?(&1, params)),
+         true <- ref.asset_id == value(params, :to_asset_id) do
+      {:ok,
+       %{
+         article_id: article.id,
+         draft_version: draft.version,
+         ref_id: ref.id,
+         usage: ref.usage,
+         from_asset_id: value(params, :from_asset_id),
+         to_asset_id: ref.asset_id,
+         workflow_ref: workflow_ref
+       }}
+    else
+      _ -> :not_applied
+    end
+  end
+
+  defp same_locator?(ref, params) do
+    ref.usage == value(params, :usage) and
+      locator_matches?(params, :block_id, ref.block_id) and
+      locator_matches?(params, :position, ref.position)
+  end
+
+  defp locator_matches?(params, key, actual) do
+    case Map.fetch(params, key) do
+      :error -> true
+      {:ok, expected} -> expected == actual
     end
   end
 
