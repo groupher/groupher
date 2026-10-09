@@ -16,7 +16,12 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
   describe "[changelog report/undo_report]" do
     test "login user can report a changelog", ~m(community changelog user_conn)a do
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         reason: "reason"
       }
 
@@ -26,7 +31,12 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
 
     test "login user can undo report a changelog", ~m(community changelog user_conn)a do
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         reason: "reason"
       }
 
@@ -34,7 +44,12 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
       assert article["innerId"] == to_string(article_inner_id(changelog, community))
 
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"}
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        }
       }
 
       article =

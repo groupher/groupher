@@ -147,7 +147,7 @@ defmodule GroupherServer.CMS.Command do
   defp context(command, command_id) do
     command
     |> Map.from_struct()
-    |> Map.take([:actor, :target, :params])
+    |> Map.take([:actor, :target, :params, :operation])
     |> Map.put(:command_id, command_id)
   end
 

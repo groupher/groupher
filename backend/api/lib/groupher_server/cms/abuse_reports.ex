@@ -34,26 +34,28 @@ defmodule GroupherServer.CMS.AbuseReports do
   end
 
   @doc "Runs `article` through the public `AbuseReports` boundary."
-  @spec article(T.article(), String.t(), map(), User.t()) :: T.domain_res(T.article())
-  def article(target_article, reason, attr, %User{} = user) do
-    CMS.Interactions.report(target_article, reason, attr, user)
+  @spec article(T.article(), String.t(), map(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(T.article())
+  def article(target_article, reason, attr, %User{} = user, command_id) do
+    CMS.Interactions.report(target_article, reason, attr, user, command_id)
   end
 
   @doc "Runs `undo_article` through the public `AbuseReports` boundary."
-  @spec undo_article(T.article(), User.t()) :: T.domain_res(T.article())
-  def undo_article(target_article, %User{} = user) do
-    CMS.Interactions.undo_report(target_article, user)
+  @spec undo_article(T.article(), User.t(), Ecto.UUID.t()) :: T.domain_res(T.article())
+  def undo_article(target_article, %User{} = user, command_id) do
+    CMS.Interactions.undo_report(target_article, user, command_id)
   end
 
   @doc "Runs `comment` through the public `AbuseReports` boundary."
-  @spec comment(Comment.t(), String.t(), map(), User.t()) :: T.domain_res(Comment.t())
-  def comment(%Comment{} = target_comment, reason, attr, %User{} = user) do
-    CMS.Interactions.report(target_comment, reason, attr, user)
+  @spec comment(Comment.t(), String.t(), map(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Comment.t())
+  def comment(%Comment{} = target_comment, reason, attr, %User{} = user, command_id) do
+    CMS.Interactions.report(target_comment, reason, attr, user, command_id)
   end
 
   @doc "Runs `undo_comment` through the public `AbuseReports` boundary."
-  @spec undo_comment(Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def undo_comment(%Comment{} = target_comment, %User{} = user) do
-    CMS.Interactions.undo_report(target_comment, user)
+  @spec undo_comment(Comment.t(), User.t(), Ecto.UUID.t()) :: T.domain_res(Comment.t())
+  def undo_comment(%Comment{} = target_comment, %User{} = user, command_id) do
+    CMS.Interactions.undo_report(target_comment, user, command_id)
   end
 end

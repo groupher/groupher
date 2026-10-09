@@ -187,8 +187,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:report_article, thread) do
     """
-    mutation($article: ArticlePathInput!, $reason: String!, $attr: String) {
-      report#{t(thread)}(article: $article, reason: $reason, attr: $attr) {
+    mutation($commandId: ID!, $article: ArticlePathInput!, $reason: String!, $attr: String) {
+      report#{t(thread)}(commandId: $commandId, article: $article, reason: $reason, attr: $attr) {
         innerId
         title
       }
@@ -198,8 +198,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:undo_report_article, thread) do
     """
-    mutation($article: ArticlePathInput!) {
-      undoReport#{t(thread)}(article: $article) {
+    mutation($commandId: ID!, $article: ArticlePathInput!) {
+      undoReport#{t(thread)}(commandId: $commandId, article: $article) {
         innerId
         title
       }

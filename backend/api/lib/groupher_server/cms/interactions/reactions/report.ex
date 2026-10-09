@@ -23,6 +23,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
   alias CMS.Gate
 
   alias CMS.Interactions.{ErrorCat, ReadState}
+  alias CMS.Interactions.Reactions.ReportConfirmation, as: Confirmation
+  alias CMS.Command
   alias CMS.Model.{AbuseReport, Comment, Embeds}
   alias Helper.T
 
@@ -33,12 +35,72 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
 
   ## Examples
 
-      Reactions.Report.add(comment, "spam", %{}, actor)
+      Reactions.Report.add(comment, "spam", %{}, actor, command_id)
 
   """
-  @spec add(struct(), String.t(), term(), User.t()) :: T.domain_res(struct())
-  def add(artiment, reason, attrs, %User{} = actor) do
-    mutate(artiment, actor, fn canonical, info ->
+  @spec add(struct(), String.t(), term(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def add(artiment, reason, attrs, %User{} = actor, command_id) do
+    execute_command(
+      artiment,
+      actor,
+      :report_add,
+      %{reason: reason, attrs: attrs},
+      command_id
+    )
+  end
+
+  @doc """
+  Removes the current reporter's fact idempotently.
+
+  ## Examples
+
+      Reactions.Report.remove(comment, actor, command_id)
+
+  """
+  @spec remove(struct(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def remove(artiment, %User{} = actor, command_id) do
+    execute_command(artiment, actor, :report_remove, %{}, command_id)
+  end
+
+  defp execute_command(input, actor, operation, params, command_id) do
+    with {:ok, command_id} <- require_command_id(command_id) do
+      %Command{
+        actor: actor,
+        command_id: command_id,
+        operation: operation,
+        target: input,
+        params: params
+      }
+      |> Command.execute(action: &action/1, confirmation: Confirmation)
+      |> present_result(input, actor)
+    end
+  end
+
+  defp action(%{
+         actor: actor,
+         target: input,
+         operation: operation,
+         params: params,
+         command_id: _command_id
+       }) do
+    result =
+      with {:ok, canonical} <-
+             mutate(input, actor, operation, params),
+           {:ok, target_type} <- target_type(canonical) do
+        {:ok,
+         %Confirmation{
+           data: %{
+             "target_id" => to_string(canonical.id),
+             "target_type" => target_type
+           }
+         }}
+      end
+
+    result
+  end
+
+  defp mutate(input, actor, :report_add, %{reason: reason, attrs: attrs}) do
+    mutate(input, actor, fn canonical, info ->
       with {:ok, report} <- add_fact(info, canonical, reason, attrs, actor),
            {:ok, _projection} <- ReadState.add_report(canonical, actor),
            {:ok, _} <- maybe_fold_comment(canonical, report, actor) do
@@ -47,17 +109,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
     end)
   end
 
-  @doc """
-  Removes the current reporter's fact idempotently.
-
-  ## Examples
-
-      Reactions.Report.remove(comment, actor)
-
-  """
-  @spec remove(struct(), User.t()) :: T.domain_res(struct())
-  def remove(artiment, %User{} = actor) do
-    mutate(artiment, actor, fn canonical, info ->
+  defp mutate(input, actor, :report_remove, _params) do
+    mutate(input, actor, fn canonical, info ->
       with {:ok, changed?} <- remove_fact(info, canonical.id, actor),
            {:ok, _} <- maybe_remove_state(canonical, actor, changed?) do
         canonical
@@ -67,7 +120,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
 
   defp mutate(input, actor, command) do
     MutationLock.observe_transaction(fn ->
-      Repo.transaction(fn ->
+      transaction = fn ->
         with {:ok, canonical} <- Gate.access_check(actor, :report, input),
              {:ok, info} <- Matcher.match_interaction(canonical),
              {:ok, result} <- normalize_command(command.(canonical, info)) do
@@ -75,9 +128,35 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
         else
           {:error, reason} -> Repo.rollback(reason)
         end
-      end)
+      end
+
+      if Repo.in_transaction?() do
+        case transaction.() do
+          {:ok, _result} = result -> result
+          {:error, _reason} = error -> error
+          result -> {:ok, result}
+        end
+      else
+        Repo.transaction(transaction)
+      end
     end)
   end
+
+  defp present_result({:ok, %Confirmation{}}, input, actor) do
+    Gate.access_check(actor, :report, input)
+  end
+
+  defp present_result({:error, _reason} = error, _input, _actor), do: error
+
+  defp require_command_id(command_id) when is_binary(command_id), do: {:ok, command_id}
+  defp require_command_id(_command_id), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  defp target_type(%Comment{}), do: {:ok, "comment"}
+
+  defp target_type(%{__struct__: module}),
+    do: {:ok, module |> Module.split() |> List.last() |> Macro.underscore()}
+
+  defp target_type(_target), do: {:error, ErrorCat.unsupported_artiment("report target")}
 
   defp normalize_command({:error, _reason} = error), do: error
   defp normalize_command(result), do: {:ok, result}

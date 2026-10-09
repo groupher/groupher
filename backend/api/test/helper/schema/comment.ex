@@ -189,8 +189,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:report_comment) do
     """
-    mutation($comment: CommentPathInput!, $reason: String!, $attr: String) {
-      reportComment(comment: $comment, reason: $reason, attr: $attr) {
+    mutation($commandId: ID!, $comment: CommentPathInput!, $reason: String!, $attr: String) {
+      reportComment(commandId: $commandId, comment: $comment, reason: $reason, attr: $attr) {
         innerId
         viewerHasReported
         meta {
@@ -203,8 +203,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:undo_report_comment) do
     """
-    mutation($comment: CommentPathInput!) {
-      undoReportComment(comment: $comment) {
+    mutation($commandId: ID!, $comment: CommentPathInput!) {
+      undoReportComment(commandId: $commandId, comment: $comment) {
         innerId
         viewerHasReported
         meta {

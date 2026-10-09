@@ -13,12 +13,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Interactions do
 
   @viewer_batch_size 100
 
-  def report_article(_root, ~m(article reason attr)a, %{context: %{cur_user: user}}) do
-    CMS.Interactions.report_result(article, reason, attr, user)
+  def report_article(_root, ~m(article reason attr)a = args, %{context: %{cur_user: user}}) do
+    CMS.Interactions.report_result(article, reason, attr, user, Map.get(args, :command_id))
   end
 
-  def undo_report_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.Interactions.undo_report_result(article, user)
+  def undo_report_article(_root, ~m(article)a = args, %{context: %{cur_user: user}}) do
+    CMS.Interactions.undo_report_result(article, user, Map.get(args, :command_id))
   end
 
   def upvote_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do

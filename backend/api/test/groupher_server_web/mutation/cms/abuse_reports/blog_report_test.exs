@@ -16,7 +16,12 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
   describe "[blog report/undo_report]" do
     test "login user can report a blog", ~m(community blog user_conn)a do
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         reason: "reason"
       }
 
@@ -26,7 +31,12 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
 
     test "login user can undo report a blog", ~m(community blog user_conn)a do
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         reason: "reason"
       }
 
@@ -34,7 +44,12 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
       assert article["innerId"] == to_string(article_inner_id(blog, community))
 
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"}
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        }
       }
 
       article = user_conn |> gq_mutation(S.Article.m(:undo_report_article, :blog), variables)

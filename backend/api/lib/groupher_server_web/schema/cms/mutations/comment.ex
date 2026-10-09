@@ -83,6 +83,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
     @desc "report a comment"
     field :report_comment, :comment do
+      arg(:command_id, non_null(:id))
       arg(:comment, non_null(:comment_path_input))
       arg(:reason, non_null(:string))
       arg(:attr, :string)
@@ -94,6 +95,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
     @desc "undo report a comment"
     field :undo_report_comment, :comment do
+      arg(:command_id, non_null(:id))
       arg(:comment, non_null(:comment_path_input))
 
       middleware(M.Authorize, :login)

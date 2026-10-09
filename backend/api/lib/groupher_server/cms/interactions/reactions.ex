@@ -87,22 +87,23 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
 
   ## Examples
 
-      Reactions.report(comment, "spam", %{}, actor)
+      Reactions.report(comment, "spam", %{}, actor, command_id)
 
   """
-  @spec report(struct(), String.t(), term(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate report(artiment, reason, attrs, actor), to: Report, as: :add
+  @spec report(struct(), String.t(), term(), User.t(), Ecto.UUID.t()) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate report(artiment, reason, attrs, actor, command_id), to: Report, as: :add
 
   @doc """
   Removes the actor's report fact idempotently.
 
   ## Examples
 
-      Reactions.undo_report(comment, actor)
+      Reactions.undo_report(comment, actor, command_id)
 
   """
-  @spec undo_report(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_report(artiment, actor), to: Report, as: :remove
+  @spec undo_report(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_report(artiment, actor, command_id), to: Report, as: :remove
 
   @doc """
   Returns public paged users who upvoted an already-scoped Article.

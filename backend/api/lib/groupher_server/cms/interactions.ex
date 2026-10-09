@@ -24,34 +24,35 @@ defmodule GroupherServer.CMS.Interactions do
 
   ## Examples
 
-      CMS.Interactions.report(comment, "spam", %{}, actor)
+      CMS.Interactions.report(comment, "spam", %{}, actor, command_id)
 
   """
-  @spec report(struct(), String.t(), term(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate report(artiment, reason, attrs, actor), to: Reactions
+  @spec report(struct(), String.t(), term(), User.t(), Ecto.UUID.t()) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate report(artiment, reason, attrs, actor, command_id), to: Reactions
 
   @doc """
   Removes the current actor's Artiment report idempotently.
 
   ## Examples
 
-      CMS.Interactions.undo_report(comment, actor)
+      CMS.Interactions.undo_report(comment, actor, command_id)
 
   """
-  @spec undo_report(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_report(artiment, actor), to: Reactions
+  @spec undo_report(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_report(artiment, actor, command_id), to: Reactions
 
   @doc "Reports an Artiment and returns its stable report presentation."
-  def report_result(artiment, reason, attrs, %User{} = actor) do
+  def report_result(artiment, reason, attrs, %User{} = actor, command_id) do
     artiment
-    |> Reactions.report(reason, attrs, actor)
+    |> Reactions.report(reason, attrs, actor, command_id)
     |> present_report(actor)
   end
 
   @doc "Removes a report and returns its stable report presentation."
-  def undo_report_result(artiment, %User{} = actor) do
+  def undo_report_result(artiment, %User{} = actor, command_id) do
     artiment
-    |> Reactions.undo_report(actor)
+    |> Reactions.undo_report(actor, command_id)
     |> present_report(actor)
   end
 

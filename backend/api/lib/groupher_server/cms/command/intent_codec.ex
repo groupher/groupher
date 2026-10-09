@@ -49,7 +49,8 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     tag_update: :digest_each,
     tag_delete: :empty,
     tag_group_create: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
-    tag_group_update: {:fields, %{"community_id" => :raw, "thread" => :raw, "attrs" => :digest_each}},
+    tag_group_update:
+      {:fields, %{"community_id" => :raw, "thread" => :raw, "attrs" => :digest_each}},
     tag_group_delete: {:fields, %{"community_id" => :raw, "thread" => :raw}},
     collect_add: {:fields, %{"folder_id" => :raw}},
     collect_remove: {:fields, %{"folder_id" => :raw}},
@@ -65,6 +66,8 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     doc_cover_unpin_doc: {:fields, %{"node_id" => :raw}},
     emotion_add: {:fields, %{"operation" => :raw, "emotion" => :raw}},
     emotion_remove: {:fields, %{"operation" => :raw, "emotion" => :raw}},
+    report_add: {:fields, %{"reason" => :raw, "attrs" => :digest}},
+    report_remove: :empty,
     upvote_add: {:fields, %{"operation" => :raw}},
     upvote_remove: {:fields, %{"operation" => :raw}},
     doc_publish_changes: :digest_each,
