@@ -5,6 +5,10 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
   The source of truth remains articles plus community tag associations. These
   counters are updated on write paths and can be rebuilt from source data.
 
+  The batch upsert keeps one atomic PostgreSQL statement for concurrent counter
+  deltas. Its SQL is intentionally retained here as the persistence owner;
+  ordinary single-row upserts use Ecto's `insert_all` conflict query.
+
   Business position:
 
       Client / reviewer
@@ -197,55 +201,51 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
     end
   end
 
+  # Ecto API: https://hexdocs.pm/ecto/Ecto.Repo.html#insert_all/3.
   defp upsert_delta(article, %CommunityTag{} = tag, delta) do
     today = Datetime.today()
     now = Datetime.now(:second)
     today_delta = if same_utc_day?(article.inserted_at, today), do: delta, else: 0
 
-    query = """
-    INSERT INTO cms.community_tag_stats (
-      community_tag_id,
-      community_id,
-      thread,
-      contents_count,
-      today_contents_count,
-      today_stat_date,
-      inserted_at,
-      updated_at
-    )
-    VALUES (
-      $1,
-      $2,
-      $3,
-      GREATEST($4, 0),
-      GREATEST($5, 0),
-      $6,
-      $7,
-      $7
-    )
-    ON CONFLICT (community_tag_id) DO UPDATE SET
-      contents_count = GREATEST(cms.community_tag_stats.contents_count + $4, 0),
-      today_contents_count = CASE
-        WHEN cms.community_tag_stats.today_stat_date = $6
-          THEN GREATEST(cms.community_tag_stats.today_contents_count + $5, 0)
-        ELSE GREATEST($5, 0)
-      END,
-      today_stat_date = $6,
-      updated_at = $7
-    """
+    attrs = %{
+      community_tag_id: tag.id,
+      community_id: tag.community_id,
+      thread: tag.thread,
+      contents_count: max(delta, 0),
+      today_contents_count: max(today_delta, 0),
+      today_stat_date: today,
+      inserted_at: now,
+      updated_at: now
+    }
 
-    Repo.query(query, [
-      tag.id,
-      tag.community_id,
-      Atom.to_string(tag.thread),
-      delta,
-      today_delta,
-      today,
-      now
-    ])
-    |> case do
-      {:ok, _} -> done(:pass)
-      error -> error
+    on_conflict =
+      from(stat in CommunityTagStat,
+        update: [
+          set: [
+            contents_count: fragment("GREATEST(?, 0)", stat.contents_count + ^delta),
+            today_contents_count:
+              fragment(
+                "CASE WHEN ? = ? THEN GREATEST(?, 0) ELSE GREATEST(?, 0) END",
+                stat.today_stat_date,
+                ^today,
+                stat.today_contents_count + ^today_delta,
+                ^today_delta
+              ),
+            today_stat_date: ^today,
+            updated_at: ^now
+          ]
+        ]
+      )
+
+    case Repo.insert_all(CommunityTagStat, [attrs],
+           on_conflict: on_conflict,
+           conflict_target: [:community_tag_id]
+         ) do
+      {1, _rows} ->
+        done(:pass)
+
+      {count, _rows} ->
+        {:error, ErrorCat.invalid_domain_tag("tag stats upsert affected #{count} rows")}
     end
   end
 

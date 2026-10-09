@@ -6,6 +6,10 @@ defmodule GroupherServer.Activity.CommunityLog do
 
   List and stats deliberately share handler selection and filter normalization so
   the dashboard timeline and its overview never count different event sets.
+
+  The final dynamic UNION query is intentionally parameterized SQL: handlers
+  provide a closed table/action manifest, while Ecto has no direct abstraction
+  for composing this heterogeneous multi-table projection.
   """
 
   alias GroupherServer.{Activity, CMS, Repo}

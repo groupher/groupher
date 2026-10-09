@@ -26,19 +26,8 @@ defmodule GroupherServer.Accounts.Mailbox do
   alias Accounts.Model.{Embeds, User}
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
   alias Accounts.FrontDesk.Cache, as: FrontDeskCache
-  alias Helper.Constant.DBPrefix
 
   @default_status Embeds.UserMailbox.default_status()
-  @account_prefix DBPrefix.account()
-
-  @batch_update_mailboxes_sql """
-  UPDATE #{@account_prefix}.users AS users
-  SET mailbox = updates.mailbox,
-      updated_at = date_trunc('second', now())
-  FROM jsonb_to_recordset($1::jsonb) AS updates(id bigint, mailbox jsonb)
-  WHERE users.id = updates.id
-  RETURNING users.id, users.updated_at
-  """
 
   @doc "Runs `status` through the public `Mailbox` boundary."
   def status(%User{mailbox: nil}), do: done(@default_status)
@@ -188,6 +177,8 @@ defmodule GroupherServer.Accounts.Mailbox do
     end
   end
 
+  # Ecto API: https://hexdocs.pm/ecto/Ecto.Query.API.html#values/2 and
+  # https://hexdocs.pm/ecto/Ecto.Repo.html#update_all/3.
   defp batch_update_mailboxes(users, unread_mentions, unread_notifications) do
     prepared_updates =
       Enum.map(users, fn user ->
@@ -204,11 +195,24 @@ defmodule GroupherServer.Accounts.Mailbox do
         {updated_user, payload}
       end)
 
-    payload = Enum.map(prepared_updates, &elem(&1, 1))
+    updates = Enum.map(prepared_updates, &elem(&1, 1))
 
-    case Repo.query(@batch_update_mailboxes_sql, [payload]) do
-      {:ok, %{num_rows: count, rows: rows}} when count == length(users) ->
-        updated_at_by_id = Map.new(rows, fn [id, updated_at] -> {id, updated_at} end)
+    query =
+      from(user in User,
+        join: update in values(updates, %{id: :id, mailbox: :map}),
+        on: update.id == user.id,
+        update: [
+          set: [
+            mailbox: update.mailbox,
+            updated_at: fragment("date_trunc('second', now())")
+          ]
+        ],
+        select: {user.id, user.updated_at}
+      )
+
+    case Repo.update_all(query, []) do
+      {count, rows} when count == length(users) ->
+        updated_at_by_id = Map.new(rows, fn {id, updated_at} -> {id, updated_at} end)
 
         users =
           Enum.map(prepared_updates, fn {user, _payload} ->
@@ -217,14 +221,11 @@ defmodule GroupherServer.Accounts.Mailbox do
 
         {:ok, users}
 
-      {:ok, %{num_rows: count}} ->
+      {count, _rows} ->
         {:error,
          ErrorCat.custom(
            "mailbox batch update affected #{count} of #{length(users)} expected users"
          )}
-
-      {:error, reason} ->
-        {:error, reason}
     end
   end
 

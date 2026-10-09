@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   alias CMS.Artiment.BodyBag
   alias CMS.CanonicalJSON
   alias CMS.Articles.ContentFingerprint
+  alias CMS.Articles.Draft.Tags, as: DraftTags
 
   alias CMS.Model.{
     Article,
@@ -239,7 +240,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   @spec delete_workspace(Article.t(), ArticleDraft.t() | DocDraft.t()) ::
           {:ok, :pass} | {:error, term()}
   def delete_workspace(%Article{} = article, draft) do
-    with {:ok, _} <- delete_tags(article, draft),
+    with {:ok, _} <- DraftTags.delete(article, draft),
          {:ok, _} <- delete_typed_draft(article, draft),
          {:ok, _draft} <- Repo.delete(draft),
          %ArticleBodyDraft{} = body <- Repo.get(ArticleBodyDraft, draft.body_draft_id),
@@ -662,57 +663,11 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   end
 
   defp replace_tags(article, draft, ids) do
-    with {:ok, _} <- delete_tags(article, draft) do
-      table = "#{article.thread}_draft_tags"
-      branch_columns = if article.thread == :doc, do: ", branch_id", else: ""
-      branch_values = if article.thread == :doc, do: ", $3", else: ""
-
-      Enum.reduce_while(ids, {:ok, :pass}, fn tag_id, {:ok, _} ->
-        params =
-          [Ecto.UUID.dump!(article.id), tag_id] ++
-            if(article.thread == :doc, do: [draft.branch_id], else: [])
-
-        case Repo.query(
-               "INSERT INTO cms.#{table} (article_id, tag_id#{branch_columns}) VALUES ($1, $2#{branch_values})",
-               params
-             ) do
-          {:ok, _} -> {:cont, {:ok, :pass}}
-          {:error, reason} -> {:halt, {:error, reason}}
-        end
-      end)
-    end
-  end
-
-  defp delete_tags(article, draft) do
-    table = "#{article.thread}_draft_tags"
-    branch = if article.thread == :doc, do: " AND branch_id = $2", else: ""
-
-    params =
-      [Ecto.UUID.dump!(article.id)] ++ if(article.thread == :doc, do: [draft.branch_id], else: [])
-
-    case Repo.query("DELETE FROM cms.#{table} WHERE article_id = $1#{branch}", params) do
-      {:ok, _} -> {:ok, :pass}
-      {:error, reason} -> {:error, reason}
-    end
+    DraftTags.replace(article, draft, ids)
   end
 
   defp copy_revision_tags(article, draft, revision) do
-    source = "#{article.thread}_revision_tags"
-    target = "#{article.thread}_draft_tags"
-    branch_column = if article.thread == :doc, do: ", branch_id", else: ""
-    branch_value = if article.thread == :doc, do: ", $3", else: ""
-
-    params =
-      [Ecto.UUID.dump!(article.id), Ecto.UUID.dump!(revision.id)] ++
-        if(article.thread == :doc, do: [draft.branch_id], else: [])
-
-    case Repo.query(
-           "INSERT INTO cms.#{target} (article_id, tag_id#{branch_column}) SELECT $1, tag_id#{branch_value} FROM cms.#{source} WHERE revision_id = $2",
-           params
-         ) do
-      {:ok, _} -> {:ok, :pass}
-      {:error, reason} -> {:error, reason}
-    end
+    DraftTags.copy_revision(article, draft, revision)
   end
 
   defp delete_typed_draft(%Article{thread: :doc}, _draft), do: {:ok, :pass}
@@ -800,16 +755,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   defp stored_tag_ids(_article, nil), do: []
 
   defp stored_tag_ids(article, draft) do
-    table = "#{article.thread}_draft_tags"
-    branch = if article.thread == :doc, do: " AND branch_id = $2", else: ""
-
-    params =
-      [Ecto.UUID.dump!(article.id)] ++ if(article.thread == :doc, do: [draft.branch_id], else: [])
-
-    %{rows: rows} =
-      Repo.query!("SELECT tag_id FROM cms.#{table} WHERE article_id = $1#{branch}", params)
-
-    Enum.map(rows, fn [tag_id] -> tag_id end)
+    DraftTags.draft_ids(article, draft)
   end
 
   defp insert_lifecycle(%Article{thread: :doc} = article, community, opts) do

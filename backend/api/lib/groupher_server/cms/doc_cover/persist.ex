@@ -195,7 +195,8 @@ defmodule GroupherServer.CMS.DocCover.Persist do
   @spec reorder_items(Community.t(), T.id(), list(T.id())) :: T.domain_res(map())
   def reorder_items(%Community{} = community, cover_card_id, ids)
       when is_list(ids) do
-    with {:ok, cover_card} <- ORM.find_by(DocCoverCard, id: cover_card_id, community_id: community.id),
+    with {:ok, cover_card} <-
+           ORM.find_by(DocCoverCard, id: cover_card_id, community_id: community.id),
          {:ok, _} <- validate_unique_ids(ids, "Doc cover item order contains duplicate items."),
          items_by_id <- cover_items_by_id(community, cover_card, ids),
          {:ok, items} <- ordered_cover_items(items_by_id, community, cover_card, ids),
@@ -460,6 +461,8 @@ defmodule GroupherServer.CMS.DocCover.Persist do
   end
 
   defp replace_descendant_cards(%Community{} = community, %DocTreeNode{} = group_node) do
+    # Recursive ancestor/descendant traversal is intentionally kept as a
+    # parameterized CTE; it has no direct Ecto tree-query equivalent.
     result =
       Repo.query!(
         """
@@ -662,19 +665,26 @@ defmodule GroupherServer.CMS.DocCover.Persist do
 
   # Reindex helpers update one tenant-scoped collection in a single SQL statement.
   # The affected-row check below turns concurrent scope changes into a rollback.
+  # Ecto API: https://hexdocs.pm/ecto/Ecto.Query.API.html#values/2 and
+  # https://hexdocs.pm/ecto/Ecto.Repo.html#update_all/3.
   defp batch_reindex_groups(%Community{} = community, groups) do
-    {ids, indexes} = reindex_columns(groups)
+    updates = reindex_values(groups)
 
-    """
-    UPDATE cms.doc_cover_cards AS cover_card
-    SET "index" = updates.new_index,
-        updated_at = $4
-    FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
-    WHERE cover_card.id = updates.id
-      AND cover_card.community_id = $3
-    """
-    |> Repo.query([ids, indexes, community.id, DateTime.utc_now(:second)])
-    |> expect_reindexed_rows(length(ids), "Doc cover card order targets changed.")
+    if updates == [] do
+      {:ok, :pass}
+    else
+      query =
+        from(cover_card in DocCoverCard,
+          join: update in values(updates, %{id: :id, index: :integer}),
+          on: update.id == cover_card.id,
+          where: cover_card.community_id == ^community.id,
+          update: [set: [index: update.index, updated_at: ^DateTime.utc_now(:second)]]
+        )
+
+      query
+      |> Repo.update_all([])
+      |> expect_reindexed_rows(length(updates), "Doc cover card order targets changed.")
+    end
   end
 
   defp batch_reindex_items(
@@ -682,54 +692,60 @@ defmodule GroupherServer.CMS.DocCover.Persist do
          %DocCoverCard{} = cover_card,
          items
        ) do
-    {ids, indexes} = reindex_columns(items)
+    updates = reindex_values(items)
 
-    """
-    UPDATE cms.doc_cover_items AS cover_item
-    SET "index" = updates.new_index,
-        updated_at = $5
-    FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
-    WHERE cover_item.id = updates.id
-      AND cover_item.community_id = $3
-      AND cover_item.cover_card_id = $4
-    """
-    |> Repo.query([ids, indexes, community.id, cover_card.id, DateTime.utc_now(:second)])
-    |> expect_reindexed_rows(length(ids), "Doc cover item order targets changed.")
+    if updates == [] do
+      {:ok, :pass}
+    else
+      query =
+        from(cover_item in DocCoverItem,
+          join: update in values(updates, %{id: :id, index: :integer}),
+          on: update.id == cover_item.id,
+          where: cover_item.community_id == ^community.id,
+          where: cover_item.cover_card_id == ^cover_card.id,
+          update: [set: [index: update.index, updated_at: ^DateTime.utc_now(:second)]]
+        )
+
+      query
+      |> Repo.update_all([])
+      |> expect_reindexed_rows(length(updates), "Doc cover item order targets changed.")
+    end
   end
 
   defp batch_reindex_pinned_docs(%Community{} = community, pinned_docs) do
-    {ids, indexes} = reindex_columns(pinned_docs)
+    updates = reindex_values(pinned_docs)
 
-    """
-    UPDATE cms.doc_cover_pinned_docs AS pinned_doc
-    SET "index" = updates.new_index,
-        updated_at = $4
-    FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
-    WHERE pinned_doc.id = updates.id
-      AND pinned_doc.community_id = $3
-    """
-    |> Repo.query([ids, indexes, community.id, DateTime.utc_now(:second)])
-    |> expect_reindexed_rows(length(ids), "Pinned doc order targets changed.")
+    if updates == [] do
+      {:ok, :pass}
+    else
+      query =
+        from(pinned_doc in DocCoverPinnedDoc,
+          join: update in values(updates, %{id: :id, index: :integer}),
+          on: update.id == pinned_doc.id,
+          where: pinned_doc.community_id == ^community.id,
+          update: [set: [index: update.index, updated_at: ^DateTime.utc_now(:second)]]
+        )
+
+      query
+      |> Repo.update_all([])
+      |> expect_reindexed_rows(length(updates), "Pinned doc order targets changed.")
+    end
   end
 
-  # Preserve caller order while splitting records into the parallel arrays expected
-  # by PostgreSQL UNNEST; indexes are always contiguous and zero-based.
-  defp reindex_columns(records) do
+  # Preserve caller order while building the typed values relation; indexes are
+  # always contiguous and zero-based.
+  defp reindex_values(records) do
     records
     |> Enum.with_index()
-    |> Enum.map(fn {record, index} -> {record.id, index} end)
-    |> Enum.unzip()
+    |> Enum.map(fn {record, index} -> %{id: record.id, index: index} end)
   end
 
   # A successful batch must update every requested row. Anything less indicates
   # that the validated collection changed or escaped its tenant/group scope.
-  defp expect_reindexed_rows({:ok, %{num_rows: expected}}, expected, _message), do: {:ok, :pass}
+  defp expect_reindexed_rows({expected, _result}, expected, _message), do: {:ok, :pass}
 
-  defp expect_reindexed_rows({:ok, _result}, _expected, message) do
-    {:error, ErrorCat.custom(message)}
-  end
-
-  defp expect_reindexed_rows({:error, reason}, _expected, _message), do: {:error, reason}
+  defp expect_reindexed_rows({_actual, _result}, _expected, message),
+    do: {:error, ErrorCat.custom(message)}
 
   # The validation reducers prepend for linear accumulation; restore request order
   # before the records are converted into reindex columns.

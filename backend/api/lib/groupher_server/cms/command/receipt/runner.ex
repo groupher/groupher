@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Helper.T
+  alias Helper.ORM.TransactionSettings
   alias CMS.ErrorCat
   alias CMS.Command
   alias CMS.Command.Confirmation, as: ConfirmationCodec
@@ -325,13 +326,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
   end
 
   defp configure_timeouts!(statement_timeout_ms, lock_timeout_ms) do
-    Repo.query!("SELECT set_config('statement_timeout', $1, true)", [
-      "#{statement_timeout_ms}ms"
-    ])
-
-    Repo.query!("SELECT set_config('lock_timeout', $1, true)", [
-      "#{lock_timeout_ms}ms"
-    ])
+    TransactionSettings.configure!(statement_timeout_ms, lock_timeout_ms)
   end
 
   defp normalize_transaction_error(%Postgrex.Error{postgres: %{code: code}})

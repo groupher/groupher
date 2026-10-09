@@ -14,6 +14,8 @@ defmodule GroupherServer.CMS.Articles.Revision do
 
   alias GroupherServer.{CMS, Repo}
 
+  alias CMS.Articles.Draft.Tags, as: DraftTags
+
   alias CMS.Model.{
     Article,
     ArticleAssetRef,
@@ -239,22 +241,6 @@ defmodule GroupherServer.CMS.Articles.Revision do
   end
 
   defp copy_tags(thread, draft, revision) do
-    source = "#{thread}_draft_tags"
-    target = "#{thread}_revision_tags"
-    branch_clause = if thread == :doc, do: " AND branch_id = $3", else: ""
-
-    params =
-      if thread == :doc,
-        do: [Ecto.UUID.dump!(revision.id), Ecto.UUID.dump!(draft.article_id), draft.branch_id],
-        else: [Ecto.UUID.dump!(revision.id), Ecto.UUID.dump!(draft.article_id)]
-
-    Repo.query(
-      "INSERT INTO cms.#{target} (revision_id, tag_id) SELECT $1, tag_id FROM cms.#{source} WHERE article_id = $2#{branch_clause}",
-      params
-    )
-    |> case do
-      {:ok, _result} -> {:ok, :pass}
-      {:error, reason} -> {:error, reason}
-    end
+    DraftTags.copy_to_revision(thread, draft, revision)
   end
 end

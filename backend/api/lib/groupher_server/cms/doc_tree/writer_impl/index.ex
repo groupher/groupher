@@ -193,55 +193,56 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
   # clear while this statement writes every final position at once. Keeping the
   # tenant, branch, stage, and parent predicates in SQL also makes a stale input
   # fail atomically instead of silently moving a row from another scope.
+  # Ecto API: https://hexdocs.pm/ecto/Ecto.Query.API.html#values/2 and
+  # https://hexdocs.pm/ecto/Ecto.Repo.html#update_all/3.
   defp batch_reindex_nodes!(nodes, community, branch, parent_node_id, opts) do
-    {ids, indexes} =
+    updates =
       nodes
       |> Enum.with_index()
-      |> Enum.map(fn {%DocTreeNode{id: id}, index} -> {id, index} end)
-      |> Enum.unzip()
+      |> Enum.map(fn {%DocTreeNode{id: id}, index} -> %{id: id, index: index} end)
 
-    {timestamp_assignment, params} =
-      if Keyword.fetch!(opts, :touch_updated_at?) do
-        {", updated_at = $7",
-         [
-           ids,
-           indexes,
-           community.id,
-           branch.id,
-           Atom.to_string(CMS.Const.stage(:draft)),
-           parent_node_id,
-           Keyword.fetch!(opts, :updated_at)
-         ]}
-      else
-        {"",
-         [
-           ids,
-           indexes,
-           community.id,
-           branch.id,
-           Atom.to_string(CMS.Const.stage(:draft)),
-           parent_node_id
-         ]}
+    if updates == [] do
+      {:ok, :pass}
+    else
+      base_query =
+        from(node in DocTreeNode,
+          join: update in values(updates, %{id: :id, index: :integer}),
+          on: update.id == node.id,
+          where: node.community_id == ^community.id,
+          where: node.branch_id == ^branch.id,
+          where: node.stage == ^CMS.Const.stage(:draft),
+          where:
+            fragment(
+              "? IS NOT DISTINCT FROM ?",
+              node.parent_node_id,
+              type(^parent_node_id, :string)
+            )
+        )
+
+      query =
+        if Keyword.fetch!(opts, :touch_updated_at?) do
+          updated_at = Keyword.fetch!(opts, :updated_at)
+
+          from([node, update] in base_query,
+            update: [
+              set: [
+                parent_node_id: ^parent_node_id,
+                index: update.index,
+                updated_at: ^updated_at
+              ]
+            ]
+          )
+        else
+          from([node, update] in base_query,
+            update: [set: [parent_node_id: ^parent_node_id, index: update.index]]
+          )
+        end
+
+      {updated_count, _result} = Repo.update_all(query, [])
+
+      if updated_count != length(updates) do
+        raise "doc tree reindex updated #{updated_count} of #{length(updates)} expected nodes"
       end
-
-    result =
-      Repo.query!(
-        """
-        UPDATE cms.doc_tree_nodes AS node
-        SET parent_node_id = $6::varchar,
-            "index" = updates.new_index#{timestamp_assignment}
-        FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
-        WHERE node.id = updates.id
-          AND node.community_id = $3
-          AND node.branch_id = $4
-          AND node.stage = $5
-          AND node.parent_node_id IS NOT DISTINCT FROM $6::varchar
-        """,
-        params
-      )
-
-    if result.num_rows != length(ids) do
-      raise "doc tree reindex updated #{result.num_rows} of #{length(ids)} expected nodes"
     end
 
     {:ok, :pass}

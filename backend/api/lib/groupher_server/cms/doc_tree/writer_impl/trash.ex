@@ -85,6 +85,8 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
   @doc "Loads a structural subtree in one materialized Tree stage."
   def subtree_nodes(%Community{} = community, branch, %DocTreeNode{} = root, stage) do
+    # Recursive subtree traversal is intentionally kept as a parameterized CTE;
+    # the surrounding writer remains the query owner.
     result =
       Repo.query!(
         """

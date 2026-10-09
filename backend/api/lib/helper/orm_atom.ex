@@ -35,7 +35,7 @@ defmodule Helper.ORMAtom do
   """
   @spec inc(struct(), atom()) :: {:ok, struct()} | {:error, term()}
   def inc(queryable, field) when is_atom(field) do
-    update_counter(queryable, field, "+ 1")
+    update_counter(queryable, field, 1)
   end
 
   @doc """
@@ -48,7 +48,7 @@ defmodule Helper.ORMAtom do
   """
   @spec dec(struct(), atom()) :: {:ok, struct()} | {:error, term()}
   def dec(queryable, field) when is_atom(field) do
-    update_counter(queryable, field, "- 1", safeguard: true)
+    update_counter(queryable, field, -1, safeguard: true)
   end
 
   @doc """
@@ -216,49 +216,37 @@ defmodule Helper.ORMAtom do
 
   def fill_meta(queryable), do: {:ok, queryable}
 
-  defp update_counter(queryable, field, operation, opts \\ []) do
+  defp update_counter(queryable, field, delta, opts \\ []) do
     schema_module = queryable.__struct__
 
     case schema_field_type(schema_module, field) do
       {:ok, :integer} ->
-        table = schema_module.__schema__(:source)
-
-        prefix =
-          case schema_module.__schema__(:prefix) do
-            nil -> ""
-            prefix -> "#{prefix}."
-          end
-
-        full_table = "#{prefix}#{table}"
         id = queryable.id
         safeguard = Keyword.get(opts, :safeguard, false)
 
-        operation_expr =
+        query =
+          from(row in schema_module,
+            where: row.id == ^id,
+            select: field(row, ^field)
+          )
+
+        query =
           if safeguard do
-            "GREATEST(#{field} #{operation}, 0)"
+            update(query, [row],
+              set: [{^field, fragment("GREATEST(?, 0)", field(row, ^field) + ^delta)}]
+            )
           else
-            "#{field} #{operation}"
+            update(query, [_row], inc: [{^field, ^delta}])
           end
 
-        # SET #{field} = #{field} + 1
-        # SET #{field} = GREATEST(#{field} - 1, 0)
-        Repo.query(
-          """
-          UPDATE #{full_table}
-          SET #{field} = #{operation_expr}
-          WHERE id = $1
-          RETURNING #{field}
-          """,
-          [id]
-        )
-        |> case do
-          {:ok, %Postgrex.Result{rows: [[new_val]]}} ->
+        case Repo.update_all(query, []) do
+          {1, [new_val]} ->
             changeset = Ecto.Changeset.change(queryable, %{field => new_val})
             updated = Ecto.Changeset.apply_changes(changeset)
             {:ok, updated}
 
-          error ->
-            error
+          {0, []} ->
+            {:error, ErrorCat.custom(%{reason: :not_found})}
         end
 
       {:ok, _type} ->

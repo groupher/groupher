@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Helper.Utils
+  alias Helper.ORM.TransactionSettings
   alias Accounts.Model.User
   alias CMS.Assets.GeneratedBatch
   alias CMS.Assets.GeneratedBatch.PublishCapability
@@ -483,11 +484,10 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
   end
 
   defp configure_publish_transaction! do
-    Repo.query!("SELECT set_config('statement_timeout', $1, true)", [
-      "#{@database_transaction_timeout_ms}ms"
-    ])
-
-    Repo.query!("SELECT set_config('lock_timeout', $1, true)", ["#{@database_lock_timeout_ms}ms"])
+    TransactionSettings.configure!(
+      @database_transaction_timeout_ms,
+      @database_lock_timeout_ms
+    )
   end
 
   defp run_publish_transaction(callback) do
