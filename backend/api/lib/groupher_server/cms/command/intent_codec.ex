@@ -55,6 +55,8 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     press_config_update: :digest,
     collect_add: {:fields, %{"folder_id" => :raw}},
     collect_remove: {:fields, %{"folder_id" => :raw}},
+    reaction_collect_add: {:fields, %{"operation" => :raw}},
+    reaction_collect_remove: {:fields, %{"operation" => :raw}},
     comment_create: :digest,
     comment_reply: :digest,
     comment_update: :digest,

@@ -47,6 +47,23 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     assert 0 == upvotes_count(post.id)
   end
 
+  test "collect command replay recovers the first reaction result" do
+    {_community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, %{reaction_outcome: :changed}} =
+             CMS.Interactions.collect(post, user, command_id)
+
+    assert {:ok, %{reaction_outcome: :changed}} =
+             CMS.Interactions.collect(post, user, command_id)
+
+    assert 1 ==
+             Repo.aggregate(
+               from(row in ArticleCollect, where: row.article_id == ^post.id),
+               :count
+             )
+  end
+
   test "article interactions reject archived targets and keep existing facts unchanged" do
     {community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
     {:ok, other_user} = db_insert(:user)

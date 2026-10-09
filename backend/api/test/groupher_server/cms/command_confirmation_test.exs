@@ -8,6 +8,7 @@ defmodule GroupherServer.Test.CMS.CommandConfirmationTest do
   alias GroupherServer.CMS.Comments.Commands.CommentConfirmation
   alias GroupherServer.CMS.DocTree.Commands.TreeConfirmation
   alias GroupherServer.CMS.Interactions.Reactions.UpvoteConfirmation, as: UpvoteConfirmation
+  alias GroupherServer.CMS.Interactions.Reactions.CollectConfirmation
 
   defmodule UnknownTypeConfirmation do
     use GroupherServer.CMS.Command.ConfirmationDefinition,
@@ -100,6 +101,13 @@ defmodule GroupherServer.Test.CMS.CommandConfirmationTest do
          "folder_id" => "7",
          "operation" => "add",
          "total_count" => 1
+       }},
+      {CollectConfirmation, :reaction_collect_add, :reaction_collect_remove,
+       %{
+         "target_id" => "article-1",
+         "target_type" => "article",
+         "operation" => "add",
+         "outcome" => "changed"
        }}
     ]
 

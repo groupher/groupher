@@ -16,8 +16,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
   alias Accounts.Model.User
   alias CMS.Articles.MutationLock
   alias CMS.Artiment.Matcher
-  alias CMS.{Gate, Interactions}
+  alias CMS.{Command, Gate, Interactions}
   alias CMS.Interactions.{ErrorCat, ReadState}
+  alias CMS.Interactions.Reactions.CollectConfirmation, as: Confirmation
   alias CMS.Model.{ArticleCollect, Author}
   alias Analysis.MetricEvent
   alias Helper.T
@@ -47,28 +48,74 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
     do: mutate(article, actor, :remove, command_id)
 
   defp mutate(input, actor, operation, command_id) do
-    with {:ok, command_id} <- require_command_id(command_id) do
-      MutationLock.observe_transaction(fn ->
-        Repo.transaction(fn ->
-          with {:ok, canonical} <- Gate.access_check(actor, :collect, input),
-               {:ok, %{collection?: true} = info} <- Matcher.match_interaction(canonical),
-               {:ok, change} <- change_fact(canonical, info, actor, operation),
-               {:ok, _} <- sync_state(canonical, actor, operation, change),
-               {:ok, _} <- record_metric(canonical, operation, command_id, change),
-               {:ok, _} <- sync_achievement(canonical, operation, change),
-               {:ok, _} <- enqueue_effect(canonical, actor, operation, command_id, change) do
-            {canonical, change}
-          else
-            {:ok, %{collection?: false}} ->
-              Repo.rollback(ErrorCat.unsupported_artiment("Comment"))
-
-            {:error, reason} ->
-              Repo.rollback(reason)
+    with {:ok, command_id} <- require_command_id(command_id),
+         {:ok, info} <- Matcher.match_interaction(input) do
+      if Repo.in_transaction?() do
+        MutationLock.observe_transaction(fn ->
+          with {:ok, {canonical, change}} <-
+                 collect_transaction(input, actor, operation, command_id, info) do
+            {:ok, reaction_projection(canonical, command_id, change)}
           end
         end)
-      end)
-      |> normalize_result()
+      else
+        %Command{
+          actor: actor,
+          command_id: command_id,
+          operation: collect_command(operation),
+          target: input,
+          params: %{operation: operation}
+        }
+        |> Command.execute(action: &collect_action(&1, info), confirmation: Confirmation)
+        |> present_reaction(input, command_id)
+      end
     end
+  end
+
+  defp collect_action(
+         %{
+           actor: actor,
+           target: input,
+           params: %{operation: operation},
+           command_id: command_id
+         },
+         info
+       ) do
+    with {:ok, {canonical, change}} <-
+           MutationLock.observe_transaction(fn ->
+             collect_transaction(input, actor, operation, command_id, info)
+           end) do
+      {:ok,
+       %Confirmation{
+         data: %{
+           "target_id" => to_string(canonical.id),
+           "target_type" => "article",
+           "operation" => Atom.to_string(operation),
+           "outcome" => Atom.to_string(change)
+         }
+       }}
+    end
+  end
+
+  defp collect_transaction(input, actor, operation, command_id, _info) do
+    transaction = fn ->
+      with {:ok, canonical} <- Gate.access_check(actor, :collect, input),
+           {:ok, %{collection?: true} = canonical_info} <- Matcher.match_interaction(canonical),
+           {:ok, change} <- change_fact(canonical, canonical_info, actor, operation),
+           {:ok, _} <- sync_state(canonical, actor, operation, change),
+           {:ok, _} <- record_metric(canonical, operation, command_id, change),
+           {:ok, _} <- sync_achievement(canonical, operation, change),
+           {:ok, _} <- enqueue_effect(canonical, actor, operation, command_id, change) do
+        {canonical, change}
+      else
+        {:ok, %{collection?: false}} ->
+          Repo.rollback(ErrorCat.unsupported_artiment("Comment"))
+
+        {:error, reason} ->
+          Repo.rollback(reason)
+      end
+    end
+
+    if Repo.in_transaction?(), do: {:ok, transaction.()}, else: Repo.transaction(transaction)
   end
 
   defp sync_state(_canonical, _actor, _operation, :unchanged), do: {:ok, :pass}
@@ -131,11 +178,29 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
     end
   end
 
-  defp normalize_result({:ok, {canonical, _change}}), do: {:ok, canonical}
-  defp normalize_result({:error, reason}), do: {:error, reason}
-
   defp require_command_id(command_id) when is_binary(command_id), do: {:ok, command_id}
   defp require_command_id(_command_id), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  defp collect_command(:add), do: :reaction_collect_add
+  defp collect_command(:remove), do: :reaction_collect_remove
+
+  defp present_reaction({:ok, %Confirmation{data: data}}, input, command_id) do
+    outcome = if data["outcome"] == "unchanged", do: :unchanged, else: :changed
+
+    {:ok, reaction_projection(input, command_id, outcome)}
+  end
+
+  defp present_reaction({:ok, data}, input, command_id) when is_map(data) do
+    present_reaction({:ok, struct(Confirmation, data: data)}, input, command_id)
+  end
+
+  defp present_reaction(error, _input, _command_id), do: error
+
+  defp reaction_projection(input, command_id, outcome) do
+    input
+    |> Map.put(:command_id, command_id)
+    |> Map.put(:reaction_outcome, outcome)
+  end
 
   @doc """
   Returns paged users for an already-scoped Article collect set.
