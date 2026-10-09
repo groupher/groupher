@@ -97,6 +97,10 @@ retry and unknown-outcome behavior
   scope 或内部 effect 派生第二 UUID。Article action focused mutation suites 当前为 **99/99**；这证明
   transport、concrete Command、Gate 和 result builder 已闭合，不把它误写成 Article moderation、
   move/mirror 或其他 Article family 的整体完成。
+- Press config 已进入 `UpdateConfig` Receipt Command：GraphQL 顶层 `commandId` 必填，配置 revision
+  与 Activity `operation_ref` 复用同一 command identity；`ConfigWriter` 在 Receipt 已持有事务时直接
+  使用当前 owner，不再嵌套开启 `Repo.transaction`。Confirmation 以 community slug/revision 恢复
+  首次配置，重复同一 command 不递增 revision；Press focused suite 当前为 **10/10**。
 - facade/resolver 的默认 command UUID 已清退；静态脚本同时检查 facade/resolver 与 production CMS
   source 中的派生 `command_id`。
 - Article publish、DocTree publish 的旧内部夹具已补齐显式 `command_id`（相关 suite 72/72）；这只证明
@@ -538,7 +542,7 @@ ReplacementPlan
 | Interaction reactions                | `Upvote` / `Emotion` / `Collect` 及 undo                                              | Receipt 或显式 one-shot      | Upvote/Emotion 已删除 nil fallback；Collect 已统一 Metric/Outbox identity，协议仍需冻结                      |
 | Moderator                            | `Add` / `AddMany` / `Remove` / `UpdatePassport`                                       | bulk/delete 优先 Receipt     | membership uniqueness、partial failure、Activity                                                             |
 | Activity export                      | `ExportCommunityActivity`                                                             | Receipt 或 export workflow   | artifact/job identity、权限快照、结果恢复                                                                    |
-| Press config                         | `UpdateConfig`                                                                        | one-shot                     | set-style config、cache invalidation                                                                         |
+| Press config                         | `UpdateConfig`                                                                        | Receipt（已实施）            | Community Gate、ConfigWriter transaction owner、Activity operation_ref 同一 `commandId`、response recovery   |
 | DocTree legacy                       | 按真实动作建立 Command                                                                | 逐项判断                     | tree revision、branch lock、owner codec，禁止万能 payload                                                    |
 
 Comment solution/pin 当前实现矩阵为：
@@ -667,7 +671,8 @@ projection 的局部 transaction 必须与 user Asset mutation 分开标注。
 6. [done in this batch] seed、maintenance、operations caller 显式提供 workflow/operation identity，不能回退为伪客户端 command；Community contribution 通过 `update_operations/3` 写入 typed workflow Outbox；
 7. [implemented, verified for current focused suites] Comment solution/pin 的四个 GraphQL mutation 增加必填 `commandId`；`SolutionChange` / `StateChange` 使用 Receipt + Confirmation，旧两参数 facade/States arity fail closed；
 8. [implemented, verified for current focused suites] Article sink/lock/category/status GraphQL mutation 增加必填 `commandId`，并切换到六个 action-specific one-shot Command；Article state transition 仍由 Gate + ArticleBinding/branch scope owner 执行，不创建 Receipt 或第二 UUID；focused suites 99/99。
-9. [ongoing] 一次只迁移一个 owner，避免把不同 Gate、Lifecycle 与 result codec 混在同一提交。
+9. [implemented, verified for current focused suites] Press config mutation 增加必填 `commandId`，由 `UpdateConfig` Receipt Command 统一 Gate、ConfigWriter transaction owner、Activity identity 与 Confirmation recovery；focused suite 10/10。
+10. [ongoing] 一次只迁移一个 owner，避免把不同 Gate、Lifecycle 与 result codec 混在同一提交。
 
 Convenience arity 清退的夹具影响（已在本批修复）如下；这些是测试调用方迁移债务，不是恢复隐式
 identity 的理由：
@@ -773,6 +778,13 @@ Outbox Event id、lease/lock ref、Article/DocTree node id、anonymous-view id �
   返回；
 - post/category/status 与四种 sink/lock thread fixture 覆盖成功、未登录和 enum/error 路径，当前
   focused mutation suites **99/99**。
+
+### 10.6 Press config
+
+- `updatePressConfig` 缺失 `commandId` 时在 schema 层拒绝，非法或缺失 identity 不进入 writer；
+- 同一 `commandId` 重试只恢复第一次 configuration confirmation，不重复递增 revision 或 Activity；
+- Receipt callback 内由 `ConfigWriter` 使用已有 transaction，配置、Activity 与 confirmation 一起提交，
+  cache invalidation 仍在 commit 后 best-effort 执行；Press suite **10/10**。
 
 ## 11. 验证命令
 

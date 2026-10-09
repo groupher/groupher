@@ -16,8 +16,8 @@ export const pressConfig = graphql(`
 `)
 
 export const updatePressConfig = graphql(`
-  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!) {
-    updatePressConfig(input: $input) {
+  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!, $commandId: ID!) {
+    updatePressConfig(input: $input, commandId: $commandId) {
       config {
         markdownEnabled
         feedEnabled

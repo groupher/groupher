@@ -100,7 +100,7 @@ type Documents = {
   '\n  fragment ArticleMenuTagFields on CommunityTag {\n    id\n    title\n    layout\n    desc\n    slug\n    color\n    marker {\n      type\n      provider\n      name\n      src\n      unified\n    }\n    thread\n    group\n    groupId\n    index\n    community {\n      slug\n    }\n  }\n': typeof types.ArticleMenuTagFieldsFragmentDoc
   '\n  mutation UpdatePostFromMenu(\n    $article: ArticlePathInput!\n    $commandId: ID!\n    $expectedVersion: Int!\n    $title: String\n    $communityTags: [ID]\n  ) {\n    updatePost(\n      article: $article\n      commandId: $commandId\n      expectedVersion: $expectedVersion\n      title: $title\n      communityTags: $communityTags\n    ) {\n      innerId\n      title\n      communityTags {\n        ...ArticleMenuTagFields\n      }\n    }\n  }\n': typeof types.UpdatePostFromMenuDocument
   '\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!, $commandId: ID!) {\n    setPostCat(article: $article, cat: $cat, commandId: $commandId) {\n      innerId\n      cat\n    }\n  }\n': typeof types.SetPostCatDocument
-  '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!, $commandId: ID!) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n': typeof types.SetPostStatusDocument
+  '\n  mutation SetPostStatus(\n    $article: ArticlePathInput!\n    $status: ArticleStatusEnum!\n    $commandId: ID!\n  ) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n': typeof types.SetPostStatusDocument
   '\n  mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {\n    pinPost(article: $article, commandId: $commandId) {\n      innerId\n    }\n  }\n': typeof types.PinPostDocument
   '\n  mutation UndoPinPost($article: ArticlePathInput!, $commandId: ID!) {\n    undoPinPost(article: $article, commandId: $commandId) {\n      innerId\n      isPinned\n    }\n  }\n': typeof types.UndoPinPostDocument
   '\n  query CommunityTagGroupsForMenu($community: String!, $thread: Thread) {\n    communityTagGroups(community: $community, thread: $thread) {\n      id\n      title\n      index\n      tags {\n        ...ArticleMenuTagFields\n      }\n    }\n  }\n': typeof types.CommunityTagGroupsForMenuDocument
@@ -202,7 +202,7 @@ type Documents = {
   '\n  fragment DashboardFooterOnelineLinkFields on DsbLinkChild {\n    id\n    title\n    url\n  }\n': typeof types.DashboardFooterOnelineLinkFieldsFragmentDoc
   '\n  fragment DashboardTrashedArticlesPageInfo on PagedTrashedArticles {\n    totalCount\n    pageSize\n    totalPages\n    pageNumber\n  }\n': typeof types.DashboardTrashedArticlesPageInfoFragmentDoc
   '\n  query DashboardPressConfig($community: String!) {\n    pressConfig(community: $community) {\n      markdownEnabled\n      feedEnabled\n      feedType\n      feedCount\n      feedThreads\n      llmsEnabled\n      sitemapEnabled\n      revision\n    }\n  }\n': typeof types.DashboardPressConfigDocument
-  '\n  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!) {\n    updatePressConfig(input: $input) {\n      config {\n        markdownEnabled\n        feedEnabled\n        feedType\n        feedCount\n        feedThreads\n        llmsEnabled\n        sitemapEnabled\n        revision\n      }\n    }\n  }\n': typeof types.UpdateDashboardPressConfigDocument
+  '\n  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!, $commandId: ID!) {\n    updatePressConfig(input: $input, commandId: $commandId) {\n      config {\n        markdownEnabled\n        feedEnabled\n        feedType\n        feedCount\n        feedThreads\n        llmsEnabled\n        sitemapEnabled\n        revision\n      }\n    }\n  }\n': typeof types.UpdateDashboardPressConfigDocument
   '\n  query DashboardThirdPartyAnalyticsProviders {\n    thirdPartyAnalyticsProviders {\n      provider\n      title\n      desc\n      detail\n      docsUrl\n      icon\n      identityField\n      configFields {\n        key\n        label\n        desc\n        placeholder\n        requiredWhenEnabled\n        pattern\n      }\n    }\n  }\n': typeof types.DashboardThirdPartyAnalyticsProvidersDocument
   '\n  query DashboardOpenGraphInfo($url: String!) {\n    openGraphInfo(url: $url) {\n      title\n      favicon\n      url\n      siteName\n    }\n  }\n': typeof types.DashboardOpenGraphInfoDocument
   '\n  mutation UpdateDashboardBaseInfo(\n    $community: String!\n    $commandId: ID!\n    $homepage: String\n    $title: String\n    $slug: String\n    $desc: String\n    $locale: String\n    $introduction: String\n    $logo: String\n    $favicon: String\n    $city: String\n    $techstack: String\n  ) {\n    updateDashboardBaseInfo(\n      community: $community\n      commandId: $commandId\n      homepage: $homepage\n      title: $title\n      slug: $slug\n      desc: $desc\n      locale: $locale\n      introduction: $introduction\n      logo: $logo\n      favicon: $favicon\n      city: $city\n      techstack: $techstack\n    ) {\n      baseInfo {\n        title\n        logo\n        favicon\n        locale\n      }\n    }\n  }\n': typeof types.UpdateDashboardBaseInfoDocument
@@ -410,7 +410,7 @@ const documents: Documents = {
     types.UpdatePostFromMenuDocument,
   '\n  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!, $commandId: ID!) {\n    setPostCat(article: $article, cat: $cat, commandId: $commandId) {\n      innerId\n      cat\n    }\n  }\n':
     types.SetPostCatDocument,
-  '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!, $commandId: ID!) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n':
+  '\n  mutation SetPostStatus(\n    $article: ArticlePathInput!\n    $status: ArticleStatusEnum!\n    $commandId: ID!\n  ) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n':
     types.SetPostStatusDocument,
   '\n  mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {\n    pinPost(article: $article, commandId: $commandId) {\n      innerId\n    }\n  }\n':
     types.PinPostDocument,
@@ -614,7 +614,7 @@ const documents: Documents = {
     types.DashboardTrashedArticlesPageInfoFragmentDoc,
   '\n  query DashboardPressConfig($community: String!) {\n    pressConfig(community: $community) {\n      markdownEnabled\n      feedEnabled\n      feedType\n      feedCount\n      feedThreads\n      llmsEnabled\n      sitemapEnabled\n      revision\n    }\n  }\n':
     types.DashboardPressConfigDocument,
-  '\n  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!) {\n    updatePressConfig(input: $input) {\n      config {\n        markdownEnabled\n        feedEnabled\n        feedType\n        feedCount\n        feedThreads\n        llmsEnabled\n        sitemapEnabled\n        revision\n      }\n    }\n  }\n':
+  '\n  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!, $commandId: ID!) {\n    updatePressConfig(input: $input, commandId: $commandId) {\n      config {\n        markdownEnabled\n        feedEnabled\n        feedType\n        feedCount\n        feedThreads\n        llmsEnabled\n        sitemapEnabled\n        revision\n      }\n    }\n  }\n':
     types.UpdateDashboardPressConfigDocument,
   '\n  query DashboardThirdPartyAnalyticsProviders {\n    thirdPartyAnalyticsProviders {\n      provider\n      title\n      desc\n      detail\n      docsUrl\n      icon\n      identityField\n      configFields {\n        key\n        label\n        desc\n        placeholder\n        requiredWhenEnabled\n        pattern\n      }\n    }\n  }\n':
     types.DashboardThirdPartyAnalyticsProvidersDocument,
@@ -1216,8 +1216,8 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!, $commandId: ID!) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n',
-): (typeof documents)['\n  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!, $commandId: ID!) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n']
+  source: '\n  mutation SetPostStatus(\n    $article: ArticlePathInput!\n    $status: ArticleStatusEnum!\n    $commandId: ID!\n  ) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n',
+): (typeof documents)['\n  mutation SetPostStatus(\n    $article: ArticlePathInput!\n    $status: ArticleStatusEnum!\n    $commandId: ID!\n  ) {\n    setPostStatus(article: $article, status: $status, commandId: $commandId) {\n      innerId\n      status\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1828,8 +1828,8 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!) {\n    updatePressConfig(input: $input) {\n      config {\n        markdownEnabled\n        feedEnabled\n        feedType\n        feedCount\n        feedThreads\n        llmsEnabled\n        sitemapEnabled\n        revision\n      }\n    }\n  }\n',
-): (typeof documents)['\n  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!) {\n    updatePressConfig(input: $input) {\n      config {\n        markdownEnabled\n        feedEnabled\n        feedType\n        feedCount\n        feedThreads\n        llmsEnabled\n        sitemapEnabled\n        revision\n      }\n    }\n  }\n']
+  source: '\n  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!, $commandId: ID!) {\n    updatePressConfig(input: $input, commandId: $commandId) {\n      config {\n        markdownEnabled\n        feedEnabled\n        feedType\n        feedCount\n        feedThreads\n        llmsEnabled\n        sitemapEnabled\n        revision\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation UpdateDashboardPressConfig($input: UpdatePressConfigInput!, $commandId: ID!) {\n    updatePressConfig(input: $input, commandId: $commandId) {\n      config {\n        markdownEnabled\n        feedEnabled\n        feedType\n        feedCount\n        feedThreads\n        llmsEnabled\n        sitemapEnabled\n        revision\n      }\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

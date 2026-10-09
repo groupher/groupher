@@ -12,12 +12,16 @@ defmodule GroupherServerWeb.Resolvers.CMS.Press do
     CMS.Press.config(community)
   end
 
-  def update_press_config(_root, %{input: %{community: community} = input}, %{
-        context: %{cur_user: actor}
-      }) do
+  def update_press_config(
+        _root,
+        %{input: %{community: community} = input, command_id: command_id},
+        %{
+          context: %{cur_user: actor}
+        }
+      ) do
     input = Map.delete(input, :community)
 
-    with {:ok, config} <- CMS.Press.update_config(community, input, actor) do
+    with {:ok, config} <- CMS.Press.update_config(community, input, actor, command_id) do
       {:ok, %{config: config}}
     end
   end

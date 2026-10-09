@@ -52,6 +52,7 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     tag_group_update:
       {:fields, %{"community_id" => :raw, "thread" => :raw, "attrs" => :digest_each}},
     tag_group_delete: {:fields, %{"community_id" => :raw, "thread" => :raw}},
+    press_config_update: :digest,
     collect_add: {:fields, %{"folder_id" => :raw}},
     collect_remove: {:fields, %{"folder_id" => :raw}},
     comment_create: :digest,

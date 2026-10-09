@@ -7355,6 +7355,7 @@ export type DashboardPressConfigQuery = {
 
 export type UpdateDashboardPressConfigMutationVariables = Exact<{
   input: UpdatePressConfigInput
+  commandId: string | number
 }>
 
 export type UpdateDashboardPressConfigMutation = {
@@ -29499,6 +29500,14 @@ export const UpdateDashboardPressConfigDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'UpdatePressConfigInput' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -29511,6 +29520,11 @@ export const UpdateDashboardPressConfigDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'input' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {

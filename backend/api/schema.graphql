@@ -858,7 +858,7 @@ type RootMutationType {
   "update docs FAQ in dashboard"
   updateDashboardDocFaq(community: String!, dsbSection: DsbSection, commandId: ID!, docFaq: DsbDocFaqInput!): Dsb
 
-  updatePressConfig(input: UpdatePressConfigInput!): PressConfigPayload
+  updatePressConfig(input: UpdatePressConfigInput!, commandId: ID!): PressConfigPayload
 
   "create one recursive docs navigation node"
   createDocTreeNode(

@@ -17,16 +17,22 @@ defmodule GroupherServer.CMS.Press do
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, PressConfig}
-  alias CMS.Press.{ConfigWriter, Invalidation, Query}
+  alias CMS.Press.{Commands, Invalidation, Query}
 
   @doc "Reads persisted or legacy Press configuration."
   @spec config(Community.t() | String.t()) :: {:ok, PressConfig.t() | map()} | {:error, term()}
   def config(community), do: Query.config(community)
 
-  @doc "Updates Press config and its Activity fact."
+  @doc "Rejects the removed implicit-identity Press config arity."
   @spec update_config(Community.t() | String.t(), map(), User.t() | nil) ::
+          {:error, CMS.ErrorCat.Error.t()}
+  def update_config(_community, _attrs, _actor), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Updates Press config through the receipt-backed command boundary."
+  @spec update_config(Community.t() | String.t(), map(), User.t(), Ecto.UUID.t()) ::
           {:ok, PressConfig.t()} | {:error, term()}
-  def update_config(community, attrs, actor), do: ConfigWriter.update(community, attrs, actor)
+  def update_config(community, attrs, %User{} = actor, command_id),
+    do: Commands.UpdateConfig.execute(community, attrs, actor, command_id)
 
   @doc "Sends best-effort Press cache invalidation after a public projection changes."
   @spec invalidate(Community.t() | String.t() | integer()) :: {:ok, :pass}

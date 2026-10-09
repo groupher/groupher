@@ -13,23 +13,20 @@ defmodule GroupherServer.CMS.Press.ConfigWriter do
   """
 
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
-  alias Ecto.Multi
-  alias Activity.EventRef
   alias Accounts.Model.User
   alias CMS.Model.{Community, PressConfig}
   alias CMS.Press.{Invalidation, Query}
   alias Helper.Later
 
   @doc "Updates persisted Press config and records the changed fields."
-  @spec update(Community.t() | String.t(), map(), User.t() | nil) ::
+  @spec update(Community.t() | String.t(), map(), User.t() | nil, Ecto.UUID.t()) ::
           {:ok, PressConfig.t()} | {:error, term()}
-  def update(community, attrs, actor) do
+  def update(community, attrs, actor, command_id) do
     with {:ok, community} <- Query.internal_community(community),
          {:ok, current} <- Query.config(community) do
       attrs = normalize_attrs(attrs)
 
-      operation_ref =
-        EventRef.derive({:press_config_update, community.id, current.revision, attrs})
+      operation_ref = command_id
 
       changeset =
         case current do
@@ -46,29 +43,34 @@ defmodule GroupherServer.CMS.Press.ConfigWriter do
             )
         end
 
-      Multi.new()
-      |> Multi.insert_or_update(:config, changeset)
-      |> Multi.run(:activity, fn _, %{config: config} ->
-        changed_payload = Map.take(changeset.changes, config_fields())
+      transaction = fn ->
+        with {:ok, config} <- Repo.insert_or_update(changeset),
+             changed_payload = Map.take(changeset.changes, config_fields()),
+             {:ok, _activity} <-
+               Activity.log(config, :config_updated,
+                 actor: actor,
+                 source: :admin,
+                 operation_ref: operation_ref,
+                 stream_ref: community.slug,
+                 occurred_at: config.updated_at,
+                 payload: changed_payload,
+                 changed_fields: Map.keys(changed_payload),
+                 metadata: %{revision: config.revision}
+               ) do
+          {:ok, config}
+        end
+      end
 
-        Activity.log(config, :config_updated,
-          actor: actor,
-          source: :admin,
-          operation_ref: operation_ref,
-          stream_ref: community.slug,
-          occurred_at: config.updated_at,
-          payload: changed_payload,
-          changed_fields: Map.keys(changed_payload),
-          metadata: %{revision: config.revision}
-        )
-      end)
-      |> Repo.transaction()
+      transaction_result =
+        if Repo.in_transaction?(), do: transaction.(), else: Repo.transaction(transaction)
+
+      transaction_result
       |> case do
-        {:ok, %{config: config}} ->
+        {:ok, config} ->
           Later.run({Invalidation, :invalidate, [community.slug]})
           {:ok, config}
 
-        {:error, _step, reason, _changes} ->
+        {:error, reason} ->
           {:error, reason}
       end
     end

@@ -15,6 +15,7 @@ defmodule GroupherServerWeb.Schema.CMS.Press.Mutations do
   object :cms_press_mutations do
     field :update_press_config, :press_config_payload do
       arg(:input, non_null(:update_press_config_input))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "dashboard.rss.update")
