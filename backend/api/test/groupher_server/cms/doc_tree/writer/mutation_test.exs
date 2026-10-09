@@ -162,7 +162,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
           base_revision: before_tree_state.tree_lock_version
         })
 
-      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
+
       {:ok, tree} = CMS.DocTree.read(community)
 
       {:ok, delete_payload} =
@@ -207,7 +209,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
           user
         )
 
-      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
+
       {:ok, tree} = CMS.DocTree.read(community)
 
       {:ok, delete_payload} =
@@ -256,7 +260,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
           base_revision: guides_payload.revision
         })
 
-      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
+
       {:ok, tree} = CMS.DocTree.read(community)
 
       {:ok, delete_payload} =
@@ -434,7 +440,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
       branch = Repo.get!(DocBranch, node.branch_id)
 
       {{:ok, :pass}, queries} =
-         capture_repo_queries(fn ->
+        capture_repo_queries(fn ->
           Index.move_node(community, branch, node, parent.node.id, 0)
         end)
 
@@ -698,7 +704,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
           user
         )
 
-      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
+
       {:ok, tree} = CMS.DocTree.read(community)
       [group] = groups(tree)
 

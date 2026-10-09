@@ -279,7 +279,8 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert {:ok, result} =
              DocPublish.publish(article, branch.id, author,
                expected_draft_version: draft.version,
-               expected_lifecycle_version: 1
+               expected_lifecycle_version: 1,
+               command_id: Ecto.UUID.generate()
              )
 
     assert result.version.version_number == 1
@@ -364,15 +365,18 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert {:ok, %{has_unpublished_changes: true}} =
              CMS.Articles.draft_diff(article.id, user, community: community)
 
-    assert {:ok, %{public: public}} =
+    assert {:ok, %{article: published_article, public: public}} =
              CMS.Articles.publish(article.id, user,
                community: community,
                expected_draft_version: updated.version,
-               expected_lifecycle_version: 1
+               expected_lifecycle_version: 1,
+               command_id: Ecto.UUID.generate()
              )
 
-    assert public.article_id == article.id
-    assert {:ok, ^public} = CMS.Articles.read_editor(article.id, user, community: community)
+    assert published_article.id == article.id
+    assert {:ok, read_public} = CMS.Articles.read_editor(article.id, user, community: community)
+    assert read_public.article_id == article.id
+    assert read_public.revision_id == public.revision_id
 
     assert {:ok, false} =
              CMS.Articles.has_unpublished_changes(article.id, user, community: community)
@@ -446,7 +450,8 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
              CMS.Articles.publish(article.id, user,
                community: source,
                expected_draft_version: draft.version,
-               expected_lifecycle_version: 1
+               expected_lifecycle_version: 1,
+               command_id: Ecto.UUID.generate()
              )
 
     {:ok, %{article: destination_article, draft: destination_draft}} =
@@ -465,7 +470,8 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
              CMS.Articles.publish(destination_article.id, user,
                community: destination,
                expected_draft_version: destination_draft.version,
-               expected_lifecycle_version: 1
+               expected_lifecycle_version: 1,
+               command_id: Ecto.UUID.generate()
              )
 
     assert {:ok, pin} = CMS.Articles.pin(source, published.id, user, Ecto.UUID.generate())
@@ -525,7 +531,8 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
              CMS.Articles.publish(article.id, user,
                community: source,
                expected_draft_version: draft.version,
-               expected_lifecycle_version: 1
+               expected_lifecycle_version: 1,
+               command_id: Ecto.UUID.generate()
              )
 
     assert {:ok, %ArticleBinding{community_id: destination_id}} =
@@ -678,7 +685,8 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
              CMS.Articles.publish(article.id, user,
                community: community,
                expected_draft_version: draft.version,
-               expected_lifecycle_version: 1
+               expected_lifecycle_version: 1,
+               command_id: Ecto.UUID.generate()
              )
 
     assert {:ok, _hidden_binding} =

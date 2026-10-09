@@ -81,7 +81,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       })
 
     assert {:ok, %{done: true}} = publish_all_changes(community, user)
-    assert {:ok, _card} = CMS.DocCover.add_card(community, group.node.id, user, Ecto.UUID.generate())
+
+    assert {:ok, _card} =
+             CMS.DocCover.add_card(community, group.node.id, user, Ecto.UUID.generate())
+
     assert {:ok, %{cards: [card]}} = CMS.DocCover.read(community)
 
     assert card.group_node_id == group.node.id
@@ -108,7 +111,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
     command_id = Ecto.UUID.generate()
     assert {:ok, first_card} = CMS.DocCover.add_card(community, group.node.id, user, command_id)
-    assert {:ok, replayed_card} = CMS.DocCover.add_card(community, group.node.id, user, command_id)
+
+    assert {:ok, replayed_card} =
+             CMS.DocCover.add_card(community, group.node.id, user, command_id)
+
     assert replayed_card.id == first_card.id
     assert replayed_card.group_node_id == first_card.group_node_id
   end
@@ -135,10 +141,15 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       )
 
     assert {:ok, %{done: true}} = publish_all_changes(community, user)
-    assert {:ok, descendant_card} = CMS.DocCover.add_card(community, nested_group.node.id, user, Ecto.UUID.generate())
+
+    assert {:ok, descendant_card} =
+             CMS.DocCover.add_card(community, nested_group.node.id, user, Ecto.UUID.generate())
+
     assert descendant_card.index == 0
 
-    assert {:ok, parent_card} = CMS.DocCover.add_card(community, group.node.id, user, Ecto.UUID.generate())
+    assert {:ok, parent_card} =
+             CMS.DocCover.add_card(community, group.node.id, user, Ecto.UUID.generate())
+
     assert parent_card.index == 0
 
     assert {:ok, %{cards: [%{group_node_id: group_node_id}]}} = CMS.DocCover.read(community)
@@ -167,7 +178,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       )
 
     assert {:ok, %{done: true}} = publish_all_changes(community, user)
-    assert {:ok, _parent_card} = CMS.DocCover.add_card(community, group.node.id, user, Ecto.UUID.generate())
+
+    assert {:ok, _parent_card} =
+             CMS.DocCover.add_card(community, group.node.id, user, Ecto.UUID.generate())
 
     assert {:error, %ErrorCat.Error{reason: :custom, details: message}} =
              CMS.DocCover.add_card(community, nested_group.node.id, user, Ecto.UUID.generate())
@@ -197,7 +210,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
   end
 
   defp publish_all_changes(community, user) do
-    CMS.DocTree.publish_changes(community, %{}, user)
+    CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
   end
 
   defp empty_docs_community(user), do: create_empty_docs_community(user)

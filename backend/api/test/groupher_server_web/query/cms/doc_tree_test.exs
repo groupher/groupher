@@ -151,7 +151,8 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
         user
       )
 
-    assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+    assert {:ok, %{done: true}} =
+             CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
     result = guest_conn |> gq_query(@public_query, %{community: community.slug})
 

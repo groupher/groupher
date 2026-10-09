@@ -84,6 +84,11 @@ retry and unknown-outcome behavior
   已迁移到显式 fixture identity；
 - facade/resolver 的默认 command UUID 已清退；静态脚本同时检查 facade/resolver 与 production CMS
   source 中的派生 `command_id`。
+- Article publish、DocTree publish 的旧内部夹具已补齐显式 `command_id`（相关 suite 72/72）；这只证明
+  调用方跟随 fail-closed 合同迁移，不把底层 `Publish` workflow 重新变成隐式 command。
+- Analysis Contribution 的 Community 更新属于 maintenance workflow，改走
+  `Communities.update_operations/3`，以 `{:workflow, ref}` 写入 presentation Outbox；workflow step ref
+  包含贡献计数，避免把内部 job identity 冒充用户 `commandId`，也避免同一日重复贡献时的 Outbox 冲突。
 
 上述切片的 focused compile/gate、Tag/Asset 行为测试、GraphQL codegen 和 frontend type-check 已通过。
 Phase 5.6 清退 facade convenience arity 后，旧测试夹具曾以 168/191 通过，剩余 23 个失败全部为
@@ -624,7 +629,7 @@ projection 的局部 transaction 必须与 user Asset mutation 分开标注。
 3. [implemented, verified for current focused suites] Article/Comment Report add/remove 统一使用 concrete command identity、Receipt 与 result builder；GraphQL report mutations 的 `commandId` 已为必填；
 4. [implemented, pending protocol freeze] 为 Collect 冻结 Receipt/one-shot 合同，并让 Metric/Outbox 复用入口 identity；
 5. [done in this batch] 清退 `CMS.Communities`、`CMS.Dashboard` 在 facade 内生成 UUID 的 convenience arity；所有受影响的 legacy fixture 必须显式传入 actor/command identity；
-6. [done in this batch] seed、maintenance、operations caller 显式提供 workflow/operation identity，不能回退为伪客户端 command；
+6. [done in this batch] seed、maintenance、operations caller 显式提供 workflow/operation identity，不能回退为伪客户端 command；Community contribution 通过 `update_operations/3` 写入 typed workflow Outbox；
 7. [ongoing] 一次只迁移一个 owner，避免把不同 Gate、Lifecycle 与 result codec 混在同一提交。
 
 Convenience arity 清退的夹具影响（已在本批修复）如下；这些是测试调用方迁移债务，不是恢复隐式
@@ -763,11 +768,13 @@ Assets 22/22、Receipt 26/26、Outbox 10/10，即 **191/191**。`tag_commands_te
 也已通过。Reaction upvote GraphQL suite 曾有 5 个旧 direct setup 调用省略 command identity，现已迁移并
 验证 **21/21**；Emotion GraphQL suite 曾有 6 个 direct reaction setup 和 1 个 Dashboard setup 省略
 identity，现已迁移并验证 **14/14**；CMS Interactions ReadState suite 的 16 个 direct reaction setup/并发
-调用也已迁移并验证 **13/13**。这类 fixture 迁移不应通过恢复 `nil` fallback 解决。由此“focused tests 61 passed”应理解为
-迁移切片的 focused suites，不可替代上述 §11 全量命令集；当前 §11 命令集仍为 191/191。扩展到评论
-create/reply 和全测试树 reaction fixture 后，评论域套件为 **312/312**、reaction/emotion/read-state
-套件为 **132/132**、资产 query 套件为 **3/3**；这些结果同样只是调用方迁移证据，不代表 §6 其余
-mutation family 已完成。
+调用也已迁移并验证 **13/13**。Article publish 与 DocTree publish 的 legacy internal fixtures 又补齐
+显式 command identity，相关 focused suite 为 **72/72**；Analysis Contribution 的 maintenance
+workflow 改用 typed workflow identity，相关 suite 为 **17/17**。这类 fixture 迁移不应通过恢复
+`nil` fallback 解决。上述数字是各迁移切片的 focused 证据，不可替代 §11 命令集，也不代表 §6 其余
+mutation family 已完成。扩展到评论 create/reply 和全测试树 reaction fixture 后，评论域套件为
+**312/312**、reaction/emotion/read-state 套件为 **132/132**、资产 query 套件为 **3/3**；最终
+backend 全量 `mix test --max-failures 100` 为 **2183 passed, 1 excluded, 0 failures**。
 
 扩展的 GraphQL community-tag mutation 目录目前为 **41/41**：Tag CRUD、set/unset（post/blog/changelog/doc）
 和 reindex 均已通过。Doc set/unset 的实现保留 FrontDesk public projection 提供的 main-branch

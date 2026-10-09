@@ -27,16 +27,22 @@ defmodule GroupherServer.CMS.Dashboard.Effects do
       Dashboard.Effects.enqueue_presentation_changed(community, command_id)
       #=> {:ok, %CMS.Outbox.Event{}} | {:error, reason}
   """
-  @spec enqueue_presentation_changed(Community.t(), Ecto.UUID.t()) ::
+  @spec enqueue_presentation_changed(Community.t(), Ecto.UUID.t() | {:workflow, String.t()}) ::
           {:ok, CMS.Outbox.Event.t()} | {:error, term()}
-  def enqueue_presentation_changed(%Community{} = community, command_id) do
-    CMS.Outbox.send(%{
+  def enqueue_presentation_changed(%Community{} = community, identity) do
+    identity_attrs =
+      case identity do
+        {:workflow, workflow_ref} -> %{identity: {:workflow, workflow_ref}}
+        command_id -> %{command_id: command_id}
+      end
+
+    Map.merge(identity_attrs, %{
       event: "community.presentation_changed",
       worker: CMS.Outbox.Workers.Community.Cleanup,
       resource_type: "community",
       resource_id: community.id,
-      command_id: command_id,
       data: %{community: community.slug, community_id: community.id}
     })
+    |> CMS.Outbox.send()
   end
 end

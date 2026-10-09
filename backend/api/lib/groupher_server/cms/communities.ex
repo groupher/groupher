@@ -168,6 +168,13 @@ defmodule GroupherServer.CMS.Communities do
     UpdateCommand.execute(community, args, actor, command_id)
   end
 
+  @doc "Updates Community fields from an explicit maintenance workflow identity."
+  @spec update_operations(Community.t(), map(), String.t()) :: T.domain_res(Community.t())
+  def update_operations(%Community{} = community, args, workflow_ref)
+      when is_binary(workflow_ref) and workflow_ref != "" do
+    UpdateCommand.execute(community, args, :operations, {:workflow, workflow_ref})
+  end
+
   @doc "Creates from application through the `Communities` write boundary."
   @spec create_from_application(String.t(), String.t()) :: T.domain_res(term())
   def create_from_application(application_ref, operation_ref) do

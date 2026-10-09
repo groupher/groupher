@@ -74,20 +74,23 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                CMS.DocTree.publish_changes(
                  community,
                  %{expected_checklist_revision: initial.revision},
-                 user
+                 user,
+                 command_id: Ecto.UUID.generate()
                )
 
       assert {:ok, %{done: true}} =
                CMS.DocTree.publish_changes(
                  community,
                  %{expected_checklist_revision: changed.revision},
-                 user
+                 user,
+                 command_id: Ecto.UUID.generate()
                )
     end
 
     test "rejects moving a public Doc back to draft when the Community is not writable",
          ~m(user community page_payload)a do
-      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       {:ok, _blocker} =
         Lifecycle.apply_blocker(
@@ -103,7 +106,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
     test "move-to-Draft replay follows the committed Doc across a later publish",
          ~m(user community page_payload)a do
       command_id = Ecto.UUID.generate()
-      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       assert {:ok, draft} =
                CMS.DocTree.move_doc_to_draft(
@@ -122,7 +127,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                )
 
       assert immediate_replay.article_id == draft.article_id
-      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       assert {:ok, published_replay} =
                CMS.DocTree.move_doc_to_draft(
@@ -168,7 +175,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       refute Enum.any?(plan.tree_changes, &(&1.title == "Added Install"))
 
       assert {:ok, %{done: true, checklist: next_checklist}} =
-               CMS.DocTree.publish_changes(community, %{}, user)
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       assert next_checklist.total_count == 0
 
@@ -208,7 +215,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
         )
 
       assert {:ok, %{done: true, checklist: next_checklist}} =
-               CMS.DocTree.publish_changes(community, %{doc_change_ids: []}, user)
+               CMS.DocTree.publish_changes(community, %{doc_change_ids: []}, user,
+                 command_id: Ecto.UUID.generate()
+               )
 
       assert Enum.any?(next_checklist.doc_changes, &(&1.doc_id == page_payload.node.doc_id))
 
@@ -228,7 +237,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       [doc_change] = CMS.DocTree.publish_checklist(community).doc_changes
 
       assert {:ok, %{done: true, checklist: next_checklist}} =
-               CMS.DocTree.publish_changes(community, %{doc_change_ids: [doc_change.id]}, user)
+               CMS.DocTree.publish_changes(community, %{doc_change_ids: [doc_change.id]}, user,
+                 command_id: Ecto.UUID.generate()
+               )
 
       assert next_checklist.total_count == 0
 
@@ -239,7 +250,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
     test "publishes selected changes as one release",
          ~m(user community)a do
       assert {:ok, %{done: true, release: release, checklist: next_checklist}} =
-               CMS.DocTree.publish_changes(community, %{}, user)
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       assert release.release_number == 1
       assert next_checklist.total_count == 0
@@ -353,12 +364,13 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
     end
 
     test "does not create a release when publish checklist is empty", ~m(user community)a do
-      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       release_count_before = release_count(community)
 
       assert {:ok, %{done: true, release: nil, checklist: %{total_count: 0}}} =
-               CMS.DocTree.publish_changes(community, %{}, user)
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       assert release_count(community) == release_count_before
     end
@@ -374,7 +386,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                CMS.DocTree.publish_changes(
                  community,
                  %{doc_change_ids: [], tree_change_ids: []},
-                 user
+                 user,
+                 command_id: Ecto.UUID.generate()
                )
 
       assert release_count(community) == release_count_before
@@ -404,7 +417,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                Enum.sort([page_payload.node.id, second_page_payload.node.id])
 
       assert {:ok, %{done: true, checklist: next_checklist}} =
-               CMS.DocTree.publish_changes(community, %{}, user)
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       assert next_checklist.total_count == 0
 
@@ -457,14 +470,15 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       refute page_payload.node.doc_id == second_page_payload.node.doc_id
 
       assert {:ok, %{done: true, checklist: next_checklist}} =
-               CMS.DocTree.publish_changes(community, %{}, user)
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       assert next_checklist.total_count == 0
     end
 
     test "publishes only selected tree events and leaves unchecked events staged",
          ~m(user community page_payload)a do
-      {:ok, _release} = CMS.DocTree.publish_changes(community, %{}, user)
+      {:ok, _release} =
+        CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       {:ok, rename_payload} =
         CMS.DocTree.update_node(community, page_payload.node.id, %{
@@ -490,7 +504,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                CMS.DocTree.publish_changes(
                  community,
                  %{doc_change_ids: [], tree_change_ids: [first_tree_change.id]},
-                 user
+                 user,
+                 command_id: Ecto.UUID.generate()
                )
 
       next_checklist = CMS.DocTree.publish_checklist(community)
@@ -505,7 +520,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
     end
 
     test "rejects restoring non-delete tree changes", ~m(user community page_payload)a do
-      {:ok, _release} = CMS.DocTree.publish_changes(community, %{}, user)
+      {:ok, _release} =
+        CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       {:ok, _rename_payload} =
         CMS.DocTree.update_node(community, page_payload.node.id, %{
@@ -534,13 +550,16 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                    tree_change_ids: [],
                    restore_tree_change_ids: [rename_change.id]
                  },
-                 user
+                 user,
+                 command_id: Ecto.UUID.generate()
                )
     end
 
     test "merges doc and tree actions for the same article in one release",
          ~m(user community page_payload)a do
-      {:ok, _release} = CMS.DocTree.publish_changes(community, %{}, user)
+      {:ok, _release} =
+        CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
+
       {:ok, tree} = CMS.DocTree.read(community)
 
       {:ok, group_payload_2} =
@@ -572,7 +591,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           base_revision: group_payload_2.revision
         })
 
-      assert {:ok, %{release: release}} = CMS.DocTree.publish_changes(community, %{}, user)
+      assert {:ok, %{release: release}} =
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       {:ok, release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
       release = Repo.preload(release, :articles)

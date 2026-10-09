@@ -38,7 +38,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Concurrency do
       results =
         1..2
         |> Enum.map(fn _ ->
-          Task.async(fn -> CMS.DocTree.publish_changes(community, %{}, user) end)
+          Task.async(fn ->
+            CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
+          end)
         end)
         |> Task.await_many(10_000)
 
