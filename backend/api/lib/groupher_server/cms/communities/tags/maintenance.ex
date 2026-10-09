@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.TagMaintenance do
+defmodule GroupherServer.CMS.Communities.Tags.Maintenance do
   @moduledoc """
   Runs explicitly named maintenance and fixture tag workflows.
 
@@ -7,13 +7,14 @@ defmodule GroupherServer.CMS.Communities.TagMaintenance do
   `{:workflow, workflow_ref}` rather than manufacturing a user command id.
 
       seed / repair job
-        -> TagMaintenance(workflow_ref)
+        -> Tags.Maintenance(workflow_ref)
         -> one Repo transaction
-        -> Communities.Tags / TagPersist
+        -> Tags.Mutation / Tags.Persist
   """
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Communities.Tags
+  alias CMS.Articles.Tags.Assignment
+  alias CMS.Communities.Tags.Mutation
   alias CMS.Model.{Community, CommunityTag, CommunityTagGroup}
   alias Helper.T
 
@@ -22,7 +23,7 @@ defmodule GroupherServer.CMS.Communities.TagMaintenance do
   def create(%Community{} = community, thread, attrs, actor, workflow_ref)
       when is_binary(workflow_ref) and workflow_ref != "" do
     transact(workflow_ref, fn ->
-      Tags.create(community, thread, attrs, actor, identity: {:workflow, workflow_ref})
+      Mutation.create(community, thread, attrs, actor, identity: {:workflow, workflow_ref})
     end)
   end
 
@@ -32,7 +33,7 @@ defmodule GroupherServer.CMS.Communities.TagMaintenance do
   def create_group(%Community{} = community, thread, attrs, workflow_ref)
       when is_binary(workflow_ref) and workflow_ref != "" do
     transact(workflow_ref, fn ->
-      Tags.create_group(community, thread, attrs, identity: {:workflow, workflow_ref})
+      Mutation.create_group(community, thread, attrs, identity: {:workflow, workflow_ref})
     end)
   end
 
@@ -40,7 +41,7 @@ defmodule GroupherServer.CMS.Communities.TagMaintenance do
   @spec add(Ecto.Schema.t(), T.id(), String.t()) :: T.domain_res(Ecto.Schema.t())
   def add(article, tag_id, workflow_ref) when is_binary(workflow_ref) and workflow_ref != "" do
     transact(workflow_ref, fn ->
-      Tags.add(article, tag_id, identity: {:workflow, workflow_ref})
+      Assignment.add(article, tag_id, identity: {:workflow, workflow_ref})
     end)
   end
 
@@ -48,7 +49,7 @@ defmodule GroupherServer.CMS.Communities.TagMaintenance do
   @spec remove(Ecto.Schema.t(), T.id(), String.t()) :: T.domain_res(Ecto.Schema.t())
   def remove(article, tag_id, workflow_ref) when is_binary(workflow_ref) and workflow_ref != "" do
     transact(workflow_ref, fn ->
-      Tags.remove(article, tag_id, identity: {:workflow, workflow_ref})
+      Assignment.remove(article, tag_id, identity: {:workflow, workflow_ref})
     end)
   end
 
@@ -58,7 +59,7 @@ defmodule GroupherServer.CMS.Communities.TagMaintenance do
   def reindex_in_group(%Community{} = community, thread, group_id, tags, workflow_ref)
       when is_binary(workflow_ref) and workflow_ref != "" do
     transact(workflow_ref, fn ->
-      Tags.reindex_in_group(community, thread, group_id, tags,
+      Mutation.reindex_in_group(community, thread, group_id, tags,
         identity: {:workflow, workflow_ref}
       )
     end)
@@ -69,7 +70,7 @@ defmodule GroupherServer.CMS.Communities.TagMaintenance do
   def reindex(%Community{} = community, thread, tags, workflow_ref)
       when is_binary(workflow_ref) and workflow_ref != "" do
     transact(workflow_ref, fn ->
-      Tags.reindex(community, thread, tags, identity: {:workflow, workflow_ref})
+      Mutation.reindex(community, thread, tags, identity: {:workflow, workflow_ref})
     end)
   end
 
@@ -78,7 +79,7 @@ defmodule GroupherServer.CMS.Communities.TagMaintenance do
   def reindex_groups(%Community{} = community, thread, groups, workflow_ref)
       when is_binary(workflow_ref) and workflow_ref != "" do
     transact(workflow_ref, fn ->
-      Tags.reindex_groups(community, thread, groups, identity: {:workflow, workflow_ref})
+      Mutation.reindex_groups(community, thread, groups, identity: {:workflow, workflow_ref})
     end)
   end
 

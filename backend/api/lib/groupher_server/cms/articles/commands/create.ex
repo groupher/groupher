@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.{Articles, Communities, Command, Docs}
+  alias CMS.Articles.Tags.Assignment
   alias CMS.FrontDesk
   alias CMS.Model.{Article, ArticleBinding, Community}
   alias CMS.Articles.RevisionResult
@@ -92,7 +93,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     with {:ok, branch} <- CMS.Docs.Branch.resolve(community, []),
          {:ok, %{article: article, draft: draft}} <-
            Articles.create_stable_draft(community, :doc, attrs, user, branch_id: branch.id),
-         {:ok, _} <- sync_community_tags(community, article, attrs, command_id),
+         {:ok, _} <-
+           Repo.transact(fn -> sync_community_tags(community, article, attrs, command_id) end),
          {:ok, _published} <-
            Docs.publish_branch(article.id, branch.id, user,
              expected_draft_version: draft.version,
@@ -155,7 +157,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
         :error -> {:workflow, "article-create:#{community.id}:#{article.id}"}
       end
 
-    case Communities.overwrite_tags(
+    case Assignment.overwrite(
            community,
            article.thread,
            article,

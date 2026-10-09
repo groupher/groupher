@@ -1,25 +1,25 @@
-defmodule GroupherServer.CMS.Communities.Commands.ReindexTagGroups do
+defmodule GroupherServer.CMS.Communities.Tags.Commands.ReindexTagsAcrossGroups do
   @moduledoc """
-  Reindexes tag groups as a one-shot, Gate-admitted mutation.
+  Reindexes tags across groups as a one-shot, Gate-admitted mutation.
 
-      GraphQL -> ReindexTagGroups -> Gate -> Tags batch update + taxonomy Outbox
+      GraphQL -> ReindexTagsAcrossGroups -> Gate -> Tags batch update + taxonomy Outbox
   """
 
   alias GroupherServer.CMS
   alias CMS.Gate
-  alias CMS.Communities.Commands.TagSupport
-  alias CMS.Communities.Tags
+  alias CMS.Communities.Tags.Commands.TagSupport
+  alias CMS.Communities.Tags.Mutation
   alias CMS.Model.Community
   alias GroupherServer.Accounts.Model.User
   alias Helper.T
 
   @spec execute(Community.t() | String.t(), atom(), list(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(atom())
-  def execute(community_ref, thread, groups, %User{} = actor, command_id) do
+  def execute(community_ref, thread, tags, %User{} = actor, command_id) do
     with {:ok, command_id} <- TagSupport.command_id(command_id),
          {:ok, community} <- TagSupport.community(community_ref) do
       Gate.with_community_check(actor, :update, community, fn canonical ->
-        Tags.reindex_groups(canonical, thread, groups, command_id: command_id)
+        Mutation.reindex(canonical, thread, tags, command_id: command_id)
       end)
     end
   end

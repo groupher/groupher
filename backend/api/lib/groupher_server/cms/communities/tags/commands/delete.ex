@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.Commands.DeleteTag do
+defmodule GroupherServer.CMS.Communities.Tags.Commands.DeleteTag do
   @moduledoc """
   Deletes a community tag through the receipt-backed command boundary.
 
@@ -7,8 +7,8 @@ defmodule GroupherServer.CMS.Communities.Commands.DeleteTag do
 
   alias GroupherServer.CMS
   alias CMS.{Command, Gate, FrontDesk}
-  alias CMS.Communities.Commands.{TagConfirmation, TagSupport}
-  alias CMS.Communities.Tags
+  alias CMS.Communities.Tags.Commands.{TagConfirmation, TagSupport}
+  alias CMS.Communities.Tags.Mutation
   alias CMS.Model.CommunityTag
   alias GroupherServer.Accounts.Model.User
   alias Helper.T
@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.Communities.Commands.DeleteTag do
     with {:ok, community} <- TagSupport.community(tag.community_id),
          {:ok, %CommunityTag{} = deleted} <-
            Gate.with_community_check(actor, :update, community, fn _canonical ->
-             Tags.delete(tag.id, command_id: command_id)
+             Mutation.delete(tag.id, command_id: command_id)
            end) do
       {:ok, TagSupport.confirmation(TagConfirmation, "tag_id", deleted.id, command_id)}
     end

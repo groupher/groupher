@@ -1,29 +1,28 @@
-defmodule GroupherServer.CMS.Communities.ModeratorPersist do
+defmodule GroupherServer.CMS.Communities.Moderators.Persist do
   @moduledoc """
   Transaction-free persistence primitives for authenticated moderator commands.
 
-  `CMS.Command`/`CMS.Gate` owns the receipt and aggregate transaction. This
-  module only performs the membership, passport and count writes inside that
-  transaction. Community setup keeps using `Moderator.add_root/2` as its
-  explicitly named workflow path.
+  `CMS.Command`/`CMS.Gate` owns admission, the receipt and the aggregate
+  transaction. This module only performs membership, passport and count writes
+  inside that transaction. Community setup keeps using
+  `Moderators.Setup.add_root/2` as its explicitly named workflow path.
 
-      Moderator Command / setup workflow
+      Moderators.Command / setup workflow
         -> Gate or workflow transaction
-        -> ModeratorPersist
+        -> Moderators.Persist
         -> membership / passport / count rows
   """
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Communities.{Count, ErrorCat, Passport}
   alias CMS.Model.{Community, CommunityModerator}
   alias CMS.Passport.Registry
   alias Helper.{ORM, PermissionConfig}
 
-  @doc "Adds one moderator without opening a transaction."
-  def add(%Community{} = community, %User{} = target_user, %User{} = actor) do
-    with {:ok, true} <- root_allowed?(community, actor),
-         {:ok, moderator} <- insert_moderator(community, target_user, :moderator),
+  @doc "Adds one moderator without opening a transaction or checking admission."
+  def add(%Community{} = community, %User{} = target_user) do
+    with {:ok, moderator} <- insert_moderator(community, target_user, :moderator),
          {:ok, _community} <- update_count(community, target_user, :inc) do
       {:ok, moderator}
     else
@@ -32,31 +31,27 @@ defmodule GroupherServer.CMS.Communities.ModeratorPersist do
   end
 
   @doc "Adds many moderators, preserving per-target partial success."
-  def add_many(%Community{} = community, targets, %User{} = actor) when is_list(targets) do
-    with {:ok, true} <- root_allowed?(community, actor) do
-      results =
-        targets
-        |> Enum.uniq_by(& &1.id)
-        |> Enum.map(fn target ->
-          case add_one(community, target) do
-            {:ok, _moderator} ->
-              %{"user_id" => target.id, "ok" => true, "error" => nil}
+  def add_many(%Community{} = community, targets) when is_list(targets) do
+    {results, _community} =
+      targets
+      |> Enum.uniq_by(& &1.id)
+      |> Enum.map_reduce(community, fn target, current_community ->
+        case add_one(current_community, target) do
+          {:ok, _moderator, updated_community} ->
+            {%{"user_id" => target.id, "ok" => true, "error" => nil}, updated_community}
 
-            {:error, reason} ->
-              %{"user_id" => target.id, "ok" => false, "error" => inspect(reason)}
-          end
-        end)
+          {:error, reason} ->
+            {%{"user_id" => target.id, "ok" => false, "error" => inspect(reason)},
+             current_community}
+        end
+      end)
 
-      {:ok, results}
-    else
-      {:error, reason} -> {:error, reason}
-    end
+    {:ok, results}
   end
 
-  @doc "Removes one moderator without opening a transaction."
-  def remove(%Community{} = community, %User{} = target_user, %User{} = actor) do
-    with {:ok, true} <- root_allowed?(community, actor),
-         {:ok, _} <- Passport.erase_passport([community.slug], target_user),
+  @doc "Removes one moderator without opening a transaction or checking admission."
+  def remove(%Community{} = community, %User{} = target_user) do
+    with {:ok, _} <- Passport.erase_passport([community.slug], target_user),
          {:ok, deleted} <-
            ORM.findby_delete!(CommunityModerator, %{
              user_id: target_user.id,
@@ -73,11 +68,9 @@ defmodule GroupherServer.CMS.Communities.ModeratorPersist do
   def update_passport(
         %Community{} = community,
         rules,
-        %User{} = target_user,
-        %User{} = actor
+        %User{} = target_user
       ) do
-    with {:ok, true} <- root_allowed?(community, actor),
-         {:ok, :match} <- match_passport_community(community.slug, rules),
+    with {:ok, :match} <- match_passport_community(community.slug, rules),
          {:ok, _} <- Passport.erase_passport([community.slug], target_user),
          {:ok, _} <- Passport.stamp_passport(rules, target_user),
          {:ok, _} <- update_passport_item_count(community, target_user, rules) do
@@ -89,8 +82,8 @@ defmodule GroupherServer.CMS.Communities.ModeratorPersist do
 
   defp add_one(community, target_user) do
     with {:ok, moderator} <- insert_moderator(community, target_user, :moderator),
-         {:ok, _community} <- update_count(community, target_user, :inc) do
-      {:ok, moderator}
+         {:ok, updated_community} <- update_count(community, target_user, :inc) do
+      {:ok, moderator, updated_community}
     end
   end
 
@@ -107,10 +100,8 @@ defmodule GroupherServer.CMS.Communities.ModeratorPersist do
     end
   end
 
-  defp update_count(%Community{id: community_id}, %User{} = user, direction) do
-    with {:ok, current} <- ORM.find(Community, community_id) do
-      Count.update(current, user, :moderators_count, direction)
-    end
+  defp update_count(%Community{} = community, %User{} = user, direction) do
+    Count.update(community, user, :moderators_count, direction)
   end
 
   defp default_passport(:moderator, community_slug),
@@ -144,30 +135,6 @@ defmodule GroupherServer.CMS.Communities.ModeratorPersist do
       end
 
     ORM.update(moderator, %{passport_item_count: count})
-  end
-
-  defp root_allowed?(%Community{slug: slug} = community, %User{} = actor) do
-    moderators =
-      case community.moderators do
-        %Ecto.Association.NotLoaded{} -> Repo.preload(community, :moderators).moderators
-        value -> value
-      end
-
-    cond do
-      moderators == [] -> {:ok, true}
-      global_god?(actor) or community_root?(actor, slug) -> {:ok, true}
-      true -> {:error, ErrorCat.community_root_only("only community root can manage moderators")}
-    end
-  end
-
-  defp global_god?(%User{} = user), do: passport_rule(user, ["global", "god"]) == true
-  defp community_root?(%User{} = user, slug), do: passport_rule(user, [slug, "root"]) == true
-
-  defp passport_rule(%User{} = user, path) do
-    case Passport.get_passport(user) do
-      {:ok, passport} -> get_in(Registry.normalize_rules(passport), path)
-      _ -> nil
-    end
   end
 
   defp match_passport_community(community_slug, rules) do

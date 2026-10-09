@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.Commands.TagConfirmation do
+defmodule GroupherServer.CMS.Communities.Tags.Commands.TagConfirmation do
   @moduledoc """
   Defines the tag CRUD Confirmation codec.
 

@@ -80,11 +80,15 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
         community_id: community.id
       )
 
-    assert {:ok, ^binding} = Tags.replace(binding, [to_string(tag.id)])
+    assert {:ok, ^binding} =
+             Repo.transact(fn -> Tags.replace(binding, [to_string(tag.id)]) end)
+
     assert {:ok, [listed]} = Tags.list(binding)
     assert listed.id == tag.id
 
-    assert {:error, :invalid_community_tags} = Tags.replace(binding, [foreign_tag.id])
+    assert {:error, :invalid_community_tags} =
+             Repo.transact(fn -> Tags.replace(binding, [foreign_tag.id]) end)
+
     assert {:ok, [unchanged]} = Tags.list(binding)
     assert unchanged.id == tag.id
   end
@@ -124,5 +128,15 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
              Repo.insert(ArticleBindingTag.changeset(%ArticleBindingTag{}, attrs))
 
     assert {"has already been taken", _metadata} = changeset.errors[:article_binding_id]
+  end
+
+  test "Tags.replace/2 fails closed without an owner transaction", ~m(community post)a do
+    binding =
+      Repo.get_by!(ArticleBinding,
+        article_id: post.article_id,
+        community_id: community.id
+      )
+
+    assert {:error, :article_binding_transaction_required} = Tags.replace(binding, [])
   end
 end

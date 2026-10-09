@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.TagStats do
+defmodule GroupherServer.CMS.Communities.Tags.Stats do
   @moduledoc """
   Maintains cached counters for community tags.
 
@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
 
       Client / reviewer
         -> CMS.Communities
-        -> TagStats
+        -> Tags.Stats
         -> Repo / Oban
   """
 
@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
 
   ## Examples
 
-      CMS.Communities.TagStats.inc(article, tag)
+      CMS.Communities.Tags.Stats.inc(article, tag)
       #=> {:ok, :pass}
 
   """
@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
 
   ## Examples
 
-      CMS.Communities.TagStats.dec(article, tag)
+      CMS.Communities.Tags.Stats.dec(article, tag)
       #=> {:ok, :pass}
 
   """
@@ -64,7 +64,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
 
   ## Examples
 
-      CMS.Communities.TagStats.update_many(article, [{tag, 1}, {other_tag, -1}])
+      CMS.Communities.Tags.Stats.update_many(article, [{tag, 1}, {other_tag, -1}])
       #=> {:ok, :pass}
 
   """

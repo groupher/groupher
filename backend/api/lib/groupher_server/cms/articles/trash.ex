@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
   alias GroupherServer.{Activity, CMS, Repo}
   alias CMS.Articles.Lifecycle
   alias CMS.Articles.Bindings
-  alias CMS.Communities.TagStats
+  alias CMS.Communities.Tags.Stats
   alias CMS.Docs.Trash, as: DocTrash
 
   alias CMS.Model.{
@@ -349,7 +349,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> where([_tag, _assignment, binding], binding.article_id == ^article.id)
       |> Repo.all()
 
-    case TagStats.update_many(article, Enum.map(tags, &{&1, delta})) do
+    case Stats.update_many(article, Enum.map(tags, &{&1, delta})) do
       {:ok, _result} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end

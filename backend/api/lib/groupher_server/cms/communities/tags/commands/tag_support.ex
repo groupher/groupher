@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.Commands.TagSupport do
+defmodule GroupherServer.CMS.Communities.Tags.Commands.TagSupport do
   @moduledoc """
   Provides shared target loading and terminal result building for tag Commands.
 

@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.TagPersist do
+defmodule GroupherServer.CMS.Communities.Tags.Persist do
   @moduledoc """
   Persistence primitives for community tags and tag groups.
 
@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Communities.TagPersist do
   calls these primitives.
 
       concrete Command / maintenance workflow
-        -> TagPersist
+        -> Tags.Persist
         -> cms.community_tags / cms.community_tag_groups
   """
 
@@ -67,75 +67,81 @@ defmodule GroupherServer.CMS.Communities.TagPersist do
   @spec delete_tag(CommunityTag.t()) :: {:ok, CommunityTag.t()} | {:error, term()}
   def delete_tag(%CommunityTag{} = tag), do: ORM.delete(tag)
 
-  @doc "Runs the SQL batch update for tag indexes (and optional group moves)."
+  @doc """
+  Batch updates tag indexes and optional group moves.
+
+  Uses [`Ecto.Query.values/2`](https://hexdocs.pm/ecto/Ecto.Query.API.html#values/2)
+  as typed in-memory update rows and [`Ecto.Repo.update_all/3`](https://hexdocs.pm/ecto/Ecto.Repo.html#update_all/3)
+  to apply every row's distinct values in one statement.
+  """
   @spec batch_reindex_tags(Community.t(), atom(), [map()], boolean()) ::
-          {:ok, term()} | {:error, term()}
+          {:ok, non_neg_integer()} | {:error, term()}
   def batch_reindex_tags(_community, _thread, [], _include_group?), do: {:ok, :pass}
 
   def batch_reindex_tags(%Community{} = community, thread, indexed_tags, include_group?) do
-    ids = Enum.map(indexed_tags, & &1.id)
-    indexes = Enum.map(indexed_tags, & &1.index)
     now = Datetime.now(:second)
 
-    {query, params} =
-      if include_group? do
-        query = """
-        UPDATE cms.community_tags AS tag
-        SET group_id = updates.group_id,
-            "index" = updates.new_index,
-            updated_at = $6
-        FROM UNNEST($1::bigint[], $2::bigint[], $3::integer[])
-          AS updates(id, group_id, new_index)
-        WHERE tag.id = updates.id
-          AND tag.community_id = $4
-          AND tag.thread = $5
-        """
+    if include_group? do
+      updates =
+        Enum.map(indexed_tags, fn tag ->
+          %{id: tag.id, group_id: tag.group_id, index: tag.index}
+        end)
 
-        {query,
-         [
-           ids,
-           Enum.map(indexed_tags, & &1.group_id),
-           indexes,
-           community.id,
-           Atom.to_string(thread),
-           now
-         ]}
-      else
-        query = """
-        UPDATE cms.community_tags AS tag
-        SET "index" = updates.new_index,
-            updated_at = $5
-        FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
-        WHERE tag.id = updates.id
-          AND tag.community_id = $3
-          AND tag.thread = $4
-        """
+      query =
+        from(tag in CommunityTag,
+          join: update in values(updates, %{id: :id, group_id: :id, index: :integer}),
+          on: update.id == tag.id,
+          where: tag.community_id == ^community.id,
+          where: tag.thread == ^thread,
+          update: [set: [group_id: update.group_id, index: update.index, updated_at: ^now]]
+        )
 
-        {query, [ids, indexes, community.id, Atom.to_string(thread), now]}
-      end
+      update_all(query)
+    else
+      updates = Enum.map(indexed_tags, fn tag -> %{id: tag.id, index: tag.index} end)
 
-    Repo.query(query, params)
+      query =
+        from(tag in CommunityTag,
+          join: update in values(updates, %{id: :id, index: :integer}),
+          on: update.id == tag.id,
+          where: tag.community_id == ^community.id,
+          where: tag.thread == ^thread,
+          update: [set: [index: update.index, updated_at: ^now]]
+        )
+
+      update_all(query)
+    end
   end
 
-  @doc "Runs the SQL batch update for tag-group indexes."
+  @doc """
+  Batch updates tag-group indexes.
+
+  Uses [`Ecto.Query.values/2`](https://hexdocs.pm/ecto/Ecto.Query.API.html#values/2)
+  and [`Ecto.Repo.update_all/3`](https://hexdocs.pm/ecto/Ecto.Repo.html#update_all/3)
+  to apply every group's distinct index in one statement.
+  """
   @spec batch_reindex_groups(Community.t(), atom(), [map()]) ::
-          {:ok, term()} | {:error, term()}
+          {:ok, non_neg_integer()} | {:error, term()}
   def batch_reindex_groups(_community, _thread, []), do: {:ok, :pass}
 
   def batch_reindex_groups(%Community{} = community, thread, indexed_groups) do
-    ids = Enum.map(indexed_groups, & &1.id)
-    indexes = Enum.map(indexed_groups, & &1.index)
+    updates = Enum.map(indexed_groups, fn group -> %{id: group.id, index: group.index} end)
+    now = Datetime.now(:second)
 
-    query = """
-    UPDATE cms.community_tag_groups AS tag_group
-    SET "index" = updates.new_index,
-        updated_at = $5
-    FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
-    WHERE tag_group.id = updates.id
-      AND tag_group.community_id = $3
-      AND tag_group.thread = $4
-    """
+    query =
+      from(tag_group in CommunityTagGroup,
+        join: update in values(updates, %{id: :id, index: :integer}),
+        on: update.id == tag_group.id,
+        where: tag_group.community_id == ^community.id,
+        where: tag_group.thread == ^thread,
+        update: [set: [index: update.index, updated_at: ^now]]
+      )
 
-    Repo.query(query, [ids, indexes, community.id, Atom.to_string(thread), Datetime.now(:second)])
+    update_all(query)
+  end
+
+  defp update_all(query) do
+    {count, _result} = Repo.update_all(query, [])
+    {:ok, count}
   end
 end

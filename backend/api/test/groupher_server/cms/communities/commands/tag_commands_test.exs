@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.CMS.Communities.Commands.TagCommandsTest do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Communities.Commands.{
+  alias GroupherServer.CMS.Communities.Tags.Commands.{
     CreateTag,
     CreateTagGroup,
     DeleteTag,

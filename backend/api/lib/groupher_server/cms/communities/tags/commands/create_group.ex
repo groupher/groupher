@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.Commands.CreateTagGroup do
+defmodule GroupherServer.CMS.Communities.Tags.Commands.CreateTagGroup do
   @moduledoc """
   Creates a community tag group through the receipt-backed command boundary.
 
@@ -7,8 +7,8 @@ defmodule GroupherServer.CMS.Communities.Commands.CreateTagGroup do
 
   alias GroupherServer.CMS
   alias CMS.{Command, Gate}
-  alias CMS.Communities.Commands.{TagGroupConfirmation, TagSupport}
-  alias CMS.Communities.Tags
+  alias CMS.Communities.Tags.Commands.{TagGroupConfirmation, TagSupport}
+  alias CMS.Communities.Tags.Mutation
   alias CMS.Model.{Community, CommunityTagGroup}
   alias GroupherServer.Accounts.Model.User
   alias Helper.T
@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Communities.Commands.CreateTagGroup do
        }) do
     Gate.with_community_check(actor, :update, community, fn canonical ->
       with {:ok, %CommunityTagGroup{} = group} <-
-             Tags.create_group(canonical, thread, attrs, command_id: command_id) do
+             Mutation.create_group(canonical, thread, attrs, command_id: command_id) do
         {:ok, TagSupport.confirmation(TagGroupConfirmation, "group_id", group.id, command_id)}
       end
     end)

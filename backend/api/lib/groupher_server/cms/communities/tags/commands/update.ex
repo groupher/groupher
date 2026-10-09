@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.Commands.UpdateTag do
+defmodule GroupherServer.CMS.Communities.Tags.Commands.UpdateTag do
   @moduledoc """
   Updates a community tag through the receipt-backed command boundary.
 
@@ -7,8 +7,8 @@ defmodule GroupherServer.CMS.Communities.Commands.UpdateTag do
 
   alias GroupherServer.CMS
   alias CMS.{Command, Gate, FrontDesk}
-  alias CMS.Communities.Commands.{TagConfirmation, TagSupport}
-  alias CMS.Communities.Tags
+  alias CMS.Communities.Tags.Commands.{TagConfirmation, TagSupport}
+  alias CMS.Communities.Tags.Mutation
   alias CMS.Model.CommunityTag
   alias GroupherServer.Accounts.Model.User
   alias Helper.T
@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Communities.Commands.UpdateTag do
     with {:ok, community} <- TagSupport.community(tag.community_id),
          {:ok, %CommunityTag{} = updated} <-
            Gate.with_community_check(actor, :update, community, fn _canonical ->
-             Tags.update(tag.id, attrs, command_id: command_id)
+             Mutation.update(tag.id, attrs, command_id: command_id)
            end) do
       {:ok, TagSupport.confirmation(TagConfirmation, "tag_id", updated.id, command_id)}
     end

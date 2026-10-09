@@ -26,11 +26,11 @@ defmodule GroupherServer.CMS.Articles.Bindings.Tags do
     {:ok, tags}
   end
 
-  @doc "Replaces tags attached to one ArticleBinding."
+  @doc "Replaces tags attached to one ArticleBinding inside an existing owner transaction."
   @spec replace(ArticleBinding.t(), [pos_integer() | String.t()]) ::
           {:ok, ArticleBinding.t()} | {:error, term()}
   def replace(%ArticleBinding{} = binding, tag_ids) when is_list(tag_ids) do
-    Repo.transaction(fn ->
+    if Repo.in_transaction?() do
       with {:ok, normalized_ids} <- normalize_tag_ids(tag_ids),
            {:ok, valid_ids} <- validate_tag_ids(binding, normalized_ids) do
         Repo.delete_all(
@@ -46,12 +46,14 @@ defmodule GroupherServer.CMS.Articles.Bindings.Tags do
           |> Repo.insert!()
         end)
 
-        binding
-      else
-        {:error, reason} -> Repo.rollback(reason)
+        {:ok, binding}
       end
-    end)
+    else
+      {:error, :article_binding_transaction_required}
+    end
   end
+
+  def replace(%ArticleBinding{}, _tag_ids), do: {:error, :invalid_community_tags}
 
   defp validate_tag_ids(binding, normalized_ids) do
     valid_ids =

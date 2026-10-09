@@ -1,8 +1,8 @@
 defmodule GroupherServer.CMS.Assets.Commands.RestoreAsset do
   @moduledoc """
-  Restores one archived asset as a one-shot CMS command.
+  Restores one archived asset through the Receipt-backed CMS command boundary.
 
-      GraphQL / facade -> RestoreAsset -> Gate -> Writer -> canonical Asset
+      GraphQL / facade -> RestoreAsset -> CMS.Command -> Gate -> Persist -> Confirmation
   """
 
   alias GroupherServer.{CMS, Repo}

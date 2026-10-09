@@ -1,9 +1,10 @@
-defmodule GroupherServer.Test.CMS.Communities.Moderator do
+defmodule GroupherServer.Test.CMS.Communities.Moderators do
   @moduledoc false
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
   alias CMS.Communities.{ErrorCat, Passport}
+  alias CMS.Communities.Moderators.Setup, as: ModeratorSetup
   alias CMS.Model.CommunityModerator
   alias Helper.PermissionRegistry
 
@@ -16,6 +17,11 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
   end
 
   describe "[cms community moderators]" do
+    test "setup add_root requires a caller-owned transaction", ~m(user community)a do
+      assert {:error, :community_moderator_transaction_required} =
+               ModeratorSetup.add_root(community, user)
+    end
+
     test "should have infinite passport count of root", ~m(user user2 community)a do
       cur_user = user
       {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user, command_id())

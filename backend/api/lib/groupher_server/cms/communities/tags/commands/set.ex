@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.Commands.SetTag do
+defmodule GroupherServer.CMS.Communities.Tags.Commands.SetTag do
   @moduledoc """
   Sets one community tag through a one-shot Gate admission.
 
@@ -7,8 +7,8 @@ defmodule GroupherServer.CMS.Communities.Commands.SetTag do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.{FrontDesk, Gate}
-  alias CMS.Communities.Commands.TagSupport
-  alias CMS.Communities.Tags
+  alias CMS.Communities.Tags.Commands.TagSupport
+  alias CMS.Articles.Tags.Assignment
   alias CMS.Model.{Article, Community}
   alias GroupherServer.Accounts.Model.User
   alias Helper.T
@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Communities.Commands.SetTag do
          {:ok, tag} <- FrontDesk.community_tag(tag_id),
          {:ok, %Community{} = community} <- TagSupport.community(tag.community_id) do
       with_article_gate(actor, community, article, branch_id, fn canonical ->
-        Tags.add(canonical, tag.id, command_id: command_id)
+        Assignment.add(canonical, tag.id, command_id: command_id)
       end)
     end
   end

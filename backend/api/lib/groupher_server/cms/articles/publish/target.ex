@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.{Bindings, Draft, Draft.Store, Lifecycle, Numbering, Public, Revision}
+  alias CMS.Articles.Tags.Assignment
   alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Author, Community}
 
   @doc "Publishes one ordinary Draft after validating the caller-observed Draft version.
@@ -122,7 +123,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
         {:ok, :pass}
 
       {:ok, tag_ids} ->
-        case CMS.Communities.overwrite_tags(
+        case Assignment.overwrite(
                community,
                article.thread,
                article,

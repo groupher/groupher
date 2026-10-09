@@ -1,8 +1,8 @@
 defmodule GroupherServer.CMS.Assets.Commands.RegisterAsset do
   @moduledoc """
-  Registers one uploaded asset as a one-shot CMS command.
+  Registers one uploaded asset through the Receipt-backed CMS command boundary.
 
-      upload callback / GraphQL -> RegisterAsset -> Gate -> Writer upsert
+      upload callback / GraphQL -> RegisterAsset -> CMS.Command -> Gate -> Persist -> Confirmation
   """
 
   alias GroupherServer.{CMS, Repo}

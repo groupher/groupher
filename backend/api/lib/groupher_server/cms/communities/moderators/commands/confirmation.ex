@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Communities.Commands.ModeratorConfirmation do
+defmodule GroupherServer.CMS.Communities.Moderators.Commands.Confirmation do
   @moduledoc """
   Receipt codec for moderator mutations.
 

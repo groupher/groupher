@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Communities.TagStats
+  alias CMS.Communities.Tags.Stats
   alias CMS.Model.{Article, CommunityTag, CommunityTagStat}
 
   setup do
@@ -949,7 +949,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} = TagStats.inc(post, blog_tag)
+      assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} = Stats.inc(post, blog_tag)
     end
   end
 end

@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Assets.Commands.DeleteAsset do
   @moduledoc """
   Deletes one unreferenced asset through the Receipt boundary.
 
-      GraphQL / facade -> DeleteAsset -> CMS.Command -> Gate + Writer + Outbox
+      GraphQL / facade -> DeleteAsset -> CMS.Command -> Gate + Persist + Outbox
   """
 
   alias GroupherServer.{CMS, Repo}

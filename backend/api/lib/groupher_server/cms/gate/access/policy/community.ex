@@ -13,6 +13,10 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
         -> allow / deny
         -> domain context
 
+  Moderator management uses the dedicated `:manage_moderators` action. Root and
+  global-god admission stays here; moderator persistence never re-checks actor
+  policy.
+
   Example contract:
 
       Access.Policy.Community.check_access(actor, :update, community, %Context.Access.Community{})
@@ -65,6 +69,17 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       when action in @command_actions do
     with {:ok, true} <- lifecycle_allowed(community, :command, context) do
       relation_allowed(command_binding_allowed?(user, community, action))
+    end
+  end
+
+  def check_access(
+        user,
+        :manage_moderators,
+        %Community{} = community,
+        %CommunityContext{} = context
+      ) do
+    with {:ok, true} <- lifecycle_allowed(community, :command, context) do
+      moderator_management_access(user, community)
     end
   end
 
@@ -142,6 +157,19 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   end
 
   defp base_command_binding_allowed?(_user, _community), do: false
+
+  defp moderator_management_access(user, community) do
+    relation_allowed(moderator_management_binding_allowed?(user, community))
+  end
+
+  defp moderator_management_binding_allowed?(:operations, _community), do: true
+  defp moderator_management_binding_allowed?(%{type: :operations}, _community), do: true
+
+  defp moderator_management_binding_allowed?(%User{} = user, community) do
+    god?(user) or root?(user, community)
+  end
+
+  defp moderator_management_binding_allowed?(_user, _community), do: false
 
   defp owner?(%User{id: user_id}, %Community{user_id: user_id}), do: true
   defp owner?(_, _), do: false

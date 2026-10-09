@@ -1,8 +1,8 @@
 defmodule GroupherServer.CMS.Assets.Commands.ArchiveAsset do
   @moduledoc """
-  Archives one asset as a one-shot CMS command.
+  Archives one asset through the Receipt-backed CMS command boundary.
 
-      GraphQL / facade -> ArchiveAsset -> Gate -> Writer -> canonical Asset
+      GraphQL / facade -> ArchiveAsset -> CMS.Command -> Gate -> Persist -> Confirmation
   """
 
   alias GroupherServer.{CMS, Repo}

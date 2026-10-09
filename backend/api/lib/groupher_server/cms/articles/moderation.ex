@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   alias GroupherServer.{CMS, FrontDesk, Repo}
 
   alias CMS.Articles.Trash
-  alias CMS.Communities.TagStats
+  alias CMS.Communities.Tags.Stats
 
   alias CMS.Model.{
     Article,
@@ -192,7 +192,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     |> where([_tag, _assignment, binding], binding.article_id == ^article_id)
     |> Repo.all()
     |> Enum.reduce_while({:ok, :pass}, fn tag, {:ok, _} ->
-      case TagStats.rebuild(tag) do
+      case Stats.rebuild(tag) do
         {:ok, _stat} -> {:cont, {:ok, :pass}}
         {:error, _reason} = error -> {:halt, error}
       end

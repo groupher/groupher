@@ -19,7 +19,8 @@ defmodule GroupherServer.CMS.Communities.Setup do
   alias GroupherServer.{Accounts, Analysis, CMS, Repo}
   alias Ecto.Multi
   alias Accounts.Model.User
-  alias CMS.Communities.{ErrorCat, Lifecycle, Moderator}
+  alias CMS.Communities.{ErrorCat, Lifecycle}
+  alias CMS.Communities.Moderators.Setup, as: ModeratorSetup
   alias CMS.Communities.Jobs.Setup, as: SetupJob
   alias CMS.CommunityApplications.Transitions
   alias CMS.Gate.Const
@@ -241,18 +242,34 @@ defmodule GroupherServer.CMS.Communities.Setup do
   end
 
   defp ensure_root(community, user) do
-    if Repo.exists?(
-         from(moderator in CommunityModerator,
-           where: moderator.community_id == ^community.id and moderator.user_id == ^user.id
-         )
-       ) do
-      {:ok, :pass}
-    else
-      case Moderator.add_root(community, user) do
-        {:ok, _} -> {:ok, :pass}
-        {:error, reason} -> {:error, reason}
-      end
+    case Repo.transaction(fn ->
+           community = lock_community(community.id)
+
+           if Repo.exists?(
+                from(moderator in CommunityModerator,
+                  where:
+                    moderator.community_id == ^community.id and
+                      moderator.user_id == ^user.id
+                )
+              ) do
+             :pass
+           else
+             case ModeratorSetup.add_root(community, user) do
+               {:ok, _} -> :pass
+               {:error, reason} -> Repo.rollback(reason)
+             end
+           end
+         end) do
+      {:ok, :pass} -> {:ok, :pass}
+      {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp lock_community(community_id) do
+    Community
+    |> where([community], community.id == ^community_id)
+    |> lock("FOR UPDATE")
+    |> Repo.one!()
   end
 
   defp ensure_analysis(community) do

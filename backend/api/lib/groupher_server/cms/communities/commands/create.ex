@@ -15,7 +15,8 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
 
   alias GroupherServer.{Accounts, Analysis, CMS, FrontDesk, Repo}
   alias Accounts.Model.User
-  alias CMS.Communities.{CreationPersist, Lifecycle, Moderator}
+  alias CMS.Communities.{CreationPersist, Lifecycle}
+  alias CMS.Communities.Moderators.Setup, as: ModeratorSetup
   alias CMS.Communities.Commands.CreateConfirmation
   alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.T
@@ -49,7 +50,7 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
   defp create_action(%{actor: %User{} = user, params: args, command_id: command_id}) do
     with {:ok, community} <- CreationPersist.create_core(with_defaults(args), user),
          {:ok, _lifecycle} <- Lifecycle.ensure_created(community.id),
-         {:ok, _moderator} <- Moderator.add_root(community, user),
+         {:ok, _moderator} <- ModeratorSetup.add_root(community, user),
          {:ok, _tree} <- CMS.DocTree.initialize(community),
          {:ok, canonical} <- FrontDesk.community(community.slug, mode: :internal),
          {:ok, _event} <-

@@ -17,13 +17,10 @@ defmodule GroupherServer.CMS.Communities do
     Count,
     Creation,
     Query,
-    Members,
     NamePolicy,
     Setup,
     SlugClaims,
     Subscribe,
-    Tags,
-    TagStats,
     Commands
   }
 
@@ -31,10 +28,18 @@ defmodule GroupherServer.CMS.Communities do
   alias Accounts.Model.User
   alias CMS.Passport
   alias CMS.Communities.{ErrorCat, Lifecycle}
+  alias CMS.Communities.Moderators.Commands.Add, as: AddModeratorCommand
+  alias CMS.Communities.Moderators.Commands.AddMany, as: AddManyModeratorsCommand
+  alias CMS.Communities.Moderators.Commands.Remove, as: RemoveModeratorCommand
+  alias CMS.Communities.Moderators.Commands.UpdatePassport, as: UpdateModeratorPassportCommand
+  alias CMS.Communities.Moderators.Query, as: ModeratorsQuery
+  alias CMS.Communities.Subscribers.Query, as: SubscribersQuery
+  alias CMS.Communities.Tags.Query, as: Tags
+  alias CMS.Communities.Tags.Stats, as: Stats
   alias CMS.Communities.Commands.Create, as: CreateCommand
   alias CMS.Communities.Commands.Update, as: UpdateCommand
 
-  alias CMS.Communities.Commands.{
+  alias CMS.Communities.Tags.Commands.{
     CreateTag,
     CreateTagGroup,
     DeleteTag,
@@ -236,24 +241,25 @@ defmodule GroupherServer.CMS.Communities do
   # Members
   @doc "Runs `members` through the public `Communities` boundary."
   @spec members(atom(), Community.t(), map()) :: T.domain_res(T.paged_data())
-  def members(type, %Community{} = community, filters) do
-    Members.members(type, community, filters)
-  end
+  def members(:moderators, %Community{} = community, filters),
+    do: ModeratorsQuery.page(community, filters)
 
-  def members(type, community_ref, filters) do
+  def members(:subscribers, %Community{} = community, filters),
+    do: SubscribersQuery.page(community, filters)
+
+  def members(type, community_ref, filters) when type in [:moderators, :subscribers] do
     with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
-      Members.members(type, community, filters)
+      members(type, community, filters)
     end
   end
 
   @spec members(atom(), Community.t(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def members(type, %Community{} = community, filters, %User{} = user) do
-    Members.members(type, community, filters, user)
-  end
+  def members(:subscribers, %Community{} = community, filters, %User{} = user),
+    do: SubscribersQuery.page(community, filters, user)
 
-  def members(type, community_ref, filters, %User{} = user) do
+  def members(:subscribers, community_ref, filters, %User{} = user) do
     with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
-      Members.members(type, community, filters, user)
+      members(:subscribers, community, filters, user)
     end
   end
 
@@ -346,7 +352,7 @@ defmodule GroupherServer.CMS.Communities do
         %User{} = cur_user,
         command_id
       ) do
-    CMS.Communities.Commands.Moderator.add(community, target_user, cur_user, command_id)
+    AddModeratorCommand.execute(community, target_user, cur_user, command_id)
   end
 
   @doc "Runs `add_moderators` through the public `Communities` boundary."
@@ -358,8 +364,7 @@ defmodule GroupherServer.CMS.Communities do
           T.domain_res(Community.t())
   def add_moderators(%Community{} = community, target_users, %User{} = cur_user, command_id)
       when is_list(target_users),
-      do:
-        CMS.Communities.Commands.Moderator.add_many(community, target_users, cur_user, command_id)
+      do: AddManyModeratorsCommand.execute(community, target_users, cur_user, command_id)
 
   @doc "Removes moderator through the `Communities` boundary."
   @spec remove_moderator(String.t() | Community.t(), User.t(), User.t()) ::
@@ -375,7 +380,7 @@ defmodule GroupherServer.CMS.Communities do
         %User{} = cur_user,
         command_id
       ),
-      do: CMS.Communities.Commands.Moderator.remove(community, target_user, cur_user, command_id)
+      do: RemoveModeratorCommand.execute(community, target_user, cur_user, command_id)
 
   @doc "Updates moderator passport through the `Communities` write boundary."
   @spec update_moderator_passport(String.t() | Community.t(), map(), User.t(), User.t()) ::
@@ -393,7 +398,7 @@ defmodule GroupherServer.CMS.Communities do
         command_id
       ),
       do:
-        CMS.Communities.Commands.Moderator.update_passport(
+        UpdateModeratorPassportCommand.execute(
           community,
           rules,
           target_user,
@@ -577,7 +582,7 @@ defmodule GroupherServer.CMS.Communities do
   def set_tag(_article, _id, _command_id), do: {:error, :command_actor_required}
 
   def set_tag(article, id, %User{} = user, command_id),
-    do: CMS.Communities.Commands.SetTag.execute(article, id, user, command_id)
+    do: CMS.Communities.Tags.Commands.SetTag.execute(article, id, user, command_id)
 
   @doc "Runs `unset_tag` through the public `Communities` boundary."
   @spec unset_tag(Ecto.Schema.t(), T.id()) :: T.domain_res(Ecto.Schema.t())
@@ -586,32 +591,7 @@ defmodule GroupherServer.CMS.Communities do
   def unset_tag(_article, _id, _command_id), do: {:error, :command_actor_required}
 
   def unset_tag(article, id, %User{} = user, command_id),
-    do: CMS.Communities.Commands.UnsetTag.execute(article, id, user, command_id)
-
-  @doc "Runs `set_tags` through the public `Communities` boundary."
-  @spec set_tags(Community.t(), atom(), Ecto.Schema.t(), map()) :: T.domain_res(Ecto.Schema.t())
-  def set_tags(%Community{} = community, thread, article, attrs) do
-    Tags.set(community, thread, article, attrs)
-  end
-
-  @spec set_tags(Community.t(), atom(), Ecto.Schema.t(), map(), keyword()) ::
-          T.domain_res(Ecto.Schema.t())
-  def set_tags(%Community{} = community, thread, article, attrs, opts) do
-    Tags.set(community, thread, article, attrs, opts)
-  end
-
-  @doc "Runs `overwrite_tags` through the public `Communities` boundary."
-  @spec overwrite_tags(Community.t(), atom(), Ecto.Schema.t(), map()) ::
-          T.domain_res(Ecto.Schema.t())
-  def overwrite_tags(%Community{} = community, thread, article, attrs) do
-    Tags.overwrite(community, thread, article, attrs)
-  end
-
-  @spec overwrite_tags(Community.t(), atom(), Ecto.Schema.t(), map(), keyword()) ::
-          T.domain_res(Ecto.Schema.t())
-  def overwrite_tags(%Community{} = community, thread, article, attrs, opts) do
-    Tags.overwrite(community, thread, article, attrs, opts)
-  end
+    do: CMS.Communities.Tags.Commands.UnsetTag.execute(article, id, user, command_id)
 
   @doc "Runs `tag_groups` through the public `Communities` boundary."
   @spec tag_groups(map()) :: T.domain_res(list(CommunityTagGroup.t()))
@@ -628,7 +608,7 @@ defmodule GroupherServer.CMS.Communities do
 
   def reindex_tags_in_group(community, thread, group, tags, %User{} = user, command_id),
     do:
-      CMS.Communities.Commands.ReindexTagsInGroup.execute(
+      CMS.Communities.Tags.Commands.ReindexTagsInGroup.execute(
         community,
         thread,
         group,
@@ -647,7 +627,7 @@ defmodule GroupherServer.CMS.Communities do
 
   def reindex_tags_across_groups(community, thread, tags, %User{} = user, command_id),
     do:
-      CMS.Communities.Commands.ReindexTagsAcrossGroups.execute(
+      CMS.Communities.Tags.Commands.ReindexTagsAcrossGroups.execute(
         community,
         thread,
         tags,
@@ -665,7 +645,7 @@ defmodule GroupherServer.CMS.Communities do
 
   def reindex_tag_groups(community, thread, groups, %User{} = user, command_id),
     do:
-      CMS.Communities.Commands.ReindexTagGroups.execute(
+      CMS.Communities.Tags.Commands.ReindexTagGroups.execute(
         community,
         thread,
         groups,
@@ -675,19 +655,19 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Runs `tag_stats` through the public `Communities` boundary."
   @spec tag_stats(CommunityTag.t() | T.id()) :: T.domain_res(term())
-  def tag_stats(tag), do: TagStats.get(tag)
+  def tag_stats(tag), do: Stats.get(tag)
 
   @spec tag_stats(String.t(), atom(), String.t()) :: T.domain_res(term())
-  def tag_stats(community, thread, slug), do: TagStats.get(community, thread, slug)
+  def tag_stats(community, thread, slug), do: Stats.get(community, thread, slug)
 
   @doc "Runs `rebuild_tag_stats` through the public `Communities` boundary."
   @spec rebuild_tag_stats(CommunityTag.t() | T.id()) :: T.domain_res(term())
-  def rebuild_tag_stats(tag), do: TagStats.rebuild(tag)
+  def rebuild_tag_stats(tag), do: Stats.rebuild(tag)
 
   @doc "Runs `rebuild_tag_stats_for_community` through the public `Communities` boundary."
   @spec rebuild_tag_stats_for_community(Community.t() | String.t(), atom()) :: T.domain_res(:pass)
   def rebuild_tag_stats_for_community(community, thread \\ :post) do
-    TagStats.rebuild_for_community(community, thread)
+    Stats.rebuild_for_community(community, thread)
   end
 
   # Count helpers (migrated from CommunityCRUD)
