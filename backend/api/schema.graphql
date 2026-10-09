@@ -562,10 +562,10 @@ type RootMutationType {
   undoEmotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a post"
-  reportPost(article: ArticlePathInput!, reason: String!, attr: String): Post
+  reportPost(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Post
 
   "undo report a post"
-  undoReportPost(article: ArticlePathInput!): Post
+  undoReportPost(commandId: ID!, article: ArticlePathInput!): Post
 
   "sink a post"
   sinkPost(article: ArticlePathInput!): Article
@@ -621,10 +621,10 @@ type RootMutationType {
   undoEmotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a blog"
-  reportBlog(article: ArticlePathInput!, reason: String!, attr: String): Blog
+  reportBlog(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Blog
 
   "undo report a blog"
-  undoReportBlog(article: ArticlePathInput!): Blog
+  undoReportBlog(commandId: ID!, article: ArticlePathInput!): Blog
 
   "sink a blog"
   sinkBlog(article: ArticlePathInput!): Article
@@ -682,10 +682,10 @@ type RootMutationType {
   undoEmotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a changelog"
-  reportChangelog(article: ArticlePathInput!, reason: String!, attr: String): Changelog
+  reportChangelog(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Changelog
 
   "undo report a changelog"
-  undoReportChangelog(article: ArticlePathInput!): Changelog
+  undoReportChangelog(commandId: ID!, article: ArticlePathInput!): Changelog
 
   "sink a changelog"
   sinkChangelog(article: ArticlePathInput!): Article
@@ -712,10 +712,10 @@ type RootMutationType {
   undoEmotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a doc"
-  reportDoc(article: ArticlePathInput!, reason: String!, attr: String): Doc
+  reportDoc(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Doc
 
   "undo report a doc"
-  undoReportDoc(article: ArticlePathInput!): Doc
+  undoReportDoc(commandId: ID!, article: ArticlePathInput!): Doc
 
   "sink a doc"
   sinkDoc(article: ArticlePathInput!): Article
@@ -748,10 +748,10 @@ type RootMutationType {
   undoUpvoteComment(comment: CommentPathInput!, commandId: ID!): Comment
 
   "report a comment"
-  reportComment(comment: CommentPathInput!, reason: String!, attr: String): Comment
+  reportComment(commandId: ID!, comment: CommentPathInput!, reason: String!, attr: String): Comment
 
   "undo report a comment"
-  undoReportComment(comment: CommentPathInput!): Comment
+  undoReportComment(commandId: ID!, comment: CommentPathInput!): Comment
 
   "emotion to a comment"
   emotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!, commandId: ID!): Comment
@@ -760,16 +760,16 @@ type RootMutationType {
   undoEmotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!, commandId: ID!): Comment
 
   "accept a comment as a QA post's current solution"
-  acceptSolution(comment: CommentPathInput!): Comment
+  acceptSolution(comment: CommentPathInput!, commandId: ID!): Comment
 
   "revoke a comment when it is a QA post's current solution"
-  revokeSolution(comment: CommentPathInput!): Comment
+  revokeSolution(comment: CommentPathInput!, commandId: ID!): Comment
 
   "pin a comment"
-  pinComment(comment: CommentPathInput!): Comment
+  pinComment(comment: CommentPathInput!, commandId: ID!): Comment
 
   "undo pin a comment"
-  undoPinComment(comment: CommentPathInput!): Comment
+  undoPinComment(comment: CommentPathInput!, commandId: ID!): Comment
 
   "Exports Activity evidence and records the export before returning the artifact"
   exportCommunityActivity(

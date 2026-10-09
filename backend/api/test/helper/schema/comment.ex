@@ -217,8 +217,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:pin_comment) do
     """
-    mutation($comment: CommentPathInput!){
-      pinComment(comment: $comment) {
+    mutation($comment: CommentPathInput!, $commandId: ID!){
+      pinComment(comment: $comment, commandId: $commandId) {
         innerId
         isPinned
       }
@@ -228,8 +228,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:undo_pin_comment) do
     """
-    mutation($comment: CommentPathInput!){
-      undoPinComment(comment: $comment) {
+    mutation($comment: CommentPathInput!, $commandId: ID!){
+      undoPinComment(comment: $comment, commandId: $commandId) {
         innerId
         isPinned
       }
@@ -277,8 +277,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:accept_solution) do
     """
-    mutation($comment: CommentPathInput!) {
-      acceptSolution(comment: $comment) {
+    mutation($comment: CommentPathInput!, $commandId: ID!) {
+      acceptSolution(comment: $comment, commandId: $commandId) {
         innerId
         isForQuestion
         isSolution
@@ -289,8 +289,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:revoke_solution) do
     """
-    mutation($comment: CommentPathInput!) {
-      revokeSolution(comment: $comment) {
+    mutation($comment: CommentPathInput!, $commandId: ID!) {
+      revokeSolution(comment: $comment, commandId: $commandId) {
         innerId
         isForQuestion
         isSolution

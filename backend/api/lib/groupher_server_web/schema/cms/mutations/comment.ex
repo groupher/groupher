@@ -128,6 +128,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
     @desc "accept a comment as a QA post's current solution"
     field :accept_solution, :comment do
       arg(:comment, non_null(:comment_path_input))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
@@ -137,6 +138,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
     @desc "revoke a comment when it is a QA post's current solution"
     field :revoke_solution, :comment do
       arg(:comment, non_null(:comment_path_input))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
@@ -146,6 +148,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
     @desc "pin a comment"
     field :pin_comment, :comment do
       arg(:comment, non_null(:comment_path_input))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
@@ -157,6 +160,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
     @desc "undo pin a comment"
     field :undo_pin_comment, :comment do
       arg(:comment, non_null(:comment_path_input))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)

@@ -56,11 +56,20 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     {:ok, _article} =
       CMS.Articles.set_status(post.article_id, @article_status.wip, actor, community.id)
 
-    {:ok, pinned} = CMS.Comments.pin_comment(first.id, actor)
+    pin_command_id = Ecto.UUID.generate()
+    {:ok, pinned} = CMS.Comments.pin_comment(first.id, actor, pin_command_id)
     assert pinned.is_pinned
 
-    assert {:ok, %{is_solution: true}} = CMS.Comments.accept_solution(first.id, actor)
-    assert {:ok, %{is_solution: true}} = CMS.Comments.accept_solution(first.id, actor)
+    assert {:ok, %{is_pinned: true}} =
+             CMS.Comments.pin_comment(first.id, actor, pin_command_id)
+
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, %{is_solution: true}} =
+             CMS.Comments.accept_solution(first.id, actor, command_id)
+
+    assert {:ok, %{is_solution: true}} =
+             CMS.Comments.accept_solution(first.id, actor, command_id)
 
     assert Repo.get_by!(PostSolution, article_id: post.article_id).comment_id == first.id
     assert Repo.get_by!(PinnedComment, comment_id: first.id)
@@ -85,9 +94,11 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     {:ok, _} =
       CMS.Articles.set_status(post.article_id, @article_status.done, actor, community.id)
 
-    {:ok, _} = CMS.Comments.pin_comment(first.id, actor)
+    {:ok, _} = CMS.Comments.pin_comment(first.id, actor, Ecto.UUID.generate())
 
-    assert {:ok, %{is_solution: false}} = CMS.Comments.revoke_solution(first.id, actor)
+    assert {:ok, %{is_solution: false}} =
+             CMS.Comments.revoke_solution(first.id, actor, Ecto.UUID.generate())
+
     refute Repo.get_by(PostSolution, article_id: post.article_id)
     assert Repo.get_by!(PinnedComment, comment_id: first.id)
 
@@ -100,18 +111,18 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   test "revoke rejects a different comment without changing the binding", context do
     ~m(post actor first second)a = context
-    {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
+    {:ok, _} = CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
 
     assert {:error, %{reason: :solution_target_mismatch}} =
-             CMS.Comments.revoke_solution(second.id, actor)
+             CMS.Comments.revoke_solution(second.id, actor, Ecto.UUID.generate())
 
     assert Repo.get_by!(PostSolution, article_id: post.article_id).comment_id == first.id
   end
 
   test "replace writes one binding and one replacement event", context do
     ~m(post actor first second)a = context
-    {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
-    {:ok, _} = CMS.Comments.accept_solution(second.id, actor)
+    {:ok, _} = CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
+    {:ok, _} = CMS.Comments.accept_solution(second.id, actor, Ecto.UUID.generate())
 
     assert Repo.get_by!(PostSolution, article_id: post.article_id).comment_id == second.id
 
@@ -129,15 +140,15 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert {:ok, _community} = CMS.Communities.add_moderator(community, outsider, actor)
 
     assert {:error, %{reason: :permission_denied}} =
-             CMS.Comments.accept_solution(first.id, outsider)
+             CMS.Comments.accept_solution(first.id, outsider, Ecto.UUID.generate())
 
     assert {:error, %{reason: :permission_denied}} =
-             CMS.Comments.revoke_solution(first.id, outsider)
+             CMS.Comments.revoke_solution(first.id, outsider, Ecto.UUID.generate())
 
     {:ok, _} = CMS.Articles.set_cat(post.article_id, @article_cat.idea, actor, community.id)
 
     assert {:error, %{reason: :solution_not_supported}} =
-             CMS.Comments.accept_solution(first.id, actor)
+             CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
 
     refute Repo.get_by(PostSolution, article_id: post.article_id)
   end
@@ -153,14 +164,14 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
       )
 
     assert {:error, %{reason: :ancestor_community_not_writable}} =
-             CMS.Comments.accept_solution(first.id, actor)
+             CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
 
     refute Repo.get_by(PostSolution, comment_id: first.id)
   end
 
   test "deleting the current solution atomically revokes it", context do
     ~m(post actor first)a = context
-    {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
+    {:ok, _} = CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
 
     assert {:ok, %{comment: deleted}} =
              CMS.Comments.delete_comment(first, actor, Ecto.UUID.generate())
@@ -173,7 +184,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   test "deleting another comment keeps the current solution", context do
     ~m(post actor first second)a = context
-    {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
+    {:ok, _} = CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
 
     assert {:ok, _} = CMS.Comments.delete_comment(second, actor, Ecto.UUID.generate())
     assert Repo.get_by!(PostSolution, article_id: post.article_id).comment_id == first.id
@@ -184,19 +195,19 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     {:ok, _} = CMS.Comments.delete_comment(first, actor, Ecto.UUID.generate())
 
     assert {:error, %{reason: :comment_deleted}} =
-             CMS.Comments.accept_solution(first.id, actor)
+             CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
 
     {:ok, _} = Lifecycle.transition(second.id, :destroy)
 
     assert {:error, %{reason: :comment_destroyed}} =
-             CMS.Comments.accept_solution(second.id, actor)
+             CMS.Comments.accept_solution(second.id, actor, Ecto.UUID.generate())
 
     refute Repo.get_by(PostSolution, article_id: post.article_id)
   end
 
   test "read projections derive comment and post fields from the binding", context do
     ~m(post actor first)a = context
-    {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
+    {:ok, _} = CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
 
     assert {:ok, %{is_solution: true}} = CMS.Comments.one_comment(first.id)
 
@@ -214,8 +225,8 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   test "comment list puts the solution first without manufacturing a pin", context do
     ~m(post actor first second)a = context
-    {:ok, _} = CMS.Comments.pin_comment(first.id, actor)
-    {:ok, _} = CMS.Comments.accept_solution(second.id, actor)
+    {:ok, _} = CMS.Comments.pin_comment(first.id, actor, Ecto.UUID.generate())
+    {:ok, _} = CMS.Comments.accept_solution(second.id, actor, Ecto.UUID.generate())
 
     assert {:ok, page} =
              CMS.Comments.paged_comments(
@@ -237,7 +248,9 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     results =
       [first, second]
       |> Enum.map(fn comment ->
-        Task.async(fn -> CMS.Comments.accept_solution(comment.id, actor) end)
+        Task.async(fn ->
+          CMS.Comments.accept_solution(comment.id, actor, Ecto.UUID.generate())
+        end)
       end)
       |> Task.await_many(10_000)
 
@@ -258,7 +271,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
     [accept_result, delete_result] =
       [
-        Task.async(fn -> CMS.Comments.accept_solution(first.id, actor) end),
+        Task.async(fn -> CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate()) end),
         Task.async(fn -> CMS.Comments.delete_comment(first, actor, Ecto.UUID.generate()) end)
       ]
       |> Task.await_many(10_000)
@@ -274,14 +287,14 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   test "comment update and solution replacement serialize on the Post aggregate", context do
     ~m(post actor first second)a = context
-    {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
+    {:ok, _} = CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
 
     [update_result, replace_result] =
       [
         Task.async(fn ->
           CMS.Comments.update_comment(first, mock_comment("updated"), actor, Ecto.UUID.generate())
         end),
-        Task.async(fn -> CMS.Comments.accept_solution(second.id, actor) end)
+        Task.async(fn -> CMS.Comments.accept_solution(second.id, actor, Ecto.UUID.generate()) end)
       ]
       |> Task.await_many(10_000)
 
@@ -298,7 +311,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   test "Comment and Post solution projections use one binding query per batch", context do
     ~m(post actor first second)a = context
-    {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
+    {:ok, _} = CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
 
     {{:ok, comments}, comment_queries} =
       capture_queries(fn ->
@@ -336,7 +349,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   test "physical hard delete cascades the authoritative binding", context do
     ~m(post actor first)a = context
-    {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
+    {:ok, _} = CMS.Comments.accept_solution(first.id, actor, Ecto.UUID.generate())
 
     assert {:ok, _} = Repo.delete(Repo.get!(Comment, first.id))
     refute Repo.get_by(PostSolution, article_id: post.article_id)

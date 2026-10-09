@@ -149,20 +149,20 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     CMS.Interactions.undo_emotion_result(comment, emotion, user, Map.get(args, :command_id))
   end
 
-  def accept_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Comments.accept_solution(comment, user)
+  def accept_solution(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do
+    CMS.Comments.accept_solution(comment, user, Map.get(args, :command_id))
   end
 
-  def revoke_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Comments.revoke_solution(comment, user)
+  def revoke_solution(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do
+    CMS.Comments.revoke_solution(comment, user, Map.get(args, :command_id))
   end
 
-  def pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.pin_comment(comment, user)
+  def pin_comment(_root, ~m(comment)a = args, %{context: %{cur_user: user}}) do
+    CMS.Comments.pin_comment(comment, user, Map.get(args, :command_id))
   end
 
-  def undo_pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.undo_pin_comment(comment, user)
+  def undo_pin_comment(_root, ~m(comment)a = args, %{context: %{cur_user: user}}) do
+    CMS.Comments.undo_pin_comment(comment, user, Map.get(args, :command_id))
   end
 
   def comment_inner_id(%{inner_id: inner_id}, _args, _info) when not is_nil(inner_id) do

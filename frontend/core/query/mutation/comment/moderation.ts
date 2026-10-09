@@ -35,12 +35,13 @@ export const reportCommentOperation = {
     return { changes, refetchOnFailure: [] }
   },
   execute: async (
-    _context: TOperationContext,
+    context: TOperationContext,
     target: TCommentTarget,
   ): Promise<TCommentMutationResult> => {
     const result = await browserGraphQLRequest(commentsSchema.reportComment, {
       attr: null,
       comment: target.commentPath,
+      commandId: context.commandId,
       reason: 'OTHER',
     })
     if (!result.reportComment) throw new Error('Report comment response is empty')

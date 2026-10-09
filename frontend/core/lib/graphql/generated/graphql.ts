@@ -4851,6 +4851,7 @@ export type ReportCommentMutationVariables = Exact<{
   comment: CommentPathInput
   reason: string
   attr?: string | null | undefined
+  commandId: string | number
 }>
 
 export type ReportCommentMutation = {
@@ -4863,6 +4864,7 @@ export type ReportCommentMutation = {
 
 export type UndoReportCommentMutationVariables = Exact<{
   comment: CommentPathInput
+  commandId: string | number
 }>
 
 export type UndoReportCommentMutation = {
@@ -22316,6 +22318,14 @@ export const ReportCommentDocument = {
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'attr' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -22338,6 +22348,11 @@ export const ReportCommentDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'attr' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'attr' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -22377,6 +22392,14 @@ export const UndoReportCommentDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'CommentPathInput' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -22389,6 +22412,11 @@ export const UndoReportCommentDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'comment' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'comment' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {

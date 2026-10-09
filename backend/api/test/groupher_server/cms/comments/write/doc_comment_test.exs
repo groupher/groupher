@@ -703,7 +703,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       assert not comment.is_pinned
 
-      {:ok, comment} = CMS.Comments.pin_comment(comment.id, user)
+      {:ok, comment} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
       {:ok, comment} = ORM.find(Comment, comment.id)
 
       assert comment.is_pinned
@@ -723,8 +723,8 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
-      {:ok, comment} = CMS.Comments.undo_pin_comment(comment.id, user)
+      {:ok, _} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
+      {:ok, comment} = CMS.Comments.undo_pin_comment(comment.id, user, Ecto.UUID.generate())
 
       assert not comment.is_pinned
       assert {:error, _} = PinnedComment |> ORM.find_by(%{comment_id: comment.id})
@@ -742,7 +742,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
             Ecto.UUID.generate()
           )
 
-        {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
+        {:ok, _} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
       end)
 
       {:ok, extra_comment} =
@@ -760,7 +760,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
                 reason: :comment_pin_limit,
                 details: @pinned_comment_limit
               }} =
-               CMS.Comments.pin_comment(extra_comment.id, user)
+               CMS.Comments.pin_comment(extra_comment.id, user, Ecto.UUID.generate())
     end
   end
 
@@ -980,8 +980,11 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, pined_comment_1} = CMS.Comments.pin_comment(random_comment_1.id, user)
-      {:ok, pined_comment_2} = CMS.Comments.pin_comment(random_comment_2.id, user)
+      {:ok, pined_comment_1} =
+        CMS.Comments.pin_comment(random_comment_1.id, user, Ecto.UUID.generate())
+
+      {:ok, pined_comment_2} =
+        CMS.Comments.pin_comment(random_comment_2.id, user, Ecto.UUID.generate())
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(
@@ -1037,8 +1040,11 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, pined_comment_1} = CMS.Comments.pin_comment(random_comment_1.id, user)
-      {:ok, pined_comment_2} = CMS.Comments.pin_comment(random_comment_2.id, user)
+      {:ok, pined_comment_1} =
+        CMS.Comments.pin_comment(random_comment_1.id, user, Ecto.UUID.generate())
+
+      {:ok, pined_comment_2} =
+        CMS.Comments.pin_comment(random_comment_2.id, user, Ecto.UUID.generate())
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(
@@ -1261,7 +1267,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       random_comment = all_comments |> Enum.at(1)
 
-      {:ok, _} = CMS.Comments.pin_comment(random_comment.id, user)
+      {:ok, _} = CMS.Comments.pin_comment(random_comment.id, user, Ecto.UUID.generate())
       {:ok, _} = ORM.find(Comment, random_comment.id)
 
       {:ok, _} = CMS.Comments.delete_comment(random_comment, user, Ecto.UUID.generate())

@@ -1,6 +1,6 @@
 # CMS Command Phase 5：Legacy Mutation 分类与迁移
 
-> 状态：in progress（typed identity、Tag/Asset concrete Command、Comment/Report identity boundary 已实施；§11 命令集已 verified，Phase 5 其余 family 仍未收口）
+> 状态：in progress（typed identity、Tag/Asset concrete Command、Comment/Report/solution/pin identity boundary 已实施；§11 命令集已 verified，Phase 5 其余 family 仍未收口）
 >
 > 范围：Tag / TagGroup、Assets，以及尚未逐项确认写入合同的 CMS mutation。
 >
@@ -84,6 +84,12 @@ retry and unknown-outcome behavior
 - Comment create/reply/update/delete 与 Article/Comment report 已收紧为显式 command identity；缺失 identity
   在 facade、Command 和 Writer 边界 fail closed，Report add/remove 使用 Receipt/result builder；旧测试夹具
   已迁移到显式 fixture identity；
+- Comment solution/pin 已进入 concrete Command：`SolutionChange` 与 `StateChange` 通过 `CMS.Command`
+  Receipt 接收 `commandId`，Gate 锁内直接调用 domain transition；Confirmation/result builder 从稳定
+  `comment_id` 恢复结果，Activity operation ref 复用同一个 command identity。旧两参数 facade/States
+  arity fail closed；Comment solution/pin mutation GraphQL 的四个入口已要求 `commandId`；Comment delete
+  在撤销当前 solution 时也复用 delete command identity，不再生成第二个 operation UUID。该切片 focused
+  Comment command/write/query suites 已通过，仍需把其余 Comment family 的协议冻结纳入 Phase 5.6；
 - facade/resolver 的默认 command UUID 已清退；静态脚本同时检查 facade/resolver 与 production CMS
   source 中的派生 `command_id`。
 - Article publish、DocTree publish 的旧内部夹具已补齐显式 `command_id`（相关 suite 72/72）；这只证明
@@ -521,15 +527,26 @@ ReplacementPlan
 | Article moderation/visibility        | `Moderate` / visibility workflow                | 按 initiator 分类            | 多 binding effect 已改为 typed/stable identity，仍需确认 workflow 与 Receipt 边界                            |
 | Article/Comment report               | `Report` / `UndoReport`                         | Report Receipt；Undo Receipt | duplicate report、Audit/Activity、首次结果；add/remove 均复用 command identity                               |
 | Comment create/reply legacy fallback | 现有 `CreateComment` / `ReplyComment`           | Receipt                      | facade/Writer 的 `nil` identity 已 fail closed；312/312 comment suite 已验证，仍需收口 GraphQL/Receipt 合同  |
-| Comment solution                     | `AcceptSolution` / `RevokeSolution`             | one-shot                     | canonical comment/article lock、唯一 solution                                                                |
-| Comment pin                          | `Pin` / `Unpin`                                 | one-shot                     | set-style、thread policy、stats/cache effect                                                                 |
+| Comment solution                     | `AcceptSolution` / `RevokeSolution`             | Receipt（已实施）            | canonical comment/article lock、唯一 solution、response recovery                                             |
+| Comment pin                          | `Pin` / `Unpin`                                 | Receipt（已实施）            | set-style、thread policy、Activity/association recovery                                                      |
 | Interaction reactions                | `Upvote` / `Emotion` / `Collect` 及 undo        | Receipt 或显式 one-shot      | Upvote/Emotion 已删除 nil fallback；Collect 已统一 Metric/Outbox identity，协议仍需冻结                      |
 | Moderator                            | `Add` / `AddMany` / `Remove` / `UpdatePassport` | bulk/delete 优先 Receipt     | membership uniqueness、partial failure、Activity                                                             |
 | Activity export                      | `ExportCommunityActivity`                       | Receipt 或 export workflow   | artifact/job identity、权限快照、结果恢复                                                                    |
 | Press config                         | `UpdateConfig`                                  | one-shot                     | set-style config、cache invalidation                                                                         |
 | DocTree legacy                       | 按真实动作建立 Command                          | 逐项判断                     | tree revision、branch lock、owner codec，禁止万能 payload                                                    |
 
-每个 family 在实施前必须追加一张与 §4.2/§5.2 同等粒度的矩阵，并标记 `classified`。不能仅以
+Comment solution/pin 当前实现矩阵为：
+
+| action                              | admission                                            | transaction owner                                            | identity / result                                                                            |
+| ----------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `AcceptSolution` / `RevokeSolution` | `Gate.with_check(:accept_solution/:revoke_solution)` | `CMS.Command` Receipt callback + Post aggregate lock         | `commandId` 同时作为 Activity operation ref；`SolutionConfirmation` + stable comment reload  |
+| `Pin` / `Unpin`                     | `Gate.with_check(:pin)`                              | `CMS.Command` Receipt callback + Post/Article aggregate lock | `commandId` 同时作为 pin Activity operation ref；`StateConfirmation` + stable comment reload |
+
+两者属于 Receipt，而非旧表格中的 one-shot 初始判断：solution replacement/response 丢失需要恢复稳定
+terminal result，pin 的 Activity/association 写入也必须与用户意图绑定。内部 delete reconciliation
+可以调用 `revoke_if_current/5`，但必须传入上层 delete command identity；不再生成独立 UUID。
+
+其余 family 在实施前必须追加一张与 §4.2/§5.2 同等粒度的矩阵，并标记 `classified`。不能仅以
 “已有 Command 模块”判定完成；仍需确认 GraphQL 参数、Gate、事务、Confirmation 和 effects。
 
 明确排除：
@@ -642,7 +659,8 @@ projection 的局部 transaction 必须与 user Asset mutation 分开标注。
 4. [implemented, pending protocol freeze] 为 Collect 冻结 Receipt/one-shot 合同，并让 Metric/Outbox 复用入口 identity；
 5. [done in this batch] 清退 `CMS.Communities`、`CMS.Dashboard` 在 facade 内生成 UUID 的 convenience arity；所有受影响的 legacy fixture 必须显式传入 actor/command identity；
 6. [done in this batch] seed、maintenance、operations caller 显式提供 workflow/operation identity，不能回退为伪客户端 command；Community contribution 通过 `update_operations/3` 写入 typed workflow Outbox；
-7. [ongoing] 一次只迁移一个 owner，避免把不同 Gate、Lifecycle 与 result codec 混在同一提交。
+7. [implemented, verified for current focused suites] Comment solution/pin 的四个 GraphQL mutation 增加必填 `commandId`；`SolutionChange` / `StateChange` 使用 Receipt + Confirmation，旧两参数 facade/States arity fail closed；
+8. [ongoing] 一次只迁移一个 owner，避免把不同 Gate、Lifecycle 与 result codec 混在同一提交。
 
 Convenience arity 清退的夹具影响（已在本批修复）如下；这些是测试调用方迁移债务，不是恢复隐式
 identity 的理由：
@@ -726,12 +744,13 @@ Outbox Event id、lease/lock ref、Article/DocTree node id、anonymous-view id �
 - Comment create/reply 无 command identity 时 fail closed，不再静默进入无 Receipt 分支；
 - Upvote/Emotion 的生产入口不接受 nil command identity；
 - Collect 的 Metric 与 Outbox 复用同一入口 identity；
+- Comment solution/pin 的 Activity operation ref 与 Receipt `commandId` 相同，重放从 Confirmation 恢复稳定 comment result；
 - facade convenience arity 不生成 UUID，seed/maintenance caller 显式提供 workflow identity；缺少 actor 或
   command identity 的旧调用应收到 `cms.command_id_required`，而不是恢复隐式 UUID。
 
 ### 10.4 通用事务与恢复
 
-- transaction owner 只有一层，不出现 nested transaction 掩盖 rollback；
+- transaction owner 只有一层，不出现 nested transaction 掩盖 rollback；Comment solution/pin command path 不再进入 States 自己的 `Repo.transaction`；
 - first execution 与 recovery 使用同一 result builder；
 - Receipt、Audit/Activity 与 Outbox identity 可追踪但语义不混用；
 - expired Receipt 不改变领域事实；

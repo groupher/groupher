@@ -453,11 +453,16 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.accept_solution(comment, post_author)
   """
   @spec accept_solution(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
-  def accept_solution(%Comment{} = comment, %User{} = user), do: Solution.accept(comment, user)
+  def accept_solution(_comment_or_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  def accept_solution(comment_id, %User{} = user) do
+  @spec accept_solution(Comment.t() | T.id(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Comment.t())
+  def accept_solution(%Comment{} = comment, %User{} = user, command_id),
+    do: Solution.accept(comment, user, command_id)
+
+  def accept_solution(comment_id, %User{} = user, command_id) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
-      Solution.accept(comment, user)
+      Solution.accept(comment, user, command_id)
     end
   end
 
@@ -469,11 +474,16 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.revoke_solution(comment, post_author)
   """
   @spec revoke_solution(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
-  def revoke_solution(%Comment{} = comment, %User{} = user), do: Solution.revoke(comment, user)
+  def revoke_solution(_comment_or_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  def revoke_solution(comment_id, %User{} = user) do
+  @spec revoke_solution(Comment.t() | T.id(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Comment.t())
+  def revoke_solution(%Comment{} = comment, %User{} = user, command_id),
+    do: Solution.revoke(comment, user, command_id)
+
+  def revoke_solution(comment_id, %User{} = user, command_id) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
-      Solution.revoke(comment, user)
+      Solution.revoke(comment, user, command_id)
     end
   end
 
@@ -559,12 +569,16 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.pin_comment(comment, actor)
   """
   @spec pin_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
-  def pin_comment(%Comment{} = comment, %User{} = user),
-    do: StateChange.execute(:pin, comment, user)
+  def pin_comment(_comment_or_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  def pin_comment(comment_id, %User{} = user) do
+  @spec pin_comment(Comment.t() | T.id(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Comment.t())
+  def pin_comment(%Comment{} = comment, %User{} = user, command_id),
+    do: StateChange.execute(:pin, comment, user, command_id)
+
+  def pin_comment(comment_id, %User{} = user, command_id) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
-      pin_comment(comment, user)
+      pin_comment(comment, user, command_id)
     end
   end
 
@@ -586,12 +600,16 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.undo_pin_comment(comment, actor)
   """
   @spec undo_pin_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
-  def undo_pin_comment(%Comment{} = comment, %User{} = user),
-    do: StateChange.execute(:undo_pin, comment, user)
+  def undo_pin_comment(_comment_or_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  def undo_pin_comment(comment_id, %User{} = user) do
+  @spec undo_pin_comment(Comment.t() | T.id(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Comment.t())
+  def undo_pin_comment(%Comment{} = comment, %User{} = user, command_id),
+    do: StateChange.execute(:undo_pin, comment, user, command_id)
+
+  def undo_pin_comment(comment_id, %User{} = user, command_id) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
-      undo_pin_comment(comment, user)
+      undo_pin_comment(comment, user, command_id)
     end
   end
 

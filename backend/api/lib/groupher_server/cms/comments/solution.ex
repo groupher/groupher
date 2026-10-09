@@ -26,11 +26,13 @@ defmodule GroupherServer.CMS.Comments.Solution do
 
       Comments.Solution.accept(comment, actor)
   """
-  @spec accept(Comment.t(), User.t()) :: {:ok, Comment.t()} | {:error, term()}
-  def accept(%Comment{} = comment, %User{} = actor) do
-    CMS.Gate.with_check(actor, :accept_solution, comment, fn canonical, post ->
-      accept_in_transaction(post, canonical, actor)
-    end)
+  @spec accept(Comment.t(), User.t()) :: {:error, term()}
+  def accept(%Comment{}, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec accept(Comment.t(), User.t(), Ecto.UUID.t()) :: {:ok, Comment.t()} | {:error, term()}
+  @doc "Accepts or replaces the solution while binding retries to `command_id`."
+  def accept(%Comment{} = comment, %User{} = actor, command_id) do
+    CMS.Comments.Commands.SolutionChange.execute(:accept_solution, comment, actor, command_id)
   end
 
   @doc """
@@ -40,11 +42,13 @@ defmodule GroupherServer.CMS.Comments.Solution do
 
       Comments.Solution.revoke(comment, actor)
   """
-  @spec revoke(Comment.t(), User.t()) :: {:ok, Comment.t()} | {:error, term()}
-  def revoke(%Comment{} = comment, %User{} = actor) do
-    CMS.Gate.with_check(actor, :revoke_solution, comment, fn canonical, post ->
-      revoke_in_transaction(post, canonical, actor)
-    end)
+  @spec revoke(Comment.t(), User.t()) :: {:error, term()}
+  def revoke(%Comment{}, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec revoke(Comment.t(), User.t(), Ecto.UUID.t()) :: {:ok, Comment.t()} | {:error, term()}
+  @doc "Revokes the current solution while binding retries to `command_id`."
+  def revoke(%Comment{} = comment, %User{} = actor, command_id) do
+    CMS.Comments.Commands.SolutionChange.execute(:revoke_solution, comment, actor, command_id)
   end
 
   @doc "Locks and returns the current solution binding for a Post."
@@ -85,22 +89,38 @@ defmodule GroupherServer.CMS.Comments.Solution do
     end
   end
 
+  @doc "Applies a command-admitted solution change inside the existing aggregate transaction."
+  @spec apply_in_transaction(atom(), Article.t(), Comment.t(), User.t(), Ecto.UUID.t()) ::
+          {:ok, Comment.t()} | {:error, term()}
+  def apply_in_transaction(
+        action,
+        %Article{thread: :post} = post,
+        %Comment{} = comment,
+        %User{} = actor,
+        command_id
+      ) do
+    case action do
+      :accept_solution -> accept_in_transaction(post, comment, actor, command_id)
+      :revoke_solution -> revoke_in_transaction(post, comment, actor, command_id)
+    end
+  end
+
   defp accept_in_transaction(
          %Article{thread: :post} = post,
          %Comment{} = comment,
-         %User{} = actor
+         %User{} = actor,
+         command_id
        ) do
     current = current(post)
 
     if match?(%PostSolution{comment_id: id} when id == comment.id, current) do
       {:ok, %{comment | is_solution: true}}
     else
-      operation_ref = Ecto.UUID.generate()
       occurred_at = DateTime.utc_now(:second)
 
       with {:ok, _solution} <- upsert(current, post, comment, actor, occurred_at),
            {:ok, _activity} <-
-             record_accept(current, post, comment, actor, operation_ref, occurred_at) do
+             record_accept(current, post, comment, actor, command_id, occurred_at) do
         {:ok, %{comment | is_solution: true}}
       end
     end
@@ -109,7 +129,8 @@ defmodule GroupherServer.CMS.Comments.Solution do
   defp revoke_in_transaction(
          %Article{thread: :post} = post,
          %Comment{} = comment,
-         %User{} = actor
+         %User{} = actor,
+         command_id
        ) do
     case current(post) do
       nil ->
@@ -123,7 +144,6 @@ defmodule GroupherServer.CMS.Comments.Solution do
          })}
 
       %PostSolution{} = solution ->
-        operation_ref = Ecto.UUID.generate()
         occurred_at = DateTime.utc_now(:second)
 
         with {:ok, _} <- Repo.delete(solution),
@@ -131,7 +151,7 @@ defmodule GroupherServer.CMS.Comments.Solution do
                Activity.log(post, :solution_revoked,
                  actor: actor,
                  target: comment,
-                 operation_ref: operation_ref,
+                 operation_ref: command_id,
                  occurred_at: occurred_at,
                  payload: %{}
                ) do

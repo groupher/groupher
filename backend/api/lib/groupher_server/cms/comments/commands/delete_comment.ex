@@ -84,7 +84,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   end
 
   defp delete_new(comment, actor, article, command_id, occurred_at) do
-    operation_ref = Ecto.UUID.generate()
+    operation_ref = command_id
 
     with {:ok, _} <- revoke_if_current(article, comment, actor, operation_ref, occurred_at),
          {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),

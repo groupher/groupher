@@ -39,14 +39,10 @@ defmodule GroupherServer.CMS.Comments.States do
   def pin(_comment_id), do: {:error, AuthErrorCat.account_login()}
 
   @spec pin(Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def pin(%Comment{} = comment, %User{} = user) do
-    pin(comment, user, operation_ref: Ecto.UUID.generate())
-  end
+  def pin(%Comment{}, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
   @spec pin(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def pin(comment_id, %User{} = user) do
-    pin(comment_id, user, operation_ref: Ecto.UUID.generate())
-  end
+  def pin(_comment_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc false
   def pin(%Comment{} = comment, %User{} = user, opts) do
@@ -66,14 +62,10 @@ defmodule GroupherServer.CMS.Comments.States do
   def undo_pin(_comment_id), do: {:error, AuthErrorCat.account_login()}
 
   @spec undo_pin(Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def undo_pin(%Comment{} = comment, %User{} = user) do
-    undo_pin(comment, user, operation_ref: Ecto.UUID.generate())
-  end
+  def undo_pin(%Comment{}, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
   @spec undo_pin(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def undo_pin(comment_id, %User{} = user) do
-    undo_pin(comment_id, user, operation_ref: Ecto.UUID.generate())
-  end
+  def undo_pin(_comment_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc false
   def undo_pin(%Comment{} = comment, %User{} = user, opts) do
@@ -86,6 +78,46 @@ defmodule GroupherServer.CMS.Comments.States do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal),
          {:ok, result} <- undo_pin(comment, user, opts) do
       {:ok, result}
+    end
+  end
+
+  @doc false
+  @spec apply_in_transaction(atom(), Comment.t(), map(), User.t(), Ecto.UUID.t()) ::
+          T.domain_res(Comment.t())
+  def apply_in_transaction(:pin, %Comment{} = comment, article, %User{} = user, command_id) do
+    case maybe_existing_pinned_comment(comment) do
+      {:ok, canonical} ->
+        with {:ok, thread} <- FrontDesk.thread_of(canonical),
+             {:ok, :pass} <-
+               check_pined_comments_count(
+                 pinned_comments_query(article, canonical.branch_id, thread)
+               ),
+             {:ok, updated} <- ORM.update(canonical, %{is_pinned: true}),
+             {:ok, _pinned} <-
+               PinnedComment |> ORM.create(pinned_comment_attrs(article, canonical, thread)),
+             {:ok, _activity} <-
+               record_pin_activity(canonical, article, :comment_pinned, user,
+                 operation_ref: command_id
+               ) do
+          {:ok, updated}
+        end
+
+      {:error, ErrorCat.error_pattern(reason: :already_pinned, details: result)} ->
+        {:ok, result}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def apply_in_transaction(:undo_pin, %Comment{} = comment, article, %User{} = user, command_id) do
+    with {:ok, updated} <- ORM.update(comment, %{is_pinned: false}),
+         {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),
+         {:ok, _activity} <-
+           record_pin_activity(comment, article, :comment_unpinned, user,
+             operation_ref: command_id
+           ) do
+      {:ok, updated}
     end
   end
 

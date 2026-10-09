@@ -1,32 +1,29 @@
-defmodule GroupherServer.CMS.Comments.Commands.StateChange do
+defmodule GroupherServer.CMS.Comments.Commands.SolutionChange do
   @moduledoc """
-  Applies one independent Comment state change to a canonical resource.
+  Owns the retry-safe Comment solution mutations.
 
-      state command -> canonical Comment -> state transition -> tagged result
+      GraphQL / CMS facade
+        -> SolutionChange (command identity + Receipt)
+        -> Gate aggregate admission
+        -> PostSolution binding + Activity
+
+  The supplied command id is also the Activity operation reference. No second
+  UUID is created inside the aggregate callback.
   """
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.{Command, FrontDesk}
-  alias CMS.Comments.States
-  alias CMS.Comments.Commands.StateConfirmation, as: Confirmation
-  alias GroupherServer.CMS.Model.Comment
-  alias GroupherServer.Accounts.Model.User
+  alias CMS.Comments.Solution
+  alias CMS.Comments.Commands.SolutionConfirmation, as: Confirmation
+  alias CMS.Model.Comment
 
-  @spec execute(atom(), Comment.t(), User.t()) :: {:ok, term()} | {:error, term()}
-  def execute(action, %Comment{} = _comment, %User{} = _user)
-      when action in [:pin, :undo_pin] do
-    {:error, CMS.ErrorCat.command_id_required()}
-  end
-
-  def execute(action, %Comment{} = comment, %User{} = user)
-      when action in [:fold, :unfold] do
-    apply(States, action, [comment, user])
-  end
+  @actions [:accept_solution, :revoke_solution]
 
   @spec execute(atom(), Comment.t(), User.t(), Ecto.UUID.t()) ::
           {:ok, Comment.t()} | {:error, term()}
   def execute(action, %Comment{} = comment, %User{} = actor, command_id)
-      when action in [:pin, :undo_pin] do
+      when action in @actions do
     command = %Command{
       actor: actor,
       command_id: command_id,
@@ -46,8 +43,7 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
 
   @spec execute(atom(), Ecto.UUID.t(), User.t(), Ecto.UUID.t()) ::
           {:ok, Comment.t()} | {:error, term()}
-  def execute(action, comment_id, %User{} = actor, command_id)
-      when action in [:pin, :undo_pin] do
+  def execute(action, comment_id, %User{} = actor, command_id) when action in @actions do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       execute(action, comment, actor, command_id)
     end
@@ -57,10 +53,10 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
          %{actor: actor, target: comment, command_id: command_id},
          action
        ) do
-    CMS.Gate.with_check(actor, :pin, comment, fn canonical, article ->
+    CMS.Gate.with_check(actor, gate_action(action), comment, fn canonical, post ->
       with {:ok, changed} <-
-             States.apply_in_transaction(action, canonical, article, actor, command_id) do
-        {:ok, confirmation(changed, article, command_id, action)}
+             Solution.apply_in_transaction(action, post, canonical, actor, command_id) do
+        {:ok, confirmation(changed, post, command_id, action)}
       end
     end)
   end
@@ -78,14 +74,18 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
 
   defp present(%Confirmation{data: %{"comment_id" => comment_id, "state" => state}}) do
     with %Comment{} = comment <- Repo.get(Comment, comment_id) do
-      {:ok, %{comment | is_pinned: state == "pinned"}}
+      {:ok, %{comment | is_solution: state == "accepted"}}
     else
       nil -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end
 
-  defp operation(:pin), do: :comment_pin
-  defp operation(:undo_pin), do: :comment_unpin
-  defp state(:pin), do: "pinned"
-  defp state(:undo_pin), do: "unpinned"
+  defp operation(:accept_solution), do: :comment_accept_solution
+  defp operation(:revoke_solution), do: :comment_revoke_solution
+
+  defp gate_action(:accept_solution), do: :accept_solution
+  defp gate_action(:revoke_solution), do: :revoke_solution
+
+  defp state(:accept_solution), do: "accepted"
+  defp state(:revoke_solution), do: "revoked"
 end
