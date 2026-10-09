@@ -20,7 +20,11 @@ defmodule GroupherServer.Test.Mutation.Articles.DocEmotion do
   describe "[doc emotion]" do
     test "login user can emotion to a doc", ~m(community doc user_conn)a do
       variables = %{
-        article: %{inner_id: article_inner_id(doc, community), community: community.slug, thread: "DOC"},
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        },
         emotion: "BEER"
       }
 
@@ -31,10 +35,14 @@ defmodule GroupherServer.Test.Mutation.Articles.DocEmotion do
     end
 
     test "login user can undo emotion to a doc", ~m(community doc user owner_conn)a do
-      {:ok, _} = CMS.Interactions.emotion(doc, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(doc, :beer, user, Ecto.UUID.generate())
 
       variables = %{
-        article: %{inner_id: article_inner_id(doc, community), community: community.slug, thread: "DOC"},
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        },
         emotion: "BEER"
       }
 
