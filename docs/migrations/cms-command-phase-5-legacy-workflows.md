@@ -398,6 +398,26 @@ Doc set/unset 已完成 main-branch admission；非 main branch 仍需要扩展 
 
 不同 payload 的并发 reindex 由 scope lock 串行化，后提交者形成最终完整顺序；它不需要恢复首次排序快照。
 
+### 4.7 Tag persistence owner 的真实剩余项
+
+`TagPersist` 的 row/batch primitive 拆分已经完成，但这不等于 persistence owner 已经切换完成。当前
+仍有一条明确的兼容层：`Tags.create/update/delete*` 负责查找 canonical aggregate、更新 community
+count、写 taxonomy effect，并在没有外层 transaction 的 seed/maintenance caller 下提供 fallback。
+这条 fallback 不会在 concrete Command 内产生第二个 transaction（Community Gate 或 Article
+MutationLock 已经是外层 owner），但它仍使 `Tags` 同时看起来像 writer 和 orchestration owner。
+
+因此本项的完成条件不是再包一层 `Repo.transact/1`，而是逐个把下列职责移入对应 Command/workflow，
+再把 `Tags` 降为 maintenance primitive facade：
+
+| 责任                            | 当前状态                  | 下一步验收                                                                 |
+| ------------------------------- | ------------------------- | -------------------------------------------------------------------------- |
+| Tag/TagGroup row 与 reindex SQL | `TagPersist` 已承接       | 保持 Persist 无 Gate、Outbox、identity、transaction                        |
+| count + taxonomy effect         | 仍在 `Tags` orchestration | 每个 concrete Command 在同一 owner 内完成并传入同一 `commandId`            |
+| set/unset association + stats   | 仍经 `Tags.add/remove`    | 提取 assignment primitive，验证 old/new 集合差与 rollback                  |
+| seed/maintenance fallback       | 保留且命名化              | 只能使用 `{:workflow, ref}` 或明确 maintenance admission，不得伪造 command |
+
+这项仍标记为 `classified/in progress`，不能因为 Tag focused suite 通过就标记为 `verified`。
+
 ## 5. Assets 迁移边界
 
 当前路径分成用户 mutation、service callback 和 maintenance workflow。迁移前的混合点与当前处理结果为：
@@ -841,8 +861,9 @@ identity，现已迁移并验证 **14/14**；CMS Interactions ReadState suite �
 workflow 改用 typed workflow identity，相关 suite 为 **17/17**。这类 fixture 迁移不应通过恢复
 `nil` fallback 解决。上述数字是各迁移切片的 focused 证据，不可替代 §11 命令集，也不代表 §6 其余
 mutation family 已完成。扩展到评论 create/reply 和全测试树 reaction fixture 后，评论域套件为
-**312/312**、reaction/emotion/read-state 套件为 **132/132**、资产 query 套件为 **3/3**；最终
-backend 全量 `mix test --max-failures 100` 为 **2183 passed, 1 excluded, 0 failures**。
+**312/312**、reaction/emotion/read-state 套件为 **132/132**、资产 query 套件为 **3/3**。最终
+backend 全量结果以本次提交后的实际命令输出为准；该数字只证明回归树稳定，不改变 §6 的
+mutation family 状态，也不能替代每个 family 的 Gate/transaction/Receipt 合同验收。
 
 扩展的 GraphQL community-tag mutation 目录目前为 **41/41**：Tag CRUD、set/unset（post/blog/changelog/doc）
 和 reindex 均已通过。Doc set/unset 的实现保留 FrontDesk public projection 提供的 main-branch
