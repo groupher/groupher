@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
   defp create_community!(user, attrs \\ %{}) do
     community_attrs = mock_attrs(:community, attrs)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
     community
   end
 
@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     {:ok, user2} = db_insert(:user)
 
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     {:ok, ~m(guest_conn community user user2)a}
   end
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert is_nil(check["reasonCode"])
 
       community_attrs = mock_attrs(:community, %{slug: "elixir"})
-      {:ok, _community} = CMS.Communities.create(community_attrs, user)
+      {:ok, _community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       check = rule_conn |> gq_query(@check_community_name_query, %{slug: "elixir"})
       assert not check["available"]
@@ -247,31 +247,63 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "user can get community info without args fails", ~m(guest_conn user)a do
       community_attrs = mock_attrs(:community)
 
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
-      {:ok, _} = CMS.Dashboard.update(community, :seo, %{og_title: "groupher"})
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
-          post_layout: "cover",
-          topbar_enabled: true
-        })
+        CMS.Dashboard.update(community, :seo, %{og_title: "groupher"}, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{kanban_bg_colors: [:green, :red]})
+        CMS.Dashboard.update(
+          community,
+          :layout,
+          %{
+            post_layout: "cover",
+            topbar_enabled: true
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :base_info, %{favicon: "new favicon"})
+        CMS.Dashboard.update(
+          community,
+          :layout,
+          %{kanban_bg_colors: [:green, :red]},
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :rss, %{
-          rss_feed_type: "digest",
-          rss_feed_count: 50
-        })
+        CMS.Dashboard.update(
+          community,
+          :base_info,
+          %{favicon: "new favicon"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :name_alias, [
-          %{slug: "slug 0", name: "name 0"}
-        ])
+        CMS.Dashboard.update(
+          community,
+          :rss,
+          %{
+            rss_feed_type: "digest",
+            rss_feed_count: 50
+          },
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _} =
+        CMS.Dashboard.update(
+          community,
+          :name_alias,
+          [
+            %{slug: "slug 0", name: "name 0"}
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{slug: community.slug}
 

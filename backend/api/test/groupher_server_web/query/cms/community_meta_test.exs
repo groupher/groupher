@@ -15,7 +15,7 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
     @query S.Community.q(:community_6)
     test "community have valid [thread]s_count in meta info",
          ~m(guest_conn community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
       {:ok, _} = CMS.Articles.create(community, :post, mock_attrs(:post), user)

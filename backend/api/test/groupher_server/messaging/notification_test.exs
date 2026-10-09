@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Messaging.Notification do
     {:ok, user3} = db_insert(:user)
     {:ok, user4} = db_insert(:user)
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     notify_attrs = %{
       thread: :post,

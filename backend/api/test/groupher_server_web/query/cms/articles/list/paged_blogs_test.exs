@@ -89,9 +89,35 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       variables = %{filter: %{page: 1, size: 20, order: "COMMENTS"}}
       blog_id = article_inner_id(blog_last_week, community)
 
-      {:ok, _} = CMS.Comments.create_comment(community, :blog, blog_id, mock_comment(), user, Ecto.UUID.generate())
-      {:ok, _} = CMS.Comments.create_comment(community, :blog, blog_id, mock_comment(), user2, Ecto.UUID.generate())
-      {:ok, _} = CMS.Comments.create_comment(community, :blog, blog_id, mock_comment(), user3, Ecto.UUID.generate())
+      {:ok, _} =
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          blog_id,
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _} =
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          blog_id,
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _} =
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          blog_id,
+          mock_comment(),
+          user3,
+          Ecto.UUID.generate()
+        )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
       first_blog = results["entries"] |> List.first()
@@ -164,11 +190,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
     end
 
     test "returns cancan error when community blog thread is disabled",
-         ~m(guest_conn community)a do
+         ~m(guest_conn community user)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :enable, %{
-          blog: false
-        })
+        CMS.Dashboard.update(
+          community,
+          :enable,
+          %{
+            blog: false
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{filter: %{page: 1, size: 10, community: community.slug}}
 
@@ -382,7 +414,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
           :blog,
           article_inner_id(blog_last_week, community),
           mock_comment(),
-          user2, Ecto.UUID.generate()
+          user2,
+          Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
@@ -403,7 +436,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
           :blog,
           article_inner_id(blog_last_year, community),
           mock_comment(),
-          user2, Ecto.UUID.generate()
+          user2,
+          Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
@@ -429,7 +463,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
           :blog,
           article_inner_id(blog, community),
           mock_comment(),
-          blog.author.user, Ecto.UUID.generate()
+          blog.author.user,
+          Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)

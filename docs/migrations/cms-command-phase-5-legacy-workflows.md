@@ -1,6 +1,6 @@
 # CMS Command Phase 5：Legacy Mutation 分类与迁移
 
-> 状态：in progress（typed identity、Tag/Asset concrete Command 已实施；§11 命令集已 verified，Phase 5 其余 family 仍未收口）
+> 状态：in progress（typed identity、Tag/Asset concrete Command、Comment/Report identity boundary 已实施；§11 命令集已 verified，Phase 5 其余 family 仍未收口）
 >
 > 范围：Tag / TagGroup、Assets，以及尚未逐项确认写入合同的 CMS mutation。
 >
@@ -79,6 +79,9 @@ retry and unknown-outcome behavior
   stable effect key；CRUD 已进入 `Commands.*`、Gate、Receipt confirmation，set/unset/reindex 使用
   Gate-admitted one-shot；旧 `Tags` 仍保留给 seed、查询和兼容 service caller 的事务 fallback，尚未完成
   `TagPersist` 物理拆分；
+- Comment create/reply/update/delete 与 Article/Comment report 已收紧为显式 command identity；缺失 identity
+  在 facade、Command 和 Writer 边界 fail closed，Report add/remove 使用 Receipt/result builder；旧测试夹具
+  已迁移到显式 fixture identity；
 - facade/resolver 的默认 command UUID 已清退；静态脚本同时检查 facade/resolver 与 production CMS
   source 中的派生 `command_id`。
 
@@ -179,8 +182,8 @@ Workflow owner
 
 ### 3.5 Outbox identity
 
-当前 `CMS.Outbox.send/1` 强制 `command_id`，导致 maintenance workflow 只能生成随机 UUID 填入该字段。
-这会把 event/job identity 冒充成客户端业务命令 identity，必须在迁移业务调用点前修正。
+当前 `CMS.Outbox.send/1` 已要求调用方显式选择 typed identity；旧 producer 若继续生成随机 UUID，会把
+event/job identity 冒充成客户端业务命令 identity，必须在迁移业务调用点前修正。
 
 目标调用合同区分两类来源：
 
@@ -494,20 +497,21 @@ ReplacementPlan
 
 以下是必须逐项完成合同确认的审计队列，不表示每项当前都有 bug，也不预先要求 Receipt：
 
-| family                               | concrete use case                               | 初始协议判断                  | 重点确认                                                                                |
-| ------------------------------------ | ----------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------- |
-| Article sink/lock/category/status    | 拆除 generic action dispatch                    | one-shot                      | action-specific Gate、ArticleBinding lock，勿误入 Lifecycle                             |
-| Article binding move/mirror          | 现有 `Move` / `Mirror` / `Unmirror`             | Receipt                       | source/destination multi-scope Outbox 已复用同一 `commandId`，仍需 worker/recovery 验收 |
-| Article moderation/visibility        | `Moderate` / visibility workflow                | 按 initiator 分类             | 多 binding effect 已改为 typed/stable identity，仍需确认 workflow 与 Receipt 边界       |
-| Article/Comment report               | `Report` / `UndoReport`                         | Report Receipt；Undo one-shot | duplicate report、Audit/Activity、首次结果                                              |
-| Comment create/reply legacy fallback | 现有 `CreateComment` / `ReplyComment`           | Receipt                       | Writer 的 `nil` identity 已 fail closed；仍需完成 concrete Receipt/result 合同          |
-| Comment solution                     | `AcceptSolution` / `RevokeSolution`             | one-shot                      | canonical comment/article lock、唯一 solution                                           |
-| Comment pin                          | `Pin` / `Unpin`                                 | one-shot                      | set-style、thread policy、stats/cache effect                                            |
-| Interaction reactions                | `Upvote` / `Emotion` / `Collect` 及 undo        | Receipt 或显式 one-shot       | Upvote/Emotion 已删除 nil fallback；Collect 已统一 Metric/Outbox identity，协议仍需冻结 |
-| Moderator                            | `Add` / `AddMany` / `Remove` / `UpdatePassport` | bulk/delete 优先 Receipt      | membership uniqueness、partial failure、Activity                                        |
-| Activity export                      | `ExportCommunityActivity`                       | Receipt 或 export workflow    | artifact/job identity、权限快照、结果恢复                                               |
-| Press config                         | `UpdateConfig`                                  | one-shot                      | set-style config、cache invalidation                                                    |
-| DocTree legacy                       | 按真实动作建立 Command                          | 逐项判断                      | tree revision、branch lock、owner codec，禁止万能 payload                               |
+| family                               | concrete use case                               | 初始协议判断                 | 重点确认                                                                                                     |
+| ------------------------------------ | ----------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Article sink/lock/category/status    | 拆除 generic action dispatch                    | one-shot                     | action-specific Gate、ArticleBinding lock，勿误入 Lifecycle                                                  |
+| Article binding move/mirror          | 现有 `Move` / `Mirror` / `Unmirror`             | Receipt                      | source/destination multi-scope Outbox 必须复用同一 `commandId`（禁止第二个 UUID），仍需 worker/recovery 验收 |
+| Article sink/lock/category/status    | action-specific Commands                        | one-shot                     | 各 scope effect 复用入口 identity；不能以 scope 数量派生第二个 command UUID                                  |
+| Article moderation/visibility        | `Moderate` / visibility workflow                | 按 initiator 分类            | 多 binding effect 已改为 typed/stable identity，仍需确认 workflow 与 Receipt 边界                            |
+| Article/Comment report               | `Report` / `UndoReport`                         | Report Receipt；Undo Receipt | duplicate report、Audit/Activity、首次结果；add/remove 均复用 command identity                               |
+| Comment create/reply legacy fallback | 现有 `CreateComment` / `ReplyComment`           | Receipt                      | facade/Writer 的 `nil` identity 已 fail closed；312/312 comment suite 已验证，仍需收口 GraphQL/Receipt 合同  |
+| Comment solution                     | `AcceptSolution` / `RevokeSolution`             | one-shot                     | canonical comment/article lock、唯一 solution                                                                |
+| Comment pin                          | `Pin` / `Unpin`                                 | one-shot                     | set-style、thread policy、stats/cache effect                                                                 |
+| Interaction reactions                | `Upvote` / `Emotion` / `Collect` 及 undo        | Receipt 或显式 one-shot      | Upvote/Emotion 已删除 nil fallback；Collect 已统一 Metric/Outbox identity，协议仍需冻结                      |
+| Moderator                            | `Add` / `AddMany` / `Remove` / `UpdatePassport` | bulk/delete 优先 Receipt     | membership uniqueness、partial failure、Activity                                                             |
+| Activity export                      | `ExportCommunityActivity`                       | Receipt 或 export workflow   | artifact/job identity、权限快照、结果恢复                                                                    |
+| Press config                         | `UpdateConfig`                                  | one-shot                     | set-style config、cache invalidation                                                                         |
+| DocTree legacy                       | 按真实动作建立 Command                          | 逐项判断                     | tree revision、branch lock、owner codec，禁止万能 payload                                                    |
 
 每个 family 在实施前必须追加一张与 §4.2/§5.2 同等粒度的矩阵，并标记 `classified`。不能仅以
 “已有 Command 模块”判定完成；仍需确认 GraphQL 参数、Gate、事务、Confirmation 和 effects。
@@ -616,11 +620,12 @@ projection 的局部 transaction 必须与 user Asset mutation 分开标注。
 ### Phase 5.6：其余 family
 
 1. [ongoing] 按 §6 逐 family 执行 `classified -> migrated -> verified`；
-2. [implemented, pending family verification] 移除 Comment create/reply、Upvote/Emotion 的 `nil` command identity fallback；
-3. [implemented, pending protocol freeze] 为 Collect 冻结 Receipt/one-shot 合同，并让 Metric/Outbox 复用入口 identity；
-4. [done in this batch] 清退 `CMS.Communities`、`CMS.Dashboard` 在 facade 内生成 UUID 的 convenience arity；
-5. [done in this batch] seed、maintenance、operations caller 显式提供 workflow/operation identity，不能回退为伪客户端 command；
-6. [ongoing] 一次只迁移一个 owner，避免把不同 Gate、Lifecycle 与 result codec 混在同一提交。
+2. [implemented, verified for current focused suites] 移除 Comment create/reply/update/delete、Upvote/Emotion 的 `nil` command identity fallback；Comment domain suite 312/312 通过，跨目录 fixtures 继续纳入回归清单；
+3. [implemented, verified for current focused suites] Article/Comment Report add/remove 统一使用 concrete command identity、Receipt 与 result builder；GraphQL report mutations 的 `commandId` 已为必填；
+4. [implemented, pending protocol freeze] 为 Collect 冻结 Receipt/one-shot 合同，并让 Metric/Outbox 复用入口 identity；
+5. [done in this batch] 清退 `CMS.Communities`、`CMS.Dashboard` 在 facade 内生成 UUID 的 convenience arity；所有受影响的 legacy fixture 必须显式传入 actor/command identity；
+6. [done in this batch] seed、maintenance、operations caller 显式提供 workflow/operation identity，不能回退为伪客户端 command；
+7. [ongoing] 一次只迁移一个 owner，避免把不同 Gate、Lifecycle 与 result codec 混在同一提交。
 
 Convenience arity 清退的夹具影响（已在本批修复）如下；这些是测试调用方迁移债务，不是恢复隐式
 identity 的理由：
@@ -642,6 +647,10 @@ identity 的理由：
 - 扫描 resolver 与 CMS 根 facade 是否直接调用 Persist；
 - 扫描 resolver、facade 与 production CMS source 是否派生 `command_id`；
 - 前端另行限制 `createCommandId()` owner。
+
+该门禁检查的是 production CMS source 中的 Persist 依赖与 identity 派生；它不负责统计测试 fixture
+中被清退的 convenience arity，也不以 regex 证明每个 workflow 分支的语义。fixture 迁移必须由对应
+focused suite 和 §11 命令集报告，不能把“静态门禁通过”写成“全仓库 mutation 已迁移”。
 
 脚本仍不试图通过正则判定所有 `nil` workflow 分支、Outbox producer 的语义或 Gate action；这些必须由
 对应 concrete Command/workflow 测试和人工 review 验收。
@@ -700,7 +709,8 @@ Outbox Event id、lease/lock ref、Article/DocTree node id、anonymous-view id �
 - Comment create/reply 无 command identity 时 fail closed，不再静默进入无 Receipt 分支；
 - Upvote/Emotion 的生产入口不接受 nil command identity；
 - Collect 的 Metric 与 Outbox 复用同一入口 identity；
-- facade convenience arity 不生成 UUID，seed/maintenance caller 显式提供 workflow identity。
+- facade convenience arity 不生成 UUID，seed/maintenance caller 显式提供 workflow identity；缺少 actor 或
+  command identity 的旧调用应收到 `cms.command_id_required`，而不是恢复隐式 UUID。
 
 ### 10.4 通用事务与恢复
 

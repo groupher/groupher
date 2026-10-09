@@ -82,13 +82,34 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       changelog_id = article_inner_id(changelog_last_week, community)
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.create_comment(
+          community,
+          :changelog,
+          changelog_id,
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.create_comment(
+          community,
+          :changelog,
+          changelog_id,
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user3, Ecto.UUID.generate())
+        CMS.Comments.create_comment(
+          community,
+          :changelog,
+          changelog_id,
+          mock_comment(),
+          user3,
+          Ecto.UUID.generate()
+        )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
@@ -163,11 +184,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     end
 
     test "returns cancan error when community changelog thread is disabled",
-         ~m(guest_conn community)a do
+         ~m(guest_conn community user)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :enable, %{
-          changelog: false
-        })
+        CMS.Dashboard.update(
+          community,
+          :enable,
+          %{
+            changelog: false
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{filter: %{page: 1, size: 10, community: community.slug}}
 
@@ -308,7 +335,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       {:ok, _} = CMS.Interactions.upvote(changelog, user, Ecto.UUID.generate())
       {:ok, _} = CMS.Interactions.collect(changelog, user, Ecto.UUID.generate())
-      {:ok, _} = CMS.AbuseReports.article(changelog, "reason", "attr_info", user, Ecto.UUID.generate())
+
+      {:ok, _} =
+        CMS.AbuseReports.article(changelog, "reason", "attr_info", user, Ecto.UUID.generate())
 
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
@@ -383,7 +412,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
           :changelog,
           article_inner_id(changelog_last_week, community),
           mock_comment(),
-          user2, Ecto.UUID.generate()
+          user2,
+          Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
@@ -404,7 +434,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
           :changelog,
           article_inner_id(changelog_last_year, community),
           mock_comment(),
-          user2, Ecto.UUID.generate()
+          user2,
+          Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
@@ -427,7 +458,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          changelog.author.user, Ecto.UUID.generate()
+          changelog.author.user,
+          Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)

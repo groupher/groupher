@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.Accounts.Publish.Changelog do
 
     {:ok, user2} = db_insert(:user)
     community2_attrs = mock_attrs(:community)
-    {:ok, community2} = CMS.Communities.create(community2_attrs, user)
+    {:ok, community2} = CMS.Communities.create(community2_attrs, user, Ecto.UUID.generate())
 
     {:ok, ~m(user user2 changelog community community2)a}
   end
@@ -83,7 +83,8 @@ defmodule GroupherServer.Test.Accounts.Publish.Changelog do
             :changelog,
             article_inner_id(changelog, community),
             mock_comment(),
-            user, Ecto.UUID.generate()
+            user,
+            Ecto.UUID.generate()
           )
 
         acc ++ [comment]

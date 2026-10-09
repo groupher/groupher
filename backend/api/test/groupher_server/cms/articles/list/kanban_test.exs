@@ -251,9 +251,15 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
 
     test "can get grouped kanban posts", ~m(user community post_attrs)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
-          kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
-        })
+        CMS.Dashboard.update(
+          community,
+          :layout,
+          %{
+            kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       kanban_attrs =
         post_attrs |> Map.merge(%{cat: @article_cat.idea, status: @article_status.backlog})
@@ -319,9 +325,15 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
     test "disabled grouped kanban boards return empty paginations",
          ~m(user community post_attrs)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
-          kanban_boards: [:todo, :wip, :done]
-        })
+        CMS.Dashboard.update(
+          community,
+          :layout,
+          %{
+            kanban_boards: [:todo, :wip, :done]
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       backlog_attrs =
         post_attrs |> Map.merge(%{cat: @article_cat.idea, status: @article_status.backlog})

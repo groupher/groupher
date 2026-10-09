@@ -104,9 +104,15 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
     {:ok, _} =
-      CMS.Dashboard.update(community, :enable, %{
-        blog: false
-      })
+      CMS.Dashboard.update(
+        community,
+        :enable,
+        %{
+          blog: false
+        },
+        user,
+        Ecto.UUID.generate()
+      )
 
     variables = %{
       article: %{

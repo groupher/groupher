@@ -113,6 +113,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
   defp create_community(user) do
     mock_attrs(:community)
     |> Map.put(:user, user)
-    |> CMS.Communities.create(user)
+    |> CMS.Communities.create(user, Ecto.UUID.generate())
   end
 end

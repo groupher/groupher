@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
   setup do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     user_conn = simu_conn(:user)
     guest_conn = simu_conn(:guest)

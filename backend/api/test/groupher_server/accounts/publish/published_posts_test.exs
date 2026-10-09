@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.Accounts.Publish.Post do
 
     {:ok, user2} = db_insert(:user)
     community2_attrs = mock_attrs(:community)
-    {:ok, community2} = CMS.Communities.create(community2_attrs, user)
+    {:ok, community2} = CMS.Communities.create(community2_attrs, user, Ecto.UUID.generate())
 
     {:ok, ~m(user user2 post community community2)a}
   end
@@ -79,7 +79,14 @@ defmodule GroupherServer.Test.Accounts.Publish.Post do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
+          CMS.Comments.create_comment(
+            community,
+            :post,
+            article_inner_id(post, community),
+            mock_comment(),
+            user,
+            Ecto.UUID.generate()
+          )
 
         acc ++ [comment]
       end)

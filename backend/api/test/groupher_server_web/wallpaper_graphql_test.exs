@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
 
   setup do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = CMS.Communities.create(mock_attrs(:community), user)
+    {:ok, community} = CMS.Communities.create(mock_attrs(:community), user, Ecto.UUID.generate())
     rule_conn = simu_conn(:user, cms: %{"community.update" => true})
 
     Application.put_env(:groupher_server, :wallpaper_batch_client, FakeBatchClient)

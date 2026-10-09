@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
     setup do
       {:ok, user} = db_insert(:user)
       community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
       {:ok, state} = ORM.find_by(DocsSiteState, community_id: community.id)
 
       {:ok, tab} =

@@ -155,7 +155,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "unauth user set/unset category fails", ~m(user_conn guest_conn)a do
       {:ok, user} = db_insert(:user)
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
       {:ok, category} = db_insert(:category)
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})

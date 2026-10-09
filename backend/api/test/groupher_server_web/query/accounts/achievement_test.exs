@@ -39,10 +39,10 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     test "can get user's  communities list when user is editor",
          ~m(guest_conn user user2 user3)a do
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       community_attrs2 = mock_attrs(:community)
-      {:ok, community2} = CMS.Communities.create(community_attrs2, user2)
+      {:ok, community2} = CMS.Communities.create(community_attrs2, user2, Ecto.UUID.generate())
 
       {:ok, _} = CMS.Communities.add_moderator(community, user3, user)
       {:ok, _} = CMS.Communities.add_moderator(community2, user3, user2)

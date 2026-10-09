@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.Query.CMS.Search do
 
   defp create_community!(user, attrs) do
     community_attrs = mock_attrs(:community, attrs)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
     community
   end
 

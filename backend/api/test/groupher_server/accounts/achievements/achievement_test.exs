@@ -30,10 +30,10 @@ defmodule GroupherServer.Test.Accounts.Achievement do
     test "community moderator should get a editable community list",
          ~m(user user2 user3)a do
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       community_attrs = mock_attrs(:community)
-      {:ok, community2} = CMS.Communities.create(community_attrs, user2)
+      {:ok, community2} = CMS.Communities.create(community_attrs, user2, Ecto.UUID.generate())
 
       {:ok, _} = CMS.Communities.add_moderator(community, user3, user)
       {:ok, _} = CMS.Communities.add_moderator(community2, user3, user2)

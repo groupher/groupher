@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.Helper.Transaction do
     test "locks existing row and returns callback value" do
       {:ok, user} = db_insert(:user)
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       assert {:ok, locked_community} =
                Transaction.lock_row(community, fn locked_community ->
@@ -70,8 +70,8 @@ defmodule GroupherServer.Test.Helper.Transaction do
       {:ok, user} = db_insert(:user)
       community1_attrs = mock_attrs(:community)
       community2_attrs = mock_attrs(:community)
-      {:ok, community1} = CMS.Communities.create(community1_attrs, user)
-      {:ok, community2} = CMS.Communities.create(community2_attrs, user)
+      {:ok, community1} = CMS.Communities.create(community1_attrs, user, Ecto.UUID.generate())
+      {:ok, community2} = CMS.Communities.create(community2_attrs, user, Ecto.UUID.generate())
 
       expected_ids = [community1.id, community2.id] |> Enum.sort()
 

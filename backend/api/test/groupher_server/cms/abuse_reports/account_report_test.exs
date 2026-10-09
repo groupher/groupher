@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.AccountReport do
     {:ok, user3} = db_insert(:user)
 
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
     post_attrs = mock_attrs(:post, %{community_id: community.id})
 
     {:ok, ~m(user user2 user3 community post_attrs)a}

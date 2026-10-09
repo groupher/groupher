@@ -104,9 +104,15 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
     {:ok, _} =
-      CMS.Dashboard.update(community, :enable, %{
-        changelog: false
-      })
+      CMS.Dashboard.update(
+        community,
+        :enable,
+        %{
+          changelog: false
+        },
+        user,
+        Ecto.UUID.generate()
+      )
 
     variables = %{
       article: %{

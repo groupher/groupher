@@ -27,7 +27,11 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       {:ok, community2} = mock_community()
 
       variables = %{
-        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug
       }
 
@@ -41,7 +45,11 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
     test "unauth user cannot mirror a post to a community",
          ~m(user_conn guest_conn community community2 post)a do
       variables = %{
-        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug
       }
 
@@ -75,14 +83,22 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       variables = %{
-        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community3.slug
       }
 
@@ -102,18 +118,26 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       {:ok, user} = db_insert(:user)
       community2_attrs = mock_attrs(:community)
       community3_attrs = mock_attrs(:community)
-      {:ok, community2} = CMS.Communities.create(community2_attrs, user)
-      {:ok, community3} = CMS.Communities.create(community3_attrs, user)
+      {:ok, community2} = CMS.Communities.create(community2_attrs, user, Ecto.UUID.generate())
+      {:ok, community3} = CMS.Communities.create(community3_attrs, user, Ecto.UUID.generate())
 
       variables = %{
-        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       variables2 = %{
-        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community3.slug
       }
 
@@ -140,7 +164,11 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug
       }
 
@@ -159,7 +187,11 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       {:ok, article_tag} = CMS.Communities.create_tag(community2, :post, article_tag_attrs, user)
 
       variables = %{
-        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug,
         communityTags: [article_tag.id]
       }
@@ -187,7 +219,11 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "NOT_EXIST_THREAD"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "NOT_EXIST_THREAD"
+        },
         targetCommunity: community2.slug
       }
 
