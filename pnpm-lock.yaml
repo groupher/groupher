@@ -383,8 +383,8 @@ importers:
         specifier: ^24.0.0
         version: 24.13.3
       cf:
-        specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@types/node@24.13.3)
+        specifier: 1.0.0-beta.13
+        version: 1.0.0-beta.13(@types/node@24.13.3)
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
@@ -438,8 +438,8 @@ importers:
         specifier: ^24.0.0
         version: 24.13.3
       cf:
-        specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@types/node@24.13.3)
+        specifier: 1.0.0-beta.13
+        version: 1.0.0-beta.13(@types/node@24.13.3)
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
@@ -520,7 +520,7 @@ importers:
         version: 8.10.0
       workflow:
         specifier: 5.0.1
-        version: 5.0.1(@aws-sdk/credential-provider-web-identity@3.972.78)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@opentelemetry/api@1.9.1)(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(magicast@0.5.4)(react@19.3.0)(supports-color@8.1.1)(typescript@7.0.2)(ws@8.21.3)
+        version: 5.0.1(@aws-sdk/credential-provider-web-identity@3.972.49)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@opentelemetry/api@1.9.1)(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(magicast@0.5.4)(react@19.3.0)(supports-color@8.1.1)(typescript@7.0.2)(ws@8.21.3)
       yaml:
         specifier: 2.8.2
         version: 2.8.2
@@ -639,8 +639,8 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1(vite@8.3.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       cf:
-        specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@types/node@24.13.3)
+        specifier: 1.0.0-beta.13
+        version: 1.0.0-beta.13(@types/node@24.13.3)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -706,8 +706,8 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1(vite@8.3.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       cf:
-        specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@types/node@24.13.3)
+        specifier: 1.0.0-beta.13
+        version: 1.0.0-beta.13(@types/node@24.13.3)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -984,8 +984,8 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1(vite@8.3.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       cf:
-        specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@types/node@24.13.3)
+        specifier: 1.0.0-beta.13
+        version: 1.0.0-beta.13(@types/node@24.13.3)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1033,8 +1033,8 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1(vite@8.3.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       cf:
-        specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@types/node@24.13.3)
+        specifier: 1.0.0-beta.13
+        version: 1.0.0-beta.13(@types/node@24.13.3)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1100,8 +1100,8 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1(vite@8.3.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       cf:
-        specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@types/node@24.13.3)
+        specifier: 1.0.0-beta.13
+        version: 1.0.0-beta.13(@types/node@24.13.3)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -1211,8 +1211,8 @@ importers:
         specifier: ^5.20260929.1
         version: 5.20260929.1
       cf:
-        specifier: 1.0.0-beta.5
-        version: 1.0.0-beta.5(@types/node@24.13.3)
+        specifier: 1.0.0-beta.13
+        version: 1.0.0-beta.13(@types/node@24.13.3)
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -1712,12 +1712,18 @@ packages:
   '@cloudflare/build-output-utils@0.8.2':
     resolution: {integrity: sha512-DHKF7p5p1ZapZbh2GyF3mfBW7D45IKtcnwMdKnVZ72A/a2rfwd1kczBYFH+O4cHnNI7e9HRwTm+Z76IDZfxVLw==}
 
-  '@cloudflare/codemods@0.2.1':
-    resolution: {integrity: sha512-nAoXTs5JPlQ8HeaTJQaxkvbJtGjXG19HoNx/W/Cz1d2PBETAt1Pdv4KqKqMw62DNq6Wfh4lwG2lJLvyn4X+Rhg==}
+  '@cloudflare/build-output-utils@0.8.6':
+    resolution: {integrity: sha512-Ku4UL7tUX9kpto9AisUg2jPNS4yXC6lMy8DMMKdDquArNjxpqDJfkW68WSlA8yfrLSFO3fgxMWW47rtxv/GHgQ==}
+
+  '@cloudflare/codemods@0.4.1':
+    resolution: {integrity: sha512-DSRpLpM0J8vD7oLKvViS6NMlMVnc6F38JXCrVy0q3KouSS5I71do1QRvGwtJjVHVOULPWlxy/DvA6cIIz3481g==}
     hasBin: true
 
   '@cloudflare/config@0.20.0':
     resolution: {integrity: sha512-Dv/UDLkqsmvW95+CmM2nE55pdkLPWnJ63KDMjAFe/5KW1hc2SzJW4f8CUagqarivQugf5+oJMWYlHSmtA4KVlA==}
+
+  '@cloudflare/config@0.24.0':
+    resolution: {integrity: sha512-DBKkL2fFfHIL0cdjXOoWybNzBxD5xAvuebu0nfcBphWeUiWKnSUYu8JMaboKzmAJRp6V1RGtPAdfdtXMHueqAA==}
 
   '@cloudflare/kv-asset-handler@0.5.0':
     resolution: {integrity: sha512-jxQYkj8dSIzc0cD6cMMNdOc1UVjqSqu8BZdor5s8cGjW2I8BjODt/kWPVdY+u9zj3ms75Q5qaZgnxUad83+eAg==}
@@ -1725,6 +1731,9 @@ packages:
 
   '@cloudflare/runtime-types@0.1.4':
     resolution: {integrity: sha512-Jp3Za6h0KybVoi/4D6La3HicW71L8nyS7AGf0WHpbKqCs17lLkCuTbOcAuUTraoib8+SR74L+AbqxwcDq3VhTw==}
+
+  '@cloudflare/runtime-types@0.1.8':
+    resolution: {integrity: sha512-gYeU3d/eRGWveJSwaAVU0bQ40xgxgfMVgioib7PnUGEYxKGHfFGc85lkNG7gyYoZnsYuPBYOH4umr+H+F4+apg==}
 
   '@cloudflare/unenv-preset@2.16.2':
     resolution: {integrity: sha512-JBP1+Z7ZSNG/d4mRP+y8VC5dka3tZVMLEZRvS+rzQ4DGV1EoxRFQckcJTTkXbHSQiTj0DtNI01Zwb/V2fX0mvQ==}
@@ -1754,8 +1763,20 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@cloudflare/workerd-darwin-64@1.20261006.1':
+    resolution: {integrity: sha512-lCX6avJO2It9AyDEYitjmOtJRVp/xmaW0TziyoLAnfxlzozyyRbSFfIIMMCiDx/sTP1++E4VLbV+7BHSD33f0Q==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [darwin]
+
   '@cloudflare/workerd-darwin-arm64@1.20260926.1':
     resolution: {integrity: sha512-oVuLXfCnr1Xu9sBMNYrEPcFZQNMcviNcacz9l+oqQiLHc5UrVp++lpKbsuWstCfh+/c39Pp37TVeaNBLA8+ReA==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@cloudflare/workerd-darwin-arm64@1.20261006.1':
+    resolution: {integrity: sha512-PyFGjOaldtppnLuKsdkoYWXfLVpDjuf8u+uoykX+1Xvxo2EPmCVViq0iDKm+U7c7PRno85ehS3/MPVXyk2HwHw==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [darwin]
@@ -1766,14 +1787,32 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-64@1.20261006.1':
+    resolution: {integrity: sha512-Ntf9S8eesmVufdjaT2kzWlz6Ng9XGYTc6cHQVRKAg59lFufwsIabGeMT6U4KkrpEeSIxgHq8aPtuLbZXE19tCA==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [linux]
+
   '@cloudflare/workerd-linux-arm64@1.20260926.1':
     resolution: {integrity: sha512-28bdfQDIFcpaKXMPisADy8BchpIsX+tEAhD+bhfEBXukFGFr8F3ouyiG3HzN3CqAh/OYvifJizzFZtptUPCy7w==}
     engines: {node: '>=16'}
     cpu: [arm64]
     os: [linux]
 
+  '@cloudflare/workerd-linux-arm64@1.20261006.1':
+    resolution: {integrity: sha512-JyeDBymVWw5tVRebSsVE8ojDYxd6UlZrAseHU8G+NpIyd5wF61tXlF/axLeCUqu0pOhBFHb8I5QKi0jwrCK41Q==}
+    engines: {node: '>=16'}
+    cpu: [arm64]
+    os: [linux]
+
   '@cloudflare/workerd-windows-64@1.20260926.1':
     resolution: {integrity: sha512-ehdL3ataKdEmlnW9oom6OZUR8n3XsTL/zl8+KGREpLi5sMSW0mek0PrF4wK9SX51f3Alnlu8tF8eKBg+mc3xFw==}
+    engines: {node: '>=16'}
+    cpu: [x64]
+    os: [win32]
+
+  '@cloudflare/workerd-windows-64@1.20261006.1':
+    resolution: {integrity: sha512-nWP0URNqOBN9fa/gZ7eh/w051DwjOXN8j4lDZDYVXyQPsux6sV3DfyYZT+CjR/rt9nKBSmJT9QE9/bWT18+84w==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
@@ -6979,8 +7018,8 @@ packages:
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
 
-  cf@1.0.0-beta.5:
-    resolution: {integrity: sha512-IKGKDAQNs8hbu7jOt3qSWKxDjmJTS+hcHCJ5B0IkF7gZ3RmEfMTUxZ0Fi7GRftjag04J127u8Nk8uppXx3OBZw==}
+  cf@1.0.0-beta.13:
+    resolution: {integrity: sha512-dCjpzCJvjudIu8IQbXCJfy9diFoyHU84D/30K4lJp7jUaBgvjJypsMFzLqvUFOuwhF1ggR/igsLqXyehAOR2FQ==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -10143,6 +10182,10 @@ packages:
     resolution: {integrity: sha512-m/M3rpLnaouw6QSoKzylfw6Z1dnOwRM48idnZ7kc5ivRqBXANFQ8XqKCyQ/V+xqQ9Rg1L99j4WkZGVU9uT4L2w==}
     engines: {node: '>=22.0.0'}
 
+  miniflare@5.20261006.0-alpha:
+    resolution: {integrity: sha512-UP3qIeQKHba59GHxBqD8H2GateacluT4vrjIpqEgH78kCSUxdu8jA0f7MH7ftRSAnnB1oOvEsDtav3xevQDbpQ==}
+    engines: {node: '>=22.0.0'}
+
   minimatch@10.2.6:
     resolution: {integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==}
     engines: {node: 18 || 20 || >=22}
@@ -12305,6 +12348,10 @@ packages:
     resolution: {integrity: sha512-IDxfleLmmbSskfWSUATiN1nfn2rDuvnMOqb5CWR92iIfojA0Ud+ulOAAEQ57LPr9rWmsreUyf5lwyao+7GNNVw==}
     engines: {node: '>=20.18.1'}
 
+  undici@7.29.1:
+    resolution: {integrity: sha512-RYONW2MeafgYlkVOKYKkA/Ag7BmXqgIWCa8t1m0JcxrQg9pI9lEqRhAOruOBCbAohOa/gkCF+iPi9hrgvTzu6Q==}
+    engines: {node: '>=20.18.1'}
+
   undici@7.30.0:
     resolution: {integrity: sha512-dkrQXeHSaoamnItlYbmzG0wFYrM0ZwDxCIg0A7aKjTyyhh9svRzCNFEzV+Vm05/yehjCzjDZ31KXfGEjYSztDQ==}
     engines: {node: '>=20.18.1'}
@@ -12754,6 +12801,11 @@ packages:
 
   workerd@1.20260926.1:
     resolution: {integrity: sha512-YojhsWBuZwk3Jk9OC0QfTgVbLeQOD1tK1olC9ZXAUcmeip8z4NE/xtttpxCsuTvQBRqppvy7Tkac0kxPYMjIXA==}
+    engines: {node: '>=16'}
+    hasBin: true
+
+  workerd@1.20261006.1:
+    resolution: {integrity: sha512-8MadBuffZ5NdpLwZjUmsqT5QlaKXq4gjgT6wzcKeynZTICNXyePhc+5QVoKiK7+MMhFTLNrRO2KXLlpk8Q6BkA==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -13516,9 +13568,17 @@ snapshots:
     dependencies:
       '@cloudflare/config': 0.20.0
 
-  '@cloudflare/codemods@0.2.1': {}
+  '@cloudflare/build-output-utils@0.8.6':
+    dependencies:
+      '@cloudflare/config': 0.24.0
+
+  '@cloudflare/codemods@0.4.1': {}
 
   '@cloudflare/config@0.20.0':
+    dependencies:
+      zod: 4.4.3
+
+  '@cloudflare/config@0.24.0':
     dependencies:
       zod: 4.4.3
 
@@ -13528,6 +13588,15 @@ snapshots:
     dependencies:
       miniflare: 5.20260926.0-alpha(@types/node@24.13.3)
       workerd: 1.20260926.1
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - utf-8-validate
+
+  '@cloudflare/runtime-types@0.1.8(@types/node@24.13.3)':
+    dependencies:
+      miniflare: 5.20261006.0-alpha(@types/node@24.13.3)
+      workerd: 1.20261006.1
     transitivePeerDependencies:
       - '@types/node'
       - bufferutil
@@ -13590,16 +13659,31 @@ snapshots:
   '@cloudflare/workerd-darwin-64@1.20260926.1':
     optional: true
 
+  '@cloudflare/workerd-darwin-64@1.20261006.1':
+    optional: true
+
   '@cloudflare/workerd-darwin-arm64@1.20260926.1':
+    optional: true
+
+  '@cloudflare/workerd-darwin-arm64@1.20261006.1':
     optional: true
 
   '@cloudflare/workerd-linux-64@1.20260926.1':
     optional: true
 
+  '@cloudflare/workerd-linux-64@1.20261006.1':
+    optional: true
+
   '@cloudflare/workerd-linux-arm64@1.20260926.1':
     optional: true
 
+  '@cloudflare/workerd-linux-arm64@1.20261006.1':
+    optional: true
+
   '@cloudflare/workerd-windows-64@1.20260926.1':
+    optional: true
+
+  '@cloudflare/workerd-windows-64@1.20261006.1':
     optional: true
 
   '@cloudflare/workers-types@5.20260829.1':
@@ -17783,13 +17867,6 @@ snapshots:
       '@aws-sdk/credential-provider-web-identity': 3.972.49
       ws: 8.21.3
 
-  '@vercel/functions@3.9.5(@aws-sdk/credential-provider-web-identity@3.972.78)(ws@8.21.3)':
-    dependencies:
-      '@vercel/oidc': 3.8.5
-    optionalDependencies:
-      '@aws-sdk/credential-provider-web-identity': 3.972.78
-      ws: 8.21.3
-
   '@vercel/oidc@3.2.0': {}
 
   '@vercel/oidc@3.8.5':
@@ -17963,7 +18040,7 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@workflow/cli@5.0.1(@aws-sdk/credential-provider-web-identity@3.972.78)(@opentelemetry/api@1.9.1)(@swc/helpers@0.5.23)(react@19.3.0)(supports-color@8.1.1)(ws@8.21.3)':
+  '@workflow/cli@5.0.1(@aws-sdk/credential-provider-web-identity@3.972.49)(@opentelemetry/api@1.9.1)(@swc/helpers@0.5.23)(react@19.3.0)(supports-color@8.1.1)(ws@8.21.3)':
     dependencies:
       '@oclif/core': 4.11.4
       '@oclif/plugin-help': 6.2.37
@@ -17977,7 +18054,7 @@ snapshots:
       '@workflow/web': 5.0.1(@opentelemetry/api@1.9.1)(react@19.3.0)
       '@workflow/world': 5.0.1
       '@workflow/world-local': 5.0.1(@opentelemetry/api@1.9.1)
-      '@workflow/world-vercel': 5.0.1(@aws-sdk/credential-provider-web-identity@3.972.78)(@opentelemetry/api@1.9.1)
+      '@workflow/world-vercel': 5.0.1(@aws-sdk/credential-provider-web-identity@3.972.49)(@opentelemetry/api@1.9.1)
       boxen: 8.0.1
       builtin-modules: 5.0.0
       chalk: 5.6.2
@@ -18196,26 +18273,6 @@ snapshots:
   '@workflow/world-vercel@5.0.1(@aws-sdk/credential-provider-web-identity@3.972.49)(@opentelemetry/api@1.9.1)':
     dependencies:
       '@vercel/functions': 3.9.5(@aws-sdk/credential-provider-web-identity@3.972.49)(ws@8.21.3)
-      '@vercel/oidc': 3.2.0
-      '@vercel/queue': 0.5.1(@opentelemetry/api@1.9.1)
-      '@workflow/errors': 5.0.1
-      '@workflow/utils': 5.0.0
-      '@workflow/world': 5.0.1
-      cbor-x: 1.6.0
-      ulid: 3.0.2
-      undici: 7.30.0
-      ws: 8.21.3
-      zod: 4.5.4
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.1
-    transitivePeerDependencies:
-      - '@aws-sdk/credential-provider-web-identity'
-      - bufferutil
-      - utf-8-validate
-
-  '@workflow/world-vercel@5.0.1(@aws-sdk/credential-provider-web-identity@3.972.78)(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@vercel/functions': 3.9.5(@aws-sdk/credential-provider-web-identity@3.972.78)(ws@8.21.3)
       '@vercel/oidc': 3.2.0
       '@vercel/queue': 0.5.1(@opentelemetry/api@1.9.1)
       '@workflow/errors': 5.0.1
@@ -18851,14 +18908,14 @@ snapshots:
 
   ccount@2.0.1: {}
 
-  cf@1.0.0-beta.5(@types/node@24.13.3):
+  cf@1.0.0-beta.13(@types/node@24.13.3):
     dependencies:
-      '@cloudflare/build-output-utils': 0.8.2
-      '@cloudflare/codemods': 0.2.1
-      '@cloudflare/config': 0.20.0
-      '@cloudflare/runtime-types': 0.1.4(@types/node@24.13.3)
+      '@cloudflare/build-output-utils': 0.8.6
+      '@cloudflare/codemods': 0.4.1
+      '@cloudflare/config': 0.24.0
+      '@cloudflare/runtime-types': 0.1.8(@types/node@24.13.3)
       blake3-wasm: 2.1.5
-      miniflare: 5.20260926.0-alpha(@types/node@24.13.3)
+      miniflare: 5.20261006.0-alpha(@types/node@24.13.3)
       minisearch: 7.2.0
     transitivePeerDependencies:
       - '@types/node'
@@ -22381,6 +22438,19 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  miniflare@5.20261006.0-alpha(@types/node@24.13.3):
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      sharp: 0.35.4(@types/node@24.13.3)
+      undici: 7.29.1
+      workerd: 1.20261006.1
+      ws: 8.21.0
+      youch: 4.1.0-beta.10
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - utf-8-validate
+
   minimatch@10.2.6:
     dependencies:
       brace-expansion: 5.0.9
@@ -24925,6 +24995,8 @@ snapshots:
 
   undici@7.29.0: {}
 
+  undici@7.29.1: {}
+
   undici@7.30.0: {}
 
   undici@8.10.0: {}
@@ -25449,10 +25521,18 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260926.1
       '@cloudflare/workerd-windows-64': 1.20260926.1
 
-  workflow@5.0.1(@aws-sdk/credential-provider-web-identity@3.972.78)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@opentelemetry/api@1.9.1)(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(magicast@0.5.4)(react@19.3.0)(supports-color@8.1.1)(typescript@7.0.2)(ws@8.21.3):
+  workerd@1.20261006.1:
+    optionalDependencies:
+      '@cloudflare/workerd-darwin-64': 1.20261006.1
+      '@cloudflare/workerd-darwin-arm64': 1.20261006.1
+      '@cloudflare/workerd-linux-64': 1.20261006.1
+      '@cloudflare/workerd-linux-arm64': 1.20261006.1
+      '@cloudflare/workerd-windows-64': 1.20261006.1
+
+  workflow@5.0.1(@aws-sdk/credential-provider-web-identity@3.972.49)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@opentelemetry/api@1.9.1)(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(magicast@0.5.4)(react@19.3.0)(supports-color@8.1.1)(typescript@7.0.2)(ws@8.21.3):
     dependencies:
       '@workflow/astro': 5.0.1(@opentelemetry/api@1.9.1)(@swc/helpers@0.5.23)(supports-color@8.1.1)(ws@8.21.3)
-      '@workflow/cli': 5.0.1(@aws-sdk/credential-provider-web-identity@3.972.78)(@opentelemetry/api@1.9.1)(@swc/helpers@0.5.23)(react@19.3.0)(supports-color@8.1.1)(ws@8.21.3)
+      '@workflow/cli': 5.0.1(@aws-sdk/credential-provider-web-identity@3.972.49)(@opentelemetry/api@1.9.1)(@swc/helpers@0.5.23)(react@19.3.0)(supports-color@8.1.1)(ws@8.21.3)
       '@workflow/core': 5.0.1(@opentelemetry/api@1.9.1)(supports-color@8.1.1)(ws@8.21.3)
       '@workflow/errors': 5.0.1
       '@workflow/nest': 5.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2))(@opentelemetry/api@1.9.1)(@swc/cli@0.8.1(@swc/core@1.15.3(@swc/helpers@0.5.23))(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.15.3(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(supports-color@8.1.1)(ws@8.21.3)
