@@ -861,9 +861,10 @@ identity，现已迁移并验证 **14/14**；CMS Interactions ReadState suite �
 workflow 改用 typed workflow identity，相关 suite 为 **17/17**。这类 fixture 迁移不应通过恢复
 `nil` fallback 解决。上述数字是各迁移切片的 focused 证据，不可替代 §11 命令集，也不代表 §6 其余
 mutation family 已完成。扩展到评论 create/reply 和全测试树 reaction fixture 后，评论域套件为
-**312/312**、reaction/emotion/read-state 套件为 **132/132**、资产 query 套件为 **3/3**。最终
-backend 全量结果以本次提交后的实际命令输出为准；该数字只证明回归树稳定，不改变 §6 的
-mutation family 状态，也不能替代每个 family 的 Gate/transaction/Receipt 合同验收。
+**312/312**、reaction/emotion/read-state 套件为 **132/132**、资产 query 套件为 **3/3**。本次提交后的
+backend 全量 `mix test --max-failures 100` 为 **2185 passed, 1 excluded, 0 failures**（2186 tests）。
+该数字只证明回归树稳定，不改变 §6 的 mutation family 状态，也不能替代每个 family 的
+Gate/transaction/Receipt 合同验收。
 
 扩展的 GraphQL community-tag mutation 目录目前为 **41/41**：Tag CRUD、set/unset（post/blog/changelog/doc）
 和 reindex 均已通过。Doc set/unset 的实现保留 FrontDesk public projection 提供的 main-branch
