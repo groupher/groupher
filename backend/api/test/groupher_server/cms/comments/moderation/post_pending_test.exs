@@ -18,7 +18,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostPending do
   describe "[pending post comment flags]" do
     test "pending post comment can set/unset pending", ~m(community post user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
         CMS.Comments.set_comment_illegal(comment.id, %{
@@ -43,7 +50,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostPending do
 
     test "pending post-comment's meta should have info", ~m(community post user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
         CMS.Comments.set_comment_illegal(comment.id, %{

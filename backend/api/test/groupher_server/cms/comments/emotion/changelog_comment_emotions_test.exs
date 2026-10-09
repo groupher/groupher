@@ -31,7 +31,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
               :changelog,
               article_inner_id(changelog, community),
               mock_comment(),
-              user, Ecto.UUID.generate()
+              user,
+              Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -79,7 +80,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
               :changelog,
               article_inner_id(changelog, community),
               mock_comment(),
-              user, Ecto.UUID.generate()
+              user,
+              Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -104,11 +106,17 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, reply_comment} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment("reply_content"), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(
+          parent_comment.id,
+          mock_comment("reply_content"),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
       {:ok, _} = CMS.Interactions.emotion(reply_comment, :downvote, user, Ecto.UUID.generate())
@@ -135,7 +143,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
@@ -151,7 +160,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
@@ -172,7 +182,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
@@ -185,8 +196,11 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
       assert user_exist_in?(user, emotions.latest_downvote_users)
       assert user_exist_in?(user2, emotions.latest_downvote_users)
 
-      {:ok, _} = CMS.Interactions.undo_emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
-      {:ok, _} = CMS.Interactions.undo_emotion(parent_comment, :downvote, user2, Ecto.UUID.generate())
+      {:ok, _} =
+        CMS.Interactions.undo_emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
+
+      {:ok, _} =
+        CMS.Interactions.undo_emotion(parent_comment, :downvote, user2, Ecto.UUID.generate())
 
       {:ok, parent_comment} = InteractionResponse.one(parent_comment, user)
       emotions = parent_comment.emotions
@@ -202,7 +216,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
@@ -222,7 +237,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
@@ -256,7 +272,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user, Ecto.UUID.generate())
@@ -280,7 +297,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())

@@ -20,8 +20,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.AccountReport do
   describe "[account report/unreport]" do
     # test "list article reports should work", ~m(community user user2 post_attrs)a do
     #   {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-    #   {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user)
-    #   {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user2)
+    #   {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user, Ecto.UUID.generate())
+    #   {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user2, Ecto.UUID.generate())
 
     #   filter = %{content_type: :post, content_id: post.id, page: 1, size: 20}
     #   {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)

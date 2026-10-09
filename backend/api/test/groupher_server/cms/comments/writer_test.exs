@@ -15,7 +15,13 @@ defmodule GroupherServer.Test.CMS.Comments.Writer do
       CMS.Articles.set_cat(stale_post.id, @article_cat.qa, actor, community.id)
 
     assert {:ok, %{is_for_question: true}} =
-             CMS.Comments.create_comment(:post, stale_post, mock_comment(), actor, Ecto.UUID.generate())
+             CMS.Comments.create_comment(
+               :post,
+               stale_post,
+               mock_comment(),
+               actor,
+               Ecto.UUID.generate()
+             )
   end
 
   test "reply reloads the canonical target and preserves the locked error contract" do
@@ -27,7 +33,8 @@ defmodule GroupherServer.Test.CMS.Comments.Writer do
         :post,
         article_inner_id(post, community),
         mock_comment(),
-        actor, Ecto.UUID.generate()
+        actor,
+        Ecto.UUID.generate()
       )
 
     {:ok, _} = CMS.Articles.lock_comments(post.id, actor, community: community)

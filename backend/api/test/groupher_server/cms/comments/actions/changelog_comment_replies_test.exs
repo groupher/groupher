@@ -20,7 +20,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, replied_comment} =
@@ -40,12 +41,14 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Comments.delete_comment(parent_comment, user)
+      {:ok, _} = CMS.Comments.delete_comment(parent_comment, user, Ecto.UUID.generate())
 
-      {:error, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+      {:error, _} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
     end
 
     test "multi reply should belong to one parent comment", ~m(community changelog user user2)a do
@@ -55,7 +58,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, replied_comment_1} =
@@ -78,17 +82,28 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, replied_comment_1} =
         CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(replied_comment_1.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(
+          replied_comment_1.id,
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
 
       {:ok, replied_comment_3} =
-        CMS.Comments.reply_comment(replied_comment_2.id, mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(
+          replied_comment_2.id,
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -113,17 +128,28 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, replied_comment_1} =
         CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(replied_comment_1.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(
+          replied_comment_1.id,
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
 
       {:ok, replied_comment_3} =
-        CMS.Comments.reply_comment(replied_comment_2.id, mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(
+          replied_comment_2.id,
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -146,7 +172,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       reply_comment_list =
@@ -155,7 +182,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
             CMS.Comments.reply_comment(
               parent_comment.id,
               mock_comment("reply_content_#{n}"),
-              user, Ecto.UUID.generate()
+              user,
+              Ecto.UUID.generate()
             )
 
           acc ++ [replied_comment]
@@ -178,10 +206,12 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+      {:ok, _} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.article_id)
 
@@ -196,16 +226,21 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       assert parent_comment.replies_count === 0
 
-      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+      {:ok, _} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
       assert parent_comment.replies_count === 1
 
-      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+      {:ok, _} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
       assert parent_comment.replies_count === 2
     end
@@ -219,7 +254,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, paged_replies} =
@@ -235,7 +271,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
             CMS.Comments.reply_comment(
               parent_comment.id,
               mock_comment("reply_content_#{n}"),
-              user, Ecto.UUID.generate()
+              user,
+              Ecto.UUID.generate()
             )
 
           acc ++ [replied_comment]
@@ -263,11 +300,15 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
-      {:ok, reply_comment} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
-      {:ok, reply_comment2} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
+      {:ok, reply_comment} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
+
+      {:ok, reply_comment2} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(

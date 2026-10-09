@@ -34,20 +34,10 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
       #=> {:ok, %{comment: %Comment{}, article: article, command_id: id}} | {:error, reason}
   """
   @spec execute(Comment.t(), String.t(), User.t()) :: T.domain_res(result())
-  def execute(%Comment{} = comment, body, %User{} = actor) do
-    execute(comment, body, actor, nil)
-  end
+  def execute(%Comment{}, _body, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Updates a Comment while binding retries to the supplied command id."
-  @spec execute(Comment.t(), String.t(), User.t(), String.t() | nil) :: T.domain_res(result())
-  def execute(%Comment{} = comment, body, %User{} = actor, nil) do
-    operation_id = Ecto.UUID.generate()
-
-    CMS.Gate.with_check(actor, :edit, comment, fn canonical, article ->
-      update_new(canonical, article, body, actor, operation_id)
-    end)
-  end
-
+  @spec execute(Comment.t(), String.t(), User.t(), String.t()) :: T.domain_res(result())
   def execute(%Comment{} = comment, body, %User{} = actor, command_id) do
     command = %Command{
       actor: actor,

@@ -32,7 +32,8 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
         :post,
         article_inner_id(post, community),
         mock_comment("first"),
-        actor, Ecto.UUID.generate()
+        actor,
+        Ecto.UUID.generate()
       )
 
     {:ok, second} =
@@ -41,7 +42,8 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
         :post,
         article_inner_id(post, community),
         mock_comment("second"),
-        actor, Ecto.UUID.generate()
+        actor,
+        Ecto.UUID.generate()
       )
 
     {:ok, outsider} = db_insert(:user)
@@ -160,7 +162,9 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     ~m(post actor first)a = context
     {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
 
-    assert {:ok, %{comment: deleted}} = CMS.Comments.delete_comment(first, actor)
+    assert {:ok, %{comment: deleted}} =
+             CMS.Comments.delete_comment(first, actor, Ecto.UUID.generate())
+
     assert deleted.body_html == Comment.delete_hint()
     refute Repo.get_by(PostSolution, article_id: post.article_id)
     assert Repo.get_by!(CommentLifecycle, comment_id: first.id).state == :deleted
@@ -171,13 +175,13 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     ~m(post actor first second)a = context
     {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
 
-    assert {:ok, _} = CMS.Comments.delete_comment(second, actor)
+    assert {:ok, _} = CMS.Comments.delete_comment(second, actor, Ecto.UUID.generate())
     assert Repo.get_by!(PostSolution, article_id: post.article_id).comment_id == first.id
   end
 
   test "deleted and destroyed targets are rejected before binding writes", context do
     ~m(post actor first second)a = context
-    {:ok, _} = CMS.Comments.delete_comment(first, actor)
+    {:ok, _} = CMS.Comments.delete_comment(first, actor, Ecto.UUID.generate())
 
     assert {:error, %{reason: :comment_deleted}} =
              CMS.Comments.accept_solution(first.id, actor)
@@ -201,7 +205,9 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert post.solution_comment_id == first.inner_id
     assert post.solution_digest == "first"
 
-    {:ok, _} = CMS.Comments.update_comment(first, mock_comment("changed"), actor)
+    {:ok, _} =
+      CMS.Comments.update_comment(first, mock_comment("changed"), actor, Ecto.UUID.generate())
+
     {:ok, post} = CMS.Articles.Response.one(Repo.get!(Article, post.id), nil)
     assert post.solution_digest == "changed"
   end
@@ -253,7 +259,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     [accept_result, delete_result] =
       [
         Task.async(fn -> CMS.Comments.accept_solution(first.id, actor) end),
-        Task.async(fn -> CMS.Comments.delete_comment(first, actor) end)
+        Task.async(fn -> CMS.Comments.delete_comment(first, actor, Ecto.UUID.generate()) end)
       ]
       |> Task.await_many(10_000)
 
@@ -272,7 +278,9 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
     [update_result, replace_result] =
       [
-        Task.async(fn -> CMS.Comments.update_comment(first, mock_comment("updated"), actor) end),
+        Task.async(fn ->
+          CMS.Comments.update_comment(first, mock_comment("updated"), actor, Ecto.UUID.generate())
+        end),
         Task.async(fn -> CMS.Comments.accept_solution(second.id, actor) end)
       ]
       |> Task.await_many(10_000)

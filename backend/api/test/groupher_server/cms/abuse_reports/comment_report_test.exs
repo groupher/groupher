@@ -15,7 +15,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
+      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user, Ecto.UUID.generate())
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -34,8 +34,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
-      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user2)
+      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user2, Ecto.UUID.generate())
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -55,8 +55,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, comment} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
-      assert {:error, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
+      {:ok, comment} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user, Ecto.UUID.generate())
+      assert {:error, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user, Ecto.UUID.generate())
     end
   end
 end

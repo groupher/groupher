@@ -19,8 +19,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.AbuseReports.article(doc2, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.article(doc2, "reason", "attr_info", user2, Ecto.UUID.generate())
 
       variables = %{filter: %{content_type: "DOC", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
@@ -33,8 +33,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.AbuseReports.article(doc2, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.article(doc2, "reason", "attr_info", user2, Ecto.UUID.generate())
 
       variables = %{
         filter: %{content_type: "DOC", content_id: doc.id, page: 1, size: 10}
@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
+      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user, Ecto.UUID.generate())
 
       variables = %{filter: %{content_type: "COMMENT", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)

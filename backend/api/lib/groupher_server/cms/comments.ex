@@ -287,15 +287,13 @@ defmodule GroupherServer.CMS.Comments do
 
   ## Examples
 
-      CMS.Comments.create_comment(:post, post, body, actor)
+      CMS.Comments.create_comment(:post, post, body, actor, command_id)
   """
-  @spec create_comment(T.thread(), T.article(), String.t(), User.t()) ::
-          T.domain_res(Comment.t())
-  def create_comment(thread, article, body, %User{} = user) do
-    create_comment(thread, article, body, user, nil)
-  end
+  @spec create_comment(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  def create_comment(_thread, _article, _body, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @spec create_comment(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
+  @spec create_comment(T.thread(), T.article(), String.t(), User.t(), String.t()) ::
           T.domain_res(Comment.t())
   def create_comment(thread, article, body, %User{} = user, command_id) do
     with {:ok, %{comment: comment}} <-
@@ -309,15 +307,14 @@ defmodule GroupherServer.CMS.Comments do
 
   ## Examples
 
-      CMS.Comments.create_comment(community, :post, post_ref, body, actor)
+      CMS.Comments.create_comment(community, :post, post_ref, body, actor, command_id)
   """
   @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
           T.domain_res(Comment.t())
-  def create_comment(%Community{} = community, thread, article_id, body, %User{} = user) do
-    create_comment(community, thread, article_id, body, user, nil)
-  end
+  def create_comment(%Community{}, _thread, _article_id, _body, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t(), String.t() | nil) ::
+  @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t(), String.t()) ::
           T.domain_res(Comment.t())
   def create_comment(
         %Community{} = community,
@@ -343,18 +340,28 @@ defmodule GroupherServer.CMS.Comments do
 
   ## Examples
 
-      CMS.Comments.create_comment_payload(:post, post, body, actor)
+      CMS.Comments.create_comment_payload(:post, post, body, actor, command_id)
   """
-  @spec create_comment_payload(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
+  @spec create_comment_payload(T.thread(), T.article(), String.t(), User.t()) ::
           T.domain_res(map())
-  def create_comment_payload(thread, article, body, %User{} = user, command_id \\ nil) do
+  def create_comment_payload(_thread, _article, _body, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec create_comment_payload(T.thread(), T.article(), String.t(), User.t(), String.t()) ::
+          T.domain_res(map())
+  def create_comment_payload(thread, article, body, %User{} = user, command_id) do
     CreateComment.execute(thread, article, body, user, command_id)
   end
 
   @doc "Creates a Comment and returns its stable post-commit mutation result."
-  @spec create_comment_result(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
+  @spec create_comment_result(T.thread(), T.article(), String.t(), User.t()) ::
           T.domain_res(map())
-  def create_comment_result(thread, article, body, %User{} = user, command_id \\ nil) do
+  def create_comment_result(_thread, _article, _body, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec create_comment_result(T.thread(), T.article(), String.t(), User.t(), String.t()) ::
+          T.domain_res(map())
+  def create_comment_result(thread, article, body, %User{} = user, command_id) do
     CreateComment.execute(thread, article, body, user, command_id)
     |> CommandResult.build()
   end
@@ -378,20 +385,23 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec update_comment(Comment.t(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(UpdateComment.result())
-  def update_comment(%Comment{} = comment, body, %User{} = user) do
-    update_comment(comment, body, user, nil)
-  end
+  def update_comment(%Comment{}, _body, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @spec update_comment(Comment.t(), String.t(), User.t(), String.t() | nil) ::
+  @spec update_comment(Comment.t(), String.t(), User.t(), String.t()) ::
           T.domain_res(UpdateComment.result())
   def update_comment(%Comment{} = comment, body, %User{} = user, command_id) do
     UpdateComment.execute(comment, body, user, command_id)
   end
 
   @doc "Updates a Comment and returns its stable post-commit mutation result."
-  @spec update_comment_result(Comment.t(), String.t(), User.t(), String.t() | nil) ::
+  @spec update_comment_result(Comment.t(), String.t(), User.t()) :: T.domain_res(map())
+  def update_comment_result(%Comment{}, _body, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec update_comment_result(Comment.t(), String.t(), User.t(), String.t()) ::
           T.domain_res(map())
-  def update_comment_result(%Comment{} = comment, body, %User{} = user, command_id \\ nil) do
+  def update_comment_result(%Comment{} = comment, body, %User{} = user, command_id) do
     comment
     |> UpdateComment.execute(body, user, command_id)
     |> CommandResult.build()
@@ -414,21 +424,22 @@ defmodule GroupherServer.CMS.Comments do
 
       CMS.Comments.delete_comment(comment, actor)
   """
-  @spec delete_comment(Comment.t(), User.t(), String.t() | nil) ::
-          T.domain_res(DeleteComment.result())
-  def delete_comment(%Comment{} = comment, %User{} = user) do
-    delete_comment(comment, user, nil)
-  end
+  @spec delete_comment(Comment.t(), User.t()) :: T.domain_res(DeleteComment.result())
+  def delete_comment(%Comment{}, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @spec delete_comment(Comment.t(), User.t(), String.t() | nil) ::
+  @spec delete_comment(Comment.t(), User.t(), String.t()) ::
           T.domain_res(DeleteComment.result())
   def delete_comment(%Comment{} = comment, %User{} = user, command_id) do
     DeleteComment.execute(comment, user, command_id)
   end
 
   @doc "Deletes a Comment and returns its stable post-commit mutation result."
-  @spec delete_comment_result(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(map())
-  def delete_comment_result(%Comment{} = comment, %User{} = user, command_id \\ nil) do
+  @spec delete_comment_result(Comment.t(), User.t()) :: T.domain_res(map())
+  def delete_comment_result(%Comment{}, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec delete_comment_result(Comment.t(), User.t(), String.t()) :: T.domain_res(map())
+  def delete_comment_result(%Comment{} = comment, %User{} = user, command_id) do
     comment
     |> DeleteComment.execute(user, command_id)
     |> CommandResult.build()
@@ -474,11 +485,10 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.reply_comment(parent_comment, body, actor)
   """
   @spec reply_comment(Comment.t() | T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
-  def reply_comment(comment_or_id, body, %User{} = user) do
-    reply_comment(comment_or_id, body, user, nil)
-  end
+  def reply_comment(_comment_or_id, _body, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
-  @spec reply_comment(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) ::
+  @spec reply_comment(Comment.t() | T.id(), String.t(), User.t(), String.t()) ::
           T.domain_res(Comment.t())
   def reply_comment(comment_or_id, body, %User{} = user, command_id) do
     with {:ok, %{comment: comment}} <-
@@ -492,11 +502,14 @@ defmodule GroupherServer.CMS.Comments do
 
   ## Examples
 
-      CMS.Comments.reply_comment_payload(parent_id, body, actor)
+      CMS.Comments.reply_comment_payload(parent_id, body, actor, command_id)
   """
-  @spec reply_comment_payload(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) ::
+  @spec reply_comment_payload(Comment.t() | T.id(), String.t(), User.t()) :: T.domain_res(map())
+  def reply_comment_payload(_comment_or_id, _body, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec reply_comment_payload(Comment.t() | T.id(), String.t(), User.t(), String.t()) ::
           T.domain_res(map())
-  def reply_comment_payload(comment_or_id, body, user, command_id \\ nil)
 
   def reply_comment_payload(%Comment{} = comment, body, %User{} = user, command_id) do
     ReplyComment.execute(comment, body, user, command_id)
@@ -509,9 +522,12 @@ defmodule GroupherServer.CMS.Comments do
   end
 
   @doc "Replies to a Comment and returns its stable post-commit mutation result."
-  @spec reply_comment_result(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) ::
+  @spec reply_comment_result(Comment.t() | T.id(), String.t(), User.t()) :: T.domain_res(map())
+  def reply_comment_result(_comment_or_id, _body, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec reply_comment_result(Comment.t() | T.id(), String.t(), User.t(), String.t()) ::
           T.domain_res(map())
-  def reply_comment_result(comment_or_id, body, user, command_id \\ nil)
 
   def reply_comment_result(%Comment{} = comment, body, %User{} = user, command_id) do
     comment

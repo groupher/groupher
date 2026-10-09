@@ -56,7 +56,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
     end
 
     test "article report persists at most one article ref", ~m(post other_user)a do
-      {:ok, _post} = CMS.AbuseReports.article(post, "spam", "title", other_user)
+      {:ok, _post} = CMS.AbuseReports.article(post, "spam", "title", other_user, Ecto.UUID.generate())
 
       assert {:ok, report} = ORM.find_by(AbuseReport, %{article_id: post.id})
 

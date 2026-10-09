@@ -37,7 +37,8 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
         :post,
         article_inner_id(post, community),
         mock_comment(),
-        actor, Ecto.UUID.generate()
+        actor,
+        Ecto.UUID.generate()
       )
     end
 
@@ -56,7 +57,8 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                :post,
                article_inner_id(post, community),
                mock_comment("parent"),
-               actor, Ecto.UUID.generate()
+               actor,
+               Ecto.UUID.generate()
              )
 
     reject_job_kind(:audition)
@@ -85,13 +87,14 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                :post,
                article_inner_id(post, community),
                mock_comment("before"),
-               actor, Ecto.UUID.generate()
+               actor,
+               Ecto.UUID.generate()
              )
 
     reject_job_kind(:audition)
 
     assert_raise Ecto.ConstraintError, fn ->
-      CMS.Comments.update_comment(comment, mock_comment("after"), actor)
+      CMS.Comments.update_comment(comment, mock_comment("after"), actor, Ecto.UUID.generate())
     end
 
     persisted = Repo.get!(Comment, comment.id)
@@ -108,7 +111,8 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                :post,
                article_inner_id(post, community),
                mock_comment("before"),
-               actor, Ecto.UUID.generate()
+               actor,
+               Ecto.UUID.generate()
              )
 
     invalid_enqueue = fn _comment ->
@@ -144,7 +148,8 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                :post,
                article_inner_id(post, community),
                mock_comment(),
-               actor, Ecto.UUID.generate()
+               actor,
+               Ecto.UUID.generate()
              )
 
     assert Repo.get!(Comment, comment.id)
@@ -166,7 +171,8 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                :post,
                article_inner_id(post, community),
                mock_comment(),
-               actor, Ecto.UUID.generate()
+               actor,
+               Ecto.UUID.generate()
              )
 
     stats = Repo.get_by!(ArticleStats, article_id: post.article_id, thread: :post)

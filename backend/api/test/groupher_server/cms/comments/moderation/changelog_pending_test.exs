@@ -23,7 +23,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -54,7 +55,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, _} =

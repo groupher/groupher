@@ -151,7 +151,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
   defp create_reply(comment, text, user) do
     body = mock_comment(text)
-    CMS.Comments.reply_comment(comment.id, body, user)
+    CMS.Comments.reply_comment(comment.id, body, user, Ecto.UUID.generate())
   end
 
   defp create_top_comment(community, thread, article, user, floor) do
@@ -159,7 +159,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
     with {:ok, %{inner_id: inner_id}} <-
            CMS.Articles.Bindings.get(%{article_id: article.id}, community) do
-      CMS.Comments.create_comment(community, thread, inner_id, body, user)
+      CMS.Comments.create_comment(community, thread, inner_id, body, user, Ecto.UUID.generate())
     end
   end
 end

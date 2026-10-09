@@ -36,20 +36,10 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
       #=> {:ok, %{comment: %Comment{}, article: article, command_id: id}} | {:error, reason}
   """
   @spec execute(Comment.t(), User.t()) :: T.domain_res(result())
-  def execute(%Comment{} = comment, %User{} = actor) do
-    execute(comment, actor, nil)
-  end
+  def execute(%Comment{}, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Deletes a Comment while binding retries to the supplied command id."
-  @spec execute(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(result())
-  def execute(%Comment{} = comment, %User{} = actor, nil) do
-    operation_id = Ecto.UUID.generate()
-
-    CMS.Gate.with_check(actor, :delete, comment, fn canonical, article ->
-      delete_new(canonical, article, actor, operation_id)
-    end)
-  end
-
+  @spec execute(Comment.t(), User.t(), String.t()) :: T.domain_res(result())
   def execute(%Comment{} = comment, %User{} = actor, command_id) do
     command = %Command{
       actor: actor,

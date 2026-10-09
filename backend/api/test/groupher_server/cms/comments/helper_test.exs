@@ -92,7 +92,8 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       parent_comment = Replies.root_comment(comment)
@@ -107,11 +108,13 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       # 创建回复
-      {:ok, reply_comment} = CMS.Comments.reply_comment(root_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+      {:ok, reply_comment} =
+        CMS.Comments.reply_comment(root_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       # 验证回复的 root_comment_id 已设置
       assert reply_comment.root_comment_id == root_comment.id
@@ -131,7 +134,8 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       # 点赞评论
@@ -157,7 +161,8 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user, Ecto.UUID.generate()
+          user,
+          Ecto.UUID.generate()
         )
 
       # 测试 mark_has_upvoted with nil viewer

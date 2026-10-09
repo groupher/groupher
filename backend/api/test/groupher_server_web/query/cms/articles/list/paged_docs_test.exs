@@ -296,7 +296,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
       {:ok, _} = CMS.Interactions.upvote(doc, user, Ecto.UUID.generate())
       {:ok, _} = CMS.Interactions.collect(doc, user, Ecto.UUID.generate())
-      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user, Ecto.UUID.generate())
 
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
 
