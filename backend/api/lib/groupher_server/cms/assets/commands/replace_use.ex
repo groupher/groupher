@@ -80,6 +80,9 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
 
   defp recover_existing_replacement(article, params, workflow_ref) do
     with {:ok, draft} <- Store.get(article),
+         expected_version when is_integer(expected_version) <-
+           value(params, :expected_draft_version),
+         true <- draft.version == expected_version + 1,
          refs <- Writer.draft_refs(draft.body_draft_id),
          %ArticleAssetRef{} = ref <- Enum.find(refs, &same_locator?(&1, params)),
          true <- ref.asset_id == value(params, :to_asset_id) do
