@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.CMS.Comments.QueryList do
                :post,
                article_inner_id(post, community),
                mock_comment(),
-               actor
+               actor, Ecto.UUID.generate()
              )
 
     stats = Repo.get_by!(ArticleStats, article_id: post.article_id, thread: :post)

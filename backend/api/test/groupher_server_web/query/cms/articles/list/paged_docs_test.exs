@@ -64,9 +64,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
          ~m(guest_conn community doc_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "UPVOTES"}}
 
-      {:ok, _} = CMS.Interactions.upvote(doc_last_week, user)
-      {:ok, _} = CMS.Interactions.upvote(doc_last_week, user2)
-      {:ok, _} = CMS.Interactions.upvote(doc_last_week, user3)
+      {:ok, _} = CMS.Interactions.upvote(doc_last_week, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(doc_last_week, user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(doc_last_week, user3, Ecto.UUID.generate())
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
@@ -79,9 +79,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       variables = %{filter: %{page: 1, size: 20, order: "COMMENTS"}}
       doc_id = article_inner_id(doc_last_week, community)
 
-      {:ok, _} = CMS.Comments.create_comment(community, :doc, doc_id, mock_comment(), user)
-      {:ok, _} = CMS.Comments.create_comment(community, :doc, doc_id, mock_comment(), user2)
-      {:ok, _} = CMS.Comments.create_comment(community, :doc, doc_id, mock_comment(), user3)
+      {:ok, _} = CMS.Comments.create_comment(community, :doc, doc_id, mock_comment(), user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Comments.create_comment(community, :doc, doc_id, mock_comment(), user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.Comments.create_comment(community, :doc, doc_id, mock_comment(), user3, Ecto.UUID.generate())
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
@@ -294,8 +294,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
       track_view(doc, user)
 
-      {:ok, _} = CMS.Interactions.upvote(doc, user)
-      {:ok, _} = CMS.Interactions.collect(doc, user)
+      {:ok, _} = CMS.Interactions.upvote(doc, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.collect(doc, user, Ecto.UUID.generate())
       {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
 
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
@@ -373,7 +373,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           :doc,
           article_inner_id(doc_last_week, community),
           mock_comment(),
-          user2
+          user2, Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
@@ -394,7 +394,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           :doc,
           article_inner_id(doc_last_year, community),
           mock_comment(),
-          user2
+          user2, Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
@@ -418,7 +418,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           :doc,
           article_inner_id(doc, community),
           mock_comment(),
-          doc.author.user
+          doc.author.user, Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)

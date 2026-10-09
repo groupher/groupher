@@ -79,7 +79,7 @@ defmodule GroupherServer.Test.Accounts.Publish.Post do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
+          CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
         acc ++ [comment]
       end)

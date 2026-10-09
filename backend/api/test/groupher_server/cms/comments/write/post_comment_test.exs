@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, state} = CMS.Comments.comments_state(:post, post.id)
@@ -62,7 +62,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #       user_id: user.id
     #     })
 
-    #   {:ok, _} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
+    #   {:ok, _} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user, Ecto.UUID.generate())
 
     #   {:ok, subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
@@ -81,7 +81,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -90,7 +90,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, state} = CMS.Comments.comments_state(:post, post.id, user)
@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user2
+          user2, Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -117,7 +117,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user3
+          user3, Ecto.UUID.generate()
         )
 
       {:ok, state} = CMS.Comments.comments_state(:post, post.id, user)
@@ -137,7 +137,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, post_comment_2} =
@@ -146,7 +146,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, comments} =
@@ -163,7 +163,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       assert comment.meta |> Map.from_struct() |> Map.delete(:id) == @default_comment_meta
@@ -178,7 +178,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user2
+          user2, Ecto.UUID.generate()
         )
 
       post_after = Repo.get!(CMS.Model.Article, post.article_id)
@@ -201,7 +201,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          author
+          author, Ecto.UUID.generate()
         )
 
       article_after = Repo.get!(CMS.Model.Article, post.article_id)
@@ -226,7 +226,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       article = Repo.get!(CMS.Model.Article, post.article_id)
@@ -257,7 +257,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       article = Repo.get!(CMS.Model.Article, post.article_id)
@@ -271,10 +271,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      # {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
+      # {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user, Ecto.UUID.generate())
       {:ok, %{comment: updated_comment}} =
         CMS.Comments.update_comment(comment, mock_comment("updated content"), user)
 
@@ -290,7 +290,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, post_comment2} =
@@ -299,7 +299,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, post_comment} = ORM.find(Comment, post_comment.id)
@@ -316,7 +316,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, post_comment2} =
@@ -325,7 +325,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, post_comment} = ORM.find(Comment, post_comment.id)
@@ -344,7 +344,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, state} = CMS.Comments.comments_state(:post, post.article_id)
@@ -360,7 +360,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -369,7 +369,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, state} = CMS.Comments.comments_state(:post, post.article_id)
@@ -385,7 +385,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -394,7 +394,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user2
+          user2, Ecto.UUID.generate()
         )
 
       {:ok, state} = CMS.Comments.comments_state(:post, post.article_id)
@@ -413,10 +413,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      CMS.Interactions.upvote(comment, user)
+      CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
 
@@ -432,8 +432,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #       user_id: user.id
     #     })
 
-    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
-    #   CMS.Interactions.upvote(comment, user)
+    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user, Ecto.UUID.generate())
+    #   CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
     #   {:ok, subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
@@ -457,11 +457,11 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Interactions.upvote(comment, user)
-      {:ok, _} = CMS.Interactions.upvote(comment, user)
+      {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       assert 1 == length(comment.upvotes)
@@ -474,12 +474,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       author_user = post.author
 
-      CMS.Interactions.upvote(comment, author_user)
+      CMS.Interactions.upvote(comment, author_user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       {:ok, comment} = InteractionResponse.one(comment, author_user)
@@ -494,20 +494,20 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       author_user = post.author
 
-      {:ok, comment} = CMS.Interactions.upvote(comment, author_user)
+      {:ok, comment} = CMS.Interactions.upvote(comment, author_user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, author_user)
       assert comment.meta.is_article_author_upvoted
 
-      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user2)
       assert comment.meta.is_article_author_upvoted
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user2)
       assert comment.meta.is_article_author_upvoted
     end
@@ -520,10 +520,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      {:ok, comment} = CMS.Interactions.upvote(comment, user)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user)
 
       assert comment.viewer_has_upvoted
@@ -537,17 +537,17 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Interactions.upvote(comment, user)
-      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
+      {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user2)
 
       assert comment.viewer_has_upvoted
       assert CMS.Interactions.viewer_state(comment, user).viewer_has_upvoted
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user2)
 
       refute comment.viewer_has_upvoted
@@ -561,11 +561,11 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      CMS.Interactions.upvote(comment, user)
-      {:ok, _} = CMS.Interactions.upvote(comment, user)
+      CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
     end
 
     test "upvote comment should inc the comment's upvotes_count",
@@ -576,14 +576,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert comment.upvotes_count == 0
 
-      {:ok, _} = CMS.Interactions.upvote(comment, user)
-      {:ok, _} = CMS.Interactions.upvote(comment, user2)
+      {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id)
       {:ok, comment} = InteractionResponse.one(comment, nil)
@@ -597,15 +597,15 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      CMS.Interactions.upvote(comment, user)
+      CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       assert 1 == length(comment.upvotes)
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
     end
@@ -617,14 +617,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
     end
@@ -637,15 +637,15 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      {:ok, replied_comment} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
+      {:ok, replied_comment} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.Interactions.upvote(parent_comment, user)
-      {:ok, _} = CMS.Interactions.upvote(replied_comment, user)
-      {:ok, _} = CMS.Interactions.upvote(replied_comment, user2)
-      {:ok, _} = CMS.Interactions.upvote(replied_comment, user3)
+      {:ok, _} = CMS.Interactions.upvote(parent_comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(replied_comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(replied_comment, user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(replied_comment, user3, Ecto.UUID.generate())
 
       filter = %{page: 1, size: 20}
       {:ok, paged_comments} = CMS.Comments.paged_comments(:post, post.id, filter, :replies)
@@ -655,7 +655,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert parent.upvotes_count == 1
       assert reply.upvotes_count == 3
 
-      {:ok, _} = CMS.Interactions.undo_upvote(replied_comment, user2)
+      {:ok, _} = CMS.Interactions.undo_upvote(replied_comment, user2, Ecto.UUID.generate())
       {:ok, paged_comments} = CMS.Comments.paged_comments(:post, post.id, filter, :replies)
 
       parent = paged_comments.entries |> List.first()
@@ -673,7 +673,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -697,7 +697,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Comments.fold_comment(comment.id, user)
@@ -724,7 +724,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -747,7 +747,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
@@ -765,7 +765,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
             :post,
             article_inner_id(post, community),
             mock_comment(),
-            user
+            user, Ecto.UUID.generate()
           )
 
         {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
@@ -777,7 +777,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       assert {:error,
@@ -792,7 +792,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[article comment report/unreport]" do
     #
     # test "user can report a comment", ~m(user post)a do
-    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
+    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user, Ecto.UUID.generate())
     #   {:ok, comment} = ORM.find(Comment, comment.id)
 
     #   {:ok, comment} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
@@ -801,7 +801,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     #
     # test "user can unreport a comment", ~m(user post)a do
-    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
+    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user, Ecto.UUID.generate())
     #   {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
     #   {:ok, comment} = ORM.find(Comment, comment.id)
 
@@ -816,7 +816,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
@@ -851,7 +851,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       assert not comment.is_folded
@@ -873,7 +873,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       assert not comment.is_folded
@@ -903,7 +903,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
             :post,
             article_inner_id(post, community),
             mock_comment(),
-            new_user
+            new_user, Ecto.UUID.generate()
           )
 
         acc ++ [comment]
@@ -915,7 +915,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -924,7 +924,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, results} =
@@ -947,7 +947,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
               :post,
               article_inner_id(post, community),
               mock_comment(),
-              user
+              user, Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -983,7 +983,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
             :post,
             article_inner_id(post, community),
             mock_comment(),
-            user
+            user, Ecto.UUID.generate()
           )
 
         acc ++ [comment]
@@ -995,7 +995,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, random_comment_2} =
@@ -1004,7 +1004,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, pined_comment_1} = CMS.Comments.pin_comment(random_comment_1.id, user)
@@ -1037,7 +1037,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
             :post,
             article_inner_id(post, community),
             mock_comment(),
-            user
+            user, Ecto.UUID.generate()
           )
 
         acc ++ [comment]
@@ -1049,7 +1049,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, random_comment_2} =
@@ -1058,7 +1058,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, pined_comment_1} = CMS.Comments.pin_comment(random_comment_1.id, user)
@@ -1092,7 +1092,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
               :post,
               article_inner_id(post, community),
               mock_comment(),
-              user
+              user, Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -1136,7 +1136,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
               :post,
               article_inner_id(post, community),
               mock_comment(),
-              user
+              user, Ecto.UUID.generate()
             )
 
           CMS.Comments.fold_comment(comment.id, user)
@@ -1176,7 +1176,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
               :post,
               article_inner_id(post, community),
               mock_comment(),
-              user
+              user, Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -1207,7 +1207,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -1216,7 +1216,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, comment} =
@@ -1225,7 +1225,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -1234,7 +1234,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -1243,7 +1243,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, stats} = CMS.ArticleStats.fetch(:post, post.article_id)
@@ -1267,7 +1267,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
               :post,
               article_inner_id(post, community),
               mock_comment(),
-              user
+              user, Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -1291,7 +1291,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user2
+          user2, Ecto.UUID.generate()
         )
 
       assert not comment.is_article_author
@@ -1304,7 +1304,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          author_user
+          author_user, Ecto.UUID.generate()
         )
 
       assert comment.is_article_author
@@ -1319,7 +1319,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Articles.lock_comments(post.id, user, community: community)
@@ -1330,7 +1330,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
@@ -1343,7 +1343,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
     end
 
@@ -1354,18 +1354,18 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _} = CMS.Articles.lock_comments(post.id, user, community: community)
 
-      {:error, reason} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
+      {:error, reason} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
       {:ok, _} = CMS.Articles.undo_lock_comments(post.id, user, community: community)
-      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
+      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
     end
   end
 
@@ -1380,7 +1380,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       assert not post_comment.is_for_question
@@ -1398,7 +1398,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
@@ -1409,7 +1409,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       assert post_comment.is_for_question
@@ -1426,7 +1426,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, comment2} =
@@ -1435,7 +1435,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, comment3} =
@@ -1444,7 +1444,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Articles.set_cat(post.article_id, @article_cat.qa, user, community.id)

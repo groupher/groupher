@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
   describe "[article comment report/unreport]" do
     test "report a comment should have a abuse report record", ~m(user community post)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
 
@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
     test "different user report a comment should have same report with different report cases",
          ~m(user user2 community post)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
       {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user2)
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.CommentReport do
 
     test "same user can not report a comment twice", ~m(user community post)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, comment} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
       assert {:error, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)

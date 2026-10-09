@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
   test "can get basic comments state", ~m(guest_conn user_conn community post user)a do
     {:ok, _} =
-      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
+      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
     variables = %{
       article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"}
@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     thread = :post
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+      CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
     variables = %{comment: comment_path(community, post, :post, comment)}
     results = guest_conn |> gq_query(@query, variables)
@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     thread = :post
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+      CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
     changed_floor = comment.floor + 100
     {:ok, comment} = ORM.update(comment, %{floor: changed_floor})
@@ -74,10 +74,10 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     thread = :post
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+      CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
-    {:ok, _} = CMS.Interactions.upvote(comment, user)
-    {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user)
+    {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+    {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user, Ecto.UUID.generate())
 
     variables = %{comment: comment_path(community, post, :post, comment)}
     results = user_conn |> gq_query(@query, variables)
@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       thread = :post
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"}
@@ -108,13 +108,13 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+          CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
         acc ++ [comment]
       end)
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user2)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"}
@@ -142,7 +142,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               thread,
               article_inner_id(post, community),
               mock_comment("comment #{i}"),
-              user
+              user, Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -153,10 +153,10 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       assert random_comment.meta.is_legal
 
       {:ok, replied_comment_1} =
-        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -197,7 +197,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               thread,
               article_inner_id(post, community),
               mock_comment("comment #{i}"),
-              user
+              user, Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -206,10 +206,10 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
 
       {:ok, replied_comment_1} =
-        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -242,7 +242,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
             thread,
             article_inner_id(post, community),
             mock_comment("comment #{i}"),
-            user
+            user, Ecto.UUID.generate()
           )
 
         acc ++ [comment]
@@ -254,14 +254,14 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment("parent_comment"),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, replied_comment_1} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -296,7 +296,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, value} =
-          CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+          CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
         acc ++ [value]
       end)
@@ -319,20 +319,20 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+          CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
         acc ++ [comment]
       end)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, pinned_comment} = CMS.Comments.pin_comment(comment.id, user)
 
       Process.sleep(1000)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment.id, user)
 
@@ -367,7 +367,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+          CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
         acc ++ [comment]
       end)
@@ -376,7 +376,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       post_author = stable.author.user
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _pinned_comment} = CMS.Comments.pin_comment(comment.id, user)
 
@@ -388,7 +388,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
           thread,
           article_inner_id(post, community),
           mock_comment("solution"),
-          post_author
+          post_author, Ecto.UUID.generate()
         )
 
       {:ok, solution_comment} = CMS.Comments.accept_solution(comment.id, post_author)
@@ -396,7 +396,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       Process.sleep(1000)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _pinned_comment2} = CMS.Comments.pin_comment(comment.id, user)
 
@@ -420,7 +420,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       Enum.reduce(1..total_count, [], fn _, acc ->
         {:ok, comment} =
-          CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+          CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
         Process.sleep(1000)
         acc ++ [comment]
@@ -442,17 +442,17 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       thread = :post
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       Process.sleep(1000)
 
       {:ok, _comment2} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       Process.sleep(1000)
 
       {:ok, comment3} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -472,17 +472,17 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       thread = :post
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       Process.sleep(1000)
 
       {:ok, _comment2} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       Process.sleep(1000)
 
       {:ok, comment3} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -502,24 +502,24 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       thread = :post
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user)
-      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user2)
+      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user, Ecto.UUID.generate())
+      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user2, Ecto.UUID.generate())
       Process.sleep(1000)
 
       {:ok, comment2} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment2.id, mock_comment(), user)
-      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment2.id, mock_comment(), user2)
+      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment2.id, mock_comment(), user, Ecto.UUID.generate())
+      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment2.id, mock_comment(), user2, Ecto.UUID.generate())
       Process.sleep(1000)
 
       {:ok, comment3} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment3.id, mock_comment(), user)
-      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment3.id, mock_comment(), user2)
+      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment3.id, mock_comment(), user, Ecto.UUID.generate())
+      {:ok, _reply_comment} = CMS.Comments.reply_comment(comment3.id, mock_comment(), user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -546,7 +546,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               thread,
               article_inner_id(post, community),
               mock_comment("comment #{i}"),
-              user
+              user, Ecto.UUID.generate()
             )
 
           Process.sleep(1000)
@@ -555,9 +555,9 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       upvote_comment = all_comment |> Enum.at(3)
       upvote_comment2 = all_comment |> Enum.at(4)
-      {:ok, _} = CMS.Interactions.upvote(upvote_comment, user)
-      {:ok, _} = CMS.Interactions.upvote(upvote_comment2, user)
-      {:ok, _} = CMS.Interactions.upvote(upvote_comment2, user2)
+      {:ok, _} = CMS.Interactions.upvote(upvote_comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(upvote_comment2, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(upvote_comment2, user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -588,19 +588,19 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               thread,
               article_inner_id(post, community),
               mock_comment("comment #{i}"),
-              user2
+              user2, Ecto.UUID.generate()
             )
 
           acc ++ [comment]
         end)
 
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
-      {:ok, _} = CMS.Interactions.upvote(random_comment, author_user)
+      {:ok, _} = CMS.Interactions.upvote(random_comment, author_user, Ecto.UUID.generate())
 
       {:ok, author_comment} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), author_user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), author_user, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.Interactions.upvote(author_comment, author_user)
+      {:ok, _} = CMS.Interactions.upvote(author_comment, author_user, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -637,7 +637,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               thread,
               article_inner_id(post, community),
               mock_comment("comment #{i}"),
-              user
+              user, Ecto.UUID.generate()
             )
 
           Process.sleep(1000)
@@ -647,9 +647,9 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       comment = all_comment |> Enum.at(0)
       comment2 = all_comment |> Enum.at(1)
 
-      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user2)
-      {:ok, _} = CMS.Interactions.emotion(comment2, :beer, user2)
+      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(comment2, :beer, user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -702,7 +702,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               thread,
               article_inner_id(post, community),
               mock_comment("comment #{i}"),
-              user
+              user, Ecto.UUID.generate()
             )
 
           Process.sleep(1000)
@@ -712,8 +712,8 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       comment = all_comment |> Enum.at(0)
       comment2 = all_comment |> Enum.at(1)
 
-      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(comment2, :downvote, user2)
+      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(comment2, :downvote, user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -741,7 +741,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               thread,
               article_inner_id(post, community),
               mock_comment("comment #{i}"),
-              user
+              user, Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -749,7 +749,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
 
-      {:ok, _} = CMS.Interactions.upvote(random_comment, user)
+      {:ok, _} = CMS.Interactions.upvote(random_comment, user, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: "POST"},
@@ -776,16 +776,16 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         {:ok, new_user} = db_insert(:user)
 
         {:ok, comment} =
-          CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), new_user)
+          CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), new_user, Ecto.UUID.generate())
 
         acc ++ [comment]
       end)
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(post, community), community: community.slug, thread: thread},
@@ -809,17 +809,17 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       author_user = post.author
 
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, thread, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       Enum.reduce(1..total_count, [], fn i, acc ->
         {:ok, reply_comment} =
-          CMS.Comments.reply_comment(parent_comment.id, mock_comment("reply #{i}"), user2)
+          CMS.Comments.reply_comment(parent_comment.id, mock_comment("reply #{i}"), user2, Ecto.UUID.generate())
 
         acc ++ [reply_comment]
       end)
 
       {:ok, author_reply_comment} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment("author reply"), author_user)
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment("author reply"), author_user, Ecto.UUID.generate())
 
       variables = %{
         comment: comment_path(community, post, :post, parent_comment),

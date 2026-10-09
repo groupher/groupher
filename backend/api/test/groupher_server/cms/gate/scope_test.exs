@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     {community, post, _attrs, author} = mock_article(:post, preload: [author: :user])
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), author)
+      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), author, Ecto.UUID.generate())
 
     assert comment.community_id == community.id
 

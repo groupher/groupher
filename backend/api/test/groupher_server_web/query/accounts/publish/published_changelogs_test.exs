@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.Query.Accounts.Publish.Changelogs do
               :changelog,
               article_inner_id(changelog, community),
               mock_comment(),
-              user
+              user, Ecto.UUID.generate()
             )
 
           acc ++ [comment]

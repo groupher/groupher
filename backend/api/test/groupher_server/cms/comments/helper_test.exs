@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       parent_comment = Replies.root_comment(comment)
@@ -107,11 +107,11 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       # 创建回复
-      {:ok, reply_comment} = CMS.Comments.reply_comment(root_comment.id, mock_comment(), user2)
+      {:ok, reply_comment} = CMS.Comments.reply_comment(root_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       # 验证回复的 root_comment_id 已设置
       assert reply_comment.root_comment_id == root_comment.id
@@ -131,11 +131,11 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       # 点赞评论
-      {:ok, _} = CMS.Interactions.upvote(comment, user2)
+      {:ok, _} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
 
       # 重新加载评论以获取更新的 meta 字段
       {:ok, updated_comment} = ORM.find(comment.__struct__, comment.id)
@@ -157,7 +157,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       # 测试 mark_has_upvoted with nil viewer

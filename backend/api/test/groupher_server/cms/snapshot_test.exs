@@ -68,9 +68,9 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
       {:ok, user3} = db_insert(:user, nickname: "third nickname")
       {community, post, _attrs, _author} = mock_article(:post)
 
-      {:ok, _} = CMS.Interactions.upvote(post, user1)
-      {:ok, _} = CMS.Interactions.upvote(post, user2)
-      {:ok, _} = CMS.Interactions.upvote(post, user3)
+      {:ok, _} = CMS.Interactions.upvote(post, user1, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(post, user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(post, user3, Ecto.UUID.generate())
 
       {:ok, first_page} =
         CMS.Articles.page(:post, %{
@@ -229,7 +229,7 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
       {community, post, _attrs, user} = mock_article(:post)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment("fresh"), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment("fresh"), user, Ecto.UUID.generate())
 
       snapshot = %{
         id: comment.id,
@@ -249,7 +249,7 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
       body = String.duplicate("文", 121)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(body), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(body), user, Ecto.UUID.generate())
 
       assert [fresh] =
                Snapshot.comments(
@@ -272,7 +272,7 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
       {community, post, _attrs, user} = mock_article(:post)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment("fresh"), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment("fresh"), user, Ecto.UUID.generate())
 
       Cache.put(:snapshot, "snapshot:comment:post:#{comment.id}", %{
         id: comment.id,
@@ -308,7 +308,7 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
       {community, post, _attrs, user} = mock_article(:post)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment("fresh"), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment("fresh"), user, Ecto.UUID.generate())
 
       {:ok, _deleted_lifecycle} = Lifecycle.transition(comment.id, :deleted)
 

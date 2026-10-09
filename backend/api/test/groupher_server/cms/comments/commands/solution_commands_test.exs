@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
         :post,
         article_inner_id(post, community),
         mock_comment("first"),
-        actor
+        actor, Ecto.UUID.generate()
       )
 
     {:ok, second} =
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
         :post,
         article_inner_id(post, community),
         mock_comment("second"),
-        actor
+        actor, Ecto.UUID.generate()
       )
 
     {:ok, outsider} = db_insert(:user)

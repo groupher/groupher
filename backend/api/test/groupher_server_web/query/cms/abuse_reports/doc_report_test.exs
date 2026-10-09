@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
 
     test "support comment", ~m(guest_conn community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
 

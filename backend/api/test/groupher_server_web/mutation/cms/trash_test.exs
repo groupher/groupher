@@ -102,7 +102,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
   test "permanent deletion removes content but leaves the item queryable until that action",
        ~m(community post owner owner_conn)a do
-    {:ok, _} = CMS.Interactions.emotion(post, :beer, owner)
+    {:ok, _} = CMS.Interactions.emotion(post, :beer, owner, Ecto.UUID.generate())
 
     ArticleStats
     |> Repo.get_by!(thread: :post, article_id: post.id)

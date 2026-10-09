@@ -89,7 +89,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
         :post,
         article_inner_id(post, community),
         mock_comment(),
-        user
+        user, Ecto.UUID.generate()
       )
 
     {:ok, second} =
@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
         :post,
         article_inner_id(post, community),
         mock_comment(),
-        user
+        user, Ecto.UUID.generate()
       )
 
     article = %{
@@ -143,7 +143,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
         :post,
         article_inner_id(post, community),
         mock_comment(),
-        user
+        user, Ecto.UUID.generate()
       )
 
     assert {:ok,
@@ -204,8 +204,8 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
       |> Map.from_struct()
       |> Map.put(:community, community)
 
-    assert {:ok, _} = CMS.Interactions.upvote(post, user)
-    assert {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
+    assert {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
+    assert {:ok, _} = CMS.Interactions.emotion(post, :beer, user, Ecto.UUID.generate())
 
     assert %{
              upvotes_count: 1,
@@ -227,7 +227,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
       |> Map.from_struct()
       |> Map.put(:community, community)
 
-    assert {:ok, _} = CMS.Interactions.upvote(post, user)
+    assert {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
 
     assert %{upvotes_count: 1, viewer_has_upvoted: false} =
              CMS.Interactions.viewer_state(post, nil)
@@ -258,7 +258,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
         :post,
         article_inner_id(post, community),
         mock_comment(),
-        user
+        user, Ecto.UUID.generate()
       )
 
     states = CMS.Interactions.viewer_states([post, comment], user)
@@ -278,11 +278,11 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
         :post,
         article_inner_id(post, community),
         mock_comment(),
-        user
+        user, Ecto.UUID.generate()
       )
 
-    assert {:ok, _} = CMS.Interactions.upvote(post, user)
-    assert {:ok, _} = CMS.Interactions.upvote(comment, user)
+    assert {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
+    assert {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
     post_key = {:post, post.id}
     comment_key = {:comment, comment.id}

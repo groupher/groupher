@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{
@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
@@ -135,7 +135,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
@@ -162,7 +162,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
@@ -190,7 +190,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{
@@ -212,7 +212,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       comment_path = comment_path(community, changelog, :changelog, comment)
@@ -244,10 +244,10 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Interactions.emotion(comment, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(comment, :beer, user, Ecto.UUID.generate())
 
       variables = %{
         comment: comment_path(community, changelog, :changelog, comment),
@@ -267,7 +267,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       comment_path = comment_path(community, changelog, :changelog, comment)
@@ -395,7 +395,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
@@ -412,7 +412,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
@@ -432,7 +432,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
@@ -451,7 +451,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Comments.pin_comment(comment.id, user)

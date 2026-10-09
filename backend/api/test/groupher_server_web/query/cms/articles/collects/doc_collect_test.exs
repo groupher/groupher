@@ -16,8 +16,8 @@ defmodule GroupherServer.Test.Query.Collects.DocCollect do
   describe "[collect users]" do
     test "guest can get collected users list after collect a doc",
          ~m(guest_conn community doc user user2)a do
-      {:ok, _} = CMS.Interactions.collect(doc, user)
-      {:ok, _} = CMS.Interactions.collect(doc, user2)
+      {:ok, _} = CMS.Interactions.collect(doc, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.collect(doc, user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{inner_id: article_inner_id(doc, community), community: community.slug, thread: "DOC"},

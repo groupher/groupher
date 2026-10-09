@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
           :changelog,
           article_inner_id(changelog, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)

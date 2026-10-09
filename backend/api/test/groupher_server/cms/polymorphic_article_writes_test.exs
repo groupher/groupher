@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
   describe "business writes keep polymorphic refs consistent" do
     test "create_comment persists only the matching article ref", ~m(community post user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
+        CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id)
 
@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
     end
 
     test "upvote persists only the matching article ref", ~m(post user)a do
-      {:ok, _post} = CMS.Interactions.upvote(post, user)
+      {:ok, _post} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
 
       assert {:ok, upvote} =
                ORM.find_by(ArticleUpvote, %{user_id: user.id, thread: :post, article_id: post.id})
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
     end
 
     test "collect persists only the matching article ref", ~m(post user)a do
-      {:ok, _collect} = CMS.Interactions.collect(post, user)
+      {:ok, _collect} = CMS.Interactions.collect(post, user, Ecto.UUID.generate())
 
       assert {:ok, collect} =
                ORM.find_by(ArticleCollect, %{user_id: user.id, thread: :post, article_id: post.id})

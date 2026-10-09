@@ -197,10 +197,10 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     {_community, post, _attrs, user} = mock_article(:post)
     {:ok, other_user} = db_insert(:user)
 
-    assert {:ok, _} = CMS.Interactions.emotion(post, :heart, other_user)
+    assert {:ok, _} = CMS.Interactions.emotion(post, :heart, other_user, Ecto.UUID.generate())
     assert {:ok, item} = CMS.Articles.trash(post, user)
 
-    assert {:error, _reason} = CMS.Interactions.emotion(post, :beer, other_user)
+    assert {:error, _reason} = CMS.Interactions.emotion(post, :beer, other_user, Ecto.UUID.generate())
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
     refute Repo.get(CMS.Model.Article, post.article_id)
@@ -229,7 +229,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                :post,
                article_inner_id(post, community),
                body,
-               user
+               user, Ecto.UUID.generate()
              )
 
     assert {:ok, {1, nil}} = CMS.ArtimentMentions.sync(comment)

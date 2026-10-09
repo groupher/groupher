@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
         :post,
         article_inner_id(post, community),
         mock_comment(),
-        actor
+        actor, Ecto.UUID.generate()
       )
     end
 
@@ -56,13 +56,13 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                :post,
                article_inner_id(post, community),
                mock_comment("parent"),
-               actor
+               actor, Ecto.UUID.generate()
              )
 
     reject_job_kind(:audition)
 
     assert_raise Ecto.ConstraintError, fn ->
-      CMS.Comments.reply_comment(parent.id, mock_comment("reply"), actor)
+      CMS.Comments.reply_comment(parent.id, mock_comment("reply"), actor, Ecto.UUID.generate())
     end
 
     assert Repo.aggregate(
@@ -85,7 +85,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                :post,
                article_inner_id(post, community),
                mock_comment("before"),
-               actor
+               actor, Ecto.UUID.generate()
              )
 
     reject_job_kind(:audition)
@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                :post,
                article_inner_id(post, community),
                mock_comment("before"),
-               actor
+               actor, Ecto.UUID.generate()
              )
 
     invalid_enqueue = fn _comment ->
@@ -144,7 +144,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                :post,
                article_inner_id(post, community),
                mock_comment(),
-               actor
+               actor, Ecto.UUID.generate()
              )
 
     assert Repo.get!(Comment, comment.id)
@@ -166,7 +166,7 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
                :post,
                article_inner_id(post, community),
                mock_comment(),
-               actor
+               actor, Ecto.UUID.generate()
              )
 
     stats = Repo.get_by!(ArticleStats, article_id: post.article_id, thread: :post)

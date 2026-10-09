@@ -63,12 +63,12 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ReadStateContractTest do
     {community, post, _attrs, user} = mock_article(:post)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
+      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
-    assert {:ok, _} = CMS.Interactions.upvote(post, user)
-    assert {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
-    assert {:ok, _} = CMS.Interactions.upvote(comment, user)
-    assert {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user)
+    assert {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
+    assert {:ok, _} = CMS.Interactions.emotion(post, :beer, user, Ecto.UUID.generate())
+    assert {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+    assert {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user, Ecto.UUID.generate())
 
     article = %{
       "community" => community.slug,
@@ -153,7 +153,7 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ReadStateContractTest do
     {community, post, _attrs, user} = mock_article(:post)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user)
+      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), user, Ecto.UUID.generate())
 
     article = %{
       "community" => community.slug,

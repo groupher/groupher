@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          post_author
+          post_author, Ecto.UUID.generate()
         )
 
       questioner_conn = simu_conn(:user, post_author)
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          post_author
+          post_author, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, post, :post, comment)}
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          post_author
+          post_author, Ecto.UUID.generate()
         )
 
       {:ok, comment} = CMS.Comments.accept_solution(comment.id, post_author)
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          post_author
+          post_author, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, post, :post, comment)}

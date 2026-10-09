@@ -8,9 +8,9 @@ defmodule GroupherServer.Test.CMS.Comments.AuthorRelationStateTest do
     {community, post, _attrs, article_author} = mock_article(:post, preload: [author: :user])
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), article_author)
+      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), article_author, Ecto.UUID.generate())
 
-    assert {:ok, _} = CMS.Interactions.upvote(comment, article_author)
+    assert {:ok, _} = CMS.Interactions.upvote(comment, article_author, Ecto.UUID.generate())
 
     {upvoted_ids, queries} = capture_queries(fn -> AuthorRelationState.upvoted_ids([comment]) end)
 

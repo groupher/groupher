@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{
@@ -152,7 +152,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{
@@ -184,7 +184,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, post, :post, comment)}
@@ -216,7 +216,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{
@@ -251,7 +251,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, post, :post, comment)}
@@ -278,7 +278,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, post, :post, comment)}
@@ -307,7 +307,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{
@@ -338,7 +338,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{
@@ -374,7 +374,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, post, :post, comment), emotion: "BEER"}
@@ -392,7 +392,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       beer_variables = %{comment: comment_path(community, post, :post, comment), emotion: "BEER"}
@@ -422,10 +422,10 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Interactions.emotion(comment, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(comment, :beer, user, Ecto.UUID.generate())
 
       variables = %{comment: comment_path(community, post, :post, comment), emotion: "BEER"}
       comment = owner_conn |> gq_mutation(S.Comment.m(:undo_emotion_to_comment), variables)
@@ -441,7 +441,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       _comment =
@@ -496,7 +496,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} =
@@ -603,7 +603,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, post, :post, comment)}
@@ -620,7 +620,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       variables = %{comment: comment_path(community, post, :post, comment)}
@@ -640,7 +640,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
@@ -659,7 +659,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
           :post,
           article_inner_id(post, community),
           mock_comment(),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, _} = CMS.Comments.pin_comment(comment.id, user)

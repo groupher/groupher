@@ -268,7 +268,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
           plate_body([
             block("block-a", [text(~s(<a href="#{@site_host}/blog/#{blog.id}">blog</a>))])
           ]),
-          user
+          user, Ecto.UUID.generate()
         )
 
       {:ok, {1, nil}} = ArtimentMentions.sync(comment)
@@ -308,7 +308,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
               :blog,
               article_inner_id(blog, community),
               plate_body([block("target-#{index}", [text("target #{index}")])]),
-              user
+              user, Ecto.UUID.generate()
             )
 
           comment
@@ -329,7 +329,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
           :post,
           article_inner_id(post, community),
           comment_body.([List.first(target_comments)]),
-          user
+          user, Ecto.UUID.generate()
         )
 
       # Warm the replace path so both measurements delete and insert existing facts.

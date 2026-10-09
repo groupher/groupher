@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access.WithCheck do
     {community, post, _, actor} = mock_article(:post, preload: [author: :user])
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), actor)
+      CMS.Comments.create_comment(community, :post, article_inner_id(post, community), mock_comment(), actor, Ecto.UUID.generate())
 
     {:ok, ~m(comment actor)a}
   end
