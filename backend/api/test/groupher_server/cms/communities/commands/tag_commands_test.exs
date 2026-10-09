@@ -53,13 +53,21 @@ defmodule GroupherServer.Test.CMS.Communities.Commands.TagCommandsTest do
   end
 
   test "set tag is a Gate-admitted one-shot command", ~m(community post user)a do
-    {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "set-group"})
+    {:ok, group} =
+      CMS.Communities.create_tag_group(
+        community,
+        :post,
+        %{title: "set-group"},
+        user,
+        Ecto.UUID.generate()
+      )
 
     attrs =
       mock_attrs(:community_tag)
       |> Map.merge(%{group_id: group.id, title: "Set Tag", slug: "set-tag"})
 
-    {:ok, tag} = CMS.Communities.create_tag(community, :post, attrs, user)
+    {:ok, tag} =
+      CMS.Communities.create_tag(community, :post, attrs, user, Ecto.UUID.generate())
 
     assert {:ok, _updated} = SetTag.execute(post, tag.id, user, Ecto.UUID.generate())
   end

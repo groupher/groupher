@@ -26,8 +26,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
   describe "[mutation cms tag]" do
     @create_tag_query S.CommunityTag.m(:create_community_tag)
     test "create tag with valid attrs, has default POST thread and default posts",
-         ~m(community)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "awesome"})
+         ~m(community user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -61,8 +68,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
       assert belong_community["slug"] == community.slug
     end
 
-    test "create tag with extra", ~m(community)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "awesome"})
+    test "create tag with extra", ~m(community user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -88,8 +102,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
       assert created["extra"] == ["menuID", "menuID2"]
     end
 
-    test "unauth user create tag fails", ~m(community user_conn guest_conn)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "awesome"})
+    test "unauth user create tag fails", ~m(community user_conn guest_conn user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -127,9 +148,22 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
     @update_tag_query S.CommunityTag.m(:update_community_tag_2)
     test "auth user can update a tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, new_group} = CMS.Communities.create_tag_group(community, :post, %{title: "new group"})
+      {:ok, new_group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "new group"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         id: community_tag.id,
@@ -173,7 +207,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
     test "auth user can update a tag with markdown note longer than varchar default",
          ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       long_desc = String.duplicate("长标签说明，支持 Markdown 内容。\n\n", 20)
 
@@ -202,10 +242,22 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
       {:ok, other_community} = mock_community(user)
 
       {:ok, other_group} =
-        CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
+        CMS.Communities.create_tag_group(
+          other_community,
+          :post,
+          %{title: "other"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         id: community_tag.id,
@@ -233,7 +285,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
     @delete_tag_query S.CommunityTag.m(:delete_community_tag_2)
     test "auth user can delete tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{id: community_tag.id, community: community.slug}
 
@@ -255,7 +313,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
     test "unauth user delete tag fails",
          ~m(community_tag_attrs community user_conn guest_conn user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{id: community_tag.id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
@@ -287,7 +351,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
       {:ok, other_community} = mock_community(user)
 
       {:ok, other_group} =
-        CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
+        CMS.Communities.create_tag_group(
+          other_community,
+          :post,
+          %{title: "other"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         id: other_group.id,
@@ -318,7 +388,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
       {:ok, other_community} = mock_community(user)
 
       {:ok, other_group} =
-        CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
+        CMS.Communities.create_tag_group(
+          other_community,
+          :post,
+          %{title: "other"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         id: other_group.id,

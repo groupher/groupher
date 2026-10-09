@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
+  alias CMS.Communities.Tags, as: CommunityTags
   alias CMS.Artiment.Threads
   alias CMS.Model.{Category, Community}
   alias CMS.Seeds.{SeedsConfig, Tags}
@@ -51,7 +52,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
     Enum.each(
       Tags.get(community, thread, type),
-      &CMS.Communities.create_tag(community, thread, &1, bot)
+      &CommunityTags.create(community, thread, &1, bot)
     )
   end
 

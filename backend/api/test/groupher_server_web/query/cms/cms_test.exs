@@ -115,12 +115,24 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       community_tag_attrs = mock_attrs(:community_tag)
 
       {:ok, _community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       community_tag_attrs = mock_attrs(:community_tag)
 
       {:ok, _community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -208,9 +220,9 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "guest user can get paged categories", ~m(guest_conn user)a do
       variables = %{filter: %{page: 1, size: 10}}
       valid_attrs = mock_attrs(:category)
-      ~m(title slug)a = valid_attrs
+      ~m(title slug user)a = valid_attrs
 
-      {:ok, _} = CMS.Communities.create_category(~m(title slug)a, %User{id: user.id})
+      {:ok, _} = CMS.Communities.create_category(~m(title slug user)a, %User{id: user.id})
 
       results = guest_conn |> gq_query(@query, variables)
       author = results["entries"] |> List.first() |> Map.get("author")
@@ -222,9 +234,9 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     test "paged categories containes communities info", ~m(guest_conn user community)a do
       variables = %{filter: %{page: 1, size: 10}}
       valid_attrs = mock_attrs(:category)
-      ~m(title slug)a = valid_attrs
+      ~m(title slug user)a = valid_attrs
 
-      {:ok, category} = CMS.Communities.create_category(~m(title slug)a, %User{id: user.id})
+      {:ok, category} = CMS.Communities.create_category(~m(title slug user)a, %User{id: user.id})
 
       {:ok, _} =
         CMS.Communities.set_category(%Community{id: community.id}, %Category{id: category.id})
@@ -238,7 +250,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
   describe "[cms query community]" do
     @query S.Community.q(:community_2)
-    test "guest user can get community info without args fails", ~m(guest_conn)a do
+    test "guest user can get community info without args fails", ~m(guest_conn user)a do
       variables = %{}
       assert guest_conn |> query_error?(@query, variables)
     end
@@ -359,7 +371,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
   describe "[cms community subscribe]" do
     @query S.Community.q(:community_5)
-    test "guest can get subscribers count of a community", ~m(guest_conn community)a do
+    test "guest can get subscribers count of a community", ~m(guest_conn community user)a do
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
 
       Enum.each(users, &CMS.Communities.subscribe(community, %User{id: &1.id}))
@@ -372,7 +384,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     end
 
     @query S.Community.q(:paged_community_subscribers)
-    test "guest user can get paged subscribers by community slug", ~m(guest_conn community)a do
+    test "guest user can get paged subscribers by community slug",
+         ~m(guest_conn community user)a do
       {:ok, users} = db_insert_multi(:user, 25)
 
       Enum.each(
@@ -387,7 +400,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     end
 
     test "guest user can get paged subscribers after duplicate subscribes",
-         ~m(guest_conn community)a do
+         ~m(guest_conn community user)a do
       {:ok, users} = db_insert_multi(:user, 25)
 
       Enum.each(

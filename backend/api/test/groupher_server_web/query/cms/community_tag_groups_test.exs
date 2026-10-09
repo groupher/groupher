@@ -18,8 +18,23 @@ defmodule GroupherServer.Test.Query.CMS.CommunityTagGroups do
 
     test "guest user can get tag groups ordered by group index",
          ~m(guest_conn community tag_attrs user)a do
-      {:ok, resources} = CMS.Communities.create_tag_group(community, :post, %{title: "Resources"})
-      {:ok, general} = CMS.Communities.create_tag_group(community, :post, %{title: "General"})
+      {:ok, resources} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "Resources"},
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, general} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "General"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
         CMS.Communities.reindex_tag_groups(community, :post, [
@@ -32,7 +47,8 @@ defmodule GroupherServer.Test.Query.CMS.CommunityTagGroups do
           community,
           :post,
           Map.merge(tag_attrs, %{group_id: resources.id}),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, general_tag} =
@@ -40,7 +56,8 @@ defmodule GroupherServer.Test.Query.CMS.CommunityTagGroups do
           community,
           :post,
           tag_attrs |> unique_community_tag_attrs("2") |> Map.merge(%{group_id: general.id}),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       results =
@@ -62,7 +79,8 @@ defmodule GroupherServer.Test.Query.CMS.CommunityTagGroups do
           community,
           :post,
           Map.merge(tag_attrs, %{group: "General"}),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       post_attrs = mock_attrs(:post) |> Map.merge(%{community_tags: [article_tag.id]})

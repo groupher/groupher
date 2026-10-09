@@ -20,7 +20,13 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostSetTag do
   describe "[mutation post tag]" do
     test "auth user can set a valid tag to post", ~m(community post community_tag_attrs user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       passport_rules = %{
         community.title => %{"community.update" => true, "post.community_tag.set" => true}
@@ -46,10 +52,22 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostSetTag do
     test "can unset tag to a post",
          ~m(community post community_tag_attrs community_tag_attrs2 user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag2} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs2, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs2,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} = CMS.Communities.set_tag(post, community_tag.id)
       {:ok, _} = CMS.Communities.set_tag(post, community_tag2.id)

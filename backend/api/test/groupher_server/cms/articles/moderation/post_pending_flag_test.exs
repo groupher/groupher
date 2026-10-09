@@ -31,7 +31,13 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
   describe "[pending posts flags]" do
     test "orders a multi-tag audit query by projected views", ~m(community user post_m)a do
       {:ok, tag} =
-        CMS.Communities.create_tag(community, :post, mock_attrs(:community_tag), user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          mock_attrs(:community_tag),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert {:ok, _post} = CMS.Communities.set_tag(post_m, tag.id)
 
@@ -51,7 +57,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       assert Enum.any?(entries, &(&1.id == post_m.id))
     end
 
-    test "pending post can not be read", ~m(community post_m)a do
+    test "pending post can not be read", ~m(community post_m user)a do
       {:ok, _} =
         read_article(
           article_binding(post_m),
@@ -133,7 +139,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
       assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
-    test "pending post can set/unset pending", ~m(community post_m)a do
+    test "pending post can set/unset pending", ~m(community post_m user)a do
       {:ok, _} =
         read_article(
           article_binding(post_m),
@@ -170,7 +176,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
         )
     end
 
-    test "pending post's meta should have info", ~m(community post_m)a do
+    test "pending post's meta should have info", ~m(community post_m user)a do
       {:ok, _} =
         read_article(
           article_binding(post_m),

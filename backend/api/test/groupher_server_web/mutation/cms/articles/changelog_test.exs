@@ -40,7 +40,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
           community,
           :changelog,
           community_tag_attrs,
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       changelog_attr = mock_attrs(:changelog)
@@ -57,7 +58,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       assert exist_in?(%{id: community_tag.id}, changelog.community_tags)
     end
 
-    test "create changelog should escape xss attracts", ~m(user_conn community)a do
+    test "create changelog should escape xss attracts", ~m(user_conn community user)a do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string()})
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
@@ -71,7 +72,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       assert not String.contains?(body_html, "<script")
     end
 
-    test "create changelog should escape xss attracts 2", ~m(user_conn community)a do
+    test "create changelog should escape xss attracts 2", ~m(user_conn community user)a do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string(:safe)})
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
@@ -88,18 +89,23 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
     test "create changelog with missing non_null field should get 200 error",
-         ~m(user_conn community)a do
+         ~m(user_conn community user)a do
       changelog_attr = mock_attrs(:changelog)
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
       assert user_conn |> mutation_error?(S.Article.m(:create_article, :changelog), variables)
     end
 
-    test "update a changelog without login user fails", ~m(guest_conn community changelog)a do
+    test "update a changelog without login user fails",
+         ~m(guest_conn community changelog user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -123,11 +129,16 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
           community,
           :changelog,
           community_tag_attrs,
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}"),
@@ -156,7 +167,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
           community,
           :changelog,
           community_tag_attrs,
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, community_tag2} =
@@ -164,7 +176,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
           community,
           :changelog,
           community_tag_attrs2,
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, community_tag3} =
@@ -172,11 +185,16 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
           community,
           :changelog,
           community_tag_attrs3,
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         expectedVersion: changelog.version,
         communityTags: [community_tag.id, community_tag2.id]
       }
@@ -189,7 +207,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
                MapSet.new([to_string(community_tag.id), to_string(community_tag2.id)])
 
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         expectedVersion: result["version"],
         communityTags: [community_tag2.id, community_tag3.id]
       }
@@ -203,11 +225,15 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     end
 
     test "update changelog with valid attrs should have is_edited meta info update",
-         ~m(owner_conn community changelog)a do
+         ~m(owner_conn community changelog user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -219,7 +245,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       assert true == updated_changelog["meta"]["isEdited"]
     end
 
-    test "login user with auth passport update a changelog", ~m(community changelog)a do
+    test "login user with auth passport update a changelog", ~m(community changelog user)a do
       belongs_community_slug = changelog.communities |> List.first() |> Map.get(:slug)
 
       passport_rules = %{belongs_community_slug => %{"changelog.edit" => true}}
@@ -228,7 +254,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -240,11 +270,16 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       assert updated_changelog["innerId"] == to_string(article_inner_id(changelog, community))
     end
 
-    test "unauth user update changelog fails", ~m(user_conn guest_conn community changelog)a do
+    test "unauth user update changelog fails",
+         ~m(user_conn guest_conn community changelog user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: article_inner_id(changelog, community), community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")

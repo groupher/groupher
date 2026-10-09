@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
   end
 
   describe "[mirror/unmirror/move post to/from community]" do
-    test "auth user can mirror a post to other community", ~m(community post)a do
+    test "auth user can mirror a post to other community", ~m(community post user)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
     end
 
     test "unauth user cannot mirror a post to a community",
-         ~m(user_conn guest_conn community community2 post)a do
+         ~m(user_conn guest_conn community community2 post user)a do
       variables = %{
         article: %{
           inner_id: article_inner_id(post, community),
@@ -78,7 +78,7 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
     end
 
     test "auth user can mirror multi post to other communities",
-         ~m(community community2 community3 post)a do
+         ~m(community community2 community3 post user)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -111,7 +111,7 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       assert community2.id in assoc_communities
     end
 
-    test "auth user can unmirror post to a community", ~m(post community)a do
+    test "auth user can unmirror post to a community", ~m(post community user)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -159,7 +159,7 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
       assert community3.id in assoc_communities
     end
 
-    test "auth user can move post to other community", ~m(community community2 post)a do
+    test "auth user can move post to other community", ~m(community community2 post user)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -184,7 +184,15 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
 
       article_tag_attrs = mock_attrs(:community_tag)
       {:ok, user} = db_insert(:user)
-      {:ok, article_tag} = CMS.Communities.create_tag(community2, :post, article_tag_attrs, user)
+
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community2,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         article: %{
@@ -214,7 +222,7 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
     end
 
     test "mirror article with invalid thread is rejected without crash",
-         ~m(community community2 post)a do
+         ~m(community community2 post user)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 

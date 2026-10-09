@@ -38,25 +38,40 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
   test "Tags.replace/2 and list/1 own binding-local assignments",
        ~m(community destination post user)a do
-    {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "binding-tags"})
+    {:ok, group} =
+      CMS.Communities.create_tag_group(
+        community,
+        :post,
+        %{title: "binding-tags"},
+        user,
+        Ecto.UUID.generate()
+      )
 
     {:ok, tag} =
       CMS.Communities.create_tag(
         community,
         :post,
         Map.put(mock_attrs(:community_tag), :group_id, group.id),
-        user
+        user,
+        Ecto.UUID.generate()
       )
 
     {:ok, destination_group} =
-      CMS.Communities.create_tag_group(destination, :post, %{title: "foreign-tags"})
+      CMS.Communities.create_tag_group(
+        destination,
+        :post,
+        %{title: "foreign-tags"},
+        user,
+        Ecto.UUID.generate()
+      )
 
     {:ok, foreign_tag} =
       CMS.Communities.create_tag(
         destination,
         :post,
         Map.put(mock_attrs(:community_tag), :group_id, destination_group.id),
-        user
+        user,
+        Ecto.UUID.generate()
       )
 
     binding =
@@ -76,14 +91,22 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
   test "duplicate binding tags return a changeset error through the named primary key",
        ~m(community post user)a do
-    {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "unique-tag"})
+    {:ok, group} =
+      CMS.Communities.create_tag_group(
+        community,
+        :post,
+        %{title: "unique-tag"},
+        user,
+        Ecto.UUID.generate()
+      )
 
     {:ok, tag} =
       CMS.Communities.create_tag(
         community,
         :post,
         Map.put(mock_attrs(:community_tag), :group_id, group.id),
-        user
+        user,
+        Ecto.UUID.generate()
       )
 
     binding =

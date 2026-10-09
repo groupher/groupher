@@ -21,12 +21,16 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
 
   describe "[mirror/unmirror/move blog to/from community]" do
     test "auth user can mirror a blog to other community",
-         ~m(community community2 blog)a do
+         ~m(community community2 blog user)a do
       passport_rules = %{"blog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         targetCommunity: community2.slug
       }
 
@@ -38,9 +42,13 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
     end
 
     test "unauth user cannot mirror a blog to a community",
-         ~m(user_conn guest_conn community community2 blog)a do
+         ~m(user_conn guest_conn community community2 blog user)a do
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         targetCommunity: community2.slug
       }
 
@@ -69,19 +77,27 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
     end
 
     test "auth user can mirror multi blog to other communities",
-         ~m(community community2 community3 blog)a do
+         ~m(community community2 community3 blog user)a do
       passport_rules = %{"blog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         targetCommunity: community3.slug
       }
 
@@ -95,19 +111,27 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
     end
 
     test "auth user can unmirror blog to a community",
-         ~m(community community2 community3 blog)a do
+         ~m(community community2 community3 blog user)a do
       passport_rules = %{"blog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       variables2 = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         targetCommunity: community3.slug
       }
 
@@ -129,12 +153,16 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
       assert community3.id in assoc_communities
     end
 
-    test "auth user can move blog to other community", ~m(community community2 blog)a do
+    test "auth user can move blog to other community", ~m(community community2 blog user)a do
       passport_rules = %{"blog.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         targetCommunity: community2.slug
       }
 
@@ -151,10 +179,22 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Blog do
 
       article_tag_attrs = mock_attrs(:community_tag)
       {:ok, user} = db_insert(:user)
-      {:ok, article_tag} = CMS.Communities.create_tag(community2, :blog, article_tag_attrs, user)
+
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community2,
+          :blog,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
-        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         targetCommunity: community2.slug,
         communityTags: [article_tag.id]
       }

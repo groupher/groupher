@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
   end
 
   describe "[query paged_blogs filter pagination]" do
-    test "should get pagination info", ~m(guest_conn)a do
+    test "should get pagination info", ~m(guest_conn user)a do
       variables = %{filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
 
@@ -159,7 +159,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       community_tag_attrs = mock_attrs(:community_tag)
 
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} = CMS.Communities.set_tag(blog, community_tag.id)
 
@@ -212,7 +218,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
              )
     end
 
-    test "request large size fails", ~m(guest_conn)a do
+    test "request large size fails", ~m(guest_conn user)a do
       variables = %{filter: %{page: 1, size: 200}}
 
       assert guest_conn
@@ -223,7 +229,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
              )
     end
 
-    test "request 0 or neg-size fails", ~m(guest_conn)a do
+    test "request 0 or neg-size fails", ~m(guest_conn user)a do
       variables_0 = %{filter: %{page: 1, size: 0}}
       variables_neg_1 = %{filter: %{page: 1, size: -1}}
 
@@ -242,7 +248,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
              )
     end
 
-    test "pagination should have default page and size arg", ~m(guest_conn)a do
+    test "pagination should have default page and size arg", ~m(guest_conn user)a do
       variables = %{filter: %{}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
       assert results |> is_valid_pagination?
@@ -275,7 +281,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert blog["inserted_at"] == blog["active_at"]
     end
 
-    test "filter sort should have default :desc_active", ~m(guest_conn)a do
+    test "filter sort should have default :desc_active", ~m(guest_conn user)a do
       variables = %{filter: %{}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
       active_timestamps = results["entries"] |> Enum.map(& &1["activeAt"])
@@ -286,7 +292,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    test "filter sort MOST_VIEWS should work", ~m(guest_conn community blog_last_year)a do
+    test "filter sort MOST_VIEWS should work", ~m(guest_conn community blog_last_year user)a do
       Repo.update_all(
         from(summary in ArticleStats,
           where: summary.thread == :blog and summary.article_id == ^blog_last_year.id
@@ -361,7 +367,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
   test: FILTER when [TODAY] [THIS_WEEK] [THIS_MONTH] [THIS_YEAR]
   """
   describe "[query paged_blogs filter when]" do
-    test "THIS_YEAR option should work", ~m(guest_conn community blog_last_year)a do
+    test "THIS_YEAR option should work", ~m(guest_conn community blog_last_year user)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
 
@@ -371,7 +377,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
              )
     end
 
-    test "TODAY option should work", ~m(guest_conn)a do
+    test "TODAY option should work", ~m(guest_conn user)a do
       variables = %{filter: %{when: "TODAY"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
 
@@ -380,14 +386,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert results |> Map.get("totalCount") >= expect_count
     end
 
-    test "THIS_WEEK option should work", ~m(guest_conn)a do
+    test "THIS_WEEK option should work", ~m(guest_conn user)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
 
       assert results |> Map.get("totalCount") >= @today_count
     end
 
-    test "THIS_MONTH option should work", ~m(guest_conn community blog_last_month)a do
+    test "THIS_MONTH option should work", ~m(guest_conn community blog_last_month user)a do
       variables = %{filter: %{when: "THIS_MONTH"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
 
@@ -427,7 +433,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
     end
 
     test "comment on very old blog have no effect",
-         ~m(guest_conn community blog_last_year user2)a do
+         ~m(guest_conn community blog_last_year user2 user)a do
       variables = %{filter: %{page: 1, size: 20, community: community.slug}}
 
       {:ok, _} =

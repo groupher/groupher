@@ -411,15 +411,11 @@ defmodule GroupherServer.CMS.Communities do
   @doc "Creates tag through the `Communities` write boundary."
   @spec create_tag(Community.t(), atom(), map(), User.t()) ::
           T.domain_res(CommunityTag.t())
-  def create_tag(%Community{} = community, thread, attrs, %User{} = user) do
-    Tags.create(community, thread, attrs, user)
-  end
+  def create_tag(%Community{}, _thread, _attrs, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
-  def create_tag(community_ref, thread, attrs, %User{} = user) do
-    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
-      Tags.create(community, thread, attrs, user)
-    end
-  end
+  def create_tag(_community_ref, _thread, _attrs, %User{}),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   def create_tag(%Community{} = community, thread, attrs, %User{} = user, command_id) do
     CreateTag.execute(community, thread, attrs, user, command_id)
@@ -433,7 +429,7 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Updates tag through the `Communities` write boundary."
   @spec update_tag(T.id(), map()) :: T.domain_res(CommunityTag.t())
-  def update_tag(id, attrs), do: Tags.update(id, attrs)
+  def update_tag(_id, _attrs), do: {:error, CMS.ErrorCat.command_id_required()}
 
   def update_tag(_id, _attrs, _command_id), do: {:error, :command_actor_required}
 
@@ -442,15 +438,11 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Creates tag group through the `Communities` write boundary."
   @spec create_tag_group(Community.t(), atom(), map()) :: T.domain_res(CommunityTagGroup.t())
-  def create_tag_group(%Community{} = community, thread, attrs) do
-    Tags.create_group(community, thread, attrs)
-  end
+  def create_tag_group(%Community{}, _thread, _attrs),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
-  def create_tag_group(community_ref, thread, attrs) do
-    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
-      Tags.create_group(community, thread, attrs)
-    end
-  end
+  def create_tag_group(_community_ref, _thread, _attrs),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   def create_tag_group(%Community{}, _thread, _attrs, _command_id),
     do: {:error, :command_actor_required}
@@ -471,15 +463,11 @@ defmodule GroupherServer.CMS.Communities do
   @doc "Updates tag group through the `Communities` write boundary."
   @spec update_tag_group(Community.t(), atom(), T.id(), map()) ::
           T.domain_res(CommunityTagGroup.t())
-  def update_tag_group(%Community{} = community, thread, id, attrs) do
-    Tags.update_group(community, thread, id, attrs)
-  end
+  def update_tag_group(%Community{}, _thread, _id, _attrs),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
-  def update_tag_group(community_ref, thread, id, attrs) do
-    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
-      Tags.update_group(community, thread, id, attrs)
-    end
-  end
+  def update_tag_group(_community_ref, _thread, _id, _attrs),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   def update_tag_group(%Community{}, _thread, _id, _attrs, _command_id),
     do: {:error, :command_actor_required}
@@ -500,15 +488,11 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Removes tag group through the `Communities` boundary."
   @spec delete_tag_group(Community.t(), atom(), T.id()) :: T.domain_res(CommunityTagGroup.t())
-  def delete_tag_group(%Community{} = community, thread, id) do
-    Tags.delete_group(community, thread, id)
-  end
+  def delete_tag_group(%Community{}, _thread, _id),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
-  def delete_tag_group(community_ref, thread, id) do
-    with {:ok, community} <- FrontDesk.community(community_ref, mode: :internal) do
-      Tags.delete_group(community, thread, id)
-    end
-  end
+  def delete_tag_group(_community_ref, _thread, _id),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   def delete_tag_group(%Community{}, _thread, _id, _command_id),
     do: {:error, :command_actor_required}
@@ -544,7 +528,7 @@ defmodule GroupherServer.CMS.Communities do
 
   @doc "Removes tag through the `Communities` boundary."
   @spec delete_tag(T.id()) :: T.domain_res(CommunityTag.t())
-  def delete_tag(id), do: Tags.delete(id)
+  def delete_tag(_id), do: {:error, CMS.ErrorCat.command_id_required()}
 
   def delete_tag(_id, _command_id), do: {:error, :command_actor_required}
 

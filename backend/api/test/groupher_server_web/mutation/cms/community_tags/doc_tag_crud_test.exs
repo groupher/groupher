@@ -25,8 +25,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
   describe "[mutation cms tag]" do
     @create_tag_query S.CommunityTag.m(:create_community_tag)
     test "create tag with valid attrs, has default DOC thread and default docs",
-         ~m(community)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :doc, %{title: "awesome"})
+         ~m(community user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :doc,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -56,8 +63,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
       assert belong_community["slug"] == community.slug
     end
 
-    test "create tag with extra", ~m(community)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :doc, %{title: "awesome"})
+    test "create tag with extra", ~m(community user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :doc,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -80,8 +94,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
       assert created["extra"] == ["menuID", "menuID2"]
     end
 
-    test "unauth user create tag fails", ~m(community user_conn guest_conn)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :doc, %{title: "awesome"})
+    test "unauth user create tag fails", ~m(community user_conn guest_conn user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :doc,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -119,7 +140,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
     @update_tag_query S.CommunityTag.m(:update_community_tag)
     test "auth user can update a tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :doc,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         id: community_tag.id,
@@ -156,7 +183,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
     @delete_tag_query S.CommunityTag.m(:delete_community_tag)
     test "auth user can delete tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :doc,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{id: community_tag.id, community: community.slug, thread: "DOC"}
 
@@ -175,7 +208,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.DocTagCRUD do
     test "unauth user delete tag fails",
          ~m(community_tag_attrs community user_conn guest_conn user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :doc, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :doc,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{id: community_tag.id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})

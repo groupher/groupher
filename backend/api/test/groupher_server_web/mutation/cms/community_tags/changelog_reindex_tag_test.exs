@@ -23,17 +23,27 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogReindexTag do
   describe "[mutation changelog tag]" do
     @query S.CommunityTag.m(:reindex_tags_in_group)
     test "auth user can reindex tags in given group", ~m(community community_tag_attrs user)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :changelog, %{title: "group1"})
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :changelog,
+          %{title: "group1"},
+          user,
+          Ecto.UUID.generate()
+        )
+
       attrs = Map.merge(community_tag_attrs, %{group_id: group.id})
 
-      {:ok, community_tag1} = CMS.Communities.create_tag(community, :changelog, attrs, user)
+      {:ok, community_tag1} =
+        CMS.Communities.create_tag(community, :changelog, attrs, user, Ecto.UUID.generate())
 
       {:ok, community_tag2} =
         CMS.Communities.create_tag(
           community,
           :changelog,
           unique_community_tag_attrs(attrs, "2"),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, community_tag3} =
@@ -41,7 +51,8 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogReindexTag do
           community,
           :changelog,
           unique_community_tag_attrs(attrs, "3"),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, community_tag4} =
@@ -49,7 +60,8 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogReindexTag do
           community,
           :changelog,
           unique_community_tag_attrs(attrs, "4"),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       passport_rules = %{

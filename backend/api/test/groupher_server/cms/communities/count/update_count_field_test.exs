@@ -16,7 +16,14 @@ defmodule GroupherServer.Test.CMS.Communities.Count.UpdateCountField do
     test "update community_tags_count field", ~m(community user)a do
       community_tag_attrs = mock_attrs(:community_tag)
 
-      {:ok, _tag} = CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+      {:ok, _tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, updated_community} =
         CMS.Communities.update_count_field(community, :community_tags_count)
@@ -28,7 +35,8 @@ defmodule GroupherServer.Test.CMS.Communities.Count.UpdateCountField do
           community,
           :post,
           unique_community_tag_attrs(community_tag_attrs, "2"),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, updated_community} =

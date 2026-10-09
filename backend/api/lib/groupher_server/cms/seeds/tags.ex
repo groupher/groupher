@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
 
   alias GroupherServer.CMS
 
+  alias CMS.Communities.Tags, as: CommunityTags
   alias CMS.Model.Community
   alias CMS.Seeds.{Config, Helper}
   alias Helper.T
@@ -101,7 +102,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
     index = current_count + 1
     attrs = build_tag_attrs(thread, groups, group_by_title, target_count, index)
 
-    case CMS.Communities.create_tag(community, thread, attrs, bot) do
+    case CommunityTags.create(community, thread, attrs, bot) do
       {:ok, _tag} ->
         ensure_tags_count(community, thread, bot, groups, group_by_title, target_count, index)
 
@@ -121,7 +122,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
           {:cont, {:ok, acc}}
 
         :error ->
-          case CMS.Communities.create_tag_group(community, thread, %{title: title}) do
+          case CommunityTags.create_group(community, thread, %{title: title}) do
             {:ok, group} -> {:cont, {:ok, Map.put(acc, title, group)}}
             {:error, reason} -> {:halt, {:error, reason}}
           end

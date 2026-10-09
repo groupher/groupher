@@ -8,6 +8,7 @@ defmodule GroupherServer.CMS.Communities.Commands.TagSupport do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Communities.ErrorCat
   alias CMS.FrontDesk
+  alias CMS.Marker
   alias CMS.Model.{Community, CommunityTag, CommunityTagGroup}
 
   @doc false
@@ -41,8 +42,21 @@ defmodule GroupherServer.CMS.Communities.Commands.TagSupport do
   @doc false
   def present_tag(id) do
     case Repo.get(CommunityTag, id) do
-      %CommunityTag{} = tag -> {:ok, Repo.preload(tag, [:community, :tag_group])}
-      nil -> {:ok, %CommunityTag{id: id}}
+      %CommunityTag{} = tag ->
+        tag = normalize_marker(tag)
+        {:ok, Repo.preload(tag, [:community, :tag_group])}
+
+      nil ->
+        {:ok, %CommunityTag{id: id}}
+    end
+  end
+
+  defp normalize_marker(%CommunityTag{marker: nil} = tag), do: tag
+
+  defp normalize_marker(%CommunityTag{marker: marker} = tag) do
+    case Marker.normalize(marker) do
+      {:ok, normalized} -> %{tag | marker: normalized}
+      {:error, _reason} -> tag
     end
   end
 
