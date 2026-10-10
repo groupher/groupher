@@ -16,25 +16,32 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.UpdateTagGroup do
   @spec execute(Community.t(), atom(), T.id(), map(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(CommunityTagGroup.t())
   def execute(community, thread, id, attrs, %User{} = actor, command_id) do
-    with {:ok, %CommunityTagGroup{} = group} <- FrontDesk.community_tag_group(id) do
-      command = %Command{
-        actor: actor,
-        command_id: command_id,
-        operation: :tag_group_update,
-        target: group,
-        params: %{
-          community_id: community.id,
-          thread: thread,
-          attrs: TagSupport.intent_attrs(attrs)
-        }
-      }
-
-      with {:ok, confirmation} <-
-             Command.execute(command, action: &action/1, confirmation: TagGroupConfirmation) do
-        TagSupport.group_confirmation(confirmation)
+    target =
+      case FrontDesk.community_tag_group(id) do
+        {:ok, %CommunityTagGroup{} = group} -> group
+        {:error, _reason} -> {:community_tag_group, id}
       end
+
+    command = %Command{
+      actor: actor,
+      command_id: command_id,
+      operation: :tag_group_update,
+      target: target,
+      params: %{
+        community_id: community.id,
+        thread: thread,
+        attrs: TagSupport.intent_attrs(attrs)
+      }
+    }
+
+    with {:ok, confirmation} <-
+           Command.execute(command, action: &action/1, confirmation: TagGroupConfirmation) do
+      TagSupport.group_confirmation(confirmation)
     end
   end
+
+  defp action(%{target: {:community_tag_group, _id}}),
+    do: {:error, CMS.Communities.ErrorCat.not_exist("CommunityTagGroup")}
 
   defp action(%{
          actor: actor,

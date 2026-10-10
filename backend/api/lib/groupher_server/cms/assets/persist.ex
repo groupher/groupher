@@ -65,7 +65,8 @@ defmodule GroupherServer.CMS.Assets.Persist do
 
   def restore(%Community{id: community_id}, asset_id) do
     with {:ok, asset} <- find_asset_for_update(community_id, asset_id),
-         {:ok, restored} <- ORM.update(asset, %{status: :active, archived_at: nil}) do
+         {:ok, restored} <-
+           ORM.update(asset, %{status: :active, archived_at: nil, deleted_at: nil}) do
       {:ok, restored}
     end
   end

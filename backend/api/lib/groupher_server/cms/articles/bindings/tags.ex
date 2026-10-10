@@ -56,13 +56,27 @@ defmodule GroupherServer.CMS.Articles.Bindings.Tags do
   def replace(%ArticleBinding{}, _tag_ids), do: {:error, :invalid_community_tags}
 
   defp validate_tag_ids(binding, normalized_ids) do
-    valid_ids =
-      CommunityTag
-      |> where([tag], tag.id in ^normalized_ids and tag.community_id == ^binding.community_id)
-      |> select([tag], tag.id)
-      |> Repo.all()
+    binding_valid? =
+      Repo.exists?(
+        from(binding_row in ArticleBinding,
+          where:
+            binding_row.id == ^binding.id and
+              binding_row.community_id == ^binding.community_id and
+              binding_row.article_id == ^binding.article_id
+        )
+      )
 
-    if Enum.sort(valid_ids) == Enum.sort(normalized_ids) do
+    valid_ids =
+      if binding_valid? do
+        CommunityTag
+        |> where([tag], tag.id in ^normalized_ids and tag.community_id == ^binding.community_id)
+        |> select([tag], tag.id)
+        |> Repo.all()
+      else
+        []
+      end
+
+    if binding_valid? and Enum.sort(valid_ids) == Enum.sort(normalized_ids) do
       {:ok, valid_ids}
     else
       {:error, :invalid_community_tags}

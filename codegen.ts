@@ -55,12 +55,17 @@ const config: CodegenConfig = {
     'frontend/core/query/viewTracker.ts',
     'frontend/core/query/mutation/article.ts',
     'frontend/core/query/mutation/article/schema.ts',
+    'frontend/apply/src/lib/graphql-documents.ts',
   ],
   pluckConfig: {
     globalGqlIdentifierName: [],
     modules: [
       {
         name: '~/graphql/authoring',
+        identifier: 'graphql',
+      },
+      {
+        name: '@groupher/frontend-core/graphql/authoring',
         identifier: 'graphql',
       },
     ],

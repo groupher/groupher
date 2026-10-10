@@ -76,9 +76,11 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
     }
   end
 
-  defp present(%Confirmation{data: %{"comment_id" => comment_id, "state" => state}}) do
+  defp present(%Confirmation{
+         data: %{"comment_id" => comment_id, "command_id" => command_id, "state" => state}
+       }) do
     with %Comment{} = comment <- Repo.get(Comment, comment_id) do
-      {:ok, %{comment | is_pinned: state == "pinned"}}
+      {:ok, comment |> Map.put(:is_pinned, state == "pinned") |> Map.put(:command_id, command_id)}
     else
       nil -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end

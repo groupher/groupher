@@ -236,7 +236,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
       {:hit, application} ->
         {:ok, application}
 
-      {:error, ErrorCat.error_pattern(reason: :command_identity_conflict)} ->
+      {:error, ErrorCat.error_pattern(reason: :idempotency_conflict)} ->
         {:error, ErrorCat.command_identity_conflict()}
 
       :miss ->

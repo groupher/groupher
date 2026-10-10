@@ -116,6 +116,9 @@ defmodule GroupherServer.CMS.DocTree do
           T.domain_res(map())
   def move_doc_to_draft_result(%Community{} = community, id, %User{} = user, opts \\ []) do
     with {:ok, draft} <- move_doc_to_draft(community, id, user, opts) do
+      command_id =
+        if is_list(opts), do: Keyword.get(opts, :command_id), else: Map.get(opts, :command_id)
+
       {:ok,
        %{
          doc_id: draft.article_id,
@@ -128,7 +131,7 @@ defmodule GroupherServer.CMS.DocTree do
            public_doc_id: draft.article_id,
            has_unpublished_changes: false
          },
-         command_id: Map.get(draft, :command_id)
+         command_id: command_id
        }}
     end
   end

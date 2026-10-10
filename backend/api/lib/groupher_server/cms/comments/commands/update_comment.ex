@@ -60,7 +60,8 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
          command_id: command_id
        }) do
     CMS.Gate.with_check(actor, :edit, comment, fn canonical, article ->
-      with {:ok, result} <- update_new(canonical, article, body, actor, command_id) do
+      with {:ok, result} <-
+             update_new(canonical, article, body, actor, command_id, comment.community_id) do
         {:ok, confirmation(result)}
       end
     end)
@@ -77,14 +78,15 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
     end
   end
 
-  defp update_new(canonical, article, body, actor, command_id) do
+  defp update_new(canonical, article, body, actor, command_id, community_id) do
     with {:ok, payload} <- BodyCodec.parse(body),
          {:ok, updated} <-
            ORM.update(canonical, %{body: payload.json, body_html: payload.html}),
          {:ok, _} <- CMS.ArticleStats.record_comment_change(article),
          {:ok, synced} <- CMS.Comments.Replies.sync_embed_replies(updated),
          {:ok, _} <- JobPolicy.audition(synced),
-         {:ok, _invalidation} <- invalidate_public_comments(article, canonical.thread, command_id),
+         {:ok, _invalidation} <-
+           invalidate_public_comments(article, community_id, canonical.thread, command_id),
          {:ok, _} <- enqueue_comment_effects(canonical, actor, command_id) do
       {:ok, %{comment: synced, article: article, command_id: command_id}}
     end
@@ -100,9 +102,9 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
     }
   end
 
-  defp invalidate_public_comments(article, thread, command_id) do
-    with {:ok, %{community: community, inner_id: inner_id}} <-
-           Bindings.get(article, Map.get(article, :community)) do
+  defp invalidate_public_comments(article, community_id, thread, command_id) do
+    with {:ok, community} <- FrontDesk.community(community_id, mode: :internal),
+         {:ok, %{community: community, inner_id: inner_id}} <- Bindings.get(article, community) do
       CMS.Outbox.send(%{
         event: "comment.changed",
         worker: CMS.Outbox.Workers.Comment.Cleanup,

@@ -1,10 +1,6 @@
-import { clientGraphQL } from './graphql'
+import { ApplicationLogoIntentDocument } from '@groupher/frontend-core/graphql/generated'
 
-type UploadIntent = {
-  uploadRef: string
-  capability: string
-  canonicalUrl: string
-}
+import { clientGraphQL } from './graphql'
 
 const assetsHubEndpoint = () =>
   window.location.hostname.endsWith('groupher.com')
@@ -13,16 +9,9 @@ const assetsHubEndpoint = () =>
 
 /** Runs the upload application logo operation at the frontend shared boundary. */
 export const uploadApplicationLogo = async (file: File): Promise<{ ref: string; url: string }> => {
-  const result = await clientGraphQL<{
-    createCommunityApplicationLogoUploadIntent: UploadIntent
-  }>(
-    `mutation ApplicationLogoIntent($input: ApplicationLogoUploadInput!) {
-      createCommunityApplicationLogoUploadIntent(input: $input) {
-        uploadRef capability canonicalUrl
-      }
-    }`,
-    { input: { fileName: file.name, mimeType: file.type, sizeBytes: file.size } },
-  )
+  const result = await clientGraphQL(ApplicationLogoIntentDocument, {
+    input: { fileName: file.name, mimeType: file.type, sizeBytes: file.size },
+  })
   const intent = result.createCommunityApplicationLogoUploadIntent
   const uploadResponse = await fetch(`${assetsHubEndpoint()}/uploads`, {
     method: 'POST',

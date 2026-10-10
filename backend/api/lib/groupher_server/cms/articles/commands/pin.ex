@@ -25,17 +25,27 @@ defmodule GroupherServer.CMS.Articles.Commands.Pin do
         params: %{community_id: community.id}
       }
       |> Command.execute(action: &pin_action(&1, community), confirmation: BindingConfirmation)
-      |> BindingSupport.present_pin()
+      |> BindingSupport.present_article()
     end
   end
 
   defp pin_action(%{actor: actor, target: article, command_id: command_id}, community) do
     CMS.Gate.with_community_check(actor, :pin, community, article, fn canonical ->
-      with {:ok, :pass} <- ensure_capacity(community.id, canonical.thread),
-           {:ok, _pin} <- insert_pin(canonical, community) do
-        {:ok, BindingSupport.confirmation(canonical, community, command_id)}
+      with %Community{} = locked_community <- lock_community(community.id),
+           {:ok, :pass} <- ensure_capacity(locked_community.id, canonical.thread),
+           {:ok, _pin} <- insert_pin(canonical, locked_community) do
+        {:ok, BindingSupport.confirmation(canonical, locked_community, command_id)}
       end
     end)
+  end
+
+  defp lock_community(community_id) do
+    Repo.one(
+      from(community in Community,
+        where: community.id == ^community_id,
+        lock: "FOR UPDATE"
+      )
+    )
   end
 
   defp ensure_capacity(community_id, thread) do

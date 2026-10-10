@@ -16,14 +16,13 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Unset do
   @spec execute(Community.t() | String.t(), T.id(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Community.t())
   def execute(community_ref, category_id, %User{} = actor, command_id) do
-    with {:ok, community} <- Support.community(community_ref),
-         {:ok, category} <- Support.category(category_id) do
+    with {:ok, community} <- Support.community(community_ref) do
       command = %Command{
         actor: actor,
         command_id: command_id,
         operation: :category_unset,
         target: community,
-        params: %{category_id: category.id}
+        params: %{category_id: category_id}
       }
 
       with {:ok, confirmation} <-
@@ -33,7 +32,12 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Unset do
     end
   end
 
-  defp action(%{actor: actor, target: community, params: %{category_id: category_id}, command_id: command_id}) do
+  defp action(%{
+         actor: actor,
+         target: community,
+         params: %{category_id: category_id},
+         command_id: command_id
+       }) do
     with {:ok, category} <- Support.category(category_id),
          {:ok, _} <-
            Gate.with_community_check(actor, :category_unset, community, fn canonical ->

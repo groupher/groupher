@@ -17,7 +17,11 @@ defmodule GroupherServer.CMS.Communities.ErrorCat do
   error(:review_permission_denied, code: 5509)
   error(:asset_not_ready, code: 5510)
   error(:invalid_application_input, code: 5511)
-  error(:command_identity_conflict, code: 5512)
+  error(:idempotency_conflict, code: 5512, message_key: "cms.community.idempotency_conflict")
+
+  # Internal callers may use the clearer name while the public wire reason
+  # remains backward compatible with existing clients.
+  def command_identity_conflict(details \\ nil), do: idempotency_conflict(details)
   error(:active_application_exists, code: 5513)
   error(:slug_claimed, code: 5514)
   error(:application_state_conflict, code: 5515)

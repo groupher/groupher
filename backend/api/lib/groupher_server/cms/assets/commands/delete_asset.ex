@@ -33,6 +33,7 @@ defmodule GroupherServer.CMS.Assets.Commands.DeleteAsset do
       end
     else
       nil -> {:error, ErrorCat.custom("asset not found")}
+      {:error, _reason} = error -> error
     end
   end
 

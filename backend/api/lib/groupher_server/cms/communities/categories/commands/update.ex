@@ -15,14 +15,12 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Update do
 
   @spec execute(String.t(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(Category.t())
   def execute(community_ref, %{id: id} = attrs, %User{} = actor, command_id) do
-    with {:ok, community} <- Support.community(community_ref),
-         {:ok, category} <- Support.category(id),
-         true <- Persist.category_in_community?(community, category) do
+    with {:ok, community} <- Support.community(community_ref) do
       command = %Command{
         actor: actor,
         command_id: command_id,
         operation: :category_update,
-        target: category,
+        target: {:category, id},
         params: %{community_id: community.id, attrs: Map.drop(attrs, [:id, "id"])}
       }
 
@@ -31,13 +29,18 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Update do
         Support.category_result(confirmation)
       end
     else
-      false -> {:error, CMS.Communities.ErrorCat.forbidden()}
       {:error, _reason} = error -> error
     end
   end
 
-  defp action(%{actor: actor, target: category, params: %{community_id: community_id, attrs: attrs}, command_id: command_id}) do
+  defp action(%{
+         actor: actor,
+         target: {:category, category_id},
+         params: %{community_id: community_id, attrs: attrs},
+         command_id: command_id
+       }) do
     with {:ok, community} <- Support.community(community_id),
+         {:ok, category} <- Support.category(category_id),
          {:ok, _} <-
            Gate.with_community_check(actor, :category_update, community, fn canonical ->
              with true <- Persist.category_in_community?(canonical, category),

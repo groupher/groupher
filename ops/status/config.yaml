@@ -50,9 +50,9 @@ endpoints:
 
   - name: API
     group: Core services
-    enabled: false
+    enabled: true
     url: https://api.groupher.com/health
-    interval: 30m
+    interval: 1h
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"

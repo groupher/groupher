@@ -46,10 +46,8 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
   end
 
   defp do_paged(folder, filter) do
-    paged = ORM.embeds_paginator(folder.collects, filter)
-
     entries =
-      Enum.flat_map(paged.entries, fn collect ->
+      Enum.flat_map(folder.collects, fn collect ->
         case Repo.get(CMS.Model.Article, collect.article_id) do
           %CMS.Model.Article{} = article ->
             {:ok, bindings} = Bindings.all(article)
@@ -70,6 +68,8 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
         end
       end)
 
-    paged |> Map.put(:entries, entries) |> done()
+    entries
+    |> ORM.embeds_paginator(filter)
+    |> done()
   end
 end

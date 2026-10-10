@@ -16,14 +16,13 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Set do
   @spec execute(Community.t() | String.t(), T.id(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Community.t())
   def execute(community_ref, category_id, %User{} = actor, command_id) do
-    with {:ok, community} <- Support.community(community_ref),
-         {:ok, category} <- Support.category(category_id) do
+    with {:ok, community} <- Support.community(community_ref) do
       command = %Command{
         actor: actor,
         command_id: command_id,
         operation: :category_set,
         target: community,
-        params: %{category_id: category.id}
+        params: %{category_id: category_id}
       }
 
       with {:ok, confirmation} <-

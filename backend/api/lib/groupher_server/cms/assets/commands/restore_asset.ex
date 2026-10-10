@@ -34,6 +34,7 @@ defmodule GroupherServer.CMS.Assets.Commands.RestoreAsset do
       present(confirmation)
     else
       nil -> {:error, ErrorCat.custom("asset not found")}
+      {:error, _reason} = error -> error
     end
   end
 

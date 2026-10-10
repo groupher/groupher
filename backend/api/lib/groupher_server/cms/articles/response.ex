@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Articles.Response do
   alias CMS.Artiment.Matcher
   alias CMS.Comments.BodyCodec
   alias CMS.Articles.Bindings
-  alias CMS.Model.{Comment, PostSolution}
+  alias CMS.Model.{ArticleBinding, Comment, PostSolution}
 
   @doc """
   Assembles one Article with public Interaction presentation fields.
@@ -52,13 +52,14 @@ defmodule GroupherServer.CMS.Articles.Response do
   def list(articles, _viewer, opts \\ []) when is_list(articles) do
     with states when is_map(states) <- CMS.Interactions.public_states(articles, opts) do
       solution_by_post = solution_by_post(articles)
+      inner_ids = public_inner_ids(articles)
 
       articles =
         Enum.map(articles, fn article ->
           {:ok, %{artiment: type}} = Matcher.match_interaction(article)
 
           article
-          |> put_public_inner_id()
+          |> put_public_inner_id(inner_ids)
           |> merge_public_state(Map.fetch!(states, {type, article.id}))
           |> merge_solution(solution_by_post)
         end)
@@ -117,6 +118,35 @@ defmodule GroupherServer.CMS.Articles.Response do
     case Bindings.get(article, Map.get(article, :community)) do
       {:ok, %{inner_id: inner_id}} -> Map.put(article, :inner_id, inner_id)
       _ -> article
+    end
+  end
+
+  defp put_public_inner_id(article, inner_ids) do
+    case Map.get(inner_ids, article.id) do
+      nil -> article
+      inner_id -> Map.put(article, :inner_id, inner_id)
+    end
+  end
+
+  defp public_inner_ids(articles) do
+    pairs =
+      for %{id: article_id, community: %{id: community_id}} <- articles,
+          do: {article_id, community_id}
+
+    if pairs == [] do
+      %{}
+    else
+      {article_ids, community_ids} = Enum.unzip(pairs)
+
+      ArticleBinding
+      |> where(
+        [binding],
+        binding.article_id in ^article_ids and binding.community_id in ^community_ids
+      )
+      |> select([binding], {binding.article_id, binding.community_id, binding.inner_id})
+      |> Repo.all()
+      |> Enum.filter(&({elem(&1, 0), elem(&1, 1)} in pairs))
+      |> Map.new(fn {article_id, _community_id, inner_id} -> {article_id, inner_id} end)
     end
   end
 

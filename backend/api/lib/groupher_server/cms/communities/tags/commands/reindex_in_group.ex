@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.ReindexTagsInGroup do
     with {:ok, command_id} <- TagSupport.command_id(command_id),
          {:ok, community} <- TagSupport.community(community_ref) do
       Gate.with_community_check(actor, :update, community, fn canonical ->
-        Mutation.reindex_in_group(canonical, thread, group_id, tags, command_id: command_id)
+        Mutation.reindex_in_group(canonical, thread, group_id, tags || [], command_id: command_id)
       end)
     end
   end

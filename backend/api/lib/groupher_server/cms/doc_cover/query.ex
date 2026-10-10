@@ -346,10 +346,10 @@ defmodule GroupherServer.CMS.DocCover.Query do
       |> Enum.uniq()
 
     Article
-    |> join(:inner, [article], binding in ArticleBinding, on: binding.article_id == article.id)
-    |> join(:inner, [article, _binding], public in DocPublic,
-      on: public.article_id == article.id
+    |> join(:inner, [article], binding in ArticleBinding,
+      on: binding.article_id == article.id and binding.visible == true
     )
+    |> join(:inner, [article, _binding], public in DocPublic, on: public.article_id == article.id)
     |> join(:inner, [article, _binding, public], branch in DocBranch,
       on: branch.id == public.branch_id and branch.type == :main
     )

@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.Communities.Commands.RequestDestroy do
     with {:ok, canonical} <- Gate.access_check(actor, :request_destroy, community),
          {:ok, _blocker} <-
            Lifecycle.request_destroy(
-             canonical.slug,
+             canonical.id,
              Keyword.put(opts, :operation_ref, command_id)
            ) do
       {:ok,

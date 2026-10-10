@@ -210,22 +210,26 @@ defmodule GroupherServer.Accounts.Mailbox do
         select: {user.id, user.updated_at}
       )
 
-    case Repo.update_all(query, []) do
-      {count, rows} when count == length(users) ->
-        updated_at_by_id = Map.new(rows, fn {id, updated_at} -> {id, updated_at} end)
+    try do
+      case Repo.update_all(query, []) do
+        {count, rows} when count == length(users) ->
+          updated_at_by_id = Map.new(rows, fn {id, updated_at} -> {id, updated_at} end)
 
-        users =
-          Enum.map(prepared_updates, fn {user, _payload} ->
-            %{user | updated_at: Map.fetch!(updated_at_by_id, user.id)}
-          end)
+          users =
+            Enum.map(prepared_updates, fn {user, _payload} ->
+              %{user | updated_at: Map.fetch!(updated_at_by_id, user.id)}
+            end)
 
-        {:ok, users}
+          {:ok, users}
 
-      {count, _rows} ->
-        {:error,
-         ErrorCat.custom(
-           "mailbox batch update affected #{count} of #{length(users)} expected users"
-         )}
+        {count, _rows} ->
+          {:error,
+           ErrorCat.custom(
+             "mailbox batch update affected #{count} of #{length(users)} expected users"
+           )}
+      end
+    rescue
+      exception -> {:error, ErrorCat.custom(Exception.message(exception))}
     end
   end
 

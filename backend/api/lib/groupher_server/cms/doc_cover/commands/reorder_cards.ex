@@ -21,6 +21,14 @@ defmodule GroupherServer.CMS.DocCover.Commands.ReorderCards do
       #=> {:ok, %{done: true}}
   """
   @spec execute(Community.t(), list(), term(), Ecto.UUID.t()) :: term()
-  def execute(community, ids, actor, _command_id),
-    do: Support.run(actor, :manage_docs, community, &Persist.reorder_cards(&1, ids))
+  def execute(community, ids, actor, command_id) do
+    Support.execute_receipted(
+      community,
+      actor,
+      command_id,
+      :doc_cover_reorder_cards,
+      %{ids: ids},
+      &Persist.reorder_cards(&1, ids)
+    )
+  end
 end

@@ -350,10 +350,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   defp do_sync(artiment, ast) do
     mentioner_context = artiment_context(artiment)
+    community_id = community_id(mentioner_context)
 
     mentions =
       ast
-      |> Parser.parse()
+      |> Parser.parse(community_id: community_id)
       |> Enum.reject(&mentioning_itself?(artiment, &1))
       |> Enum.map(&shape(mentioner_context, &1))
       |> merge_occurrences()

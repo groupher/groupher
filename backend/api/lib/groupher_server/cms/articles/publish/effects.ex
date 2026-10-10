@@ -33,6 +33,8 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
 
   def run(%{article: %Article{}} = result), do: run_public_effects(result)
 
+  def run(_result), do: {:error, :article_binding_context_required}
+
   defp run_public_effects(
          %{article: %Article{} = article, community: community, binding: %{inner_id: inner_id}} =
            result

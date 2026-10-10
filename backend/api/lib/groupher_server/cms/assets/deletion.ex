@@ -59,8 +59,8 @@ defmodule GroupherServer.CMS.Assets.Deletion do
           is_nil(asset.deleted_at)
     )
     |> Repo.all()
-    |> Enum.each(fn asset ->
-      _ =
+    |> Enum.reduce_while({:ok, :pass}, fn asset, {:ok, :pass} ->
+      result =
         Repo.transaction(fn ->
           with {:ok, deleted} <- Persist.delete(community, asset.id, {:workflow, workflow_ref}),
                {:ok, _event} <-
@@ -73,14 +73,17 @@ defmodule GroupherServer.CMS.Assets.Deletion do
                    effect_key: "asset:#{deleted.id}",
                    data: %{asset_id: deleted.id, public_ref: deleted.public_ref}
                  }) do
-            deleted
+            :pass
           else
             {:error, reason} -> Repo.rollback(reason)
           end
         end)
-    end)
 
-    {:ok, :pass}
+      case result do
+        {:ok, :pass} -> {:cont, {:ok, :pass}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
   end
 
   defp retention_workflow_ref(community_id, public_refs) do

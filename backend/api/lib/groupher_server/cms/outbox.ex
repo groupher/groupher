@@ -29,6 +29,7 @@ defmodule GroupherServer.CMS.Outbox do
           optional(:identity) => {:command | :workflow, String.t()},
           optional(:effect_key) => String.t(),
           optional(:contract_version) => pos_integer(),
+          optional(:retry_failed) => boolean(),
           optional(:data) => map(),
           required(:worker) => module()
         }
@@ -56,9 +57,28 @@ defmodule GroupherServer.CMS.Outbox do
         available_at: DateTime.utc_now(:second)
       }
 
-      with {:ok, event_record} <- Repo.insert(Event.changeset(%Event{}, event_attrs)),
-           {:ok, _job} <- enqueue(worker, event_record.id) do
-        {:ok, event_record}
+      changeset = Event.changeset(%Event{}, event_attrs)
+
+      case Repo.insert(changeset,
+             on_conflict: [set: [effect_key: event_attrs.effect_key]],
+             conflict_target: [
+               :identity_type,
+               :command_id,
+               :event,
+               :resource_type,
+               :resource_id,
+               :effect_key
+             ],
+             returning: true
+           ) do
+        {:ok, event_record} when event_record.id == event_attrs.id ->
+          with {:ok, _job} <- enqueue(worker, event_record.id), do: {:ok, event_record}
+
+        {:ok, %Event{} = event_record} ->
+          maybe_retry_existing(event_record, worker, attrs)
+
+        {:error, reason} ->
+          {:error, reason}
       end
     end
   end
@@ -225,6 +245,34 @@ defmodule GroupherServer.CMS.Outbox do
       worker.new(%{event_id: event_id}) |> Oban.insert()
     end
   end
+
+  defp maybe_retry_existing(%Event{status: status} = event, worker, attrs)
+       when status in [:failed, :dead] do
+    if Map.get(attrs, :retry_failed, false) do
+      now = DateTime.utc_now(:second)
+
+      with {:ok, event} <-
+             event
+             |> Event.changeset(%{
+               status: :pending,
+               attempts: 0,
+               available_at: now,
+               locked_at: nil,
+               locked_by: nil,
+               completed_at: nil,
+               last_error_code: nil,
+               last_error_at: nil
+             })
+             |> Repo.update(),
+           {:ok, _job} <- enqueue(worker, event.id) do
+        {:ok, event}
+      end
+    else
+      {:ok, event}
+    end
+  end
+
+  defp maybe_retry_existing(%Event{} = event, _worker, _attrs), do: {:ok, event}
 
   defp required_worker(attrs) do
     case Map.get(attrs, :worker) do

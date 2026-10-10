@@ -1,5 +1,7 @@
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
 import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
+import { print } from 'graphql'
 
 export type GraphQLResponse<T> = {
   data?: T
@@ -25,10 +27,10 @@ const readToken = (cookieHeader: string | null): string | null => {
 }
 
 /** Runs the request graph ql operation at the frontend shared boundary. */
-export const requestGraphQL = async <T>(
-  query: string,
-  variables: Record<string, unknown> = {},
-): Promise<T> => {
+export const requestGraphQL = async <TData, TVariables extends object>(
+  query: TypedDocumentNode<TData, TVariables>,
+  variables?: TVariables,
+): Promise<TData> => {
   setResponseHeader('cache-control', 'private, no-store')
   const token = readToken(getRequest().headers.get('cookie'))
   const endpoint = process.env.GRAPHQL_ENDPOINT || LOCAL_PHOENIX_GRAPHQL_ENDPOINT
@@ -39,12 +41,12 @@ export const requestGraphQL = async <T>(
       'content-type': 'application/json',
       ...(token ? { cookie: `${GROUPHER_AUTH_TOKEN_COOKIE}=${token}` } : {}),
     },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({ query: print(query), variables }),
   })
   const responseText = await response.text()
-  let payload: GraphQLResponse<T>
+  let payload: GraphQLResponse<TData>
   try {
-    payload = JSON.parse(responseText) as GraphQLResponse<T>
+    payload = JSON.parse(responseText) as GraphQLResponse<TData>
   } catch {
     throw new GraphQLRequestError(`GraphQL request failed with HTTP ${response.status}.`)
   }

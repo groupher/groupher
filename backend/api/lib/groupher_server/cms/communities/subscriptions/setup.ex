@@ -8,6 +8,8 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Setup do
       Setup workflow -> transaction owner -> Persist -> counts/profile projection
   """
 
+  import Ecto.Query
+
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Communities
@@ -19,8 +21,9 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Setup do
   @spec subscribe(Community.t(), User.t()) :: T.domain_res(Community.t())
   def subscribe(%Community{} = community, %User{} = user) do
     Repo.transact(fn ->
-      with {:ok, _} <- Persist.subscribe(community, user),
-           {:ok, canonical} <- ORM.find(Community, community.id),
+      with %Community{} = locked_community <- lock_community(community.id),
+           {:ok, _} <- Persist.subscribe(locked_community, user),
+           {:ok, canonical} <- ORM.find(Community, locked_community.id),
            {:ok, canonical} <- Communities.Count.update(canonical, user, :subscribers_count, :inc),
            {:ok, _user} <- Accounts.Profiles.update_subscribe_state(user) do
         {:ok, canonical}
@@ -32,8 +35,9 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Setup do
   def unsubscribe(%Community{} = community, %User{} = user) do
     with true <- community.slug != "home" do
       Repo.transact(fn ->
-        with {:ok, _} <- Persist.unsubscribe(community, user),
-             {:ok, canonical} <- ORM.find(Community, community.id),
+        with %Community{} = locked_community <- lock_community(community.id),
+             {:ok, _} <- Persist.unsubscribe(locked_community, user),
+             {:ok, canonical} <- ORM.find(Community, locked_community.id),
              {:ok, canonical} <-
                Communities.Count.update(canonical, user, :subscribers_count, :dec),
              {:ok, _user} <- Accounts.Profiles.update_subscribe_state(user) do
@@ -43,6 +47,13 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Setup do
     else
       false -> {:error, CommunityErrorCat.custom("can not unsubscribe home community")}
     end
+  end
+
+  defp lock_community(community_id) do
+    Community
+    |> where([community], community.id == ^community_id)
+    |> lock("FOR UPDATE")
+    |> Repo.one()
   end
 
   @spec subscribe_ifnot(Community.t(), User.t()) :: T.domain_res(term())

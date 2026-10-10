@@ -21,6 +21,14 @@ defmodule GroupherServer.CMS.DocCover.Commands.ReorderPinnedDocs do
       #=> {:ok, %{done: true}}
   """
   @spec execute(Community.t(), list(), term(), Ecto.UUID.t()) :: term()
-  def execute(community, ids, actor, _command_id),
-    do: Support.run(actor, :manage_docs, community, &Persist.reorder_pinned_docs(&1, ids))
+  def execute(community, ids, actor, command_id) do
+    Support.execute_receipted(
+      community,
+      actor,
+      command_id,
+      :doc_cover_reorder_pinned_docs,
+      %{ids: ids},
+      &Persist.reorder_pinned_docs(&1, ids)
+    )
+  end
 end

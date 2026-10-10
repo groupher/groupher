@@ -19,6 +19,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
@@ -54,6 +56,8 @@ jobs:
         working-directory: backend/api
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
@@ -79,6 +83,22 @@ jobs:
 
       - name: Ensure dependencies are synced
         run: mix deps.get
+
+      - name: Check formatting for changed Elixir files
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          base_sha="$BASE_SHA"
+          if [ -z "$base_sha" ] || [ "$base_sha" = "0000000000000000000000000000000000000000" ]; then
+            base_sha="$(git rev-parse "$GITHUB_SHA^")"
+          fi
+          files="$(git diff --name-only "$base_sha" "$GITHUB_SHA" -- 'backend/api/**/*.ex' 'backend/api/**/*.exs' | sed 's#^backend/api/##')"
+          if [ -n "$files" ]; then
+            mix format --check-formatted $files
+          fi
+
+      - name: Compile without warnings
+        run: mix compile --warnings-as-errors
 
       - name: Start PostgreSQL with pg_roaringbitmap
         working-directory: ${{ github.workspace }}

@@ -1,3 +1,6 @@
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
+import { print } from 'graphql'
+
 type GraphQLResponse<T> = {
   data?: T
   errors?: Array<{ extensions?: { code?: unknown; reasonCode?: unknown }; message?: string }>
@@ -14,20 +17,20 @@ export class ClientGraphQLError extends Error {
 }
 
 /** Runs the client graph ql operation at the frontend shared boundary. */
-export const clientGraphQL = async <T>(
-  query: string,
-  variables: Record<string, unknown> = {},
-): Promise<T> => {
+export const clientGraphQL = async <TData, TVariables extends object>(
+  query: TypedDocumentNode<TData, TVariables>,
+  variables?: TVariables,
+): Promise<TData> => {
   const response = await fetch('/apply/api/graphql', {
     method: 'POST',
     credentials: 'include',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({ query: print(query), variables }),
   })
   const responseText = await response.text()
-  let payload: GraphQLResponse<T>
+  let payload: GraphQLResponse<TData>
   try {
-    payload = JSON.parse(responseText) as GraphQLResponse<T>
+    payload = JSON.parse(responseText) as GraphQLResponse<TData>
   } catch {
     throw new ClientGraphQLError(`Request failed with HTTP ${response.status}.`)
   }

@@ -89,8 +89,10 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
 
   test "the command-event-resource identity is unique" do
     attrs = event_attrs("test.unique", Ecto.UUID.generate())
-    assert {:ok, _event} = CMS.Outbox.send(attrs)
-    assert {:error, %Ecto.Changeset{}} = CMS.Outbox.send(attrs)
+    assert {:ok, first} = CMS.Outbox.send(attrs)
+    assert {:ok, second} = CMS.Outbox.send(attrs)
+    assert second.id == first.id
+    assert Repo.aggregate(Event, :count, :id) == 1
   end
 
   test "workflow identity is separate from command identity" do

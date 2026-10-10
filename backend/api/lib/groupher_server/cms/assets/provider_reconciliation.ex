@@ -60,6 +60,7 @@ defmodule GroupherServer.CMS.Assets.ProviderReconciliation do
                resource_id: asset.id,
                identity: {:workflow, workflow_ref},
                effect_key: "asset:#{asset.id}",
+               retry_failed: true,
                data: %{asset_id: asset.id, public_ref: asset.public_ref}
              }) do
           {:ok, _event} -> {:ok, count + 1}

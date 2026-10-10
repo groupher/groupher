@@ -146,7 +146,12 @@ export const decodePreviewRecord = (value: unknown): TPreviewRecord => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('Invalid preview record.')
   }
-  const record = value as TPreviewRecord
+  const raw = value as TPreviewRecord & { idempotencyKey?: unknown }
+  const record = {
+    ...raw,
+    commandId:
+      typeof raw.commandId === 'string' && raw.commandId ? raw.commandId : raw.idempotencyKey,
+  } as TPreviewRecord
   const source = record.requestedSource
   if (
     record.schemaVersion !== PREVIEW_RECORD_SCHEMA_VERSION ||

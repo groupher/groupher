@@ -117,13 +117,22 @@ defmodule GroupherServer.CMS.Articles.Query do
       |> stable_order(filter, thread)
       |> stable_pin_order(page, community_ref)
 
-    total_count =
+    total_count_query =
       base
       |> exclude(:order_by)
       |> exclude(:select)
       |> exclude(:distinct)
-      |> select([article, ...], count(article.id, :distinct))
-      |> Repo.one()
+
+    total_count =
+      if is_binary(community_ref) do
+        total_count_query
+        |> select([article, ...], count(article.id, :distinct))
+        |> Repo.one()
+      else
+        total_count_query
+        |> select([_article, binding, ...], count(binding.id, :distinct))
+        |> Repo.one()
+      end
 
     entries =
       base

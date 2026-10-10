@@ -14,6 +14,12 @@ export type AnalysisTrendPagesDimension = 'ENTRY' | 'EXIT' | 'PATH' | 'QUERY' | 
 
 export type AnalysisTrendSourcesDimension = 'CHANNEL' | 'DOMAIN' | 'REFERRER'
 
+export type ApplicationLogoUploadInput = {
+  fileName: string
+  mimeType: string
+  sizeBytes: number
+}
+
 export type ArticleCatEnum = 'BUG' | 'DISCUSSION' | 'IDEA' | 'QA'
 
 export type ArticleDocumentAssetUsage = 'ATTACHMENT' | 'COVER' | 'COVER_DARK' | 'EMBED' | 'INLINE'
@@ -130,6 +136,32 @@ export type CommunityActivitySelectionInput = {
   filter?: CommunityActivityFilterInput | null | undefined
   presetKey?: string | null | undefined
 }
+
+export type CommunityApplicationActorType = 'APPLICANT' | 'JOB' | 'REVIEWER' | 'SYSTEM'
+
+export type CommunityApplicationCategory = 'GAMING' | 'GROUP' | 'PRODUCT' | 'TEACH'
+
+export type CommunityApplicationInput = {
+  applyCategory: CommunityApplicationCategory
+  applyMessage?: string | null | undefined
+  desc: string
+  locale: string
+  logoAssetRef: string | number
+  slug: string
+  title: string
+}
+
+export type CommunityApplicationStatus =
+  | 'APPROVED'
+  | 'CANCELLED'
+  | 'CREATED'
+  | 'CREATION_FAILED'
+  | 'EXPIRED'
+  | 'REJECTED'
+  | 'REVIEWING'
+  | 'SETTING_UP'
+  | 'SETUP_FAILED'
+  | 'SUBMITTED'
 
 export type CommunityAssetFilter = {
   assetType?: CommunityAssetType | null | undefined
@@ -520,6 +552,326 @@ export type WallpaperUploadPrepareInput = {
 }
 
 export type WhenEnum = 'THIS_MONTH' | 'THIS_WEEK' | 'THIS_YEAR' | 'TODAY'
+
+export type ApplyApplicationFieldsFragment = {
+  publicRef: string
+  status: CommunityApplicationStatus
+  version: number
+  title: string
+  slug: string
+  desc: string
+  locale: string
+  applyCategory: CommunityApplicationCategory
+  applyMessage: string | null
+  submittedAt: string
+  completedAt: string | null
+  updatedAt: string
+  decisionReasonCode: string | null
+  logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  community: { publicRef: string; slug: string } | null
+}
+
+export type ApplyAccountQueryVariables = Exact<{ [key: string]: never }>
+
+export type ApplyAccountQuery = { me: { login: string | null } | null }
+
+export type ApplyInitialStateQueryVariables = Exact<{ [key: string]: never }>
+
+export type ApplyInitialStateQuery = {
+  communityApplicationState: {
+    canApply: { allowed: boolean; reasonCode: string | null; retryAt: string | null }
+    currentApplication: {
+      publicRef: string
+      status: CommunityApplicationStatus
+      version: number
+      title: string
+      slug: string
+      desc: string
+      locale: string
+      applyCategory: CommunityApplicationCategory
+      applyMessage: string | null
+      submittedAt: string
+      completedAt: string | null
+      updatedAt: string
+      decisionReasonCode: string | null
+      logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+      community: { publicRef: string; slug: string } | null
+    } | null
+    latestFailedApplication: {
+      publicRef: string
+      status: CommunityApplicationStatus
+      title: string
+      slug: string
+      updatedAt: string
+    } | null
+  }
+}
+
+export type OwnedApplicationQueryVariables = Exact<{
+  ref: string | number
+}>
+
+export type OwnedApplicationQuery = {
+  communityApplication: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    applyMessage: string | null
+    submittedAt: string
+    completedAt: string | null
+    updatedAt: string
+    decisionReasonCode: string | null
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+    community: { publicRef: string; slug: string } | null
+  } | null
+}
+
+export type ReviewQueueQueryVariables = Exact<{ [key: string]: never }>
+
+export type ReviewQueueQuery = {
+  pagedCommunityApplications: {
+    edges: Array<{
+      node: {
+        publicRef: string
+        status: CommunityApplicationStatus
+        version: number
+        title: string
+        slug: string
+        desc: string
+        locale: string
+        applyCategory: CommunityApplicationCategory
+        submittedAt: string
+        updatedAt: string
+        logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+        reviewer: { publicRef: string } | null
+      }
+    }>
+  }
+}
+
+export type ReviewApplicationQueryVariables = Exact<{
+  ref: string | number
+}>
+
+export type ReviewApplicationQuery = {
+  reviewCommunityApplication: {
+    expiresAt: string | null
+    reviewedAt: string | null
+    setupStartedAt: string | null
+    decisionNote: string | null
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    applyMessage: string | null
+    submittedAt: string
+    completedAt: string | null
+    updatedAt: string
+    decisionReasonCode: string | null
+    applicant: { publicRef: string }
+    reviewer: { publicRef: string } | null
+    lastJobError: {
+      reasonCode: string
+      message: string
+      operationRef: string | null
+      occurredAt: string | null
+    } | null
+    events: {
+      edges: Array<{
+        cursor: string
+        node: {
+          fromStatus: CommunityApplicationStatus | null
+          toStatus: CommunityApplicationStatus
+          actorType: CommunityApplicationActorType
+          reasonCode: string | null
+          operationRef: string | null
+          occurredAt: string
+          actor: { publicRef: string } | null
+        }
+      }>
+    }
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+    community: { publicRef: string; slug: string } | null
+  } | null
+}
+
+export type SubmitApplicationMutationVariables = Exact<{
+  input: CommunityApplicationInput
+  commandId: string | number
+}>
+
+export type SubmitApplicationMutation = {
+  submitCommunityApplication: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    applyMessage: string | null
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type StartApplicationReviewMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+}>
+
+export type StartApplicationReviewMutation = {
+  startCommunityApplicationReview: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type ApproveApplicationMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+  note?: string | null | undefined
+}>
+
+export type ApproveApplicationMutation = {
+  approveCommunityApplication: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type RejectApplicationMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+  reasonCode: string
+  note?: string | null | undefined
+}>
+
+export type RejectApplicationMutation = {
+  rejectCommunityApplication: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type RetryCommunityCreationMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+}>
+
+export type RetryCommunityCreationMutation = {
+  retryCommunityCreation: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type RetryCommunitySetupMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+}>
+
+export type RetryCommunitySetupMutation = {
+  retryCommunitySetup: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type CancelApplicationMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+}>
+
+export type CancelApplicationMutation = {
+  cancelCommunityApplication: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type ApplicationLogoIntentMutationVariables = Exact<{
+  input: ApplicationLogoUploadInput
+}>
+
+export type ApplicationLogoIntentMutation = {
+  createCommunityApplicationLogoUploadIntent: {
+    uploadRef: string
+    capability: string
+    canonicalUrl: string
+  }
+}
 
 export type QueryUpvotePostMutationVariables = Exact<{
   article: ArticlePathInput
@@ -8145,6 +8497,57 @@ export type UpdateCommunityTagMutationVariables = Exact<{
 
 export type UpdateCommunityTagMutation = { updateCommunityTag: { id: string | null } | null }
 
+export const ApplyApplicationFieldsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ApplyApplicationFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityApplication' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyMessage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'decisionReasonCode' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'logo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'community' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApplyApplicationFieldsFragment, unknown>
 export const PageAuthorFieldsFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -11248,6 +11651,1208 @@ export const KanbanPageFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<KanbanPageFieldsFragment, unknown>
+export const ApplyAccountDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ApplyAccount' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'me' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'login' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApplyAccountQuery, ApplyAccountQueryVariables>
+export const ApplyInitialStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ApplyInitialState' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'communityApplicationState' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'canApply' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'allowed' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'reasonCode' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'retryAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currentApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'ApplyApplicationFields' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'latestFailedApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ApplyApplicationFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityApplication' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyMessage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'decisionReasonCode' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'logo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'community' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApplyInitialStateQuery, ApplyInitialStateQueryVariables>
+export const OwnedApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'OwnedApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'communityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ApplyApplicationFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ApplyApplicationFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityApplication' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyMessage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'decisionReasonCode' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'logo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'community' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<OwnedApplicationQuery, OwnedApplicationQueryVariables>
+export const ReviewQueueDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReviewQueue' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pagedCommunityApplications' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'statuses' },
+                      value: {
+                        kind: 'ListValue',
+                        values: [
+                          { kind: 'EnumValue', value: 'SUBMITTED' },
+                          { kind: 'EnumValue', value: 'REVIEWING' },
+                          { kind: 'EnumValue', value: 'APPROVED' },
+                          { kind: 'EnumValue', value: 'CREATION_FAILED' },
+                          { kind: 'EnumValue', value: 'SETUP_FAILED' },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: { kind: 'IntValue', value: '100' },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'edges' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'node' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'logo' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'applicationUploadRef' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'communityAssetRef' },
+                                  },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'reviewer' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReviewQueueQuery, ReviewQueueQueryVariables>
+export const ReviewApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReviewApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reviewCommunityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ApplyApplicationFields' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'applicant' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'publicRef' } }],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'reviewer' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'publicRef' } }],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'setupStartedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'decisionNote' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'lastJobError' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reasonCode' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'events' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'first' },
+                      value: { kind: 'IntValue', value: '100' },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'edges' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'cursor' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'node' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'fromStatus' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'toStatus' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'actorType' } },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'actor' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'publicRef' },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'reasonCode' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ApplyApplicationFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityApplication' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyMessage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'decisionReasonCode' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'logo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'community' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReviewApplicationQuery, ReviewApplicationQueryVariables>
+export const SubmitApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SubmitApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityApplicationInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'submitCommunityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyMessage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SubmitApplicationMutation, SubmitApplicationMutationVariables>
+export const StartApplicationReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'StartApplicationReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'startCommunityApplicationReview' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  StartApplicationReviewMutation,
+  StartApplicationReviewMutationVariables
+>
+export const ApproveApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ApproveApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'note' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'approveCommunityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'note' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'note' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApproveApplicationMutation, ApproveApplicationMutationVariables>
+export const RejectApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RejectApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reasonCode' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'note' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rejectCommunityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'reasonCode' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'reasonCode' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'note' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'note' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RejectApplicationMutation, RejectApplicationMutationVariables>
+export const RetryCommunityCreationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RetryCommunityCreation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'retryCommunityCreation' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  RetryCommunityCreationMutation,
+  RetryCommunityCreationMutationVariables
+>
+export const RetryCommunitySetupDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RetryCommunitySetup' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'retryCommunitySetup' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RetryCommunitySetupMutation, RetryCommunitySetupMutationVariables>
+export const CancelApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CancelApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cancelCommunityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CancelApplicationMutation, CancelApplicationMutationVariables>
+export const ApplicationLogoIntentDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ApplicationLogoIntent' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'ApplicationLogoUploadInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createCommunityApplicationLogoUploadIntent' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'uploadRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'capability' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canonicalUrl' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApplicationLogoIntentMutation, ApplicationLogoIntentMutationVariables>
 export const QueryUpvotePostDocument = {
   kind: 'Document',
   definitions: [

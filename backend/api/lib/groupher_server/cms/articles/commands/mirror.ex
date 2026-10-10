@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Mirror do
         action: &mirror_action(&1, source, destination),
         confirmation: BindingConfirmation
       )
-      |> BindingSupport.present_binding()
+      |> BindingSupport.present_article()
     end
   end
 
@@ -44,7 +44,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Mirror do
       with {:ok, binding} <- BindingPersist.mirror(canonical, destination),
            {:ok, binding} <- Tags.replace(binding, params.tag_ids),
            {:ok, _} <-
-             BindingSupport.invalidate_scope(destination, binding, canonical.thread, command_id) do
+             BindingSupport.invalidate_scope(destination, binding, canonical.thread, command_id),
+           {:ok, _destination} <-
+             CMS.Communities.update_count_field(destination, canonical.thread) do
         {:ok, BindingSupport.confirmation(canonical, destination, command_id)}
       end
     end)

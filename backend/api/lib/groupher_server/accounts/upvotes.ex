@@ -19,15 +19,12 @@ defmodule GroupherServer.Accounts.Upvotes do
 
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
   alias Accounts.Model.User
-  alias CMS.Articles.Bindings
-  alias CMS.Model.{ArticleStats, ArticleUpvote}
+  alias CMS.Model.{ArticleBinding, ArticleStats, ArticleUpvote}
   alias Helper.{ORM, QueryBuilder}
 
   @doc "Returns paged articles from the `Upvotes` read boundary."
   def paged_articles(%User{id: user_id}, %{thread: thread} = filter) when is_atom(thread) do
-    where_query = dynamic([a], a.user_id == ^user_id and a.thread == ^thread)
-
-    load_articles(where_query, filter)
+    load_articles(user_id, thread, filter)
   end
 
   def paged_articles(%User{}, %{thread: _thread}) do
@@ -35,48 +32,55 @@ defmodule GroupherServer.Accounts.Upvotes do
   end
 
   def paged_articles(%User{id: user_id}, filter) do
-    where_query = dynamic([a], a.user_id == ^user_id)
-    load_articles(where_query, filter)
+    load_articles(user_id, nil, filter)
   end
 
-  defp load_articles(where_query, %{page: page, size: size} = filter) do
-    query = from(upvote in ArticleUpvote, preload: :article)
+  defp load_articles(user_id, thread, %{page: page, size: size} = filter) do
+    query =
+      from(binding in ArticleBinding,
+        join: upvote in ArticleUpvote,
+        on: upvote.article_id == binding.article_id,
+        where: upvote.user_id == ^user_id,
+        preload: [:article, :community],
+        distinct: binding.id
+      )
+
+    query =
+      if is_nil(thread),
+        do: query,
+        else: where(query, [binding, upvote], upvote.thread == ^thread)
 
     paged =
       query
-      |> where(^where_query)
       |> QueryBuilder.filter_pack(filter)
       |> ORM.paginator(~m(page size)a)
 
     entries =
-      Enum.flat_map(paged.entries, fn upvote ->
-        article = upvote.article
-        {:ok, bindings} = Bindings.all(article)
+      Enum.flat_map(paged.entries, fn binding ->
+        article = binding.article
 
-        Enum.flat_map(bindings, fn binding ->
-          case FrontDesk.article(%{
-                 community: binding.community.slug,
-                 thread: article.thread,
-                 inner_id: binding.inner_id
-               }) do
-            {:ok, projection} ->
-              stats = Repo.get_by(ArticleStats, article_id: article.id, thread: article.thread)
+        case FrontDesk.article(%{
+               community: binding.community.slug,
+               thread: article.thread,
+               inner_id: binding.inner_id
+             }) do
+          {:ok, projection} ->
+            stats = Repo.get_by(ArticleStats, article_id: article.id, thread: article.thread)
 
-              [
-                %{
-                  author: projection.author,
-                  id: projection.id,
-                  inner_id: projection.inner_id,
-                  thread: projection.thread,
-                  title: projection.title,
-                  upvotes_count: if(stats, do: stats.upvotes_count, else: 0)
-                }
-              ]
+            [
+              %{
+                author: projection.author,
+                id: projection.id,
+                inner_id: projection.inner_id,
+                thread: projection.thread,
+                title: projection.title,
+                upvotes_count: if(stats, do: stats.upvotes_count, else: 0)
+              }
+            ]
 
-            {:error, _reason} ->
-              []
-          end
-        end)
+          {:error, _reason} ->
+            []
+        end
       end)
 
     paged |> Map.put(:entries, entries) |> done()

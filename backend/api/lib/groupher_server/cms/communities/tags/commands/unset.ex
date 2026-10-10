@@ -45,6 +45,12 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.UnsetTag do
     Gate.with_branch_check(actor, :edit, community, article, branch_id, callback)
   end
 
+  defp with_article_gate(actor, community, %Article{thread: :doc} = article, nil, callback) do
+    with {:ok, branch} <- CMS.Docs.Branch.resolve(community, []) do
+      Gate.with_branch_check(actor, :edit, community, article, branch.id, callback)
+    end
+  end
+
   defp with_article_gate(actor, community, article, _branch_id, callback) do
     Gate.with_community_check(actor, :edit, community, article, callback)
   end

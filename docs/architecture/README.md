@@ -26,6 +26,7 @@
 - [`cms-outbox.md`](./cms-outbox.md)：统一 Domain Outbox、typed event、Dispatcher 与 PublicCache Cleanup 等消费边界。
 - [`cms-command.md`](./cms-command.md)：CMS 用户写命令、Receipt 幂等与 Confirmation 边界。
 - [`cms-command-v3.md`](./cms-command-v3.md)：Confirmation 与提交后 result builder 的 V3 收口。
+- [`ci-contract-gaps.md`](./ci-contract-gaps.md)：GraphQL operation、Command Receipt、Outbox、scope、并发与分页的 CI/测试覆盖缺口及门禁计划。
 - [`error-cat.md`](./error-cat.md)：领域错误目录、全局注册和协议边界。
 - [`domains.md`](./domains.md)：主要业务领域的命名、职责和详细设计入口。
 - [`seo.md`](./seo.md)：搜索索引与规范 URL。

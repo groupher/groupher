@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.DeleteTag do
     end
   end
 
-  defp action(%{actor: actor, target: tag, command_id: command_id}) do
+  defp action(%{actor: actor, target: %CommunityTag{} = tag, command_id: command_id}) do
     with {:ok, community} <- TagSupport.community(tag.community_id),
          {:ok, %CommunityTag{} = deleted} <-
            Gate.with_community_check(actor, :update, community, fn _canonical ->

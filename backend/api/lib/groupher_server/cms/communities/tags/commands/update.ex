@@ -15,21 +15,28 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.UpdateTag do
 
   @spec execute(T.id(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(CommunityTag.t())
   def execute(id, attrs, %User{} = actor, command_id) do
-    with {:ok, %CommunityTag{} = tag} <- FrontDesk.community_tag(id) do
-      command = %Command{
-        actor: actor,
-        command_id: command_id,
-        operation: :tag_update,
-        target: tag,
-        params: TagSupport.intent_attrs(attrs)
-      }
-
-      with {:ok, confirmation} <-
-             Command.execute(command, action: &action/1, confirmation: TagConfirmation) do
-        TagSupport.tag_confirmation(confirmation)
+    target =
+      case FrontDesk.community_tag(id) do
+        {:ok, %CommunityTag{} = tag} -> tag
+        {:error, _reason} -> {:community_tag, id}
       end
+
+    command = %Command{
+      actor: actor,
+      command_id: command_id,
+      operation: :tag_update,
+      target: target,
+      params: TagSupport.intent_attrs(attrs)
+    }
+
+    with {:ok, confirmation} <-
+           Command.execute(command, action: &action/1, confirmation: TagConfirmation) do
+      TagSupport.tag_confirmation(confirmation)
     end
   end
+
+  defp action(%{target: {:community_tag, _id}}),
+    do: {:error, CMS.Communities.ErrorCat.not_exist("CommunityTag")}
 
   defp action(%{actor: actor, target: tag, params: attrs, command_id: command_id}) do
     with {:ok, community} <- TagSupport.community(tag.community_id),
