@@ -287,7 +287,7 @@ defmodule GroupherServer.CMS.DocCover.Persist do
 
   defp reindex_pinned_docs(community, pinned_docs) do
     case batch_reindex_pinned_docs(community, pinned_docs) do
-      {:ok, _} -> {:ok, :pass}
+      {:ok, _} -> {:ok, %{done: true}}
       error -> error
     end
   end
