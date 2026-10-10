@@ -398,7 +398,11 @@ defmodule GroupherServer.Analysis.Web do
     end
   end
 
-  defp dashboard_for(%Community{} = community), do: Persist.get_or_insert_dashboard(community)
+  defp dashboard_for(%Community{} = community) do
+    Transaction.lock_global("community_dashboard:ensure:#{community.id}", fn ->
+      Persist.get_or_insert_dashboard(community)
+    end)
+  end
 
   defp ensure_runtime_configured do
     case Config.runtime().api_token do

@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
 
   alias GroupherServer.CMS
   alias CMS.Articles.ErrorCat
-  alias CMS.Model.PinnedArticle
+  alias CMS.Model.{ArticleBinding, PinnedArticle}
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
@@ -24,7 +24,13 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
       {:ok, pinned_article} = CMS.Articles.pin(community, post.id, user, command_id)
       assert {:ok, replayed} = CMS.Articles.pin(community, post.id, user, command_id)
       assert replayed.id == pinned_article.id
-      assert Repo.get!(PinnedArticle, pinned_article.id).id == pinned_article.id
+
+      binding = Repo.get_by!(ArticleBinding, article_id: post.id, community_id: community.id)
+
+      assert Repo.get_by!(PinnedArticle, article_binding_id: binding.id).article_binding_id ==
+               binding.id
+
+      assert pinned_article.id == post.id
     end
 
     test "one community & thread can only pin certain count of post", ~m(community user)a do
@@ -42,7 +48,7 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
     end
 
     test "can undo pin to a post", ~m(community post user)a do
-      {:ok, pin} = CMS.Articles.pin(community, post.id, user, Ecto.UUID.generate())
+      {:ok, _pin} = CMS.Articles.pin(community, post.id, user, Ecto.UUID.generate())
       command_id = Ecto.UUID.generate()
 
       assert {:ok, _unpinned} =
@@ -50,7 +56,8 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
 
       assert {:ok, :done} = CMS.Articles.undo_pin(community, post.id, user, command_id)
 
-      refute Repo.get(PinnedArticle, pin.id)
+      binding = Repo.get_by!(ArticleBinding, article_id: post.id, community_id: community.id)
+      refute Repo.get_by(PinnedArticle, article_binding_id: binding.id)
     end
   end
 end

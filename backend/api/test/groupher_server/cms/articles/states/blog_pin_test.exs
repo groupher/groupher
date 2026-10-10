@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
 
   alias GroupherServer.CMS
   alias CMS.Articles.ErrorCat
-  alias CMS.Model.PinnedArticle
+  alias CMS.Model.{ArticleBinding, PinnedArticle}
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
@@ -21,7 +21,12 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
   describe "[cms blog pin]" do
     test "can pin a blog", ~m(community blog user)a do
       {:ok, pinned_article} = CMS.Articles.pin(community, blog.id, user, Ecto.UUID.generate())
-      assert Repo.get!(PinnedArticle, pinned_article.id).id == pinned_article.id
+      binding = Repo.get_by!(ArticleBinding, article_id: blog.id, community_id: community.id)
+
+      assert Repo.get_by!(PinnedArticle, article_binding_id: binding.id).article_binding_id ==
+               binding.id
+
+      assert pinned_article.id == blog.id
     end
 
     test "one community & thread can only pin certain count of blog", ~m(community user)a do
@@ -41,12 +46,13 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
     end
 
     test "can undo pin to a blog", ~m(community blog user)a do
-      {:ok, pin} = CMS.Articles.pin(community, blog.id, user, Ecto.UUID.generate())
+      {:ok, _pin} = CMS.Articles.pin(community, blog.id, user, Ecto.UUID.generate())
 
       assert {:ok, _unpinned} =
                CMS.Articles.undo_pin(community, blog.id, user, Ecto.UUID.generate())
 
-      refute Repo.get(PinnedArticle, pin.id)
+      binding = Repo.get_by!(ArticleBinding, article_id: blog.id, community_id: community.id)
+      refute Repo.get_by(PinnedArticle, article_binding_id: binding.id)
     end
   end
 end

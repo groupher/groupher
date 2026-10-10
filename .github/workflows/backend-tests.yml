@@ -92,7 +92,7 @@ jobs:
           if [ -z "$base_sha" ] || [ "$base_sha" = "0000000000000000000000000000000000000000" ]; then
             base_sha="$(git rev-parse "$GITHUB_SHA^")"
           fi
-          files="$(git diff --name-only "$base_sha" "$GITHUB_SHA" -- 'backend/api/**/*.ex' 'backend/api/**/*.exs' | sed 's#^backend/api/##')"
+          files="$(git diff --diff-filter=ACMR --name-only "$base_sha" "$GITHUB_SHA" -- 'backend/api/**/*.ex' 'backend/api/**/*.exs' | sed 's#^backend/api/##')"
           if [ -n "$files" ]; then
             mix format --check-formatted $files
           fi

@@ -93,6 +93,8 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     community_request_destroy: :digest_each,
     doc_cover_add_card: {:fields, %{"group_node_id" => :raw}},
     doc_cover_remove_card: {:fields, %{"group_node_id" => :raw}},
+    doc_cover_reorder_cards: {:fields, %{"ids" => :digest}},
+    doc_cover_reorder_pinned_docs: {:fields, %{"ids" => :digest}},
     doc_cover_pin_doc: {:fields, %{"node_id" => :raw}},
     doc_cover_unpin_doc: {:fields, %{"node_id" => :raw}},
     emotion_add: {:fields, %{"operation" => :raw, "emotion" => :raw}},

@@ -52,7 +52,7 @@ endpoints:
     group: Core services
     enabled: true
     url: https://api.groupher.com/health
-    interval: 1h
+    interval: 1m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"

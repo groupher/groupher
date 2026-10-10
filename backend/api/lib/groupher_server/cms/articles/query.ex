@@ -204,7 +204,7 @@ defmodule GroupherServer.CMS.Articles.Query do
       on: assignment.article_binding_id == binding.id,
       join: tag in CommunityTag,
       on: tag.id == assignment.tag_id and tag.slug in ^tags,
-      distinct: article.id
+      distinct: binding.id
     )
   end
 

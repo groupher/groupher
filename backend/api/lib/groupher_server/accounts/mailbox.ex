@@ -1,4 +1,6 @@
 defmodule GroupherServer.Accounts.Mailbox do
+  require Logger
+
   @moduledoc """
   Account-facing mailbox facade and unread counter synchronizer.
 
@@ -229,7 +231,9 @@ defmodule GroupherServer.Accounts.Mailbox do
            )}
       end
     rescue
-      exception -> {:error, ErrorCat.custom(Exception.message(exception))}
+      exception ->
+        Logger.error("mailbox batch update failed: #{Exception.message(exception)}")
+        {:error, ErrorCat.custom()}
     end
   end
 

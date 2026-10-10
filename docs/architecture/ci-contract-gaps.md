@@ -12,13 +12,13 @@ PR [#593](https://github.com/groupher/groupher/pull/593) 的 `commandId` 迁移�
 
 ## 2. 当前 CI 实际检查的范围
 
-| 检查                     | 当前覆盖                                                                                                         | 当前不能保证                                                                                          |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Backend schema freshness | 生成 `backend/api/schema.graphql`，并检查生成结果无未提交 diff                                                   | 不验证所有客户端 operation 的字段、参数和 response selection                                          |
-| Core GraphQL contract    | 对 `codegen.ts` 清单中的 operation 做静态 GraphQL 检查、codegen 和生成文件 freshness 检查                        | 不覆盖清单外的 raw GraphQL 文本                                                                       |
-| Apply type-check/build   | 检查 TypeScript 类型和构建产物                                                                                   | `clientGraphQL(query: string)` 的 operation 名、字段、参数仍是普通字符串；build 不会执行 GraphQL 请求 |
-| Backend tests            | 运行 `mix test --exclude skip_ci`，并在 workflow 中执行变更文件 format 检查和 `mix compile --warnings-as-errors` | Credo 仍未作为硬门禁，也没有覆盖全部 Receipt/outbox/scope/concurrency 组合                            |
-| 命令静态检查             | 已有若干仓库级脚本，例如 command identity、facade boundary、business return shape                                | 静态脚本不能替代运行时协议和数据库状态转换测试                                                        |
+| 检查                     | 当前覆盖                                                                                                         | 当前不能保证                                                               |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Backend schema freshness | 生成 `backend/api/schema.graphql`，并检查生成结果无未提交 diff                                                   | 不验证所有客户端 operation 的字段、参数和 response selection               |
+| Core GraphQL contract    | 对 `codegen.ts` 清单中的 operation 做静态 GraphQL 检查、codegen 和生成文件 freshness 检查                        | 不覆盖清单外的 raw GraphQL 文本                                            |
+| Apply type-check/build   | 检查 TypeScript 类型、typed documents 和构建产物                                                                 | build 不会执行 GraphQL 请求，也不覆盖服务端运行时状态语义                  |
+| Backend tests            | 运行 `mix test --exclude skip_ci`，并在 workflow 中执行变更文件 format 检查和 `mix compile --warnings-as-errors` | Credo 仍未作为硬门禁，也没有覆盖全部 Receipt/outbox/scope/concurrency 组合 |
+| 命令静态检查             | 已有若干仓库级脚本，例如 command identity、facade boundary、business return shape                                | 静态脚本不能替代运行时协议和数据库状态转换测试                             |
 
 因此，“有 schema 检查”与“所有客户端请求都经过 schema 校验”是两件不同的事。
 
@@ -26,11 +26,11 @@ PR [#593](https://github.com/groupher/groupher/pull/593) 的 `commandId` 迁移�
 
 当前 Apply 请求链路的关键特征是：
 
-1. operation 以 raw template string 写在 Apply 代码中；
-2. `clientGraphQL` 和 server-side GraphQL helper 接收的是 `string`，返回值也是由调用方指定的泛型；
-3. Apply operation 不在 Core 的 `codegen.ts` operation manifest 中；
+1. 历史上 operation 以 raw template string 写在 Apply 代码中；
+2. 历史上的 `clientGraphQL` 和 server-side helper 接收的是 `string`，返回值也是由调用方指定的泛型；
+3. 历史上 Apply operation 不在 Core 的 `codegen.ts` operation manifest 中；
 4. `commandId` 和 `idempotencyKey` 在 TypeScript 层都只是 `string`，变量名的语义差异不会触发类型错误；
-5. 构建和普通单元测试不会自动向当前 GraphQL schema 发请求。
+5. 即使当前 typed documents 已纳入 codegen，构建和普通单元测试也不会自动向当前 GraphQL schema 发请求。
 
 所以 CI 能证明“代码可以编译、已纳入的 GraphQL 文档与 schema 一致”，但不能证明“Apply 的每一段 raw GraphQL 文本与 schema 一致”。这正是本次低级错误逃逸的直接原因，而不是 schema 本身没有任何检查。
 
@@ -53,7 +53,7 @@ PR [#593](https://github.com/groupher/groupher/pull/593) 的 `commandId` 迁移�
 
 ### P0：先堵住 GraphQL contract 漏洞
 
-- 已落地：Apply operation 已集中到 `frontend/apply/src/lib/graphql-documents.ts`，纳入 `codegen.ts`，由 GraphQL Codegen against 当前 SDL 校验；运行时使用 Apply-specific generated documents。
+- 已落地：Apply operation 已集中到 `frontend/apply/src/lib/graphql-documents.ts`，纳入 `codegen.ts`，由 GraphQL Codegen against 当前 SDL 校验；运行时使用 Apply-specific generated documents。此前绕过 SDL 的 raw transport 已成为历史背景。
 - 已落地：`graphql-contract.yml` 已覆盖 `frontend/apply/**`，并执行 Apply type-check。修改该 workflow 时仍需分别核对 `push` 和 `pull_request` 两组 `paths`：`push` 目前不带 `branches` filter，而 `build-apply.yml` 的 `push` 仅限 `dev`，两者触发语义不同，不能直接照搬配置。
 - 已落地：验证既有真实回归测试对 Receipt replay、资源删除后的恢复、outbox retry 的覆盖；本次新增/修正的是 Outbox identity upsert 测试，以及无 community scope 时 PostgreSQL `NULL` 参数类型无法推断的问题。
 - 后续应继续扩展统一 operation inventory，确保新增 Apply、SSR 和 test fixture 中的 GraphQL 文本不会重新绕过 SDL 校验。

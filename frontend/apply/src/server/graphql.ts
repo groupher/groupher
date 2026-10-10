@@ -29,7 +29,7 @@ const readToken = (cookieHeader: string | null): string | null => {
 /** Runs the request graph ql operation at the frontend shared boundary. */
 export const requestGraphQL = async <TData, TVariables extends object>(
   query: TypedDocumentNode<TData, TVariables>,
-  variables?: TVariables,
+  variables: TVariables,
 ): Promise<TData> => {
   setResponseHeader('cache-control', 'private, no-store')
   const token = readToken(getRequest().headers.get('cookie'))

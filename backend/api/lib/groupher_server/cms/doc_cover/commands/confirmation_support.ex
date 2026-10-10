@@ -36,7 +36,8 @@ defmodule GroupherServer.CMS.DocCover.Commands.ConfirmationSupport do
     |> normalize_result()
   end
 
-  defp normalize_result(%{__struct__: _} = result), do: result |> Map.from_struct() |> normalize_result()
+  defp normalize_result(%{__struct__: _} = result),
+    do: result |> Map.from_struct() |> normalize_result()
 
   defp normalize_result(map) when is_map(map) and not is_struct(map) do
     Map.new(map, fn {key, value} -> {to_string(key), normalize_nested(value)} end)
@@ -57,8 +58,9 @@ defmodule GroupherServer.CMS.DocCover.Commands.ConfirmationSupport do
 
   defp restore_result(value), do: value
 
-  defp restore_key(key) when key in ~w(id community_id group_node_id node_id index appearance title),
-    do: String.to_existing_atom(key)
+  defp restore_key(key)
+       when key in ~w(id community_id group_node_id node_id index appearance title done),
+       do: String.to_existing_atom(key)
 
   defp restore_key(key), do: key
 end

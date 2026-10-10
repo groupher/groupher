@@ -66,10 +66,11 @@ export const OwnedApplicationDocument = graphql(`
 `)
 
 export const ReviewQueueDocument = graphql(`
-  query ReviewQueue {
+  query ReviewQueue($after: String) {
     pagedCommunityApplications(
       filter: { statuses: [SUBMITTED, REVIEWING, APPROVED, CREATION_FAILED, SETUP_FAILED] }
       first: 100
+      after: $after
     ) {
       edges {
         node {
@@ -92,6 +93,10 @@ export const ReviewQueueDocument = graphql(`
             publicRef
           }
         }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }

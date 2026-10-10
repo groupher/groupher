@@ -19,7 +19,7 @@ export class ClientGraphQLError extends Error {
 /** Runs the client graph ql operation at the frontend shared boundary. */
 export const clientGraphQL = async <TData, TVariables extends object>(
   query: TypedDocumentNode<TData, TVariables>,
-  variables?: TVariables,
+  variables: TVariables,
 ): Promise<TData> => {
   const response = await fetch('/apply/api/graphql', {
     method: 'POST',

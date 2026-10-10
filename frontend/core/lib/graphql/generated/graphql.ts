@@ -631,7 +631,9 @@ export type OwnedApplicationQuery = {
   } | null
 }
 
-export type ReviewQueueQueryVariables = Exact<{ [key: string]: never }>
+export type ReviewQueueQueryVariables = Exact<{
+  after?: string | null | undefined
+}>
 
 export type ReviewQueueQuery = {
   pagedCommunityApplications: {
@@ -651,6 +653,7 @@ export type ReviewQueueQuery = {
         reviewer: { publicRef: string } | null
       }
     }>
+    pageInfo: { hasNextPage: boolean; endCursor: string | null }
   }
 }
 
@@ -11878,6 +11881,13 @@ export const ReviewQueueDocument = {
       kind: 'OperationDefinition',
       operation: 'query',
       name: { kind: 'Name', value: 'ReviewQueue' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'after' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
@@ -11912,6 +11922,11 @@ export const ReviewQueueDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'first' },
                 value: { kind: 'IntValue', value: '100' },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'after' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'after' } },
               },
             ],
             selectionSet: {
@@ -11970,6 +11985,17 @@ export const ReviewQueueDocument = {
                           ],
                         },
                       },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
                     ],
                   },
                 },

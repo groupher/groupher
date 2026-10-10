@@ -12,7 +12,7 @@ import { requestGraphQL } from './graphql'
 
 export const loadApplyState = createServerFn({ method: 'GET', strict: false }).handler(
   async (): Promise<ApplyInitialData> => {
-    const accountData = await requestGraphQL(ApplyAccountDocument)
+    const accountData = await requestGraphQL(ApplyAccountDocument, {})
     if (!accountData.me) {
       return {
         account: null,
@@ -22,7 +22,7 @@ export const loadApplyState = createServerFn({ method: 'GET', strict: false }).h
       }
     }
 
-    const data = await requestGraphQL(ApplyInitialStateDocument)
+    const data = await requestGraphQL(ApplyInitialStateDocument, {})
 
     return {
       account: { publicRef: accountData.me.login },
@@ -40,8 +40,18 @@ export const loadOwnedApplication = createServerFn({ method: 'GET', strict: fals
 
 export const loadReviewQueue = createServerFn({ method: 'GET', strict: false }).handler(
   async (): Promise<CommunityApplication[]> => {
-    const result = await requestGraphQL(ReviewQueueDocument)
-    return result.pagedCommunityApplications.edges.map(({ node }) => node)
+    const applications: CommunityApplication[] = []
+    let after: string | null = null
+
+    do {
+      const result = await requestGraphQL(ReviewQueueDocument, { after })
+      applications.push(...result.pagedCommunityApplications.edges.map(({ node }) => node))
+      after = result.pagedCommunityApplications.pageInfo.hasNextPage
+        ? result.pagedCommunityApplications.pageInfo.endCursor
+        : null
+    } while (after)
+
+    return applications
   },
 )
 

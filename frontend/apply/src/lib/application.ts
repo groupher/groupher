@@ -12,6 +12,8 @@ import type { ApplyCategory } from '../flow/spec'
 import type { CommunityApplication } from '../spec'
 import { clientGraphQL } from './graphql'
 
+const reviewCommandIds = new Map<string, string>()
+
 /** Runs the submit application operation at the frontend shared boundary. */
 export const submitApplication = async (
   input: {
@@ -36,7 +38,9 @@ export const mutateReviewApplication = async (
   expectedVersion: number,
   options: { note?: string; reasonCode?: string } = {},
 ): Promise<CommunityApplication> => {
-  const commandId = crypto.randomUUID()
+  const commandKey = `${action}:${ref}:${expectedVersion}`
+  const commandId = reviewCommandIds.get(commandKey) ?? crypto.randomUUID()
+  reviewCommandIds.set(commandKey, commandId)
   const variables = { ref, expectedVersion, commandId }
   switch (action) {
     case 'start':

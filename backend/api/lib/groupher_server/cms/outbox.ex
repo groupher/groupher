@@ -251,21 +251,28 @@ defmodule GroupherServer.CMS.Outbox do
     if Map.get(attrs, :retry_failed, false) do
       now = DateTime.utc_now(:second)
 
-      with {:ok, event} <-
-             event
-             |> Event.changeset(%{
-               status: :pending,
-               attempts: 0,
-               available_at: now,
-               locked_at: nil,
-               locked_by: nil,
-               completed_at: nil,
-               last_error_code: nil,
-               last_error_at: nil
-             })
-             |> Repo.update(),
-           {:ok, _job} <- enqueue(worker, event.id) do
-        {:ok, event}
+      case Repo.transaction(fn ->
+             with {:ok, event} <-
+                    event
+                    |> Event.changeset(%{
+                      status: :pending,
+                      attempts: 0,
+                      available_at: now,
+                      locked_at: nil,
+                      locked_by: nil,
+                      completed_at: nil,
+                      last_error_code: nil,
+                      last_error_at: nil
+                    })
+                    |> Repo.update(),
+                  {:ok, _job} <- enqueue(worker, event.id) do
+               event
+             else
+               {:error, reason} -> Repo.rollback(reason)
+             end
+           end) do
+        {:ok, event} -> {:ok, event}
+        {:error, reason} -> {:error, reason}
       end
     else
       {:ok, event}

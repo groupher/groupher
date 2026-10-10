@@ -122,7 +122,13 @@ defmodule GroupherServer.CMS.Articles.Response do
   end
 
   defp put_public_inner_id(article, inner_ids) do
-    case Map.get(inner_ids, article.id) do
+    community_id =
+      case Map.get(article, :community) do
+        %{id: id} -> id
+        _ -> nil
+      end
+
+    case Map.get(inner_ids, {article.id, community_id}) do
       nil -> article
       inner_id -> Map.put(article, :inner_id, inner_id)
     end
@@ -146,7 +152,9 @@ defmodule GroupherServer.CMS.Articles.Response do
       |> select([binding], {binding.article_id, binding.community_id, binding.inner_id})
       |> Repo.all()
       |> Enum.filter(&({elem(&1, 0), elem(&1, 1)} in pairs))
-      |> Map.new(fn {article_id, _community_id, inner_id} -> {article_id, inner_id} end)
+      |> Map.new(fn {article_id, community_id, inner_id} ->
+        {{article_id, community_id}, inner_id}
+      end)
     end
   end
 
