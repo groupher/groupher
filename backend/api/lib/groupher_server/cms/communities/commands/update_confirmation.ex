@@ -1,5 +1,11 @@
 defmodule GroupherServer.CMS.Communities.Commands.UpdateConfirmation do
-  @moduledoc "Receipt codec for Community field updates."
+  @moduledoc """
+  Receipt codec for Community field updates.
+
+      command -> update community -> encode receipt confirmation
+         |                                  |
+         +---------- replay saved result ---+
+  """
 
   use GroupherServer.CMS.Command.ConfirmationDefinition,
     operation: :community_update,
