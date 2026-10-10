@@ -475,7 +475,13 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
              )
 
     assert {:ok, pin} = CMS.Articles.pin(source, published.id, user, Ecto.UUID.generate())
-    assert pin.article_binding_id
+    assert pin.id == published.id
+
+    source_binding =
+      Repo.get_by!(ArticleBinding, article_id: published.id, community_id: source.id)
+
+    assert Repo.get_by!(PinnedArticle, article_binding_id: source_binding.id).article_binding_id ==
+             source_binding.id
 
     move_command_id = Ecto.UUID.generate()
 
@@ -496,7 +502,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert destination_id == destination.id
     refute Repo.get_by(ArticleBinding, article_id: moved.id, community_id: source.id)
-    refute Repo.get(PinnedArticle, pin.id)
+    refute Repo.get_by(PinnedArticle, article_binding_id: source_binding.id)
 
     scopes =
       from(event in CMS.Outbox.Event,
@@ -535,7 +541,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
                command_id: Ecto.UUID.generate()
              )
 
-    assert {:ok, %ArticleBinding{community_id: destination_id}} =
+    assert {:ok, mirrored} =
              CMS.Articles.mirror(
                destination,
                published.id,
@@ -545,6 +551,12 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
                Ecto.UUID.generate()
              )
 
+    assert mirrored.id == published.id
+
+    destination_binding =
+      Repo.get_by!(ArticleBinding, article_id: published.id, community_id: destination.id)
+
+    destination_id = destination_binding.community_id
     assert destination_id == destination.id
     assert {:ok, author} = CMS.Articles.Writer.ensure_author_exists(user)
     assert {:ok, restored} = Store.ensure_from_public(published, author)
@@ -587,7 +599,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     mirror_command_id = Ecto.UUID.generate()
 
-    assert {:ok, %ArticleBinding{} = mirror} =
+    assert {:ok, mirror} =
              CMS.Articles.mirror(
                mirror_community,
                article.id,
@@ -597,7 +609,17 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
                mirror_command_id
              )
 
-    assert {:ok, %ArticleBinding{id: mirror_id}} =
+    assert mirror.id == article.id
+
+    mirror_community_id = mirror_community.id
+
+    assert %ArticleBinding{community_id: ^mirror_community_id} =
+             Repo.get_by!(ArticleBinding,
+               article_id: article.id,
+               community_id: mirror_community_id
+             )
+
+    assert {:ok, replayed_mirror} =
              CMS.Articles.mirror(
                mirror_community,
                article.id,
@@ -607,7 +629,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
                mirror_command_id
              )
 
-    assert mirror_id == mirror.id
+    assert replayed_mirror.id == mirror.id
 
     assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_conflict}} =
              CMS.Articles.mirror(
@@ -618,8 +640,6 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
                source,
                mirror_command_id
              )
-
-    assert mirror.community_id == mirror_community.id
 
     assert Repo.get_by!(ArticleBinding,
              article_id: article.id,
