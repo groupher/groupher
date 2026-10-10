@@ -277,7 +277,12 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     @update_community_query S.Community.m(:update_community)
     test "update community with valid attrs", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
-      variables = %{community: community.slug, title: "new title"}
+
+      variables = %{
+        community: community.slug,
+        title: "new title",
+        command_id: Ecto.UUID.generate()
+      }
 
       updated = rule_conn |> gq_mutation(@update_community_query, variables)
 

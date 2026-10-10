@@ -89,6 +89,7 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     comment_pin: :empty,
     comment_unpin: :empty,
     community_create: :digest_each,
+    community_update: :digest_each,
     community_request_destroy: :digest_each,
     doc_cover_add_card: {:fields, %{"group_node_id" => :raw}},
     doc_cover_remove_card: {:fields, %{"group_node_id" => :raw}},

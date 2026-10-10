@@ -36,7 +36,8 @@ defmodule GroupherServerWeb.Resolvers.CMS.Communities do
         %{community: community} = args,
         %{context: %{cur_user: user}}
       ) do
-    CMS.Communities.update(community, Map.delete(args, :command_id), user, args[:command_id])
+    params = Map.drop(args, [:community, :command_id])
+    CMS.Communities.update(community, params, user, args[:command_id])
   end
 
   def request_destroy_community(_root, %{community: %Community{} = community} = args, %{
