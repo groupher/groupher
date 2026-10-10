@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
        ~m(community destination post user)a do
     command_id = Ecto.UUID.generate()
 
-    assert {:ok, %ArticleBinding{}} =
+    assert {:ok, mirrored} =
              CMS.Articles.mirror(
                destination,
                post.article_id,
@@ -27,8 +27,12 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
                command_id
              )
 
-    assert {:ok, %ArticleBinding{}} =
+    assert mirrored.id == post.article_id
+
+    assert {:ok, replayed} =
              CMS.Articles.mirror(destination, post.article_id, [], user, community, command_id)
+
+    assert replayed.id == mirrored.id
 
     assert {:ok, bindings} = Bindings.all(post)
 
