@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Articles.Writer do
 
   alias Accounts.Model.User
   alias CMS.FrontDesk
-  alias CMS.Model.{Article, Author, Community}
+  alias CMS.Model.{Article, ArticleBinding, Author, Community}
   alias Helper.{ORM, T}
 
   @doc "Publishes one Gate-authorized Article and commits all first-publish side effects atomically."
@@ -38,28 +38,31 @@ defmodule GroupherServer.CMS.Articles.Writer do
 
   @doc "Notifies community administrators after the first official Article publish."
   @spec notify_admin_new_article(map()) :: T.domain_res(term())
-  def notify_admin_new_article(%{target: target, id: id, thread: thread})
+  def notify_admin_new_article(%{target: target, id: id, thread: thread, community: community})
       when is_atom(target) and is_atom(thread) do
-    do_notify_admin_new_article(target, id, thread)
+    do_notify_admin_new_article(target, id, thread, community)
   end
 
-  def notify_admin_new_article(%{target: target, id: id}) when is_atom(target) do
-    do_notify_admin_new_article(target, id)
+  def notify_admin_new_article(%{target: target, id: id, community: community})
+      when is_atom(target) do
+    do_notify_admin_new_article(target, id, nil, community)
   end
 
   @doc false
-  def notify_admin_new_article(%{__struct__: target, id: id}) do
-    do_notify_admin_new_article(target, id)
+  def notify_admin_new_article(%{__struct__: target, id: id, community: community}) do
+    do_notify_admin_new_article(target, id, nil, community)
   end
 
-  defp do_notify_admin_new_article(target, id, thread \\ nil) do
-    with {:ok, article} <- FrontDesk.article(id, mode: :internal, view: :command_context) do
+  defp do_notify_admin_new_article(target, id, thread, community) do
+    with {:ok, article} <- FrontDesk.article(id, mode: :internal, view: :command_context),
+         {:ok, %{community: ^community}} <-
+           CMS.Articles.Bindings.get(%{article_id: article.id}, community) do
       info = %{
         id: article.id,
         title: article.title,
         digest: Map.get(article, :digest, article.title),
         author_name: article.author.user.nickname,
-        community_slug: article.community.slug,
+        community_slug: community.slug,
         type:
           thread ||
             target |> to_string() |> String.split(".") |> List.last() |> String.downcase()
@@ -86,58 +89,91 @@ defmodule GroupherServer.CMS.Articles.Writer do
   end
 
   defp enqueue_publish_events(
-         %{article: %Article{} = article, public: public, first_publish?: first_publish?} = result,
+         %{
+           article: %Article{} = article,
+           public: public,
+           first_publish?: first_publish?,
+           community: %Community{} = community,
+           binding: %ArticleBinding{inner_id: inner_id}
+         } = result,
          opts
        ) do
-    command_id = Keyword.get(opts, :outbox_command_id, Ecto.UUID.generate())
+    case outbox_identity(opts) do
+      {:ok, identity} ->
+        with {:ok, cache_event} <-
+               CMS.Outbox.send(%{
+                 event: if(first_publish?, do: "article.published", else: "article.updated"),
+                 worker: CMS.Outbox.Workers.Article.Cleanup,
+                 resource_type: "article",
+                 resource_id: article.id,
+                 identity: identity,
+                 effect_key: "article-cache:#{community.id}:#{inner_id}",
+                 data: %{
+                   community: community.slug,
+                   community_id: community.id,
+                   thread: article.thread,
+                   inner_id: inner_id,
+                   article_id: article.id,
+                   revision_id: public.revision_id
+                 }
+               }),
+             {:ok, projection_event} <-
+               CMS.Outbox.send(%{
+                 event: "article.projections",
+                 worker: CMS.Outbox.Workers.Article.Cleanup,
+                 resource_type: "article",
+                 resource_id: article.id,
+                 identity: identity,
+                 effect_key: "article-projections:#{community.id}:#{inner_id}",
+                 data: %{
+                   first_publish?: first_publish?,
+                   community_id: community.id,
+                   inner_id: inner_id,
+                   changed_fields: Map.get(result, :changed_fields, []),
+                   published_by_id: Map.get(result, :published_by_id),
+                   revision_id: public.revision_id
+                 }
+               }) do
+          {:ok, %{cache: cache_event, projections: projection_event}}
+        else
+          {:error, reason} -> {:error, reason}
+        end
 
-    with {:ok, %Community{} = community} <-
-           FrontDesk.community(article.community_id, mode: :internal),
-         {:ok, cache_event} <-
-           CMS.Outbox.send(%{
-             event: if(first_publish?, do: "article.published", else: "article.updated"),
-             worker: CMS.Outbox.Workers.Article.Cleanup,
-             resource_type: "article",
-             resource_id: article.id,
-             command_id: command_id,
-             data: %{
-               community: community.slug,
-               community_id: community.id,
-               thread: article.thread,
-               inner_id: article.inner_id,
-               article_id: article.id,
-               revision_id: public.revision_id
-             }
-           }),
-         {:ok, projection_event} <-
-           CMS.Outbox.send(%{
-             event: "article.projections",
-             worker: CMS.Outbox.Workers.Article.Cleanup,
-             resource_type: "article",
-             resource_id: article.id,
-             command_id: command_id,
-             data: %{
-               first_publish?: first_publish?,
-               changed_fields: Map.get(result, :changed_fields, []),
-               published_by_id: Map.get(result, :published_by_id),
-               revision_id: public.revision_id
-             }
-           }) do
-      {:ok, %{cache: cache_event, projections: projection_event}}
-    else
-      {:error, reason} -> {:error, reason}
+      _ ->
+        {:error, CMS.ErrorCat.command_id_required()}
+    end
+  end
+
+  defp outbox_identity(opts) do
+    case Keyword.get(opts, :outbox_command_id) do
+      command_id when is_binary(command_id) ->
+        case Ecto.UUID.cast(command_id) do
+          {:ok, command_id} -> {:ok, {:command, command_id}}
+          :error -> {:error, :outbox_command_id_required}
+        end
+
+      _ ->
+        case Keyword.get(opts, :outbox_workflow_ref) do
+          workflow_ref when is_binary(workflow_ref) and workflow_ref != "" ->
+            {:ok, {:workflow, workflow_ref}}
+
+          _ ->
+            {:error, :outbox_identity_required}
+        end
     end
   end
 
   defp finalize_first_publish(%{first_publish?: false} = result, _actor), do: {:ok, result}
 
   defp finalize_first_publish(
-         %{first_publish?: true, article: %Article{} = article} = result,
+         %{
+           first_publish?: true,
+           article: %Article{} = article,
+           community: %Community{} = community
+         } = result,
          actor
        ) do
-    with {:ok, %Community{} = community} <-
-           FrontDesk.community(article.community_id, mode: :internal),
-         %User{} = user <- actor_user(actor),
+    with %User{} = user <- actor_user(actor),
          {:ok, _community} <- CMS.Communities.update_count_field(community, article.thread),
          {:ok, _user} <- Accounts.Publish.update_states(user, article.thread),
          {:ok, _throttle} <- CMS.Gate.RateLimit.Publish.record(user) do

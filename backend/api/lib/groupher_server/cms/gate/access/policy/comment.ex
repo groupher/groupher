@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
   Example contract:
 
       Access.Policy.Comment.check_access(actor, :edit, comment, %Context.Access.Comment{})
-      #=> :ok | {:error, reason}
+      #=> {:ok, :pass} | {:error, reason}
   """
 
   alias GroupherServer.{Accounts, CMS}
@@ -46,10 +46,10 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
       when action in @actions do
     with {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
-         :ok <- article_mutable(context),
-         :ok <- comment_mutable(context),
-         :ok <- action_allowed(user, action, context) do
-      :ok
+         {:ok, _} <- article_mutable(context),
+         {:ok, _} <- comment_mutable(context),
+         {:ok, _} <- action_allowed(user, action, context) do
+      {:ok, :pass}
     else
       {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
       {:error, _reason} = error -> error
@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
 
   def check_access(_user, _action, _comment, _context), do: {:error, ErrorCat.unknown_action()}
 
-  defp article_mutable(%{article_lifecycle: %{state: :published}}), do: :ok
+  defp article_mutable(%{article_lifecycle: %{state: :published}}), do: {:ok, :pass}
 
   defp article_mutable(%{article_lifecycle: %{state: :archived}}) do
     {:error, ErrorCat.ancestor_article_archived()}
@@ -84,7 +84,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
   defp article(%{article: article}) when is_map(article), do: {:ok, article}
   defp article(_context), do: {:error, ErrorCat.lifecycle_not_loaded()}
 
-  defp comment_mutable(%{comment_lifecycle: %CommentLifecycle{state: :visible}}), do: :ok
+  defp comment_mutable(%{comment_lifecycle: %CommentLifecycle{state: :visible}}), do: {:ok, :pass}
 
   defp comment_mutable(%{comment_lifecycle: %CommentLifecycle{state: :deleted}}) do
     {:error, ErrorCat.comment_deleted()}
@@ -99,7 +99,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
   defp action_allowed(_user, :reply_comment, context) do
     with {:ok, article} <- article(context),
          {:ok, _} <- Enable.comment?(article) do
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -108,7 +108,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
          article_cat: :qa
        })
        when action in @solution_actions do
-    :ok
+    {:ok, :pass}
   end
 
   defp action_allowed(_user, action, %{article_cat: :qa})
@@ -123,6 +123,6 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
 
   defp action_allowed(_user, action, _context)
        when action in [:edit, :delete, :upvote, :emotion, :report, :pin] do
-    :ok
+    {:ok, :pass}
   end
 end

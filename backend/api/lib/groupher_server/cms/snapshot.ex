@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Snapshot do
         -> Snapshot.Projection | Snapshot.Refresh
         -> Snapshot.Query | Snapshot.Cache
 
-  The facade preserves relation membership and offers stale-first reads by
+  The facade preserves binding membership and offers stale-first reads by
   default. Internal modules own projection, authority reads, cache policy, and
   refresh orchestration separately.
   """
@@ -87,6 +87,7 @@ defmodule GroupherServer.CMS.Snapshot do
   defdelegate refresh_async(kind, refs, opts \\ []), to: Refresh
 
   @doc "Performs the immediate refresh used by the background snapshot job."
-  @spec perform_refresh(snapshot_kind(), term(), keyword()) :: :ok | {:error, term()}
+  @spec perform_refresh(snapshot_kind(), term(), keyword()) ::
+          {:ok, :pass} | {:error, term()}
   defdelegate perform_refresh(kind, refs, opts), to: Refresh
 end

@@ -215,12 +215,12 @@ defmodule GroupherServer.Test.ActivityTest do
       assert handler.contracts()[action].producer_status == :contract_only
     end
 
-    {_community, post, _attrs, user} = mock_article(:post)
+    {community, post, _attrs, user} = mock_article(:post)
 
     comment = %Comment{
       thread: :post,
       article_id: post.article_id,
-      community_id: post.community_id,
+      community_id: community.id,
       inner_id: 42
     }
 
@@ -282,7 +282,7 @@ defmodule GroupherServer.Test.ActivityTest do
   end
 
   test "ArticleLog authorizes Article reads and projects only safe fields" do
-    {_community, post, _attrs, _user} = mock_article(:post)
+    {community, post, _attrs, _user} = mock_article(:post)
 
     assert {:ok, %{entries: entries, total_count: total_count}} =
              Activity.list_article_logs(post, nil, %{page: 1})
@@ -295,7 +295,7 @@ defmodule GroupherServer.Test.ActivityTest do
              type: :post,
              ref: post.article_id,
              title: post.title,
-             inner_id: post.inner_id
+             inner_id: article_inner_id(post, community)
            }
 
     assert created.payload == %{}
@@ -384,7 +384,7 @@ defmodule GroupherServer.Test.ActivityTest do
                user
              )
 
-    assert {:ok, draft} = CMS.Articles.read_draft(article.id, user)
+    assert {:ok, draft} = CMS.Articles.read_draft(article.id, user, community: community)
     assert {:ok, %{entries: []}} = Activity.list_article_logs(draft, user)
     assert {:error, _} = Activity.list_article_logs(draft, stranger)
     assert {:error, _} = Activity.list_article_logs(draft, nil)
@@ -717,7 +717,7 @@ defmodule GroupherServer.Test.ActivityTest do
     assert empty.total_count == 0
   end
 
-  test "CommunityLog projects parent event refs for detail relations" do
+  test "CommunityLog projects parent event refs for detail bindings" do
     {community, _post, _attrs, manager} = mock_article(:post)
 
     assert {:ok, parent} =

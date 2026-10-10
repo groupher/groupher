@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Communities.TagStats
+  alias CMS.Communities.Tags.Stats
   alias CMS.Model.{Article, CommunityTag, CommunityTagStat}
 
   setup do
@@ -16,25 +16,66 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
   describe "[post tag reindex]" do
     test "can reindex group of tags", ~m(community article_tag_attrs user)a do
-      {:ok, group1} = CMS.Communities.create_tag_group(community, :post, %{title: "group1"})
-      {:ok, group2} = CMS.Communities.create_tag_group(community, :post, %{title: "group2"})
+      {:ok, group1} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "group1"},
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, group2} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "group2"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       attrs = Map.merge(article_tag_attrs, %{group_id: group1.id})
-      {:ok, article_tag1} = CMS.Communities.create_tag(community, :post, attrs, user)
+
+      {:ok, article_tag1} =
+        CMS.Communities.create_tag(community, :post, attrs, user, Ecto.UUID.generate())
 
       {:ok, article_tag2} =
-        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "2"), user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(attrs, "2"),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, article_tag3} =
-        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "3"), user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(attrs, "3"),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, article_tag4} =
-        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "4"), user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(attrs, "4"),
+          user,
+          Ecto.UUID.generate()
+        )
 
       attrs = Map.merge(article_tag_attrs, %{group_id: group2.id})
 
       {:ok, article_tag5} =
-        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "5"), user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(attrs, "5"),
+          user,
+          Ecto.UUID.generate()
+        )
 
       tags_with_index = [
         %{
@@ -55,7 +96,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         }
       ]
 
-      CMS.Communities.reindex_tags(community, :post, group1.id, tags_with_index)
+      CMS.Communities.reindex_tags_in_group(
+        community,
+        :post,
+        group1.id,
+        tags_with_index,
+        user,
+        Ecto.UUID.generate()
+      )
 
       {:ok, article_tag1_after} = ORM.find(CommunityTag, article_tag1.id)
       {:ok, article_tag2_after} = ORM.find(CommunityTag, article_tag2.id)
@@ -72,25 +120,49 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
     end
 
     test "can batch reindex tags across groups", ~m(community article_tag_attrs user)a do
-      {:ok, group1} = CMS.Communities.create_tag_group(community, :post, %{title: "group1"})
-      {:ok, group2} = CMS.Communities.create_tag_group(community, :post, %{title: "group2"})
+      {:ok, group1} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "group1"},
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, group2} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "group2"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       attrs = Map.put(article_tag_attrs, :group_id, group1.id)
-      {:ok, tag1} = CMS.Communities.create_tag(community, :post, attrs, user)
+
+      {:ok, tag1} =
+        CMS.Communities.create_tag(community, :post, attrs, user, Ecto.UUID.generate())
 
       {:ok, tag2} =
         CMS.Communities.create_tag(
           community,
           :post,
           unique_community_tag_attrs(attrs, "2"),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       assert {:ok, :pass} =
-               CMS.Communities.reindex_tags(community, :post, [
-                 %{id: tag1.id, group_id: group2.id, index: 3},
-                 %{id: tag2.id, group_id: group2.id, index: 4}
-               ])
+               CMS.Communities.reindex_tags_across_groups(
+                 community,
+                 :post,
+                 [
+                   %{id: tag1.id, group_id: group2.id, index: 3},
+                   %{id: tag2.id, group_id: group2.id, index: 4}
+                 ],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, tag1} = ORM.find(CommunityTag, tag1.id)
       {:ok, tag2} = ORM.find(CommunityTag, tag2.id)
@@ -103,22 +175,40 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "rejects incomplete group reindex without changing any tag",
          ~m(community article_tag_attrs user)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "group"})
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "group"},
+          user,
+          Ecto.UUID.generate()
+        )
+
       attrs = Map.put(article_tag_attrs, :group_id, group.id)
-      {:ok, tag1} = CMS.Communities.create_tag(community, :post, attrs, user)
+
+      {:ok, tag1} =
+        CMS.Communities.create_tag(community, :post, attrs, user, Ecto.UUID.generate())
 
       {:ok, tag2} =
         CMS.Communities.create_tag(
           community,
           :post,
           unique_community_tag_attrs(attrs, "2"),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} =
-               CMS.Communities.reindex_tags(community, :post, group.id, [
-                 %{id: tag1.id, index: 9}
-               ])
+               CMS.Communities.reindex_tags_in_group(
+                 community,
+                 :post,
+                 group.id,
+                 [
+                   %{id: tag1.id, index: 9}
+                 ],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, tag1} = ORM.find(CommunityTag, tag1.id)
       {:ok, tag2} = ORM.find(CommunityTag, tag2.id)
@@ -129,28 +219,64 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "rejects duplicate and foreign tag ids before batch reindex",
          ~m(community article_tag_attrs user)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "group"})
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "group"},
+          user,
+          Ecto.UUID.generate()
+        )
+
       attrs = Map.put(article_tag_attrs, :group_id, group.id)
-      {:ok, tag} = CMS.Communities.create_tag(community, :post, attrs, user)
+
+      {:ok, tag} =
+        CMS.Communities.create_tag(community, :post, attrs, user, Ecto.UUID.generate())
 
       assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} =
-               CMS.Communities.reindex_tags(community, :post, [
-                 %{id: tag.id, group_id: group.id, index: 1},
-                 %{id: tag.id, group_id: group.id, index: 2}
-               ])
+               CMS.Communities.reindex_tags_across_groups(
+                 community,
+                 :post,
+                 [
+                   %{id: tag.id, group_id: group.id, index: 1},
+                   %{id: tag.id, group_id: group.id, index: 2}
+                 ],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
-      {:ok, other_community} = mock_community()
+      {:ok, other_community} = mock_community(user)
 
       {:ok, other_group} =
-        CMS.Communities.create_tag_group(other_community, :post, %{title: "other-group"})
+        CMS.Communities.create_tag_group(
+          other_community,
+          :post,
+          %{title: "other-group"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       other_attrs = Map.put(unique_community_tag_attrs(attrs, "other"), :group_id, other_group.id)
-      {:ok, other_tag} = CMS.Communities.create_tag(other_community, :post, other_attrs, user)
+
+      {:ok, other_tag} =
+        CMS.Communities.create_tag(
+          other_community,
+          :post,
+          other_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} =
-               CMS.Communities.reindex_tags(community, :post, [
-                 %{id: other_tag.id, group_id: group.id, index: 8}
-               ])
+               CMS.Communities.reindex_tags_across_groups(
+                 community,
+                 :post,
+                 [
+                   %{id: other_tag.id, group_id: group.id, index: 8}
+                 ],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, tag} = ORM.find(CommunityTag, tag.id)
       {:ok, other_tag} = ORM.find(CommunityTag, other_tag.id)
@@ -159,15 +285,36 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert other_tag.index == 0
     end
 
-    test "can batch reindex tag groups", ~m(community)a do
-      {:ok, group1} = CMS.Communities.create_tag_group(community, :post, %{title: "group1"})
-      {:ok, group2} = CMS.Communities.create_tag_group(community, :post, %{title: "group2"})
+    test "can batch reindex tag groups", ~m(community user)a do
+      {:ok, group1} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "group1"},
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, group2} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "group2"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert {:ok, :pass} =
-               CMS.Communities.reindex_tag_groups(community, :post, [
-                 %{id: group1.id, index: 6},
-                 %{id: group2.id, index: 5}
-               ])
+               CMS.Communities.reindex_tag_groups(
+                 community,
+                 :post,
+                 [
+                   %{id: group1.id, index: 6},
+                   %{id: group2.id, index: 5}
+                 ],
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, group1} = ORM.find(CMS.Model.CommunityTagGroup, group1.id)
       {:ok, group2} = ORM.find(CMS.Model.CommunityTagGroup, group2.id)
@@ -179,33 +326,73 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
   describe "[post tag CRUD]" do
     test "create article tag with valid data", ~m(community article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
       assert article_tag.title == article_tag_attrs.title
       assert article_tag.group_id
     end
 
     test "can not create duplicate tag slug in same community and thread",
          ~m(community article_tag_attrs user)a do
-      {:ok, _article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, _article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       dup_attrs =
         article_tag_attrs
         |> Map.merge(%{title: "another title"})
 
-      assert {:error, changeset} = CMS.Communities.create_tag(community, :post, dup_attrs, user)
+      assert {:error, changeset} =
+               CMS.Communities.create_tag(
+                 community,
+                 :post,
+                 dup_attrs,
+                 user,
+                 Ecto.UUID.generate()
+               )
+
       assert Keyword.has_key?(changeset.errors, :slug)
     end
 
     test "can not update tag to duplicate slug in same community and thread",
          ~m(community article_tag_attrs article_tag_attrs2 user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, article_tag2} = CMS.Communities.create_tag(community, :post, article_tag_attrs2, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, article_tag2} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs2,
+          user,
+          Ecto.UUID.generate()
+        )
 
       attrs =
         article_tag_attrs2
         |> Map.merge(%{slug: article_tag.slug})
 
-      assert {:error, changeset} = CMS.Communities.update_tag(article_tag2.id, attrs)
+      assert {:error, changeset} =
+               CMS.Communities.update_tag(article_tag2.id, attrs, user, Ecto.UUID.generate())
+
       assert Keyword.has_key?(changeset.errors, :slug)
     end
 
@@ -216,7 +403,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           marker: %{type: "ICON", provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}
         })
 
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(community, :post, tag_attrs, user, Ecto.UUID.generate())
 
       assert article_tag.extra == ["menuID", "menuID2"]
 
@@ -229,11 +417,19 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
     end
 
     test "can update an article tag", ~m(community article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       new_attrs = article_tag_attrs |> Map.merge(%{title: "new title", layout: "simple"})
 
-      {:ok, article_tag} = CMS.Communities.update_tag(article_tag.id, new_attrs)
+      {:ok, article_tag} =
+        CMS.Communities.update_tag(article_tag.id, new_attrs, user, Ecto.UUID.generate())
 
       assert article_tag.title == "new title"
       assert article_tag.layout == "simple"
@@ -245,40 +441,64 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
                  %Community{slug: non_exist_slug()},
                  :post,
                  article_tag_attrs,
-                 user
+                 user,
+                 Ecto.UUID.generate()
                )
     end
 
     test "tag can be deleted", ~m(community article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
       {:ok, article_tag} = ORM.find(CommunityTag, article_tag.id)
 
-      {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
+      {:ok, _} = CMS.Communities.delete_tag(article_tag.id, user, Ecto.UUID.generate())
 
       assert {:error, _} = ORM.find(CommunityTag, article_tag.id)
     end
 
     test "assoc tag should be delete after tag deleted",
          ~m(community post article_tag_attrs article_tag_attrs2 user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, article_tag2} = CMS.Communities.create_tag(community, :post, article_tag_attrs2, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag2.id)
+      {:ok, article_tag2} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs2,
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, post} = read_article(community, :post, post.inner_id)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag2.id, user, Ecto.UUID.generate())
+
+      {:ok, post} = read_article(community, :post, article_inner_id(post, community))
       assert exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
 
-      {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
+      {:ok, _} = CMS.Communities.delete_tag(article_tag.id, user, Ecto.UUID.generate())
 
-      {:ok, post} = read_article(community, :post, post.inner_id)
+      {:ok, post} = read_article(community, :post, article_inner_id(post, community))
       assert not exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
 
-      {:ok, _} = CMS.Communities.delete_tag(article_tag2.id)
+      {:ok, _} = CMS.Communities.delete_tag(article_tag2.id, user, Ecto.UUID.generate())
 
-      {:ok, post} = read_article(community, :post, post.inner_id)
+      {:ok, post} = read_article(community, :post, article_inner_id(post, community))
       assert not exist_in?(article_tag, post.community_tags)
       assert not exist_in?(article_tag2, post.community_tags)
     end
@@ -287,15 +507,31 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
   describe "[create/update post with tags]" do
     test "can create post with existed community tags",
          ~m(community user post_attrs article_tag_attrs article_tag_attrs2)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, article_tag2} = CMS.Communities.create_tag(community, :post, article_tag_attrs2, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, article_tag2} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs2,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, article_tag3} =
         CMS.Communities.create_tag(
           community,
           :post,
           unique_community_tag_attrs(article_tag_attrs, "3"),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       post_with_tags =
@@ -326,7 +562,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "deduplicates tag ids in one set operation",
          ~m(community user post_attrs article_tag_attrs)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       post_with_tags =
         Map.put(post_attrs, :community_tags, [article_tag.id, article_tag.id, article_tag.id])
@@ -345,9 +588,32 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
          ~m(community user post_attrs article_tag_attrs article_tag_attrs2)a do
       article_tag_attrs3 = mock_attrs(:community_tag)
 
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, article_tag2} = CMS.Communities.create_tag(community, :post, article_tag_attrs2, user)
-      {:ok, article_tag3} = CMS.Communities.create_tag(community, :post, article_tag_attrs3, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, article_tag2} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs2,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, article_tag3} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs3,
+          user,
+          Ecto.UUID.generate()
+        )
 
       post_with_tags = Map.merge(post_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
       {:ok, created} = CMS.Articles.create(community, :post, post_with_tags, user)
@@ -384,11 +650,25 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "can not create post with other community's community tags",
          ~m(community user post_attrs article_tag_attrs article_tag_attrs2)a do
-      {:ok, community2} = mock_community()
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, community2} = mock_community(user)
+
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, article_tag2} =
-        CMS.Communities.create_tag(community2, :post, article_tag_attrs2, user)
+        CMS.Communities.create_tag(
+          community2,
+          :post,
+          article_tag_attrs2,
+          user,
+          Ecto.UUID.generate()
+        )
 
       post_with_tags = Map.merge(post_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
@@ -399,10 +679,25 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
   describe "[post tag set /unset]" do
     test "can set a tag ", ~m(community post article_tag_attrs article_tag_attrs2 user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, article_tag2} = CMS.Communities.create_tag(community, :post, article_tag_attrs2, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, article_tag2} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs2,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
       assert post.community_tags |> length == 1
       assert exist_in?(article_tag, post.community_tags)
 
@@ -410,12 +705,12 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat.contents_count == 1
       assert stat.today_contents_count == 1
 
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag2.id)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag2.id, user, Ecto.UUID.generate())
       assert post.community_tags |> length == 2
       assert exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
 
-      {:ok, post} = CMS.Communities.unset_tag(post, article_tag.id)
+      {:ok, post} = CMS.Communities.unset_tag(post, article_tag.id, user, Ecto.UUID.generate())
       assert post.community_tags |> length == 1
       assert not exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
@@ -427,7 +722,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat2.contents_count == 1
       assert stat2.today_contents_count == 1
 
-      {:ok, post} = CMS.Communities.unset_tag(post, article_tag2.id)
+      {:ok, post} = CMS.Communities.unset_tag(post, article_tag2.id, user, Ecto.UUID.generate())
       assert post.community_tags |> length == 0
       assert not exist_in?(article_tag, post.community_tags)
       assert not exist_in?(article_tag2, post.community_tags)
@@ -438,9 +733,17 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
     end
 
     test "can not set dup tag ", ~m(community post article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       assert post.community_tags |> length == 1
 
@@ -451,15 +754,24 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "set tag counts all contents but only today's contents",
          ~m(community post article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, old_post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
 
       from(article in Article, where: article.id == ^old_post.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
 
-      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
-      {:ok, _old_post} = CMS.Communities.set_tag(old_post, article_tag.id)
+      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
+
+      {:ok, _old_post} =
+        CMS.Communities.set_tag(old_post, article_tag.id, user, Ecto.UUID.generate())
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 2
@@ -468,13 +780,21 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "Trash and restore keep stats in sync",
          ~m(community post article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 1
 
-      {:ok, trash_item} = CMS.Articles.trash(post, user)
+      {:ok, trash_item} = CMS.Articles.trash(post, user, community: community)
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
       assert stat.today_contents_count == 0
@@ -487,12 +807,23 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "repeated Trash does not decrement stats twice",
          ~m(community post article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
       command_id = Ecto.UUID.generate()
 
-      {:ok, _} = CMS.Articles.trash(post, user, command_id: command_id)
-      {:ok, _} = CMS.Articles.trash(post, user, command_id: command_id)
+      {:ok, _} =
+        CMS.Articles.trash(post, user, community_id: community.id, command_id: command_id)
+
+      {:ok, _} =
+        CMS.Articles.trash(post, user, community_id: community.id, command_id: command_id)
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
@@ -501,8 +832,16 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "Trash does not decrement stats for an already illegal post",
          ~m(community post article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       {:ok, _} =
         CMS.Articles.set_illegal(
@@ -512,13 +851,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          user
+          user,
+          community: community
         )
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
 
-      {:ok, _} = CMS.Articles.trash(post, user)
+      {:ok, _} = CMS.Articles.trash(post, user, community: community)
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
@@ -527,8 +867,16 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "can rebuild tag stats from source data",
          ~m(community post article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       from(s in CommunityTagStat, where: s.community_tag_id == ^article_tag.id)
       |> Repo.update_all(set: [contents_count: 99, today_contents_count: 99])
@@ -542,11 +890,21 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "rebuild tag stats counts all contents but only today's contents",
          ~m(community post article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
       {:ok, old_post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
 
-      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
-      {:ok, _old_post} = CMS.Communities.set_tag(old_post, article_tag.id)
+      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
+
+      {:ok, _old_post} =
+        CMS.Communities.set_tag(old_post, article_tag.id, user, Ecto.UUID.generate())
 
       from(article in Article, where: article.id == ^old_post.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
@@ -561,8 +919,16 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "normalizes stale today stat date with stale today count",
          ~m(community post article_tag_attrs user)a do
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       from(s in CommunityTagStat, where: s.community_tag_id == ^article_tag.id)
       |> Repo.update_all(set: [today_stat_date: yesterday_date(), today_contents_count: 99])
@@ -574,9 +940,16 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
     test "tag stats rejects mismatched article and tag thread",
          ~m(community post article_tag_attrs user)a do
-      {:ok, blog_tag} = CMS.Communities.create_tag(community, :blog, article_tag_attrs, user)
+      {:ok, blog_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
-      assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} = TagStats.inc(post, blog_tag)
+      assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} = Stats.inc(post, blog_tag)
     end
   end
 end

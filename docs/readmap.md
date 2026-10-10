@@ -8,6 +8,7 @@
 - [x] [Article View 同步计数](./feature/view-tracker/article-view-counting.md) — `ViewDedupeState`、字段级 ArticleStats 与 MetricEvent 同事务，View transport receipt/客户端幂等 ID 已删除，前端四个 surface 已统一；Cloudflare 防滥用另列部署待办。
 - [x] [Article emotion counts direct cutover](./architecture/article-emotion-counts.md) — 保留现有 `(thread, article_id)` identity，typed rows、GraphQL `emotionCounts` 与前端 consumer 已在本地一步切换；生产维护窗口、CDN purge 和线上 smoke test 待发布验收。
 - [ ] [ORM 与数据库原语边界](./architecture/orm.md) — 待将重复 advisory-lock SQL 直接收口到 `Helper.ORM.AdvisoryLock`，补齐 API 注释、示例和 runtime `Repo.query*` 静态门禁；不建立 `Database.*` 或兼容 wrapper。
+- [x] [GraphQL Resolver 边界整改](./architecture/graphql-resolver-boundary.md) — R1-R5 已完成：领域 use case/result builder 收口、CMS/Accounts resolver 拆分和全目录静态门禁均已落地。
 - [ ] [AI](./ai) — 首期应用仍处于规划阶段。
 - [ ] [Assets Hub V4](./assets-hub/v4.md) — thread 归属、stats 与 quota 方案待实施。
 - [ ] [OAuth 帐户链接与取消链接](./auth/link-unlink-oauth.md) — 设计方案尚未实施。

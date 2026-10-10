@@ -28,10 +28,10 @@ defmodule GroupherServer.Test.CMS.Assets.Endpoints do
   end
 
   test "non-production runtimes do not require external service endpoints" do
-    assert :ok = Endpoints.validate!(%{}, :dev)
-    assert :ok = Endpoints.validate!(%{}, :mock)
-    assert :ok = Endpoints.validate!(%{}, :test)
-    assert :ok = Endpoints.validate!(%{}, :seed_prod)
+    assert {:ok, :pass} = Endpoints.validate!(%{}, :dev)
+    assert {:ok, :pass} = Endpoints.validate!(%{}, :mock)
+    assert {:ok, :pass} = Endpoints.validate!(%{}, :test)
+    assert {:ok, :pass} = Endpoints.validate!(%{}, :seed_prod)
   end
 
   test "rejects malformed endpoint values" do

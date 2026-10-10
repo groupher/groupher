@@ -40,8 +40,11 @@ defmodule GroupherServer.TestMate do
         Community,
         Doc,
         Embeds,
+        Article,
         Post
       }
+
+      alias CMS.Model.ArticleBinding
 
       alias GroupherServer.Test
       alias Test.Helper.Schema, as: S
@@ -63,10 +66,35 @@ defmodule GroupherServer.TestMate do
       @last_year Datetime.shift(@now, years: -1)
                  |> DateTime.truncate(:second)
 
-      def article_path(%Community{slug: slug}, article, thread) do
+      def article_inner_id(%{inner_id: inner_id}, _community), do: inner_id
+
+      def article_inner_id(article, %Community{id: community_id}) when is_map(article) do
+        article_id = Map.get(article, :article_id) || Map.get(article, :id)
+
+        Repo.get_by!(ArticleBinding, article_id: article_id, community_id: community_id).inner_id
+      end
+
+      def article_bindings(article) when is_map(article) do
+        {:ok, bindings} = GroupherServer.CMS.Articles.Bindings.all(article)
+        bindings
+      end
+
+      def binding_communities(article) when is_map(article) do
+        article |> article_bindings() |> Enum.map(& &1.community)
+      end
+
+      def binding_tags(article, %Community{} = community) when is_map(article) do
+        {:ok, %{binding: binding}} = GroupherServer.CMS.Articles.Bindings.get(article, community)
+        GroupherServer.CMS.Articles.Bindings.Tags.list(binding)
+      end
+
+      def article_path(%Community{slug: slug} = community, article, thread) do
+        {:ok, %{inner_id: inner_id}} =
+          GroupherServer.CMS.Articles.Bindings.get(%{article_id: article.id}, community)
+
         %{
           community: slug,
-          inner_id: article.inner_id,
+          inner_id: inner_id,
           thread: thread |> to_string() |> String.upcase()
         }
       end
@@ -136,7 +164,7 @@ defmodule GroupherServer.TestMate do
       def create_empty_docs_community(user) do
         attrs = mock_attrs(:community) |> Map.put(:user, user)
 
-        with {:ok, community} <- CMS.Communities.create(attrs, user),
+        with {:ok, community} <- CMS.Communities.create(attrs, user, Ecto.UUID.generate()),
              {:ok, state} <-
                ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id),
              {:ok, _tab} <-

@@ -155,8 +155,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   end
 
   defp fetch_editor_article(%Community{id: community_id} = community, :doc, article_id) do
-    with {:ok, %CMS.Model.Article{community_id: ^community_id, thread: :doc} = article} <-
+    with {:ok, %CMS.Model.Article{thread: :doc} = article} <-
            FrontDesk.article(article_id, mode: :internal, view: :with_author),
+         {:ok, %{community: %Community{id: ^community_id}}} <-
+           CMS.Articles.Bindings.get(%{article_id: article.id}, community),
          {:ok, branch} <- CMS.Docs.Branch.resolve(community, nil) do
       {:ok, article, branch.id}
     else
@@ -164,10 +166,13 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
-  defp fetch_editor_article(%Community{id: community_id}, thread, article_id) do
+  defp fetch_editor_article(%Community{} = community, thread, article_id) do
     case FrontDesk.article(article_id, mode: :internal, view: :with_author) do
-      {:ok, %CMS.Model.Article{community_id: ^community_id, thread: ^thread} = article} ->
-        {:ok, article, nil}
+      {:ok, %CMS.Model.Article{thread: ^thread} = article} ->
+        case CMS.Articles.Bindings.get(%{article_id: article.id}, community) do
+          {:ok, _context} -> {:ok, article, nil}
+          _ -> {:error, ArticleErrorCat.not_exist("stable Article not found")}
+        end
 
       _ ->
         {:error, ArticleErrorCat.not_exist("stable Article not found")}

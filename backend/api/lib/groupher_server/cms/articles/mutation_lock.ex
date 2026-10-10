@@ -22,6 +22,7 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   alias CMS.Gate.ErrorCat
   alias CMS.Model.{Article, Community}
   alias Helper.{T, Transaction}
+  alias Helper.ORM.AdvisoryLock
 
   @article_threads CMS.Artiment.Config.threads() -- [:doc]
 
@@ -216,10 +217,9 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   defp transact_lock(lock_key, fun) do
     started_at = System.monotonic_time()
     metadata = lock_metadata(lock_key)
-    key = normalize_lock_key(lock_key)
 
     Repo.transact(fn ->
-      Repo.query!("SELECT pg_advisory_xact_lock($1)", [key])
+      AdvisoryLock.acquire!(lock_key)
       acquired_at = System.monotonic_time()
 
       :telemetry.execute(
@@ -234,11 +234,6 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
         observe_hold(acquired_at, metadata)
       end
     end)
-  end
-
-  defp normalize_lock_key(lock_key) when is_binary(lock_key) do
-    <<key::signed-64, _::binary>> = :crypto.hash(:sha256, lock_key)
-    key
   end
 
   defp observe_hold(acquired_at, metadata) do

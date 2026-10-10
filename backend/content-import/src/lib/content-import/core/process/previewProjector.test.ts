@@ -12,7 +12,7 @@ const record: TPreviewRecord = {
   community: 'home',
   createdAt: '2026-07-22T08:00:00.000Z',
   expiresAt: '2026-07-22T09:00:00.000Z',
-  idempotencyKey: 'request-1',
+  commandId: 'request-1',
   previewRef: 'prv_123456',
   requestedSource: {
     type: 'repo',

@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.CMS.Communities.Query do
     end
 
     test "read subscribed community should have a flag", ~m(community user user2)a do
-      {:ok, _} = CMS.Communities.subscribe(community, user)
+      {:ok, _} = CMS.Communities.Subscriptions.Setup.subscribe(community, user)
 
       {:ok, community} = CMS.Communities.fetch(community.slug, user)
 
@@ -72,7 +72,9 @@ defmodule GroupherServer.Test.CMS.Communities.Query do
 
     test "read moderatorable community should have a flag", ~m(community user user2 user3)a do
       cur_user = user
-      {:ok, community} = CMS.Communities.add_moderator(community, user2, cur_user)
+
+      {:ok, community} =
+        CMS.Communities.add_moderator(community, user2, cur_user, Ecto.UUID.generate())
 
       {:ok, community} = CMS.Communities.fetch(community.slug, user2)
       assert community.viewer_is_moderator
@@ -80,7 +82,9 @@ defmodule GroupherServer.Test.CMS.Communities.Query do
       {:ok, community} = CMS.Communities.fetch(community.slug, user3)
       assert not community.viewer_is_moderator
 
-      {:ok, community} = CMS.Communities.remove_moderator(community.slug, user2, cur_user)
+      {:ok, community} =
+        CMS.Communities.remove_moderator(community, user2, cur_user, Ecto.UUID.generate())
+
       {:ok, community} = CMS.Communities.fetch(community.slug, user2)
 
       assert not community.viewer_is_moderator

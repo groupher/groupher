@@ -9,6 +9,7 @@ on:
       - 'frontend/core/unit/**'
       - 'contracts/graphql/**'
       - 'frontend/core/lib/graphql/**'
+      - 'frontend/apply/**'
       - 'codegen.ts'
       - 'Makefile'
       - 'package.json'
@@ -22,6 +23,7 @@ on:
       - 'frontend/core/unit/**'
       - 'contracts/graphql/**'
       - 'frontend/core/lib/graphql/**'
+      - 'frontend/apply/**'
       - 'codegen.ts'
       - 'Makefile'
       - 'package.json'
@@ -33,7 +35,7 @@ permissions:
 
 jobs:
   contract:
-    name: SDL freshness and Pages operations
+    name: SDL freshness and frontend operations
     runs-on: ubuntu-latest
 
     steps:
@@ -75,6 +77,9 @@ jobs:
 
       - name: Validate feature-local operations against the backend SDL
         run: pnpm exec vitest --config frontend/core/vitest.config.mts run frontend/core/schemas/feature.schema.test.ts
+
+      - name: Type-check Apply operations against the backend SDL
+        run: pnpm --filter @groupher/frontend-apply run type-check
 
       - name: Rebuild and verify generated GraphQL artifacts
         run: |

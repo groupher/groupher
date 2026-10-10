@@ -24,10 +24,10 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
     assert trashed["thread"] == "POST"
     assert trashed["articleId"] == post.id
-    assert trashed["article"]["innerId"] == to_string(post.inner_id)
+    assert trashed["article"]["innerId"] == to_string(article_inner_id(post, community))
     assert trashed["scheduledPermanentDeletionAt"]
     assert Repo.get(Article, post.id)
-    assert {:error, _} = read_article(community, :post, post.inner_id)
+    assert {:error, _} = read_article(community, :post, article_inner_id(post, community))
 
     rule_conn =
       simu_conn(:user, cms: %{community.slug => %{"post.restore" => true}})
@@ -42,8 +42,9 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
         commandId: command_id
       })
 
-    assert restored["innerId"] == to_string(post.inner_id)
-    assert {:ok, _} = read_article(community, :post, post.inner_id)
+    assert restored["innerId"] == to_string(article_inner_id(post, community))
+    assert restored["commandId"] == command_id
+    assert {:ok, _} = read_article(community, :post, article_inner_id(post, community))
 
     replayed =
       gq_mutation(rule_conn, S.Article.m(:restore_trashed_article), %{
@@ -53,7 +54,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
         commandId: command_id
       })
 
-    assert replayed["innerId"] == restored["innerId"]
+    assert replayed == restored
   end
 
   test "Trash requires login and either ownership or the thread grant",
@@ -96,12 +97,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
              ErrorCat.code(PassportErrorCat.passport())
            )
 
-    assert {:ok, _} = read_article(community_b, :post, post_b.inner_id)
+    assert {:ok, _} = read_article(community_b, :post, article_inner_id(post_b, community_b))
   end
 
   test "permanent deletion removes content but leaves the item queryable until that action",
        ~m(community post owner owner_conn)a do
-    {:ok, _} = CMS.Interactions.emotion(post, :beer, owner)
+    {:ok, _} = CMS.Interactions.emotion(post, :beer, owner, Ecto.UUID.generate())
 
     ArticleStats
     |> Repo.get_by!(thread: :post, article_id: post.id)
@@ -128,7 +129,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
     assert listed["totalCount"] == 1
     assert hd(listed["entries"])["mentionedByCount"] == 0
-    assert hd(listed["entries"])["article"]["innerId"] == to_string(post.inner_id)
+    assert hd(listed["entries"])["article"]["innerId"] == to_string(article_inner_id(post, community))
 
     assert hd(listed["entries"])["article"]["articleStats"]
            |> Map.take(["views", "viewsRevision", "upvotesCount", "commentsCount"]) == %{
@@ -152,6 +153,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
       })
 
     assert result["done"]
+    assert result["commandId"] == command_id
     refute Repo.get(Article, post.id)
     refute Repo.get_by(ArticleStats, thread: :post, article_id: post.id)
     refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.id)
@@ -165,6 +167,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
         commandId: command_id
       })
 
-    assert replayed["done"]
+    assert replayed == result
   end
 end

@@ -13,13 +13,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   alias GroupherServer.{Activity, CMS, Repo}
   alias CMS.Articles.Lifecycle
-  alias CMS.Communities.TagStats
+  alias CMS.Articles.Bindings
+  alias CMS.Communities.Tags.Stats
   alias CMS.Docs.Trash, as: DocTrash
 
   alias CMS.Model.{
     Article,
-    ArticleCommunity,
-    ArticleCommunityTag,
+    ArticleBinding,
+    ArticleBindingTag,
     ArticlePublic,
     ArticleStats,
     ArtimentMention,
@@ -79,7 +80,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   @doc "Deletes an empty TrashAction after its final membership is removed."
-  @spec delete_empty_action(pos_integer()) :: :ok | {:error, term()}
+  @spec delete_empty_action(pos_integer()) :: {:ok, :pass} | {:error, term()}
   def delete_empty_action(action_id) do
     occupied? =
       Enum.any?([TrashedArticle, TrashedDocArticle, TrashedDocTreeNode], fn model ->
@@ -87,10 +88,10 @@ defmodule GroupherServer.CMS.Articles.Trash do
       end)
 
     if occupied? do
-      :ok
+      {:ok, :pass}
     else
       case Repo.get(TrashAction, action_id) do
-        nil -> :ok
+        nil -> {:ok, :pass}
         action -> action |> Repo.delete() |> normalize_delete()
       end
     end
@@ -100,6 +101,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
   @spec trash(Article.t() | map(), term(), keyword()) ::
           {:ok, TrashedArticle.t()} | {:error, term()}
   def trash(article, actor, opts \\ [])
+
+  def trash(%{article_id: article_id, community: %Community{} = community}, actor, opts)
+      when is_binary(article_id) do
+    trash(Repo.get(Article, article_id), actor, Keyword.put(opts, :community, community))
+  end
 
   def trash(%{article_id: article_id}, actor, opts) when is_binary(article_id) do
     trash(Repo.get(Article, article_id), actor, opts)
@@ -111,12 +117,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   def trash(%Article{} = article, actor, opts) do
-    CMS.Gate.Access.with_check(actor, :delete, article, fn canonical ->
-      case Repo.get_by(TrashedArticle, article_id: canonical.id) do
-        %TrashedArticle{} = item -> {:ok, item}
-        nil -> create_trash_membership(canonical, actor, opts)
-      end
-    end)
+    with {:ok, community} <- explicit_community(opts) do
+      CMS.Gate.with_community_check(actor, :delete, community, article, fn canonical ->
+        case Repo.get_by(TrashedArticle, article_id: canonical.id) do
+          %TrashedArticle{} = item -> {:ok, item}
+          nil -> create_trash_membership(canonical, actor, opts)
+        end
+      end)
+    end
   end
 
   def trash(_article, _actor, _opts) do
@@ -139,17 +147,22 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   def restore(item_or_id, actor, _opts) do
     with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
-         %Article{} = article <- Repo.get(Article, item.article_id) do
-      CMS.Gate.Access.with_check(actor, :restore, article, fn canonical ->
+         %Article{} = article <- Repo.get(Article, item.article_id),
+         %Community{} = community <- Repo.get(Community, item.community_id) do
+      CMS.Gate.with_community_check(actor, :restore, community, article, fn canonical ->
         with {:ok, lifecycle} <- Lifecycle.lock(canonical),
              {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, item.restore_state),
              {:ok, _deleted} <- Repo.delete(item),
-             :ok <- update_tag_stats(canonical, 1),
-             :ok <- update_community_count(canonical),
-             :ok <- delete_empty_action(item.trash_action_id),
+             {:ok, _} <- update_tag_stats(canonical, 1),
+             {:ok, _} <- update_community_count(canonical, community),
+             {:ok, _} <- delete_empty_action(item.trash_action_id),
              {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :active) do
           _ = CMS.SearchArtiments.Indexer.enqueue_upsert(canonical)
-          {:ok, canonical}
+
+          with {:ok, %{inner_id: inner_id}} <-
+                 Bindings.get(%{article_id: canonical.id}, community) do
+            {:ok, Map.put(canonical, :inner_id, inner_id)}
+          end
         end
       end)
     else
@@ -178,26 +191,33 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   def permanently_delete(item_or_id, actor, opts) do
     with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
-         %Article{} = article <- Repo.get(Article, item.article_id) do
-      CMS.Gate.Access.with_check(actor, :permanently_delete, article, fn canonical ->
-        action_id = item.trash_action_id
+         %Article{} = article <- Repo.get(Article, item.article_id),
+         %Community{} = community <- Repo.get(Community, item.community_id) do
+      CMS.Gate.with_community_check(
+        actor,
+        :permanently_delete,
+        community,
+        article,
+        fn canonical ->
+          action_id = item.trash_action_id
 
-        with {:ok, lifecycle} <- Lifecycle.lock(canonical),
-             {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :destroy),
-             {:ok, _event} <-
-               activity(canonical, :permanently_deleted, actor, item.trash_action,
-                 source: activity_source(opts)
-               ),
-             {:ok, _comment_mentions} <-
-               CMS.ArtimentMentions.purge_article_comments(canonical),
-             {:ok, _article_mentions} <- CMS.ArtimentMentions.purge(canonical),
-             {:ok, _asset_refs} <- CMS.Assets.cleanup_refs(canonical.thread, canonical.id),
-             {:ok, _deleted} <- Repo.delete(canonical),
-             :ok <- delete_empty_action(action_id) do
-          _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)
-          {:ok, %{done: true, article_id: canonical.id}}
+          with {:ok, lifecycle} <- Lifecycle.lock(canonical),
+               {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :destroy),
+               {:ok, _event} <-
+                 activity(canonical, :permanently_deleted, actor, item.trash_action,
+                   source: activity_source(opts)
+                 ),
+               {:ok, _comment_mentions} <-
+                 CMS.ArtimentMentions.purge_article_comments(canonical),
+               {:ok, _article_mentions} <- CMS.ArtimentMentions.purge(canonical),
+               {:ok, _asset_refs} <- CMS.Assets.cleanup_refs(canonical.thread, canonical.id),
+               {:ok, _deleted} <- Repo.delete(canonical),
+               {:ok, _} <- delete_empty_action(action_id) do
+            _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)
+            {:ok, %{done: true, article_id: canonical.id}}
+          end
         end
-      end)
+      )
     else
       nil -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
       {:error, reason} -> {:error, reason}
@@ -213,6 +233,19 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
       nil ->
         get_doc_item(hash_id)
+    end
+  end
+
+  @doc "Gets one Trash membership and verifies its public Community/thread scope."
+  @spec get_in_scope(Ecto.UUID.t(), pos_integer(), atom()) ::
+          {:ok, TrashedArticle.t() | TrashedDocArticle.t()} | {:error, term()}
+  def get_in_scope(hash_id, community_id, thread)
+      when is_integer(community_id) and is_atom(thread) do
+    with {:ok, item} <- get(hash_id),
+         true <- item.community_id == community_id and item.thread == thread do
+      {:ok, item}
+    else
+      _ -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
     end
   end
 
@@ -235,11 +268,16 @@ defmodule GroupherServer.CMS.Articles.Trash do
   defp hydrate_item(%TrashedArticle{article: %Article{} = article} = item) do
     public = Repo.get(ArticlePublic, article.id)
     stats = Repo.get_by(ArticleStats, article_id: article.id, thread: article.thread)
+    community = Repo.get!(Community, item.community_id)
+
+    {:ok, %{inner_id: inner_id}} =
+      Bindings.get(%{article_id: article.id}, community)
 
     projection =
       article
       |> Map.from_struct()
       |> Map.put(:title, public && public.title)
+      |> Map.put(:inner_id, inner_id)
       |> Map.put(:article_stats, stats)
 
     mentioned_by_count =
@@ -255,22 +293,29 @@ defmodule GroupherServer.CMS.Articles.Trash do
     %{item | article: projection, mentioned_by_count: mentioned_by_count}
   end
 
-  defp create_trash_membership(canonical, actor, opts) do
-    with %Community{} = community <- Repo.get(Community, canonical.community_id),
-         {:ok, lifecycle} <- Lifecycle.lock(canonical),
+  defp create_trash_membership(
+         %{community: %Community{} = community} = canonical,
+         actor,
+         opts
+       ) do
+    article = struct(Article, Map.from_struct(canonical))
+
+    with {:ok, %{community: %Community{}}} <- Bindings.get(article, community),
+         {:ok, lifecycle} <- Lifecycle.lock(article),
          {:ok, action} <-
            create_action(community, actor, %{
              root_type: :article,
-             root_ref: canonical.id,
+             root_ref: article.id,
              retention_days: Keyword.get(opts, :retention_days, @default_retention_days)
            }),
-         :ok <- update_tag_stats(canonical, -1),
-         {:ok, item} <- create_membership(action, canonical, lifecycle.state, actor),
+         {:ok, _} <- update_tag_stats(article, -1),
+         {:ok, item} <-
+           create_membership(action, article, community, lifecycle.state, actor),
          {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :deleted),
-         :ok <- update_community_count(canonical),
+         {:ok, _} <- update_community_count(article, community),
          {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :trashed),
          {:ok, _event} <- activity(canonical, :trashed, actor, action) do
-      _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)
+      _ = CMS.SearchArtiments.Indexer.enqueue_delete(article)
       {:ok, item}
     else
       nil -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
@@ -278,43 +323,64 @@ defmodule GroupherServer.CMS.Articles.Trash do
     end
   end
 
-  defp create_membership(action, article, restore_state, actor) do
-    %TrashedArticle{}
-    |> TrashedArticle.changeset(%{
-      trash_action_id: action.id,
-      community_id: article.community_id,
-      thread: article.thread,
-      article_id: article.id,
-      restore_state: restore_state,
-      deleted_by_id: actor_id(actor),
-      deleted_at: action.deleted_at
-    })
-    |> Repo.insert()
+  defp create_membership(action, article, community, restore_state, actor) do
+    with {:ok, %{community: community}} <- Bindings.get(article, community) do
+      %TrashedArticle{}
+      |> TrashedArticle.changeset(%{
+        trash_action_id: action.id,
+        community_id: community.id,
+        thread: article.thread,
+        article_id: article.id,
+        restore_state: restore_state,
+        deleted_by_id: actor_id(actor),
+        deleted_at: action.deleted_at
+      })
+      |> Repo.insert()
+    end
   end
 
   defp update_tag_stats(article, delta) when delta in [-1, 1] do
     tags =
       CommunityTag
-      |> join(:inner, [tag], assignment in ArticleCommunityTag, on: assignment.tag_id == tag.id)
-      |> join(:inner, [_tag, assignment], relation in ArticleCommunity,
-        on: relation.id == assignment.article_community_id
+      |> join(:inner, [tag], assignment in ArticleBindingTag, on: assignment.tag_id == tag.id)
+      |> join(:inner, [_tag, assignment], binding in ArticleBinding,
+        on: binding.id == assignment.article_binding_id
       )
-      |> where([_tag, _assignment, relation], relation.article_id == ^article.id)
+      |> where([_tag, _assignment, binding], binding.article_id == ^article.id)
       |> Repo.all()
 
-    case TagStats.update_many(article, Enum.map(tags, &{&1, delta})) do
-      {:ok, _result} -> :ok
+    case Stats.update_many(article, Enum.map(tags, &{&1, delta})) do
+      {:ok, _result} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp update_community_count(%Article{} = article) do
-    with %Community{} = community <- Repo.get(Community, article.community_id),
+  defp update_community_count(article, %Community{} = community) do
+    with {:ok, %{community: %Community{}}} <- Bindings.get(article, community),
          {:ok, _community} <- CMS.Communities.update_count_field(community, article.thread) do
-      :ok
+      {:ok, :pass}
     else
       nil -> {:error, CMS.Articles.ErrorCat.article_not_found("community not found")}
       {:error, _reason} = error -> error
+    end
+  end
+
+  defp explicit_community(opts) do
+    case Keyword.get(opts, :community) do
+      %Community{} = community ->
+        {:ok, community}
+
+      _ ->
+        case Keyword.get(opts, :community_id) do
+          community_id when is_integer(community_id) ->
+            case Repo.get(Community, community_id) do
+              %Community{} = community -> {:ok, community}
+              nil -> {:error, :article_binding_not_found}
+            end
+
+          _ ->
+            {:error, :article_binding_context_required}
+        end
     end
   end
 
@@ -347,6 +413,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   defp actor_id(%{id: id}) when is_integer(id), do: id
   defp actor_id(_actor), do: nil
-  defp normalize_delete({:ok, _row}), do: :ok
+  defp normalize_delete({:ok, _row}), do: {:ok, :pass}
   defp normalize_delete({:error, reason}), do: {:error, reason}
 end

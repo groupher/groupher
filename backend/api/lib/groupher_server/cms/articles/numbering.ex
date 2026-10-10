@@ -1,65 +1,56 @@
 defmodule GroupherServer.CMS.Articles.Numbering do
   @moduledoc """
-  Allocates Community/thread-scoped public Article numbers.
+  Allocates Community-wide public numbers for ArticleBinding bindings.
 
-      locked stable Article
-        -> locked ArticleInnerIdCounter
-        -> Article.inner_id
-
-  Callers run this inside the Publish or Move transaction so no cache/search
-  side effect can observe a public Article without an `inner_id`.
+      Publish / Mirror / Move
+        -> lock Community counter
+        -> ArticleBinding.inner_id
   """
 
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Article, ArticleInnerIdCounter}
+  alias CMS.Model.{ArticleBinding, CommunityInnerIdCounter}
 
-  @doc "Assigns the next public inner id, or returns the Article unchanged when already assigned."
-  @spec assign_public_inner_id(Article.t()) :: {:ok, Article.t()} | {:error, term()}
-  def assign_public_inner_id(%Article{inner_id: inner_id} = article) when not is_nil(inner_id) do
-    {:ok, article}
+  @doc "Assigns the next Community-wide number to an ArticleBinding binding."
+  @spec assign_binding_inner_id(ArticleBinding.t()) ::
+          {:ok, ArticleBinding.t()} | {:error, term()}
+  def assign_binding_inner_id(%ArticleBinding{inner_id: inner_id} = binding)
+      when is_integer(inner_id) do
+    {:ok, binding}
   end
 
-  def assign_public_inner_id(%Article{} = article) do
-    with {:ok, _counter} <- ensure_counter(article),
-         %ArticleInnerIdCounter{} = counter <- lock_counter(article),
-         inner_id <- counter.next_inner_id,
-         {:ok, _counter} <- advance(counter),
-         {:ok, article} <- article |> Article.changeset(%{inner_id: inner_id}) |> Repo.update() do
-      {:ok, article}
+  def assign_binding_inner_id(%ArticleBinding{} = binding) do
+    with {:ok, _counter} <- ensure_community_counter(binding.community_id),
+         %CommunityInnerIdCounter{} = counter <- lock_community_counter(binding.community_id),
+         {:ok, _counter} <- advance_community_counter(counter),
+         {:ok, binding} <-
+           binding
+           |> ArticleBinding.changeset(%{inner_id: counter.next_inner_id})
+           |> Repo.update() do
+      {:ok, binding}
     else
-      nil -> {:error, :article_inner_id_counter_not_found}
+      nil -> {:error, :community_inner_id_counter_not_found}
       {:error, reason} -> {:error, reason}
     end
   end
 
-  defp ensure_counter(article) do
-    %ArticleInnerIdCounter{}
-    |> ArticleInnerIdCounter.changeset(%{
-      community_id: article.community_id,
-      thread: article.thread,
-      next_inner_id: 1
-    })
-    |> Repo.insert(
-      on_conflict: :nothing,
-      conflict_target: [:community_id, :thread]
-    )
+  defp ensure_community_counter(community_id) do
+    %CommunityInnerIdCounter{}
+    |> CommunityInnerIdCounter.changeset(%{community_id: community_id, next_inner_id: 1})
+    |> Repo.insert(on_conflict: :nothing, conflict_target: [:community_id])
   end
 
-  defp lock_counter(article) do
-    ArticleInnerIdCounter
-    |> where(
-      [counter],
-      counter.community_id == ^article.community_id and counter.thread == ^article.thread
-    )
+  defp lock_community_counter(community_id) do
+    CommunityInnerIdCounter
+    |> where([counter], counter.community_id == ^community_id)
     |> lock("FOR UPDATE")
     |> Repo.one()
   end
 
-  defp advance(counter) do
+  defp advance_community_counter(counter) do
     counter
-    |> ArticleInnerIdCounter.changeset(%{next_inner_id: counter.next_inner_id + 1})
+    |> CommunityInnerIdCounter.changeset(%{next_inner_id: counter.next_inner_id + 1})
     |> Repo.update()
   end
 end

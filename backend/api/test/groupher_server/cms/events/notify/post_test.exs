@@ -12,16 +12,22 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
     {:ok, user3} = db_insert(:user)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment(),
+        user, Ecto.UUID.generate()
+      )
 
     {:ok, ~m(user2 user3 community post comment)a}
   end
 
   describe "[upvote notify]" do
-    test "upvote hook should work on post", ~m(user2 post)a do
-      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id)
+    test "upvote hook should work on post", ~m(user2 community post)a do
+      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id, community)
 
-      {:ok, article} = CMS.Interactions.upvote(post, user2)
+      {:ok, article} = CMS.Interactions.upvote(post, user2, Ecto.UUID.generate())
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
@@ -38,7 +44,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
     end
 
     test "upvote hook should work on post comment", ~m(user2 post comment)a do
-      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
       {:ok, comment_author} = CMS.Comments.Query.Reconcile.load_comment_author(comment.id)
       comment = %{comment | author: comment_author}
 
@@ -58,13 +64,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    test "undo upvote hook should work on post", ~m(user2 post)a do
-      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id)
+    test "undo upvote hook should work on post", ~m(user2 community post)a do
+      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id, community)
 
-      {:ok, article} = CMS.Interactions.upvote(post, user2)
+      {:ok, article} = CMS.Interactions.upvote(post, user2, Ecto.UUID.generate())
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
-      {:ok, article} = CMS.Interactions.undo_upvote(post, user2)
+      {:ok, article} = CMS.Interactions.undo_upvote(post, user2, Ecto.UUID.generate())
       Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
@@ -74,11 +80,11 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
     end
 
     test "undo upvote hook should work on post comment", ~m(user2 comment)a do
-      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2, Ecto.UUID.generate())
       Events.emit(:notify_undo_upvote, %{target: comment, from_user: user2})
 
       {:ok, comment_author} = CMS.Comments.Query.Reconcile.load_comment_author(comment.id)
@@ -92,10 +98,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
   end
 
   describe "[collect notify]" do
-    test "collect hook should work on post", ~m(user2 post)a do
-      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id)
+    test "collect hook should work on post", ~m(user2 community post)a do
+      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id, community)
 
-      {:ok, _} = CMS.Interactions.collect(post, user2)
+      {:ok, _} = CMS.Interactions.collect(post, user2, Ecto.UUID.generate())
       Events.emit(:notify_collect, %{article: post, from_user: user2})
 
       {:ok, notifications} =
@@ -111,13 +117,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    test "undo collect hook should work on post", ~m(user2 post)a do
-      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id)
+    test "undo collect hook should work on post", ~m(user2 community post)a do
+      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id, community)
 
-      {:ok, _} = CMS.Interactions.upvote(post, user2)
+      {:ok, _} = CMS.Interactions.upvote(post, user2, Ecto.UUID.generate())
       Events.emit(:notify_collect, %{article: post, from_user: user2})
 
-      {:ok, _} = CMS.Interactions.undo_upvote(post, user2)
+      {:ok, _} = CMS.Interactions.undo_upvote(post, user2, Ecto.UUID.generate())
       Events.emit(:notify_undo_collect, %{article: post, from_user: user2})
 
       {:ok, notifications} =
@@ -130,10 +136,16 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
   describe "[comment notify]" do
     test "post author should get notify after some one comment on it",
          ~m(user2 community post)a do
-      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id)
+      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id, community)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user2, Ecto.UUID.generate()
+        )
 
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
@@ -152,12 +164,18 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
 
     test "post comment author should get notify after some one reply it",
          ~m(user2 user3 community post)a do
-      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id)
+      {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id, community)
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user2, Ecto.UUID.generate()
+        )
 
-      {:ok, replied_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user3)
+      {:ok, replied_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user3, Ecto.UUID.generate())
 
       Events.emit(:notify_reply, %{reply_comment: replied_comment, from_user: user3})
 

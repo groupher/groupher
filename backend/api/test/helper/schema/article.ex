@@ -49,10 +49,12 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     mutation(
           $article: ArticlePathInput!
           $cat: ArticleCatEnum!
+          $commandId: ID!
         ) {
           setPostCat(
             article: $article
             cat: $cat
+            commandId: $commandId
           ) {
             innerId
             cat
@@ -61,20 +63,10 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
-  def m(:move_to_blackhole) do
-    """
-    mutation($article: ArticlePathInput!, $communityTags: [ID]) {
-      moveToBlackhole(article: $article, communityTags: $communityTags) {
-        innerId
-      }
-    }
-    """
-  end
-
   def m(:move_article) do
     """
-    mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID]) {
-      moveArticle(article: $article, targetCommunity: $targetCommunity, communityTags: $communityTags) {
+    mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID], $commandId: ID!) {
+      moveArticle(article: $article, targetCommunity: $targetCommunity, communityTags: $communityTags, commandId: $commandId) {
         innerId
       }
     }
@@ -83,8 +75,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:unmirror_article) do
     """
-    mutation($article: ArticlePathInput!, $targetCommunity: String!) {
-      unmirrorArticle(article: $article, targetCommunity: $targetCommunity) {
+    mutation($article: ArticlePathInput!, $targetCommunity: String!, $commandId: ID!) {
+      unmirrorArticle(article: $article, targetCommunity: $targetCommunity, commandId: $commandId) {
         innerId
       }
     }
@@ -93,28 +85,18 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:mirror_article) do
     """
-    mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID]) {
-        mirrorArticle(article: $article, targetCommunity: $targetCommunity, communityTags: $communityTags) {
+    mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID], $commandId: ID!) {
+        mirrorArticle(article: $article, targetCommunity: $targetCommunity, communityTags: $communityTags, commandId: $commandId) {
           innerId
         }
       }
     """
   end
 
-  def m(:mirror_to_home) do
-    """
-    mutation($article: ArticlePathInput!, $communityTags: [ID]) {
-      mirrorToHome(article: $article, communityTags: $communityTags) {
-        innerId
-      }
-    }
-    """
-  end
-
   def m(:set_community_tag) do
     """
-    mutation($article: ArticlePathInput!, $communityTagId: ID!) {
-      setCommunityTag(article: $article, communityTagId: $communityTagId) {
+    mutation($article: ArticlePathInput!, $communityTagId: ID!, $commandId: ID!) {
+      setCommunityTag(article: $article, communityTagId: $communityTagId, commandId: $commandId) {
         innerId
       }
     }
@@ -126,10 +108,12 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     mutation(
           $article: ArticlePathInput!
           $status: ArticleStatusEnum!
+          $commandId: ID!
         ) {
           setPostStatus(
             article: $article
             status: $status
+            commandId: $commandId
           ) {
             innerId
             status
@@ -140,8 +124,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:unset_community_tag) do
     """
-    mutation($article: ArticlePathInput!, $communityTagId: ID!) {
-      unsetCommunityTag(article: $article, communityTagId: $communityTagId) {
+    mutation($article: ArticlePathInput!, $communityTagId: ID!, $commandId: ID!) {
+      unsetCommunityTag(article: $article, communityTagId: $communityTagId, commandId: $commandId) {
         innerId
         title
       }
@@ -166,8 +150,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:sink_article, thread) do
     """
-    mutation($article: ArticlePathInput!){
-      sink#{t(thread)}(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!){
+      sink#{t(thread)}(article: $article, commandId: $commandId) {
         innerId
       }
     }
@@ -176,8 +160,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:undo_sink_article, thread) do
     """
-    mutation($article: ArticlePathInput!){
-      undoSink#{t(thread)}(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!){
+      undoSink#{t(thread)}(article: $article, commandId: $commandId) {
         innerId
       }
     }
@@ -186,8 +170,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:lock_comment, thread) do
     """
-    mutation($article: ArticlePathInput!) {
-      lock#{t(thread)}Comment(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!) {
+      lock#{t(thread)}Comment(article: $article, commandId: $commandId) {
         innerId
         title
       }
@@ -197,8 +181,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:unlock_comment, thread) do
     """
-    mutation($article: ArticlePathInput!){
-      undoLock#{t(thread)}Comment(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!){
+      undoLock#{t(thread)}Comment(article: $article, commandId: $commandId) {
         innerId
       }
     }
@@ -207,8 +191,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:report_article, thread) do
     """
-    mutation($article: ArticlePathInput!, $reason: String!, $attr: String) {
-      report#{t(thread)}(article: $article, reason: $reason, attr: $attr) {
+    mutation($commandId: ID!, $article: ArticlePathInput!, $reason: String!, $attr: String) {
+      report#{t(thread)}(commandId: $commandId, article: $article, reason: $reason, attr: $attr) {
         innerId
         title
       }
@@ -218,8 +202,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:undo_report_article, thread) do
     """
-    mutation($article: ArticlePathInput!) {
-      undoReport#{t(thread)}(article: $article) {
+    mutation($commandId: ID!, $article: ArticlePathInput!) {
+      undoReport#{t(thread)}(commandId: $commandId, article: $article) {
         innerId
         title
       }
@@ -229,8 +213,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:pin_article, thread) do
     """
-    mutation($article: ArticlePathInput!){
-      pin#{t(thread)}(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!){
+      pin#{t(thread)}(article: $article, commandId: $commandId) {
         innerId
         isPinned
       }
@@ -240,8 +224,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:undo_pin_article, thread) do
     """
-    mutation($article: ArticlePathInput!){
-      undoPin#{t(thread)}(article: $article) {
+    mutation($article: ArticlePathInput!, $commandId: ID!){
+      undoPin#{t(thread)}(article: $article, commandId: $commandId) {
         innerId
         isPinned
       }

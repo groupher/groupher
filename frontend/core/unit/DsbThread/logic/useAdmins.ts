@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { browserGraphQLRequest } from '~/graphql/client'
 import { sortByKey } from '~/helper'
 import { patchCommunityConfig } from '~/query'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TModerator, TUser } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDsbEdit from '~/stores/dsbEdit/hooks'
@@ -157,12 +158,12 @@ export default function useAdmins(): TRet {
       const validUsers = users.filter((user) => user.login && !moderatorLoginSet.has(user.login))
       if (!community$.slug || !validUsers.length) return
 
-      const data = await browserGraphQLRequest<
-        { addModerators: { moderators: TModerator[] } },
-        { community: string; users: string[] }
-      >(S.addModerators, {
-        community: community$.slug,
-        users: validUsers.map((user) => user.login!),
+      const data = await executeCommand({
+        request: (variables) => browserGraphQLRequest(S.addModerators, variables),
+        variables: {
+          community: community$.slug,
+          users: validUsers.map((user) => user.login!),
+        },
       })
 
       const pendingLogins = new Set(validUsers.map((user) => user.login))

@@ -20,16 +20,16 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
   alias __MODULE__
   alias GroupherServer.CMS
   alias CMS.Artiment.Threads
-  alias CMS.Model.{ArticleCommunity, Community}
+  alias CMS.Model.{ArticleBinding, Community}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @required_fields ~w(community_id thread article_community_id)a
+  @required_fields ~w(community_id thread article_binding_id)a
 
   @type t :: %PinnedArticle{}
   schema "pinned_articles" do
     belongs_to(:community, Community, foreign_key: :community_id)
-    belongs_to(:article_community, ArticleCommunity)
+    belongs_to(:article_binding, ArticleBinding)
     field(:thread, Ecto.Enum, values: Threads.article_enums())
 
     timestamps(type: :utc_datetime)
@@ -41,7 +41,7 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
     |> cast(attrs, @required_fields)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:community_id)
-    |> foreign_key_constraint(:article_community_id)
-    |> unique_constraint(:article_community_id)
+    |> foreign_key_constraint(:article_binding_id)
+    |> unique_constraint(:article_binding_id)
   end
 end

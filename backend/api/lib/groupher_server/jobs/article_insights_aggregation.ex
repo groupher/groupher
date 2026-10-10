@@ -22,7 +22,7 @@ defmodule GroupherServer.Jobs.ArticleInsightsAggregation do
 
       {:ok, _count, false} ->
         emit_metrics()
-        :ok
+        {:ok, :pass}
 
       {:error, reason} ->
         emit_metrics()

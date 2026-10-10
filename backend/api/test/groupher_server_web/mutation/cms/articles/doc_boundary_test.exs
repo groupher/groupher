@@ -23,12 +23,12 @@ defmodule GroupherServer.Test.Mutation.Articles.DocBoundary do
     assert owner_conn
            |> mutation_error?(S.Article.m(:trash_article), %{
              article: %{
-               inner_id: context.doc.inner_id,
+               inner_id: article_inner_id(context.doc, context.community),
                community: context.community.slug,
                thread: "DOC"
              }
            })
 
-    assert {:ok, _} = read_article(context.community, :doc, context.doc.inner_id)
+    assert {:ok, _} = read_article(context.community, :doc, article_inner_id(context.doc, context.community))
   end
 end

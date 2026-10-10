@@ -49,20 +49,22 @@ defmodule GroupherServer.Activity.ArtimentEvent do
         if resource_thread == @thread do
           target = Keyword.get(opts, :target)
 
-          {:ok,
-           %{
-             @stream_field => stable_article_id(resource),
-             community_id: Map.fetch!(resource, :community_id),
-             stream_snapshot: Event.snapshot(resource, [:title, :thread]),
-             subject_type: to_string(@thread),
-             subject_ref: Event.stringify(stable_article_id(resource)),
-             subject_snapshot: Event.snapshot(resource, [:title, :inner_id]),
-             target_type: target_type(target),
-             target_ref: target_ref(target),
-             target_snapshot: target_snapshot(target),
-             branch_id: branch_id(resource)
-           }
-           |> Map.take(@schema.__schema__(:fields))}
+          with {:ok, community_id} <- resource_community_id(resource) do
+            {:ok,
+             %{
+               @stream_field => stable_article_id(resource),
+               community_id: community_id,
+               stream_snapshot: Event.snapshot(resource, [:title, :thread]),
+               subject_type: to_string(@thread),
+               subject_ref: Event.stringify(stable_article_id(resource)),
+               subject_snapshot: Event.snapshot(resource, [:title, :inner_id]),
+               target_type: target_type(target),
+               target_ref: target_ref(target),
+               target_snapshot: target_snapshot(target),
+               branch_id: branch_id(resource)
+             }
+             |> Map.take(@schema.__schema__(:fields))}
+          end
         else
           {:error, Event.error("Activity resource thread does not match handler")}
         end
@@ -89,6 +91,19 @@ defmodule GroupherServer.Activity.ArtimentEvent do
         do: article_id
 
       defp stable_article_id(%{id: article_id}) when is_binary(article_id), do: article_id
+
+      defp resource_community_id(resource) do
+        case Map.get(resource, :community_id) do
+          community_id when is_integer(community_id) ->
+            {:ok, community_id}
+
+          _ ->
+            case CMS.Articles.Bindings.get(resource, Map.get(resource, :community)) do
+              {:ok, %{community: %{id: community_id}}} -> {:ok, community_id}
+              {:error, reason} -> {:error, Event.error(inspect(reason))}
+            end
+        end
+      end
 
       defp branch_id(%{branch_id: branch_id}) when is_integer(branch_id), do: branch_id
 

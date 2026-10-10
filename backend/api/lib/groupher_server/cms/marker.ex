@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Marker do
 
   defp normalize_icon(marker) do
     with {:ok, provider} <- required_string(marker, :provider),
-         :ok <- validate_provider(provider),
+         {:ok, _} <- validate_provider(provider),
          {:ok, name} <- required_string(marker, :name),
          {:ok, src} <- required_string(marker, :src),
          {:ok, appearance} <- normalize_appearance(raw_field(marker, :appearance), :icon) do
@@ -79,7 +79,7 @@ defmodule GroupherServer.CMS.Marker do
     end
   end
 
-  defp validate_provider(provider) when provider in @providers, do: :ok
+  defp validate_provider(provider) when provider in @providers, do: {:ok, :pass}
   defp validate_provider(_provider), do: {:error, "marker provider is invalid"}
 
   defp normalize_emoji(marker) do

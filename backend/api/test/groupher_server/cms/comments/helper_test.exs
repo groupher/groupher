@@ -87,7 +87,14 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
   describe "root_comment/1" do
     test "should return the comment itself if it's not a reply", ~m(community user post)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       parent_comment = Replies.root_comment(comment)
       assert parent_comment.id == comment.id
@@ -96,10 +103,18 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
     test "should return the root comment for a reply", ~m(community user user2 post)a do
       # 创建根评论
       {:ok, root_comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       # 创建回复
-      {:ok, reply_comment} = CMS.Comments.reply_comment(root_comment.id, mock_comment(), user2)
+      {:ok, reply_comment} =
+        CMS.Comments.reply_comment(root_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       # 验证回复的 root_comment_id 已设置
       assert reply_comment.root_comment_id == root_comment.id
@@ -114,10 +129,17 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
     test "should mark viewer has upvoted for comments", ~m(community user user2 post)a do
       # 创建评论
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       # 点赞评论
-      {:ok, _} = CMS.Interactions.upvote(comment, user2)
+      {:ok, _} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
 
       # 重新加载评论以获取更新的 meta 字段
       {:ok, updated_comment} = ORM.find(comment.__struct__, comment.id)
@@ -134,7 +156,14 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
     test "should return comments unchanged when viewer is nil", ~m(community user post)a do
       # 创建评论
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       # 测试 mark_has_upvoted with nil viewer
       paged_comments = %{entries: [comment]}
@@ -153,10 +182,10 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       assert {:ok, ^post} = Enable.comment?(post)
     end
 
-    test "should return false if article is comment locked", ~m(post user)a do
+    test "should return false if article is comment locked", ~m(community post user)a do
       _ = user
       # 锁定评论
-      {:ok, locked_post} = CMS.Articles.lock_comments(post.id, user)
+      {:ok, locked_post} = CMS.Articles.lock_comments(post.id, user, community: community)
       assert {:error, %Error{reason: :article_comments_locked}} = Enable.comment?(locked_post)
     end
   end

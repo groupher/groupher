@@ -171,7 +171,7 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
           "article" => %{
             "community" => community.slug,
             "thread" => "POST",
-            "innerId" => Integer.to_string(post.inner_id)
+            "innerId" => Integer.to_string(article_inner_id(post, community))
           }
         }
       )
@@ -212,7 +212,7 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
           "article" => %{
             "community" => community.slug,
             "thread" => "POST",
-            "innerId" => Integer.to_string(post.inner_id)
+            "innerId" => Integer.to_string(article_inner_id(post, community))
           }
         }
       )

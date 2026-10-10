@@ -40,17 +40,23 @@ defmodule GroupherServer.CMS.Command do
         }
 
   @type callback_result(value) :: {:ok, value} | {:error, term()}
-  @type action_result(value) :: callback_result(value)
+  @type action_result(confirmation) ::
+          {:ok, confirmation} | {:error, term()}
+
+  @type execute_opts :: [
+          action: (map() -> action_result(struct())),
+          confirmation: module()
+        ]
 
   @enforce_keys [:actor, :command_id, :operation, :target, :params]
   defstruct [:actor, :command_id, :operation, :target, :params]
 
   @doc "Runs one user command and returns its canonical domain result."
-  @spec execute(t(), keyword()) :: T.done()
+  @spec execute(t(), execute_opts()) :: T.done()
   def execute(%__MODULE__{} = command, opts) when is_list(opts) do
     case Keyword.keys(opts) -- [:action, :confirmation] do
       [] ->
-        :ok
+        {:ok, :pass}
 
       unknown ->
         raise ArgumentError,
@@ -141,7 +147,7 @@ defmodule GroupherServer.CMS.Command do
   defp context(command, command_id) do
     command
     |> Map.from_struct()
-    |> Map.take([:actor, :target, :params])
+    |> Map.take([:actor, :target, :params, :operation])
     |> Map.put(:command_id, command_id)
   end
 

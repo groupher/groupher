@@ -22,6 +22,9 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
     assert Artiment.article_key(:doc, article_id) ==
              "ARTICLE:DOC:550e8400-e29b-41d4-a716-446655440000"
 
+    assert Artiment.article_key(:doc, article_id, "home") ==
+             "ARTICLE:DOC:home:550e8400-e29b-41d4-a716-446655440000"
+
     assert Artiment.comment_ref(:post, article_id, 18) ==
              "COMMENT:POST:550e8400-e29b-41d4-a716-446655440000:18"
   end

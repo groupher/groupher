@@ -1,7 +1,7 @@
 defmodule GroupherServer.CMS.Comments.InteractionResponse do
   @moduledoc """
   Assembles Comment API response fields from Interaction viewer state and the
-  separate Article-author relation state.
+  separate Article-author binding state.
 
       Comments Query -> InteractionResponse -> Comment API response
   """
@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
   alias CMS.Model.PostSolution
 
   @doc """
-  Assembles one Comment with Interaction and Article-author relation fields.
+  Assembles one Comment with Interaction and Article-author binding fields.
 
   ## Examples
 

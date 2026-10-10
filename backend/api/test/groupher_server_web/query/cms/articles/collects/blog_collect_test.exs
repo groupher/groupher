@@ -17,11 +17,11 @@ defmodule GroupherServer.Test.Query.Collects.BlogCollect do
   describe "[collect users]" do
     test "guest can get collected users list after collect a blog",
          ~m(guest_conn community blog user user2)a do
-      {:ok, _} = CMS.Interactions.collect(blog, user)
-      {:ok, _} = CMS.Interactions.collect(blog, user2)
+      {:ok, _} = CMS.Interactions.collect(blog, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.collect(blog, user2, Ecto.UUID.generate())
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{inner_id: article_inner_id(blog, community), community: community.slug, thread: "BLOG"},
         filter: %{page: 1, size: 20}
       }
 

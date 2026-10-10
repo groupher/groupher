@@ -30,10 +30,10 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
   end
 
   describe "[pending docs flags]" do
-    test "pending doc can not be read", ~m(docs_m)a do
+    test "pending doc can not be read", ~m(community docs_m)a do
       {:ok, _} =
         read_article(
-          article_community(docs_m),
+          article_binding(docs_m),
           :doc,
           docs_m.inner_id
         )
@@ -47,7 +47,8 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
             illegal_words: ["some-word"]
           },
           :operations,
-          branch_id: docs_m.branch_id
+          branch_id: docs_m.branch_id,
+          community: community
         )
 
       state =
@@ -60,7 +61,7 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
 
       {:error, reason} =
         read_article(
-          article_community(docs_m),
+          article_binding(docs_m),
           :doc,
           docs_m.inner_id
         )
@@ -73,7 +74,7 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
       {:ok, doc} = CMS.Articles.create(community, :doc, docs_attrs, user)
 
       {:ok, _} =
-        read_article(article_community(doc), :doc, doc.inner_id)
+        read_article(article_binding(doc), :doc, article_inner_id(doc, community))
 
       {:ok, _} =
         CMS.Articles.set_illegal(
@@ -84,14 +85,15 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
             illegal_words: ["some-word"]
           },
           :operations,
-          branch_id: doc.branch_id
+          branch_id: doc.branch_id,
+          community: community
         )
 
       {:ok, docs_read} =
         read_article(
-          article_community(doc),
+          article_binding(doc),
           :doc,
-          doc.inner_id,
+          article_inner_id(doc, community),
           user
         )
 
@@ -101,19 +103,19 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
 
       {:error, reason} =
         read_article(
-          article_community(doc),
+          article_binding(doc),
           :doc,
-          doc.inner_id,
+          article_inner_id(doc, community),
           user2
         )
 
       assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
-    test "pending doc can set/unset pending", ~m(docs_m)a do
+    test "pending doc can set/unset pending", ~m(community docs_m)a do
       {:ok, _} =
         read_article(
-          article_community(docs_m),
+          article_binding(docs_m),
           :doc,
           docs_m.inner_id
         )
@@ -127,7 +129,8 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
             illegal_words: ["some-word"]
           },
           :operations,
-          branch_id: docs_m.branch_id
+          branch_id: docs_m.branch_id,
+          community: community
         )
 
       state =
@@ -140,7 +143,8 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
 
       {:ok, _} =
         CMS.Articles.unset_illegal(docs_m.article_id, %{}, :operations,
-          branch_id: docs_m.branch_id
+          branch_id: docs_m.branch_id,
+          community: community
         )
 
       state =
@@ -153,16 +157,16 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
 
       {:ok, _} =
         read_article(
-          article_community(docs_m),
+          article_binding(docs_m),
           :doc,
           docs_m.inner_id
         )
     end
 
-    test "pending doc's meta should have info", ~m(docs_m)a do
+    test "pending doc's meta should have info", ~m(community docs_m)a do
       {:ok, _} =
         read_article(
-          article_community(docs_m),
+          article_binding(docs_m),
           :doc,
           docs_m.inner_id
         )
@@ -177,7 +181,8 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
             illegal_articles: ["/doc/#{docs_m.id}"]
           },
           :operations,
-          branch_id: docs_m.branch_id
+          branch_id: docs_m.branch_id,
+          community: community
         )
 
       state =
@@ -205,7 +210,8 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
             illegal_articles: ["/doc/#{docs_m.id}"]
           },
           :operations,
-          branch_id: docs_m.branch_id
+          branch_id: docs_m.branch_id,
+          community: community
         )
 
       state =

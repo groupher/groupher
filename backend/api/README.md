@@ -52,8 +52,8 @@ From this directory:
 
 ```sh
 mix deps.get
-mix ecto.setup
-mix phx.server
+MIX_ENV=dev mix ecto.setup
+MIX_ENV=dev mix phx.server
 ```
 
 The default local endpoint is `http://127.0.0.1:4001`; normal browser traffic

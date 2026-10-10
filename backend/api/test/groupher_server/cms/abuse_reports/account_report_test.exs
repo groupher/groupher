@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.AccountReport do
     {:ok, user3} = db_insert(:user)
 
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
     post_attrs = mock_attrs(:post, %{community_id: community.id})
 
     {:ok, ~m(user user2 user3 community post_attrs)a}
@@ -20,8 +20,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.AccountReport do
   describe "[account report/unreport]" do
     # test "list article reports should work", ~m(community user user2 post_attrs)a do
     #   {:ok, post} = CMS.create_article(community, :post, post_attrs, user)
-    #   {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user)
-    #   {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user2)
+    #   {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user, Ecto.UUID.generate())
+    #   {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user2, Ecto.UUID.generate())
 
     #   filter = %{content_type: :post, content_id: post.id, page: 1, size: 20}
     #   {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)

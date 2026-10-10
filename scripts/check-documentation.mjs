@@ -305,8 +305,6 @@ const checkElixirSharedFunctions = () => {
     'backend/api/lib/groupher_server/cms/view_tracker/view_counter.ex',
     'backend/api/lib/groupher_server/cms/view_tracker/view_dedupe_cleanup.ex',
     'backend/api/lib/groupher_server/request_actor/evidence.ex',
-    'backend/api/lib/groupher_server_web/resolvers/article_interaction_payload.ex',
-    'backend/api/lib/groupher_server_web/resolvers/article_stats_payload.ex',
   ].map((file) => path.join(root, file))
 
   const files = [

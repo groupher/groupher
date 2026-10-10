@@ -21,14 +21,14 @@ defmodule GroupherServer.CMS.Outbox.Workers.Community.Cleanup do
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
     case Outbox.execute(event_id, &cleanup/1) do
       {:ok, _value} ->
-        :ok
+        {:ok, :pass}
 
       {:busy, seconds} ->
         {:snooze, seconds}
 
       {:error, _reason} when job.attempt >= job.max_attempts ->
         _ = Outbox.mark_dead(event_id)
-        :ok
+        {:ok, :pass}
 
       {:error, reason} ->
         {:error, reason}
@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Outbox.Workers.Community.Cleanup do
   defp cleanup(event) do
     with {:ok, type} <- invalidation_type(event.event),
          {:ok, tags} <- Scope.tags(type, event.data),
-         :ok <- Cloudflare.purge(tags) do
+         {:ok, _} <- Cloudflare.purge(tags) do
       {:ok, :purged}
     end
   end

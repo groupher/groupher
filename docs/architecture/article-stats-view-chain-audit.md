@@ -570,31 +570,32 @@ Comment 的缺失语义必须按 query 分开：
 commentViewerStates
   -> 可以只返回存在且可见的 Comment 子集
 
-commentReconcileStates（保持现状）
-  -> Reader 返回存在且可见的 Comment 子集
-  -> resolver 按原始 commentInnerIds 逐项恢复 entry
+commentReconcileStates
+  -> Comments Reconciliation Query 返回存在且可见的 Comment 子集
+  -> Query 按原始 commentInnerIds 逐项恢复 entry
   -> 缺失、已删除或不可见项返回 comment: null
 ```
 
 `commentReconcileStates` 的 nullable entry 是 delete receipt 收敛信号，不能为了统一 batch shape 而省略。现有
-`Reader.reconcile_comments/4` 已经执行一次 Article-scoped Gate query 和 `InteractionResponse.many/3`；`commentViewerStates` 直接复用该
-reader 并返回可见子集，reconcile resolver 则继续负责把结果重新映射成与输入一一对应的 entries。不存在和不可见继续不可区分。
+`Comments.Query.Reconcile.reconcile_comments/4` 执行一次 Article-scoped Gate query 和 `InteractionResponse.many/3`；`commentViewerStates`
+直接复用该 reader 并返回可见子集，`reconcile_states/3` 负责把结果重新映射成与输入一一对应的 entries。resolver 只转发；不存在和不可见继续不可区分。
 
 不能只新增一个“轻量但逐 path”的 reader；验收必须包含 query-count 或 SQL-shape 测试。
 
 ### 4.6 写后 payload 使用明确 loader 和具体 mapper
 
 Upvote、collect、comment 和 private batch 当前重复拼 path、ArticleStats 和 interaction state，`viewer_emotion` 也存在多份实现。
-目标是让 Interactions read state 直接给出 `viewer_emotion`。ArticleStats 不新增命名冗长的 singular FrontDesk wrapper，继续使用当前统一入口：
+目标是让 Interactions read state 直接给出 `viewer_emotion`。ArticleStats 的共享 post-commit reader 与纯 mapper 分开：
 
 ```elixir
-ArticleStatsPayload.load(thread, article, community)
-ArticleInteractionPayload.from(path, interaction)
+CMS.ArticleStats.for_article(article)
+CMS.Interactions.ReadState.article_state(article_stats, interaction)
 ```
 
-`ArticleStatsPayload.load/3` 明确包含一次 post-commit stats 读取、目标 row 提取和 GraphQL payload 映射；内部继续复用现有
-`FrontDesk.article_stats_for_articles/3`，不新增 `article_stats_for_article` wrapper。`ArticleInteractionPayload.from/2` 是纯映射，不执行查询。
-二者都不负责 Gate、业务写入、事务或 command replay。各 operation 继续显式拥有自己的 payload：
+`CMS.ArticleStats.for_article/1` 明确包含一次 post-commit stats 读取和目标 row 提取，并返回带 public locator 的稳定领域结果；
+`CMS.Interactions.ReadState.article_state/2` 是公开读 surface 上的纯映射，不执行查询。原 Web 层
+`ArticleStatsPayload` 与 `ArticleInteractionPayload` 因无生产调用方已删除。
+这些 reader/mapper 都不负责 Gate、业务写入、事务或 command replay。各 owning result builder 继续显式拥有自己的 payload：
 
 ```text
 Upvote  = commandId + reactionOutcome + ArticleStats + InteractionState
@@ -887,8 +888,8 @@ Slice 2  GraphQL hard cut / 后端批量读取                         [done]
 
 Slice 3  写后 payload 收口                                      [done]
   -> Interactions read state 直接提供 viewerEmotion
-  -> ArticleStatsPayload.load 保持唯一 stats 读取+映射入口，不新增 singular FrontDesk wrapper
-  -> ArticleInteractionPayload.from 保持纯 mapper
+  -> CMS.ArticleStats.for_article/1 作为共享 post-commit stats reader
+  -> CMS.Interactions.ReadState.article_state/2 作为公开纯 mapper
   -> 各 mutation 保留专用 payload，不建立万能 presenter
   -> Comment 领域结果统一携带 Article
   -> stats/private interactionRevision 独立来源与 post-commit snapshot skew 测试

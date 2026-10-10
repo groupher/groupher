@@ -131,20 +131,36 @@ defmodule GroupherServer.CMS.Assets do
 
   ## Examples
 
-      CMS.Assets.register_to_community(community, %{url: url, size_bytes: 1024}, user)
+      CMS.Assets.register_to_community(
+        community,
+        %{url: url, size_bytes: 1024},
+        user,
+        command_id
+      )
       #=> {:ok, %CommunityAsset{}}
 
   """
   @spec register_to_community(Community.t(), map(), User.t() | nil) ::
           T.domain_res(CommunityAsset.t())
-  def register_to_community(%Community{} = community, attrs, user \\ nil) do
-    Writer.register(community, attrs, user)
+  def register_to_community(%Community{}, _attrs, _user),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Registers an asset with the caller-provided command identity."
+  @spec register_to_community(Community.t(), map(), User.t() | nil, Ecto.UUID.t()) ::
+          T.domain_res(CommunityAsset.t())
+  def register_to_community(%Community{} = community, attrs, user, command_id) do
+    Commands.RegisterAsset.execute(community, attrs, user, command_id)
   end
 
   @doc "Deprecated alias for register_to_community/3."
   @spec register(Community.t(), map(), User.t() | nil) :: T.domain_res(CommunityAsset.t())
-  def register(%Community{} = community, attrs, user \\ nil) do
-    register_to_community(community, attrs, user)
+  def register(%Community{}, _attrs, _user),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec register(Community.t(), map(), User.t() | nil, Ecto.UUID.t()) ::
+          T.domain_res(CommunityAsset.t())
+  def register(%Community{} = community, attrs, user, command_id) do
+    register_to_community(community, attrs, user, command_id)
   end
 
   @doc "Promotes one finalized Application Logo using local database writes only."
@@ -174,9 +190,9 @@ defmodule GroupherServer.CMS.Assets do
   end
 
   @doc "Soft-deletes generated asset rows after an abandoned Wallpaper Batch."
-  @spec delete_generated_assets(Community.t(), [String.t()]) :: :ok
-  def delete_generated_assets(%Community{} = community, public_refs) do
-    Deletion.delete_generated_assets(community, public_refs)
+  @spec delete_generated_assets(Community.t(), [String.t()], keyword()) :: {:ok, :pass}
+  def delete_generated_assets(%Community{} = community, public_refs, opts \\ []) do
+    Deletion.delete_generated_assets(community, public_refs, opts)
   end
 
   @doc """
@@ -187,7 +203,7 @@ defmodule GroupherServer.CMS.Assets do
 
   ## Examples
 
-      CMS.Assets.delete(community, asset.id)
+      CMS.Assets.delete(community, asset.id, user, command_id)
       #=> {:ok, %CommunityAsset{status: :deleted}}
 
       CMS.Assets.delete(community, referenced_asset.id)
@@ -195,18 +211,34 @@ defmodule GroupherServer.CMS.Assets do
 
   """
   @spec delete(Community.t(), T.id()) :: T.domain_res(CommunityAsset.t())
-  def delete(%Community{} = community, asset_id) do
-    Writer.delete(community, asset_id)
+  def delete(%Community{}, _asset_id), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @spec delete(Community.t(), T.id(), User.t(), Ecto.UUID.t()) :: T.domain_res(CommunityAsset.t())
+  def delete(%Community{} = community, asset_id, %User{} = user, command_id) do
+    Commands.DeleteAsset.execute(community, asset_id, user, command_id)
   end
 
   @doc "Archives an asset while preserving all existing content references."
-  def archive(%Community{} = community, asset_id), do: Writer.archive(community, asset_id)
+  def archive(%Community{}, _asset_id), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  def archive(%Community{} = community, asset_id, %User{} = user, command_id) do
+    Commands.ArchiveAsset.execute(community, asset_id, user, command_id)
+  end
 
   @doc "Restores one archived asset to the active library."
-  def restore(%Community{} = community, asset_id), do: Writer.restore(community, asset_id)
+  def restore(%Community{}, _asset_id), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  def restore(%Community{} = community, asset_id, %User{} = user, command_id) do
+    Commands.RestoreAsset.execute(community, asset_id, user, command_id)
+  end
 
   @doc "Replaces one Draft-owned asset use through the Article command boundary."
-  @spec replace_use(map(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(map())
+  @spec replace_use(
+          map(),
+          map(),
+          User.t(),
+          Ecto.UUID.t() | {:workflow, String.t()} | nil
+        ) :: T.domain_res(map())
   def replace_use(article, attrs, %User{} = user, command_id) do
     Commands.ReplaceUse.execute(article, attrs, user, command_id)
   end

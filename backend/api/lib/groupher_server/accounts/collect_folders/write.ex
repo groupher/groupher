@@ -2,7 +2,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   @moduledoc """
   Mutations for collect folders and their article membership.
 
-  Folder membership is coordinated with the article collect relation so the
+  Folder membership is coordinated with the article collect binding so the
   account folder, article collect row, and denormalized folder meta stay aligned.
 
       add/remove article
@@ -88,7 +88,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   @doc "Adds folder membership through the retry-safe CMS Command boundary."
   @spec add_payload(T.article(), T.id(), User.t(), String.t() | nil) :: T.domain_res(map())
   def add_payload(article, folder_id, %User{} = user, nil) do
-    add_new(article, folder_id, user)
+    add_new(article, folder_id, user, Ecto.UUID.generate())
     |> collect_payload(nil)
   end
 
@@ -104,7 +104,12 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     with {:ok, %Confirmation{data: data}} <-
            Command.execute(command,
              action: fn _context ->
-               confirmation(add_new(article, folder_id, user), article, folder_id, :add)
+               confirmation(
+                 add_new(article, folder_id, user, command_id),
+                 article,
+                 folder_id,
+                 :add
+               )
              end,
              confirmation: Confirmation
            ),
@@ -113,14 +118,14 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
-  defp add_new(article, folder_id, %User{} = user) do
+  defp add_new(article, folder_id, %User{} = user, command_id) do
     with {:ok, thread} <- thread_of(article),
          {:ok, folder} <- ORM.find(CollectFolder, folder_id),
          {:ok, _} <- article_not_in_folder(article, folder.collects),
          true <- user.id == folder.user_id do
       Multi.new()
       |> Multi.run(:add_article_collect, fn _, _ ->
-        ensure_article_collect(article, user)
+        ensure_article_collect(article, user, command_id)
       end)
       |> Multi.run(:add_to_collect_folder, fn _, %{add_article_collect: article_collect} ->
         collects = [article_collect] ++ folder.collects
@@ -154,7 +159,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   @doc "Removes folder membership through the retry-safe CMS Command boundary."
   @spec remove_payload(T.article(), T.id(), User.t(), String.t() | nil) :: T.domain_res(map())
   def remove_payload(article, folder_id, %User{} = user, nil) do
-    remove_new(article, folder_id, user)
+    remove_new(article, folder_id, user, Ecto.UUID.generate())
     |> collect_payload(nil)
   end
 
@@ -170,7 +175,12 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     with {:ok, %Confirmation{data: data}} <-
            Command.execute(command,
              action: fn _context ->
-               confirmation(remove_new(article, folder_id, user), article, folder_id, :remove)
+               confirmation(
+                 remove_new(article, folder_id, user, command_id),
+                 article,
+                 folder_id,
+                 :remove
+               )
              end,
              confirmation: Confirmation
            ),
@@ -179,13 +189,13 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
-  defp remove_new(article, folder_id, %User{} = user) do
+  defp remove_new(article, folder_id, %User{} = user, command_id) do
     with {:ok, thread} <- thread_of(article),
          {:ok, folder} <- ORM.find(CollectFolder, folder_id),
          true <- user.id == folder.user_id do
       Multi.new()
       |> Multi.run(:del_article_collect, fn _, _ ->
-        maybe_remove_article_collect(article, user)
+        maybe_remove_article_collect(article, user, command_id)
       end)
       |> Multi.run(:rm_from_collect_folder, fn _, %{del_article_collect: article_collect} ->
         collects = Enum.reject(folder.collects, &(&1.id == article_collect.id))
@@ -216,17 +226,17 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
-  defp ensure_article_collect(article, user) do
-    with {:ok, _canonical} <- CMS.Interactions.collect(article, user) do
+  defp ensure_article_collect(article, user, command_id) do
+    with {:ok, _canonical} <- CMS.Interactions.collect(article, user, command_id) do
       ORM.find_by(ArticleCollect, article_collect_args(article, user.id))
     end
   end
 
-  defp maybe_remove_article_collect(article, user) do
+  defp maybe_remove_article_collect(article, user, command_id) do
     with {:ok, article_collect} <-
            ORM.find_by(ArticleCollect, article_collect_args(article, user.id)) do
       if length(article_collect.collect_folders) <= 1 do
-        with {:ok, _canonical} <- CMS.Interactions.undo_collect(article, user) do
+        with {:ok, _canonical} <- CMS.Interactions.undo_collect(article, user, command_id) do
           {:ok, article_collect}
         end
       else

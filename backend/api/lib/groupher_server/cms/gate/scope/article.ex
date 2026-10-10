@@ -102,7 +102,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
       from([article, ...] in query,
         join: branch in DocBranch,
         as: :gate_doc_branch,
-        on: branch.community_id == article.community_id and branch.id == ^branch_id
+        on:
+          branch.community_id == as(:gate_community).id and
+            branch.id == ^branch_id
       )
 
     case policy_mode do
@@ -122,7 +124,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
       join: branch in DocBranch,
       as: :gate_doc_branch,
       on:
-        branch.community_id == article.community_id and
+        branch.community_id == as(:gate_community).id and
           branch.type == ^CMS.Docs.Const.doc_branch_type(:main)
     )
   end

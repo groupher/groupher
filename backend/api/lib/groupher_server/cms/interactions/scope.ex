@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Interactions.Scope do
   def scope(queryable, opts) when is_list(opts) do
     order = Keyword.get(opts, :order)
 
-    with :ok <- validate_order(order),
+    with {:ok, _} <- validate_order(order),
          {:ok, query} <- to_query(queryable),
          {:ok, info} <- interaction_info(query, opts) do
       compile_order(query, info, order)
@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.Interactions.Scope do
 
   defp validate_order(order) do
     if ArticlesConst.valid_order?(order) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.unsupported_order(inspect(order))}
     end

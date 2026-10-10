@@ -49,7 +49,6 @@ defmodule GroupherServer.Mixfile do
 
   # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test"]
-  defp elixirc_paths(:mock), do: ["lib", "test/support"]
   defp elixirc_paths(:seed_prod), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib", "test/support"]
 
@@ -62,7 +61,7 @@ defmodule GroupherServer.Mixfile do
       {:phoenix_pubsub, "~> 2.2"},
       {:phoenix_html, "~> 4.3"},
       {:phoenix_live_view, "~> 1.2.8"},
-      {:phoenix_live_reload, "~> 1.7.0", only: :mock},
+      {:phoenix_live_reload, "~> 1.7.0", only: :dev},
       {:phoenix_live_dashboard, "~> 0.9.1"},
       {:ecto_sql, "~> 3.14.0"},
       {:phoenix_ecto, "~> 4.7.0"},
@@ -92,7 +91,7 @@ defmodule GroupherServer.Mixfile do
       {:jason, "~> 1.4"},
       {:credo, "1.7.19", only: [:dev, :test], runtime: false},
       {:bunt, "~> 1.0", only: [:dev, :test], override: true},
-      {:dialyxir, "~> 1.4", only: [:dev, :mock], runtime: false},
+      {:dialyxir, "~> 1.4", only: :dev, runtime: false},
       {:excoveralls, "~> 0.18", only: :test},
       {:sentry, "~> 13.4"},
       {:recase, "~> 0.9.1"},
@@ -114,9 +113,9 @@ defmodule GroupherServer.Mixfile do
       {:ogp, "~> 1.1.2"},
       {:dns_cluster, "~> 0.3"},
       {:bandit, "~> 1.12"},
-      {:esbuild, "~> 0.10", runtime: Mix.env() == :mock},
+      {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
       {:ex_const, "~> 0.3.0"},
-      {:tailwind, "~> 0.5", runtime: Mix.env() == :mock},
+      {:tailwind, "~> 0.5", runtime: Mix.env() == :dev},
       {:heroicons,
        github: "tailwindlabs/heroicons",
        tag: "v2.1.1",

@@ -32,12 +32,12 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
   end
 
   describe "[pending changelogs flags]" do
-    test "pending changelog can not be read", ~m(changelog_m)a do
+    test "pending changelog can not be read", ~m(community changelog_m)a do
       {:ok, _} =
         read_article(
-          article_community(changelog_m),
+          article_binding(changelog_m),
           :changelog,
-          changelog_m.inner_id
+          article_inner_id(changelog_m, community)
         )
 
       {:ok, _} =
@@ -48,7 +48,8 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, changelog_m.article_id)
@@ -56,9 +57,9 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
 
       {:error, reason} =
         read_article(
-          article_community(changelog_m),
+          article_binding(changelog_m),
           :changelog,
-          changelog_m.inner_id
+          article_inner_id(changelog_m, community)
         )
 
       assert reason |> is_error?({{:cms, :article}, :pending})
@@ -70,9 +71,9 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
 
       {:ok, _} =
         read_article(
-          article_community(changelog),
+          article_binding(changelog),
           :changelog,
-          changelog.inner_id
+          article_inner_id(changelog, community)
         )
 
       {:ok, _} =
@@ -83,14 +84,15 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       {:ok, changelog_read} =
         read_article(
-          article_community(changelog),
+          article_binding(changelog),
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           user
         )
 
@@ -100,21 +102,21 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
 
       {:error, reason} =
         read_article(
-          article_community(changelog),
+          article_binding(changelog),
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           user2
         )
 
       assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
-    test "pending changelog can set/unset pending", ~m(changelog_m)a do
+    test "pending changelog can set/unset pending", ~m(community changelog_m)a do
       {:ok, _} =
         read_article(
-          article_community(changelog_m),
+          article_binding(changelog_m),
           :changelog,
-          changelog_m.inner_id
+          article_inner_id(changelog_m, community)
         )
 
       {:ok, _} =
@@ -125,31 +127,33 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, changelog_m.article_id)
       assert stable.moderation_state == :illegal
 
-      {:ok, _} = CMS.Articles.unset_illegal(changelog_m.article_id, %{}, :operations)
+      {:ok, _} =
+        CMS.Articles.unset_illegal(changelog_m.article_id, %{}, :operations, community: community)
 
       stable = Repo.get!(CMS.Model.Article, changelog_m.article_id)
       assert stable.moderation_state == :legal
 
       {:ok, _} =
         read_article(
-          article_community(changelog_m),
+          article_binding(changelog_m),
           :changelog,
-          changelog_m.inner_id
+          article_inner_id(changelog_m, community)
         )
     end
 
-    test "pending changelog's meta should have info", ~m(changelog_m)a do
+    test "pending changelog's meta should have info", ~m(community changelog_m)a do
       {:ok, _} =
         read_article(
-          article_community(changelog_m),
+          article_binding(changelog_m),
           :changelog,
-          changelog_m.inner_id
+          article_inner_id(changelog_m, community)
         )
 
       {:ok, _} =
@@ -161,7 +165,8 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
             illegal_words: ["some-word"],
             illegal_articles: ["/changelog/#{changelog_m.id}"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, changelog_m.article_id)
@@ -183,7 +188,8 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
             illegal_words: [],
             illegal_articles: ["/changelog/#{changelog_m.id}"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, changelog_m.article_id)

@@ -36,7 +36,13 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       community_tag_attrs = mock_attrs(:community_tag)
 
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       blog_attr = mock_attrs(:blog)
 
@@ -51,7 +57,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert exist_in?(%{id: community_tag.id}, blog.community_tags)
     end
 
-    test "create blog should escape xss attracts", ~m(user_conn community)a do
+    test "create blog should escape xss attracts", ~m(user_conn community user)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string()})
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
@@ -65,7 +71,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert not String.contains?(body_html, "<script")
     end
 
-    test "create blog should escape xss attracts 2", ~m(user_conn community)a do
+    test "create blog should escape xss attracts 2", ~m(user_conn community user)a do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string(:safe)})
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
@@ -82,18 +88,22 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     # NOTE: this test is IMPORTANT, cause json_codec: Jason in router will cause
     # server crash when GraphQL parse error
     test "create blog with missing non_null field should get 200 error",
-         ~m(user_conn community)a do
+         ~m(user_conn community user)a do
       blog_attr = mock_attrs(:blog)
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
       assert user_conn |> mutation_error?(S.Article.m(:create_article, :blog), variables)
     end
 
-    test "update a blog without login user fails", ~m(guest_conn community blog)a do
+    test "update a blog without login user fails", ~m(guest_conn community blog user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -113,10 +123,20 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       community_tag_attrs = mock_attrs(:community_tag)
 
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}"),
@@ -141,16 +161,38 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       community_tag_attrs3 = mock_attrs(:community_tag)
 
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag2} =
-        CMS.Communities.create_tag(community, :blog, community_tag_attrs2, user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          community_tag_attrs2,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag3} =
-        CMS.Communities.create_tag(community, :blog, community_tag_attrs3, user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          community_tag_attrs3,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         expectedVersion: blog.version,
         communityTags: [community_tag.id, community_tag2.id]
       }
@@ -163,7 +205,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
                MapSet.new([to_string(community_tag.id), to_string(community_tag2.id)])
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         expectedVersion: result["version"],
         communityTags: [community_tag2.id, community_tag3.id]
       }
@@ -177,11 +223,15 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
     end
 
     test "update blog with valid attrs should have is_edited meta info update",
-         ~m(owner_conn community blog)a do
+         ~m(owner_conn community blog user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -193,7 +243,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       assert true == updated_blog["meta"]["isEdited"]
     end
 
-    test "login user with auth passport update a blog", ~m(community blog)a do
+    test "login user with auth passport update a blog", ~m(community blog user)a do
       belongs_community_slug = blog.communities |> List.first() |> Map.get(:slug)
 
       passport_rules = %{belongs_community_slug => %{"blog.edit" => true}}
@@ -202,7 +252,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
@@ -211,14 +265,18 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       updated_blog =
         rule_conn |> gq_mutation(S.Article.m(:update_article, :blog), variables)
 
-      assert updated_blog["innerId"] == to_string(blog.inner_id)
+      assert updated_blog["innerId"] == to_string(article_inner_id(blog, community))
     end
 
-    test "unauth user update blog fails", ~m(user_conn guest_conn community blog)a do
+    test "unauth user update blog fails", ~m(user_conn guest_conn community blog user)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")

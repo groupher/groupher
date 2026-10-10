@@ -18,7 +18,8 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   alias GroupherServer.{Accounts, CMS, Messaging, Repo}
   alias Accounts.Model.User
-  alias CMS.{ErrorCat, Events.Event, FrontDesk, Model.Comment}
+  alias CMS.{ErrorCat, Events.Event, FrontDesk}
+  alias CMS.Model.{Comment, Community}
 
   @behaviour CMS.Events.Handler
 
@@ -73,7 +74,7 @@ defmodule GroupherServer.CMS.Events.Notify do
       notify_attrs = %{
         action: :comment,
         thread: thread,
-        article_id: article.id,
+        article_id: stable_article_id(article),
         branch_id: Map.get(article, :branch_id),
         title: article.title,
         comment_id: comment.id,
@@ -95,7 +96,7 @@ defmodule GroupherServer.CMS.Events.Notify do
       notify_attrs = %{
         action: :reply,
         thread: thread,
-        article_id: article.id,
+        article_id: stable_article_id(article),
         branch_id: Map.get(article, :branch_id),
         title: article.title,
         comment_id: reply_comment.id,
@@ -191,8 +192,8 @@ defmodule GroupherServer.CMS.Events.Notify do
   defp article_author(%{author: %{user: %User{} = user}}), do: {:ok, user}
   defp article_author(_article), do: {:error, ErrorCat.custom("article author not found")}
 
-  defp load_article_for_notification(%{id: article_id}) do
-    CMS.Articles.Store.load_article_for_notification(article_id)
+  defp load_article_for_notification(%{id: article_id, community: %Community{} = community}) do
+    CMS.Articles.Store.load_article_for_notification(article_id, community)
   end
 
   defp load_article_for_notification(%{article_id: article_id} = article)
@@ -203,6 +204,10 @@ defmodule GroupherServer.CMS.Events.Notify do
   defp load_article_for_notification(_article) do
     {:error, ErrorCat.custom("article not found")}
   end
+
+  defp stable_article_id(%{id: article_id}) when is_binary(article_id), do: article_id
+
+  defp stable_article_id(%{article_id: article_id}) when is_binary(article_id), do: article_id
 
   # Background jobs may arrive after related content is deleted; skip quietly.
   defp handle_missing_target(

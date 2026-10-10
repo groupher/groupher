@@ -157,7 +157,7 @@ defmodule GroupherServer.CMS.Assets.Query do
   @spec usages(Community.t(), T.id(), term()) :: T.domain_res([map()])
   def usages(%Community{} = community, asset_id, actor) do
     with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community.id, asset_id),
-         {:ok, _community} <- CMS.Gate.Access.access_check(actor, :read, community) do
+         {:ok, _community} <- CMS.Gate.access_check(actor, :read, community) do
       rows =
         from(ref in ArticleAssetRef,
           where: ref.community_id == ^community.id and ref.asset_id == ^asset_id,
@@ -175,7 +175,7 @@ defmodule GroupherServer.CMS.Assets.Query do
           order_by: [desc: ref.inserted_at, desc: ref.id]
         )
         |> Repo.all()
-        |> Enum.filter(&usage_visible?(&1, actor))
+        |> Enum.filter(&usage_visible?(&1, actor, community))
 
       {:ok,
        Enum.map(rows, fn {ref, article, public, trash} ->
@@ -205,10 +205,15 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
-  defp usage_visible?({ref, article, public, trash}, actor) do
+  defp usage_visible?({ref, article, public, trash}, actor, community) do
     case lifecycle(ref, public, trash) do
       :draft ->
-        match?({:ok, _article}, CMS.Gate.Access.access_check(actor, :edit, article))
+        match?(
+          {:ok, _article},
+          CMS.Gate.with_community_check(actor, :edit, community, article, fn canonical ->
+            {:ok, canonical}
+          end)
+        )
 
       _lifecycle ->
         true

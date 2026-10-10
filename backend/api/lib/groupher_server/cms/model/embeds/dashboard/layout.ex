@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Layout do
   defp validate_custom_theme_preset(changeset) do
     validate_change(changeset, :custom_theme_preset, fn :custom_theme_preset, value ->
       case ThemePreset.validate_custom_preset(value) do
-        :ok -> []
+        {:ok, _} -> []
         {:error, reason} -> [custom_theme_preset: reason]
       end
     end)

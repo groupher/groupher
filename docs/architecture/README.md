@@ -22,9 +22,11 @@
 - [`resource-loading-boundary.md`](./resource-loading-boundary.md)：CMS resource loading 合同。
 - [`cms-query-v2.md`](./cms-query-v2.md)：CMS Reader/List 向 Query、Store/Facts、Projection 收口，以及与 FrontDesk 的互补边界。
 - [`cms-multi-entry-boundary.md`](./cms-multi-entry-boundary.md)：GraphQL、CLI、MCP 与 Plugin 复用同一 CMS facade 和领域用例的多入口架构。
+- [`graphql-resolver-boundary.md`](./graphql-resolver-boundary.md)：GraphQL resolver 越界审计、目标职责和 R1-R5 完成结果。
 - [`cms-outbox.md`](./cms-outbox.md)：统一 Domain Outbox、typed event、Dispatcher 与 PublicCache Cleanup 等消费边界。
 - [`cms-command.md`](./cms-command.md)：CMS 用户写命令、Receipt 幂等与 Confirmation 边界。
 - [`cms-command-v3.md`](./cms-command-v3.md)：Confirmation 与提交后 result builder 的 V3 收口。
+- [`ci-contract-gaps.md`](./ci-contract-gaps.md)：GraphQL operation、Command Receipt、Outbox、scope、并发与分页的 CI/测试覆盖缺口及门禁计划。
 - [`error-cat.md`](./error-cat.md)：领域错误目录、全局注册和协议边界。
 - [`domains.md`](./domains.md)：主要业务领域的命名、职责和详细设计入口。
 - [`seo.md`](./seo.md)：搜索索引与规范 URL。

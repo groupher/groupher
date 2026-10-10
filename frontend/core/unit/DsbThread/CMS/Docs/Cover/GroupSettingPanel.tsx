@@ -5,6 +5,7 @@ import { DOC_COVER_LAYOUT } from '~/const/layout'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import useTwBelt from '~/hooks/useTwBelt'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDocCoverLayout, TMarkerValue } from '~/spec'
 import MarkerPicker from '~/ui/MarkerPicker'
 import { toast } from '~/ui/Toaster'
@@ -78,10 +79,13 @@ const GroupSettingPanel: FC<TProps> = ({ section, layout, community, onDone }) =
     setSaving(true)
 
     try {
-      await browserGraphQLRequest(S.updateDocCoverCardAppearance, {
-        community,
-        id: section.id,
-        appearance,
+      await executeCommand({
+        request: (variables) => browserGraphQLRequest(S.updateDocCoverCardAppearance, variables),
+        variables: {
+          community,
+          id: section.id,
+          appearance,
+        },
       })
       toast(t('dsb.cms.docs.cover.group.saved'))
       setBaselineAppearance(appearance)

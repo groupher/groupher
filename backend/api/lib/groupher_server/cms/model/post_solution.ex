@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Model.PostSolution do
   @moduledoc """
-  Authoritative accepted-answer relation for one Post.
+  Authoritative accepted-answer binding for one Post.
 
   This row is the single current fact used to distinguish accept, replace and
   revoke transitions. Comment/Post response fields are virtual Query
@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Model.PostSolution do
   end
 
   @doc """
-  Validates one live solution relation written by the Comments command.
+  Validates one live solution binding written by the Comments command.
 
   ## Examples
 

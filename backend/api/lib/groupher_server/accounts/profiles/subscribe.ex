@@ -18,25 +18,43 @@ defmodule GroupherServer.Accounts.Profiles.Subscribe do
 
   alias GroupherServer.{Accounts, CMS, FrontDesk, Repo}
   alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat
   alias CMS.Model.CommunitySubscriber
   alias Helper.ORM
 
   def update_subscribe_state(%User{} = user) do
-    query =
-      from(s in CommunitySubscriber,
-        where: s.user_id == ^user.id,
-        join: c in assoc(s, :community),
-        select: c.id
-      )
+    canonical_user =
+      User
+      |> where([candidate], candidate.id == ^user.id)
+      |> lock("FOR UPDATE")
+      |> Repo.one()
 
-    subscribed_communities_ids = query |> Repo.all()
-    subscribed_communities_count = subscribed_communities_ids |> length()
+    case canonical_user do
+      %User{} = locked_user ->
+        query =
+          from(s in CommunitySubscriber,
+            where: s.user_id == ^locked_user.id,
+            join: c in assoc(s, :community),
+            select: c.id
+          )
 
-    {:ok, user} = ORM.update(user, %{subscribed_communities_count: subscribed_communities_count})
+        subscribed_communities_ids = Repo.all(query)
+        subscribed_communities_count = length(subscribed_communities_ids)
 
-    user
-    |> ORM.update_meta(%{subscribed_communities_ids: subscribed_communities_ids})
-    |> revalidate_user(user.login)
+        with {:ok, updated_user} <-
+               ORM.update(locked_user, %{
+                 subscribed_communities_count: subscribed_communities_count
+               }),
+             {:ok, updated_user} <-
+               ORM.update_meta(updated_user, %{
+                 subscribed_communities_ids: subscribed_communities_ids
+               }) do
+          revalidate_user({:ok, updated_user}, updated_user.login)
+        end
+
+      nil ->
+        {:error, ErrorCat.not_exist("User")}
+    end
   end
 
   defp revalidate_user({:ok, _result} = response, login) when is_binary(login) do

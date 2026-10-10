@@ -3,20 +3,20 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
 
   alias GroupherServer.CMS
   alias CMS.Model.{Article, Community}
-  alias GroupherServerWeb.Resolvers.CMS, as: ResolverCMS
+  alias GroupherServerWeb.Resolvers.CMS.{Comments, Interactions, ViewTracker}
 
   test "viewer batch resolvers return empty lists without an authenticated session" do
     info = %{context: %{cur_user: nil}}
 
     assert {:ok, []} =
-             ResolverCMS.article_viewer_states(
+             ViewTracker.article_viewer_states(
                nil,
                %{paths: [%{community: "home", thread: "POST", inner_id: "1"}]},
                info
              )
 
     assert {:ok, []} =
-             ResolverCMS.comment_viewer_states(
+             Comments.comment_viewer_states(
                nil,
                %{
                  article: %{community: "home", thread: "POST", inner_id: "1"},
@@ -33,14 +33,18 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
 
     paths =
       Enum.map([second, first], fn article ->
-        %{community: community.slug, thread: :post, inner_id: to_string(article.inner_id)}
+        %{
+          community: community.slug,
+          thread: :post,
+          inner_id: to_string(article_inner_id(article, community))
+        }
       end)
 
-    assert {:ok, viewer_states} = ResolverCMS.article_viewer_states(nil, %{paths: paths}, info)
+    assert {:ok, viewer_states} = ViewTracker.article_viewer_states(nil, %{paths: paths}, info)
     assert Enum.map(viewer_states, & &1.inner_id) == [second.inner_id, first.inner_id]
 
     assert {:ok, interaction_states} =
-             ResolverCMS.article_interaction_states(nil, %{paths: paths}, info)
+             Interactions.article_interaction_states(nil, %{paths: paths}, info)
 
     assert Enum.map(interaction_states, & &1.inner_id) == [second.inner_id, first.inner_id]
   end
@@ -51,17 +55,21 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
     info = %{context: %{cur_user: user}}
 
     path = fn article ->
-      %{community: community.slug, thread: :post, inner_id: to_string(article.inner_id)}
+      %{
+        community: community.slug,
+        thread: :post,
+        inner_id: to_string(article_inner_id(article, community))
+      }
     end
 
     {_one, one_queries} =
       capture_queries(fn ->
-        ResolverCMS.article_interaction_states(nil, %{paths: [path.(first)]}, info)
+        Interactions.article_interaction_states(nil, %{paths: [path.(first)]}, info)
       end)
 
     {_many, many_queries} =
       capture_queries(fn ->
-        ResolverCMS.article_interaction_states(
+        Interactions.article_interaction_states(
           nil,
           %{paths: [path.(first), path.(second)]},
           info
@@ -76,17 +84,34 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
     {community, post, _attrs, user} = mock_article(:post)
 
     {:ok, first} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment(),
+        user, Ecto.UUID.generate()
+      )
 
     {:ok, second} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment(),
+        user, Ecto.UUID.generate()
+      )
 
-    article = %{community: community.slug, thread: :post, inner_id: post.inner_id}
+    article = %{
+      community: community.slug,
+      thread: :post,
+      inner_id: article_inner_id(post, community)
+    }
+
     info = %{context: %{cur_user: user}}
 
     {_one, one_queries} =
       capture_queries(fn ->
-        ResolverCMS.comment_viewer_states(
+        Comments.comment_viewer_states(
           nil,
           %{article: article, comment_inner_ids: [to_string(first.inner_id)]},
           info
@@ -95,7 +120,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
 
     {_many, many_queries} =
       capture_queries(fn ->
-        ResolverCMS.comment_viewer_states(
+        Comments.comment_viewer_states(
           nil,
           %{
             article: article,
@@ -113,7 +138,13 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
     {community, post, _attrs, user} = mock_article(:post)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment(),
+        user, Ecto.UUID.generate()
+      )
 
     assert {:ok,
             %{
@@ -127,29 +158,33 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
                 %{comment_inner_id: "999999", comment: nil}
               ]
             }} =
-             ResolverCMS.comment_reconcile_states(
+             Comments.comment_reconcile_states(
                nil,
                %{
-                 article: %{community: community.slug, thread: :post, inner_id: post.inner_id},
+                 article: %{
+                   community: community.slug,
+                   thread: :post,
+                   inner_id: article_inner_id(post, community)
+                 },
                  comment_inner_ids: [to_string(comment.inner_id), "999999"]
                },
                %{context: %{cur_user: user}}
              )
 
-    assert article_inner_id == post.inner_id
+    assert article_inner_id == article_inner_id(post, community)
     assert comments_count == 1
     assert comments_revision >= 1
     assert to_string(comment_inner_id) == to_string(comment.inner_id)
     assert reconciled.inner_id == comment.inner_id
     assert reconciled.viewer_has_upvoted == false
-    assert reconciled.article.inner_id == post.inner_id
+    assert reconciled.article.inner_id == article_inner_id(post, community)
   end
 
   test "comment reconciliation rejects batches larger than the shared limit" do
     refs = Enum.map(1..101, &to_string/1)
 
     assert {:error, "viewer batch cannot contain more than 100 paths"} =
-             ResolverCMS.comment_reconcile_states(
+             Comments.comment_reconcile_states(
                nil,
                %{
                  article: %{community: "home", thread: "POST", inner_id: "1"},
@@ -160,11 +195,17 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
   end
 
   test "returns Article read state with complete emotion vocabulary" do
-    {_community, post, _attrs, user} = mock_article(:post)
-    post = Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
+    {community, post, _attrs, user} = mock_article(:post)
 
-    assert {:ok, _} = CMS.Interactions.upvote(post, user)
-    assert {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
+    post =
+      Article
+      |> Repo.get!(post.id)
+      |> Repo.preload(author: :user)
+      |> Map.from_struct()
+      |> Map.put(:community, community)
+
+    assert {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
+    assert {:ok, _} = CMS.Interactions.emotion(post, :beer, user, Ecto.UUID.generate())
 
     assert %{
              upvotes_count: 1,
@@ -177,9 +218,16 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
   end
 
   test "anonymous state has fixed false viewer flags" do
-    {_community, post, _attrs, user} = mock_article(:post)
-    post = Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
-    assert {:ok, _} = CMS.Interactions.upvote(post, user)
+    {community, post, _attrs, user} = mock_article(:post)
+
+    post =
+      Article
+      |> Repo.get!(post.id)
+      |> Repo.preload(author: :user)
+      |> Map.from_struct()
+      |> Map.put(:community, community)
+
+    assert {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
 
     assert %{upvotes_count: 1, viewer_has_upvoted: false} =
              CMS.Interactions.viewer_state(post, nil)
@@ -205,7 +253,13 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
     {community, post, _attrs, user} = mock_article(:post)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment(),
+        user, Ecto.UUID.generate()
+      )
 
     states = CMS.Interactions.viewer_states([post, comment], user)
 
@@ -219,10 +273,16 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
     {community, post, _attrs, user} = mock_article(:post)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment(),
+        user, Ecto.UUID.generate()
+      )
 
-    assert {:ok, _} = CMS.Interactions.upvote(post, user)
-    assert {:ok, _} = CMS.Interactions.upvote(comment, user)
+    assert {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
+    assert {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
     post_key = {:post, post.id}
     comment_key = {:comment, comment.id}

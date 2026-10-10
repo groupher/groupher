@@ -28,12 +28,14 @@ defmodule GroupherServer.Test.CMS.Press do
       CMS.Press.article(%{
         community: community.slug,
         thread: :post,
-        inner_id: post.inner_id
+        inner_id: article_inner_id(post, community)
       })
 
     assert projection.article_id == post.id
     assert is_binary(projection.markdown)
-    assert projection.canonical_path == "/#{community.slug}/post/#{post.inner_id}"
+
+    assert projection.canonical_path ==
+             "/#{community.slug}/post/#{article_inner_id(post, community)}"
 
     assert Repo.get_by!(ArticleStats, thread: :post, article_id: post.id).views == 0
   end
@@ -56,13 +58,13 @@ defmodule GroupherServer.Test.CMS.Press do
              CMS.Press.article(%{
                community: community.slug,
                thread: :post,
-               inner_id: post.inner_id
+               inner_id: article_inner_id(post, community)
              })
   end
 
   test "Docs Markdown requires membership in the current public main tree" do
     {community, doc, _attrs, _user} = mock_article(:doc)
-    path = %{community: community.slug, thread: :doc, inner_id: doc.inner_id}
+    path = %{community: community.slug, thread: :doc, inner_id: article_inner_id(doc, community)}
 
     assert {:error,
             %ErrorCat.Error{
@@ -113,7 +115,8 @@ defmodule GroupherServer.Test.CMS.Press do
              CMS.Press.update_config(
                community,
                %{feed_enabled: true, feed_count: 5, feed_threads: [:post]},
-               user
+               user,
+               Ecto.UUID.generate()
              )
 
     query = """
@@ -148,8 +151,8 @@ defmodule GroupherServer.Test.CMS.Press do
   test "Dashboard mutation authorizes the nested community input and persists config",
        ~m(community)a do
     mutation = """
-    mutation UpdatePress($input: UpdatePressConfigInput!) {
-      updatePressConfig(input: $input) {
+    mutation UpdatePress($input: UpdatePressConfigInput!, $commandId: ID!) {
+      updatePressConfig(input: $input, commandId: $commandId) {
         config { feedEnabled feedCount feedThreads revision }
       }
     }
@@ -164,7 +167,8 @@ defmodule GroupherServer.Test.CMS.Press do
           feedEnabled: true,
           feedCount: 10,
           feedThreads: ["POST"]
-        }
+        },
+        commandId: Ecto.UUID.generate()
       })
 
     assert get_in(updated, ["config", "feedEnabled"])
@@ -186,7 +190,8 @@ defmodule GroupherServer.Test.CMS.Press do
                  feed_count: 12,
                  feed_threads: [:post, :changelog]
                },
-               user
+               user,
+               Ecto.UUID.generate()
              )
 
     assert config.feed_enabled
@@ -204,8 +209,24 @@ defmodule GroupherServer.Test.CMS.Press do
     assert Enum.sort(activity.changed_fields) ==
              Enum.sort(["feed_enabled", "feed_type", "feed_count", "feed_threads"])
 
-    assert {:ok, updated} = CMS.Press.update_config(community, %{feed_count: 15}, user)
+    assert {:ok, updated} =
+             CMS.Press.update_config(community, %{feed_count: 15}, user, Ecto.UUID.generate())
+
     assert updated.revision == 2
+  end
+
+  test "same Press config command identity recovers the first revision",
+       ~m(community user)a do
+    command_id = Ecto.UUID.generate()
+    attrs = %{feed_enabled: true, feed_count: 12, feed_threads: [:post]}
+
+    assert {:ok, %PressConfig{revision: 1}} =
+             CMS.Press.update_config(community, attrs, user, command_id)
+
+    assert {:ok, %PressConfig{revision: 1}} =
+             CMS.Press.update_config(community, attrs, user, command_id)
+
+    assert {:ok, %PressConfig{revision: 1}} = CMS.Press.config(community)
   end
 
   test "feed reads selected public articles in one bounded projection",
@@ -214,7 +235,8 @@ defmodule GroupherServer.Test.CMS.Press do
              CMS.Press.update_config(
                community,
                %{feed_enabled: true, feed_count: 5, feed_threads: [:post]},
-               user
+               user,
+               Ecto.UUID.generate()
              )
 
     assert {:ok, feed} = CMS.Press.community_rss_feed(community)
@@ -261,7 +283,8 @@ defmodule GroupherServer.Test.CMS.Press do
              CMS.Press.update_config(
                community,
                %{feed_enabled: true, feed_count: 5, feed_threads: [:doc]},
-               user
+               user,
+               Ecto.UUID.generate()
              )
 
     assert {:ok, %{items: [item]}} = CMS.Press.thread_rss_feed(community, :doc)
@@ -278,14 +301,16 @@ defmodule GroupherServer.Test.CMS.Press do
              CMS.Press.update_config(
                community,
                %{feed_enabled: true, feed_count: 51, feed_threads: [:post]},
-               user
+               user,
+               Ecto.UUID.generate()
              )
 
     assert {:error, %Ecto.Changeset{errors: [feed_threads: _]}} =
              CMS.Press.update_config(
                community,
                %{feed_enabled: true, feed_count: 20, feed_threads: []},
-               user
+               user,
+               Ecto.UUID.generate()
              )
   end
 end

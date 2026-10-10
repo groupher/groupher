@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
+defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
   @moduledoc false
 
   use GroupherServer.TestMate
@@ -12,39 +12,44 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
     {:ok, community2} = mock_community(user)
     {:ok, community3} = mock_community(user)
 
-    {:ok, blackhole} = mock_community(user, %{slug: "blackhole"})
-
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
     owner_conn = simu_conn(:owner, post)
 
-    {:ok,
-     ~m(user_conn guest_conn owner_conn community community2 community3 blackhole post user)a}
+    {:ok, ~m(user_conn guest_conn owner_conn community community2 community3 post user)a}
   end
 
   describe "[mirror/unmirror/move post to/from community]" do
-    test "auth user can mirror a post to other community", ~m(community post)a do
+    test "auth user can mirror a post to other community", ~m(community post user)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       {:ok, community2} = mock_community()
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
-      found = %{communities: CMS.Articles.Communities.communities(post)}
+      found = %{communities: binding_communities(post)}
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community.id in assoc_communities
     end
 
     test "unauth user cannot mirror a post to a community",
-         ~m(user_conn guest_conn community community2 post)a do
+         ~m(user_conn guest_conn community community2 post user)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug
       }
 
@@ -73,56 +78,72 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
     end
 
     test "auth user can mirror multi post to other communities",
-         ~m(community community2 community3 post)a do
+         ~m(community community2 community3 post user)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community3.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
-      found = %{communities: CMS.Articles.Communities.communities(post)}
+      found = %{communities: binding_communities(post)}
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community.id in assoc_communities
       assert community2.id in assoc_communities
     end
 
-    test "auth user can unmirror post to a community", ~m(post community)a do
+    test "auth user can unmirror post to a community", ~m(post community user)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       {:ok, user} = db_insert(:user)
       community2_attrs = mock_attrs(:community)
       community3_attrs = mock_attrs(:community)
-      {:ok, community2} = CMS.Communities.create(community2_attrs, user)
-      {:ok, community3} = CMS.Communities.create(community3_attrs, user)
+      {:ok, community2} = CMS.Communities.create(community2_attrs, user, Ecto.UUID.generate())
+      {:ok, community3} = CMS.Communities.create(community3_attrs, user, Ecto.UUID.generate())
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       variables2 = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community3.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables2)
 
-      found = %{communities: CMS.Articles.Communities.communities(post)}
+      found = %{communities: binding_communities(post)}
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community2.id in assoc_communities
@@ -132,67 +153,52 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       rule_conn |> gq_mutation(S.Article.m(:unmirror_article), variables)
-      found = %{communities: CMS.Articles.Communities.communities(post)}
+      found = %{communities: binding_communities(post)}
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community2.id not in assoc_communities
       assert community3.id in assoc_communities
     end
 
-    test "auth user can mirror post home", ~m(community post user)a do
-      {:ok, home_community} = mock_community(user, %{slug: "home"})
-
-      variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
-      }
-
-      passport_rules = %{"homemirror" => true}
-      rule_conn = simu_conn(:user, cms: passport_rules)
-
-      rule_conn |> gq_mutation(S.Article.m(:mirror_to_home), variables)
-
-      post = %{communities: CMS.Articles.Communities.communities(post)}
-
-      assert exist_in?(home_community, post.communities)
-    end
-
-    test "auth user can move post to blackhole", ~m(community blackhole post)a do
-      variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
-      }
-
-      passport_rules = %{"blackeye" => true}
-      rule_conn = simu_conn(:user, cms: passport_rules)
-
-      rule_conn |> gq_mutation(S.Article.m(:move_to_blackhole), variables)
-      post = Repo.get!(CMS.Model.Article, post.id)
-      assert post.community_id == blackhole.id
-    end
-
-    test "auth user can move post to other community", ~m(community community2 post)a do
+    test "auth user can move post to other community", ~m(community community2 post user)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
       found = Repo.get!(CMS.Model.Article, post.id)
-      assoc_communities = CMS.Articles.Communities.communities(found) |> Enum.map(& &1.id)
+      assoc_communities = binding_communities(found) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
 
       passport_rules = %{"post.community.move" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      pre_community_id = found.community_id
+      pre_community_id = community.id
 
       article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, user} = db_insert(:user)
-      {:ok, article_tag} = CMS.Communities.create_tag(community2, :post, article_tag_attrs, user)
+
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community2,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         targetCommunity: community2.slug,
         communityTags: [article_tag.id]
       }
@@ -201,26 +207,30 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
       found = Repo.get!(CMS.Model.Article, post.id)
 
-      assoc_communities = CMS.Articles.Communities.communities(found) |> Enum.map(& &1.id)
-      {:ok, tags} = CMS.Articles.Communities.tags(found, community2)
+      assoc_communities = binding_communities(found) |> Enum.map(& &1.id)
+      {:ok, tags} = binding_tags(found, community2)
       assoc_article_tags = Enum.map(tags, & &1.id)
 
       assert pre_community_id not in assoc_communities
       assert community2.id in assoc_communities
-      assert community2.id == found.community_id
+      assert pre_community_id == community.id
 
       assert article_tag.id in assoc_article_tags
 
-      assert found.community_id == community2.id
+      assert pre_community_id == community.id
     end
 
     test "mirror article with invalid thread is rejected without crash",
-         ~m(community community2 post)a do
+         ~m(community community2 post user)a do
       passport_rules = %{"post.community.mirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "NOT_EXIST_THREAD"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "NOT_EXIST_THREAD"
+        },
         targetCommunity: community2.slug
       }
 

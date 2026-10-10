@@ -44,7 +44,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with {:ok, policy_mode} <- policy_mode(context),
-         :ok <- validate_actor(policy_mode, actor) do
+         {:ok, _} <- validate_actor(policy_mode, actor) do
       if lifecycle_join?(query) do
         {:error, ErrorCat.scope_binding_conflict()}
       else
@@ -144,11 +144,11 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
   defp policy_mode(%{}), do: {:error, ErrorCat.scope_context_missing()}
   defp policy_mode(_context), do: {:error, ErrorCat.unknown_policy_mode()}
 
-  defp validate_actor(:public, _actor), do: :ok
+  defp validate_actor(:public, _actor), do: {:ok, :pass}
 
   defp validate_actor(:operations, actor) do
     if operations_actor?(actor) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.scope_policy_actor_mismatch()}
     end
@@ -157,7 +157,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
   defp validate_actor(mode, %{id: actor_id})
        when mode in [:management, :owner_management, :moderator_management] and
               is_integer(actor_id) do
-    :ok
+    {:ok, :pass}
   end
 
   defp validate_actor(_mode, _actor), do: {:error, ErrorCat.scope_policy_actor_mismatch()}

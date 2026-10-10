@@ -16,8 +16,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
   alias Accounts.Model.User
   alias CMS.Articles.MutationLock
   alias CMS.Artiment.Matcher
-  alias CMS.{Gate, Interactions}
+  alias CMS.{Command, Gate, Interactions}
   alias CMS.Interactions.{ErrorCat, ReadState}
+  alias CMS.Interactions.Reactions.CollectConfirmation, as: Confirmation
   alias CMS.Model.{ArticleCollect, Author}
   alias Analysis.MetricEvent
   alias Helper.T
@@ -30,8 +31,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
       Reactions.Collect.add(article, actor)
 
   """
-  @spec add(struct(), User.t()) :: T.domain_res(struct())
-  def add(article, %User{} = actor), do: mutate(article, actor, :add)
+  @spec add(struct(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def add(article, %User{} = actor, command_id),
+    do: mutate(article, actor, :add, command_id)
 
   @doc """
   Removes an Article collect as an idempotent set-state command.
@@ -41,33 +43,82 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
       Reactions.Collect.remove(article, actor)
 
   """
-  @spec remove(struct(), User.t()) :: T.domain_res(struct())
-  def remove(article, %User{} = actor), do: mutate(article, actor, :remove)
+  @spec remove(struct(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def remove(article, %User{} = actor, command_id),
+    do: mutate(article, actor, :remove, command_id)
 
-  defp mutate(input, actor, operation) do
-    MutationLock.observe_transaction(fn ->
-      Repo.transaction(fn ->
-        with {:ok, canonical} <- Gate.access_check(actor, :collect, input),
-             {:ok, %{collection?: true} = info} <- Matcher.match_interaction(canonical),
-             {:ok, change} <- change_fact(canonical, info, actor, operation),
-             :ok <- sync_state(canonical, actor, operation, change),
-             :ok <- record_metric(canonical, operation, change),
-             :ok <- sync_achievement(canonical, operation, change),
-             :ok <- enqueue_effect(canonical, actor, operation, change) do
-          {canonical, change}
-        else
-          {:ok, %{collection?: false}} ->
-            Repo.rollback(ErrorCat.unsupported_artiment("Comment"))
-
-          {:error, reason} ->
-            Repo.rollback(reason)
-        end
-      end)
-    end)
-    |> normalize_result()
+  defp mutate(input, actor, operation, command_id) do
+    with {:ok, command_id} <- require_command_id(command_id),
+         {:ok, info} <- Matcher.match_interaction(input) do
+      if Repo.in_transaction?() do
+        MutationLock.observe_transaction(fn ->
+          with {:ok, {canonical, change}} <-
+                 collect_transaction(input, actor, operation, command_id, info) do
+            {:ok, reaction_projection(canonical, command_id, change)}
+          end
+        end)
+      else
+        %Command{
+          actor: actor,
+          command_id: command_id,
+          operation: collect_command(operation),
+          target: input,
+          params: %{operation: operation}
+        }
+        |> Command.execute(action: &collect_action(&1, info), confirmation: Confirmation)
+        |> present_reaction(input, command_id)
+      end
+    end
   end
 
-  defp sync_state(_canonical, _actor, _operation, :unchanged), do: :ok
+  defp collect_action(
+         %{
+           actor: actor,
+           target: input,
+           params: %{operation: operation},
+           command_id: command_id
+         },
+         info
+       ) do
+    with {:ok, {canonical, change}} <-
+           MutationLock.observe_transaction(fn ->
+             collect_transaction(input, actor, operation, command_id, info)
+           end) do
+      {:ok,
+       %Confirmation{
+         data: %{
+           "target_id" => to_string(canonical.id),
+           "target_type" => "article",
+           "operation" => Atom.to_string(operation),
+           "outcome" => Atom.to_string(change)
+         }
+       }}
+    end
+  end
+
+  defp collect_transaction(input, actor, operation, command_id, _info) do
+    transaction = fn ->
+      with {:ok, canonical} <- Gate.access_check(actor, :collect, input),
+           {:ok, %{collection?: true} = canonical_info} <- Matcher.match_interaction(canonical),
+           {:ok, change} <- change_fact(canonical, canonical_info, actor, operation),
+           {:ok, _} <- sync_state(canonical, actor, operation, change),
+           {:ok, _} <- record_metric(canonical, operation, command_id, change),
+           {:ok, _} <- sync_achievement(canonical, operation, change),
+           {:ok, _} <- enqueue_effect(canonical, actor, operation, command_id, change) do
+        {canonical, change}
+      else
+        {:ok, %{collection?: false}} ->
+          Repo.rollback(ErrorCat.unsupported_artiment("Comment"))
+
+        {:error, reason} ->
+          Repo.rollback(reason)
+      end
+    end
+
+    if Repo.in_transaction?(), do: {:ok, transaction.()}, else: Repo.transaction(transaction)
+  end
+
+  defp sync_state(_canonical, _actor, _operation, :unchanged), do: {:ok, :pass}
 
   defp sync_state(canonical, actor, operation, :changed) do
     result =
@@ -76,23 +127,23 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
         else: ReadState.remove_collect(canonical, actor)
 
     case result do
-      {:ok, _projection} -> :ok
+      {:ok, _projection} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp record_metric(_article, _operation, :unchanged), do: :ok
+  defp record_metric(_article, _operation, _command_id, :unchanged), do: {:ok, :pass}
 
-  defp record_metric(article, operation, :changed) do
+  defp record_metric(article, operation, command_id, :changed) do
     metric = if operation == :add, do: :collect_added, else: :collect_removed
 
-    case MetricEvent.append_article_action(article, Ecto.UUID.generate(), metric) do
-      :ok -> :ok
+    case MetricEvent.append_article_action(article, command_id, metric) do
+      {:ok, _} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp sync_achievement(_article, _operation, :unchanged), do: :ok
+  defp sync_achievement(_article, _operation, :unchanged), do: {:ok, :pass}
 
   defp sync_achievement(article, operation, :changed) do
     achievement_operation = if operation == :add, do: :inc, else: :dec
@@ -102,7 +153,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
            achievement_operation,
            :collect
          ) do
-      {:ok, _achievement} -> :ok
+      {:ok, _achievement} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
@@ -110,24 +161,46 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
   defp author_user(%{author: %{user_id: user_id}}), do: %User{id: user_id}
   defp author_user(%{author_id: author_id}), do: %User{id: Repo.get!(Author, author_id).user_id}
 
-  defp enqueue_effect(_article, _actor, _operation, :unchanged), do: :ok
+  defp enqueue_effect(_article, _actor, _operation, _command_id, :unchanged), do: {:ok, :pass}
 
-  defp enqueue_effect(article, actor, operation, :changed) do
+  defp enqueue_effect(article, actor, operation, command_id, :changed) do
     case CMS.Outbox.send(%{
            event: "interaction.collect_changed",
            worker: CMS.Outbox.Workers.Interaction.Cleanup,
            resource_type: "article",
            resource_id: article.id,
-           command_id: Ecto.UUID.generate(),
+           command_id: command_id,
+           effect_key: "article:#{article.id}:#{operation}",
            data: %{actor_id: actor.id, operation: operation}
          }) do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
 
-  defp normalize_result({:ok, {canonical, _change}}), do: {:ok, canonical}
-  defp normalize_result({:error, reason}), do: {:error, reason}
+  defp require_command_id(command_id) when is_binary(command_id), do: {:ok, command_id}
+  defp require_command_id(_command_id), do: {:error, CMS.ErrorCat.command_id_required()}
+
+  defp collect_command(:add), do: :reaction_collect_add
+  defp collect_command(:remove), do: :reaction_collect_remove
+
+  defp present_reaction({:ok, %Confirmation{data: data}}, input, command_id) do
+    outcome = if data["outcome"] == "unchanged", do: :unchanged, else: :changed
+
+    {:ok, reaction_projection(input, command_id, outcome)}
+  end
+
+  defp present_reaction({:ok, data}, input, command_id) when is_map(data) do
+    present_reaction({:ok, struct(Confirmation, data: data)}, input, command_id)
+  end
+
+  defp present_reaction(error, _input, _command_id), do: error
+
+  defp reaction_projection(input, command_id, outcome) do
+    input
+    |> Map.put(:command_id, command_id)
+    |> Map.put(:reaction_outcome, outcome)
+  end
 
   @doc """
   Returns paged users for an already-scoped Article collect set.

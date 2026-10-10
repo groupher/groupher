@@ -17,13 +17,13 @@ defmodule GroupherServer.CMS.Press.Invalidation do
   alias ServiceAuth.Client
 
   @doc "Notifies Press that one Community projection changed."
-  @spec invalidate(Community.t() | String.t() | integer()) :: :ok
+  @spec invalidate(Community.t() | String.t() | integer()) :: {:ok, :pass}
   def invalidate(%Community{slug: slug}), do: invalidate(slug)
 
   def invalidate(community_id) when is_integer(community_id) do
     case Repo.get(Community, community_id) do
       %Community{slug: slug} -> invalidate(slug)
-      _ -> :ok
+      _ -> {:ok, :pass}
     end
   end
 
@@ -44,12 +44,12 @@ defmodule GroupherServer.CMS.Press.Invalidation do
              headers: [{"authorization", "Bearer #{token}"}],
              receive_timeout: 5_000
            ) do
-        {:ok, %{status: status}} when status in 200..299 -> :ok
+        {:ok, %{status: status}} when status in 200..299 -> {:ok, :pass}
         {:ok, %{status: status}} -> Logger.warning("Press invalidation returned HTTP #{status}")
         {:error, reason} -> Logger.warning("Press invalidation failed: #{inspect(reason)}")
       end
     end
 
-    :ok
+    {:ok, :pass}
   end
 end

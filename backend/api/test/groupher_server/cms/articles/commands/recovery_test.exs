@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
   end
 
   test "publish replay returns the committed stable result" do
-    {_community, public, _attrs, user} = mock_article(:post)
+    {community, public, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()
 
     lifecycle =
@@ -72,12 +72,14 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
                public.article_id,
                %{title: "Published through a command"},
                user,
-               expected_version: public.version
+               expected_version: public.version,
+               community: community
              )
 
     opts = [
       expected_draft_version: draft.version,
       expected_lifecycle_version: lifecycle.version,
+      community: community,
       command_id: command_id
     ]
 
@@ -101,7 +103,8 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
                public.article_id,
                %{title: "Published through command B"},
                user,
-               expected_version: draft_b.version
+               expected_version: draft_b.version,
+               community: community
              )
 
     lifecycle_b =
@@ -110,6 +113,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     opts_b = [
       expected_draft_version: draft_b.version,
       expected_lifecycle_version: lifecycle_b.version,
+      community: community,
       command_id: Ecto.UUID.generate()
     ]
 

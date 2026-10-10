@@ -10,6 +10,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState do
 
   alias __MODULE__.{Query, Sync}
   alias GroupherServer.Accounts
+  alias GroupherServer.CMS.Articles.Bindings
+  alias GroupherServer.CMS.Model.Article
   alias Accounts.Model.User
 
   @doc """
@@ -33,6 +35,34 @@ defmodule GroupherServer.CMS.Interactions.ReadState do
   """
   @spec viewer_states([struct()], User.t() | nil, keyword()) :: map() | {:error, term()}
   defdelegate viewer_states(artiments, viewer, opts \\ []), to: Query
+
+  @doc "Resolves public Article paths and returns ordered private Interaction state."
+  defdelegate article_states_for_paths(paths, viewer, opts \\ []), to: Query
+
+  @doc "Maps an already-read Article locator and private Interaction state without IO."
+  @spec article_state(map(), map()) :: map()
+  def article_state(article, interaction) do
+    %{
+      community: article.community,
+      thread: article.thread,
+      inner_id: article_inner_id(article),
+      interaction_revision: interaction.interaction_revision || 0,
+      viewer_has_upvoted: interaction.viewer_has_upvoted || false,
+      viewer_has_collected: interaction.viewer_has_collected || false,
+      viewer_emotion: interaction.viewer_emotion
+    }
+  end
+
+  defp article_inner_id(article) when is_map(article) do
+    if Map.get(article, :__struct__) == Article do
+      case Bindings.get(article, Map.get(article, :community)) do
+        {:ok, %{inner_id: inner_id}} -> inner_id
+        _ -> nil
+      end
+    else
+      Map.get(article, :inner_id)
+    end
+  end
 
   @doc "Returns public Interaction presentation state for one Artiment."
   defdelegate public_state(artiment, opts \\ []), to: Query

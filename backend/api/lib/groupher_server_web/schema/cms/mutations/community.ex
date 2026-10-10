@@ -20,7 +20,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
           non_null(:application_logo_upload_intent) do
       arg(:input, non_null(:application_logo_upload_input))
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.create_community_application_logo_upload_intent/3)
+      resolve(&R.CMS.CommunityApplications.create_community_application_logo_upload_intent/3)
     end
 
     @desc "Complete an Application Logo upload from Assets Hub"
@@ -33,75 +33,82 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
         scope: "assets:application-upload:complete"
       )
 
-      resolve(&R.CMS.complete_community_application_logo_upload/3)
+      resolve(&R.CMS.CommunityApplications.complete_community_application_logo_upload/3)
     end
 
     @desc "Submit a new Community Application"
     field :submit_community_application, non_null(:community_application) do
       arg(:input, non_null(:community_application_input))
-      arg(:idempotency_key, non_null(:string))
+      arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.submit_community_application/3)
+      resolve(&R.CMS.CommunityApplications.submit_community_application/3)
     end
 
     @desc "Cancel an owned Community Application"
     field :cancel_community_application, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.cancel_community_application/3)
+      resolve(&R.CMS.CommunityApplications.cancel_community_application/3)
     end
 
     @desc "Move a submitted Application into review"
     field :start_community_application_review, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.review")
-      resolve(&R.CMS.start_community_application_review/3)
+      resolve(&R.CMS.CommunityApplications.start_community_application_review/3)
     end
 
     @desc "Approve a reviewed Community Application"
     field :approve_community_application, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       arg(:note, :string)
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.approve")
-      resolve(&R.CMS.approve_community_application/3)
+      resolve(&R.CMS.CommunityApplications.approve_community_application/3)
     end
 
     @desc "Reject a reviewed Community Application"
     field :reject_community_application, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       arg(:reason_code, non_null(:string))
       arg(:note, :string)
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.reject")
-      resolve(&R.CMS.reject_community_application/3)
+      resolve(&R.CMS.CommunityApplications.reject_community_application/3)
     end
 
     @desc "Retry Community identity creation for a failed Application"
     field :retry_community_creation, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.retry_creation")
-      resolve(&R.CMS.retry_community_creation/3)
+      resolve(&R.CMS.CommunityApplications.retry_community_creation/3)
     end
 
     @desc "Retry Community setup for a failed Application"
     field :retry_community_setup, non_null(:community_application) do
       arg(:ref, non_null(:id))
       arg(:expected_version, non_null(:integer))
+      arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.application.retry_setup")
-      resolve(&R.CMS.retry_community_setup/3)
+      resolve(&R.CMS.CommunityApplications.retry_community_setup/3)
     end
 
     @desc "create a global community"
     field :create_community, :community do
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:desc, non_null(:string))
       arg(:slug, non_null(:string))
@@ -111,13 +118,14 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.create")
 
-      resolve(&R.CMS.create_community/3)
+      resolve(&R.CMS.Communities.create_community/3)
       middleware(M.Analysis.MakeContribution, for: [:user])
     end
 
     @desc "update a community"
     field :update_community, :community do
       arg(:community, non_null(:string))
+      arg(:command_id, non_null(:id))
       arg(:title, :string)
       arg(:desc, :string)
       arg(:slug, :string)
@@ -129,7 +137,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
 
-      resolve(&R.CMS.update_community/3)
+      resolve(&R.CMS.Communities.update_community/3)
     end
 
     @desc "delete a global community"
@@ -141,19 +149,20 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Passport, action: "community.request_destroy")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.request_destroy_community/3)
+      resolve(&R.CMS.Communities.request_destroy_community/3)
     end
 
     @desc "register an uploaded asset into the community asset library"
     field :register_community_asset, :community_asset do
       arg(:community, non_null(:string))
       arg(:asset, non_null(:community_asset_input))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.update")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.register_community_asset/3)
+      resolve(&R.CMS.Assets.register_community_asset/3)
     end
 
     @desc "create a short-lived assets-hub upload intent"
@@ -165,7 +174,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.create_community_asset_upload_intent/3)
+      resolve(&R.CMS.Assets.create_community_asset_upload_intent/3)
     end
 
     @desc "complete a verified assets-hub upload"
@@ -177,23 +186,25 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
         scope: "assets:upload:complete"
       )
 
-      resolve(&R.CMS.complete_community_asset_upload/3)
+      resolve(&R.CMS.Assets.complete_community_asset_upload/3)
     end
 
     @desc "delete an unreferenced community asset from the asset library"
     field :delete_community_asset, :community_asset do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.delete_community_asset/3)
+      resolve(&R.CMS.Assets.delete_community_asset/3)
     end
 
     @desc "create category"
     field :create_category, :category do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:title, non_null(:string))
       arg(:slug, non_null(:string))
@@ -201,22 +212,24 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "category.create")
 
-      resolve(&R.CMS.create_category/3)
+      resolve(&R.CMS.Communities.create_category/3)
     end
 
     @desc "delete category"
     field :delete_category, :category do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "category.delete")
 
-      resolve(&R.CMS.delete_category/3)
+      resolve(&R.CMS.Communities.delete_category/3)
     end
 
     @desc "update category"
     field :update_category, :category do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:title, non_null(:string))
@@ -224,11 +237,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "category.update")
 
-      resolve(&R.CMS.update_category/3)
+      resolve(&R.CMS.Communities.update_category/3)
     end
 
     @desc "add a moderator for a community"
     field :add_moderator, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:user, non_null(:string))
 
@@ -237,11 +251,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :user)
 
-      resolve(&R.CMS.add_moderator/3)
+      resolve(&R.CMS.Communities.add_moderator/3)
     end
 
     @desc "add moderators for a community"
     field :add_moderators, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:users, non_null(list_of(non_null(:string))))
 
@@ -250,11 +265,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :users)
 
-      resolve(&R.CMS.add_moderators/3)
+      resolve(&R.CMS.Communities.add_moderators/3)
     end
 
     @desc "unset a moderator from a community, the user's passport also deleted"
     field :remove_moderator, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:user, non_null(:string))
 
@@ -263,11 +279,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :user)
 
-      resolve(&R.CMS.remove_moderator/3)
+      resolve(&R.CMS.Communities.remove_moderator/3)
     end
 
     @desc "update cms moderator's title, passport is not effected"
     field :update_moderator_passport, :community do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:user, non_null(:string))
       arg(:rules, non_null(:json))
@@ -277,11 +294,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, :user)
 
-      resolve(&R.CMS.update_moderator_passport/3)
+      resolve(&R.CMS.Communities.update_moderator_passport/3)
     end
 
     @desc "create a tag"
     field :create_community_tag, :community_tag do
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:slug, non_null(:string))
       arg(:color, non_null(:rainbow_color))
@@ -295,11 +313,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.create")
 
-      resolve(&R.CMS.create_community_tag/3)
+      resolve(&R.CMS.Communities.create_community_tag/3)
     end
 
     @desc "update a tag"
     field :update_community_tag, :community_tag do
+      arg(:command_id, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:title, :string)
@@ -315,11 +334,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.update")
 
-      resolve(&R.CMS.update_community_tag/3)
+      resolve(&R.CMS.Communities.update_community_tag/3)
     end
 
     @desc "create a tag group"
     field :create_community_tag_group, :community_tag_group do
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
@@ -327,11 +347,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.create")
 
-      resolve(&R.CMS.create_community_tag_group/3)
+      resolve(&R.CMS.Communities.create_community_tag_group/3)
     end
 
     @desc "update a tag group"
     field :update_community_tag_group, :community_tag_group do
+      arg(:command_id, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:title, non_null(:string))
@@ -340,11 +361,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.update")
 
-      resolve(&R.CMS.update_community_tag_group/3)
+      resolve(&R.CMS.Communities.update_community_tag_group/3)
     end
 
     @desc "delete a tag group"
     field :delete_community_tag_group, :community_tag_group do
+      arg(:command_id, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
@@ -352,11 +374,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.delete")
 
-      resolve(&R.CMS.delete_community_tag_group/3)
+      resolve(&R.CMS.Communities.delete_community_tag_group/3)
     end
 
     @desc "delete a tag by thread"
     field :delete_community_tag, :community_tag do
+      arg(:command_id, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
@@ -364,7 +387,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.delete")
 
-      resolve(&R.CMS.delete_community_tag/3)
+      resolve(&R.CMS.Communities.delete_community_tag/3)
     end
   end
 end

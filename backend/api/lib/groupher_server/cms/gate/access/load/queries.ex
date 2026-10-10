@@ -22,6 +22,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
 
   alias CMS.Model.{
     ArticleLifecycle,
+    ArticleBinding,
     CommentLifecycle,
     CommunityLifecycle,
     DocBranch,
@@ -39,6 +40,17 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     schema
     |> where([resource], resource.id == ^id)
     |> lock("FOR UPDATE")
+    |> Repo.one()
+  end
+
+  @doc "Loads one ArticleBinding binding under `FOR SHARE` while checking membership."
+  def article_binding(article_id, community_id) do
+    ArticleBinding
+    |> where(
+      [binding],
+      binding.article_id == ^article_id and binding.community_id == ^community_id
+    )
+    |> lock("FOR SHARE")
     |> Repo.one()
   end
 

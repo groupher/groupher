@@ -703,7 +703,7 @@ defmodule Helper.ORM do
     %{
       thread: thread,
       id: article.id,
-      inner_id: article.inner_id,
+      inner_id: Map.get(article, :inner_id),
       title: article.title,
       upvotes_count: Map.get(counts, :upvotes_count, 0),
       author: author

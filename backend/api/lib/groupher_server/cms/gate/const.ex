@@ -15,6 +15,11 @@ defmodule GroupherServer.CMS.Gate.Const do
       community_application_retry_creation: "community.application.retry_creation",
       community_application_retry_setup: "community.application.retry_setup",
       community_update: "community.update",
+      category_create: "category.create",
+      category_update: "category.update",
+      category_delete: "category.delete",
+      category_set: "category.set",
+      category_unset: "category.unset",
       community_request_destroy: "community.request_destroy",
       article_insights_read: "article.insights.read"
     ]
@@ -27,6 +32,11 @@ defmodule GroupherServer.CMS.Gate.Const do
       list: :list,
       read_insights: :read_insights,
       update: :update,
+      category_create: :category_create,
+      category_update: :category_update,
+      category_delete: :category_delete,
+      category_set: :category_set,
+      category_unset: :category_unset,
       publish: :publish,
       create_comment: :create_comment,
       reply_comment: :reply_comment,

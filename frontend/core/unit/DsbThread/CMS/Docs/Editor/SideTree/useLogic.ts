@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { ARTICLE_STAGE, type TArticleStage } from '~/const/article'
+import { ARTICLE_STAGE } from '~/const/article'
 import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
 import { graphqlQueryOptions } from '~/query'
-import { createCommandId } from '~/query/mutation/optimistic/execute'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
@@ -78,14 +78,6 @@ import type {
 } from './spec'
 import useDocEditorUrl from './useDocEditorUrl'
 import useSideTreePersistence, { type TSideTreeMutationSchema } from './usePersistence'
-
-type TMoveDocToDraftData = {
-  moveDocToDraft?: {
-    docId?: string | null
-    stage?: TArticleStage | null
-    publishState?: TDocTreeNodePublishState | null
-  } | null
-}
 
 type TLocalCreateState = {
   deleteRequested: boolean
@@ -889,10 +881,12 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     }
 
     if (action === SIDE_TREE_NODE_MENU_ACTION.MOVE_TO_DRAFT) {
-      browserGraphQLRequest<TMoveDocToDraftData>(S.moveDocToDraft, {
-        community,
-        id: childId,
-        commandId: createCommandId(),
+      executeCommand({
+        request: (variables) => browserGraphQLRequest(S.moveDocToDraft, variables),
+        variables: {
+          community,
+          id: childId,
+        },
       })
         .then((data) => {
           const payload = data?.moveDocToDraft
@@ -926,9 +920,10 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       action === SIDE_TREE_NODE_MENU_ACTION.UNPIN_FROM_COVER
     ) {
       const pinning = action === SIDE_TREE_NODE_MENU_ACTION.PIN_TO_COVER
-      browserGraphQLRequest(pinning ? S.pinDocToCover : S.unpinDocFromCover, {
-        community,
-        nodeId: childId,
+      executeCommand({
+        request: (variables) =>
+          browserGraphQLRequest(pinning ? S.pinDocToCover : S.unpinDocFromCover, variables),
+        variables: { community, nodeId: childId },
       })
         .then(() => {
           const current = findChild(readGroups(), childId)

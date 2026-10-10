@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Model.CommunityApplication do
 
   @required_fields ~w(
     public_ref user_id status version title slug desc logo_asset_ref locale
-    apply_category idempotency_key input_fingerprint submitted_at
+    apply_category submit_command_id input_fingerprint submitted_at
   )a
   @optional_fields ~w(
     community_id apply_message policy_snapshot review_metadata expires_at reviewed_at
@@ -80,7 +80,7 @@ defmodule GroupherServer.CMS.Model.CommunityApplication do
     field(:apply_category, Ecto.Enum, values: @categories)
     field(:apply_message, :string)
 
-    field(:idempotency_key, :string)
+    field(:submit_command_id, :string)
     field(:input_fingerprint, :string)
     field(:policy_snapshot, :map, default: %{})
     field(:review_metadata, :map, default: %{})
@@ -126,15 +126,15 @@ defmodule GroupherServer.CMS.Model.CommunityApplication do
     |> validate_length(:logo_asset_ref, min: 8, max: 80)
     |> validate_length(:locale, min: 2, max: 20)
     |> validate_length(:apply_message, max: 2_000)
-    |> validate_length(:idempotency_key, min: 8, max: 128)
+    |> validate_length(:submit_command_id, min: 8, max: 128)
     |> validate_length(:input_fingerprint, min: 16, max: 128)
     |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:reviewer_id)
     |> unique_constraint(:public_ref)
-    |> unique_constraint([:user_id, :idempotency_key],
-      name: :community_applications_user_idempotency_index
+    |> unique_constraint([:user_id, :submit_command_id],
+      name: :community_applications_user_submit_command_index
     )
     |> unique_constraint(:user_id,
       name: :community_applications_one_blocking_per_user_index

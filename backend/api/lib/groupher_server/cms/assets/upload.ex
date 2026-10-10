@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
-  alias CMS.Assets.{Capability, Writer}
+  alias CMS.Assets.{Capability, Persist}
   alias CMS.Model.{Community, CommunityAsset}
   alias Helper.{T, Utils}
 
@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
   @spec create_intent(Community.t(), map(), User.t()) :: T.domain_res(map())
   def create_intent(%Community{} = community, file, %User{} = user) when is_map(file) do
     with {:ok, attrs} <- validate_file(file),
-         :ok <- ensure_capacity(community.id, attrs.size_bytes) do
+         {:ok, _} <- ensure_capacity(community.id, attrs.size_bytes) do
       issued_at = DateTime.utc_now(:second)
       upload_ref = "upload_" <> Utils.uid(18)
       asset_uid = Utils.uid(18)
@@ -101,7 +101,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
   def create_generated_intent(%Community{} = community, file, %User{} = user) when is_map(file) do
     with {:ok, attrs} <- validate_file(file),
          {:ok, generated} <- validate_generated_file(file),
-         :ok <- ensure_capacity(community.id, attrs.size_bytes) do
+         {:ok, _} <- ensure_capacity(community.id, attrs.size_bytes) do
       issued_at = DateTime.utc_now(:second)
       upload_ref = "upload_" <> Utils.uid(18)
       asset_uid = Utils.uid(18)
@@ -167,7 +167,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
       uploader_id: get(input, :uploader_id)
     }
 
-    with :ok <- validate_completion(attrs) do
+    with {:ok, _} <- validate_completion(attrs) do
       Repo.transaction(fn ->
         case input |> get(:community_id) |> normalize_id() do
           nil ->
@@ -183,8 +183,8 @@ defmodule GroupherServer.CMS.Assets.Upload do
   end
 
   defp complete_asset(community_id, attrs) do
-    with :ok <- ensure_capacity(community_id, attrs.size_bytes),
-         {:ok, asset} <- Writer.register(%Community{id: community_id}, attrs, nil) do
+    with {:ok, _} <- ensure_capacity(community_id, attrs.size_bytes),
+         {:ok, asset} <- Persist.register(%Community{id: community_id}, attrs, nil) do
       asset
     else
       {:error, reason} -> Repo.rollback(reason)
@@ -273,7 +273,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
         {:error, ErrorCat.custom("size_bytes must be positive")}
 
       true ->
-        :ok
+        {:ok, :pass}
     end
   end
 
@@ -291,7 +291,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
           |> Repo.one()
 
         if storage_bytes_to_integer(used_bytes) + incoming_size_bytes <= @storage_limit_bytes do
-          :ok
+          {:ok, :pass}
         else
           {:error, ErrorCat.custom("community asset storage quota exceeded")}
         end

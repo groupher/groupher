@@ -74,6 +74,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
     field(:meta, :map, default: %{})
     field(:archived_at, :utc_datetime)
     field(:deleted_at, :utc_datetime)
+    field(:command_id, Ecto.UUID, virtual: true)
 
     has_many(:asset_refs, ArticleAssetRef, foreign_key: :asset_id)
 

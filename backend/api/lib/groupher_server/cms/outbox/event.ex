@@ -24,7 +24,11 @@ defmodule GroupherServer.CMS.Outbox.Event do
     field(:contract_version, :integer, default: 1)
     field(:resource_type, :string)
     field(:resource_id, :string)
-    field(:command_id, Ecto.UUID)
+    # Kept under the legacy column name while the database contract migrates;
+    # `identity_type` distinguishes a user command from a maintenance workflow.
+    field(:command_id, :string)
+    field(:identity_type, Ecto.Enum, values: [:command, :workflow], default: :command)
+    field(:effect_key, :string, default: "default")
     field(:data, :map, default: %{})
     field(:status, Ecto.Enum, values: @statuses, default: :pending)
     field(:attempts, :integer, default: 0)
@@ -48,6 +52,8 @@ defmodule GroupherServer.CMS.Outbox.Event do
       :resource_type,
       :resource_id,
       :command_id,
+      :identity_type,
+      :effect_key,
       :data,
       :status,
       :attempts,
@@ -65,6 +71,8 @@ defmodule GroupherServer.CMS.Outbox.Event do
       :resource_type,
       :resource_id,
       :command_id,
+      :identity_type,
+      :effect_key,
       :data,
       :status,
       :attempts,
@@ -72,8 +80,10 @@ defmodule GroupherServer.CMS.Outbox.Event do
     ])
     |> validate_number(:contract_version, greater_than: 0)
     |> validate_number(:attempts, greater_than_or_equal_to: 0)
+    |> validate_inclusion(:identity_type, [:command, :workflow])
     |> unique_constraint(:id, name: :outbox_events_pkey)
-    |> unique_constraint([:command_id, :event, :resource_type, :resource_id],
+    |> unique_constraint(
+      [:identity_type, :command_id, :event, :resource_type, :resource_id, :effect_key],
       name: :outbox_events_command_event_resource_index
     )
   end

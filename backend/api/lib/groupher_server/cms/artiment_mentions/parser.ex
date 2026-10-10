@@ -29,6 +29,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
 
   alias CMS.Model.{
+    ArticleBinding,
     Article,
     ArticlePublic,
     ArticleRevision,
@@ -61,19 +62,21 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   Comment results retain their already-loaded parent Article so downstream
   snapshot construction stays query-free.
   """
-  @spec parse(list()) :: [parsed_mention()]
-  def parse(ast) when is_list(ast) do
+  @spec parse(list(), keyword()) :: [parsed_mention()]
+  def parse(ast, opts \\ [])
+
+  def parse(ast, opts) when is_list(ast) do
     ast
     |> Enum.with_index()
     |> Enum.flat_map(fn {node, index} ->
       block_id = node_block_id(node)
       collect_mentions_from_node(node, block_id, [index])
     end)
-    |> resolve_internal_mentions()
+    |> resolve_internal_mentions(Keyword.get(opts, :community_id))
     |> Enum.uniq()
   end
 
-  def parse(_), do: []
+  def parse(_, _opts), do: []
 
   defp collect_mentions_from_node(%{"type" => "mention"} = node, block_id, path) do
     node
@@ -278,8 +281,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     }
   end
 
-  defp resolve_internal_mentions(mentions) do
-    cache = internal_mention_cache(mentions)
+  defp resolve_internal_mentions(mentions, community_id) do
+    cache = internal_mention_cache(mentions, community_id)
 
     mentions
     |> Enum.flat_map(fn
@@ -294,13 +297,13 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     end)
   end
 
-  defp internal_mention_cache(mentions) do
+  defp internal_mention_cache(mentions, community_id) do
     candidates = Enum.filter(mentions, &Map.get(&1, :internal_mention_candidate?))
 
     %{
       users_by_login: load_users_by_login(candidates),
-      articles_by_thread: load_articles_by_thread(candidates),
-      comments: load_comments(candidates)
+      articles_by_thread: load_articles_by_thread(candidates, community_id),
+      comments: load_comments(candidates, community_id)
     }
   end
 
@@ -414,7 +417,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     end
   end
 
-  defp load_articles_by_thread(candidates) do
+  defp load_articles_by_thread(candidates, community_id) do
     @threads
     |> Map.new(fn thread ->
       ids =
@@ -424,19 +427,21 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
         |> Enum.reject(&is_nil/1)
         |> Enum.uniq()
 
-      {thread, load_articles(thread, ids)}
+      {thread, load_articles(thread, ids, community_id)}
     end)
   end
 
-  defp load_articles(_thread, []), do: %{}
+  defp load_articles(_thread, [], _community_id), do: %{}
 
-  defp load_articles(thread, ids) do
+  defp load_articles(thread, ids, community_id) do
     query =
       case thread do
         :doc ->
           from(article in Article,
+            join: binding in ArticleBinding,
+            on: binding.article_id == article.id,
             join: branch in DocBranch,
-            on: branch.community_id == article.community_id and branch.type == :main,
+            on: branch.community_id == binding.community_id and branch.type == :main,
             join: public in DocPublic,
             on: public.article_id == article.id and public.branch_id == branch.id,
             join: version in DocBranchVersion,
@@ -449,13 +454,15 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
               article_id: article.id,
               branch_id: branch.id,
               thread: article.thread,
-              community_id: article.community_id,
+              community_id: binding.community_id,
               title: revision.title
             }
           )
 
         _ ->
           from(article in Article,
+            join: binding in ArticleBinding,
+            on: binding.article_id == article.id,
             join: public in ArticlePublic,
             on: public.article_id == article.id,
             join: revision in ArticleRevision,
@@ -466,16 +473,25 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
               article_id: article.id,
               branch_id: nil,
               thread: article.thread,
-              community_id: article.community_id,
+              community_id: binding.community_id,
               title: revision.title
             }
           )
       end
 
-    query |> Repo.all() |> Map.new(&{&1.id, &1})
+    query
+    |> maybe_scope_articles(community_id)
+    |> Repo.all()
+    |> Map.new(&{&1.id, &1})
   end
 
-  defp load_comments(candidates) do
+  defp maybe_scope_articles(query, nil), do: query
+
+  defp maybe_scope_articles(query, community_id) do
+    where(query, [_article, binding, ...], binding.community_id == ^community_id)
+  end
+
+  defp load_comments(candidates, community_id) do
     ids =
       candidates
       |> Enum.filter(&(&1.type == :comment))
@@ -497,7 +513,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     articles_by_thread =
       comments
       |> comment_article_ids_by_thread()
-      |> Map.new(fn {thread, ids} -> {thread, load_articles(thread, Enum.uniq(ids))} end)
+      |> Map.new(fn {thread, ids} ->
+        {thread, load_articles(thread, Enum.uniq(ids), community_id)}
+      end)
 
     comments
     |> Enum.reduce(%{}, fn comment, acc ->

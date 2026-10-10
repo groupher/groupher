@@ -3,7 +3,16 @@ import type { QueryClient } from '@tanstack/react-query'
 import { clearChanges, markChange, rollbackChanges } from './effects'
 import type { TOptimisticPlan, TOptimisticOperation } from './types'
 
-/** Creates the client command identity used for pending entities and retries. */
+/**
+ * Creates the client command identity used by the mutation executor.
+ *
+ * Components and domain hooks must not call this primitive directly. They
+ * should use `executeCommand` or `executeOptimisticOperation` so retry identity
+ * stays owned by the executor.
+ *
+ * @example
+ * const data = await executeCommand({ request, variables })
+ */
 export const createCommandId = (): string => {
   const cryptoApi = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined
   if (typeof cryptoApi?.randomUUID === 'function') {
@@ -26,6 +35,52 @@ export const createCommandId = (): string => {
   const hex = Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('')
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
 }
+
+export type TCommandVariables<TVariables extends { commandId: string | number }> = Omit<
+  TVariables,
+  'commandId'
+>
+
+export type TCommandHandle<TVariables extends { commandId: string | number }> = {
+  commandId: string
+  variables: TCommandVariables<TVariables>
+  status: 'pending' | 'unknown'
+}
+
+/**
+ * Starts a command handle for coordinators that span multiple transport calls.
+ *
+ * @example
+ * const handle = createCommandHandle({ operation: 'wallpaper.publish' })
+ */
+export const createCommandHandle = (variables: Record<string, unknown>) => ({
+  commandId: createCommandId(),
+  variables: Object.freeze({ ...variables }),
+  status: 'pending' as const,
+})
+
+export type TExecuteCommandArgs<TVariables extends { commandId: string | number }, TResult> = {
+  request: (variables: TVariables) => Promise<TResult>
+  variables: TCommandVariables<TVariables>
+  commandId?: string
+}
+
+/**
+ * Executes one command mutation and injects its identity at the transport boundary.
+ * The optional identity is reserved for bounded retry/recovery of the same attempt.
+ *
+ * @example
+ * const result = await executeCommand({
+ *   request: (variables) => browserGraphQLRequest(UpdatePost, variables),
+ *   variables: { article, expectedVersion, title },
+ * })
+ */
+export const executeCommand = async <TVariables extends { commandId: string | number }, TResult>({
+  request,
+  variables,
+  commandId,
+}: TExecuteCommandArgs<TVariables, TResult>): Promise<TResult> =>
+  request({ ...variables, commandId: commandId || createCommandId() } as TVariables)
 
 const operationQueues = new WeakMap<QueryClient, Map<string, Promise<unknown>>>()
 

@@ -28,7 +28,8 @@ defmodule GroupherServer.CMS.Snapshot.Cache do
   end
 
   @doc "Stores summary maps using the configured or default snapshot TTL."
-  @spec put_summaries(map(), :user | :article | :comment, atom() | nil, keyword()) :: :ok
+  @spec put_summaries(map(), :user | :article | :comment, atom() | nil, keyword()) ::
+          {:ok, :pass}
   def put_summaries(summary_by_id, kind, thread, opts) when is_map(summary_by_id) do
     ttl_seconds = Keyword.get(opts, :ttl, @default_ttl_seconds)
 
@@ -36,7 +37,7 @@ defmodule GroupherServer.CMS.Snapshot.Cache do
       CacheStore.put(@pool, cache_key(kind, thread, id), summary, expire_sec: ttl_seconds)
     end)
 
-    :ok
+    {:ok, :pass}
   end
 
   defp cache_key(:user, _thread, id), do: "snapshot:user:#{id}"

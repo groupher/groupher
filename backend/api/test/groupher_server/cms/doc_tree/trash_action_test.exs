@@ -42,7 +42,9 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
         user
       )
 
-    assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+    assert {:ok, %{done: true}} =
+             CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
+
     {:ok, tree} = CMS.DocTree.read(community)
 
     assert {:ok, deleted} =

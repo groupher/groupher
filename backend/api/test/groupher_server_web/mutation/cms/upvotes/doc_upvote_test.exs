@@ -15,16 +15,30 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
 
   describe "[doc upvote]" do
     test "login user can upvote a doc", ~m(user_conn community doc)a do
-      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        }
+      }
 
       created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :doc), variables)
 
       assert get_in(created, ["interactionState", "viewerHasUpvoted"])
-      assert get_in(created, ["interactionState", "innerId"]) == to_string(doc.inner_id)
+
+      assert get_in(created, ["interactionState", "innerId"]) ==
+               to_string(article_inner_id(doc, community))
     end
 
     test "unauth user upvote a doc fails", ~m(guest_conn community doc)a do
-      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        }
+      }
 
       assert guest_conn
              |> mutation_error?(
@@ -35,18 +49,32 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
     end
 
     test "login user can undo upvote to a doc", ~m(user_conn community doc user)a do
-      {:ok, _} = CMS.Interactions.upvote(doc, user)
+      {:ok, _} = CMS.Interactions.upvote(doc, user, Ecto.UUID.generate())
 
-      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        }
+      }
 
       updated = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :doc), variables)
 
       refute get_in(updated, ["interactionState", "viewerHasUpvoted"])
-      assert get_in(updated, ["interactionState", "innerId"]) == to_string(doc.inner_id)
+
+      assert get_in(updated, ["interactionState", "innerId"]) ==
+               to_string(article_inner_id(doc, community))
     end
 
     test "unauth user undo upvote a doc fails", ~m(guest_conn community doc)a do
-      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        }
+      }
 
       assert guest_conn
              |> mutation_error?(

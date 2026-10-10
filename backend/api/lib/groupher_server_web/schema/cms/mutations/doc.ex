@@ -16,7 +16,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Doc do
   object :cms_doc_mutations do
     article_react_mutations(:doc, [
       :upvote,
-      :pin,
       :emotion,
       :report,
       :sink,

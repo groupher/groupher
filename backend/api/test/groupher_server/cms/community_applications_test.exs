@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
   alias Activity.Model.CommunityLog
   alias CMS.Communities.Jobs.Setup
   alias CMS.CommunityApplications.Jobs.CreateCommunity
-  alias GroupherServerWeb.Resolvers.CMS, as: ResolverCMS
+  alias GroupherServerWeb.Resolvers.CMS.CommunityApplications, as: ResolverCMS
 
   alias CMS.Model.{
     Community,
@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.CommunityApplications.submit(
                application_attrs(upload, "home"),
                user,
-               "idem_home"
+               Ecto.UUID.generate()
              )
 
     assert {:error,
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
                nil,
                %{
                  input: application_attrs(upload, "home"),
-                 idempotency_key: "idem_home_resolver"
+                 command_id: Ecto.UUID.generate()
                },
                %{context: %{cur_user: user}}
              )
@@ -66,7 +66,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.CommunityApplications.submit(
                application_attrs(upload, "feature-disabled"),
                user,
-               "idem_feature_disabled"
+               Ecto.UUID.generate()
              )
 
     assert {:error, %ErrorCat.Error{reason: :apply_not_allowed}} =
@@ -80,11 +80,13 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
     upload = finalized_logo(user, "first")
     attrs = application_attrs(upload, "apply-first")
 
+    command_id = Ecto.UUID.generate()
+
     assert {:ok, application} =
              CMS.CommunityApplications.submit(
                attrs,
                user,
-               "idem_first_application"
+               command_id
              )
 
     assert application.status == :submitted
@@ -103,7 +105,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.CommunityApplications.submit(
                attrs,
                user,
-               "idem_first_application"
+               command_id
              )
 
     assert same_application.id == application.id
@@ -114,7 +116,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.CommunityApplications.submit(
                application_attrs(second_upload, "apply-second"),
                user,
-               "idem_second_application"
+               Ecto.UUID.generate()
              )
   end
 
@@ -124,8 +126,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
 
     results =
       [
-        {application_attrs(first_upload, "concurrent-first"), "idem_concurrent_first"},
-        {application_attrs(second_upload, "concurrent-second"), "idem_concurrent_second"}
+        {application_attrs(first_upload, "concurrent-first"), Ecto.UUID.generate()},
+        {application_attrs(second_upload, "concurrent-second"), Ecto.UUID.generate()}
       ]
       |> Enum.map(fn {attrs, key} ->
         Task.async(fn ->
@@ -159,14 +161,15 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.CommunityApplications.submit(
                application_attrs(upload, "apply-cancel"),
                user,
-               "idem_cancel_application"
+               Ecto.UUID.generate()
              )
 
     assert {:ok, cancelled} =
              CMS.CommunityApplications.cancel(
                application.public_ref,
                user,
-               application.version
+               application.version,
+               Ecto.UUID.generate()
              )
 
     assert cancelled.status == :cancelled
@@ -185,7 +188,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.CommunityApplications.start_review(
                application.public_ref,
                reviewer(user),
-               application.version
+               application.version,
+               Ecto.UUID.generate()
              )
 
     assert reviewing.status == :reviewing
@@ -225,7 +229,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
           CMS.CommunityApplications.start_review(
             application.public_ref,
             reviewer(user),
-            application.version
+            application.version,
+            Ecto.UUID.generate()
           )
         end,
         fn -> CMS.CommunityApplications.expire_due(now) end
@@ -258,14 +263,16 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.CommunityApplications.start_review(
                application.public_ref,
                user,
-               application.version
+               application.version,
+               Ecto.UUID.generate()
              )
 
     assert {:error, %ErrorCat.Error{reason: :application_state_conflict}} =
              CMS.CommunityApplications.start_review(
                application.public_ref,
                reviewer(user),
-               application.version + 1
+               application.version + 1,
+               Ecto.UUID.generate()
              )
   end
 
@@ -277,7 +284,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.CommunityApplications.start_review(
                application.public_ref,
                review_user,
-               application.version
+               application.version,
+               Ecto.UUID.generate()
              )
 
     assert {:ok, approved} =
@@ -285,7 +293,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
                reviewing.public_ref,
                review_user,
                reviewing.version,
-               %{}
+               %{},
+               Ecto.UUID.generate()
              )
 
     assert {:ok, failed} =
@@ -302,7 +311,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.CommunityApplications.retry_creation(
                failed.public_ref,
                review_user,
-               failed.version
+               failed.version,
+               Ecto.UUID.generate()
              )
 
     assert Repo.get!(CommunityApplication, failed.id).status == :creation_failed
@@ -316,7 +326,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.CommunityApplications.start_review(
                application.public_ref,
                review_user,
-               application.version
+               application.version,
+               Ecto.UUID.generate()
              )
 
     assert {:ok, approved} =
@@ -324,13 +335,14 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
                reviewing.public_ref,
                review_user,
                reviewing.version,
-               %{"note" => "approved in integration test"}
+               %{"note" => "approved in integration test"},
+               Ecto.UUID.generate()
              )
 
     create_job = application_job(CreateCommunity, approved.public_ref)
     assert application_job_count(CreateCommunity, approved.public_ref) == 1
-    assert :ok = CreateCommunity.perform(job_from(create_job))
-    assert :ok = CreateCommunity.perform(job_from(create_job))
+    assert {:ok, :pass} = CreateCommunity.perform(job_from(create_job))
+    assert {:ok, :pass} = CreateCommunity.perform(job_from(create_job))
 
     setting_up = Repo.get!(CommunityApplication, approved.id)
     assert setting_up.status == :setting_up
@@ -373,10 +385,11 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
            )
 
     assert {:ok, retried} =
-             CMS.Communities.retry_setup(
+             CMS.CommunityApplications.retry_setup(
                approved.public_ref,
                review_user,
-               failed.version
+               failed.version,
+               Ecto.UUID.generate()
              )
 
     assert retried.status == :setting_up
@@ -410,8 +423,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
                operation_ref: setup_operation_ref
              )
 
-    assert :ok = Setup.perform(job_from(setup_job))
-    assert :ok = Setup.perform(job_from(setup_job))
+    assert {:ok, :pass} = Setup.perform(job_from(setup_job))
+    assert {:ok, :pass} = Setup.perform(job_from(setup_job))
 
     created = Repo.get!(CommunityApplication, approved.id)
     assert created.status == :created
@@ -457,7 +470,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
       CMS.CommunityApplications.start_review(
         application.public_ref,
         review_user,
-        application.version
+        application.version,
+        Ecto.UUID.generate()
       )
 
     {:ok, approved} =
@@ -465,7 +479,8 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
         reviewing.public_ref,
         review_user,
         reviewing.version,
-        %{}
+        %{},
+        Ecto.UUID.generate()
       )
 
     from(upload in CommunityApplicationLogoUpload, where: upload.application_id == ^approved.id)
@@ -495,7 +510,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
                application_attrs(upload, "invalid-input")
                |> Map.put(:title, String.duplicate("x", 81)),
                user,
-               "idem_invalid_input"
+               Ecto.UUID.generate()
              )
   end
 
@@ -527,7 +542,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
       CMS.CommunityApplications.submit(
         application_attrs(upload, slug),
         user,
-        "idem_#{slug}"
+        Ecto.UUID.generate()
       )
 
     application

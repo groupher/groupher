@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
   setup do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     {:ok, community: community}
   end
@@ -25,9 +25,13 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
 
     test "reads community dashboard override for comment thread emotions", ~m(community)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :thread_emotions, %{
-          post_comment: [:heart]
-        })
+        CMS.Dashboard.update(
+          community,
+          :thread_emotions,
+          %{post_comment: [:heart]},
+          :operations,
+          Ecto.UUID.generate()
+        )
 
       assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                Enable.emotion?(community.slug, :comment, :post, :beer)
@@ -38,9 +42,13 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
 
     test "reads community dashboard override for article thread emotions", ~m(community)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :thread_emotions, %{
-          post: [:heart]
-        })
+        CMS.Dashboard.update(
+          community,
+          :thread_emotions,
+          %{post: [:heart]},
+          :operations,
+          Ecto.UUID.generate()
+        )
 
       assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                Enable.emotion?(community.slug, :article, :post, :beer)
@@ -67,9 +75,13 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
                Enable.emotion?(community.slug, :comment, :post, :upvote)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :thread_emotions, %{
-          post_comment: [:heart]
-        })
+        CMS.Dashboard.update(
+          community,
+          :thread_emotions,
+          %{post_comment: [:heart]},
+          :operations,
+          Ecto.UUID.generate()
+        )
 
       assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                Enable.emotion?(community.slug, :comment, :post, :beer)
@@ -88,9 +100,13 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
 
     test "allow_thread returns cancan error key when disabled", ~m(community)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :enable, %{
-          post: false
-        })
+        CMS.Dashboard.update(
+          community,
+          :enable,
+          %{post: false},
+          :operations,
+          Ecto.UUID.generate()
+        )
 
       assert {:error, %ErrorCat.Error{reason: :thread_not_visible}} =
                Enable.thread?(community.slug, :post)

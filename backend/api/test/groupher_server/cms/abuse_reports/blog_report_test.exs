@@ -14,8 +14,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
 
   describe "[article blog report/unreport]" do
     test "list article reports should work", ~m(user user2 blog)a do
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user)
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user2, Ecto.UUID.generate())
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
     end
 
     test "report a blog should have a abuse report record", ~m(user blog)a do
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user, Ecto.UUID.generate())
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -46,8 +46,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
     end
 
     test "can undo a report", ~m(user blog)a do
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user)
-      {:ok, _} = CMS.AbuseReports.undo_article(blog, user)
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.undo_article(blog, user, Ecto.UUID.generate())
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -57,9 +57,9 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
     end
 
     test "can undo a existed report", ~m(user user2 blog)a do
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user)
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user2)
-      {:ok, _} = CMS.AbuseReports.undo_article(blog, user)
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.undo_article(blog, user, Ecto.UUID.generate())
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -70,8 +70,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
     end
 
     test "can undo a report with other user report it too", ~m(user user2 blog)a do
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user)
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user2, Ecto.UUID.generate())
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
 
-      {:ok, _} = CMS.AbuseReports.undo_article(blog, user)
+      {:ok, _} = CMS.AbuseReports.undo_article(blog, user, Ecto.UUID.generate())
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -95,8 +95,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
 
     test "different user report a comment should have same report with different report cases",
          ~m(user user2 blog)a do
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user)
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason2", "attr_info 2", user2)
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason2", "attr_info 2", user2, Ecto.UUID.generate())
 
       filter = %{content_type: :blog, content_id: blog.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -113,9 +113,9 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
     end
 
     test "same user can not report a comment twice", ~m(blog user)a do
-      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user)
+      {:ok, _} = CMS.AbuseReports.article(blog, "reason", "attr_info", user, Ecto.UUID.generate())
 
-      assert {:error, _report} = CMS.AbuseReports.article(blog, "reason", "attr_info", user)
+      assert {:error, _report} = CMS.AbuseReports.article(blog, "reason", "attr_info", user, Ecto.UUID.generate())
     end
   end
 end

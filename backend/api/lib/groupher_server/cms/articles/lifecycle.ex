@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Activity, CMS, Repo}
-  alias CMS.Articles.ErrorCat
+  alias CMS.Articles.{Bindings, ErrorCat}
   alias CMS.Model.{Article, ArticleLifecycle}
 
   @article_threads CMS.Artiment.Config.threads() -- [:doc]
@@ -76,7 +76,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
           {:ok, ArticleLifecycle.t()} | {:error, term()}
   def transition(%Article{} = article, state, expected_version) when state in @states do
     with {:ok, lifecycle} <- lock(article),
-         :ok <- ensure_version(lifecycle.version, expected_version) do
+         {:ok, _} <- ensure_version(lifecycle.version, expected_version) do
       transition(lifecycle, state)
     end
   end
@@ -111,15 +111,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
         Enum.reduce_while(lifecycles, 0, fn {lifecycle, article}, count ->
           with {:ok, archived} <- transition(lifecycle, :archived),
-               {:ok, _activity} <-
-                 Activity.log(
-                   article,
-                   :archived,
-                   operation_ref: operation_ref,
-                   source: :maintenance,
-                   occurred_at: archived.changed_at,
-                   metadata: %{batch: true}
-                 ) do
+               {:ok, _activity} <- log_archived(article, archived, operation_ref) do
             {:cont, count + 1}
           else
             {:error, reason} -> Repo.rollback(reason)
@@ -130,9 +122,27 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
     count
   end
 
+  defp log_archived(article, archived, operation_ref) do
+    with {:ok, bindings} <- Bindings.all(article) do
+      Enum.reduce_while(bindings, {:ok, :pass}, fn binding, {:ok, :pass} ->
+        resource = Map.put(article, :community, binding.community)
+
+        case Activity.log(resource, :archived,
+               operation_ref: operation_ref,
+               source: :maintenance,
+               occurred_at: archived.changed_at,
+               metadata: %{batch: true}
+             ) do
+          {:ok, _event} -> {:cont, {:ok, :pass}}
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+      end)
+    end
+  end
+
   defp state_time(state, state, now, _current), do: now
   defp state_time(_state, _target, _now, current), do: current
 
-  defp ensure_version(version, version), do: :ok
+  defp ensure_version(version, version), do: {:ok, :pass}
   defp ensure_version(_actual, _expected), do: {:error, :lifecycle_version_conflict}
 end

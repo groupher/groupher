@@ -208,8 +208,13 @@ const undoUpvoteComment = graphql(`
 `)
 
 const reportComment = graphql(`
-  mutation ReportComment($comment: CommentPathInput!, $reason: String!, $attr: String) {
-    reportComment(comment: $comment, reason: $reason, attr: $attr) {
+  mutation ReportComment(
+    $comment: CommentPathInput!
+    $reason: String!
+    $attr: String
+    $commandId: ID!
+  ) {
+    reportComment(comment: $comment, reason: $reason, attr: $attr, commandId: $commandId) {
       innerId
       viewerHasReported
       meta {
@@ -220,8 +225,8 @@ const reportComment = graphql(`
 `)
 
 const undoReportComment = graphql(`
-  mutation UndoReportComment($comment: CommentPathInput!) {
-    undoReportComment(comment: $comment) {
+  mutation UndoReportComment($comment: CommentPathInput!, $commandId: ID!) {
+    undoReportComment(comment: $comment, commandId: $commandId) {
       innerId
       viewerHasReported
       meta {

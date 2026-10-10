@@ -39,13 +39,13 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     test "can get user's  communities list when user is editor",
          ~m(guest_conn user user2 user3)a do
       community_attrs = mock_attrs(:community)
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       community_attrs2 = mock_attrs(:community)
-      {:ok, community2} = CMS.Communities.create(community_attrs2, user2)
+      {:ok, community2} = CMS.Communities.create(community_attrs2, user2, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.Communities.add_moderator(community, user3, user)
-      {:ok, _} = CMS.Communities.add_moderator(community2, user3, user2)
+      {:ok, _} = CMS.Communities.add_moderator(community, user3, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Communities.add_moderator(community2, user3, user2, Ecto.UUID.generate())
 
       variables = %{login: user3.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(@query, variables)
@@ -101,10 +101,10 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     @query S.Account.q(:user_4)
     test "inc user's achievement after user's post got collected", ~m(guest_conn user)a do
       {:ok, post} = db_insert(:post)
-      {:ok, _article_collect} = CMS.Interactions.collect(post, user)
+      {:ok, _article_collect} = CMS.Interactions.collect(post, user, Ecto.UUID.generate())
 
-      post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
-      author_user_login = post.author.user.login
+      stable_post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
+      author_user_login = stable_post.author.user.login
 
       variables = %{login: author_user_login}
       results = guest_conn |> gq_query(@query, variables)
@@ -119,14 +119,14 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       {:ok, users} = db_insert_multi(:user, total_count)
 
       Enum.each(users, fn user ->
-        {:ok, _article_collect} = CMS.Interactions.collect(post, user)
+        {:ok, _article_collect} = CMS.Interactions.collect(post, user, Ecto.UUID.generate())
       end)
 
-      post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
-      author_user_login = post.author.user.login
+      stable_post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
+      author_user_login = stable_post.author.user.login
 
       user = users |> Enum.shuffle() |> List.first()
-      {:ok, _article_collect} = CMS.Interactions.undo_collect(post, user)
+      {:ok, _article_collect} = CMS.Interactions.undo_collect(post, user, Ecto.UUID.generate())
 
       variables = %{login: author_user_login}
       results = guest_conn |> gq_query(@query, variables)

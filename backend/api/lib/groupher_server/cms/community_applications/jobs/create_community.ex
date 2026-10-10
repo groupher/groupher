@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity do
       }) do
     case CMS.Communities.create_from_application(application_ref, operation_ref) do
       {:ok, _application} ->
-        :ok
+        {:ok, :pass}
 
       {:error, reason} when attempt >= max_attempts ->
         case CMS.CommunityApplications.mark_creation_failed(
@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity do
                operation_ref,
                reason
              ) do
-          {:ok, _application} -> :ok
+          {:ok, _application} -> {:ok, :pass}
           {:error, mark_reason} -> {:error, mark_reason}
         end
 

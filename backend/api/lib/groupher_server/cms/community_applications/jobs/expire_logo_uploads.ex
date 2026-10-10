@@ -20,6 +20,6 @@ defmodule GroupherServer.CMS.CommunityApplications.Jobs.ExpireLogoUploads do
 
   def perform(_job) do
     {_count, nil} = CMS.CommunityApplications.expire_logo_uploads(DateTime.utc_now(:second))
-    :ok
+    {:ok, :pass}
   end
 end

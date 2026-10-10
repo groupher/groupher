@@ -182,7 +182,10 @@ Command/Confirmation 模块共享实现，因此记录到 facade-directory 审�
 - States：`archive`、`sink`、`undo_sink`、`set_cat`、`set_status`、`update_active_timestamp`、
   `lock_comments`、`undo_lock_comments`；
 - Moderation：`set_illegal`、`unset_illegal`、`set_audit_failed`；
-- placement：`move_to_blackhole`、`mirror_to_home`。
+- 历史 Article actions（已删除）：`move_to_blackhole`、`mirror_to_home`。
+
+> 历史记录说明：下方旧 mutation 名称保留用于记录当时的迁移范围；当前 GraphQL contract 已删除这些
+> mutation，现行 ArticleCommunity 命令以 `mirror_article` / `move_article` 等入口为准。
 
 分类规则固定为：已经接入 `CMS.Command`、携带 `commandId`、共享本次迁移的 Confirmation/Command module，
 或已在上表显式列为代表性 facade bypass 的路径进入本文；其余 direct States/Moderation/Writer 路径进入

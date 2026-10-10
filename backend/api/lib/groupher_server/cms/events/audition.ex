@@ -147,8 +147,11 @@ defmodule GroupherServer.CMS.Events.Audition do
 
   defp moderation_opts(article) do
     case Map.get(article, :branch_id) do
-      branch_id when is_integer(branch_id) -> [branch_id: branch_id]
-      _ -> []
+      branch_id when is_integer(branch_id) ->
+        [branch_id: branch_id, workflow_ref: "article-audit:#{article.id}"]
+
+      _ ->
+        [workflow_ref: "article-audit:#{article.id}"]
     end
   end
 end

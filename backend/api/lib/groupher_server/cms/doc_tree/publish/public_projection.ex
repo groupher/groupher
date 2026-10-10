@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.Model.{Article, Community, DocPublic, DocTreeEvent, DocTreeNode}
+  alias CMS.Model.{Article, ArticleBinding, Community, DocPublic, DocTreeEvent, DocTreeNode}
   alias Helper.ORM
 
   @doc_tree_json_key_type CMS.DocTree.Const.doc_tree_json_key(:type)
@@ -86,10 +86,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
 
   def apply_tree_events(%Community{} = community, branch, events) do
     events
-    |> Enum.reduce_while(:ok, fn event, :ok ->
+    |> Enum.reduce_while({:ok, :pass}, fn event, {:ok, _} ->
       case apply_tree_event(community, branch, event) do
-        :ok -> {:cont, :ok}
-        {:ok, _node} -> {:cont, :ok}
+        {:ok, _} -> {:cont, {:ok, :pass}}
         error -> {:halt, error}
       end
     end)
@@ -151,8 +150,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
     draft = draft_node_by_node_id(community, branch, event_node["id"])
     node = authoritative_placement(event_node, draft)
 
-    with :ok <- ensure_public_parent(community, branch, node),
-         :ok <- sync_public_sibling_positions(community, branch, draft),
+    with {:ok, _} <- ensure_public_parent(community, branch, node),
+         {:ok, _} <- sync_public_sibling_positions(community, branch, draft),
          {:ok, attrs} <- public_attrs_from_event_node(community, branch, node) do
       upsert_public_node_attrs(community, branch, node["id"], attrs)
     end
@@ -208,7 +207,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
     end
   end
 
-  defp ensure_public_parent(_community, _branch, %{"type" => @tree_node_type_tab_key}), do: :ok
+  defp ensure_public_parent(_community, _branch, %{"type" => @tree_node_type_tab_key}),
+    do: {:ok, :pass}
 
   defp ensure_public_parent(%Community{} = community, branch, %{
          "parentNodeId" => parent_node_id
@@ -216,18 +216,18 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
        when not is_nil(parent_node_id) do
     case public_node_by_node_id(community, branch, parent_node_id) do
       %DocTreeNode{} ->
-        :ok
+        {:ok, :pass}
 
       nil ->
         case draft_node_by_node_id(community, branch, parent_node_id) do
           %DocTreeNode{type: type} = parent when type in [:tab, :group] ->
-            with :ok <-
+            with {:ok, _} <-
                    ensure_public_parent(community, branch, %{
                      "type" => to_string(parent.type),
                      "parentNodeId" => parent.parent_node_id
                    }),
                  {:ok, _} <- create_public_parent(community, branch, parent) do
-              :ok
+              {:ok, :pass}
             end
 
           nil ->
@@ -253,10 +253,13 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
     public_exists? =
       DocPublic
       |> join(:inner, [public], article in Article, on: article.id == public.article_id)
+      |> join(:inner, [public, _article], binding in ArticleBinding,
+        on: binding.article_id == public.article_id
+      )
       |> where(
-        [public, article],
+        [public, _article, binding],
         public.article_id == ^doc_id and public.branch_id == ^branch.id and
-          article.community_id == ^community.id
+          binding.community_id == ^community.id
       )
       |> Repo.exists?()
 
@@ -325,7 +328,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   defp delete_public_node_by_node_id(%Community{} = community, branch, node_id, node_type) do
     case public_node_by_node_id(community, branch, node_id) do
       %DocTreeNode{type: type} = node when type in [:tab, :group] ->
-        with :ok <- delete_public_descendants(community, branch, node.node_id) do
+        with {:ok, _} <- delete_public_descendants(community, branch, node.node_id) do
           ORM.delete(node)
         end
 
@@ -347,9 +350,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
     community
     |> public_descendants(branch, parent_node_id)
     |> Enum.reverse()
-    |> Enum.reduce_while(:ok, fn node, :ok ->
+    |> Enum.reduce_while({:ok, :pass}, fn node, {:ok, _} ->
       case ORM.delete(node) do
-        {:ok, _node} -> {:cont, :ok}
+        {:ok, _node} -> {:cont, {:ok, :pass}}
         error -> {:halt, error}
       end
     end)
@@ -373,7 +376,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   defp authoritative_placement(node, _draft), do: node
 
   defp create_public_parent(%Community{} = community, branch, %DocTreeNode{} = parent) do
-    with :ok <- sync_public_sibling_positions(community, branch, parent) do
+    with {:ok, _} <- sync_public_sibling_positions(community, branch, parent) do
       parent
       |> Map.take([
         :community_id,
@@ -390,7 +393,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
     end
   end
 
-  defp sync_public_sibling_positions(_community, _branch, nil), do: :ok
+  defp sync_public_sibling_positions(_community, _branch, nil), do: {:ok, :pass}
 
   defp sync_public_sibling_positions(
          %Community{} = community,
@@ -423,7 +426,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
       |> Repo.update_all(set: [index: Map.get(draft_indexes, node.node_id, node.index)])
     end)
 
-    :ok
+    {:ok, :pass}
   end
 
   defp where_sibling_scope(query, nil, @tree_node_type_tab) do

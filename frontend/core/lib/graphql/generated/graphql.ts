@@ -14,6 +14,12 @@ export type AnalysisTrendPagesDimension = 'ENTRY' | 'EXIT' | 'PATH' | 'QUERY' | 
 
 export type AnalysisTrendSourcesDimension = 'CHANNEL' | 'DOMAIN' | 'REFERRER'
 
+export type ApplicationLogoUploadInput = {
+  fileName: string
+  mimeType: string
+  sizeBytes: number
+}
+
 export type ArticleCatEnum = 'BUG' | 'DISCUSSION' | 'IDEA' | 'QA'
 
 export type ArticleDocumentAssetUsage = 'ATTACHMENT' | 'COVER' | 'COVER_DARK' | 'EMBED' | 'INLINE'
@@ -130,6 +136,32 @@ export type CommunityActivitySelectionInput = {
   filter?: CommunityActivityFilterInput | null | undefined
   presetKey?: string | null | undefined
 }
+
+export type CommunityApplicationActorType = 'APPLICANT' | 'JOB' | 'REVIEWER' | 'SYSTEM'
+
+export type CommunityApplicationCategory = 'GAMING' | 'GROUP' | 'PRODUCT' | 'TEACH'
+
+export type CommunityApplicationInput = {
+  applyCategory: CommunityApplicationCategory
+  applyMessage?: string | null | undefined
+  desc: string
+  locale: string
+  logoAssetRef: string | number
+  slug: string
+  title: string
+}
+
+export type CommunityApplicationStatus =
+  | 'APPROVED'
+  | 'CANCELLED'
+  | 'CREATED'
+  | 'CREATION_FAILED'
+  | 'EXPIRED'
+  | 'REJECTED'
+  | 'REVIEWING'
+  | 'SETTING_UP'
+  | 'SETUP_FAILED'
+  | 'SUBMITTED'
 
 export type CommunityAssetFilter = {
   assetType?: CommunityAssetType | null | undefined
@@ -489,7 +521,7 @@ export type WallpaperProfile = 'DESKTOP' | 'PHONE' | 'TABLET' | 'WIDE'
 export type WallpaperPublishInput = {
   baseVersion: number
   batchRef?: string | null | undefined
-  idempotencyKey: string
+  commandId: string | number
   settings: WallpaperSettingsInput
   theme: WallpaperTheme
 }
@@ -513,13 +545,336 @@ export type WallpaperType = 'GRADIENT' | 'NONE' | 'PICTURE' | 'UPLOAD'
 
 export type WallpaperUploadPrepareInput = {
   baseVersion: number
-  idempotencyKey: string
+  commandId: string | number
   images: Array<WallpaperImageInput>
   settings: WallpaperSettingsInput
   theme: WallpaperTheme
 }
 
 export type WhenEnum = 'THIS_MONTH' | 'THIS_WEEK' | 'THIS_YEAR' | 'TODAY'
+
+export type ApplyApplicationFieldsFragment = {
+  publicRef: string
+  status: CommunityApplicationStatus
+  version: number
+  title: string
+  slug: string
+  desc: string
+  locale: string
+  applyCategory: CommunityApplicationCategory
+  applyMessage: string | null
+  submittedAt: string
+  completedAt: string | null
+  updatedAt: string
+  decisionReasonCode: string | null
+  logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  community: { publicRef: string; slug: string } | null
+}
+
+export type ApplyAccountQueryVariables = Exact<{ [key: string]: never }>
+
+export type ApplyAccountQuery = { me: { login: string | null } | null }
+
+export type ApplyInitialStateQueryVariables = Exact<{ [key: string]: never }>
+
+export type ApplyInitialStateQuery = {
+  communityApplicationState: {
+    canApply: { allowed: boolean; reasonCode: string | null; retryAt: string | null }
+    currentApplication: {
+      publicRef: string
+      status: CommunityApplicationStatus
+      version: number
+      title: string
+      slug: string
+      desc: string
+      locale: string
+      applyCategory: CommunityApplicationCategory
+      applyMessage: string | null
+      submittedAt: string
+      completedAt: string | null
+      updatedAt: string
+      decisionReasonCode: string | null
+      logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+      community: { publicRef: string; slug: string } | null
+    } | null
+    latestFailedApplication: {
+      publicRef: string
+      status: CommunityApplicationStatus
+      title: string
+      slug: string
+      updatedAt: string
+    } | null
+  }
+}
+
+export type OwnedApplicationQueryVariables = Exact<{
+  ref: string | number
+}>
+
+export type OwnedApplicationQuery = {
+  communityApplication: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    applyMessage: string | null
+    submittedAt: string
+    completedAt: string | null
+    updatedAt: string
+    decisionReasonCode: string | null
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+    community: { publicRef: string; slug: string } | null
+  } | null
+}
+
+export type ReviewQueueQueryVariables = Exact<{
+  after?: string | null | undefined
+}>
+
+export type ReviewQueueQuery = {
+  pagedCommunityApplications: {
+    edges: Array<{
+      node: {
+        publicRef: string
+        status: CommunityApplicationStatus
+        version: number
+        title: string
+        slug: string
+        desc: string
+        locale: string
+        applyCategory: CommunityApplicationCategory
+        submittedAt: string
+        updatedAt: string
+        logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+        reviewer: { publicRef: string } | null
+      }
+    }>
+    pageInfo: { hasNextPage: boolean; endCursor: string | null }
+  }
+}
+
+export type ReviewApplicationQueryVariables = Exact<{
+  ref: string | number
+}>
+
+export type ReviewApplicationQuery = {
+  reviewCommunityApplication: {
+    expiresAt: string | null
+    reviewedAt: string | null
+    setupStartedAt: string | null
+    decisionNote: string | null
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    applyMessage: string | null
+    submittedAt: string
+    completedAt: string | null
+    updatedAt: string
+    decisionReasonCode: string | null
+    applicant: { publicRef: string }
+    reviewer: { publicRef: string } | null
+    lastJobError: {
+      reasonCode: string
+      message: string
+      operationRef: string | null
+      occurredAt: string | null
+    } | null
+    events: {
+      edges: Array<{
+        cursor: string
+        node: {
+          fromStatus: CommunityApplicationStatus | null
+          toStatus: CommunityApplicationStatus
+          actorType: CommunityApplicationActorType
+          reasonCode: string | null
+          operationRef: string | null
+          occurredAt: string
+          actor: { publicRef: string } | null
+        }
+      }>
+    }
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+    community: { publicRef: string; slug: string } | null
+  } | null
+}
+
+export type SubmitApplicationMutationVariables = Exact<{
+  input: CommunityApplicationInput
+  commandId: string | number
+}>
+
+export type SubmitApplicationMutation = {
+  submitCommunityApplication: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    applyMessage: string | null
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type StartApplicationReviewMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+}>
+
+export type StartApplicationReviewMutation = {
+  startCommunityApplicationReview: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type ApproveApplicationMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+  note?: string | null | undefined
+}>
+
+export type ApproveApplicationMutation = {
+  approveCommunityApplication: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type RejectApplicationMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+  reasonCode: string
+  note?: string | null | undefined
+}>
+
+export type RejectApplicationMutation = {
+  rejectCommunityApplication: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type RetryCommunityCreationMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+}>
+
+export type RetryCommunityCreationMutation = {
+  retryCommunityCreation: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type RetryCommunitySetupMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+}>
+
+export type RetryCommunitySetupMutation = {
+  retryCommunitySetup: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type CancelApplicationMutationVariables = Exact<{
+  ref: string | number
+  expectedVersion: number
+  commandId: string | number
+}>
+
+export type CancelApplicationMutation = {
+  cancelCommunityApplication: {
+    publicRef: string
+    status: CommunityApplicationStatus
+    version: number
+    title: string
+    slug: string
+    desc: string
+    locale: string
+    applyCategory: CommunityApplicationCategory
+    submittedAt: string
+    updatedAt: string
+    logo: { applicationUploadRef: string; communityAssetRef: string | null; url: string }
+  }
+}
+
+export type ApplicationLogoIntentMutationVariables = Exact<{
+  input: ApplicationLogoUploadInput
+}>
+
+export type ApplicationLogoIntentMutation = {
+  createCommunityApplicationLogoUploadIntent: {
+    uploadRef: string
+    capability: string
+    canonicalUrl: string
+  }
+}
 
 export type QueryUpvotePostMutationVariables = Exact<{
   article: ArticlePathInput
@@ -1296,6 +1651,7 @@ export type CommentViewerStatesQuery = {
 export type SetCommunityTagMutationVariables = Exact<{
   article: ArticlePathInput
   tagId: string | number
+  commandId: string | number
 }>
 
 export type SetCommunityTagMutation = {
@@ -1310,6 +1666,7 @@ export type SetCommunityTagMutation = {
 export type UnsetCommunityTagMutationVariables = Exact<{
   article: ArticlePathInput
   tagId: string | number
+  commandId: string | number
 }>
 
 export type UnsetCommunityTagMutation = {
@@ -3675,6 +4032,7 @@ export type UpdatePostFromMenuMutation = {
 export type SetPostCatMutationVariables = Exact<{
   article: ArticlePathInput
   cat: ArticleCatEnum
+  commandId: string | number
 }>
 
 export type SetPostCatMutation = {
@@ -3684,6 +4042,7 @@ export type SetPostCatMutation = {
 export type SetPostStatusMutationVariables = Exact<{
   article: ArticlePathInput
   status: ArticleStatusEnum
+  commandId: string | number
 }>
 
 export type SetPostStatusMutation = {
@@ -3692,12 +4051,14 @@ export type SetPostStatusMutation = {
 
 export type PinPostMutationVariables = Exact<{
   article: ArticlePathInput
+  commandId: string | number
 }>
 
 export type PinPostMutation = { pinPost: { innerId: string | null } | null }
 
 export type UndoPinPostMutationVariables = Exact<{
   article: ArticlePathInput
+  commandId: string | number
 }>
 
 export type UndoPinPostMutation = {
@@ -4847,6 +5208,7 @@ export type ReportCommentMutationVariables = Exact<{
   comment: CommentPathInput
   reason: string
   attr?: string | null | undefined
+  commandId: string | number
 }>
 
 export type ReportCommentMutation = {
@@ -4859,6 +5221,7 @@ export type ReportCommentMutation = {
 
 export type UndoReportCommentMutationVariables = Exact<{
   comment: CommentPathInput
+  commandId: string | number
 }>
 
 export type UndoReportCommentMutation = {
@@ -5286,6 +5649,7 @@ export type AnalysisTrendsOverviewQuery = {
 
 export type SaveCustomThemePresetMutationVariables = Exact<{
   community: string
+  commandId: string | number
   themePreset: DsbThemePreset
   themePresetBase: DsbThemePreset
   themeOverwrite?: unknown
@@ -5304,6 +5668,7 @@ export type SaveCustomThemePresetMutation = {
 
 export type SelectThemePresetMutationVariables = Exact<{
   community: string
+  commandId: string | number
   themePreset: DsbThemePreset
 }>
 
@@ -5412,6 +5777,7 @@ export type PublishWallpaperMutation = { publishWallpaper: { version: number } }
 export type UpdateDashboardContentShadowMutationVariables = Exact<{
   community: string
   enabled: boolean
+  commandId: string | number
 }>
 
 export type UpdateDashboardContentShadowMutation = {
@@ -5537,6 +5903,7 @@ export type DashboardSearchUsersQuery = {
 }
 
 export type DashboardAddModeratorMutationVariables = Exact<{
+  commandId: string | number
   community: string
   user: string
 }>
@@ -5557,6 +5924,7 @@ export type DashboardAddModeratorMutation = {
 }
 
 export type DashboardAddModeratorsMutationVariables = Exact<{
+  commandId: string | number
   community: string
   users: Array<string> | string
 }>
@@ -5578,6 +5946,7 @@ export type DashboardAddModeratorsMutation = {
 
 export type UpdateDashboardLayoutMutationVariables = Exact<{
   community: string
+  commandId: string | number
   postLayout?: DsbPostLayout | null | undefined
   kanbanLayout?: DsbKanbanLayout | null | undefined
   kanbanCardLayout?: DsbKanbanCardLayout | null | undefined
@@ -5743,6 +6112,7 @@ export type CommunityAssetRefsQuery = {
 export type DeleteCommunityAssetMutationVariables = Exact<{
   community: string
   id: string | number
+  commandId: string | number
 }>
 
 export type DeleteCommunityAssetMutation = {
@@ -7186,6 +7556,7 @@ export type MoveDocTreeNodeMutation = {
 }
 
 export type AddDocCoverCardMutationVariables = Exact<{
+  commandId: string | number
   community: string
   groupNodeId: string | number
 }>
@@ -7195,6 +7566,7 @@ export type AddDocCoverCardMutation = {
 }
 
 export type RemoveDocCoverCardMutationVariables = Exact<{
+  commandId: string | number
   community: string
   groupNodeId: string | number
 }>
@@ -7204,6 +7576,7 @@ export type RemoveDocCoverCardMutation = {
 }
 
 export type ReorderDocCoverCardsMutationVariables = Exact<{
+  commandId: string | number
   community: string
   ids: Array<string | number> | string | number
 }>
@@ -7211,6 +7584,7 @@ export type ReorderDocCoverCardsMutationVariables = Exact<{
 export type ReorderDocCoverCardsMutation = { reorderDocCoverCards: { done: boolean | null } | null }
 
 export type PinDocToCoverMutationVariables = Exact<{
+  commandId: string | number
   community: string
   nodeId: string | number
 }>
@@ -7220,6 +7594,7 @@ export type PinDocToCoverMutation = {
 }
 
 export type UnpinDocFromCoverMutationVariables = Exact<{
+  commandId: string | number
   community: string
   nodeId: string | number
 }>
@@ -7227,6 +7602,7 @@ export type UnpinDocFromCoverMutationVariables = Exact<{
 export type UnpinDocFromCoverMutation = { unpinDocFromCover: { nodeId: string } }
 
 export type ReorderDocCoverPinnedDocsMutationVariables = Exact<{
+  commandId: string | number
   community: string
   nodeIds: Array<string | number> | string | number
 }>
@@ -7236,6 +7612,7 @@ export type ReorderDocCoverPinnedDocsMutation = {
 }
 
 export type UpdateDocCoverCardAppearanceMutationVariables = Exact<{
+  commandId: string | number
   community: string
   id: string | number
   appearance: unknown
@@ -7246,6 +7623,7 @@ export type UpdateDocCoverCardAppearanceMutation = {
 }
 
 export type UpdatePinnedDocAppearanceMutationVariables = Exact<{
+  commandId: string | number
   community: string
   nodeId: string | number
   appearance: unknown
@@ -7334,6 +7712,7 @@ export type DashboardPressConfigQuery = {
 
 export type UpdateDashboardPressConfigMutationVariables = Exact<{
   input: UpdatePressConfigInput
+  commandId: string | number
 }>
 
 export type UpdateDashboardPressConfigMutation = {
@@ -7388,6 +7767,7 @@ export type DashboardOpenGraphInfoQuery = {
 
 export type UpdateDashboardBaseInfoMutationVariables = Exact<{
   community: string
+  commandId: string | number
   homepage?: string | null | undefined
   title?: string | null | undefined
   slug?: string | null | undefined
@@ -7413,6 +7793,7 @@ export type UpdateDashboardBaseInfoMutation = {
 
 export type UpdateDashboardMediaReportsMutationVariables = Exact<{
   community: string
+  commandId: string | number
   mediaReports?: Array<DsbMediaReportMap | null | undefined> | DsbMediaReportMap | null | undefined
 }>
 
@@ -7430,6 +7811,7 @@ export type UpdateDashboardMediaReportsMutation = {
 
 export type UpdateDashboardThirdPartyAnalyticsMutationVariables = Exact<{
   community: string
+  commandId: string | number
   thirdPartyAnalytics?:
     | Array<DsbThirdPartyAnalyticsInput | null | undefined>
     | DsbThirdPartyAnalyticsInput
@@ -7453,6 +7835,7 @@ export type UpdateDashboardThirdPartyAnalyticsMutation = {
 
 export type UpdateDashboardSeoMutationVariables = Exact<{
   community: string
+  commandId: string | number
   seoEnable?: boolean | null | undefined
   ogSiteName?: string | null | undefined
   ogTitle?: string | null | undefined
@@ -7477,6 +7860,7 @@ export type UpdateDashboardSeoMutation = {
 
 export type UpdateDashboardEnableMutationVariables = Exact<{
   community: string
+  commandId: string | number
   post?: boolean | null | undefined
   blog?: boolean | null | undefined
   kanban?: boolean | null | undefined
@@ -7514,6 +7898,7 @@ export type UpdateDashboardEnableMutation = {
 
 export type UpdateDashboardSocialLinksMutationVariables = Exact<{
   community: string
+  commandId: string | number
   socialLinks?: Array<DsbSocialLinkMap | null | undefined> | DsbSocialLinkMap | null | undefined
 }>
 
@@ -7525,6 +7910,7 @@ export type UpdateDashboardSocialLinksMutation = {
 
 export type UpdateDashboardNameAliasMutationVariables = Exact<{
   community: string
+  commandId: string | number
   nameAlias?: Array<DsbAliasMap | null | undefined> | DsbAliasMap | null | undefined
 }>
 
@@ -7541,6 +7927,7 @@ export type UpdateDashboardNameAliasMutation = {
 
 export type UpdateDashboardDocFaqMutationVariables = Exact<{
   community: string
+  commandId: string | number
   docFaq: DsbDocFaqInput
 }>
 
@@ -7573,6 +7960,7 @@ export type UpdateDashboardDocFaqMutation = {
 
 export type UpdateDashboardHeaderLinksMutationVariables = Exact<{
   community: string
+  commandId: string | number
   headerLinks?: Array<DsbLinkMap | null | undefined> | DsbLinkMap | null | undefined
 }>
 
@@ -7590,6 +7978,7 @@ export type UpdateDashboardHeaderLinksMutation = {
 
 export type UpdateDashboardFooterLinksMutationVariables = Exact<{
   community: string
+  commandId: string | number
   footerLinks?: Array<DsbLinkMap | null | undefined> | DsbLinkMap | null | undefined
 }>
 
@@ -7607,6 +7996,7 @@ export type UpdateDashboardFooterLinksMutation = {
 
 export type UpdateDashboardFooterOnelineLinksMutationVariables = Exact<{
   community: string
+  commandId: string | number
   footerOnelineLinks?:
     | Array<DsbLinkChildMap | null | undefined>
     | DsbLinkChildMap
@@ -7719,6 +8109,7 @@ export type DashboardCommunityTagGroupsQuery = {
 }
 
 export type DashboardUpdateCommunityTagMutationVariables = Exact<{
+  commandId: string | number
   id: string | number
   color?: RainbowColor | null | undefined
   title?: string | null | undefined
@@ -7748,6 +8139,7 @@ export type DashboardUpdateCommunityTagMutation = {
 }
 
 export type DashboardCreateCommunityTagGroupMutationVariables = Exact<{
+  commandId: string | number
   thread: Thread
   title: string
   community: string
@@ -7782,6 +8174,7 @@ export type DashboardCreateCommunityTagGroupMutation = {
 }
 
 export type DashboardUpdateCommunityTagGroupMutationVariables = Exact<{
+  commandId: string | number
   id: string | number
   title: string
   community: string
@@ -7817,6 +8210,7 @@ export type DashboardUpdateCommunityTagGroupMutation = {
 }
 
 export type DashboardCreateCommunityTagMutationVariables = Exact<{
+  commandId: string | number
   thread: Thread
   title: string
   slug: string
@@ -7832,6 +8226,7 @@ export type DashboardCreateCommunityTagMutation = {
 }
 
 export type DashboardReindexTagsInGroupMutationVariables = Exact<{
+  commandId: string | number
   community: string
   thread?: Thread | null | undefined
   groupId: string | number
@@ -7843,6 +8238,7 @@ export type DashboardReindexTagsInGroupMutation = {
 }
 
 export type DashboardReindexCommunityTagsMutationVariables = Exact<{
+  commandId: string | number
   community: string
   thread?: Thread | null | undefined
   tags?:
@@ -7857,6 +8253,7 @@ export type DashboardReindexCommunityTagsMutation = {
 }
 
 export type DashboardReindexCommunityTagGroupsMutationVariables = Exact<{
+  commandId: string | number
   community: string
   thread?: Thread | null | undefined
   groups?:
@@ -8015,6 +8412,7 @@ export type AllPassportRulesQueryVariables = Exact<{ [key: string]: never }>
 export type AllPassportRulesQuery = { allPassportRulesString: { cms: unknown } | null }
 
 export type UpdateModeratorPassportMutationVariables = Exact<{
+  commandId: string | number
   community: string
   user: string
   rules: unknown
@@ -8037,6 +8435,7 @@ export type UpdateModeratorPassportMutation = {
 }
 
 export type RemoveModeratorMutationVariables = Exact<{
+  commandId: string | number
   community: string
   user: string
 }>
@@ -8064,6 +8463,7 @@ export type RichEditorSimpleQueryQueryVariables = Exact<{
 export type RichEditorSimpleQueryQuery = { post: { innerId: string | null } }
 
 export type DeleteCommunityTagMutationVariables = Exact<{
+  commandId: string | number
   id: string | number
   community: string
   thread?: Thread | null | undefined
@@ -8072,6 +8472,7 @@ export type DeleteCommunityTagMutationVariables = Exact<{
 export type DeleteCommunityTagMutation = { deleteCommunityTag: { id: string | null } | null }
 
 export type CreateCommunityTagMutationVariables = Exact<{
+  commandId: string | number
   thread: Thread
   title: string
   slug: string
@@ -8085,6 +8486,7 @@ export type CreateCommunityTagMutationVariables = Exact<{
 export type CreateCommunityTagMutation = { createCommunityTag: { id: string | null } | null }
 
 export type UpdateCommunityTagMutationVariables = Exact<{
+  commandId: string | number
   id: string | number
   color?: RainbowColor | null | undefined
   title?: string | null | undefined
@@ -8098,6 +8500,57 @@ export type UpdateCommunityTagMutationVariables = Exact<{
 
 export type UpdateCommunityTagMutation = { updateCommunityTag: { id: string | null } | null }
 
+export const ApplyApplicationFieldsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ApplyApplicationFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityApplication' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyMessage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'decisionReasonCode' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'logo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'community' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApplyApplicationFieldsFragment, unknown>
 export const PageAuthorFieldsFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -11201,6 +11654,1231 @@ export const KanbanPageFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<KanbanPageFieldsFragment, unknown>
+export const ApplyAccountDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ApplyAccount' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'me' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'login' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApplyAccountQuery, ApplyAccountQueryVariables>
+export const ApplyInitialStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ApplyInitialState' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'communityApplicationState' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'canApply' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'allowed' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'reasonCode' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'retryAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currentApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'FragmentSpread',
+                        name: { kind: 'Name', value: 'ApplyApplicationFields' },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'latestFailedApplication' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ApplyApplicationFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityApplication' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyMessage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'decisionReasonCode' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'logo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'community' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApplyInitialStateQuery, ApplyInitialStateQueryVariables>
+export const OwnedApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'OwnedApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'communityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ApplyApplicationFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ApplyApplicationFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityApplication' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyMessage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'decisionReasonCode' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'logo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'community' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<OwnedApplicationQuery, OwnedApplicationQueryVariables>
+export const ReviewQueueDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReviewQueue' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'after' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pagedCommunityApplications' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: {
+                  kind: 'ObjectValue',
+                  fields: [
+                    {
+                      kind: 'ObjectField',
+                      name: { kind: 'Name', value: 'statuses' },
+                      value: {
+                        kind: 'ListValue',
+                        values: [
+                          { kind: 'EnumValue', value: 'SUBMITTED' },
+                          { kind: 'EnumValue', value: 'REVIEWING' },
+                          { kind: 'EnumValue', value: 'APPROVED' },
+                          { kind: 'EnumValue', value: 'CREATION_FAILED' },
+                          { kind: 'EnumValue', value: 'SETUP_FAILED' },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: { kind: 'IntValue', value: '100' },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'after' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'after' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'edges' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'node' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'logo' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'applicationUploadRef' },
+                                  },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'communityAssetRef' },
+                                  },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'reviewer' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReviewQueueQuery, ReviewQueueQueryVariables>
+export const ReviewApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReviewApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reviewCommunityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'ApplyApplicationFields' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'applicant' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'publicRef' } }],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'reviewer' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'publicRef' } }],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'expiresAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'setupStartedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'decisionNote' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'lastJobError' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'reasonCode' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'message' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'events' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'first' },
+                      value: { kind: 'IntValue', value: '100' },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'edges' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'cursor' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'node' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'fromStatus' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'toStatus' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'actorType' } },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'actor' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'publicRef' },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'reasonCode' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ApplyApplicationFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityApplication' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'applyMessage' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'decisionReasonCode' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'logo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'community' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReviewApplicationQuery, ReviewApplicationQueryVariables>
+export const SubmitApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SubmitApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityApplicationInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'submitCommunityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyMessage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SubmitApplicationMutation, SubmitApplicationMutationVariables>
+export const StartApplicationReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'StartApplicationReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'startCommunityApplicationReview' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  StartApplicationReviewMutation,
+  StartApplicationReviewMutationVariables
+>
+export const ApproveApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ApproveApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'note' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'approveCommunityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'note' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'note' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApproveApplicationMutation, ApproveApplicationMutationVariables>
+export const RejectApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RejectApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reasonCode' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'note' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'rejectCommunityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'reasonCode' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'reasonCode' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'note' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'note' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RejectApplicationMutation, RejectApplicationMutationVariables>
+export const RetryCommunityCreationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RetryCommunityCreation' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'retryCommunityCreation' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  RetryCommunityCreationMutation,
+  RetryCommunityCreationMutationVariables
+>
+export const RetryCommunitySetupDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RetryCommunitySetup' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'retryCommunitySetup' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RetryCommunitySetupMutation, RetryCommunitySetupMutationVariables>
+export const CancelApplicationDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CancelApplication' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cancelCommunityApplication' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ref' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ref' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'publicRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'desc' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'locale' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'applyCategory' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'submittedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'logo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'applicationUploadRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityAssetRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CancelApplicationMutation, CancelApplicationMutationVariables>
+export const ApplicationLogoIntentDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ApplicationLogoIntent' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'ApplicationLogoUploadInput' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createCommunityApplicationLogoUploadIntent' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'uploadRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'capability' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'canonicalUrl' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApplicationLogoIntentMutation, ApplicationLogoIntentMutationVariables>
 export const QueryUpvotePostDocument = {
   kind: 'Document',
   definitions: [
@@ -14151,6 +15829,14 @@ export const SetCommunityTagDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -14168,6 +15854,11 @@ export const SetCommunityTagDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'communityTagId' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'tagId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -14207,6 +15898,14 @@ export const UnsetCommunityTagDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -14224,6 +15923,11 @@ export const UnsetCommunityTagDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'communityTagId' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'tagId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -19662,6 +21366,14 @@ export const SetPostCatDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticleCatEnum' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -19679,6 +21391,11 @@ export const SetPostCatDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'cat' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'cat' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -19718,6 +21435,14 @@ export const SetPostStatusDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticleStatusEnum' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -19735,6 +21460,11 @@ export const SetPostStatusDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'status' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'status' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -19766,6 +21496,14 @@ export const PinPostDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -19778,6 +21516,11 @@ export const PinPostDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'article' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -19806,6 +21549,14 @@ export const UndoPinPostDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -19818,6 +21569,11 @@ export const UndoPinPostDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'article' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -22226,6 +23982,14 @@ export const ReportCommentDocument = {
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'attr' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -22248,6 +24012,11 @@ export const ReportCommentDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'attr' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'attr' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -22287,6 +24056,14 @@ export const UndoReportCommentDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'CommentPathInput' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -22299,6 +24076,11 @@ export const UndoReportCommentDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'comment' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'comment' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -23814,6 +25596,14 @@ export const SaveCustomThemePresetDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'themePreset' } },
           type: {
             kind: 'NonNullType',
@@ -23845,6 +25635,11 @@ export const SaveCustomThemePresetDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -23914,6 +25709,14 @@ export const SelectThemePresetDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'themePreset' } },
           type: {
             kind: 'NonNullType',
@@ -23932,6 +25735,11 @@ export const SelectThemePresetDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -24351,6 +26159,14 @@ export const UpdateDashboardContentShadowDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -24368,6 +26184,11 @@ export const UpdateDashboardContentShadowDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'enabled' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'enabled' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -24778,6 +26599,14 @@ export const DashboardAddModeratorDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -24800,6 +26629,11 @@ export const DashboardAddModeratorDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'addModerator' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -24856,6 +26690,14 @@ export const DashboardAddModeratorsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -24884,6 +26726,11 @@ export const DashboardAddModeratorsDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'addModerators' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -24947,6 +26794,14 @@ export const UpdateDashboardLayoutDocument = {
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
         {
@@ -25107,6 +26962,11 @@ export const UpdateDashboardLayoutDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -25664,6 +27524,14 @@ export const DeleteCommunityAssetDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -25681,6 +27549,11 @@ export const DeleteCommunityAssetDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -28640,6 +30513,14 @@ export const AddDocCoverCardDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28662,6 +30543,11 @@ export const AddDocCoverCardDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'addDocCoverCard' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28697,6 +30583,14 @@ export const RemoveDocCoverCardDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28719,6 +30613,11 @@ export const RemoveDocCoverCardDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'removeDocCoverCard' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28754,6 +30653,14 @@ export const ReorderDocCoverCardsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28782,6 +30689,11 @@ export const ReorderDocCoverCardsDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'reorderDocCoverCards' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28813,6 +30725,14 @@ export const PinDocToCoverDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28835,6 +30755,11 @@ export const PinDocToCoverDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'pinDocToCover' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28870,6 +30795,14 @@ export const UnpinDocFromCoverDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28892,6 +30825,11 @@ export const UnpinDocFromCoverDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'unpinDocFromCover' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28923,6 +30861,14 @@ export const ReorderDocCoverPinnedDocsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -28951,6 +30897,11 @@ export const ReorderDocCoverPinnedDocsDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'reorderDocCoverPinnedDocs' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -28985,6 +30936,14 @@ export const UpdateDocCoverCardAppearanceDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -29015,6 +30974,11 @@ export const UpdateDocCoverCardAppearanceDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updateDocCoverCardAppearance' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -29057,6 +31021,14 @@ export const UpdatePinnedDocAppearanceDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -29087,6 +31059,11 @@ export const UpdatePinnedDocAppearanceDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updatePinnedDocAppearance' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -29184,6 +31161,14 @@ export const UpdateDashboardPressConfigDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'UpdatePressConfigInput' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -29196,6 +31181,11 @@ export const UpdateDashboardPressConfigDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'input' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
             ],
             selectionSet: {
@@ -29341,6 +31331,14 @@ export const UpdateDashboardBaseInfoDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'homepage' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
@@ -29401,6 +31399,11 @@ export const UpdateDashboardBaseInfoDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -29498,6 +31501,14 @@ export const UpdateDashboardMediaReportsDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'mediaReports' } },
           type: {
             kind: 'ListType',
@@ -29516,6 +31527,11 @@ export const UpdateDashboardMediaReportsDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -29569,6 +31585,14 @@ export const UpdateDashboardThirdPartyAnalyticsDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'thirdPartyAnalytics' } },
           type: {
             kind: 'ListType',
@@ -29590,6 +31614,11 @@ export const UpdateDashboardThirdPartyAnalyticsDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -29655,6 +31684,14 @@ export const UpdateDashboardSeoDocument = {
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
           },
         },
         {
@@ -29749,6 +31786,11 @@ export const UpdateDashboardSeoDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -29868,6 +31910,14 @@ export const UpdateDashboardEnableDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'post' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
         },
@@ -29943,6 +31993,11 @@ export const UpdateDashboardEnableDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30061,6 +32116,14 @@ export const UpdateDashboardSocialLinksDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'socialLinks' } },
           type: {
             kind: 'ListType',
@@ -30079,6 +32142,11 @@ export const UpdateDashboardSocialLinksDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30129,6 +32197,14 @@ export const UpdateDashboardNameAliasDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'nameAlias' } },
           type: {
             kind: 'ListType',
@@ -30147,6 +32223,11 @@ export const UpdateDashboardNameAliasDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30199,6 +32280,14 @@ export const UpdateDashboardDocFaqDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'docFaq' } },
           type: {
             kind: 'NonNullType',
@@ -30217,6 +32306,11 @@ export const UpdateDashboardDocFaqDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30303,6 +32397,14 @@ export const UpdateDashboardHeaderLinksDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'headerLinks' } },
           type: {
             kind: 'ListType',
@@ -30321,6 +32423,11 @@ export const UpdateDashboardHeaderLinksDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30399,6 +32506,14 @@ export const UpdateDashboardFooterLinksDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'footerLinks' } },
           type: {
             kind: 'ListType',
@@ -30417,6 +32532,11 @@ export const UpdateDashboardFooterLinksDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30495,6 +32615,14 @@ export const UpdateDashboardFooterOnelineLinksDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'footerOnelineLinks' } },
           type: {
             kind: 'ListType',
@@ -30513,6 +32641,11 @@ export const UpdateDashboardFooterOnelineLinksDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
               },
               {
                 kind: 'Argument',
@@ -30920,6 +33053,14 @@ export const DashboardUpdateCommunityTagDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
           type: {
             kind: 'NonNullType',
@@ -30975,6 +33116,11 @@ export const DashboardUpdateCommunityTagDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updateCommunityTag' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },
@@ -31060,6 +33206,14 @@ export const DashboardCreateCommunityTagGroupDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
           type: {
             kind: 'NonNullType',
@@ -31090,6 +33244,11 @@ export const DashboardCreateCommunityTagGroupDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'createCommunityTagGroup' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'thread' },
@@ -31188,6 +33347,14 @@ export const DashboardUpdateCommunityTagGroupDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
           type: {
             kind: 'NonNullType',
@@ -31223,6 +33390,11 @@ export const DashboardUpdateCommunityTagGroupDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updateCommunityTagGroup' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },
@@ -31326,6 +33498,14 @@ export const DashboardCreateCommunityTagDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
           type: {
             kind: 'NonNullType',
@@ -31392,6 +33572,11 @@ export const DashboardCreateCommunityTagDocument = {
             arguments: [
               {
                 kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
                 name: { kind: 'Name', value: 'thread' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
               },
@@ -31454,6 +33639,14 @@ export const DashboardReindexTagsInGroupDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -31489,6 +33682,11 @@ export const DashboardReindexTagsInGroupDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'reindexTagsInGroup' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -31533,6 +33731,14 @@ export const DashboardReindexCommunityTagsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -31560,6 +33766,11 @@ export const DashboardReindexCommunityTagsDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'reindexCommunityTags' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -31599,6 +33810,14 @@ export const DashboardReindexCommunityTagGroupsDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -31629,6 +33848,11 @@ export const DashboardReindexCommunityTagGroupsDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'reindexCommunityTagGroups' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -32095,6 +34319,14 @@ export const UpdateModeratorPassportDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -32125,6 +34357,11 @@ export const UpdateModeratorPassportDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updateModeratorPassport' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -32190,6 +34427,14 @@ export const RemoveModeratorDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
           type: {
             kind: 'NonNullType',
@@ -32212,6 +34457,11 @@ export const RemoveModeratorDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'removeModerator' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'community' },
@@ -32309,6 +34559,14 @@ export const DeleteCommunityTagDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
           type: {
             kind: 'NonNullType',
@@ -32336,6 +34594,11 @@ export const DeleteCommunityTagDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'deleteCommunityTag' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },
@@ -32370,6 +34633,14 @@ export const CreateCommunityTagDocument = {
       operation: 'mutation',
       name: { kind: 'Name', value: 'CreateCommunityTag' },
       variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
         {
           kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
@@ -32438,6 +34709,11 @@ export const CreateCommunityTagDocument = {
             arguments: [
               {
                 kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
                 name: { kind: 'Name', value: 'thread' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
               },
@@ -32497,6 +34773,14 @@ export const UpdateCommunityTagDocument = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
           type: {
             kind: 'NonNullType',
@@ -32554,6 +34838,11 @@ export const UpdateCommunityTagDocument = {
             kind: 'Field',
             name: { kind: 'Name', value: 'updateCommunityTag' },
             arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },

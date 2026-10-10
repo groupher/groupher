@@ -19,8 +19,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.AbuseReports.article(doc2, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.article(doc2, "reason", "attr_info", user2, Ecto.UUID.generate())
 
       variables = %{filter: %{content_type: "DOC", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
@@ -33,8 +33,8 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
-      {:ok, _} = CMS.AbuseReports.article(doc2, "reason", "attr_info", user2)
+      {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.article(doc2, "reason", "attr_info", user2, Ecto.UUID.generate())
 
       variables = %{
         filter: %{content_type: "DOC", content_id: doc.id, page: 1, size: 10}
@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
       report = results["entries"] |> List.first()
 
       assert get_in(report, ["article", "thread"]) == "DOC"
-      assert get_in(report, ["article", "innerId"]) == to_string(doc.inner_id)
+      assert get_in(report, ["article", "innerId"]) == to_string(article_inner_id(doc, community))
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 1
@@ -53,9 +53,9 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
 
     test "support comment", ~m(guest_conn community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(community, :doc, article_inner_id(doc, community), mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
+      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user, Ecto.UUID.generate())
 
       variables = %{filter: %{content_type: "COMMENT", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)

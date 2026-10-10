@@ -25,14 +25,14 @@ defmodule GroupherServer.CMS.Outbox.Workers.Comment.Cleanup do
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
     case Outbox.execute(event_id, &cleanup/1) do
       {:ok, _value} ->
-        :ok
+        {:ok, :pass}
 
       {:busy, seconds} ->
         {:snooze, seconds}
 
       {:error, _reason} when job.attempt >= job.max_attempts ->
         _ = Outbox.mark_dead(event_id)
-        :ok
+        {:ok, :pass}
 
       {:error, reason} ->
         {:error, reason}
@@ -43,13 +43,13 @@ defmodule GroupherServer.CMS.Outbox.Workers.Comment.Cleanup do
     case event.event do
       "comment.changed" ->
         with {:ok, tags} <- Scope.tags(:comments_content_changed, event.data),
-             :ok <- Cloudflare.purge(tags) do
+             {:ok, _} <- Cloudflare.purge(tags) do
           {:ok, :purged}
         end
 
       "comment.deleted" ->
         with %Article{} = article <- Repo.get(Article, event.resource_id),
-             :ok <- normalize(Indexer.enqueue_metrics(article)) do
+             {:ok, _} <- normalize(Indexer.enqueue_metrics(article)) do
           {:ok, :effects_enqueued}
         else
           nil -> {:error, :comment_article_not_found}
@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Outbox.Workers.Comment.Cleanup do
     with %Comment{} = comment <- Repo.get(Comment, event.resource_id),
          %User{} = actor <- Repo.get(User, event.data["actor_id"]),
          %Community{} = community <- Repo.get(Community, event.data["community_id"]),
-         :ok <- enqueue_comment_job(action, comment, actor, community) do
+         {:ok, _} <- enqueue_comment_job(action, comment, actor, community) do
       {:ok, :effects_enqueued}
     else
       nil -> {:error, :comment_effect_target_not_found}
@@ -75,21 +75,22 @@ defmodule GroupherServer.CMS.Outbox.Workers.Comment.Cleanup do
   defp comment_effects(_action, _event), do: {:error, :unknown_comment_outbox_event}
 
   defp enqueue_comment_job("comment.created", comment, actor, community) do
-    with :ok <- enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end),
-         :ok <-
+    with {:ok, _} <- enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end),
+         {:ok, _} <-
            enqueue(:notify_comment, comment.id, fn -> Jobs.notify_comment(comment, actor) end),
-         :ok <-
+         {:ok, _} <-
            enqueue(:subscribe_community, community.id, fn ->
              Jobs.subscribe_community(community, actor)
            end) do
-      :ok
+      {:ok, :pass}
     end
   end
 
   defp enqueue_comment_job("comment.replied", comment, actor, _community) do
-    with :ok <- enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end),
-         :ok <- enqueue(:notify_reply, comment.id, fn -> Jobs.notify_reply(comment, actor) end) do
-      :ok
+    with {:ok, _} <- enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end),
+         {:ok, _} <-
+           enqueue(:notify_reply, comment.id, fn -> Jobs.notify_reply(comment, actor) end) do
+      {:ok, :pass}
     end
   end
 
@@ -99,7 +100,7 @@ defmodule GroupherServer.CMS.Outbox.Workers.Comment.Cleanup do
 
   defp enqueue(type, key, fun), do: Jobs.enqueue_best_effort(type, key, fun)
 
-  defp normalize(:ok), do: :ok
-  defp normalize({:ok, _}), do: :ok
+  defp normalize(:ok), do: {:ok, :pass}
+  defp normalize({:ok, _}), do: {:ok, :pass}
   defp normalize({:error, reason}), do: {:error, reason}
 end

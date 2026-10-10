@@ -26,16 +26,23 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       all_comment =
         Enum.reduce(0..total_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+            CMS.Comments.create_comment(
+              community,
+              :post,
+              article_inner_id(post, community),
+              mock_comment(),
+              user,
+              Ecto.UUID.generate()
+            )
 
           acc ++ [comment]
         end)
 
       first_comment = List.first(all_comment)
 
-      {:ok, _} = CMS.Interactions.emotion(first_comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(first_comment, :beer, user)
-      {:ok, _} = CMS.Interactions.emotion(first_comment, :popcorn, user)
+      {:ok, _} = CMS.Interactions.emotion(first_comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(first_comment, :beer, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(first_comment, :popcorn, user, Ecto.UUID.generate())
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(
@@ -68,16 +75,23 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       all_comment =
         Enum.reduce(0..total_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+            CMS.Comments.create_comment(
+              community,
+              :post,
+              article_inner_id(post, community),
+              mock_comment(),
+              user,
+              Ecto.UUID.generate()
+            )
 
           acc ++ [comment]
         end)
 
       first_comment = List.first(all_comment)
 
-      {:ok, _} = CMS.Interactions.emotion(first_comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(first_comment, :beer, user2)
-      {:ok, comment} = CMS.Interactions.emotion(first_comment, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(first_comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(first_comment, :beer, user2, Ecto.UUID.generate())
+      {:ok, comment} = CMS.Interactions.emotion(first_comment, :beer, user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user)
 
       assert comment.emotions.viewer_has_downvoteed == true
@@ -87,13 +101,25 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
     test "nested reply should have viewer emotion status in replies mode",
          ~m(community post user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, reply_comment} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment("reply_content"), user)
+        CMS.Comments.reply_comment(
+          parent_comment.id,
+          mock_comment("reply_content"),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(reply_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(reply_comment, :downvote, user, Ecto.UUID.generate())
 
       filter = %{page: 1, size: 10}
 
@@ -112,28 +138,35 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
     # test "should subscribe community if need", ~m(post user user2)a do
     #   {:error, _subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: post.community_id,
+    #       community_id: community.id,
     #       user_id: user.id
     #     })
 
-    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
-    #   {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user)
+    #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user, Ecto.UUID.generate())
+    #   {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user, Ecto.UUID.generate())
 
     #   {:ok, subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
-    #       community_id: post.community_id,
+    #       community_id: community.id,
     #       user_id: user.id
     #     })
 
     #   assert subscriber.user_id === user.id
-    #   assert subscriber.community_id === post.community_id
+    #   assert subscriber.community_id === community.id
     # end
   end
 
   describe "[basic article comment emotion]" do
     test "comment has default emotions after created", ~m(community post user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -143,10 +176,17 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
 
     test "can make emotion to comment", ~m(community post user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user2)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user2, Ecto.UUID.generate())
 
       {:ok, parent_comment} = InteractionResponse.one(parent_comment, user)
       emotions = parent_comment.emotions
@@ -158,10 +198,17 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
 
     test "can undo emotion to comment", ~m(community post user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user2)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user2, Ecto.UUID.generate())
 
       {:ok, parent_comment} = InteractionResponse.one(parent_comment, user)
       emotions = parent_comment.emotions
@@ -170,8 +217,11 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       assert user_exist_in?(user, emotions.latest_downvote_users)
       assert user_exist_in?(user2, emotions.latest_downvote_users)
 
-      {:ok, _} = CMS.Interactions.undo_emotion(parent_comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.undo_emotion(parent_comment, :downvote, user2)
+      {:ok, _} =
+        CMS.Interactions.undo_emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
+
+      {:ok, _} =
+        CMS.Interactions.undo_emotion(parent_comment, :downvote, user2, Ecto.UUID.generate())
 
       {:ok, parent_comment} = InteractionResponse.one(parent_comment, user)
       emotions = parent_comment.emotions
@@ -182,10 +232,17 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
 
     test "same user make same emotion to same comment.", ~m(community post user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
 
       {:ok, parent_comment} = InteractionResponse.one(parent_comment, user)
 
@@ -196,10 +253,17 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
     test "same user different emotions create one record per emotion",
          ~m(community post user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :heart, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :heart, user, Ecto.UUID.generate())
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -223,9 +287,17 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
 
     test "undo missing emotion does not create empty record", ~m(community post user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Interactions.undo_emotion(parent_comment, :downvote, user)
+      {:ok, _} =
+        CMS.Interactions.undo_emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
 
       {:error, _} =
         ORM.find_by(CommentUserEmotion, %{
@@ -238,11 +310,18 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
     test "different user can make same emotions on same comment",
          ~m(community post user user2 user3)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user)
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user2)
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user3)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user3, Ecto.UUID.generate())
 
       {:ok, parent_comment} = InteractionResponse.one(parent_comment, user)
       emotions = parent_comment.emotions
@@ -255,13 +334,20 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
 
     test "same user can make different emotions on same comment", ~m(community post user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user)
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :heart, user)
-      {:ok, _} = CMS.Interactions.emotion(parent_comment, :orz, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :heart, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :orz, user, Ecto.UUID.generate())
 
       {:ok, parent_comment} = InteractionResponse.one(parent_comment, user)
       emotions = parent_comment.emotions

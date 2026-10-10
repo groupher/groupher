@@ -42,7 +42,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :done_state do
     @desc "Whether the requested operation completed successfully."
     field(:done, :boolean)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
   end
 
   object :article_view_track_result do
@@ -179,13 +179,13 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :community_application_actor do
     field(:public_ref, non_null(:id),
-      resolve: &GroupherServerWeb.Resolvers.CMS.application_actor_ref/3
+      resolve: &GroupherServerWeb.Resolvers.CMS.CommunityApplications.application_actor_ref/3
     )
   end
 
   object :community_application_community do
     field(:public_ref, non_null(:id),
-      resolve: &GroupherServerWeb.Resolvers.CMS.application_community_ref/3
+      resolve: &GroupherServerWeb.Resolvers.CMS.CommunityApplications.application_community_ref/3
     )
 
     field(:slug, non_null(:string))
@@ -211,7 +211,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:actor_type, non_null(:community_application_actor_type))
 
     field(:actor, :community_application_actor,
-      resolve: &GroupherServerWeb.Resolvers.CMS.application_event_actor/3
+      resolve: &GroupherServerWeb.Resolvers.CMS.CommunityApplications.application_event_actor/3
     )
 
     field(:reason_code, :string)
@@ -240,11 +240,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:version, non_null(:integer))
 
     field(:applicant, non_null(:community_application_actor),
-      resolve: &GroupherServerWeb.Resolvers.CMS.application_applicant/3
+      resolve: &GroupherServerWeb.Resolvers.CMS.CommunityApplications.application_applicant/3
     )
 
     field(:reviewer, :community_application_actor,
-      resolve: &GroupherServerWeb.Resolvers.CMS.application_reviewer/3
+      resolve: &GroupherServerWeb.Resolvers.CMS.CommunityApplications.application_reviewer/3
     )
 
     field(:title, non_null(:string))
@@ -252,7 +252,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:desc, non_null(:string))
 
     field(:logo, non_null(:community_application_logo),
-      resolve: &GroupherServerWeb.Resolvers.CMS.community_application_logo/3
+      resolve: &GroupherServerWeb.Resolvers.CMS.CommunityApplications.community_application_logo/3
     )
 
     field(:locale, non_null(:string))
@@ -268,17 +268,20 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:decision_note, :string)
 
     field(:community, :community_application_community,
-      resolve: &GroupherServerWeb.Resolvers.CMS.application_community/3
+      resolve: &GroupherServerWeb.Resolvers.CMS.CommunityApplications.application_community/3
     )
 
     field(:last_job_error, :community_application_job_error,
-      resolve: &GroupherServerWeb.Resolvers.CMS.application_job_error/3
+      resolve: &GroupherServerWeb.Resolvers.CMS.CommunityApplications.application_job_error/3
     )
 
     field :events, non_null(:community_application_event_connection) do
       arg(:first, :integer, default_value: 100)
       arg(:after, :string)
-      resolve(&GroupherServerWeb.Resolvers.CMS.community_application_events/3)
+
+      resolve(
+        &GroupherServerWeb.Resolvers.CMS.CommunityApplications.community_application_events/3
+      )
     end
   end
 
@@ -375,7 +378,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:deleted_by, :user, resolve: dataloader(CMS, :deleted_by))
     field(:deleted_at, non_null(:datetime))
     field(:mentioned_by_count, non_null(:integer))
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
 
     field(:scheduled_permanent_deletion_at, non_null(:datetime),
       resolve: fn item, _, _ -> {:ok, item.trash_action.scheduled_permanent_deletion_at} end
@@ -383,12 +386,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field :mentioned_by, :paged_mentions do
       arg(:filter, :pagi_filter)
-      resolve(&GroupherServerWeb.Resolvers.CMS.trashed_article_mentioned_by/3)
+      resolve(&GroupherServerWeb.Resolvers.CMS.ArtimentMentions.trashed_article_mentioned_by/3)
     end
 
     field :mentions, :paged_mentions do
       arg(:filter, :pagi_filter)
-      resolve(&GroupherServerWeb.Resolvers.CMS.trashed_article_mentions/3)
+      resolve(&GroupherServerWeb.Resolvers.CMS.ArtimentMentions.trashed_article_mentions/3)
     end
   end
 
@@ -862,7 +865,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:release, :doc_publish_release)
     field(:checklist, non_null(:doc_publish_checklist))
     field(:scope, non_null(:doc_publish_scope))
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
   end
 
   input_object :doc_publish_changes_input do
@@ -923,7 +926,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:title, :string)
     field(:subtitle, :string)
     field(:slug, :string)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
     field(:stage, :article_stage)
     field(:digest, :string)
     field(:author, :user)
@@ -969,7 +972,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:digest, :string)
     field(:slug, :string)
     field(:subtitle, :string)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
 
     field(:document, :article_document,
       resolve: fn draft, _, _ ->
@@ -989,14 +992,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:node, :doc_tree_node)
     field(:affected_nodes, list_of(:doc_tree_node))
     field(:conflict, :boolean)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
   end
 
   object :move_doc_to_draft_payload do
     field(:doc_id, :id)
     field(:stage, :article_stage)
     field(:publish_state, :doc_tree_node_publish_state)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
   end
 
   input_object :doc_tree_node_input do
@@ -1045,7 +1048,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :common_comment do
-    field(:inner_id, :id, resolve: &R.CMS.comment_inner_id/3)
+    field(:inner_id, :id, resolve: &R.CMS.Comments.comment_inner_id/3)
     field(:body_html, :string)
     field(:upvotes_count, :integer)
     field(:author, :common_user)
@@ -1725,7 +1728,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     @desc "Total number of tags configured for the community."
     field :community_tags_count, :integer do
-      resolve(&R.CMS.community_tags_count/3)
+      resolve(&R.CMS.Communities.community_tags_count/3)
     end
 
     @desc "Whether the current viewer has subscribed to this community."
@@ -1741,7 +1744,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     )
 
     field(:pending, :integer)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
 
     timestamp_fields()
   end
@@ -1765,7 +1768,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:slug, :string)
     field(:color, :rainbow_color)
     field(:thread, :thread)
-    field(:group, :string, resolve: &R.CMS.community_tag_group_title/3)
+    field(:group, :string, resolve: &R.CMS.Communities.community_tag_group_title/3)
     field(:group_id, :id)
     field(:extra, list_of(:string))
     field(:marker, :marker)
@@ -1773,7 +1776,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field(:author, :user, resolve: dataloader(CMS, :author))
     field(:community, :community, resolve: dataloader(CMS, :community))
-    field(:stats, :community_tag_stat, resolve: &R.CMS.community_tag_stats/3)
+    field(:stats, :community_tag_stat, resolve: &R.CMS.Communities.community_tag_stats/3)
 
     timestamp_fields()
   end

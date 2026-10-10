@@ -1,6 +1,7 @@
 # ORM 与数据库原语边界
 
-> 状态：目标合同，待直接切换。
+> 状态：当前合同；普通 CRUD 和可表达的批量写入已直接使用 Ecto，少量 PostgreSQL/query
+> owner 例外保留参数化 SQL。
 >
 > 当前普通领域读写主要使用 Ecto；PostgreSQL advisory transaction lock 仍分别实现在
 > `Helper.Transaction` 与 `CMS.Articles.MutationLock`。实施时直接收口到 `Helper.ORM.AdvisoryLock`，删除旧实现，
@@ -38,8 +39,10 @@ Business Context
                       PostgreSQL
 ```
 
-业务 Context 不能直接执行 `Repo.query/2` 或 `Repo.query!/2`。PostgreSQL 专属原语必须集中在职责明确的
-`Helper.ORM.*` 模块；普通 CRUD、counter UPSERT、排序和关联查询继续使用 Ecto，不因“可能更快”改写成手工 SQL。
+业务 Context 不能散落执行 `Repo.query/2` 或 `Repo.query!/2`。PostgreSQL 专属原语必须集中在职责明确的
+`Helper.ORM.*` 模块；无法由 Ecto 清晰表达的 recursive CTE、异构 UNION query 和原子 counter
+upsert 可以留在专门的 persistence/query owner 中。普通 CRUD、counter UPSERT、排序和关联查询
+继续使用 Ecto，不因“可能更快”改写成手工 SQL。
 
 ## 2. AdvisoryLock
 
@@ -144,28 +147,19 @@ end)
 
 示例只表达调用合同；真实 doctest 使用 repository fixture 或可独立执行的值，不能依赖未定义的示意函数。
 
-### 2.4 直接切换
+### 2.4 直接切换（已完成）
 
 ```text
-当前
-├─ Helper.Transaction.lock_global
-│    ├─ normalize key
-│    └─ Repo.query!(pg_advisory_xact_lock)
-└─ CMS.Articles.MutationLock.transact_lock
-     ├─ normalize key
-     └─ Repo.query!(pg_advisory_xact_lock)
-
-目标
-├─ Helper.ORM.AdvisoryLock
-│    ├─ transact/2
-│    ├─ acquire!/1
-│    └─ 唯一 SQL/key normalization owner
-└─ CMS.Articles.MutationLock
-     └─ identity/order/domain telemetry -> AdvisoryLock
+Helper.Transaction / CMS.Articles.MutationLock
+  ├─ identity/order/domain telemetry
+  └─ Helper.ORM.AdvisoryLock
+       ├─ transact/2
+       ├─ acquire!/1
+       └─ 唯一 SQL/key normalization owner
 ```
 
-实施时同时迁移所有调用方并删除 `Helper.Transaction.lock_global/2`、MutationLock 内的 SQL 与重复 key normalization。
-不得保留旧函数转调新函数，也不得建立 `Database.AdvisoryLock` alias。
+已迁移所有 runtime 调用方；`Helper.Transaction.lock_global/2` 保留为业务兼容入口，但不再拥有
+SQL 或 key normalization。不得新增 `Database.AdvisoryLock` alias。
 
 ## 3. Ecto 与裸 SQL
 
@@ -186,12 +180,13 @@ end)
 
 只有以下情况可以使用 `Repo.query*` 或 migration `execute/1`：
 
-| 场景                                      | 位置                             | 要求                                                      |
-| ----------------------------------------- | -------------------------------- | --------------------------------------------------------- |
-| Ecto 没有等价 API 的 PostgreSQL primitive | 专门的 `Helper.ORM.*` 模块       | 参数化、注释、spec、示例、集中测试                        |
-| transaction-local setting                 | `Helper.ORM.TransactionSettings` | 使用 `set_config(..., true)`，不泄漏到 connection session |
-| schema migration / one-off backfill       | migration                        | 可回滚或明确 irreversible，不能成为 runtime 读写路径      |
-| PostgreSQL custom operator/function       | Ecto query `fragment`            | 输入仍通过 parameter binding；封装到 owner query module   |
+| 场景                                                        | 位置                             | 要求                                                                    |
+| ----------------------------------------------------------- | -------------------------------- | ----------------------------------------------------------------------- |
+| Ecto 没有等价 API 的 PostgreSQL primitive                   | 专门的 `Helper.ORM.*` 模块       | 参数化、注释、spec、示例、集中测试                                      |
+| transaction-local setting                                   | `Helper.ORM.TransactionSettings` | 使用 `set_config(..., true)`，不泄漏到 connection session               |
+| schema migration / one-off backfill                         | migration                        | 可回滚或明确 irreversible，不能成为 runtime 读写路径                    |
+| PostgreSQL custom operator/function                         | Ecto query `fragment`            | 输入仍通过 parameter binding；封装到 owner query module                 |
+| recursive CTE / heterogeneous UNION / atomic counter upsert | 专门 persistence/query owner     | 说明无法直接使用 Ecto 的原因，参数化、scope 测试、affected-row/并发合同 |
 
 `unsafe_fragment` 不能成为长期 runtime contract。当前 Interactions 为多态 partial conflict target 使用的
 `unsafe_fragment` 应随 canonical Article identity 与 `cms.article_emotion_counts` direct cutover 删除，而不是复制到新模型。
@@ -216,6 +211,7 @@ backend/api/priv/repo/migrations/** execute/query
 
 - runtime 中不存在 `Database.*`、`GroupherServer.ORM` 或其他平行数据库基础设施 namespace；
 - `pg_advisory_xact_lock` 的 runtime SQL 只存在于 `Helper.ORM.AdvisoryLock`；
+- transaction-local timeout SQL 只存在于 `Helper.ORM.TransactionSettings`；
 - `Helper.Transaction.lock_global/2`、MutationLock 重复 SQL 和重复 key normalization 已删除；
 - 相同 key 的并发 transaction 串行，不同 key 不互相阻塞；
 - commit、rollback、callback error 和进程退出后 transaction lock 都会释放；
@@ -223,5 +219,5 @@ backend/api/priv/repo/migrations/** execute/query
 - `acquire!/1` 在既有 transaction connection 上执行，没有隐藏 nested transaction；
 - public API 有完整 moduledoc、ASCII business flow、`@doc`、`@spec` 和可执行示例；
 - ArticleStats 与 ArticleEmotionCount 的普通写入使用 Ecto，不在领域模块新增裸 SQL；
-- 静态门禁阻止 `Repo.query*` 再次散落到 runtime 业务模块；
+- runtime 裸 SQL 只存在于 primitive owner 或有明确查询形状/原子性理由的 persistence/query owner；
 - 不存在旧 API delegate、命名 alias、双实现或兼容中间层。

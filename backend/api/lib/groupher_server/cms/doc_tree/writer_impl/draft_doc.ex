@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
   alias CMS.Articles.Draft.Store
   alias CMS.Artiment.BodyBag
   alias CMS.DocTree.{Revision, State}
-  alias CMS.Model.{Article, Community, DocDraft}
+  alias CMS.Model.{Article, ArticleBinding, Community, DocDraft}
   alias Helper.Validator.Slug
 
   @doc """
@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
 
   """
   def update(%Community{} = community, branch, doc_id, args, %User{} = user) do
-    with :ok <- validate_update_attrs(args),
+    with {:ok, _} <- validate_update_attrs(args),
          {:ok, site_state} <- State.ensure_site_state(community, branch_id: branch.id),
          {:ok, draft} <- CMS.Docs.update_draft(doc_id, branch.id, args, user),
          {:ok, _state} <- Revision.bump_site_draft(community, site_state) do
@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
 
   def ensure(%Community{} = community, branch, %{doc_id: doc_id} = args, _user)
       when not is_nil(doc_id) do
-    with :ok <- validate(community, branch, doc_id), do: {:ok, args}
+    with {:ok, _} <- validate(community, branch, doc_id), do: {:ok, args}
   end
 
   def ensure(_community, _branch, args, nil), do: {:ok, args}
@@ -68,17 +68,20 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
     end
   end
 
-  def validate(_community, _branch, nil), do: :ok
+  def validate(_community, _branch, nil), do: {:ok, :pass}
 
   def validate(%Community{} = community, branch, doc_id) do
     DocDraft
     |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
-    |> where([draft, article], article.community_id == ^community.id)
-    |> where([draft], draft.branch_id == ^branch.id)
+    |> join(:inner, [draft, _article], binding in ArticleBinding,
+      on: binding.article_id == draft.article_id
+    )
+    |> where([_draft, _article, binding], binding.community_id == ^community.id)
+    |> where([draft, _article, _binding], draft.branch_id == ^branch.id)
     |> where([draft], draft.article_id == ^doc_id)
     |> Repo.exists?()
     |> case do
-      true -> :ok
+      true -> {:ok, :pass}
       false -> {:error, ErrorCat.custom("doc draft not found in this community")}
     end
   end
@@ -109,11 +112,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
 
   defp validate_update_attrs(%{title: _title} = attrs) do
     if Map.has_key?(attrs, :slug) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom("slug is required when updating a Doc title")}
     end
   end
 
-  defp validate_update_attrs(_attrs), do: :ok
+  defp validate_update_attrs(_attrs), do: {:ok, :pass}
 end

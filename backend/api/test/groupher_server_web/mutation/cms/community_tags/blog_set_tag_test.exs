@@ -20,18 +20,31 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.BlogSetTag do
   describe "[mutation blog tag]" do
     test "auth user can set a valid tag to blog", ~m(community blog community_tag_attrs user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
-      passport_rules = %{community.title => %{"blog.community_tag.set" => true}}
+      passport_rules = %{
+        community.title => %{"community.update" => true, "blog.community_tag.set" => true}
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         communityTagId: community_tag.id
       }
 
       rule_conn |> gq_mutation(S.Article.m(:set_community_tag), variables)
-      {:ok, tags} = CMS.Articles.Communities.tags(blog, community)
+      {:ok, tags} = binding_tags(blog, community)
       assoc_tags = Enum.map(tags, & &1.id)
       assert community_tag.id in assoc_tags
     end
@@ -39,25 +52,44 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.BlogSetTag do
     test "can unset tag to a blog",
          ~m(community blog community_tag_attrs community_tag_attrs2 user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag2} =
-        CMS.Communities.create_tag(community, :blog, community_tag_attrs2, user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          community_tag_attrs2,
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Communities.set_tag(blog, community_tag.id)
-      {:ok, _} = CMS.Communities.set_tag(blog, community_tag2.id)
+      {:ok, _} = CMS.Communities.set_tag(blog, community_tag.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Communities.set_tag(blog, community_tag2.id, user, Ecto.UUID.generate())
 
-      passport_rules = %{community.title => %{"blog.community_tag.unset" => true}}
+      passport_rules = %{
+        community.title => %{"community.update" => true, "blog.community_tag.unset" => true}
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
-        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        article: %{
+          inner_id: article_inner_id(blog, community),
+          community: community.slug,
+          thread: "BLOG"
+        },
         communityTagId: community_tag.id
       }
 
       rule_conn |> gq_mutation(S.Article.m(:unset_community_tag), variables)
 
-      {:ok, tags} = CMS.Articles.Communities.tags(blog, community)
+      {:ok, tags} = binding_tags(blog, community)
       assoc_tags = Enum.map(tags, & &1.id)
 
       assert community_tag.id not in assoc_tags

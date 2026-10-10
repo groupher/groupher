@@ -16,14 +16,19 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
   describe "[post sink]" do
     test "login user can sink a post", ~m(community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        }
       }
 
       passport_rules = %{community.slug => %{"post.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_mutation(S.Article.m(:sink_article, :post), variables)
-      assert result["innerId"] == to_string(post.inner_id)
+      assert result["innerId"] == to_string(article_inner_id(post, community))
 
       post = Repo.get!(CMS.Model.Article, post.id)
       assert post.is_sunk
@@ -32,7 +37,12 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
 
     test "unauth user sink a post fails", ~m(guest_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        }
       }
 
       assert guest_conn
@@ -45,23 +55,33 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
 
     test "login user can undo sink to a post", ~m(community post user)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        }
       }
 
       passport_rules = %{community.slug => %{"post.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      {:ok, _} = CMS.Articles.sink(post.id, user)
+      {:ok, _} = CMS.Articles.sink(post.id, user, community: community)
 
       updated = rule_conn |> gq_mutation(S.Article.m(:undo_sink_article, :post), variables)
-      assert updated["innerId"] == to_string(post.inner_id)
+      assert updated["innerId"] == to_string(article_inner_id(post, community))
 
       refute Repo.get!(CMS.Model.Article, post.id).is_sunk
     end
 
     test "unauth user undo sink a post fails", ~m(guest_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        }
       }
 
       assert guest_conn

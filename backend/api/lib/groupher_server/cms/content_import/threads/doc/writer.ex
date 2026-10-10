@@ -40,7 +40,17 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   alias CMS.{DocTree, ErrorCat}
   alias CMS.DocTree.Import, as: DocTreeImport
   alias CMS.DocTree.State, as: DocTreeState
-  alias CMS.Model.{Article, Community, DocDraft, DocPublic, TrashAction, TrashedDocArticle}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBinding,
+    Community,
+    DocDraft,
+    DocPublic,
+    TrashAction,
+    TrashedDocArticle
+  }
+
   alias Helper.Transaction
 
   @doc "Atomically applies all ready items for one community Job."
@@ -82,7 +92,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   end
 
   defp apply_to_main_draft(community, branch, actor, job) do
-    with :ok <-
+    with {:ok, _} <-
            Validator.validate_intent(
              community,
              job.source_info,
@@ -96,12 +106,12 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
          {:ok, bodies} <- load_bodies(job.id, ready_items),
          ready_refs <- MapSet.new(ready_items, & &1.external_ref),
          tree <- Validator.filter_target_tree(job.target_tree, ready_refs),
-         :ok <- restore_trashed_targets(community, branch, actor, ready_items),
+         {:ok, _} <- restore_trashed_targets(community, branch, actor, ready_items),
          {:ok, target_states} <- load_target_states(community, branch, ready_items),
          {:ok, written_items} <-
            write_items(community, branch, actor, ready_items, bodies, target_states),
          {:ok, _tree} <- DocTreeImport.apply(community, branch, tree, written_items),
-         :ok <- upsert_mappings(job, ready_items, bodies),
+         {:ok, _} <- upsert_mappings(job, ready_items, bodies),
          result <- build_result(job, items, tree, ready_items),
          {_count, nil} <- Repo.delete_all(from(body in StagedBody, where: body.job_id == ^job.id)),
          {:ok, completed} <-
@@ -150,7 +160,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
     ready_items
     |> Enum.map(& &1.target_ref)
     |> trashed_action_refs(community, branch)
-    |> Enum.reduce_while(:ok, fn action_ref, :ok ->
+    |> Enum.reduce_while({:ok, :pass}, fn action_ref, {:ok, _} ->
       with {:ok, state} <- DocTreeState.ensure_draft_state(community, branch_id: branch.id),
            {:ok, %{conflict: false}} <-
              DocTree.restore_trash_item(community, action_ref, %{
@@ -158,7 +168,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
                base_revision: state.tree_lock_version,
                branch_id: branch.id
              }) do
-        {:cont, :ok}
+        {:cont, {:ok, :pass}}
       else
         {:ok, %{conflict: true}} ->
           {:halt, {:error, ErrorCat.custom("The Docs Trash changed during import")}}
@@ -209,7 +219,10 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
     model
     |> join(:inner, [version], article in Article, on: article.id == version.article_id)
     |> where([version, article], article.id in ^target_refs)
-    |> where([version, article], article.community_id == ^community.id)
+    |> join(:inner, [version, _article], binding in ArticleBinding,
+      on: binding.article_id == version.article_id
+    )
+    |> where([_version, _article, binding], binding.community_id == ^community.id)
     |> where([version, _article], version.branch_id == ^branch.id)
     |> select([version, _article], version.article_id)
     |> Repo.all()

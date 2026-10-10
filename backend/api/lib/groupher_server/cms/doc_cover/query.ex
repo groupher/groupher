@@ -24,6 +24,7 @@ defmodule GroupherServer.CMS.DocCover.Query do
 
   alias CMS.Model.{
     Article,
+    ArticleBinding,
     Community,
     DocBranch,
     DocCoverCard,
@@ -43,7 +44,7 @@ defmodule GroupherServer.CMS.DocCover.Query do
   @spec read(Community.t(), view(), User.t() | nil) :: T.domain_res(map())
   def read(%Community{} = community, view \\ CMS.DocCover.Const.cover_view(:public), actor \\ nil)
       when view in CMS.DocCover.Const.cover_view_values() do
-    with :ok <- authorize_view(community, view, actor) do
+    with {:ok, _} <- authorize_view(community, view, actor) do
       do_read(community, view)
     end
   end
@@ -119,11 +120,11 @@ defmodule GroupherServer.CMS.DocCover.Query do
      }}
   end
 
-  defp authorize_view(_community, :public, _actor), do: :ok
+  defp authorize_view(_community, :public, _actor), do: {:ok, :pass}
 
   defp authorize_view(%Community{} = community, :dashboard, %User{} = actor) do
     case CMS.Gate.access_check(actor, :manage_docs, community) do
-      {:ok, _canonical} -> :ok
+      {:ok, _canonical} -> {:ok, :pass}
       {:error, decision} -> {:error, decision}
     end
   end
@@ -345,16 +346,19 @@ defmodule GroupherServer.CMS.DocCover.Query do
       |> Enum.uniq()
 
     Article
-    |> join(:inner, [article], public in DocPublic, on: public.article_id == article.id)
-    |> join(:inner, [article, public], branch in DocBranch,
+    |> join(:inner, [article], binding in ArticleBinding,
+      on: binding.article_id == article.id and binding.visible == true
+    )
+    |> join(:inner, [article, _binding], public in DocPublic, on: public.article_id == article.id)
+    |> join(:inner, [article, _binding, public], branch in DocBranch,
       on: branch.id == public.branch_id and branch.type == :main
     )
-    |> where([article, _public, _branch], article.community_id == ^community.id)
-    |> where([article, _public, _branch], article.id in ^doc_ids)
-    |> where([_article, public, _branch], public.visible)
-    |> select([article, public, _branch], %{
+    |> where([_article, binding, _public, _branch], binding.community_id == ^community.id)
+    |> where([article, _binding, _public, _branch], article.id in ^doc_ids)
+    |> where([_article, _binding, public, _branch], public.visible)
+    |> select([article, binding, public, _branch], %{
       id: article.id,
-      inner_id: article.inner_id,
+      inner_id: binding.inner_id,
       slug: public.slug,
       title: public.title
     })

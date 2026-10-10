@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.CMS.Events.Audition.PostTest do
     {:ok, post} = db_insert(:post)
 
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     post_attrs = mock_attrs(:post, %{community_id: community.id})
 

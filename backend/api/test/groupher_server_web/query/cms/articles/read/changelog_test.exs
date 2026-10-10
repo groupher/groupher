@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
     variables = %{
       article: %{
-        inner_id: changelog.inner_id,
+        inner_id: article_inner_id(changelog, community),
         community: community.slug,
         thread: "CHANGELOG"
       }
@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
     results = user_conn |> gq_query(S.Article.q(:article, :changelog), variables)
 
-    assert results["innerId"] == to_string(changelog.inner_id)
+    assert results["innerId"] == to_string(article_inner_id(changelog, community))
     assert get_in(results, ["community", "slug"]) == community.slug
 
     assert is_valid_kv?(results, "title", :string)
@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
     variables = %{
       article: %{
-        inner_id: changelog.inner_id,
+        inner_id: article_inner_id(changelog, community),
         community: community.slug,
         thread: "CHANGELOG"
       }
@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
     results = guest_conn |> gq_query(S.Article.q(:article, :changelog), variables)
 
-    assert results["innerId"] == to_string(changelog.inner_id)
+    assert results["innerId"] == to_string(article_inner_id(changelog, community))
     assert is_valid_kv?(results, "title", :string)
   end
 
@@ -64,7 +64,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
     variables = %{
       article: %{
-        inner_id: changelog.inner_id,
+        inner_id: article_inner_id(changelog, community),
         community: community.slug,
         thread: "CHANGELOG"
       }
@@ -88,7 +88,8 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
           illegal_reason: ["some-reason"],
           illegal_words: ["some-word"]
         },
-        :operations
+        :operations,
+        community: community
       )
 
     results = user_conn |> gq_query(S.Article.q(:article, :changelog), variables)
@@ -103,13 +104,19 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
     {:ok, _} =
-      CMS.Dashboard.update(community, :enable, %{
-        changelog: false
-      })
+      CMS.Dashboard.update(
+        community,
+        :enable,
+        %{
+          changelog: false
+        },
+        user,
+        Ecto.UUID.generate()
+      )
 
     variables = %{
       article: %{
-        inner_id: changelog.inner_id,
+        inner_id: article_inner_id(changelog, community),
         community: community.slug,
         thread: "CHANGELOG"
       }

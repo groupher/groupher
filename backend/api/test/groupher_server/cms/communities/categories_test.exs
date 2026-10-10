@@ -3,7 +3,9 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Model.Category
+  alias CMS.Articles.Writer
+  alias CMS.Communities.Categories.Persist, as: CategoriesPersist
+  alias CMS.Model.{Category, Community}
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -18,7 +20,10 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
       valid_attrs = mock_attrs(:category, %{user_id: user.id})
       ~m(title slug)a = valid_attrs
 
-      {:ok, category} = CMS.Communities.create_category(~m(title slug)a, user)
+      {:ok, author} = Writer.ensure_author_exists(user)
+
+      {:ok, category} =
+        CategoriesPersist.insert_category(~m(title slug)a, %Community{}, author.id)
 
       assert category.title == valid_attrs.title
     end
@@ -27,20 +32,27 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
       valid_attrs = mock_attrs(:category, %{user_id: user.id})
       ~m(title slug)a = valid_attrs
 
-      assert {:ok, _} = CMS.Communities.create_category(~m(title slug)a, user)
-      assert {:error, _} = CMS.Communities.create_category(~m(title)a, user)
+      {:ok, author} = Writer.ensure_author_exists(user)
+
+      assert {:ok, _} =
+               CategoriesPersist.insert_category(~m(title slug)a, %Community{}, author.id)
+
+      assert {:error, _} = CategoriesPersist.insert_category(~m(title)a, %Community{}, author.id)
     end
 
     test "update category with valid attrs", ~m(user)a do
       valid_attrs = mock_attrs(:category, %{user_id: user.id})
       ~m(title slug)a = valid_attrs
 
-      {:ok, category} = CMS.Communities.create_category(~m(title slug)a, user)
+      {:ok, author} = Writer.ensure_author_exists(user)
+
+      {:ok, category} =
+        CategoriesPersist.insert_category(~m(title slug)a, %Community{}, author.id)
 
       assert category.title == valid_attrs.title
 
       {:ok, updated} =
-        CMS.Communities.update_category(%Category{id: category.id, title: "new title"})
+        CategoriesPersist.update_category(category, %{title: "new title"})
 
       assert updated.title == "new title"
     end
@@ -49,17 +61,22 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
       valid_attrs = mock_attrs(:category, %{user_id: user.id})
       ~m(title slug)a = valid_attrs
 
-      {:ok, category} = CMS.Communities.create_category(~m(title slug)a, user)
+      {:ok, author} = Writer.ensure_author_exists(user)
 
-      new_category_attrs = %{title: "category2 title", slug: "category2 title"}
-      {:ok, category2} = CMS.Communities.create_category(new_category_attrs, user)
+      {:ok, category} =
+        CategoriesPersist.insert_category(~m(title slug)a, %Community{}, author.id)
+
+      new_category_attrs = %{title: "category2 title", slug: "category2-title"}
+
+      {:ok, category2} =
+        CategoriesPersist.insert_category(new_category_attrs, %Community{}, author.id)
 
       {:error, _} =
-        CMS.Communities.update_category(%Category{id: category.id, title: category2.title})
+        CategoriesPersist.update_category(category, %{title: category2.title})
     end
 
     test "can set a category to a community", ~m(community category)a do
-      {:ok, _} = CMS.Communities.set_category(community, category)
+      {:ok, _} = CategoriesPersist.set_category(community, category)
 
       {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
       {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)
@@ -72,8 +89,8 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
     end
 
     test "can unset a category to a community", ~m(community category)a do
-      {:ok, _} = CMS.Communities.set_category(community, category)
-      CMS.Communities.unset_category(community, category)
+      {:ok, _} = CategoriesPersist.set_category(community, category)
+      CategoriesPersist.unset_category(community, category)
 
       {:ok, found_community} = ORM.find(Community, community.id, preload: :categories)
       {:ok, found_category} = ORM.find(Category, category.id, preload: :communities)

@@ -35,14 +35,14 @@ defmodule GroupherServer.PublicCache.PurgeWorker do
           deliver(invalidation, job, lock_ref)
         else
           finalize_failed(invalidation, lock_ref, {:invalid_contract, :version}, true)
-          :ok
+          {:ok, :pass}
         end
 
       {:busy, retry_after_seconds} ->
         {:snooze, retry_after_seconds}
 
       status when status in [:dead, :delivered, :missing] ->
-        :ok
+        {:ok, :pass}
 
       {:error, reason} ->
         {:error, reason}
@@ -51,14 +51,14 @@ defmodule GroupherServer.PublicCache.PurgeWorker do
 
   defp deliver(%Invalidation{} = invalidation, job, lock_ref) do
     with {:ok, tags} <- Scope.tags(invalidation.type, invalidation.payload),
-         :ok <- Cloudflare.purge(tags) do
+         {:ok, _} <- Cloudflare.purge(tags) do
       finalize_delivered(invalidation, lock_ref)
-      :ok
+      {:ok, :pass}
     else
       {:error, reason} = error ->
         dead? = terminal_failure?(reason) or job.attempt >= job.max_attempts
         finalize_failed(invalidation, lock_ref, reason, dead?)
-        if dead?, do: :ok, else: error
+        if dead?, do: {:ok, :pass}, else: error
     end
   rescue
     exception ->
@@ -71,20 +71,20 @@ defmodule GroupherServer.PublicCache.PurgeWorker do
         job.attempt >= job.max_attempts
       )
 
-      if job.attempt >= job.max_attempts, do: :ok, else: {:error, exception}
+      if job.attempt >= job.max_attempts, do: {:ok, :pass}, else: {:error, exception}
   end
 
   defp finalize_delivered(invalidation, lock_ref) do
     case PublicCache.mark_delivered(invalidation.id, lock_ref, invalidation.type) do
-      :ok -> :ok
-      {:error, :stale_lock} -> :ok
+      {:ok, _} -> {:ok, :pass}
+      {:error, :stale_lock} -> {:ok, :pass}
     end
   end
 
   defp finalize_failed(invalidation, lock_ref, reason, dead?) do
     case PublicCache.mark_failed(invalidation.id, lock_ref, invalidation.type, reason, dead?) do
-      :ok -> :ok
-      {:error, :stale_lock} -> :ok
+      {:ok, _} -> {:ok, :pass}
+      {:error, :stale_lock} -> {:ok, :pass}
     end
   end
 

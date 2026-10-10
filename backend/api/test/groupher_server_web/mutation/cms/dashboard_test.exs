@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     {:ok, category} = db_insert(:category)
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     user_conn = simu_conn(:user)
     guest_conn = simu_conn(:guest)
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         community: community.slug,
         input: %{
           baseVersion: 0,
-          idempotencyKey: "typed-graphql-variants",
+          commandId: "typed-graphql-variants",
           images: images,
           settings: %{
             renderConfig: Jason.encode!(wallpaper_render_config()),
@@ -113,7 +113,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
             input: %{
               baseVersion: 0,
               images: images,
-              idempotencyKey: "invalid-graphql-variant-width",
+              commandId: "invalid-graphql-variant-width",
               settings: %{
                 renderConfig: Jason.encode!(wallpaper_render_config()),
                 settingsSchemaVersion: 1,

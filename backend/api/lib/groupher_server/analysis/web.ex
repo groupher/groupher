@@ -22,7 +22,7 @@ defmodule GroupherServer.Analysis.Web do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.Dashboard.Writer
+  alias CMS.Dashboard.Persist
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{Cache, Transaction}
 
@@ -109,6 +109,16 @@ defmodule GroupherServer.Analysis.Web do
         [expire_sec: @active_cache_seconds],
         fn -> provider.active(community_analysis) end
       )
+    end
+  end
+
+  @doc "Returns the nullable Dashboard active-visitors field without swallowing provider failures."
+  @spec active_for_dashboard(Community.t()) ::
+          {:ok, %{visitors: non_neg_integer()} | nil} | {:error, term()}
+  def active_for_dashboard(%Community{} = community) do
+    case active(community) do
+      {:ok, payload} -> {:ok, payload}
+      {:error, reason} -> normalize_active_error(reason)
     end
   end
 
@@ -246,7 +256,7 @@ defmodule GroupherServer.Analysis.Web do
   defp load_visitor_location_map(community, dashboard, range) do
     provider = provider()
 
-    with :ok <- ensure_runtime_configured(),
+    with {:ok, _} <- ensure_runtime_configured(),
          website_id when is_binary(website_id) <- dashboard.umami_website_id do
       community_analysis = AnalysisCommunity.from_community(community, website_id)
       key = "analysis.visitor_location_map.#{website_id}"
@@ -380,24 +390,28 @@ defmodule GroupherServer.Analysis.Web do
   defp percentage_of(value, total), do: Float.round(value / total * 100, 1)
 
   defp prepare_community(%Community{} = community, provider) do
-    with :ok <- ensure_runtime_configured(),
-         :ok <- ensure_persisted_community(community),
+    with {:ok, _} <- ensure_runtime_configured(),
+         {:ok, _} <- ensure_persisted_community(community),
          {:ok, dashboard} <- dashboard_for(community),
          {:ok, website_id} <- ensure_umami_website_id(community, dashboard, provider) do
       {:ok, AnalysisCommunity.from_community(community, website_id)}
     end
   end
 
-  defp dashboard_for(%Community{} = community), do: Writer.ensure_exist(community)
+  defp dashboard_for(%Community{} = community) do
+    Transaction.lock_global("community_dashboard:ensure:#{community.id}", fn ->
+      Persist.get_or_insert_dashboard(community)
+    end)
+  end
 
   defp ensure_runtime_configured do
     case Config.runtime().api_token do
-      token when is_binary(token) and token != "" -> :ok
+      token when is_binary(token) and token != "" -> {:ok, :pass}
       _ -> {:error, ErrorCat.not_configured()}
     end
   end
 
-  defp ensure_persisted_community(%Community{id: id}) when is_integer(id), do: :ok
+  defp ensure_persisted_community(%Community{id: id}) when is_integer(id), do: {:ok, :pass}
   defp ensure_persisted_community(%Community{}), do: {:error, ErrorCat.community_not_persisted()}
 
   defp ensure_umami_website_id(
@@ -592,6 +606,13 @@ defmodule GroupherServer.Analysis.Web do
 
   defp error_reason(ErrorCat.error_pattern(reason: reason)), do: reason
   defp error_reason(reason), do: reason
+
+  defp normalize_active_error(reason) do
+    case error_reason(reason) do
+      unavailable when unavailable in [:not_configured, :dashboard_not_found] -> {:ok, nil}
+      _provider_or_domain_error -> {:error, reason}
+    end
+  end
 
   defp error_code(:not_configured), do: "not_configured"
   defp error_code({:http_error, _status}), do: "provider_http_error"

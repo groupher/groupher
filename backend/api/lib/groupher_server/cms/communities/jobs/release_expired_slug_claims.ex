@@ -19,6 +19,6 @@ defmodule GroupherServer.CMS.Communities.Jobs.ReleaseExpiredSlugClaims do
 
   def perform(_job) do
     {_count, nil} = CMS.Communities.release_expired_slug_claims(DateTime.utc_now(:second))
-    :ok
+    {:ok, :pass}
   end
 end

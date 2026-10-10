@@ -20,7 +20,11 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogEmotion do
   describe "[changelog emotion]" do
     test "login user can emotion to a changelog", ~m(community changelog user_conn)a do
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         emotion: "BEER"
       }
 
@@ -31,10 +35,14 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogEmotion do
     end
 
     test "login user can undo emotion to a changelog", ~m(community changelog user owner_conn)a do
-      {:ok, _} = CMS.Interactions.emotion(changelog, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(changelog, :beer, user, Ecto.UUID.generate())
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        article: %{
+          inner_id: article_inner_id(changelog, community),
+          community: community.slug,
+          thread: "CHANGELOG"
+        },
         emotion: "BEER"
       }
 

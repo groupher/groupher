@@ -1,25 +1,23 @@
 export type TPendingWallpaperSave = {
   fingerprint: string
-  idempotencyKey: string
+  commandId: string
 }
 
-type TResolveWallpaperIdempotencyKeyInput = {
+type TResolveWallpaperCommandIdInput = {
   fingerprint: string
   pending: TPendingWallpaperSave | null
   createKey?: () => string
 }
 
-const createIdempotencyKey = (): string =>
-  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(16).slice(2)}`
+const createCommand = (): string => createCommandHandle({ scope: 'wallpaper' }).commandId
 
-/** Reuses a key only when the pending request represents the same fingerprint. */
-export const resolveWallpaperIdempotencyKey = ({
+/** Reuses a command id only when the pending request represents the same fingerprint. */
+export const resolveWallpaperCommandId = ({
   fingerprint,
   pending,
-  createKey = createIdempotencyKey,
-}: TResolveWallpaperIdempotencyKeyInput): TPendingWallpaperSave => ({
+  createKey = createCommand,
+}: TResolveWallpaperCommandIdInput): TPendingWallpaperSave => ({
   fingerprint,
-  idempotencyKey: pending?.fingerprint === fingerprint ? pending.idempotencyKey : createKey(),
+  commandId: pending?.fingerprint === fingerprint ? pending.commandId : createKey(),
 })
+import { createCommandHandle } from '~/query/mutation/optimistic/execute'

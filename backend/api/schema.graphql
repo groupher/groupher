@@ -377,37 +377,39 @@ type RootMutationType {
   completeCommunityApplicationLogoUpload(input: CommunityApplicationLogoCompletionInput!): ApplicationLogoUploadCompletion!
 
   "Submit a new Community Application"
-  submitCommunityApplication(input: CommunityApplicationInput!, idempotencyKey: String!): CommunityApplication!
+  submitCommunityApplication(input: CommunityApplicationInput!, commandId: ID!): CommunityApplication!
 
   "Cancel an owned Community Application"
-  cancelCommunityApplication(ref: ID!, expectedVersion: Int!): CommunityApplication!
+  cancelCommunityApplication(ref: ID!, expectedVersion: Int!, commandId: ID!): CommunityApplication!
 
   "Move a submitted Application into review"
-  startCommunityApplicationReview(ref: ID!, expectedVersion: Int!): CommunityApplication!
+  startCommunityApplicationReview(ref: ID!, expectedVersion: Int!, commandId: ID!): CommunityApplication!
 
   "Approve a reviewed Community Application"
-  approveCommunityApplication(ref: ID!, expectedVersion: Int!, note: String): CommunityApplication!
+  approveCommunityApplication(ref: ID!, expectedVersion: Int!, commandId: ID!, note: String): CommunityApplication!
 
   "Reject a reviewed Community Application"
-  rejectCommunityApplication(ref: ID!, expectedVersion: Int!, reasonCode: String!, note: String): CommunityApplication!
+  rejectCommunityApplication(ref: ID!, expectedVersion: Int!, commandId: ID!, reasonCode: String!, note: String): CommunityApplication!
 
   "Retry Community identity creation for a failed Application"
-  retryCommunityCreation(ref: ID!, expectedVersion: Int!): CommunityApplication!
+  retryCommunityCreation(ref: ID!, expectedVersion: Int!, commandId: ID!): CommunityApplication!
 
   "Retry Community setup for a failed Application"
-  retryCommunitySetup(ref: ID!, expectedVersion: Int!): CommunityApplication!
+  retryCommunitySetup(ref: ID!, expectedVersion: Int!, commandId: ID!): CommunityApplication!
 
   "create a global community"
-  createCommunity(title: String!, desc: String!, slug: String!, logo: String!, locale: String): Community
+  createCommunity(commandId: ID!, title: String!, desc: String!, slug: String!, logo: String!, locale: String): Community
 
   "update a community"
-  updateCommunity(community: String!, title: String, desc: String, slug: String, logo: String, locale: String): Community
+  updateCommunity(
+    community: String!, commandId: ID!, title: String, desc: String, slug: String, logo: String, locale: String
+  ): Community
 
   "delete a global community"
   requestDestroyCommunity(community: String!, commandId: ID!): Community
 
   "register an uploaded asset into the community asset library"
-  registerCommunityAsset(community: String!, asset: CommunityAssetInput!): CommunityAsset
+  registerCommunityAsset(community: String!, asset: CommunityAssetInput!, commandId: ID!): CommunityAsset
 
   "create a short-lived assets-hub upload intent"
   createCommunityAssetUploadIntent(community: String!, file: CommunityAssetUploadFileInput!): CommunityAssetUploadIntent
@@ -416,50 +418,50 @@ type RootMutationType {
   completeCommunityAssetUpload(input: CommunityAssetUploadCompletionInput!): CommunityAsset
 
   "delete an unreferenced community asset from the asset library"
-  deleteCommunityAsset(community: String!, id: ID!): CommunityAsset
+  deleteCommunityAsset(community: String!, id: ID!, commandId: ID!): CommunityAsset
 
   "create category"
-  createCategory(community: String!, title: String!, slug: String!): Category
+  createCategory(commandId: ID!, community: String!, title: String!, slug: String!): Category
 
   "delete category"
-  deleteCategory(community: String!, id: ID!): Category
+  deleteCategory(commandId: ID!, community: String!, id: ID!): Category
 
   "update category"
-  updateCategory(community: String!, id: ID!, title: String!): Category
+  updateCategory(commandId: ID!, community: String!, id: ID!, title: String!): Category
 
   "add a moderator for a community"
-  addModerator(community: String!, user: String!): Community
+  addModerator(commandId: ID!, community: String!, user: String!): Community
 
   "add moderators for a community"
-  addModerators(community: String!, users: [String!]!): Community
+  addModerators(commandId: ID!, community: String!, users: [String!]!): Community
 
   "unset a moderator from a community, the user's passport also deleted"
-  removeModerator(community: String!, user: String!): Community
+  removeModerator(commandId: ID!, community: String!, user: String!): Community
 
   "update cms moderator's title, passport is not effected"
-  updateModeratorPassport(community: String!, user: String!, rules: Json!): Community
+  updateModeratorPassport(commandId: ID!, community: String!, user: String!, rules: Json!): Community
 
   "create a tag"
   createCommunityTag(
-    title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, groupId: ID!, thread: Thread, extra: [String], marker: MarkerInput
+    commandId: ID!, title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, groupId: ID!, thread: Thread, extra: [String], marker: MarkerInput
   ): CommunityTag
 
   "update a tag"
   updateCommunityTag(
-    id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, groupId: ID, thread: Thread, extra: [String], marker: MarkerInput
+    commandId: ID!, id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, groupId: ID, thread: Thread, extra: [String], marker: MarkerInput
   ): CommunityTag
 
   "create a tag group"
-  createCommunityTagGroup(title: String!, community: String!, thread: Thread): CommunityTagGroup
+  createCommunityTagGroup(commandId: ID!, title: String!, community: String!, thread: Thread): CommunityTagGroup
 
   "update a tag group"
-  updateCommunityTagGroup(id: ID!, community: String!, title: String!, thread: Thread): CommunityTagGroup
+  updateCommunityTagGroup(commandId: ID!, id: ID!, community: String!, title: String!, thread: Thread): CommunityTagGroup
 
   "delete a tag group"
-  deleteCommunityTagGroup(id: ID!, community: String!, thread: Thread): CommunityTagGroup
+  deleteCommunityTagGroup(commandId: ID!, id: ID!, community: String!, thread: Thread): CommunityTagGroup
 
   "delete a tag by thread"
-  deleteCommunityTag(id: ID!, community: String!, thread: Thread): CommunityTag
+  deleteCommunityTag(commandId: ID!, id: ID!, community: String!, thread: Thread): CommunityTag
 
   "Records one visible public Article read through ViewTracker"
   trackArticleView(article: ArticlePathInput!): ArticleViewTrackResult!
@@ -477,46 +479,40 @@ type RootMutationType {
   permanentlyDeleteTrashAction(commandId: ID!, id: ID!, community: String!, thread: Thread!): DoneState
 
   "set category to a community"
-  setCategory(community: String!, categoryId: ID!): Community
+  setCategory(commandId: ID!, community: String!, categoryId: ID!): Community
 
   "unset category to a community"
-  unsetCategory(community: String!, categoryId: ID!): Community
+  unsetCategory(commandId: ID!, community: String!, categoryId: ID!): Community
 
   "subscribe a community so it can appear in sidebar"
-  subscribeCommunity(community: String!): Community
+  subscribeCommunity(commandId: ID!, community: String!): Community
 
   "unsubscribe a community"
-  unsubscribeCommunity(community: String!): Community
+  unsubscribeCommunity(commandId: ID!, community: String!): Community
 
   "set a community_tag to content"
-  setCommunityTag(article: ArticlePathInput!, communityTagId: ID!): Article
+  setCommunityTag(commandId: ID!, article: ArticlePathInput!, communityTagId: ID!): Article
 
   "unset a tag to content"
-  unsetCommunityTag(article: ArticlePathInput!, communityTagId: ID!): Article
+  unsetCommunityTag(commandId: ID!, article: ArticlePathInput!, communityTagId: ID!): Article
 
   "reindex tags in given group"
-  reindexTagsInGroup(community: String!, thread: Thread, groupId: ID!, tags: [ReindexTagInput]): Done
+  reindexTagsInGroup(commandId: ID!, community: String!, thread: Thread, groupId: ID!, tags: [ReindexTagInput]): Done
 
   "reindex tags across groups"
-  reindexCommunityTags(community: String!, thread: Thread, tags: [ReindexCommunityTagInput]): Done
+  reindexCommunityTags(commandId: ID!, community: String!, thread: Thread, tags: [ReindexCommunityTagInput]): Done
 
   "reindex tag groups"
-  reindexCommunityTagGroups(community: String!, thread: Thread, groups: [ReindexCommunityTagGroupInput]): Done
+  reindexCommunityTagGroups(commandId: ID!, community: String!, thread: Thread, groups: [ReindexCommunityTagGroupInput]): Done
 
   "mirror article to other community"
-  mirrorArticle(article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
+  mirrorArticle(commandId: ID!, article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
 
   "unmirror article for community"
-  unmirrorArticle(article: ArticlePathInput!, targetCommunity: String!): Article
+  unmirrorArticle(commandId: ID!, article: ArticlePathInput!, targetCommunity: String!): Article
 
   "move article to other community"
-  moveArticle(article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
-
-  "mirror article to home community"
-  mirrorToHome(article: ArticlePathInput!, communityTags: [ID]): Article
-
-  "move article to other community"
-  moveToBlackhole(article: ArticlePathInput!, communityTags: [ID]): Article
+  moveArticle(commandId: ID!, article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
 
   "create a post"
   createPost(
@@ -542,10 +538,10 @@ type RootMutationType {
   publishPostDraft(commandId: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!): Post
 
   "set cat for a post"
-  setPostCat(article: ArticlePathInput!, cat: ArticleCatEnum!): Post
+  setPostCat(article: ArticlePathInput!, cat: ArticleCatEnum!, commandId: ID!): Post
 
   "set status for a post"
-  setPostStatus(article: ArticlePathInput!, status: ArticleStatusEnum!): Post
+  setPostStatus(article: ArticlePathInput!, status: ArticleStatusEnum!, commandId: ID!): Post
 
   "upvote to post"
   upvotePost(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
@@ -554,10 +550,10 @@ type RootMutationType {
   undoUpvotePost(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to post"
-  pinPost(article: ArticlePathInput!): Post
+  pinPost(article: ArticlePathInput!, commandId: ID!): Post
 
   "undo pin to post"
-  undoPinPost(article: ArticlePathInput!): Post
+  undoPinPost(article: ArticlePathInput!, commandId: ID!): Post
 
   "emotion to post"
   emotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
@@ -566,22 +562,22 @@ type RootMutationType {
   undoEmotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a post"
-  reportPost(article: ArticlePathInput!, reason: String!, attr: String): Post
+  reportPost(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Post
 
   "undo report a post"
-  undoReportPost(article: ArticlePathInput!): Post
+  undoReportPost(commandId: ID!, article: ArticlePathInput!): Post
 
   "sink a post"
-  sinkPost(article: ArticlePathInput!): Article
+  sinkPost(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo sink to post"
-  undoSinkPost(article: ArticlePathInput!): Article
+  undoSinkPost(article: ArticlePathInput!, commandId: ID!): Article
 
   "lock comment of a post"
-  lockPostComment(article: ArticlePathInput!): Article
+  lockPostComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo lock to a post"
-  undoLockPostComment(article: ArticlePathInput!): Article
+  undoLockPostComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "create a blog"
   createBlog(
@@ -613,10 +609,10 @@ type RootMutationType {
   undoUpvoteBlog(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to blog"
-  pinBlog(article: ArticlePathInput!): Blog
+  pinBlog(article: ArticlePathInput!, commandId: ID!): Blog
 
   "undo pin to blog"
-  undoPinBlog(article: ArticlePathInput!): Blog
+  undoPinBlog(article: ArticlePathInput!, commandId: ID!): Blog
 
   "emotion to blog"
   emotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
@@ -625,22 +621,22 @@ type RootMutationType {
   undoEmotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a blog"
-  reportBlog(article: ArticlePathInput!, reason: String!, attr: String): Blog
+  reportBlog(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Blog
 
   "undo report a blog"
-  undoReportBlog(article: ArticlePathInput!): Blog
+  undoReportBlog(commandId: ID!, article: ArticlePathInput!): Blog
 
   "sink a blog"
-  sinkBlog(article: ArticlePathInput!): Article
+  sinkBlog(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo sink to blog"
-  undoSinkBlog(article: ArticlePathInput!): Article
+  undoSinkBlog(article: ArticlePathInput!, commandId: ID!): Article
 
   "lock comment of a blog"
-  lockBlogComment(article: ArticlePathInput!): Article
+  lockBlogComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo lock to a blog"
-  undoLockBlogComment(article: ArticlePathInput!): Article
+  undoLockBlogComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "create a changelog"
   createChangelog(
@@ -674,10 +670,10 @@ type RootMutationType {
   undoUpvoteChangelog(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to changelog"
-  pinChangelog(article: ArticlePathInput!): Changelog
+  pinChangelog(article: ArticlePathInput!, commandId: ID!): Changelog
 
   "undo pin to changelog"
-  undoPinChangelog(article: ArticlePathInput!): Changelog
+  undoPinChangelog(article: ArticlePathInput!, commandId: ID!): Changelog
 
   "emotion to changelog"
   emotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
@@ -686,34 +682,28 @@ type RootMutationType {
   undoEmotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a changelog"
-  reportChangelog(article: ArticlePathInput!, reason: String!, attr: String): Changelog
+  reportChangelog(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Changelog
 
   "undo report a changelog"
-  undoReportChangelog(article: ArticlePathInput!): Changelog
+  undoReportChangelog(commandId: ID!, article: ArticlePathInput!): Changelog
 
   "sink a changelog"
-  sinkChangelog(article: ArticlePathInput!): Article
+  sinkChangelog(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo sink to changelog"
-  undoSinkChangelog(article: ArticlePathInput!): Article
+  undoSinkChangelog(article: ArticlePathInput!, commandId: ID!): Article
 
   "lock comment of a changelog"
-  lockChangelogComment(article: ArticlePathInput!): Article
+  lockChangelogComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo lock to a changelog"
-  undoLockChangelogComment(article: ArticlePathInput!): Article
+  undoLockChangelogComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "upvote to doc"
   upvoteDoc(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "undo upvote to doc"
   undoUpvoteDoc(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
-
-  "pin to doc"
-  pinDoc(article: ArticlePathInput!): Doc
-
-  "undo pin to doc"
-  undoPinDoc(article: ArticlePathInput!): Doc
 
   "emotion to doc"
   emotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
@@ -722,22 +712,22 @@ type RootMutationType {
   undoEmotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a doc"
-  reportDoc(article: ArticlePathInput!, reason: String!, attr: String): Doc
+  reportDoc(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Doc
 
   "undo report a doc"
-  undoReportDoc(article: ArticlePathInput!): Doc
+  undoReportDoc(commandId: ID!, article: ArticlePathInput!): Doc
 
   "sink a doc"
-  sinkDoc(article: ArticlePathInput!): Article
+  sinkDoc(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo sink to doc"
-  undoSinkDoc(article: ArticlePathInput!): Article
+  undoSinkDoc(article: ArticlePathInput!, commandId: ID!): Article
 
   "lock comment of a doc"
-  lockDocComment(article: ArticlePathInput!): Article
+  lockDocComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo lock to a doc"
-  undoLockDocComment(article: ArticlePathInput!): Article
+  undoLockDocComment(article: ArticlePathInput!, commandId: ID!): Article
 
   "write a comment"
   createComment(article: ArticlePathInput!, body: String!, commandId: ID!): ArticleCommentResult
@@ -758,10 +748,10 @@ type RootMutationType {
   undoUpvoteComment(comment: CommentPathInput!, commandId: ID!): Comment
 
   "report a comment"
-  reportComment(comment: CommentPathInput!, reason: String!, attr: String): Comment
+  reportComment(commandId: ID!, comment: CommentPathInput!, reason: String!, attr: String): Comment
 
   "undo report a comment"
-  undoReportComment(comment: CommentPathInput!): Comment
+  undoReportComment(commandId: ID!, comment: CommentPathInput!): Comment
 
   "emotion to a comment"
   emotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!, commandId: ID!): Comment
@@ -770,16 +760,16 @@ type RootMutationType {
   undoEmotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!, commandId: ID!): Comment
 
   "accept a comment as a QA post's current solution"
-  acceptSolution(comment: CommentPathInput!): Comment
+  acceptSolution(comment: CommentPathInput!, commandId: ID!): Comment
 
   "revoke a comment when it is a QA post's current solution"
-  revokeSolution(comment: CommentPathInput!): Comment
+  revokeSolution(comment: CommentPathInput!, commandId: ID!): Comment
 
   "pin a comment"
-  pinComment(comment: CommentPathInput!): Comment
+  pinComment(comment: CommentPathInput!, commandId: ID!): Comment
 
   "undo pin a comment"
-  undoPinComment(comment: CommentPathInput!): Comment
+  undoPinComment(comment: CommentPathInput!, commandId: ID!): Comment
 
   "Exports Activity evidence and records the export before returning the artifact"
   exportCommunityActivity(
@@ -788,19 +778,19 @@ type RootMutationType {
 
   "update base info in dashboard"
   updateDashboardBaseInfo(
-    community: String!, dsbSection: DsbSection, favicon: String, title: String, locale: String, logo: String, slug: String, desc: String, introduction: String, homepage: String, city: String, techstack: String
+    community: String!, dsbSection: DsbSection, commandId: ID!, favicon: String, title: String, locale: String, logo: String, slug: String, desc: String, introduction: String, homepage: String, city: String, techstack: String
   ): Dsb
 
   "update seo in dashboard"
   updateDashboardSeo(
-    community: String!, dsbSection: DsbSection, seoEnable: Boolean, ogSiteName: String, ogTitle: String, ogDescription: String, ogUrl: String, ogImage: String, ogLocale: String, ogPublisher: String, twTitle: String, twDescription: String, twUrl: String, twCard: String, twSite: String, twImage: String, twImageWidth: String, twImageHeight: String
+    community: String!, dsbSection: DsbSection, commandId: ID!, seoEnable: Boolean, ogSiteName: String, ogTitle: String, ogDescription: String, ogUrl: String, ogImage: String, ogLocale: String, ogPublisher: String, twTitle: String, twDescription: String, twUrl: String, twCard: String, twSite: String, twImage: String, twImageWidth: String, twImageHeight: String
   ): Dsb
 
   "Publishes one current-theme Wallpaper Snapshot"
   publishWallpaper(community: String!, input: WallpaperPublishInput!): WallpaperPublishResult!
 
   "Updates the Dashboard-owned content surface shadow"
-  updateDashboardContentShadow(community: String!, enabled: Boolean!): Dsb
+  updateDashboardContentShadow(community: String!, enabled: Boolean!, commandId: ID!): Dsb
 
   "Prepares the generated images for one current-theme Wallpaper save"
   prepareWallpaperUpload(community: String!, input: WallpaperUploadPrepareInput!): WallpaperUploadPreparation!
@@ -810,57 +800,65 @@ type RootMutationType {
 
   "update enable in dashboard"
   updateDashboardEnable(
-    community: String!, dsbSection: DsbSection, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean, visitorLocationMap: Boolean
+    community: String!, dsbSection: DsbSection, commandId: ID!, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean, visitorLocationMap: Boolean
   ): Dsb
 
   "update thread-specific emotion settings in dashboard"
   updateDashboardThreadEmotions(
-    community: String!, dsbSection: DsbSection, post: [EmotionType], blog: [EmotionType], changelog: [EmotionType], doc: [EmotionType], postComment: [EmotionType], blogComment: [EmotionType], changelogComment: [EmotionType], docComment: [EmotionType]
+    community: String!, dsbSection: DsbSection, commandId: ID!, post: [EmotionType], blog: [EmotionType], changelog: [EmotionType], doc: [EmotionType], postComment: [EmotionType], blogComment: [EmotionType], changelogComment: [EmotionType], docComment: [EmotionType]
   ): Dsb
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dsbSection: DsbSection, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, overlayDark: Boolean
+    community: String!, dsbSection: DsbSection, commandId: ID!, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, overlayDark: Boolean
   ): Dsb
 
   "save custom theme preset in dashboard"
   saveCustomThemePreset(
-    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeOverwrite: Json
+    community: String!, commandId: ID!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeOverwrite: Json
   ): Dsb
 
   "select read-only theme preset in dashboard"
-  selectThemePreset(community: String!, themePreset: DsbThemePreset!): Dsb
+  selectThemePreset(community: String!, commandId: ID!, themePreset: DsbThemePreset!): Dsb
 
   "update rss in dashboard"
-  updateDashboardRss(community: String!, dsbSection: DsbSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int): Dsb
+  updateDashboardRss(
+    community: String!, dsbSection: DsbSection, commandId: ID!, rssFeedType: DsbRssFeedType, rssFeedCount: Int
+  ): Dsb
 
   "update name alias in dashboard"
-  updateDashboardNameAlias(community: String!, dsbSection: DsbSection, nameAlias: [DsbAliasMap]): Dsb
+  updateDashboardNameAlias(community: String!, dsbSection: DsbSection, commandId: ID!, nameAlias: [DsbAliasMap]): Dsb
 
   "update header links in dashboard"
-  updateDashboardHeaderLinks(community: String!, dsbSection: DsbSection, headerLinks: [DsbLinkMap]): Dsb
+  updateDashboardHeaderLinks(community: String!, dsbSection: DsbSection, commandId: ID!, headerLinks: [DsbLinkMap]): Dsb
 
   "update footer links in dashboard"
-  updateDashboardFooterLinks(community: String!, dsbSection: DsbSection, footerLinks: [DsbLinkMap]): Dsb
+  updateDashboardFooterLinks(community: String!, dsbSection: DsbSection, commandId: ID!, footerLinks: [DsbLinkMap]): Dsb
 
   "update footer oneline links in dashboard"
-  updateDashboardFooterOnelineLinks(community: String!, dsbSection: DsbSection, footerOnelineLinks: [DsbLinkChildMap]): Dsb
+  updateDashboardFooterOnelineLinks(
+    community: String!, dsbSection: DsbSection, commandId: ID!, footerOnelineLinks: [DsbLinkChildMap]
+  ): Dsb
 
   "update social links in dashboard"
-  updateDashboardSocialLinks(community: String!, dsbSection: DsbSection, socialLinks: [DsbSocialLinkMap]): Dsb
+  updateDashboardSocialLinks(
+    community: String!, dsbSection: DsbSection, commandId: ID!, socialLinks: [DsbSocialLinkMap]
+  ): Dsb
 
   "update media reports in dashboard"
-  updateDashboardMediaReports(community: String!, dsbSection: DsbSection, mediaReports: [DsbMediaReportMap]): Dsb
+  updateDashboardMediaReports(
+    community: String!, dsbSection: DsbSection, commandId: ID!, mediaReports: [DsbMediaReportMap]
+  ): Dsb
 
   "update third-party analytics integrations in dashboard"
   updateDashboardThirdPartyAnalytics(
-    community: String!, dsbSection: DsbSection, thirdPartyAnalytics: [DsbThirdPartyAnalyticsInput]
+    community: String!, dsbSection: DsbSection, commandId: ID!, thirdPartyAnalytics: [DsbThirdPartyAnalyticsInput]
   ): Dsb
 
   "update docs FAQ in dashboard"
-  updateDashboardDocFaq(community: String!, dsbSection: DsbSection, docFaq: DsbDocFaqInput!): Dsb
+  updateDashboardDocFaq(community: String!, dsbSection: DsbSection, commandId: ID!, docFaq: DsbDocFaqInput!): Dsb
 
-  updatePressConfig(input: UpdatePressConfigInput!): PressConfigPayload
+  updatePressConfig(input: UpdatePressConfigInput!, commandId: ID!): PressConfigPayload
 
   "create one recursive docs navigation node"
   createDocTreeNode(
@@ -935,28 +933,28 @@ type RootMutationType {
   ): DocTreeMutationPayload
 
   "add a published Group as a Cover Card"
-  addDocCoverCard(community: String!, groupNodeId: ID!): DocCoverCard
+  addDocCoverCard(commandId: ID!, community: String!, groupNodeId: ID!): DocCoverCard
 
   "remove a docs Cover Card"
-  removeDocCoverCard(community: String!, groupNodeId: ID!): DocCoverCard
+  removeDocCoverCard(commandId: ID!, community: String!, groupNodeId: ID!): DocCoverCard
 
   "reorder docs Cover Cards"
-  reorderDocCoverCards(community: String!, ids: [ID!]!): DoneState
+  reorderDocCoverCards(commandId: ID!, community: String!, ids: [ID!]!): DoneState
 
   "update docs Cover Card appearance"
-  updateDocCoverCardAppearance(community: String!, id: ID!, appearance: Json!): DocCoverCard
+  updateDocCoverCardAppearance(commandId: ID!, community: String!, id: ID!, appearance: Json!): DocCoverCard
 
   "pin a published docs page to cover"
-  pinDocToCover(community: String!, nodeId: ID!): DocCoverPinnedDoc!
+  pinDocToCover(commandId: ID!, community: String!, nodeId: ID!): DocCoverPinnedDoc!
 
   "remove a published docs page from cover pins"
-  unpinDocFromCover(community: String!, nodeId: ID!): DocCoverPinnedDoc!
+  unpinDocFromCover(commandId: ID!, community: String!, nodeId: ID!): DocCoverPinnedDoc!
 
   "reorder the complete docs cover pin collection"
-  reorderDocCoverPinnedDocs(community: String!, nodeIds: [ID!]!): DoneState!
+  reorderDocCoverPinnedDocs(commandId: ID!, community: String!, nodeIds: [ID!]!): DoneState!
 
   "update a pinned docs cover card appearance"
-  updatePinnedDocAppearance(community: String!, nodeId: ID!, appearance: Json!): DocCoverPinnedDoc!
+  updatePinnedDocAppearance(commandId: ID!, community: String!, nodeId: ID!, appearance: Json!): DocCoverPinnedDoc!
 
   "create the persistent import Job after a temporary Preview is confirmed"
   startDocContentImport(
@@ -4077,7 +4075,7 @@ input WallpaperPublishInput {
   theme: WallpaperTheme!
   settings: WallpaperSettingsInput!
   baseVersion: Int!
-  idempotencyKey: String!
+  commandId: ID!
   batchRef: String
 }
 
@@ -4094,7 +4092,7 @@ input WallpaperUploadPrepareInput {
   theme: WallpaperTheme!
   settings: WallpaperSettingsInput!
   baseVersion: Int!
-  idempotencyKey: String!
+  commandId: ID!
   images: [WallpaperImageInput!]!
 }
 

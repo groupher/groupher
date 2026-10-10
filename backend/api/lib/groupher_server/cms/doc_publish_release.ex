@@ -34,6 +34,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
 
   alias CMS.Model.{
     Community,
+    ArticleBinding,
     DocBranchVersion,
     DocPublic,
     DocPublishRelease,
@@ -336,13 +337,16 @@ defmodule GroupherServer.CMS.DocPublishRelease do
   defp latest_public_doc_version(community_id, branch_id, doc_id) do
     DocPublic
     |> join(:inner, [public], article in CMS.Model.Article, on: article.id == public.article_id)
+    |> join(:inner, [public, _article], binding in ArticleBinding,
+      on: binding.article_id == public.article_id
+    )
     |> join(:inner, [public, _article], version in DocBranchVersion,
       on: version.id == public.branch_version_id
     )
-    |> where([public, article, _version], article.community_id == ^community_id)
-    |> where([public, _article, _version], public.branch_id == ^branch_id)
-    |> where([public, _article, _version], public.article_id == ^doc_id)
-    |> select([public, _article, version], {version, public})
+    |> where([_public, _article, binding, _version], binding.community_id == ^community_id)
+    |> where([public, _article, _binding, _version], public.branch_id == ^branch_id)
+    |> where([public, _article, _binding, _version], public.article_id == ^doc_id)
+    |> select([public, _article, _binding, version], {version, public})
     |> Repo.one()
   end
 

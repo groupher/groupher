@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
 
   alias GroupherServer.{CMS, Repo, ServiceAuth}
 
-  alias CMS.Assets.{ErrorCat, Writer}
+  alias CMS.Assets.{ErrorCat, Persist}
   alias CMS.Model.{Community, CommunityAsset}
   alias ServiceAuth.Client
 
@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   plug(Tesla.Middleware.Timeout, timeout: @timeout)
 
   @doc "Builds the provider-deletion projection for an expired Application upload."
-  @spec delete_application_upload_object(map()) :: :ok
+  @spec delete_application_upload_object(map()) :: {:ok, :pass}
   def delete_application_upload_object(upload) do
     enqueue(%CommunityAsset{
       id: upload.id,
@@ -45,10 +45,13 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   end
 
   @doc "Soft-deletes generated assets and enqueues provider cleanup."
-  @spec delete_generated_assets(Community.t(), [String.t()]) :: :ok
-  def delete_generated_assets(%Community{id: community_id} = community, public_refs)
-      when is_list(public_refs) do
+  @spec delete_generated_assets(Community.t(), [String.t()], keyword()) :: {:ok, :pass}
+  def delete_generated_assets(%Community{id: community_id} = community, public_refs, opts \\ [])
+      when is_list(public_refs) and is_list(opts) do
     public_refs = Enum.filter(public_refs, &is_binary/1)
+
+    workflow_ref =
+      Keyword.get(opts, :workflow_ref, retention_workflow_ref(community_id, public_refs))
 
     from(asset in CommunityAsset,
       where:
@@ -56,11 +59,38 @@ defmodule GroupherServer.CMS.Assets.Deletion do
           is_nil(asset.deleted_at)
     )
     |> Repo.all()
-    |> Enum.each(fn asset ->
-      _ = Writer.delete(community, asset.id)
-    end)
+    |> Enum.reduce({:ok, :pass}, fn asset, acc ->
+      result =
+        Repo.transaction(fn ->
+          with {:ok, deleted} <- Persist.delete(community, asset.id, {:workflow, workflow_ref}),
+               {:ok, _event} <-
+                 CMS.Outbox.send(%{
+                   event: "asset.provider_delete",
+                   worker: CMS.Outbox.Workers.Asset.Cleanup,
+                   resource_type: "community_asset",
+                   resource_id: deleted.id,
+                   identity: {:workflow, workflow_ref},
+                   effect_key: "asset:#{deleted.id}",
+                   data: %{asset_id: deleted.id, public_ref: deleted.public_ref}
+                 }) do
+            :pass
+          else
+            {:error, reason} -> Repo.rollback(reason)
+          end
+        end)
 
-    :ok
+      case {acc, result} do
+        {{:ok, :pass}, {:ok, :pass}} -> {:ok, :pass}
+        {{:error, first_reason}, {:ok, :pass}} -> {:error, first_reason}
+        {{:ok, :pass}, {:error, reason}} -> {:error, reason}
+        {{:error, first_reason}, {:error, _reason}} -> {:error, first_reason}
+      end
+    end)
+  end
+
+  defp retention_workflow_ref(community_id, public_refs) do
+    digest = :crypto.hash(:sha256, :erlang.term_to_binary(Enum.sort(public_refs)))
+    "wallpaper-retention:#{community_id}:#{Base.encode16(digest, case: :lower)}"
   end
 
   @doc """
@@ -72,17 +102,17 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   ## Examples
 
       Deletion.enqueue(%CommunityAsset{id: 1, public_ref: "asset_1"})
-      #=> :ok
+      #=> {:ok, :pass}
 
   """
-  @spec enqueue(CommunityAsset.t()) :: :ok
+  @spec enqueue(CommunityAsset.t()) :: {:ok, :pass}
   def enqueue(%CommunityAsset{} = asset) do
     case deliver(asset) do
-      :ok ->
-        :ok
+      {:ok, _} ->
+        {:ok, :pass}
 
       {:error, ErrorCat.error_pattern(reason: :skipped)} ->
-        :ok
+        {:ok, :pass}
 
       {:error, reason} ->
         Logger.warning(
@@ -90,7 +120,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
             "public_ref=#{asset.public_ref} reason=#{inspect(reason)}"
         )
 
-        :ok
+        {:ok, :pass}
     end
   end
 
@@ -146,7 +176,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
             "public_ref=#{asset.public_ref} duration_ms=#{duration_ms}"
         )
 
-        :ok
+        {:ok, :pass}
 
       {:ok, %Tesla.Env{status: status, body: body}} ->
         {:error,

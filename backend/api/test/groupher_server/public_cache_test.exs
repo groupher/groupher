@@ -135,7 +135,7 @@ defmodule GroupherServer.PublicCacheTest do
                true
              )
 
-    assert :ok =
+    assert {:ok, :pass} =
              PublicCache.mark_failed(
                invalidation.id,
                second_lock,
@@ -175,7 +175,7 @@ defmodule GroupherServer.PublicCacheTest do
       set: [locked_at: DateTime.add(DateTime.utc_now(:second), -300, :second)]
     )
 
-    assert :ok = PurgeWorker.perform(%{job | attempt: 2})
+    assert {:ok, :pass} = PurgeWorker.perform(%{job | attempt: 2})
 
     assert %Invalidation{status: :dead, attempts: 2, locked_at: nil, locked_by: nil} =
              Repo.get!(Invalidation, invalidation.id)
@@ -225,7 +225,7 @@ defmodule GroupherServer.PublicCacheTest do
 
     assert {:ok, _} = PublicCache.claim(invalidation.id, "health-worker")
 
-    assert :ok =
+    assert {:ok, :pass} =
              PublicCache.mark_failed(
                invalidation.id,
                "health-worker",
@@ -245,7 +245,7 @@ defmodule GroupherServer.PublicCacheTest do
                causation_id: "44444444-4444-4444-8444-444444444444"
              )
 
-    assert :ok =
+    assert {:ok, :pass} =
              PurgeWorker.perform(%Oban.Job{
                id: 1,
                args: %{"invalidation_id" => invalid_payload.id},
@@ -267,7 +267,7 @@ defmodule GroupherServer.PublicCacheTest do
       set: [contract_version: 2]
     )
 
-    assert :ok =
+    assert {:ok, :pass} =
              PurgeWorker.perform(%Oban.Job{
                id: 2,
                args: %{"invalidation_id" => invalid_version.id},

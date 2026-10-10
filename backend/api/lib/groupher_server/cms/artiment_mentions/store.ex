@@ -10,20 +10,20 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
     * post A links to blog B:
       `mentioner_type = :post`, `mentioner_id = A.id`,
-      `mentioner_community_id = A.community_id`,
+      `mentioner_community_id` is resolved from explicit ArticleBinding context,
       `mentioned_scope = :internal`, `mentioned_type = :blog`,
       `mentioned_id = B.id`, `mentioned_community_id = B.community_id`,
       `mention_case = :inline_mention`
 
     * comment A mentions user B with an inline mention:
       `mentioner_type = :comment`, `mentioner_id = A.id`,
-      `mentioner_community_id = A.article.community_id`,
+      `mentioner_community_id` is resolved from explicit ArticleBinding context,
       `mentioned_scope = :internal`, `mentioned_type = :user`,
       `mentioned_id = B.id`, `mention_case = :inline_mention`
 
     * post A links to an external URL:
       `mentioner_type = :post`, `mentioner_id = A.id`,
-      `mentioner_community_id = A.community_id`,
+      `mentioner_community_id` is resolved from explicit ArticleBinding context,
       `mentioned_scope = :external`, `mentioned_type = :url`,
       `mentioned_url = "https://..."`, `mention_case = :link`
 
@@ -69,6 +69,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     Artiment.PlateJSON,
     ArtimentMentions.Config,
     ArtimentMentions.Parser,
+    Articles.Bindings,
     FrontDesk
   }
 
@@ -124,10 +125,10 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     end
   end
 
-  def sync(%{id: article_id, thread: thread})
+  def sync(%{id: article_id, thread: thread, community: %CMS.Model.Community{} = community})
       when is_binary(article_id) and thread in [:post, :blog, :changelog, :doc] do
     with %Article{} <- Repo.get(Article, article_id),
-         {:ok, projection} <- CMS.Articles.Store.load_article_for_mentions(article_id) do
+         {:ok, projection} <- CMS.Articles.Store.load_article_for_mentions(article_id, community) do
       sync(projection)
     else
       nil -> {:error, ErrorCat.custom(%{reason: :not_exist})}
@@ -349,10 +350,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   defp do_sync(artiment, ast) do
     mentioner_context = artiment_context(artiment)
+    community_id = community_id(mentioner_context)
 
     mentions =
       ast
-      |> Parser.parse()
+      |> Parser.parse(community_id: community_id)
       |> Enum.reject(&mentioning_itself?(artiment, &1))
       |> Enum.map(&shape(mentioner_context, &1))
       |> merge_occurrences()
@@ -545,8 +547,14 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     end
   end
 
-  defp load_article_for_mentions(%{id: article_id}) when is_binary(article_id) do
-    CMS.Articles.Store.load_article_for_mentions(article_id)
+  defp load_article_for_mentions(%{id: article_id} = article) when is_binary(article_id) do
+    case Map.get(article, :community) do
+      %CMS.Model.Community{} = community ->
+        CMS.Articles.Store.load_article_for_mentions(article_id, community)
+
+      _ ->
+        {:error, :article_binding_context_required}
+    end
   end
 
   defp load_article_for_mentions(%{article_id: _article_id} = article), do: {:ok, article}
@@ -588,12 +596,51 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   defp article_url(thread, id), do: Config.article_url(thread, id)
 
   defp community_id(%{artiment: %Comment{}, parent_article: article}) when is_map(article) do
-    Map.get(article, :community_id)
+    case Map.get(article, :community) do
+      %CMS.Model.Community{id: community_id} ->
+        community_id
+
+      _ ->
+        case explicit_community_id(article) do
+          community_id when is_integer(community_id) ->
+            community_id
+
+          _ ->
+            case Bindings.get(article, Map.get(article, :community)) do
+              {:ok, %{community: %{id: community_id}}} -> community_id
+              _ -> nil
+            end
+        end
+    end
   end
 
   defp community_id(%{artiment: %Comment{}}), do: nil
-  defp community_id(%{artiment: %{community_id: community_id}}), do: community_id
+
+  defp community_id(%{artiment: %{community_id: community_id}})
+       when is_integer(community_id),
+       do: community_id
+
+  defp community_id(%{artiment: article}) when is_map(article) do
+    case explicit_community_id(article) do
+      community_id when is_integer(community_id) ->
+        community_id
+
+      _ ->
+        case Bindings.get(article, Map.get(article, :community)) do
+          {:ok, %{community: %{id: community_id}}} -> community_id
+          _ -> nil
+        end
+    end
+  end
+
   defp community_id(_), do: nil
+
+  defp explicit_community_id(article) do
+    case :maps.find(:community_id, article) do
+      {:ok, community_id} -> community_id
+      :error -> nil
+    end
+  end
 
   defp snapshot(context, mention \\ %{})
 

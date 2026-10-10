@@ -27,10 +27,24 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   describe "[comments state]" do
     test "can get basic state", ~m(community user doc)a do
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, state} = CMS.Comments.comments_state(:doc, doc.id)
 
@@ -43,10 +57,24 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
     test "can get viewer joined state", ~m(community user doc)a do
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, state} = CMS.Comments.comments_state(:doc, doc.id, user)
 
@@ -58,10 +86,24 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
     test "can get viewer joined state 2", ~m(community user user2 user3 doc)a do
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user3)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user3,
+          Ecto.UUID.generate()
+        )
 
       {:ok, state} = CMS.Comments.comments_state(:doc, doc.id, user)
 
@@ -75,10 +117,24 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   describe "[basic article comment]" do
     test "doc are supported by article comment.", ~m(user community doc)a do
       {:ok, doc_comment_1} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, doc_comment_2} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, comments} =
         CMS.Comments.paged_comments(:doc, doc.article_id, %{page: 1, size: 20}, :replies)
@@ -89,7 +145,14 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
     test "comment should have default meta after create", ~m(user doc community)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert comment.meta |> Map.from_struct() |> Map.delete(:id) == @default_comment_meta
     end
@@ -99,7 +162,14 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       Process.sleep(1000)
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
 
       doc_after =
         Repo.get_by!(CMS.Model.DocBranchState,
@@ -129,9 +199,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         CMS.Comments.create_comment(
           community,
           :doc,
-          doc.inner_id,
+          article_inner_id(doc, community),
           mock_comment(),
-          author
+          author,
+          Ecto.UUID.generate()
         )
 
       state_after =
@@ -156,7 +227,14 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       Process.sleep(1000)
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       state =
         Repo.get_by!(CMS.Model.DocBranchState,
@@ -189,7 +267,14 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       Process.sleep(1000)
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       state =
         Repo.get_by!(CMS.Model.DocBranchState,
@@ -202,10 +287,22 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
     test "comment can be updated", ~m(community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, %{comment: updated_comment}} =
-        CMS.Comments.update_comment(comment, mock_comment("updated content"), user)
+        CMS.Comments.update_comment(
+          comment,
+          mock_comment("updated content"),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert updated_comment.body_html |> String.contains?(~s(updated content</p>))
     end
@@ -214,10 +311,24 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   describe "[article comment floor]" do
     test "comment will have a floor number after created", ~m(community doc user)a do
       {:ok, doc_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, doc_comment2} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, doc_comment} = ORM.find(Comment, doc_comment.id)
       {:ok, doc_comment2} = ORM.find(Comment, doc_comment2.id)
@@ -231,7 +342,14 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "doc will have participator after comment created",
          ~m(community doc user)a do
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, state} = CMS.Comments.comments_state(:doc, doc.article_id)
 
@@ -241,10 +359,24 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
     test "post participator will not contains same user", ~m(community doc user)a do
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, state} = CMS.Comments.comments_state(:doc, doc.article_id)
 
@@ -254,10 +386,24 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "recent comment user should appear at first of the post participants",
          ~m(community user user2 doc)a do
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
 
       {:ok, state} = CMS.Comments.comments_state(:doc, doc.article_id)
 
@@ -270,9 +416,16 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   describe "[article comment upvotes]" do
     test "user can upvote a doc comment", ~m(community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      CMS.Interactions.upvote(comment, user)
+      CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
 
@@ -282,10 +435,17 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
     test "user can upvote a doc comment twice is fine", ~m(community user doc)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Interactions.upvote(comment, user)
-      {:ok, _} = CMS.Interactions.upvote(comment, user)
+      {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       assert 1 == length(comment.upvotes)
@@ -294,11 +454,18 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "article author upvote doc comment will have flag",
          ~m(community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       author_user = doc.author
 
-      CMS.Interactions.upvote(comment, author_user)
+      CMS.Interactions.upvote(comment, author_user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       {:ok, comment} = InteractionResponse.one(comment, author_user)
@@ -308,9 +475,16 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "user upvote doc comment marks the viewer in the reaction projection",
          ~m(community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, comment} = CMS.Interactions.upvote(comment, user)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user)
 
       assert comment.viewer_has_upvoted
@@ -319,16 +493,23 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "user undo upvote doc comment clears the viewer reaction projection",
          ~m(community doc user user2)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Interactions.upvote(comment, user)
-      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
+      {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user2)
 
       assert comment.viewer_has_upvoted
       assert CMS.Interactions.viewer_state(comment, user).viewer_has_upvoted
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user2)
 
       refute comment.viewer_has_upvoted
@@ -337,22 +518,36 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
     test "user upvote an already-upvoted comment is idempotent", ~m(community user doc)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      CMS.Interactions.upvote(comment, user)
-      {:ok, _} = CMS.Interactions.upvote(comment, user)
+      CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
     end
 
     test "upvote comment should inc the comment's upvotes_count",
          ~m(community doc user user2)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert comment.upvotes_count == 0
 
-      {:ok, _} = CMS.Interactions.upvote(comment, user)
-      {:ok, _} = CMS.Interactions.upvote(comment, user2)
+      {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id)
       {:ok, comment} = InteractionResponse.one(comment, nil)
@@ -361,14 +556,21 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
     test "user can undo upvote a doc comment", ~m(community user doc)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      CMS.Interactions.upvote(comment, user)
+      CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       assert 1 == length(comment.upvotes)
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
     end
@@ -376,13 +578,20 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "user can undo upvote a doc comment with no upvote",
          ~m(community user doc)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user, Ecto.UUID.generate())
       {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
     end
@@ -390,14 +599,22 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "upvote comment should update embeded replies too",
          ~m(community doc user user2 user3)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, replied_comment} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
+      {:ok, replied_comment} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.Interactions.upvote(parent_comment, user)
-      {:ok, _} = CMS.Interactions.upvote(replied_comment, user)
-      {:ok, _} = CMS.Interactions.upvote(replied_comment, user2)
-      {:ok, _} = CMS.Interactions.upvote(replied_comment, user3)
+      {:ok, _} = CMS.Interactions.upvote(parent_comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(replied_comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(replied_comment, user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(replied_comment, user3, Ecto.UUID.generate())
 
       filter = %{page: 1, size: 20}
       {:ok, paged_comments} = CMS.Comments.paged_comments(:doc, doc.id, filter, :replies)
@@ -407,7 +624,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert parent.upvotes_count == 1
       assert reply.upvotes_count == 3
 
-      {:ok, _} = CMS.Interactions.undo_upvote(replied_comment, user2)
+      {:ok, _} = CMS.Interactions.undo_upvote(replied_comment, user2, Ecto.UUID.generate())
       {:ok, paged_comments} = CMS.Comments.paged_comments(:doc, doc.id, filter, :replies)
 
       parent = paged_comments.entries |> List.first()
@@ -420,7 +637,14 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   describe "[article comment fold/unfold]" do
     test "user can fold a comment", ~m(community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, comment} = ORM.find(Comment, comment.id)
 
@@ -438,7 +662,14 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
     test "user can unfold a comment", ~m(community doc user)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} = CMS.Comments.fold_comment(comment.id, user)
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -459,13 +690,20 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   describe "[article comment pin/unpin]" do
     test "user can pin a comment", ~m(community user doc)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, comment} = ORM.find(Comment, comment.id)
 
       assert not comment.is_pinned
 
-      {:ok, comment} = CMS.Comments.pin_comment(comment.id, user)
+      {:ok, comment} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
       {:ok, comment} = ORM.find(Comment, comment.id)
 
       assert comment.is_pinned
@@ -476,10 +714,17 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
     test "user can unpin a comment", ~m(community user doc)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
-      {:ok, comment} = CMS.Comments.undo_pin_comment(comment.id, user)
+      {:ok, _} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
+      {:ok, comment} = CMS.Comments.undo_pin_comment(comment.id, user, Ecto.UUID.generate())
 
       assert not comment.is_pinned
       assert {:error, _} = PinnedComment |> ORM.find_by(%{comment_id: comment.id})
@@ -488,30 +733,54 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "pinned comments has a limit for each article", ~m(community user doc)a do
       Enum.each(1..@pinned_comment_limit, fn _ ->
         {:ok, comment} =
-          CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+          CMS.Comments.create_comment(
+            community,
+            :doc,
+            article_inner_id(doc, community),
+            mock_comment(),
+            user,
+            Ecto.UUID.generate()
+          )
 
-        {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
+        {:ok, _} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
       end)
 
       {:ok, extra_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert {:error,
               %ErrorCat.Error{
                 reason: :comment_pin_limit,
                 details: @pinned_comment_limit
               }} =
-               CMS.Comments.pin_comment(extra_comment.id, user)
+               CMS.Comments.pin_comment(extra_comment.id, user, Ecto.UUID.generate())
     end
   end
 
   describe "[article comment report/unreport]" do
     test "can undo a report with other user report it too", ~m(community user user2 doc)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
-      {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user2)
+      {:ok, _} =
+        CMS.AbuseReports.comment(comment, mock_comment(), "attr", user, Ecto.UUID.generate())
+
+      {:ok, _} =
+        CMS.AbuseReports.comment(comment, mock_comment(), "attr", user2, Ecto.UUID.generate())
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -522,7 +791,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
       assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
 
-      {:ok, _} = CMS.AbuseReports.undo_comment(comment, user)
+      {:ok, _} = CMS.AbuseReports.undo_comment(comment, user, Ecto.UUID.generate())
 
       filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
@@ -537,13 +806,22 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "report user < @report_threshold_for_fold will not fold comment",
          ~m(community user doc)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert not comment.is_folded
 
       Enum.reduce(1..(@report_threshold_for_fold - 1), [], fn _, _acc ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
+
+        {:ok, _} =
+          CMS.AbuseReports.comment(comment, mock_comment(), "attr", user, Ecto.UUID.generate())
       end)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -553,13 +831,22 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "report user > @report_threshold_for_fold will cause comment fold",
          ~m(community user doc)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert not comment.is_folded
 
       Enum.reduce(1..(@report_threshold_for_fold + 1), [], fn _, _acc ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.AbuseReports.comment(comment, mock_comment(), "attr", user)
+
+        {:ok, _} =
+          CMS.AbuseReports.comment(comment, mock_comment(), "attr", user, Ecto.UUID.generate())
       end)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
@@ -580,19 +867,34 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
           CMS.Comments.create_comment(
             community,
             :doc,
-            doc.inner_id,
+            article_inner_id(doc, community),
             mock_comment(),
-            new_user
+            new_user,
+            Ecto.UUID.generate()
           )
 
         acc ++ [comment]
       end)
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, results} =
         CMS.Comments.paged_comments_participants(thread, doc.id, %{page: 1, size: page_size})
@@ -612,9 +914,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
             CMS.Comments.create_comment(
               community,
               :doc,
-              doc.inner_id,
+              article_inner_id(doc, community),
               mock_comment(),
-              user
+              user,
+              Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -648,22 +951,40 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
           CMS.Comments.create_comment(
             community,
             :doc,
-            doc.inner_id,
+            article_inner_id(doc, community),
             mock_comment(),
-            user
+            user,
+            Ecto.UUID.generate()
           )
 
         acc ++ [comment]
       end)
 
       {:ok, random_comment_1} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, random_comment_2} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, pined_comment_1} = CMS.Comments.pin_comment(random_comment_1.id, user)
-      {:ok, pined_comment_2} = CMS.Comments.pin_comment(random_comment_2.id, user)
+      {:ok, pined_comment_1} =
+        CMS.Comments.pin_comment(random_comment_1.id, user, Ecto.UUID.generate())
+
+      {:ok, pined_comment_2} =
+        CMS.Comments.pin_comment(random_comment_2.id, user, Ecto.UUID.generate())
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(
@@ -690,22 +1011,40 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
           CMS.Comments.create_comment(
             community,
             :doc,
-            doc.inner_id,
+            article_inner_id(doc, community),
             mock_comment(),
-            user
+            user,
+            Ecto.UUID.generate()
           )
 
         acc ++ [comment]
       end)
 
       {:ok, random_comment_1} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, random_comment_2} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, pined_comment_1} = CMS.Comments.pin_comment(random_comment_1.id, user)
-      {:ok, pined_comment_2} = CMS.Comments.pin_comment(random_comment_2.id, user)
+      {:ok, pined_comment_1} =
+        CMS.Comments.pin_comment(random_comment_1.id, user, Ecto.UUID.generate())
+
+      {:ok, pined_comment_2} =
+        CMS.Comments.pin_comment(random_comment_2.id, user, Ecto.UUID.generate())
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(
@@ -733,9 +1072,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
             CMS.Comments.create_comment(
               community,
               :doc,
-              doc.inner_id,
+              article_inner_id(doc, community),
               mock_comment(),
-              user
+              user,
+              Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -777,9 +1117,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
             CMS.Comments.create_comment(
               community,
               :doc,
-              doc.inner_id,
+              article_inner_id(doc, community),
               mock_comment(),
-              user
+              user,
+              Ecto.UUID.generate()
             )
 
           CMS.Comments.fold_comment(comment.id, user)
@@ -817,9 +1158,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
             CMS.Comments.create_comment(
               community,
               :doc,
-              doc.inner_id,
+              article_inner_id(doc, community),
               mock_comment(),
-              user
+              user,
+              Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -827,7 +1169,8 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       random_comment = all_comments |> Enum.at(1)
 
-      {:ok, %{comment: deleted_comment}} = CMS.Comments.delete_comment(random_comment, user)
+      {:ok, %{comment: deleted_comment}} =
+        CMS.Comments.delete_comment(random_comment, user, Ecto.UUID.generate())
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(
@@ -845,25 +1188,60 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "delete comment still update article's comments_count field",
          ~m(community user doc)a do
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, stats} = CMS.ArticleStats.fetch(:doc, doc.article_id)
 
       assert stats.comments_count == 5
 
-      {:ok, _} = CMS.Comments.delete_comment(comment, user)
+      {:ok, _} = CMS.Comments.delete_comment(comment, user, Ecto.UUID.generate())
 
       {:ok, stats} = CMS.ArticleStats.fetch(:doc, doc.article_id)
       assert stats.comments_count == 4
@@ -878,9 +1256,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
             CMS.Comments.create_comment(
               community,
               :doc,
-              doc.inner_id,
+              article_inner_id(doc, community),
               mock_comment(),
-              user
+              user,
+              Ecto.UUID.generate()
             )
 
           acc ++ [comment]
@@ -888,10 +1267,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       random_comment = all_comments |> Enum.at(1)
 
-      {:ok, _} = CMS.Comments.pin_comment(random_comment.id, user)
+      {:ok, _} = CMS.Comments.pin_comment(random_comment.id, user, Ecto.UUID.generate())
       {:ok, _} = ORM.find(Comment, random_comment.id)
 
-      {:ok, _} = CMS.Comments.delete_comment(random_comment, user)
+      {:ok, _} = CMS.Comments.delete_comment(random_comment, user, Ecto.UUID.generate())
       assert {:error, _} = ORM.find(PinnedComment, random_comment.id)
     end
   end
@@ -900,7 +1279,14 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "author of the article comment a comment should have flag",
          ~m(community doc user2)a do
       {:ok, comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user2)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
 
       assert not comment.is_article_author
 
@@ -910,9 +1296,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         CMS.Comments.create_comment(
           community,
           :doc,
-          doc.inner_id,
+          article_inner_id(doc, community),
           mock_comment(),
-          author_user
+          author_user,
+          Ecto.UUID.generate()
         )
 
       assert comment.is_article_author
@@ -922,34 +1309,77 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
   describe "[lock/unlock doc comment]" do
     test "locked doc can not be comment", ~m(community user doc)a do
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Articles.lock_comments(doc.id, user, branch_id: doc.branch_id)
+      {:ok, _} =
+        CMS.Articles.lock_comments(doc.id, user, branch_id: doc.branch_id, community: community)
 
       {:error, reason} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(doc.id, user, branch_id: doc.branch_id)
+      {:ok, _} =
+        CMS.Articles.undo_lock_comments(doc.id, user,
+          branch_id: doc.branch_id,
+          community: community
+        )
 
       {:ok, _} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
     end
 
     test "locked doc can not by reply", ~m(community user doc)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :doc,
+          article_inner_id(doc, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
+      {:ok, _} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
 
-      {:ok, _} = CMS.Articles.lock_comments(doc.id, user, branch_id: doc.branch_id)
+      {:ok, _} =
+        CMS.Articles.lock_comments(doc.id, user, branch_id: doc.branch_id, community: community)
 
-      {:error, reason} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
+      {:error, reason} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
+
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(doc.id, user, branch_id: doc.branch_id)
-      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
+      {:ok, _} =
+        CMS.Articles.undo_lock_comments(doc.id, user,
+          branch_id: doc.branch_id,
+          community: community
+        )
+
+      {:ok, _} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
     end
   end
 end

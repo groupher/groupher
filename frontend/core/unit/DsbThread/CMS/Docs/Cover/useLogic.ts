@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import { graphqlQueryOptions } from '~/query'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDocCoverLayout } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDsbEdit from '~/stores/dsbEdit/hooks'
@@ -107,19 +108,26 @@ export default function useLogic(): TRet {
   }
 
   const pinDoc = async (nodeId: string): Promise<void> => {
-    await browserGraphQLRequest(DashboardSchema.pinDocToCover, { community, nodeId })
+    await executeCommand({
+      request: (variables) => browserGraphQLRequest(DashboardSchema.pinDocToCover, variables),
+      variables: { community, nodeId },
+    })
     reload()
   }
 
   const unpinDoc = async (nodeId: string): Promise<void> => {
-    await browserGraphQLRequest(DashboardSchema.unpinDocFromCover, { community, nodeId })
+    await executeCommand({
+      request: (variables) => browserGraphQLRequest(DashboardSchema.unpinDocFromCover, variables),
+      variables: { community, nodeId },
+    })
     reload()
   }
 
   const reorderPinnedDocs = async (pinnedDocs: readonly TDocCoverPinnedDoc[]): Promise<void> => {
-    await browserGraphQLRequest(DashboardSchema.reorderDocCoverPinnedDocs, {
-      community,
-      nodeIds: pinnedDocs.map((doc) => doc.nodeId),
+    await executeCommand({
+      request: (variables) =>
+        browserGraphQLRequest(DashboardSchema.reorderDocCoverPinnedDocs, variables),
+      variables: { community, nodeIds: pinnedDocs.map((doc) => doc.nodeId) },
     })
     void reloadCover()
   }
@@ -128,10 +136,10 @@ export default function useLogic(): TRet {
     nodeId: string,
     appearance: TDocCoverPinnedDocAppearance,
   ): Promise<void> => {
-    await browserGraphQLRequest(DashboardSchema.updatePinnedDocAppearance, {
-      community,
-      nodeId,
-      appearance: JSON.stringify(appearance),
+    await executeCommand({
+      request: (variables) =>
+        browserGraphQLRequest(DashboardSchema.updatePinnedDocAppearance, variables),
+      variables: { community, nodeId, appearance: JSON.stringify(appearance) },
     })
     void reloadCover()
   }

@@ -120,7 +120,7 @@ defense-in-depth，不是永久业务幂等；领域唯一约束仍然必要。
 Confirmation 只保存恢复所需的非敏感事实：资源 id、branch/revision/version、content hash 等。Article
 和 Doc Draft 正文由版本化 snapshot 表重建，不能复制到 Receipt。
 
-Article command result 使用 typed `ArticleResult`，而不是自由形状 map。revision builder 以 Confirmation
+Article command result 统一使用 typed `ArticleView`，而不是自由形状 map。revision builder 以 Confirmation
 的 immutable revision anchor 为根；current operational decoration 属于明确命名的 transport layer。
 builder 不伪装 Ecto schema，不实现 `__schema__/1,2` compatibility delegation。
 

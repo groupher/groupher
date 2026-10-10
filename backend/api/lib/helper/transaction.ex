@@ -29,6 +29,7 @@ defmodule Helper.Transaction do
 
   import Ecto.Query, warn: false
   alias GroupherServer.{ErrorCat, Repo}
+  alias Helper.ORM.AdvisoryLock
 
   @spec lock_row(any() | [any()], (any() -> any())) :: {:ok, any()} | {:error, any()}
   def lock_row(queryable, fun) when not is_list(queryable) do
@@ -73,11 +74,7 @@ defmodule Helper.Transaction do
   """
   @spec lock_global(binary() | integer(), (-> any())) :: {:ok, any()} | {:error, any()}
   def lock_global(lock_key, fun) when is_function(fun, 0) do
-    key = normalize_lock_key(lock_key)
-
-    Repo.transaction(fn ->
-      Repo.query!("SELECT pg_advisory_xact_lock($1)", [key])
-
+    AdvisoryLock.transact(lock_key, fn ->
       case fun.() do
         {:ok, result} -> result
         {:error, reason} -> throw({:error, reason})
@@ -103,13 +100,6 @@ defmodule Helper.Transaction do
       throw(
         {:error, ErrorCat.custom(%{reason: :resource_not_found, resource: queryable.__struct__})}
       )
-  end
-
-  defp normalize_lock_key(lock_key) when is_integer(lock_key), do: lock_key
-
-  defp normalize_lock_key(lock_key) when is_binary(lock_key) do
-    <<key::signed-64, _::binary>> = :crypto.hash(:sha256, lock_key)
-    key
   end
 
   defp normalize_error(%ErrorCat.Error{} = error), do: error

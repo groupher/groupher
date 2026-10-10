@@ -61,13 +61,17 @@ defmodule GroupherServer.Analysis.Contribution do
         {:error, _} -> insert_contribute_record(%Community{id: id})
       end
     end)
-    |> Multi.run(:update_community_field, fn _, _ ->
+    |> Multi.run(:update_community_field, fn _, %{make_contribute: contribute} ->
       contributes_digest =
         %Community{id: id}
         |> do_get_contributes()
         |> to_counts_digest(days: @community_contribute_days)
 
-      CMS.Communities.update(community, %{contributes_digest: contributes_digest}, :operations)
+      CMS.Communities.update_operations(
+        community,
+        %{contributes_digest: contributes_digest},
+        "analysis:community-contribution:#{id}:#{today}:#{contribute.count}"
+      )
     end)
     |> Repo.transaction()
     |> result()

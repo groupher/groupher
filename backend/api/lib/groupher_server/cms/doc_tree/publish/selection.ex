@@ -63,7 +63,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
            selected_tree_checklist_item_ids(args, current_checklist.tree_changes),
          {:ok, restore_tree_checklist_item_ids} <-
            selected_restore_tree_checklist_item_ids(args, current_checklist.tree_changes),
-         :ok <-
+         {:ok, _} <-
            reject_overlapping_tree_selections(
              tree_checklist_item_ids,
              restore_tree_checklist_item_ids
@@ -171,7 +171,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
       MapSet.new(Enum.map(restore_tree_checklist_item_ids, &to_string/1))
 
     if MapSet.disjoint?(tree_checklist_item_id_set, restore_tree_checklist_item_id_set) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom("Tree publish items can not be both published and restored.")}
     end

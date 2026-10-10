@@ -19,7 +19,8 @@ defmodule GroupherServer.CMS.Communities.Setup do
   alias GroupherServer.{Accounts, Analysis, CMS, Repo}
   alias Ecto.Multi
   alias Accounts.Model.User
-  alias CMS.Communities.{ErrorCat, Lifecycle, Moderator}
+  alias CMS.Communities.{ErrorCat, Lifecycle}
+  alias CMS.Communities.Moderators.Setup, as: ModeratorSetup
   alias CMS.Communities.Jobs.Setup, as: SetupJob
   alias CMS.CommunityApplications.Transitions
   alias CMS.Gate.Const
@@ -51,19 +52,19 @@ defmodule GroupherServer.CMS.Communities.Setup do
     with {:ok, community} <- fetch_community(community_ref),
          {:ok, application} <- fetch_application(community.id),
          {:ok, user} <- fetch_user(application.user_id),
-         :ok <- ensure_root(community, user),
+         {:ok, _} <- ensure_root(community, user),
          {:ok, _state} <- CMS.DocTree.initialize(community),
-         :ok <- ensure_analysis(community) do
+         {:ok, _} <- ensure_analysis(community) do
       activate(community, application, operation_ref)
     end
   end
 
   @spec retry(String.t(), User.t(), integer()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
-  def retry(application_ref, %User{} = reviewer, expected_version) do
-    with :ok <-
+  def retry(application_ref, %User{} = reviewer, expected_version, command_id \\ nil) do
+    with {:ok, _} <-
            review_authorized?(reviewer, Const.passport_action(:community_application_retry_setup)) do
-      operation_ref = Ecto.UUID.generate()
+      operation_ref = workflow_ref("community_setup", command_id)
       now = DateTime.utc_now(:second)
 
       Repo.transaction(fn ->
@@ -241,24 +242,40 @@ defmodule GroupherServer.CMS.Communities.Setup do
   end
 
   defp ensure_root(community, user) do
-    if Repo.exists?(
-         from(moderator in CommunityModerator,
-           where: moderator.community_id == ^community.id and moderator.user_id == ^user.id
-         )
-       ) do
-      :ok
-    else
-      case Moderator.add_root(community, user) do
-        {:ok, _} -> :ok
-        {:error, reason} -> {:error, reason}
-      end
+    case Repo.transaction(fn ->
+           community = lock_community(community.id)
+
+           if Repo.exists?(
+                from(moderator in CommunityModerator,
+                  where:
+                    moderator.community_id == ^community.id and
+                      moderator.user_id == ^user.id
+                )
+              ) do
+             :pass
+           else
+             case ModeratorSetup.add_root(community, user) do
+               {:ok, _} -> :pass
+               {:error, reason} -> Repo.rollback(reason)
+             end
+           end
+         end) do
+      {:ok, :pass} -> {:ok, :pass}
+      {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp lock_community(community_id) do
+    Community
+    |> where([community], community.id == ^community_id)
+    |> lock("FOR UPDATE")
+    |> Repo.one!()
   end
 
   defp ensure_analysis(community) do
     case Analysis.Web.provision_community(community) do
-      {:ok, _} -> :ok
-      {:error, ErrorCat.error_pattern(reason: :not_configured)} -> :ok
+      {:ok, _} -> {:ok, :pass}
+      {:error, ErrorCat.error_pattern(reason: :not_configured)} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -303,8 +320,12 @@ defmodule GroupherServer.CMS.Communities.Setup do
 
   defp review_authorized?(reviewer, action) do
     case Passport.check(reviewer, action, %{}) do
-      {:ok, true} -> :ok
+      {:ok, true} -> {:ok, :pass}
       _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
+
+  defp workflow_ref(_kind, command_id) when is_binary(command_id), do: command_id
+
+  defp workflow_ref(_kind, _command_id), do: Ecto.UUID.generate()
 end

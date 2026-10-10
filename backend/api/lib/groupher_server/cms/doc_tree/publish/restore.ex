@@ -69,7 +69,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   product Trash actions are restored through `DocTree.Trash`.
   """
   def restore_tree_events(%Community{} = community, branch, events, %User{} = user) do
-    with :ok <- ensure_delete_restore_events(events),
+    with {:ok, _} <- ensure_delete_restore_events(events),
          {:ok, restore_entries} <- restore_tree_delete_events(community, branch, events),
          {:ok, _audit} <- create_restore_audit(community, branch, user, restore_entries),
          {:ok, _state} <- mark_tree_restore_revision(community, branch, length(restore_entries)) do
@@ -81,9 +81,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
 
   defp ensure_delete_restore_events(events) do
     events
-    |> Enum.reduce_while(:ok, fn event, :ok ->
+    |> Enum.reduce_while({:ok, :pass}, fn event, {:ok, _} ->
       if delete_restore_event?(event) do
-        {:cont, :ok}
+        {:cont, {:ok, :pass}}
       else
         {:halt, {:error, ErrorCat.custom("Only deleted tree publish items can be restored.")}}
       end
@@ -104,7 +104,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   defp restore_tree_delete_event(%Community{} = community, branch, %DocTreeEvent{} = event) do
     with {:ok, nodes} <- restore_nodes_from_delete_event(event),
          {:ok, _draft_nodes} <- restore_draft_nodes(community, branch, nodes),
-         :ok <- mark_restored_delete_event_discarded(event) do
+         {:ok, _} <- mark_restored_delete_event_discarded(event) do
       {:ok, %{event: event, nodes: nodes}}
     end
   end
@@ -175,7 +175,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
 
   defp mark_restored_delete_event_discarded(%DocTreeEvent{} = event) do
     case ORM.update(event, %{status: CMS.DocTree.Const.tree_event_status(:discarded)}) do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       error -> error
     end
   end

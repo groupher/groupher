@@ -118,7 +118,7 @@ SERVICE_AUTH_TOKEN_ENDPOINT=http://127.0.0.1:3004/oauth2/token
 但 `make be.start` 随后无条件加载 `backend/api/.env.local`：
 
 ```make
-cd ./backend/api && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=mock mix phx.server
+cd ./backend/api && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=dev mix phx.server
 ```
 
 `.env.local` 中又声明：

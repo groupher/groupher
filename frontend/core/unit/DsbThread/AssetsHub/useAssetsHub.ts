@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import { graphqlQueryOptions } from '~/query'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/assets'
@@ -264,9 +265,10 @@ export default function useAssetsHub(initialData?: TPagedAssets | null): TAssets
       setDeletingAssetId(asset.id)
 
       try {
-        await browserGraphQLRequest<TDeleteResult>(S.deleteCommunityAsset, {
-          community,
-          id: asset.id,
+        await executeCommand({
+          request: (variables) =>
+            browserGraphQLRequest<TDeleteResult>(S.deleteCommunityAsset, variables),
+          variables: { community, id: asset.id },
         })
 
         if (selectedAssetId === asset.id) setSelectedAssetId(null)

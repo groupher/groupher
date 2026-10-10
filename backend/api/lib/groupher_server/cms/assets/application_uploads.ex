@@ -13,14 +13,14 @@ defmodule GroupherServer.CMS.Assets.ApplicationUploads do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Assets.Writer
+  alias CMS.Assets.Persist
   alias CMS.Model.{Community, CommunityApplicationLogoUpload}
   alias Helper.Utils
 
   @doc """
   Promotes one finalized Application Logo upload into Community ownership.
 
-  The upload metadata is passed to `CMS.Assets.Writer.register` so the object
+  The upload metadata is passed to `CMS.Assets.Persist.register` so the object
   becomes a regular community asset with `asset_type: :image`.
 
   ## Examples
@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Assets.ApplicationUploads do
         %CommunityApplicationLogoUpload{} = upload,
         %User{} = user
       ) do
-    Writer.register(
+    Persist.register(
       community,
       %{
         public_ref: "asset_" <> Utils.uid(24),

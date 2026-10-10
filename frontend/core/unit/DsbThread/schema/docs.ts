@@ -366,8 +366,8 @@ export const moveDocTreeNode = graphql(`
 `)
 
 export const addDocCoverCard = graphql(`
-  mutation addDocCoverCard($community: String!, $groupNodeId: ID!) {
-    addDocCoverCard(community: $community, groupNodeId: $groupNodeId) {
+  mutation addDocCoverCard($commandId: ID!, $community: String!, $groupNodeId: ID!) {
+    addDocCoverCard(commandId: $commandId, community: $community, groupNodeId: $groupNodeId) {
       id
       index
       appearance
@@ -376,8 +376,8 @@ export const addDocCoverCard = graphql(`
 `)
 
 export const removeDocCoverCard = graphql(`
-  mutation removeDocCoverCard($community: String!, $groupNodeId: ID!) {
-    removeDocCoverCard(community: $community, groupNodeId: $groupNodeId) {
+  mutation removeDocCoverCard($commandId: ID!, $community: String!, $groupNodeId: ID!) {
+    removeDocCoverCard(commandId: $commandId, community: $community, groupNodeId: $groupNodeId) {
       id
       index
       appearance
@@ -386,16 +386,16 @@ export const removeDocCoverCard = graphql(`
 `)
 
 export const reorderDocCoverCards = graphql(`
-  mutation reorderDocCoverCards($community: String!, $ids: [ID!]!) {
-    reorderDocCoverCards(community: $community, ids: $ids) {
+  mutation reorderDocCoverCards($commandId: ID!, $community: String!, $ids: [ID!]!) {
+    reorderDocCoverCards(commandId: $commandId, community: $community, ids: $ids) {
       done
     }
   }
 `)
 
 export const pinDocToCover = graphql(`
-  mutation pinDocToCover($community: String!, $nodeId: ID!) {
-    pinDocToCover(community: $community, nodeId: $nodeId) {
+  mutation pinDocToCover($commandId: ID!, $community: String!, $nodeId: ID!) {
+    pinDocToCover(commandId: $commandId, community: $community, nodeId: $nodeId) {
       nodeId
       index
       appearance
@@ -404,24 +404,34 @@ export const pinDocToCover = graphql(`
 `)
 
 export const unpinDocFromCover = graphql(`
-  mutation unpinDocFromCover($community: String!, $nodeId: ID!) {
-    unpinDocFromCover(community: $community, nodeId: $nodeId) {
+  mutation unpinDocFromCover($commandId: ID!, $community: String!, $nodeId: ID!) {
+    unpinDocFromCover(commandId: $commandId, community: $community, nodeId: $nodeId) {
       nodeId
     }
   }
 `)
 
 export const reorderDocCoverPinnedDocs = graphql(`
-  mutation reorderDocCoverPinnedDocs($community: String!, $nodeIds: [ID!]!) {
-    reorderDocCoverPinnedDocs(community: $community, nodeIds: $nodeIds) {
+  mutation reorderDocCoverPinnedDocs($commandId: ID!, $community: String!, $nodeIds: [ID!]!) {
+    reorderDocCoverPinnedDocs(commandId: $commandId, community: $community, nodeIds: $nodeIds) {
       done
     }
   }
 `)
 
 export const updateDocCoverCardAppearance = graphql(`
-  mutation updateDocCoverCardAppearance($community: String!, $id: ID!, $appearance: Json!) {
-    updateDocCoverCardAppearance(community: $community, id: $id, appearance: $appearance) {
+  mutation updateDocCoverCardAppearance(
+    $commandId: ID!
+    $community: String!
+    $id: ID!
+    $appearance: Json!
+  ) {
+    updateDocCoverCardAppearance(
+      commandId: $commandId
+      community: $community
+      id: $id
+      appearance: $appearance
+    ) {
       id
       appearance
     }
@@ -429,8 +439,18 @@ export const updateDocCoverCardAppearance = graphql(`
 `)
 
 export const updatePinnedDocAppearance = graphql(`
-  mutation updatePinnedDocAppearance($community: String!, $nodeId: ID!, $appearance: Json!) {
-    updatePinnedDocAppearance(community: $community, nodeId: $nodeId, appearance: $appearance) {
+  mutation updatePinnedDocAppearance(
+    $commandId: ID!
+    $community: String!
+    $nodeId: ID!
+    $appearance: Json!
+  ) {
+    updatePinnedDocAppearance(
+      commandId: $commandId
+      community: $community
+      nodeId: $nodeId
+      appearance: $appearance
+    ) {
       nodeId
       appearance
     }

@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Jobs.ExpireSubmitted do
 
   def perform(_job) do
     case CMS.CommunityApplications.expire_due(DateTime.utc_now(:second)) do
-      {:ok, _count} -> :ok
+      {:ok, _count} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end

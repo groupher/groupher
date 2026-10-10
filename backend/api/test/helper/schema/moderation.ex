@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Schema.Moderation do
 
   def m(:remove_moderator) do
     """
-    mutation($community: String!, $user: String!){
-          removeModerator(community: $community, user: $user) {
+    mutation($community: String!, $user: String!, $commandId: ID!){
+          removeModerator(community: $community, user: $user, commandId: $commandId) {
             slug
           }
         }
@@ -13,8 +13,8 @@ defmodule GroupherServer.Test.Helper.Schema.Moderation do
 
   def m(:update_moderator_passport) do
     """
-    mutation($community: String!, $user: String!, $rules: Json!){
-          updateModeratorPassport(community: $community, user: $user, rules: $rules) {
+    mutation($community: String!, $user: String!, $rules: Json!, $commandId: ID!){
+          updateModeratorPassport(community: $community, user: $user, rules: $rules, commandId: $commandId) {
             slug
             moderators {
               isRoot
@@ -31,8 +31,8 @@ defmodule GroupherServer.Test.Helper.Schema.Moderation do
 
   def m(:add_moderators) do
     """
-    mutation($community: String!, $users: [String!]!){
-          addModerators(community: $community, users: $users) {
+    mutation($community: String!, $users: [String!]!, $commandId: ID!){
+          addModerators(community: $community, users: $users, commandId: $commandId) {
             slug
             moderators {
               isRoot
@@ -47,8 +47,8 @@ defmodule GroupherServer.Test.Helper.Schema.Moderation do
 
   def m(:add_moderator) do
     """
-    mutation($community: String!, $user: String!){
-          addModerator(community: $community, user: $user) {
+    mutation($community: String!, $user: String!, $commandId: ID!){
+          addModerator(community: $community, user: $user, commandId: $commandId) {
             slug
           }
         }

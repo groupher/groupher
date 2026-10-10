@@ -36,11 +36,11 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
   @spec stage(Community.t(), Ecto.UUID.t(), [map()]) :: {:ok, map()} | {:error, term()}
   def stage(%Community{} = community, job_ref, items)
       when is_list(items) and length(items) in 1..@max_batch_count do
-    with :ok <- validate_unique_refs(items) do
+    with {:ok, _} <- validate_unique_refs(items) do
       Repo.transaction(fn ->
         with {:ok, job} <- Jobs.lock_job(community.id, job_ref),
-             :ok <- ensure_stageable(job),
-             :ok <- stage_items(job, items),
+             {:ok, _} <- ensure_stageable(job),
+             {:ok, _} <- stage_items(job, items),
              {:ok, job} <- refresh_job(job, items) do
           Jobs.project(job)
         else
@@ -58,14 +58,14 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
     refs = Enum.map(items, &value(&1, "external_ref"))
 
     if Enum.all?(refs, &(is_binary(&1) and &1 != "")) and length(Enum.uniq(refs)) == length(refs) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom("BodyBag batch contains an invalid or duplicate externalRef")}
     end
   end
 
   defp ensure_stageable(%Job{status: status}) when status in [:staging, :ready, :completed] do
-    :ok
+    {:ok, :pass}
   end
 
   defp ensure_stageable(job) do
@@ -73,13 +73,13 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
   end
 
   defp stage_items(job, items) do
-    Enum.reduce_while(items, :ok, fn input, :ok ->
+    Enum.reduce_while(items, {:ok, :pass}, fn input, {:ok, _} ->
       external_ref = value(input, "external_ref")
 
       case lock_item(job.id, external_ref) do
         {:ok, item} ->
           case stage_item(job, item, input) do
-            :ok -> {:cont, :ok}
+            {:ok, _} -> {:cont, {:ok, :pass}}
             {:error, reason} -> {:halt, {:error, reason}}
           end
 
@@ -121,7 +121,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
   defp stage_body(%Job{status: :completed}, item, attrs) do
     with {:ok, body_bag} <- BodyBag.cast(attrs, thread: :doc),
          true <- item.content_status == :ready and item.body_hash == body_bag.body_hash do
-      :ok
+      {:ok, :pass}
     else
       false ->
         {:error, ErrorCat.custom("Completed ImportJob staging payload changed")}
@@ -133,7 +133,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
 
   defp stage_body(job, item, attrs) do
     case validate_document_metadata(item) do
-      :ok -> stage_cast_body(job, item, attrs)
+      {:ok, _} -> stage_cast_body(job, item, attrs)
       {:error, {code, message}} -> stage_failure(job, item, code, message, "validation")
     end
   end
@@ -165,7 +165,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
          {"invalid_document_slug", "Document slug must contain between 1 and 120 characters."}}
 
       true ->
-        :ok
+        {:ok, :pass}
     end
   end
 
@@ -181,7 +181,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
   end
 
   defp persist_validated_body(job, item, body_map, body_hash, encoded) do
-    with :ok <- persist_body(job, item, body_map, body_hash, byte_size(encoded)),
+    with {:ok, _} <- persist_body(job, item, body_map, body_hash, byte_size(encoded)),
          {:ok, _item} <-
            item
            |> Item.changeset(%{
@@ -193,7 +193,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
              skip_code: nil
            })
            |> Repo.update() do
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -222,7 +222,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
            )
          ) do
       %StagedBody{body_hash: ^body_hash} ->
-        :ok
+        {:ok, :pass}
 
       %StagedBody{} ->
         {:error, ErrorCat.custom("BodyBag staging changed for an existing externalRef")}
@@ -238,7 +238,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
         }
 
         case %StagedBody{} |> StagedBody.changeset(attrs) |> Repo.insert() do
-          {:ok, _body} -> :ok
+          {:ok, _body} -> {:ok, :pass}
           {:error, changeset} -> {:error, changeset}
         end
     end
@@ -259,7 +259,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
            skip_code: "content_too_large"
          })
          |> Repo.update() do
-      {:ok, _item} -> :ok
+      {:ok, _item} -> {:ok, :pass}
       {:error, changeset} -> {:error, changeset}
     end
   end
@@ -280,7 +280,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
          message,
          stage
        ) do
-    :ok
+    {:ok, :pass}
   end
 
   defp stage_failure(%Job{status: :completed}, _item, _code, _message, _stage) do
@@ -304,7 +304,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
            skip_code: nil
          })
          |> Repo.update() do
-      {:ok, _item} -> :ok
+      {:ok, _item} -> {:ok, :pass}
       {:error, changeset} -> {:error, changeset}
     end
   end

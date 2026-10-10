@@ -17,7 +17,12 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
     @set_cat_query S.Article.m(:set_post_cat)
     test "can set cat for a existing post", ~m(user_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         cat: "IDEA"
       }
 
@@ -28,7 +33,12 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
 
     test "set cat rejects non-enum value", ~m(user_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         cat: "NOT_EXIST"
       }
 
@@ -38,7 +48,12 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
     @set_status_query S.Article.m(:set_post_status)
     test "can set status for a existing post", ~m(user_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         status: "DONE"
       }
 
@@ -49,7 +64,12 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
 
     test "set status rejects non-enum value", ~m(user_conn community post)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         status: "NOT_EXIST"
       }
 

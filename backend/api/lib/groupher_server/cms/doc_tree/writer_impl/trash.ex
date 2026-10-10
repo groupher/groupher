@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
                doc_ids,
                branch_id: branch.id
              ),
-           :ok <- delete_nodes(draft_nodes ++ public_nodes),
+           {:ok, _} <- delete_nodes(draft_nodes ++ public_nodes),
            {:ok, _activity} <-
              Activity.log(draft_root, :trashed,
                actor: actor,
@@ -85,6 +85,8 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
   @doc "Loads a structural subtree in one materialized Tree stage."
   def subtree_nodes(%Community{} = community, branch, %DocTreeNode{} = root, stage) do
+    # Recursive subtree traversal is intentionally kept as a parameterized CTE;
+    # the surrounding writer remains the query owner.
     result =
       Repo.query!(
         """
@@ -175,7 +177,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
       end)
 
     case validate_trash_rows(rows) do
-      :ok ->
+      {:ok, _} ->
         case Repo.insert_all(TrashedDocTreeNode, rows, returning: true) do
           {count, items} when count == length(rows) ->
             {:ok, Enum.sort_by(items, & &1.node_id)}
@@ -193,11 +195,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
   end
 
   defp validate_trash_rows(rows) do
-    Enum.reduce_while(rows, :ok, fn row, :ok ->
+    Enum.reduce_while(rows, {:ok, :pass}, fn row, {:ok, _} ->
       changeset = TrashedDocTreeNode.changeset(%TrashedDocTreeNode{}, row)
 
       if changeset.valid? do
-        {:cont, :ok}
+        {:cont, {:ok, :pass}}
       else
         {:halt, {:error, changeset}}
       end
@@ -217,13 +219,13 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
     case ids do
       [] ->
-        :ok
+        {:ok, :pass}
 
       ids ->
         {count, _} = DocTreeNode |> where([node], node.id in ^ids) |> Repo.delete_all()
 
         if count == length(ids) do
-          :ok
+          {:ok, :pass}
         else
           {:error, ErrorCat.custom("Docs Tree changed during Trash")}
         end

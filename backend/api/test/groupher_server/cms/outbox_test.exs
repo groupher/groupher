@@ -89,8 +89,45 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
 
   test "the command-event-resource identity is unique" do
     attrs = event_attrs("test.unique", Ecto.UUID.generate())
-    assert {:ok, _event} = CMS.Outbox.send(attrs)
-    assert {:error, %Ecto.Changeset{}} = CMS.Outbox.send(attrs)
+    assert {:ok, first} = CMS.Outbox.send(attrs)
+    assert {:ok, second} = CMS.Outbox.send(attrs)
+    assert second.id == first.id
+    assert Repo.aggregate(Event, :count, :id) == 1
+  end
+
+  test "workflow identity is separate from command identity" do
+    assert {:ok, event} =
+             CMS.Outbox.send(%{
+               event: "test.workflow",
+               worker: CMS.Outbox.Workers.Article.Cleanup,
+               resource_type: "asset",
+               resource_id: 42,
+               identity: {:workflow, "reconcile-run-42"},
+               effect_key: "asset:42"
+             })
+
+    assert event.identity_type == :workflow
+    assert event.command_id == "reconcile-run-42"
+    assert event.effect_key == "asset:42"
+  end
+
+  test "one command can own multiple effect scopes without a second uuid" do
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, _source} = CMS.Outbox.send(event_attrs("test.scope", command_id))
+
+    assert {:ok, destination} =
+             CMS.Outbox.send(%{
+               event: "test.scope",
+               worker: CMS.Outbox.Workers.Article.Cleanup,
+               resource_type: "test",
+               resource_id: "destination",
+               identity: {:command, command_id},
+               effect_key: "destination"
+             })
+
+    assert destination.command_id == command_id
+    assert destination.identity_type == :command
   end
 
   test "a live lease makes a second delivery busy" do
@@ -133,7 +170,7 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
     assert {:error, :permanent_failure} =
              CMS.Outbox.execute(event.id, fn _event -> {:error, :permanent_failure} end)
 
-    assert :ok = CMS.Outbox.mark_dead(event.id)
+    assert {:ok, :pass} = CMS.Outbox.mark_dead(event.id)
     assert Repo.get!(Event, event.id).status == :dead
     assert {:error, :outbox_event_dead} = CMS.Outbox.execute(event.id, fn _ -> {:ok, :nope} end)
   end

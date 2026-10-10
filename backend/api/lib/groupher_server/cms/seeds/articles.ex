@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
 
   alias GroupherServer.CMS
 
+  alias CMS.Communities.Tags.Maintenance
   alias CMS.Model.Community
   alias Helper.{ORM, T}
   alias CMS.Seeds.{Comments, Config, Tags}
@@ -139,7 +140,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     {:ok, Enum.reverse(articles)}
   end
 
-  defp attach_tags(_article, []), do: :ok
+  defp attach_tags(_article, []), do: {:ok, :pass}
 
   defp attach_tags(article, tag_ids) do
     count = Enum.random(1..min(3, length(tag_ids)))
@@ -147,8 +148,10 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     tag_ids
     |> Enum.shuffle()
     |> Enum.take(count)
-    |> Enum.each(fn tag_id ->
-      CMS.Communities.set_tag(article, tag_id)
+    |> Enum.with_index()
+    |> Enum.each(fn {tag_id, index} ->
+      workflow_ref = "seed-article-tags:#{article.id}:#{index}"
+      Maintenance.add(article, tag_id, workflow_ref)
     end)
   end
 
@@ -158,7 +161,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     if target_count > 0 do
       Enum.each(1..target_count, fn _ ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.Interactions.upvote(article, user)
+        {:ok, _} = CMS.Interactions.upvote(article, user, Ecto.UUID.generate())
       end)
     end
 
@@ -172,7 +175,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   defp seed_emotions(article) do
     with {:ok, user} <- db_insert(:user),
          emotion <- Enum.random(@article_emotions),
-         {:ok, _} <- CMS.Interactions.emotion(article, emotion, user) do
+         {:ok, _} <- CMS.Interactions.emotion(article, emotion, user, Ecto.UUID.generate()) do
       {:ok, article}
     end
   end

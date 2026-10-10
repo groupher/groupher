@@ -16,7 +16,12 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
   describe "[doc report/undo_report]" do
     test "login user can report a doc", ~m(community doc user_conn)a do
       variables = %{
-        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        },
         reason: "reason"
       }
 
@@ -24,23 +29,35 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
         user_conn
         |> gq_mutation(S.Article.m(:report_article, :doc), variables)
 
-      assert article["innerId"] == to_string(doc.inner_id)
+      assert article["innerId"] == to_string(article_inner_id(doc, community))
     end
 
     test "login user can undo report a doc", ~m(community doc user_conn)a do
       variables = %{
-        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        },
         reason: "reason"
       }
 
       article = user_conn |> gq_mutation(S.Article.m(:report_article, :doc), variables)
 
-      assert article["innerId"] == to_string(doc.inner_id)
+      assert article["innerId"] == to_string(article_inner_id(doc, community))
 
-      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
+      variables = %{
+        command_id: Ecto.UUID.generate(),
+        article: %{
+          inner_id: article_inner_id(doc, community),
+          community: community.slug,
+          thread: "DOC"
+        }
+      }
 
       article = user_conn |> gq_mutation(S.Article.m(:undo_report_article, :doc), variables)
-      assert article["innerId"] == to_string(doc.inner_id)
+      assert article["innerId"] == to_string(article_inner_id(doc, community))
     end
   end
 end

@@ -17,7 +17,7 @@ defmodule GroupherServer.Jobs.ArticleInsightsRetention do
   def perform(%Oban.Job{}) do
     case Maintenance.delete_expired() do
       %{more?: true} -> {:snooze, Config.retention_snooze_seconds()}
-      %{more?: false} -> :ok
+      %{more?: false} -> {:ok, :pass}
     end
   end
 end

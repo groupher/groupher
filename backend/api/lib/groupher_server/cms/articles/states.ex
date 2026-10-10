@@ -19,15 +19,14 @@ defmodule GroupherServer.CMS.Articles.States do
 
   alias CMS.Articles.ErrorCat
   alias CMS.{Articles.Lifecycle, Artiment.Const, Comments.Writer}
-  alias CMS.Articles.Communities, as: ArticleCommunities
   alias CMS.Docs.Lifecycle, as: DocLifecycle
 
   alias CMS.Model.{
     Article,
-    Community,
+    ArticleBinding,
     DocBranch,
     DocBranchState,
-    PinnedArticle,
+    KanbanState,
     PostState
   }
 
@@ -36,8 +35,6 @@ defmodule GroupherServer.CMS.Articles.States do
   @active_period CMS.Artiment.Config.active_period_days()
   @archive_threshold CMS.Artiment.Config.archive_threshold()
   @article_cat Const.cat_values() |> Enum.into(%{}, &{&1, &1})
-
-  @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
   @doc """
   Sets the category of a post and refreshes the question flag on its comments.
@@ -59,15 +56,40 @@ defmodule GroupherServer.CMS.Articles.States do
     end
   end
 
-  @doc "Sets the immediate Kanban status of a stable Post projection."
-  def set_status(%Article{id: article_id, thread: :post} = article, status) do
-    with %PostState{} = state <- Repo.get(PostState, article_id),
-         {:ok, _state} <- state |> PostState.changeset(%{status: status}) |> Repo.update() do
+  @spec set_status(Article.t(), Const.status_enum() | nil, pos_integer()) ::
+          T.domain_res(Article.t())
+  def set_status(%Article{thread: :post} = article, status, community_id)
+      when is_integer(community_id) do
+    with %ArticleBinding{} = binding <-
+           Repo.get_by(ArticleBinding, article_id: article.id, community_id: community_id),
+         {:ok, _state} <- put_kanban_state(binding, status) do
       {:ok, article}
     else
-      nil -> {:error, ErrorCat.article_not_found("article not found")}
+      nil -> {:error, ErrorCat.article_not_found("article binding not found")}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  def set_status(%Article{}, _status, _community_id) do
+    {:error, ErrorCat.article_not_found("post not found")}
+  end
+
+  defp put_kanban_state(%ArticleBinding{id: article_binding_id}, nil) do
+    Repo.delete_all(
+      from(state in KanbanState, where: state.article_binding_id == ^article_binding_id)
+    )
+
+    {:ok, :removed}
+  end
+
+  defp put_kanban_state(%ArticleBinding{id: article_binding_id}, status) do
+    %KanbanState{}
+    |> KanbanState.changeset(%{article_binding_id: article_binding_id, status: status})
+    |> Repo.insert(
+      on_conflict: [set: [status: status, updated_at: DateTime.utc_now(:second)]],
+      conflict_target: [:article_binding_id],
+      returning: true
+    )
   end
 
   @spec update_active_timestamp(atom(), term()) :: T.domain_res(term())
@@ -197,64 +219,6 @@ defmodule GroupherServer.CMS.Articles.States do
     update_stable_article(article, %{comments_locked: false})
   end
 
-  @spec pin(Community.t(), T.article()) :: T.domain_res(T.article())
-  def pin(%Community{} = community, article) do
-    with {:ok, stable} <- stable_article(article),
-         {:ok, _} <- check_pinned_article_count(community, stable.thread),
-         {:ok, _} <- ArticleCommunities.pin(stable, community) do
-      {:ok, article}
-    end
-  end
-
-  @spec undo_pin(Community.t(), T.article()) :: T.domain_res(T.article())
-  def undo_pin(%Community{} = community, article) do
-    with {:ok, stable} <- stable_article(article),
-         {:ok, _} <- ArticleCommunities.unpin(stable, community) do
-      {:ok, article}
-    end
-  end
-
-  @spec mirror(Community.t(), T.article()) :: T.domain_res(T.article())
-  @spec mirror(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def mirror(%Community{} = target_community, article, community_tag_ids \\ []) do
-    with {:ok, stable} <- stable_article(article),
-         {:ok, relation} <- ArticleCommunities.mirror(stable, target_community),
-         {:ok, _relation} <- ArticleCommunities.replace_tags(relation, community_tag_ids) do
-      {:ok, article}
-    end
-  end
-
-  @spec unmirror(Community.t(), T.article()) :: T.domain_res(T.article())
-  def unmirror(%Community{} = target_community, article) do
-    with {:ok, stable} <- stable_article(article),
-         {:ok, _} <- ArticleCommunities.unmirror(stable, target_community) do
-      {:ok, article}
-    end
-  end
-
-  @spec move(Community.t(), T.article()) :: T.domain_res(T.article())
-  @spec move(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def move(%Community{} = target_community, article, community_tag_ids \\ []) do
-    with {:ok, stable} <- stable_article(article),
-         {:ok, moved} <- ArticleCommunities.move(stable, target_community),
-         relation <- Repo.get_by!(CMS.Model.ArticleCommunity, article_id: moved.id, role: :home),
-         {:ok, _relation} <- ArticleCommunities.replace_tags(relation, community_tag_ids) do
-      {:ok, Map.merge(article, %{community_id: moved.community_id, inner_id: moved.inner_id})}
-    end
-  end
-
-  @spec mirror_to_home(Community.t(), T.article()) :: T.domain_res(T.article())
-  @spec mirror_to_home(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def mirror_to_home(%Community{} = home_community, article, community_tag_ids \\ []) do
-    mirror(home_community, article, community_tag_ids)
-  end
-
-  @spec move_to_blackhole(Community.t(), T.article()) :: T.domain_res(T.article())
-  @spec move_to_blackhole(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
-  def move_to_blackhole(%Community{} = blackhole, article, community_tag_ids \\ []) do
-    move(blackhole, article, community_tag_ids)
-  end
-
   defp in_active_period?(thread, article) do
     active_period_days = @active_period[thread] || @active_period[:default]
 
@@ -262,27 +226,6 @@ defmodule GroupherServer.CMS.Articles.States do
     active_threshold = Datetime.now() |> Datetime.shift(days: -active_period_days)
 
     :gt == DateTime.compare(inserted_at, active_threshold)
-  end
-
-  defp check_pinned_article_count(%Community{} = community, thread) do
-    query =
-      from(p in PinnedArticle, where: p.community_id == ^community.id and p.thread == ^thread)
-
-    pinned_articles = query |> Repo.all()
-
-    case length(pinned_articles) >= @max_pinned_article_count_per_thread do
-      true -> too_much_pinned_article("too much pinned article")
-      _ -> {:ok, :pass}
-    end
-  end
-
-  defp stable_article(%Article{} = article), do: {:ok, article}
-
-  defp stable_article(%{id: article_id}) when is_binary(article_id) do
-    case Repo.get(Article, article_id) do
-      %Article{} = article -> {:ok, article}
-      nil -> {:error, ErrorCat.article_not_found("article not found")}
-    end
   end
 
   defp update_stable_article(%Article{} = article, attrs) do
@@ -300,5 +243,4 @@ defmodule GroupherServer.CMS.Articles.States do
   end
 
   defp undo_sink_old_article(details), do: {:error, ErrorCat.undo_sink_old_article(details)}
-  defp too_much_pinned_article(details), do: {:error, ErrorCat.too_much_pinned_article(details)}
 end

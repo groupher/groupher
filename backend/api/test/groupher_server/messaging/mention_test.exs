@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.Messaging.Mention do
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     mention_attr = %{
       thread: :post,

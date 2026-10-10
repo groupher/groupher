@@ -20,13 +20,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
   alias CMS.Gate.Const
   alias CMS.Passport
 
-  alias CMS.CommunityApplications.{
-    LogoUploads,
-    Policy,
-    Query,
-    Review,
-    Writer
-  }
+  alias CMS.CommunityApplications.{Commands, LogoUploads, Policy, Query, Review, Writer}
 
   alias Helper.T
 
@@ -49,7 +43,8 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @doc "Runs `review_queue` through the public `CommunityApplications` boundary."
   @spec review_queue(map(), User.t()) :: T.domain_res(term())
   def review_queue(filter, %User{} = reviewer) do
-    with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
+    with {:ok, _} <-
+           review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
       Query.review_queue(filter)
     end
   end
@@ -57,7 +52,8 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @doc "Runs `review_detail` through the public `CommunityApplications` boundary."
   @spec review_detail(String.t(), User.t()) :: T.domain_res(term())
   def review_detail(public_ref, %User{} = reviewer) do
-    with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
+    with {:ok, _} <-
+           review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
       Query.review_detail(public_ref)
     end
   end
@@ -84,7 +80,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   defp review_authorized?(reviewer, action) do
     case Passport.check(reviewer, action, %{}) do
-      {:ok, true} -> :ok
+      {:ok, true} -> {:ok, :pass}
       _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
@@ -93,41 +89,92 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @spec can_apply(User.t()) :: map()
   def can_apply(%User{} = user), do: Policy.can_apply(user)
 
+  @doc "Returns the complete application state consumed by the Apply product."
+  @spec state(User.t()) :: T.domain_res(map())
+  def state(%User{} = user) do
+    with {:ok, current} <- Query.current(user),
+         {:ok, latest_failed} <- Query.latest_failed(user) do
+      policy = Policy.can_apply(user)
+
+      {:ok,
+       %{
+         can_apply: %{policy | reason_code: stringify(policy.reason_code)},
+         current_application: current,
+         latest_failed_application: latest_failed
+       }}
+    end
+  end
+
+  @doc "Normalizes public reviewer filters and returns the authorized review queue."
+  @spec review_queue_by_public_filter(map(), User.t()) :: T.domain_res(map())
+  def review_queue_by_public_filter(filter, %User{} = reviewer) do
+    with {:ok, _} <-
+           review_authorized?(reviewer, Const.passport_action(:community_application_review)),
+         {:ok, filter} <- normalize_public_filter(filter) do
+      Query.review_queue(filter)
+    end
+  end
+
   @doc "Runs `submit` through the public `CommunityApplications` boundary."
   @spec submit(map(), User.t(), String.t()) :: T.domain_res(term())
-  def submit(attrs, %User{} = user, idempotency_key) do
-    Writer.submit(attrs, user, idempotency_key)
+  def submit(attrs, %User{} = user, submit_command_id) do
+    Commands.Submit.execute(attrs, user, submit_command_id)
   end
+
+  @doc "Runs the receipt-backed cancellation Command."
+  @spec cancel(String.t(), User.t(), integer(), Ecto.UUID.t()) :: T.domain_res(term())
+  def cancel(public_ref, %User{} = user, expected_version, command_id),
+    do: Commands.Cancel.execute(public_ref, user, expected_version, command_id)
 
   @doc "Runs `cancel` through the public `CommunityApplications` boundary."
   @spec cancel(String.t(), User.t(), integer()) :: T.domain_res(term())
-  def cancel(public_ref, %User{} = user, expected_version) do
-    Writer.cancel(public_ref, user, expected_version)
-  end
+  def cancel(_public_ref, %User{} = _user, _expected_version),
+    do: {:error, CMS.ErrorCat.command_id_required()}
 
   @doc "Runs `start_review` through the public `CommunityApplications` boundary."
   @spec start_review(String.t(), User.t(), integer()) :: T.domain_res(term())
-  def start_review(public_ref, %User{} = reviewer, expected_version) do
-    Review.start(public_ref, reviewer, expected_version)
-  end
+  def start_review(_public_ref, %User{} = _reviewer, _expected_version),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Runs the receipt-backed review-start Command."
+  @spec start_review(String.t(), User.t(), integer(), Ecto.UUID.t()) :: T.domain_res(term())
+  def start_review(public_ref, %User{} = reviewer, expected_version, command_id),
+    do: Commands.Review.start(public_ref, reviewer, expected_version, command_id)
 
   @doc "Runs `approve` through the public `CommunityApplications` boundary."
   @spec approve(String.t(), User.t(), integer(), map()) :: T.domain_res(term())
-  def approve(public_ref, %User{} = reviewer, expected_version, metadata) do
-    Review.approve(public_ref, reviewer, expected_version, metadata)
-  end
+  def approve(_public_ref, %User{} = _reviewer, _expected_version, _metadata),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Runs the receipt-backed approval Command."
+  @spec approve(String.t(), User.t(), integer(), map(), Ecto.UUID.t()) :: T.domain_res(term())
+  def approve(public_ref, %User{} = reviewer, expected_version, metadata, command_id),
+    do: Commands.Review.approve(public_ref, reviewer, expected_version, metadata, command_id)
 
   @doc "Runs `reject` through the public `CommunityApplications` boundary."
   @spec reject(String.t(), User.t(), integer(), map()) :: T.domain_res(term())
-  def reject(public_ref, %User{} = reviewer, expected_version, reason) do
-    Review.reject(public_ref, reviewer, expected_version, reason)
-  end
+  def reject(_public_ref, %User{} = _reviewer, _expected_version, _reason),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Runs the receipt-backed rejection Command."
+  @spec reject(String.t(), User.t(), integer(), map(), Ecto.UUID.t()) :: T.domain_res(term())
+  def reject(public_ref, %User{} = reviewer, expected_version, reason, command_id),
+    do: Commands.Review.reject(public_ref, reviewer, expected_version, reason, command_id)
 
   @doc "Runs `retry_creation` through the public `CommunityApplications` boundary."
   @spec retry_creation(String.t(), User.t(), integer()) :: T.domain_res(term())
-  def retry_creation(public_ref, %User{} = reviewer, expected_version) do
-    Review.retry_creation(public_ref, reviewer, expected_version)
-  end
+  def retry_creation(_public_ref, %User{} = _reviewer, _expected_version),
+    do: {:error, CMS.ErrorCat.command_id_required()}
+
+  @doc "Runs the receipt-backed creation retry Command."
+  @spec retry_creation(String.t(), User.t(), integer(), Ecto.UUID.t()) :: T.domain_res(term())
+  def retry_creation(public_ref, %User{} = reviewer, expected_version, command_id),
+    do: Commands.Review.retry_creation(public_ref, reviewer, expected_version, command_id)
+
+  @doc "Runs setup retry through the receipt-backed Application Command."
+  @spec retry_setup(String.t(), User.t(), integer(), Ecto.UUID.t()) :: T.domain_res(term())
+  def retry_setup(public_ref, %User{} = reviewer, expected_version, command_id),
+    do: Commands.RetrySetup.execute(public_ref, reviewer, expected_version, command_id)
 
   @doc "Creates logo upload intent through the `CommunityApplications` write boundary."
   @spec create_logo_upload_intent(map(), User.t()) :: T.domain_res(term())
@@ -150,4 +197,28 @@ defmodule GroupherServer.CMS.CommunityApplications do
   def mark_creation_failed(public_ref, operation_ref, reason) do
     Review.mark_creation_failed(public_ref, operation_ref, reason)
   end
+
+  defp normalize_public_filter(filter) do
+    with {:ok, filter} <- put_actor_id(filter, :applicant_ref, :applicant_id),
+         {:ok, filter} <- put_actor_id(filter, :reviewer_ref, :reviewer_id) do
+      {:ok, filter}
+    end
+  end
+
+  defp put_actor_id(filter, public_key, id_key) do
+    case Map.get(filter, public_key) do
+      nil ->
+        {:ok, filter}
+
+      public_ref ->
+        case GroupherServer.FrontDesk.user(public_ref) do
+          {:ok, user} -> {:ok, Map.put(filter, id_key, user.id)}
+          {:error, reason} -> {:error, reason}
+        end
+    end
+  end
+
+  defp stringify(nil), do: nil
+  defp stringify(value) when is_atom(value), do: Atom.to_string(value)
+  defp stringify(value), do: to_string(value)
 end

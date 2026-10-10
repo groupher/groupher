@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Helper.Utils
+  alias Helper.ORM.TransactionSettings
   alias Accounts.Model.User
   alias CMS.Assets.GeneratedBatch
   alias CMS.Assets.GeneratedBatch.PublishCapability
@@ -59,16 +60,16 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
 
     theme = get(input, :theme)
     base_version = get(input, :base_version)
-    idempotency_key = get(input, :idempotency_key)
+    command_id = get(input, :command_id)
     batch_ref = get(input, :batch_ref)
 
-    with :ok <- validate_theme(theme),
+    with {:ok, _} <- validate_theme(theme),
          {:ok, settings} <- Settings.normalize(get(input, :settings)),
-         :ok <- validate_publish_metadata(base_version, idempotency_key),
-         :ok <- validate_batch_requirement(settings, batch_ref) do
+         {:ok, _} <- validate_publish_metadata(base_version, command_id),
+         {:ok, _} <- validate_batch_requirement(settings, batch_ref) do
       digest = Upload.request_digest(community.id, theme, base_version, settings)
 
-      case existing_publish_receipt(community.id, idempotency_key, digest) do
+      case existing_publish_receipt(community.id, command_id, digest) do
         {:ok, response} ->
           {:ok, response}
 
@@ -82,7 +83,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
             theme,
             settings,
             base_version,
-            idempotency_key,
+            command_id,
             batch_ref,
             digest
           )
@@ -148,7 +149,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
          theme,
          settings,
          base_version,
-         idempotency_key,
+         command_id,
          batch_ref,
          digest
        ) do
@@ -157,11 +158,11 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
              community,
              theme,
              batch_ref,
-             idempotency_key,
+             command_id,
              digest,
              settings
            ),
-         :ok <- ensure_publish_lease(capability) do
+         {:ok, _} <- ensure_publish_lease(capability) do
       case run_publish_transaction(fn ->
              configure_publish_transaction!()
              ensure_publish_lease!(capability)
@@ -172,7 +173,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
                theme,
                settings,
                base_version,
-               idempotency_key,
+               command_id,
                batch_ref,
                capability,
                digest
@@ -194,14 +195,14 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
          theme,
          settings,
          base_version,
-         idempotency_key,
+         command_id,
          batch_ref,
          capability,
          digest
        ) do
     case Repo.get_by(WallpaperPublishReceipt,
            community_id: community.id,
-           idempotency_key: idempotency_key
+           command_id: command_id
          ) do
       %WallpaperPublishReceipt{
         request_digest: ^digest,
@@ -210,7 +211,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
         recovered_receipt_response(community.id, receipt.response_payload)
 
       %WallpaperPublishReceipt{} ->
-        Repo.rollback(ErrorCat.wallpaper_publish_idempotency_conflict())
+        Repo.rollback(ErrorCat.wallpaper_publish_command_conflict())
 
       nil ->
         state = lock_or_create_wallpaper(community.id)
@@ -222,7 +223,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
         now = DateTime.utc_now(:second)
         snapshot_ref = (capability && capability.snapshot_ref) || new_snapshot_ref!()
 
-        :ok = Settings.assert_current_version!(settings)
+        {:ok, _} = Settings.assert_current_version!(settings)
 
         image_rows =
           capability && snapshot_images_from_manifest(capability.manifest, snapshot_ref)
@@ -263,7 +264,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
         receipt_attrs = %{
           community_id: community.id,
           expires_at: DateTime.add(now, Retention.publish_receipt_retention_seconds(), :second),
-          idempotency_key: idempotency_key,
+          command_id: command_id,
           request_digest: digest,
           request_digest_version: @request_digest_version,
           response_payload: %{"version" => state.version}
@@ -278,11 +279,11 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
     end
   end
 
-  defp prepare_publish_capability(community, theme, batch_ref, idempotency_key, digest, settings) do
+  defp prepare_publish_capability(community, theme, batch_ref, command_id, digest, settings) do
     if settings["type"] == "none" do
       {:ok, nil}
     else
-      case batch_client().claim_for_publish(batch_ref, idempotency_key) do
+      case batch_client().claim_for_publish(batch_ref, command_id) do
         {:ok, result} ->
           with {:ok, capability} <- verify_publish_capability(result, batch_ref, digest),
                {:ok, snapshot_ref} <- validate_publish_manifest(capability.manifest, theme) do
@@ -402,14 +403,14 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
         {:error, ErrorCat.wallpaper_publish_base_version_invalid()}
 
       not is_binary(key) or String.trim(key) == "" ->
-        {:error, ErrorCat.wallpaper_publish_idempotency_key_invalid()}
+        {:error, ErrorCat.wallpaper_publish_command_id_invalid()}
 
       true ->
-        :ok
+        {:ok, :pass}
     end
   end
 
-  defp validate_batch_requirement(%{"type" => "none"}, nil), do: :ok
+  defp validate_batch_requirement(%{"type" => "none"}, nil), do: {:ok, :pass}
 
   defp validate_batch_requirement(%{"type" => "none"}, _) do
     {:error, ErrorCat.wallpaper_none_publish_must_not_have_batch()}
@@ -417,14 +418,14 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
 
   defp validate_batch_requirement(_settings, batch_ref)
        when is_binary(batch_ref) and batch_ref != "" do
-    :ok
+    {:ok, :pass}
   end
 
   defp validate_batch_requirement(_settings, _) do
     {:error, ErrorCat.wallpaper_upload_batch_required()}
   end
 
-  defp validate_theme(theme) when theme in [:light, :dark], do: :ok
+  defp validate_theme(theme) when theme in [:light, :dark], do: {:ok, :pass}
   defp validate_theme(_), do: {:error, ErrorCat.wallpaper_settings_invalid()}
 
   defp active_field(:light), do: :active_light_snapshot_ref
@@ -433,7 +434,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
   defp new_snapshot_ref!, do: "wsnap_" <> Utils.uid(24)
 
   defp existing_publish_receipt(community_id, key, digest) do
-    case Repo.get_by(WallpaperPublishReceipt, community_id: community_id, idempotency_key: key) do
+    case Repo.get_by(WallpaperPublishReceipt, community_id: community_id, command_id: key) do
       %WallpaperPublishReceipt{
         request_digest: ^digest,
         request_digest_version: @request_digest_version
@@ -441,7 +442,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
         {:ok, recovered_receipt_response(community_id, receipt.response_payload)}
 
       %WallpaperPublishReceipt{} ->
-        {:error, ErrorCat.wallpaper_publish_idempotency_conflict()}
+        {:error, ErrorCat.wallpaper_publish_command_conflict()}
 
       nil ->
         :miss
@@ -460,16 +461,16 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
     true = @database_lock_timeout_ms < @database_transaction_timeout_ms
     true = @database_transaction_timeout_ms < @publish_transaction_budget_ms
     true = @publish_transaction_budget_ms + @max_clock_skew_ms < @batch_ttl_seconds * 1_000
-    :ok
+    {:ok, :pass}
   end
 
-  defp ensure_publish_lease(nil), do: :ok
+  defp ensure_publish_lease(nil), do: {:ok, :pass}
 
   defp ensure_publish_lease(%{expires_at: expires_at}) do
     required_ms = @publish_transaction_budget_ms + @max_clock_skew_ms
 
     if DateTime.diff(expires_at, DateTime.utc_now(), :millisecond) > required_ms do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.wallpaper_publish_lease_too_short()}
     end
@@ -477,17 +478,16 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
 
   defp ensure_publish_lease!(capability) do
     case ensure_publish_lease(capability) do
-      :ok -> :ok
+      {:ok, _} -> {:ok, :pass}
       {:error, reason} -> Repo.rollback(reason)
     end
   end
 
   defp configure_publish_transaction! do
-    Repo.query!("SELECT set_config('statement_timeout', $1, true)", [
-      "#{@database_transaction_timeout_ms}ms"
-    ])
-
-    Repo.query!("SELECT set_config('lock_timeout', $1, true)", ["#{@database_lock_timeout_ms}ms"])
+    TransactionSettings.configure!(
+      @database_transaction_timeout_ms,
+      @database_lock_timeout_ms
+    )
   end
 
   defp run_publish_transaction(callback) do
@@ -500,31 +500,31 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
        when is_binary(batch_ref) and is_map(result) do
     case get(result, :capability) do
       token when is_binary(token) -> cleanup_batch_claim(batch_ref, token)
-      _ -> :ok
+      _ -> {:ok, :pass}
     end
 
-    :ok
+    {:ok, :pass}
   end
 
-  defp cleanup_publish_claim(_community, _batch_ref, _result), do: :ok
+  defp cleanup_publish_claim(_community, _batch_ref, _result), do: {:ok, :pass}
 
   defp cleanup_publish_capability(_community, batch_ref, capability)
        when is_binary(batch_ref) and is_map(capability) do
     case get(capability, :token) do
       token when is_binary(token) -> cleanup_batch_claim(batch_ref, token)
-      _ -> :ok
+      _ -> {:ok, :pass}
     end
 
-    :ok
+    {:ok, :pass}
   end
 
-  defp cleanup_publish_capability(_community, _batch_ref, _capability), do: :ok
+  defp cleanup_publish_capability(_community, _batch_ref, _capability), do: {:ok, :pass}
 
   defp cleanup_batch_claim(batch_ref, token) do
     case published_batch_status(batch_ref) do
-      :published -> :ok
+      :published -> {:ok, :pass}
       :not_published -> _ = batch_client().delete_claim(batch_ref, token)
-      :unknown -> :ok
+      :unknown -> {:ok, :pass}
     end
   end
 

@@ -36,7 +36,7 @@ import { executeContentShadowUpdate, type TContentShadowSavePlan } from './conte
 import { executeWallpaperPublish } from './publishExecutor'
 import { buildWallpaperPublishPlan } from './publishPlan'
 import { updatePublishedWallpaperVersion } from './queryCache'
-import { resolveWallpaperIdempotencyKey, type TPendingWallpaperSave } from './requestCoordinator'
+import { resolveWallpaperCommandId, type TPendingWallpaperSave } from './requestCoordinator'
 import { executeAppearanceSave } from './saveCoordinator'
 import type { TTab } from './spec'
 import useWallpaperPreview, { type TWallpaperPreviewPatch } from './useWallpaperPreview'
@@ -58,7 +58,7 @@ const getInitialTab = (type: TWallpaperType): TTab => {
 type TWallpaperSaveRequest = {
   community: string
   baseVersion: number
-  idempotencyKey: string
+  commandId: string
   submitted: TWallpaperPatch
   theme: 'light' | 'dark'
 }
@@ -240,18 +240,18 @@ export function useLogicValue(): TWallpaperLogic {
     mutationFn: async ({
       community,
       baseVersion,
-      idempotencyKey,
+      commandId,
       submitted,
       theme,
     }: TWallpaperSaveRequest) => {
       const plan = buildWallpaperPublishPlan({
         baseVersion,
         community,
-        reuseKey: idempotencyKey,
+        reuseCommandId: commandId,
         theme,
         wallpaper: clone(liveWallpaper$[theme]),
       })
-      const result = await executeWallpaperPublish(plan, idempotencyKey)
+      const result = await executeWallpaperPublish(plan, commandId)
       if (!result) throw new Error('WALLPAPER_PUBLISH_EMPTY_RESPONSE')
       return { result, submitted }
     },
@@ -355,7 +355,7 @@ export function useLogicValue(): TWallpaperLogic {
         : undefined,
       wallpaper: hasWallpaperChanges
         ? async () => {
-            const pending = resolveWallpaperIdempotencyKey({
+            const pending = resolveWallpaperCommandId({
               fingerprint: wallpaperFingerprint,
               pending: pendingSaveRef.current,
             })
@@ -363,7 +363,7 @@ export function useLogicValue(): TWallpaperLogic {
             await wallpaperMutation.mutateAsync({
               baseVersion: wallpaperStateVersion,
               community,
-              idempotencyKey: pending.idempotencyKey,
+              commandId: pending.commandId,
               submitted,
               theme,
             })

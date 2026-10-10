@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
   alias __MODULE__
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Article, Comment, DocBranch, Embeds}
+  alias CMS.Model.{Article, Comment, Community, DocBranch, Embeds}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -35,6 +35,7 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
     belongs_to(:comment, Comment, foreign_key: :comment_id)
     belongs_to(:account, User, foreign_key: :account_id)
     belongs_to(:article, Article, type: Ecto.UUID)
+    belongs_to(:community, Community)
     belongs_to(:branch, DocBranch)
 
     embeds_many(:report_cases, Embeds.AbuseReportCase, on_replace: :delete)
@@ -50,7 +51,7 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
   @doc false
   def changeset(%AbuseReport{} = struct, attrs) do
     struct
-    |> cast(attrs, [:article_id, :branch_id] ++ @optional_fields)
+    |> cast(attrs, [:article_id, :community_id, :branch_id] ++ @optional_fields)
     |> cast_embed(:report_cases, required: true, with: &Embeds.AbuseReportCase.changeset/2)
     |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:branch_id)
@@ -58,7 +59,7 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
 
   def update_changeset(%AbuseReport{} = struct, attrs) do
     struct
-    |> cast(attrs, [:article_id, :branch_id] ++ @update_fields)
+    |> cast(attrs, [:article_id, :community_id, :branch_id] ++ @update_fields)
     |> cast_embed(:report_cases, required: true, with: &Embeds.AbuseReportCase.changeset/2)
     |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:branch_id)

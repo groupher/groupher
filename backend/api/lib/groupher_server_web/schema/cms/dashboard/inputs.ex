@@ -71,7 +71,7 @@ defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Inputs do
     field(:theme, non_null(:wallpaper_theme))
     field(:settings, non_null(:wallpaper_settings_input))
     field(:base_version, non_null(:integer))
-    field(:idempotency_key, non_null(:string))
+    field(:command_id, non_null(:id))
     field(:batch_ref, :string)
   end
 
@@ -88,7 +88,7 @@ defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Inputs do
     field(:theme, non_null(:wallpaper_theme))
     field(:settings, non_null(:wallpaper_settings_input))
     field(:base_version, non_null(:integer))
-    field(:idempotency_key, non_null(:string))
+    field(:command_id, non_null(:id))
     field(:images, non_null(list_of(non_null(:wallpaper_image_input))))
   end
 

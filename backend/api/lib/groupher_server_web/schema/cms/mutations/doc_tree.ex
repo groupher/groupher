@@ -24,7 +24,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.create_doc_tree_node/3)
+      resolve(&R.CMS.Docs.create_doc_tree_node/3)
     end
 
     @desc "update a docs tree node"
@@ -38,7 +38,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.update_doc_tree_node/3)
+      resolve(&R.CMS.Docs.update_doc_tree_node/3)
     end
 
     @desc "update a docs draft document"
@@ -57,7 +57,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, {:article_editor, thread: :doc})
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.update_doc_draft/3)
+      resolve(&R.CMS.Docs.update_doc_draft/3)
     end
 
     @desc "publish selected docs content and tree changes as one release"
@@ -70,7 +70,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.publish_doc_changes/3)
+      resolve(&R.CMS.Docs.publish_doc_changes/3)
     end
 
     @desc "move one published docs page back to draft visibility"
@@ -82,7 +82,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.move_doc_to_draft/3)
+      resolve(&R.CMS.Docs.move_doc_to_draft/3)
     end
 
     @desc "create missing article drafts for every published Page in one navigation subtree"
@@ -94,7 +94,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.move_doc_tree_subtree_to_draft/3)
+      resolve(&R.CMS.Docs.move_doc_tree_subtree_to_draft/3)
     end
 
     @desc "restore one immutable Doc Revision into its branch Draft workspace"
@@ -107,7 +107,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.restore_doc_revision_to_draft/3)
+      resolve(&R.CMS.Docs.restore_doc_revision_to_draft/3)
     end
 
     @desc "delete a docs tree node"
@@ -120,7 +120,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.delete_doc_tree_node/3)
+      resolve(&R.CMS.Docs.delete_doc_tree_node/3)
     end
 
     @desc "restore a docs tree item from product trash"
@@ -136,7 +136,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.restore_doc_tree_trash_item/3)
+      resolve(&R.CMS.Docs.restore_doc_tree_trash_item/3)
     end
 
     @desc "duplicate a docs tree node"
@@ -149,7 +149,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.duplicate_doc_tree_node/3)
+      resolve(&R.CMS.Docs.duplicate_doc_tree_node/3)
     end
 
     @desc "move a docs tree node"
@@ -165,44 +165,48 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.move_doc_tree_node/3)
+      resolve(&R.CMS.Docs.move_doc_tree_node/3)
     end
 
     @desc "add a published Group as a Cover Card"
     field :add_doc_cover_card, :doc_cover_card do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:group_node_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.add_doc_cover_card/3)
+      resolve(&R.CMS.Docs.add_doc_cover_card/3)
     end
 
     @desc "remove a docs Cover Card"
     field :remove_doc_cover_card, :doc_cover_card do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:group_node_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.remove_doc_cover_card/3)
+      resolve(&R.CMS.Docs.remove_doc_cover_card/3)
     end
 
     @desc "reorder docs Cover Cards"
     field :reorder_doc_cover_cards, :done_state do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:ids, non_null(list_of(non_null(:id))))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.reorder_doc_cover_cards/3)
+      resolve(&R.CMS.Docs.reorder_doc_cover_cards/3)
     end
 
     @desc "update docs Cover Card appearance"
     field :update_doc_cover_card_appearance, :doc_cover_card do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:appearance, non_null(:json))
@@ -210,44 +214,48 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.update_doc_cover_card_appearance/3)
+      resolve(&R.CMS.Docs.update_doc_cover_card_appearance/3)
     end
 
     @desc "pin a published docs page to cover"
     field :pin_doc_to_cover, non_null(:doc_cover_pinned_doc) do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:node_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.pin_doc_to_cover/3)
+      resolve(&R.CMS.Docs.pin_doc_to_cover/3)
     end
 
     @desc "remove a published docs page from cover pins"
     field :unpin_doc_from_cover, non_null(:doc_cover_pinned_doc) do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:node_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.unpin_doc_from_cover/3)
+      resolve(&R.CMS.Docs.unpin_doc_from_cover/3)
     end
 
     @desc "reorder the complete docs cover pin collection"
     field :reorder_doc_cover_pinned_docs, non_null(:done_state) do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:node_ids, non_null(list_of(non_null(:id))))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.reorder_doc_cover_pinned_docs/3)
+      resolve(&R.CMS.Docs.reorder_doc_cover_pinned_docs/3)
     end
 
     @desc "update a pinned docs cover card appearance"
     field :update_pinned_doc_appearance, non_null(:doc_cover_pinned_doc) do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:node_id, non_null(:id))
       arg(:appearance, non_null(:json))
@@ -255,7 +263,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.update_pinned_doc_appearance/3)
+      resolve(&R.CMS.Docs.update_pinned_doc_appearance/3)
     end
   end
 end

@@ -25,8 +25,8 @@ const updatePost = graphql(`
 `)
 
 const setPostCat = graphql(`
-  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!) {
-    setPostCat(article: $article, cat: $cat) {
+  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!, $commandId: ID!) {
+    setPostCat(article: $article, cat: $cat, commandId: $commandId) {
       innerId
       cat
     }
@@ -34,8 +34,12 @@ const setPostCat = graphql(`
 `)
 
 const setPostStatus = graphql(`
-  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!) {
-    setPostStatus(article: $article, status: $status) {
+  mutation SetPostStatus(
+    $article: ArticlePathInput!
+    $status: ArticleStatusEnum!
+    $commandId: ID!
+  ) {
+    setPostStatus(article: $article, status: $status, commandId: $commandId) {
       innerId
       status
     }
@@ -43,16 +47,16 @@ const setPostStatus = graphql(`
 `)
 
 const pinPost = graphql(`
-  mutation PinPost($article: ArticlePathInput!) {
-    pinPost(article: $article) {
+  mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {
+    pinPost(article: $article, commandId: $commandId) {
       innerId
     }
   }
 `)
 
 const undoPinPost = graphql(`
-  mutation UndoPinPost($article: ArticlePathInput!) {
-    undoPinPost(article: $article) {
+  mutation UndoPinPost($article: ArticlePathInput!, $commandId: ID!) {
+    undoPinPost(article: $article, commandId: $commandId) {
       innerId
       isPinned
     }

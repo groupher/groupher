@@ -29,6 +29,7 @@ defmodule GroupherServer.CMS.Model.AssetReplacementPlan do
     belongs_to(:to_asset, CommunityAsset)
     belongs_to(:created_by, User)
     field(:status, Ecto.Enum, values: [:pending, :partially_applied, :completed, :cancelled])
+    field(:apply_run_ref, :string)
     field(:items, {:array, :map}, default: [])
     field(:applied_at, :utc_datetime)
     timestamps(type: :utc_datetime)
@@ -43,6 +44,7 @@ defmodule GroupherServer.CMS.Model.AssetReplacementPlan do
       :to_asset_id,
       :created_by_id,
       :status,
+      :apply_run_ref,
       :items,
       :applied_at
     ])

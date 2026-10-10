@@ -38,8 +38,8 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   @spec preview(Community.t(), map(), map()) :: {:ok, map()} | {:error, term()}
   def preview(%Community{} = community, source_info, source_tree) do
     with {:ok, info} <- normalize_source_info(source_info),
-         :ok <- validate_source_tree(source_tree),
-         :ok <- validate_source_match(info, source_tree) do
+         {:ok, _} <- validate_source_tree(source_tree),
+         {:ok, _} <- validate_source_match(info, source_tree) do
       branch_slug = branch_slug(info["repo"], info["branch"])
       mapping_refs = source_mapping_refs(community, info)
       target_tree = plan_target_tree(source_tree, branch_slug, mapping_refs)
@@ -56,16 +56,17 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   end
 
   @doc "Revalidates only the confirmed target intent and revision; it never replans SourceTree."
-  @spec validate_intent(Community.t(), map(), map(), String.t()) :: :ok | {:error, term()}
+  @spec validate_intent(Community.t(), map(), map(), String.t()) ::
+          {:ok, :pass} | {:error, term()}
   def validate_intent(%Community{} = community, source_info, target_tree, target_revision) do
     with {:ok, info} <- normalize_source_info(source_info),
          branch_slug <- branch_slug(info["repo"], info["branch"]),
          mapping_refs <- source_mapping_refs(community, info),
-         :ok <- validate_target_tree(target_tree, branch_slug, mapping_refs),
+         {:ok, _} <- validate_target_tree(target_tree, branch_slug, mapping_refs),
          {current_revision, conflicts} <- target_state(community),
          true <- current_revision == target_revision,
          [] <- conflicts do
-      :ok
+      {:ok, :pass}
     else
       false ->
         {:error, ErrorCat.custom("The Docs target changed after Review")}
@@ -192,7 +193,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
          {:ok, _root} <- required_string(source, "root"),
          {:ok, _paths} <- string_list(source, "configPaths"),
          {:ok, _state} <- validate_source_nodes(navigation, 1, %{count: 0, ids: MapSet.new()}) do
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -294,7 +295,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
     if info["framework"] == source["framework"] and
          info["content_root"] == source["root"] and
          info["config_paths"] == source["configPaths"] do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom("sourceInfo does not match the SourceTree source contract")}
     end
@@ -421,7 +422,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
     end
   end
 
-  defp normalize_target_validation({:ok, _ids}), do: :ok
+  defp normalize_target_validation({:ok, _ids}), do: {:ok, :pass}
   defp normalize_target_validation(error), do: error
 
   defp validate_target_children(_pages, _branch_slug, _mapping_refs, _ids, depth)

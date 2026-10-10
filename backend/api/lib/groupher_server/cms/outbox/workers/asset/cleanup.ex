@@ -22,14 +22,14 @@ defmodule GroupherServer.CMS.Outbox.Workers.Asset.Cleanup do
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
     case CMS.Outbox.execute(event_id, &delete_provider_object/1) do
       {:ok, _value} ->
-        :ok
+        {:ok, :pass}
 
       {:busy, seconds} ->
         {:snooze, seconds}
 
       {:error, _reason} when job.attempt >= job.max_attempts ->
         _ = CMS.Outbox.mark_dead(event_id)
-        :ok
+        {:ok, :pass}
 
       {:error, reason} ->
         {:error, reason}
@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Outbox.Workers.Asset.Cleanup do
     case Repo.get(CommunityAsset, event.resource_id) do
       %CommunityAsset{} = asset ->
         case Deletion.deliver(asset) do
-          :ok -> {:ok, :deleted}
+          {:ok, _} -> {:ok, :deleted}
           {:error, reason} -> {:error, reason}
         end
 

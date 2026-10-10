@@ -20,12 +20,13 @@ defmodule GroupherServer.CMS.ArticleStats do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.{Matcher, Threads}
+  alias CMS.Articles.Bindings
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.FrontDesk
 
   alias CMS.Model.{
     Article,
-    ArticleCommunity,
+    ArticleBinding,
     ArticleEmotionCount,
     ArticleStats,
     Comment,
@@ -37,8 +38,36 @@ defmodule GroupherServer.CMS.ArticleStats do
   @article_emotions CMS.Artiment.Config.emotions() -- [:upvote, :collect]
   @conflict_target [:thread, :article_id]
 
+  @doc """
+  Reads one fully located public ArticleStats result for a canonical Article.
+
+  This is the shared post-commit read contract used by owning command result
+  builders. It preserves the revision and snapshot observed by ArticleStats and
+  never synthesizes a missing projection row.
+  """
+  @spec for_article(struct(), Community.t()) :: {:ok, map()} | {:error, term()}
+  def for_article(article, %Community{} = community) when is_struct(article) do
+    with {:ok, %{community: community, inner_id: inner_id}} when is_integer(inner_id) <-
+           Bindings.get(article, community),
+         {:ok, %{artiment: thread}} <- Matcher.match_interaction(article),
+         stats when is_map(stats) <- for_public_articles(thread, [article], community.slug),
+         {:ok, article_stats} <- Map.fetch(stats, {thread, article.id}) do
+      {:ok,
+       Map.merge(article_stats, %{
+         community: community.slug,
+         thread: thread,
+         inner_id: inner_id
+       })}
+    else
+      {:error, _reason} = error -> error
+      _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
+    end
+  end
+
+  def for_article(_article, _community), do: {:error, :article_binding_context_required}
+
   @doc "Creates the zero-valued public row on first publish without overwriting an existing row."
-  @spec initialize(struct()) :: :ok | {:error, term()}
+  @spec initialize(struct()) :: {:ok, :pass} | {:error, term()}
   def initialize(article) when is_struct(article) do
     with {:ok, thread} <- article_thread(article) do
       Repo.insert_all(
@@ -48,7 +77,7 @@ defmodule GroupherServer.CMS.ArticleStats do
         conflict_target: @conflict_target
       )
 
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -80,7 +109,7 @@ defmodule GroupherServer.CMS.ArticleStats do
   end
 
   @doc "UPSERTs every Comments-owned ArticleStats field from one physical Article row."
-  @spec apply_comment_counts(struct()) :: :ok | {:error, term()}
+  @spec apply_comment_counts(struct()) :: {:ok, :pass} | {:error, term()}
   def apply_comment_counts(article) when is_struct(article) do
     with {:ok, thread} <- article_thread(article),
          {:ok, comments_count} <- owner_count(article, :comments_count),
@@ -114,12 +143,12 @@ defmodule GroupherServer.CMS.ArticleStats do
         conflict_target: @conflict_target
       )
 
-      :ok
+      {:ok, :pass}
     end
   end
 
   @doc "Refreshes Comment-owned counts and atomically advances the public comments revision."
-  @spec record_comment_change(Article.t()) :: :ok | {:error, term()}
+  @spec record_comment_change(Article.t()) :: {:ok, :pass} | {:error, term()}
   def record_comment_change(%Article{} = article) do
     with {:ok, comments_count} <- owner_count(article, :comments_count),
          {:ok, participants_count} <- owner_count(article, :comments_participants_count) do
@@ -156,12 +185,12 @@ defmodule GroupherServer.CMS.ArticleStats do
         conflict_target: @conflict_target
       )
 
-      :ok
+      {:ok, :pass}
     end
   end
 
   @doc "UPSERTs the fixed Interactions-owned fields from their owner projection."
-  @spec apply_interaction_counts(struct()) :: :ok | {:error, term()}
+  @spec apply_interaction_counts(struct()) :: {:ok, :pass} | {:error, term()}
   def apply_interaction_counts(article) when is_struct(article) do
     with {:ok, thread} <- article_thread(article),
          counts when is_map(counts) <- CMS.Interactions.counts([article]),
@@ -197,12 +226,12 @@ defmodule GroupherServer.CMS.ArticleStats do
         conflict_target: @conflict_target
       )
 
-      :ok
+      {:ok, :pass}
     end
   end
 
   @doc "UPSERTs only the affected Interactions-owned emotion type."
-  @spec apply_emotion_count(struct(), atom()) :: :ok | {:error, term()}
+  @spec apply_emotion_count(struct(), atom()) :: {:ok, :pass} | {:error, term()}
   def apply_emotion_count(article, emotion)
       when is_struct(article) and emotion in @article_emotions do
     with {:ok, thread} <- article_thread(article),
@@ -228,7 +257,7 @@ defmodule GroupherServer.CMS.ArticleStats do
         conflict_target: [:thread, :article_id, :type]
       )
       |> case do
-        {:ok, _row} -> :ok
+        {:ok, _row} -> {:ok, :pass}
         {:error, _reason} = error -> error
       end
     end
@@ -237,7 +266,7 @@ defmodule GroupherServer.CMS.ArticleStats do
   def apply_emotion_count(_article, emotion), do: {:error, {:unsupported_emotion, emotion}}
 
   @doc "Repairs only Comments-owned fields from the current physical Article row."
-  @spec rebuild_comment_fields(struct()) :: :ok | {:error, term()}
+  @spec rebuild_comment_fields(struct()) :: {:ok, :pass} | {:error, term()}
   def rebuild_comment_fields(%Article{id: article_id}) do
     Repo.transaction(fn ->
       current =
@@ -267,8 +296,8 @@ defmodule GroupherServer.CMS.ArticleStats do
              current
              |> Ecto.Changeset.change(comments_revision: current.comments_revision + 1)
              |> Repo.update(),
-           :ok <- apply_comment_counts(current) do
-        :ok
+           {:ok, _} <- apply_comment_counts(current) do
+        {:ok, :pass}
       else
         nil -> Repo.rollback(:article_not_found)
         {:error, reason} -> Repo.rollback(reason)
@@ -278,7 +307,7 @@ defmodule GroupherServer.CMS.ArticleStats do
   end
 
   @doc "Repairs fixed and typed Interactions-owned fields from current owner facts."
-  @spec rebuild_interaction_fields(struct()) :: :ok | {:error, term()}
+  @spec rebuild_interaction_fields(struct()) :: {:ok, :pass} | {:error, term()}
   def rebuild_interaction_fields(article) when is_struct(article) do
     schema = article.__struct__
 
@@ -288,13 +317,13 @@ defmodule GroupherServer.CMS.ArticleStats do
         |> Repo.one()
 
       with %{} = current <- current,
-           :ok <- bump_interaction_owner_revision(current),
-           :ok <- apply_interaction_counts(current),
+           {:ok, _} <- bump_interaction_owner_revision(current),
+           {:ok, _} <- apply_interaction_counts(current),
            counts when is_map(counts) <- CMS.Interactions.counts([current]),
            {:ok, thread} <- article_thread(current),
            {:ok, facts} <- owner_facts(counts, {thread, current.id}),
-           :ok <- rebuild_emotion_rows(current, thread, Map.get(facts, :emotion_counts, [])) do
-        :ok
+           {:ok, _} <- rebuild_emotion_rows(current, thread, Map.get(facts, :emotion_counts, [])) do
+        {:ok, :pass}
       else
         nil -> Repo.rollback(:article_not_found)
         {:error, reason} -> Repo.rollback(reason)
@@ -305,7 +334,7 @@ defmodule GroupherServer.CMS.ArticleStats do
   end
 
   @doc "Removes both public projections during permanent Article deletion."
-  @spec delete(atom(), Ecto.UUID.t()) :: :ok
+  @spec delete(atom(), Ecto.UUID.t()) :: {:ok, :pass}
   def delete(thread, article_id)
       when thread in @article_threads and is_binary(article_id) do
     Repo.delete_all(
@@ -320,7 +349,7 @@ defmodule GroupherServer.CMS.ArticleStats do
       )
     )
 
-    :ok
+    {:ok, :pass}
   end
 
   @doc "Returns one complete row by stable Article identity."
@@ -363,10 +392,10 @@ defmodule GroupherServer.CMS.ArticleStats do
     articles = preload_stats_communities(articles, community_ref)
     stats_by_article_id = for_articles(thread, articles)
 
-    with :ok <- ensure_stats_rows(articles, stats_by_article_id, thread) do
+    with {:ok, _} <- ensure_stats_rows(articles, stats_by_article_id, thread) do
       Map.new(articles, fn article ->
         stats = Map.fetch!(stats_by_article_id, {thread, article.id})
-        community = community_ref || article_community_slug(article)
+        community = community_ref || article_binding_slug(article)
 
         {{thread, article.id}, Map.put(stats, :community, community)}
       end)
@@ -380,29 +409,30 @@ defmodule GroupherServer.CMS.ArticleStats do
       {:ok, %Community{id: community_id}} ->
         rows =
           Article
-          |> join(:inner, [article], relation in ArticleCommunity,
-            on: relation.article_id == article.id and relation.visible == true
+          |> join(:inner, [article], binding in ArticleBinding,
+            on: binding.article_id == article.id and binding.visible == true
           )
           |> where(
-            [article, relation],
-            article.thread == ^thread and relation.community_id == ^community_id and
-              article.inner_id in ^inner_ids
+            [article, binding],
+            article.thread == ^thread and binding.community_id == ^community_id and
+              binding.inner_id in ^inner_ids
           )
-          |> select([article, _relation], article)
+          |> select([article, binding], %{article: article, inner_id: binding.inner_id})
           |> Repo.all()
 
-        stats_by_article_id = for_articles(thread, rows)
+        articles = Enum.map(rows, & &1.article)
+        stats_by_article_id = for_articles(thread, articles)
 
-        with :ok <- ensure_stats_rows(rows, stats_by_article_id, thread) do
+        with {:ok, _} <- ensure_stats_rows(articles, stats_by_article_id, thread) do
           stats_by_inner_id =
-            Map.new(rows, fn article ->
+            Map.new(rows, fn %{article: article, inner_id: inner_id} ->
               stats = Map.fetch!(stats_by_article_id, {thread, article.id})
 
-              {to_string(article.inner_id),
+              {to_string(inner_id),
                Map.merge(stats, %{
                  community: community_ref,
                  thread: thread,
-                 inner_id: article.inner_id
+                 inner_id: inner_id
                })}
             end)
 
@@ -446,26 +476,25 @@ defmodule GroupherServer.CMS.ArticleStats do
 
   defp ensure_stats_rows(articles, stats_by_article_id, thread) do
     if Enum.all?(articles, &Map.has_key?(stats_by_article_id, {thread, &1.id})) do
-      :ok
+      {:ok, :pass}
     else
       {:error, ArticleErrorCat.projection_not_updated()}
     end
   end
 
-  defp article_community_slug(%{community: %Ecto.Association.NotLoaded{}}), do: nil
-  defp article_community_slug(%{community: %{slug: slug}}), do: slug
-  defp article_community_slug(_article), do: nil
+  defp article_binding_slug(article) do
+    case Bindings.get(article, Map.get(article, :community)) do
+      {:ok, %{community: community}} -> community.slug
+      _ -> nil
+    end
+  end
 
   defp preload_stats_communities(articles, community_ref) when is_binary(community_ref) do
     articles
   end
 
   defp preload_stats_communities(articles, _community_ref) do
-    if Enum.all?(articles, &match?(%Article{}, &1)) do
-      Repo.preload(articles, :community)
-    else
-      articles
-    end
+    articles
   end
 
   defp load_snapshots(_thread, []), do: %{}
@@ -606,7 +635,7 @@ defmodule GroupherServer.CMS.ArticleStats do
       )
       |> Repo.update_all(inc: [interaction_revision: 1], set: [updated_at: now])
       |> case do
-        {1, _} -> :ok
+        {1, _} -> {:ok, :pass}
         _ -> {:error, :interaction_projection_not_updated}
       end
     end
@@ -618,7 +647,7 @@ defmodule GroupherServer.CMS.ArticleStats do
 
   defp interaction_projection_conflict_target(foreign_key), do: [foreign_key]
 
-  defp transaction_result({:ok, :ok}), do: :ok
+  defp transaction_result({:ok, {:ok, _value}}), do: {:ok, :pass}
   defp transaction_result({:error, reason}), do: {:error, reason}
 
   defp emotion_owner_facts(article, emotion) do
@@ -658,9 +687,9 @@ defmodule GroupherServer.CMS.ArticleStats do
     emotion_counts
     |> Enum.map(&(Map.get(&1, :type) || Map.get(&1, "type")))
     |> Enum.filter(&(&1 in @article_emotions))
-    |> Enum.reduce_while(:ok, fn emotion, :ok ->
+    |> Enum.reduce_while({:ok, :pass}, fn emotion, {:ok, _} ->
       case apply_emotion_count(article, emotion) do
-        :ok -> {:cont, :ok}
+        {:ok, _} -> {:cont, {:ok, :pass}}
         {:error, _reason} = error -> {:halt, error}
       end
     end)

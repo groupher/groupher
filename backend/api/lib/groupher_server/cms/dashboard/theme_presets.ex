@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
 
   alias GroupherServer.CMS
 
-  alias CMS.Dashboard.{ThemePreset, Writer}
+  alias CMS.Dashboard.{Persist, ThemePreset}
   alias CMS.Model.{Community, CommunityDashboard}
   alias CMS.Model.Embeds.Dashboard.Layout
   alias Helper.T
@@ -44,38 +44,55 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
   """
   @spec save_custom(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   def save_custom(%Community{} = community, args) do
+    with {:ok, dashboard} <- Persist.get_or_insert_dashboard(community) do
+      save_custom(dashboard, args)
+    end
+  end
+
+  @spec save_custom(CommunityDashboard.t(), map()) :: T.domain_res(CommunityDashboard.t())
+  def save_custom(%CommunityDashboard{} = community_dashboard, args) do
     args = Map.drop(args, [:community])
 
-    with :ok <- validate_custom_save(args),
-         {:ok, community_dashboard} <- Writer.ensure_exist(community),
+    with {:ok, _} <- validate_custom_save(args),
          current_layout <- current_layout(community_dashboard),
          {:ok, custom_theme_preset} <- merge_custom_theme_preset(current_layout, args),
          args <-
            args
            |> Map.drop([:theme_preset_base, :theme_overwrite])
            |> Map.put(:custom_theme_preset, custom_theme_preset) do
-      Writer.replace_section(community_dashboard, :layout, args)
+      Persist.replace_section(community_dashboard, :layout, args)
     end
   end
 
   @spec select(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   def select(%Community{} = community, %{theme_preset: :custom} = args) do
-    args = Map.drop(args, [:community])
-
-    with {:ok, community_dashboard} <- Writer.ensure_exist(community),
-         current_layout <- current_layout(community_dashboard),
-         true <- is_map(current_layout.custom_theme_preset) do
-      Writer.update_section(community, :layout, args)
-    else
-      false -> {:error, "custom theme preset has not been created"}
-      error -> error
+    with {:ok, dashboard} <- Persist.get_or_insert_dashboard(community) do
+      select(dashboard, args)
     end
   end
 
-  def select(%Community{} = community, args) do
+  @spec select(CommunityDashboard.t(), map()) :: T.domain_res(CommunityDashboard.t())
+  def select(%CommunityDashboard{} = community_dashboard, %{theme_preset: :custom} = args) do
     args = Map.drop(args, [:community])
 
-    Writer.update_section(community, :layout, args)
+    with current_layout <- current_layout(community_dashboard),
+         true <- is_map(current_layout.custom_theme_preset) do
+      Persist.replace_section(community_dashboard, :layout, args)
+    else
+      false -> {:error, "custom theme preset has not been created"}
+    end
+  end
+
+  @doc "Selects a theme preset on a community or an existing dashboard row."
+  def select(%Community{} = community, args) do
+    with {:ok, dashboard} <- Persist.get_or_insert_dashboard(community) do
+      select(dashboard, args)
+    end
+  end
+
+  def select(%CommunityDashboard{} = community_dashboard, args) do
+    args = Map.drop(args, [:community])
+    Persist.replace_section(community_dashboard, :layout, args)
   end
 
   defp current_layout(community_dashboard) do
@@ -87,7 +104,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
     {:error, "saveCustomThemePreset requires a read-only themePresetBase"}
   end
 
-  defp validate_custom_save(%{theme_preset: :custom}), do: :ok
+  defp validate_custom_save(%{theme_preset: :custom}), do: {:ok, :pass}
 
   defp validate_custom_save(_), do: {:error, "saveCustomThemePreset only accepts CUSTOM preset"}
 

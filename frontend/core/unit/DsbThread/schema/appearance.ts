@@ -3,6 +3,7 @@ import { graphql } from '~/graphql/authoring'
 export const updateDashboardLayout = graphql(`
   mutation UpdateDashboardLayout(
     $community: String!
+    $commandId: ID!
     $postLayout: DsbPostLayout
     $kanbanLayout: DsbKanbanLayout
     $kanbanCardLayout: DsbKanbanCardLayout
@@ -34,6 +35,7 @@ export const updateDashboardLayout = graphql(`
   ) {
     updateDashboardLayout(
       community: $community
+      commandId: $commandId
       postLayout: $postLayout
       kanbanLayout: $kanbanLayout
       kanbanCardLayout: $kanbanCardLayout

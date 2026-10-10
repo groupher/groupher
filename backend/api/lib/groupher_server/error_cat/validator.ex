@@ -15,7 +15,7 @@ defmodule GroupherServer.ErrorCat.Validator do
     validate_ranges!(ranges)
     validate_reserved!(ranges, reserved)
     validate_catalogs!(ranges, reserved, catalogs)
-    :ok
+    {:ok, :pass}
   end
 
   defp validate_ranges!(ranges) do
@@ -52,7 +52,7 @@ defmodule GroupherServer.ErrorCat.Validator do
     |> Enum.drop(index + 1)
     |> Enum.each(fn {right_namespace, right_range} ->
       if Range.disjoint?(left_range, right_range) do
-        :ok
+        {:ok, :pass}
       else
         raise(ArgumentError,
           message:
@@ -96,7 +96,7 @@ defmodule GroupherServer.ErrorCat.Validator do
     |> Enum.group_by(&{&1.namespace, &1.reason})
     |> Enum.each(fn
       {_identity, [_entry]} ->
-        :ok
+        {:ok, :pass}
 
       {identity, _entries} ->
         raise ArgumentError, "ErrorCat duplicate entry: #{inspect(identity)}"
@@ -117,7 +117,7 @@ defmodule GroupherServer.ErrorCat.Validator do
     |> Enum.group_by(& &1.code)
     |> Enum.each(fn
       {_code, [_definition]} ->
-        :ok
+        {:ok, :pass}
 
       {code, _definitions} ->
         raise ArgumentError, "ErrorCat reserved code is duplicated: #{code}"
@@ -195,19 +195,19 @@ defmodule GroupherServer.ErrorCat.Validator do
     end
   end
 
-  defp validate_reserved_reason!(reason) when is_atom(reason), do: :ok
+  defp validate_reserved_reason!(reason) when is_atom(reason), do: {:ok, :pass}
 
   defp validate_reserved_reason!(_) do
     raise(ArgumentError, "ErrorCat reserved reason must be an atom")
   end
 
-  defp validate_reserved_code!(code) when is_integer(code) and code > 0, do: :ok
+  defp validate_reserved_code!(code) when is_integer(code) and code > 0, do: {:ok, :pass}
 
   defp validate_reserved_code!(_) do
     raise(ArgumentError, "ErrorCat reserved code must be a positive integer")
   end
 
-  defp validate_reserved_retryable!(retryable) when is_boolean(retryable), do: :ok
+  defp validate_reserved_retryable!(retryable) when is_boolean(retryable), do: {:ok, :pass}
 
   defp validate_reserved_retryable!(_) do
     raise(ArgumentError, "ErrorCat reserved retryable must be boolean")
@@ -215,7 +215,7 @@ defmodule GroupherServer.ErrorCat.Validator do
 
   defp validate_reserved_actions!(actions) when is_list(actions) do
     if Enum.all?(actions, &is_atom/1) do
-      :ok
+      {:ok, :pass}
     else
       raise(ArgumentError, "ErrorCat reserved actions must be a list of atoms")
     end
@@ -225,7 +225,7 @@ defmodule GroupherServer.ErrorCat.Validator do
     raise(ArgumentError, "ErrorCat reserved actions must be a list of atoms")
   end
 
-  defp validate_reserved_message_key!(message_key) when is_binary(message_key), do: :ok
+  defp validate_reserved_message_key!(message_key) when is_binary(message_key), do: {:ok, :pass}
 
   defp validate_reserved_message_key!(_) do
     raise(ArgumentError, "ErrorCat reserved message_key must be a string")

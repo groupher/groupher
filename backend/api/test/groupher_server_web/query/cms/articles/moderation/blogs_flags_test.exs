@@ -42,7 +42,8 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       blog_m = Repo.get!(CMS.Model.Article, blog_m.article_id)
@@ -65,13 +66,13 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
       assert results["pageSize"] == @page_size
       assert results["totalCount"] == @total_count
 
-      {:ok, _} = CMS.Articles.pin(community, blog_m.article_id, user)
+      {:ok, _} = CMS.Articles.pin(community, blog_m.article_id, user, Ecto.UUID.generate())
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
       entries_first = results["entries"] |> List.first()
 
       assert results["totalCount"] == @total_count
-      assert entries_first["innerId"] == to_string(blog_m.inner_id)
+      assert entries_first["innerId"] == to_string(article_inner_id(blog_m, community))
       assert entries_first["isPinned"] == true
     end
 
@@ -82,7 +83,7 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
       {:ok, blog} = read_article(community, :blog, random_id)
-      {:ok, _} = CMS.Articles.pin(community, blog.article_id, user)
+      {:ok, _} = CMS.Articles.pin(community, blog.article_id, user, Ecto.UUID.generate())
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
@@ -95,7 +96,7 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
       {:ok, random_blog} = read_article(community, :blog, random_id)
-      {:ok, _} = CMS.Articles.pin(community, random_blog.article_id, user)
+      {:ok, _} = CMS.Articles.pin(community, random_blog.article_id, user, Ecto.UUID.generate())
       {:ok, _} = CMS.Articles.trash(random_blog, user)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)

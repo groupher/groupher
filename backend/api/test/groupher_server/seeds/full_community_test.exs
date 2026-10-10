@@ -12,7 +12,16 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   alias CMS.Dashboard.Fields, as: Dashboard
   alias Helper.ORM
 
-  alias CMS.Model.{Article, ArticlePublic, Comment, Community, DocPublic, PostState}
+  alias CMS.Model.{
+    Article,
+    ArticleBinding,
+    ArticlePublic,
+    Comment,
+    Community,
+    DocPublic,
+    KanbanState,
+    PostState
+  }
 
   describe "[full community seeds]" do
     test "seeds full community data including about dashboard" do
@@ -32,9 +41,11 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
       doc_count =
         from(article in Article,
+          join: binding in CMS.Model.ArticleBinding,
+          on: binding.article_id == article.id,
           join: public in DocPublic,
           on: public.article_id == article.id,
-          where: article.community_id == ^community.id and article.thread == :doc
+          where: binding.community_id == ^community.id and article.thread == :doc
         )
         |> count()
 
@@ -47,10 +58,14 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
           from(article in Article,
             join: state in PostState,
             on: state.article_id == article.id,
+            join: binding in ArticleBinding,
+            on: binding.article_id == article.id and binding.community_id == ^community.id,
+            left_join: kanban in KanbanState,
+            on: kanban.article_binding_id == binding.id,
             join: public in ArticlePublic,
             on: public.article_id == article.id,
-            where: article.community_id == ^community.id and article.thread == :post,
-            select: %{id: article.id, cat: state.cat, status: state.status, title: public.title}
+            where: binding.community_id == ^community.id and article.thread == :post,
+            select: %{id: article.id, cat: state.cat, status: kanban.status, title: public.title}
           )
         )
 
@@ -143,7 +158,9 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
   defp article_count(community_id, thread) do
     from(article in Article,
-      where: article.community_id == ^community_id and article.thread == ^thread
+      join: binding in ArticleBinding,
+      on: binding.article_id == article.id,
+      where: binding.community_id == ^community_id and article.thread == ^thread
     )
     |> count()
   end

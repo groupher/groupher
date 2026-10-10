@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   Example contract:
 
       Access.Policy.Article.check_access(actor, :publish, article, %Context.Access.Article{})
-      #=> :ok | {:error, reason}
+      #=> {:ok, :pass} | {:error, reason}
   """
 
   alias GroupherServer.{Accounts, CMS}
@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   @doc "Checks Article or Doc mutation admission without loading or locking resources."
   @spec check_access(User.t() | nil, atom(), map(), ArticleContext.t() | DocContext.t()) ::
-          :ok | {:error, ErrorCat.error()}
+          {:ok, :pass} | {:error, ErrorCat.error()}
   def check_access(%User{} = user, action, article, context)
       when action in @actions and is_map(article) and
              (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
@@ -94,7 +94,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
          true <- lifecycle.state in [:published, :archived],
          {:ok, community} <- community(context),
          true <- insights_actor?(actor, article, community) do
-      :ok
+      {:ok, :pass}
     else
       _ -> {:error, ErrorCat.permission_denied()}
     end
@@ -104,7 +104,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     with {:ok, lifecycle} <- article_lifecycle(context),
          true <- lifecycle.state in [:published, :archived],
          true <- moderation_state(article, context) == :legal do
-      :ok
+      {:ok, :pass}
     else
       _ -> {:error, ErrorCat.permission_denied()}
     end
@@ -114,9 +114,9 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     with {:ok, lifecycle} <- article_lifecycle(context),
          {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
-         :ok <- doc_branch_allowed(action, context),
-         :ok <- action_allowed(action, lifecycle, article) do
-      :ok
+         {:ok, _} <- doc_branch_allowed(action, context),
+         {:ok, _} <- action_allowed(action, lifecycle, article) do
+      {:ok, :pass}
     else
       {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
       {:error, _reason} = error -> error
@@ -160,7 +160,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:error, ErrorCat.article_not_mutable()}
   end
 
-  defp doc_branch_allowed(_action, _context), do: :ok
+  defp doc_branch_allowed(_action, _context), do: {:ok, :pass}
 
   defp article_lifecycle(%{article_lifecycle: %{state: _} = lifecycle}), do: {:ok, lifecycle}
   defp article_lifecycle(%{doc_lifecycle: %{state: _} = lifecycle}), do: {:ok, lifecycle}
@@ -172,7 +172,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   defp action_allowed(:publish, %{state: state}, _article)
        when state in [:draft_only, :published] do
-    :ok
+    {:ok, :pass}
   end
 
   defp action_allowed(:publish, %{state: :archived}, _article) do
@@ -192,7 +192,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   # entry points reject a non-writable ancestor before touching Draft rows.
   defp action_allowed(:edit, %{state: state}, _article)
        when state in [:draft_only, :published] do
-    :ok
+    {:ok, :pass}
   end
 
   defp action_allowed(:edit, %{state: :archived}, _article) do
@@ -207,7 +207,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:error, ErrorCat.article_destroyed()}
   end
 
-  defp action_allowed(:discard_draft, %{state: :published}, _article), do: :ok
+  defp action_allowed(:discard_draft, %{state: :published}, _article), do: {:ok, :pass}
 
   defp action_allowed(:discard_draft, _lifecycle, _article) do
     {:error, ErrorCat.article_not_mutable()}
@@ -215,7 +215,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   defp action_allowed(:create_comment, %{state: :published}, article) do
     case Enable.comment?(article) do
-      {:ok, _} -> :ok
+      {:ok, _} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -237,7 +237,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   # its Community remains writable; a future undo-only policy must be explicit.
   defp action_allowed(action, %{state: :published}, _article)
        when action in @interaction_actions do
-    :ok
+    {:ok, :pass}
   end
 
   defp action_allowed(action, %{state: :archived}, _article)
@@ -257,7 +257,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   defp action_allowed(:delete, %{state: state}, _article)
        when state in [:draft_only, :published] do
-    :ok
+    {:ok, :pass}
   end
 
   defp action_allowed(:delete, %{state: :archived}, _article) do
@@ -272,13 +272,13 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:error, ErrorCat.article_destroyed()}
   end
 
-  defp action_allowed(:restore, %{state: :deleted}, _article), do: :ok
+  defp action_allowed(:restore, %{state: :deleted}, _article), do: {:ok, :pass}
 
   defp action_allowed(:restore, _lifecycle, _article) do
     {:error, ErrorCat.article_not_deleted()}
   end
 
-  defp action_allowed(:permanently_delete, %{state: :deleted}, _article), do: :ok
+  defp action_allowed(:permanently_delete, %{state: :deleted}, _article), do: {:ok, :pass}
 
   defp action_allowed(:permanently_delete, _lifecycle, _article) do
     {:error, ErrorCat.article_not_deleted()}
@@ -286,7 +286,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   defp action_allowed(:restore_revision_to_draft, %{state: state}, _article)
        when state in [:draft_only, :published] do
-    :ok
+    {:ok, :pass}
   end
 
   defp action_allowed(:restore_revision_to_draft, %{state: :archived}, _article) do
@@ -304,7 +304,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   defp action_allowed(action, %{state: state}, %{thread: thread})
        when action in [:move, :mirror, :unmirror, :pin, :unpin] and
               state in [:draft_only, :published] and thread in [:post, :blog, :changelog] do
-    :ok
+    {:ok, :pass}
   end
 
   defp action_allowed(action, _lifecycle, _article)
@@ -322,7 +322,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
               :unlock_comments,
               :moderate
             ] and state in [:draft_only, :published] do
-    :ok
+    {:ok, :pass}
   end
 
   defp action_allowed(_action, _lifecycle, _article), do: {:error, ErrorCat.article_not_mutable()}

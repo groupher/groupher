@@ -15,10 +15,17 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
   describe "[basic article comment replies]" do
     test "exist comment can be reply", ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, replied_comment} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       assert replied_comment.reply_to_comment.id == parent_comment.id
 
@@ -29,22 +36,37 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
 
     test "deleted comment can not be reply", ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Comments.delete_comment(parent_comment, user)
+      {:ok, _} = CMS.Comments.delete_comment(parent_comment, user, Ecto.UUID.generate())
 
-      {:error, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:error, _} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
     end
 
     test "multi reply should belong to one parent comment", ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, replied_comment_1} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -55,16 +77,33 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     test "reply to reply inside a comment should belong same parent comment",
          ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, replied_comment_1} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(replied_comment_1.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(
+          replied_comment_1.id,
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
 
       {:ok, replied_comment_3} =
-        CMS.Comments.reply_comment(replied_comment_2.id, mock_comment(), user)
+        CMS.Comments.reply_comment(
+          replied_comment_2.id,
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -84,16 +123,33 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     test "reply to reply inside a comment should have is_reply_to_others flag in meta",
          ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, replied_comment_1} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(replied_comment_1.id, mock_comment(), user2)
+        CMS.Comments.reply_comment(
+          replied_comment_1.id,
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
 
       {:ok, replied_comment_3} =
-        CMS.Comments.reply_comment(replied_comment_2.id, mock_comment(), user)
+        CMS.Comments.reply_comment(
+          replied_comment_2.id,
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -111,7 +167,14 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       total_reply_count = @max_parent_replies_count + 1
 
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       reply_comment_list =
         Enum.reduce(1..total_reply_count, [], fn n, acc ->
@@ -119,7 +182,8 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
             CMS.Comments.reply_comment(
               parent_comment.id,
               mock_comment("reply_content_#{n}"),
-              user
+              user,
+              Ecto.UUID.generate()
             )
 
           acc ++ [replied_comment]
@@ -137,9 +201,17 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     test "replied user should appear in article comment participants",
          ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, _} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, state} = CMS.Comments.comments_state(:blog, blog.article_id)
 
@@ -149,15 +221,26 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
 
     test "replies count should inc by 1 after got replied", ~m(community blog user user2)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       assert parent_comment.replies_count === 0
 
-      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, _} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
       assert parent_comment.replies_count === 1
 
-      {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, _} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
       assert parent_comment.replies_count === 2
     end
@@ -167,7 +250,14 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
     @tag :wip
     test "can get paged replies of a parent comment", ~m(community blog user)a do
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, paged_replies} =
         CMS.Comments.paged_comment_replies(parent_comment.id, %{page: 1, size: 20})
@@ -182,7 +272,8 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
             CMS.Comments.reply_comment(
               parent_comment.id,
               mock_comment("reply_content_#{n}"),
-              user
+              user,
+              Ecto.UUID.generate()
             )
 
           acc ++ [replied_comment]
@@ -205,10 +296,20 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       page_size = 10
 
       {:ok, parent_comment} =
-        CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
+        CMS.Comments.create_comment(
+          community,
+          :blog,
+          article_inner_id(blog, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, reply_comment} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
-      {:ok, reply_comment2} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
+      {:ok, reply_comment} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
+
+      {:ok, reply_comment2} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(

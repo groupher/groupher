@@ -37,6 +37,6 @@ defmodule GroupherServer.PublicCache.Telemetry do
   @impl GenServer
   def terminate(_reason, _state) do
     :telemetry.detach(@event_name)
-    :ok
+    {:ok, :pass}
   end
 end

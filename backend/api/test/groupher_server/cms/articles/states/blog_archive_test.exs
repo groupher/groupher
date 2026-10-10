@@ -7,7 +7,13 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
 
-    {:ok, blog_long_ago} = db_insert(:blog, %{title: "last week", inserted_at: @last_year})
+    {:ok, blog_long_ago} =
+      db_insert(:blog, %{
+        title: "last week",
+        inserted_at: @last_year,
+        community: community
+      })
+
     blog_long_ago = Repo.get!(CMS.Model.Article, blog_long_ago.id)
 
     {:ok, blog_long_ago} =
@@ -29,7 +35,7 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
       assert archived_blog.id == blog_long_ago.id
     end
 
-    test "can not edit archived blog", ~m(user)a do
+    test "can not edit archived blog", ~m(community user)a do
       {:ok, _} = CMS.Articles.archive(:blog)
 
       archived_blogs = archived_articles(:blog)
@@ -38,7 +44,7 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
 
       {:error, reason} =
         CMS.Articles.update(
-          archived_blog,
+          Map.put(archived_blog, :community, community),
           %{"title" => "new title"},
           user,
           Ecto.UUID.generate()
@@ -47,14 +53,16 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
       assert %ErrorCat.Error{reason: :article_archived} = reason
     end
 
-    test "can not delete archived blog" do
+    test "can not delete archived blog", ~m(community)a do
       {:ok, _} = CMS.Articles.archive(:blog)
 
       archived_blogs = archived_articles(:blog)
 
       archived_blog = archived_blogs |> List.first()
 
-      {:error, reason} = CMS.Articles.trash(archived_blog, :operations)
+      {:error, reason} =
+        CMS.Articles.trash(archived_blog, :operations, community: community)
+
       assert %ErrorCat.Error{reason: :article_archived} = reason
     end
   end

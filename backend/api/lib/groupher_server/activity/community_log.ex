@@ -6,6 +6,10 @@ defmodule GroupherServer.Activity.CommunityLog do
 
   List and stats deliberately share handler selection and filter normalization so
   the dashboard timeline and its overview never count different event sets.
+
+  The final dynamic UNION query is intentionally parameterized SQL: handlers
+  provide a closed table/action manifest, while Ecto has no direct abstraction
+  for composing this heterogeneous multi-table projection.
   """
 
   alias GroupherServer.{Activity, CMS, Repo}
@@ -448,7 +452,7 @@ defmodule GroupherServer.Activity.CommunityLog do
   end
 
   defp normalize_filter(filter, mode) when is_map(filter) do
-    with :ok <- validate_filter_keys(filter),
+    with {:ok, _} <- validate_filter_keys(filter),
          {:ok, page} <- positive_page(Map.get(filter, :page, 1)),
          {:ok, resource_types} <- normalize_resource_types(filter),
          {:ok, actions} <- normalize_actions(filter),
@@ -467,7 +471,7 @@ defmodule GroupherServer.Activity.CommunityLog do
          {:ok, source} <- normalize_source(Map.get(filter, :source)),
          {:ok, occurred_after} <- normalize_datetime(Map.get(filter, :occurred_after)),
          {:ok, occurred_before} <- normalize_datetime(Map.get(filter, :occurred_before)),
-         :ok <- validate_time_window(mode, occurred_after, occurred_before),
+         {:ok, _} <- validate_time_window(mode, occurred_after, occurred_before),
          {:ok, event_ref} <- normalize_uuid(Map.get(filter, :event_ref)),
          {:ok, operation_ref} <- normalize_uuid(Map.get(filter, :operation_ref)),
          {:ok, parent_event_ref} <- normalize_uuid(Map.get(filter, :parent_event_ref)) do
@@ -504,7 +508,7 @@ defmodule GroupherServer.Activity.CommunityLog do
 
   defp validate_filter_keys(filter) do
     if Map.keys(filter) -- @supported_filter_keys == [] do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.invalid_pagination()}
     end
@@ -620,7 +624,7 @@ defmodule GroupherServer.Activity.CommunityLog do
 
   defp normalize_datetime(_), do: {:error, ErrorCat.invalid_pagination()}
 
-  defp validate_time_window(:list, nil, nil), do: :ok
+  defp validate_time_window(:list, nil, nil), do: {:ok, :pass}
 
   defp validate_time_window(:stats, nil, nil), do: {:error, ErrorCat.invalid_pagination()}
 
@@ -628,7 +632,7 @@ defmodule GroupherServer.Activity.CommunityLog do
     seconds = DateTime.diff(occurred_before, occurred_after)
 
     if seconds > 0 and seconds <= @max_time_window_days * 86_400 do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.invalid_pagination()}
     end

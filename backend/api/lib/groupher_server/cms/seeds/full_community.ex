@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
         with {:ok, community} <- Communities.mock(slug),
              {:ok, _} <- seed_about_dashboard(community, slug),
              {:ok, posts} <- seed_threads(community, opts),
-             {:ok, _} <- seed_post_states_and_cats(posts) do
+             {:ok, _} <- seed_post_states_and_cats(community, posts) do
           CMS.Communities.fetch(community.slug, inc_views: false)
         end
 
@@ -75,8 +75,14 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   @spec delete(String.t() | atom()) :: T.domain_res(:ok)
   def delete(slug) do
     with {:ok, community} <- ORM.find_by(Community, %{slug: to_string(slug)}),
-         {_count, _} <-
-           delete_all(from(article in Article, where: article.community_id == ^community.id)),
+         article_ids <-
+           Repo.all(
+             from(binding in CMS.Model.ArticleBinding,
+               where: binding.community_id == ^community.id,
+               select: binding.article_id
+             )
+           ),
+         {_count, _} <- delete_all(from(article in Article, where: article.id in ^article_ids)),
          {:ok, _community} <- Repo.delete(community, timeout: 300_000) do
       {:ok, :ok}
     end
@@ -135,7 +141,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     {:ok, posts}
   end
 
-  defp seed_post_states_and_cats(posts) when is_list(posts) do
+  defp seed_post_states_and_cats(%Community{} = community, posts) when is_list(posts) do
     post_modes =
       posts
       |> Enum.shuffle()
@@ -167,7 +173,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
         :cat_and_state ->
           with {:ok, post} <- CMS.Articles.States.set_cat(post, Enum.random(@post_cats)),
                {:ok, _post} <-
-                 CMS.Articles.States.set_status(post, Enum.random(@post_statuses)) do
+                 CMS.Articles.States.set_status(post, Enum.random(@post_statuses), community.id) do
             {:cont, {:ok, :ok}}
           else
             {:error, reason} -> {:halt, {:error, reason}}
@@ -180,50 +186,74 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     slug = to_string(slug)
 
     with {:ok, _} <-
-           CMS.Dashboard.update(community, :enable, %{
-             about: true,
-             about_techstack: true,
-             about_location: true,
-             about_links: true,
-             about_media_report: true,
-             post: true,
-             changelog: true,
-             kanban: true,
-             doc: true
-           }),
-         {:ok, _} <-
-           CMS.Dashboard.update(community, :base_info, %{
-             title: String.capitalize(slug),
-             slug: slug,
-             desc: "#{slug} community",
-             homepage: "https://#{slug}.example.com",
-             introduction: "Built with seed data for QA and showcase.",
-             city: "Shanghai,Singapore,Berlin",
-             techstack: "Elixir,Phoenix,PostgreSQL,TypeScript,React"
-           }),
-         {:ok, _} <-
-           CMS.Dashboard.update(community, :social_links, [
-             %{type: "github", link: "https://github.com/#{slug}"},
-             %{type: "twitter", link: "https://x.com/#{slug}"},
-             %{type: "website", link: "https://#{slug}.example.com"}
-           ]),
-         {:ok, _} <-
-           CMS.Dashboard.update(community, :media_reports, [
+           CMS.Dashboard.update(
+             community,
+             :enable,
              %{
-               index: 0,
-               title: "#{String.capitalize(slug)} announced",
-               site_name: "Groupher Weekly",
-               favicon: "https://groupher.com/favicon.ico",
-               url: "https://news.example.com/#{slug}/announce"
+               about: true,
+               about_techstack: true,
+               about_location: true,
+               about_links: true,
+               about_media_report: true,
+               post: true,
+               changelog: true,
+               kanban: true,
+               doc: true
              },
+             :operations,
+             Ecto.UUID.generate()
+           ),
+         {:ok, _} <-
+           CMS.Dashboard.update(
+             community,
+             :base_info,
              %{
-               index: 1,
-               title: "#{String.capitalize(slug)} product deep dive",
-               site_name: "Tech Radar",
-               favicon: "https://techradar.example.com/favicon.ico",
-               url: "https://techradar.example.com/#{slug}/deep-dive"
-             }
-           ]) do
+               title: String.capitalize(slug),
+               slug: slug,
+               desc: "#{slug} community",
+               homepage: "https://#{slug}.example.com",
+               introduction: "Built with seed data for QA and showcase.",
+               city: "Shanghai,Singapore,Berlin",
+               techstack: "Elixir,Phoenix,PostgreSQL,TypeScript,React"
+             },
+             :operations,
+             Ecto.UUID.generate()
+           ),
+         {:ok, _} <-
+           CMS.Dashboard.update(
+             community,
+             :social_links,
+             [
+               %{type: "github", link: "https://github.com/#{slug}"},
+               %{type: "twitter", link: "https://x.com/#{slug}"},
+               %{type: "website", link: "https://#{slug}.example.com"}
+             ],
+             :operations,
+             Ecto.UUID.generate()
+           ),
+         {:ok, _} <-
+           CMS.Dashboard.update(
+             community,
+             :media_reports,
+             [
+               %{
+                 index: 0,
+                 title: "#{String.capitalize(slug)} announced",
+                 site_name: "Groupher Weekly",
+                 favicon: "https://groupher.com/favicon.ico",
+                 url: "https://news.example.com/#{slug}/announce"
+               },
+               %{
+                 index: 1,
+                 title: "#{String.capitalize(slug)} product deep dive",
+                 site_name: "Tech Radar",
+                 favicon: "https://techradar.example.com/favicon.ico",
+                 url: "https://techradar.example.com/#{slug}/deep-dive"
+               }
+             ],
+             :operations,
+             Ecto.UUID.generate()
+           ) do
       {:ok, :ok}
     end
   end

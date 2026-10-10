@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
     {:ok, post_last_week} = backdate(post, @last_week)
 
-    {_, post, _, _} = mock_article(:post)
+    {last_month_community, post, _, _} = mock_article(:post)
 
     {:ok, post_last_month} = backdate(post, @last_month)
 
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     guest_conn = simu_conn(:guest)
 
     {:ok,
-     ~m(guest_conn user user2 user3 post_last_week post_last_month post_last_year community)a}
+     ~m(guest_conn user user2 user3 post_last_week post_last_month post_last_year community last_month_community)a}
   end
 
   describe "[query paged_posts filter pagination]" do
@@ -63,36 +63,63 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       first_post = results["entries"] |> List.first()
-      assert first_post["innerId"] == to_string(post.inner_id)
+      assert first_post["innerId"] == to_string(article_inner_id(post, community))
     end
 
-    test "upvotes_count order should work", ~m(guest_conn post_last_week user user2 user3)a do
+    test "upvotes_count order should work",
+         ~m(guest_conn community post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "UPVOTES"}}
 
-      {:ok, _} = CMS.Interactions.upvote(post_last_week, user)
-      {:ok, _} = CMS.Interactions.upvote(post_last_week, user2)
-      {:ok, _} = CMS.Interactions.upvote(post_last_week, user3)
+      {:ok, _} = CMS.Interactions.upvote(post_last_week, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(post_last_week, user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(post_last_week, user3, Ecto.UUID.generate())
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       first_post = results["entries"] |> List.first()
 
-      assert first_post["innerId"] === to_string(post_last_week.inner_id)
+      assert first_post["innerId"] === to_string(article_inner_id(post_last_week, community))
     end
 
     test "comments_count order should work",
          ~m(guest_conn community post_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "COMMENTS"}}
-      post_id = post_last_week.inner_id
+      post_id = article_inner_id(post_last_week, community)
 
-      {:ok, _} = CMS.Comments.create_comment(community, :post, post_id, mock_comment(), user)
-      {:ok, _} = CMS.Comments.create_comment(community, :post, post_id, mock_comment(), user2)
-      {:ok, _} = CMS.Comments.create_comment(community, :post, post_id, mock_comment(), user3)
+      {:ok, _} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          post_id,
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          post_id,
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          post_id,
+          mock_comment(),
+          user3,
+          Ecto.UUID.generate()
+        )
 
       results =
         guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat status"), variables)
 
       first_post = results["entries"] |> List.first()
-      assert first_post["innerId"] === to_string(post_last_week.inner_id)
+      assert first_post["innerId"] === to_string(article_inner_id(post_last_week, community))
     end
 
     test "views order should work", ~m(guest_conn community user user2 user3)a do
@@ -107,14 +134,16 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       first_post = results["entries"] |> List.first()
-      assert first_post["innerId"] == to_string(post.inner_id)
+      assert first_post["innerId"] == to_string(article_inner_id(post, community))
     end
 
-    test "should get valid cat & status", ~m(guest_conn post_last_week user)a do
+    test "should get valid cat & status", ~m(guest_conn community post_last_week user)a do
       variables = %{filter: %{page: 1, size: 20}}
 
-      {:ok, _} = CMS.Articles.set_cat(post_last_week.id, @article_cat.idea, user)
-      {:ok, _} = CMS.Articles.set_status(post_last_week.id, @article_status.wip, user)
+      {:ok, _} = CMS.Articles.set_cat(post_last_week.id, @article_cat.idea, user, community.id)
+
+      {:ok, _} =
+        CMS.Articles.set_status(post_last_week.id, @article_status.wip, user, community.id)
 
       results =
         guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat status"), variables)
@@ -123,9 +152,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["entries"] |> Enum.any?(&(&1["status"] == "WIP"))
     end
 
-    test "should get valid cat & status by filter", ~m(guest_conn post_last_week user)a do
-      {:ok, _} = CMS.Articles.set_cat(post_last_week.id, @article_cat.idea, user)
-      {:ok, _} = CMS.Articles.set_status(post_last_week.id, @article_status.wip, user)
+    test "should get valid cat & status by filter",
+         ~m(guest_conn community post_last_week user)a do
+      {:ok, _} = CMS.Articles.set_cat(post_last_week.id, @article_cat.idea, user, community.id)
+
+      {:ok, _} =
+        CMS.Articles.set_status(post_last_week.id, @article_status.wip, user, community.id)
 
       variables = %{filter: %{page: 1, size: 20, cat: "IDEA"}}
 
@@ -177,8 +209,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       article_tag_attrs = mock_attrs(:community_tag)
-      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
-      {:ok, _} = CMS.Communities.set_tag(post, article_tag.id)
+
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          article_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 
       variables = %{filter: %{page: 1, size: 10, community_tag: article_tag.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
@@ -207,11 +248,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     end
 
     test "returns cancan error when community post thread is disabled",
-         ~m(guest_conn community)a do
+         ~m(guest_conn community user)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :enable, %{
-          post: false
-        })
+        CMS.Dashboard.update(
+          community,
+          :enable,
+          %{
+            post: false
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{filter: %{page: 1, size: 10, community: community.slug}}
 
@@ -271,7 +318,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
 
       assert length(results["entries"]) == 3
-      assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(post.inner_id)))
+
+      assert results["entries"]
+             |> Enum.any?(&(&1["innerId"] == to_string(article_inner_id(post, community))))
     end
 
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
@@ -295,7 +344,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    test "filter sort MOST_VIEWS should work", ~m(guest_conn post_last_year)a do
+    test "filter sort MOST_VIEWS should work", ~m(guest_conn community post_last_year)a do
       Repo.update_all(
         from(summary in ArticleStats,
           where: summary.thread == :post and summary.article_id == ^post_last_year.id
@@ -316,11 +365,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       find_post = results |> Map.get("entries") |> hd
 
       assert most_views_post.article_id == post_last_year.id
-      assert find_post["innerId"] == to_string(post_last_year.inner_id)
+      assert find_post["innerId"] == to_string(article_inner_id(post_last_year, community))
     end
 
     test "filter sort LEAST_VIEWS should use Summary zero-row semantics",
-         ~m(guest_conn community post_last_year)a do
+         ~m(guest_conn community post_last_year user)a do
       Repo.update_all(
         from(summary in ArticleStats,
           where: summary.thread == :post and summary.article_id == ^post_last_year.id
@@ -332,7 +381,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       find_post = results |> Map.get("entries") |> hd
 
-      refute find_post["innerId"] == to_string(post_last_year.inner_id)
+      refute find_post["innerId"] == to_string(article_inner_id(post_last_year, community))
     end
   end
 
@@ -348,7 +397,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       assert results["totalCount"] == 5
 
-      the_post = Enum.find(results["entries"], &(&1["innerId"] == to_string(post.inner_id)))
+      the_post =
+        Enum.find(
+          results["entries"],
+          &(&1["innerId"] == to_string(article_inner_id(post, community)))
+        )
+
       refute Map.has_key?(the_post, "viewerHasViewed")
       refute Map.has_key?(the_post, "viewerHasUpvoted")
       refute Map.has_key?(the_post, "viewerHasCollected")
@@ -356,13 +410,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       track_view(post, user)
 
-      {:ok, _} = CMS.Interactions.upvote(post, user)
-      {:ok, _} = CMS.Interactions.collect(post, user)
-      {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user)
+      {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.collect(post, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user, Ecto.UUID.generate())
 
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
 
-      the_post = Enum.find(results["entries"], &(&1["innerId"] == to_string(post.inner_id)))
+      the_post =
+        Enum.find(
+          results["entries"],
+          &(&1["innerId"] == to_string(article_inner_id(post, community)))
+        )
 
       refute Map.has_key?(the_post, "viewerHasViewed")
       refute Map.has_key?(the_post, "viewerHasUpvoted")
@@ -377,11 +435,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   test: FILTER when [TODAY] [THIS_WEEK] [THIS_MONTH] [THIS_YEAR]
   """
   describe "[query paged_posts filter when]" do
-    test "THIS_YEAR option should work", ~m(guest_conn post_last_year)a do
+    test "THIS_YEAR option should work", ~m(guest_conn community post_last_year)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["innerId"] != post_last_year.inner_id))
+      assert results["entries"]
+             |> Enum.any?(&(&1["innerId"] != article_inner_id(post_last_year, community)))
     end
 
     test "TODAY option should work", ~m(guest_conn)a do
@@ -400,17 +459,21 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results |> Map.get("totalCount") >= @today_count
     end
 
-    test "THIS_MONTH option should work", ~m(guest_conn post_last_month)a do
+    test "THIS_MONTH option should work",
+         ~m(guest_conn last_month_community post_last_month user)a do
       variables = %{filter: %{when: "THIS_MONTH"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["innerId"] != post_last_month.inner_id))
+      assert results["entries"]
+             |> Enum.any?(
+               &(&1["innerId"] != article_inner_id(post_last_month, last_month_community))
+             )
     end
   end
 
   describe "[paged posts active_at]" do
     test "latest commented post should appear on top",
-         ~m(guest_conn community post_last_week user2)a do
+         ~m(guest_conn community post_last_week user2 user)a do
       variables = %{filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       entries = results["entries"]
@@ -423,9 +486,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
         CMS.Comments.create_comment(
           community,
           :post,
-          post_last_week.inner_id,
+          article_inner_id(post_last_week, community),
           mock_comment(),
-          user2
+          user2,
+          Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
@@ -436,16 +500,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     end
 
     test "comment on very old post have no effect",
-         ~m(guest_conn community post_last_year user2)a do
+         ~m(guest_conn community post_last_year user2 user)a do
       variables = %{filter: %{page: 1, size: 20}}
 
       {:ok, _} =
         CMS.Comments.create_comment(
           community,
           :post,
-          post_last_year.inner_id,
+          article_inner_id(post_last_year, community),
           mock_comment(),
-          user2
+          user2,
+          Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
@@ -456,7 +521,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     end
 
     test "latest post author commented post have no effect",
-         ~m(guest_conn community post_last_week)a do
+         ~m(guest_conn community post_last_week user)a do
       variables = %{filter: %{page: 1, size: 20}}
       post = CMS.Model.Article |> Repo.get!(post_last_week.id) |> Repo.preload(author: :user)
 
@@ -464,9 +529,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
         CMS.Comments.create_comment(
           community,
           :post,
-          post.inner_id,
+          article_inner_id(post, community),
           mock_comment(),
-          post.author.user
+          post.author.user,
+          Ecto.UUID.generate()
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
@@ -483,15 +549,22 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   end
 
   defp matches_article?(entry, community, article) do
-    entry["innerId"] == to_string(article.inner_id) and
+    entry["innerId"] == to_string(article_inner_id(article, community)) and
       Enum.any?(entry["communities"], &(&1["slug"] == community.slug))
   end
 
   defp backdate(article, timestamp) do
-    article = Repo.get!(CMS.Model.Article, article.id)
+    stored = Repo.get!(CMS.Model.Article, article.id)
 
-    article
-    |> Ecto.Changeset.change(%{inserted_at: timestamp, active_at: timestamp})
-    |> Repo.update()
+    with {:ok, updated} <-
+           stored
+           |> Ecto.Changeset.change(%{inserted_at: timestamp, active_at: timestamp})
+           |> Repo.update() do
+      {:ok,
+       Map.merge(article, %{
+         inserted_at: updated.inserted_at,
+         active_at: updated.active_at
+       })}
+    end
   end
 end

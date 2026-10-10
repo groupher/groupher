@@ -1,3 +1,4 @@
+import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
 import { useQueryClient } from '@tanstack/react-query'
 import { find, forEach, reject, uniq } from 'ramda'
 import { useMemo, useState } from 'react'
@@ -5,6 +6,7 @@ import { useMemo, useState } from 'react'
 import EVENT from '~/const/event'
 import { browserGraphQLRequest } from '~/graphql/client'
 import { patchCommunityConfig } from '~/query'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import { closeDrawer, send } from '~/signal'
 import type { TModerator, TUser } from '~/spec'
 import useAccount from '~/stores/account/hooks'
@@ -296,10 +298,16 @@ export default function useLogic(): TRet {
 
     const rules = { global: globalRules, [community]: { cms: innerRules } }
 
-    browserGraphQLRequest(S.updateModeratorPassport, {
-      community,
-      user: activeModerator.login,
-      rules: JSON.stringify(rules),
+    executeCommand<
+      VariablesOf<typeof S.updateModeratorPassport>,
+      ResultOf<typeof S.updateModeratorPassport>
+    >({
+      request: (variables) => browserGraphQLRequest(S.updateModeratorPassport, variables),
+      variables: {
+        community,
+        user: activeModerator.login,
+        rules: JSON.stringify(rules),
+      },
     })
       .then((res) => {
         const remoteModerators = (res.updateModeratorPassport?.moderators ?? []).filter(
@@ -328,9 +336,12 @@ export default function useLogic(): TRet {
   const deleteModerator = (): void => {
     if (!activeModerator?.login) return
 
-    browserGraphQLRequest(S.removeModerator, {
-      community: community$.slug,
-      user: activeModerator.login,
+    executeCommand<VariablesOf<typeof S.removeModerator>, ResultOf<typeof S.removeModerator>>({
+      request: (variables) => browserGraphQLRequest(S.removeModerator, variables),
+      variables: {
+        community: community$.slug,
+        user: activeModerator.login,
+      },
     }).then((res) => {
       const moderators = (res.removeModerator?.moderators ?? []).filter(
         (moderator) => moderator.user?.login,

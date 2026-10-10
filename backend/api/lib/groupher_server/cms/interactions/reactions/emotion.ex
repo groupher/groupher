@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
+  alias CMS.Articles.Bindings
   alias CMS.Communities.Enable
   alias CMS.{Gate, Command}
   alias CMS.Interactions.{Config, ErrorCat, ReadState}
@@ -33,8 +34,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
       Reactions.Emotion.add(comment, :heart, actor)
 
   """
-  @spec add(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def add(artiment, emotion, %User{} = actor, command_id \\ nil) do
+  @spec add(struct(), atom(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def add(artiment, emotion, %User{} = actor, command_id) do
     mutate(artiment, emotion, actor, :add, command_id)
   end
 
@@ -46,33 +47,23 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
       Reactions.Emotion.remove(comment, :heart, actor)
 
   """
-  @spec remove(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def remove(artiment, emotion, %User{} = actor, command_id \\ nil) do
+  @spec remove(struct(), atom(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def remove(artiment, emotion, %User{} = actor, command_id) do
     mutate(artiment, emotion, actor, :remove, command_id)
   end
 
   defp mutate(input, emotion, actor, operation, command_id) when is_atom(emotion) do
-    with {:ok, info} <- Matcher.match_interaction(input) do
-      context = %{
-        actor: actor,
-        target: input,
-        params: %{operation: operation, emotion: emotion},
-        command_id: command_id || Ecto.UUID.generate()
-      }
-
+    with {:ok, command_id} <- require_command_id(command_id),
+         {:ok, info} <- Matcher.match_interaction(input) do
       result =
-        if is_nil(command_id) do
-          execute_without_receipt(&emotion_action(&1, info), context)
-        else
-          %Command{
-            actor: actor,
-            command_id: command_id,
-            operation: emotion_command(operation),
-            target: input,
-            params: %{operation: operation, emotion: emotion}
-          }
-          |> Command.execute(action: &emotion_action(&1, info), confirmation: Confirmation)
-        end
+        %Command{
+          actor: actor,
+          command_id: command_id,
+          operation: emotion_command(operation),
+          target: input,
+          params: %{operation: operation, emotion: emotion}
+        }
+        |> Command.execute(action: &emotion_action(&1, info), confirmation: Confirmation)
 
       present_reaction(result, input, command_id)
     end
@@ -94,9 +85,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
          {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
          {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
-         :ok <- sync_state(canonical, emotion, actor, operation, change),
-         :ok <- record_metric(canonical, operation, change, command_id),
-         :ok <- enqueue_effect(canonical, actor, operation, emotion, command_id, change) do
+         {:ok, _} <- sync_state(canonical, emotion, actor, operation, change),
+         {:ok, _} <- record_metric(canonical, operation, change, command_id),
+         {:ok, _} <- enqueue_effect(canonical, actor, operation, emotion, command_id, change) do
       {:ok,
        %Confirmation{
          data: %{
@@ -110,21 +101,11 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     end
   end
 
-  defp execute_without_receipt(action, context) do
-    Repo.transaction(fn ->
-      case action.(context) do
-        {:ok, %Confirmation{data: data}} -> {:ok, data}
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
-    |> case do
-      {:ok, {:ok, data}} -> {:ok, data}
-      other -> other
-    end
-  end
+  defp require_command_id(command_id) when is_binary(command_id), do: {:ok, command_id}
+  defp require_command_id(_command_id), do: {:error, CMS.ErrorCat.command_id_required()}
 
   defp enqueue_effect(_canonical, _actor, _operation, _emotion, _command_id, :unchanged) do
-    :ok
+    {:ok, :pass}
   end
 
   defp enqueue_effect(canonical, actor, operation, emotion, command_id, :changed) do
@@ -137,7 +118,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
       data: %{actor_id: actor.id, operation: operation, emotion: emotion}
     })
     |> case do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -157,10 +138,16 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   end
 
   defp allow_emotion(article, info, emotion) do
-    Enable.emotion?(article.community.slug, :article, info.artiment, emotion)
+    case Bindings.get(article, Map.get(article, :community)) do
+      {:ok, %{community: community}} ->
+        Enable.emotion?(community.slug, :article, info.artiment, emotion)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
-  defp sync_state(_canonical, _emotion, _actor, _operation, :unchanged), do: :ok
+  defp sync_state(_canonical, _emotion, _actor, _operation, :unchanged), do: {:ok, :pass}
 
   defp sync_state(canonical, emotion, actor, operation, :changed) do
     result =
@@ -169,19 +156,19 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
         else: ReadState.remove_emotion(canonical, emotion, actor)
 
     case result do
-      {:ok, _projection} -> :ok
+      {:ok, _projection} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: :ok
-  defp record_metric(_article, _operation, :unchanged, _operation_id), do: :ok
+  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: {:ok, :pass}
+  defp record_metric(_article, _operation, :unchanged, _operation_id), do: {:ok, :pass}
 
   defp record_metric(article, operation, :changed, operation_id) do
     metric = if operation == :add, do: :emotion_added, else: :emotion_removed
 
     case MetricEvent.append_article_action(article, operation_id, metric) do
-      :ok -> :ok
+      {:ok, _} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end

@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.AccountReport do
     {:ok, user2} = db_insert(:user)
 
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
     guest_conn = simu_conn(:guest)
 
     {:ok, ~m(guest_conn community user user2)a}

@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.ArtimentMentions do
   """
 
   alias __MODULE__.Store
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, FrontDesk}
   alias CMS.Model.Comment
   alias Helper.T
 
@@ -50,4 +50,54 @@ defmodule GroupherServer.CMS.ArtimentMentions do
   @doc "Runs `mentioned_by` through the public `ArtimentMentions` boundary."
   @spec mentioned_by(atom(), T.id(), map() | nil) :: T.domain_res(T.paged_data())
   defdelegate mentioned_by(mentioned_type, mentioned_id, filter), to: Store
+
+  @doc "Resolves one public mention source and returns its outgoing mentions."
+  @spec mentions(map(), map() | nil) :: T.domain_res(T.paged_data())
+  def mentions(source, filter) when is_map(source) do
+    with {:ok, type, id} <- resolve_locator(source, [:article, :comment], :source) do
+      Store.mentions(type, id, filter)
+    end
+  end
+
+  @doc "Resolves one public mention target and returns incoming mentions."
+  @spec mentioned_by(map(), map() | nil) :: T.domain_res(T.paged_data())
+  def mentioned_by(target, filter) when is_map(target) do
+    with {:ok, type, id} <- resolve_locator(target, [:article, :comment, :user_login], :target) do
+      Store.mentioned_by(type, id, filter)
+    end
+  end
+
+  defp resolve_locator(input, keys, label) do
+    with {:ok, key, value} <- one_of(input, keys, label) do
+      resolve_value(key, value)
+    end
+  end
+
+  defp resolve_value(:article, path) do
+    with {:ok, article} <- FrontDesk.article(path) do
+      {:ok, article.thread, article.id}
+    end
+  end
+
+  defp resolve_value(:comment, path) do
+    with {:ok, comment} <- FrontDesk.comment(path) do
+      {:ok, :comment, comment.id}
+    end
+  end
+
+  defp resolve_value(:user_login, login) do
+    with {:ok, user} <- FrontDesk.user(login) do
+      {:ok, :user, user.id}
+    end
+  end
+
+  defp one_of(input, keys, label) do
+    present = Enum.filter(keys, &(not is_nil(Map.get(input, &1))))
+
+    case present do
+      [key] -> {:ok, key, Map.get(input, key)}
+      [] -> {:error, "missing mention #{label}"}
+      _ -> {:error, "ambiguous mention #{label}"}
+    end
+  end
 end

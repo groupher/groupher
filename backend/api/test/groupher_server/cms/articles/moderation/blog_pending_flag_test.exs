@@ -29,12 +29,12 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
   end
 
   describe "[pending blogs flags]" do
-    test "pending blog can not be read", ~m(blog_m)a do
+    test "pending blog can not be read", ~m(community blog_m)a do
       {:ok, _} =
         read_article(
-          article_community(blog_m),
+          article_binding(blog_m),
           :blog,
-          blog_m.inner_id
+          article_inner_id(blog_m, community)
         )
 
       {:ok, _} =
@@ -45,7 +45,8 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, blog_m.article_id)
@@ -53,9 +54,9 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
 
       {:error, reason} =
         read_article(
-          article_community(blog_m),
+          article_binding(blog_m),
           :blog,
-          blog_m.inner_id
+          article_inner_id(blog_m, community)
         )
 
       assert reason |> is_error?({{:cms, :article}, :pending})
@@ -66,7 +67,7 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       {:ok, _} =
-        read_article(article_community(blog), :blog, blog.inner_id)
+        read_article(article_binding(blog), :blog, article_inner_id(blog, community))
 
       {:ok, _} =
         CMS.Articles.set_illegal(
@@ -76,14 +77,15 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       {:ok, blog_read} =
         read_article(
-          article_community(blog),
+          article_binding(blog),
           :blog,
-          blog.inner_id,
+          article_inner_id(blog, community),
           user
         )
 
@@ -93,21 +95,21 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
 
       {:error, reason} =
         read_article(
-          article_community(blog),
+          article_binding(blog),
           :blog,
-          blog.inner_id,
+          article_inner_id(blog, community),
           user2
         )
 
       assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
-    test "pending blog can set/unset pending", ~m(blog_m)a do
+    test "pending blog can set/unset pending", ~m(community blog_m)a do
       {:ok, _} =
         read_article(
-          article_community(blog_m),
+          article_binding(blog_m),
           :blog,
-          blog_m.inner_id
+          article_inner_id(blog_m, community)
         )
 
       {:ok, _} =
@@ -118,31 +120,33 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
             illegal_reason: ["some-reason"],
             illegal_words: ["some-word"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, blog_m.article_id)
       assert stable.moderation_state == :illegal
 
-      {:ok, _} = CMS.Articles.unset_illegal(blog_m.article_id, %{}, :operations)
+      {:ok, _} =
+        CMS.Articles.unset_illegal(blog_m.article_id, %{}, :operations, community: community)
 
       stable = Repo.get!(CMS.Model.Article, blog_m.article_id)
       assert stable.moderation_state == :legal
 
       {:ok, _} =
         read_article(
-          article_community(blog_m),
+          article_binding(blog_m),
           :blog,
-          blog_m.inner_id
+          article_inner_id(blog_m, community)
         )
     end
 
-    test "pending blog's meta should have info", ~m(blog_m)a do
+    test "pending blog's meta should have info", ~m(community blog_m)a do
       {:ok, _} =
         read_article(
-          article_community(blog_m),
+          article_binding(blog_m),
           :blog,
-          blog_m.inner_id
+          article_inner_id(blog_m, community)
         )
 
       {:ok, _} =
@@ -154,7 +158,8 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
             illegal_words: ["some-word"],
             illegal_articles: ["/blog/#{blog_m.id}"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, blog_m.article_id)
@@ -176,7 +181,8 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
             illegal_words: [],
             illegal_articles: ["/blog/#{blog_m.id}"]
           },
-          :operations
+          :operations,
+          community: community
         )
 
       stable = Repo.get!(CMS.Model.Article, blog_m.article_id)

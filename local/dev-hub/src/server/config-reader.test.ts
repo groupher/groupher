@@ -87,8 +87,8 @@ test('Elixir manifests identify the active environment and omit symbolic links',
   const outsideFile = path.join(outsideRoot, 'outside.exs')
   await Promise.all([
     writeFile(path.join(root, 'config.exs'), 'import Config\n'),
-    writeFile(path.join(root, 'mock.exs'), 'config :app, :mode, :mock\n'),
-    writeFile(path.join(root, 'mock.secret.exs'), 'config :app, :token, "secret"\n'),
+    writeFile(path.join(root, 'dev.secret.exs'), 'config :app, :token, "secret"\n'),
+    writeFile(path.join(root, 'test.exs'), 'config :app, :mode, :test\n'),
     writeFile(path.join(root, 'runtime.exs'), 'import Config\n'),
     writeFile(path.join(root, 'dev.exs'), 'config :app, :mode, :dev\n'),
     writeFile(outsideFile, 'config :outside, true\n'),
@@ -100,7 +100,7 @@ test('Elixir manifests identify the active environment and omit symbolic links',
       createDefinition(root, {
         kind: 'elixir-config',
         root,
-        environment: 'mock',
+        environment: 'dev',
       }),
     ],
     root,
@@ -111,14 +111,14 @@ test('Elixir manifests identify the active environment and omit symbolic links',
     manifest.files.map(({ name, group }) => ({ name, group })),
     [
       { name: 'config.exs', group: 'active' },
-      { name: 'mock.exs', group: 'active' },
-      { name: 'mock.secret.exs', group: 'active' },
+      { name: 'dev.exs', group: 'active' },
+      { name: 'dev.secret.exs', group: 'active' },
       { name: 'runtime.exs', group: 'active' },
-      { name: 'dev.exs', group: 'other' },
+      { name: 'test.exs', group: 'other' },
     ],
   )
 
-  const secret = manifest.files.find((file) => file.name === 'mock.secret.exs')
+  const secret = manifest.files.find((file) => file.name === 'dev.secret.exs')
   assert.ok(secret)
   assert.equal(secret.sensitive, true)
   const redacted = await reader.getContent('fixture', secret.id, false)

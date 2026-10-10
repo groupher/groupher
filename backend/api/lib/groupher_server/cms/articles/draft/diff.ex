@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Diff do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.ContentFingerprint
+  alias CMS.Articles.Draft.Tags, as: DraftTags
 
   alias CMS.Model.{
     Article,
@@ -159,22 +160,16 @@ defmodule GroupherServer.CMS.Articles.Draft.Diff do
   defp cover_edit(%ArticleRevision{id: revision_id}), do: ContentFingerprint.revision(revision_id)
 
   defp tag_ids(%Article{thread: thread}, draft) when is_struct(draft, DocDraft) do
-    query_tag_ids("#{thread}_draft_tags", "article_id = $1 AND branch_id = $2", [
-      Ecto.UUID.dump!(draft.article_id),
-      draft.branch_id
-    ])
+    DraftTags.draft_ids(%Article{thread: thread, id: draft.article_id}, draft)
   end
 
   defp tag_ids(%Article{thread: thread}, %ArticleDraft{article_id: article_id}) do
-    query_tag_ids("#{thread}_draft_tags", "article_id = $1", [Ecto.UUID.dump!(article_id)])
+    DraftTags.draft_ids(%Article{thread: thread, id: article_id}, %ArticleDraft{
+      article_id: article_id
+    })
   end
 
   defp tag_ids(%Article{thread: thread}, %ArticleRevision{id: revision_id}) do
-    query_tag_ids("#{thread}_revision_tags", "revision_id = $1", [Ecto.UUID.dump!(revision_id)])
-  end
-
-  defp query_tag_ids(table, where, params) do
-    %{rows: rows} = Repo.query!("SELECT tag_id FROM cms.#{table} WHERE #{where}", params)
-    rows |> Enum.map(fn [tag_id] -> tag_id end) |> Enum.sort()
+    DraftTags.revision_ids(thread, revision_id)
   end
 end

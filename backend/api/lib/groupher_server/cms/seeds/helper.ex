@@ -18,6 +18,9 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
+  alias CMS.Articles.Writer
+  alias CMS.Communities.Categories.Persist, as: CategoriesPersist
+  alias CMS.Communities.Tags.Maintenance
   alias CMS.Artiment.Threads
   alias CMS.Model.{Category, Community}
   alias CMS.Seeds.{SeedsConfig, Tags}
@@ -49,10 +52,12 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   def create_tags(%Community{} = community, %{slug: slug}, bot, type) do
     {:ok, thread} = Threads.to_atom(slug)
 
-    Enum.each(
-      Tags.get(community, thread, type),
-      &CMS.Communities.create_tag(community, thread, &1, bot)
-    )
+    Tags.get(community, thread, type)
+    |> Enum.with_index()
+    |> Enum.each(fn {attrs, index} ->
+      workflow_ref = "seed-helper-tags:#{community.id}:#{thread}:#{index}"
+      Maintenance.create(community, thread, attrs, bot, workflow_ref)
+    end)
   end
 
   # create tags end
@@ -68,7 +73,10 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
     Enum.each(communities, fn community ->
       {:ok, _} =
-        CMS.Communities.set_category(%Community{id: community.id}, %Category{id: the_category.id})
+        CategoriesPersist.set_category(
+          %Community{id: community.id},
+          %Category{id: the_category.id}
+        )
     end)
   end
 
@@ -76,7 +84,13 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
   def seed_categories_ifneed(bot) do
     with true <- empty_in_db?(Category) do
-      Enum.each(@categories, &CMS.Communities.create_category(&1, bot))
+      {:ok, author} = Writer.ensure_author_exists(bot)
+
+      Enum.each(@categories, fn attrs ->
+        attrs
+        |> Map.put(:author_id, author.id)
+        |> then(&CategoriesPersist.insert_category(&1, %Community{}, author.id))
+      end)
     end
 
     ORM.find_all(Category, %{page: 1, size: 20})

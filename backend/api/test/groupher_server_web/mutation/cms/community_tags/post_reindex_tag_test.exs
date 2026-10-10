@@ -23,21 +23,54 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
   describe "[mutation post tag]" do
     @query S.CommunityTag.m(:reindex_tags_in_group)
     test "auth user can reindex tags in given group", ~m(community community_tag_attrs user)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "group1"})
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "group1"},
+          user,
+          Ecto.UUID.generate()
+        )
+
       attrs = Map.merge(community_tag_attrs, %{group_id: group.id})
 
-      {:ok, community_tag1} = CMS.Communities.create_tag(community, :post, attrs, user)
+      {:ok, community_tag1} =
+        CMS.Communities.create_tag(community, :post, attrs, user, Ecto.UUID.generate())
 
       {:ok, community_tag2} =
-        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "2"), user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(attrs, "2"),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag3} =
-        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "3"), user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(attrs, "3"),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag4} =
-        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "4"), user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(attrs, "4"),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      passport_rules = %{community.title => %{"post.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{
@@ -79,20 +112,43 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
 
     @across_groups_query S.CommunityTag.m(:reindex_community_tags)
     test "auth user can reindex tags across groups", ~m(community community_tag_attrs user)a do
-      {:ok, resources} = CMS.Communities.create_tag_group(community, :post, %{title: "Resources"})
-      {:ok, general} = CMS.Communities.create_tag_group(community, :post, %{title: "General"})
+      {:ok, resources} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "Resources"},
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, general} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "General"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       resources_attrs = Map.merge(community_tag_attrs, %{group_id: resources.id})
       general_attrs = Map.merge(community_tag_attrs, %{group_id: general.id})
 
-      {:ok, community_tag1} = CMS.Communities.create_tag(community, :post, resources_attrs, user)
+      {:ok, community_tag1} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          resources_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag2} =
         CMS.Communities.create_tag(
           community,
           :post,
           unique_community_tag_attrs(resources_attrs, "2"),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, community_tag3} =
@@ -100,7 +156,8 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
           community,
           :post,
           unique_community_tag_attrs(general_attrs, "3"),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       {:ok, community_tag4} =
@@ -108,10 +165,17 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
           community,
           :post,
           unique_community_tag_attrs(general_attrs, "4"),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
-      passport_rules = %{community.title => %{"post.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{

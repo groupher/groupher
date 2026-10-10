@@ -26,7 +26,16 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.Model.{Article, Community, DocDraft, DocPublic, DocTreeNode, TrashedDocTreeNode}
+  alias CMS.Model.{
+    Article,
+    ArticleBinding,
+    Community,
+    DocDraft,
+    DocPublic,
+    DocTreeNode,
+    TrashedDocTreeNode
+  }
+
   alias Helper.Validator.Slug
 
   # Explicit slugs are user input and win over title-derived slugs; title is
@@ -97,8 +106,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
     draft_slugs =
       DocDraft
       |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
-      |> where([draft, article], article.community_id == ^community.id)
-      |> where([draft], draft.branch_id == ^branch.id)
+      |> join(:inner, [draft, _article], binding in ArticleBinding,
+        on: binding.article_id == draft.article_id
+      )
+      |> where([_draft, _article, binding], binding.community_id == ^community.id)
+      |> where([draft, _article, _binding], draft.branch_id == ^branch.id)
       |> select([draft], draft.slug)
       |> Repo.all()
       |> MapSet.new()
@@ -106,8 +118,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
     public_slugs =
       DocPublic
       |> join(:inner, [public], article in Article, on: article.id == public.article_id)
-      |> where([public, article], article.community_id == ^community.id)
-      |> where([public], public.branch_id == ^branch.id)
+      |> join(:inner, [public, _article], binding in ArticleBinding,
+        on: binding.article_id == public.article_id
+      )
+      |> where([_public, _article, binding], binding.community_id == ^community.id)
+      |> where([public, _article, _binding], public.branch_id == ^branch.id)
       |> select([public], public.slug)
       |> Repo.all()
       |> MapSet.new()
@@ -128,7 +143,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
         attrs
       ) do
     [:title]
-    |> Enum.reduce_while(:ok, fn field, :ok ->
+    |> Enum.reduce_while({:ok, :pass}, fn field, {:ok, _} ->
       if Map.has_key?(attrs, field) and Map.get(attrs, field) != Map.get(node, field) and
            pending_deleted_value_exists?(
              community,
@@ -141,7 +156,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
         {:halt,
          {:error, ErrorCat.custom("A trashed tree item with this title is pending restore.")}}
       else
-        {:cont, :ok}
+        {:cont, {:ok, :pass}}
       end
     end)
   end

@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ModelTest do
     refute :latest_collected_users in CommentReactionInfo.__schema__(:fields)
   end
 
-  test "reaction and emotion info require their target relation" do
+  test "reaction and emotion info require their target binding" do
     refute PostReactionInfo.changeset(%PostReactionInfo{}, %{}).valid?
     refute CommentEmotionInfo.changeset(%CommentEmotionInfo{}, %{emotion: "beer"}).valid?
 

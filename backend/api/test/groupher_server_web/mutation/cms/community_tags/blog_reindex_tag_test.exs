@@ -23,21 +23,54 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.BlogReindexTag do
   describe "[mutation blog tag]" do
     @query S.CommunityTag.m(:reindex_tags_in_group)
     test "auth user can reindex tags in given group", ~m(community community_tag_attrs user)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :blog, %{title: "group1"})
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :blog,
+          %{title: "group1"},
+          user,
+          Ecto.UUID.generate()
+        )
+
       attrs = Map.merge(community_tag_attrs, %{group_id: group.id})
 
-      {:ok, community_tag1} = CMS.Communities.create_tag(community, :blog, attrs, user)
+      {:ok, community_tag1} =
+        CMS.Communities.create_tag(community, :blog, attrs, user, Ecto.UUID.generate())
 
       {:ok, community_tag2} =
-        CMS.Communities.create_tag(community, :blog, unique_community_tag_attrs(attrs, "2"), user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          unique_community_tag_attrs(attrs, "2"),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag3} =
-        CMS.Communities.create_tag(community, :blog, unique_community_tag_attrs(attrs, "3"), user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          unique_community_tag_attrs(attrs, "3"),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag4} =
-        CMS.Communities.create_tag(community, :blog, unique_community_tag_attrs(attrs, "4"), user)
+        CMS.Communities.create_tag(
+          community,
+          :blog,
+          unique_community_tag_attrs(attrs, "4"),
+          user,
+          Ecto.UUID.generate()
+        )
 
-      passport_rules = %{community.title => %{"blog.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "blog.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{

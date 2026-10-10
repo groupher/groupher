@@ -68,8 +68,12 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
 
   defp audit_denial(result, _article, _actor, _command_id, _opts), do: result
 
-  defp present_confirmation({:ok, %TrashConfirmation{data: %{"trash_id" => trash_id}}}) do
-    TrashAgg.get(trash_id)
+  defp present_confirmation(
+         {:ok, %TrashConfirmation{data: %{"trash_id" => trash_id, "command_id" => command_id}}}
+       ) do
+    with {:ok, item} <- TrashAgg.get(trash_id) do
+      {:ok, Map.put(item, :command_id, command_id)}
+    end
   end
 
   defp present_confirmation(error), do: error

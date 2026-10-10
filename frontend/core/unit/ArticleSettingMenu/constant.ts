@@ -18,7 +18,6 @@ export enum SUB_MENU {
   LOCK = 'lock',
   MERGE = 'merge',
   ARCHIVE = 'archive',
-  MIRROR = 'mirror',
   DELETE = 'delete',
 }
 

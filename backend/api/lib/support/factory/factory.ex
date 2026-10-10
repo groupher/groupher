@@ -156,9 +156,13 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_attrs(thread, attrs), do: mock_meta(thread) |> Map.merge(attrs)
 
-  def article_community(%{community_id: community_id}) do
+  def article_binding(%{community_id: community_id}) do
     GroupherServer.Repo.get!(Community, community_id)
   end
+
+  def article_binding(%{community: %Community{} = community}), do: community
+
+  def article_binding(%{communities: [%Community{} = community | _]}), do: community
 
   # NOTICE: avoid Recursive problem
   # this line of code will cause SERIOUS Recursive problem
@@ -195,7 +199,9 @@ defmodule GroupherServer.Support.Factory do
     public_attrs =
       mock_attrs(factory_name, attrs) |> Map.drop([:author, :community, :communities])
 
-    CMS.Articles.create(community, factory_name, public_attrs, user)
+    CMS.Articles.create(community, factory_name, public_attrs, user,
+      command_id: Ecto.UUID.generate()
+    )
   end
 
   def db_insert(factory_name, attributes) do
@@ -206,7 +212,7 @@ defmodule GroupherServer.Support.Factory do
     try do
       factory_name
       |> mock(attributes)
-      |> maybe_put_default_article_community()
+      |> maybe_put_default_article_binding()
       |> maybe_put_default_doc_branch()
       |> maybe_put_default_tag_group()
       |> GroupherServer.Repo.insert()
@@ -235,7 +241,7 @@ defmodule GroupherServer.Support.Factory do
 
   defp maybe_put_default_tag_group(record), do: record
 
-  defp maybe_put_default_article_community(record), do: record
+  defp maybe_put_default_article_binding(record), do: record
 
   defp maybe_put_default_doc_branch(record), do: record
 
@@ -367,13 +373,13 @@ defmodule GroupherServer.Support.Factory do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
 
-    CMS.Communities.create(community_attrs, user)
+    CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
   end
 
   def mock_community(%User{} = user, attrs \\ %{}) do
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user}) |> Map.merge(attrs)
 
-    CMS.Communities.create(community_attrs, user)
+    CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
   end
 
   @doc """
@@ -383,31 +389,39 @@ defmodule GroupherServer.Support.Factory do
     {:ok, user} = db_insert(:user)
 
     community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
-    {:ok, article} = CMS.Articles.create(community, thread, with_body_bag(attrs), user)
+
+    {:ok, article} =
+      CMS.Articles.create(community, thread, with_body_bag(attrs), user,
+        command_id: Ecto.UUID.generate()
+      )
 
     {community, article, attrs, user}
   end
 
   def mock_article(thread, preload: []), do: mock_article(thread)
 
-  @doc "Creates one stable Article projection; requested public relations are already materialized."
+  @doc "Creates one stable Article projection; requested public bindings are already materialized."
   def mock_article(thread, preload: preload) do
     {community, article, attrs, user} = mock_article(thread)
 
     # Stable Article creation already returns the public projection with its
-    # canonical author, community, lifecycle, tags and community placements.
+    # canonical author, community, lifecycle, tags and ArticleBinding bindings.
     # The historical helper reloaded a thread-specific physical row here; that
     # would incorrectly cast the stable UUID to the removed integer identity.
-    _requested_relations = preload
+    _requested_bindings = preload
     {community, article, attrs, user}
   end
 
   def mock_article(thread, %Community{} = community, %User{} = user) do
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
-    {:ok, article} = CMS.Articles.create(community, thread, with_body_bag(attrs), user)
+
+    {:ok, article} =
+      CMS.Articles.create(community, thread, with_body_bag(attrs), user,
+        command_id: Ecto.UUID.generate()
+      )
 
     {community, article, attrs, user}
   end

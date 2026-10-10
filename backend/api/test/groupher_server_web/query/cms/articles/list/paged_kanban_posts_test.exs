@@ -19,26 +19,32 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     @query S.Article.q(:grouped_kanban_posts)
     test "should get grouped paged posts", ~m(guest_conn user community post_attrs)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
-          kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
-        })
+        CMS.Dashboard.update(
+          community,
+          :layout,
+          %{
+            kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      set_post_state(post, @article_cat.idea, @article_status.backlog, user)
+      set_post_state(post, @article_cat.idea, @article_status.backlog, user, community)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      set_post_state(post, @article_cat.idea, @article_status.todo, user)
+      set_post_state(post, @article_cat.idea, @article_status.todo, user, community)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      set_post_state(post, @article_cat.bug, @article_status.wip, user)
+      set_post_state(post, @article_cat.bug, @article_status.wip, user, community)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      set_post_state(post, @article_cat.idea, @article_status.done, user)
+      set_post_state(post, @article_cat.idea, @article_status.done, user, community)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      set_post_state(post, @article_cat.bug, @article_status.reject_dup, user)
+      set_post_state(post, @article_cat.bug, @article_status.reject_dup, user, community)
 
       variables = %{community: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -62,18 +68,24 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     test "disabled grouped kanban boards resolve to empty paginations",
          ~m(guest_conn user community post_attrs)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
-          kanban_boards: [:todo, :wip, :done]
-        })
+        CMS.Dashboard.update(
+          community,
+          :layout,
+          %{
+            kanban_boards: [:todo, :wip, :done]
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      set_post_state(post, @article_cat.idea, @article_status.backlog, user)
+      set_post_state(post, @article_cat.idea, @article_status.backlog, user, community)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      set_post_state(post, @article_cat.idea, @article_status.todo, user)
+      set_post_state(post, @article_cat.idea, @article_status.todo, user, community)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      set_post_state(post, @article_cat.bug, @article_status.reject_dup, user)
+      set_post_state(post, @article_cat.bug, @article_status.reject_dup, user, community)
 
       variables = %{community: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -91,13 +103,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     @query S.Article.q(:paged_kanban_posts)
     test "can get paged kanban posts", ~m(guest_conn user community post_attrs)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      set_post_state(post, @article_cat.idea, @article_status.todo, user)
+      set_post_state(post, @article_cat.idea, @article_status.todo, user, community)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      set_post_state(post, @article_cat.bug, @article_status.wip, user)
+      set_post_state(post, @article_cat.bug, @article_status.wip, user, community)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      set_post_state(post, @article_cat.idea, @article_status.done, user)
+      set_post_state(post, @article_cat.idea, @article_status.done, user, community)
 
       variables = %{
         community: community.slug,
@@ -111,8 +123,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     end
   end
 
-  defp set_post_state(post, cat, status, user) do
-    assert {:ok, _} = CMS.Articles.set_cat(post.id, cat, user)
-    assert {:ok, _} = CMS.Articles.set_status(post.id, status, user)
+  defp set_post_state(post, cat, status, user, community) do
+    assert {:ok, _} = CMS.Articles.set_cat(post.id, cat, user, community.id)
+    assert {:ok, _} = CMS.Articles.set_status(post.id, status, user, community.id)
   end
 end

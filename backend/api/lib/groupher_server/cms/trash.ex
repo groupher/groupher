@@ -76,6 +76,25 @@ defmodule GroupherServer.CMS.Trash do
     end
   end
 
+  @doc "Resolves and permanently deletes one Trash action inside its public scope."
+  @spec permanently_delete_action_in_scope(
+          Ecto.UUID.t(),
+          pos_integer(),
+          atom(),
+          User.t(),
+          keyword()
+        ) :: T.domain_res(map())
+  def permanently_delete_action_in_scope(ref, community_id, thread, %User{} = actor, opts \\ []) do
+    with {:ok, action} <- get_action(ref),
+         true <- action.community_id == community_id,
+         {:ok, ^thread} <- action_thread(action),
+         {:ok, result} <- permanently_delete_action(action, actor, opts) do
+      {:ok, maybe_put_command_id(result, Keyword.get(opts, :command_id))}
+    else
+      _ -> {:error, CMS.Articles.ErrorCat.not_exist("TrashAction")}
+    end
+  end
+
   @doc "Permanently deletes due actions in bounded, independently retriable units."
   @spec purge_due(keyword()) :: T.domain_res(map())
   def purge_due(opts \\ []) do
@@ -111,4 +130,10 @@ defmodule GroupherServer.CMS.Trash do
         {:ok, %{done: true}}
     end
   end
+
+  defp maybe_put_command_id(result, command_id) when is_map(result) and is_binary(command_id) do
+    Map.put(result, :command_id, command_id)
+  end
+
+  defp maybe_put_command_id(result, _command_id), do: result
 end

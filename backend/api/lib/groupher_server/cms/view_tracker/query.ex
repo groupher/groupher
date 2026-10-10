@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.ViewTracker.Query do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
+  alias CMS.FrontDesk
   alias CMS.Model.ArticleStats
   alias CMS.ViewTracker.{ErrorCat, Model.ViewerState}
 
@@ -101,6 +102,34 @@ defmodule GroupherServer.CMS.ViewTracker.Query do
         nil ->
           base
       end
+    end
+  end
+
+  @doc """
+  Resolves public Article paths and returns ViewTracker-owned private state in
+  the same order as the visible paths.
+
+  Invalid or non-visible paths are omitted, matching the Article path batch
+  reader. The returned read model contains no Interaction-owned fields.
+  """
+  @spec viewer_states_for_paths([map()], User.t(), keyword()) ::
+          {:ok, [map()]} | {:error, term()}
+  def viewer_states_for_paths(paths, %User{} = viewer, opts \\ []) when is_list(paths) do
+    with {:ok, resolved} <- FrontDesk.articles(paths),
+         states when is_map(states) <-
+           viewer_states(Enum.map(resolved, & &1.article), viewer, opts) do
+      {:ok,
+       Enum.map(resolved, fn %{path: path, article: article, binding: binding} ->
+         {:ok, %{artiment: type}} = Matcher.match_interaction(article)
+         state = Map.fetch!(states, {type, article.id})
+
+         %{
+           community: path.community,
+           thread: path.thread,
+           inner_id: binding.inner_id,
+           viewer_has_viewed: state.viewer_has_viewed
+         }
+       end)}
     end
   end
 

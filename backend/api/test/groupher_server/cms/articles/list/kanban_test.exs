@@ -30,7 +30,10 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
 
     test "can set cat of a post", ~m(user community post_attrs)a do
       {:ok, kanban} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, post} = CMS.Articles.set_cat(kanban.article_id, @article_cat.idea, user)
+
+      {:ok, post} =
+        CMS.Articles.set_cat(kanban.article_id, @article_cat.idea, user, community.id)
+
       state = Repo.get!(CMS.Model.PostState, post.id)
 
       assert state.cat == @article_cat.idea
@@ -38,10 +41,91 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
 
     test "can set status of a post", ~m(user community post_attrs)a do
       {:ok, kanban} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, post} = CMS.Articles.set_status(kanban.article_id, @article_status.todo, user)
-      state = Repo.get!(CMS.Model.PostState, post.id)
+
+      {:ok, post} =
+        CMS.Articles.set_status(kanban.article_id, @article_status.todo, user, community.id)
+
+      binding =
+        Repo.get_by!(CMS.Model.ArticleBinding,
+          article_id: post.id,
+          community_id: community.id
+        )
+
+      state = Repo.get!(CMS.Model.KanbanState, binding.id)
 
       assert state.status == @article_status.todo
+    end
+
+    test "kanban status is scoped to each ArticleBinding placement",
+         ~m(user community post_attrs)a do
+      {:ok, kanban} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, mirror_community} = mock_community(user)
+
+      assert {:ok, _binding} =
+               CMS.Articles.mirror(
+                 mirror_community,
+                 kanban.article_id,
+                 [],
+                 user,
+                 community,
+                 Ecto.UUID.generate()
+               )
+
+      {:ok, article} = CMS.FrontDesk.article(kanban.article_id, mode: :internal)
+
+      assert {:ok, _} =
+               CMS.Kanban.add_post(community, article, @article_status.todo, user)
+
+      assert {:ok, _} =
+               CMS.Kanban.add_post(
+                 mirror_community,
+                 article,
+                 @article_status.todo,
+                 user
+               )
+
+      assert {:ok, _} =
+               CMS.Kanban.move_post(
+                 mirror_community,
+                 article,
+                 @article_status.done,
+                 user
+               )
+
+      source_binding =
+        Repo.get_by!(CMS.Model.ArticleBinding,
+          article_id: kanban.article_id,
+          community_id: community.id
+        )
+
+      mirror_binding =
+        Repo.get_by!(CMS.Model.ArticleBinding,
+          article_id: kanban.article_id,
+          community_id: mirror_community.id
+        )
+
+      assert Repo.get!(CMS.Model.KanbanState, source_binding.id).status == @article_status.todo
+      assert Repo.get!(CMS.Model.KanbanState, mirror_binding.id).status == @article_status.done
+    end
+
+    test "can remove a post from one Community-local Kanban",
+         ~m(user community post_attrs)a do
+      {:ok, kanban} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, article} = CMS.FrontDesk.article(kanban.article_id, mode: :internal)
+
+      assert {:ok, _} = CMS.Kanban.add_post(community, article, @article_status.todo, user)
+      assert {:ok, _} = CMS.Kanban.remove_post(community, article, user)
+
+      binding =
+        Repo.get_by!(CMS.Model.ArticleBinding,
+          article_id: kanban.article_id,
+          community_id: community.id
+        )
+
+      refute Repo.get(CMS.Model.KanbanState, binding.id)
+
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :not_in_kanban}} =
+               CMS.Kanban.move_post(community, article, @article_status.done, user)
     end
 
     test "can create kanban post with valid attrs", ~m(user2 community post_attrs)a do
@@ -167,9 +251,15 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
 
     test "can get grouped kanban posts", ~m(user community post_attrs)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
-          kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
-        })
+        CMS.Dashboard.update(
+          community,
+          :layout,
+          %{
+            kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       kanban_attrs =
         post_attrs |> Map.merge(%{cat: @article_cat.idea, status: @article_status.backlog})
@@ -235,9 +325,15 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
     test "disabled grouped kanban boards return empty paginations",
          ~m(user community post_attrs)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
-          kanban_boards: [:todo, :wip, :done]
-        })
+        CMS.Dashboard.update(
+          community,
+          :layout,
+          %{
+            kanban_boards: [:todo, :wip, :done]
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       backlog_attrs =
         post_attrs |> Map.merge(%{cat: @article_cat.idea, status: @article_status.backlog})

@@ -12,11 +12,12 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   canonical public result; it never guesses an old Draft/Public physical row.
   """
 
-  alias GroupherServer.{Accounts, Activity, CMS}
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.{Articles, Communities, Command, Docs}
+  alias CMS.Articles.Tags.Assignment
   alias CMS.FrontDesk
-  alias CMS.Model.{Article, Community}
+  alias CMS.Model.{Article, ArticleBinding, Community}
   alias CMS.Articles.RevisionResult
   alias CMS.Articles.Commands.RevisionConfirmation, as: Confirmation
   alias Helper.T
@@ -29,7 +30,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
 
     case option(opts, :command_id) do
       nil ->
-        with {:ok, public} <- create_and_publish(community, thread, attrs, user),
+        with {:ok, public} <- create_and_publish(community, thread, attrs, user, nil),
              {:ok, confirmation} <- confirmation_from_public(public, community, nil) do
           RevisionResult.build(confirmation, community)
         end
@@ -59,13 +60,15 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
          community,
          user
        ) do
-    with {:ok, public} <- create_and_publish(community, thread, attrs, user) do
+    with {:ok, public} <- create_and_publish(community, thread, attrs, user, command_id) do
       confirmation_from_public(public, community, command_id)
     end
   end
 
   defp confirmation_from_public(public, community, command_id) do
     with {:ok, %Article{} = article} <- FrontDesk.article(public.article_id, mode: :internal),
+         %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) <-
+           Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id),
          published_at when is_struct(published_at, DateTime) <- Map.get(public, :inserted_at),
          publication_version when is_integer(publication_version) <-
            Map.get(public, :publication_version, Map.get(public, :version, 1)) do
@@ -75,7 +78,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
          revision_id: public.revision_id,
          community_id: community.id,
          author_id: article.author_id,
-         inner_id: article.inner_id,
+         inner_id: inner_id,
          thread: article.thread,
          publication_version: publication_version,
          published_at: published_at,
@@ -86,19 +89,23 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     end
   end
 
-  defp create_and_publish(community, :doc, attrs, user) do
+  defp create_and_publish(community, :doc, attrs, user, command_id) do
     with {:ok, branch} <- CMS.Docs.Branch.resolve(community, []),
          {:ok, %{article: article, draft: draft}} <-
            Articles.create_stable_draft(community, :doc, attrs, user, branch_id: branch.id),
-         :ok <- sync_community_tags(community, article, attrs),
+         {:ok, _} <-
+           Repo.transact(fn -> sync_community_tags(community, article, attrs, command_id) end),
          {:ok, _published} <-
            Docs.publish_branch(article.id, branch.id, user,
              expected_draft_version: draft.version,
-             expected_lifecycle_version: 1
+             expected_lifecycle_version: 1,
+             community: community,
+             causation_id: command_id
            ),
          {:ok, %Article{} = published} <- FrontDesk.article(article.id, mode: :internal),
          {:ok, public} <- public_projection(published, community),
-         {:ok, _activity} <- Activity.log(public, :created, actor: user),
+         {:ok, _activity} <-
+           Activity.log(Map.put(public, :community_id, community.id), :created, actor: user),
          {:ok, _community} <- Communities.update_count_field(community, :doc),
          {:ok, _user} <- Accounts.Publish.update_states(user, :doc) do
       {:ok, _throttle} = CMS.Gate.RateLimit.Publish.record(user)
@@ -106,40 +113,60 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     end
   end
 
-  defp create_and_publish(community, thread, attrs, user) do
+  defp create_and_publish(community, thread, attrs, user, command_id) do
     with {:ok, %{article: article, draft: draft}} <-
            Articles.create_stable_draft(community, thread, attrs, user),
          publish_opts =
-           [expected_draft_version: draft.version, expected_lifecycle_version: 1] ++
+           [
+             expected_draft_version: draft.version,
+             expected_lifecycle_version: 1,
+             community: community,
+             outbox_command_id: command_id,
+             outbox_workflow_ref: "article-create:#{community.id}:#{article.id}"
+           ] ++
              community_tag_opts(attrs),
          {:ok, %{article: published}} <-
            Articles.publish(article.id, user, publish_opts),
          {:ok, public} <- public_projection(published, community),
-         {:ok, _activity} <- Activity.log(public, :created, actor: user) do
+         {:ok, _activity} <-
+           Activity.log(Map.put(public, :community_id, community.id), :created, actor: user) do
       {:ok, public}
     end
   end
 
-  defp public_projection(%Article{inner_id: inner_id, thread: thread}, community)
-       when is_integer(inner_id) do
-    FrontDesk.article(%{
-      community: community.slug,
-      thread: thread,
-      inner_id: inner_id
-    })
+  defp public_projection(%Article{thread: thread, id: article_id}, community) do
+    case Repo.get_by(ArticleBinding, article_id: article_id, community_id: community.id) do
+      %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) ->
+        FrontDesk.article(%{
+          community: community.slug,
+          thread: thread,
+          inner_id: inner_id
+        })
+
+      _ ->
+        {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+    end
   end
 
-  defp public_projection(_article, _community) do
-    {:error, CMS.Articles.ErrorCat.projection_not_updated()}
-  end
-
-  defp sync_community_tags(community, article, attrs) do
+  defp sync_community_tags(community, article, attrs, command_id) do
     tag_ids = Map.get(attrs, :community_tags) || Map.get(attrs, "community_tags") || []
 
-    case Communities.overwrite_tags(community, article.thread, article, %{
-           community_tags: tag_ids
-         }) do
-      {:ok, _article} -> :ok
+    identity =
+      case Ecto.UUID.cast(command_id) do
+        {:ok, command_id} -> {:command, command_id}
+        :error -> {:workflow, "article-create:#{community.id}:#{article.id}"}
+      end
+
+    case Assignment.overwrite(
+           community,
+           article.thread,
+           article,
+           %{
+             community_tags: tag_ids
+           },
+           identity: identity
+         ) do
+      {:ok, _article} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end

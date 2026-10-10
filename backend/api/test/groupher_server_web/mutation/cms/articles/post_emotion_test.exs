@@ -25,7 +25,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
   describe "[post emotion]" do
     test "login user can emotion to a post", ~m(community post user_conn)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         emotion: "BEER"
       }
 
@@ -47,10 +51,14 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     end
 
     test "login user can undo emotion to a post", ~m(community post user owner_conn)a do
-      {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(post, :beer, user, Ecto.UUID.generate())
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         emotion: "BEER"
       }
 
@@ -67,7 +75,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
     test "duplicate same emotion counts as 1", ~m(community post user_conn)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         emotion: "BEER"
       }
 
@@ -83,7 +95,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     test "different emotions from different users both get counted",
          ~m(community post user_conn user2_conn)a do
       variables_beer = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         emotion: "BEER"
       }
 
@@ -91,7 +107,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       assert emotion_entry(article["articleStats"]["emotionCounts"], :beer)["count"] == 1
 
       variables_heart = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         emotion: "HEART"
       }
 
@@ -103,7 +123,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       assert beer.count == 1
       assert heart.count == 1
 
-      {:ok, current_post} = read_article(community, :post, post.inner_id)
+      {:ok, current_post} = read_article(community, :post, article_inner_id(post, community))
       counts = CMS.Interactions.counts([current_post])
       emotion_counts = counts[{:post, current_post.id}].emotion_counts
       assert %{type: :beer, count: 1} in emotion_counts
@@ -111,8 +131,8 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     end
 
     test "same user different emotions create one record per emotion", ~m(post user)a do
-      {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
-      {:ok, _} = CMS.Interactions.emotion(post, :heart, user)
+      {:ok, _} = CMS.Interactions.emotion(post, :beer, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(post, :heart, user, Ecto.UUID.generate())
 
       {:ok, records} = ORM.find_all(ArticleUserEmotion, %{page: 1, size: 10})
       assert records.total_count == 2
@@ -126,7 +146,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
     test "generic Article emotion rejects the dedicated UPVOTE reaction", ~m(post user)a do
       assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
-               CMS.Interactions.emotion(post, :upvote, user)
+               CMS.Interactions.emotion(post, :upvote, user, Ecto.UUID.generate())
 
       refute Repo.get_by(ArticleUserEmotion,
                article_id: post.id,
@@ -138,7 +158,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     test "generic Article emotion GraphQL enum excludes UPVOTE",
          ~m(community post user_conn)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         emotion: "UPVOTE"
       }
 
@@ -152,12 +176,22 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     test "article emotion is rejected when disabled by dashboard thread settings",
          ~m(community post user_conn)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :thread_emotions, %{
-          post: [:heart]
-        })
+        CMS.Dashboard.update(
+          community,
+          :thread_emotions,
+          %{
+            post: [:heart]
+          },
+          :operations,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
         emotion: "BEER"
       }
 

@@ -141,7 +141,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
          {:ok, info} <- Matcher.match_interaction(article) do
       with {:ok, projection} <-
              sync_fixed(info, article.id, reaction, user, operation),
-           :ok <- maybe_sync_article_stats(article, reaction) do
+           {:ok, _} <- maybe_sync_article_stats(article, reaction) do
         {:ok, projection}
       end
     end
@@ -158,14 +158,14 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
          {:ok, info} <- Matcher.match_interaction(article) do
       with {:ok, projection} <-
              sync_emotion(info, article.id, emotion, user, operation),
-           :ok <- CMS.ArticleStats.apply_interaction_counts(article),
-           :ok <- CMS.ArticleStats.apply_emotion_count(article, emotion) do
+           {:ok, _} <- CMS.ArticleStats.apply_interaction_counts(article),
+           {:ok, _} <- CMS.ArticleStats.apply_emotion_count(article, emotion) do
         {:ok, projection}
       end
     end
   end
 
-  defp maybe_sync_article_stats(_article, :report), do: :ok
+  defp maybe_sync_article_stats(_article, :report), do: {:ok, :pass}
 
   defp maybe_sync_article_stats(article, _reaction) do
     CMS.ArticleStats.apply_interaction_counts(article)
@@ -188,7 +188,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
         field -> next_latest_users(Map.get(reaction_info, field, []), user, operation)
       end
 
-    with :ok <-
+    with {:ok, _} <-
            update_projection!(
              info.reaction_info_model,
              reaction_info.id,
@@ -208,7 +208,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
     emotion_info = lock_emotion_info(info, target_id, emotion)
     latest_users = next_latest_users(emotion_info.latest_users, user, operation)
 
-    with :ok <-
+    with {:ok, _} <-
            update_projection!(
              info.emotion_info_model,
              emotion_info.id,
@@ -220,7 +220,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
              latest_users,
              false
            ),
-         :ok <- bump_interaction_revision(info, target_id) do
+         {:ok, _} <- bump_interaction_revision(info, target_id) do
       {:ok, emotion_info}
     end
   end
@@ -236,7 +236,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
            inc: [interaction_revision: 1],
            set: [updated_at: DateTime.utc_now(:second)]
          ) do
-      {1, _} -> :ok
+      {1, _} -> {:ok, :pass}
       {0, _} -> {:error, ErrorCat.projection_not_updated()}
     end
   end
@@ -336,7 +336,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
     updates = if increment_revision?, do: maybe_increment_revision(updates, schema), else: updates
 
     case from(info in schema, where: info.id == ^info_id) |> Repo.update_all(updates) do
-      {1, _} -> :ok
+      {1, _} -> {:ok, :pass}
       {0, _} -> {:error, ErrorCat.projection_not_updated()}
     end
   end

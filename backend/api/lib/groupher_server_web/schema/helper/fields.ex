@@ -49,7 +49,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:cover_url_dark, :string)
 
       field(:cover_edit_info, :cover_edit_info,
-        resolve: &GroupherServerWeb.Resolvers.CMS.cover_edit_info/3
+        resolve: &GroupherServerWeb.Resolvers.CMS.Articles.cover_edit_info/3
       )
 
       field(:community_tags, list_of(:community_tag),
@@ -97,7 +97,10 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       )
 
       field(:meta, :article_meta)
-      field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+
+      field(:command_id, :id,
+        resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3
+      )
 
       field(:lifecycle, :article_lifecycle,
         resolve: fn source, args, resolution ->
@@ -242,7 +245,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   defmacro comment_general_fields do
     quote do
-      field(:inner_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.comment_inner_id/3)
+      field(:inner_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.Comments.comment_inner_id/3)
       field(:body, :string)
       field(:body_html, :string)
       field(:author, :user, resolve: dataloader(CMS, :author))
@@ -250,12 +253,16 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:floor, :integer)
       field(:upvotes_count, :integer)
       field(:comment_interaction_revision, :integer)
-      field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+
+      field(:command_id, :id,
+        resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3
+      )
+
       field(:reaction_outcome, :reaction_outcome)
       field(:is_article_author, :boolean)
 
       field(:emotions, list_of(:emotion_stat),
-        resolve: &GroupherServerWeb.Resolvers.CMS.emotions/3
+        resolve: &GroupherServerWeb.Resolvers.CMS.Interactions.emotions/3
       )
 
       field(:meta, :comment_meta)
@@ -367,15 +374,23 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   defmacro dsb_args(section \\ :layout, opts \\ []) do
     except = Keyword.get(opts, :except, [])
 
-    Dashboard.macro_schema(section)
-    |> Enum.reject(fn [key, _type, _default_v] -> key in except end)
-    |> Enum.map(fn item ->
+    fields =
+      Dashboard.macro_schema(section)
+      |> Enum.reject(fn [key, _type, _default_v] -> key in except end)
+      |> Enum.map(fn item ->
       [key, type, _default_v] = item
 
       quote do
         arg(unquote(key), unquote(to_absinthe_type(type, key)))
       end
-    end)
+      end)
+
+    [
+      quote do
+        arg(:command_id, non_null(:id))
+      end
+      | fields
+    ]
   end
 
   defmacro dsb_fields(section \\ :layout) do

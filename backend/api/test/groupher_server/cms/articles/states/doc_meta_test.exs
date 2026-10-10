@@ -40,11 +40,13 @@ defmodule GroupherServer.Test.CMS.DocMeta do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
 
-      {:ok, _} = CMS.Articles.lock_comments(doc.id, user, branch_id: branch.id)
+      {:ok, _} =
+        CMS.Articles.lock_comments(doc.id, user, branch_id: branch.id, community: community)
 
       assert Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id).comments_locked
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(doc.id, user, branch_id: branch.id)
+      {:ok, _} =
+        CMS.Articles.undo_lock_comments(doc.id, user, branch_id: branch.id, community: community)
 
       refute Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id).comments_locked
     end

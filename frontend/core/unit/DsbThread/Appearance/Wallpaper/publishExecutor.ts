@@ -72,7 +72,7 @@ const getExportProfile = (variant: TExportedImageVariant, theme: 'light' | 'dark
 const prepareWallpaperUpload = async (
   exported: TExportedImageVariant[],
   plan: Extract<TWallpaperPublishPlan, { type: 'generated' }>,
-  idempotencyKey: string,
+  commandId: string,
   deps: TWallpaperPublishExecutorDeps,
 ): Promise<TPreparedBatch> => {
   const batchResult = await deps.graphqlRequest<
@@ -82,7 +82,7 @@ const prepareWallpaperUpload = async (
     community: plan.community,
     input: {
       baseVersion: plan.baseVersion,
-      idempotencyKey,
+      commandId,
       images: prepareImages(exported, plan),
       settings: plan.settings,
       theme: toGraphqlTheme(plan.theme),
@@ -116,11 +116,11 @@ const prepareImages = (
 
 const createPublishInput = (
   plan: TWallpaperPublishPlan,
-  idempotencyKey: string,
+  commandId: string,
   batchRef: string | null,
 ) => ({
   baseVersion: plan.baseVersion,
-  idempotencyKey,
+  commandId,
   settings: plan.settings,
   theme: toGraphqlTheme(plan.theme),
   batchRef,
@@ -128,7 +128,7 @@ const createPublishInput = (
 
 const publish = async (
   plan: TWallpaperPublishPlan,
-  idempotencyKey: string,
+  commandId: string,
   batchRef: string | null,
   deps: TWallpaperPublishExecutorDeps,
 ): Promise<ResultOf<typeof S.publishWallpaper>['publishWallpaper']> => {
@@ -137,7 +137,7 @@ const publish = async (
     VariablesOf<typeof S.publishWallpaper>
   >(S.publishWallpaper, {
     community: plan.community,
-    input: createPublishInput(plan, idempotencyKey, batchRef),
+    input: createPublishInput(plan, commandId, batchRef),
   })
   return result.publishWallpaper
 }
@@ -168,12 +168,12 @@ const uploadImages = async (
 /** Executes the existing prepare -> batch -> upload -> publish Wallpaper protocol. */
 export const executeWallpaperPublish = async (
   plan: TWallpaperPublishPlan,
-  idempotencyKey: string,
+  commandId: string,
   overrides?: Partial<TWallpaperPublishExecutorDeps>,
 ): Promise<ResultOf<typeof S.publishWallpaper>['publishWallpaper']> => {
   const deps = { ...defaultDeps, ...overrides }
 
-  if (plan.type === 'none') return publish(plan, idempotencyKey, null, deps)
+  if (plan.type === 'none') return publish(plan, commandId, null, deps)
 
   if (!deps.hasWebGPU()) throw new Error('WebGPU is required to publish this Wallpaper')
 
@@ -181,12 +181,12 @@ export const executeWallpaperPublish = async (
     targets: plan.targets,
     themes: [{ renderSpec: plan.renderSpec, theme: plan.theme }],
   })
-  const batch = await prepareWallpaperUpload(exported, plan, idempotencyKey, deps)
+  const batch = await prepareWallpaperUpload(exported, plan, commandId, deps)
 
   try {
     await deps.createBatch(batch.batchCapability)
     await uploadImages(exported, batch, plan, deps)
-    return await publish(plan, idempotencyKey, batch.batchRef, deps)
+    return await publish(plan, commandId, batch.batchRef, deps)
   } catch (error) {
     await deps
       .cancelBatch(batch.batchRef, batch.batchCapability)

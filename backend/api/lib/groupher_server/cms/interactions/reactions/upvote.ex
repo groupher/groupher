@@ -34,8 +34,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       Reactions.Upvote.add(canonical_input, actor)
 
   """
-  @spec add(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def add(artiment, %User{} = actor, command_id \\ nil) do
+  @spec add(struct(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def add(artiment, %User{} = actor, command_id) do
     mutate(artiment, actor, :add, command_id)
   end
 
@@ -47,33 +47,23 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       Reactions.Upvote.remove(canonical_input, actor)
 
   """
-  @spec remove(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def remove(artiment, %User{} = actor, command_id \\ nil) do
+  @spec remove(struct(), User.t(), Ecto.UUID.t()) :: T.domain_res(struct())
+  def remove(artiment, %User{} = actor, command_id) do
     mutate(artiment, actor, :remove, command_id)
   end
 
   defp mutate(input, actor, operation, command_id) do
-    with {:ok, info} <- Matcher.match_interaction(input) do
-      context = %{
-        actor: actor,
-        target: input,
-        params: %{operation: operation},
-        command_id: command_id || Ecto.UUID.generate()
-      }
-
+    with {:ok, command_id} <- require_command_id(command_id),
+         {:ok, info} <- Matcher.match_interaction(input) do
       result =
-        if is_nil(command_id) do
-          execute_without_receipt(&upvote_action(&1, info), context)
-        else
-          %Command{
-            actor: actor,
-            command_id: command_id,
-            operation: upvote_command(operation),
-            target: input,
-            params: %{operation: operation}
-          }
-          |> Command.execute(action: &upvote_action(&1, info), confirmation: Confirmation)
-        end
+        %Command{
+          actor: actor,
+          command_id: command_id,
+          operation: upvote_command(operation),
+          target: input,
+          params: %{operation: operation}
+        }
+        |> Command.execute(action: &upvote_action(&1, info), confirmation: Confirmation)
 
       present_reaction(result, input, command_id)
     end
@@ -90,10 +80,10 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
        ) do
     with {:ok, canonical} <- Gate.access_check(actor, :upvote, input),
          {:ok, change} <- change_fact(canonical, info, actor, operation),
-         :ok <- sync_state(canonical, actor, operation, change),
-         :ok <- record_metric(canonical, operation, change, command_id),
-         :ok <- maybe_achieve(canonical, actor, operation, change),
-         :ok <- enqueue_effect(canonical, operation, actor, command_id, change) do
+         {:ok, _} <- sync_state(canonical, actor, operation, change),
+         {:ok, _} <- record_metric(canonical, operation, change, command_id),
+         {:ok, _} <- maybe_achieve(canonical, actor, operation, change),
+         {:ok, _} <- enqueue_effect(canonical, operation, actor, command_id, change) do
       {:ok,
        %Confirmation{
          data: %{
@@ -106,23 +96,13 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
     end
   end
 
-  defp execute_without_receipt(action, context) do
-    Repo.transaction(fn ->
-      case action.(context) do
-        {:ok, %Confirmation{data: data}} -> {:ok, data}
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
-    |> case do
-      {:ok, {:ok, data}} -> {:ok, data}
-      other -> other
-    end
-  end
+  defp require_command_id(command_id) when is_binary(command_id), do: {:ok, command_id}
+  defp require_command_id(_command_id), do: {:error, CMS.ErrorCat.command_id_required()}
 
   defp upvote_command(:add), do: :upvote_add
   defp upvote_command(:remove), do: :upvote_remove
 
-  defp sync_state(_canonical, _actor, _operation, :unchanged), do: :ok
+  defp sync_state(_canonical, _actor, _operation, :unchanged), do: {:ok, :pass}
 
   defp sync_state(canonical, actor, operation, :changed) do
     result =
@@ -131,35 +111,35 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
         else: ReadState.remove_upvote(canonical, actor)
 
     case result do
-      {:ok, _projection} -> :ok
+      {:ok, _projection} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: :ok
-  defp record_metric(_article, _operation, :unchanged, _operation_id), do: :ok
+  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: {:ok, :pass}
+  defp record_metric(_article, _operation, :unchanged, _operation_id), do: {:ok, :pass}
 
   defp record_metric(article, operation, :changed, operation_id) do
     metric = if operation == :add, do: :upvote_added, else: :upvote_removed
 
     case MetricEvent.append_article_action(article, operation_id, metric) do
-      :ok -> :ok
+      {:ok, _} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp maybe_achieve(%Comment{}, _actor, _operation, _change), do: :ok
-  defp maybe_achieve(_article, _actor, _operation, :unchanged), do: :ok
-  defp maybe_achieve(_article, _actor, :remove, :changed), do: :ok
+  defp maybe_achieve(%Comment{}, _actor, _operation, _change), do: {:ok, :pass}
+  defp maybe_achieve(_article, _actor, _operation, :unchanged), do: {:ok, :pass}
+  defp maybe_achieve(_article, _actor, :remove, :changed), do: {:ok, :pass}
 
   defp maybe_achieve(article, _actor, :add, :changed) do
     case Accounts.Achievements.achieve(author_user(article), :inc, :upvote) do
-      {:ok, _achievement} -> :ok
+      {:ok, _achievement} -> {:ok, :pass}
       {:error, _reason} = error -> error
     end
   end
 
-  defp enqueue_effect(_canonical, _operation, _actor, _command_id, :unchanged), do: :ok
+  defp enqueue_effect(_canonical, _operation, _actor, _command_id, :unchanged), do: {:ok, :pass}
 
   defp enqueue_effect(canonical, operation, actor, command_id, :changed) do
     CMS.Outbox.send(%{
@@ -171,7 +151,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       data: %{actor_id: actor.id, operation: operation}
     })
     |> case do
-      {:ok, _event} -> :ok
+      {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end

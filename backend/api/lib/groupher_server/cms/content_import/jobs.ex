@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
                                           v
                                    atomic Writer apply
 
-  `preview_ref` is the idempotency boundary: a retry may return the existing Job
+  `preview_ref` is the preview resource identity: a retry may return the existing Job
   only when the complete confirmed intent still matches.
 
   See `docs/content-import/content-import-architecture.md` and
@@ -39,7 +39,8 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
     target_revision = Map.fetch!(input, :target_revision)
     documents = Map.fetch!(input, :documents)
 
-    with :ok <- Validator.validate_intent(community, source_info, target_tree, target_revision),
+    with {:ok, _} <-
+           Validator.validate_intent(community, source_info, target_tree, target_revision),
          {:ok, item_attrs} <- build_item_attrs(documents, target_tree, source_info),
          {:ok, connection} <- get_or_create_connection(community, source_info) do
       Repo.transaction(fn ->
@@ -83,14 +84,14 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
 
   defp resume_job(job, input, source_info, item_attrs) do
     case assert_same_job(job, input, source_info, item_attrs) do
-      :ok -> project(job)
+      {:ok, _} -> project(job)
       {:error, reason} -> Repo.rollback(reason)
     end
   end
 
   defp create_new_job(attrs, item_attrs) do
     with {:ok, job} <- %Job{} |> Job.changeset(attrs) |> Repo.insert(),
-         :ok <- insert_items(job, item_attrs) do
+         {:ok, _} <- insert_items(job, item_attrs) do
       project(job)
     else
       {:error, reason} -> Repo.rollback(reason)
@@ -292,9 +293,9 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   end
 
   defp insert_items(job, attrs) do
-    Enum.reduce_while(attrs, :ok, fn attrs, :ok ->
+    Enum.reduce_while(attrs, {:ok, :pass}, fn attrs, {:ok, _} ->
       case %Item{} |> Item.changeset(Map.put(attrs, :job_id, job.id)) |> Repo.insert() do
-        {:ok, _item} -> {:cont, :ok}
+        {:ok, _item} -> {:cont, {:ok, :pass}}
         {:error, changeset} -> {:halt, {:error, changeset}}
       end
     end)
@@ -366,7 +367,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
         persisted_items == requested_items
 
     if same? do
-      :ok
+      {:ok, :pass}
     else
       {:error, ErrorCat.custom("previewRef is already bound to another intent")}
     end

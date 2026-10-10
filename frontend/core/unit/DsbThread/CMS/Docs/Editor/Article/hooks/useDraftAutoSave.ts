@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import { saveDocDraft } from '~/lib/artimentPublisher'
+import { saveDocDraft, type TSaveDocDraftInput } from '~/lib/artimentPublisher'
 import { slugify } from '~/lib/slug'
-import { createCommandId } from '~/query/mutation/optimistic/execute'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 
@@ -73,15 +73,17 @@ export default function useDraftAutoSave(
         title: nextTitle,
       })
       const input = composeDraftSaveInput(requestDraft, nextSlug)
-      const savedDraft = await saveDocDraft<TDocDraftDTO>({
-        value: input.value,
-        community,
-        id: input.id,
-        slug: input.slug,
-        subtitle: input.subtitle,
-        title: input.title,
-        expectedVersion: startedDraft.version,
-        commandId: createCommandId(),
+      const savedDraft = await executeCommand({
+        request: (variables: TSaveDocDraftInput) => saveDocDraft<TDocDraftDTO>(variables),
+        variables: {
+          value: input.value,
+          community,
+          id: input.id,
+          slug: input.slug,
+          subtitle: input.subtitle,
+          title: input.title,
+          expectedVersion: startedDraft.version,
+        },
       })
       failedAutoSaveDraftRef.current = null
       const publishState = composeDraftPublishState(activePage.publishState)

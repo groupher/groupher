@@ -26,7 +26,12 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
     test "asset upload passport can page article refs for one asset",
          ~m(asset_conn community post user)a do
       {:ok, asset} =
-        CMS.Assets.register_to_community(community, image_asset_attrs("query-refs.png", 70), user)
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("query-refs.png", 70),
+          user,
+          Ecto.UUID.generate()
+        )
 
       asset_refs =
         Enum.map(1..25, fn position ->
@@ -78,7 +83,8 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
             storage: "r2",
             storage_key: "communities/groupher/assets/2026_07/29_origin_query/original"
           }),
-          user
+          user,
+          Ecto.UUID.generate()
         )
 
       result =

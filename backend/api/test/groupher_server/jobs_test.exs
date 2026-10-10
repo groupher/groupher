@@ -6,10 +6,10 @@ defmodule GroupherServer.Test.Jobs do
   alias GroupherServer.Jobs
 
   describe "enqueue_best_effort/3" do
-    test "passes successful enqueue results through as :ok without logging" do
+    test "passes successful enqueue results through as a tagged success without logging" do
       log =
         capture_log(fn ->
-          assert :ok =
+          assert {:ok, :pass} =
                    Jobs.enqueue_best_effort(:notify_comment, 42, fn ->
                      {:ok, :enqueued}
                    end)
@@ -23,12 +23,12 @@ defmodule GroupherServer.Test.Jobs do
 
       log =
         capture_log(fn ->
-          assert :ok = Jobs.enqueue_best_effort(:sync_mentions, 42, fn -> {:error, secret} end)
-          assert :ok = Jobs.enqueue_best_effort(:notify_reply, 42, fn -> secret end)
-          assert :ok = Jobs.enqueue_best_effort(:notify_comment, 42, fn -> raise secret end)
-          assert :ok = Jobs.enqueue_best_effort(:subscribe_community, 42, fn -> throw(secret) end)
+          assert {:ok, :pass} = Jobs.enqueue_best_effort(:sync_mentions, 42, fn -> {:error, secret} end)
+          assert {:ok, :pass} = Jobs.enqueue_best_effort(:notify_reply, 42, fn -> secret end)
+          assert {:ok, :pass} = Jobs.enqueue_best_effort(:notify_comment, 42, fn -> raise secret end)
+          assert {:ok, :pass} = Jobs.enqueue_best_effort(:subscribe_community, 42, fn -> throw(secret) end)
 
-          assert :ok =
+          assert {:ok, :pass} =
                    Jobs.enqueue_best_effort(:reconcile_comments_participants, 42, fn ->
                      exit(secret)
                    end)

@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias CMS.Assets.Completeness
+  alias CMS.Articles.Bindings
   alias CMS.Assets.ErrorCat, as: AssetErrorCat
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
@@ -25,6 +26,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
   alias CMS.Model.{
     Article,
+    ArticleBinding,
     ArticleAssetRef,
     ArticleDraft,
     Community,
@@ -100,39 +102,39 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
   ## Examples
 
-      Writer.delete(community, asset.id)
+      Writer.delete(community, asset.id, {:command, command_id})
       #=> {:ok, %CommunityAsset{status: :deleted}}
 
       Writer.delete(community, referenced_asset.id)
       #=> {:error, AssetErrorCat.custom("asset is still referenced")}
 
   """
-  @spec delete(Community.t(), T.id()) :: T.domain_res(CommunityAsset.t())
-  def delete(%Community{id: community_id}, asset_id) do
-    Repo.transaction(fn ->
-      with {:ok, asset} <- find_active_asset_for_update(community_id, asset_id),
-           :ok <- Completeness.guard(community_id),
-           false <- referenced?(asset),
-           {:ok, asset} <-
-             ORM.update(asset, %{
-               status: :deleted,
-               deleted_at: DateTime.utc_now(:second)
-             }),
-           {:ok, _event} <-
-             Outbox.send(%{
-               event: "asset.provider_delete",
-               worker: CMS.Outbox.Workers.Asset.Cleanup,
-               resource_type: "community_asset",
-               resource_id: asset.id,
-               command_id: Ecto.UUID.generate(),
-               data: %{asset_id: asset.id, public_ref: asset.public_ref}
-             }) do
-        asset
-      else
-        true -> Repo.rollback(AssetErrorCat.custom("asset is still referenced"))
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
+  @spec delete(Community.t(), T.id(), {:command | :workflow, String.t()}) ::
+          T.domain_res(CommunityAsset.t())
+  def delete(%Community{id: community_id}, asset_id, identity) do
+    with {:ok, asset} <- find_active_asset_for_update(community_id, asset_id),
+         {:ok, _} <- Completeness.guard(community_id),
+         false <- referenced?(asset),
+         {:ok, asset} <-
+           ORM.update(asset, %{
+             status: :deleted,
+             deleted_at: DateTime.utc_now(:second)
+           }),
+         {:ok, _event} <-
+           Outbox.send(%{
+             event: "asset.provider_delete",
+             worker: CMS.Outbox.Workers.Asset.Cleanup,
+             resource_type: "community_asset",
+             resource_id: asset.id,
+             identity: identity,
+             effect_key: "asset:#{asset.id}",
+             data: %{asset_id: asset.id, public_ref: asset.public_ref}
+           }) do
+      {:ok, asset}
+    else
+      true -> {:error, AssetErrorCat.custom("asset is still referenced")}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @doc "Archives an asset without changing Draft or Revision-owned refs."
@@ -174,7 +176,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
   end
 
   @doc """
-  Synchronizes refs for an article using `article.community_id`.
+  Synchronizes refs for an Article using explicit ArticleBinding context.
 
   This variant keeps article create/update flows concise. If the article is not
   associated with a community, the sync is a no-op.
@@ -184,28 +186,30 @@ defmodule GroupherServer.CMS.Assets.Writer do
       Writer.sync_refs(post, %{asset_refs: [%{asset_id: asset.id}]})
       #=> {:ok, %{body: body_refs, cover: cover_refs}}
 
-      Writer.sync_refs(%{post | community_id: nil}, %{asset_refs: []})
+      Writer.sync_refs(post, %{asset_refs: []})
       #=> {:ok, :pass}
 
   """
   @spec sync_refs(T.article(), map()) :: T.domain_res(term())
   def sync_refs(article, attrs) do
-    case Map.get(article, :community_id) do
-      nil -> {:ok, :pass}
-      community_id -> do_sync_refs(community_id, article, attrs)
+    case Bindings.get(article, Map.get(article, :community)) do
+      {:ok, %{community: %{id: community_id}}} -> do_sync_refs(community_id, article, attrs)
+      {:error, reason} -> {:error, reason}
     end
   end
 
   @doc "Copies the complete asset-ref projection from one Article version to another."
   @spec copy_refs(T.article(), T.article()) :: T.domain_res(term())
   def copy_refs(source, target) do
-    with {:ok, source_thread} <- FrontDesk.thread_of(source),
+    with {:ok, %{community: %{id: target_community_id}}} <-
+           Bindings.get(target, Map.get(target, :community)),
+         {:ok, source_thread} <- FrontDesk.thread_of(source),
          {:ok, target_thread} <- FrontDesk.thread_of(target),
          true <- source_thread == target_thread,
          {:ok, source_body_id} <- draft_body_id(source),
          {:ok, target_body_id} <- draft_body_id(target) do
       Repo.transaction(fn ->
-        :ok = Completeness.lock_scope(target.community_id)
+        {:ok, _} = Completeness.lock_scope(target_community_id)
 
         ArticleAssetRef
         |> where([ref], ref.body_draft_id == ^target_body_id)
@@ -283,10 +287,18 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
     body_draft_ids = draft_body_ids(thread, article_id)
 
+    community_ids =
+      Repo.all(
+        from(binding in ArticleBinding,
+          where: binding.article_id == ^article_id,
+          select: binding.community_id
+        )
+      )
+
     case Repo.get(Article, article_id) do
-      %Article{community_id: community_id} ->
+      %Article{} ->
         Repo.transaction(fn ->
-          :ok = Completeness.lock_scope(community_id)
+          Enum.each(community_ids, &Completeness.lock_scope/1)
 
           ArticleAssetRef
           |> where(
@@ -310,9 +322,9 @@ defmodule GroupherServer.CMS.Assets.Writer do
       true ->
         Repo.transaction(fn ->
           with {:ok, _thread} <- FrontDesk.thread_of(article),
-               :ok <- Completeness.lock_scope(community_id),
+               {:ok, _} <- Completeness.lock_scope(community_id),
                {:ok, body_draft_id} <- draft_body_id(article),
-               :ok <- lock_body_draft(body_draft_id),
+               {:ok, _} <- lock_body_draft(body_draft_id),
                base <- base_ref_attrs(community_id, body_draft_id),
                user <- get_attr(attrs, :cur_user),
                {:ok, body_refs} <- sync_body_refs(body_draft_id, base, attrs, user),
@@ -597,7 +609,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
     |> Repo.one()
     |> case do
       nil -> {:error, AssetErrorCat.not_exist("article body draft not found")}
-      _body -> :ok
+      _body -> {:ok, :pass}
     end
   end
 

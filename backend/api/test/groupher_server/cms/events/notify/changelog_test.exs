@@ -13,16 +13,22 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     {:ok, user3} = db_insert(:user)
 
     {:ok, comment} =
-      CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
+      CMS.Comments.create_comment(
+        community,
+        :changelog,
+        article_inner_id(changelog, community),
+        mock_comment(),
+        user, Ecto.UUID.generate()
+      )
 
     {:ok, ~m(user2 user3 community changelog comment)a}
   end
 
   describe "[upvote notify]" do
-    test "upvote hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+    test "upvote hook should work on changelog", ~m(user2 community changelog)a do
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
-      {:ok, article} = CMS.Interactions.upvote(changelog, user2)
+      {:ok, article} = CMS.Interactions.upvote(changelog, user2, Ecto.UUID.generate())
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
@@ -39,7 +45,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     end
 
     test "upvote hook should work on changelog comment", ~m(user2 changelog comment)a do
-      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
       {:ok, comment_author} = CMS.Comments.Query.Reconcile.load_comment_author(comment.id)
       comment = %{comment | author: comment_author}
 
@@ -59,13 +65,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    test "undo upvote hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+    test "undo upvote hook should work on changelog", ~m(user2 community changelog)a do
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
-      {:ok, article} = CMS.Interactions.upvote(changelog, user2)
+      {:ok, article} = CMS.Interactions.upvote(changelog, user2, Ecto.UUID.generate())
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
-      {:ok, article} = CMS.Interactions.undo_upvote(changelog, user2)
+      {:ok, article} = CMS.Interactions.undo_upvote(changelog, user2, Ecto.UUID.generate())
       Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
@@ -75,11 +81,11 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     end
 
     test "undo upvote hook should work on changelog comment", ~m(user2 comment)a do
-      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
-      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2, Ecto.UUID.generate())
       Events.emit(:notify_undo_upvote, %{target: comment, from_user: user2})
 
       {:ok, comment_author} = CMS.Comments.Query.Reconcile.load_comment_author(comment.id)
@@ -93,10 +99,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
   end
 
   describe "[collect notify]" do
-    test "collect hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+    test "collect hook should work on changelog", ~m(user2 community changelog)a do
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
-      {:ok, _} = CMS.Interactions.collect(changelog, user2)
+      {:ok, _} = CMS.Interactions.collect(changelog, user2, Ecto.UUID.generate())
       Events.emit(:notify_collect, %{article: changelog, from_user: user2})
 
       {:ok, notifications} =
@@ -112,13 +118,13 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       assert user_exist_in?(user2, notify.from_users)
     end
 
-    test "undo collect hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+    test "undo collect hook should work on changelog", ~m(user2 community changelog)a do
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
-      {:ok, _} = CMS.Interactions.collect(changelog, user2)
+      {:ok, _} = CMS.Interactions.collect(changelog, user2, Ecto.UUID.generate())
       Events.emit(:notify_collect, %{article: changelog, from_user: user2})
 
-      {:ok, _} = CMS.Interactions.undo_collect(changelog, user2)
+      {:ok, _} = CMS.Interactions.undo_collect(changelog, user2, Ecto.UUID.generate())
       Events.emit(:notify_undo_collect, %{article: changelog, from_user: user2})
 
       {:ok, notifications} =
@@ -131,15 +137,15 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
   describe "[comment notify]" do
     test "changelog author should get notify after some one comment on it",
          ~m(user2 community changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
       {:ok, comment} =
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
-          user2
+          user2, Ecto.UUID.generate()
         )
 
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
@@ -159,18 +165,18 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
 
     test "changelog comment author should get notify after some one reply it",
          ~m(user2 user3 community changelog)a do
-      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id)
+      {:ok, changelog} = CMS.Articles.Store.load_article_for_notification(changelog.id, community)
 
       {:ok, comment} =
         CMS.Comments.create_comment(
           community,
           :changelog,
-          changelog.inner_id,
+          article_inner_id(changelog, community),
           mock_comment(),
-          user2
+          user2, Ecto.UUID.generate()
         )
 
-      {:ok, replied_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user3)
+      {:ok, replied_comment} = CMS.Comments.reply_comment(comment.id, mock_comment(), user3, Ecto.UUID.generate())
 
       Events.emit(:notify_reply, %{reply_comment: replied_comment, from_user: user3})
 

@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.QueryBuilder do
   alias GroupherServer.CMS
 
   alias CMS.Artiment.{Const, Threads}
-  alias CMS.Model.{ArticleCommunity, ArticleCommunityTag, CommunityTag}
+  alias CMS.Model.{ArticleBinding, ArticleBindingTag, CommunityTag}
   alias Helper.QueryBuilder, as: GenericQueryBuilder
 
   @article_cat Const.cat_values()
@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.QueryBuilder do
     |> handle_community_relate_logic(filter)
   end
 
-  @doc "Loads users joined through a CMS relation and applies the supplied filters."
+  @doc "Loads users joined through a CMS binding and applies the supplied filters."
   @spec load_inner_users(Ecto.Queryable.t(), map()) :: Ecto.Query.t()
   def load_inner_users(queryable, filter) do
     queryable
@@ -106,10 +106,10 @@ defmodule GroupherServer.CMS.QueryBuilder do
 
   defp join_article_tags(query, tag_names) do
     from(article in query,
-      join: relation in ArticleCommunity,
-      on: relation.article_id == article.id,
-      join: assignment in ArticleCommunityTag,
-      on: assignment.article_community_id == relation.id,
+      join: binding in ArticleBinding,
+      on: binding.article_id == article.id,
+      join: assignment in ArticleBindingTag,
+      on: assignment.article_binding_id == binding.id,
       join: tag in CommunityTag,
       on: tag.id == assignment.tag_id,
       where: tag.slug in ^tag_names,

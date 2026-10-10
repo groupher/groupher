@@ -18,12 +18,12 @@ defmodule GroupherServer.Test.CMS.Dashboard do
   end
 
   describe "[community dashboard base info]" do
-    test "updates content shadow as an ordinary dashboard boolean field", ~m(community)a do
+    test "updates content shadow as an ordinary dashboard boolean field", ~m(community user)a do
       assert {:ok, _dashboard} =
-               CMS.Dashboard.update(community, :content_shadow, true)
+               CMS.Dashboard.update(community, :content_shadow, true, user, Ecto.UUID.generate())
 
       assert {:ok, _dashboard} =
-               CMS.Dashboard.update(community, :content_shadow, false)
+               CMS.Dashboard.update(community, :content_shadow, false, user, Ecto.UUID.generate())
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "created community should have default dashboard.", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert find_community.dashboard.base_info.homepage == @default_dashboard.base_info.homepage
@@ -51,22 +51,28 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert not is_nil(find_community.dashboard)
     end
 
-    test "update with malformed dashboard payload returns domain error",
+    test "update with malformed dashboard payload requires command identity",
          ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
-      assert {:error, %ErrorCat.Error{reason: :invalid_dsb_section}} =
-               CMS.Dashboard.update(community, %{})
+      assert {:error, %ErrorCat.Error{reason: :command_id_required}} =
+               CMS.Dashboard.update(community, %{}, user, Ecto.UUID.generate())
     end
 
     test "can update base info in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :base_info, %{
-          homepage: "https://groupher.com",
-          slug: "groupher"
-        })
+        CMS.Dashboard.update(
+          community,
+          :base_info,
+          %{
+            homepage: "https://groupher.com",
+            slug: "groupher"
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -75,13 +81,19 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "update base info should update community's related fields", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :base_info, %{
-          title: "new title",
-          slug: "new-slug"
-        })
+        CMS.Dashboard.update(
+          community,
+          :base_info,
+          %{
+            title: "new title",
+            slug: "new-slug"
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community} = ORM.find(Community, community.id)
 
@@ -90,27 +102,39 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "base info emits one public presentation invalidation", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
       before_count = Repo.aggregate(CMS.Outbox.Event, :count)
 
       assert {:ok, _dashboard} =
-               CMS.Dashboard.update(community, :base_info, %{
-                 homepage: "https://groupher.com",
-                 title: "One invalidation"
-               })
+               CMS.Dashboard.update(
+                 community,
+                 :base_info,
+                 %{
+                   homepage: "https://groupher.com",
+                   title: "One invalidation"
+                 },
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       assert Repo.aggregate(CMS.Outbox.Event, :count) == before_count + 1
     end
 
     test "update base info should reject invalid slug format", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
       {:ok, before_update} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert {:error, %Ecto.Changeset{}} =
-               CMS.Dashboard.update(community, :base_info, %{
-                 title: "new title",
-                 slug: "new slug"
-               })
+               CMS.Dashboard.update(
+                 community,
+                 :base_info,
+                 %{
+                   title: "new title",
+                   slug: "new slug"
+                 },
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, found} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -121,15 +145,21 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "update base info logo should keep provided path", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       asset_path = "ugc/_tmp/2023-10-14/73l5_groupher.png"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :base_info, %{
-          logo: asset_path,
-          favicon: asset_path
-        })
+        CMS.Dashboard.update(
+          community,
+          :base_info,
+          %{
+            logo: asset_path,
+            favicon: asset_path
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community} = ORM.find(Community, community.id)
 
@@ -139,13 +169,13 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     # test "update base info logo should skip persist when not in ugc/_tmp prefix",
     #      ~m(community_attrs user)a do
-    #   {:ok, community} = CMS.Communities.create(community_attrs, user)
+    #   {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     #   {:ok, _} =
     #     CMS.Dashboard.update(community, :base_info, %{
     #       logo: "ugc/2023-10-14/73l5_groupher.png",
     #       favicon: "ugc/2023-10-14/73l5_groupher.png"
-    #     })
+    #     }, user, Ecto.UUID.generate())
 
     #   {:ok, community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -154,13 +184,19 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     # end
 
     test "can update seo in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :seo, %{
-          og_title: "groupher",
-          og_description: "forum sass provider"
-        })
+        CMS.Dashboard.update(
+          community,
+          :seo,
+          %{
+            og_title: "groupher",
+            og_description: "forum sass provider"
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -169,64 +205,70 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update wallpaper in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :wallpaper, %{
-          light: %{
-            type: "gradient",
-            source: "orange",
-            pattern: %{
-              "enabled" => true,
-              "id" => "02",
-              "intensity" => 65,
-              "tone" => "light"
+        CMS.Dashboard.update(
+          community,
+          :wallpaper,
+          %{
+            light: %{
+              type: "gradient",
+              source: "orange",
+              pattern: %{
+                "enabled" => true,
+                "id" => "02",
+                "intensity" => 65,
+                "tone" => "light"
+              },
+              effect: %{
+                "blurIntensity" => 35,
+                "brightness" => 85,
+                "saturation" => 120
+              },
+              gradient: %{
+                "version" => 2,
+                "renderer" => "flow",
+                "preset" => "test",
+                "seed" => 1,
+                "colors" => ["#fff", "#000"],
+                "angle" => 45,
+                "softness" => 60,
+                "warp" => 50,
+                "scale" => 60,
+                "contrast" => 100,
+                "brightness" => 100
+              },
+              texture: %{"enabled" => true, "type" => "ascii", "intensity" => 55, "params" => %{}}
             },
-            effect: %{
-              "blurIntensity" => 35,
-              "brightness" => 85,
-              "saturation" => 120
-            },
-            gradient: %{
-              "version" => 2,
-              "renderer" => "flow",
-              "preset" => "test",
-              "seed" => 1,
-              "colors" => ["#fff", "#000"],
-              "angle" => 45,
-              "softness" => 60,
-              "warp" => 50,
-              "scale" => 60,
-              "contrast" => 100,
-              "brightness" => 100
-            },
-            texture: %{"enabled" => true, "type" => "ascii", "intensity" => 55, "params" => %{}}
+            dark: %{
+              type: "gradient",
+              source: "purple",
+              pattern: %{
+                "enabled" => true,
+                "id" => "03",
+                "intensity" => 35,
+                "tone" => "dark"
+              },
+              effect: %{
+                "blurIntensity" => 15,
+                "brightness" => 90,
+                "saturation" => 80
+              },
+              gradient: %{
+                "version" => 2,
+                "renderer" => "linear",
+                "preset" => "dark-test",
+                "colors" => ["#111", "#333"],
+                "angle" => 90,
+                "spread" => 50
+              },
+              texture: %{"enabled" => true, "type" => "tile", "intensity" => 45, "params" => %{}}
+            }
           },
-          dark: %{
-            type: "gradient",
-            source: "purple",
-            pattern: %{
-              "enabled" => true,
-              "id" => "03",
-              "intensity" => 35,
-              "tone" => "dark"
-            },
-            effect: %{
-              "blurIntensity" => 15,
-              "brightness" => 90,
-              "saturation" => 80
-            },
-            gradient: %{
-              "version" => 2,
-              "renderer" => "linear",
-              "preset" => "dark-test",
-              "colors" => ["#111", "#333"],
-              "angle" => 90,
-              "spread" => 50
-            },
-            texture: %{"enabled" => true, "type" => "tile", "intensity" => 45, "params" => %{}}
-          }
-        })
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -258,12 +300,18 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update wallpaper dots texture", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :wallpaper, %{
-          light: %{texture: %{"type" => "dots", "intensity" => 55, "params" => %{}}}
-        })
+        CMS.Dashboard.update(
+          community,
+          :wallpaper,
+          %{
+            light: %{texture: %{"type" => "dots", "intensity" => 55, "params" => %{}}}
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -273,7 +321,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     test "can update existing wallpaper bg config without embedded ids",
          ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
       {:ok, dashboard} = ORM.find_by(CommunityDashboard, community_id: community.id)
       wallpaper = dashboard.wallpaper |> Helper.Utils.strip_struct()
 
@@ -284,9 +332,15 @@ defmodule GroupherServer.Test.CMS.Dashboard do
         |> Repo.update()
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :wallpaper, %{
-          light: %{texture: %{"type" => "dots", "intensity" => 42, "params" => %{}}}
-        })
+        CMS.Dashboard.update(
+          community,
+          :wallpaper,
+          %{
+            light: %{texture: %{"type" => "dots", "intensity" => 42, "params" => %{}}}
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -296,12 +350,18 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update wallpaper oil texture", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :wallpaper, %{
-          light: %{texture: %{"type" => "oil", "intensity" => 68, "params" => %{}}}
-        })
+        CMS.Dashboard.update(
+          community,
+          :wallpaper,
+          %{
+            light: %{texture: %{"type" => "oil", "intensity" => 68, "params" => %{}}}
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -310,12 +370,18 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update wallpaper tile texture", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :wallpaper, %{
-          light: %{texture: %{"type" => "tile", "intensity" => 72, "params" => %{}}}
-        })
+        CMS.Dashboard.update(
+          community,
+          :wallpaper,
+          %{
+            light: %{texture: %{"type" => "tile", "intensity" => 72, "params" => %{}}}
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -324,14 +390,20 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update layout in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
-          post_layout: "cover",
-          changelog_layout: "simple",
-          topbar_enabled: true
-        })
+        CMS.Dashboard.update(
+          community,
+          :layout,
+          %{
+            post_layout: "cover",
+            changelog_layout: "simple",
+            topbar_enabled: true
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -341,48 +413,72 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "rejects unsupported kanban boards in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       assert {:error, %Ecto.Changeset{} = changeset} =
-               CMS.Dashboard.update(community, :layout, %{
-                 kanban_boards: [:todo, :invalid_board]
-               })
+               CMS.Dashboard.update(
+                 community,
+                 :layout,
+                 %{
+                   kanban_boards: [:todo, :invalid_board]
+                 },
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       assert {:kanban_boards, {"is invalid", _}} =
                List.keyfind(changeset.errors, :kanban_boards, 0)
     end
 
     test "rejects duplicate kanban boards in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       assert {:error, %Ecto.Changeset{} = changeset} =
-               CMS.Dashboard.update(community, :layout, %{
-                 kanban_boards: [:todo, :todo, :done]
-               })
+               CMS.Dashboard.update(
+                 community,
+                 :layout,
+                 %{
+                   kanban_boards: [:todo, :todo, :done]
+                 },
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       assert {:kanban_boards, {"contains duplicate kanban boards", _}} =
                List.keyfind(changeset.errors, :kanban_boards, 0)
     end
 
     test "rejects nil kanban boards in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       assert {:error, %Ecto.Changeset{} = changeset} =
-               CMS.Dashboard.update(community, :layout, %{
-                 kanban_boards: nil
-               })
+               CMS.Dashboard.update(
+                 community,
+                 :layout,
+                 %{
+                   kanban_boards: nil
+                 },
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       assert {:kanban_boards, {"can't be blank", _}} =
                List.keyfind(changeset.errors, :kanban_boards, 0)
     end
 
     test "rejects empty kanban boards in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       assert {:error, %Ecto.Changeset{} = changeset} =
-               CMS.Dashboard.update(community, :layout, %{
-                 kanban_boards: []
-               })
+               CMS.Dashboard.update(
+                 community,
+                 :layout,
+                 %{
+                   kanban_boards: []
+                 },
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       assert {:kanban_boards, {"contains unsupported kanban boards", _}} =
                List.keyfind(changeset.errors, :kanban_boards, 0)
@@ -390,24 +486,36 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     test "rejects unsupported thread emotions in community dashboard",
          ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       assert {:error, %Ecto.Changeset{} = changeset} =
-               CMS.Dashboard.update(community, :thread_emotions, %{
-                 post: [:beer, :invalid_emotion]
-               })
+               CMS.Dashboard.update(
+                 community,
+                 :thread_emotions,
+                 %{
+                   post: [:beer, :invalid_emotion]
+                 },
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       assert {:post, {"is invalid", _}} = List.keyfind(changeset.errors, :post, 0)
     end
 
     test "can update rss in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :rss, %{
-          rss_feed_type: "full",
-          rss_feed_count: 25
-        })
+        CMS.Dashboard.update(
+          community,
+          :rss,
+          %{
+            rss_feed_type: "full",
+            rss_feed_count: 25
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -417,17 +525,29 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     test "rss updates keep existing values when updating incrementally",
          ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :rss, %{
-          rss_feed_type: "full"
-        })
+        CMS.Dashboard.update(
+          community,
+          :rss,
+          %{
+            rss_feed_type: "full"
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :rss, %{
-          rss_feed_count: 25
-        })
+        CMS.Dashboard.update(
+          community,
+          :rss,
+          %{
+            rss_feed_count: 25
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -436,17 +556,23 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update alias in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :name_alias, [
-          %{
-            slug: "slug",
-            name: "name",
-            original: "original",
-            group: "group"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :name_alias,
+          [
+            %{
+              slug: "slug",
+              name: "name",
+              original: "original",
+              group: "group"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -460,23 +586,29 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     test "should overwrite all alias in community dashboard every time",
          ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :name_alias, [
-          %{
-            slug: "slug",
-            name: "name",
-            original: "original",
-            group: "group"
-          },
-          %{
-            slug: "raw2",
-            name: "name2",
-            original: "original2",
-            group: "group2"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :name_alias,
+          [
+            %{
+              slug: "slug",
+              name: "name",
+              original: "original",
+              group: "group"
+            },
+            %{
+              slug: "raw2",
+              name: "name2",
+              original: "original2",
+              group: "group2"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -489,14 +621,20 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert second.slug == "raw2"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :name_alias, [
-          %{
-            slug: "raw3",
-            name: "name3",
-            original: "original3",
-            group: "group3"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :name_alias,
+          [
+            %{
+              slug: "raw3",
+              name: "name3",
+              original: "original3",
+              group: "group3"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
       assert find_community.dashboard.name_alias |> length == 1
@@ -506,25 +644,31 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update header links in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :header_links, [
-          %{
-            id: "link-1",
-            type: :link,
-            title: "title",
-            url: "link"
-          },
-          %{
-            id: "group-1",
-            type: :group,
-            title: "group",
-            links: [
-              %{id: "child-1", title: "child", url: "child-link"}
-            ]
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :header_links,
+          [
+            %{
+              id: "link-1",
+              type: :link,
+              title: "title",
+              url: "link"
+            },
+            %{
+              id: "group-1",
+              type: :group,
+              title: "group",
+              links: [
+                %{id: "child-1", title: "child", url: "child-link"}
+              ]
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -540,23 +684,29 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     test "should overwrite all header links in community dashboard every time",
          ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :header_links, [
-          %{
-            id: "link-1",
-            type: :link,
-            title: "title",
-            url: "link"
-          },
-          %{
-            id: "link-2",
-            type: :link,
-            title: "title2",
-            url: "link2"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :header_links,
+          [
+            %{
+              id: "link-1",
+              type: :link,
+              title: "title",
+              url: "link"
+            },
+            %{
+              id: "link-2",
+              type: :link,
+              title: "title2",
+              url: "link2"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -571,14 +721,20 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert second.url == "link2"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :header_links, [
-          %{
-            id: "link-3",
-            type: :link,
-            title: "title3",
-            url: "link3"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :header_links,
+          [
+            %{
+              id: "link-3",
+              type: :link,
+              title: "title3",
+              url: "link3"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
       assert find_community.dashboard.header_links |> length == 1
@@ -588,17 +744,23 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update footer links in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :footer_links, [
-          %{
-            id: "group-1",
-            type: :group,
-            title: "title",
-            links: [%{id: "link-1", title: "link-title", url: "link"}]
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :footer_links,
+          [
+            %{
+              id: "group-1",
+              type: :group,
+              title: "title",
+              links: [%{id: "link-1", title: "link-title", url: "link"}]
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -609,37 +771,61 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "rejects non-list dashboard link payloads", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       assert {:error, %ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
-               CMS.Dashboard.update(community, :header_links, %{id: "not-list"})
+               CMS.Dashboard.update(
+                 community,
+                 :header_links,
+                 %{id: "not-list"},
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       assert {:error, %ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
-               CMS.Dashboard.update(community, :footer_links, %{id: "not-list"})
+               CMS.Dashboard.update(
+                 community,
+                 :footer_links,
+                 %{id: "not-list"},
+                 user,
+                 Ecto.UUID.generate()
+               )
 
       assert {:error, %ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
-               CMS.Dashboard.update(community, :footer_oneline_links, %{id: "not-list"})
+               CMS.Dashboard.update(
+                 community,
+                 :footer_oneline_links,
+                 %{id: "not-list"},
+                 user,
+                 Ecto.UUID.generate()
+               )
     end
 
     test "should overwrite all footer links in community dashboard every time",
          ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :footer_links, [
-          %{
-            id: "group-1",
-            type: :group,
-            title: "title",
-            links: [%{id: "link-1", title: "link-title", url: "link"}]
-          },
-          %{
-            id: "group-2",
-            type: :group,
-            title: "title2",
-            links: [%{id: "link-2", title: "link-title2", url: "link2"}]
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :footer_links,
+          [
+            %{
+              id: "group-1",
+              type: :group,
+              title: "title",
+              links: [%{id: "link-1", title: "link-title", url: "link"}]
+            },
+            %{
+              id: "group-2",
+              type: :group,
+              title: "title2",
+              links: [%{id: "link-2", title: "link-title2", url: "link2"}]
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -652,14 +838,20 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert second.title == "title2"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :footer_links, [
-          %{
-            id: "group-3",
-            type: :group,
-            title: "title3",
-            links: []
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :footer_links,
+          [
+            %{
+              id: "group-3",
+              type: :group,
+              title: "title3",
+              links: []
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
       assert find_community.dashboard.footer_links |> length == 1
@@ -670,17 +862,23 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update media reports in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :media_reports, [
-          %{
-            title: "report title",
-            favicon: "https://favicon.com",
-            site_name: "site name",
-            url: "https://whatever.com"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :media_reports,
+          [
+            %{
+              title: "report title",
+              favicon: "https://favicon.com",
+              site_name: "site name",
+              url: "https://whatever.com"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -694,17 +892,23 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     test "should overwrite all media reports in community dashboard every time",
          ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :media_reports, [
-          %{
-            title: "report title",
-            favicon: "https://favicon.com",
-            site_name: "site name",
-            url: "https://whatever.com"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :media_reports,
+          [
+            %{
+              title: "report title",
+              favicon: "https://favicon.com",
+              site_name: "site name",
+              url: "https://whatever.com"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -713,20 +917,26 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert first.title == "report title"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :media_reports, [
-          %{
-            title: "report title 2",
-            favicon: "https://favicon.com",
-            site_name: "site name",
-            url: "https://whatever.com"
-          },
-          %{
-            title: "report title 3",
-            favicon: "https://favicon.com",
-            site_name: "site name",
-            url: "https://whatever.com"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :media_reports,
+          [
+            %{
+              title: "report title 2",
+              favicon: "https://favicon.com",
+              site_name: "site name",
+              url: "https://whatever.com"
+            },
+            %{
+              title: "report title 3",
+              favicon: "https://favicon.com",
+              site_name: "site name",
+              url: "https://whatever.com"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
       assert find_community.dashboard.media_reports |> length == 2
@@ -737,30 +947,36 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update docs FAQ in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :doc_faq, %{
-          title: "FAQ",
-          desc: "Common docs questions",
-          grouped_view: true,
-          group_items: [
-            %{
-              id: "grp_basics",
-              title: "Basics",
-              index: 0,
-              items: [
-                %{
-                  id: "faq_intro",
-                  title: "What is docs?",
-                  index: 0,
-                  detail: "Docs are product help content."
-                }
-              ]
-            }
-          ],
-          flat_items: []
-        })
+        CMS.Dashboard.update(
+          community,
+          :doc_faq,
+          %{
+            title: "FAQ",
+            desc: "Common docs questions",
+            grouped_view: true,
+            group_items: [
+              %{
+                id: "grp_basics",
+                title: "Basics",
+                index: 0,
+                items: [
+                  %{
+                    id: "faq_intro",
+                    title: "What is docs?",
+                    index: 0,
+                    detail: "Docs are product help content."
+                  }
+                ]
+              }
+            ],
+            flat_items: []
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -776,41 +992,53 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     test "should update docs FAQ as one dashboard section",
          ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :doc_faq, %{
-          title: "FAQ",
-          desc: "Common docs questions",
-          grouped_view: true,
-          group_items: [
-            %{id: "grp_basics", title: "Basics", index: 0, items: []},
-            %{id: "grp_usage", title: "Usage", index: 1, items: []}
-          ],
-          flat_items: []
-        })
+        CMS.Dashboard.update(
+          community,
+          :doc_faq,
+          %{
+            title: "FAQ",
+            desc: "Common docs questions",
+            grouped_view: true,
+            group_items: [
+              %{id: "grp_basics", title: "Basics", index: 0, items: []},
+              %{id: "grp_usage", title: "Usage", index: 1, items: []}
+            ],
+            flat_items: []
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert find_community.dashboard.doc_faq.group_items |> length == 2
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :doc_faq, %{
-          title: "FAQ",
-          desc: "Flat FAQ",
-          grouped_view: false,
-          group_items: [
-            %{
-              id: "grp_basics",
-              title: "Basics",
-              index: 0,
-              items: []
-            }
-          ],
-          flat_items: [
-            %{id: "faq_general", title: "General question", detail: "Answer", index: 0}
-          ]
-        })
+        CMS.Dashboard.update(
+          community,
+          :doc_faq,
+          %{
+            title: "FAQ",
+            desc: "Flat FAQ",
+            grouped_view: false,
+            group_items: [
+              %{
+                id: "grp_basics",
+                title: "Basics",
+                index: 0,
+                items: []
+              }
+            ],
+            flat_items: [
+              %{id: "faq_general", title: "General question", detail: "Answer", index: 0}
+            ]
+          },
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
       assert find_community.dashboard.doc_faq.group_items |> length == 1
@@ -822,15 +1050,21 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "can update social links in community dashboard", ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :social_links, [
-          %{
-            type: "twitter",
-            link: "https://link.com"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :social_links,
+          [
+            %{
+              type: "twitter",
+              link: "https://link.com"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -842,19 +1076,25 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     test "should overwrite all social links in community dashboard every time",
          ~m(community_attrs user)a do
-      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :social_links, [
-          %{
-            type: "twitter",
-            link: "https://link.com"
-          },
-          %{
-            type: "zhihu",
-            link: "https://zhihu.com"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :social_links,
+          [
+            %{
+              type: "twitter",
+              link: "https://link.com"
+            },
+            %{
+              type: "zhihu",
+              link: "https://zhihu.com"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
@@ -867,12 +1107,18 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert second.type == "zhihu"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :social_links, [
-          %{
-            type: "wechat",
-            link: "https://wechat.com"
-          }
-        ])
+        CMS.Dashboard.update(
+          community,
+          :social_links,
+          [
+            %{
+              type: "wechat",
+              link: "https://wechat.com"
+            }
+          ],
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
       assert find_community.dashboard.social_links |> length == 1

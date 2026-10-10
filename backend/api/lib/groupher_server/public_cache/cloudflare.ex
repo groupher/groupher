@@ -29,13 +29,13 @@ defmodule GroupherServer.PublicCache.Cloudflare do
   alias GroupherServer.PublicCache
   alias PublicCache.{Policy, Tags}
 
-  @spec purge([String.t()]) :: :ok | {:error, term()}
+  @spec purge([String.t()]) :: {:ok, :pass} | {:error, term()}
   def purge(tags) when is_list(tags) do
     with {:ok, tags} <- Tags.validate(tags),
          {:ok, config} <- config(),
          {:ok, response} <- request(config, tags),
-         :ok <- response_success(response) do
-      :ok
+         {:ok, _} <- response_success(response) do
+      {:ok, :pass}
     end
   end
 
@@ -68,11 +68,11 @@ defmodule GroupherServer.PublicCache.Cloudflare do
   end
 
   defp response_success(%{status: status, body: %{"success" => true}}) when status in 200..299 do
-    :ok
+    {:ok, :pass}
   end
 
   defp response_success(%{status: status, body: %{success: true}}) when status in 200..299 do
-    :ok
+    {:ok, :pass}
   end
 
   defp response_success(%{status: status}), do: {:error, {:cloudflare_rejected, status}}

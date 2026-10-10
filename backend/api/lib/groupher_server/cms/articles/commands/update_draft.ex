@@ -11,17 +11,24 @@ defmodule GroupherServer.CMS.Articles.Commands.UpdateDraft do
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Articles
   alias GroupherServer.CMS.Articles.Draft.Store
-  alias GroupherServer.CMS.Model.{Article, Author}
+  alias GroupherServer.CMS.Model.{Article, Author, Community}
   alias GroupherServer.FrontDesk, as: RootFrontDesk
 
   @spec execute(Ecto.UUID.t(), map(), User.t() | Author.t(), keyword()) ::
           {:ok, struct()} | {:error, term()}
   def execute(article_id, attrs, actor, opts) when is_binary(article_id) do
     with {:ok, article} <- stable_article(article_id),
-         {:ok, author} <- target_author(actor) do
-      CMS.Gate.Access.with_check(actor_user(actor), :edit, article, fn canonical ->
-        Store.update(canonical, attrs, author, opts)
-      end)
+         {:ok, author} <- target_author(actor),
+         {:ok, community} <- explicit_community(opts) do
+      CMS.Gate.with_community_check(
+        actor_user(actor),
+        :edit,
+        community,
+        article,
+        fn canonical ->
+          Store.update(canonical, attrs, author, opts)
+        end
+      )
     end
   end
 
@@ -45,4 +52,20 @@ defmodule GroupherServer.CMS.Articles.Commands.UpdateDraft do
       {:error, _} -> {:error, :article_not_found}
     end
   end
+
+  defp explicit_community(opts) do
+    case Keyword.get(opts, :community) do
+      %Community{} = community -> {:ok, community}
+      _ -> community_by_id(Keyword.get(opts, :community_id))
+    end
+  end
+
+  defp community_by_id(community_id) when is_integer(community_id) do
+    case CMS.FrontDesk.community(community_id, mode: :internal) do
+      {:ok, %Community{} = community} -> {:ok, community}
+      _ -> {:error, :article_binding_not_found}
+    end
+  end
+
+  defp community_by_id(_community_id), do: {:error, :article_binding_context_required}
 end

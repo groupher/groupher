@@ -34,11 +34,11 @@ defmodule GroupherServer.CMS.Communities.Jobs.Setup do
       }) do
     case CMS.Communities.run_setup(community_ref, operation_ref) do
       {:ok, _application} ->
-        :ok
+        {:ok, :pass}
 
       {:error, reason} when attempt >= max_attempts ->
         case CMS.Communities.mark_setup_failed(application_ref, operation_ref, reason, attempt) do
-          {:ok, _application} -> :ok
+          {:ok, _application} -> {:ok, :pass}
           {:error, mark_reason} -> {:error, mark_reason}
         end
 

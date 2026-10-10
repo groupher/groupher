@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { browserGraphQLRequest } from '~/graphql/client'
 import { communityKeys, graphqlQueryOptions } from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
+import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TEditFunc, TRSSType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDsbEdit from '~/stores/dsbEdit/hooks'
@@ -61,7 +62,10 @@ export default function useRSS(): TRet {
   const updateMutation = useMutation({
     mutationKey: ['dsb', 'press-config', community],
     mutationFn: ({ options: _options, ...input }: TUpdatePressConfigRequest) =>
-      browserGraphQLRequest(S.updatePressConfig, { input }),
+      executeCommand({
+        request: (variables) => browserGraphQLRequest(S.updatePressConfig, variables),
+        variables: { input },
+      }),
     onSuccess: (_data, input) => {
       original.current = input.options
       dsb$.accept([FIELD.RSS_FEED_TYPE, FIELD.RSS_FEED_COUNT])

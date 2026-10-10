@@ -177,18 +177,25 @@ defmodule GroupherServer.CMS.Docs.Trash do
   @spec restore(TrashedDocArticle.t(), Community.t(), DocBranch.t(), term(), keyword()) ::
           {:ok, Article.t()} | {:error, term()}
   def restore(%TrashedDocArticle{} = item, community, branch, actor, opts) do
-    with :ok <- ensure_group_action(item, opts),
+    with {:ok, _} <- ensure_group_action(item, opts),
          {:ok, article} <- representative_doc(community, branch, item.article_id) do
-      CMS.Gate.Access.with_branch_check(actor, :restore, article, branch.id, fn canonical ->
-        with {:ok, lifecycle} <-
-               Lifecycle.transition(item.article_id, branch.id, item.restore_state),
-             {:ok, _} <- Repo.delete(item),
-             {:ok, action} <- load_action(item.trash_action_id),
-             {:ok, _activity} <-
-               maybe_activity(:restored, canonical, actor, action, lifecycle.changed_at, opts) do
-          {:ok, canonical}
+      CMS.Gate.with_branch_check(
+        actor,
+        :restore,
+        community,
+        article,
+        branch.id,
+        fn canonical ->
+          with {:ok, lifecycle} <-
+                 Lifecycle.transition(item.article_id, branch.id, item.restore_state),
+               {:ok, _} <- Repo.delete(item),
+               {:ok, action} <- load_action(item.trash_action_id),
+               {:ok, _activity} <-
+                 maybe_activity(:restored, canonical, actor, action, lifecycle.changed_at, opts) do
+            {:ok, canonical}
+          end
         end
-      end)
+      )
     end
   end
 
@@ -201,16 +208,17 @@ defmodule GroupherServer.CMS.Docs.Trash do
           keyword()
         ) :: {:ok, :done} | {:error, term()}
   def permanently_delete(%TrashedDocArticle{} = item, community, branch, actor, opts) do
-    with :ok <- ensure_group_action(item, opts),
+    with {:ok, _} <- ensure_group_action(item, opts),
          {:ok, article} <- representative_doc(community, branch, item.article_id) do
-      CMS.Gate.Access.with_branch_check(
+      CMS.Gate.with_branch_check(
         actor,
         :permanently_delete,
+        community,
         article,
         branch.id,
         fn canonical ->
           with {:ok, lifecycle} <- Lifecycle.transition(item.article_id, branch.id, :destroy),
-               :ok <- purge_branch(canonical, branch),
+               {:ok, _} <- purge_branch(canonical, branch),
                {:ok, _} <- Repo.delete(item),
                {:ok, action} <- load_action(item.trash_action_id),
                {:ok, _activity} <-
@@ -257,10 +265,10 @@ defmodule GroupherServer.CMS.Docs.Trash do
     )
 
     if Repo.exists?(from(row in DocLifecycle, where: row.article_id == ^article_id)) do
-      :ok
+      {:ok, :pass}
     else
       case Repo.delete(article) do
-        {:ok, _article} -> :ok
+        {:ok, _article} -> {:ok, :pass}
         {:error, reason} -> {:error, reason}
       end
     end
@@ -273,13 +281,17 @@ defmodule GroupherServer.CMS.Docs.Trash do
     if grouped? and not Keyword.get(opts, :group_action, false) do
       {:error, ErrorCat.custom("Trash action must be restored as one group")}
     else
-      :ok
+      {:ok, :pass}
     end
   end
 
-  defp representative_doc(%Community{id: community_id}, branch, article_id) do
-    with %Article{community_id: ^community_id, thread: :doc} = article <-
-           Repo.get(Article, article_id),
+  defp representative_doc(%Community{} = community, branch, article_id) do
+    with %Article{thread: :doc} = article <- Repo.get(Article, article_id),
+         %CMS.Model.ArticleBinding{} <-
+           Repo.get_by(CMS.Model.ArticleBinding,
+             article_id: article_id,
+             community_id: community.id
+           ),
          {:ok, _state} <- Lifecycle.state(article_id, branch.id) do
       {:ok, Repo.preload(article, author: :user)}
     else

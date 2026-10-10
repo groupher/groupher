@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
   Ecto schema for article upvote rows.
 
   The schema enforces one upvote per user/source item and lets article counters
-  and user achievement reputation be updated from a durable relation.
+  and user achievement reputation be updated from a durable binding.
 
   Business position:
 

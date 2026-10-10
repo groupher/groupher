@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD do
+defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.ChangelogTagCRUD do
   @moduledoc false
 
   use GroupherServer.TestMate
@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
   setup do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     community_tag_attrs = mock_attrs(:community_tag)
 
@@ -25,8 +25,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
   describe "[mutation cms tag]" do
     @create_tag_query S.CommunityTag.m(:create_community_tag)
     test "create tag with valid attrs, has default CHANGELOG thread and default changelogs",
-         ~m(community)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :changelog, %{title: "awesome"})
+         ~m(community user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :changelog,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -37,7 +44,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
         groupId: group.id
       }
 
-      passport_rules = %{community.title => %{"changelog.community_tag.create" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "changelog.community_tag.create" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       created = rule_conn |> gq_mutation(@create_tag_query, variables)
@@ -53,8 +66,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
       assert belong_community["slug"] == community.slug
     end
 
-    test "create tag with extra", ~m(community)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :changelog, %{title: "awesome"})
+    test "create tag with extra", ~m(community user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :changelog,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -66,7 +86,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
         extra: ["menuID", "menuID2"]
       }
 
-      passport_rules = %{community.title => %{"changelog.community_tag.create" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "changelog.community_tag.create" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       created = rule_conn |> gq_mutation(@create_tag_query, variables)
@@ -74,8 +100,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
       assert created["extra"] == ["menuID", "menuID2"]
     end
 
-    test "unauth user create tag fails", ~m(community user_conn guest_conn)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :changelog, %{title: "awesome"})
+    test "unauth user create tag fails", ~m(community user_conn guest_conn user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :changelog,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -113,7 +146,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
     @update_tag_query S.CommunityTag.m(:update_community_tag)
     test "auth user can update a tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :changelog,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         id: community_tag.id,
@@ -126,7 +165,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
         thread: "CHANGELOG"
       }
 
-      passport_rules = %{community.title => %{"changelog.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "changelog.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated = rule_conn |> gq_mutation(@update_tag_query, variables)
@@ -147,13 +192,24 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
     @delete_tag_query S.CommunityTag.m(:delete_community_tag)
     test "auth user can delete tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :changelog,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{id: community_tag.id, community: community.slug, thread: "CHANGELOG"}
 
       rule_conn =
         simu_conn(:user,
-          cms: %{community.title => %{"changelog.community_tag.delete" => true}}
+          cms: %{
+            community.title => %{
+              "community.update" => true,
+              "changelog.community_tag.delete" => true
+            }
+          }
         )
 
       deleted = rule_conn |> gq_mutation(@delete_tag_query, variables)
@@ -164,7 +220,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
     test "unauth user delete tag fails",
          ~m(community_tag_attrs community user_conn guest_conn user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :changelog, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :changelog,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{id: community_tag.id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})

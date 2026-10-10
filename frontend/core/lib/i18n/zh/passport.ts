@@ -24,8 +24,6 @@ export default {
   'passport.stacked.community_mirror': '镜像社区',
   'passport.rule.god': '系统 God',
   'passport.rule.root': '社区 Root',
-  'passport.rule.blackeye': '移入黑洞',
-  'passport.rule.homemirror': '同步到首页',
   'passport.rule.system_notification.publish': '发布系统通知',
   'passport.rule.stamp_passport': '授予权限',
   'passport.rule.community.create': '创建社区',

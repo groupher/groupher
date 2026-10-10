@@ -22,13 +22,13 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:browser_session_ref, non_null(:string))
 
       middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:read")
-      resolve(&R.Accounts.browser_sessions/3)
+      resolve(&R.Accounts.Sessions.browser_sessions/3)
     end
 
     @desc "List linked OAuth accounts for canonical Auth."
     field :linked_oauth_accounts, non_null(:linked_oauth_accounts) do
       middleware(M.DelegatedScope, audience: "phoenix:auth-api", scope: "auth:oauth:read")
-      resolve(&R.Accounts.linked_oauth_accounts/3)
+      resolve(&R.Accounts.Sessions.linked_oauth_accounts/3)
     end
 
     @desc "get all users"
@@ -36,12 +36,12 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:filter, non_null(:paged_users_filter))
 
       middleware(M.PageSizeProof)
-      resolve(&R.Accounts.paged_users/3)
+      resolve(&R.Accounts.Profiles.paged_users/3)
     end
 
     @desc "get cur user"
     field :me, :user do
-      resolve(&R.Accounts.me/3)
+      resolve(&R.Accounts.Profiles.me/3)
     end
 
     @desc "get user by login"
@@ -49,12 +49,12 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:login, non_null(:string))
       middleware(M.FrontDesk, :user)
 
-      resolve(&R.Accounts.user/3)
+      resolve(&R.Accounts.Profiles.user/3)
     end
 
     @desc "check the cur token is valid or not"
     field :session_state, :session_state do
-      resolve(&R.Accounts.session_state/3)
+      resolve(&R.Accounts.Sessions.session_state/3)
     end
 
     @desc "anyone can get anyone's subscribed communities"
@@ -64,7 +64,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
 
       middleware(M.PageSizeProof)
       middleware(M.FrontDesk, {:user, optional: true})
-      resolve(&R.Accounts.subscribed_communities/3)
+      resolve(&R.Accounts.Profiles.subscribed_communities/3)
     end
 
     @desc "get login user's mentions in mailbox"
@@ -73,7 +73,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.PageSizeProof)
-      resolve(&R.Accounts.paged_mailbox_mentions/3)
+      resolve(&R.Accounts.Mailbox.paged_mailbox_mentions/3)
     end
 
     @desc "get login user's notifications in mailbox"
@@ -82,7 +82,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.PageSizeProof)
-      resolve(&R.Accounts.paged_mailbox_notifications/3)
+      resolve(&R.Accounts.Mailbox.paged_mailbox_notifications/3)
     end
 
     @desc "get user's follower"
@@ -92,7 +92,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
 
       middleware(M.PageSizeProof)
       middleware(M.FrontDesk, :user)
-      resolve(&R.Accounts.paged_followers/3)
+      resolve(&R.Accounts.Relationships.paged_followers/3)
     end
 
     @desc "get user's follower"
@@ -102,7 +102,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
 
       middleware(M.PageSizeProof)
       middleware(M.FrontDesk, :user)
-      resolve(&R.Accounts.paged_followings/3)
+      resolve(&R.Accounts.Relationships.paged_followings/3)
     end
 
     @desc "get paged upvoted articles"
@@ -111,7 +111,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:filter, :upvoted_articles_filter)
 
       middleware(M.FrontDesk, :user)
-      resolve(&R.Accounts.paged_upvoted_articles/3)
+      resolve(&R.Accounts.Relationships.paged_upvoted_articles/3)
     end
 
     @desc "get paged collect folders of a user"
@@ -121,7 +121,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
 
       middleware(M.PageSizeProof)
       middleware(M.FrontDesk, :user)
-      resolve(&R.Accounts.paged_collect_folders/3)
+      resolve(&R.Accounts.Relationships.paged_collect_folders/3)
     end
 
     @desc "get paged collected articles"
@@ -130,7 +130,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:filter, non_null(:collected_articles_filter))
 
       middleware(M.PageSizeProof)
-      resolve(&R.Accounts.paged_collected_articles/3)
+      resolve(&R.Accounts.Relationships.paged_collected_articles/3)
     end
 
     @desc "paged communities which the user it's the editor"
@@ -140,21 +140,21 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
 
       middleware(M.PageSizeProof)
       middleware(M.FrontDesk, {:user, optional: true})
-      resolve(&R.Accounts.moderatorable_communities/3)
+      resolve(&R.Accounts.Profiles.moderatorable_communities/3)
     end
 
     @desc "get all passport rules include system and community etc ..."
     field :all_passport_rules_string, :rules do
       middleware(M.Authorize, :login)
 
-      resolve(&R.Accounts.get_all_rules/3)
+      resolve(&R.Accounts.Passport.get_all_rules/3)
     end
 
     @desc "search user by name"
     field :search_users, :paged_users do
       arg(:name, non_null(:string))
 
-      resolve(&R.Accounts.search_users/3)
+      resolve(&R.Accounts.Profiles.search_users/3)
     end
 
     @desc "get paged published article comments"
@@ -165,7 +165,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
 
       middleware(M.PageSizeProof)
       middleware(M.FrontDesk, :user)
-      resolve(&R.Accounts.paged_published_comments/3)
+      resolve(&R.Accounts.Profiles.paged_published_comments/3)
     end
 
     published_article_queries()

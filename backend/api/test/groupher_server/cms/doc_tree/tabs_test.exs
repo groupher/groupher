@@ -47,7 +47,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
 
       assert payload.affected_nodes == []
 
-      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(community, %{}, user, command_id: Ecto.UUID.generate())
 
       assert {:ok, %{tabs: []}} = CMS.DocTree.read_public(community)
     end
@@ -113,6 +114,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
   defp create_community(user) do
     mock_attrs(:community)
     |> Map.put(:user, user)
-    |> CMS.Communities.create(user)
+    |> CMS.Communities.create(user, Ecto.UUID.generate())
   end
 end

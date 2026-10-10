@@ -1,0 +1,384 @@
+defmodule GroupherServer.CMS.Communities.Tags.Stats do
+  @moduledoc """
+  Maintains cached counters for community tags.
+
+  The source of truth remains articles plus community tag associations. These
+  counters are updated on write paths and can be rebuilt from source data.
+
+  The batch upsert keeps one atomic PostgreSQL statement for concurrent counter
+  deltas. Its SQL is intentionally retained here as the persistence owner;
+  ordinary single-row upserts use Ecto's `insert_all` conflict query.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Tags.Stats
+        -> Repo / Oban
+  """
+
+  import Ecto.Query, warn: false
+  import Helper.Utils, only: [done: 1]
+
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.{Articles.Trash, Communities.ErrorCat, FrontDesk}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBinding,
+    ArticleBindingTag,
+    Community,
+    CommunityTag,
+    CommunityTagStat
+  }
+
+  alias Helper.{Datetime, ORM, T}
+
+  @audit_illegal :illegal
+  @tracked_threads CMS.Communities.Config.ordinary_article_threads()
+  @default_thread :post
+
+  @doc """
+  Increments the cached counters for one community tag.
+
+  ## Examples
+
+      CMS.Communities.Tags.Stats.inc(article, tag)
+      #=> {:ok, :pass}
+
+  """
+  @spec inc(Ecto.Schema.t(), CommunityTag.t() | T.id()) :: T.domain_res(:pass)
+  def inc(article, tag), do: do_update(article, tag, 1)
+
+  @doc """
+  Decrements the cached counters for one community tag.
+
+  ## Examples
+
+      CMS.Communities.Tags.Stats.dec(article, tag)
+      #=> {:ok, :pass}
+
+  """
+  @spec dec(Ecto.Schema.t(), CommunityTag.t() | T.id()) :: T.domain_res(:pass)
+  def dec(article, tag), do: do_update(article, tag, -1)
+
+  @doc """
+  Applies multiple tag counter deltas in one batch upsert.
+
+  ## Examples
+
+      CMS.Communities.Tags.Stats.update_many(article, [{tag, 1}, {other_tag, -1}])
+      #=> {:ok, :pass}
+
+  """
+  @spec update_many(Ecto.Schema.t(), [{CommunityTag.t(), -1 | 1}]) :: T.domain_res(:pass)
+  def update_many(_article, []), do: done(:pass)
+
+  def update_many(article, tag_deltas) do
+    trackable_tag_deltas =
+      Enum.filter(tag_deltas, fn {tag, _delta} -> trackable_tag?(tag) end)
+
+    if trackable_tag_deltas == [] do
+      done(:pass)
+    else
+      with {:ok, true} <- valid_article_tag_pairs?(article, trackable_tag_deltas),
+           {:ok, true} <- trackable_article?(article) do
+        upsert_deltas(article, trackable_tag_deltas)
+      end
+    end
+  end
+
+  @spec do_update(Ecto.Schema.t(), CommunityTag.t() | T.id(), integer()) :: T.domain_res(:pass)
+  defp do_update(article, tag, delta) when delta in [-1, 1] do
+    with {:ok, tag} <- ensure_tag(tag),
+         true <- trackable_tag?(tag),
+         {:ok, true} <- valid_article_tag_pair?(article, tag),
+         {:ok, true} <- trackable_article?(article) do
+      upsert_delta(article, tag, delta)
+    else
+      false -> done(:pass)
+      error -> error
+    end
+  end
+
+  @spec rebuild(CommunityTag.t() | T.id()) :: T.domain_res(CommunityTagStat.t())
+  def rebuild(tag) do
+    with {:ok, tag} <- ensure_tag(tag) do
+      case trackable_tag?(tag) do
+        true -> do_rebuild(tag)
+        false -> empty_stat(tag)
+      end
+    end
+  end
+
+  defp trackable_tag?(%CommunityTag{thread: thread}), do: thread in @tracked_threads
+
+  @spec rebuild_for_community(Community.t() | String.t(), atom()) :: T.domain_res(:pass)
+  def rebuild_for_community(community, thread \\ @default_thread)
+
+  def rebuild_for_community(%Community{} = community, thread) do
+    CommunityTag
+    |> where([t], t.community_id == ^community.id and t.thread == ^thread)
+    |> Repo.all()
+    |> Enum.reduce_while(done(:pass), fn tag, {:ok, :pass} ->
+      case rebuild(tag) do
+        {:ok, _} -> {:cont, done(:pass)}
+        error -> {:halt, error}
+      end
+    end)
+  end
+
+  def rebuild_for_community(community, thread) when is_binary(community) do
+    with {:ok, community} <- ORM.find_by(Community, slug: community) do
+      rebuild_for_community(community, thread)
+    end
+  end
+
+  defp do_rebuild(%CommunityTag{} = tag) do
+    today = Datetime.today()
+    day_start = Datetime.beginning_of_day(today)
+    day_end = Datetime.end_of_day(today)
+
+    base_query = base_rebuild_query(tag)
+
+    contents_count = base_query |> select([a, ...], count(a.id)) |> Repo.one()
+
+    today_contents_count =
+      base_query
+      |> where([a, ...], a.inserted_at >= ^day_start and a.inserted_at <= ^day_end)
+      |> select([a, ...], count(a.id))
+      |> Repo.one()
+
+    attrs = %{
+      community_tag_id: tag.id,
+      community_id: tag.community_id,
+      thread: tag.thread,
+      contents_count: contents_count,
+      today_contents_count: today_contents_count,
+      today_stat_date: today
+    }
+
+    %CommunityTagStat{}
+    |> CommunityTagStat.changeset(attrs)
+    |> Repo.insert(
+      on_conflict:
+        {:replace, [:contents_count, :today_contents_count, :today_stat_date, :updated_at]},
+      conflict_target: :community_tag_id
+    )
+  end
+
+  defp base_rebuild_query(%CommunityTag{thread: thread} = tag) do
+    Article
+    |> Trash.not_trashed_scope(thread)
+    |> join(:inner, [article], binding in ArticleBinding,
+      on: binding.article_id == article.id and binding.community_id == ^tag.community_id
+    )
+    |> join(:inner, [_article, binding], assignment in ArticleBindingTag,
+      on: assignment.article_binding_id == binding.id
+    )
+    |> where([article, _binding, assignment], assignment.tag_id == ^tag.id)
+    |> where(
+      [article, ...],
+      article.thread == ^thread and article.moderation_state != ^@audit_illegal
+    )
+  end
+
+  @spec get(CommunityTag.t() | T.id()) :: T.domain_res(CommunityTagStat.t())
+  def get(tag) do
+    with {:ok, tag} <- ensure_tag(tag) do
+      case ORM.find_by(CommunityTagStat, community_tag_id: tag.id) do
+        {:ok, stat} -> normalize_today(stat)
+        {:error, _} -> empty_stat(tag)
+      end
+    end
+  end
+
+  @spec get(String.t(), atom(), String.t()) :: T.domain_res(CommunityTagStat.t())
+  def get(community, thread, slug) do
+    with {:ok, tag} <- FrontDesk.community_tag(community, thread, slug) do
+      get(tag)
+    end
+  end
+
+  # Ecto API: https://hexdocs.pm/ecto/Ecto.Repo.html#insert_all/3.
+  defp upsert_delta(article, %CommunityTag{} = tag, delta) do
+    today = Datetime.today()
+    now = Datetime.now(:second)
+    today_delta = if same_utc_day?(article.inserted_at, today), do: delta, else: 0
+
+    attrs = %{
+      community_tag_id: tag.id,
+      community_id: tag.community_id,
+      thread: tag.thread,
+      contents_count: max(delta, 0),
+      today_contents_count: max(today_delta, 0),
+      today_stat_date: today,
+      inserted_at: now,
+      updated_at: now
+    }
+
+    on_conflict =
+      from(stat in CommunityTagStat,
+        update: [
+          set: [
+            contents_count: fragment("GREATEST(?, 0)", stat.contents_count + ^delta),
+            today_contents_count:
+              fragment(
+                "CASE WHEN ? = ? THEN GREATEST(?, 0) ELSE GREATEST(?, 0) END",
+                stat.today_stat_date,
+                ^today,
+                stat.today_contents_count + ^today_delta,
+                ^today_delta
+              ),
+            today_stat_date: ^today,
+            updated_at: ^now
+          ]
+        ]
+      )
+
+    case Repo.insert_all(CommunityTagStat, [attrs],
+           on_conflict: on_conflict,
+           conflict_target: [:community_tag_id]
+         ) do
+      {1, _rows} ->
+        done(:pass)
+
+      {count, _rows} ->
+        {:error, ErrorCat.invalid_domain_tag("tag stats upsert affected #{count} rows")}
+    end
+  end
+
+  defp upsert_deltas(article, tag_deltas) do
+    today = Datetime.today()
+    now = Datetime.now(:second)
+    today_multiplier = if same_utc_day?(article.inserted_at, today), do: 1, else: 0
+
+    query = """
+    INSERT INTO cms.community_tag_stats (
+      community_tag_id,
+      community_id,
+      thread,
+      contents_count,
+      today_contents_count,
+      today_stat_date,
+      inserted_at,
+      updated_at
+    )
+    SELECT
+      updates.community_tag_id,
+      updates.community_id,
+      updates.thread,
+      GREATEST(updates.delta, 0),
+      GREATEST(updates.delta * $6, 0),
+      $5,
+      $7,
+      $7
+    FROM UNNEST($1::bigint[], $2::bigint[], $3::text[], $4::integer[])
+      AS updates(community_tag_id, community_id, thread, delta)
+    ON CONFLICT (community_tag_id) DO UPDATE SET
+      contents_count = GREATEST(
+        cms.community_tag_stats.contents_count +
+          CASE WHEN EXCLUDED.contents_count = 0 THEN -1 ELSE 1 END,
+        0
+      ),
+      today_contents_count = CASE
+        WHEN cms.community_tag_stats.today_stat_date = $5
+          THEN GREATEST(
+            cms.community_tag_stats.today_contents_count +
+              CASE WHEN EXCLUDED.contents_count = 0 THEN -$6 ELSE $6 END,
+            0
+          )
+        ELSE EXCLUDED.today_contents_count
+      END,
+      today_stat_date = $5,
+      updated_at = $7
+    """
+
+    tags = Enum.map(tag_deltas, &elem(&1, 0))
+    deltas = Enum.map(tag_deltas, &elem(&1, 1))
+
+    Repo.query(query, [
+      Enum.map(tags, & &1.id),
+      Enum.map(tags, & &1.community_id),
+      Enum.map(tags, &Atom.to_string(&1.thread)),
+      deltas,
+      today,
+      today_multiplier,
+      now
+    ])
+    |> case do
+      {:ok, _} -> done(:pass)
+      error -> error
+    end
+  end
+
+  defp normalize_today(%CommunityTagStat{today_stat_date: today} = stat) do
+    case today == Datetime.today() do
+      true -> done(stat)
+      false -> done(%{stat | today_contents_count: 0, today_stat_date: Datetime.today()})
+    end
+  end
+
+  defp empty_stat({:ok, %CommunityTag{} = tag}), do: empty_stat(tag)
+
+  defp empty_stat(%CommunityTag{} = tag) do
+    %CommunityTagStat{
+      community_tag_id: tag.id,
+      community_id: tag.community_id,
+      thread: tag.thread,
+      contents_count: 0,
+      today_contents_count: 0,
+      today_stat_date: Datetime.today()
+    }
+    |> done()
+  end
+
+  defp ensure_tag(%CommunityTag{} = tag), do: done(tag)
+  defp ensure_tag(id), do: FrontDesk.community_tag(id)
+
+  defp trackable_article?(article) do
+    with {:ok, thread} <- FrontDesk.thread_of(article) do
+      done(thread in @tracked_threads and visible?(article))
+    end
+  end
+
+  defp valid_article_tag_pair?(article, %CommunityTag{} = tag) do
+    with %Community{} = community <- Repo.get(Community, tag.community_id),
+         {:ok, thread} <- FrontDesk.thread_of(article),
+         {:ok, %{community: %{id: community_id}}} <-
+           CMS.Articles.Bindings.get(article, community) do
+      case thread == tag.thread and community_id == tag.community_id do
+        true ->
+          done(true)
+
+        false ->
+          {:error, ErrorCat.invalid_domain_tag("article and tag not in same community or thread")}
+      end
+    else
+      nil -> {:error, ErrorCat.invalid_domain_tag("tag community not found")}
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp valid_article_tag_pairs?(article, tag_deltas) do
+    Enum.reduce_while(tag_deltas, done(true), fn {tag, _delta}, {:ok, true} ->
+      case valid_article_tag_pair?(article, tag) do
+        {:ok, true} -> {:cont, done(true)}
+        error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp visible?(article) do
+    Map.get(article, :pending) != @audit_illegal
+  end
+
+  defp same_utc_day?(nil, _today), do: false
+
+  defp same_utc_day?(inserted_at, today) do
+    inserted_at
+    |> Datetime.to_date()
+    |> Kernel.==(today)
+  end
+end

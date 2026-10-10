@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Model.CommunityCategory do
   @moduledoc """
   Join schema linking communities to discovery categories.
 
-  The relation supports category-filtered community listing without embedding
+  The binding supports category-filtered community listing without embedding
   category state into the community row.
 
   Business position:

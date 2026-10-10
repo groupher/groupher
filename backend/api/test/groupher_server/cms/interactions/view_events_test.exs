@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
                  "article" => %{
                    "community" => community.slug,
                    "thread" => "POST",
-                   "innerId" => Integer.to_string(post.inner_id)
+                   "innerId" => Integer.to_string(article_inner_id(post, community))
                  }
                },
                context: %{
@@ -276,7 +276,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
 
     assert {:ok, _result} = track_article_view(post, user, read_purpose: :public_read)
 
-    assert :ok = ViewTracker.delete_article_state(:post, post.id)
+    assert {:ok, :pass} = ViewTracker.delete_article_state(:post, post.id)
     assert Repo.aggregate(ViewDedupeState, :count) == 0
     assert Repo.aggregate(ViewerState, :count) == 0
     assert is_nil(Repo.get_by(ArticleStats, thread: :post, article_id: post.id))
@@ -288,14 +288,14 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     assert {:ok, %{tracked: true}} =
              track_article_view(post, user, read_purpose: :public_read)
 
-    assert {:ok, :ok} = delete_physical_article(post)
+    assert {:ok, {:ok, :pass}} = delete_physical_article(post)
     assert_article_view_state_deleted(post.id)
   end
 
   test "tracking after committed permanent deletion cannot recreate projection rows" do
     {_community, post, _attrs, user} = mock_article(:post)
 
-    assert {:ok, :ok} = delete_physical_article(post)
+    assert {:ok, {:ok, :pass}} = delete_physical_article(post)
 
     assert {:error, _reason} =
              track_article_view(post, user, read_purpose: :public_read)
@@ -333,7 +333,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     {_community, post, _attrs, _user} = mock_article(:post)
     article = Repo.get!(CMS.Model.Article, post.article_id)
 
-    assert :ok = CMS.ArticleStats.apply_comment_counts(article)
+    assert {:ok, :pass} = CMS.ArticleStats.apply_comment_counts(article)
 
     assert {:ok, %{comments_count: 0, comments_revision: 0}} =
              CMS.ArticleStats.fetch(:post, post.id)
@@ -350,8 +350,8 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
       set: [comments_count: 9, upvotes_count: 9, comments_revision: 0, interaction_revision: 0]
     )
 
-    assert :ok = CMS.ArticleStats.rebuild_comment_fields(article)
-    assert :ok = CMS.ArticleStats.rebuild_interaction_fields(article)
+    assert {:ok, :pass} = CMS.ArticleStats.rebuild_comment_fields(article)
+    assert {:ok, :pass} = CMS.ArticleStats.rebuild_interaction_fields(article)
 
     assert {:ok,
             %{
@@ -435,7 +435,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     Repo.transaction(fn ->
       article = Repo.get!(CMS.Model.Article, post.article_id)
       {:ok, _deleted} = Repo.delete(article)
-      :ok = ViewTracker.delete_article_state(:post, post.article_id)
+      {:ok, :pass} = ViewTracker.delete_article_state(:post, post.article_id)
     end)
   end
 

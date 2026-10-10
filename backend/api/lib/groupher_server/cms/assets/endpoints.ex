@@ -37,15 +37,15 @@ defmodule GroupherServer.CMS.Assets.Endpoints do
   end
 
   @doc "Fails application startup when an active Assets Hub boundary is unconfigured."
-  @spec validate!(map(), atom()) :: :ok
+  @spec validate!(map(), atom()) :: {:ok, :pass}
   def validate!(env \\ System.get_env(), app_env \\ Application.get_env(:groupher_server, :env)) do
     if app_env != :prod do
-      :ok
+      {:ok, :pass}
     else
       missing = Enum.reject(@required_keys, &match?({:ok, _}, fetch(&1, env)))
 
       if missing == [] do
-        :ok
+        {:ok, :pass}
       else
         raise ArgumentError, "missing Assets Hub endpoints: #{Enum.join(missing, ", ")}"
       end

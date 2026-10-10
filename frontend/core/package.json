@@ -11,7 +11,9 @@
     "./oxfmt": "./config/oxfmt.json",
     "./oxlint": "./config/oxlint.json",
     "./dev-hub-reporter": "./lib/devHubReporter/index.ts",
-    "./dev-hub-reporter/react": "./ui/DevHubReporter/index.tsx"
+    "./dev-hub-reporter/react": "./ui/DevHubReporter/index.tsx",
+    "./graphql/authoring": "./lib/graphql/authoring.ts",
+    "./graphql/generated": "./lib/graphql/generated/graphql.ts"
   },
   "scripts": {
     "type-check": "pnpm exec tsc --noEmit --project ./tsconfig.app.json",

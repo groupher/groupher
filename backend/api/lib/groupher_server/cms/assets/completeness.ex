@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.Assets.Completeness do
            on_conflict: :nothing,
            conflict_target: [:community_id]
          ) do
-      {:ok, _record} -> :ok
+      {:ok, _record} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.Assets.Completeness do
 
   @doc false
   def lock_scope(community_id) do
-    with :ok <- ensure_new_scope(community_id),
+    with {:ok, _} <- ensure_new_scope(community_id),
          %AssetUsageCompleteness{} <-
            Repo.one!(
              from(scope in AssetUsageCompleteness,
@@ -55,7 +55,7 @@ defmodule GroupherServer.CMS.Assets.Completeness do
                lock: "FOR UPDATE"
              )
            ) do
-      :ok
+      {:ok, :pass}
     end
   end
 
@@ -71,9 +71,9 @@ defmodule GroupherServer.CMS.Assets.Completeness do
 
   @doc false
   def guard(community_id) do
-    with :ok <- lock_scope(community_id),
+    with {:ok, _} <- lock_scope(community_id),
          true <- completed?(community_id) do
-      :ok
+      {:ok, :pass}
     else
       false -> {:error, CMS.Assets.ErrorCat.custom("asset usage backfill incomplete")}
       {:error, reason} -> {:error, reason}

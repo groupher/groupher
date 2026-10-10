@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
+defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.PostTagCRUD do
   @moduledoc false
 
   use GroupherServer.TestMate
@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
   setup do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user)
+    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     community_tag_attrs = mock_attrs(:community_tag)
 
@@ -26,8 +26,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
   describe "[mutation cms tag]" do
     @create_tag_query S.CommunityTag.m(:create_community_tag)
     test "create tag with valid attrs, has default POST thread and default posts",
-         ~m(community)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "awesome"})
+         ~m(community user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -38,7 +45,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
         groupId: group.id
       }
 
-      passport_rules = %{community.title => %{"post.community_tag.create" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.create" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       created = rule_conn |> gq_mutation(@create_tag_query, variables)
@@ -55,8 +68,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       assert belong_community["slug"] == community.slug
     end
 
-    test "create tag with extra", ~m(community)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "awesome"})
+    test "create tag with extra", ~m(community user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -68,7 +88,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
         extra: ["menuID", "menuID2"]
       }
 
-      passport_rules = %{community.title => %{"post.community_tag.create" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.create" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       created = rule_conn |> gq_mutation(@create_tag_query, variables)
@@ -76,8 +102,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       assert created["extra"] == ["menuID", "menuID2"]
     end
 
-    test "unauth user create tag fails", ~m(community user_conn guest_conn)a do
-      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "awesome"})
+    test "unauth user create tag fails", ~m(community user_conn guest_conn user)a do
+      {:ok, group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "awesome"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         title: "tag title",
@@ -115,9 +148,22 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
     @update_tag_query S.CommunityTag.m(:update_community_tag_2)
     test "auth user can update a tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
-      {:ok, new_group} = CMS.Communities.create_tag_group(community, :post, %{title: "new group"})
+      {:ok, new_group} =
+        CMS.Communities.create_tag_group(
+          community,
+          :post,
+          %{title: "new group"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         id: community_tag.id,
@@ -131,7 +177,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
         marker: %{type: "ICON", provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}
       }
 
-      passport_rules = %{community.title => %{"post.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated = rule_conn |> gq_mutation(@update_tag_query, variables)
@@ -155,7 +207,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
     test "auth user can update a tag with markdown note longer than varchar default",
          ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       long_desc = String.duplicate("长标签说明，支持 Markdown 内容。\n\n", 20)
 
@@ -165,7 +223,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
         community: community.slug
       }
 
-      passport_rules = %{community.title => %{"post.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated = rule_conn |> gq_mutation(@update_tag_query, variables)
@@ -178,10 +242,22 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       {:ok, other_community} = mock_community(user)
 
       {:ok, other_group} =
-        CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
+        CMS.Communities.create_tag_group(
+          other_community,
+          :post,
+          %{title: "other"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         id: community_tag.id,
@@ -189,7 +265,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
         groupId: other_group.id
       }
 
-      passport_rules = %{community.title => %{"post.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       assert rule_conn
@@ -203,13 +285,24 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
     @delete_tag_query S.CommunityTag.m(:delete_community_tag_2)
     test "auth user can delete tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{id: community_tag.id, community: community.slug}
 
       rule_conn =
         simu_conn(:user,
-          cms: %{community.title => %{"post.community_tag.delete" => true}}
+          cms: %{
+            community.title => %{
+              "community.update" => true,
+              "post.community_tag.delete" => true
+            }
+          }
         )
 
       deleted = rule_conn |> gq_mutation(@delete_tag_query, variables)
@@ -220,7 +313,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
     test "unauth user delete tag fails",
          ~m(community_tag_attrs community user_conn guest_conn user)a do
       {:ok, community_tag} =
-        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          community_tag_attrs,
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{id: community_tag.id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
@@ -252,7 +351,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       {:ok, other_community} = mock_community(user)
 
       {:ok, other_group} =
-        CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
+        CMS.Communities.create_tag_group(
+          other_community,
+          :post,
+          %{title: "other"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         id: other_group.id,
@@ -261,7 +366,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
         thread: "POST"
       }
 
-      passport_rules = %{community.title => %{"post.community_tag.update" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.update" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       assert rule_conn
@@ -277,7 +388,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       {:ok, other_community} = mock_community(user)
 
       {:ok, other_group} =
-        CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
+        CMS.Communities.create_tag_group(
+          other_community,
+          :post,
+          %{title: "other"},
+          user,
+          Ecto.UUID.generate()
+        )
 
       variables = %{
         id: other_group.id,
@@ -285,7 +402,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
         thread: "POST"
       }
 
-      passport_rules = %{community.title => %{"post.community_tag.delete" => true}}
+      passport_rules = %{
+        community.title => %{
+          "community.update" => true,
+          "post.community_tag.delete" => true
+        }
+      }
+
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       assert rule_conn

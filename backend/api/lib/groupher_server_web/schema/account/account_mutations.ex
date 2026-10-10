@@ -22,7 +22,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:social, :social_input)
 
       middleware(M.Authorize, :login)
-      resolve(&R.Accounts.update_profile/3)
+      resolve(&R.Accounts.Profiles.update_profile/3)
     end
 
     @desc "Sign in with an OAuth provider and return token info."
@@ -31,7 +31,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:browser_session, :browser_session_metadata_input)
 
       middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:signin")
-      resolve(&R.Accounts.signin_oauth/3)
+      resolve(&R.Accounts.Sessions.signin_oauth/3)
     end
 
     @desc "Refresh a persisted Browser Session for canonical Auth only."
@@ -39,7 +39,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:browser_session_ref, non_null(:string))
 
       middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:refresh")
-      resolve(&R.Accounts.refresh_browser_session/3)
+      resolve(&R.Accounts.Sessions.refresh_browser_session/3)
     end
 
     @desc "Revoke the current persisted Browser Session for canonical Auth only."
@@ -47,7 +47,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:browser_session_ref, non_null(:string))
 
       middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:revoke")
-      resolve(&R.Accounts.revoke_browser_session/3)
+      resolve(&R.Accounts.Sessions.revoke_browser_session/3)
     end
 
     field :revoke_browser_session_public, :done do
@@ -55,14 +55,14 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:public_ref, non_null(:string))
 
       middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:revoke")
-      resolve(&R.Accounts.revoke_browser_session_public/3)
+      resolve(&R.Accounts.Sessions.revoke_browser_session_public/3)
     end
 
     field :revoke_other_browser_sessions, :done do
       arg(:browser_session_ref, non_null(:string))
 
       middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:revoke")
-      resolve(&R.Accounts.revoke_other_browser_sessions/3)
+      resolve(&R.Accounts.Sessions.revoke_other_browser_sessions/3)
     end
 
     @desc "Link a verified OAuth identity through canonical Auth."
@@ -74,7 +74,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
         scope: "auth:oauth:link"
       )
 
-      resolve(&R.Accounts.link_oauth_identity/3)
+      resolve(&R.Accounts.Sessions.link_oauth_identity/3)
     end
 
     @desc "Unlink one OAuth binding through canonical Auth."
@@ -86,7 +86,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
         scope: "auth:oauth:unlink"
       )
 
-      resolve(&R.Accounts.unlink_oauth_identity/3)
+      resolve(&R.Accounts.Sessions.unlink_oauth_identity/3)
     end
 
     @desc "follow a user"
@@ -95,7 +95,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :user)
-      resolve(&R.Accounts.follow/3)
+      resolve(&R.Accounts.Relationships.follow/3)
     end
 
     @desc "unfollow a user"
@@ -104,7 +104,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :user)
-      resolve(&R.Accounts.undo_follow/3)
+      resolve(&R.Accounts.Relationships.undo_follow/3)
     end
 
     @desc "create a collect folder"
@@ -114,7 +114,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:desc, :string)
 
       middleware(M.Authorize, :login)
-      resolve(&R.Accounts.create_collect_folder/3)
+      resolve(&R.Accounts.Relationships.create_collect_folder/3)
     end
 
     @desc "update a collect folder"
@@ -125,7 +125,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:desc, :string)
 
       middleware(M.Authorize, :login)
-      resolve(&R.Accounts.update_collect_folder/3)
+      resolve(&R.Accounts.Relationships.update_collect_folder/3)
     end
 
     @desc "delete a collect folder"
@@ -133,7 +133,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      resolve(&R.Accounts.delete_collect_folder/3)
+      resolve(&R.Accounts.Relationships.delete_collect_folder/3)
     end
 
     @desc "add article into a collect folder"
@@ -145,7 +145,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.Accounts.add_to_collect/3)
+      resolve(&R.Accounts.Relationships.add_to_collect/3)
     end
 
     @desc "remove article from a collect folder"
@@ -157,7 +157,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :article)
 
-      resolve(&R.Accounts.remove_from_collect/3)
+      resolve(&R.Accounts.Relationships.remove_from_collect/3)
     end
 
     @desc "mark a message as read"
@@ -166,7 +166,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:type, :mailbox_type, default_value: :mention)
 
       middleware(M.Authorize, :login)
-      resolve(&R.Accounts.mark_read/3)
+      resolve(&R.Accounts.Mailbox.mark_read/3)
     end
 
     @desc "mark all unread message as read"
@@ -174,7 +174,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:type, :mailbox_type, default_value: :mention)
 
       middleware(M.Authorize, :login)
-      resolve(&R.Accounts.mark_read_all/3)
+      resolve(&R.Accounts.Mailbox.mark_read_all/3)
     end
   end
 end

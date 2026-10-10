@@ -12,16 +12,17 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   the current canonical public DTO instead of retaining a physical content row.
   """
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Articles.Draft.Store, as: DraftStore
+  alias CMS.Articles.Bindings
   alias CMS.Articles.RevisionResult
   alias CMS.Articles.Store, as: ArticleStore
   alias CMS.Articles.Publish.Effects
   alias CMS.Articles.Publish.Target
   alias CMS.Command
   alias CMS.FrontDesk
-  alias CMS.Model.{Article, ArticleLifecycle, Community}
+  alias CMS.Model.{Article, ArticleBinding, ArticleLifecycle, Community}
   alias CMS.Articles.Commands.RevisionConfirmation, as: Confirmation
 
   @doc "Updates and republishes one stable Article using optimistic content versioning."
@@ -29,8 +30,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
           {:ok, map()} | {:error, term()}
   def execute(article_or_projection, attrs, %User{} = user, command_id) do
     with {:ok, article} <- load_article(article_or_projection),
-         {:ok, %Community{} = community} <-
-           FrontDesk.community(article.community_id, mode: :internal) do
+         {:ok, %{community: %Community{} = community}} <-
+           binding_context(article, article_or_projection) do
       command = %Command{
         actor: user,
         command_id: command_id,
@@ -58,7 +59,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
        ) do
     with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user),
          {:ok, %{public: public}} <-
-           update_and_publish(article, attrs, author, user, community) do
+           update_and_publish(article, attrs, author, user, community, command_id),
+         %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) <-
+           Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id) do
       with {:ok, revision_id} <- required_revision_id(public),
            {:ok, publication_version} <- required_publication_version(public),
            {:ok, published_at} <- required_published_at(public) do
@@ -68,7 +71,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
            revision_id: revision_id,
            community_id: community.id,
            author_id: article.author_id,
-           inner_id: article.inner_id,
+           inner_id: inner_id,
            thread: article.thread,
            publication_version: publication_version,
            published_at: published_at,
@@ -96,19 +99,20 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   defp required_published_at(%{inserted_at: %DateTime{} = value}), do: {:ok, value}
   defp required_published_at(_), do: {:error, :missing_published_at}
 
-  defp update_and_publish(article, attrs, author, user, community) do
-    CMS.Gate.Access.with_check(user, :edit, article, fn canonical ->
+  defp update_and_publish(article, attrs, author, user, community, command_id) do
+    CMS.Gate.with_community_check(user, :edit, community, article, fn canonical ->
       with {:ok, lifecycle} <- lifecycle(canonical.id),
            {:ok, draft} <- DraftStore.ensure_from_public(canonical, author),
-           :ok <- expected_version(attrs, draft.version),
+           {:ok, _} <- expected_version(attrs, draft.version),
            {:ok, updated} <-
              DraftStore.update(canonical, attrs, author, expected_version: draft.version),
            publish_opts =
              [
                expected_draft_version: updated.version,
-               expected_lifecycle_version: lifecycle.version
+               expected_lifecycle_version: lifecycle.version,
+               community: community
              ] ++
-               community_tag_opts(attrs),
+               community_tag_opts(attrs) ++ [outbox_command_id: command_id],
            {:ok, %{article: published} = publish_result} <-
              Target.publish(canonical, author, publish_opts),
            {:ok, _effects} <- Effects.run(publish_result),
@@ -120,8 +124,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
 
   defp expected_version(attrs, version) do
     case Map.get(attrs, :expected_version) do
-      nil -> :ok
-      ^version -> :ok
+      nil -> {:ok, :pass}
+      ^version -> {:ok, :pass}
       _ -> {:error, :draft_version_conflict}
     end
   end
@@ -142,14 +146,27 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
     end
   end
 
+  defp binding_context(article, %{community: %Community{} = community}) do
+    Bindings.get(article, community)
+  end
+
+  defp binding_context(article, _article_or_projection),
+    do: Bindings.get(article, Map.get(article, :community))
+
   defp public_projection(article_id, community) do
     case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{inner_id: inner_id, thread: thread}} when is_integer(inner_id) ->
-        FrontDesk.article(%{
-          community: community.slug,
-          thread: thread,
-          inner_id: inner_id
-        })
+      {:ok, %Article{thread: thread}} ->
+        case Repo.get_by(ArticleBinding, article_id: article_id, community_id: community.id) do
+          %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) ->
+            FrontDesk.article(%{
+              community: community.slug,
+              thread: thread,
+              inner_id: inner_id
+            })
+
+          _ ->
+            {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+        end
 
       _ ->
         {:error, CMS.Articles.ErrorCat.projection_not_updated()}

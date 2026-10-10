@@ -38,7 +38,7 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
          kid when is_binary(kid) <- header["kid"],
          {:ok, jwk} <- signing_key(kid),
          {true, %JOSE.JWT{fields: claims}, _jws} <- JOSE.JWT.verify_strict(jwk, ["RS256"], token),
-         :ok <- validate_claims(claims) do
+         {:ok, :pass} <- validate_claims(claims) do
       {:ok,
        %{
          audience: claims["aud"],
@@ -128,7 +128,7 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
         valid_token_ttl?(claims)
       ])
 
-    if valid, do: :ok, else: {:error, ErrorCat.invalid_claims()}
+    if valid, do: {:ok, :pass}, else: {:error, ErrorCat.invalid_claims()}
   end
 
   defp valid_subject?(subject) do

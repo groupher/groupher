@@ -1,12 +1,31 @@
 import { QueryClient } from '@tanstack/react-query'
 
-import { executeOptimisticOperation } from './execute'
+import { executeCommand, executeOptimisticOperation } from './execute'
 import { enqueueOptimisticToggle } from './toggle'
 import type { TOptimisticPlan, TOptimisticOperation, TOptimisticToggleOperation } from './types'
 
 const emptyPlan: TOptimisticPlan = { changes: [], refetchOnFailure: [] }
 
 describe('optimistic operation executor', () => {
+  it('creates one command identity at the transport boundary and reuses an injected identity', async () => {
+    const requests: string[] = []
+    const request = async (variables: { value: string; commandId: string }) => {
+      requests.push(variables.commandId)
+      return variables.value
+    }
+
+    await expect(executeCommand({ request, variables: { value: 'first' } })).resolves.toBe('first')
+    await expect(
+      executeCommand({ request, variables: { value: 'first' }, commandId: requests[0] }),
+    ).resolves.toBe('first')
+
+    expect(requests).toHaveLength(2)
+    expect(requests[0]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    )
+    expect(requests[1]).toBe(requests[0])
+  })
+
   it('cancels affected queries and serializes one queue lane', async () => {
     const queryClient = new QueryClient()
     const cancelQueries = vi.spyOn(queryClient, 'cancelQueries').mockResolvedValue()

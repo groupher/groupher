@@ -15,29 +15,46 @@ defmodule GroupherServer.CMS.Interactions do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Interactions.{ErrorCat, Reactions, ReadState, Scope}
+  alias CMS.Comments.InteractionResponse
+  alias CMS.Interactions.{CommandResult, ErrorCat, Reactions, ReadState, Scope}
+  alias CMS.Model.Comment
 
   @doc """
   Reports an Artiment using the immutable reporter identity.
 
   ## Examples
 
-      CMS.Interactions.report(comment, "spam", %{}, actor)
+      CMS.Interactions.report(comment, "spam", %{}, actor, command_id)
 
   """
-  @spec report(struct(), String.t(), term(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate report(artiment, reason, attrs, actor), to: Reactions
+  @spec report(struct(), String.t(), term(), User.t(), Ecto.UUID.t()) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate report(artiment, reason, attrs, actor, command_id), to: Reactions
 
   @doc """
   Removes the current actor's Artiment report idempotently.
 
   ## Examples
 
-      CMS.Interactions.undo_report(comment, actor)
+      CMS.Interactions.undo_report(comment, actor, command_id)
 
   """
-  @spec undo_report(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_report(artiment, actor), to: Reactions
+  @spec undo_report(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_report(artiment, actor, command_id), to: Reactions
+
+  @doc "Reports an Artiment and returns its stable report presentation."
+  def report_result(artiment, reason, attrs, %User{} = actor, command_id) do
+    artiment
+    |> Reactions.report(reason, attrs, actor, command_id)
+    |> present_report(actor)
+  end
+
+  @doc "Removes a report and returns its stable report presentation."
+  def undo_report_result(artiment, %User{} = actor, command_id) do
+    artiment
+    |> Reactions.undo_report(actor, command_id)
+    |> present_report(actor)
+  end
 
   @doc """
   Returns typed Interaction state for one Artiment and optional viewer.
@@ -61,6 +78,11 @@ defmodule GroupherServer.CMS.Interactions do
   @spec viewer_states([struct()], User.t() | nil, keyword()) :: map()
   defdelegate viewer_states(artiments, viewer, opts \\ []), to: ReadState
 
+  @doc "Resolves public Article paths and returns ordered private Interaction state."
+  @spec article_states_for_paths([map()], User.t(), keyword()) ::
+          {:ok, [map()]} | {:error, term()}
+  defdelegate article_states_for_paths(paths, viewer, opts \\ []), to: ReadState
+
   @doc "Returns public presentation state without current-viewer fields."
   defdelegate public_state(artiment, opts \\ []), to: ReadState
 
@@ -78,27 +100,37 @@ defmodule GroupherServer.CMS.Interactions do
   @spec counts([struct()]) :: map() | {:error, ErrorCat.error()}
   defdelegate counts(artiments), to: ReadState
 
+  defp present_report({:ok, %Comment{} = comment}, viewer) do
+    InteractionResponse.one(comment, viewer, surface: :report)
+  end
+
+  defp present_report({:ok, article}, viewer) do
+    CMS.Articles.Response.one(article, viewer, surface: :report)
+  end
+
+  defp present_report({:error, _reason} = error, _viewer), do: error
+
   @doc """
   Collects an Article idempotently and returns the canonical Article.
 
   ## Examples
 
-      CMS.Interactions.collect(article, actor)
+      CMS.Interactions.collect(article, actor, command_id)
 
   """
-  @spec collect(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate collect(article, actor), to: Reactions
+  @spec collect(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate collect(article, actor, command_id), to: Reactions
 
   @doc """
   Removes an Article collect idempotently and returns the canonical Article.
 
   ## Examples
 
-      CMS.Interactions.undo_collect(article, actor)
+      CMS.Interactions.undo_collect(article, actor, command_id)
 
   """
-  @spec undo_collect(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_collect(article, actor), to: Reactions
+  @spec undo_collect(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_collect(article, actor, command_id), to: Reactions
 
   @doc """
   Returns public paged users who collected an already-scoped Article.
@@ -116,46 +148,82 @@ defmodule GroupherServer.CMS.Interactions do
 
   ## Examples
 
-      CMS.Interactions.emotion(comment, :heart, actor)
+      CMS.Interactions.emotion(comment, :heart, actor, command_id)
 
   """
-  @spec emotion(struct(), atom(), User.t(), String.t() | nil) ::
+  @spec emotion(struct(), atom(), User.t(), Ecto.UUID.t()) ::
           {:ok, struct()} | {:error, term()}
-  defdelegate emotion(artiment, emotion, actor, command_id \\ nil), to: Reactions
+  defdelegate emotion(artiment, emotion, actor, command_id), to: Reactions
+
+  @doc "Applies an emotion and returns the stable command result."
+  @spec emotion_result(struct(), atom(), User.t(), Ecto.UUID.t()) ::
+          {:ok, map() | struct()} | {:error, term()}
+  def emotion_result(artiment, emotion, %User{} = actor, command_id) do
+    artiment
+    |> Reactions.emotion(emotion, actor, command_id)
+    |> CommandResult.build(actor)
+  end
 
   @doc """
   Removes an Artiment emotion idempotently and returns the canonical Artiment.
 
   ## Examples
 
-      CMS.Interactions.undo_emotion(comment, :heart, actor)
+      CMS.Interactions.undo_emotion(comment, :heart, actor, command_id)
 
   """
-  @spec undo_emotion(struct(), atom(), User.t(), String.t() | nil) ::
+  @spec undo_emotion(struct(), atom(), User.t(), Ecto.UUID.t()) ::
           {:ok, struct()} | {:error, term()}
-  defdelegate undo_emotion(artiment, emotion, actor, command_id \\ nil), to: Reactions
+  defdelegate undo_emotion(artiment, emotion, actor, command_id), to: Reactions
+
+  @doc "Removes an emotion and returns the stable command result."
+  @spec undo_emotion_result(struct(), atom(), User.t(), Ecto.UUID.t()) ::
+          {:ok, map() | struct()} | {:error, term()}
+  def undo_emotion_result(artiment, emotion, %User{} = actor, command_id) do
+    artiment
+    |> Reactions.undo_emotion(emotion, actor, command_id)
+    |> CommandResult.build(actor)
+  end
 
   @doc """
   Adds an Artiment upvote idempotently and returns the canonical Artiment.
 
   ## Examples
 
-      CMS.Interactions.upvote(article, actor)
+      CMS.Interactions.upvote(article, actor, command_id)
 
   """
-  @spec upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate upvote(artiment, actor, command_id \\ nil), to: Reactions
+  @spec upvote(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate upvote(artiment, actor, command_id), to: Reactions
+
+  @doc "Applies an upvote and returns the stable command result."
+  @spec upvote_result(struct(), User.t(), Ecto.UUID.t()) ::
+          {:ok, map() | struct()} | {:error, term()}
+  def upvote_result(artiment, %User{} = actor, command_id) do
+    artiment
+    |> Reactions.upvote(actor, command_id)
+    |> CommandResult.build(actor)
+  end
 
   @doc """
   Removes an Artiment upvote idempotently and returns the canonical Artiment.
 
   ## Examples
 
-      CMS.Interactions.undo_upvote(article, actor)
+      CMS.Interactions.undo_upvote(article, actor, command_id)
 
   """
-  @spec undo_upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_upvote(artiment, actor, command_id \\ nil), to: Reactions
+  @spec undo_upvote(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_upvote(artiment, actor, command_id), to: Reactions
+
+  @doc "Removes an upvote and returns the stable command result."
+  @spec undo_upvote_result(struct(), User.t(), Ecto.UUID.t()) ::
+          {:ok, map() | struct()} | {:error, term()}
+  def undo_upvote_result(artiment, %User{} = actor, command_id) do
+    artiment
+    |> Reactions.undo_upvote(actor, command_id)
+    |> CommandResult.build(actor)
+  end
 
   @doc """
   Returns public paged users who upvoted an already-scoped Article.

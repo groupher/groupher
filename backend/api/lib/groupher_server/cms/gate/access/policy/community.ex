@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   @moduledoc """
-  Community access composition across Lifecycle, relations and Passport.
+  Community access composition across Lifecycle, bindings and Passport.
 
   Read/list visibility belongs to Community Scope. Access only checks the
   resource mutation and management actions against the loaded facts.
@@ -13,10 +13,14 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
         -> allow / deny
         -> domain context
 
+  Moderator management uses the dedicated `:manage_moderators` action. Root and
+  global-god admission stays here; moderator persistence never re-checks actor
+  policy.
+
   Example contract:
 
       Access.Policy.Community.check_access(actor, :update, community, %Context.Access.Community{})
-      #=> :ok | {:error, reason}
+      #=> {:ok, :pass} | {:error, reason}
   """
 
   require GroupherServer.CMS.Gate.Const
@@ -30,11 +34,17 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   alias CMS.Gate.{Const, ErrorCat}
   alias CMS.Gate.Context.Access.Community, as: CommunityContext
   alias CMS.Model.Community
+  alias CMS.Passport
   alias CMS.Passport.Registry
 
   @read_actions [:read, :list]
   @command_actions [
     :update,
+    :category_create,
+    :category_update,
+    :category_delete,
+    :category_set,
+    :category_unset,
     :request_destroy,
     :restore,
     :schedule_destroy,
@@ -44,7 +54,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   @doc "Checks Community admission using the default loaded lifecycle context."
   @spec check_access(User.t() | nil, atom(), Community.t()) ::
-          :ok | {:error, ErrorCat.error()}
+          {:ok, :pass} | {:error, ErrorCat.error()}
   def check_access(user, action, community) do
     check_access(user, action, community, %CommunityContext{
       community: community,
@@ -54,7 +64,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   @doc "Checks Community admission against an explicitly typed Access Context."
   @spec check_access(User.t() | nil, atom(), Community.t(), CommunityContext.t()) ::
-          :ok | {:error, ErrorCat.error()}
+          {:ok, :pass} | {:error, ErrorCat.error()}
   def check_access(_user, action, %Community{} = community, %CommunityContext{} = context)
       when action in @read_actions do
     read_allowed?(community, context)
@@ -63,13 +73,24 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   def check_access(user, action, %Community{} = community, %CommunityContext{} = context)
       when action in @command_actions do
     with {:ok, true} <- lifecycle_allowed(community, :command, context) do
-      relation_allowed(command_relation_allowed?(user, community, action))
+      relation_allowed(command_binding_allowed?(user, community, action))
+    end
+  end
+
+  def check_access(
+        user,
+        :manage_moderators,
+        %Community{} = community,
+        %CommunityContext{} = context
+      ) do
+    with {:ok, true} <- lifecycle_allowed(community, :command, context) do
+      moderator_management_access(user, community)
     end
   end
 
   def check_access(user, :manage_docs, %Community{} = community, %CommunityContext{} = context) do
     case Lifecycle.can_write(community, context) do
-      {:ok, true} -> relation_allowed(management_relation_allowed?(user, community))
+      {:ok, true} -> relation_allowed(management_binding_allowed?(user, community))
       {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
       {:error, reason} -> {:error, reason}
     end
@@ -80,7 +101,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp read_allowed?(%Community{} = community, context) do
     case Lifecycle.can_read(community, context) do
       {:ok, true} ->
-        :ok
+        {:ok, :pass}
 
       {:ok, false} ->
         {:error, ErrorCat.permission_denied()}
@@ -93,7 +114,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
     end
   end
 
-  defp relation_allowed(true), do: :ok
+  defp relation_allowed(true), do: {:ok, :pass}
   defp relation_allowed(false), do: {:error, ErrorCat.permission_denied()}
 
   defp lifecycle_allowed(%Community{} = community, :command, context) do
@@ -106,41 +127,72 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
     end
   end
 
-  defp command_relation_allowed?(nil, _community, _action), do: false
-  defp command_relation_allowed?(:operations, _community, _action), do: true
-  defp command_relation_allowed?(%{type: :operations}, _community, _action), do: true
+  defp command_binding_allowed?(nil, _community, _action), do: false
+  defp command_binding_allowed?(:operations, _community, _action), do: true
+  defp command_binding_allowed?(%{type: :operations}, _community, _action), do: true
 
-  defp command_relation_allowed?(user, community, :request_destroy) do
-    base_command_relation_allowed?(user, community) or
+  defp command_binding_allowed?(user, community, :request_destroy) do
+    base_command_binding_allowed?(user, community) or
       passport_allowed?(user, community, Const.passport_action(:community_request_destroy))
   end
 
-  defp command_relation_allowed?(user, community, _action) do
-    base_command_relation_allowed?(user, community) or
+  defp command_binding_allowed?(user, community, action)
+       when action in [
+              :category_create,
+              :category_update,
+              :category_delete,
+              :category_set,
+              :category_unset
+            ] do
+    base_command_binding_allowed?(user, community) or
+      passport_allowed?(user, community, category_passport_action(action))
+  end
+
+  defp command_binding_allowed?(user, community, _action) do
+    base_command_binding_allowed?(user, community) or
       passport_allowed?(user, community, Const.passport_action(:community_update))
   end
 
-  defp management_relation_allowed?(:operations, _community), do: true
-  defp management_relation_allowed?(%{type: :operations}, _community), do: true
+  defp category_passport_action(:category_create), do: Const.passport_action(:category_create)
+  defp category_passport_action(:category_update), do: Const.passport_action(:category_update)
+  defp category_passport_action(:category_delete), do: Const.passport_action(:category_delete)
+  defp category_passport_action(:category_set), do: Const.passport_action(:category_set)
+  defp category_passport_action(:category_unset), do: Const.passport_action(:category_unset)
 
-  defp management_relation_allowed?(%User{} = user, community) do
+  defp management_binding_allowed?(:operations, _community), do: true
+  defp management_binding_allowed?(%{type: :operations}, _community), do: true
+
+  defp management_binding_allowed?(%User{} = user, community) do
     owner?(user, community) or moderator?(user, community) or god?(user) or
       root?(user, community) or docs_member?(user, community)
   end
 
-  defp management_relation_allowed?(_user, _community), do: false
+  defp management_binding_allowed?(_user, _community), do: false
 
   # Docs editing remains an authenticated-member capability; the explicit Gate
   # action still enforces the Community Lifecycle writable state.
   defp docs_member?(%User{}, %Community{}), do: true
   defp docs_member?(_, _), do: false
 
-  defp base_command_relation_allowed?(%User{} = user, community) do
+  defp base_command_binding_allowed?(%User{} = user, community) do
     owner?(user, community) or moderator?(user, community) or god?(user) or
       root?(user, community)
   end
 
-  defp base_command_relation_allowed?(_user, _community), do: false
+  defp base_command_binding_allowed?(_user, _community), do: false
+
+  defp moderator_management_access(user, community) do
+    relation_allowed(moderator_management_binding_allowed?(user, community))
+  end
+
+  defp moderator_management_binding_allowed?(:operations, _community), do: true
+  defp moderator_management_binding_allowed?(%{type: :operations}, _community), do: true
+
+  defp moderator_management_binding_allowed?(%User{} = user, community) do
+    god?(user) or root?(user, community)
+  end
+
+  defp moderator_management_binding_allowed?(_user, _community), do: false
 
   defp owner?(%User{id: user_id}, %Community{user_id: user_id}), do: true
   defp owner?(_, _), do: false
@@ -161,9 +213,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp root?(_, _), do: false
 
   defp god?(%User{} = user) do
-    passport =
-      Map.get(user, :cur_passport) ||
-        Map.get(user, :cms_passport, %{}) |> Map.get(:rules, %{})
+    passport = passport_rules(user)
 
     get_in(Registry.normalize_rules(passport), ["global", "god"]) == true
   rescue
@@ -171,9 +221,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   end
 
   defp passport_root?(%User{} = user, slug) when is_binary(slug) do
-    passport =
-      Map.get(user, :cur_passport) ||
-        Map.get(user, :cms_passport, %{}) |> Map.get(:rules, %{})
+    passport = passport_rules(user)
 
     get_in(Registry.normalize_rules(passport), [slug, "root"]) == true
   rescue
@@ -182,12 +230,39 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   defp passport_allowed?(%User{} = user, %Community{slug: slug}, action)
        when is_binary(slug) do
-    passport =
-      Map.get(user, :cur_passport) ||
-        Map.get(user, :cms_passport, %{}) |> Map.get(:rules, %{})
+    passport = passport_rules(user)
 
-    match?({:ok, true}, Registry.allowed?(passport, slug, action))
+    case Registry.allowed?(passport, slug, action) do
+      {:ok, true} ->
+        true
+
+      _ ->
+        passport
+        |> Registry.normalize_rules()
+        |> get_in([slug, "cms", action])
+        |> Kernel.==(true)
+    end
   rescue
     _ -> false
+  end
+
+  defp passport_rules(%User{} = user) do
+    embedded = Map.get(user, :cur_passport) || Map.get(user, :cms_passport)
+
+    value =
+      case embedded do
+        %{} = passport when not is_struct(passport) and map_size(passport) > 0 ->
+          Map.get(passport, :rules, Map.get(passport, "rules", passport))
+
+        _ ->
+          case Passport.get_passport(user) do
+            {:ok, %{} = passport} -> passport
+            _ -> %{}
+          end
+      end
+
+    value
+  rescue
+    _ -> %{}
   end
 end

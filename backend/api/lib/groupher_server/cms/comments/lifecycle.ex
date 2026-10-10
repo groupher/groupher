@@ -67,7 +67,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
 
   This is a command-internal primitive, not a standalone delete or destroy
   business operation. Callers that change Comment visibility must reconcile
-  parent aggregate relations before invoking it.
+  parent aggregate bindings before invoking it.
 
   ## Examples
 

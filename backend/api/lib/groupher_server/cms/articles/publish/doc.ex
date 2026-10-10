@@ -13,10 +13,11 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.{Draft.Store, Numbering, Revision}
+  alias CMS.Articles.{Bindings, Draft.Store, Numbering, Revision}
 
   alias CMS.Model.{
     Article,
+    ArticleBinding,
     ArticleBodySnapshot,
     ArticleRevision,
     Author,
@@ -26,8 +27,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
     DocBranchState,
     DocLifecycle,
     DocPublic,
-    DocRevision,
-    Community
+    DocRevision
   }
 
   alias Helper.Validator.Slug
@@ -43,46 +43,82 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
            }}
           | {:error, term()}
   def publish(%Article{thread: :doc} = article, branch_id, %Author{} = actor, opts) do
-    Repo.transaction(fn ->
-      with {:ok, article} <- lock_article(article.id),
-           {:ok, branch} <- lock_branch(branch_id, article.community_id),
-           {:ok, draft} <- Store.get_for_update(article, branch_id: branch_id),
-           :ok <- valid_slug(draft.slug),
-           :ok <- same_version(draft.version, Keyword.fetch!(opts, :expected_draft_version)),
-           {:ok, lifecycle} <- lock_lifecycle(article.id, branch_id),
-           :ok <-
-             same_lifecycle_version(
-               lifecycle.version,
-               Keyword.fetch!(opts, :expected_lifecycle_version)
-             ),
-           first_publish? <-
-             is_nil(Repo.get_by(DocPublic, article_id: article.id, branch_id: branch_id)),
-           {:ok, article} <- maybe_assign_public_inner_id(article, branch),
-           {:ok, revision} <- Revision.create(article, draft),
-           {:ok, version_number} <- allocate_version(article.id, branch_id),
-           {:ok, version} <-
-             insert_version(article, branch_id, revision, actor, version_number, opts),
-           {:ok, _branch_state} <-
-             activate_branch_state(article.id, branch_id, version.published_at),
-           {:ok, public} <- select_public(article, version, revision, actor),
-           :ok <- CMS.ArticleStats.initialize(article),
-           {:ok, _lifecycle} <- publish_lifecycle(lifecycle),
-           {:ok, _invalidation} <-
-             invalidate_public_cache(article, branch, first_publish?, opts),
-           :ok <- Store.delete_workspace(article, draft) do
-        %{
-          article: article,
-          branch_type: branch.type,
-          revision: revision,
-          version: version,
-          public: public,
-          first_publish?: first_publish?,
-          published_by_id: actor.id
-        }
-      else
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
+    with {:ok, community} <- binding_community(opts, article, branch_id) do
+      Repo.transaction(fn ->
+        with {:ok, article} <- lock_article(article.id),
+             {:ok, branch} <- lock_branch(branch_id, community.id),
+             {:ok, draft} <- Store.get_for_update(article, branch_id: branch_id),
+             {:ok, _} <- valid_slug(draft.slug),
+             {:ok, _} <-
+               same_version(draft.version, Keyword.fetch!(opts, :expected_draft_version)),
+             {:ok, lifecycle} <- lock_lifecycle(article.id, branch_id),
+             {:ok, _} <-
+               same_lifecycle_version(
+                 lifecycle.version,
+                 Keyword.fetch!(opts, :expected_lifecycle_version)
+               ),
+             first_publish? <-
+               is_nil(Repo.get_by(DocPublic, article_id: article.id, branch_id: branch_id)),
+             {:ok, article, binding} <- maybe_assign_public_inner_id(article, branch, community),
+             {:ok, revision} <- Revision.create(article, draft),
+             {:ok, version_number} <- allocate_version(article.id, branch_id),
+             {:ok, version} <-
+               insert_version(article, branch_id, revision, actor, version_number, opts),
+             {:ok, _branch_state} <-
+               activate_branch_state(article.id, branch_id, version.published_at),
+             {:ok, public} <- select_public(article, version, revision, actor),
+             {:ok, _} <- CMS.ArticleStats.initialize(article),
+             {:ok, _lifecycle} <- publish_lifecycle(lifecycle),
+             {:ok, _invalidation} <-
+               invalidate_public_cache(article, branch, binding, community, first_publish?, opts),
+             {:ok, _} <- Store.delete_workspace(article, draft) do
+          %{
+            article: article,
+            community: community,
+            binding: binding,
+            branch_type: branch.type,
+            revision: revision,
+            version: version,
+            public: public,
+            first_publish?: first_publish?,
+            published_by_id: actor.id
+          }
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+    end
+  end
+
+  defp binding_community(opts, article, branch_id) do
+    case Keyword.get(opts, :community) do
+      %GroupherServer.CMS.Model.Community{} = community ->
+        {:ok, community}
+
+      _ ->
+        case Keyword.get(opts, :community_id) do
+          community_id when is_integer(community_id) ->
+            case Repo.get(GroupherServer.CMS.Model.Community, community_id) do
+              %GroupherServer.CMS.Model.Community{} = community -> {:ok, community}
+              _ -> {:error, :article_binding_not_found}
+            end
+
+          _ ->
+            case Repo.get(DocBranch, branch_id) do
+              %DocBranch{community_id: community_id} ->
+                case Repo.get(GroupherServer.CMS.Model.Community, community_id) do
+                  %GroupherServer.CMS.Model.Community{} = community -> {:ok, community}
+                  _ -> {:error, :article_binding_not_found}
+                end
+
+              _ ->
+                case Bindings.get(article, Map.get(article, :community)) do
+                  {:ok, %{community: community}} -> {:ok, community}
+                  {:error, reason} -> {:error, reason}
+                end
+            end
+        end
+    end
   end
 
   defp lock_article(article_id) do
@@ -196,11 +232,24 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
     |> Repo.update()
   end
 
-  defp maybe_assign_public_inner_id(article, %DocBranch{type: :main}) do
-    Numbering.assign_public_inner_id(article)
+  defp maybe_assign_public_inner_id(article, %DocBranch{type: :main}, community) do
+    with %ArticleBinding{} = binding <-
+           Repo.get_by(ArticleBinding,
+             article_id: article.id,
+             community_id: community.id
+           ),
+         {:ok, binding} <- Numbering.assign_binding_inner_id(binding) do
+      {:ok, article, binding}
+    else
+      nil -> {:error, :article_binding_not_found}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
-  defp maybe_assign_public_inner_id(article, %DocBranch{}), do: {:ok, article}
+  defp maybe_assign_public_inner_id(article, %DocBranch{}, community) do
+    {:ok, article,
+     Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id)}
+  end
 
   defp activate_branch_state(article_id, branch_id, published_at) do
     state = Repo.get_by!(DocBranchState, article_id: article_id, branch_id: branch_id)
@@ -212,42 +261,79 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
     end
   end
 
-  defp same_version(version, version), do: :ok
+  defp same_version(version, version), do: {:ok, :pass}
   defp same_version(_actual, _expected), do: {:error, :draft_version_conflict}
-  defp same_lifecycle_version(version, version), do: :ok
+  defp same_lifecycle_version(version, version), do: {:ok, :pass}
   defp same_lifecycle_version(_actual, _expected), do: {:error, :lifecycle_version_conflict}
   defp present(nil, error), do: {:error, error}
   defp present(value, _error), do: {:ok, value}
 
-  defp valid_slug(slug), do: if(Slug.valid?(slug), do: :ok, else: {:error, :invalid_slug})
+  defp valid_slug(slug),
+    do: if(Slug.valid?(slug), do: {:ok, :pass}, else: {:error, :invalid_slug})
 
-  defp invalidate_public_cache(%Article{inner_id: inner_id}, _branch, _first?, _opts)
-       when not is_integer(inner_id) do
+  defp invalidate_public_cache(_article, _branch, nil, _community, _first?, _opts) do
     {:ok, :not_public_path}
   end
 
-  defp invalidate_public_cache(article, %DocBranch{type: :main}, first_publish?, opts) do
-    with %Community{} = community <- Repo.get(Community, article.community_id) do
+  defp invalidate_public_cache(
+         article,
+         %DocBranch{type: :main} = branch,
+         binding,
+         community,
+         first_publish?,
+         opts
+       ) do
+    with %ArticleBinding{inner_id: inner_id} <- binding,
+         true <- is_integer(inner_id),
+         {:ok, identity} <- outbox_identity(opts) do
       CMS.Outbox.send(%{
         event: if(first_publish?, do: "article.published", else: "article.updated"),
         worker: CMS.Outbox.Workers.Article.Cleanup,
         resource_type: "article",
         resource_id: article.id,
-        command_id: Keyword.get(opts, :causation_id, Ecto.UUID.generate()),
+        identity: identity,
+        effect_key:
+          "article:#{article.id}:#{branch.id}:#{if(first_publish?, do: "published", else: "updated")}",
         data: %{
           community: community.slug,
           community_id: community.id,
           thread: :doc,
-          inner_id: article.inner_id,
+          inner_id: inner_id,
           article_id: article.id
         }
       })
     else
-      nil -> {:error, :community_not_found}
+      false -> {:ok, :not_public_path}
     end
   end
 
-  defp invalidate_public_cache(_article, %DocBranch{}, _first_publish?, _opts) do
+  defp invalidate_public_cache(
+         _article,
+         %DocBranch{},
+         _binding,
+         _community,
+         _first_publish?,
+         _opts
+       ) do
     {:ok, :branch_not_public}
+  end
+
+  defp outbox_identity(opts) do
+    case Keyword.get(opts, :causation_id) || Keyword.get(opts, :command_id) do
+      command_id when is_binary(command_id) ->
+        case Ecto.UUID.cast(command_id) do
+          {:ok, command_id} -> {:ok, {:command, command_id}}
+          :error -> {:error, :outbox_command_id_required}
+        end
+
+      nil ->
+        case Keyword.get(opts, :workflow_ref) do
+          workflow_ref when is_binary(workflow_ref) and workflow_ref != "" ->
+            {:ok, {:workflow, workflow_ref}}
+
+          _ ->
+            {:error, :outbox_identity_required}
+        end
+    end
   end
 end

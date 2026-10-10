@@ -22,16 +22,16 @@ defmodule GroupherServer.CMS.CommunityApplications.ReviewAuth do
   ## Examples
 
       CMS.CommunityApplications.ReviewAuth.authorize(%User{id: 1}, "community_application_review")
-      #=> :ok
+      #=> {:ok, :pass}
 
       CMS.CommunityApplications.ReviewAuth.authorize(%User{id: 1}, "community_application_review")
       #=> {:error, CMS.Communities.ErrorCat.review_permission_denied()}
 
   """
-  @spec authorize(map(), String.t()) :: :ok | {:error, ErrorCat.error()}
+  @spec authorize(map(), String.t()) :: {:ok, :pass} | {:error, ErrorCat.error()}
   def authorize(reviewer, grant) when is_map(reviewer) and is_binary(grant) do
     case Passport.check(reviewer, grant, %{}) do
-      {:ok, true} -> :ok
+      {:ok, true} -> {:ok, :pass}
       _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end

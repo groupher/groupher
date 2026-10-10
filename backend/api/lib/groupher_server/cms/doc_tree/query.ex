@@ -27,6 +27,7 @@ defmodule GroupherServer.CMS.DocTree.Query do
 
   alias CMS.Model.{
     Article,
+    ArticleBinding,
     ArticleRevision,
     Community,
     DocCoverCard,
@@ -217,17 +218,23 @@ defmodule GroupherServer.CMS.DocTree.Query do
       |> Enum.uniq()
 
     Article
-    |> join(:inner, [article], public in DocPublic, on: public.article_id == article.id)
-    |> join(:inner, [article, public], lifecycle in CMS.Model.DocLifecycle,
+    |> join(:inner, [article], binding in ArticleBinding, on: binding.article_id == article.id)
+    |> join(:inner, [article, _binding], public in DocPublic,
+      on: public.article_id == article.id
+    )
+    |> join(:inner, [article, _binding, public], lifecycle in CMS.Model.DocLifecycle,
       on: lifecycle.article_id == article.id and lifecycle.branch_id == public.branch_id
     )
-    |> where([article, public, lifecycle], article.community_id == ^community.id)
-    |> where([_article, public, _lifecycle], public.branch_id == ^branch.id)
-    |> where([article, _public, _lifecycle], article.id in ^doc_ids)
-    |> where([_article, public, lifecycle], public.visible and lifecycle.state == :published)
-    |> select([article, public, _lifecycle], %{
+    |> where([_article, binding, _public, _lifecycle], binding.community_id == ^community.id)
+    |> where([_article, _binding, public, _lifecycle], public.branch_id == ^branch.id)
+    |> where([article, _binding, _public, _lifecycle], article.id in ^doc_ids)
+    |> where(
+      [_article, _binding, public, lifecycle],
+      public.visible and lifecycle.state == :published
+    )
+    |> select([article, binding, public, _lifecycle], %{
       id: article.id,
-      inner_id: article.inner_id,
+      inner_id: binding.inner_id,
       slug: public.slug,
       title: public.title
     })
@@ -483,9 +490,12 @@ defmodule GroupherServer.CMS.DocTree.Query do
     draft_versions =
       DocDraft
       |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
-      |> where([draft, article], article.community_id == ^community.id)
-      |> where([draft, _article], draft.branch_id == ^branch.id)
-      |> where([draft, _article], draft.article_id in ^doc_ids)
+      |> join(:inner, [draft, _article], binding in ArticleBinding,
+        on: binding.article_id == draft.article_id
+      )
+      |> where([_draft, _article, binding], binding.community_id == ^community.id)
+      |> where([draft, _article, _binding], draft.branch_id == ^branch.id)
+      |> where([draft, _article, _binding], draft.article_id in ^doc_ids)
       |> Repo.all()
       |> Map.new(&{&1.article_id, &1})
 
@@ -500,9 +510,18 @@ defmodule GroupherServer.CMS.DocTree.Query do
       |> join(:inner, [revision, _version, _public], article in Article,
         on: article.id == revision.article_id
       )
-      |> where([_revision, _version, public, article], article.community_id == ^community.id)
-      |> where([_revision, _version, public, _article], public.branch_id == ^branch.id)
-      |> where([revision, _version, _public, _article], revision.article_id in ^doc_ids)
+      |> join(:inner, [revision, _version, _public, article], binding in ArticleBinding,
+        on: binding.article_id == article.id
+      )
+      |> where(
+        [_revision, _version, _public, _article, binding],
+        binding.community_id == ^community.id
+      )
+      |> where([_revision, _version, public, _article, _binding], public.branch_id == ^branch.id)
+      |> where(
+        [revision, _version, _public, _article, _binding],
+        revision.article_id in ^doc_ids
+      )
       |> Repo.all()
       |> Map.new(&{&1.article_id, &1})
 
