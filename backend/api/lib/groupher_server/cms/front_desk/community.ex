@@ -16,7 +16,8 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.{ErrorCat, Gate}
+  alias CMS.Gate
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
 
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
   alias CMS.Gate.ErrorCat, as: GateErrorCat
@@ -53,7 +54,7 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
     where(query, [community], community.slug == ^slug or community.aka == ^slug)
   end
 
-  defp where_ref(_query, _ref), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
+  defp where_ref(_query, _ref), do: {:error, CommunityErrorCat.not_exist()}
 
   defp scope_context(policy_mode) do
     if policy_mode in CMS.Communities.Lifecycle.read_policy_modes() do
@@ -67,7 +68,7 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
   defp effective_policy(mode, actor), do: {mode, actor}
 
   defp validate_view(:default), do: {:ok, :pass}
-  defp validate_view(_view), do: {:error, ErrorCat.custom(%{reason: :unsupported_read_view})}
+  defp validate_view(_view), do: {:error, CommunityErrorCat.not_exist("unsupported read view")}
 
   @doc "Reads one Community Tag by database id."
   @spec tag(T.id()) :: T.domain_res(CommunityTag.t())
@@ -100,6 +101,6 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
     |> done()
   end
 
-  defp done(nil), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
+  defp done(nil), do: {:error, CommunityErrorCat.not_exist("Community")}
   defp done(result), do: {:ok, result}
 end

@@ -149,15 +149,15 @@ defmodule GroupherServer.Test.ActivityTest do
     assert {:ok, _lifecycle} =
              CMS.Articles.Lifecycle.transition(article, :archived, lifecycle.version)
 
-    assert {:error, %ErrorCat.Error{reason: :article_archived}} =
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CMS.Articles.trash_receipt(post, stranger, command_id: command_id)
 
-    assert {:error, %ErrorCat.Error{reason: :article_archived}} =
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CMS.Articles.trash_receipt(post, stranger, command_id: command_id)
 
     denied = Repo.get_by!(PostLog, article_id: post.article_id, action: :trashed)
     assert denied.outcome == :denied
-    assert denied.rejection_code == "article_archived"
+    assert denied.rejection_code == "permission_denied"
     assert denied.operation_ref == command_id
     assert denied.actor_type == :user
     assert denied.actor_ref == stranger.login
@@ -187,7 +187,11 @@ defmodule GroupherServer.Test.ActivityTest do
     {_community, post, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()
 
-    assert {:error, :article_binding_context_required} =
+    assert {:error,
+            %ErrorCat.Error{
+              namespace: {:cms, :article},
+              reason: :binding_context_required
+            }} =
              CMS.Articles.trash(post, user,
                command_id: command_id,
                community_id: "invalid-community-id"
@@ -210,38 +214,27 @@ defmodule GroupherServer.Test.ActivityTest do
     assert GroupherServer.Activity.Event.classification(:release_rescheduled).category ==
              :publishing
 
-    assert GroupherServer.Activity.Event.classification(:moderation_review_started).category ==
-             :moderation
-
     for {handler, actions} <- [
           {Activity.Post,
            [
              :comment_created,
-             :comment_updated,
-             :moderation_review_started,
-             :moderation_review_resolved
+             :comment_updated
            ]},
           {Activity.Blog,
            [
              :comment_created,
-             :comment_updated,
-             :moderation_review_started,
-             :moderation_review_resolved
+             :comment_updated
            ]},
           {Activity.Changelog,
            [
              :comment_created,
-             :comment_updated,
-             :moderation_review_started,
-             :moderation_review_resolved
+             :comment_updated
            ]},
           {Activity.Doc,
            [
              :draft_updated,
              :comment_created,
-             :comment_updated,
-             :moderation_review_started,
-             :moderation_review_resolved
+             :comment_updated
            ]}
         ],
         action <- actions do
@@ -288,36 +281,6 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert Ecto.Enum.values(PostLog, :source) == ActivityConst.source_values()
     assert Ecto.Enum.values(PostLog, :actor_type) == ActivityConst.actor_type_values()
-  end
-
-  test "contract_only actions remain writable and use their declared surface" do
-    {community, post, _attrs, user} = mock_article(:post)
-
-    assert {:ok, event} =
-             Activity.log(post, :moderation_review_started,
-               actor: user,
-               metadata: %{case_ref: "review-case-1"}
-             )
-
-    assert event.action == :moderation_review_started
-    assert Activity.Post.contracts().moderation_review_started.producer_status == :contract_only
-
-    {:ok, manager} = db_insert(:user)
-
-    manager = %{
-      manager
-      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
-    }
-
-    assert {:ok, result} =
-             Activity.list_community_logs(
-               community,
-               manager,
-               %{filter: %{}},
-               %GroupherServer.Pagi.Params.Offset{page: 1, size: 30}
-             )
-
-    refute Enum.any?(result.entries, &(&1.action == :moderation_review_started))
   end
 
   test "ArticleLog authorizes Article reads and projects only safe fields" do

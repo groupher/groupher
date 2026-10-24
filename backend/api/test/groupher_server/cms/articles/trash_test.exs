@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.{Activity, CMS}
+  alias GroupherServer.{Activity, AlertWall, CMS}
+  alias AlertWall.Model.{Item, UserReport}
 
   alias CMS.Model.{
     ArticleEmotionCount,
@@ -170,31 +171,6 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert count_after == count_before - 1
   end
 
-  test "Trash excludes Articles from the audit-failed list" do
-    {community, post, _attrs, user} = mock_article(:post)
-
-    assert {:ok, post} =
-             CMS.Articles.set_audit_failed(post.id, %{}, :operations, community: community)
-
-    assert {:ok, %{entries: entries}} =
-             CMS.Articles.paged_audit_failed(:post, %GroupherServer.Pagi.Params.Offset{
-               page: 1,
-               size: 20
-             })
-
-    assert Enum.any?(entries, &(&1.id == post.id))
-
-    assert {:ok, _item} = CMS.Articles.trash(post, user, community: community)
-
-    assert {:ok, %{entries: entries}} =
-             CMS.Articles.paged_audit_failed(:post, %GroupherServer.Pagi.Params.Offset{
-               page: 1,
-               size: 20
-             })
-
-    refute Enum.any?(entries, &(&1.id == post.id))
-  end
-
   test "permanent delete removes the aggregate but keeps append-only audit" do
     {community, post, _attrs, user} = mock_article(:post)
     assert {:ok, item} = CMS.Articles.trash(post, user)
@@ -220,6 +196,51 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                %{thread: :post},
                %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
              )
+  end
+
+  test "permanent delete supersedes Wall items and preserves report history" do
+    {_community, post, _attrs, user} = mock_article(:post)
+
+    report_attrs = %{
+      reporter_id: user.id,
+      owner: :cms,
+      target_type: :article,
+      target_id: to_string(post.article_id),
+      community_id: nil,
+      subject_ref: "published-subject",
+      report_type: "SPAM",
+      details: "Please review"
+    }
+
+    assert {:ok, {item, report}} =
+             Repo.transact_result(fn ->
+               with {:ok, report} <-
+                      AlertWall.submit_report_in_transaction(
+                        report_attrs,
+                        Ecto.UUID.generate()
+                      ),
+                    %Item{} = item <- Repo.get(Item, report.item_id) do
+                 {:ok, {item, report}}
+               else
+                 {:error, reason} -> {:error, reason}
+                 _ -> {:error, :wall_item_not_found}
+               end
+             end)
+
+    assert {:ok, trash_item} = CMS.Articles.trash(post, user)
+
+    assert {:ok, %{done: true}} =
+             CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
+
+    deleted_item = Repo.get!(Item, item.id)
+    assert deleted_item.target_id == to_string(post.article_id)
+    assert deleted_item.target_deleted_at
+    assert deleted_item.status == :superseded
+
+    deleted_report = Repo.get!(UserReport, report.id)
+    assert deleted_report.target_id == to_string(post.article_id)
+    assert deleted_report.item_id == item.id
+    assert deleted_report.outdated_at
   end
 
   test "permanent-delete receipt replays after the aggregate is gone" do

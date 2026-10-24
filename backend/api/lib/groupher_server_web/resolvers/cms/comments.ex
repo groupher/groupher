@@ -153,14 +153,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     CMS.interactions_undo_upvote_result(comment, user, Map.get(args, :command_id))
   end
 
-  def report_comment(_root, ~m(comment reason attr)a = args, %{context: %{cur_user: user}}) do
-    CMS.interactions_report_result(comment, reason, attr, user, Map.get(args, :command_id))
-  end
-
-  def undo_report_comment(_root, ~m(comment)a = args, %{context: %{cur_user: user}}) do
-    CMS.interactions_undo_report_result(comment, user, Map.get(args, :command_id))
-  end
-
   def emotion_to_comment(_root, %{comment: comment, emotion: emotion} = args, %{
         context: %{cur_user: user}
       }) do

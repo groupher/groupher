@@ -53,7 +53,6 @@ const commentViewerStates = graphql(`
     commentViewerStates(article: $article, commentInnerIds: $commentInnerIds) {
       innerId
       viewerHasUpvoted
-      viewerHasReported
       emotions {
         type
         viewerHasReacted
@@ -315,7 +314,6 @@ const fetchCommentViewerStates = async (
       states[String(comment.innerId)] = {
         emotionFlags,
         viewerHasUpvoted: comment.viewerHasUpvoted ?? undefined,
-        viewerHasReported: comment.viewerHasReported ?? undefined,
       }
     }
   }

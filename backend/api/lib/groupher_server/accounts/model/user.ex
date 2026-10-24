@@ -79,7 +79,6 @@ defmodule GroupherServer.Accounts.Model.User do
 
     has_many(:collect_folder, CollectFolder)
 
-    field(:viewer_has_reported, :boolean, default: false, virtual: true)
     # 已关注
     field(:viewer_has_followed, :boolean, default: false, virtual: true)
     # Ta 关注了你

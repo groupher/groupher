@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Press.Query do
   Feed and manifest output needs immutable body snapshots, so it is not an
   ArticleLite consumer. The query reuses the Articles pagination selector for
   public visibility, ordering, and the Docs public tree, then resolves complete
-  public projections through bounded `FrontDesk.articles/1` batches. Press is a
+  public projections through bounded `Articles.locators/1` batches. Press is a
   service-scoped request path and is not a pagination N+1 exception.
   """
 
@@ -293,7 +293,7 @@ defmodule GroupherServer.CMS.Press.Query do
     path_entries
     |> Enum.chunk_every(@pagination_page_size)
     |> Enum.reduce_while({:ok, []}, fn chunk, {:ok, collected} ->
-      with {:ok, admitted} <- FrontDesk.articles(Enum.map(chunk, & &1.path)),
+      with {:ok, admitted} <- CMS.Articles.locators(Enum.map(chunk, & &1.path)),
            paths = MapSet.new(admitted, &path_key(&1.path)),
            visible = Enum.filter(chunk, &MapSet.member?(paths, path_key(&1.path))),
            {:ok, publications} <- publications(Enum.map(visible, & &1.entry)) do
@@ -316,7 +316,7 @@ defmodule GroupherServer.CMS.Press.Query do
         on: revision.id == public.revision_id,
         join: body in ArticleBodySnapshot,
         on: body.id == revision.body_snapshot_id,
-        where: public.article_id in ^ordinary_ids and public.visible,
+        where: public.article_id in ^ordinary_ids,
         select: {public.article_id, public, body}
       )
       |> Repo.all()

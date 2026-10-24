@@ -2,7 +2,7 @@ defmodule GroupherServerWeb.Middleware.DelegatedScopeTest do
   use ExUnit.Case, async: true
 
   alias GroupherServer.Auth
-  alias GroupherServerWeb.Middleware.DelegatedScope
+  alias GroupherServerWeb.Middleware.{DelegatedScope, GeneralError, GQLResultFmt}
   alias Auth.Contract, as: AuthContract
 
   @opts [audience: "phoenix:auth-api", scope: "auth:oauth:read"]
@@ -24,8 +24,15 @@ defmodule GroupherServerWeb.Middleware.DelegatedScopeTest do
         },
         @opts
       )
+      |> finalize_error()
 
-    assert [[message: _message, extensions: %{code: code}]] = result.errors
+    assert [%{message: _message, extensions: %{code: code}}] = result.errors
     assert code == AuthContract.token_invalid()
+  end
+
+  defp finalize_error(resolution) do
+    resolution
+    |> GQLResultFmt.call([])
+    |> GeneralError.call([])
   end
 end

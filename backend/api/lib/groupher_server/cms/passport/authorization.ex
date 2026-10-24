@@ -34,6 +34,20 @@ defmodule GroupherServer.CMS.Passport.Authorization do
   end
 
   @doc """
+  Asks whether one normalized passport grants an action scoped to a thread.
+
+  This remains a Passport fact lookup. Gate must still combine the result with
+  resource Lifecycle and ancestor admission.
+
+  ## Examples
+
+      Authorization.allowed?(passport, community_slug, "post.edit", :post)
+  """
+  def allowed?(passport, community, action, thread) do
+    Registry.allowed?(passport, community, action, thread)
+  end
+
+  @doc """
   Checks an action for one user inside an optional context map.
 
   The user's `cur_passport` is matched against the action requirement for the
@@ -71,6 +85,18 @@ defmodule GroupherServer.CMS.Passport.Authorization do
     end
   end
 
+  @doc """
+  Checks a global reviewer action and maps any denial to the review permission error.
+
+  This legacy helper has no Community context; resource-specific authorization
+  belongs to Gate Policy, which combines Passport facts with Lifecycle state.
+
+  ## Examples
+
+      Authorization.authorize(reviewer, "community.application.review")
+      #=> {:error, ErrorCat.review_permission_denied()}
+  """
+  @spec authorize(term(), String.t()) :: {:ok, :pass} | {:error, ErrorCat.error()}
   def authorize(user, action) do
     case check(user, action, %{}) do
       {:ok, true} -> {:ok, :pass}

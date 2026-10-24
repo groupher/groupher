@@ -138,6 +138,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       community_id: community.id,
       id: Ecto.UUID.generate(),
       thread: :post,
+      author_id: user.id,
+      author: %{user_id: user.id},
       meta: %{is_comment_locked: false}
     }
 
@@ -195,6 +197,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       community_id: community.id,
       id: Ecto.UUID.generate(),
       thread: :post,
+      author_id: user.id,
+      author: %{user_id: user.id},
       meta: %{is_comment_locked: false}
     }
 
@@ -213,6 +217,88 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              ArticlePolicy.check_access(user, :edit, article, invalid_context)
   end
 
+  test "single Article read denies active restrictions except to the author" do
+    {:ok, author} = db_insert(:user)
+    {:ok, other_user} = db_insert(:user)
+    {:ok, community} = mock_community(author)
+
+    community = %{
+      community
+      | lifecycle: Repo.get_by!(CommunityLifecycle, community_id: community.id)
+    }
+
+    article = %{
+      community_id: community.id,
+      id: Ecto.UUID.generate(),
+      thread: :post,
+      author_id: author.id,
+      author: %{user_id: author.id},
+      meta: %{is_comment_locked: false}
+    }
+
+    restricted_context = %ArticleContext{
+      article: article,
+      article_lifecycle: %ArticleLifecycle{state: :published},
+      community: community,
+      community_lifecycle: community.lifecycle,
+      review_restricted?: true
+    }
+
+    assert {:ok, :pass} = ArticlePolicy.check_access(author, :read, article, restricted_context)
+
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+             ArticlePolicy.check_access(other_user, :read, article, restricted_context)
+
+    community_reader = %{
+      other_user
+      | cur_passport: %{"global" => %{}, community.slug => %{"cms" => %{"review.read" => true}}}
+    }
+
+    assert {:ok, :pass} =
+             ArticlePolicy.check_access(
+               community_reader,
+               :read,
+               article,
+               %{
+                 restricted_context
+                 | passport_rules: community_reader.cur_passport,
+                   review_scope_keys: ["community:#{community.id}"]
+               }
+             )
+
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+             ArticlePolicy.check_access(
+               community_reader,
+               :read,
+               article,
+               %{
+                 restricted_context
+                 | passport_rules: community_reader.cur_passport,
+                   review_scope_keys: ["platform", "community:#{community.id}"]
+               }
+             )
+
+    platform_reader = %{
+      other_user
+      | cur_passport: %{
+          "global" => %{"review.platform.read" => true},
+          community.slug => %{"cms" => %{"review.read" => true}}
+        }
+    }
+
+    assert {:ok, :pass} =
+             ArticlePolicy.check_access(
+               platform_reader,
+               :read,
+               article,
+               %{
+                 restricted_context
+                 | passport_rules: platform_reader.cur_passport,
+                   review_scope_keys: ["platform", "community:#{community.id}"]
+               }
+             )
+  end
+
   test "article interactions use the same Article and Community admission matrix" do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
@@ -226,6 +312,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       community_id: community.id,
       id: Ecto.UUID.generate(),
       thread: :post,
+      author_id: user.id,
       meta: %{is_comment_locked: false}
     }
 
@@ -293,6 +380,108 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
                  community_lifecycle: community.lifecycle
                }
              )
+  end
+
+  test "article policy enforces Passport actions on direct domain calls" do
+    {:ok, author} = db_insert(:user)
+    {:ok, moderator} = db_insert(:user)
+    {:ok, unrelated} = db_insert(:user)
+    {:ok, community} = mock_community(author)
+
+    community = %{
+      community
+      | lifecycle: Repo.get_by!(CommunityLifecycle, community_id: community.id)
+    }
+
+    article = %{
+      community_id: community.id,
+      id: Ecto.UUID.generate(),
+      thread: :post,
+      # Model a CMS Author ID colliding with an unrelated account ID. The
+      # loaded linked user remains the only source of Article ownership.
+      author_id: unrelated.id,
+      author: %{id: unrelated.id, user_id: author.id},
+      meta: %{is_comment_locked: false}
+    }
+
+    context = %ArticleContext{
+      article: article,
+      article_lifecycle: %ArticleLifecycle{state: :published},
+      community: community,
+      community_lifecycle: community.lifecycle
+    }
+
+    assert {:ok, :pass} = ArticlePolicy.check_access(author, :edit, article, context)
+
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+             ArticlePolicy.check_access(unrelated, :edit, article, context)
+
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+             ArticlePolicy.check_access(author, :pin, article, context)
+
+    moderator = %{
+      moderator
+      | cur_passport: %{
+          "global" => %{},
+          community.slug => %{"cms" => %{"post.pin" => true}}
+        }
+    }
+
+    assert {:ok, :pass} = ArticlePolicy.check_access(moderator, :pin, article, context)
+
+    read_only_community = %{
+      community
+      | lifecycle: %{community.lifecycle | state: :read_only}
+    }
+
+    assert {:error, %ErrorCat.Error{reason: :ancestor_community_not_writable}} =
+             ArticlePolicy.check_access(
+               moderator,
+               :pin,
+               article,
+               %{
+                 context
+                 | community: read_only_community,
+                   community_lifecycle: read_only_community.lifecycle
+               }
+             )
+  end
+
+  test "comment policy applies owner fallback, Passport action, and login-only interactions" do
+    {:ok, author} = db_insert(:user)
+    {:ok, unrelated} = db_insert(:user)
+    {:ok, community} = mock_community(author)
+
+    community = %{
+      community
+      | lifecycle: Repo.get_by!(CommunityLifecycle, community_id: community.id)
+    }
+
+    comment = %Comment{author_id: author.id}
+
+    context = %CommentContext{
+      comment: comment,
+      comment_author_user_id: author.id,
+      article: %{thread: :post, meta: %{is_comment_locked: false}},
+      article_lifecycle: %ArticleLifecycle{state: :published},
+      comment_lifecycle: %CommentLifecycle{state: :visible},
+      community: community,
+      community_lifecycle: community.lifecycle
+    }
+
+    assert {:ok, :pass} = CommentPolicy.check_access(author, :edit, comment, context)
+
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+             CommentPolicy.check_access(unrelated, :edit, comment, context)
+
+    assert {:ok, :pass} = CommentPolicy.check_access(unrelated, :upvote, comment, context)
+
+    god = %{
+      unrelated
+      | cur_passport: %{"global" => %{"god" => true}}
+    }
+
+    assert {:ok, :pass} = CommentPolicy.check_access(god, :delete, comment, context)
   end
 
   test "article mutation admission rejects a read-only community before writing" do

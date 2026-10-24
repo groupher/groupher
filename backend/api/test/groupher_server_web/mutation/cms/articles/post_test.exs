@@ -285,7 +285,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
              |> mutation_error?(
                S.Article.m(:update_article, :post),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -299,7 +299,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
              |> mutation_error?(
                S.Article.m(:update_article, :post),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
 
@@ -328,7 +328,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
              |> mutation_error?(
                S.Article.m(:update_article, :post),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       {:ok, found} = read_article(community_b, :post, article_inner_id(post_b, community_b))

@@ -58,6 +58,18 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
              PermissionRegistry.allowed?(%{"global" => %{"god" => true}}, nil, "post.update")
   end
 
+  test "allowed?/4 expands thread-scoped global requirements" do
+    passport = %{"global" => %{"post.community.mirror" => true}}
+
+    assert {:ok, true} =
+             PermissionRegistry.allowed?(passport, "demo", "article.mirror", :post)
+
+    assert {:ok, false} =
+             PermissionRegistry.allowed?(passport, "demo", "article.mirror", :blog)
+
+    assert {:ok, false} = PermissionRegistry.allowed?(passport, "demo", "article.mirror")
+  end
+
   test "allowed? checks context grants and requires a community" do
     passport = %{
       "global" => %{},

@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Articles.PinPersist do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Model.{Article, ArticleBinding, Community, PinnedArticle}
 
   def lock_community(community_id) do
@@ -33,7 +34,7 @@ defmodule GroupherServer.CMS.Articles.PinPersist do
   def insert(%Article{} = article, %Community{} = community) do
     case Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id) do
       %ArticleBinding{} = binding -> upsert(binding, community, article.thread)
-      nil -> {:error, :article_binding_not_found}
+      nil -> {:error, ArticleErrorCat.binding_not_found()}
     end
   end
 

@@ -8,6 +8,8 @@ import { authWarn } from '~/signal'
 import type { TComment, TMenuOption } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import MenuButton from '~/ui/Buttons/MenuButton'
+import ReportAction from '~/unit/AlertWall/ReportAction'
+import { useCommentFeed } from '~/unit/Comments/pagination/context'
 
 import useActions from '../useLogic/useActions'
 import useSalon from './salon/actions'
@@ -21,8 +23,20 @@ const Actions: FC<TProps> = ({ data }) => {
   const { t } = useTrans()
 
   const accountInfo = useAccount()
+  const { collection } = useCommentFeed()
   const { openUpdateEditor, openReplyEditor } = useActions()
-  const { deleteComment, reportComment } = useCommentModeration(data)
+  const { deleteComment } = useCommentModeration(data)
+  const article = collection.article
+  const reportTarget =
+    article?.innerId && article.thread
+      ? {
+          type: 'COMMENT' as const,
+          comment: {
+            article,
+            innerId: data.innerId,
+          },
+        }
+      : null
 
   const menuOptions: TMenuOption[] = [
     // {
@@ -34,11 +48,6 @@ const Actions: FC<TProps> = ({ data }) => {
       key: 'share',
       icon: `${ICON}/article/share.svg`,
       title: t('comment.action.share'),
-    },
-    {
-      key: 'report',
-      icon: `${ICON}/article/report.svg`,
-      title: t('comment.action.report'),
     },
   ]
 
@@ -70,9 +79,6 @@ const Actions: FC<TProps> = ({ data }) => {
         case 'quote': {
           return console.log('## todo: quote')
         }
-        case 'report': {
-          return reportComment()
-        }
         case 'edit': {
           return openUpdateEditor(data)
         }
@@ -84,24 +90,23 @@ const Actions: FC<TProps> = ({ data }) => {
         }
       }
     },
-    [accountInfo.isLogin, data, deleteComment, openUpdateEditor, reportComment],
+    [accountInfo.isLogin, data, deleteComment, openUpdateEditor],
   )
 
   return (
     <div className={s.wrapper}>
-      {data.meta?.isLegal && (
-        <button
-          type='button'
-          className={s.replyAction}
-          onClick={() => {
-            if (!accountInfo.isLogin) return authWarn()
+      {reportTarget && <ReportAction target={reportTarget} />}
+      <button
+        type='button'
+        className={s.replyAction}
+        onClick={() => {
+          if (!accountInfo.isLogin) return authWarn()
 
-            openReplyEditor(data)
-          }}
-        >
-          {t('comment.action.reply')}
-        </button>
-      )}
+          openReplyEditor(data)
+        }}
+      >
+        {t('comment.action.reply')}
+      </button>
 
       <div className='grow' />
       <MenuButton options={menuOptions} extraOptions={extraOptions} onClick={handleAction}>

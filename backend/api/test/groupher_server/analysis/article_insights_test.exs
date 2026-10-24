@@ -2,6 +2,8 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
   use GroupherServer.TestMate
 
   alias GroupherServer.Analysis
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityModerator
   alias Analysis.{Aggregator, ArticleInsights, MetricEvent, Model}
   alias MetricEvent, as: MetricEventAPI
   alias Model.{ArticleHourlyMetric, MetricEvent}
@@ -97,6 +99,72 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
              )
 
     assert [%{metrics: %{article_view: %{value: 1}}}] = path_result.items
+  end
+
+  test "loaded Article authorization and path resolution share the Insights Gate scope" do
+    {community, article, _attrs, author} = mock_article(:post)
+    {:ok, unrelated} = db_insert(:user)
+    inner_id = article_inner_id(article, community)
+    path = %{community: community.slug, thread: :post, inner_id: inner_id}
+
+    assert {:ok, :pass} =
+             CMS.Insights.authorize(article, author, :post, community: community.slug)
+
+    assert {:ok, %{id: article_id}} = CMS.Insights.resolve(path, author, [])
+    assert article_id == article.id
+
+    assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
+             CMS.Insights.authorize(article, unrelated, :post, community: community.slug)
+
+    assert {:error, %ErrorCat.Error{namespace: {:cms, :gate}, reason: :permission_denied}} =
+             CMS.Insights.authorize(article, author, :post, community: "not-this-community")
+
+    community_owner = Repo.get!(GroupherServer.Accounts.Model.User, community.user_id)
+    assert {:ok, :pass} = CMS.Insights.authorize(article, community_owner, :post, [])
+
+    {:ok, moderator} = db_insert(:user)
+
+    Repo.insert!(
+      CommunityModerator.changeset(%CommunityModerator{}, %{
+        community_id: community.id,
+        user_id: moderator.id
+      })
+    )
+
+    moderator = %{
+      moderator
+      | cur_passport: %{
+          "global" => %{},
+          community.slug => %{"cms" => %{"article.insights.read" => true}}
+        }
+    }
+
+    grants = Analysis.ArticleInsights.passport_granted_community_slugs(moderator)
+
+    assert {:ok, :pass} =
+             CMS.Insights.authorize(article, moderator, :post,
+               community: community.slug,
+               passport_granted_community_slugs: grants
+             )
+  end
+
+  test "Doc Insights reject a non-main branch and missing lifecycle through Gate scope" do
+    {community, doc, _attrs, author} = mock_article(:doc)
+
+    assert {:error,
+            %ErrorCat.Error{
+              namespace: {:cms, :gate},
+              reason: :scope_context_missing
+            }} = CMS.Insights.authorize(doc, author, :doc, branch_id: 999)
+
+    lifecycle = Repo.get_by!(GroupherServer.CMS.Model.DocLifecycle, article_id: doc.id)
+    Repo.delete!(lifecycle)
+
+    assert {:error,
+            %ErrorCat.Error{
+              namespace: {:cms, :gate},
+              reason: :permission_denied
+            }} = CMS.Insights.authorize(doc, author, :doc, community: community.slug)
   end
 
   test "view dimensions do not filter non-view metrics and ranges are bounded" do

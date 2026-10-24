@@ -252,9 +252,6 @@ type RootQueryType {
   "A root comment's flat descendants through the shared Pagi contract"
   commentReplyPage(comment: CommentPathInput!, filter: CommentPageFilter, pagi: PagiInput): CommentReplyPage!
 
-  "paged reports list"
-  pagedAbuseReports(pagi: PagiInput, filter: ReportFilter!): ReportPage
-
   "mentions created by an artiment"
   mentions(source: MentionSourceInput!, pagi: PagiInput): ArtimentMentionPage
 
@@ -306,6 +303,10 @@ type RootQueryType {
   "get doc by id"
   doc(article: ArticlePathInput!): Doc!
 
+  pendingContentReviews(scope: ReviewBotScopeInput!): [CmsContentReview!]!
+
+  contentReview(target: CmsReviewTargetInput!): CmsContentReview
+
   pressConfig(community: String!): PressConfig
 
   pressArticle(article: ArticlePathInput!): PressArticle
@@ -324,6 +325,14 @@ type RootQueryType {
 
   "read one community-scoped ContentImport Job and its safe Doc preview"
   contentImportJob(community: String!, jobRef: ID!): ContentImportJob
+
+  myReports(filter: AlertReportFilter, pagi: PagiInput): AlertReportPage!
+
+  alertItems(scope: ReviewBotScopeInput!, filter: AlertItemFilter, pagi: PagiInput): AlertItemPage!
+
+  alertItem(id: ID!): AlertItem
+
+  reviewBotConfig(scope: ReviewBotScopeInput!, subjectType: ReviewBotSubjectType!): ReviewBotConfig!
 }
 
 type RootMutationType {
@@ -570,12 +579,6 @@ type RootMutationType {
   "undo emotion to post"
   undoEmotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
-  "report a post"
-  reportPost(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Post
-
-  "undo report a post"
-  undoReportPost(commandId: ID!, article: ArticlePathInput!): Post
-
   "sink a post"
   sinkPost(article: ArticlePathInput!, commandId: ID!): Article
 
@@ -628,12 +631,6 @@ type RootMutationType {
 
   "undo emotion to blog"
   undoEmotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
-
-  "report a blog"
-  reportBlog(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Blog
-
-  "undo report a blog"
-  undoReportBlog(commandId: ID!, article: ArticlePathInput!): Blog
 
   "sink a blog"
   sinkBlog(article: ArticlePathInput!, commandId: ID!): Article
@@ -690,12 +687,6 @@ type RootMutationType {
   "undo emotion to changelog"
   undoEmotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
-  "report a changelog"
-  reportChangelog(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Changelog
-
-  "undo report a changelog"
-  undoReportChangelog(commandId: ID!, article: ArticlePathInput!): Changelog
-
   "sink a changelog"
   sinkChangelog(article: ArticlePathInput!, commandId: ID!): Article
 
@@ -719,12 +710,6 @@ type RootMutationType {
 
   "undo emotion to doc"
   undoEmotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
-
-  "report a doc"
-  reportDoc(commandId: ID!, article: ArticlePathInput!, reason: String!, attr: String): Doc
-
-  "undo report a doc"
-  undoReportDoc(commandId: ID!, article: ArticlePathInput!): Doc
 
   "sink a doc"
   sinkDoc(article: ArticlePathInput!, commandId: ID!): Article
@@ -755,12 +740,6 @@ type RootMutationType {
 
   "undo upvote to a comment"
   undoUpvoteComment(comment: CommentPathInput!, commandId: ID!): Comment
-
-  "report a comment"
-  reportComment(commandId: ID!, comment: CommentPathInput!, reason: String!, attr: String): Comment
-
-  "undo report a comment"
-  undoReportComment(commandId: ID!, comment: CommentPathInput!): Comment
 
   "emotion to a comment"
   emotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!, commandId: ID!): Comment
@@ -986,6 +965,34 @@ type RootMutationType {
 
   "cancel an unfinished import Job and discard its staged BodyBags"
   cancelDocContentImport(community: String!, jobRef: ID!): ContentImportJob!
+
+  recheckReviewTarget(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): CmsReviewCommandResult!
+
+  approveArticle(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+
+  denyArticle(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+
+  releaseArticle(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+
+  approveComment(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+
+  denyComment(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+
+  releaseComment(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+
+  approveDoc(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+
+  denyDoc(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+
+  releaseDoc(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+
+  updateReviewBotConfig(input: UpdateReviewBotConfigInput!, commandId: ID!): ReviewBotConfig!
+
+  submitReport(input: AlertReportInput!, commandId: ID!): AlertReport!
+
+  withdrawReport(reportId: ID!, commandId: ID!): AlertReport!
+
+  resolveAlertItem(id: ID!, resolution: String!, expectedVersion: Int!, commandId: ID!): AlertWallCommandResult!
 }
 
 enum ContentImportJobStatus {
@@ -1139,6 +1146,158 @@ type ContentImportBodyStageResult {
   progress: Json!
   failedItems: Json!
   skipped: Json!
+}
+
+enum ReviewBotScopeType {
+  PLATFORM
+  COMMUNITY
+}
+
+enum ReviewBotSubjectType {
+  ARTICLE
+  COMMENT
+  DOC
+}
+
+enum ReviewBotMode {
+  IMMEDIATE
+  AI_FIRST
+  HUMAN_FIRST
+}
+
+input ReviewBotScopeInput {
+  type: ReviewBotScopeType!
+  community: String
+}
+
+type ReviewBotConfig {
+  id: ID!
+  communityId: ID
+  subjectType: ReviewBotSubjectType!
+  reviewMode: ReviewBotMode!
+  reviewBanWords: [String!]!
+  reviewPrompt: String!
+  version: Int!
+  updatedAt: DateTime!
+}
+
+input UpdateReviewBotConfigInput {
+  scope: ReviewBotScopeInput!
+  subjectType: ReviewBotSubjectType!
+  expectedVersion: Int!
+  reviewMode: ReviewBotMode!
+  reviewBanWords: [String!]!
+  reviewPrompt: String!
+}
+
+type AlertWallCommandResult {
+  itemId: ID!
+  resolution: String!
+}
+
+enum AlertItemStatus {
+  OPEN
+  RESOLVED
+  SUPERSEDED
+}
+
+enum AlertTargetType {
+  ARTICLE
+  COMMENT
+  DOC
+  USER
+}
+
+enum AlertItemOwner {
+  CMS
+  ACCOUNTS
+}
+
+enum AlertReportReason {
+  SPAM
+  HARASSMENT
+  ILLEGAL_CONTENT
+  IMPERSONATION
+  OTHER
+}
+
+enum AlertReportStatus {
+  ACTIVE
+  WITHDRAWN
+  OUTDATED
+  RESOLVED
+}
+
+input AlertItemFilter {
+  targetType: AlertTargetType
+  owner: AlertItemOwner
+  hasReports: Boolean
+}
+
+input AlertReportFilter {
+  targetType: AlertTargetType
+  status: AlertReportStatus
+}
+
+input AlertReportTargetInput {
+  type: AlertTargetType!
+  article: ArticlePathInput
+  comment: CommentPathInput
+  docBranchId: Int
+  userId: ID
+}
+
+input AlertReportInput {
+  target: AlertReportTargetInput!
+  reportType: AlertReportReason!
+  details: String
+}
+
+type SusNote {
+  type: String!
+  evidence: String!
+  explanation: String!
+}
+
+type AlertItem {
+  id: ID!
+  owner: AlertItemOwner!
+  targetType: AlertTargetType!
+  targetId: String!
+  communityId: ID
+  status: AlertItemStatus!
+  susNotes: [SusNote!]!
+  summary: String!
+  reportCount: Int!
+  version: Int!
+  openedAt: DateTime!
+  resolvedAt: DateTime
+  resolution: String
+}
+
+type AlertReport {
+  id: ID!
+  targetType: AlertTargetType!
+  targetId: String!
+  communityId: ID
+  itemId: ID!
+  reportType: String!
+  details: String
+  withdrawnAt: DateTime
+  outdatedAt: DateTime
+  resolvedAt: DateTime
+  resolution: String
+  insertedAt: DateTime!
+}
+
+type AlertItemPage {
+  entries: [AlertItem!]!
+  pageInfo: PageInfo!
+}
+
+type AlertReportPage {
+  entries: [AlertReport!]!
+  pageInfo: PageInfo!
 }
 
 enum ArticleInsightsMetric {
@@ -1518,6 +1677,42 @@ type PressSiteManifest {
   siteRevision: String!
   threads: [Thread!]!
   items: [PressRSSFeedItem!]!
+}
+
+type CmsReviewCommandResult {
+  commandId: ID!
+  targetType: ReviewBotSubjectType!
+  targetId: String!
+  action: String!
+}
+
+input CmsReviewTargetInput {
+  type: ReviewBotSubjectType!
+  article: ArticlePathInput
+  comment: CommentPathInput
+  articleId: ID
+  commentId: ID
+  branchId: Int
+  communityId: ID
+}
+
+type CmsReviewOpinion {
+  status: String
+  summary: String
+  susNotes: [SusNote!]!
+}
+
+type CmsContentReview {
+  artimentReviewId: ID
+  targetType: ReviewBotSubjectType!
+  articleId: ID
+  commentId: ID
+  branchId: Int
+  communityId: ID
+  state: String!
+  reviewMode: String
+  systemOpinion: CmsReviewOpinion
+  communityOpinion: CmsReviewOpinion
 }
 
 type CommunityNameCheck {
@@ -2372,14 +2567,6 @@ type CommonArticle {
   author: CommonUser
 }
 
-type CommonComment {
-  innerId: ID
-  body: ArtimentBody!
-  upvotesCount: Int
-  author: CommonUser
-  article: CommonArticle
-}
-
 type CommunityAsset {
   id: ID
   publicRef: String
@@ -2618,7 +2805,6 @@ type Post implements Article {
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
-  pending: Int
   commentsParticipants: [User]
   cat: ArticleCatEnum
   status: ArticleStatusEnum
@@ -2652,7 +2838,6 @@ type Changelog implements Article {
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
-  pending: Int
   commentsParticipants: [User]
   insertedAt: DateTime
   updatedAt: DateTime
@@ -2681,7 +2866,6 @@ type Doc implements Article {
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
-  pending: Int
   subtitle: String
   commentsParticipants: [User]
   insertedAt: DateTime
@@ -2711,7 +2895,6 @@ type Blog implements Article {
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
-  pending: Int
   commentsParticipants: [User]
   insertedAt: DateTime
   updatedAt: DateTime
@@ -3317,17 +3500,12 @@ type ViewerCommentEmotionState {
 type ViewerCommentState {
   innerId: ID!
   viewerHasUpvoted: Boolean
-  viewerHasReported: Boolean
   emotions: [ViewerCommentEmotionState!]!
 }
 
 type CommentMeta {
   isArticleAuthorUpvoted: Boolean
   isReplyToOthers: Boolean
-  isLegal: Boolean
-  illegalReason: [String]
-  illegalWords: [String]
-  reportedCount: Int
 }
 
 type CommentReply {
@@ -3348,7 +3526,6 @@ type CommentReply {
   repliesCount: Int
   thread: Thread
   viewerHasUpvoted: Boolean
-  viewerHasReported: Boolean
   replyToComment: Comment
   lifecycle: CommentLifecycle
   insertedAt: DateTime
@@ -3374,7 +3551,6 @@ type Comment {
   repliesCount: Int
   thread: Thread
   viewerHasUpvoted: Boolean
-  viewerHasReported: Boolean
   replyToComment: Comment
   lifecycle: CommentLifecycle
   insertedAt: DateTime
@@ -3390,25 +3566,6 @@ type CommentsListState {
   participantsCount: Int
   participants: [CommonUser]
   isViewerJoined: Boolean
-}
-
-type AbuseReportCase {
-  reason: String
-  attr: String
-  user: CommonUser
-}
-
-type AbuseReport {
-  id: ID
-  article: CommonArticle
-  comment: CommonComment
-  account: CommonUser
-  reportCasesCount: Int
-  dealWith: String
-  operateUser: User
-  reportCases: [AbuseReportCase]
-  insertedAt: DateTime
-  updatedAt: DateTime
 }
 
 type ArtimentMention {
@@ -3557,11 +3714,6 @@ type KanbanPages {
   rejected: PostPage
 }
 
-type ReportPage {
-  entries: [AbuseReport]
-  pageInfo: PageInfo!
-}
-
 type ArtimentMentionPage {
   entries: [ArtimentMention]
   pageInfo: PageInfo!
@@ -3677,9 +3829,6 @@ type ArticleMeta {
   isCommentLocked: Boolean
   lastActiveAt: DateTime
   latestUpvotedUsers: [CommonUser]
-  isLegal: Boolean
-  illegalReason: [String]
-  illegalWords: [String]
 }
 
 type CommunityMeta {
@@ -3703,7 +3852,6 @@ interface Article {
   title: String
   articleStats: ArticleStats
   meta: ArticleMeta
-  pending: Int
   coverUrl: String
   coverUrlDark: String
 }
@@ -3836,27 +3984,32 @@ enum WhenEnum {
   THIS_YEAR
 }
 
-enum InsertedSortEnum {
+enum AccountSortEnum {
   ASC_INSERTED
   DESC_INSERTED
 }
 
-enum SortEnum {
-  DESC_INSERTED
-  MOST_VIEWS
-  ASC_ACTIVE
-  DESC_ACTIVE
-  MOST_STARS
-  LEAST_VIEWS
-  LEAST_STARS
-}
-
 enum ArticleOrderEnum {
   PUBLISH
+  UPVOTES
   COMMENTS
   VIEWS
-  UPVOTES
-  COLLECTS
+}
+
+enum ArticleSortEnum {
+  MOST_VIEWS
+  LEAST_VIEWS
+  ASC_INSERTED
+  DESC_INSERTED
+  ASC_ACTIVE
+  DESC_ACTIVE
+}
+
+enum CommunitySortEnum {
+  DESC_INSERTED
+  ASC_INSERTED
+  MOST_VIEWS
+  LEAST_VIEWS
 }
 
 enum ArticleCatEnum {
@@ -3886,8 +4039,13 @@ enum CommentsMode {
   TIMELINE
 }
 
+enum CommentPageSortEnum {
+  ASC_INSERTED
+  DESC_INSERTED
+}
+
 input CommunitiesFilter {
-  sort: SortEnum
+  sort: CommunitySortEnum
   category: String
 }
 
@@ -3990,7 +4148,7 @@ input ArticlePageFilter {
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
-  sort: SortEnum
+  sort: ArticleSortEnum
 }
 
 input PostFilter {
@@ -4002,7 +4160,7 @@ input PostFilter {
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
-  sort: SortEnum
+  sort: ArticleSortEnum
 }
 
 input ChangelogFilter {
@@ -4014,31 +4172,16 @@ input ChangelogFilter {
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
-  sort: SortEnum
+  sort: ArticleSortEnum
 }
 
 input CommentPageFilter {
-  sort: InsertedSortEnum
+  sort: CommentPageSortEnum
 }
 
 "Thread scope for an account's Article\/folder collections."
 input ArticleCollectionFilter {
   thread: Thread
-}
-
-enum ReportContentType {
-  POST
-  BLOG
-  CHANGELOG
-  DOC
-  ACCOUNT
-  COMMENT
-}
-
-"abuse report filter"
-input ReportFilter {
-  contentType: ReportContentType
-  contentId: ID
 }
 
 input DsbAliasMap {
@@ -4334,14 +4477,10 @@ type ProfileViewTrackResult {
 }
 
 type UserMeta {
-  reportedCount: Int
   isMaker: Boolean
   publishedPostsCount: Int
   publishedBlogsCount: Int
-  hasIllegalArticles: Boolean
-  hasIllegalComments: Boolean
-  illegalArticles: [String]
-  illegalComments: [String]
+  reportedCount: Int
 }
 
 type User {
@@ -4564,7 +4703,7 @@ input MailboxNotificationsFilter {
 }
 
 input UserListFilter {
-  sort: SortEnum
+  sort: AccountSortEnum
 }
 
 input UserProfileInput {

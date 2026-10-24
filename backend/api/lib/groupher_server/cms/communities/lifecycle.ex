@@ -120,14 +120,48 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
           {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_read(resource, context \\ %{}), do: capability(resource, :read, context)
 
+  @doc """
+  Checks whether the materialized Community state permits writes, without checking actor identity.
+
+  A loaded Lifecycle row or a Community preloaded with its Lifecycle is
+  required. Only `:active` permits writes.
+
+  ## Examples
+
+      Lifecycle.can_write(%CommunityLifecycle{state: :read_only})
+      #=> {:ok, false}
+  """
   @spec can_write(Community.t() | CommunityLifecycle.t(), map()) ::
           {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_write(resource, context \\ %{}), do: capability(resource, :write, context)
 
+  @doc """
+  Checks whether the materialized state permits management, without checking actor identity.
+
+  Management is allowed for active, read-only, suspended, archived, and
+  pending-destroy states. This capability does not grant public read or write.
+
+  ## Examples
+
+      Lifecycle.can_manage(%CommunityLifecycle{state: :archived})
+      #=> {:ok, true}
+  """
   @spec can_manage(Community.t() | CommunityLifecycle.t(), map()) ::
           {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_manage(resource, context \\ %{}), do: capability(resource, :manage, context)
 
+  @doc """
+  Checks whether state and loaded blockers permit destruction, without checking actor identity.
+
+  The destroy check needs active blockers either in the supplied context or on
+  the loaded Lifecycle row; if neither is available it returns
+  `Gate.ErrorCat.lifecycle_not_loaded()` instead of querying or guessing.
+
+  ## Examples
+
+      Lifecycle.can_destroy(%CommunityLifecycle{state: :suspended})
+      #=> {:ok, false}
+  """
   @spec can_destroy(Community.t() | CommunityLifecycle.t(), map()) ::
           {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_destroy(resource, context \\ %{}), do: capability(resource, :destroy, context)

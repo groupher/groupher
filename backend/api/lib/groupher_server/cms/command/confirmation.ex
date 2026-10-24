@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Command.Confirmation do
   @moduledoc """
-  Small shared helper for Confirmation codecs.
+  Internal shared helper for Confirmation codecs.
 
   It deliberately does not define a domain result struct. Domain modules keep
   their own Confirmation structs and use these helpers for common strict JSON
@@ -8,8 +8,12 @@ defmodule GroupherServer.CMS.Command.Confirmation do
 
       Domain Confirmation
         -> strict JSON key/type checks
-        -> CMS.Command.Receipt confirmation envelope
+        -> GroupherServer.CMS.Command.Receipt confirmation envelope
         -> decode on an idempotent retry
+
+  Domain code should use its generated Confirmation codec, not call these
+  shape validators as a second persistence contract. The codec DSL uses these
+  helpers to keep string-key JSON checks strict and consistent.
   """
 
   @type json_object :: %{required(String.t()) => term()}
@@ -17,11 +21,13 @@ defmodule GroupherServer.CMS.Command.Confirmation do
   alias GroupherServer.CMS
   alias Helper.T
 
+  @doc false
   @spec operation_tag(atom()) :: String.t()
   def operation_tag(operation) when is_atom(operation) do
     GroupherServer.CMS.Command.operation_tag(operation)
   end
 
+  @doc false
   @spec required_keys(map(), [String.t()]) :: T.result(:pass, :missing_confirmation_field)
   def required_keys(payload, keys) when is_map(payload) and is_list(keys) do
     if Enum.all?(keys, &Map.has_key?(payload, &1)) do
@@ -31,6 +37,7 @@ defmodule GroupherServer.CMS.Command.Confirmation do
     end
   end
 
+  @doc false
   @spec strict_keys(map(), [String.t()]) :: T.result(:pass, :unknown_confirmation_field)
   def strict_keys(payload, keys) when is_map(payload) and is_list(keys) do
     if Map.keys(payload) |> Enum.sort() == Enum.sort(keys) do
@@ -40,6 +47,7 @@ defmodule GroupherServer.CMS.Command.Confirmation do
     end
   end
 
+  @doc false
   @spec json_safe?(term()) :: boolean()
   def json_safe?(value) when is_binary(value) or is_number(value) or is_boolean(value), do: true
   def json_safe?(nil), do: true
@@ -51,6 +59,7 @@ defmodule GroupherServer.CMS.Command.Confirmation do
 
   def json_safe?(_), do: false
 
+  @doc false
   @spec valid_data_keys?(map(), nil | [String.t()]) :: boolean()
   def valid_data_keys?(_data, nil), do: true
 
@@ -58,6 +67,7 @@ defmodule GroupherServer.CMS.Command.Confirmation do
     Map.keys(data) |> Enum.sort() == Enum.sort(keys)
   end
 
+  @doc false
   @spec valid_data_schema?(map(), [String.t()] | nil, term()) :: boolean()
   def valid_data_schema?(data, data_keys, field_types)
       when is_map(data) and is_list(data_keys) and is_map(field_types) do
@@ -66,7 +76,7 @@ defmodule GroupherServer.CMS.Command.Confirmation do
 
   def valid_data_schema?(_data, _data_keys, _field_types), do: false
 
-  @doc "Validates the declared type of every field in a closed Confirmation payload."
+  @doc false
   @spec valid_data_types?(map(), term()) :: boolean()
   def valid_data_types?(data, field_types) when is_map(data) do
     if is_map(field_types) do
@@ -78,6 +88,7 @@ defmodule GroupherServer.CMS.Command.Confirmation do
     end
   end
 
+  @doc false
   def valid_type?(value, :string), do: is_binary(value)
   def valid_type?(value, :integer), do: is_integer(value)
   def valid_type?(value, :boolean), do: is_boolean(value)
@@ -103,6 +114,7 @@ defmodule GroupherServer.CMS.Command.Confirmation do
   # must reject the payload instead of silently turning into a wildcard.
   def valid_type?(_value, _type), do: false
 
+  @doc false
   @spec valid_variant?(map(), nil | String.t(), atom()) :: boolean()
   def valid_variant?(_data, nil, _operation), do: true
 
@@ -112,6 +124,7 @@ defmodule GroupherServer.CMS.Command.Confirmation do
     Map.get(data, key) == expected
   end
 
+  @doc false
   @spec decode_error() :: {:error, CMS.ErrorCat.Error.t()}
   def decode_error, do: {:error, CMS.ErrorCat.command_result_unavailable()}
 end

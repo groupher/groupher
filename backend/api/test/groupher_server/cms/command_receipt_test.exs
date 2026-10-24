@@ -1,5 +1,6 @@
 defmodule GroupherServer.Test.CMS.BadConfirmation do
   alias GroupherServer.CMS
+  alias GroupherServer.CMS
 
   @behaviour CMS.Command.ConfirmationCodec
 
@@ -516,6 +517,22 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
              })
 
     assert first == second
+  end
+
+  test "ReviewBot config updates have a canonical redacted Receipt intent" do
+    params = %{
+      scope: "community:12",
+      subject_type: :article,
+      expected_version: 3,
+      attrs: %{review_mode: :human_first, ban_words: ["private-term"], prompt: "private prompt"}
+    }
+
+    assert {:ok, encoded} = IntentCodec.encode(:review_bot_update_config, params)
+    assert encoded["scope"] == "community:12"
+    assert encoded["subject_type"] == "article"
+    assert encoded["expected_version"] == 3
+    refute Jason.encode!(encoded) =~ "private-term"
+    refute Jason.encode!(encoded) =~ "private prompt"
   end
 
   test "a nil command id cannot bypass the receipt boundary" do

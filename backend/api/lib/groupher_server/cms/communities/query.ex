@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.Query do
 
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
   alias CMS.QueryBuilder
+  alias CMS.Communities.Query.Contract
   alias Accounts.Model.User
   alias CMS.Model.{Community, Category}
   alias Helper.ORM
@@ -24,12 +25,28 @@ defmodule GroupherServer.CMS.Communities.Query do
   alias GroupherServer.{Pagi}
   alias Pagi.Params
 
-  @doc "Returns the canonical public Community query for composable collection scopes."
+  @doc """
+  Returns the canonical public Community query for composable collection scopes.
+
+  ## Examples
+
+      Query.public_query()
+      #=> #Ecto.Query<from c in Community, ...>
+  """
+  @spec public_query() :: Ecto.Query.t() | {:error, term()}
   def public_query do
     CMS.Gate.scope(Community, nil, :list, CommunityContext.public())
   end
 
-  @doc "Returns the navigation category configuration in stable index order."
+  @doc """
+  Returns the navigation category configuration in stable index order.
+
+  ## Examples
+
+      Query.categories()
+      #=> {:ok, [%Category{}]}
+  """
+  @spec categories() :: {:ok, [Category.t()]} | {:error, term()}
   def categories do
     Category
     |> order_by([category], asc: category.index, asc: category.id)
@@ -37,13 +54,24 @@ defmodule GroupherServer.CMS.Communities.Query do
     |> done()
   end
 
-  @doc "Pages public communities; filters and Pagi position have separate owners."
+  @doc """
+  Pages public communities; filters and Pagi position have separate owners.
+
+  Supported filters are validated by `Communities.Query.Contract`; sorting is
+  independently restricted to the contract's registered values.
+
+  ## Examples
+
+      Query.page(%{category: "engineering", sort: :most_views}, %Pagi{}, viewer)
+      #=> {:ok, %{entries: [%Community{}], page_info: %{...}}}
+  """
   @spec page(map(), Params.t() | nil, User.t() | nil) :: tuple()
   def page(filter, pagi, viewer \\ nil) do
     filter = Map.reject(filter, fn {_key, value} -> is_nil(value) end)
     sort = Map.get(filter, :sort, :desc_inserted)
 
-    if sort in [:desc_inserted, :asc_inserted, :most_views, :least_views] do
+    with {:ok, :pass} <- Contract.validate_filter(filter),
+         true <- sort in Contract.sort_values() do
       query =
         public_query()
         |> QueryBuilder.filter_pack(Map.delete(filter, :sort))
@@ -73,7 +101,8 @@ defmodule GroupherServer.CMS.Communities.Query do
         {:ok, %{page | entries: entries}}
       end
     else
-      {:error, GroupherServer.Pagi.unsupported_sort()}
+      {:error, _reason} = error -> error
+      false -> {:error, Pagi.unsupported_sort()}
     end
   end
 
@@ -108,7 +137,4 @@ defmodule GroupherServer.CMS.Communities.Query do
       cursor_fields: [:inserted_at, :id]
     }
   end
-
-  @doc false
-  def get(id), do: Repo.get(Community, id)
 end

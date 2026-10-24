@@ -24,6 +24,7 @@ defmodule GroupherServer.CMS.Command do
   `"doc.tree.create_tab"`.
   """
 
+  alias GroupherServer.CMS
   alias GroupherServer.{Accounts, CMS}
   alias Helper.T
 

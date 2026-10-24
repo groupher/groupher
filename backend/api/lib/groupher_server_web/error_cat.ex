@@ -23,4 +23,8 @@ defmodule GroupherServerWeb.ErrorCat do
   error(:missing_host, code: 4028)
   error(:resolve_failed, code: 4029, retryable: true)
   error(:unsafe_url, code: 4030)
+  error(:service_scope_forbidden, code: 4031)
+  error(:token_missing, code: 4032)
+  error(:request_identity_unavailable, code: 4033)
+  error(:unexpected_error, code: 4034)
 end

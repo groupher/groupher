@@ -5,9 +5,29 @@ defmodule GroupherServer.CMS.Command.ConfirmationDefinition do
       domain operation
         -> explicit Confirmation module
         -> string-key JSON envelope
-        -> CMS.Command.Receipt recovery
+        -> GroupherServer.CMS.Command.Receipt recovery
+
+  The owning domain defines its payload keys and field types once; the macro
+  generates `operations/0`, `encode/2`, and `decode/2` callbacks. Unsupported
+  keys, types, variants, or schema versions fail closed at decode time.
+
+  ## Examples
+
+      defmodule ExampleConfirmation do
+        use GroupherServer.CMS.Command.ConfirmationDefinition,
+          operation: :example_update,
+          data_keys: ["id"],
+          field_types: %{"id" => :string}
+      end
   """
 
+  @doc """
+  Installs the Receipt confirmation codec generated from one domain-owned payload schema.
+
+  Required option: `:operation`. Optional options include `:operations`,
+  `:data_keys`, `:field_types`, `:variant_key`, and schema version settings.
+  """
+  @spec __using__(keyword()) :: Macro.t()
   defmacro __using__(opts) do
     operation = Keyword.fetch!(opts, :operation)
     operations = Keyword.get(opts, :operations, [operation])

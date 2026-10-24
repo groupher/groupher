@@ -300,7 +300,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
   defp restore_options(args) do
     case option(args, :workflow) do
-      :content_import -> [source: :worker]
+      :content_import -> [source: :worker, workflow: :content_import]
       _ -> [source: :api]
     end
   end

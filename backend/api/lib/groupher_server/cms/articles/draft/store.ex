@@ -277,8 +277,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     %Article{id: value(attrs, :article_id)}
     |> Article.changeset(%{
       thread: thread,
-      author_id: author.id,
-      moderation_state: Map.get(attrs, :moderation_state, :legal)
+      author_id: author.id
     })
     |> Repo.insert()
   end
@@ -808,8 +807,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     %ArticleBinding{}
     |> ArticleBinding.changeset(%{
       article_id: article.id,
-      community_id: community.id,
-      visible: true
+      community_id: community.id
     })
     |> Repo.insert()
   end
@@ -818,8 +816,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     %DocBranchState{}
     |> DocBranchState.changeset(%{
       article_id: article.id,
-      branch_id: Keyword.fetch!(opts, :branch_id),
-      moderation_state: :legal
+      branch_id: Keyword.fetch!(opts, :branch_id)
     })
     |> Repo.insert()
   end

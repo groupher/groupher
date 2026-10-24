@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   alias CMS.Communities.Lifecycle
   alias CMS.Gate.{Const, ErrorCat}
   alias CMS.Gate.Context.Access.Community, as: CommunityContext
-  alias CMS.Model.Community
+  alias CMS.Model.{Community, CommunityLifecycle}
   alias CMS.Passport.Registry
 
   @read_actions [:read, :list]
@@ -44,6 +44,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
     :category_delete,
     :category_set,
     :category_unset,
+    :import_docs,
     :request_destroy,
     :restore,
     :schedule_destroy,
@@ -106,7 +107,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   end
 
   def check_access(user, :manage_docs, %Community{} = community, %CommunityContext{} = context) do
-    case Lifecycle.can_write(community, context) do
+    case lifecycle_capability(context, :write) do
       {:ok, true} -> relation_allowed(management_binding_allowed?(user, community, context))
       {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
       {:error, reason} -> {:error, reason}
@@ -145,10 +146,26 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp relation_allowed(false), do: {:error, ErrorCat.permission_denied()}
 
   defp lifecycle_allowed(%Community{} = community, :command, context) do
-    case Lifecycle.can_manage(community, context) do
-      result ->
-        result
-    end
+    _ = community
+    lifecycle_capability(context, :manage)
+  end
+
+  defp lifecycle_capability(
+         %CommunityContext{community_lifecycle: %CommunityLifecycle{} = lifecycle} = context,
+         :manage
+       ) do
+    Lifecycle.can_manage(lifecycle, context)
+  end
+
+  defp lifecycle_capability(
+         %CommunityContext{community_lifecycle: %CommunityLifecycle{} = lifecycle} = context,
+         :write
+       ) do
+    Lifecycle.can_write(lifecycle, context)
+  end
+
+  defp lifecycle_capability(_context, _capability) do
+    {:error, ErrorCat.lifecycle_not_loaded()}
   end
 
   defp command_binding_allowed?(nil, _community, _action, _context), do: false
@@ -158,6 +175,10 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp command_binding_allowed?(user, community, :request_destroy, context) do
     base_command_binding_allowed?(user, community, context) or
       passport_allowed?(community, Const.passport_action(:community_request_destroy), context)
+  end
+
+  defp command_binding_allowed?(_user, community, :import_docs, context) do
+    passport_allowed?(community, CMS.GateAction.doc_import(), context)
   end
 
   defp command_binding_allowed?(user, community, action, context)

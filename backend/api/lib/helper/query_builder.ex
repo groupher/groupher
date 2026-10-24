@@ -77,12 +77,6 @@ defmodule Helper.QueryBuilder do
       {:sort, :asc_index}, queryable ->
         queryable |> order_by(asc: :index)
 
-      {:sort, :most_stars}, queryable ->
-        queryable |> sort_by_count(:stars, :desc)
-
-      {:sort, :least_stars}, queryable ->
-        queryable |> sort_by_count(:stars, :asc)
-
       {_, _}, queryable ->
         queryable
     end)
@@ -131,13 +125,5 @@ defmodule Helper.QueryBuilder do
       {_, _}, queryable ->
         queryable
     end)
-  end
-
-  defp sort_by_count(queryable, field, direction) do
-    queryable
-    |> join(:left, [p], s in assoc(p, ^field))
-    |> group_by([p], p.id)
-    |> select([p], p)
-    |> order_by([_, s], {^direction, fragment("count(?)", s.id)})
   end
 end

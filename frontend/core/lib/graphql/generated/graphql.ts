@@ -6,6 +6,35 @@ export type Incremental<T> =
   | T
   | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never }
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core'
+export type AccountSortEnum = 'ASC_INSERTED' | 'DESC_INSERTED'
+
+export type AlertItemOwner = 'ACCOUNTS' | 'CMS'
+
+export type AlertItemStatus = 'OPEN' | 'RESOLVED' | 'SUPERSEDED'
+
+export type AlertReportInput = {
+  details?: string | null | undefined
+  reportType: AlertReportReason
+  target: AlertReportTargetInput
+}
+
+export type AlertReportReason =
+  | 'HARASSMENT'
+  | 'ILLEGAL_CONTENT'
+  | 'IMPERSONATION'
+  | 'OTHER'
+  | 'SPAM'
+
+export type AlertReportTargetInput = {
+  article?: ArticlePathInput | null | undefined
+  comment?: CommentPathInput | null | undefined
+  docBranchId?: number | null | undefined
+  type: AlertTargetType
+  userId?: string | number | null | undefined
+}
+
+export type AlertTargetType = 'ARTICLE' | 'COMMENT' | 'DOC' | 'USER'
+
 export type AnalysisTrendEnvironmentDimension = 'BROWSER' | 'DEVICE' | 'LANGUAGE' | 'OS' | 'SCREEN'
 
 export type AnalysisTrendLocationDimension = 'CITY' | 'COUNTRY' | 'REGION'
@@ -37,7 +66,7 @@ export type ArticleEmotion =
 
 export type ArticleLifecycleState = 'ARCHIVED' | 'DELETED' | 'DESTROY' | 'DRAFT_ONLY' | 'PUBLISHED'
 
-export type ArticleOrderEnum = 'COLLECTS' | 'COMMENTS' | 'PUBLISH' | 'UPVOTES' | 'VIEWS'
+export type ArticleOrderEnum = 'COMMENTS' | 'PUBLISH' | 'UPVOTES' | 'VIEWS'
 
 export type ArticlePageFilter = {
   cat?: ArticleCatEnum | null | undefined
@@ -45,7 +74,7 @@ export type ArticlePageFilter = {
   communityTag?: string | null | undefined
   communityTags?: Array<string | null | undefined> | null | undefined
   order?: ArticleOrderEnum | null | undefined
-  sort?: SortEnum | null | undefined
+  sort?: ArticleSortEnum | null | undefined
   status?: ArticleStatusEnum | null | undefined
   statuses?: Array<ArticleStatusEnum> | null | undefined
   when?: WhenEnum | null | undefined
@@ -56,6 +85,14 @@ export type ArticlePathInput = {
   innerId: string | number
   thread: Thread
 }
+
+export type ArticleSortEnum =
+  | 'ASC_ACTIVE'
+  | 'ASC_INSERTED'
+  | 'DESC_ACTIVE'
+  | 'DESC_INSERTED'
+  | 'LEAST_VIEWS'
+  | 'MOST_VIEWS'
 
 export type ArticleStage = 'DRAFT' | 'PUBLIC'
 
@@ -97,13 +134,23 @@ export type ChangelogFilter = {
   communityTag?: string | null | undefined
   communityTags?: Array<string | null | undefined> | null | undefined
   order?: ArticleOrderEnum | null | undefined
-  sort?: SortEnum | null | undefined
+  sort?: ArticleSortEnum | null | undefined
   status?: ArticleStatusEnum | null | undefined
   statuses?: Array<ArticleStatusEnum> | null | undefined
   when?: WhenEnum | null | undefined
 }
 
 export type ChangelogThread = 'CHANGELOG'
+
+export type CmsReviewTargetInput = {
+  article?: ArticlePathInput | null | undefined
+  articleId?: string | number | null | undefined
+  branchId?: number | null | undefined
+  comment?: CommentPathInput | null | undefined
+  commentId?: string | number | null | undefined
+  communityId?: string | number | null | undefined
+  type: ReviewBotSubjectType
+}
 
 /** emotion options of comment */
 export type CommentEmotion =
@@ -117,8 +164,10 @@ export type CommentEmotion =
   | 'POPCORN'
 
 export type CommentPageFilter = {
-  sort?: InsertedSortEnum | null | undefined
+  sort?: CommentPageSortEnum | null | undefined
 }
+
+export type CommentPageSortEnum = 'ASC_INSERTED' | 'DESC_INSERTED'
 
 export type CommentPathInput = {
   article: ArticlePathInput
@@ -130,7 +179,7 @@ export type CommentsMode = 'REPLIES' | 'TIMELINE'
 
 export type CommunitiesFilter = {
   category?: string | null | undefined
-  sort?: SortEnum | null | undefined
+  sort?: CommunitySortEnum | null | undefined
 }
 
 export type CommunityActivityExportFormat = 'CSV' | 'JSON'
@@ -205,6 +254,8 @@ export type CommunityAssetUploadFileInput = {
   sizeBytes: unknown
   thread?: Thread | null | undefined
 }
+
+export type CommunitySortEnum = 'ASC_INSERTED' | 'DESC_INSERTED' | 'LEAST_VIEWS' | 'MOST_VIEWS'
 
 export type ContentImportJobStatus =
   | 'APPLYING'
@@ -394,8 +445,6 @@ export type ForwardCursorPagiInput = {
   first?: number | null | undefined
 }
 
-export type InsertedSortEnum = 'ASC_INSERTED' | 'DESC_INSERTED'
-
 export type KanbanBoard = 'BACKLOG' | 'DONE' | 'REJECTED' | 'TODO' | 'WIP'
 
 export type MarkerAppearanceInput = {
@@ -439,7 +488,7 @@ export type PostFilter = {
   communityTag?: string | null | undefined
   communityTags?: Array<string | null | undefined> | null | undefined
   order?: ArticleOrderEnum | null | undefined
-  sort?: SortEnum | null | undefined
+  sort?: ArticleSortEnum | null | undefined
   status?: ArticleStatusEnum | null | undefined
   statuses?: Array<ArticleStatusEnum> | null | undefined
   when?: WhenEnum | null | undefined
@@ -482,14 +531,16 @@ export type ReindexTagInput = {
   index?: number | null | undefined
 }
 
-export type SortEnum =
-  | 'ASC_ACTIVE'
-  | 'DESC_ACTIVE'
-  | 'DESC_INSERTED'
-  | 'LEAST_STARS'
-  | 'LEAST_VIEWS'
-  | 'MOST_STARS'
-  | 'MOST_VIEWS'
+export type ReviewBotMode = 'AI_FIRST' | 'HUMAN_FIRST' | 'IMMEDIATE'
+
+export type ReviewBotScopeInput = {
+  community?: string | null | undefined
+  type: ReviewBotScopeType
+}
+
+export type ReviewBotScopeType = 'COMMUNITY' | 'PLATFORM'
+
+export type ReviewBotSubjectType = 'ARTICLE' | 'COMMENT' | 'DOC'
 
 export type Thread =
   | 'ABOUT'
@@ -513,8 +564,17 @@ export type UpdatePressConfigInput = {
   sitemapEnabled?: boolean | null | undefined
 }
 
+export type UpdateReviewBotConfigInput = {
+  expectedVersion: number
+  reviewBanWords: Array<string>
+  reviewMode: ReviewBotMode
+  reviewPrompt: string
+  scope: ReviewBotScopeInput
+  subjectType: ReviewBotSubjectType
+}
+
 export type UserListFilter = {
-  sort?: SortEnum | null | undefined
+  sort?: AccountSortEnum | null | undefined
 }
 
 export type WallpaperImageInput = {
@@ -1687,7 +1747,6 @@ export type CommentViewerStatesQuery = {
   commentViewerStates: Array<{
     innerId: string
     viewerHasUpvoted: boolean | null
-    viewerHasReported: boolean | null
     emotions: Array<{ type: EmotionType; viewerHasReacted: boolean | null }>
   }>
 }
@@ -4266,6 +4325,81 @@ export type AboutSimpleQueryQueryVariables = Exact<{
 
 export type AboutSimpleQueryQuery = { post: { innerId: string | null } }
 
+export type AlertItemsQueryVariables = Exact<{
+  scope: ReviewBotScopeInput
+  pagi?: PagiInput | null | undefined
+}>
+
+export type AlertItemsQuery = {
+  alertItems: {
+    entries: Array<{
+      id: string
+      owner: AlertItemOwner
+      targetType: AlertTargetType
+      targetId: string
+      communityId: string | null
+      status: AlertItemStatus
+      summary: string
+      reportCount: number
+      version: number
+      openedAt: string
+      susNotes: Array<{ type: string; evidence: string; explanation: string }>
+    }>
+    pageInfo:
+      | { hasPreviousPage: boolean; hasNextPage: boolean }
+      | { totalCount: number; totalPages: number; hasPreviousPage: boolean; hasNextPage: boolean }
+  }
+}
+
+export type ResolveAlertItemMutationVariables = Exact<{
+  id: string | number
+  resolution: string
+  expectedVersion: number
+  commandId: string | number
+}>
+
+export type ResolveAlertItemMutation = { resolveAlertItem: { itemId: string; resolution: string } }
+
+export type MyReportsQueryVariables = Exact<{
+  pagi?: PagiInput | null | undefined
+}>
+
+export type MyReportsQuery = {
+  myReports: {
+    entries: Array<{
+      id: string
+      targetType: AlertTargetType
+      targetId: string
+      communityId: string | null
+      itemId: string
+      reportType: string
+      details: string | null
+      withdrawnAt: string | null
+      outdatedAt: string | null
+      resolvedAt: string | null
+      resolution: string | null
+      insertedAt: string
+    }>
+    pageInfo:
+      | { hasPreviousPage: boolean; hasNextPage: boolean }
+      | { totalCount: number; totalPages: number; hasPreviousPage: boolean; hasNextPage: boolean }
+  }
+}
+
+export type SubmitReportMutationVariables = Exact<{
+  input: AlertReportInput
+  commandId: string | number
+}>
+
+export type SubmitReportMutation = { submitReport: { id: string; reportType: string } }
+
+export type WithdrawReportMutationVariables = Exact<{
+  reportId: string | number
+  commandId: string | number
+}>
+
+export type WithdrawReportMutation = { withdrawReport: { id: string; withdrawnAt: string | null } }
+
 export type ArticleEditorAuthorFieldsFragment = {
   login: string | null
   nickname: string | null
@@ -4352,12 +4486,7 @@ export type UpdatePostFromEditorMutation = {
       bio: string | null
       shortbio: string | null
     } | null
-    meta: {
-      thread: Thread | null
-      isLegal: boolean | null
-      illegalReason: Array<string | null> | null
-      illegalWords: Array<string | null> | null
-    } | null
+    meta: { thread: Thread | null } | null
   } | null
 }
 
@@ -4478,12 +4607,7 @@ export type ArticleEditorPostQuery = {
       } | null
       community: { slug: string } | null
     } | null> | null
-    meta: {
-      thread: Thread | null
-      isLegal: boolean | null
-      illegalReason: Array<string | null> | null
-      illegalWords: Array<string | null> | null
-    } | null
+    meta: { thread: Thread | null } | null
     body: { json: string }
   }
 }
@@ -4613,6 +4737,144 @@ export type CommunityTagGroupsForMenuQuery = {
   } | null> | null
 }
 
+export type ContentReviewQueryVariables = Exact<{
+  target: CmsReviewTargetInput
+}>
+
+export type ContentReviewQuery = {
+  contentReview: {
+    artimentReviewId: string | null
+    targetType: ReviewBotSubjectType
+    articleId: string | null
+    commentId: string | null
+    branchId: number | null
+    communityId: string | null
+    state: string
+    reviewMode: string | null
+    systemOpinion: {
+      status: string | null
+      summary: string | null
+      susNotes: Array<{ type: string; evidence: string; explanation: string }>
+    } | null
+    communityOpinion: {
+      status: string | null
+      summary: string | null
+      susNotes: Array<{ type: string; evidence: string; explanation: string }>
+    } | null
+  } | null
+}
+
+export type PendingContentReviewsQueryVariables = Exact<{
+  scope: ReviewBotScopeInput
+}>
+
+export type PendingContentReviewsQuery = {
+  pendingContentReviews: Array<{
+    artimentReviewId: string | null
+    targetType: ReviewBotSubjectType
+    articleId: string | null
+    commentId: string | null
+    branchId: number | null
+    communityId: string | null
+    state: string
+    reviewMode: string | null
+    systemOpinion: {
+      status: string | null
+      summary: string | null
+      susNotes: Array<{ type: string; evidence: string; explanation: string }>
+    } | null
+    communityOpinion: {
+      status: string | null
+      summary: string | null
+      susNotes: Array<{ type: string; evidence: string; explanation: string }>
+    } | null
+  }>
+}
+
+export type ApproveArticleReviewMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  commandId: string | number
+}>
+
+export type ApproveArticleReviewMutation = {
+  approveArticle: {
+    commandId: string
+    targetType: ReviewBotSubjectType
+    targetId: string
+    action: string
+  }
+}
+
+export type ApproveCommentReviewMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  commandId: string | number
+}>
+
+export type ApproveCommentReviewMutation = {
+  approveComment: {
+    commandId: string
+    targetType: ReviewBotSubjectType
+    targetId: string
+    action: string
+  }
+}
+
+export type DenyArticleReviewMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  commandId: string | number
+}>
+
+export type DenyArticleReviewMutation = {
+  denyArticle: {
+    commandId: string
+    targetType: ReviewBotSubjectType
+    targetId: string
+    action: string
+  }
+}
+
+export type ReleaseArticleReviewMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  commandId: string | number
+}>
+
+export type ReleaseArticleReviewMutation = {
+  releaseArticle: {
+    commandId: string
+    targetType: ReviewBotSubjectType
+    targetId: string
+    action: string
+  }
+}
+
+export type DenyCommentReviewMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  commandId: string | number
+}>
+
+export type DenyCommentReviewMutation = {
+  denyComment: {
+    commandId: string
+    targetType: ReviewBotSubjectType
+    targetId: string
+    action: string
+  }
+}
+
+export type ReleaseCommentReviewMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  commandId: string | number
+}>
+
+export type ReleaseCommentReviewMutation = {
+  releaseComment: {
+    commandId: string
+    targetType: ReviewBotSubjectType
+    targetId: string
+    action: string
+  }
+}
+
 export type ChangelogSimpleQueryQueryVariables = Exact<{
   article: ArticlePathInput
 }>
@@ -4639,9 +4901,6 @@ export type CommentEmotionFieldsFragment = {
 }
 
 export type CommentMetaFieldsFragment = {
-  isLegal: boolean | null
-  illegalReason: Array<string | null> | null
-  illegalWords: Array<string | null> | null
   isArticleAuthorUpvoted: boolean | null
   isReplyToOthers: boolean | null
 }
@@ -4657,7 +4916,6 @@ export type CommentFieldsFragment = {
   commentInteractionRevision: number | null
   isArticleAuthor: boolean | null
   viewerHasUpvoted: boolean | null
-  viewerHasReported: boolean | null
   repliesCount: number | null
   insertedAt: string | null
   updatedAt: string | null
@@ -4669,13 +4927,7 @@ export type CommentFieldsFragment = {
     bio: string | null
     shortbio: string | null
   } | null
-  meta: {
-    isLegal: boolean | null
-    illegalReason: Array<string | null> | null
-    illegalWords: Array<string | null> | null
-    isArticleAuthorUpvoted: boolean | null
-    isReplyToOthers: boolean | null
-  } | null
+  meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
   emotions: Array<{
     type: EmotionType | null
     count: number | null
@@ -4719,13 +4971,7 @@ export type CommentPublicFieldsFragment = {
     bio: string | null
     shortbio: string | null
   } | null
-  meta: {
-    isLegal: boolean | null
-    illegalReason: Array<string | null> | null
-    illegalWords: Array<string | null> | null
-    isArticleAuthorUpvoted: boolean | null
-    isReplyToOthers: boolean | null
-  } | null
+  meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
   emotions: Array<{
     type: EmotionType | null
     count: number | null
@@ -4758,13 +5004,7 @@ export type CommentPublicReplyFieldsFragment = {
     bio: string | null
     shortbio: string | null
   } | null
-  meta: {
-    isLegal: boolean | null
-    illegalReason: Array<string | null> | null
-    illegalWords: Array<string | null> | null
-    isArticleAuthorUpvoted: boolean | null
-    isReplyToOthers: boolean | null
-  } | null
+  meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
   emotions: Array<{
     type: EmotionType | null
     count: number | null
@@ -4795,13 +5035,7 @@ export type CommentPublicReplyFieldsFragment = {
       bio: string | null
       shortbio: string | null
     } | null
-    meta: {
-      isLegal: boolean | null
-      illegalReason: Array<string | null> | null
-      illegalWords: Array<string | null> | null
-      isArticleAuthorUpvoted: boolean | null
-      isReplyToOthers: boolean | null
-    } | null
+    meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
     emotions: Array<{
       type: EmotionType | null
       count: number | null
@@ -4879,13 +5113,7 @@ export type CommentPageQuery = {
           bio: string | null
           shortbio: string | null
         } | null
-        meta: {
-          isLegal: boolean | null
-          illegalReason: Array<string | null> | null
-          illegalWords: Array<string | null> | null
-          isArticleAuthorUpvoted: boolean | null
-          isReplyToOthers: boolean | null
-        } | null
+        meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
         emotions: Array<{
           type: EmotionType | null
           count: number | null
@@ -4917,13 +5145,7 @@ export type CommentPageQuery = {
           bio: string | null
           shortbio: string | null
         } | null
-        meta: {
-          isLegal: boolean | null
-          illegalReason: Array<string | null> | null
-          illegalWords: Array<string | null> | null
-          isArticleAuthorUpvoted: boolean | null
-          isReplyToOthers: boolean | null
-        } | null
+        meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
         emotions: Array<{
           type: EmotionType | null
           count: number | null
@@ -4954,13 +5176,7 @@ export type CommentPageQuery = {
             bio: string | null
             shortbio: string | null
           } | null
-          meta: {
-            isLegal: boolean | null
-            illegalReason: Array<string | null> | null
-            illegalWords: Array<string | null> | null
-            isArticleAuthorUpvoted: boolean | null
-            isReplyToOthers: boolean | null
-          } | null
+          meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
           emotions: Array<{
             type: EmotionType | null
             count: number | null
@@ -4980,13 +5196,7 @@ export type CommentPageQuery = {
         bio: string | null
         shortbio: string | null
       } | null
-      meta: {
-        isLegal: boolean | null
-        illegalReason: Array<string | null> | null
-        illegalWords: Array<string | null> | null
-        isArticleAuthorUpvoted: boolean | null
-        isReplyToOthers: boolean | null
-      } | null
+      meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
       emotions: Array<{
         type: EmotionType | null
         count: number | null
@@ -5031,13 +5241,7 @@ export type CommentPageQuery = {
           bio: string | null
           shortbio: string | null
         } | null
-        meta: {
-          isLegal: boolean | null
-          illegalReason: Array<string | null> | null
-          illegalWords: Array<string | null> | null
-          isArticleAuthorUpvoted: boolean | null
-          isReplyToOthers: boolean | null
-        } | null
+        meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
         emotions: Array<{
           type: EmotionType | null
           count: number | null
@@ -5069,13 +5273,7 @@ export type CommentPageQuery = {
           bio: string | null
           shortbio: string | null
         } | null
-        meta: {
-          isLegal: boolean | null
-          illegalReason: Array<string | null> | null
-          illegalWords: Array<string | null> | null
-          isArticleAuthorUpvoted: boolean | null
-          isReplyToOthers: boolean | null
-        } | null
+        meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
         emotions: Array<{
           type: EmotionType | null
           count: number | null
@@ -5106,13 +5304,7 @@ export type CommentPageQuery = {
             bio: string | null
             shortbio: string | null
           } | null
-          meta: {
-            isLegal: boolean | null
-            illegalReason: Array<string | null> | null
-            illegalWords: Array<string | null> | null
-            isArticleAuthorUpvoted: boolean | null
-            isReplyToOthers: boolean | null
-          } | null
+          meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
           emotions: Array<{
             type: EmotionType | null
             count: number | null
@@ -5132,13 +5324,7 @@ export type CommentPageQuery = {
         bio: string | null
         shortbio: string | null
       } | null
-      meta: {
-        isLegal: boolean | null
-        illegalReason: Array<string | null> | null
-        illegalWords: Array<string | null> | null
-        isArticleAuthorUpvoted: boolean | null
-        isReplyToOthers: boolean | null
-      } | null
+      meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
       emotions: Array<{
         type: EmotionType | null
         count: number | null
@@ -5198,13 +5384,7 @@ export type CommentReplyPageQuery = {
         bio: string | null
         shortbio: string | null
       } | null
-      meta: {
-        isLegal: boolean | null
-        illegalReason: Array<string | null> | null
-        illegalWords: Array<string | null> | null
-        isArticleAuthorUpvoted: boolean | null
-        isReplyToOthers: boolean | null
-      } | null
+      meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
       emotions: Array<{
         type: EmotionType | null
         count: number | null
@@ -5235,13 +5415,7 @@ export type CommentReplyPageQuery = {
           bio: string | null
           shortbio: string | null
         } | null
-        meta: {
-          isLegal: boolean | null
-          illegalReason: Array<string | null> | null
-          illegalWords: Array<string | null> | null
-          isArticleAuthorUpvoted: boolean | null
-          isReplyToOthers: boolean | null
-        } | null
+        meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
         emotions: Array<{
           type: EmotionType | null
           count: number | null
@@ -5293,7 +5467,6 @@ export type CreateCommentMutation = {
       commentInteractionRevision: number | null
       isArticleAuthor: boolean | null
       viewerHasUpvoted: boolean | null
-      viewerHasReported: boolean | null
       repliesCount: number | null
       insertedAt: string | null
       updatedAt: string | null
@@ -5305,13 +5478,7 @@ export type CreateCommentMutation = {
         bio: string | null
         shortbio: string | null
       } | null
-      meta: {
-        isLegal: boolean | null
-        illegalReason: Array<string | null> | null
-        illegalWords: Array<string | null> | null
-        isArticleAuthorUpvoted: boolean | null
-        isReplyToOthers: boolean | null
-      } | null
+      meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
       emotions: Array<{
         type: EmotionType | null
         count: number | null
@@ -5409,7 +5576,6 @@ export type OneCommentQuery = {
     commentInteractionRevision: number | null
     isArticleAuthor: boolean | null
     viewerHasUpvoted: boolean | null
-    viewerHasReported: boolean | null
     repliesCount: number | null
     insertedAt: string | null
     updatedAt: string | null
@@ -5422,13 +5588,7 @@ export type OneCommentQuery = {
       bio: string | null
       shortbio: string | null
     } | null
-    meta: {
-      isLegal: boolean | null
-      illegalReason: Array<string | null> | null
-      illegalWords: Array<string | null> | null
-      isArticleAuthorUpvoted: boolean | null
-      isReplyToOthers: boolean | null
-    } | null
+    meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
     emotions: Array<{
       type: EmotionType | null
       count: number | null
@@ -5463,7 +5623,6 @@ export type ReconcileCommentsQuery = {
         commentInteractionRevision: number | null
         isArticleAuthor: boolean | null
         viewerHasUpvoted: boolean | null
-        viewerHasReported: boolean | null
         repliesCount: number | null
         insertedAt: string | null
         updatedAt: string | null
@@ -5476,13 +5635,7 @@ export type ReconcileCommentsQuery = {
           bio: string | null
           shortbio: string | null
         } | null
-        meta: {
-          isLegal: boolean | null
-          illegalReason: Array<string | null> | null
-          illegalWords: Array<string | null> | null
-          isArticleAuthorUpvoted: boolean | null
-          isReplyToOthers: boolean | null
-        } | null
+        meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
         emotions: Array<{
           type: EmotionType | null
           count: number | null
@@ -5518,7 +5671,6 @@ export type ReplyCommentMutation = {
       commentInteractionRevision: number | null
       isArticleAuthor: boolean | null
       viewerHasUpvoted: boolean | null
-      viewerHasReported: boolean | null
       repliesCount: number | null
       insertedAt: string | null
       updatedAt: string | null
@@ -5533,7 +5685,6 @@ export type ReplyCommentMutation = {
         commentInteractionRevision: number | null
         isArticleAuthor: boolean | null
         viewerHasUpvoted: boolean | null
-        viewerHasReported: boolean | null
         repliesCount: number | null
         insertedAt: string | null
         updatedAt: string | null
@@ -5545,13 +5696,7 @@ export type ReplyCommentMutation = {
           bio: string | null
           shortbio: string | null
         } | null
-        meta: {
-          isLegal: boolean | null
-          illegalReason: Array<string | null> | null
-          illegalWords: Array<string | null> | null
-          isArticleAuthorUpvoted: boolean | null
-          isReplyToOthers: boolean | null
-        } | null
+        meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
         emotions: Array<{
           type: EmotionType | null
           count: number | null
@@ -5571,13 +5716,7 @@ export type ReplyCommentMutation = {
         bio: string | null
         shortbio: string | null
       } | null
-      meta: {
-        isLegal: boolean | null
-        illegalReason: Array<string | null> | null
-        illegalWords: Array<string | null> | null
-        isArticleAuthorUpvoted: boolean | null
-        isReplyToOthers: boolean | null
-      } | null
+      meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
       emotions: Array<{
         type: EmotionType | null
         count: number | null
@@ -5688,34 +5827,6 @@ export type UndoUpvoteCommentMutation = {
   } | null
 }
 
-export type ReportCommentMutationVariables = Exact<{
-  comment: CommentPathInput
-  reason: string
-  attr?: string | null | undefined
-  commandId: string | number
-}>
-
-export type ReportCommentMutation = {
-  reportComment: {
-    innerId: string | null
-    viewerHasReported: boolean | null
-    meta: { reportedCount: number | null } | null
-  } | null
-}
-
-export type UndoReportCommentMutationVariables = Exact<{
-  comment: CommentPathInput
-  commandId: string | number
-}>
-
-export type UndoReportCommentMutation = {
-  undoReportComment: {
-    innerId: string | null
-    viewerHasReported: boolean | null
-    meta: { reportedCount: number | null } | null
-  } | null
-}
-
 export type EmotionToCommentMutationVariables = Exact<{
   comment: CommentPathInput
   emotion: CommentEmotion
@@ -5804,7 +5915,6 @@ export type PagedPublishedCommentsQuery = {
       commentInteractionRevision: number | null
       isArticleAuthor: boolean | null
       viewerHasUpvoted: boolean | null
-      viewerHasReported: boolean | null
       repliesCount: number | null
       insertedAt: string | null
       updatedAt: string | null
@@ -5822,13 +5932,7 @@ export type PagedPublishedCommentsQuery = {
         bio: string | null
         shortbio: string | null
       } | null
-      meta: {
-        isLegal: boolean | null
-        illegalReason: Array<string | null> | null
-        illegalWords: Array<string | null> | null
-        isArticleAuthorUpvoted: boolean | null
-        isReplyToOthers: boolean | null
-      } | null
+      meta: { isArticleAuthorUpvoted: boolean | null; isReplyToOthers: boolean | null } | null
       emotions: Array<{
         type: EmotionType | null
         count: number | null
@@ -8877,6 +8981,39 @@ export type RemoveModeratorMutationVariables = Exact<{
 
 export type RemoveModeratorMutation = { removeModerator: { slug: string } | null }
 
+export type ReviewBotConfigQueryVariables = Exact<{
+  scope: ReviewBotScopeInput
+  subjectType: ReviewBotSubjectType
+}>
+
+export type ReviewBotConfigQuery = {
+  reviewBotConfig: {
+    id: string
+    communityId: string | null
+    subjectType: ReviewBotSubjectType
+    reviewMode: ReviewBotMode
+    reviewBanWords: Array<string>
+    reviewPrompt: string
+    version: number
+    updatedAt: string
+  }
+}
+
+export type UpdateReviewBotConfigMutationVariables = Exact<{
+  input: UpdateReviewBotConfigInput
+  commandId: string | number
+}>
+
+export type UpdateReviewBotConfigMutation = {
+  updateReviewBotConfig: {
+    id: string
+    reviewMode: ReviewBotMode
+    reviewBanWords: Array<string>
+    reviewPrompt: string
+    version: number
+  }
+}
+
 export type RichEditorSimpleQueryQueryVariables = Exact<{
   article: ArticlePathInput
 }>
@@ -10676,9 +10813,6 @@ export const CommentMetaFieldsFragmentDoc = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -10777,7 +10911,6 @@ export const CommentFieldsFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'commentInteractionRevision' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthor' } },
           { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'viewerHasReported' } },
           { kind: 'Field', name: { kind: 'Name', value: 'repliesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
@@ -10806,9 +10939,6 @@ export const CommentFieldsFragmentDoc = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -10961,9 +11091,6 @@ export const CommentPublicFieldsFragmentDoc = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -11096,9 +11223,6 @@ export const CommentPublicReplyFieldsFragmentDoc = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -16329,7 +16453,6 @@ export const CommentViewerStatesDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'viewerHasReported' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'emotions' },
@@ -21420,6 +21543,419 @@ export const AboutSimpleQueryDocument = {
     },
   ],
 } as unknown as DocumentNode<AboutSimpleQueryQuery, AboutSimpleQueryQueryVariables>
+export const AlertItemsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'AlertItems' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReviewBotScopeInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'alertItems' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'scope' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagi' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'susNotes' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'evidence' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'explanation' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'summary' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'reportCount' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'openedAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AlertItemsQuery, AlertItemsQueryVariables>
+export const ResolveAlertItemDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ResolveAlertItem' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'resolution' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'resolveAlertItem' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'resolution' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'resolution' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'itemId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'resolution' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ResolveAlertItemMutation, ResolveAlertItemMutationVariables>
+export const MyReportsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'MyReports' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'myReports' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagi' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'itemId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'reportType' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'details' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'outdatedAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'resolvedAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'resolution' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MyReportsQuery, MyReportsQueryVariables>
+export const SubmitReportDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SubmitReport' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'AlertReportInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'submitReport' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reportType' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SubmitReportMutation, SubmitReportMutationVariables>
+export const WithdrawReportDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'WithdrawReport' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reportId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'withdrawReport' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'reportId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'reportId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<WithdrawReportMutation, WithdrawReportMutationVariables>
 export const CreatePostDocument = {
   kind: 'Document',
   definitions: [
@@ -21695,12 +22231,7 @@ export const UpdatePostFromEditorDocument = {
                   name: { kind: 'Name', value: 'meta' },
                   selectionSet: {
                     kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'thread' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
-                    ],
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'thread' } }],
                   },
                 },
               ],
@@ -22272,12 +22803,7 @@ export const ArticleEditorPostDocument = {
                   name: { kind: 'Name', value: 'meta' },
                   selectionSet: {
                     kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'thread' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
-                    ],
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'thread' } }],
                   },
                 },
                 {
@@ -22881,6 +23407,544 @@ export const CommunityTagGroupsForMenuDocument = {
   CommunityTagGroupsForMenuQuery,
   CommunityTagGroupsForMenuQueryVariables
 >
+export const ContentReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ContentReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'contentReview' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'artimentReviewId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'articleId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'commentId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'branchId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewMode' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'systemOpinion' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'summary' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'susNotes' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'evidence' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'explanation' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'communityOpinion' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'summary' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'susNotes' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'evidence' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'explanation' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ContentReviewQuery, ContentReviewQueryVariables>
+export const PendingContentReviewsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'PendingContentReviews' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReviewBotScopeInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pendingContentReviews' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'scope' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'artimentReviewId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'articleId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'commentId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'branchId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewMode' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'systemOpinion' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'summary' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'susNotes' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'evidence' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'explanation' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'communityOpinion' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'summary' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'susNotes' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'evidence' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'explanation' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PendingContentReviewsQuery, PendingContentReviewsQueryVariables>
+export const ApproveArticleReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ApproveArticleReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'approveArticle' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApproveArticleReviewMutation, ApproveArticleReviewMutationVariables>
+export const ApproveCommentReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ApproveCommentReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'approveComment' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApproveCommentReviewMutation, ApproveCommentReviewMutationVariables>
+export const DenyArticleReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DenyArticleReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'denyArticle' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DenyArticleReviewMutation, DenyArticleReviewMutationVariables>
+export const ReleaseArticleReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ReleaseArticleReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'releaseArticle' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReleaseArticleReviewMutation, ReleaseArticleReviewMutationVariables>
+export const DenyCommentReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DenyCommentReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'denyComment' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DenyCommentReviewMutation, DenyCommentReviewMutationVariables>
+export const ReleaseCommentReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ReleaseCommentReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'releaseComment' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReleaseCommentReviewMutation, ReleaseCommentReviewMutationVariables>
 export const ChangelogSimpleQueryDocument = {
   kind: 'Document',
   definitions: [
@@ -23100,9 +24164,6 @@ export const CommentPageDocument = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -23417,9 +24478,6 @@ export const CommentReplyPageDocument = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -23741,9 +24799,6 @@ export const CreateCommentDocument = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -23832,7 +24887,6 @@ export const CreateCommentDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'commentInteractionRevision' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthor' } },
           { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'viewerHasReported' } },
           { kind: 'Field', name: { kind: 'Name', value: 'repliesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
@@ -24167,9 +25221,6 @@ export const OneCommentDocument = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -24258,7 +25309,6 @@ export const OneCommentDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'commentInteractionRevision' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthor' } },
           { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'viewerHasReported' } },
           { kind: 'Field', name: { kind: 'Name', value: 'repliesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
@@ -24395,9 +25445,6 @@ export const ReconcileCommentsDocument = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -24486,7 +25533,6 @@ export const ReconcileCommentsDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'commentInteractionRevision' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthor' } },
           { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'viewerHasReported' } },
           { kind: 'Field', name: { kind: 'Name', value: 'repliesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
@@ -24619,9 +25665,6 @@ export const ReplyCommentDocument = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -24710,7 +25753,6 @@ export const ReplyCommentDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'commentInteractionRevision' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthor' } },
           { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'viewerHasReported' } },
           { kind: 'Field', name: { kind: 'Name', value: 'repliesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
@@ -25091,157 +26133,6 @@ export const UndoUpvoteCommentDocument = {
     },
   ],
 } as unknown as DocumentNode<UndoUpvoteCommentMutation, UndoUpvoteCommentMutationVariables>
-export const ReportCommentDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'ReportComment' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'comment' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CommentPathInput' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reason' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'attr' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'reportComment' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'comment' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'comment' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'reason' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'reason' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'attr' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'attr' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'commandId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'viewerHasReported' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'meta' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'reportedCount' } }],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ReportCommentMutation, ReportCommentMutationVariables>
-export const UndoReportCommentDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'UndoReportComment' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'comment' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CommentPathInput' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'undoReportComment' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'comment' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'comment' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'commandId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'viewerHasReported' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'meta' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'reportedCount' } }],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<UndoReportCommentMutation, UndoReportCommentMutationVariables>
 export const EmotionToCommentDocument = {
   kind: 'Document',
   definitions: [
@@ -25669,9 +26560,6 @@ export const PagedPublishedCommentsDocument = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'isLegal' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalReason' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'illegalWords' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthorUpvoted' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isReplyToOthers' } },
         ],
@@ -25760,7 +26648,6 @@ export const PagedPublishedCommentsDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'commentInteractionRevision' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthor' } },
           { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'viewerHasReported' } },
           { kind: 'Field', name: { kind: 'Name', value: 'repliesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
@@ -35606,6 +36493,130 @@ export const RemoveModeratorDocument = {
     },
   ],
 } as unknown as DocumentNode<RemoveModeratorMutation, RemoveModeratorMutationVariables>
+export const ReviewBotConfigDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ReviewBotConfig' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReviewBotScopeInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'subjectType' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReviewBotSubjectType' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reviewBotConfig' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'scope' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'subjectType' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'subjectType' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'subjectType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewMode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBanWords' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewPrompt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReviewBotConfigQuery, ReviewBotConfigQueryVariables>
+export const UpdateReviewBotConfigDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateReviewBotConfig' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'UpdateReviewBotConfigInput' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateReviewBotConfig' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'input' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'input' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewMode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBanWords' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewPrompt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateReviewBotConfigMutation, UpdateReviewBotConfigMutationVariables>
 export const RichEditorSimpleQueryDocument = {
   kind: 'Document',
   definitions: [

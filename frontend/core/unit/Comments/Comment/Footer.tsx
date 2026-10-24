@@ -30,9 +30,8 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
   const { emotions, toggle: toggleEmotion } = useCommentEmotion(data)
   const { t } = useTrans()
 
-  // const { isLegal } = data.meta
   const { meta } = data
-  const { isArticleAuthorUpvoted = false, isLegal = false } = meta ?? {}
+  const { isArticleAuthorUpvoted = false } = meta ?? {}
 
   const isSolution = data.isSolution
   const noExtraInfo = !isSolution && !isArticleAuthorUpvoted
@@ -70,7 +69,6 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
         <div className='mr-2.5' />
 
         <EmotionSelector
-          isLegal={isLegal}
           emotions={emotions}
           onAction={(name) => {
             if (!isLogin) return authWarn()

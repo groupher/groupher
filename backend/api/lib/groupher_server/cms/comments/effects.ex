@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Comments.Effects do
 
   The caller owns the current Command transaction. This module only builds the
   bounded Outbox intent; the Comment cleanup worker performs post-commit
-  cache, search, mention, notification, and subscription delivery.
+  cache, search, mention reconciliation, and subscription delivery.
 
       Comment Command
         -> Comments.Effects
@@ -48,33 +48,6 @@ defmodule GroupherServer.CMS.Comments.Effects do
     case comment(id) do
       {:ok, %Comment{} = comment} -> CMS.Events.emit(:sync_mentions, %{artiment: comment})
       {:ok, :deleted} -> {:ok, :pass}
-    end
-  end
-
-  def deliver(:audition, %{"comment_id" => id}) do
-    case comment(id) do
-      {:ok, %Comment{} = comment} -> CMS.Events.emit(:audition, %{artiment: comment})
-      {:ok, :deleted} -> {:ok, :pass}
-    end
-  end
-
-  def deliver(:notify_comment, %{"comment_id" => id, "actor_id" => actor_id}) do
-    with {:ok, %Comment{} = comment} <- comment(id),
-         {:ok, actor} <- user(actor_id) do
-      CMS.Events.emit(:notify_comment, %{comment: comment, from_user: actor})
-    else
-      {:ok, :deleted} -> {:ok, :pass}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  def deliver(:notify_reply, %{"comment_id" => id, "actor_id" => actor_id}) do
-    with {:ok, %Comment{} = comment} <- comment(id),
-         {:ok, actor} <- user(actor_id) do
-      CMS.Events.emit(:notify_reply, %{reply_comment: comment, from_user: actor})
-    else
-      {:ok, :deleted} -> {:ok, :pass}
-      {:error, reason} -> {:error, reason}
     end
   end
 

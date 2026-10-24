@@ -11,7 +11,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   @active_period CMS.Artiment.Config.active_period_days()
 
   @delete_hint Comment.delete_hint()
-  @report_threshold_for_fold Comment.report_threshold_for_fold()
   @default_comment_meta Embeds.CommentMeta.default_meta()
   @pinned_comment_limit Comment.pinned_comment_limit()
 
@@ -852,118 +851,19 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user, Ecto.UUID.generate())
     #   {:ok, comment} = ORM.find(Comment, comment.id)
 
-    #   {:ok, comment} = CMS.AbuseReports.comment(comment, "comment reason", "attr", user, Ecto.UUID.generate())
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
 
     #
     # test "user can unreport a comment", ~m(user post)a do
     #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user, Ecto.UUID.generate())
-    #   {:ok, _} = CMS.AbuseReports.comment(comment, "comment reason", "attr", user, Ecto.UUID.generate())
     #   {:ok, comment} = ORM.find(Comment, comment.id)
 
-    #   {:ok, _} = CMS.AbuseReports.undo_comment(comment, user, Ecto.UUID.generate())
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
 
-    test "can undo a report with other user report it too", ~m(community user user2 post)a do
-      {:ok, comment} =
-        CMS.Comments.create_comment(
-          community,
-          :post,
-          article_inner_id(post, community),
-          mock_comment(),
-          user,
-          Ecto.UUID.generate()
-        )
 
-      {:ok, _} =
-        CMS.AbuseReports.comment(comment, "comment reason", "attr", user, Ecto.UUID.generate())
 
-      {:ok, _} =
-        CMS.AbuseReports.comment(comment, "comment reason", "attr", user2, Ecto.UUID.generate())
-
-      filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
-
-      {:ok, all_reports} =
-        CMS.AbuseReports.paged_reports(
-          Map.drop(filter, [:page, :size]),
-          %GroupherServer.Pagi.Params.Offset{page: filter.page, size: filter.size}
-        )
-
-      assert all_reports.total_count == 1
-
-      report = all_reports.entries |> List.first()
-      assert report.report_cases |> length == 2
-      assert Enum.any?(report.report_cases, &(&1.user.login == user.login))
-      assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
-
-      {:ok, _} = CMS.AbuseReports.undo_comment(comment, user, Ecto.UUID.generate())
-
-      filter = %{content_type: :comment, content_id: comment.id, page: 1, size: 20}
-
-      {:ok, all_reports} =
-        CMS.AbuseReports.paged_reports(
-          Map.drop(filter, [:page, :size]),
-          %GroupherServer.Pagi.Params.Offset{page: filter.page, size: filter.size}
-        )
-
-      assert all_reports.total_count == 1
-
-      report = all_reports.entries |> List.first()
-      assert report.report_cases |> length == 1
-      assert Enum.any?(report.report_cases, &(&1.user.login == user2.login))
-    end
-
-    test "report user < @report_threshold_for_fold will not fold comment",
-         ~m(community user post)a do
-      {:ok, comment} =
-        CMS.Comments.create_comment(
-          community,
-          :post,
-          article_inner_id(post, community),
-          mock_comment(),
-          user,
-          Ecto.UUID.generate()
-        )
-
-      assert not comment.is_folded
-
-      Enum.reduce(1..(@report_threshold_for_fold - 1), [], fn _, _acc ->
-        {:ok, user} = db_insert(:user)
-
-        {:ok, _} =
-          CMS.AbuseReports.comment(comment, "comment reason", "attr", user, Ecto.UUID.generate())
-      end)
-
-      {:ok, comment} = ORM.find(Comment, comment.id)
-      assert not comment.is_folded
-    end
-
-    test "report user > @report_threshold_for_fold will cause comment fold",
-         ~m(community user post)a do
-      {:ok, comment} =
-        CMS.Comments.create_comment(
-          community,
-          :post,
-          article_inner_id(post, community),
-          mock_comment(),
-          user,
-          Ecto.UUID.generate()
-        )
-
-      assert not comment.is_folded
-
-      Enum.reduce(1..(@report_threshold_for_fold + 1), [], fn _, _acc ->
-        {:ok, user} = db_insert(:user)
-
-        {:ok, _} =
-          CMS.AbuseReports.comment(comment, "comment reason", "attr", user, Ecto.UUID.generate())
-      end)
-
-      {:ok, comment} = ORM.find(Comment, comment.id)
-      assert comment.is_folded
-    end
   end
 
   describe "paged article comments" do
@@ -1179,51 +1079,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert paged_comments.page_info.total_count == total_count
     end
 
-    test "paged article comments should not contains folded and reported comments",
-         ~m(community user post)a do
-      total_count = 15
-      page_number = 1
-      page_size = 20
-
-      all_comments =
-        Enum.reduce(1..total_count, [], fn _, acc ->
-          {:ok, comment} =
-            CMS.Comments.create_comment(
-              community,
-              :post,
-              article_inner_id(post, community),
-              mock_comment(),
-              user,
-              Ecto.UUID.generate()
-            )
-
-          acc ++ [comment]
-        end)
-
-      random_comment_1 = all_comments |> Enum.at(0)
-      random_comment_2 = all_comments |> Enum.at(1)
-      random_comment_3 = all_comments |> Enum.at(3)
-
-      {:ok, _} = CMS.Comments.fold_comment(random_comment_1.id, user)
-      {:ok, _} = CMS.Comments.fold_comment(random_comment_2.id, user)
-      {:ok, _} = CMS.Comments.fold_comment(random_comment_3.id, user)
-
-      {:ok, paged_comments} =
-        comment_page(
-          :post,
-          post.id,
-          %{page: page_number, size: page_size},
-          :replies
-        )
-
-      assert not exist_in?(random_comment_1, paged_comments.entries)
-      assert not exist_in?(random_comment_2, paged_comments.entries)
-      assert not exist_in?(random_comment_3, paged_comments.entries)
-
-      assert page_number == paged_comments.page_info.page
-      assert page_size == paged_comments.page_info.size
-      assert total_count - 3 == paged_comments.page_info.total_count
-    end
 
     test "can loaded paged folded comment", ~m(community user post)a do
       total_count = 10

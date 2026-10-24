@@ -16,8 +16,10 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     ArticleBodyDraft,
     ArticleBinding,
     ArticleDraft,
+    ArticleLifecycle,
     ArticlePublic,
     ArticleRevision,
+    ArtimentReview,
     DocBranch,
     DocBranchState,
     DocBranchVersion,
@@ -27,8 +29,9 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
   test "publish materialization keeps stable identity and reuses unchanged body snapshots" do
     {:ok, user} = db_insert(:user)
+    {:ok, community} = db_insert(:community)
     {:ok, author} = CMS.Articles.Persist.ensure_author_exists(user)
-    {:ok, article} = insert_article(author.id)
+    {:ok, article} = insert_article(author.id, community.id)
     {:ok, body} = insert_body("body-v1")
     {:ok, draft} = insert_draft(article.id, body.id, author.id, "Title one", "content-1")
     {:ok, _typed_draft} = insert_post_draft(article.id)
@@ -179,7 +182,14 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert result.public.revision_id == result.revision.id
     assert {:error, :not_found} = Store.get(article)
 
-    assert Repo.aggregate(CMS.Outbox.Event, :count) == 0
+    assert Repo.aggregate(CMS.Outbox.Event, :count) == 2
+
+    assert Repo.aggregate(
+             from(request in ArtimentReview,
+               where: request.target_type == :article and request.article_id == ^article.id
+             ),
+             :count
+           ) == 2
   end
 
   test "publish waits for an in-flight autosave and preserves its newer Draft" do
@@ -274,7 +284,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
         branch_id: branch.id
       )
 
-    assert %DocBranchState{moderation_state: :legal, is_edited: false} =
+    assert %DocBranchState{is_edited: false} =
              Repo.get_by!(DocBranchState, article_id: article.id, branch_id: branch.id)
 
     command_id = Ecto.UUID.generate()
@@ -299,7 +309,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     doc_binding = Repo.get_by!(ArticleBinding, article_id: article.id, community_id: community.id)
 
     assert {:ok, [%{article: batch_article, binding: batch_binding, branch_id: branch_id}]} =
-             CMS.FrontDesk.articles([
+             CMS.Articles.locators([
                %{community: community.slug, thread: :doc, inner_id: doc_binding.inner_id}
              ])
 
@@ -328,16 +338,41 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
              )
 
     for number <- [2, 3] do
-      attrs = result.version |> Map.from_struct() |> Map.take([:article_id, :branch_id, :revision_id, :published_by_id, :published_at]) |> Map.put(:version_number, number)
+      attrs =
+        result.version
+        |> Map.from_struct()
+        |> Map.take([:article_id, :branch_id, :revision_id, :published_by_id, :published_at])
+        |> Map.put(:version_number, number)
+
       Repo.insert!(DocBranchVersion.changeset(%DocBranchVersion{}, attrs))
     end
-    assert {:ok, %{entries: first, total_count: 3}} = CMS.Docs.list_branch_versions(article.id, branch.id, %{offset: %{page: 1, size: 2}}, user)
-    assert {:ok, %{entries: same, end_cursor: cursor, has_next_page: true}} = CMS.Docs.list_branch_versions(article.id, branch.id, %{cursor: %{first: 2}}, user)
+
+    assert {:ok, %{entries: first, total_count: 3}} =
+             CMS.Docs.list_branch_versions(
+               article.id,
+               branch.id,
+               %{offset: %{page: 1, size: 2}},
+               user
+             )
+
+    assert {:ok, %{entries: same, end_cursor: cursor, has_next_page: true}} =
+             CMS.Docs.list_branch_versions(article.id, branch.id, %{cursor: %{first: 2}}, user)
+
     assert Enum.map(first, & &1.version.id) == Enum.map(same, & &1.version.id)
-    assert {:ok, %{entries: [%{version: tail}], has_next_page: false}} = CMS.Docs.list_branch_versions(article.id, branch.id, %{cursor: %{first: 2, after: cursor}}, user)
+
+    assert {:ok, %{entries: [%{version: tail}], has_next_page: false}} =
+             CMS.Docs.list_branch_versions(
+               article.id,
+               branch.id,
+               %{cursor: %{first: 2, after: cursor}},
+               user
+             )
+
     assert tail.id == result.version.id
     assert {:error, _} = CMS.Docs.list_branch_versions(article.id, branch.id, nil, nil)
-    assert {:error, _} = CMS.Docs.get_branch_version(article.id, branch.id, result.version.id, nil)
+
+    assert {:error, _} =
+             CMS.Docs.get_branch_version(article.id, branch.id, result.version.id, nil)
 
     assert {:ok, restored} =
              CMS.Docs.restore_revision_to_draft(
@@ -453,6 +488,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     {:ok, user} = db_insert(:user)
     {:ok, source} = db_insert(:community)
     {:ok, destination} = db_insert(:community)
+    user = grant_binding_actions(user, [source, destination])
 
     {:ok, %{article: article, draft: draft}} =
       CMS.Articles.create_stable_draft(
@@ -542,6 +578,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
   test "move preserves an existing destination binding and its local data" do
     {source, article, _attrs, user} = mock_article(:post)
     {:ok, destination} = db_insert(:community)
+    user = grant_binding_actions(user, [source, destination])
 
     assert {:ok, _} =
              CMS.Articles.mirror(
@@ -620,6 +657,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
   test "move updates the Community scope of binding-owned metrics" do
     {source, article, _attrs, user} = mock_article(:post)
     {:ok, destination} = db_insert(:community)
+    user = grant_binding_actions(user, [source, destination])
     binding = Repo.get_by!(ArticleBinding, article_id: article.id, community_id: source.id)
 
     assert {:ok, :pass} =
@@ -652,6 +690,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     {:ok, user} = db_insert(:user)
     {:ok, source} = db_insert(:community)
     {:ok, destination} = db_insert(:community)
+    user = grant_binding_actions(user, [source, destination])
 
     {:ok, %{article: article, draft: draft}} =
       CMS.Articles.create_stable_draft(
@@ -694,7 +733,11 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert {:ok, restored} = Store.ensure_from_public(published, author)
     lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: published.id)
 
-    assert {:error, :article_binding_context_required} =
+    assert {:error,
+            %ErrorCat.Error{
+              namespace: {:cms, :article},
+              reason: :binding_context_required
+            }} =
              Target.publish(published, author,
                expected_draft_version: restored.version,
                expected_lifecycle_version: lifecycle.version
@@ -716,6 +759,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     {:ok, source} = db_insert(:community)
     {:ok, mirror_community} = db_insert(:community)
     {:ok, conflicting_community} = db_insert(:community)
+    user = grant_binding_actions(user, [source, mirror_community, conflicting_community])
 
     {:ok, %{article: article}} =
       CMS.Articles.create_stable_draft(
@@ -820,6 +864,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     {:ok, user} = db_insert(:user)
     {:ok, community} = db_insert(:community)
     {:ok, hidden_community} = db_insert(:community)
+    user = grant_binding_actions(user, [community, hidden_community])
 
     {:ok, %{article: article, draft: draft}} =
       CMS.Articles.create_stable_draft(
@@ -841,12 +886,11 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
                command_id: Ecto.UUID.generate()
              )
 
-    assert {:ok, _hidden_binding} =
+    assert {:ok, _extra_binding} =
              %ArticleBinding{}
              |> ArticleBinding.changeset(%{
                article_id: published.id,
-               community_id: hidden_community.id,
-               visible: false
+               community_id: hidden_community.id
              })
              |> Repo.insert()
 
@@ -902,7 +946,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert public.body.plain_text =~ "stable public body"
 
     assert {:ok, [%{article: batch_article, binding: batch_binding}]} =
-             CMS.FrontDesk.articles([
+             CMS.Articles.locators([
                %{community: community.slug, thread: :post, inner_id: binding.inner_id}
              ])
 
@@ -927,14 +971,39 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     |> Repo.insert!()
   end
 
-  defp insert_article(author_id) do
-    %Article{}
-    |> Article.changeset(%{
-      author_id: author_id,
-      thread: :post,
-      moderation_state: :legal
-    })
-    |> Repo.insert()
+  defp grant_binding_actions(user, communities) do
+    grants =
+      Enum.into(communities, %{}, fn community ->
+        {community.slug, %{"cms" => %{"post.pin" => true}}}
+      end)
+
+    global = %{
+      "post.community.mirror" => true,
+      "post.community.move" => true,
+      "post.community.unmirror" => true
+    }
+
+    Map.put(user, :cur_passport, Map.merge(%{"global" => global}, grants))
+  end
+
+  defp insert_article(author_id, community_id) do
+    with {:ok, article} <-
+           %Article{}
+           |> Article.changeset(%{author_id: author_id, thread: :post})
+           |> Repo.insert(),
+         {:ok, _lifecycle} <-
+           %ArticleLifecycle{}
+           |> ArticleLifecycle.changeset(%{
+             article_id: article.id,
+             community_id: community_id,
+             thread: :post,
+             state: :draft_only,
+             version: 1,
+             changed_at: DateTime.utc_now(:second)
+           })
+           |> Repo.insert() do
+      {:ok, article}
+    end
   end
 
   defp insert_body(content) do

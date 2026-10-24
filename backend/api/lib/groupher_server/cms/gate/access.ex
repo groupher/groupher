@@ -11,6 +11,10 @@ defmodule GroupherServer.CMS.Gate.Access do
   @doc "Delegates check_in_transaction/3 to the owning implementation."
   defdelegate check_in_transaction(arg1, arg2, arg3), to: GroupherServer.CMS.Gate.Access.Query
 
+  @doc "Delegates caller-owned Community workflow admission to the owning implementation."
+  defdelegate check_community_workflow_in_transaction(actor, action, community),
+    to: GroupherServer.CMS.Gate.Access.Query
+
   @doc "Delegates check_in_transaction/4 to the owning implementation."
   defdelegate check_in_transaction(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Gate.Access.Query

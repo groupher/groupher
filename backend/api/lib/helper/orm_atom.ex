@@ -147,7 +147,6 @@ defmodule Helper.ORMAtom do
       # 通过结构体更新
       post = Repo.get!(Post, 1)
       {:ok, updated} = update_meta(post, %{
-        reported_count: 100,
         is_comment_locked: true
       })
 

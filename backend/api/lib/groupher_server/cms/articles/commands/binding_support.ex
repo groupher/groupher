@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
   """
 
   alias GroupherServer.CMS
-  alias CMS.Articles.{Commands.BindingConfirmation, Effects, Query}
+  alias CMS.Articles.{Bindings, Commands.BindingConfirmation, Effects}
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Article, ArticleBinding, Community, PinnedArticle}
@@ -34,9 +34,12 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
   end
 
   def present_binding({:ok, %BindingConfirmation{data: data}}) do
-    case Query.binding(data["article_id"], data["community_id"]) do
-      %ArticleBinding{} = binding -> {:ok, Map.put(binding, :command_id, data["command_id"])}
-      nil -> {:error, CMS.ErrorCat.command_result_unavailable()}
+    case Bindings.fetch_binding(data["article_id"], data["community_id"]) do
+      {:ok, %ArticleBinding{} = binding} ->
+        {:ok, Map.put(binding, :command_id, data["command_id"])}
+
+      {:error, _reason} ->
+        {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
 
@@ -52,9 +55,12 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
   def present_article(error), do: error
 
   def present_pin({:ok, %BindingConfirmation{data: data}}) do
-    case Query.pinned_binding(data["article_id"], data["community_id"]) do
-      %PinnedArticle{} = pin -> {:ok, Map.put(pin, :command_id, data["command_id"])}
-      nil -> {:error, CMS.ErrorCat.command_result_unavailable()}
+    case Bindings.fetch_pin(data["article_id"], data["community_id"]) do
+      {:ok, %PinnedArticle{} = pin} ->
+        {:ok, Map.put(pin, :command_id, data["command_id"])}
+
+      {:error, _reason} ->
+        {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
 

@@ -61,8 +61,7 @@ middleware 参数规范化；它不访问 Repo，也不查询 ArticleBinding。�
 
 `Articles.Bindings` 不负责路径解析，也不引入 `PublicPath`、`Articles.Path` 或 binding locator
 查询 API。
-公共路径的 binding/database lookup 归 FrontDesk。批量路径读取已由
-`CMS.FrontDesk.articles/1` 承接，原 `Articles.PathResolver` 已删除。
+公共 Article locator 的 binding/database lookup 由 `Articles.Query.Locator` 批量完成；单 Article 的资源读取仍经 FrontDesk。原 `Articles.PathResolver` 已删除。
 旧 `Articles.Communities` 同时混合 binding 生命周期、pin、tag 和查询职责，必须在调用方迁移后删除；
 不保留 alias、转发函数或兼容 facade。
 

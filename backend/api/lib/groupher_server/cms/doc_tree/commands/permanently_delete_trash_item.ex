@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.PermanentlyDeleteTrashItem do
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
+  alias GroupherServer.CMS
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User

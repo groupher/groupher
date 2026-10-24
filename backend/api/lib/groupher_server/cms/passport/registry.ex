@@ -17,6 +17,9 @@ defmodule GroupherServer.CMS.Passport.Registry do
   @doc "Delegates passport grant checks to `PermissionRegistry`."
   defdelegate allowed?(passport, community, action), to: PermissionRegistry
 
+  @doc "Delegates thread-scoped passport grant checks to `PermissionRegistry`."
+  defdelegate allowed?(passport, community, action, thread), to: PermissionRegistry
+
   @doc "Delegates moderator title listing to `PermissionRegistry`."
   defdelegate moderator_titles(scope), to: PermissionRegistry
 
@@ -26,8 +29,28 @@ defmodule GroupherServer.CMS.Passport.Registry do
   @doc "Delegates the default passport rule catalog to `PermissionRegistry`."
   defdelegate all_passport_rules(), to: PermissionRegistry
 
-  @doc "Delegates known grant listing for one scope to `PermissionRegistry`."
+  @doc """
+  Delegates known grant listing for one scope to `PermissionRegistry`.
+
+  Pass `:stringify` to encode each known grant as a JSON map with false defaults
+  for the Passport editing surface.
+
+  ## Examples
+
+      CMS.Passport.Registry.all_rules(:cms, :stringify)
+  """
   defdelegate all_rules(scope), to: PermissionRegistry
+
+  @doc """
+  Returns the known grants for a scope in the requested output format.
+
+  `:stringify` encodes each grant as a JSON object whose initial value is
+  `false`, which is the shape expected by the Passport editor.
+
+  ## Examples
+
+      CMS.Passport.Registry.all_rules(:cms, :stringify)
+  """
   defdelegate all_rules(scope, format), to: PermissionRegistry
 
   @doc "Delegates the canonical empty rules payload to `PermissionRegistry`."

@@ -72,14 +72,45 @@ defmodule Helper.PermissionRegistry do
   @spec allowed?(map() | nil, String.t() | nil, String.t()) ::
           {:ok, boolean()} | {:error, ErrorCat.error()}
   def allowed?(passport, community, action) when is_binary(action) do
+    allowed?(passport, community, action, nil)
+  end
+
+  def allowed?(_, _, _), do: {:error, ErrorCat.unknown_action()}
+
+  @doc "Checks a registered action using the resource thread for thread-scoped grants."
+  @spec allowed?(map() | nil, String.t() | nil, String.t(), atom() | String.t() | nil) ::
+          {:ok, boolean()} | {:error, ErrorCat.error()}
+  def allowed?(passport, community, action, thread) when is_binary(action) do
     with {:ok, requirement} <- requirement(action) do
-      allowed_requirement?(normalize_rules(passport), community, requirement)
+      requirement
+      |> resolve_thread_grant(thread)
+      |> case do
+        {:ok, resolved_requirement} ->
+          allowed_requirement?(normalize_rules(passport), community, resolved_requirement)
+
+        :error ->
+          {:ok, false}
+      end
     end
   rescue
     ArgumentError -> {:ok, false}
   end
 
-  def allowed?(_, _, _), do: {:error, ErrorCat.unknown_action()}
+  def allowed?(_, _, _, _), do: {:error, ErrorCat.unknown_action()}
+
+  defp resolve_thread_grant(%{grant_by_thread: suffix} = requirement, thread)
+       when is_binary(suffix) and (is_atom(thread) or is_binary(thread)) do
+    thread = to_string(thread)
+
+    if thread in PermissionConfig.threads() do
+      {:ok, requirement |> Map.delete(:grant_by_thread) |> Map.put(:grant, "#{thread}.#{suffix}")}
+    else
+      :error
+    end
+  end
+
+  defp resolve_thread_grant(%{grant_by_thread: _suffix}, _thread), do: :error
+  defp resolve_thread_grant(requirement, _thread), do: {:ok, requirement}
 
   defp allowed_requirement?(rules, community, requirement) do
     if get_in(rules, ["global", "god"]) == true do

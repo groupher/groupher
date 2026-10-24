@@ -5,9 +5,12 @@
 import { useEffect, useState } from 'react'
 
 import ArticleBody from '~/render/ArtimentBody'
+import useCommunity from '~/stores/community/hooks'
 import GotoTop from '~/ui/GotoTop'
 import { ArticleContentLoading } from '~/ui/Loading'
 import ViewportTracker from '~/ui/ViewportTracker'
+import ReportAction from '~/unit/AlertWall/ReportAction'
+import ReviewNotice from '~/unit/AlertWall/ReviewNotice'
 
 import ArticleFooter from '../ArticleFooter'
 import useLogic from '../useLogic'
@@ -30,6 +33,7 @@ export default function ChangelogViewer({ isFullView = true }: TProps) {
   const s = useSalon()
 
   const { loading, article, stats, viewerState } = useLogic()
+  const { slug: community } = useCommunity()
 
   const [viewState, setViewState] = useState(INIT_VIEW_STATE)
 
@@ -67,6 +71,22 @@ export default function ChangelogViewer({ isFullView = true }: TProps) {
         <div className={s.subTitle}>{article.innerId}</div>
       </div>
       <ArticleInfo article={article} stats={stats} viewerState={viewerState} />
+      {article.thread === 'CHANGELOG' && article.innerId && (
+        <>
+          <ReviewNotice
+            target={{
+              type: 'ARTICLE',
+              article: { community, thread: article.thread, innerId: article.innerId },
+            }}
+          />
+          <ReportAction
+            target={{
+              type: 'ARTICLE',
+              article: { community, thread: article.thread, innerId: article.innerId },
+            }}
+          />
+        </>
+      )}
       {isFullView && (
         <ViewportTracker
           onEnter={() => {

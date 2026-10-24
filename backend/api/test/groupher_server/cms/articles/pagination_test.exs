@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
   import Ecto.Query
 
   alias CMS.Articles.Pagination
+  alias CMS.Articles.Query.Contract
   alias GroupherServer.CMS
   alias CMS.Model.ArticleStats
   alias GroupherServer.ErrorCat
@@ -30,6 +31,18 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
 
     assert {:error, %{reason: :unsupported_sort}} =
              Pagination.page(:post, %{community: community.slug, sort: :unknown}, nil)
+  end
+
+  test "Article query contract rejects unknown keys, ambiguous aliases, and unwired collects" do
+    assert {:error, %{reason: :unsupported_sort}} = Contract.validate_filter(%{sort: :collects})
+    assert {:error, _} = Contract.validate_filter(%{unrecognized: true})
+    assert {:error, _} = Contract.validate_filter(%{sort: :desc_inserted, order: :views})
+
+    assert {:error, _} =
+             Contract.validate_filter(%{community_tag: "one", community_tags: ["two"]})
+
+    assert {:ok, :pass} = Contract.validate_filter(%{order: :views})
+    assert :collects in CMS.Interactions.Const.interaction_order_values()
   end
 
   test "offset returns Article Lite rows and a distinct binding count" do
@@ -235,6 +248,7 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
     {community, pinned_article, _attrs, user} = mock_article(:post)
     {_, _regular_article, _attrs, _user} = mock_article(:post, community, user)
     {_, _another_regular_article, _attrs, _user} = mock_article(:post, community, user)
+    user = grant_post_pin(user, community)
 
     assert {:ok, _pinned} =
              CMS.Articles.pin(community, pinned_article.id, user, Ecto.UUID.generate())
@@ -389,6 +403,7 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
     {community, pinned, _attrs, user} = mock_article(:post)
     mock_article(:post, community, user)
     mock_article(:post, community, user)
+    user = grant_post_pin(user, community)
     assert {:ok, _pin} = CMS.Articles.pin(community, pinned.id, user, Ecto.UUID.generate())
     filter = %{community: community.slug}
 
@@ -590,5 +605,12 @@ defmodule GroupherServer.CMS.Articles.PaginationTest do
     after
       0 -> Enum.reverse(queries)
     end
+  end
+
+  defp grant_post_pin(user, community) do
+    Map.put(user, :cur_passport, %{
+      "global" => %{},
+      community.slug => %{"cms" => %{"post.pin" => true}}
+    })
   end
 end

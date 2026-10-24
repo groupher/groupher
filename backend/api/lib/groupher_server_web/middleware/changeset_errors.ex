@@ -15,17 +15,15 @@ defmodule GroupherServerWeb.Middleware.ChangesetErrors do
   """
 
   @behaviour Absinthe.Middleware
-  import Helper.Utils, only: [handle_absinthe_error: 3]
-  alias GroupherServer.ErrorCat
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+  alias GroupherServerWeb.ErrorResponse
 
   alias GroupherServerWeb.Gettext, as: Translator
 
   def call(%{errors: [%Ecto.Changeset{} = changeset]} = resolution, _) do
-    resolution
-    |> handle_absinthe_error(
-      transform_errors(changeset),
-      ErrorCat.code(WebErrorCat.changeset())
+    ErrorResponse.put_error(
+      resolution,
+      WebErrorCat.changeset(%{message: transform_errors(changeset)})
     )
   end
 

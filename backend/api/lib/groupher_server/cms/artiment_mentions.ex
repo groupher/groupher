@@ -48,6 +48,10 @@ defmodule GroupherServer.CMS.ArtimentMentions do
           T.domain_res(T.paged_data())
   defdelegate mentions(mentioner_type, mentioner_id, pagi), to: Store
 
+  @doc "Returns user recipients directly mentioned by one internal CMS source."
+  @spec mentioned_user_ids(atom(), T.id()) :: {:ok, [pos_integer()]} | {:error, term()}
+  defdelegate mentioned_user_ids(mentioner_type, mentioner_id), to: Store
+
   @doc "Runs `mentioned_by` through the public `ArtimentMentions` boundary."
   @spec mentioned_by(atom(), T.id(), GroupherServer.Pagi.Params.t() | nil) ::
           T.domain_res(T.paged_data())

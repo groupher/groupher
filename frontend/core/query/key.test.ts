@@ -143,6 +143,12 @@ describe('query keys', () => {
       'article-state',
       ['post:1', 'post:2'],
     ])
+    expect(viewerQueryKeys.myReports('account-a', 2)).not.toEqual(
+      viewerQueryKeys.myReports('account-b', 2),
+    )
+    expect(viewerQueryKeys.contentReview('account-a', { kind: 'ARTICLE' })).not.toEqual(
+      viewerQueryKeys.contentReview('account-b', { kind: 'ARTICLE' }),
+    )
   })
 
   it('matches every comment page for one article without crossing article ids', () => {

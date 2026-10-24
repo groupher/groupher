@@ -48,7 +48,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
         join: article in Article,
         on: article.id == entry.article_id,
         join: binding in ArticleBinding,
-        on: binding.id == entry.article_binding_id and binding.visible == true,
+        on: binding.id == entry.article_binding_id,
         join: community in Community,
         on: community.id == binding.community_id,
         where: entry.folder_id == ^folder.id,

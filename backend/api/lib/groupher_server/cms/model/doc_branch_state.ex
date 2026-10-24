@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Model.DocBranchState do
 
       stable Doc Article + DocBranch
         -> DocBranchState
-        -> moderation, activity, edited, and comment state
+        -> activity, edited, and comment state
 
   Keeping these facts branch-scoped prevents preview moderation or editing from
   changing the main branch's public behavior.
@@ -20,9 +20,8 @@ defmodule GroupherServer.CMS.Model.DocBranchState do
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @moderation_states [:legal, :audit_failed, :illegal]
-  @required_fields ~w(article_id branch_id moderation_state)a
-  @optional_fields ~w(illegal_reason illegal_words active_at is_sunk last_active_at is_edited
+  @required_fields ~w(article_id branch_id)a
+  @optional_fields ~w(active_at is_sunk last_active_at is_edited
                       comments_locked next_floor next_comment_inner_id)a
 
   @type t :: %__MODULE__{}
@@ -30,9 +29,6 @@ defmodule GroupherServer.CMS.Model.DocBranchState do
   schema "doc_branch_states" do
     belongs_to(:article, Article, type: Ecto.UUID)
     belongs_to(:branch, DocBranch)
-    field(:moderation_state, Ecto.Enum, values: @moderation_states, default: :legal)
-    field(:illegal_reason, :string)
-    field(:illegal_words, {:array, :string}, default: [])
     field(:active_at, :utc_datetime)
     field(:is_sunk, :boolean, default: false)
     field(:last_active_at, :utc_datetime)
@@ -43,7 +39,7 @@ defmodule GroupherServer.CMS.Model.DocBranchState do
     timestamps(type: :utc_datetime)
   end
 
-  @doc "Builds branch-scoped moderation, activity, edited, and comment state."
+  @doc "Builds branch-scoped activity, edited, and comment state."
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(%__MODULE__{} = state, attrs) do
     state

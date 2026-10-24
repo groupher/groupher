@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            |> mutation_error?(
              schema,
              variables,
-             ErrorCat.code(PassportErrorCat.passport())
+             ErrorCat.code(PassportErrorCat.permission_denied())
            )
 
     moderator = simu_conn(:user, cms: %{community.slug => %{"post.trash" => true}})
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            |> mutation_error?(
              S.Article.m(:trash_article),
              variables,
-             ErrorCat.code(PassportErrorCat.passport())
+             ErrorCat.code(PassportErrorCat.permission_denied())
            )
 
     assert {:ok, _} = read_article(community_b, :post, article_inner_id(post_b, community_b))

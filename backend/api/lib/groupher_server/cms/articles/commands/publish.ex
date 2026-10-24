@@ -12,9 +12,10 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias Helper.T
   alias CMS.{Articles, FrontDesk}
-  alias CMS.Articles.{Bindings, Query}
+  alias CMS.Articles.Bindings
   alias Accounts.Model.User
   alias Articles.RevisionResult
   alias Articles.Commands.PublishConfirmation
@@ -117,7 +118,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
   def publish_after_gate(%Article{} = article, actor, opts) do
     with true <-
            GroupherServer.Repo.in_transaction?() ||
-             {:error, :pipeline_transaction_required},
+             {:error, CMS.Gate.ErrorCat.gate_transaction_required()},
          {:ok, author} <- target_author(actor) do
       Articles.Workflow.publish(article, author, actor, opts)
     end
@@ -131,9 +132,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
       nil ->
         case Keyword.get(opts, :community_id) do
           community_id when is_integer(community_id) ->
-            case Query.community(community_id) do
-              %Community{} = community -> Bindings.get(article, community)
-              _ -> {:error, :article_binding_not_found}
+            case CMS.FrontDesk.community(community_id, mode: :internal) do
+              {:ok, %Community{} = community} -> Bindings.get(article, community)
+              {:error, _reason} -> {:error, CMS.Communities.ErrorCat.not_exist()}
             end
 
           _ ->
@@ -141,7 +142,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
         end
 
       _ ->
-        {:error, :article_binding_context_required}
+        {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
@@ -162,7 +163,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
 
   defp target_author(%Author{} = author), do: {:ok, author}
   defp target_author(%User{} = user), do: Articles.Persist.ensure_author_exists(user)
-  defp target_author(_actor), do: {:error, :invalid_actor}
+  defp target_author(_actor), do: {:error, CMS.Gate.ErrorCat.permission_denied()}
 
   defp actor_user(%User{} = user), do: user
   defp actor_user(%Author{user: %User{} = user}), do: user
@@ -177,7 +178,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
   defp stable_article(article_id) do
     case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> {:ok, article}
-      {:error, _} -> {:error, :article_not_found}
+      {:error, _} -> {:error, Articles.ErrorCat.article_not_found()}
     end
   end
 end

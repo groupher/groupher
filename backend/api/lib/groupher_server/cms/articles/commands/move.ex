@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Move do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Articles.{BindingPersist, Store}
+  alias CMS.Articles.{BindingPersist, Store, Publish.Target}
   alias CMS.Articles.Bindings.Tags
   alias CMS.Articles.Commands.{BindingConfirmation, BindingSupport}
   alias CMS.Communities, as: CommunityFacade
@@ -52,9 +52,11 @@ defmodule GroupherServer.CMS.Articles.Commands.Move do
 
     change(fn canonical ->
       with {:ok, source_binding} <- source_binding(source, canonical.id),
+           {:ok, :pass} <- Target.remove_binding_review(canonical, source, command_id),
            {:ok, moved} <- BindingPersist.move(canonical, source, destination),
            {:ok, destination_binding} <- Store.binding(moved.id, destination.id),
            {:ok, _binding} <- Tags.replace(destination_binding, tag_ids),
+           {:ok, :pass} <- Target.register_binding_review(canonical, destination, command_id),
            {:ok, _source} <- CommunityFacade.update_count_field(source, canonical.thread),
            {:ok, _destination} <-
              CommunityFacade.update_count_field(destination, canonical.thread),

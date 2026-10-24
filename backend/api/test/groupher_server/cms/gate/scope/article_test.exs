@@ -7,7 +7,15 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
   alias GroupherServer.CMS
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias CMS.Model.Article
+  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Comment}
+
+  test "ordinary content models keep review visibility in Lifecycle and Gate facts" do
+    refute :pending in Article.__schema__(:fields)
+    refute :moderation_state in Article.__schema__(:fields)
+    refute :visible in ArticleBinding.__schema__(:fields)
+    refute :visible in ArticlePublic.__schema__(:fields)
+    refute :pending in Comment.__schema__(:fields)
+  end
 
   test "Article scope compiles complete public visibility for every thread" do
     for thread <- [:post, :blog, :changelog, :doc] do
@@ -40,7 +48,14 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
       assert sql =~ if(thread == :doc, do: "doc_publics", else: "article_publics")
       refute sql =~ "archived_at"
       refute sql =~ "is_archived"
-      assert sql =~ "moderation_state"
+      assert sql =~ "review_blocks"
+      refute sql =~ ~s("cms"."article_bindings"."visible")
+
+      if thread != :doc do
+        refute sql =~ ~s("cms"."article_publics"."visible")
+      end
+
+      refute sql =~ "moderation_state"
       assert ["active", "read_only"] in params
       assert ["published", "archived"] in params
     end
@@ -94,13 +109,24 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
              )
   end
 
-  test "actor-aware Article scope keeps moderation visibility inside SQL" do
+  test "actor-aware Article scope exposes active restrictions only to the author" do
     {:ok, actor} = db_insert(:user)
     query = CMS.Gate.scope(Article, actor, :read, ArticleContext.public(:post))
     {sql, _params} = to_sql(query)
 
     assert sql =~ ~s(FROM "cms"."authors")
     assert sql =~ "user_id"
+    assert sql =~ "article_review_blocks"
+    assert sql =~ "community_id"
+  end
+
+  test "Doc public scope filters against Doc restrictions rather than Article restrictions" do
+    query = CMS.Gate.scope(Article, nil, :read, DocContext.public_main())
+    assert %Ecto.Query{} = query
+
+    {sql, _params} = to_sql(query)
+    assert sql =~ "doc_review_blocks"
+    refute sql =~ "article_review_blocks"
   end
 
   test "Article Insights scope combines author, owner, and scoped moderator access" do

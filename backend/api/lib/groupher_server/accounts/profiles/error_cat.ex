@@ -16,4 +16,7 @@ defmodule GroupherServer.Accounts.Profiles.ErrorCat do
   error(:session_not_found, code: 4307)
   error(:invalid_browser_access_claims, code: 4308)
   error(:invalid_legacy_access_claims, code: 4309)
+  error(:invalid_user_read_options, code: 4310)
+  error(:account_blocked, code: 4311)
+  error(:session_unavailable, code: 4312, retryable: true)
 end

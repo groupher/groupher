@@ -367,8 +367,7 @@ defmodule GroupherServer.Support.Factory.Articles do
       title: title,
       body: rich_text(text),
       emotions: default_emotions,
-      active_at: active_at,
-      pending: 0
+      active_at: active_at
     }
   end
 

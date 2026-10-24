@@ -82,8 +82,6 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
     Threads.to_atom(thread)
   end
 
-  def thread_of(%{article_id: article_id}) when is_binary(article_id), do: {:ok, :doc}
-
   def thread_of(%{meta: %{thread: thread}}) when is_atom(thread) and not is_nil(thread) do
     Threads.to_atom(thread)
   end

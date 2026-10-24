@@ -5,10 +5,10 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
   This facade contains no persistence or transaction logic. Each concrete
   reaction owns its complete business flow.
 
-      CMS.Interactions -> Reactions -> Upvote / Emotion / Collect / Report
+      CMS.Interactions -> Reactions -> Upvote / Emotion / Collect
   """
 
-  alias __MODULE__.{Collect, Emotion, Report, Upvote}
+  alias __MODULE__.{Collect, Emotion, Upvote}
   alias GroupherServer.Accounts
   alias Accounts.Model.User
 
@@ -81,29 +81,6 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
   """
   @spec undo_collect(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
   defdelegate undo_collect(article, actor, command_id), to: Collect, as: :remove
-
-  @doc """
-  Adds one immutable-reporter report fact.
-
-  ## Examples
-
-      Reactions.report(comment, "spam", %{}, actor, command_id)
-
-  """
-  @spec report(struct(), String.t(), term(), User.t(), Ecto.UUID.t()) ::
-          {:ok, struct()} | {:error, term()}
-  defdelegate report(artiment, reason, attrs, actor, command_id), to: Report, as: :add
-
-  @doc """
-  Removes the actor's report fact idempotently.
-
-  ## Examples
-
-      Reactions.undo_report(comment, actor, command_id)
-
-  """
-  @spec undo_report(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_report(artiment, actor, command_id), to: Report, as: :remove
 
   @doc """
   Returns public paged users who upvoted an already-scoped Article.

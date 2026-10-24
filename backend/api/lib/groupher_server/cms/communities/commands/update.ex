@@ -13,7 +13,8 @@ defmodule GroupherServer.CMS.Communities.Commands.Update do
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
   alias GroupherServer.CMS
-  alias CMS.Communities.{Commands.UpdateConfirmation, Persist, Query}
+  alias CMS.Communities.{Commands.UpdateConfirmation, Persist}
+  alias CMS.FrontDesk
   alias CMS.Dashboard.Effects
   alias CMS.Model.Community
 
@@ -67,11 +68,11 @@ defmodule GroupherServer.CMS.Communities.Commands.Update do
   end
 
   defp present_result(%UpdateConfirmation{data: %{"community_id" => community_id}} = confirmation) do
-    case Query.get(community_id) do
-      %Community{} = community ->
+    case FrontDesk.community(community_id, mode: :internal) do
+      {:ok, %Community{} = community} ->
         {:ok, Map.put(community, :command_id, confirmation.data["command_id"])}
 
-      nil ->
+      {:error, _reason} ->
         {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end

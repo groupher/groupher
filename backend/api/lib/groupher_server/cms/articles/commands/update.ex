@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Articles.Draft.Store, as: DraftStore
-  alias CMS.Articles.{Bindings, Query, RevisionResult}
+  alias CMS.Articles.{Bindings, RevisionProjection, RevisionResult}
   alias CMS.Articles.Store, as: ArticleStore
   alias CMS.FrontDesk
   alias CMS.Model.{Article, ArticleBinding, ArticleLifecycle, Community}
@@ -55,8 +55,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
       with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(user),
            {:ok, %{public: public}} <-
              update_and_publish(canonical, attrs, author, user, community, command_id),
-           %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) <-
-             Query.binding(canonical.id, community.id) do
+           {:ok, %ArticleBinding{inner_id: inner_id}} when is_integer(inner_id) <-
+             Bindings.fetch_binding(canonical.id, community.id) do
         with {:ok, revision_id} <- required_revision_id(public),
              {:ok, publication_version} <- required_publication_version(public),
              {:ok, published_at} <- required_published_at(public) do
@@ -112,9 +112,16 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
                community: community
              ] ++
                community_tag_opts(attrs) ++ [outbox_command_id: command_id],
-           {:ok, %{article: published}} <-
+           {:ok, publish_result} <-
              CMS.Articles.Workflow.publish(article, author, user, publish_opts),
-           {:ok, public} <- public_projection(published.id, community) do
+           {:ok, public} <-
+             RevisionProjection.build(
+               publish_result.article,
+               community,
+               publish_result.revision,
+               publication_version: publish_result.public.publication_version,
+               published_at: publish_result.public.published_at
+             ) do
         {:ok, %{public: public}}
       end
 
@@ -154,26 +161,6 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
 
   defp binding_context(article, _article_or_projection) do
     Bindings.get(article, Map.get(article, :community))
-  end
-
-  defp public_projection(article_id, community) do
-    case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{thread: thread}} ->
-        case Query.binding(article_id, community.id) do
-          %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) ->
-            FrontDesk.article(%{
-              community: community.slug,
-              thread: thread,
-              inner_id: inner_id
-            })
-
-          _ ->
-            {:error, CMS.Articles.ErrorCat.projection_not_updated()}
-        end
-
-      _ ->
-        {:error, CMS.Articles.ErrorCat.projection_not_updated()}
-    end
   end
 
   defp community_tag_opts(attrs) do

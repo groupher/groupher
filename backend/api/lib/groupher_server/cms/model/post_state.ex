@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Model.PostState do
   @moduledoc """
   Stable Article-global Post classification that does not create content Revisions.
 
-      Post category / moderation -> PostState -> ArticlePublic refresh
+      Post category -> PostState -> ArticlePublic refresh
   """
 
   use Ecto.Schema

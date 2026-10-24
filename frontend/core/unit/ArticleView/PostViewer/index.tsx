@@ -7,9 +7,12 @@ import { useEffect, useState } from 'react'
 import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
 import useBroadcast from '~/hooks/useBroadcast'
 import ArticleBody from '~/render/ArtimentBody'
+import useCommunity from '~/stores/community/hooks'
 import GotoTop from '~/ui/GotoTop'
 import { ArticleContentLoading } from '~/ui/Loading'
 import ViewportTracker from '~/ui/ViewportTracker'
+import ReportAction from '~/unit/AlertWall/ReportAction'
+import ReviewNotice from '~/unit/AlertWall/ReviewNotice'
 
 import ArticleBroadcast from '../ArticleBroadcast'
 import ArticleFooter from '../ArticleFooter'
@@ -33,6 +36,7 @@ export default function PostViewer({ isFullView = true }: TProps) {
   const s = useSalon()
 
   const { loading, article, stats, viewerState } = useLogic()
+  const { slug: community } = useCommunity()
   const broadcastConfig = useBroadcast()
 
   const [viewState, setViewState] = useState(INIT_VIEW_STATE)
@@ -71,6 +75,22 @@ export default function PostViewer({ isFullView = true }: TProps) {
         <div className={s.subTitle}>{article.innerId}</div>
       </div>
       <ArticleInfo article={article} stats={stats} viewerState={viewerState} />
+      {article.thread && article.thread !== 'DOC' && article.innerId && (
+        <>
+          <ReviewNotice
+            target={{
+              type: 'ARTICLE',
+              article: { community, thread: article.thread, innerId: article.innerId },
+            }}
+          />
+          <ReportAction
+            target={{
+              type: 'ARTICLE',
+              article: { community, thread: article.thread, innerId: article.innerId },
+            }}
+          />
+        </>
+      )}
       {isFullView && (
         <ViewportTracker
           onEnter={() => {

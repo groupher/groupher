@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
       target Comment
         -> Gate authorization + aggregate transaction/lock
         -> parse body -> update canonical Comment -> sync embedded replies
-        -> enqueue required audition job -> commit
+        -> enqueue durable Comment effects -> commit
         -> enqueue best-effort mention reconciliation
 
   Solution identity is never inferred from a Comment flag. Read-side Query
@@ -16,21 +16,21 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, ReviewBot}
   alias Accounts.Model.User
   alias CMS.{FrontDesk, Comments}
   alias CMS.Articles.Bindings
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias CMS.Comments.Effects
-  alias Comments.{Persist, RequiredJobs}
+  alias Comments.Persist
   alias CMS.Model.Comment
   alias Helper.{ORM, T}
 
   @type result :: %{comment: Comment.t(), article: struct(), command_id: String.t() | nil}
 
   @doc """
-  Updates the authorized canonical Comment, requires audition enqueue before
-  commit, then schedules mention reconciliation without changing the result.
+  Updates the authorized canonical Comment and schedules mention reconciliation
+  without changing the committed mutation result.
 
   ## Examples
 
@@ -88,14 +88,34 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
   end
 
   defp update_new(canonical, article, body_bag, expected_version, actor, command_id, community_id) do
-    with {:ok, updated} <- Persist.update_content(canonical, body_bag, expected_version),
+    with {:ok, lifecycle} <- Comments.Lifecycle.lock(canonical.id),
+         {:ok, updated} <- Persist.update_content(canonical, body_bag, expected_version),
+         {:ok, _review} <-
+           register_comment_review(updated, lifecycle, community_id, command_id),
          {:ok, _} <- CMS.ArticleStats.record_comment_change(article),
          {:ok, synced} <- CMS.Comments.Replies.sync_embed_replies(updated),
-         {:ok, _} <- RequiredJobs.audition(synced),
          {:ok, _invalidation} <-
            invalidate_public_comments(article, community_id, canonical.thread, command_id),
          {:ok, _} <- enqueue_comment_effects(canonical, actor, command_id) do
       {:ok, %{comment: synced, article: article, command_id: command_id}}
+    end
+  end
+
+  defp register_comment_review(%Comment{} = comment, lifecycle, community_id, _command_id) do
+    with {:ok, configs} <- ReviewBot.configs(community_id, :comment) do
+      content = %{
+        title: "",
+        body: comment.body.plain_text,
+        images: CMS.Review.Media.comment_images(comment.body.json, comment.community_id)
+      }
+
+      target = %{
+        type: :comment,
+        comment_id: comment.id,
+        lifecycle: lifecycle
+      }
+
+      CMS.Review.RequestSubmission.register_in_transaction(target, content, configs, :edit)
     end
   end
 

@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionChange do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.FrontDesk
-  alias CMS.Comments.{Query, Solution}
+  alias CMS.Comments.Solution
   alias CMS.Comments.Commands.SolutionConfirmation, as: Confirmation
   alias CMS.Model.Comment
 
@@ -101,9 +101,9 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionChange do
   end
 
   defp present_result(%Confirmation{data: %{"comment_id" => comment_id, "state" => state}}) do
-    case Query.comment(comment_id) do
-      %Comment{} = comment -> {:ok, %{comment | is_solution: state == "accepted"}}
-      nil -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
+    case FrontDesk.comment(comment_id, mode: :internal) do
+      {:ok, %Comment{} = comment} -> {:ok, %{comment | is_solution: state == "accepted"}}
+      {:error, _reason} -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end
 

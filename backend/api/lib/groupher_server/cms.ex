@@ -9,12 +9,11 @@ defmodule GroupherServer.CMS do
   Callers outside `GroupherServer.CMS.*` must enter through this module.
   """
 
-  require GroupherServer.CMS.Articles.Const
   require GroupherServer.CMS.Artiment.Const
   require GroupherServer.CMS.Artiment.Threads
   require GroupherServer.CMS.Dashboard.KanbanBoards
 
-  alias __MODULE__.{ArticlePath, Comments, EmotionFormatter, Insights, Query}
+  alias __MODULE__.{ArticlePath, Comments, EmotionFormatter, ErrorCat, Insights, Query}
 
   @doc "Returns community-scoped moderator picker candidates."
   defdelegate communities_moderator_candidates(community, name),
@@ -38,6 +37,19 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Gate,
     as: :check_interaction_in_transaction
 
+  @doc """
+  Checks canonical resource access through the existing CMS Gate policy.
+
+  ## Examples
+
+      CMS.gate_access_check(actor, :edit, comment)
+      #=> {:ok, canonical_comment} | {:error, %CMS.Gate.Decision{}}
+  """
+  @spec gate_access_check(term(), atom(), term()) :: {:ok, term()} | {:error, term()}
+  defdelegate gate_access_check(actor, action, resource),
+    to: GroupherServer.CMS.Gate,
+    as: :access_check
+
   @doc "Applies one collect fact and its synchronous projections in the caller-owned transaction."
   @spec apply_collect_change_in_transaction(struct(), struct(), :add | :remove, Ecto.UUID.t()) ::
           {:ok, {struct(), :changed | :unchanged}} | {:error, term()}
@@ -56,9 +68,277 @@ defmodule GroupherServer.CMS do
     GroupherServer.CMS.Artiment.Threads.values()
   end
 
-  @doc "Expands the Article ordering values at compile time."
-  defmacro articles_const_order_values_ast do
-    GroupherServer.CMS.Articles.Const.order_values_ast()
+  @doc """
+  Expands the Article list order values accepted by its Query contract.
+
+  ## Examples
+
+      enum(:article_order_enum, do: enum_values(CMS.articles_query_order_values_ast()))
+  """
+  defmacro articles_query_order_values_ast do
+    Macro.escape(GroupherServer.CMS.Articles.Query.Contract.order_values())
+  end
+
+  @doc """
+  Expands the Article list sort values accepted by its Query contract.
+
+  ## Examples
+
+      CMS.Articles.Query.Contract.sort_values()
+      #=> [:most_views, :least_views, :asc_inserted, :desc_inserted, :asc_active, :desc_active]
+  """
+  defmacro articles_query_sort_values_ast do
+    Macro.escape(GroupherServer.CMS.Articles.Query.Contract.sort_values())
+  end
+
+  @doc """
+  Expands the Community list sort values accepted by its Query contract.
+
+  ## Examples
+
+      CMS.Communities.Query.Contract.sort_values()
+      #=> [:desc_inserted, :asc_inserted, :most_views, :least_views]
+  """
+  defmacro communities_query_sort_values_ast do
+    Macro.escape(GroupherServer.CMS.Communities.Query.Contract.sort_values())
+  end
+
+  @doc """
+  Locks a ReviewBot target in the CMS resource order before the Check row is locked.
+
+  ## Examples
+
+      CMS.load_review_target_for_update(check.target_key, check.scope_key)
+      #=> {:ok, target_context} | {:error, reason}
+  """
+  @spec load_review_target_for_update(String.t(), String.t()) :: {:ok, map()} | {:error, term()}
+  defdelegate load_review_target_for_update(target_key, scope_key),
+    to: GroupherServer.CMS.Review,
+    as: :load_for_update
+
+  @doc "Creates the current scoped review request inside the resource command transaction."
+  @spec create_artiment_review_in_transaction(map()) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate create_artiment_review_in_transaction(attrs),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :create_in_transaction
+
+  @doc "Pins one submitted content snapshot to every configured ReviewBot scope."
+  @spec register_artiment_reviews_in_transaction(map(), map(), map(), atom()) ::
+          {:ok, [struct()]} | {:error, term()}
+  defdelegate register_artiment_reviews_in_transaction(target, content, configs, trigger),
+    to: GroupherServer.CMS.Review.RequestSubmission,
+    as: :register_in_transaction
+
+  @doc "Supersedes one target scope's current CMS requests in its resource transaction."
+  @spec supersede_review_scope_in_transaction(map(), Ecto.UUID.t()) ::
+          {:ok, :pass} | {:error, term()}
+  defdelegate supersede_review_scope_in_transaction(attrs, operation_ref),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :supersede_scope_in_transaction
+
+  @doc "Locks current request rows for one target scope in the caller's transaction."
+  defdelegate current_artiment_reviews_for_scope_in_transaction(attrs),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :current_for_scope_in_transaction
+
+  @doc "Applies a human review decision to one CMS target scope in the caller transaction."
+  defdelegate apply_review_decision_in_transaction(
+                target_key,
+                scope_key,
+                action,
+                actor,
+                operation_ref
+              ),
+              to: GroupherServer.CMS.Review.Decisions,
+              as: :apply_in_transaction
+
+  @doc "Runs an authorized CMS review decision through its Receipt-backed resource Command."
+  defdelegate decide_review_target(target_key, scope_key, action, actor, command_id),
+    to: GroupherServer.CMS.Review.Commands.Decide,
+    as: :execute
+
+  @doc "Starts a receipt-backed AI recheck for current public content in one scope."
+  defdelegate recheck_review_target(target_key, scope_key, actor, command_id),
+    to: GroupherServer.CMS.Review.Commands.Recheck,
+    as: :execute
+
+  @doc "Returns a request only while its current CMS scope and short-lived payload remain valid."
+  @spec current_artiment_review(Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
+  defdelegate current_artiment_review(request_id),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :current
+
+  @doc "Returns the current request for one canonical CMS review scope."
+  defdelegate current_review_for_scope(attrs),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :current_for_scope
+
+  @doc "Lists current review requests that need a human decision in one scope."
+  defdelegate pending_artiment_reviews(attrs),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :pending_for_scope
+
+  @doc "Expires unprocessed CMS review payloads in a bounded batch."
+  defdelegate expire_artiment_review_payloads(batch_size),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :expire_payloads
+
+  @doc "Claims a current review request before provider work begins."
+  @spec claim_artiment_review_in_transaction(Ecto.UUID.t()) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate claim_artiment_review_in_transaction(request_id),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :claim_in_transaction
+
+  @doc "Stores a completed opinion only while the scoped request is still current."
+  @spec complete_artiment_review_in_transaction(Ecto.UUID.t(), map()) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate complete_artiment_review_in_transaction(request_id, result),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :complete_in_transaction
+
+  @doc "Stores terminal provider failure and clears the request payload."
+  @spec fail_artiment_review_in_transaction(Ecto.UUID.t(), map()) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate fail_artiment_review_in_transaction(request_id, failure),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :fail_in_transaction
+
+  @doc "Marks a completed current request applied after its resource effects commit."
+  @spec mark_artiment_review_applied_in_transaction(Ecto.UUID.t()) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate mark_artiment_review_applied_in_transaction(request_id),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :mark_applied_in_transaction
+
+  @doc "Adds the shared report-count projection through the CMS interaction boundary."
+  @spec add_report_projection(struct(), struct()) :: {:ok, term()} | {:error, term()}
+  defdelegate add_report_projection(resource, actor),
+    to: GroupherServer.CMS.Interactions.Projection,
+    as: :add_report
+
+  @doc "Removes the shared report-count projection through the CMS interaction boundary."
+  @spec remove_report_projection(struct(), struct()) :: {:ok, term()} | {:error, term()}
+  defdelegate remove_report_projection(resource, actor),
+    to: GroupherServer.CMS.Interactions.Projection,
+    as: :remove_report
+
+  @doc "Returns the standard unavailable-command-result error."
+  @spec command_result_unavailable() :: struct()
+  defdelegate command_result_unavailable(),
+    to: ErrorCat
+
+  @doc "Signs a short-lived asset capability for an approved internal provider read."
+  @spec asset_capability_sign(map()) :: {:ok, String.t()} | {:error, term()}
+  defdelegate asset_capability_sign(payload), to: GroupherServer.CMS.Assets.Capability, as: :sign
+
+  @doc "Returns the configured Assets Hub public endpoint."
+  @spec asset_capability_public_endpoint() :: String.t()
+  defdelegate asset_capability_public_endpoint(),
+    to: GroupherServer.CMS.Assets.Capability,
+    as: :public_endpoint
+
+  @doc """
+  Returns active restrictions under the caller's locked Lifecycle transaction.
+
+  ## Examples
+
+      CMS.active_review_blocks(lifecycle, "community:12")
+      #=> {:ok, restrictions} | {:error, reason}
+  """
+  @spec active_review_blocks(struct(), String.t()) :: {:ok, [struct()]} | {:error, term()}
+  defdelegate active_review_blocks(lifecycle, scope_key),
+    to: GroupherServer.CMS.ReviewBlocks,
+    as: :active_for
+
+  @doc "Links the CMS suspicion fact to its Wall item in the current resource transaction."
+  defdelegate link_review_item_in_transaction(artiment_review_id, item_id),
+    to: GroupherServer.CMS.ReviewBlocks,
+    as: :link_item_for_artiment_review_in_transaction
+
+  @doc "Returns the invalid CMS review restriction error."
+  defdelegate invalid_review_block_error(), to: ErrorCat, as: :invalid_review_block
+
+  @doc """
+  Applies one review restriction through the resource Lifecycle owner.
+
+  ## Examples
+
+      CMS.apply_review_block(locked_lifecycle, attrs)
+      #=> {:ok, restriction} | {:error, reason}
+  """
+  @spec apply_review_block(struct(), map()) :: {:ok, struct()} | {:error, term()}
+  def apply_review_block(%GroupherServer.CMS.Model.ArticleLifecycle{} = lifecycle, attrs) do
+    GroupherServer.CMS.Articles.Lifecycle.apply_review_block(lifecycle, attrs)
+  end
+
+  def apply_review_block(%GroupherServer.CMS.Model.CommentLifecycle{} = lifecycle, attrs) do
+    GroupherServer.CMS.Comments.Lifecycle.apply_review_block(lifecycle, attrs)
+  end
+
+  def apply_review_block(%GroupherServer.CMS.Model.DocLifecycle{} = lifecycle, attrs) do
+    GroupherServer.CMS.Docs.Lifecycle.apply_review_block(lifecycle, attrs)
+  end
+
+  def apply_review_block(_lifecycle, _attrs) do
+    {:error, ErrorCat.invalid_review_block()}
+  end
+
+  @doc """
+  Ends selected review restrictions through the resource Lifecycle owner.
+
+  ## Examples
+
+      CMS.end_review_blocks(lifecycle, scope, ids, operation_ref, reason)
+      #=> {:ok, :pass} | {:error, reason}
+  """
+  @spec end_review_blocks(struct(), String.t(), [integer()], Ecto.UUID.t(), String.t()) ::
+          {:ok, :pass} | {:error, term()}
+  def end_review_blocks(lifecycle, scope_key, ids, operation_ref, reason) do
+    case lifecycle do
+      %GroupherServer.CMS.Model.ArticleLifecycle{} = article_lifecycle ->
+        GroupherServer.CMS.Articles.Lifecycle.end_review_blocks(
+          article_lifecycle,
+          scope_key,
+          ids,
+          operation_ref,
+          reason
+        )
+
+      %GroupherServer.CMS.Model.CommentLifecycle{} = comment_lifecycle ->
+        GroupherServer.CMS.Comments.Lifecycle.end_review_blocks(
+          comment_lifecycle,
+          scope_key,
+          ids,
+          operation_ref,
+          reason
+        )
+
+      %GroupherServer.CMS.Model.DocLifecycle{} = doc_lifecycle ->
+        GroupherServer.CMS.Docs.Lifecycle.end_review_blocks(
+          doc_lifecycle,
+          scope_key,
+          ids,
+          operation_ref,
+          reason
+        )
+
+      _ ->
+        {:error, ErrorCat.invalid_review_block()}
+    end
+  end
+
+  @doc """
+  Expands the Comment page sort values accepted by its Query contract.
+
+  ## Examples
+
+      CMS.Comments.Query.Contract.sort_values()
+      #=> [:asc_inserted, :desc_inserted]
+  """
+  defmacro comments_query_sort_values_ast do
+    Macro.escape(GroupherServer.CMS.Comments.Query.Contract.sort_values())
   end
 
   @doc "Expands the Artiment category values at compile time."
@@ -142,11 +422,6 @@ defmodule GroupherServer.CMS do
   defdelegate articles_resolve_binding(article_ref, community_ref),
     to: GroupherServer.CMS.FrontDesk,
     as: :resolve_binding
-
-  @doc "Delegates GroupherServer.CMS.AbuseReports.paged_reports/2 through the CMS Context boundary."
-  defdelegate abuse_reports_paged_reports(arg1, arg2),
-    to: GroupherServer.CMS.AbuseReports,
-    as: :paged_reports
 
   @doc "Delegates GroupherServer.CMS.ArticleStats.for_article/2 through the CMS Context boundary."
   defdelegate article_stats_for_article(arg1, arg2),
@@ -257,11 +532,6 @@ defmodule GroupherServer.CMS do
   defdelegate articles_public_binding_ids(),
     to: GroupherServer.CMS.Articles,
     as: :public_binding_ids
-
-  @doc "Delegates GroupherServer.CMS.Articles.paged_audit_failed/2 through the CMS Context boundary."
-  defdelegate articles_paged_audit_failed(arg1, arg2),
-    to: GroupherServer.CMS.Articles,
-    as: :paged_audit_failed
 
   @doc "Pages a canonical Kanban column."
   defdelegate articles_kanban_page(community, filter, pagi),
@@ -426,6 +696,11 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.ArtimentMentions,
     as: :mentions
 
+  @doc "Returns user recipients directly mentioned by one internal CMS source."
+  defdelegate artiment_mentions_mentioned_user_ids(arg1, arg2),
+    to: GroupherServer.CMS.ArtimentMentions,
+    as: :mentioned_user_ids
+
   @doc "Delegates GroupherServer.CMS.Artiment.Threads.article_enums/0 through the CMS Context boundary."
   defdelegate artiment_threads_article_enums(),
     to: GroupherServer.CMS.Artiment.Threads,
@@ -533,11 +808,6 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates GroupherServer.CMS.Comments.one_comment/2 through the CMS Context boundary."
   defdelegate comments_one_comment(arg1, arg2), to: GroupherServer.CMS.Comments, as: :one_comment
-
-  @doc "Delegates GroupherServer.CMS.Comments.paged_audit_failed_comments/1 through the CMS Context boundary."
-  defdelegate comments_paged_audit_failed_comments(arg1),
-    to: GroupherServer.CMS.Comments,
-    as: :paged_audit_failed_comments
 
   @doc "Delegates GroupherServer.CMS.Comments.paged_comments_participants/3 through the CMS Context boundary."
   defdelegate comments_paged_comments_participants(arg1, arg2, arg3),
@@ -1467,11 +1737,6 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Interactions,
     as: :article_state
 
-  @doc "Delegates GroupherServer.CMS.Interactions.report_result/5 through the CMS Context boundary."
-  defdelegate interactions_report_result(arg1, arg2, arg3, arg4, arg5),
-    to: GroupherServer.CMS.Interactions,
-    as: :report_result
-
   @doc "Delegates GroupherServer.CMS.Interactions.undo_collect/3 through the CMS Context boundary."
   defdelegate interactions_undo_collect(arg1, arg2, arg3),
     to: GroupherServer.CMS.Interactions,
@@ -1481,11 +1746,6 @@ defmodule GroupherServer.CMS do
   defdelegate interactions_undo_emotion_result(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Interactions,
     as: :undo_emotion_result
-
-  @doc "Delegates GroupherServer.CMS.Interactions.undo_report_result/3 through the CMS Context boundary."
-  defdelegate interactions_undo_report_result(arg1, arg2, arg3),
-    to: GroupherServer.CMS.Interactions,
-    as: :undo_report_result
 
   @doc "Delegates GroupherServer.CMS.Interactions.undo_upvote_result/3 through the CMS Context boundary."
   defdelegate interactions_undo_upvote_result(arg1, arg2, arg3),
@@ -1738,6 +1998,30 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Gate.Context.Scope.Article,
     as: :public
 
+  @doc """
+  Builds the public Comment read context through the CMS boundary.
+
+  ## Examples
+
+      gate_context_scope_comment_for_thread(:post)
+      #=> %CMS.Gate.Context.Scope.Comment{thread: :post, policy_mode: :public}
+  """
+  defdelegate gate_context_scope_comment_for_thread(thread),
+    to: GroupherServer.CMS.Gate.Context.Scope.Comment,
+    as: :for_thread
+
+  @doc """
+  Builds a branch-aware Comment read context through the CMS boundary.
+
+  ## Examples
+
+      gate_context_scope_comment_for_thread(:doc, branch_policy: :main)
+      #=> %CMS.Gate.Context.Scope.Comment{thread: :doc, branch_policy: :main}
+  """
+  defdelegate gate_context_scope_comment_for_thread(thread, opts),
+    to: GroupherServer.CMS.Gate.Context.Scope.Comment,
+    as: :for_thread
+
   @doc "Delegates CMS.Gate.scope/4 through the CMS Context boundary."
   defdelegate gate_scope(arg1, arg2, arg3, arg4), to: GroupherServer.CMS.Gate, as: :scope
 
@@ -1750,6 +2034,18 @@ defmodule GroupherServer.CMS do
   defdelegate gate_context_scope_doc_public_branch(arg1, arg2),
     to: GroupherServer.CMS.Gate.Context.Scope.Doc,
     as: :public_branch
+
+  @doc """
+  Builds the public Doc read context for the official main branch.
+
+  ## Examples
+
+      gate_context_scope_doc_public_main()
+      #=> %CMS.Gate.Context.Scope.Doc{stage: :public, branch_policy: :main}
+  """
+  defdelegate gate_context_scope_doc_public_main(),
+    to: GroupherServer.CMS.Gate.Context.Scope.Doc,
+    as: :public_main
 
   @doc "Delegates CMS.Artiment.Matcher.match/1 through the CMS Context boundary."
   defdelegate artiment_matcher_match(arg1), to: GroupherServer.CMS.Artiment.Matcher, as: :match
@@ -1776,39 +2072,51 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates CMS.ErrorCat.unexpected_external_response/0 through the CMS Context boundary."
   defdelegate error_cat_unexpected_external_response(),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :unexpected_external_response
+
+  @doc """
+  Returns the stable error used when a review Lifecycle transition lacks its caller transaction.
+
+  ## Examples
+
+      CMS.error_cat_review_transition_requires_transaction()
+      #=> %GroupherServer.ErrorCat.Error{reason: :review_transition_requires_transaction}
+  """
+  defdelegate error_cat_review_transition_requires_transaction(),
+    to: ErrorCat,
+    as: :review_transition_requires_transaction
 
   @doc "Delegates CMS.ErrorCat.unexpected_external_response/1 through the CMS Context boundary."
   defdelegate error_cat_unexpected_external_response(arg1),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :unexpected_external_response
 
   @doc "Delegates CMS.ErrorCat.external_unavailable/0 through the CMS Context boundary."
   defdelegate error_cat_external_unavailable(),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :external_unavailable
 
   @doc "Delegates CMS.ErrorCat.external_unavailable/1 through the CMS Context boundary."
   defdelegate error_cat_external_unavailable(arg1),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :external_unavailable
 
   @doc "Delegates CMS.ErrorCat.external_not_found/0 through the CMS Context boundary."
   defdelegate error_cat_external_not_found(),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :external_not_found
 
   @doc "Delegates CMS.ErrorCat.external_not_found/1 through the CMS Context boundary."
   defdelegate error_cat_external_not_found(arg1),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :external_not_found
 
   @doc "Delegates CMS.ErrorCat.not_configured/0 through the CMS Context boundary."
-  defdelegate error_cat_not_configured(), to: GroupherServer.CMS.ErrorCat, as: :not_configured
+  defdelegate error_cat_not_configured(), to: ErrorCat, as: :not_configured
 
   @doc "Delegates CMS.ErrorCat.not_configured/1 through the CMS Context boundary."
-  defdelegate error_cat_not_configured(arg1), to: GroupherServer.CMS.ErrorCat, as: :not_configured
+  defdelegate error_cat_not_configured(arg1), to: ErrorCat, as: :not_configured
 
   @doc "Delegates CMS.Dashboard.Persist.get_or_insert_dashboard/1 through the CMS Context boundary."
   defdelegate dashboard_persist_get_or_insert_dashboard(arg1),
@@ -1817,12 +2125,12 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates CMS.ErrorCat.community_not_persisted/0 through the CMS Context boundary."
   defdelegate error_cat_community_not_persisted(),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :community_not_persisted
 
   @doc "Delegates CMS.ErrorCat.community_not_persisted/1 through the CMS Context boundary."
   defdelegate error_cat_community_not_persisted(arg1),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :community_not_persisted
 
   @doc "Delegates CMS.Dashboard.Persist.get_dashboard/1 through the CMS Context boundary."
@@ -1837,12 +2145,12 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates CMS.ErrorCat.dashboard_not_found/0 through the CMS Context boundary."
   defdelegate error_cat_dashboard_not_found(),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :dashboard_not_found
 
   @doc "Delegates CMS.ErrorCat.dashboard_not_found/1 through the CMS Context boundary."
   defdelegate error_cat_dashboard_not_found(arg1),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :dashboard_not_found
 
   @doc "Delegates CMS.FrontDesk.comment/1 through the CMS Context boundary."
@@ -1862,9 +2170,6 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates CMS.FrontDesk.article/3 through the CMS Context boundary."
   defdelegate front_desk_article(arg1, arg2, arg3), to: GroupherServer.CMS.FrontDesk, as: :article
-
-  @doc "Delegates CMS.FrontDesk.articles/1 through the CMS Context boundary."
-  defdelegate front_desk_articles(arg1), to: GroupherServer.CMS.FrontDesk, as: :articles
 
   @doc "Delegates CMS.FrontDesk.article_author/1 through the CMS Context boundary."
   defdelegate front_desk_article_author(arg1),
@@ -1890,12 +2195,12 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.FrontDesk,
     as: :community_tag_group
 
-  @doc "Delegates CMS.Command.Receipt.prune_expired/0 through the CMS Context boundary."
+  @doc "Delegates GroupherServer.CMS.Command.Receipt.prune_expired/0 through the CMS Context boundary."
   defdelegate command_receipt_prune_expired(),
     to: GroupherServer.CMS.Command.Receipt,
     as: :prune_expired
 
-  @doc "Delegates CMS.Command.Receipt.prune_expired/1 through the CMS Context boundary."
+  @doc "Delegates GroupherServer.CMS.Command.Receipt.prune_expired/1 through the CMS Context boundary."
   defdelegate command_receipt_prune_expired(arg1),
     to: GroupherServer.CMS.Command.Receipt,
     as: :prune_expired
@@ -1936,19 +2241,19 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates CMS.ErrorCat.invalid_notify_payload/0 through the CMS Context boundary."
   defdelegate error_cat_invalid_notify_payload(),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :invalid_notify_payload
 
   @doc "Delegates CMS.ErrorCat.invalid_notify_payload/1 through the CMS Context boundary."
   defdelegate error_cat_invalid_notify_payload(arg1),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :invalid_notify_payload
 
   @doc "Delegates CMS.ErrorCat.invalid_body/0 through the CMS Context boundary."
-  defdelegate error_cat_invalid_body(), to: GroupherServer.CMS.ErrorCat, as: :invalid_body
+  defdelegate error_cat_invalid_body(), to: ErrorCat, as: :invalid_body
 
   @doc "Delegates CMS.ErrorCat.invalid_body/1 through the CMS Context boundary."
-  defdelegate error_cat_invalid_body(arg1), to: GroupherServer.CMS.ErrorCat, as: :invalid_body
+  defdelegate error_cat_invalid_body(arg1), to: ErrorCat, as: :invalid_body
 
   @doc "Delegates CMS.ViewTracker.AnonymousSession.ensure/1 through the CMS Context boundary."
   defdelegate view_tracker_anonymous_session_ensure(arg1),
@@ -1990,12 +2295,32 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Passport.ErrorCat,
     as: :passport
 
+  @doc "Delegates CMS.Passport.ErrorCat.unknown_action/0 through the CMS Context boundary."
+  defdelegate passport_error_cat_unknown_action(),
+    to: GroupherServer.CMS.Passport.ErrorCat,
+    as: :unknown_action
+
+  @doc "Delegates CMS.Passport.ErrorCat.unknown_action/1 through the CMS Context boundary."
+  defdelegate passport_error_cat_unknown_action(arg1),
+    to: GroupherServer.CMS.Passport.ErrorCat,
+    as: :unknown_action
+
+  @doc "Delegates CMS.Passport.ErrorCat.permission_denied/0 through the CMS Context boundary."
+  defdelegate passport_error_cat_permission_denied(),
+    to: GroupherServer.CMS.Passport.ErrorCat,
+    as: :permission_denied
+
+  @doc "Delegates CMS.Passport.ErrorCat.permission_denied/1 through the CMS Context boundary."
+  defdelegate passport_error_cat_permission_denied(arg1),
+    to: GroupherServer.CMS.Passport.ErrorCat,
+    as: :permission_denied
+
   @doc "Delegates CMS.ErrorCat.missing_passport/0 through the CMS Context boundary."
-  defdelegate error_cat_missing_passport(), to: GroupherServer.CMS.ErrorCat, as: :missing_passport
+  defdelegate error_cat_missing_passport(), to: ErrorCat, as: :missing_passport
 
   @doc "Delegates CMS.ErrorCat.missing_passport/1 through the CMS Context boundary."
   defdelegate error_cat_missing_passport(arg1),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :missing_passport
 
   @doc "Delegates CMS.Passport.Registry.normalize_rules/1 through the CMS Context boundary."
@@ -2005,28 +2330,38 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates CMS.ErrorCat.invalid_requirement/0 through the CMS Context boundary."
   defdelegate error_cat_invalid_requirement(),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :invalid_requirement
 
   @doc "Delegates CMS.ErrorCat.invalid_requirement/1 through the CMS Context boundary."
   defdelegate error_cat_invalid_requirement(arg1),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :invalid_requirement
 
   @doc "Delegates CMS.ErrorCat.missing_thread/0 through the CMS Context boundary."
-  defdelegate error_cat_missing_thread(), to: GroupherServer.CMS.ErrorCat, as: :missing_thread
+  defdelegate error_cat_missing_thread(), to: ErrorCat, as: :missing_thread
 
   @doc "Delegates CMS.ErrorCat.missing_thread/1 through the CMS Context boundary."
-  defdelegate error_cat_missing_thread(arg1), to: GroupherServer.CMS.ErrorCat, as: :missing_thread
+  defdelegate error_cat_missing_thread(arg1), to: ErrorCat, as: :missing_thread
+
+  @doc "Delegates CMS.ErrorCat.invalid_article_path/0 through the CMS Context boundary."
+  defdelegate error_cat_invalid_article_path(),
+    to: ErrorCat,
+    as: :invalid_article_path
+
+  @doc "Delegates CMS.ErrorCat.invalid_article_path/1 through the CMS Context boundary."
+  defdelegate error_cat_invalid_article_path(arg1),
+    to: ErrorCat,
+    as: :invalid_article_path
 
   @doc "Delegates CMS.ErrorCat.missing_community/0 through the CMS Context boundary."
   defdelegate error_cat_missing_community(),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :missing_community
 
   @doc "Delegates CMS.ErrorCat.missing_community/1 through the CMS Context boundary."
   defdelegate error_cat_missing_community(arg1),
-    to: GroupherServer.CMS.ErrorCat,
+    to: ErrorCat,
     as: :missing_community
 
   @doc "Delegates CMS.Gate.RateLimit.Publish.check/1 through the CMS Context boundary."
@@ -2080,10 +2415,10 @@ defmodule GroupherServer.CMS do
     as: :all_rules
 
   @doc "Delegates CMS.ErrorCat.custom/0 through the CMS Context boundary."
-  defdelegate error_cat_custom(), to: GroupherServer.CMS.ErrorCat, as: :custom
+  defdelegate error_cat_custom(), to: ErrorCat, as: :custom
 
   @doc "Delegates CMS.ErrorCat.custom/1 through the CMS Context boundary."
-  defdelegate error_cat_custom(arg1), to: GroupherServer.CMS.ErrorCat, as: :custom
+  defdelegate error_cat_custom(arg1), to: ErrorCat, as: :custom
 
   @doc "Delegates CMS.ContentImport.DocValidator.preview/3 through the CMS Context boundary."
   defdelegate content_import_doc_validator_preview(arg1, arg2, arg3),

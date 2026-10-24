@@ -42,7 +42,6 @@ const mergeViewerState = (
         [String(comment.innerId)]: {
           ...(states[String(comment.innerId)] || { emotionFlags: {} }),
           viewerHasUpvoted: comment.viewerHasUpvoted,
-          viewerHasReported: comment.viewerHasReported,
           emotionFlags,
         },
       }

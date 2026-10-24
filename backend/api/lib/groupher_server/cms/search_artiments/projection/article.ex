@@ -55,7 +55,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          author_ref: author_ref(article),
          locale: article.community.locale,
          upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
-         comments_count: article.comments_count || 0,
+         comments_count: Map.get(article, :comments_count, 0) || 0,
          published_at: article.active_at,
          inserted_at: article.inserted_at,
          updated_at: article.updated_at,

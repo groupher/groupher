@@ -17,7 +17,8 @@ defmodule GroupherServerWeb.Middleware.BodyBagTrust do
 
   @behaviour Absinthe.Middleware
 
-  import Helper.Utils, only: [handle_absinthe_error: 3]
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+  alias GroupherServerWeb.ErrorResponse
 
   @doc "Allows ordinary mutations and requires a bounded publisher scope for BodyBag writes."
   @impl Absinthe.Middleware
@@ -60,6 +61,19 @@ defmodule GroupherServerWeb.Middleware.BodyBagTrust do
   def call(resolution, _opts), do: resolution
 
   defp reject(resolution, message, code) do
-    handle_absinthe_error(resolution, message, code)
+    ErrorResponse.put_error(resolution, service_error(code, message))
+  end
+
+  defp service_error(code, message) do
+    cond do
+      code == GroupherServer.Auth.contract_service_scope_forbidden() ->
+        WebErrorCat.service_scope_forbidden(message)
+
+      code == GroupherServer.Auth.contract_service_jwks_unavailable() ->
+        WebErrorCat.jwks_unavailable(message)
+
+      true ->
+        WebErrorCat.invalid_service_token(message)
+    end
   end
 end

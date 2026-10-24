@@ -73,7 +73,6 @@ describe('viewer query factories', () => {
         {
           innerId: '7',
           viewerHasUpvoted: true,
-          viewerHasReported: false,
           emotions: [{ type: 'HEART', viewerHasReacted: true }],
         },
       ],
@@ -88,7 +87,6 @@ describe('viewer query factories', () => {
     await expect(options.queryFn?.({} as never)).resolves.toMatchObject({
       '7': {
         viewerHasUpvoted: true,
-        viewerHasReported: false,
         emotionFlags: { HEART: true },
       },
     })

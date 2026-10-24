@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Support do
   """
 
   alias GroupherServer.CMS
-  alias CMS.Communities.{ErrorCat, Query}
+  alias CMS.Communities.ErrorCat
   alias CMS.Communities.Categories.Query, as: CategoriesQuery
   alias CMS.FrontDesk
   alias CMS.Model.{Category, Community}
@@ -35,9 +35,9 @@ defmodule GroupherServer.CMS.Communities.Categories.Commands.Support do
 
   @doc false
   def community_result(%{data: %{"community_id" => id}}) do
-    case Query.get(id) do
-      %Community{} = community -> {:ok, community}
-      nil -> {:error, CMS.ErrorCat.command_result_unavailable()}
+    case FrontDesk.community(id, mode: :internal) do
+      {:ok, %Community{} = community} -> {:ok, community}
+      {:error, _reason} -> {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
 

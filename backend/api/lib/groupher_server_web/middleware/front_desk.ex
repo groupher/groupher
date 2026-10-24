@@ -22,8 +22,8 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   require GroupherServer.CMS.ErrorCat
 
-  import Helper.Utils, only: [handle_absinthe_error: 3]
   alias GroupherServer.{Accounts, CMS, ErrorCat, FrontDesk}
+  alias GroupherServerWeb.ErrorResponse
 
   alias Accounts.Model.User
 
@@ -74,11 +74,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         %{resolution | arguments: Map.put(arguments, community_key, community)}
 
       {:error, err_msg} ->
-        resolution
-        |> handle_absinthe_error(
-          GroupherServer.CMS.communities_error_cat_not_exist(error_details(err_msg)),
-          ErrorCat.code(GroupherServer.CMS.communities_error_cat_not_exist())
-        )
+        put_lookup_error(resolution, err_msg, &CMS.communities_error_cat_not_exist/1)
     end
   end
 
@@ -88,8 +84,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         do_fetch_article(%{resolution | arguments: arguments}, opts)
 
       {:error, CmsErrorCat.error_pattern(reason: :invalid_article_path)} ->
-        resolution
-        |> handle_absinthe_error("invalid article input", ErrorCat.code(ErrorCat.custom()))
+        ErrorResponse.put_error(
+          resolution,
+          CMS.error_cat_invalid_article_path("invalid article input")
+        )
     end
   end
 
@@ -98,9 +96,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
            arguments: %{article_path: article_path} = arguments
          } =
            resolution,
-         _opts
+         opts
        ) do
-    case FrontDesk.article(article_path) do
+    actor = Map.get(resolution.context, :cur_user)
+
+    case FrontDesk.article(article_path, actor, opts) do
       {:ok, article} ->
         updated_arguments =
           arguments
@@ -110,11 +110,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         %{resolution | arguments: updated_arguments}
 
       {:error, err_msg} ->
-        resolution
-        |> handle_absinthe_error(
-          GroupherServer.CMS.articles_error_cat_not_exist(error_details(err_msg)),
-          ErrorCat.code(GroupherServer.CMS.articles_error_cat_not_exist())
-        )
+        put_lookup_error(resolution, err_msg, &CMS.articles_error_cat_not_exist/1)
     end
   end
 
@@ -135,18 +131,13 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
       %{resolution | arguments: updated_arguments}
     else
       :error ->
-        resolution
-        |> handle_absinthe_error(
-          "article editor thread is required",
-          ErrorCat.code(ErrorCat.custom())
+        ErrorResponse.put_error(
+          resolution,
+          CMS.error_cat_missing_thread("article editor thread is required")
         )
 
       {:error, err_msg} ->
-        resolution
-        |> handle_absinthe_error(
-          GroupherServer.CMS.articles_error_cat_not_exist(error_details(err_msg)),
-          ErrorCat.code(GroupherServer.CMS.articles_error_cat_not_exist())
-        )
+        put_lookup_error(resolution, err_msg, &CMS.articles_error_cat_not_exist/1)
     end
   end
 
@@ -193,11 +184,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         %{resolution | arguments: updated_arguments}
 
       {:error, err_msg} ->
-        resolution
-        |> handle_absinthe_error(
-          GroupherServer.CMS.comments_error_cat_not_exist(error_details(err_msg)),
-          ErrorCat.code(GroupherServer.CMS.comments_error_cat_not_exist())
-        )
+        put_lookup_error(resolution, err_msg, &CMS.comments_error_cat_not_exist/1)
     end
   end
 
@@ -258,11 +245,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         %{resolution | arguments: Map.put(arguments, :user, user)}
 
       {:error, err_msg} ->
-        resolution
-        |> handle_absinthe_error(
-          GroupherServer.Accounts.profiles_error_cat_not_exist(error_details(err_msg)),
-          ErrorCat.code(GroupherServer.Accounts.profiles_error_cat_not_exist())
-        )
+        put_lookup_error(resolution, err_msg, &Accounts.profiles_error_cat_not_exist/1)
     end
   end
 
@@ -270,10 +253,9 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     if Keyword.get(opts, :optional, false) do
       resolution
     else
-      resolution
-      |> handle_absinthe_error(
-        "user not found",
-        ErrorCat.code(GroupherServer.Accounts.profiles_error_cat_not_exist("user not found"))
+      ErrorResponse.put_error(
+        resolution,
+        GroupherServer.Accounts.profiles_error_cat_not_exist("user not found")
       )
     end
   end
@@ -284,19 +266,14 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         %{resolution | arguments: Map.put(arguments, :users, users)}
 
       {:error, err_msg} ->
-        resolution
-        |> handle_absinthe_error(
-          GroupherServer.Accounts.profiles_error_cat_not_exist(error_details(err_msg)),
-          ErrorCat.code(GroupherServer.Accounts.profiles_error_cat_not_exist())
-        )
+        put_lookup_error(resolution, err_msg, &Accounts.profiles_error_cat_not_exist/1)
     end
   end
 
   defp fetch_users(resolution) do
-    resolution
-    |> handle_absinthe_error(
-      "users not found",
-      ErrorCat.code(GroupherServer.Accounts.profiles_error_cat_not_exist("users not found"))
+    ErrorResponse.put_error(
+      resolution,
+      GroupherServer.Accounts.profiles_error_cat_not_exist("users not found")
     )
   end
 
@@ -323,11 +300,14 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   defp load_user(_), do: {:error, "user not found"}
 
-  defp error_details(%ErrorCat.Error{details: %{message: message}}) when is_binary(message) do
-    message
+  defp put_lookup_error(resolution, %ErrorCat.Error{} = error, _fallback) do
+    ErrorResponse.put_error(resolution, error)
   end
 
-  defp error_details(%ErrorCat.Error{details: details}) when is_binary(details), do: details
+  defp put_lookup_error(resolution, details, fallback) do
+    ErrorResponse.put_error(resolution, fallback.(error_details(details)))
+  end
+
   defp error_details(details) when is_binary(details), do: details
   defp error_details(_), do: nil
 end

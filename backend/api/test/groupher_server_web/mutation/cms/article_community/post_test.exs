@@ -59,7 +59,7 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
              |> mutation_error?(
                S.Article.m(:mirror_article),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -73,7 +73,7 @@ defmodule GroupherServer.Test.Mutation.ArticleBinding.Post do
              |> mutation_error?(
                S.Article.m(:mirror_article),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
 

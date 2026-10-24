@@ -171,7 +171,11 @@ defmodule GroupherServer.CommandPipelineRunnerTest do
   end
 
   test "Gate join-only APIs reject calls outside the gate stage" do
-    assert {:error, :gate_stage_required} =
+    assert {:error,
+            %ErrorCat.Error{
+              namespace: {:cms, :gate},
+              reason: :gate_stage_required
+            }} =
              Fixture.execute_gate_from_change(%GroupherServer.CMS.Model.Community{id: 1})
   end
 

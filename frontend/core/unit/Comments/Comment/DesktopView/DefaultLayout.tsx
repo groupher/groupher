@@ -1,4 +1,4 @@
-import { type FC, Fragment } from 'react'
+import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 // import Tooltip from '~/ui/Tooltip'
@@ -12,7 +12,6 @@ import Footer from '../Footer'
 import Header from '../Header'
 import ReplyBar from '../ReplyBar'
 import useSalon, { cn } from '../salon/desktop_view'
-import IllegalBar from './IllegalBar'
 
 type TProps = {
   data: TComment
@@ -33,8 +32,7 @@ const DefaultLayout: FC<TProps> = ({
   const { foldComment } = useActions()
   const { t } = useTrans()
 
-  const { isPinned, meta } = data
-  const { isLegal = false, illegalReason = [], illegalWords = [] } = meta ?? {}
+  const { isPinned } = data
 
   return (
     <div className={cn(s.wrapper, isPinned && 'pt-6')}>
@@ -60,18 +58,12 @@ const DefaultLayout: FC<TProps> = ({
         <div className={s.commentBody}>
           <Header data={data} showInnerRef={showInnerRef} apiMode={apiMode} isReply={isReply} />
           <div className={cn(isReply && 'ml-10')}>
-            {isLegal ? (
-              <Fragment>
-                {!isReply && data.replyToComment && <ReplyBar data={data.replyToComment} />}
-                <ArtimentBody
-                  document={{ html: data.body?.html }}
-                  initLineClamp={preview ? 2 : 6}
-                  mode='comment'
-                />
-              </Fragment>
-            ) : (
-              <IllegalBar illegalReason={illegalReason} illegalWords={illegalWords} />
-            )}
+            {!isReply && data.replyToComment && <ReplyBar data={data.replyToComment} />}
+            <ArtimentBody
+              document={{ html: data.body?.html }}
+              initLineClamp={preview ? 2 : 6}
+              mode='comment'
+            />
             <Footer data={data} apiMode={apiMode} />
           </div>
         </div>

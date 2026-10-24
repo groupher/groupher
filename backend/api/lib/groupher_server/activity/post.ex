@@ -48,11 +48,7 @@ defmodule GroupherServer.Activity.Post do
     solution_accepted: Event.contract([], [], [:article_log, :community_log], :comment),
     solution_replaced:
       Event.contract([:previous_comment_ref], [], [:article_log, :community_log], :comment),
-    solution_revoked: Event.contract([], [], [:article_log, :community_log], :comment),
-    moderation_review_started:
-      Event.contract([], [:case_ref], [:community_log]) |> Event.contract_only(),
-    moderation_review_resolved:
-      Event.contract([], [:case_ref, :decision], [:community_log]) |> Event.contract_only()
+    solution_revoked: Event.contract([], [], [:article_log, :community_log], :comment)
   }
 
   @doc """

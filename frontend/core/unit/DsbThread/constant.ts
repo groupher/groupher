@@ -246,6 +246,11 @@ export const MENU: TDsbMenu = {
         title: 'dsb.menu.activity',
         slug: DSB_ROUTE.ACTIVITY,
       },
+      {
+        icon: 'content',
+        title: 'dsb.menu.alert_wall',
+        slug: DSB_ROUTE.REVIEW,
+      },
     ],
   },
 

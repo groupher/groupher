@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Model.ArticlePublic do
   @schema_prefix DBPrefix.cms()
   @required_fields ~w(article_id revision_id published_at published_by_id publication_version
                       title digest body_hash)a
-  @optional_fields ~w(slug excerpt thumbnail active_at visible)a
+  @optional_fields ~w(slug excerpt thumbnail active_at)a
 
   @type t :: %__MODULE__{}
 
@@ -36,7 +36,6 @@ defmodule GroupherServer.CMS.Model.ArticlePublic do
     field(:excerpt, :string)
     field(:thumbnail, :map)
     field(:active_at, :utc_datetime)
-    field(:visible, :boolean, default: true)
     timestamps(type: :utc_datetime)
   end
 

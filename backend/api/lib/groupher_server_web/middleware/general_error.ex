@@ -16,44 +16,38 @@ defmodule GroupherServerWeb.Middleware.GeneralError do
 
   @behaviour Absinthe.Middleware
 
-  alias GroupherServer.ErrorCat
+  require Logger
 
-  # legacy string errors
-  def call(%{errors: [error]} = resolution, _) when is_binary(error) do
-    %{resolution | value: [], errors: [%{message: error}]}
-  end
+  alias GroupherServer.{CMS, ErrorCat}
+  alias CMS.Gate.Decision
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+  alias GroupherServerWeb.ErrorResponse
 
-  # legacy list errors (exclude graphql keyword shape)
-  def call(%{errors: [error]} = resolution, _) when is_list(error) do
-    if Keyword.keyword?(error) do
-      resolution
-    else
-      %{resolution | value: [], errors: [%{message: error}]}
-    end
-  end
-
-  # Legacy tuple errors are not part of the ErrorCat contract. Keep the
-  # transport safe without guessing a domain code from their contents.
-  def call(%{errors: [error]} = resolution, _) when is_tuple(error) do
-    case ErrorCat.gq_format(ErrorCat.custom("Unexpected legacy domain error.")) do
-      {:error, [message: message, code: code]} ->
-        %{resolution | value: [], errors: [%{message: message, extensions: %{code: code}}]}
-
-      _ ->
-        resolution
-    end
-  end
-
-  # typed ErrorCat domain errors
-  def call(%{errors: [%ErrorCat.Error{} = error]} = resolution, _) do
-    case ErrorCat.gq_format(error) do
-      {:error, [message: message, code: code]} ->
-        %{resolution | value: [], errors: [%{message: message, extensions: %{code: code}}]}
-
-      _ ->
-        resolution
-    end
+  def call(%{errors: errors} = resolution, _) when is_list(errors) and errors != [] do
+    %{resolution | value: [], errors: Enum.map(errors, &format_error/1)}
   end
 
   def call(resolution, _), do: resolution
+
+  defp format_error(%{message: message, extensions: extensions} = payload)
+       when is_binary(message) and is_map(extensions) do
+    payload
+  end
+
+  defp format_error(%ErrorCat.Error{} = error), do: format_declared(error)
+  defp format_error(%Decision{} = decision), do: format_declared(decision)
+
+  defp format_error(error) do
+    Logger.warning("Unstructured GraphQL error reached GeneralError",
+      error_type: inspect(if(is_map(error), do: Map.get(error, :__struct__), else: nil)),
+      error: inspect(error, limit: 20, printable_limit: 200)
+    )
+
+    format_declared(WebErrorCat.unexpected_error())
+  end
+
+  defp format_declared(error) do
+    {:error, formatted} = ErrorResponse.format_error(error)
+    Map.new(formatted)
+  end
 end

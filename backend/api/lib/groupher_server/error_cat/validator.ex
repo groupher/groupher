@@ -2,7 +2,12 @@ defmodule GroupherServer.ErrorCat.Validator do
   @moduledoc """
   Compile-time validation for the global ErrorCat contract.
 
-  Ranges and catalogs -> invariant checks -> `:ok` or a compilation error.
+  Ranges and catalogs -> invariant checks -> `{:ok, :pass}` or an ArgumentError.
+
+  Validation is invoked when the application ErrorCat registry is compiled.
+  It checks namespace ownership, disjoint numeric ranges, unique reasons and
+  codes, reserved entries, and message-key prefixes. Runtime callers should
+  use `ErrorCat.valid?/1`, not call this validator themselves.
   """
 
   alias GroupherServer.ErrorCat
@@ -11,6 +16,8 @@ defmodule GroupherServer.ErrorCat.Validator do
   @message_key ~r/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/
   @definition_fields [:namespace, :reason, :code, :retryable, :actions, :message_key]
 
+  @doc "Validates the global ErrorCat ranges, reserved entries, and catalogs."
+  @spec validate!(map(), [map()], [module()]) :: {:ok, :pass}
   def validate!(ranges, reserved, catalogs) do
     validate_ranges!(ranges)
     validate_reserved!(ranges, reserved)
@@ -253,10 +260,14 @@ defmodule GroupherServer.ErrorCat.Validator do
     raise(ArgumentError, "ErrorCat namespace must be a non-empty tuple: #{inspect(namespace)}")
   end
 
+  @doc "Builds the default localization key for one namespace and reason."
+  @spec default_message_key(tuple(), atom()) :: String.t()
   def default_message_key(namespace, reason) do
     namespace_path(namespace) <> "." <> Atom.to_string(reason)
   end
 
+  @doc "Joins namespace atoms into the dot-separated path used by message keys."
+  @spec namespace_path(tuple()) :: String.t()
   def namespace_path(namespace) do
     namespace |> Tuple.to_list() |> Enum.map_join(".", &Atom.to_string/1)
   end

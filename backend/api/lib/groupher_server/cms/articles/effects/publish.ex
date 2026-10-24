@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
 
       committed Publish result
         -> Search enqueue + Press invalidation
-        -> mention sync + moderation audition
+        -> mention sync
 
   Durable PublicCache invalidation remains inside the Publish transaction; the
   effects here consume only stable Article identity and the committed public
@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
   """
 
   alias GroupherServer.{Activity, CMS, Messaging, Repo}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.FrontDesk
   alias CMS.Model.{Article, Author}
 
@@ -33,7 +34,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
 
   def run(%{article: %Article{}} = result), do: run_public_effects(result)
 
-  def run(_result), do: {:error, :article_binding_context_required}
+  def run(_result), do: {:error, ArticleErrorCat.binding_context_required()}
 
   defp run_public_effects(
          %{article: %Article{} = article, community: community, binding: %{inner_id: inner_id}} =
@@ -46,13 +47,12 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
          {:ok, _user} <- update_published_projection(result, public) do
       with {:ok, _} <- CMS.Press.invalidate(community.id),
            {:ok, _} <- CMS.Events.emit(:sync_mentions, %{artiment: public}),
-           {:ok, _} <- CMS.Events.emit(:audition, %{artiment: public}),
            {:ok, _} <- notify_admin_on_first_publish(result, article),
            {:ok, _} <- append_activity(result, Map.put(public, :community_id, community.id)) do
         {:ok, result}
       end
     else
-      false -> {:error, :article_binding_context_required}
+      false -> {:error, ArticleErrorCat.binding_context_required()}
       {:error, reason} -> {:error, reason}
     end
   end

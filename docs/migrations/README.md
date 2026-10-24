@@ -5,6 +5,14 @@
 本目录保留跨应用或跨框架的阶段性迁移记录；稳定的当前合同应回到所属应用、Feature
 或 Architecture。
 
+- [FrontDesk 与 Query 读取边界收口](./frontdesk-query-convergence.md)：单资源、批量转发、list/pagi、统一查询能力合同与资源加载 lint；整改已实施，验收见本文档与执行记录。
+- [Gate 读取与操作准入收口](./gate-admission-convergence.md)：复用当前 Gate 合同，补齐调用覆盖、唯一可见集合和跨入口验收；整改已实施，验收见执行记录。
+- [旧内容 Audit 链路退役](./legacy-content-audit-removal.md)：已执行静态扫描，列出旧外部接口、配置、前后端消费者与替代/切换清单；实现待执行。
+- [旧 Audit 逐文件扫描](./legacy-content-audit-inventory.md)：逐文件证据与保留分类。
+- [ErrorCat 全链路收口](./errorcat-chain-convergence.md)：领域错误、FrontDesk 错误传播与协议 formatter 的收口方案及实施结果，不擅自扩展 GraphQL 输出合同。
+- [基础模块清理与源码文档审计](./backend-foundation-cleanup-and-codedoc.md)：已核实的兼容层、死代码候选、错误示例/调用图，以及 F/G/E/N/D 批次依赖与退出条件。
+- [基础模块源码文档清单](./backend-foundation-codedoc-inventory.md)：166 个文件范围的 AST 候选清单，逐模块列出缺注释、隐藏文档与示例覆盖；不等同于违规判定。
+
 - [`tanstack/`](./tanstack)：Community、Landing、Inspire Me 等应用的 TanStack rewrite。
 - [Policy Boundary 修复](./policy-boundary-fix.md)：清理 Policy 中的隐式加载、配置读取、重复决策和副作用，并收敛 Gate、Facts 与领域 capability 边界。
 - [CMS Command Receipt 重构](./cms-command-receipt-refactor.md)：从 `CommandReceipt.run_user_command/8`
@@ -28,6 +36,7 @@
 - [Backend 非 Commands 写入口审计](./backend-non-command-write-entry-audit.md)：在已完成的
   Accounts/Messaging 21 个显式 Command 之外，记录 job、maintenance、workflow、facade 与 transaction
   owner 的简化决策；默认保留现有 owner，只迁移真正的顶层业务 Command。
+  Command 化分类已收口；新增授权、状态、错误与事务边界的定点复核要求，不恢复全仓证明型 manifest。
 - [Article Binding 命名与存储重构](./article-binding-naming-and-storage.md)：统一
   `ArticleBinding`、`ArticleView`、`Articles.Bindings` 命名，收拢 FrontDesk 路径边界，并规划物理表重命名。
 - [Backend Read / Write Owner 命名与职责修复](./backend-read-write-owner-naming-fix.md)：已完成禁止含糊

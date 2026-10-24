@@ -731,6 +731,16 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   defp create_job(documents) do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = db_insert(:community)
+
+    assert {:ok, _passport} =
+             CMS.Passport.stamp_passport(
+               %{
+                 "global" => %{},
+                 community.slug => %{"cms" => %{"doc.import" => true}}
+               },
+               actor
+             )
+
     source_info = source_info()
     source_tree = source_tree(documents)
     assert {:ok, preview} = DocValidator.preview(community, source_info, source_tree)

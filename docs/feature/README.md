@@ -5,6 +5,7 @@
 本目录按主要业务能力和完整逻辑链路组织文档。一个 Feature 可以同时覆盖前端交互、
 后端 Context、GraphQL、数据模型、权限、生命周期和测试，不再按技术层拆分。
 
+- [`alert-board/`](./alert-board)：ReviewBot / AlertWall 审核与举报；V1 实现基线、V2 重构目标（尚未实施）。
 - [`activity/`](./activity)：业务事件、产品活动日志与审计面。
 - [`analysis/`](./analysis)：Article 业务指标事件、小时趋势与产品查询。
 - [`article/`](./article)：Article 版本、Trash 与 Audit。

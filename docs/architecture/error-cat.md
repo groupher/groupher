@@ -67,6 +67,9 @@ reason，不能长期使用 `custom/1`。
 
 ## 变更和校验
 
+当前实现与上述合同之间的已发现缺口、迁移批次和验收见
+[ErrorCat 全链路收口](../migrations/errorcat-chain-convergence.md)（原则已确认，待实施）。
+
 新增错误时，先确定真实 producer 和 namespace，再在所属 catalog 声明 reason 与 code；全局
 range、reserved code、重复定义和 message key 由编译期 validator 校验。当前仓库的源码约束由
 `scripts/check-elixir-module-style.mjs` 检查，完整字段、迁移表和测试要求见

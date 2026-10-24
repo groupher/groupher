@@ -9,8 +9,9 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias Accounts.Model.User
-  alias CMS.Articles.{Query, States}
+  alias CMS.Articles.States
   alias CMS.Docs.Store, as: DocStore
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
@@ -23,7 +24,7 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
       :sink -> sink_pipeline(article_id, actor, opts)
       :undo_sink -> undo_sink_pipeline(article_id, actor, opts)
       :set_category -> set_category(article_id, nil, actor, Keyword.fetch!(opts, :community))
-      :set_status -> {:error, :article_status_community_required}
+      :set_status -> {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
@@ -117,9 +118,9 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
       _ ->
         case Keyword.get(opts, :community_id) do
           community_id when is_integer(community_id) ->
-            case Query.community(community_id) do
-              %Community{} = community -> {:ok, community}
-              _ -> {:error, :article_binding_not_found}
+            case FrontDesk.community(community_id, mode: :internal) do
+              {:ok, %Community{} = community} -> {:ok, community}
+              {:error, _reason} -> {:error, CMS.Communities.ErrorCat.not_exist()}
             end
 
           _ ->
@@ -131,10 +132,13 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
   defp resolve_branch_community(opts, _article) do
     case Keyword.get(opts, :branch_id) do
       branch_id when is_integer(branch_id) ->
-        Query.branch_community(branch_id)
+        with {:ok, %{community_id: community_id}} <- CMS.Docs.Store.branch_context(branch_id),
+             {:ok, community} <- FrontDesk.community(community_id, mode: :internal) do
+          {:ok, community}
+        end
 
       _ ->
-        {:error, :article_binding_context_required}
+        {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 

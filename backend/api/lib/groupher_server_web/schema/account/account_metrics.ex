@@ -25,7 +25,7 @@ defmodule GroupherServerWeb.Schema.Account.Metrics do
   end
 
   input_object :user_list_filter do
-    field(:sort, :sort_enum)
+    field(:sort, :account_sort_enum)
   end
 
   input_object :user_profile_input do

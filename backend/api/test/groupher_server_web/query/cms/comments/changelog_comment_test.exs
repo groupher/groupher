@@ -188,7 +188,6 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
 
-      assert random_comment.meta.is_legal
 
       {:ok, replied_comment_1} =
         CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2, Ecto.UUID.generate())

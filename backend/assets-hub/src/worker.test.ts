@@ -107,6 +107,67 @@ describe('Assets Hub readiness', () => {
   })
 })
 
+describe('ReviewBot private image reads', () => {
+  it('serves only a signed active-window image capability with no-store headers', async () => {
+    const secret = 'review-image-capability-secret'
+    const bytes = new Uint8Array([137, 80, 78, 71])
+    const get = vi.fn(async () => ({
+      body: new Blob([bytes]).stream(),
+      httpMetadata: { contentType: 'image/png' },
+      size: bytes.byteLength,
+    }))
+    const runtime = {
+      ASSETS_BUCKET: { get },
+      ASSETS_HUB_CAPABILITY_SECRET: secret,
+    } as unknown as Env
+    const token = signPayload(
+      {
+        assetId: 41,
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        immutableVersion: 'sha256:asset-version',
+        mimeType: 'image/png',
+        objectKey: 'communities/9/assets/41/original',
+        purpose: 'review.read',
+      },
+      runtime,
+    )
+
+    const response = await worker.fetch(new Request(`https://assets.test/review/${token}`), runtime)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(response.headers.get('content-type')).toBe('image/png')
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes)
+    expect(get).toHaveBeenCalledWith('communities/9/assets/41/original')
+  })
+
+  it('rejects expired capabilities before reading the object', async () => {
+    const get = vi.fn()
+    const runtime = {
+      ASSETS_BUCKET: { get },
+      ASSETS_HUB_CAPABILITY_SECRET: 'review-image-capability-secret',
+    } as unknown as Env
+    const token = signPayload(
+      {
+        assetId: 41,
+        expiresAt: new Date(Date.now() - 1_000).toISOString(),
+        immutableVersion: 'sha256:asset-version',
+        mimeType: 'image/png',
+        objectKey: 'communities/9/assets/41/original',
+        purpose: 'review.read',
+      },
+      runtime,
+    )
+
+    const response = await worker.fetch(new Request(`https://assets.test/review/${token}`), runtime)
+
+    expect(response.status).toBe(404)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(get).not.toHaveBeenCalled()
+  })
+})
+
 describe('Assets Hub generated-batch authorization', () => {
   const authEnv = {
     ASSETS_BUCKET: { delete: vi.fn(), get: vi.fn() },

@@ -103,7 +103,6 @@ defmodule GroupherServer.Mixfile do
       {:quantum,
        git: "https://github.com/quantum-elixir/quantum-core.git",
        ref: "f6d838cbdc9f8893653df33f6a0f89c4e42768a3"},
-      {:html_sanitize_ex, "~> 1.5"},
       {:accessible, "~> 0.3.0"},
       {:floki, "~> 0.38.4"},
       {:req, "~> 0.7.2"},

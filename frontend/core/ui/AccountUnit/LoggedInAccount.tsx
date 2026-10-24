@@ -21,6 +21,7 @@ import type { TSpace, TUser } from '~/spec'
 import ImgFallback from '~/ui/ImgFallback'
 import Tooltip from '~/ui/Tooltip'
 import AccountSessionDrawer from '~/unit/AccountSessionDrawer'
+import MyReports from '~/unit/AlertWall/MyReports'
 
 import useSalon, { cn } from './salon/logged_in_account'
 
@@ -34,12 +35,14 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
   const { t } = useTrans()
   const router = useRouter()
   const [showSessions, setShowSessions] = useState(false)
+  const [showReports, setShowReports] = useState(false)
 
   const { avatar, nickname } = user
 
   return (
     <>
       <AccountSessionDrawer show={showSessions} onClose={() => setShowSessions(false)} />
+      <MyReports show={showReports} onClose={() => setShowReports(false)} />
       <Tooltip
         accessibleContent
         offset={[18, 5]}
@@ -64,6 +67,14 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
             >
               <span className={s.menuTitle}>Login &amp; devices</span>
               <DesktopSVG className={s.icon} />
+            </button>
+            <button
+              type='button'
+              aria-label={t('alert_wall.my_reports')}
+              className={s.menuBar}
+              onClick={() => setShowReports(true)}
+            >
+              <span className={s.menuTitle}>{t('alert_wall.my_reports')}</span>
             </button>
             <div className={s.divider} />
             <div className={s.menuBar}>

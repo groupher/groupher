@@ -50,7 +50,6 @@ defmodule Helper.ORM do
       iex> ORM.update_meta(user, %{follower_user_ids: [1, 2]})
       {:ok, updated_user}
 
-      iex> ORM.update_meta(article, %{reported_count: 42})
       {:ok, updated_article}
   """
   defdelegate update_meta(queryable, changes), to: ORMAtom
@@ -295,7 +294,7 @@ defmodule Helper.ORM do
 
   ## Examples
 
-      iex> ORM.delete_all(from(p in Post, where: p.pending == :illegal), :if_exist)
+      iex> ORM.delete_all(from(p in Post, where: p.id == 1), :if_exist)
       {:ok, {count, _}}
   """
   def delete_all(queryable, :if_exist) do

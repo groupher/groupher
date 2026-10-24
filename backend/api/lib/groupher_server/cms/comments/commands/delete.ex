@@ -89,9 +89,24 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
 
     with {:ok, _} <- revoke_if_current(article, comment, actor, operation_ref, occurred_at),
          {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),
+         {:ok, :pass} <-
+           CMS.Review.Requests.supersede_scope_in_transaction(
+             %{type: :comment, comment_id: comment.id, community_id: nil},
+             operation_ref
+           ),
+         {:ok, :pass} <-
+           CMS.Review.Requests.supersede_scope_in_transaction(
+             %{type: :comment, comment_id: comment.id, community_id: comment.community_id},
+             operation_ref
+           ),
+         {:ok, :pass} <-
+           GroupherServer.AlertWall.mark_target_deleted_in_transaction(
+             :comment,
+             to_string(comment.id),
+             command_id
+           ),
          {:ok, _} <- Lifecycle.transition(comment.id, :deleted),
          {:ok, deleted} <- Persist.tombstone(comment, @delete_hint),
-         {:ok, _} <- CMS.ArticleStats.record_comment_change(article),
          {:ok, _} <- record_article_metric(article, command_id, :comment_deleted),
          {:ok, _invalidation} <-
            invalidate_public_comments(article, comment.thread, command_id),

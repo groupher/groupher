@@ -213,6 +213,12 @@ export const viewerQueryKeys = {
     ] as const,
   commentSummary: (accountRef: string, articleKey: string) =>
     [...viewerQueryKeys.all, accountRef || 'anonymous', 'comment-summary', articleKey] as const,
+  myReportsPrefix: (accountRef: string) =>
+    [...viewerQueryKeys.all, accountRef || 'anonymous', 'my-reports'] as const,
+  myReports: (accountRef: string, page: number) =>
+    [...viewerQueryKeys.myReportsPrefix(accountRef), page] as const,
+  contentReview: (accountRef: string, target: unknown) =>
+    [...viewerQueryKeys.all, accountRef || 'anonymous', 'content-review', target] as const,
 }
 
 /** Constructors for serialized optimistic mutation lanes. */

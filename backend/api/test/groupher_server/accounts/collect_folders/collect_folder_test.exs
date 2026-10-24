@@ -240,6 +240,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {source, post, _attrs, user} = mock_article(:post)
       {:ok, %{binding: source_binding}} = CMS.articles_bindings_get(post, source)
       {:ok, destination} = mock_community(user)
+      user = grant_binding_actions(user, [source, destination])
 
       assert {:ok, _mirrored} =
                CMS.Articles.mirror(
@@ -389,5 +390,14 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
 
       assert reason |> is_error?({{:account, :collection}, :private_collect_folder})
     end
+  end
+
+  defp grant_binding_actions(user, communities) do
+    grants =
+      Enum.into(communities, %{}, fn community ->
+        {community.slug, %{"cms" => %{"post.pin" => true}}}
+      end)
+
+    Map.put(user, :cur_passport, Map.merge(%{"global" => %{"post.community.mirror" => true}}, grants))
   end
 end

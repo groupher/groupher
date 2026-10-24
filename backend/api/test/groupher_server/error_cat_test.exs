@@ -108,10 +108,10 @@ defmodule GroupherServer.ErrorCatTest do
              ErrorCat.gq_format({:error, error})
   end
 
-  test "passes through an already formatted GraphQL error" do
-    formatted = {:error, [message: "oops", code: 4001]}
-
-    assert ^formatted = ErrorCat.gq_format(formatted)
+  test "rejects an already formatted GraphQL error at the domain boundary" do
+    assert_raise ArgumentError, ~r/ErrorCat\.Error is required/, fn ->
+      ErrorCat.gq_format({:error, [message: "oops", code: 4001]})
+    end
   end
 
   test "rejects raw errors at the GraphQL boundary" do

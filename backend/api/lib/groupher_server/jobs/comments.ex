@@ -18,7 +18,7 @@ defmodule GroupherServer.Jobs.Comments do
 
   alias GroupherServer.CMS
 
-  @event_types ~w(sync_mentions audition notify_comment notify_reply subscribe_community)
+  @event_types ~w(sync_mentions subscribe_community)
 
   @doc """
   Performs one persisted Comments job.

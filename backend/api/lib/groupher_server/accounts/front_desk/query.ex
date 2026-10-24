@@ -50,6 +50,32 @@ defmodule GroupherServer.Accounts.FrontDesk.Query do
   def user(login) when is_binary(login), do: Cache.user(login)
 
   @doc """
+  Reads a User after validating the supported read mode and view options.
+
+  ## Examples
+
+      Query.user("alice", mode: :public, view: :default)
+      #=> {:ok, %Accounts.Model.User{}}
+
+  """
+  @spec user(integer() | String.t(), keyword()) :: {:ok, User.t()} | {:error, term()}
+  def user(ref, opts) when is_list(opts) do
+    case {Keyword.get(opts, :mode, :public), Keyword.get(opts, :view, :default)} do
+      {mode, :default} when mode in [:public, :internal] ->
+        if Enum.all?(Keyword.keys(opts), &(&1 in [:mode, :view])) do
+          user(ref)
+        else
+          {:error, ProfileErrorCat.invalid_user_read_options()}
+        end
+
+      _ ->
+        {:error, ProfileErrorCat.invalid_user_read_options()}
+    end
+  end
+
+  def user(_ref, _opts), do: {:error, ProfileErrorCat.invalid_user_read_options()}
+
+  @doc """
   Reads the current User row, bypassing the full User cache.
 
   ## Examples

@@ -14,36 +14,22 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   """
 
   @behaviour Absinthe.Middleware
-  import Helper.Utils, only: [handle_absinthe_error: 3]
-  alias GroupherServer.ErrorCat
-
-  alias ErrorCat.Error
+  alias GroupherServer.{Accounts, CMS, ErrorCat}
+  alias GroupherServerWeb.ErrorResponse
 
   def call(%{context: %{cur_user: cur_user}} = resolution, opt) do
     case GroupherServer.CMS.gate_rate_limit_publish_check(cur_user, opt) do
       {:ok, _} ->
         resolution
 
-      {:error, %Error{reason: :throttle_interval}} ->
-        resolution
-        |> handle_absinthe_error(
-          "throttle_interval",
-          ErrorCat.code(GroupherServer.CMS.gate_error_cat_throttle_interval())
-        )
+      {:error, %ErrorCat.Error{reason: :throttle_interval}} ->
+        ErrorResponse.put_error(resolution, CMS.gate_error_cat_throttle_interval())
 
-      {:error, %Error{reason: :throttle_hour}} ->
-        resolution
-        |> handle_absinthe_error(
-          "throttle_hour",
-          ErrorCat.code(GroupherServer.CMS.gate_error_cat_throttle_hour())
-        )
+      {:error, %ErrorCat.Error{reason: :throttle_hour}} ->
+        ErrorResponse.put_error(resolution, CMS.gate_error_cat_throttle_hour())
 
-      {:error, %Error{reason: :throttle_day}} ->
-        resolution
-        |> handle_absinthe_error(
-          "throttle_day",
-          ErrorCat.code(GroupherServer.CMS.gate_error_cat_throttle_day())
-        )
+      {:error, %ErrorCat.Error{reason: :throttle_day}} ->
+        ErrorResponse.put_error(resolution, CMS.gate_error_cat_throttle_day())
 
       {:error, _error} ->
         # publish first time ignore
@@ -52,10 +38,6 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   end
 
   def call(resolution, _) do
-    resolution
-    |> handle_absinthe_error(
-      "Authorize: need login",
-      ErrorCat.code(GroupherServer.Accounts.profiles_error_cat_account_login())
-    )
+    ErrorResponse.put_error(resolution, Accounts.profiles_error_cat_account_login())
   end
 end

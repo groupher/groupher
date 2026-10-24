@@ -1,26 +1,33 @@
 defmodule GroupherServer.CMS.Comments.Query do
   @moduledoc """
-  List/paged operations for comments.
+  List/paged operations and page projection support for Comments.
 
   Business position:
 
       Client
-        -> GraphQL
+        -> GraphQL / Comments facade
         -> CMS.Comments
         -> Query
-        -> Repo / domain event
+        -> Gate scope -> QueryBuilder / Pagi -> Repo -> PageProjection
+        -> participant count drift -> best-effort reconciliation Job
   """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
   alias GroupherServer.{Accounts, CMS, Jobs, Pagi, Repo}
 
-  alias CMS.QueryBuilder
-  alias CMS.Articles.Pagination
-  alias CMS.Dashboard.PagiMode
+  alias CMS.{
+    Articles.Pagination,
+    Comments.PageProjection,
+    Comments.Replies,
+    Comments.Query.Contract
+  }
+
+  alias CMS.{Dashboard.PagiMode, FrontDesk, QueryBuilder}
   alias Accounts.Model.User
   alias CMS.Gate.Context.Scope.Comment, as: CommentContext
-  alias CMS.Comments.{PageProjection, Replies}
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
 
   alias CMS.Model.{
     Article,
@@ -93,7 +100,14 @@ defmodule GroupherServer.CMS.Comments.Query do
     end
   end
 
-  @doc "Returns the new CommentPage contract through the shared offset/cursor engine."
+  @doc """
+  Returns the Comment page contract through the shared offset/cursor engine.
+
+  ## Examples
+
+      Query.page(:post, article_id, "community", %{sort: :desc_inserted}, nil, :timeline, viewer)
+      #=> {:ok, %{entries: [], pinned_entries: [], page_info: page_info}}
+  """
   @spec page(atom(), T.id(), String.t(), map(), term(), atom(), User.t() | nil) ::
           T.domain_res(map())
   def page(thread, article_id, community_slug, filter, pagi_input, mode, user \\ nil)
@@ -101,7 +115,8 @@ defmodule GroupherServer.CMS.Comments.Query do
   def page(thread, article_id, community_slug, filter, pagi_input, mode, user)
       when is_atom(thread) and is_binary(community_slug) and is_map(filter) and
              mode in [:timeline, :replies] do
-    with {:ok, effective} <-
+    with {:ok, :pass} <- Contract.validate_filter(filter),
+         {:ok, effective} <-
            PagiMode.for_community(community_slug,
              expected_revision: Pagi.revision(pagi_input)
            ),
@@ -137,9 +152,17 @@ defmodule GroupherServer.CMS.Comments.Query do
     {:error, Pagi.invalid_config_context()}
   end
 
-  @doc "Returns a Pagi page of all descendants under a canonical root, preserving direct parents."
+  @doc """
+  Returns a Pagi page of all descendants under a canonical root, preserving direct parents.
+
+  ## Examples
+
+      Query.reply_page(root_comment, "community", %{sort: :asc_inserted}, nil, viewer)
+      #=> {:ok, %{entries: [%Comment{}], page_info: page_info}}
+  """
   def reply_page(comment, community_slug, filter, pagi_input, user \\ nil) do
-    with {:ok, root} <- Replies.root(comment),
+    with {:ok, :pass} <- Contract.validate_filter(filter),
+         {:ok, root} <- Replies.root(comment),
          {:ok, article} <- stable_article(root.thread, root.article_id),
          {:ok, effective} <-
            PagiMode.for_community(community_slug,
@@ -266,23 +289,29 @@ defmodule GroupherServer.CMS.Comments.Query do
     |> Base.encode16(case: :lower)
   end
 
-  @doc "Pages one user's published Comments, optionally restricted to a thread."
+  @doc """
+  Pages one user's publicly visible Comments, optionally restricted to a thread.
+
+  ## Examples
+
+      Query.paged_published_comments(author, :post, %{sort: :desc_inserted}, nil, viewer)
+      #=> {:ok, %Page{entries: [%Comment{}]}}
+  """
   @spec paged_published_comments(User.t(), atom() | nil, map(), Params.t() | nil, User.t() | nil) ::
           tuple()
   def paged_published_comments(%User{id: user_id}, thread, filter, pagi, actor) do
-    scope = if is_nil(thread), do: CommentContext.all_public(), else: comment_scope(thread)
-    order = comment_order(filter)
-
-    query =
-      Comment
-      |> CMS.Gate.scope(actor, :list, scope)
-      |> preload([:body, :author])
-      |> where([comment], comment.author_id == ^user_id)
-
-    query = if thread, do: where(query, [comment], comment.thread == ^thread), else: query
-    query = QueryBuilder.filter_pack(query, Map.delete(filter, :sort))
-
-    with {:ok, paged} <-
+    with {:ok, :pass} <- Contract.validate_filter(filter),
+         scope <- if(is_nil(thread), do: CommentContext.all_public(), else: comment_scope(thread)),
+         order <- comment_order(filter),
+         query <-
+           Comment
+           |> CMS.Gate.scope(actor, :list, scope)
+           |> preload([:body, :author])
+           |> where([comment], comment.author_id == ^user_id),
+         query <- if(thread, do: where(query, [comment], comment.thread == ^thread), else: query),
+         query <- restrict_to_visible_parent_bindings(query, actor, thread),
+         query <- QueryBuilder.filter_pack(query, Map.delete(filter, :sort)),
+         {:ok, paged} <-
            ORM.pagi(query, pagi,
              for: Comment,
              order: order,
@@ -298,6 +327,55 @@ defmodule GroupherServer.CMS.Comments.Query do
            ) do
       paged |> assign_stable_articles() |> done()
     end
+  end
+
+  defp restrict_to_visible_parent_bindings(query, actor, nil) do
+    parent_filter =
+      Enum.reduce([:post, :blog, :changelog, :doc], dynamic(false), fn thread, filter ->
+        dynamic(
+          [comment],
+          ^filter or
+            fragment(
+              "?::text || ':' || ?::text IN (?)",
+              comment.article_id,
+              comment.community_id,
+              subquery(visible_parent_bindings(actor, thread))
+            )
+        )
+      end)
+
+    where(query, ^parent_filter)
+  end
+
+  defp restrict_to_visible_parent_bindings(query, actor, thread) do
+    where(
+      query,
+      [comment],
+      fragment(
+        "?::text || ':' || ?::text IN (?)",
+        comment.article_id,
+        comment.community_id,
+        subquery(visible_parent_bindings(actor, thread))
+      )
+    )
+  end
+
+  defp visible_parent_bindings(actor, :doc) do
+    Article
+    |> CMS.Gate.scope(actor, :list, DocContext.public_main())
+    |> select(
+      [article, ...],
+      fragment("?::text || ':' || ?::text", article.id, as(:gate_community).id)
+    )
+  end
+
+  defp visible_parent_bindings(actor, thread) do
+    Article
+    |> CMS.Gate.scope(actor, :list, ArticleContext.public(thread))
+    |> select(
+      [article, ...],
+      fragment("?::text || ':' || ?::text", article.id, as(:gate_community).id)
+    )
   end
 
   defp assign_stable_articles(%{entries: entries} = page) do
@@ -351,9 +429,17 @@ defmodule GroupherServer.CMS.Comments.Query do
     end
   end
 
-  @doc "Pages folded comments without inserting pins or solutions into the sequence."
+  @doc """
+  Pages folded comments without inserting pins or solutions into the sequence.
+
+  ## Examples
+
+      Query.paged_folded_comments(:post, article_id, %{sort: :desc_inserted}, nil, viewer)
+      #=> {:ok, %Page{entries: [%Comment{}]}}
+  """
   def paged_folded_comments(thread, article_id, filter, pagi, viewer \\ nil) do
-    with {:ok, article} <- stable_article(thread, article_id),
+    with {:ok, :pass} <- Contract.validate_filter(filter),
+         {:ok, article} <- stable_article(thread, article_id),
          order <- comment_order(filter),
          query <-
            Comment
@@ -382,7 +468,17 @@ defmodule GroupherServer.CMS.Comments.Query do
     end
   end
 
-  @doc "Pages distinct visible Comment authors; cursor reads do not execute a count."
+  @doc """
+  Pages distinct visible Comment authors; cursor reads do not execute a count.
+
+  Offset reads may enqueue best-effort reconciliation when the stored participant
+  count differs from the query result. Cursor reads never request a total count.
+
+  ## Examples
+
+      Query.paged_comments_participants(:post, article_id, nil)
+      #=> {:ok, %Page{entries: [%User{}]}}
+  """
   @spec paged_comments_participants(T.thread(), T.id(), Params.t() | nil) :: tuple()
   def paged_comments_participants(thread, article_id, pagi) do
     with {:ok, article} <- stable_article(thread, article_id),
@@ -443,8 +539,8 @@ defmodule GroupherServer.CMS.Comments.Query do
   defp comment_scope(thread), do: CommentContext.for_thread(thread)
 
   defp stable_article(thread, article_id) do
-    case Repo.get(Article, article_id) do
-      %Article{thread: ^thread} = article -> {:ok, article}
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{thread: ^thread} = article} -> {:ok, article}
       _ -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
     end
   end
@@ -454,10 +550,15 @@ defmodule GroupherServer.CMS.Comments.Query do
   defp stats_value(nil, _field), do: 0
   defp stats_value(stats, field), do: Map.fetch!(stats, field)
 
-  @doc "Returns a Comment by its database identifier, or `nil` when it does not exist."
-  def comment(id), do: Repo.get(Comment, id)
+  @doc """
+  Preloads the author of the parent Comment referenced by a reply.
 
-  @doc "Preloads the author of the parent Comment referenced by a reply."
+  ## Examples
+
+      Query.comment_with_reply_author(reply)
+      #=> %Comment{reply_to_comment: %Comment{author: %User{}}}
+  """
+  @spec comment_with_reply_author(Comment.t()) :: Comment.t()
   def comment_with_reply_author(%Comment{} = comment) do
     Repo.preload(comment, reply_to_comment: :author)
   end

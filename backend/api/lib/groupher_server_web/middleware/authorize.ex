@@ -18,23 +18,25 @@ defmodule GroupherServerWeb.Middleware.Authorize do
 
   @behaviour Absinthe.Middleware
 
-  import Helper.Utils, only: [handle_absinthe_error: 3]
-  alias GroupherServer.ErrorCat
+  alias GroupherServer.Accounts
+  alias GroupherServerWeb.ErrorResponse
 
   def call(%{context: %{cur_user: _}} = resolution, _info), do: resolution
 
   def call(%{context: %{auth_failure: code}} = resolution, _info) do
-    Absinthe.Resolution.put_result(
-      resolution,
-      {:error, [message: "Authorize: browser token is invalid", code: code]}
-    )
+    error =
+      if code == GroupherServer.Auth.contract_token_expired() do
+        Accounts.profiles_error_cat_session_expired("Authorize: browser token is expired")
+      else
+        Accounts.profiles_error_cat_invalid_browser_access_claims(
+          "Authorize: browser token is invalid"
+        )
+      end
+
+    ErrorResponse.put_error(resolution, error)
   end
 
   def call(resolution, _) do
-    resolution
-    |> handle_absinthe_error(
-      "Authorize: need login",
-      ErrorCat.code(GroupherServer.Accounts.profiles_error_cat_account_login())
-    )
+    ErrorResponse.put_error(resolution, Accounts.profiles_error_cat_account_login())
   end
 end

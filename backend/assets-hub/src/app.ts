@@ -22,6 +22,7 @@ import {
   verifyBatchCapability,
   verifyCapability,
   verifyPublishClaim,
+  verifyReviewReadCapability,
   type TUploadCapability,
 } from './capability'
 import { LocalGeneratedBatchStore } from './local-batch'
@@ -405,6 +406,60 @@ export const createApp = ({ environment = process.env }: TOptions = {}) => {
         },
         400,
       )
+    }
+  })
+
+  app.on(['GET', 'HEAD'], '/review/:token', async (context) => {
+    try {
+      const capability = verifyReviewReadCapability(context.req.param('token'), environment)
+      const head = localStore
+        ? await localStore.headObject(capability.objectKey)
+        : await headR2Object(capability.objectKey)
+      const contentType =
+        head?.ContentType || (head as { contentType?: string } | null)?.contentType
+      const contentLength = head?.ContentLength || (head as { size?: number } | null)?.size
+
+      if (
+        !head ||
+        !contentType ||
+        contentType !== capability.mimeType ||
+        !contentLength ||
+        contentLength > 10 * 1024 * 1024
+      ) {
+        return new Response('Not found.', {
+          headers: {
+            'cache-control': 'no-store',
+            'content-type': 'text/plain; charset=utf-8',
+            'x-content-type-options': 'nosniff',
+          },
+          status: 404,
+        })
+      }
+
+      const body =
+        context.req.method === 'HEAD'
+          ? null
+          : localStore
+            ? await localStore.getObjectBytes(capability.objectKey)
+            : await getR2ObjectBytes(capability.objectKey)
+
+      return new Response(body, {
+        headers: {
+          'cache-control': 'no-store',
+          'content-length': String(contentLength),
+          'content-type': contentType,
+          'x-content-type-options': 'nosniff',
+        },
+      })
+    } catch {
+      return new Response('Not found.', {
+        headers: {
+          'cache-control': 'no-store',
+          'content-type': 'text/plain; charset=utf-8',
+          'x-content-type-options': 'nosniff',
+        },
+        status: 404,
+      })
     }
   })
 

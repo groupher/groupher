@@ -14,12 +14,11 @@ import useSalon from './salon'
 import SelectedEmotions from './SelectedEmotions'
 
 type TProps = {
-  isLegal?: boolean
   emotions?: TEmotion[]
   onAction?: (name: TEmotionType, hasReacted: boolean) => void
 }
 
-const EmotionSelector: FC<TProps> = ({ onAction = console.log, isLegal = true, emotions }) => {
+const EmotionSelector: FC<TProps> = ({ onAction = console.log, emotions }) => {
   const s = useSalon()
   const preparedEmotions = ensureEmotion(emotions)
   const selectedEmotions = visibleEmotions(preparedEmotions)
@@ -27,17 +26,15 @@ const EmotionSelector: FC<TProps> = ({ onAction = console.log, isLegal = true, e
   return (
     <>
       <SelectedEmotions emotions={selectedEmotions} onAction={onAction} />
-      {isLegal && (
-        <Tooltip
-          content={<Panel emotions={preparedEmotions} onAction={onAction} />}
-          trigger='click'
-          noPadding
-        >
-          <div className={s.selectEmotion}>
-            <IconButton icon='emotion' dimWhenIdle size={18} />
-          </div>
-        </Tooltip>
-      )}
+      <Tooltip
+        content={<Panel emotions={preparedEmotions} onAction={onAction} />}
+        trigger='click'
+        noPadding
+      >
+        <div className={s.selectEmotion}>
+          <IconButton icon='emotion' dimWhenIdle size={18} />
+        </div>
+      </Tooltip>
     </>
   )
 }

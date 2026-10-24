@@ -102,7 +102,6 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
          %{
            inner_id: comment.inner_id,
            viewer_has_upvoted: comment.viewer_has_upvoted,
-           viewer_has_reported: comment.viewer_has_reported,
            emotions: viewer_emotions(comment)
          }
        end)}

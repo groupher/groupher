@@ -12,6 +12,31 @@ defmodule GroupherServer.CommandPipeline do
         -> pipeline macro
         -> ordered runner stages
         -> Gate / Lifecycle / Persist contract
+
+  Receipt pipelines persist a confirmation so retries can recover the first
+  committed result; direct pipelines execute once without a Receipt. For a
+  real pair of both forms, see `CMS.Accounts.CollectFolders.Commands.Add`.
+
+  ## Examples
+
+      use GroupherServer.CommandPipeline,
+        adapter: GroupherServer.CMS.CommandPipelineAdapter
+
+      @pipeline operation: :collect_add,
+                access: :user,
+                target: :article,
+                params: [:folder_id],
+                confirmation: GroupherServer.Accounts.CollectFolders.MembershipConfirmation
+
+      receipt_pipeline execute_receipt(article, folder_id, user, command_id) do
+        gate(fn candidate -> prepare_gated_add(article, folder_id, user, command_id) end)
+        change(fn prepared -> apply_add(prepared, article, user) end)
+        confirm(fn folder -> confirmation(folder, article, folder_id, :add) end)
+        present(fn receipt -> present_confirmation(receipt, command_id) end)
+      end
+
+  This excerpt follows `CMS.Accounts.CollectFolders.Commands.Add`; its named
+  stage functions and confirmation codec are defined by that command.
   """
 
   alias GroupherServer.CommandPipeline
@@ -29,6 +54,13 @@ defmodule GroupherServer.CommandPipeline do
     :cleanup
   ]
 
+  @doc """
+  Imports the command-pipeline DSL and registers the adapter used by generated pipelines.
+
+  `adapter:` is optional and defaults to `GroupherServer.CommandPipeline.DefaultAdapter`.
+  CMS commands supply `CMS.CommandPipelineAdapter` to connect Receipt and CMS Gate behavior.
+  """
+  @spec __using__(keyword()) :: Macro.t()
   defmacro __using__(opts) do
     Module.register_attribute(__CALLER__.module, :pipeline, persist: false)
 
@@ -61,14 +93,30 @@ defmodule GroupherServer.CommandPipeline do
     end
   end
 
+  @doc """
+  Declares a retry-safe pipeline whose confirm stage persists a Receipt result.
+
+  The `@pipeline` metadata must identify operation, actor, target, Receipt
+  parameters, and confirmation codec. See the complete module example above.
+  """
+  @spec receipt_pipeline(Macro.t(), Macro.t()) :: Macro.t()
   defmacro receipt_pipeline(head, do: body) do
     build_pipeline(__CALLER__, :receipt_pipeline, head, body)
   end
 
+  @doc """
+  Declares a direct pipeline with Gate/Lifecycle/write stages and no Receipt recovery.
+
+  Use this only when the operation has no retry/replay contract. For a concrete
+  direct path paired with a receipt path, see `CMS.Accounts.CollectFolders.Commands.Add.run_direct/3`.
+  """
+  @spec direct_pipeline(Macro.t(), Macro.t()) :: Macro.t()
   defmacro direct_pipeline(head, do: body) do
     build_pipeline(__CALLER__, :direct_pipeline, head, body)
   end
 
+  @doc "Compile-time hook that validates declarations and generates pipeline contract functions."
+  @spec __before_compile__(Macro.Env.t()) :: Macro.t()
   defmacro __before_compile__(env) do
     contracts = Module.get_attribute(env.module, :pipeline_contracts) || []
     contracts = Enum.reverse(contracts)
@@ -91,14 +139,31 @@ defmodule GroupherServer.CommandPipeline do
   # Stage macros exist only so the quoted body has a stable, readable shape if
   # a caller accidentally expands it before the outer pipeline macro consumes
   # it. The outer macro removes all stage calls from the generated function.
+  @doc "Declares an input-normalization stage that runs before loading or authorization."
   defmacro prepare(value), do: value
+
+  @doc "Declares the canonical resource-loading stage for the pipeline."
   defmacro load(value), do: value
+
+  @doc "Declares the authorization stage; Gate transaction checks must run here."
   defmacro gate(value), do: value
+
+  @doc "Declares the Lifecycle transition stage for an authorized canonical resource."
   defmacro lifecycle(value), do: value
+
+  @doc "Declares the domain change stage, after Gate and Lifecycle validation."
   defmacro change(value), do: value
+
+  @doc "Declares Receipt confirmation construction; required by `receipt_pipeline`."
   defmacro confirm(value), do: value
+
+  @doc "Declares the caller-facing projection stage after transaction work succeeds."
   defmacro present(value), do: value
+
+  @doc "Declares explicit handling for a rejected Gate/Lifecycle result."
   defmacro on_rejection(value), do: value
+
+  @doc "Declares cleanup that runs under the pipeline runner's rejection/finalization contract."
   defmacro cleanup(value), do: value
 
   defp build_pipeline(caller, pipeline_type, head, body) do

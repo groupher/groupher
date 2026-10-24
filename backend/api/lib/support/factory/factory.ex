@@ -13,8 +13,7 @@ defmodule GroupherServer.Support.Factory do
   """
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Artiment.Matcher
-
-  alias GroupherServer.{Accounts, CMS, Messaging, Support}
+  alias GroupherServer.{Accounts, CMS, Messaging, Repo, ReviewBot, Support}
   alias Support.FakeData
 
   alias Accounts.Model.User
@@ -226,8 +225,9 @@ defmodule GroupherServer.Support.Factory do
     |> maybe_put_default_article_binding()
     |> maybe_put_default_doc_branch()
     |> maybe_put_default_tag_group()
-    |> GroupherServer.Repo.insert()
+    |> Repo.insert()
     |> ensure_community_lifecycle()
+    |> ensure_community_review_configs()
     |> ensure_article_lifecycle()
   rescue
     e in Ecto.ConstraintError ->
@@ -262,6 +262,16 @@ defmodule GroupherServer.Support.Factory do
   end
 
   defp ensure_community_lifecycle(result), do: result
+
+  defp ensure_community_review_configs({:ok, %Community{} = community} = result) do
+    case Repo.transaction(fn -> ReviewBot.create_default_configs_for_community(community.id) end) do
+      {:ok, {:ok, _configs}} -> result
+      {:ok, {:error, reason}} -> {:error, reason}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp ensure_community_review_configs(result), do: result
 
   defp ensure_article_lifecycle(result), do: result
 

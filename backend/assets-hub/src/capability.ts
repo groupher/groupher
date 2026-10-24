@@ -84,6 +84,15 @@ type TCapabilityEnvironment = {
   ASSETS_HUB_CAPABILITY_SECRET?: string
 }
 
+export type TReviewReadCapability = {
+  assetId: number
+  expiresAt: string
+  immutableVersion: string
+  mimeType: 'image/avif' | 'image/gif' | 'image/jpeg' | 'image/png' | 'image/webp'
+  objectKey: string
+  purpose: 'review.read'
+}
+
 const requiredSecret = (environment: TCapabilityEnvironment) => {
   const secret = environment.ASSETS_HUB_CAPABILITY_SECRET?.trim()
   if (!secret) throw new Error('ASSETS_HUB_CAPABILITY_SECRET is required')
@@ -164,6 +173,53 @@ export const verifyCapability = (
 
   const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'))
   return assertCapability(decoded)
+}
+
+/** Verifies the narrowly scoped, short-lived image read token used by ReviewBot. */
+export const verifyReviewReadCapability = (
+  token: string,
+  environment: TCapabilityEnvironment = process.env,
+): TReviewReadCapability => {
+  const [payload, signature] = token.split('.')
+  if (!payload || !signature) throw new Error('Invalid review-read capability')
+
+  const expected = sign(payload, requiredSecret(environment))
+  const expectedBuffer = Buffer.from(expected)
+  const actualBuffer = Buffer.from(signature)
+  if (
+    expectedBuffer.length !== actualBuffer.length ||
+    !timingSafeEqual(expectedBuffer, actualBuffer)
+  ) {
+    throw new Error('Invalid review-read capability signature')
+  }
+
+  const decoded = JSON.parse(
+    Buffer.from(payload, 'base64url').toString('utf8'),
+  ) as Partial<TReviewReadCapability>
+  const allowedTypes = new Set<TReviewReadCapability['mimeType']>([
+    'image/avif',
+    'image/gif',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+  ])
+  const keySegments = decoded.objectKey?.split('/') || []
+
+  if (
+    decoded.purpose !== 'review.read' ||
+    !Number.isSafeInteger(decoded.assetId) ||
+    !decoded.immutableVersion ||
+    !decoded.expiresAt ||
+    Date.parse(decoded.expiresAt) <= Date.now() ||
+    Date.parse(decoded.expiresAt) > Date.now() + 121_000 ||
+    !allowedTypes.has(decoded.mimeType as TReviewReadCapability['mimeType']) ||
+    !decoded.objectKey?.startsWith('communities/') ||
+    keySegments.some((segment) => !segment || segment === '.' || segment === '..')
+  ) {
+    throw new Error('Invalid or expired review-read capability')
+  }
+
+  return decoded as TReviewReadCapability
 }
 
 const assertBatchCapability = (value: unknown): TGeneratedImageBatchCapability => {

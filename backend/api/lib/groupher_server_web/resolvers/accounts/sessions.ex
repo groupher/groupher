@@ -9,11 +9,11 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
   alias Accounts.Profiles.ErrorCat
 
   def session_state(_root, _args, %{context: %{auth_failure: code}}) do
-    {:error, message: "Authorize: browser token is invalid", code: code}
+    {:error, auth_failure_error(code)}
   end
 
   def session_state(_root, _args, %{context: %{service_auth_failure: code}}) do
-    {:error, message: "Authorize: service identity could not be verified", code: code}
+    {:error, service_auth_failure_error(code)}
   end
 
   def session_state(_root, _args, %{context: %{cur_user: cur_user}}) do
@@ -74,30 +74,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
   end
 
   defp browser_session_result({:error, reason}) do
-    {message, code} =
-      case error_reason(reason) do
-        :session_expired ->
-          {"Browser Session expired.", GroupherServer.Auth.contract_session_expired()}
-
-        :session_revoked ->
-          {"Browser Session revoked.", GroupherServer.Auth.contract_session_revoked()}
-
-        :session_not_found ->
-          {"Browser Session no longer exists.", GroupherServer.Auth.contract_session_revoked()}
-
-        :current_session ->
-          {"The current Browser Session cannot be revoked here.",
-           GroupherServer.Auth.contract_session_conflict()}
-
-        :account_blocked ->
-          {"Account is blocked.", GroupherServer.Auth.contract_account_blocked()}
-
-        _ ->
-          {"Browser Session operation failed.",
-           GroupherServer.Auth.contract_session_unavailable()}
-      end
-
-    {:error, message: message, code: code}
+    {:error, session_error(error_reason(reason))}
   end
 
   defp browser_session_result(result) do
@@ -114,5 +91,61 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
 
   defp error_reason(_reason) do
     :unknown
+  end
+
+  defp auth_failure_error(code) do
+    token_invalid = GroupherServer.Auth.contract_token_invalid()
+    session_revoked = GroupherServer.Auth.contract_session_revoked()
+
+    case code do
+      ^token_invalid ->
+        Accounts.profiles_error_cat_invalid_browser_access_claims(
+          "Authorize: browser token is invalid"
+        )
+
+      ^session_revoked ->
+        Accounts.profiles_error_cat_session_revoked("Browser Session revoked.")
+
+      _ ->
+        Accounts.profiles_error_cat_invalid_browser_access_claims(
+          "Authorize: browser token is invalid"
+        )
+    end
+  end
+
+  defp service_auth_failure_error(code) do
+    if code == GroupherServer.Auth.contract_service_token_invalid() do
+      GroupherServerWeb.ErrorCat.invalid_service_token(
+        "Authorize: service identity could not be verified"
+      )
+    else
+      GroupherServerWeb.ErrorCat.service_auth("Authorize: service identity could not be verified")
+    end
+  end
+
+  defp session_error(:session_expired) do
+    Accounts.profiles_error_cat_session_expired("Browser Session expired.")
+  end
+
+  defp session_error(:session_revoked) do
+    Accounts.profiles_error_cat_session_revoked("Browser Session revoked.")
+  end
+
+  defp session_error(:session_not_found) do
+    Accounts.profiles_error_cat_session_revoked("Browser Session no longer exists.")
+  end
+
+  defp session_error(:current_session) do
+    Accounts.profiles_error_cat_current_session(
+      "The current Browser Session cannot be revoked here."
+    )
+  end
+
+  defp session_error(:account_blocked) do
+    Accounts.profiles_error_cat_account_blocked("Account is blocked.")
+  end
+
+  defp session_error(_reason) do
+    Accounts.profiles_error_cat_session_unavailable("Browser Session operation failed.")
   end
 end

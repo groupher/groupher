@@ -1,12 +1,12 @@
 defmodule GroupherServer.CMS.FrontDesk do
   @moduledoc """
-  Stable CMS facade for single-resource reads, bounded Article path batches,
-  and relationship lookup.
+  Stable CMS facade for single-resource reads and relationship lookup.
 
   `:public` is the default read mode. `:management` requires an actor and
   delegates actor/resource policy to Gate. `:internal` is reserved for trusted
-  backend command, event, and recovery reads. Public Article path batches are
-  owned here; writes stay in their owning domain facades.
+  backend command, event, and recovery reads. Collection queries and bounded
+  Article path resolution belong to their owning Query modules; writes stay in
+  their owning domain facades.
 
   Business position:
 
@@ -35,6 +35,15 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   @doc "Reads one Community with an explicit mode and optional named view."
   def community(ref, opts) when is_list(opts), do: Community.read(ref, nil, opts)
+
+  @doc """
+  Reads one Community with an actor and explicit public/management options.
+
+  ## Examples
+
+      CMS.FrontDesk.community(community_slug, actor, mode: :management)
+  """
+  @spec community(term(), term(), keyword()) :: T.domain_res(CMS.Model.Community.t())
   def community(ref, actor, opts), do: Community.read(ref, actor, opts)
 
   @doc "Reads one Comment from a structured public path in the default public mode."
@@ -50,6 +59,14 @@ defmodule GroupherServer.CMS.FrontDesk do
     CommentFrontDesk.read(comment_path, actor, [])
   end
 
+  @doc """
+  Reads a Comment path with an actor and explicit public/management options.
+
+  ## Examples
+
+      CMS.FrontDesk.comment(comment_path, actor, mode: :public, view: :with_author)
+  """
+  @spec comment(map(), term(), keyword()) :: T.domain_res(CMS.Model.Comment.t())
   def comment(comment_path, actor, opts) when is_map(comment_path) and is_map(actor) do
     CommentFrontDesk.read(comment_path, actor, opts)
   end
@@ -77,6 +94,17 @@ defmodule GroupherServer.CMS.FrontDesk do
   @spec article(ArticlePath.t() | String.t()) :: {:ok, struct()} | {:error, map()}
   def article(article_ref), do: Article.read(article_ref, nil, [])
 
+  @doc """
+  Reads an Article with explicit options, or reads a public path for an actor.
+
+  Use `article(path, actor, opts)` when an actor and non-default mode are both
+  needed. Stable IDs are available only to trusted internal callers.
+
+  ## Examples
+
+      CMS.FrontDesk.article(article_id, mode: :internal, view: :command_context)
+      CMS.FrontDesk.article(article_path, actor)
+  """
   @spec article(ArticlePath.t() | String.t(), keyword()) ::
           {:ok, struct()} | {:error, map()}
   def article(article_ref, opts) when is_list(opts), do: Article.read(article_ref, nil, opts)
@@ -84,12 +112,15 @@ defmodule GroupherServer.CMS.FrontDesk do
   @spec article(ArticlePath.t() | String.t(), term()) :: {:ok, struct()} | {:error, map()}
   def article(article_path, actor), do: Article.read(article_path, actor, [])
 
+  @doc """
+  Reads a public or management Article path with actor and explicit options.
+
+  ## Examples
+
+      CMS.FrontDesk.article(article_path, actor, mode: :management)
+  """
   @spec article(ArticlePath.t(), term(), keyword()) :: {:ok, struct()} | {:error, map()}
   def article(article_path, actor, opts), do: Article.read(article_path, actor, opts)
-
-  @doc "Reads a bounded batch of visible public Articles from ArticlePaths."
-  @spec articles([ArticlePath.t()]) :: {:ok, [map()]} | {:error, term()}
-  def articles(article_paths) when is_list(article_paths), do: Article.read_many(article_paths)
 
   @doc "Resolves the canonical relationship between one Article and one Community."
   @spec resolve_binding(term(), term()) ::

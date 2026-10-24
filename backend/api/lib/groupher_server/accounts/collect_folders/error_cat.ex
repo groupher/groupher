@@ -12,4 +12,5 @@ defmodule GroupherServer.Accounts.CollectFolders.ErrorCat do
   error(:private_collect_folder, code: 4704)
   error(:not_collected_in_folder, code: 4705)
   error(:already_exist, code: 4701)
+  error(:binding_context_required, code: 4706)
 end

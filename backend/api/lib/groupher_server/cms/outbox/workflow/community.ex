@@ -4,26 +4,40 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Community do
 
   Business position:
 
-      committed Community/DocTree outbox event
-        -> Community.Cleanup worker
-        -> public-cache purge
+      Oban outbox job
+        -> Outbox.execute lease + fencing
+        -> Community / DocTree cache effects
+        -> complete / retry / snooze / terminal failure
   """
 
-  alias GroupherServer.{Analysis, CMS}
+  alias GroupherServer.{Analysis, CMS, ErrorCat}
 
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Dashboard.PagiMode
   alias CMS.Outbox
 
+  @doc """
+  Delivers one Community or DocTree outbox event under the shared lease protocol.
+
+  Busy leases snooze; transient delivery errors retry; after exhaustion Outbox
+  records terminal failure and the job is acknowledged.
+  """
+  @spec perform(Oban.Job.t()) :: Oban.Worker.result()
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
-    case Outbox.execute(event_id, &cleanup/1) do
+    case Outbox.execute(event_id, &cleanup/1,
+           on_error: if(job.attempt >= job.max_attempts, do: :fail, else: :classify)
+         ) do
       {:ok, _value} ->
         {:ok, :pass}
 
       {:busy, seconds} ->
         {:snooze, seconds}
 
-      {:error, _reason} when job.attempt >= job.max_attempts ->
-        _ = Outbox.mark_failed(event_id)
+      {:error,
+       %ErrorCat.Error{
+         namespace: {:cms},
+         reason: :outbox_delivery_exhausted
+       }} ->
         {:ok, :pass}
 
       {:error, reason} ->
@@ -46,7 +60,7 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Community do
         end
 
       _ ->
-        {:error, :invalid_community_id}
+        {:error, CommunityErrorCat.invalid_outbox_resource()}
     end
   end
 
@@ -70,7 +84,7 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Community do
         with {:ok, _} <- PagiMode.invalidate(slug), do: {:ok, :pass}
 
       _ ->
-        {:error, :invalid_pagi_mode_invalidation}
+        {:error, CommunityErrorCat.invalid_pagination_invalidation()}
     end
   end
 
@@ -86,5 +100,5 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Community do
 
   defp invalidation_type("community.taxonomy_changed"), do: {:ok, :taxonomy_changed}
   defp invalidation_type("doc_tree.changed"), do: {:ok, :doc_tree_changed}
-  defp invalidation_type(_event), do: {:error, :unknown_community_outbox_event}
+  defp invalidation_type(_event), do: {:error, CommunityErrorCat.unknown_outbox_event()}
 end

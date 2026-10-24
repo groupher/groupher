@@ -349,15 +349,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       refute Map.has_key?(the_changelog, "viewerHasViewed")
       refute Map.has_key?(the_changelog, "viewerHasUpvoted")
       refute Map.has_key?(the_changelog, "viewerHasCollected")
-      refute Map.has_key?(the_changelog, "viewerHasReported")
 
       track_view(changelog, user)
 
       {:ok, _} = CMS.Interactions.upvote(changelog, user, Ecto.UUID.generate())
       {:ok, _} = CMS.Interactions.collect(changelog, user, Ecto.UUID.generate())
-
-      {:ok, _} =
-        CMS.AbuseReports.article(changelog, "reason", "attr_info", user, Ecto.UUID.generate())
 
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
@@ -370,7 +366,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       refute Map.has_key?(the_changelog, "viewerHasViewed")
       refute Map.has_key?(the_changelog, "viewerHasUpvoted")
       refute Map.has_key?(the_changelog, "viewerHasCollected")
-      refute Map.has_key?(the_changelog, "viewerHasReported")
 
       refute Map.has_key?(the_changelog, "meta")
     end

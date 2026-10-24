@@ -18,8 +18,6 @@ defmodule GroupherServer.CMS.Articles.Const do
   @spec native_order_values() :: [atom()]
   def native_order_values, do: @native_orders
 
-  defmacro order_values_ast, do: Macro.escape(@orders)
-
   @spec valid_order?(atom() | nil) :: boolean()
   def valid_order?(nil), do: true
   def valid_order?(order), do: order in @orders

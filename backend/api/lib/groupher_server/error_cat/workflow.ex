@@ -7,6 +7,11 @@ defmodule GroupherServer.ErrorCat.Workflow do
   formatting for protocol boundaries such as GraphQL.
 
   Context catalog -> global registry and validation -> protocol error.
+
+  For example, `valid?(Accounts.Profiles.ErrorCat.not_exist())` checks the
+  generated entry against its registered namespace, reason, and transport code.
+  `definition/2` is an introspection API and raises for an undeclared pair;
+  `declared?/2` is the non-raising membership check.
   """
 
   alias GroupherServer.ErrorCat
@@ -30,7 +35,8 @@ defmodule GroupherServer.ErrorCat.Workflow do
     {:cms, :article} => 6000..6099,
     {:activity} => 6100..6199,
     {:messaging, :notification} => 6200..6249,
-    {:account, :profile_view_tracker} => 6250..6299
+    {:account, :profile_view_tracker} => 6250..6299,
+    {:review_bot, :check} => 7400..7499
   }
 
   @reserved [
@@ -78,19 +84,34 @@ defmodule GroupherServer.ErrorCat.Workflow do
     GroupherServer.CMS.ViewTracker.ErrorCat,
     GroupherServer.Accounts.ProfileViewTracker.ErrorCat,
     GroupherServer.Activity.ErrorCat,
-    GroupherServer.Messaging.ErrorCat
+    GroupherServer.Messaging.ErrorCat,
+    GroupherServer.ReviewBot.ErrorCat
   ]
 
+  @doc "Returns the namespace-to-code-range registry used by ErrorCat validation."
+  @spec ranges() :: %{tuple() => Range.t()}
   def ranges, do: @ranges
+
+  @doc "Returns the reserved error definitions outside ordinary context catalogs."
+  @spec reserved() :: [map()]
   def reserved, do: @reserved
+
+  @doc "Returns the context-owned catalogs registered with the global ErrorCat system."
+  @spec catalogs() :: [module()]
   def catalogs, do: @catalogs
 
+  @doc "Validates all registered catalog entries and their namespace/code ranges."
+  @spec validate!() :: {:ok, :pass}
   def validate!, do: Validator.validate!(@ranges, @reserved, @catalogs)
 
+  @doc "Returns the registered definition for one structured error or raises if absent."
+  @spec definition(Error.t()) :: map()
   def definition(%Error{namespace: namespace, reason: reason}) do
     definition(namespace, reason)
   end
 
+  @doc "Returns the registered definition for a namespace/reason pair or raises if absent."
+  @spec definition(tuple(), atom()) :: map()
   def definition(namespace, reason) when is_tuple(namespace) and is_atom(reason) do
     case Registry.find(@catalogs, namespace, reason) do
       nil ->
@@ -113,6 +134,8 @@ defmodule GroupherServer.ErrorCat.Workflow do
           "invalid ErrorCat definition lookup: #{inspect(namespace)}.#{inspect(reason)}"
   end
 
+  @doc "Checks whether a namespace/reason pair is declared without raising on invalid input."
+  @spec declared?(term(), term()) :: boolean()
   def declared?(namespace, reason) when is_tuple(namespace) and is_atom(reason) do
     match?(%{}, Registry.find(@catalogs, namespace, reason)) or
       Enum.any?(@reserved, &(&1.namespace == namespace and &1.reason == reason))
@@ -120,6 +143,8 @@ defmodule GroupherServer.ErrorCat.Workflow do
 
   def declared?(_, _), do: false
 
+  @doc "Checks that an ErrorCat struct exactly matches its registered definition."
+  @spec valid?(term()) :: boolean()
   def valid?(%Error{} = error) do
     definition = definition(error.namespace, error.reason)
 
@@ -132,11 +157,17 @@ defmodule GroupherServer.ErrorCat.Workflow do
 
   def valid?(_), do: false
 
+  @doc "Returns the protocol code carried by a structured ErrorCat error."
+  @spec code(Error.t()) :: pos_integer()
   def code(%Error{code: code}), do: code
 
-  @doc "Formats a declared ErrorCat error for the GraphQL error boundary."
-  @spec gq_format(Error.t() | {:error, Error.t()} | {:error, keyword()}) :: {:error, keyword()}
-  def gq_format({:error, [message: _message, code: _code]} = error), do: error
+  @doc """
+  Validates an ErrorCat error and converts it to the GraphQL boundary's message/code tuple.
+
+  The Web `ErrorResponse` adapter owns the public GraphQL payload; this helper
+  does not serialize Decision metadata or expose arbitrary error details.
+  """
+  @spec gq_format(Error.t() | {:error, Error.t()}) :: {:error, keyword()}
   def gq_format({:error, error}), do: gq_format(error)
 
   def gq_format(%Error{} = error) do
@@ -162,9 +193,16 @@ defmodule GroupherServer.ErrorCat.Workflow do
           "ErrorCat.Error is required at the GraphQL boundary, got: #{inspect(value)}"
   end
 
+  @doc "Builds the reserved generic custom error with optional diagnostic details."
+  @spec custom(term()) :: Error.t()
   def custom(details \\ nil), do: reserved_error({:web}, :custom, details)
+
+  @doc "Builds the reserved generic default error with optional diagnostic details."
+  @spec default(term()) :: Error.t()
   def default(details \\ nil), do: reserved_error({:web}, :default, details)
 
+  @doc "Builds the reserved unknown-Gate error with optional diagnostic details."
+  @spec gate_unknown(term()) :: Error.t()
   def gate_unknown(details \\ nil) do
     reserved_error({:cms, :gate}, :gate_unknown, details)
   end

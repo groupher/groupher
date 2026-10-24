@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.{Artiment.Matcher, FrontDesk, EmotionFormatter, Model.Interaction.RoaringBitmap}
+  alias CMS.{Artiment.Matcher, EmotionFormatter, Model.Interaction.RoaringBitmap}
   alias CMS.Interactions.{Config, DefaultViewerState, ErrorCat, Reactions, Projection}
 
   @article_threads Config.article_threads()
@@ -84,7 +84,7 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
   @spec article_states_for_paths([map()], User.t(), keyword()) ::
           {:ok, [map()]} | {:error, term()}
   def article_states_for_paths(paths, %User{} = viewer, opts \\ []) when is_list(paths) do
-    with {:ok, resolved} <- FrontDesk.articles(paths),
+    with {:ok, resolved} <- CMS.Articles.locators(paths),
          states when is_map(states) <-
            viewer_states(Enum.map(resolved, & &1.article), viewer, opts) do
       {:ok,
@@ -153,11 +153,11 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
     end
   end
 
-  defp viewer_rows(info, thread, target_ids, viewer, opts)
+  defp viewer_rows(info, thread, target_ids, viewer, _opts)
        when thread in @supported_threads and is_list(target_ids) do
     target_ids = Enum.uniq(target_ids)
     projection_type = if thread == :comment, do: :comment, else: :article
-    fixed_by_target = fixed_stats_by_target(info, target_ids, viewer, opts)
+    fixed_by_target = fixed_stats_by_target(info, target_ids, viewer)
     emotions_by_target = emotion_stats_by_target(info, target_ids, viewer, projection_type)
 
     Map.new(target_ids, fn target_id ->
@@ -184,20 +184,18 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
     end
   end
 
-  defp build(state, :comment, opts) do
+  defp build(state, :comment, _opts) do
     DefaultViewerState.comment()
     |> Map.merge(%{
       upvotes_count: value(state, :upvotes_count, 0),
       interaction_revision: value(state, :interaction_revision, 0),
       latest_upvoted_users: value(state, :latest_upvoted_users, []),
       emotions: emotions(state, :comment),
-      viewer_has_upvoted: value(state, :viewer_has_upvoted, false),
-      viewer_has_reported: value(state, :viewer_has_reported, false)
+      viewer_has_upvoted: value(state, :viewer_has_upvoted, false)
     })
-    |> maybe_add_report(state, opts)
   end
 
-  defp build(state, type, opts) when type in @article_threads do
+  defp build(state, type, _opts) when type in @article_threads do
     DefaultViewerState.article()
     |> Map.merge(%{
       upvotes_count: value(state, :upvotes_count, 0),
@@ -208,10 +206,8 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
       emotions: emotions(state, :article),
       viewer_has_upvoted: value(state, :viewer_has_upvoted, false),
       viewer_has_collected: value(state, :viewer_has_collected, false),
-      viewer_emotion: viewer_emotion(state, :article),
-      viewer_has_reported: value(state, :viewer_has_reported, false)
+      viewer_emotion: viewer_emotion(state, :article)
     })
-    |> maybe_add_report(state, opts)
   end
 
   defp viewer_emotion(state, projection_type) do
@@ -220,18 +216,6 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
     |> Enum.find_value(fn emotion ->
       if emotion.viewer_has_reacted, do: emotion.emotion
     end)
-  end
-
-  defp maybe_add_report(result, state, opts) do
-    if Keyword.get(opts, :surface) == :report do
-      report =
-        DefaultViewerState.report()
-        |> Map.put(:reported_count, reported_count(state))
-
-      Map.merge(result, report)
-    else
-      result
-    end
   end
 
   defp emotions(state, projection_type) do
@@ -248,10 +232,6 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
         viewer_has_reacted: value(values, :"viewer_has_#{emotion}ed", false)
       })
     end)
-  end
-
-  defp reported_count(state) do
-    value(state, :reported_count, value(value(state, :meta, %{}), :reported_count, 0))
   end
 
   defp fixed_counts_for(info, target_ids) do
@@ -283,7 +263,7 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
     end
   end
 
-  defp fixed_stats_by_target(info, target_ids, user, opts) do
+  defp fixed_stats_by_target(info, target_ids, user) do
     target_id_field = info.foreign_key
     user_id = if match?(%User{}, user), do: user.id
 
@@ -297,15 +277,6 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
           interaction_revision: info_row.interaction_revision
         }
       )
-
-    query =
-      if Keyword.get(opts, :surface) == :report do
-        select_merge(query, [info_row], %{
-          reported_count: RoaringBitmap.cardinality(info_row.reported_user_ids)
-        })
-      else
-        query
-      end
 
     query
     |> select_fixed_viewer_state(user_id)
@@ -371,14 +342,12 @@ defmodule GroupherServer.CMS.Interactions.Projection.Query do
 
   defp select_fixed_viewer_state(query, nil) do
     select_merge(query, %{
-      viewer_has_reported: false,
       viewer_has_upvoted: false
     })
   end
 
   defp select_fixed_viewer_state(query, user_id) do
     select_merge(query, [info], %{
-      viewer_has_reported: RoaringBitmap.contains(info.reported_user_ids, ^user_id),
       viewer_has_upvoted: RoaringBitmap.contains(info.upvoted_user_ids, ^user_id)
     })
   end

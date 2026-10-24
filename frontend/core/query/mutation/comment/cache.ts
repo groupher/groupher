@@ -304,7 +304,7 @@ export const patchCommentChanges = (
 export const patchCommentViewerChanges = (
   queryClient: QueryClient,
   target: TCommentTarget,
-  field: 'viewerHasUpvoted' | 'viewerHasReported' | 'emotionFlags',
+  field: 'viewerHasUpvoted' | 'emotionFlags',
   value: boolean | { name: TEmotionType; enabled: boolean },
   context: TOperationContext,
 ): TOptimisticChange[] => {
@@ -318,23 +318,19 @@ export const patchCommentViewerChanges = (
     const before =
       field === 'viewerHasUpvoted'
         ? current?.viewerHasUpvoted
-        : field === 'viewerHasReported'
-          ? current?.viewerHasReported
-          : current?.emotionFlags[emotionName as keyof typeof current.emotionFlags]
+        : current?.emotionFlags[emotionName as keyof typeof current.emotionFlags]
     if (!previous || !current || typeof before !== 'boolean') continue
     const enabled = typeof value === 'object' ? value.enabled : value
     const nextState =
       field === 'viewerHasUpvoted'
         ? { ...current, viewerHasUpvoted: enabled }
-        : field === 'viewerHasReported'
-          ? { ...current, viewerHasReported: enabled }
-          : {
-              ...current,
-              emotionFlags: {
-                ...current.emotionFlags,
-                [emotionName]: enabled,
-              },
-            }
+        : {
+            ...current,
+            emotionFlags: {
+              ...current.emotionFlags,
+              [emotionName]: enabled,
+            },
+          }
     queryClient.setQueryData<TCommentViewerStates>(queryKey, {
       ...previous,
       [target.commentInnerId]: nextState,
@@ -357,9 +353,7 @@ export const patchCommentViewerChanges = (
             [target.commentInnerId]:
               field === 'viewerHasUpvoted'
                 ? { ...state, viewerHasUpvoted: before }
-                : field === 'viewerHasReported'
-                  ? { ...state, viewerHasReported: before }
-                  : { ...state, emotionFlags: { ...state.emotionFlags, [emotionName]: before } },
+                : { ...state, emotionFlags: { ...state.emotionFlags, [emotionName]: before } },
           }
         })
       },

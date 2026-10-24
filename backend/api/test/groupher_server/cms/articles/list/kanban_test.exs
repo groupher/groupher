@@ -60,6 +60,7 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
          ~m(user community post_attrs)a do
       {:ok, kanban} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, mirror_community} = mock_community(user)
+      user = grant_binding_actions(user, [community, mirror_community])
 
       assert {:ok, _binding} =
                CMS.Articles.mirror(
@@ -380,5 +381,15 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
 
       assert grouped_kanban_posts.todo.page_info.total_count == 1
     end
+  end
+
+  defp grant_binding_actions(user, communities) do
+    grants =
+      Enum.into(communities, %{}, fn community ->
+        {community.slug, %{"cms" => %{"post.pin" => true}}}
+      end)
+
+    global = %{"post.community.mirror" => true}
+    Map.put(user, :cur_passport, Map.merge(%{"global" => global}, grants))
   end
 end
