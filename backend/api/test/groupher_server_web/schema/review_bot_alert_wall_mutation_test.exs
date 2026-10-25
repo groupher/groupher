@@ -1,8 +1,9 @@
 defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
   use GroupherServer.TestMate, async: false
 
+  alias GroupherServer
   alias GroupherServer.{AlertWall, Repo}
-  alias GroupherServer.AlertWall.Model.Item
+  alias AlertWall.Model.Item
   alias GroupherServerWeb.Schema
 
   test "recheck mutations are named for supported CMS targets" do
