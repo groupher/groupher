@@ -1,8 +1,11 @@
 defmodule GroupherServer.Test.AlertWall.PersistTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.{AlertWall, Repo}
-  alias AlertWall.Model.UserReport
+  import Ecto.Query
+
+  alias GroupherServer.{AlertWall, CMS, Repo}
+  alias CMS.Model.ArtimentReview
+  alias AlertWall.Model.{Item, UserReport}
 
   test "add is idempotent and a fresh AI source replaces the opinion as one unit" do
     first_ref = Ecto.UUID.generate()
@@ -193,6 +196,57 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     assert is_nil(resolved.outdated_at)
   end
 
+  test "AI Wall transitions stay inside the review request community scope" do
+    {community_a, article, _attrs, _author} = mock_article(:post)
+    {:ok, community_b} = db_insert(:community)
+
+    current_requests =
+      Repo.all(
+        from(request in ArtimentReview,
+          where: request.article_id == ^article.id and is_nil(request.outdated_at)
+        )
+      )
+
+    system_request = Enum.find(current_requests, &is_nil(&1.community_id))
+    community_a_request = Enum.find(current_requests, &(&1.community_id == community_a.id))
+    assert %ArtimentReview{} = system_request
+    assert %ArtimentReview{} = community_a_request
+    subject_ref = system_request.subject_ref
+    community_b_request = review_request(article.id, community_b.id, subject_ref)
+
+    system_item = review_item(article.id, nil, subject_ref, system_request.id)
+
+    community_a_item =
+      review_item(article.id, community_a.id, subject_ref, community_a_request.id)
+
+    community_b_item =
+      review_item(article.id, community_b.id, subject_ref, community_b_request.id)
+
+    assert {:ok, {:ok, :pass}} =
+             Repo.transaction(fn ->
+               AlertWall.supersede_ai_source_in_transaction(
+                 system_request.id,
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert Repo.get!(Item, system_item.id).status == :superseded
+    assert Repo.get!(Item, community_a_item.id).status == :open
+    assert Repo.get!(Item, community_b_item.id).status == :open
+
+    assert {:ok, {:ok, :pass}} =
+             Repo.transaction(fn ->
+               AlertWall.resolve_ai_source_in_transaction(
+                 community_a_request.id,
+                 "human_cleared",
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert Repo.get!(Item, community_a_item.id).status == :resolved
+    assert Repo.get!(Item, community_b_item.id).status == :open
+  end
+
   defp item_attrs(ai_source_ref, sus_notes, summary) do
     %{
       owner: :cms,
@@ -217,5 +271,46 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
       report_type: "SPAM",
       details: "Please review"
     }
+  end
+
+  defp review_request(article_id, community_id, subject_ref) do
+    now = DateTime.utc_now(:second)
+
+    {:ok, request} =
+      %ArtimentReview{}
+      |> ArtimentReview.changeset(%{
+        target_type: :article,
+        article_id: article_id,
+        community_id: community_id,
+        subject_ref: subject_ref,
+        policy_snapshot: %{"scope" => if(community_id, do: "community", else: "system")},
+        payload: %{"text" => %{"title" => "example", "body" => "example"}},
+        state: :completed,
+        payload_expires_at: DateTime.add(now, 3_600, :second),
+        applied_at: now
+      })
+      |> Repo.insert()
+
+    request
+  end
+
+  defp review_item(article_id, community_id, subject_ref, request_id) do
+    attrs = %{
+      owner: :cms,
+      target_type: :article,
+      target_id: article_id,
+      community_id: community_id,
+      subject_ref: subject_ref,
+      ai_source_ref: request_id,
+      sus_notes: [],
+      summary: "review"
+    }
+
+    assert {:ok, {:ok, item}} =
+             Repo.transaction(fn ->
+               AlertWall.add_in_transaction(attrs, Ecto.UUID.generate())
+             end)
+
+    item
   end
 end

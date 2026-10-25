@@ -109,9 +109,16 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     with {:ok, context} <- Target.load_for_update(target_key, scope_key),
          {:ok, content} <- current_content(context),
          {:ok, configs} <- current_configs(context, scope_key),
+         {:ok, requested_scope} <- request_scope(scope_key),
          target <- request_target(context),
          {:ok, requests} <-
-           RequestSubmission.register_in_transaction(target, content, configs, :recheck) do
+           RequestSubmission.register_in_transaction(
+             target,
+             content,
+             configs,
+             :recheck,
+             requested_scope
+           ) do
       {:ok,
        %Confirmation{
          data: %{
@@ -203,6 +210,17 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   end
 
   defp current_configs(%{kind: :doc}, _scope_key), do: ReviewBot.configs(nil, :doc)
+
+  defp request_scope("platform"), do: {:ok, :system}
+
+  defp request_scope("community:" <> id) do
+    case Integer.parse(id) do
+      {community_id, ""} when community_id > 0 -> {:ok, {:community, community_id}}
+      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+    end
+  end
+
+  defp request_scope(_scope_key), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
   defp request_target(%{
          kind: :article,

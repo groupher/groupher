@@ -400,7 +400,7 @@ defmodule GroupherServer.AlertWall.Persist do
       %ArtimentReview{} = request ->
         target_id = review_target_id(request)
 
-        Repo.all(
+        query =
           from(item in Item,
             where:
               item.owner == :cms and item.target_type == ^request.target_type and
@@ -409,7 +409,15 @@ defmodule GroupherServer.AlertWall.Persist do
             order_by: [asc: item.id],
             lock: "FOR UPDATE"
           )
-        )
+
+        query =
+          if is_nil(request.community_id) do
+            where(query, [item], is_nil(item.community_id))
+          else
+            where(query, [item], item.community_id == ^request.community_id)
+          end
+
+        Repo.all(query)
 
       nil ->
         []

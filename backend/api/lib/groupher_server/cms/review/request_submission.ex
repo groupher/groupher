@@ -21,8 +21,31 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
   def register_in_transaction(target, content, configs, trigger)
       when is_map(target) and is_map(content) and is_map(configs) and
              trigger in [:publish, :edit, :recheck, :binding] do
+    register_in_transaction(target, content, configs, trigger, :all)
+  end
+
+  def register_in_transaction(_target, _content, _configs, _trigger) do
+    {:error, CMS.ErrorCat.invalid_review_block()}
+  end
+
+  @doc "Creates one request for a specific policy scope inside the caller transaction."
+  @spec register_in_transaction(
+          map(),
+          map(),
+          map(),
+          :publish | :edit | :recheck | :binding,
+          :all | :system | {:community, pos_integer()}
+        ) ::
+          {:ok, [ArtimentReview.t()]} | {:error, term()}
+  def register_in_transaction(target, content, configs, trigger, requested_scope)
+      when is_map(target) and is_map(content) and is_map(configs) and
+             trigger in [:publish, :edit, :recheck, :binding] and
+             (requested_scope == :all or requested_scope == :system or
+                (trigger == :recheck and is_tuple(requested_scope) and
+                   tuple_size(requested_scope) == 2 and elem(requested_scope, 0) == :community and
+                   is_integer(elem(requested_scope, 1)))) do
     with true <- Repo.in_transaction?(),
-         {:ok, scopes} <- policy_scopes(configs),
+         {:ok, scopes} <- policy_scopes(configs, requested_scope),
          {:ok, attrs} <- target_attrs(target, content, trigger, scopes),
          {:ok, requests} <- insert_scoped_requests(attrs, target) do
       {:ok, requests}
@@ -33,15 +56,26 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
     end
   end
 
-  def register_in_transaction(_target, _content, _configs, _trigger) do
+  def register_in_transaction(_target, _content, _configs, _trigger, _scope) do
     {:error, CMS.ErrorCat.invalid_review_block()}
   end
 
-  defp policy_scopes(%{system: %ReviewBotConfig{} = system, community: nil}) do
+  defp policy_scopes(configs, :all), do: all_policy_scopes(configs)
+
+  defp policy_scopes(configs, requested_scope) do
+    with {:ok, scopes} <- all_policy_scopes(configs) do
+      case Enum.find(scopes, &(&1.scope == requested_scope)) do
+        nil -> {:error, CMS.ErrorCat.invalid_review_block()}
+        scope -> {:ok, [scope]}
+      end
+    end
+  end
+
+  defp all_policy_scopes(%{system: %ReviewBotConfig{} = system, community: nil}) do
     {:ok, [%{scope: :system, config: system, system_config: system}]}
   end
 
-  defp policy_scopes(%{
+  defp all_policy_scopes(%{
          system: %ReviewBotConfig{} = system,
          community: %ReviewBotConfig{} = community
        }) do
@@ -52,7 +86,7 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
      ]}
   end
 
-  defp policy_scopes(%{system: %ReviewBotConfig{} = system, communities: communities})
+  defp all_policy_scopes(%{system: %ReviewBotConfig{} = system, communities: communities})
        when is_map(communities) do
     scope_policies =
       communities
@@ -64,7 +98,9 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
     {:ok, [%{scope: :system, config: system, system_config: system} | scope_policies]}
   end
 
-  defp policy_scopes(_configs), do: {:error, CMS.ErrorCat.invalid_review_block()}
+  defp all_policy_scopes(_configs) do
+    {:error, CMS.ErrorCat.invalid_review_block()}
+  end
 
   defp target_attrs(target, content, trigger, scopes) do
     with {:ok, payload} <- normalize_content(content),

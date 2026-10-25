@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
          {:ok, :pass} <- reject_author_review(context, actor),
          attrs <- request_scope(context),
          {:ok, requests} <- CMS.Review.Requests.current_for_scope_in_transaction(attrs),
-         {:ok, :pass} <- ensure_ai_finished(requests),
+         {:ok, :pass} <- ensure_ai_finished(requests, action),
          {:ok, :pass} <- update_restrictions(context, action, requests, actor, operation_ref),
          {:ok, :pass} <- update_wall(requests, action, operation_ref),
          {:ok, :pass} <- CMS.Review.Requests.supersede_scope_in_transaction(attrs, operation_ref) do
@@ -59,8 +59,10 @@ defmodule GroupherServer.CMS.Review.Decisions do
 
   defp reject_author_review(_context, _actor), do: {:ok, :pass}
 
-  defp ensure_ai_finished(requests) do
-    if Enum.any?(requests, &(&1.state in [:queued, :running])) do
+  defp ensure_ai_finished(_requests, action) when action in [:deny, :release], do: {:ok, :pass}
+
+  defp ensure_ai_finished(requests, :approve) do
+    if Enum.any?(requests, &(&1.state in [:queued, :running, :failed])) do
       {:error, CMS.ErrorCat.invalid_review_block()}
     else
       {:ok, :pass}

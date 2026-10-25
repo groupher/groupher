@@ -30,17 +30,31 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                Ecto.UUID.generate()
              )
 
-    now = DateTime.utc_now(:second)
+    Repo.update_all(
+      from(request in ArtimentReview,
+        where:
+          request.article_id == ^article.id and request.community_id == ^community.id and
+            is_nil(request.outdated_at)
+      ),
+      set: [state: :failed]
+    )
+
+    assert {:error, _reason} =
+             CMS.decide_review_target(
+               target_key,
+               scope_key,
+               :approve,
+               reviewer,
+               Ecto.UUID.generate()
+             )
 
     Repo.update_all(
       from(request in ArtimentReview,
-        where: request.article_id == ^article.id and is_nil(request.outdated_at)
+        where:
+          request.article_id == ^article.id and request.community_id == ^community.id and
+            is_nil(request.outdated_at)
       ),
-      set: [
-        state: :completed,
-        result: %{"status" => "clear", "sus_notes" => [], "summary" => ""},
-        applied_at: now
-      ]
+      set: [state: :queued]
     )
 
     assert {:ok, _result} =
@@ -94,6 +108,14 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
         }
     }
 
+    before_ids =
+      Repo.all(
+        from(request in ArtimentReview,
+          where: request.article_id == ^article.id,
+          select: request.id
+        )
+      )
+
     assert {:ok, result} =
              CMS.recheck_review_target(
                "article:#{article.id}",
@@ -105,6 +127,60 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     assert result.action == "recheck"
     assert result.target_type == :article
     assert result.target_id == article.id
-    assert result.request_count >= 1
+    assert result.request_count == 1
+
+    requests =
+      Repo.all(
+        from(request in ArtimentReview,
+          where: request.article_id == ^article.id and request.id not in ^before_ids
+        )
+      )
+
+    assert [%ArtimentReview{community_id: community_id}] = requests
+    assert community_id == community.id
+  end
+
+  test "platform Comment recheck registers only the platform policy request" do
+    {community, article, _attrs, author} = mock_article(:post)
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(article, community),
+        mock_comment("public comment"),
+        author,
+        Ecto.UUID.generate()
+      )
+
+    {:ok, reviewer} = db_insert(:user)
+    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+
+    before_ids =
+      Repo.all(
+        from(request in ArtimentReview,
+          where: request.comment_id == ^comment.id,
+          select: request.id
+        )
+      )
+
+    assert {:ok, result} =
+             CMS.recheck_review_target(
+               "comment:#{comment.id}",
+               "platform",
+               reviewer,
+               Ecto.UUID.generate()
+             )
+
+    assert result.request_count == 1
+
+    requests =
+      Repo.all(
+        from(request in ArtimentReview,
+          where: request.comment_id == ^comment.id and request.id not in ^before_ids
+        )
+      )
+
+    assert [%ArtimentReview{community_id: nil}] = requests
   end
 end
