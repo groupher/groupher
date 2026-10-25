@@ -966,7 +966,9 @@ type RootMutationType {
   "cancel an unfinished import Job and discard its staged BodyBags"
   cancelDocContentImport(community: String!, jobRef: ID!): ContentImportJob!
 
-  recheckReviewTarget(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): CmsReviewCommandResult!
+  recheckArticle(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): CmsReviewCommandResult!
+
+  recheckComment(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): CmsReviewCommandResult!
 
   approveArticle(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
 
@@ -1264,7 +1266,9 @@ type AlertItem {
   owner: AlertItemOwner!
   targetType: AlertTargetType!
   targetId: String!
+  subjectRef: String!
   communityId: ID
+  aiSourceRef: String
   status: AlertItemStatus!
   susNotes: [SusNote!]!
   summary: String!
@@ -1281,6 +1285,7 @@ type AlertReport {
   targetId: String!
   communityId: ID
   itemId: ID!
+  subjectRef: String!
   reportType: String!
   details: String
   withdrawnAt: DateTime

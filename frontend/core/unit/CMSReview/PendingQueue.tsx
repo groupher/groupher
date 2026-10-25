@@ -12,6 +12,8 @@ import {
   denyArticleReview,
   denyCommentReview,
   pendingContentReviews,
+  recheckArticleReview,
+  recheckCommentReview,
   releaseArticleReview,
   releaseCommentReview,
 } from './schema'
@@ -70,6 +72,26 @@ export default function PendingQueue({ community }: { community?: string }) {
       )
       await invalidatePrefix(client, queryKey)
     },
+  })
+  const recheck = useMutation({
+    mutationFn: async (target: CmsReviewTargetInput) => {
+      if (target.type === 'ARTICLE') {
+        return browserGraphQLRequest(recheckArticleReview, {
+          target,
+          scope,
+          commandId: crypto.randomUUID(),
+        })
+      }
+      if (target.type === 'COMMENT') {
+        return browserGraphQLRequest(recheckCommentReview, {
+          target,
+          scope,
+          commandId: crypto.randomUUID(),
+        })
+      }
+      throw new Error('Unsupported review target.')
+    },
+    onSuccess: async () => invalidatePrefix(client, queryKey),
   })
 
   return (
@@ -130,9 +152,22 @@ export default function PendingQueue({ community }: { community?: string }) {
                         {t(`cms_review.action.${action}`)}
                       </button>
                     ))}
+                    <button
+                      type='button'
+                      className='border-divider rounded-md border px-3 py-2 text-sm disabled:opacity-50'
+                      disabled={recheck.isPending}
+                      onClick={() => recheck.mutate(target)}
+                    >
+                      {t('cms_review.action.recheck')}
+                    </button>
                   </div>
                 )}
                 {decide.isError && (
+                  <p role='alert' className='text-sm text-red-600'>
+                    {t('cms_review.action_error')}
+                  </p>
+                )}
+                {recheck.isError && (
                   <p role='alert' className='text-sm text-red-600'>
                     {t('cms_review.action_error')}
                   </p>

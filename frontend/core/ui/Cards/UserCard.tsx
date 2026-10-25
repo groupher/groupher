@@ -10,6 +10,7 @@ import Img from '~/Img'
 import { Link } from '~/platform'
 import type { TAccount, TUser } from '~/spec'
 import ImgFallback from '~/ui/ImgFallback'
+import ReportAction from '~/unit/AlertWall/ReportAction'
 
 import useSalon from './salon/user_card'
 
@@ -40,6 +41,7 @@ const UserCard: FC<TProps> = ({ user }) => {
         </div>
       </div>
       <div className={s.desc}>{cutRest(bio ?? '', 50)}</div>
+      {user.id && <ReportAction target={{ type: 'USER', userId: user.id }} />}
     </div>
   )
 }

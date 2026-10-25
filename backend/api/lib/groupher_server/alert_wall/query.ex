@@ -138,7 +138,8 @@ defmodule GroupherServer.AlertWall.Query do
               from(report in UserReport,
                 where:
                   report.item_id == parent_as(:alert_item).id and
-                    is_nil(report.withdrawn_at) and is_nil(report.outdated_at)
+                    is_nil(report.withdrawn_at) and is_nil(report.outdated_at) and
+                    is_nil(report.resolved_at)
               )
             )
         )
@@ -151,7 +152,8 @@ defmodule GroupherServer.AlertWall.Query do
               from(report in UserReport,
                 where:
                   report.item_id == parent_as(:alert_item).id and
-                    is_nil(report.withdrawn_at) and is_nil(report.outdated_at)
+                    is_nil(report.withdrawn_at) and is_nil(report.outdated_at) and
+                    is_nil(report.resolved_at)
               )
             )
         )

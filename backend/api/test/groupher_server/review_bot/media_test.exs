@@ -60,6 +60,27 @@ defmodule GroupherServer.Test.CMS.Review.MediaTest do
     assert payload["text"]["body"] == "safe"
   end
 
+  test "signed image URLs use the shape consumed by AI adapters" do
+    {:ok, owner} = db_insert(:user)
+    {:ok, community} = mock_community(owner)
+
+    {:ok, asset} =
+      insert_image_asset(
+        community.id,
+        "asset_signed_review_image",
+        "communities/#{community.id}/asset/original"
+      )
+
+    payload = %{
+      "images" => [%{"asset_id" => asset.id, "immutable_version" => "sha256:comment-version"}],
+      "text" => %{"body" => "review this image"}
+    }
+
+    assert {:ok, %{"images" => [image]}} = CMS.Review.Media.attach_signed_urls(payload)
+    assert is_binary(image.signed_read_url)
+    assert image.asset_id == asset.id
+  end
+
   defp insert_image_asset(community_id, public_ref, storage_key) do
     %CommunityAsset{}
     |> CommunityAsset.changeset(%{

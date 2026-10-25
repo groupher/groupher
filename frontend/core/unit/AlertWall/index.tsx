@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
@@ -15,15 +15,20 @@ export default function AlertWall({ community }: { community?: string }) {
   const { accountRef } = useAccount()
   const client = useQueryClient()
   const commandId = useRef<string | null>(null)
+  const [page, setPage] = useState(1)
   const scope = community
     ? { type: 'COMMUNITY' as const, community }
     : { type: 'PLATFORM' as const }
-  const queryKey = ['alert-wall', accountRef || 'anonymous', community || 'platform']
+  const queryKey = ['alert-wall', accountRef || 'anonymous', community || 'platform', page]
   const items = useQuery({
     queryKey,
-    queryFn: async () =>
-      (await browserGraphQLRequest(alertItems, { scope, pagi: { offset: { page: 1, size: 50 } } }))
-        .alertItems.entries,
+    queryFn: async () => {
+      const response = await browserGraphQLRequest(alertItems, {
+        scope,
+        pagi: { offset: { page, size: 50 } },
+      })
+      return response.alertItems
+    },
   })
   const resolve = useMutation({
     mutationFn: ({ id, version }: { id: string; version: number }) =>
@@ -70,13 +75,13 @@ export default function AlertWall({ community }: { community?: string }) {
         <p role='alert' className='text-sm text-red-600'>
           {t('alert_wall.load_error')}
         </p>
-      ) : items.data.length === 0 ? (
+      ) : items.data.entries.length === 0 ? (
         <p className='border-divider text-digest rounded-lg border p-5 text-sm'>
           {t('alert_wall.empty')}
         </p>
       ) : (
         <ul className='divide-divider border-divider divide-y rounded-lg border'>
-          {items.data.map((item) => (
+          {items.data.entries.map((item) => (
             <li key={item.id} className='grid gap-3 p-4'>
               <div className='flex items-start justify-between gap-4'>
                 <div>
@@ -106,6 +111,34 @@ export default function AlertWall({ community }: { community?: string }) {
           ))}
         </ul>
       )}
+      {items.data?.pageInfo &&
+        'totalPages' in items.data.pageInfo &&
+        items.data.pageInfo.totalPages > 1 && (
+          <nav
+            aria-label={t('alert_wall.queue_pagination')}
+            className='mt-4 flex items-center justify-end gap-3'
+          >
+            <button
+              type='button'
+              className='border-divider rounded-md border px-3 py-2 text-sm disabled:opacity-50'
+              disabled={!items.data.pageInfo.hasPreviousPage || items.isFetching}
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+            >
+              {t('alert_wall.previous_page')}
+            </button>
+            <span className='text-digest text-sm'>
+              {page} / {items.data.pageInfo.totalPages}
+            </span>
+            <button
+              type='button'
+              className='border-divider rounded-md border px-3 py-2 text-sm disabled:opacity-50'
+              disabled={!items.data.pageInfo.hasNextPage || items.isFetching}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              {t('alert_wall.next_page')}
+            </button>
+          </nav>
+        )}
     </section>
   )
 }

@@ -61,3 +61,44 @@ it('withdraws a report from the account list without loading its target', async 
   expect(state.request.mock.calls.some((call) => 'reportId' in call[1])).toBe(true)
   expect(state.request.mock.calls.some((call) => 'pagi' in call[1])).toBe(true)
 })
+
+it('loads the next report page from the server', async () => {
+  state.request.mockImplementation(
+    async (_document: unknown, variables: { pagi: { offset: { page: number } } }) => ({
+      myReports: {
+        entries: [
+          {
+            id: `report-${variables.pagi.offset.page}`,
+            targetType: 'COMMENT',
+            targetId: String(variables.pagi.offset.page),
+            communityId: '7',
+            itemId: '1',
+            reportType: 'SPAM',
+            details: `Report page ${variables.pagi.offset.page}`,
+            withdrawnAt: null,
+            insertedAt: '2026-10-22T00:00:00Z',
+          },
+        ],
+        pageInfo: {
+          totalPages: 2,
+          totalCount: 2,
+          hasPreviousPage: variables.pagi.offset.page > 1,
+          hasNextPage: variables.pagi.offset.page < 2,
+        },
+      },
+    }),
+  )
+
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <MyReports show onClose={() => {}} />
+    </QueryClientProvider>,
+  )
+
+  expect(await screen.findByText('comment · 1')).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: 'alert_wall.next_page' }))
+  expect(await screen.findByText('comment · 2')).toBeInTheDocument()
+  expect(state.request.mock.calls.some((call) => call[1].pagi?.offset?.page === 2)).toBe(true)
+})

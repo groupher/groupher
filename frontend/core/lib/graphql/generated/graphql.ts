@@ -4337,7 +4337,9 @@ export type AlertItemsQuery = {
       owner: AlertItemOwner
       targetType: AlertTargetType
       targetId: string
+      subjectRef: string
       communityId: string | null
+      aiSourceRef: string | null
       status: AlertItemStatus
       summary: string
       reportCount: number
@@ -4372,6 +4374,7 @@ export type MyReportsQuery = {
       targetId: string
       communityId: string | null
       itemId: string
+      subjectRef: string
       reportType: string
       details: string | null
       withdrawnAt: string | null
@@ -4789,6 +4792,36 @@ export type PendingContentReviewsQuery = {
       susNotes: Array<{ type: string; evidence: string; explanation: string }>
     } | null
   }>
+}
+
+export type RecheckArticleMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  scope: ReviewBotScopeInput
+  commandId: string | number
+}>
+
+export type RecheckArticleMutation = {
+  recheckArticle: {
+    commandId: string
+    targetType: ReviewBotSubjectType
+    targetId: string
+    action: string
+  }
+}
+
+export type RecheckCommentMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  scope: ReviewBotScopeInput
+  commandId: string | number
+}>
+
+export type RecheckCommentMutation = {
+  recheckComment: {
+    commandId: string
+    targetType: ReviewBotSubjectType
+    targetId: string
+    action: string
+  }
 }
 
 export type ApproveArticleReviewMutationVariables = Exact<{
@@ -21596,7 +21629,9 @@ export const AlertItemsDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'subjectRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'aiSourceRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'status' } },
                       {
                         kind: 'Field',
@@ -21787,6 +21822,7 @@ export const MyReportsDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'itemId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'subjectRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'reportType' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'details' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
@@ -23597,6 +23633,148 @@ export const PendingContentReviewsDocument = {
     },
   ],
 } as unknown as DocumentNode<PendingContentReviewsQuery, PendingContentReviewsQueryVariables>
+export const RecheckArticleDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RecheckArticle' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReviewBotScopeInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'recheckArticle' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'scope' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RecheckArticleMutation, RecheckArticleMutationVariables>
+export const RecheckCommentDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RecheckComment' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReviewBotScopeInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'recheckComment' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'scope' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<RecheckCommentMutation, RecheckCommentMutationVariables>
 export const ApproveArticleReviewDocument = {
   kind: 'Document',
   definitions: [

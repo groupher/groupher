@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
@@ -15,13 +15,14 @@ export default function MyReportsDialog({ accountRef, onClose }: TProps) {
   const { t } = useTrans()
   const client = useQueryClient()
   const commandIds = useRef(new Map<string, string>())
+  const [page, setPage] = useState(1)
   const reports = useQuery({
-    queryKey: viewerQueryKeys.myReports(accountRef || 'anonymous', 1),
+    queryKey: viewerQueryKeys.myReports(accountRef || 'anonymous', page),
     queryFn: async () => {
       const response = await browserGraphQLRequest(myReports, {
-        pagi: { offset: { page: 1, size: 50 } },
+        pagi: { offset: { page, size: 50 } },
       })
-      return response.myReports.entries
+      return response.myReports
     },
     enabled: Boolean(accountRef),
   })
@@ -68,11 +69,11 @@ export default function MyReportsDialog({ accountRef, onClose }: TProps) {
           <p role='alert' className='py-6 text-sm text-red-600'>
             {t('alert_wall.my_reports_error')}
           </p>
-        ) : reports.data.length === 0 ? (
+        ) : reports.data.entries.length === 0 ? (
           <p className='text-digest py-6 text-sm'>{t('alert_wall.my_reports_empty')}</p>
         ) : (
           <ul className='divide-divider mt-4 divide-y'>
-            {reports.data.map((report) => (
+            {reports.data.entries.map((report) => (
               <li key={report.id} className='py-4'>
                 <div className='flex flex-wrap items-start justify-between gap-3'>
                   <div className='min-w-0'>
@@ -105,6 +106,34 @@ export default function MyReportsDialog({ accountRef, onClose }: TProps) {
             ))}
           </ul>
         )}
+        {reports.data?.pageInfo &&
+          'totalPages' in reports.data.pageInfo &&
+          reports.data.pageInfo.totalPages > 1 && (
+            <nav
+              aria-label={t('alert_wall.my_reports_pagination')}
+              className='mt-4 flex items-center justify-end gap-3'
+            >
+              <button
+                type='button'
+                className='border-divider rounded-md border px-3 py-2 text-sm disabled:opacity-50'
+                disabled={!reports.data.pageInfo.hasPreviousPage || reports.isFetching}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+              >
+                {t('alert_wall.previous_page')}
+              </button>
+              <span className='text-digest text-sm'>
+                {page} / {reports.data.pageInfo.totalPages}
+              </span>
+              <button
+                type='button'
+                className='border-divider rounded-md border px-3 py-2 text-sm disabled:opacity-50'
+                disabled={!reports.data.pageInfo.hasNextPage || reports.isFetching}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                {t('alert_wall.next_page')}
+              </button>
+            </nav>
+          )}
 
         {withdraw.isError && (
           <p role='alert' className='mt-3 text-sm text-red-600'>

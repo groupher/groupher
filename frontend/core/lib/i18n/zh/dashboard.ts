@@ -1464,6 +1464,7 @@ export default {
   'cms_review.action.approve': '批准',
   'cms_review.action.deny': '禁止',
   'cms_review.action.release': '恢复',
+  'cms_review.action.recheck': '重新检查',
   'cms_review.action_error': '审核决定未能保存。',
   'alert_wall.scope': '审核范围',
   'alert_wall.community_scope': '当前社区',

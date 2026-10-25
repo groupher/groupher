@@ -60,12 +60,20 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
-  def recheck_content(
-        _parent,
-        %{target: target, scope: scope, command_id: command_id},
-        %{context: %{cur_user: actor}}
-      ) do
+  def recheck_article(parent, args, resolution),
+    do: recheck_target(parent, args, resolution, :article)
+
+  def recheck_comment(parent, args, resolution),
+    do: recheck_target(parent, args, resolution, :comment)
+
+  defp recheck_target(
+         _parent,
+         %{target: target, scope: scope, command_id: command_id},
+         %{context: %{cur_user: actor}},
+         expected_type
+       ) do
     with {:ok, attrs} <- resolve_target(target, actor),
+         true <- attrs.type == expected_type || {:error, CMS.invalid_review_block_error()},
          {:ok, target_key, target_type, target_id} <- recheck_target(attrs),
          {:ok, scope_key} <- recheck_scope(scope, attrs),
          {:ok, _result} <- CMS.recheck_review_target(target_key, scope_key, actor, command_id) do
@@ -79,7 +87,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     end
   end
 
-  def recheck_content(_parent, _args, _resolution) do
+  defp recheck_target(_parent, _args, _resolution, _expected_type) do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 

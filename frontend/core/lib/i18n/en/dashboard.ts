@@ -1516,6 +1516,7 @@ export default {
   'cms_review.action.approve': 'Approve',
   'cms_review.action.deny': 'Deny',
   'cms_review.action.release': 'Release',
+  'cms_review.action.recheck': 'Recheck',
   'cms_review.action_error': 'The content decision could not be saved.',
   'alert_wall.scope': 'Review scope',
   'alert_wall.community_scope': 'This community',

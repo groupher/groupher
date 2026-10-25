@@ -9,7 +9,9 @@ export const alertItems = graphql(`
         owner
         targetType
         targetId
+        subjectRef
         communityId
+        aiSourceRef
         status
         susNotes {
           type
@@ -65,6 +67,7 @@ export const myReports = graphql(`
         targetId
         communityId
         itemId
+        subjectRef
         reportType
         details
         withdrawnAt

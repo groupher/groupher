@@ -19,12 +19,20 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
   end
 
   object :cms_review_mutations do
-    field :recheck_review_target, non_null(:cms_review_command_result) do
+    field :recheck_article, non_null(:cms_review_command_result) do
       arg(:target, non_null(:cms_review_target_input))
       arg(:scope, non_null(:review_bot_scope_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.Review.recheck_content/3)
+      resolve(&R.CMS.Review.recheck_article/3)
+    end
+
+    field :recheck_comment, non_null(:cms_review_command_result) do
+      arg(:target, non_null(:cms_review_target_input))
+      arg(:scope, non_null(:review_bot_scope_input))
+      arg(:command_id, non_null(:id))
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.Review.recheck_comment/3)
     end
 
     field :approve_article, non_null(:cms_review_command_result) do

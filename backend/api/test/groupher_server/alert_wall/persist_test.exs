@@ -196,6 +196,57 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     assert is_nil(resolved.outdated_at)
   end
 
+  test "hasReports follows active report status and excludes resolved reports" do
+    {:ok, reporter} = db_insert(:user)
+    reviewer = %{reporter | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+    attrs = item_attrs(nil, [], "resolved report only")
+
+    assert {:ok, {:ok, item}} =
+             Repo.transaction(fn -> AlertWall.add_in_transaction(attrs, Ecto.UUID.generate()) end)
+
+    assert {:ok, {:ok, report}} =
+             Repo.transaction(fn ->
+               AlertWall.submit_report_in_transaction(
+                 Map.put(report_attrs(reporter.id), :item_id, item.id),
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    report
+    |> UserReport.changeset(%{resolved_at: DateTime.utc_now(:second), resolution: "reviewed"})
+    |> Repo.update!()
+
+    assert {:ok, %{entries: []}} =
+             AlertWall.list_items(%{type: :platform}, %{has_reports: true}, reviewer)
+  end
+
+  test "account target deletion supersedes open account-owned items" do
+    attrs = %{
+      owner: :accounts,
+      target_type: :user,
+      target_id: "108965",
+      community_id: nil,
+      subject_ref: "user:108965:profile-version-1",
+      ai_source_ref: nil,
+      sus_notes: [],
+      summary: "impersonation"
+    }
+
+    assert {:ok, {:ok, item}} =
+             Repo.transaction(fn -> AlertWall.add_in_transaction(attrs, Ecto.UUID.generate()) end)
+
+    assert {:ok, {:ok, :pass}} =
+             Repo.transaction(fn ->
+               AlertWall.mark_account_target_deleted_in_transaction(
+                 :user,
+                 "108965",
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert Repo.get!(Item, item.id).status == :superseded
+  end
+
   test "AI Wall transitions stay inside the review request community scope" do
     {community_a, article, _attrs, _author} = mock_article(:post)
     {:ok, community_b} = db_insert(:community)

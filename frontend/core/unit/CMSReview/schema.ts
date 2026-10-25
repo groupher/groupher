@@ -1,4 +1,5 @@
 import { graphql } from '~/graphql/authoring'
+import type { RecheckArticleDocument, RecheckCommentDocument } from '~/graphql/generated/graphql'
 
 export const contentReview = graphql(`
   query ContentReview($target: CmsReviewTargetInput!) {
@@ -65,6 +66,36 @@ export const pendingContentReviews = graphql(`
     }
   }
 `)
+
+export const recheckArticleReview = graphql(`
+  mutation RecheckArticle(
+    $target: CmsReviewTargetInput!
+    $scope: ReviewBotScopeInput!
+    $commandId: ID!
+  ) {
+    recheckArticle(target: $target, scope: $scope, commandId: $commandId) {
+      commandId
+      targetType
+      targetId
+      action
+    }
+  }
+`) as typeof RecheckArticleDocument
+
+export const recheckCommentReview = graphql(`
+  mutation RecheckComment(
+    $target: CmsReviewTargetInput!
+    $scope: ReviewBotScopeInput!
+    $commandId: ID!
+  ) {
+    recheckComment(target: $target, scope: $scope, commandId: $commandId) {
+      commandId
+      targetType
+      targetId
+      action
+    }
+  }
+`) as typeof RecheckCommentDocument
 
 export const approveArticleReview = graphql(`
   mutation ApproveArticleReview($target: CmsReviewTargetInput!, $commandId: ID!) {
