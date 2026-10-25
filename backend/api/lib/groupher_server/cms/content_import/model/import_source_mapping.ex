@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.ContentImport.Model.ImportSourceMapping do
   @moduledoc """
   Last successful source and Groupher synchronization baseline.
 
-  See `docs/content-import/content-import-architecture.md` for mapping ownership and identity.
+  See `docs/import/content-import-architecture.md` for mapping ownership and identity.
 
   Business position:
 

@@ -28,6 +28,7 @@ import { serialize } from 'hono/utils/cookie'
 import './env'
 import { buildHostOnlyAuthCookies } from '../cookie-config'
 import { resolveAuthRedirect } from '../redirect-url'
+import { issueServiceToken } from './service-auth'
 
 const AUTH_BASE_PATH = '/api/auth'
 export const ACCESS_TOKEN_MAX_AGE = 60 * 30
@@ -38,8 +39,15 @@ const PHOENIX_GRAPHQL_ENDPOINT =
 const PHOENIX_AUTH_RESOURCE = 'https://api.groupher.com/auth'
 let serviceTokenProvider: TServiceAuthClient | undefined
 
+// Auth owns the issuer. Calling its public hostname from this Worker bypasses
+// the route and can reach an unavailable origin; keep the credential checks local.
+const issueLocalServiceToken: typeof fetch = async (input, init) => {
+  const result = await issueServiceToken(new Request(input, init), process.env)
+  return Response.json(result, { status: 'error' in result ? result.status : 200 })
+}
+
 const authServiceToken = (scope: string) => {
-  serviceTokenProvider ??= createServiceAuthClientFromEnv()
+  serviceTokenProvider ??= createServiceAuthClientFromEnv(process.env, issueLocalServiceToken)
   return serviceTokenProvider.getToken({ resource: PHOENIX_AUTH_RESOURCE, scopes: [scope] })
 }
 

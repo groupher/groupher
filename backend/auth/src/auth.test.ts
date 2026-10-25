@@ -1,4 +1,7 @@
+import { createHash } from 'node:crypto'
+
 import { AUTH_ERROR } from '@groupher/contracts/auth'
+import { exportJWK, generateKeyPair } from 'jose'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
@@ -29,36 +32,51 @@ describe('Auth core integration', () => {
   })
 
   it('preserves Phoenix browser-session machine error codes', async () => {
+    const clientSecret = 'auth-test-secret'
+    const { privateKey } = await generateKeyPair('RS256', { extractable: true })
+    const signingJwk = { ...(await exportJWK(privateKey)), alg: 'RS256', kid: 'auth-test-key' }
     vi.stubEnv('SERVICE_AUTH_CLIENT_ID', 'auth-test')
-    vi.stubEnv('SERVICE_AUTH_CLIENT_SECRET', 'auth-secret')
+    vi.stubEnv('SERVICE_AUTH_CLIENT_SECRET', clientSecret)
     vi.stubEnv('SERVICE_AUTH_TOKEN_ENDPOINT', 'https://auth.test/oauth2/token')
+    vi.stubEnv('SERVICE_AUTH_ISSUER', 'https://auth.test')
+    vi.stubEnv(
+      'SERVICE_AUTH_RESOURCES_JSON',
+      JSON.stringify({ 'https://api.groupher.com/auth': 'phoenix:auth-api' }),
+    )
+    vi.stubEnv(
+      'SERVICE_AUTH_CLIENTS_JSON',
+      JSON.stringify([
+        {
+          allowedAudiences: ['phoenix:auth-api'],
+          allowedScopes: ['auth:session:refresh'],
+          clientId: 'auth-test',
+          clientRef: 'auth-test-client',
+          credentialHashes: [`sha256:${createHash('sha256').update(clientSecret).digest('hex')}`],
+          serviceName: 'auth',
+          status: 'active',
+        },
+      ]),
+    )
+    vi.stubEnv('SERVICE_AUTH_SIGNING_JWK', JSON.stringify(signingJwk))
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (input) => {
-        if (String(input) === 'https://auth.test/oauth2/token') {
-          return Response.json({
-            access_token: 'service-token',
-            expires_in: 600,
-            scope: 'auth:session:refresh',
-            token_type: 'Bearer',
-          })
-        }
-
-        return Response.json({
+      vi.fn(async () =>
+        Response.json({
           errors: [
             {
               extensions: { code: AUTH_ERROR.SESSION_REVOKED },
               message: 'Browser Session revoked.',
             },
           ],
-        })
-      }),
+        }),
+      ),
     )
 
     await expect(refreshBrowserSession('bs_revoked')).rejects.toMatchObject({
       code: AUTH_ERROR.SESSION_REVOKED,
       name: 'PhoenixBrowserSessionError',
     } satisfies Partial<PhoenixBrowserSessionError>)
+    expect(fetch).toHaveBeenCalledTimes(1)
   })
 
   it.each([

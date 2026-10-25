@@ -57,7 +57,10 @@ defmodule GroupherServer.CMS.Docs.Editor do
 
   @spec put_doc_digest(map()) :: map()
   def put_doc_digest(%{subtitle: subtitle} = attrs) when is_binary(subtitle) do
-    Map.put_new(attrs, :digest, subtitle)
+    case String.trim(subtitle) do
+      "" -> attrs
+      _ -> Map.put_new(attrs, :digest, subtitle)
+    end
   end
 
   def put_doc_digest(attrs), do: attrs

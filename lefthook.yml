@@ -48,9 +48,9 @@ pre-commit:
       files: node scripts/lefthook-files.mjs infra/dev-gateway ts tsx --absolute
       run: cd infra/dev-gateway && pnpm exec tsc-files --noEmit --project tsconfig.json {files}
 
-    - name: type-check content-import
-      files: node scripts/lefthook-files.mjs backend/content-import ts tsx --absolute
-      run: cd backend/content-import && pnpm exec tsc-files --noEmit --project tsconfig.json {files}
+    - name: type-check import
+      files: node scripts/lefthook-files.mjs backend/import ts tsx --absolute
+      run: cd backend/import && pnpm exec tsc-files --noEmit --project tsconfig.json {files}
 
 commit-msg:
   jobs:

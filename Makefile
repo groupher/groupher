@@ -73,14 +73,14 @@ be.auth.test:
 	pnpm --filter @groupher/backend-auth run test
 
 # content import
-be.content-import.start:
-	pnpm run dev:content-import
+be.import.start:
+	pnpm run dev:import
 
-be.content-import.build:
-	pnpm run build:prod:content-import
+be.import.build:
+	pnpm --filter @groupher/import run deploy:dry-run
 
-be.content-import.test:
-	pnpm --filter @groupher/backend-content-import run test
+be.import.test:
+	pnpm --filter @groupher/import run test
 
 be.press.start:
 	pnpm --filter @groupher/press run db:migrate && pnpm run dev:press
@@ -96,14 +96,11 @@ fe.assets-hub.deploy:
 	pnpm --filter @groupher/assets-hub run deploy:worker
 
 # document converter
-be.document-converter.install:
-	pnpm run document-converter:install
+be.converter.start:
+	pnpm run dev:converter
 
-be.document-converter.start:
-	pnpm run dev:document-converter
-
-be.document-converter.test:
-	pnpm run test:document-converter
+be.converter.test:
+	pnpm run test:converter
 
 # backend
 # mix ecto.setup

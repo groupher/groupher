@@ -116,7 +116,8 @@ const executeMutation = async ({
     resource: CONTENT_PUBLISH_RESOURCE,
     scopes: [CONTENT_SCOPE_BY_ACTION[action]],
   })
-  const response = await options.fetcher(phoenixEndpoint(options.environment), {
+  const fetcher = options.fetcher
+  const response = await fetcher(phoenixEndpoint(options.environment), {
     body: JSON.stringify({ query: print(document), variables }),
     cache: 'no-store',
     headers: {
@@ -380,6 +381,11 @@ export const handleContentPublishRequest = async (
   } catch (error) {
     if (error instanceof ArtimentPublisherError)
       return failure(error.status, error.code, error.message, error.diagnostics)
+    console.error('content_publish_failed', {
+      action: parsed.value.action,
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+      message: error instanceof Error ? error.message : 'Unexpected publisher failure.',
+    })
     return failure(502, 'publisher_unavailable', 'Content Publisher is temporarily unavailable.')
   }
 }

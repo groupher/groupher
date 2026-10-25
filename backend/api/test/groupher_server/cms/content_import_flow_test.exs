@@ -728,6 +728,46 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert Repo.get_by!(Job, hash_id: job.job_ref).status == :failed
   end
 
+  test "reads persisted import heading TOC through the editor GraphQL contract" do
+    %{actor: actor, community: community, job: job} =
+      create_job([document("docs/headings.md", "/headings")])
+
+    toc = [%{id: "import-heading", level: 2, title: "Import heading"}]
+    bag = Map.put(body_bag("Import heading body", "a"), :toc, toc)
+
+    assert {:ok, %{status: :ready}} =
+             Staging.stage(community, job.job_ref, [
+               %{external_ref: "docs/headings.md", body_bag: bag}
+             ])
+
+    assert {:ok, completed} = ContentImport.apply(community, job.job_ref)
+
+    query = """
+    query ImportedDraftReadback($community: String!, $id: ID!) {
+      docDraft(community: $community, id: $id) {
+        branchId
+        version
+        body { json markdown toc { id level title } }
+      }
+    }
+    """
+
+    assert {:ok, %{data: %{"docDraft" => draft}} = response} =
+             Absinthe.run(query, GroupherServerWeb.Schema,
+               variables: %{
+                 "community" => community.slug,
+                 "id" => completed.first_imported_doc_id
+               },
+               context: %{cur_user: actor}
+             )
+
+    refute Map.has_key?(response, :errors)
+
+    assert draft["body"]["toc"] == [
+             %{"id" => "import-heading", "level" => 2, "title" => "Import heading"}
+           ]
+  end
+
   defp create_job(documents) do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = db_insert(:community)

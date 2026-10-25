@@ -65,7 +65,7 @@ export default {
   'dsb.doc.import.source_desc':
     'Import external content, review it, then choose where to insert it.',
   'dsb.doc.import.source.local': 'Local file',
-  'dsb.doc.import.source.local_desc': 'PDF, DOCX, PPTX, XLSX, HTML, and HTM.',
+  'dsb.doc.import.source.local_desc': 'DOCX, PPTX, and XLSX.',
   'dsb.doc.import.source.platform': 'Documentation platform',
   'dsb.doc.import.source.platform_desc': 'Public Markdown-ready documentation.',
   'dsb.doc.import.platform.label': 'Documentation page URL',
@@ -100,7 +100,7 @@ export default {
   'dsb.doc.import.desc':
     'Convert one external document to editable content, then review the result in the same editor used by Groupher Docs.',
   'dsb.doc.import.upload': 'Drop a document here or choose a file',
-  'dsb.doc.import.formats': 'PDF, DOCX, PPTX, XLSX, HTML, or HTM · up to 25 MiB',
+  'dsb.doc.import.formats': 'DOCX, PPTX, or XLSX · up to 25 MiB',
   'dsb.doc.import.converting': 'Converting document…',
   'dsb.doc.import.preview': 'Editable preview',
   'dsb.doc.import.preview_desc':

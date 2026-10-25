@@ -37,8 +37,8 @@
         "phoenix",
         "press",
         "assets-hub",
-        "content-import",
-        "document-converter"
+        "import",
+        "converter"
       ]
     },
     "version": {

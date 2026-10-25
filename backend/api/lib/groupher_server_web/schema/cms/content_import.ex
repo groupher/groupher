@@ -14,7 +14,7 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
            v
       ContentImport resolver
 
-  See `docs/content-import/content-import-architecture.md` for trust and ownership boundaries.
+  See `docs/import/content-import-architecture.md` for trust and ownership boundaries.
   """
 
   use Helper.GqlSchemaSuite

@@ -188,20 +188,20 @@ export const SERVICE_DEPLOYMENT_TARGETS: Partial<Record<string, TServiceDeployme
   ),
   phoenix: deploymentTarget('phoenix', 'fly', 'https://fly.io/apps/groupher-api'),
   press: deploymentTarget('press', 'fly', 'https://fly.io/apps/groupher-press'),
-  'content-import': deploymentTarget(
-    'content-import',
-    'vercel',
-    'https://vercel.com/groupher/content-import',
+  import: deploymentTarget(
+    'import',
+    'cloudflare',
+    'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers/services/view/import/production',
   ),
   'assets-hub': deploymentTarget(
     'assets-hub',
     'cloudflare',
     'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers-and-pages',
   ),
-  'document-converter': deploymentTarget(
-    'document-converter',
-    'vercel',
-    'https://vercel.com/groupher/document-converter',
+  converter: deploymentTarget(
+    'converter',
+    'cloudflare',
+    'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers/services/view/converter/production',
   ),
   gatus: deploymentTarget('gatus', 'fly', 'https://fly.io/apps/groupher-status'),
 }

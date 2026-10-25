@@ -79,7 +79,7 @@ const productionSourceSkip = (file) =>
   /(^|\/)salon(\/|\.[cm]?[jt]sx?$)/.test(file) ||
   /\.d\.[cm]?ts$/.test(file)
 
-const backendApps = ['assets-hub', 'auth', 'content-import', 'press']
+const backendApps = ['assets-hub', 'auth', 'import', 'converter', 'press']
 const infraApps = ['dev-gateway']
 
 const frontendFlowModules = [
@@ -131,20 +131,6 @@ const checkBackendScriptModules = () => {
       else if (!hasAsciiFlow(header))
         fail(file, 'module JSDoc is missing an ASCII business-position flow')
     }
-  }
-
-  const pythonDirectory = path.join(root, 'backend/document-converter')
-  const pythonFiles = walk(
-    pythonDirectory,
-    (file) => file.endsWith('.py'),
-    (file) => /(^|\/)(tests|\.venv)(\/|$)/.test(file),
-  )
-  for (const file of pythonFiles) {
-    const source = fs.readFileSync(file, 'utf8')
-    const header = source.match(/^\s*"""([\s\S]*?)"""/)?.[1]
-    if (!header) fail(file, 'is missing a module docstring')
-    else if (!hasAsciiFlow(header))
-      fail(file, 'module docstring is missing an ASCII business-position flow')
   }
 }
 
@@ -535,7 +521,7 @@ const checkWorkspaceReadmes = () => {
       if (fs.existsSync(path.join(directory, 'package.json'))) directories.push(directory)
     }
   }
-  directories.push(path.join(root, 'backend/api'), path.join(root, 'backend/document-converter'))
+  directories.push(path.join(root, 'backend/api'))
 
   for (const directory of directories) {
     if (!fs.existsSync(path.join(directory, 'README.md'))) fail(directory, 'is missing README.md')
@@ -669,9 +655,9 @@ const documentationAppDirectories = [
   'assets-hub',
   'auth',
   'community',
-  'content-import',
+  'import',
   'dash',
-  'document-converter',
+  'converter',
   'gateway',
   'posthouse',
   'press',

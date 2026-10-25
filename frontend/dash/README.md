@@ -21,7 +21,7 @@ GraphQL contracts remain in Core when they are genuinely framework-neutral.
 
 Docs bulk import remains same-origin in the browser. TanStack server routes under
 `/api/docs/import/*` validate the Phoenix browser token, acquire the scoped Dash
-service identity, and proxy to `backend/content-import`. Production must provide
+service identity, and proxy to `backend/import`. Production must provide
 `PHX_JWT_SECRET` for browser-token verification plus `SERVICE_AUTH_CLIENT_ID` and
 `SERVICE_AUTH_CLIENT_SECRET` for a registered `service:dash` client with
 `content-import:internal-api` access.

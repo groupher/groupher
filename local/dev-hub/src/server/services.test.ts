@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
+import { SERVICE_DEPLOYMENT_TARGETS } from '../client/lib/infra-links.ts'
 import {
   LOCAL_SERVICE_AUTH_ISSUER,
   LOCAL_SERVICE_ENDPOINTS,
@@ -64,15 +65,7 @@ test('backend services keep the intended list order', () => {
     SERVICE_DEFINITIONS.filter((definition) => definition.group === 'backend').map(
       (definition) => definition.id,
     ),
-    [
-      'dev-gateway',
-      'auth',
-      'phoenix',
-      'content-import',
-      'press',
-      'assets-hub',
-      'document-converter',
-    ],
+    ['dev-gateway', 'auth', 'phoenix', 'import', 'press', 'assets-hub', 'converter'],
   )
 })
 
@@ -114,17 +107,12 @@ test('the request flow documents gateway routing and GraphQL dependencies', () =
       { source: 'dash', target: 'phoenix', label: 'GraphQL' },
       { source: 'apply', target: 'phoenix', label: 'CommunityApplications GraphQL' },
       { source: 'apply', target: 'assets-hub', label: 'Application Logo upload' },
-      { source: 'dash', target: 'content-import', label: '/api/docs/import/*' },
+      { source: 'dash', target: 'import', label: '/api/docs/import/*, /api/artiment/import' },
       { source: 'dash', target: 'assets-hub', label: 'asset upload flow' },
       { source: 'assets-hub', target: 'phoenix', label: 'trusted GraphQL' },
       { source: 'phoenix', target: 'assets-hub', label: 'asset callbacks' },
-      { source: 'content-import', target: 'phoenix', label: 'trusted GraphQL' },
-      { source: 'content-import', target: 'document-converter', label: 'file conversion' },
-      {
-        source: 'dash',
-        target: 'document-converter',
-        label: '/api/artiment/import -> /convert',
-      },
+      { source: 'import', target: 'phoenix', label: 'trusted GraphQL' },
+      { source: 'import', target: 'converter', label: 'file conversion' },
     ],
   )
 })
@@ -137,7 +125,7 @@ test('frontend app start chains match their local routing boundaries', () => {
   assert.deepEqual(startPolicies.dash, {
     defaultMode: 'chain',
     requiredDependencies: ['dev-gateway', 'auth', 'phoenix', 'assets-hub'],
-    optionalDependencies: ['content-import', 'document-converter'],
+    optionalDependencies: ['import', 'converter'],
   })
   assert.deepEqual(startPolicies.landing, {
     defaultMode: 'chain',
@@ -150,14 +138,7 @@ test('frontend app start chains match their local routing boundaries', () => {
     optionalDependencies: [],
   })
 
-  for (const id of [
-    'dev-gateway',
-    'auth',
-    'inspire-me',
-    'phoenix',
-    'content-import',
-    'document-converter',
-  ]) {
+  for (const id of ['dev-gateway', 'auth', 'inspire-me', 'phoenix', 'import', 'converter']) {
     assert.equal(startPolicies[id], undefined, id)
   }
 })
@@ -197,10 +178,10 @@ test('service configuration roots stay scoped to each runtime', () => {
   assert.match(configByService['dev-gateway']?.root || '', /infra\/dev-gateway$/)
   assert.match(configByService.auth?.root || '', /backend\/auth$/)
   assert.match(configByService['inspire-me']?.root || '', /frontend\/inspire-me$/)
-  assert.match(configByService['content-import']?.root || '', /backend\/content-import$/)
+  assert.match(configByService['import']?.root || '', /backend\/import$/)
   assert.equal(configByService.phoenix?.kind, 'elixir-config')
   assert.match(configByService.phoenix?.root || '', /backend\/api\/config$/)
-  assert.match(configByService['document-converter']?.root || '', /backend\/document-converter$/)
+  assert.equal(configByService.converter, null)
 })
 
 test('gateway and auth start through backend Makefile entrypoints', () => {
@@ -278,36 +259,76 @@ test('Auth-backed app chains enforce the live Service Identity startup contract'
 })
 
 test('document converter starts through the repository Makefile entrypoint', () => {
-  const converter = SERVICE_DEFINITIONS.find((definition) => definition.id === 'document-converter')
+  const converter = SERVICE_DEFINITIONS.find((definition) => definition.id === 'converter')
 
-  assert.equal(converter?.name, 'Document-converter')
+  assert.equal(converter?.name, 'Converter')
   assert.equal(converter?.cwd, REPO_ROOT)
-  assert.deepEqual(converter?.args, ['be.document-converter.start'])
+  assert.deepEqual(converter?.args, ['be.converter.start'])
 })
 
-test('content import runs as a standalone Node service', () => {
-  const contentImport = SERVICE_DEFINITIONS.find((definition) => definition.id === 'content-import')
+test('import runs in the Cloudflare local runtime', () => {
+  const contentImport = SERVICE_DEFINITIONS.find((definition) => definition.id === 'import')
 
   assert.equal(contentImport?.cwd, REPO_ROOT)
   assert.equal(contentImport?.port, 8001)
-  assert.deepEqual(contentImport?.technologies, ['hono', 'nodejs', 'typescript', 'graphql'])
-  assert.deepEqual(contentImport?.args, ['be.content-import.start'])
+  assert.deepEqual(contentImport?.technologies, ['hono', 'cloudflare', 'typescript', 'graphql'])
+  assert.deepEqual(contentImport?.args, ['be.import.start'])
+})
+
+test('converter and import use matching local and Cloudflare project identities', () => {
+  for (const [id, port] of [
+    ['converter', 8000],
+    ['import', 8001],
+  ] as const) {
+    const service = SERVICE_DEFINITIONS.find((definition) => definition.id === id)
+    assert.equal(service?.command, 'make')
+    assert.deepEqual(service?.args, [`be.${id}.start`])
+    assert.equal(service?.port, port)
+    assert.equal(service?.portlessName, id)
+    assert.equal(service?.unavailableReason, undefined)
+    assert.ok(service?.technologies?.includes('cloudflare'))
+    const deployment = SERVICE_DEPLOYMENT_TARGETS[id]
+    assert.equal(deployment?.serviceId, id)
+    assert.equal(deployment?.platformId, 'cloudflare')
+    assert.ok(deployment?.url.endsWith(`/view/${id}/production`))
+    const manifest = JSON.parse(readFileSync(`${REPO_ROOT}/backend/${id}/package.json`, 'utf8'))
+    assert.equal(manifest.name, `@groupher/${id}`)
+    assert.equal(
+      manifest.scripts.dev,
+      id === 'converter' ? 'cf dev --mode development' : `cf dev --mode development --port ${port}`,
+    )
+    assert.equal(manifest.scripts['dev:node'], undefined)
+  }
+  for (const id of ['content-import', 'document-converter']) {
+    assert.equal(
+      SERVICE_DEFINITIONS.find((definition) => definition.id === id),
+      undefined,
+    )
+    assert.equal(SERVICE_DEPLOYMENT_TARGETS[id], undefined)
+  }
+
+  const dashCloudflareConfig = readFileSync(
+    `${REPO_ROOT}/frontend/dash/cloudflare.config.ts`,
+    'utf8',
+  )
+  assert.doesNotMatch(dashCloudflareConfig, /dash-poc|import-poc|mode === 'poc'/)
+  assert.match(dashCloudflareConfig, /https:\/\/import\.groupher\.com/)
 })
 
 test('dash bulk import routes through the standalone content import service', () => {
   const dash = SERVICE_DEFINITIONS.find((definition) => definition.id === 'dash')
-  const contentImport = SERVICE_DEFINITIONS.find((definition) => definition.id === 'content-import')
+  const contentImport = SERVICE_DEFINITIONS.find((definition) => definition.id === 'import')
 
   assert.equal(dash?.env?.NEXT_PUBLIC_ASSETS_HUB_ENDPOINT, 'https://assets-hub.groupher.localhost')
   assert.equal(dash?.env?.NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT, 'https://assets.groupher.localhost')
-  assert.equal(dash?.env?.CONTENT_IMPORT_APP_ENDPOINT, LOCAL_SERVICE_ENDPOINTS.contentImport)
+  assert.equal(dash?.env?.CONTENT_IMPORT_APP_ENDPOINT, LOCAL_SERVICE_ENDPOINTS.import)
   assert.equal(
     contentImport?.env?.PHOENIX_GRAPHQL_ENDPOINT,
     LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
   )
   assert.equal(
     contentImport?.env?.DOCUMENT_CONVERTER_APP_ENDPOINT,
-    LOCAL_SERVICE_ENDPOINTS.documentConverter,
+    LOCAL_SERVICE_ENDPOINTS.converter,
   )
 })
 
@@ -340,14 +361,7 @@ test('managed services expose stable Portless names and keep the API under the c
     ],
   )
 
-  for (const id of [
-    'auth',
-    'landing',
-    'dash',
-    'inspire-me',
-    'content-import',
-    'document-converter',
-  ]) {
+  for (const id of ['auth', 'landing', 'dash', 'inspire-me', 'import', 'converter']) {
     const service = SERVICE_DEFINITIONS.find((definition) => definition.id === id)
     assert.equal(
       new URL(service?.portlessUrl || '').hostname.endsWith('.groupher.localhost'),

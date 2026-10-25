@@ -1,6 +1,8 @@
 import type { TTechnology, TTechnologyStack } from '@shared/contracts'
 import { Server } from 'lucide-react'
 import {
+  siCloudflare,
+  siWebassembly,
   siElixir,
   siFastapi,
   siGraphql,
@@ -71,6 +73,8 @@ const TECHNOLOGY_ICONS: Record<Exclude<TTechnology, 'authjs' | 'uvicorn'>, TIcon
     outlineColor: '#ffffff',
     outlineWidth: 2.4,
   },
+  cloudflare: fromSimpleIcon(siCloudflare),
+  wasm: fromSimpleIcon(siWebassembly),
   fastapi: fromSimpleIcon(siFastapi),
   graphql: {
     ...fromSimpleIcon(siGraphql),

@@ -16,8 +16,8 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
   Any failure rolls back Docs, tree, mappings, staged-body deletion, and Job
   completion together. Retrying a completed Job returns its persisted result.
 
-  See `docs/content-import/article-publish-import-refactor.md` and
-  `docs/content-import/content-import-architecture.md`.
+  See `docs/import/article-publish-import-refactor.md` and
+  `docs/import/content-import-architecture.md`.
   """
 
   import Ecto.Query, warn: false

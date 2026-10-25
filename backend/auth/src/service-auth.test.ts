@@ -71,6 +71,91 @@ describe('service identity issuer', () => {
     expect(verified.protectedHeader.kid).toBe('test-key')
   })
 
+  it('adds separately configured clients without replacing the base registry', async () => {
+    const addedClientSecret = 'content-import-secret'
+    const addedEnvironment = {
+      ...environment,
+      SERVICE_AUTH_CLIENTS_JSON_ADDITIONS: JSON.stringify([
+        {
+          allowedAudiences: ['phoenix:press-api'],
+          allowedScopes: ['press:article:read'],
+          clientId: 'content-import-test-addition',
+          clientRef: 'client_test_content_import',
+          credentialHashes: [
+            `sha256:${createHash('sha256').update(addedClientSecret).digest('hex')}`,
+          ],
+          serviceName: 'content-import',
+          status: 'active',
+        },
+      ]),
+    }
+    const request = tokenRequest()
+    request.headers.set(
+      'authorization',
+      `Basic ${Buffer.from(`content-import-test-addition:${addedClientSecret}`).toString('base64')}`,
+    )
+
+    await expect(issueServiceToken(request, addedEnvironment)).resolves.toMatchObject({
+      scope: 'press:article:read',
+      token_type: 'Bearer',
+    })
+    await expect(issueServiceToken(tokenRequest(), addedEnvironment)).resolves.toMatchObject({
+      scope: 'press:article:read',
+      token_type: 'Bearer',
+    })
+  })
+
+  it('merges the extra registry without replacing either existing registry', async () => {
+    const extraClientSecret = 'content-import-cloudflare-secret'
+    const extraEnvironment = {
+      ...environment,
+      SERVICE_AUTH_CLIENTS_JSON_ADDITIONS: JSON.stringify([
+        {
+          allowedAudiences: ['phoenix:press-api'],
+          allowedScopes: ['press:article:read'],
+          clientId: 'content-import-existing',
+          clientRef: 'client_test_existing',
+          credentialHashes: [
+            `sha256:${createHash('sha256').update('existing-secret').digest('hex')}`,
+          ],
+          serviceName: 'content-import',
+          status: 'active',
+        },
+      ]),
+      SERVICE_AUTH_CLIENTS_JSON_EXTRA: JSON.stringify([
+        {
+          allowedAudiences: ['phoenix:press-api'],
+          allowedScopes: ['press:article:read'],
+          clientId: 'content-import-cloudflare',
+          clientRef: 'client_test_cloudflare',
+          credentialHashes: [
+            `sha256:${createHash('sha256').update(extraClientSecret).digest('hex')}`,
+          ],
+          serviceName: 'content-import',
+          status: 'active',
+        },
+      ]),
+    }
+    const request = tokenRequest()
+    request.headers.set(
+      'authorization',
+      `Basic ${Buffer.from(`content-import-cloudflare:${extraClientSecret}`).toString('base64')}`,
+    )
+
+    await expect(issueServiceToken(request, extraEnvironment)).resolves.toMatchObject({
+      scope: 'press:article:read',
+      token_type: 'Bearer',
+    })
+    await expect(
+      issueServiceToken(
+        tokenRequest({
+          scope: 'press:article:read',
+        }),
+        extraEnvironment,
+      ),
+    ).resolves.toMatchObject({ scope: 'press:article:read', token_type: 'Bearer' })
+  })
+
   it('rejects a resource outside the client allowlist', async () => {
     await expect(
       issueServiceToken(

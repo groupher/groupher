@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.ContentImport.ImportSourceMapping do
 
       externalRef + source hash <-> Groupher Doc ref + rendered-content hash
 
-  See `docs/content-import/content-import-architecture.md`.
+  See `docs/import/content-import-architecture.md`.
   """
 
   alias GroupherServer.{CMS, Repo}

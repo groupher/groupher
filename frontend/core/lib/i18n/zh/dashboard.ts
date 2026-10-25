@@ -63,7 +63,7 @@ export default {
   'dsb.doc.import.source_title': '选择导入来源',
   'dsb.doc.import.source_desc': '导入外部内容、检查预览，然后选择插入位置。',
   'dsb.doc.import.source.local': '本地文件',
-  'dsb.doc.import.source.local_desc': '支持 PDF、DOCX、PPTX、XLSX、HTML 和 HTM。',
+  'dsb.doc.import.source.local_desc': '支持 DOCX、PPTX 和 XLSX。',
   'dsb.doc.import.source.platform': '文档平台',
   'dsb.doc.import.source.platform_desc': '支持公开获取 Markdown 的文档平台。',
   'dsb.doc.import.platform.label': '文档页面 URL',
@@ -98,7 +98,7 @@ export default {
   'dsb.doc.import.desc':
     '把一个外部文档转换成可编辑内容，并在 Groupher Docs 使用的同一编辑器中检查结果。',
   'dsb.doc.import.upload': '拖入文档，或点击选择文件',
-  'dsb.doc.import.formats': '支持 PDF、DOCX、PPTX、XLSX、HTML、HTM，最大 25 MiB',
+  'dsb.doc.import.formats': '支持 DOCX、PPTX、XLSX，最大 25 MiB',
   'dsb.doc.import.converting': '正在转换文档…',
   'dsb.doc.import.preview': '可编辑预览',
   'dsb.doc.import.preview_desc': '转换服务先生成 Markdown，再由 MarkdownKit 初始化下方编辑器。',

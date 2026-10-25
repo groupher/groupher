@@ -44,6 +44,47 @@ export type TServiceTokenResult =
   | TTokenFailure
   | { access_token: string; expires_in: number; scope: string; token_type: 'Bearer' }
 
+const signServiceToken = async (
+  config: TServiceAuthConfig,
+  client: TServiceClient,
+  audience: string,
+  requestedScopes: string[],
+): Promise<TServiceTokenResult> => {
+  const scopes = requestedScopes.filter((scope) => client.allowedScopes.includes(scope))
+  if (requestedScopes.length === 0 || scopes.length === 0) {
+    return {
+      error: 'invalid_scope',
+      error_description: 'No requested scope can be granted.',
+      status: 400,
+    }
+  }
+
+  const privateKey = await importJWK(config.signingJwk, 'RS256')
+  const now = Math.floor(Date.now() / 1_000)
+  const token = await new SignJWT({ scope: scopes.join(' ') })
+    .setProtectedHeader({ alg: 'RS256', kid: config.signingJwk.kid, typ: 'service_access+jwt' })
+    .setIssuer(config.issuer)
+    .setSubject(`service:${client.serviceName}`)
+    .setAudience(audience)
+    .setIssuedAt(now)
+    .setNotBefore(now)
+    .setExpirationTime(now + config.ttlSeconds)
+    .setJti(randomUUID())
+    .sign(privateKey)
+
+  console.info('[service-auth] token_issued', {
+    audience,
+    clientRef: client.clientRef,
+    scopes,
+  })
+  return {
+    access_token: token,
+    expires_in: config.ttlSeconds,
+    scope: scopes.join(' '),
+    token_type: 'Bearer',
+  }
+}
+
 const jsonEnv = <T>(environment: Record<string, string | undefined>, name: string): T => {
   const value = environment[name]?.trim()
   if (!value) throw new Error(`${name} is not configured.`)
@@ -65,7 +106,15 @@ export const readServiceAuthConfig = (
 ): TServiceAuthConfig => {
   const ttlSeconds = Number.parseInt(environment.SERVICE_AUTH_TOKEN_TTL_SECONDS || '', 10)
   return {
-    clients: jsonEnv<TServiceClient[]>(environment, 'SERVICE_AUTH_CLIENTS_JSON'),
+    clients: [
+      ...jsonEnv<TServiceClient[]>(environment, 'SERVICE_AUTH_CLIENTS_JSON'),
+      ...(environment.SERVICE_AUTH_CLIENTS_JSON_ADDITIONS?.trim()
+        ? (JSON.parse(environment.SERVICE_AUTH_CLIENTS_JSON_ADDITIONS) as TServiceClient[])
+        : []),
+      ...(environment.SERVICE_AUTH_CLIENTS_JSON_EXTRA?.trim()
+        ? (JSON.parse(environment.SERVICE_AUTH_CLIENTS_JSON_EXTRA) as TServiceClient[])
+        : []),
+    ],
     issuer: environment.SERVICE_AUTH_ISSUER?.trim() || environment.AUTH_URL?.trim() || '',
     resources: jsonEnv<Record<string, string>>(environment, 'SERVICE_AUTH_RESOURCES_JSON'),
     signingJwk: jsonEnv<JWK>(environment, 'SERVICE_AUTH_SIGNING_JWK'),
@@ -145,39 +194,7 @@ export const issueServiceToken = async (
     typeof form.get('scope') === 'string'
       ? String(form.get('scope')).split(/\s+/).filter(Boolean)
       : []
-  const scopes = requestedScopes.filter((scope) => client.allowedScopes.includes(scope))
-  if (requestedScopes.length === 0 || scopes.length === 0) {
-    return {
-      error: 'invalid_scope',
-      error_description: 'No requested scope can be granted.',
-      status: 400,
-    }
-  }
-
-  const privateKey = await importJWK(config.signingJwk, 'RS256')
-  const now = Math.floor(Date.now() / 1_000)
-  const token = await new SignJWT({ scope: scopes.join(' ') })
-    .setProtectedHeader({ alg: 'RS256', kid: config.signingJwk.kid, typ: 'service_access+jwt' })
-    .setIssuer(config.issuer)
-    .setSubject(`service:${client.serviceName}`)
-    .setAudience(audience)
-    .setIssuedAt(now)
-    .setNotBefore(now)
-    .setExpirationTime(now + config.ttlSeconds)
-    .setJti(randomUUID())
-    .sign(privateKey)
-
-  console.info('[service-auth] token_issued', {
-    audience,
-    clientRef: client.clientRef,
-    scopes,
-  })
-  return {
-    access_token: token,
-    expires_in: config.ttlSeconds,
-    scope: scopes.join(' '),
-    token_type: 'Bearer',
-  }
+  return signServiceToken(config, client, audience, requestedScopes)
 }
 
 /** Runs the service jwks operation at the auth boundary. */

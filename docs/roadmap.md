@@ -8,7 +8,7 @@
 ## In progress
 
 - [Assets Hub V3](./assets-hub/v3.md)：资源管理、stats/quota 与删除链路继续实施；后续目标见 V4/V5。
-- [Content Import](./content-import/README.md)：本地切换已完成，仍需生产验收。
+- [Import](./import/README.md)：Cloudflare 生产迁移与 `home` 小样本 Preview/Apply 已验收；生产规模容量验证另行安排。
 - [Web Analysis V2](./umami/web-analysis-v2.md)：本地能力已实现，等待部署与后续阶段。
 - [Interaction V5](./feature/interaction/v5.md)：ViewTracker 迁出与 Audit 退役已落地，ReportFact/Moderation
   继续按独立设计推进。

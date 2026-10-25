@@ -14,13 +14,13 @@
 
 ## 命名
 
-| 变量                                                                       | 含义                                         | 示例                                  |
-| -------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------- |
-| `CONTENT_IMPORT_APP_ENDPOINT`                                              | Dashboard 调用 content-import 的服务根地址   | `https://content-import.groupher.com` |
-| `NEXT_PUBLIC_ASSETS_HUB_ENDPOINT`                                          | Dashboard 浏览器调用 assets-hub 的服务根地址 | `https://assets-hub.groupher.com`     |
-| `DOCUMENT_CONVERTER_APP_ENDPOINT`                                          | 调用 document-converter 的服务根地址         | `https://converter.groupher.com`      |
-| `PHOENIX_GRAPHQL_ENDPOINT`                                                 | 子应用调用 Phoenix GraphQL 的内部地址        | `https://api.groupher.com/graphiql`   |
-| `LANDING_SITE` / `MAIN_SITE` / `DASHBOARD_SITE` / `AUTH_SITE` / `API_SITE` | Gateway 后端路由目标                         | 部署平台注入的服务 URL                |
+| 变量                                                                       | 含义                                         | 示例                                |
+| -------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------- |
+| `CONTENT_IMPORT_APP_ENDPOINT`                                              | Dashboard 调用 Import 的服务根地址           | `https://import.groupher.com`       |
+| `NEXT_PUBLIC_ASSETS_HUB_ENDPOINT`                                          | Dashboard 浏览器调用 assets-hub 的服务根地址 | `https://assets-hub.groupher.com`   |
+| `DOCUMENT_CONVERTER_APP_ENDPOINT`                                          | 调用 Converter 的服务根地址                  | `https://converter.groupher.com`    |
+| `PHOENIX_GRAPHQL_ENDPOINT`                                                 | 子应用调用 Phoenix GraphQL 的内部地址        | `https://api.groupher.com/graphiql` |
+| `LANDING_SITE` / `MAIN_SITE` / `DASHBOARD_SITE` / `AUTH_SITE` / `API_SITE` | Gateway 后端路由目标                         | 部署平台注入的服务 URL              |
 
 浏览器 GraphQL 地址固定为 `/api/graphql`，由 Next route handler 或 Gateway 转发到
 Phoenix；浏览器代码不读取 `NEXT_PUBLIC_GRAPHQL_ENDPOINT`。
@@ -34,7 +34,7 @@ Dev Hub 在 `local/dev-hub/src/server/service-endpoints.ts` 集中定义本地 l
 endpoint，并在启动各服务时注入对应 env。其他模块不能重新写一份端口表。
 
 Portless 仍然负责人类可见的本地域名，例如
-`https://content-import.groupher.localhost`。服务间调用首期可以继续使用 Dev Hub
+`https://import.groupher.localhost`。服务间调用首期可以继续使用 Dev Hub
 listener endpoint；是否改走 Portless 域名取决于各运行时是否统一信任本地 CA。
 
 ## 生产
@@ -42,10 +42,13 @@ listener endpoint；是否改走 Portless 域名取决于各运行时是否统�
 生产环境不使用 Dev Hub endpoint 表。每个服务由部署平台或 secret/config 管理系统
 注入相同变量名，但值指向生产域名或内部 service discovery 地址。
 
+截至 2026-10-26，`import.groupher.com` 和
+`converter.groupher.com` 已由 Cloudflare Workers 提供服务。当前部署与完整 Apply 验收记录见 [`Docs Import Cloudflare 迁移计划`](../import/cloudflare-workers-migration-plan.md)。
+
 例如：
 
 ```text
-CONTENT_IMPORT_APP_ENDPOINT=https://content-import.groupher.com
+CONTENT_IMPORT_APP_ENDPOINT=https://import.groupher.com
 NEXT_PUBLIC_ASSETS_HUB_ENDPOINT=https://assets-hub.groupher.com
 DOCUMENT_CONVERTER_APP_ENDPOINT=https://converter.groupher.com
 PHOENIX_GRAPHQL_ENDPOINT=https://api.groupher.com/graphiql

@@ -16,8 +16,8 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
   introduced only by target planning. Confirmed intent is revalidated, never
   silently replanned, before Job creation and again inside atomic apply.
 
-  See `docs/content-import/content-import-architecture.md` and
-  `docs/content-import/bulk-import.md`.
+  See `docs/import/content-import-architecture.md` and
+  `docs/import/bulk-import.md`.
   """
 
   require GroupherServer.CMS.DocTree.Const

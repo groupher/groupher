@@ -44,8 +44,11 @@ export const proxyContentImportRequest = async (
   let token: string
   try {
     token = await client.getToken({
-      resource: 'https://content-import.groupher.com/internal',
-      scopes: ['docs:import:proxy'],
+      resource:
+        process.env.CONTENT_IMPORT_SERVICE_AUTH_RESOURCE || 'https://import.groupher.com/internal',
+      scopes: (process.env.CONTENT_IMPORT_SERVICE_AUTH_SCOPES || 'docs:import:proxy')
+        .split(/\s+/u)
+        .filter(Boolean),
     })
   } catch {
     return serviceUnavailable('Dash service authentication is not configured.')

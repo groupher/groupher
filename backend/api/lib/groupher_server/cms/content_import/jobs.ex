@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   `preview_ref` is the preview resource identity: a retry may return the existing Job
   only when the complete confirmed intent still matches.
 
-  See `docs/content-import/content-import-architecture.md` and
-  `docs/content-import/article-publish-import-refactor.md`.
+  See `docs/import/content-import-architecture.md` and
+  `docs/import/article-publish-import-refactor.md`.
   """
 
   import Ecto.Query, warn: false

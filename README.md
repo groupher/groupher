@@ -29,23 +29,23 @@ Groupher 由公开 Community、内容管理 Dashboard、社区申请 Apply、统
 
 每个已落地子应用的运行边界、本地命令和相关文档入口如下：
 
-| 子应用             | 代码目录与 README                                          | 定位                               |
-| ------------------ | ---------------------------------------------------------- | ---------------------------------- |
-| Landing            | [`frontend/landing`](frontend/landing)                     | 官网与产品信息站点                 |
-| Community          | [`frontend/community`](frontend/community)                 | 面向访客的公开社区                 |
-| Dash               | [`frontend/dash`](frontend/dash)                           | 管理员与运营工作台                 |
-| Apply              | [`frontend/apply`](frontend/apply)                         | 社区申请与创建流程                 |
-| Widget             | [`frontend/widget`](frontend/widget)                       | 可嵌入的社区组件                   |
-| Inspire Me         | [`frontend/inspire-me`](frontend/inspire-me)               | 反馈平台研究工具                   |
-| Auth               | [`backend/auth`](backend/auth)                             | OAuth、登录与会话边界              |
-| Phoenix API        | [`backend/api`](backend/api)                               | 账户、CMS、权限与 GraphQL 领域后端 |
-| Assets Hub         | [`backend/assets-hub`](backend/assets-hub)                 | 上传、对象访问与媒体执行层         |
-| Content Import     | [`backend/content-import`](backend/content-import)         | 外部内容导入与标准化               |
-| Document Converter | [`backend/document-converter`](backend/document-converter) | 单文档格式转换                     |
-| Press              | [`backend/press`](backend/press)                           | 官方内容的缓存友好输出             |
-| Dev Gateway        | [`infra/dev-gateway`](infra/dev-gateway)                   | 本地开发入口与代理                 |
-| Edge Router        | [`infra/edge-router`](infra/edge-router)                   | Cloudflare 生产边缘路由            |
-| Status             | [`ops/status`](ops/status)                                 | 公共状态页与可用性监控             |
+| 子应用      | 代码目录与 README                            | 定位                               |
+| ----------- | -------------------------------------------- | ---------------------------------- |
+| Landing     | [`frontend/landing`](frontend/landing)       | 官网与产品信息站点                 |
+| Community   | [`frontend/community`](frontend/community)   | 面向访客的公开社区                 |
+| Dash        | [`frontend/dash`](frontend/dash)             | 管理员与运营工作台                 |
+| Apply       | [`frontend/apply`](frontend/apply)           | 社区申请与创建流程                 |
+| Widget      | [`frontend/widget`](frontend/widget)         | 可嵌入的社区组件                   |
+| Inspire Me  | [`frontend/inspire-me`](frontend/inspire-me) | 反馈平台研究工具                   |
+| Auth        | [`backend/auth`](backend/auth)               | OAuth、登录与会话边界              |
+| Phoenix API | [`backend/api`](backend/api)                 | 账户、CMS、权限与 GraphQL 领域后端 |
+| Assets Hub  | [`backend/assets-hub`](backend/assets-hub)   | 上传、对象访问与媒体执行层         |
+| Import      | [`backend/import`](backend/import)           | 外部内容导入与标准化               |
+| Converter   | [`backend/converter`](backend/converter)     | 单文档格式转换                     |
+| Press       | [`backend/press`](backend/press)             | 官方内容的缓存友好输出             |
+| Dev Gateway | [`infra/dev-gateway`](infra/dev-gateway)     | 本地开发入口与代理                 |
+| Edge Router | [`infra/edge-router`](infra/edge-router)     | Cloudflare 生产边缘路由            |
+| Status      | [`ops/status`](ops/status)                   | 公共状态页与可用性监控             |
 
 规划中的 `AI`、`Posthouse` 和 `Risk Center` 尚未作为独立代码应用落地，当前边界与实施
 状态以 [`docs/ai`](docs/ai)、[`docs/posthouse`](docs/posthouse) 和

@@ -58,8 +58,8 @@ const getCoreServicePositions = (
     press: { x: CORE_COLUMN_X.farLeft, y: backendRowY },
     'assets-hub': { x: CORE_COLUMN_X.left, y: backendRowY },
     phoenix: { x: CORE_COLUMN_X.center, y: backendRowY },
-    'content-import': { x: CORE_COLUMN_X.right, y: backendRowY },
-    'document-converter': { x: CORE_COLUMN_X.farRight, y: backendRowY },
+    import: { x: CORE_COLUMN_X.right, y: backendRowY },
+    converter: { x: CORE_COLUMN_X.farRight, y: backendRowY },
   }
 }
 

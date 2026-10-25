@@ -298,7 +298,7 @@ Dev Hub 和类似服务清单中的陈旧条目。它可能命中普通说明文
 - `frontend/e2e` 只保存 Playwright 配置、setup/teardown 和浏览器用例；运行报告、trace、截图
   和 test results 统一写入仓库根 `.playwright/`，不得保存在 `frontend/e2e/.playwright`；
 - Content Import 的 Docusaurus、Fumadocs、MkDocs、Nextra、Rspress、Starlight 和 VitePress
-  analyzer fixtures 位于 `backend/content-import/test/fixtures/frameworks`，不再使用通用
+  analyzer fixtures 位于 `backend/import/test/fixtures/frameworks`，不再使用通用
   `frontend/fixtures` 目录。
 
 最终验收重复运行相同命令。剩余命中必须逐条分类为有效历史文字、Vinext 兼容 API 或明确
@@ -317,7 +317,7 @@ Status、Dev Hub、Portless、ignore 或部署配置命中。剩余结果归为�
   已更新为当前路径，或在文件头明确标注为迁移期证据/继续实施前必须重做清点；
 - `docs/deploy/cloudflare.md` 中的 `/_next`：当前 Edge Router 的显式 `404` 负面合同，不是代理
   路由；
-- `backend/content-import/.../candidateFilter.ts` 中的 `.next`：过滤导入的第三方 GitHub
+- `backend/import/.../candidateFilter.ts` 中的 `.next`：过滤导入的第三方 GitHub
   workspace 生成目录，不是 Groupher build/cache 约定；
 - `service: 'dev-gateway'` 与 `service.id === 'dev-gateway'`：Dev Gateway 的正式新 service id；
 - `.next()`、`next_floor`、`next_page`、`nextIconHover`：普通语言或 API 标识，与 Next.js 无关；

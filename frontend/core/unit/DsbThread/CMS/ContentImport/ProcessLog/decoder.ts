@@ -1,6 +1,6 @@
 /** Tolerant UI decoder for the shared import process projection.
  *
- * @see docs/content-import/import-process-log.md
+ * @see docs/import/import-process-log.md
  */
 import type {
   TImportProcess,
