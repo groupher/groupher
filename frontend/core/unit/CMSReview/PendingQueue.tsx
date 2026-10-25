@@ -74,24 +74,29 @@ export default function PendingQueue({ community }: { community?: string }) {
     },
   })
   const recheck = useMutation({
-    mutationFn: async (target: CmsReviewTargetInput) => {
+    mutationFn: async ({ target, key }: { target: CmsReviewTargetInput; key: string }) => {
+      const commandId = commandIds.current.get(key) || crypto.randomUUID()
+      commandIds.current.set(key, commandId)
       if (target.type === 'ARTICLE') {
         return browserGraphQLRequest(recheckArticleReview, {
           target,
           scope,
-          commandId: crypto.randomUUID(),
+          commandId,
         })
       }
       if (target.type === 'COMMENT') {
         return browserGraphQLRequest(recheckCommentReview, {
           target,
           scope,
-          commandId: crypto.randomUUID(),
+          commandId,
         })
       }
       throw new Error('Unsupported review target.')
     },
-    onSuccess: async () => invalidatePrefix(client, queryKey),
+    onSuccess: async (_result, { key }) => {
+      commandIds.current.delete(key)
+      await invalidatePrefix(client, queryKey)
+    },
   })
 
   return (
@@ -156,7 +161,12 @@ export default function PendingQueue({ community }: { community?: string }) {
                       type='button'
                       className='border-divider rounded-md border px-3 py-2 text-sm disabled:opacity-50'
                       disabled={recheck.isPending}
-                      onClick={() => recheck.mutate(target)}
+                      onClick={() =>
+                        recheck.mutate({
+                          target,
+                          key: `recheck:${scope.type}:${scope.community || 'platform'}:${type}:${target.articleId || target.commentId}`,
+                        })
+                      }
                     >
                       {t('cms_review.action.recheck')}
                     </button>

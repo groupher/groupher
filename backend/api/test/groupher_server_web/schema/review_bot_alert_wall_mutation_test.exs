@@ -14,6 +14,86 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     refute Map.has_key?(fields, :recheck_review_target)
   end
 
+  test "recheckArticle succeeds through GraphQL" do
+    {community, post, _attrs, reviewer} = mock_article(:post)
+    reviewer = put_community_permission(reviewer, community.slug, "review.decide")
+
+    mutation = """
+    mutation Recheck($target: CmsReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
+      recheckArticle(target: $target, scope: $scope, commandId: $commandId) {
+        commandId
+        targetType
+        targetId
+        action
+      }
+    }
+    """
+
+    assert {:ok, %{data: %{"recheckArticle" => result}}} =
+             Absinthe.run(mutation, Schema,
+               variables: %{
+                 "target" => %{
+                   "type" => "ARTICLE",
+                   "articleId" => post.id,
+                   "communityId" => community.id
+                 },
+                 "scope" => %{"type" => "COMMUNITY", "community" => community.slug},
+                 "commandId" => Ecto.UUID.generate()
+               },
+               context: %{cur_user: reviewer}
+             )
+
+    assert result["action"] == "recheck"
+    assert result["targetType"] == "ARTICLE"
+    assert result["targetId"] == to_string(post.id)
+  end
+
+  test "recheckComment succeeds through GraphQL" do
+    {community, post, _attrs, author} = mock_article(:post)
+
+    {:ok, comment} =
+      GroupherServer.CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment("public comment"),
+        author,
+        Ecto.UUID.generate()
+      )
+
+    {:ok, reviewer} = db_insert(:user)
+    reviewer = put_community_permission(reviewer, community.slug, "review.decide")
+
+    mutation = """
+    mutation Recheck($target: CmsReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
+      recheckComment(target: $target, scope: $scope, commandId: $commandId) {
+        commandId
+        targetType
+        targetId
+        action
+      }
+    }
+    """
+
+    assert {:ok, %{data: %{"recheckComment" => result}}} =
+             Absinthe.run(mutation, Schema,
+               variables: %{
+                 "target" => %{
+                   "type" => "COMMENT",
+                   "commentId" => comment.id,
+                   "communityId" => community.id
+                 },
+                 "scope" => %{"type" => "COMMUNITY", "community" => community.slug},
+                 "commandId" => Ecto.UUID.generate()
+               },
+               context: %{cur_user: reviewer}
+             )
+
+    assert result["action"] == "recheck"
+    assert result["targetType"] == "COMMENT"
+    assert result["targetId"] == to_string(comment.id)
+  end
+
   test "submitReport succeeds through GraphQL" do
     {community, post, _attrs, reporter} = mock_article(:post)
 
@@ -144,5 +224,10 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
     assert result == %{"itemId" => to_string(item.id), "resolution" => "reviewed"}
     assert Repo.get!(Item, item.id).status == :resolved
+  end
+
+  defp put_community_permission(user, slug, permission) do
+    passport = Map.put(user.cur_passport || %{}, slug, %{"cms" => %{permission => true}})
+    %{user | cur_passport: Map.put_new(passport, "global", %{})}
   end
 end

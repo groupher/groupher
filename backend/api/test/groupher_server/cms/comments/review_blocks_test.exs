@@ -7,6 +7,7 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
   alias GroupherServer.CMS
 
   alias CMS.Model.{CommentLifecycle, CommentReviewBlock}
+  alias CMS.Outbox.Event, as: OutboxEvent
 
   test "single Comment responses filter restricted embedded replies through Gate" do
     {community, article, _article_attrs, parent_author} = mock_article(:post)
@@ -93,6 +94,16 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
                  {:error, reason} -> Repo.rollback(reason)
                end
              end)
+
+    assert %OutboxEvent{data: effect_data} =
+             Repo.get_by!(OutboxEvent,
+               event: "article.visibility_changed",
+               resource_id: comment.article_id,
+               effect_key: "review:#{restriction.source_ref}:#{community.id}"
+             )
+
+    assert effect_data["community_id"] == community.id
+    assert effect_data["thread"] == "post"
 
     assert {:ok, %{comments_count: 0, comments_participants_count: 0}} =
              CMS.ArticleStats.fetch(:post, comment.article_id)

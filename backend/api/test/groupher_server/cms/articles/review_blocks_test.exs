@@ -151,6 +151,16 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
                end
              end)
 
+    assert %OutboxEvent{data: effect_data} =
+             Repo.get_by!(OutboxEvent,
+               event: "article.visibility_changed",
+               resource_id: article.id,
+               effect_key: "review:#{restriction.source_ref}:#{community.id}"
+             )
+
+    assert effect_data["community_id"] == community.id
+    assert effect_data["thread"] == "post"
+
     assert {:ok, :pass} =
              CMS.SearchArtiments.Indexer.sync_binding(:post, article.id, community.id)
 

@@ -205,8 +205,10 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     end
   end
 
-  defp current_configs(%{kind: :comment, target: comment}, _scope_key) do
-    ReviewBot.configs(comment.community_id, :comment)
+  defp current_configs(%{kind: :comment}, scope_key) do
+    with {:ok, community_id} <- parse_scope(scope_key) do
+      ReviewBot.configs(community_id, :comment)
+    end
   end
 
   defp current_configs(%{kind: :doc}, _scope_key), do: ReviewBot.configs(nil, :doc)

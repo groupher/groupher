@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, Repo, ReviewBot}
   alias CMS.Model.{ArticleReviewBlock, ArtimentReview}
+  alias ReviewBot.Model.ReviewBotConfig
 
   test "human deny and release run as receipt-backed CMS decisions" do
     {community, article, _attrs, _author} = mock_article(:post)
@@ -182,5 +183,39 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
       )
 
     assert [%ArtimentReview{community_id: nil}] = requests
+  end
+
+  test "platform Comment recheck does not require a community policy" do
+    {community, article, _attrs, author} = mock_article(:post)
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(article, community),
+        mock_comment("public comment"),
+        author,
+        Ecto.UUID.generate()
+      )
+
+    Repo.delete!(
+      Repo.get_by!(ReviewBotConfig,
+        community_id: community.id,
+        subject_type: :comment
+      )
+    )
+
+    {:ok, reviewer} = db_insert(:user)
+    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+
+    assert {:ok, result} =
+             CMS.recheck_review_target(
+               "comment:#{comment.id}",
+               "platform",
+               reviewer,
+               Ecto.UUID.generate()
+             )
+
+    assert result.request_count == 1
   end
 end

@@ -202,9 +202,20 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:ok, %{type: :platform}, "review.platform.read", %{}}
   end
 
+  defp target_scope(%{community_id: community_id}) when is_binary(community_id) do
+    with {id, ""} <- Integer.parse(community_id),
+         {:ok, community} <- FrontDesk.community(id) do
+      {:ok, %{type: :community, community: community}, "review.read",
+       %{community: community.slug}}
+    else
+      _ -> {:error, CMS.invalid_review_block_error()}
+    end
+  end
+
   defp target_scope(%{community_id: community_id}) do
-    with {:ok, %{slug: slug}} <- FrontDesk.community(community_id) do
-      {:ok, %{type: :community, community: slug}, "review.read", %{community: slug}}
+    with {:ok, community} <- FrontDesk.community(community_id) do
+      {:ok, %{type: :community, community: community}, "review.read",
+       %{community: community.slug}}
     end
   end
 
