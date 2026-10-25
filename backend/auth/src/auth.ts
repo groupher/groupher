@@ -47,7 +47,8 @@ const issueLocalServiceToken: typeof fetch = async (input, init) => {
 }
 
 const authServiceToken = (scope: string) => {
-  serviceTokenProvider ??= createServiceAuthClientFromEnv(process.env, issueLocalServiceToken)
+  const tokenFetcher = process.env.E2E_AUTH_STACK === '1' ? fetch : issueLocalServiceToken
+  serviceTokenProvider ??= createServiceAuthClientFromEnv(process.env, tokenFetcher)
   return serviceTokenProvider.getToken({ resource: PHOENIX_AUTH_RESOURCE, scopes: [scope] })
 }
 
