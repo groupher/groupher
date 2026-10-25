@@ -17,7 +17,9 @@ vi.mock('~/stores/account/hooks', () => ({
 }))
 vi.mock('~/Img', () => ({ default: () => null }))
 vi.mock('~/platform', () => ({
-  Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
+  Link: ({ children, href }: { children: ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
 }))
 vi.mock('~/ui/ImgFallback', () => ({ default: () => null }))
 vi.mock('~/unit/AlertWall/ReportAction', () => ({
