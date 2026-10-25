@@ -60,11 +60,13 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
-  def recheck_article(parent, args, resolution),
-    do: recheck_target(parent, args, resolution, :article)
+  def recheck_article(parent, args, resolution) do
+    recheck_target(parent, args, resolution, :article)
+  end
 
-  def recheck_comment(parent, args, resolution),
-    do: recheck_target(parent, args, resolution, :comment)
+  def recheck_comment(parent, args, resolution) do
+    recheck_target(parent, args, resolution, :comment)
+  end
 
   defp recheck_target(
          _parent,
