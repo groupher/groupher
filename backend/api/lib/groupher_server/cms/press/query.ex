@@ -211,12 +211,6 @@ defmodule GroupherServer.CMS.Press.Query do
     end
   end
 
-  defp current_feed_items(community, :doc, limit, hydrate) do
-    with {:ok, articles} <- current_articles(community, :doc, limit, hydrate) do
-      {:ok, Enum.map(articles, &Projection.feed_item(community, :doc, &1))}
-    end
-  end
-
   defp current_feed_items(community, thread, limit, hydrate) do
     with {:ok, articles} <- current_articles(community, thread, limit, hydrate) do
       {:ok, Enum.map(articles, &Projection.feed_item(community, thread, &1))}
