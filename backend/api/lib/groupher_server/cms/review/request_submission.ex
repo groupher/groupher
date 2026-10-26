@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
   """
 
   alias GroupherServer.ReviewBot
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{AlertWall, CMS, Repo}
   alias CMS.Model.ArtimentReview
   alias ReviewBot.Model.ReviewBotConfig
 
@@ -41,12 +41,13 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
       when is_map(target) and is_map(content) and is_map(configs) and
              trigger in [:publish, :edit, :recheck, :binding] and
              (requested_scope == :all or requested_scope == :system or
-                (trigger == :recheck and is_tuple(requested_scope) and
+                (trigger in [:recheck, :binding] and is_tuple(requested_scope) and
                    tuple_size(requested_scope) == 2 and elem(requested_scope, 0) == :community and
                    is_integer(elem(requested_scope, 1)))) do
     with true <- Repo.in_transaction?(),
          {:ok, scopes} <- policy_scopes(configs, requested_scope),
          {:ok, attrs} <- target_attrs(target, content, trigger, scopes),
+         {:ok, :pass} <- end_previous_wall_items(target, trigger),
          {:ok, requests} <- insert_scoped_requests(attrs, target) do
       {:ok, requests}
     else
@@ -104,7 +105,7 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
 
   defp target_attrs(target, content, trigger, scopes) do
     with {:ok, payload} <- normalize_content(content),
-         {:ok, common} <- validate_target(target, trigger) do
+         {:ok, common} <- validate_target(target) do
       {:ok,
        Enum.map(scopes, fn scope ->
          config = scope.config
@@ -139,54 +140,39 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
     end
   end
 
-  defp validate_target(
-         %{type: :article, article_id: article_id},
-         trigger
-       )
+  defp validate_target(%{type: :article, article_id: article_id})
        when is_binary(article_id) do
     {:ok,
      %{
        target_type: :article,
-       article_id: article_id,
-       subject_ref: Ecto.UUID.generate(),
-       trigger: trigger
+       article_id: article_id
      }}
   end
 
-  defp validate_target(
-         %{type: :comment, comment_id: comment_id},
-         trigger
-       )
+  defp validate_target(%{type: :comment, comment_id: comment_id})
        when is_integer(comment_id) do
     {:ok,
      %{
        target_type: :comment,
-       comment_id: comment_id,
-       subject_ref: Ecto.UUID.generate(),
-       trigger: trigger
+       comment_id: comment_id
      }}
   end
 
-  defp validate_target(
-         %{
-           type: :doc,
-           article_id: article_id,
-           branch_id: branch_id
-         },
-         trigger
-       )
+  defp validate_target(%{
+         type: :doc,
+         article_id: article_id,
+         branch_id: branch_id
+       })
        when is_binary(article_id) and is_integer(branch_id) do
     {:ok,
      %{
        target_type: :doc,
        article_id: article_id,
-       branch_id: branch_id,
-       subject_ref: Ecto.UUID.generate(),
-       trigger: trigger
+       branch_id: branch_id
      }}
   end
 
-  defp validate_target(_target, _trigger) do
+  defp validate_target(_target) do
     {:error, CMS.ErrorCat.invalid_review_block()}
   end
 
@@ -247,7 +233,6 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
            scope_key: scope_key,
            type: :awaiting_ai,
            artiment_review_id: request.id,
-           subject_ref: request.subject_ref,
            source_ref: "request:#{request.id}:awaiting_ai",
            source: :request,
            applied_at: DateTime.utc_now(:second)
@@ -259,6 +244,45 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
 
   defp apply_initial_hold(_request, _target) do
     {:error, CMS.ErrorCat.invalid_review_block()}
+  end
+
+  defp end_previous_wall_items(_target, trigger) when trigger in [:recheck, :binding] do
+    {:ok, :pass}
+  end
+
+  defp end_previous_wall_items(%{type: :article, article_id: id}, _trigger) do
+    with {:ok, :pass} <-
+           CMS.Review.Requests.mark_content_changed_in_transaction(%{
+             type: :article,
+             article_id: id
+           }) do
+      AlertWall.mark_content_changed_in_transaction(:article, id, Ecto.UUID.generate())
+    end
+  end
+
+  defp end_previous_wall_items(%{type: :comment, comment_id: id}, _trigger) do
+    with {:ok, :pass} <-
+           CMS.Review.Requests.mark_content_changed_in_transaction(%{
+             type: :comment,
+             comment_id: id
+           }) do
+      AlertWall.mark_content_changed_in_transaction(:comment, to_string(id), Ecto.UUID.generate())
+    end
+  end
+
+  defp end_previous_wall_items(%{type: :doc, article_id: id, branch_id: branch_id}, _trigger) do
+    with {:ok, :pass} <-
+           CMS.Review.Requests.mark_content_changed_in_transaction(%{
+             type: :doc,
+             article_id: id,
+             branch_id: branch_id
+           }) do
+      AlertWall.mark_content_changed_in_transaction(
+        :doc,
+        "#{id}:#{branch_id}",
+        Ecto.UUID.generate()
+      )
+    end
   end
 
   defp community_id({:community, community_id}), do: community_id

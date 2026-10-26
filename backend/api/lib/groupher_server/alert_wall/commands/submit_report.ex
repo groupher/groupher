@@ -23,7 +23,7 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
 
         CMS/Accounts resolver -> typed Target -> SubmitReport CommandPipeline
     """
-    defstruct [:owner, :target_type, :target_id, :community_id, :subject_ref]
+    defstruct [:owner, :target_type, :target_id, :community_id, :observed_version]
   end
 
   @report_types [:spam, :harassment, :illegal_content, :impersonation, :other]
@@ -81,7 +81,7 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
          report_type: report_type,
          details: details,
          community_id: attrs.community_id,
-         subject_ref: attrs.subject_ref
+         observed_version: attrs.observed_version
        }}
     else
       _ -> {:error, AlertWall.ErrorCat.invalid_report()}
@@ -94,14 +94,18 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
   defp submit(prepared, %{id: reporter_id}, command_id) do
     attrs = Map.put(prepared, :reporter_id, reporter_id)
 
-    case AlertWall.Persist.submit_report_in_transaction(attrs, command_id) do
-      {:ok, %UserReport{id: report_id}} ->
-        {:ok, %Confirmation{data: %{"report_id" => report_id}}}
-
-      {:error, _reason} = error ->
-        error
+    with {:ok, :pass} <- validate_current_target(attrs),
+         {:ok, %UserReport{id: report_id}} <-
+           AlertWall.Persist.submit_report_in_transaction(attrs, command_id) do
+      {:ok, %Confirmation{data: %{"report_id" => report_id}}}
     end
   end
+
+  defp validate_current_target(%{owner: :cms} = attrs) do
+    CMS.validate_report_target_in_transaction(attrs)
+  end
+
+  defp validate_current_target(%{owner: :accounts}), do: {:ok, :pass}
 
   defp present_report(%Confirmation{data: %{"report_id" => report_id}}) do
     case Repo.get(UserReport, report_id) do
@@ -116,14 +120,15 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
          %{
            owner: owner,
            target_type: target_type,
-           target_id: target_id,
-           subject_ref: subject_ref
+           target_id: target_id
          } = target
        ) do
     owner in [:cms, :accounts] and
       ((owner == :cms and target_type in [:article, :comment, :doc]) or
          (owner == :accounts and target_type == :user)) and
-      is_binary(target_id) and target_id != "" and is_binary(subject_ref) and subject_ref != "" and
-      (target_type != :doc or is_nil(Map.get(target, :community_id)))
+      is_binary(target_id) and target_id != "" and
+      (target_type != :doc or is_nil(Map.get(target, :community_id))) and
+      (owner != :cms or
+         (is_integer(Map.get(target, :observed_version)) and target.observed_version > 0))
   end
 end

@@ -1,21 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import type { CmsReviewTargetInput } from '~/graphql/generated/graphql'
 import useTrans from '~/hooks/useTrans'
 import { invalidatePrefix } from '~/query/invalidation'
 
+import History from './History'
 import {
   approveArticleReview,
   approveCommentReview,
+  approveDocReview,
   denyArticleReview,
   denyCommentReview,
+  denyDocReview,
   pendingContentReviews,
   recheckArticleReview,
   recheckCommentReview,
   releaseArticleReview,
   releaseCommentReview,
+  releaseDocReview,
 } from './schema'
 
 /** Shows CMS-owned review work and submits the resource decision once. */
@@ -23,14 +27,21 @@ export default function PendingQueue({ community }: { community?: string }) {
   const { t } = useTrans()
   const client = useQueryClient()
   const commandIds = useRef(new Map<string, string>())
+  const [page, setPage] = useState(1)
   const scope = community
     ? { type: 'COMMUNITY' as const, community }
     : { type: 'PLATFORM' as const }
-  const queryKey = ['cms-content-review', community || 'platform']
+  const queryKey = ['cms-content-review', community || 'platform', page]
   const pending = useQuery({
     queryKey,
     queryFn: async () =>
-      (await browserGraphQLRequest(pendingContentReviews, { scope })).pendingContentReviews,
+      (
+        await browserGraphQLRequest(pendingContentReviews, {
+          scope,
+          limit: 50,
+          offset: (page - 1) * 50,
+        })
+      ).pendingContentReviews,
   })
   const decide = useMutation({
     mutationFn: async ({
@@ -41,8 +52,10 @@ export default function PendingQueue({ community }: { community?: string }) {
       action: 'approve' | 'deny' | 'release'
     }) => {
       const type = target.type
-      if (type !== 'ARTICLE' && type !== 'COMMENT') throw new Error('Unsupported review target.')
-      const key = `${type}:${target.articleId || target.commentId}:${action}`
+      if (type !== 'ARTICLE' && type !== 'COMMENT' && type !== 'DOC') {
+        throw new Error('Unsupported review target.')
+      }
+      const key = `${type}:${target.articleId || target.commentId}:${target.branchId || ''}:${action}`
       const commandId = commandIds.current.get(key) || crypto.randomUUID()
       commandIds.current.set(key, commandId)
       if (type === 'ARTICLE') {
@@ -53,6 +66,17 @@ export default function PendingQueue({ community }: { community?: string }) {
             return browserGraphQLRequest(denyArticleReview, { target, commandId })
           case 'release':
             return browserGraphQLRequest(releaseArticleReview, { target, commandId })
+        }
+      }
+
+      if (type === 'DOC') {
+        switch (action) {
+          case 'approve':
+            return browserGraphQLRequest(approveDocReview, { target, commandId })
+          case 'deny':
+            return browserGraphQLRequest(denyDocReview, { target, commandId })
+          case 'release':
+            return browserGraphQLRequest(releaseDocReview, { target, commandId })
         }
       }
 
@@ -68,7 +92,7 @@ export default function PendingQueue({ community }: { community?: string }) {
     onSuccess: async (_result, variables) => {
       const target = variables.target
       commandIds.current.delete(
-        `${target.type}:${target.articleId || target.commentId}:${variables.action}`,
+        `${target.type}:${target.articleId || target.commentId}:${target.branchId || ''}:${variables.action}`,
       )
       await invalidatePrefix(client, queryKey)
     },
@@ -121,7 +145,9 @@ export default function PendingQueue({ community }: { community?: string }) {
                 ? { type, articleId: request.articleId, communityId: request.communityId }
                 : type === 'COMMENT' && request.commentId
                   ? { type, commentId: request.commentId, communityId: request.communityId }
-                  : null
+                  : type === 'DOC' && request.articleId && request.branchId
+                    ? { type, articleId: request.articleId, branchId: request.branchId }
+                    : null
 
             return (
               <li key={request.artimentReviewId} className='grid gap-3 p-4'>
@@ -133,6 +159,12 @@ export default function PendingQueue({ community }: { community?: string }) {
                   <p className='text-digest mt-1 text-sm'>
                     {request.state.toLowerCase()} · {request.reviewMode || '—'}
                   </p>
+                  {request.state.toUpperCase() === 'FAILED' && (
+                    <p role='alert' className='mt-1 text-sm text-red-600'>
+                      {request.failureMessage || t('content_review.status.check_unavailable')}
+                      {request.failureCode ? ` (${request.failureCode})` : ''}
+                    </p>
+                  )}
                   {[
                     { source: 'system', opinion: request.systemOpinion },
                     { source: 'community', opinion: request.communityOpinion },
@@ -157,21 +189,24 @@ export default function PendingQueue({ community }: { community?: string }) {
                         {t(`cms_review.action.${action}`)}
                       </button>
                     ))}
-                    <button
-                      type='button'
-                      className='border-divider rounded-md border px-3 py-2 text-sm disabled:opacity-50'
-                      disabled={recheck.isPending}
-                      onClick={() =>
-                        recheck.mutate({
-                          target,
-                          key: `recheck:${scope.type}:${scope.community || 'platform'}:${type}:${target.articleId || target.commentId}`,
-                        })
-                      }
-                    >
-                      {t('cms_review.action.recheck')}
-                    </button>
+                    {type !== 'DOC' && (
+                      <button
+                        type='button'
+                        className='border-divider rounded-md border px-3 py-2 text-sm disabled:opacity-50'
+                        disabled={recheck.isPending}
+                        onClick={() =>
+                          recheck.mutate({
+                            target,
+                            key: `recheck:${scope.type}:${scope.community || 'platform'}:${type}:${target.articleId || target.commentId}`,
+                          })
+                        }
+                      >
+                        {t('cms_review.action.recheck')}
+                      </button>
+                    )}
                   </div>
                 )}
+                {target && <History target={target} />}
                 {decide.isError && (
                   <p role='alert' className='text-sm text-red-600'>
                     {t('cms_review.action_error')}
@@ -186,6 +221,26 @@ export default function PendingQueue({ community }: { community?: string }) {
             )
           })}
         </ul>
+      )}
+      {pending.data && (page > 1 || pending.data.length === 50) && (
+        <nav className='mt-4 flex justify-end gap-3 text-sm'>
+          <button
+            type='button'
+            className='border-divider rounded-md border px-3 py-2 disabled:opacity-50'
+            disabled={page === 1 || pending.isFetching}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+          >
+            {t('alert_wall.previous_page')}
+          </button>
+          <button
+            type='button'
+            className='border-divider rounded-md border px-3 py-2 disabled:opacity-50'
+            disabled={pending.data.length < 50 || pending.isFetching}
+            onClick={() => setPage((current) => current + 1)}
+          >
+            {t('alert_wall.next_page')}
+          </button>
+        </nav>
       )}
     </section>
   )

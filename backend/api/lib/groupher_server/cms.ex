@@ -116,6 +116,15 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Review,
     as: :load_for_update
 
+  @doc "Checks the public content version a reporter observed inside the report transaction."
+  defdelegate validate_report_target_in_transaction(target),
+    to: GroupherServer.CMS.Review
+
+  @doc "Returns a safe review status for the author of a CMS target."
+  defdelegate review_notice_for_author(target, actor),
+    to: GroupherServer.CMS.Review,
+    as: :notice_for_author
+
   @doc "Creates the current scoped review request inside the resource command transaction."
   @spec create_artiment_review_in_transaction(map()) ::
           {:ok, struct()} | {:error, term()}
@@ -174,8 +183,13 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Review.Requests,
     as: :current_for_scope
 
+  @doc "Lists retained checks for one resource and review scope."
+  defdelegate review_history_for_scope(attrs, limit, offset),
+    to: GroupherServer.CMS.Review.Requests,
+    as: :history_for_scope
+
   @doc "Lists current review requests that need a human decision in one scope."
-  defdelegate pending_artiment_reviews(attrs),
+  defdelegate pending_artiment_reviews(attrs, limit \\ 50, offset \\ 0),
     to: GroupherServer.CMS.Review.Requests,
     as: :pending_for_scope
 

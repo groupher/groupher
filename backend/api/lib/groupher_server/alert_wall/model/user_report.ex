@@ -1,6 +1,6 @@
 defmodule GroupherServer.AlertWall.Model.UserReport do
   @moduledoc """
-  A reporter's immutable report fact tied to the Wall item for the content they reported.
+  A reporter's report fact tied to the Wall item and observed public content version.
 
   Business position:
 
@@ -32,8 +32,8 @@ defmodule GroupherServer.AlertWall.Model.UserReport do
     field(:owner, Ecto.Enum, values: @owners)
     field(:target_type, Ecto.Enum, values: @target_types)
     field(:target_id, :string)
+    field(:observed_version, :integer)
     belongs_to(:community, Community)
-    field(:subject_ref, :string)
     field(:report_type, :string)
     field(:details, :string)
     field(:operation_ref, Ecto.UUID)
@@ -52,8 +52,8 @@ defmodule GroupherServer.AlertWall.Model.UserReport do
       :owner,
       :target_type,
       :target_id,
+      :observed_version,
       :community_id,
-      :subject_ref,
       :report_type,
       :details,
       :operation_ref,
@@ -68,22 +68,19 @@ defmodule GroupherServer.AlertWall.Model.UserReport do
       :owner,
       :target_type,
       :target_id,
-      :subject_ref,
       :report_type,
       :operation_ref
     ])
     |> validate_length(:details, max: 8_000)
+    |> validate_number(:observed_version, greater_than: 0)
     |> validate_owner_target()
     |> foreign_key_constraint(:item_id)
     |> foreign_key_constraint(:reporter_id)
     |> foreign_key_constraint(:community_id)
     |> unique_constraint(:operation_ref)
     |> unique_constraint(
-      [:reporter_id, :owner, :target_type, :target_id, :community_id, :subject_ref],
-      name: :alert_wall_user_reports_active_community_unique
-    )
-    |> unique_constraint([:reporter_id, :owner, :target_type, :target_id, :subject_ref],
-      name: :alert_wall_user_reports_active_system_unique
+      [:reporter_id, :item_id],
+      name: :alert_wall_user_reports_active_item_unique
     )
     |> validate_resolution()
   end
@@ -107,6 +104,9 @@ defmodule GroupherServer.AlertWall.Model.UserReport do
 
       owner == :accounts and target_type != :user ->
         add_error(changeset, :target_type, "is not owned by Accounts")
+
+      owner == :cms and is_nil(get_field(changeset, :observed_version)) ->
+        add_error(changeset, :observed_version, "is required for CMS content")
 
       target_type == :doc and not is_nil(community_id) ->
         add_error(changeset, :community_id, "Doc reports use the platform scope")

@@ -206,8 +206,8 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
       owner: :cms,
       target_type: :article,
       target_id: to_string(post.article_id),
+      observed_version: 1,
       community_id: nil,
-      subject_ref: "published-subject",
       report_type: "SPAM",
       details: "Please review"
     }

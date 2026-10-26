@@ -27,6 +27,11 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Types do
     field(:sus_notes, non_null(list_of(non_null(:sus_note))))
   end
 
+  object :cms_review_notice do
+    field(:status, non_null(:string))
+    field(:failure_code, :string)
+  end
+
   object :cms_content_review do
     field(:artiment_review_id, :id)
     field(:target_type, non_null(:review_bot_subject_type))
@@ -35,6 +40,10 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Types do
     field(:branch_id, :integer)
     field(:community_id, :id)
     field(:state, non_null(:string))
+    field(:replaced_at, :datetime)
+    field(:outdated_at, :datetime)
+    field(:failure_code, :string)
+    field(:failure_message, :string)
     field(:review_mode, :string)
     field(:system_opinion, :cms_review_opinion)
     field(:community_opinion, :cms_review_opinion)

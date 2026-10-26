@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo, ReviewBot}
+  alias GroupherServer.{AlertWall, CMS, Repo, ReviewBot}
   alias CMS.Model.{ArticleReviewBlock, ArtimentReview}
+  alias AlertWall.Model.{Item, UserReport}
   alias ReviewBot.Model.ReviewBotConfig
 
   test "human deny and release run as receipt-backed CMS decisions" do
@@ -95,6 +96,51 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
              ),
              :count
            ) == 0
+  end
+
+  test "a CMS decision resolves a report-only Wall item in its own scope" do
+    {community, article, _attrs, _author} = mock_article(:post)
+    {:ok, reporter} = db_insert(:user)
+    {:ok, reviewer} = db_insert(:user)
+
+    reviewer = %{
+      reviewer
+      | cur_passport: %{
+          "global" => %{},
+          community.slug => %{"cms" => %{"review.decide" => true}}
+        }
+    }
+
+    assert {:ok, {:ok, report}} =
+             Repo.transaction(fn ->
+               AlertWall.submit_report_in_transaction(
+                 %{
+                   reporter_id: reporter.id,
+                   owner: :cms,
+                   target_type: :article,
+                   target_id: article.id,
+                   observed_version: 1,
+                   community_id: community.id,
+                   report_type: "SPAM",
+                   details: "Please review"
+                 },
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert %Item{ai_source_ref: nil, status: :open} = Repo.get!(Item, report.item_id)
+
+    assert {:ok, _result} =
+             CMS.decide_review_target(
+               "article:#{article.id}",
+               "community:#{community.id}",
+               :deny,
+               reviewer,
+               Ecto.UUID.generate()
+             )
+
+    assert Repo.get!(Item, report.item_id).status == :resolved
+    assert Repo.get!(UserReport, report.id).resolved_at
   end
 
   test "recheck registers a new current request through the CMS Receipt command" do

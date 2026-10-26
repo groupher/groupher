@@ -303,9 +303,13 @@ type RootQueryType {
   "get doc by id"
   doc(article: ArticlePathInput!): Doc!
 
-  pendingContentReviews(scope: ReviewBotScopeInput!): [CmsContentReview!]!
+  pendingContentReviews(scope: ReviewBotScopeInput!, limit: Int, offset: Int): [CmsContentReview!]!
 
   contentReview(target: CmsReviewTargetInput!): CmsContentReview
+
+  contentReviewNotice(target: CmsReviewTargetInput!): CmsReviewNotice
+
+  contentReviewHistory(target: CmsReviewTargetInput!, limit: Int, offset: Int): [CmsContentReview!]!
 
   pressConfig(community: String!): PressConfig
 
@@ -331,6 +335,8 @@ type RootQueryType {
   alertItems(scope: ReviewBotScopeInput!, filter: AlertItemFilter, pagi: PagiInput): AlertItemPage!
 
   alertItem(id: ID!): AlertItem
+
+  alertItemReports(id: ID!, pagi: PagiInput): AlertReportPage!
 
   reviewBotConfig(scope: ReviewBotScopeInput!, subjectType: ReviewBotSubjectType!): ReviewBotConfig!
 }
@@ -1234,6 +1240,7 @@ input AlertItemFilter {
   targetType: AlertTargetType
   owner: AlertItemOwner
   hasReports: Boolean
+  closed: Boolean
 }
 
 input AlertReportFilter {
@@ -1243,10 +1250,11 @@ input AlertReportFilter {
 
 input AlertReportTargetInput {
   type: AlertTargetType!
+  observedVersion: Int
   article: ArticlePathInput
   comment: CommentPathInput
   docBranchId: Int
-  userId: ID
+  userLogin: String
 }
 
 input AlertReportInput {
@@ -1265,14 +1273,14 @@ type AlertItem {
   id: ID!
   owner: AlertItemOwner!
   targetType: AlertTargetType!
-  targetId: String!
-  subjectRef: String!
+  targetId: String
   communityId: ID
   aiSourceRef: String
   status: AlertItemStatus!
   susNotes: [SusNote!]!
   summary: String!
   reportCount: Int!
+  totalReportCount: Int!
   version: Int!
   openedAt: DateTime!
   resolvedAt: DateTime
@@ -1281,11 +1289,12 @@ type AlertItem {
 
 type AlertReport {
   id: ID!
+  reporterLogin: String
   targetType: AlertTargetType!
-  targetId: String!
+  targetId: String
   communityId: ID
   itemId: ID!
-  subjectRef: String!
+  observedVersion: Int
   reportType: String!
   details: String
   withdrawnAt: DateTime
@@ -1707,6 +1716,11 @@ type CmsReviewOpinion {
   susNotes: [SusNote!]!
 }
 
+type CmsReviewNotice {
+  status: String!
+  failureCode: String
+}
+
 type CmsContentReview {
   artimentReviewId: ID
   targetType: ReviewBotSubjectType!
@@ -1715,6 +1729,10 @@ type CmsContentReview {
   branchId: Int
   communityId: ID
   state: String!
+  replacedAt: DateTime
+  outdatedAt: DateTime
+  failureCode: String
+  failureMessage: String
   reviewMode: String
   systemOpinion: CmsReviewOpinion
   communityOpinion: CmsReviewOpinion
@@ -4489,13 +4507,11 @@ type UserMeta {
 }
 
 type User {
-  accountRef: ID!
+  login: String!
 
   meta: UserMeta
 
   nickname: String
-
-  login: String
 
   avatar: String
 

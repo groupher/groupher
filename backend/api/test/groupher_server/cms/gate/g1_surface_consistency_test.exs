@@ -38,7 +38,6 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
         type: :ai_suspect,
         source_ref: "test-rule",
         source: :request,
-        subject_ref: Ecto.UUID.generate(),
         applied_at: DateTime.utc_now(:second)
       })
 
@@ -130,7 +129,6 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
       type: :ai_suspect,
       source_ref: "test-rule",
       source: :request,
-      subject_ref: Ecto.UUID.generate(),
       applied_at: DateTime.utc_now(:second)
     })
 

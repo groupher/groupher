@@ -65,4 +65,5 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:invalid_review_block, code: 4545)
   error(:review_transition_requires_transaction, code: 4546)
   error(:review_block_not_found, code: 4547)
+  error(:review_content_changed, code: 4548)
 end

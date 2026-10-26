@@ -11,6 +11,10 @@ export const contentReview = graphql(`
       branchId
       communityId
       state
+      replacedAt
+      outdatedAt
+      failureCode
+      failureMessage
       reviewMode
       systemOpinion {
         status
@@ -34,9 +38,18 @@ export const contentReview = graphql(`
   }
 `)
 
+export const contentReviewNotice = graphql(`
+  query ContentReviewNotice($target: CmsReviewTargetInput!) {
+    contentReviewNotice(target: $target) {
+      status
+      failureCode
+    }
+  }
+`)
+
 export const pendingContentReviews = graphql(`
-  query PendingContentReviews($scope: ReviewBotScopeInput!) {
-    pendingContentReviews(scope: $scope) {
+  query PendingContentReviews($scope: ReviewBotScopeInput!, $limit: Int, $offset: Int) {
+    pendingContentReviews(scope: $scope, limit: $limit, offset: $offset) {
       artimentReviewId
       targetType
       articleId
@@ -44,6 +57,43 @@ export const pendingContentReviews = graphql(`
       branchId
       communityId
       state
+      replacedAt
+      outdatedAt
+      failureCode
+      failureMessage
+      reviewMode
+      systemOpinion {
+        status
+        summary
+        susNotes {
+          type
+          evidence
+          explanation
+        }
+      }
+      communityOpinion {
+        status
+        summary
+        susNotes {
+          type
+          evidence
+          explanation
+        }
+      }
+    }
+  }
+`)
+
+export const contentReviewHistory = graphql(`
+  query ContentReviewHistory($target: CmsReviewTargetInput!, $limit: Int, $offset: Int) {
+    contentReviewHistory(target: $target, limit: $limit, offset: $offset) {
+      artimentReviewId
+      targetType
+      state
+      replacedAt
+      outdatedAt
+      failureCode
+      failureMessage
       reviewMode
       systemOpinion {
         status
@@ -119,6 +169,17 @@ export const approveCommentReview = graphql(`
   }
 `)
 
+export const approveDocReview = graphql(`
+  mutation ApproveDocReview($target: CmsReviewTargetInput!, $commandId: ID!) {
+    approveDoc(target: $target, commandId: $commandId) {
+      commandId
+      targetType
+      targetId
+      action
+    }
+  }
+`)
+
 export const denyArticleReview = graphql(`
   mutation DenyArticleReview($target: CmsReviewTargetInput!, $commandId: ID!) {
     denyArticle(target: $target, commandId: $commandId) {
@@ -152,9 +213,31 @@ export const denyCommentReview = graphql(`
   }
 `)
 
+export const denyDocReview = graphql(`
+  mutation DenyDocReview($target: CmsReviewTargetInput!, $commandId: ID!) {
+    denyDoc(target: $target, commandId: $commandId) {
+      commandId
+      targetType
+      targetId
+      action
+    }
+  }
+`)
+
 export const releaseCommentReview = graphql(`
   mutation ReleaseCommentReview($target: CmsReviewTargetInput!, $commandId: ID!) {
     releaseComment(target: $target, commandId: $commandId) {
+      commandId
+      targetType
+      targetId
+      action
+    }
+  }
+`)
+
+export const releaseDocReview = graphql(`
+  mutation ReleaseDocReview($target: CmsReviewTargetInput!, $commandId: ID!) {
+    releaseDoc(target: $target, commandId: $commandId) {
       commandId
       targetType
       targetId

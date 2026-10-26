@@ -1,11 +1,11 @@
 defmodule GroupherServer.CMS.Review.Target do
   @moduledoc """
-  Locks the canonical target and its Lifecycle before ReviewBot locks a Check.
+  Locks the CMS target and its Lifecycle before a review result or report is applied.
 
-      ReviewBot target key
+      CMS target key
         -> parent Article lock
         -> resource Lifecycle lock
-        -> Check lock
+        -> CMS review request or report write
   """
 
   import Ecto.Query
@@ -16,9 +16,12 @@ defmodule GroupherServer.CMS.Review.Target do
     Article,
     ArticleBinding,
     ArticleLifecycle,
+    ArticlePublic,
     Comment,
+    CommentBody,
     CommentLifecycle,
-    DocLifecycle
+    DocLifecycle,
+    DocPublic
   }
 
   @doc """
@@ -26,8 +29,8 @@ defmodule GroupherServer.CMS.Review.Target do
 
   ## Examples
 
-      CMS.load_review_target_for_update("comment:42", "community:7")
-      #=> {:ok, %{kind: :comment, target: comment, lifecycle: lifecycle}} | {:error, reason}
+      CMS.Review.load_for_update("comment:42", "community:7")
+      #=> {:ok, %{type: :comment, target: comment, lifecycle: lifecycle}} | {:error, reason}
   """
   @spec load_for_update(String.t(), String.t()) :: {:ok, map()} | {:error, term()}
   def load_for_update(target_key, scope_key)
@@ -46,6 +49,68 @@ defmodule GroupherServer.CMS.Review.Target do
   def load_for_update(_target_key, _scope_key) do
     {:error, CMS.ErrorCat.invalid_review_block()}
   end
+
+  @doc "Checks that a report still refers to the target's current public content."
+  def validate_report_target_in_transaction(%{
+        owner: :cms,
+        target_type: type,
+        target_id: id,
+        community_id: community_id,
+        observed_version: version
+      })
+      when type in [:article, :comment, :doc] and is_binary(id) and is_integer(version) and
+             version > 0 do
+    scope_key = if is_nil(community_id), do: "platform", else: "community:#{community_id}"
+
+    with {:ok, context} <- load_for_update("#{type}:#{id}", scope_key),
+         true <- current_public_version(context) == version do
+      {:ok, :pass}
+    else
+      false -> {:error, CMS.ErrorCat.review_content_changed()}
+      {:error, _reason} = error -> error
+    end
+  end
+
+  def validate_report_target_in_transaction(_target) do
+    {:error, CMS.ErrorCat.invalid_review_block()}
+  end
+
+  defp current_public_version(%{
+         type: :article,
+         target: article,
+         lifecycle: %{state: state}
+       })
+       when state in [:published, :archived] do
+    case Repo.get(ArticlePublic, article.id) do
+      %ArticlePublic{publication_version: version} -> version
+      nil -> nil
+    end
+  end
+
+  defp current_public_version(%{
+         type: :comment,
+         target: comment,
+         lifecycle: %{state: :visible}
+       }) do
+    case Repo.get_by(CommentBody, comment_id: comment.id) do
+      %CommentBody{version: version} -> version
+      nil -> nil
+    end
+  end
+
+  defp current_public_version(%{
+         type: :doc,
+         target: article,
+         lifecycle: %{state: state} = lifecycle
+       })
+       when state in [:published, :archived] do
+    case Repo.get_by(DocPublic, article_id: article.id, branch_id: lifecycle.branch_id) do
+      %DocPublic{publication_version: version} -> version
+      nil -> nil
+    end
+  end
+
+  defp current_public_version(_context), do: nil
 
   defp parse_target("article:" <> id) do
     case Ecto.UUID.cast(id) do
@@ -84,12 +149,11 @@ defmodule GroupherServer.CMS.Review.Target do
          %ArticleLifecycle{} = lifecycle <- lock_article_lifecycle(article_id) do
       {:ok,
        %{
-         kind: :article,
+         type: :article,
          target: article,
          lifecycle: lifecycle,
          target_key: "article:#{article.id}",
-         scope_key: scope_key,
-         case_attrs: %{article_id: article.id}
+         scope_key: scope_key
        }}
     else
       nil -> {:error, CMS.ErrorCat.lifecycle_not_found()}
@@ -105,13 +169,12 @@ defmodule GroupherServer.CMS.Review.Target do
          {:ok, :pass} <- lock_comment_scope(comment, scope_key) do
       {:ok,
        %{
-         kind: :comment,
+         type: :comment,
          target: comment,
          parent: article,
          lifecycle: lifecycle,
          target_key: "comment:#{comment.id}",
-         scope_key: scope_key,
-         case_attrs: %{comment_id: comment.id}
+         scope_key: scope_key
        }}
     else
       nil -> {:error, CMS.ErrorCat.lifecycle_not_found()}
@@ -124,12 +187,12 @@ defmodule GroupherServer.CMS.Review.Target do
          %DocLifecycle{} = lifecycle <- lock_doc_lifecycle(article_id, branch_id) do
       {:ok,
        %{
-         kind: :doc,
+         type: :doc,
          target: article,
          lifecycle: lifecycle,
          target_key: "doc:#{article.id}:#{branch_id}",
          scope_key: "platform",
-         case_attrs: %{article_id: article.id, branch_id: branch_id}
+         branch_id: branch_id
        }}
     else
       nil -> {:error, CMS.ErrorCat.lifecycle_not_found()}

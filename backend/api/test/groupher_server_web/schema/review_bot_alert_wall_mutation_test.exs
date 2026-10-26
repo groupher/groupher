@@ -1,6 +1,8 @@
 defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
   use GroupherServer.TestMate, async: false
 
+  import Ecto.Query
+
   alias GroupherServer
   alias GroupherServer.{AlertWall, Repo}
   alias AlertWall.Model.Item
@@ -101,7 +103,6 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     mutation Submit($input: AlertReportInput!, $commandId: ID!) {
       submitReport(input: $input, commandId: $commandId) {
         id
-        subjectRef
         reportType
       }
     }
@@ -113,6 +114,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
                  "input" => %{
                    "target" => %{
                      "type" => "ARTICLE",
+                     "observedVersion" => 1,
                      "article" => %{
                        "community" => community.slug,
                        "thread" => "POST",
@@ -127,8 +129,148 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
                context: %{cur_user: reporter}
              )
 
-    assert report["subjectRef"]
+    assert report["id"]
     assert report["reportType"] == "SPAM"
+  end
+
+  test "an author sees only a safe review notice" do
+    {community, post, _attrs, author} = mock_article(:post)
+    {:ok, other_reader} = db_insert(:user)
+
+    query = """
+    query Notice($target: CmsReviewTargetInput!) {
+      contentReviewNotice(target: $target) { status failureCode }
+    }
+    """
+
+    variables = %{
+      "target" => %{
+        "type" => "ARTICLE",
+        "article" => %{
+          "community" => community.slug,
+          "thread" => "POST",
+          "innerId" => Integer.to_string(article_inner_id(post, community))
+        }
+      }
+    }
+
+    assert {:ok, %{data: %{"contentReviewNotice" => notice}}} =
+             Absinthe.run(query, Schema, variables: variables, context: %{cur_user: author})
+
+    assert Map.keys(notice) |> Enum.sort() == ["failureCode", "status"]
+
+    assert {:ok, %{data: %{"contentReviewNotice" => nil}, errors: [_ | _]}} =
+             Absinthe.run(query, Schema, variables: variables, context: %{cur_user: other_reader})
+  end
+
+  test "contentReviewHistory exposes a failed check for manual recheck" do
+    {_community, post, _attrs, reviewer} = mock_article(:post)
+    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+
+    request =
+      Repo.one!(
+        from(request in GroupherServer.CMS.Model.ArtimentReview,
+          where: request.article_id == ^post.id and is_nil(request.community_id)
+        )
+      )
+
+    request
+    |> GroupherServer.CMS.Model.ArtimentReview.changeset(%{
+      state: :failed,
+      result: %{"code" => "provider_unavailable", "message" => "The check failed."}
+    })
+    |> Repo.update!()
+
+    query = """
+    query History($target: CmsReviewTargetInput!) {
+      contentReviewHistory(target: $target) {
+        artimentReviewId
+        state
+        failureCode
+        failureMessage
+        outdatedAt
+      }
+    }
+    """
+
+    assert {:ok, %{data: %{"contentReviewHistory" => [entry | _]}}} =
+             Absinthe.run(query, Schema,
+               variables: %{"target" => %{"type" => "ARTICLE", "articleId" => post.id}},
+               context: %{cur_user: reviewer}
+             )
+
+    assert entry["artimentReviewId"] == request.id
+    assert entry["state"] == "failed"
+    assert entry["failureCode"] == "provider_unavailable"
+    assert entry["failureMessage"] == "The check failed."
+    assert is_nil(entry["outdatedAt"])
+  end
+
+  test "platform Comment history stays in the platform scope" do
+    {community, post, _attrs, author} = mock_article(:post)
+
+    {:ok, comment} =
+      GroupherServer.CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment("public comment"),
+        author,
+        Ecto.UUID.generate()
+      )
+
+    {:ok, reviewer} = db_insert(:user)
+    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+
+    query = """
+    query History($target: CmsReviewTargetInput!) {
+      contentReviewHistory(target: $target) { artimentReviewId communityId }
+    }
+    """
+
+    assert {:ok, %{data: %{"contentReviewHistory" => [entry | _]}}} =
+             Absinthe.run(query, Schema,
+               variables: %{
+                 "target" => %{
+                   "type" => "COMMENT",
+                   "commentId" => to_string(comment.id),
+                   "communityId" => nil
+                 }
+               },
+               context: %{cur_user: reviewer}
+             )
+
+    assert is_nil(entry["communityId"])
+  end
+
+  test "submitReport resolves a user by public login" do
+    {:ok, reporter} = db_insert(:user)
+    {:ok, target} = db_insert(:user)
+
+    mutation = """
+    mutation Submit($input: AlertReportInput!, $commandId: ID!) {
+      submitReport(input: $input, commandId: $commandId) {
+        id
+        targetType
+        targetId
+      }
+    }
+    """
+
+    assert {:ok, %{data: %{"submitReport" => report}}} =
+             Absinthe.run(mutation, Schema,
+               variables: %{
+                 "input" => %{
+                   "target" => %{"type" => "USER", "userLogin" => target.login},
+                   "reportType" => "IMPERSONATION"
+                 },
+                 "commandId" => Ecto.UUID.generate()
+               },
+               context: %{cur_user: reporter}
+             )
+
+    assert report["targetType"] == "USER"
+    assert report["targetId"] == target.login
   end
 
   test "updateReviewBotConfig succeeds through GraphQL" do
@@ -188,7 +330,6 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
                    target_type: :article,
                    target_id: "graphql-resolve",
                    community_id: nil,
-                   subject_ref: "graphql-resolve-v1",
                    ai_source_ref: nil,
                    sus_notes: [],
                    summary: "needs review"
@@ -224,6 +365,51 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
     assert result == %{"itemId" => to_string(item.id), "resolution" => "reviewed"}
     assert Repo.get!(Item, item.id).status == :resolved
+  end
+
+  test "alertItems closed filter returns earlier items through GraphQL" do
+    {:ok, reviewer} = db_insert(:user)
+    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+
+    assert {:ok, {:ok, item}} =
+             Repo.transaction(fn ->
+               AlertWall.add_in_transaction(
+                 %{
+                   owner: :cms,
+                   target_type: :article,
+                   target_id: "graphql-history",
+                   community_id: nil,
+                   ai_source_ref: nil,
+                   sus_notes: [],
+                   summary: "earlier concern"
+                 },
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert {:ok, {:ok, _item}} =
+             Repo.transaction(fn ->
+               AlertWall.supersede_in_transaction(item.id, Ecto.UUID.generate(), :cms)
+             end)
+
+    query = """
+    query WallHistory($scope: ReviewBotScopeInput!, $filter: AlertItemFilter) {
+      alertItems(scope: $scope, filter: $filter) {
+        entries { id status reportCount totalReportCount }
+      }
+    }
+    """
+
+    assert {:ok, %{data: %{"alertItems" => %{"entries" => entries}}}} =
+             Absinthe.run(query, Schema,
+               variables: %{
+                 "scope" => %{"type" => "PLATFORM"},
+                 "filter" => %{"closed" => true}
+               },
+               context: %{cur_user: reviewer}
+             )
+
+    assert Enum.any?(entries, &(&1["id"] == to_string(item.id) and &1["status"] == "SUPERSEDED"))
   end
 
   defp put_community_permission(user, slug, permission) do

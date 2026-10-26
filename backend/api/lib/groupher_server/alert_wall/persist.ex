@@ -7,9 +7,8 @@ defmodule GroupherServer.AlertWall.Persist do
 
   import Ecto.Query
 
-  alias GroupherServer.{AlertWall, CMS, Repo}
+  alias GroupherServer.{AlertWall, Repo}
   alias AlertWall.Model.{Action, Item, UserReport}
-  alias CMS.Model.ArtimentReview
 
   @report_types ~w(SPAM HARASSMENT ILLEGAL_CONTENT IMPERSONATION OTHER)
 
@@ -149,19 +148,20 @@ defmodule GroupherServer.AlertWall.Persist do
     {:error, AlertWall.ErrorCat.invalid_item()}
   end
 
-  @doc "Supersedes the open item created from one no-longer-current CMS request, if it exists."
-  @spec supersede_ai_source_in_transaction(Ecto.UUID.t(), Ecto.UUID.t()) ::
+  @doc "Ends open CMS items for content that was just changed by its owner."
+  @spec mark_content_changed_in_transaction(atom(), String.t(), Ecto.UUID.t()) ::
           {:ok, :pass} | {:error, term()}
-  def supersede_ai_source_in_transaction(request_id, operation_ref)
-      when is_binary(request_id) and is_binary(operation_ref) do
+  def mark_content_changed_in_transaction(target_type, target_id, operation_ref)
+      when target_type in [:article, :comment, :doc] and is_binary(target_id) and
+             is_binary(operation_ref) do
     with {:ok, :pass} <- require_transaction(),
-         items <- items_for_review_request(request_id),
+         items <- deleted_target_items(target_type, target_id),
          {:ok, :pass} <- supersede_items(items, operation_ref) do
       {:ok, :pass}
     end
   end
 
-  def supersede_ai_source_in_transaction(_request_id, _operation_ref) do
+  def mark_content_changed_in_transaction(_target_type, _target_id, _operation_ref) do
     {:error, AlertWall.ErrorCat.invalid_item()}
   end
 
@@ -180,7 +180,7 @@ defmodule GroupherServer.AlertWall.Persist do
     {:error, AlertWall.ErrorCat.invalid_item()}
   end
 
-  @doc "Tombstones open Accounts-owned user items when an account target is removed."
+  @doc "Ends open account items when their target account is removed."
   def mark_account_target_deleted_in_transaction(:user, target_id, operation_ref)
       when is_binary(target_id) and is_binary(operation_ref) do
     with {:ok, :pass} <- require_transaction(),
@@ -233,19 +233,20 @@ defmodule GroupherServer.AlertWall.Persist do
     )
   end
 
-  @doc "Resolves an open CMS item sourced from one review request, if present."
-  @spec resolve_ai_source_in_transaction(Ecto.UUID.t(), String.t(), Ecto.UUID.t()) ::
+  @doc "Resolves the open item for one CMS target and scope, including report-only items."
+  @spec resolve_target_in_transaction(map(), String.t(), Ecto.UUID.t()) ::
           {:ok, :pass} | {:error, term()}
-  def resolve_ai_source_in_transaction(request_id, resolution, operation_ref)
-      when is_binary(request_id) and is_binary(resolution) and is_binary(operation_ref) do
+  def resolve_target_in_transaction(%{owner: :cms} = target, resolution, operation_ref)
+      when is_binary(resolution) and is_binary(operation_ref) do
     with {:ok, :pass} <- require_transaction(),
-         items <- items_for_review_request(request_id),
+         {:ok, normalized} <- validate_item(Map.put(target, :ai_source_ref, nil)),
+         items <- Repo.all(lock(current_item_query(normalized))),
          {:ok, :pass} <- resolve_items(items, resolution, operation_ref) do
       {:ok, :pass}
     end
   end
 
-  def resolve_ai_source_in_transaction(_request_id, _resolution, _operation_ref) do
+  def resolve_target_in_transaction(_target, _resolution, _operation_ref) do
     {:error, AlertWall.ErrorCat.invalid_item()}
   end
 
@@ -372,7 +373,6 @@ defmodule GroupherServer.AlertWall.Persist do
             :target_type,
             :target_id,
             :community_id,
-            :subject_ref,
             :ai_source_ref,
             :sus_notes,
             :summary
@@ -395,48 +395,12 @@ defmodule GroupherServer.AlertWall.Persist do
     end
   end
 
-  defp items_for_review_request(request_id) do
-    case Repo.get(ArtimentReview, request_id) do
-      %ArtimentReview{} = request ->
-        target_id = review_target_id(request)
-
-        query =
-          from(item in Item,
-            where:
-              item.owner == :cms and item.target_type == ^request.target_type and
-                item.target_id == ^target_id and item.subject_ref == ^request.subject_ref and
-                item.status == :open,
-            order_by: [asc: item.id],
-            lock: "FOR UPDATE"
-          )
-
-        query =
-          if is_nil(request.community_id) do
-            where(query, [item], is_nil(item.community_id))
-          else
-            where(query, [item], item.community_id == ^request.community_id)
-          end
-
-        Repo.all(query)
-
-      nil ->
-        []
-    end
-  end
-
-  defp review_target_id(%ArtimentReview{target_type: :article, article_id: id}), do: id
-  defp review_target_id(%ArtimentReview{target_type: :comment, comment_id: id}), do: to_string(id)
-
-  defp review_target_id(%ArtimentReview{target_type: :doc, article_id: id, branch_id: branch_id}) do
-    "#{id}:#{branch_id}"
-  end
-
   defp current_item_query(attrs) do
     query =
       from(item in Item,
         where:
           item.owner == ^attrs.owner and item.target_type == ^attrs.target_type and
-            item.target_id == ^attrs.target_id and item.subject_ref == ^attrs.subject_ref and
+            item.target_id == ^attrs.target_id and
             item.status == :open,
         lock: "FOR UPDATE"
       )
@@ -470,7 +434,7 @@ defmodule GroupherServer.AlertWall.Persist do
   end
 
   defp validate_item(attrs) do
-    required = [:owner, :target_type, :target_id, :subject_ref]
+    required = [:owner, :target_type, :target_id]
     notes = Map.get(attrs, :sus_notes, [])
     summary = Map.get(attrs, :summary, "")
     source_ref = Map.get(attrs, :ai_source_ref)
@@ -488,8 +452,7 @@ defmodule GroupherServer.AlertWall.Persist do
           (attrs.target_type == :doc and not is_nil(Map.get(attrs, :community_id))) ->
         {:error, AlertWall.ErrorCat.invalid_item()}
 
-      not is_binary(attrs.target_id) or attrs.target_id == "" or not is_binary(attrs.subject_ref) or
-          attrs.subject_ref == "" ->
+      not is_binary(attrs.target_id) or attrs.target_id == "" ->
         {:error, AlertWall.ErrorCat.invalid_item()}
 
       not is_list(notes) or not is_binary(summary) or
@@ -536,7 +499,7 @@ defmodule GroupherServer.AlertWall.Persist do
   end
 
   defp validate_report(attrs, operation_ref) do
-    required = [:reporter_id, :owner, :target_type, :target_id, :subject_ref, :report_type]
+    required = [:reporter_id, :owner, :target_type, :target_id, :report_type]
 
     cond do
       Enum.any?(required, &(not Map.has_key?(attrs, &1))) ->
@@ -553,8 +516,12 @@ defmodule GroupherServer.AlertWall.Persist do
         {:error, AlertWall.ErrorCat.invalid_report()}
 
       not is_integer(attrs.reporter_id) or not is_binary(attrs.target_id) or
-        attrs.target_id == "" or not is_binary(attrs.subject_ref) or attrs.subject_ref == "" or
+        attrs.target_id == "" or
           (not is_nil(Map.get(attrs, :details)) and not is_binary(attrs.details)) ->
+        {:error, AlertWall.ErrorCat.invalid_report()}
+
+      attrs.owner == :cms and
+          (not is_integer(Map.get(attrs, :observed_version)) or attrs.observed_version < 1) ->
         {:error, AlertWall.ErrorCat.invalid_report()}
 
       true ->
@@ -590,7 +557,6 @@ defmodule GroupherServer.AlertWall.Persist do
                target_type: attrs.target_type,
                target_id: attrs.target_id,
                community_id: attrs.community_id,
-               subject_ref: attrs.subject_ref,
                ai_source_ref: nil,
                sus_notes: [],
                summary: ""
@@ -605,8 +571,8 @@ defmodule GroupherServer.AlertWall.Persist do
                owner: attrs.owner,
                target_type: attrs.target_type,
                target_id: attrs.target_id,
+               observed_version: Map.get(attrs, :observed_version),
                community_id: attrs.community_id,
-               subject_ref: attrs.subject_ref,
                report_type: attrs.report_type,
                details: attrs.details,
                operation_ref: operation_ref
@@ -620,7 +586,8 @@ defmodule GroupherServer.AlertWall.Persist do
   defp report_matches?(report, attrs) do
     report.reporter_id == attrs.reporter_id and report.owner == attrs.owner and
       report.target_type == attrs.target_type and report.target_id == attrs.target_id and
-      report.community_id == attrs.community_id and report.subject_ref == attrs.subject_ref and
+      report.community_id == attrs.community_id and
+      report.observed_version == Map.get(attrs, :observed_version) and
       report.report_type == attrs.report_type and report.details == attrs.details
   end
 

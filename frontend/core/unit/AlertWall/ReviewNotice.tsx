@@ -5,32 +5,32 @@ import type { CmsReviewTargetInput } from '~/graphql/generated/graphql'
 import useTrans from '~/hooks/useTrans'
 import { viewerQueryKeys } from '~/query/key'
 import useAccount from '~/stores/account/hooks'
-import { contentReview } from '~/unit/CMSReview/schema'
+import { contentReviewNotice } from '~/unit/CMSReview/schema'
 
 type TProps = { target: CmsReviewTargetInput }
 
 export default function ReviewNotice({ target }: TProps) {
   const { t } = useTrans()
-  const { accountRef } = useAccount()
+  const { accountScope } = useAccount()
   const query = useQuery({
-    queryKey: viewerQueryKeys.contentReview(accountRef || 'anonymous', target),
+    queryKey: viewerQueryKeys.contentReview(accountScope || 'anonymous', target),
     queryFn: async () => {
-      const response = await browserGraphQLRequest(contentReview, { target })
-      return response.contentReview
+      const response = await browserGraphQLRequest(contentReviewNotice, { target })
+      return response.contentReviewNotice
     },
     staleTime: 10_000,
   })
 
   if (!query.data) return null
 
-  const status = query.data.state.toUpperCase()
-  if (status === 'COMPLETED' && query.data.reviewMode !== 'human_first') return null
   const message =
-    status === 'QUEUED' || status === 'RUNNING'
+    query.data.status === 'checking'
       ? t('content_review.status.checking')
-      : status === 'FAILED'
+      : query.data.status === 'failed'
         ? t('content_review.status.check_unavailable')
-        : t('content_review.status.waiting_human')
+        : query.data.status === 'restricted'
+          ? t('content_review.status.restricted')
+          : t('content_review.status.waiting_human')
 
   return (
     <aside
@@ -38,15 +38,8 @@ export default function ReviewNotice({ target }: TProps) {
       className='border-divider bg-notice-bg my-4 rounded-md border-l-4 px-4 py-3'
     >
       <p className='text-sm font-medium'>{message}</p>
-      {[
-        { source: 'system', opinion: query.data.systemOpinion },
-        { source: 'community', opinion: query.data.communityOpinion },
-      ].map(({ source, opinion }) =>
-        opinion?.summary ? (
-          <p key={source} className='text-digest mt-1 text-sm'>
-            {opinion.summary}
-          </p>
-        ) : null,
+      {query.data.status === 'failed' && query.data.failureCode && (
+        <p className='text-digest mt-1 text-sm'>{query.data.failureCode}</p>
       )}
     </aside>
   )

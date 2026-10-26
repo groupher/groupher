@@ -3,15 +3,15 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import MyReports from './MyReports'
 
-const state = vi.hoisted(() => ({ request: vi.fn(), active: true, accountRef: 'account-a' }))
+const state = vi.hoisted(() => ({ request: vi.fn(), active: true, accountScope: 'account-a' }))
 
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: state.request }))
 vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key }) }))
-vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountRef: state.accountRef }) }))
+vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: state.accountScope }) }))
 
 beforeEach(() => {
   state.active = true
-  state.accountRef = 'account-a'
+  state.accountScope = 'account-a'
   state.request.mockImplementation(
     async (_document: unknown, variables: Record<string, unknown>) => {
       if ('reportId' in variables) {
@@ -101,4 +101,50 @@ it('loads the next report page from the server', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'alert_wall.next_page' }))
   expect(await screen.findByText('comment · 2')).toBeInTheDocument()
   expect(state.request.mock.calls.some((call) => call[1].pagi?.offset?.page === 2)).toBe(true)
+})
+
+it('folds reports about content before the latest edit', async () => {
+  state.request.mockResolvedValue({
+    myReports: {
+      entries: [
+        {
+          id: 'new',
+          targetType: 'ARTICLE',
+          targetId: 'new-content',
+          itemId: '2',
+          reportType: 'SPAM',
+          details: 'Current report',
+          withdrawnAt: null,
+          outdatedAt: null,
+          resolvedAt: null,
+          insertedAt: '2026-10-26T00:00:00Z',
+        },
+        {
+          id: 'old',
+          targetType: 'ARTICLE',
+          targetId: 'old-content',
+          itemId: '1',
+          reportType: 'SPAM',
+          details: 'Old report',
+          withdrawnAt: null,
+          outdatedAt: '2026-10-25T00:00:00Z',
+          resolvedAt: '2026-10-26T00:00:00Z',
+          resolution: 'reviewed',
+          insertedAt: '2026-10-24T00:00:00Z',
+        },
+      ],
+    },
+  })
+
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <MyReports show onClose={() => {}} />
+    </QueryClientProvider>,
+  )
+
+  expect(await screen.findByText('Current report')).toBeInTheDocument()
+  expect(screen.getByText('Old report').closest('details')).not.toHaveAttribute('open')
+  expect(screen.getByText('alert_wall.older_reports (1)')).toBeInTheDocument()
+  expect(screen.getByText('cms_review.outdated')).toBeInTheDocument()
+  expect(screen.getByText('alert_wall.report_resolved')).toBeInTheDocument()
 })

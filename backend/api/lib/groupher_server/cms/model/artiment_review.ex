@@ -35,13 +35,13 @@ defmodule GroupherServer.CMS.Model.ArtimentReview do
     belongs_to(:comment, Comment)
     belongs_to(:branch, DocBranch)
     belongs_to(:community, Community)
-    field(:subject_ref, Ecto.UUID)
     field(:policy_snapshot, :map)
     field(:payload, :map)
     field(:state, Ecto.Enum, values: @states, default: :queued)
     field(:result, :map)
     belongs_to(:updated_by, User)
     field(:applied_at, :utc_datetime)
+    field(:replaced_at, :utc_datetime)
     field(:outdated_at, :utc_datetime)
     field(:payload_expires_at, :utc_datetime)
     timestamps(type: :utc_datetime)
@@ -57,19 +57,18 @@ defmodule GroupherServer.CMS.Model.ArtimentReview do
       :comment_id,
       :branch_id,
       :community_id,
-      :subject_ref,
       :policy_snapshot,
       :payload,
       :state,
       :result,
       :updated_by_id,
       :applied_at,
+      :replaced_at,
       :outdated_at,
       :payload_expires_at
     ])
     |> validate_required([
       :target_type,
-      :subject_ref,
       :policy_snapshot,
       :state,
       :payload_expires_at

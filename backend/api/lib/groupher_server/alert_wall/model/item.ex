@@ -26,7 +26,6 @@ defmodule GroupherServer.AlertWall.Model.Item do
     field(:target_type, Ecto.Enum, values: @target_types)
     field(:target_id, :string)
     belongs_to(:community, Community)
-    field(:subject_ref, :string)
     field(:status, Ecto.Enum, values: @statuses, default: :open)
     field(:ai_source_ref, Ecto.UUID)
     field(:sus_notes, {:array, :map}, default: [])
@@ -48,7 +47,6 @@ defmodule GroupherServer.AlertWall.Model.Item do
       :target_type,
       :target_id,
       :community_id,
-      :subject_ref,
       :status,
       :ai_source_ref,
       :sus_notes,
@@ -63,7 +61,6 @@ defmodule GroupherServer.AlertWall.Model.Item do
       :owner,
       :target_type,
       :target_id,
-      :subject_ref,
       :status,
       :version,
       :opened_at

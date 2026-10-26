@@ -32,5 +32,12 @@ defmodule GroupherServerWeb.Schema.AlertWall.Queries do
       middleware(M.Authorize, :login)
       resolve(&R.AlertWall.alert_item/3)
     end
+
+    field :alert_item_reports, non_null(:alert_report_page) do
+      arg(:id, non_null(:id))
+      arg(:pagi, :pagi_input)
+      middleware(M.Authorize, :login)
+      resolve(&R.AlertWall.item_reports/3)
+    end
   end
 end

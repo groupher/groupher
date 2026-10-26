@@ -131,7 +131,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   end
 
   defp current_content(%{
-         kind: :article,
+         type: :article,
          target: article,
          lifecycle: %ArticleLifecycle{state: state}
        })
@@ -153,7 +153,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   end
 
   defp current_content(%{
-         kind: :comment,
+         type: :comment,
          target: comment,
          parent: article,
          lifecycle: %CommentLifecycle{state: :visible}
@@ -172,10 +172,10 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   end
 
   defp current_content(%{
-         kind: :doc,
+         type: :doc,
          target: article,
          lifecycle: %DocLifecycle{state: state},
-         case_attrs: %{branch_id: branch_id}
+         branch_id: branch_id
        })
        when state in [:published, :archived] do
     with %DocPublic{branch_version_id: version_id, title: title} <-
@@ -195,7 +195,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     end
   end
 
-  defp current_configs(%{kind: :article}, scope_key) do
+  defp current_configs(%{type: :article}, scope_key) do
     with {:ok, community_id} <- parse_scope(scope_key) do
       if community_id do
         ReviewBot.configs_for_targets([community_id], :article)
@@ -205,13 +205,13 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     end
   end
 
-  defp current_configs(%{kind: :comment}, scope_key) do
+  defp current_configs(%{type: :comment}, scope_key) do
     with {:ok, community_id} <- parse_scope(scope_key) do
       ReviewBot.configs(community_id, :comment)
     end
   end
 
-  defp current_configs(%{kind: :doc}, _scope_key), do: ReviewBot.configs(nil, :doc)
+  defp current_configs(%{type: :doc}, _scope_key), do: ReviewBot.configs(nil, :doc)
 
   defp request_scope("platform"), do: {:ok, :system}
 
@@ -225,7 +225,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   defp request_scope(_scope_key), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
   defp request_target(%{
-         kind: :article,
+         type: :article,
          target: article,
          lifecycle: %ArticleLifecycle{} = lifecycle
        }) do
@@ -233,7 +233,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   end
 
   defp request_target(%{
-         kind: :comment,
+         type: :comment,
          target: comment,
          lifecycle: %CommentLifecycle{} = lifecycle
        }) do
@@ -241,18 +241,18 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   end
 
   defp request_target(%{
-         kind: :doc,
+         type: :doc,
          target: article,
          lifecycle: %DocLifecycle{} = lifecycle,
-         case_attrs: %{branch_id: branch_id}
+         branch_id: branch_id
        }) do
     %{type: :doc, article_id: article.id, branch_id: branch_id, lifecycle: lifecycle}
   end
 
-  defp request_target_id(%{kind: :article, target: article}), do: article.id
-  defp request_target_id(%{kind: :comment, target: comment}), do: to_string(comment.id)
+  defp request_target_id(%{type: :article, target: article}), do: article.id
+  defp request_target_id(%{type: :comment, target: comment}), do: to_string(comment.id)
 
-  defp request_target_id(%{kind: :doc, target: article, case_attrs: %{branch_id: branch_id}}) do
+  defp request_target_id(%{type: :doc, target: article, branch_id: branch_id}) do
     "#{article.id}:#{branch_id}"
   end
 

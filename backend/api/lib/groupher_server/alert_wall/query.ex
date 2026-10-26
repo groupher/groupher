@@ -23,9 +23,13 @@ defmodule GroupherServer.AlertWall.Query do
          {:ok, :pass} <- authorize(actor, permission) do
       query =
         from(item in Item,
-          where: item.status == :open,
           order_by: [desc: item.opened_at, desc: item.id]
         )
+
+      query =
+        if is_map(filter) and Map.get(filter, :closed) == true,
+          do: where(query, [item], item.status != :open),
+          else: where(query, [item], item.status == :open)
 
       query =
         if is_nil(community_id),
@@ -37,7 +41,8 @@ defmodule GroupherServer.AlertWall.Query do
       binding = %{
         surface: "alert_wall.items",
         order: %{"sort" => "opened_at_desc_id_desc"},
-        fingerprint: Base.encode64(:crypto.hash(:sha256, :erlang.term_to_binary({community_id})))
+        fingerprint:
+          Base.encode64(:crypto.hash(:sha256, :erlang.term_to_binary({community_id, filter})))
       }
 
       Helper.ORM.Pagi.Window.run(
@@ -70,6 +75,46 @@ defmodule GroupherServer.AlertWall.Query do
   end
 
   def item(_item_id, _actor), do: {:error, GroupherServer.AlertWall.ErrorCat.item_not_found()}
+
+  @doc "Lists the original reports for one item after checking reviewer access to its scope."
+  def item_reports(item_id, actor, pagi \\ nil)
+
+  def item_reports(item_id, actor, pagi) when is_integer(item_id) and item_id > 0 do
+    with {:ok, %Item{}} <- item(item_id, actor) do
+      query =
+        from(report in UserReport,
+          where: report.item_id == ^item_id,
+          order_by: [desc: report.inserted_at, desc: report.id]
+        )
+
+      binding = %{
+        surface: "alert_wall.item_reports",
+        order: %{"sort" => "inserted_at_desc_id_desc"},
+        fingerprint: Base.encode64(:crypto.hash(:sha256, :erlang.term_to_binary(item_id)))
+      }
+
+      Helper.ORM.Pagi.Window.run(
+        pagi || default_pagi(),
+        binding,
+        fn offset, size ->
+          entries = Repo.all(from(report in query, limit: ^size, offset: ^offset))
+          {:ok, %{entries: entries, total: Repo.aggregate(query, :count, :id)}}
+        end,
+        max_entries: 500
+      )
+    end
+  end
+
+  def item_reports(_item_id, _actor, _pagi) do
+    {:error, GroupherServer.AlertWall.ErrorCat.item_not_found()}
+  end
+
+  @doc "Counts every report retained on an item, including resolved and outdated reports."
+  def total_report_count(item_id) when is_integer(item_id) and item_id > 0 do
+    Repo.aggregate(from(report in UserReport, where: report.item_id == ^item_id), :count, :id)
+  end
+
+  def total_report_count(_item_id), do: 0
 
   @doc "Lists the current user's original report facts, including withdrawn history."
   def my_reports(actor, filter, pagi \\ nil) do

@@ -11,6 +11,7 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
 
   alias GroupherServer.{Accounts, AlertWall, CMS, FrontDesk}
   alias Accounts.Model.User
+  alias AlertWall.Model.UserReport
   alias CMS.Model.{Article, Comment, Community}
 
   def alert_items(_parent, %{scope: %{type: :platform}} = args, %{context: %{cur_user: actor}}) do
@@ -44,6 +45,16 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
     {:error, AlertWall.item_not_found_error()}
   end
 
+  def item_reports(_parent, %{id: id} = args, %{context: %{cur_user: actor}}) do
+    with {:ok, item_id} <- parse_id(id) do
+      AlertWall.item_reports(item_id, actor, Map.get(args, :pagi))
+    end
+  end
+
+  def item_reports(_parent, _args, _resolution) do
+    {:error, AlertWall.item_not_found_error()}
+  end
+
   def my_reports(_parent, args, %{context: %{cur_user: actor}}) do
     AlertWall.my_reports(actor, Map.get(args, :filter), Map.get(args, :pagi))
   end
@@ -56,7 +67,13 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
         context: %{cur_user: actor}
       }) do
     with {:ok, target} <- resolve_report_target(input.target, actor) do
-      AlertWall.submit_report(target, input.report_type, input.details || "", actor, command_id)
+      AlertWall.submit_report(
+        target,
+        input.report_type,
+        Map.get(input, :details) || "",
+        actor,
+        command_id
+      )
     end
   end
 
@@ -81,6 +98,30 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
   end
 
   def report_count(_item, _args, _resolution), do: {:ok, 0}
+
+  def total_report_count(%{id: id}, _args, _resolution) when is_integer(id) do
+    {:ok, AlertWall.total_report_count(id)}
+  end
+
+  def total_report_count(_item, _args, _resolution), do: {:ok, 0}
+
+  def reporter_login(%UserReport{reporter_id: id}, _args, _resolution) do
+    case FrontDesk.user(id, mode: :internal) do
+      {:ok, %User{} = user} -> {:ok, user.login}
+      {:error, _reason} -> {:ok, nil}
+    end
+  end
+
+  def public_target_id(%{target_type: :user, target_id: id}, _args, _resolution) do
+    with {user_id, ""} <- Integer.parse(id),
+         {:ok, %User{} = user} <- FrontDesk.user(user_id, mode: :internal) do
+      {:ok, user.login}
+    else
+      _ -> {:ok, nil}
+    end
+  end
+
+  def public_target_id(%{target_id: id}, _args, _resolution), do: {:ok, id}
 
   def reported_count(%{id: user_id}, _args, _resolution) when is_integer(user_id) do
     {:ok, AlertWall.reported_count(user_id)}
@@ -120,7 +161,8 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
 
   defp parse_id(_id), do: {:error, AlertWall.item_not_found_error()}
 
-  defp resolve_report_target(%{type: :article, article: path}, actor) when is_map(path) do
+  defp resolve_report_target(%{type: :article, article: path} = input, actor)
+       when is_map(path) do
     with {:ok, projection} <- FrontDesk.article(path, actor),
          article_id when is_binary(article_id) <- Map.get(projection, :id),
          {:ok, %Community{} = community} <- FrontDesk.community(path.community, actor, []),
@@ -131,38 +173,34 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
          owner: :cms,
          target_type: :article,
          target_id: article.id,
-         community_id: community.id,
-         subject_ref:
-           review_subject_ref(
-             %{type: :article, article_id: article.id, community_id: community.id},
-             subject_ref(:article, article, projection)
-           )
+         observed_version: Map.get(input, :observed_version),
+         community_id: community.id
        }}
     else
       _ -> {:error, AlertWall.invalid_report_error()}
     end
   end
 
-  defp resolve_report_target(%{type: :comment, comment: path}, actor) when is_map(path) do
+  defp resolve_report_target(%{type: :comment, comment: path} = input, actor)
+       when is_map(path) do
     with {:ok, %Comment{} = comment} <- FrontDesk.comment(path, actor) do
       {:ok,
        %{
          owner: :cms,
          target_type: :comment,
          target_id: to_string(comment.id),
-         community_id: comment.community_id,
-         subject_ref:
-           review_subject_ref(
-             %{type: :comment, comment_id: comment.id, community_id: comment.community_id},
-             subject_ref(:comment, comment, comment.body)
-           )
+         observed_version: Map.get(input, :observed_version),
+         community_id: comment.community_id
        }}
     else
       _ -> {:error, AlertWall.invalid_report_error()}
     end
   end
 
-  defp resolve_report_target(%{type: :doc, article: path, doc_branch_id: branch_id}, actor)
+  defp resolve_report_target(
+         %{type: :doc, article: path, doc_branch_id: branch_id} = input,
+         actor
+       )
        when is_map(path) and is_integer(branch_id) and branch_id > 0 do
     with {:ok, projection} <- FrontDesk.article(path, actor),
          article_id when is_binary(article_id) <- Map.get(projection, :id),
@@ -174,30 +212,24 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
          owner: :cms,
          target_type: :doc,
          target_id: "#{article.id}:#{branch_id}",
-         community_id: nil,
-         subject_ref:
-           review_subject_ref(
-             %{type: :doc, article_id: article.id, branch_id: branch_id, community_id: nil},
-             "branch:#{branch_id}:#{subject_ref(:doc, article, projection)}"
-           )
+         observed_version: Map.get(input, :observed_version),
+         community_id: nil
        }}
     else
       _ -> {:error, AlertWall.invalid_report_error()}
     end
   end
 
-  defp resolve_report_target(%{type: :user, user_id: user_id}, actor)
-       when is_binary(user_id) do
-    with {id, ""} when id > 0 <- Integer.parse(user_id),
-         {:ok, %User{} = user} <- FrontDesk.user(id, mode: :public, view: :default),
+  defp resolve_report_target(%{type: :user, user_login: login}, actor)
+       when is_binary(login) and login != "" do
+    with {:ok, %User{} = user} <- FrontDesk.user(login, mode: :public, view: :default),
          false <- user.id == actor.id do
       {:ok,
        %{
          owner: :accounts,
          target_type: :user,
          target_id: to_string(user.id),
-         community_id: nil,
-         subject_ref: "user:#{user.id}:#{DateTime.to_iso8601(user.updated_at)}"
+         community_id: nil
        }}
     else
       _ -> {:error, AlertWall.invalid_report_error()}
@@ -206,25 +238,5 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
 
   defp resolve_report_target(_target, _actor) do
     {:error, AlertWall.invalid_report_error()}
-  end
-
-  defp review_subject_ref(attrs, fallback) do
-    case CMS.current_review_for_scope(attrs) do
-      {:ok, %{subject_ref: subject_ref}} when is_binary(subject_ref) -> subject_ref
-      _ -> fallback
-    end
-  end
-
-  defp subject_ref(type, resource, projection) do
-    revision = Map.get(projection, :revision_id) || Map.get(projection, :current_revision_id)
-    version = Map.get(projection, :version) || Map.get(projection, :body_version)
-    updated_at = Map.get(resource, :updated_at)
-
-    cond do
-      is_integer(revision) or is_binary(revision) -> "#{type}:revision:#{revision}"
-      is_integer(version) -> "#{type}:version:#{version}"
-      match?(%DateTime{}, updated_at) -> "#{type}:updated:#{DateTime.to_iso8601(updated_at)}"
-      true -> "#{type}:current:#{resource.id}"
-    end
   end
 end

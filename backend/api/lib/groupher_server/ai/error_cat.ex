@@ -14,4 +14,5 @@ defmodule GroupherServer.AI.ErrorCat do
   error(:provider_protocol_error, code: 7505)
   error(:coverage_incomplete, code: 7506)
   error(:invalid_opinion_input, code: 7507)
+  error(:input_too_large, code: 7508)
 end

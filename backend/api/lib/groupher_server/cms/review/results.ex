@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Review.Results do
          %ArtimentReview{} = request <- Repo.get(ArtimentReview, artiment_review_id),
          {:ok, context} <- lock_target(request),
          true <- current_content?(request),
-         %ArtimentReview{state: :running, outdated_at: nil} <- lock_request(artiment_review_id),
+         %ArtimentReview{state: :running, replaced_at: nil} <- lock_request(artiment_review_id),
          {:ok, completed} <-
            CMS.Review.Requests.complete_in_transaction(artiment_review_id, result),
          {:ok, :pass} <- apply_restrictions(request, context, result),
@@ -107,7 +107,7 @@ defmodule GroupherServer.CMS.Review.Results do
   defp lock_request(artiment_review_id) do
     Repo.one(
       from(request in ArtimentReview,
-        where: request.id == ^artiment_review_id and is_nil(request.outdated_at),
+        where: request.id == ^artiment_review_id and is_nil(request.replaced_at),
         lock: "FOR UPDATE"
       )
     )
@@ -166,7 +166,6 @@ defmodule GroupherServer.CMS.Review.Results do
       scope_key: context.scope_key,
       type: type,
       artiment_review_id: request.id,
-      subject_ref: request.subject_ref,
       source_ref: "request:#{request.id}:#{type}",
       source: :request,
       applied_at: DateTime.utc_now(:second)
@@ -193,18 +192,25 @@ defmodule GroupherServer.CMS.Review.Results do
     attrs = wall_attrs(request, result)
 
     with {:ok, item} <- AlertWall.replace_ai_opinion_in_transaction(attrs),
-         {:ok, :pass} <- maybe_resolve_cleared_item(item, request) do
+         {:ok, :pass} <- maybe_resolve_unfounded_item(item, request, "ai_clear") do
+      {:ok, :pass}
+    end
+  end
+
+  defp apply_wall(request, %{"status" => "uncertain"} = result) do
+    with {:ok, item} <- AlertWall.replace_ai_opinion_in_transaction(wall_attrs(request, result)),
+         {:ok, :pass} <- maybe_resolve_unfounded_item(item, request, "ai_uncertain") do
       {:ok, :pass}
     end
   end
 
   defp apply_wall(_request, _result), do: {:ok, :pass}
 
-  defp maybe_resolve_cleared_item(:absent, _request), do: {:ok, :pass}
+  defp maybe_resolve_unfounded_item(:absent, _request, _resolution), do: {:ok, :pass}
 
-  defp maybe_resolve_cleared_item(item, request) do
+  defp maybe_resolve_unfounded_item(item, request, resolution) do
     if item.sus_notes == [] and AlertWall.active_report_count(item.id) == 0 do
-      case AlertWall.resolve_from_cms_in_transaction(item.id, "ai_clear", request.id) do
+      case AlertWall.resolve_from_cms_in_transaction(item.id, resolution, request.id) do
         {:ok, _resolved} -> {:ok, :pass}
         {:error, _reason} = error -> error
       end
@@ -219,7 +225,6 @@ defmodule GroupherServer.CMS.Review.Results do
       target_type: request.target_type,
       target_id: target_id(request),
       community_id: request.community_id,
-      subject_ref: request.subject_ref,
       ai_source_ref: request.id,
       sus_notes: result["sus_notes"] || [],
       summary: result["summary"] || ""

@@ -6,12 +6,12 @@ import ReportAction from './ReportAction'
 const state = vi.hoisted(() => ({
   request: vi.fn(),
   login: true,
-  accountRef: 'account-a',
+  accountScope: 'account-a',
 }))
 
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: state.request }))
 vi.mock('~/stores/account/hooks', () => ({
-  default: () => ({ isLogin: state.login, accountRef: state.accountRef }),
+  default: () => ({ isLogin: state.login, accountScope: state.accountScope }),
 }))
 vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key }) }))
 vi.mock('~/signal', () => ({ authWarn: vi.fn() }))
@@ -19,6 +19,7 @@ vi.mock('~/signal', () => ({ authWarn: vi.fn() }))
 const target = {
   type: 'ARTICLE' as const,
   article: { community: 'home', thread: 'POST' as const, innerId: '17' },
+  observedVersion: 1,
 }
 
 const renderReportAction = () =>
@@ -32,7 +33,7 @@ const renderReportAction = () =>
 
 beforeEach(() => {
   state.login = true
-  state.accountRef = 'account-a'
+  state.accountScope = 'account-a'
   let rejectNextSubmit = true
   state.request.mockImplementation(
     async (_document: unknown, variables: Record<string, unknown>) => {
@@ -58,6 +59,9 @@ it('retries a report with the same command id after an ambiguous failure', async
   const submitCalls = state.request.mock.calls.filter((call) => 'input' in call[1])
   const firstCommandId = submitCalls[0][1].commandId
   expect(firstCommandId).toBeTruthy()
+  expect(
+    (submitCalls[0][1].input as { target: { observedVersion: number } }).target.observedVersion,
+  ).toBe(1)
 
   fireEvent.click(screen.getByRole('button', { name: 'alert_wall.report_submit' }))
   await screen.findByText('alert_wall.report_submitted')
@@ -82,4 +86,16 @@ it('re-enables a failed report form after cancel and reopen', async () => {
 
   expect(screen.getByRole('combobox')).toBeEnabled()
   expect(screen.getByRole('textbox')).toBeEnabled()
+})
+
+it('asks the reporter to refresh when the public content changed', async () => {
+  state.request.mockRejectedValueOnce(
+    Object.assign(new Error('content changed'), { errors: [{ extensions: { code: 4548 } }] }),
+  )
+  renderReportAction()
+
+  fireEvent.click(screen.getByRole('button', { name: 'alert_wall.report' }))
+  fireEvent.click(screen.getByRole('button', { name: 'alert_wall.report_submit' }))
+
+  expect(await screen.findByText('alert_wall.report_content_changed')).toBeInTheDocument()
 })

@@ -18,6 +18,7 @@ defmodule GroupherServer.AI.Adapters.JudgeHTTP do
 
   @timeout 15_000
   @max_body_bytes 2 * 1024 * 1024
+  @max_state_bytes 16_000
 
   @doc "Submits a moderation opinion to the operator-hosted judge service."
   @impl true
@@ -71,11 +72,26 @@ defmodule GroupherServer.AI.Adapters.JudgeHTTP do
   defp validate_opinion_size(input) do
     body = Jason.encode!(opinion_request_body(input, "model"))
 
-    if byte_size(body) <= @max_body_bytes and length(input.images || []) <= 10 and
-         Enum.all?(input.images || [], &valid_image?/1) do
-      {:ok, :pass}
-    else
-      {:error, ErrorCat.coverage_incomplete()}
+    state =
+      Jason.encode!(%{
+        policy: %{
+          systemRules: input.system_prompt,
+          communityRules: input.prompt,
+          bannedTerms: input.ban_words
+        },
+        content: input.text
+      })
+
+    cond do
+      byte_size(state) > @max_state_bytes ->
+        {:error, ErrorCat.input_too_large()}
+
+      byte_size(body) > @max_body_bytes or length(input.images || []) > 10 or
+          not Enum.all?(input.images || [], &valid_image?/1) ->
+        {:error, ErrorCat.coverage_incomplete()}
+
+      true ->
+        {:ok, :pass}
     end
   end
 

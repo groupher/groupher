@@ -13,10 +13,15 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   alias GroupherServer.{CMS, FrontDesk}
   alias CMS.Model.Community
 
-  def pending_content_reviews(_parent, %{scope: scope}, %{context: %{cur_user: actor}}) do
+  def pending_content_reviews(_parent, %{scope: scope} = args, %{context: %{cur_user: actor}}) do
     with {:ok, normalized, attrs, permission, params} <- resolve_scope(scope),
          {:ok, :pass} <- authorize(actor, permission, params),
-         {:ok, requests} <- CMS.pending_artiment_reviews(attrs) do
+         {:ok, requests} <-
+           CMS.pending_artiment_reviews(
+             attrs,
+             Map.get(args, :limit, 50),
+             Map.get(args, :offset, 0)
+           ) do
       {:ok, Enum.map(requests, &present(&1, normalized))}
     end
   end
@@ -35,6 +40,36 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   end
 
   def content_review(_parent, _args, _resolution) do
+    {:error, CMS.passport_error_cat_permission_denied()}
+  end
+
+  def content_review_notice(_parent, %{target: target}, %{context: %{cur_user: actor}}) do
+    with {:ok, attrs} <- resolve_target(target, actor) do
+      CMS.review_notice_for_author(attrs, actor)
+    end
+  end
+
+  def content_review_notice(_parent, _args, _resolution) do
+    {:error, CMS.passport_error_cat_permission_denied()}
+  end
+
+  def content_review_history(_parent, %{target: target} = args, %{
+        context: %{cur_user: actor}
+      }) do
+    with {:ok, attrs} <- resolve_target(target, actor),
+         {:ok, scope, permission, params} <- target_scope(attrs),
+         {:ok, :pass} <- authorize(actor, permission, params),
+         {:ok, requests} <-
+           CMS.review_history_for_scope(
+             attrs,
+             Map.get(args, :limit, 50),
+             Map.get(args, :offset, 0)
+           ) do
+      {:ok, Enum.map(requests, &present(&1, scope))}
+    end
+  end
+
+  def content_review_history(_parent, _args, _resolution) do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
@@ -148,7 +183,11 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   defp resolve_target(%{type: :article, article_id: id} = input, _actor) when is_binary(id) do
     with {:ok, article} <- FrontDesk.article(id, mode: :internal, view: :command_context),
          {:ok, scope, _permission, _params} <-
-           target_scope(%{type: :article, article_id: id, community_id: input.community_id}) do
+           target_scope(%{
+             type: :article,
+             article_id: id,
+             community_id: Map.get(input, :community_id)
+           }) do
       {:ok, %{type: :article, article_id: article.id, community_id: scope_community_id(scope)}}
     end
   end
@@ -163,10 +202,22 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     end
   end
 
-  defp resolve_target(%{type: :comment, comment_id: id}, _actor) when is_binary(id) do
+  defp resolve_target(%{type: :comment, comment_id: id} = input, _actor) when is_binary(id) do
     case FrontDesk.comment(id, mode: :internal, view: :with_author) do
       {:ok, comment} ->
-        {:ok, %{type: :comment, comment_id: comment.id, community_id: comment.community_id}}
+        requested_community_id = Map.get(input, :community_id, comment.community_id)
+
+        case requested_community_id do
+          nil ->
+            {:ok, %{type: :comment, comment_id: comment.id, community_id: nil}}
+
+          community_id ->
+            if to_string(community_id) == to_string(comment.community_id) do
+              {:ok, %{type: :comment, comment_id: comment.id, community_id: comment.community_id}}
+            else
+              {:error, CMS.invalid_review_block_error()}
+            end
+        end
 
       {:error, _reason} = error ->
         error
@@ -290,7 +341,15 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
       comment_id: request.comment_id,
       branch_id: request.branch_id,
       community_id: request.community_id,
-      state: request.state,
+      state: review_state(request),
+      replaced_at: request.replaced_at,
+      outdated_at: request.outdated_at,
+      failure_code:
+        if(request.state == :failed,
+          do: Map.get(request.result || %{}, "code") || Map.get(request.result || %{}, "error")
+        ),
+      failure_message:
+        if(request.state == :failed, do: Map.get(request.result || %{}, "message")),
       review_mode: get_in(request.policy_snapshot, ["review_mode"]),
       system_opinion: if(is_nil(request.community_id), do: opinion),
       community_opinion: if(not is_nil(request.community_id), do: opinion)
@@ -300,9 +359,16 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   defp scope_community_id(%{type: :community, community: community}), do: community.id
   defp scope_community_id(_scope), do: nil
 
+  defp review_state(%{replaced_at: replaced_at, state: state})
+       when not is_nil(replaced_at) and state in [:queued, :running] do
+    "replaced"
+  end
+
+  defp review_state(%{state: state}), do: state
+
   defp present_opinion(nil), do: nil
 
-  defp present_opinion(opinion) do
+  defp present_opinion(%{"status" => _status} = opinion) do
     %{
       status: Map.get(opinion, "status"),
       summary: Map.get(opinion, "summary"),
@@ -316,4 +382,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
         end)
     }
   end
+
+  defp present_opinion(_opinion), do: nil
 end

@@ -49,6 +49,7 @@ defmodule GroupherServerWeb.Schema.AlertWall.Types do
     field(:target_type, :alert_target_type)
     field(:owner, :alert_item_owner)
     field(:has_reports, :boolean)
+    field(:closed, :boolean)
   end
 
   input_object :alert_report_filter do
@@ -58,10 +59,11 @@ defmodule GroupherServerWeb.Schema.AlertWall.Types do
 
   input_object :alert_report_target_input do
     field(:type, non_null(:alert_target_type))
+    field(:observed_version, :integer)
     field(:article, :article_path_input)
     field(:comment, :comment_path_input)
     field(:doc_branch_id, :integer)
-    field(:user_id, :id)
+    field(:user_login, :string)
   end
 
   input_object :alert_report_input do
@@ -80,14 +82,14 @@ defmodule GroupherServerWeb.Schema.AlertWall.Types do
     field(:id, non_null(:id))
     field(:owner, non_null(:alert_item_owner))
     field(:target_type, non_null(:alert_target_type))
-    field(:target_id, non_null(:string))
-    field(:subject_ref, non_null(:string))
+    field(:target_id, :string, resolve: &R.AlertWall.public_target_id/3)
     field(:community_id, :id)
     field(:ai_source_ref, :string)
     field(:status, non_null(:alert_item_status))
     field(:sus_notes, non_null(list_of(non_null(:sus_note))))
     field(:summary, non_null(:string))
     field(:report_count, non_null(:integer), resolve: &R.AlertWall.report_count/3)
+    field(:total_report_count, non_null(:integer), resolve: &R.AlertWall.total_report_count/3)
     field(:version, non_null(:integer))
     field(:opened_at, non_null(:datetime))
     field(:resolved_at, :datetime)
@@ -96,11 +98,12 @@ defmodule GroupherServerWeb.Schema.AlertWall.Types do
 
   object :alert_report do
     field(:id, non_null(:id))
+    field(:reporter_login, :string, resolve: &R.AlertWall.reporter_login/3)
     field(:target_type, non_null(:alert_target_type))
-    field(:target_id, non_null(:string))
+    field(:target_id, :string, resolve: &R.AlertWall.public_target_id/3)
     field(:community_id, :id)
     field(:item_id, non_null(:id))
-    field(:subject_ref, non_null(:string))
+    field(:observed_version, :integer)
     field(:report_type, non_null(:string))
     field(:details, :string)
     field(:withdrawn_at, :datetime)

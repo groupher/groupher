@@ -20,6 +20,9 @@ defmodule GroupherServer.AlertWall do
   @doc "Loads one reviewer-visible item."
   defdelegate item(item_id, actor), to: Query
 
+  @doc "Lists reports for a reviewer-visible Wall item."
+  defdelegate item_reports(item_id, actor, pagi \\ nil), to: Query
+
   @doc "Lists the current user's report history."
   defdelegate my_reports(actor, filter, pagi \\ nil), to: Query
 
@@ -59,19 +62,23 @@ defmodule GroupherServer.AlertWall do
   @doc "Counts unresolved reports that still apply to an item."
   defdelegate active_report_count(item_id), to: Persist
 
-  @doc "Supersedes a current CMS item when its source review request is replaced."
-  defdelegate supersede_ai_source_in_transaction(request_id, operation_ref), to: Persist
+  @doc "Counts all reports retained for a Wall item."
+  defdelegate total_report_count(item_id), to: Query
+
+  @doc "Ends current CMS items when the public content changes."
+  defdelegate mark_content_changed_in_transaction(target_type, target_id, operation_ref),
+    to: Persist
 
   @doc "Marks open items for a permanently deleted CMS target while retaining their history."
   defdelegate mark_target_deleted_in_transaction(target_type, target_id, operation_ref),
     to: Persist
 
-  @doc "Tombstones open Accounts-owned user items when their account target is removed."
+  @doc "Marks open account items as ended when their target account is removed."
   defdelegate mark_account_target_deleted_in_transaction(target_type, target_id, operation_ref),
     to: Persist
 
-  @doc "Resolves an open CMS item sourced from one review request."
-  defdelegate resolve_ai_source_in_transaction(request_id, resolution, operation_ref), to: Persist
+  @doc "Resolves the open CMS item for one target and review scope."
+  defdelegate resolve_target_in_transaction(target, resolution, operation_ref), to: Persist
 
   @doc "Replaces the complete AI opinion only when a matching open item exists."
   defdelegate replace_ai_opinion_in_transaction(attrs), to: Persist

@@ -21,6 +21,17 @@ const reasonLabels = {
 } as const
 type TProps = { target: AlertReportTargetInput }
 
+const contentChanged = (error: Error | null): boolean => {
+  const errors = (error as { errors?: unknown } | null)?.errors
+  return (
+    Array.isArray(errors) &&
+    errors.some((entry) => {
+      const extensions = entry?.extensions as Record<string, unknown> | undefined
+      return String(extensions?.code ?? extensions?.reasonCode) === '4548'
+    })
+  )
+}
+
 /** Submits an authenticated report through AlertWall's report command. */
 export default function ReportAction({ target }: TProps) {
   const { t } = useTrans()
@@ -44,7 +55,7 @@ export default function ReportAction({ target }: TProps) {
       setOpen(false)
       await invalidatePrefix(
         client,
-        viewerQueryKeys.myReportsPrefix(account.accountRef || 'anonymous'),
+        viewerQueryKeys.myReportsPrefix(account.accountScope || 'anonymous'),
       )
     },
   })
@@ -100,7 +111,9 @@ export default function ReportAction({ target }: TProps) {
           </label>
           {report.isError && (
             <p role='alert' className='text-sm text-red-600'>
-              {t('alert_wall.report_error')}
+              {contentChanged(report.error)
+                ? t('alert_wall.report_content_changed')
+                : t('alert_wall.report_error')}
             </p>
           )}
           <div className='flex gap-2'>

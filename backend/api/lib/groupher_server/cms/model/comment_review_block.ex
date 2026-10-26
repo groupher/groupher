@@ -28,7 +28,6 @@ defmodule GroupherServer.CMS.Model.CommentReviewBlock do
     field(:type, Ecto.Enum, values: @types)
     belongs_to(:artiment_review, ArtimentReview, type: Ecto.UUID)
     field(:item_id, :integer)
-    field(:subject_ref, Ecto.UUID)
     field(:source_ref, :string)
     field(:source, Ecto.Enum, values: @sources)
     field(:applied_at, :utc_datetime)
@@ -48,7 +47,6 @@ defmodule GroupherServer.CMS.Model.CommentReviewBlock do
       :type,
       :artiment_review_id,
       :item_id,
-      :subject_ref,
       :source_ref,
       :source,
       :applied_at,

@@ -289,8 +289,8 @@ defmodule GroupherServer.CMS.ReviewBlocks do
                  restriction.source_ref == ^attrs.source_ref and is_nil(restriction.resolved_at)
                )
              ) do
-          %{type: type, subject_ref: existing_subject_ref} = row ->
-            if type == attrs.type and existing_subject_ref == Map.get(attrs, :subject_ref) do
+          %{type: type} = row ->
+            if type == attrs.type do
               {:ok, row}
             else
               {:error, CMS.ErrorCat.lifecycle_state_conflict()}

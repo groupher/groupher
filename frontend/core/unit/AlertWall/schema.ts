@@ -2,14 +2,13 @@ import { graphql } from '~/graphql/authoring'
 import type { ResolveAlertItemDocument } from '~/graphql/generated/graphql'
 
 export const alertItems = graphql(`
-  query AlertItems($scope: ReviewBotScopeInput!, $pagi: PagiInput) {
-    alertItems(scope: $scope, pagi: $pagi) {
+  query AlertItems($scope: ReviewBotScopeInput!, $filter: AlertItemFilter, $pagi: PagiInput) {
+    alertItems(scope: $scope, filter: $filter, pagi: $pagi) {
       entries {
         id
         owner
         targetType
         targetId
-        subjectRef
         communityId
         aiSourceRef
         status
@@ -20,6 +19,7 @@ export const alertItems = graphql(`
         }
         summary
         reportCount
+        totalReportCount
         version
         openedAt
       }
@@ -31,6 +31,31 @@ export const alertItems = graphql(`
           hasNextPage
         }
         ... on CursorPageInfo {
+          hasPreviousPage
+          hasNextPage
+        }
+      }
+    }
+  }
+`)
+
+export const alertItemReports = graphql(`
+  query AlertItemReports($id: ID!, $pagi: PagiInput) {
+    alertItemReports(id: $id, pagi: $pagi) {
+      entries {
+        id
+        reportType
+        reporterLogin
+        details
+        observedVersion
+        insertedAt
+        withdrawnAt
+        outdatedAt
+        resolvedAt
+      }
+      pageInfo {
+        ... on OffsetPageInfo {
+          totalPages
           hasPreviousPage
           hasNextPage
         }
@@ -67,7 +92,6 @@ export const myReports = graphql(`
         targetId
         communityId
         itemId
-        subjectRef
         reportType
         details
         withdrawnAt

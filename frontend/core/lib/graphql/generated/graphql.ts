@@ -8,6 +8,13 @@ export type Incremental<T> =
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core'
 export type AccountSortEnum = 'ASC_INSERTED' | 'DESC_INSERTED'
 
+export type AlertItemFilter = {
+  closed?: boolean | null | undefined
+  hasReports?: boolean | null | undefined
+  owner?: AlertItemOwner | null | undefined
+  targetType?: AlertTargetType | null | undefined
+}
+
 export type AlertItemOwner = 'ACCOUNTS' | 'CMS'
 
 export type AlertItemStatus = 'OPEN' | 'RESOLVED' | 'SUPERSEDED'
@@ -29,8 +36,9 @@ export type AlertReportTargetInput = {
   article?: ArticlePathInput | null | undefined
   comment?: CommentPathInput | null | undefined
   docBranchId?: number | null | undefined
+  observedVersion?: number | null | undefined
   type: AlertTargetType
-  userId?: string | number | null | undefined
+  userLogin?: string | null | undefined
 }
 
 export type AlertTargetType = 'ARTICLE' | 'COMMENT' | 'DOC' | 'USER'
@@ -644,7 +652,7 @@ export type ApplyApplicationFieldsFragment = {
 
 export type ApplyAccountQueryVariables = Exact<{ [key: string]: never }>
 
-export type ApplyAccountQuery = { me: { login: string | null } | null }
+export type ApplyAccountQuery = { me: { login: string } | null }
 
 export type ApplyInitialStateQueryVariables = Exact<{ [key: string]: never }>
 
@@ -1785,16 +1793,14 @@ export type FollowMutationVariables = Exact<{
   login: string
 }>
 
-export type FollowMutation = {
-  follow: { login: string | null; viewerHasFollowed: boolean | null } | null
-}
+export type FollowMutation = { follow: { login: string; viewerHasFollowed: boolean | null } | null }
 
 export type UndoFollowMutationVariables = Exact<{
   login: string
 }>
 
 export type UndoFollowMutation = {
-  undoFollow: { login: string | null; viewerHasFollowed: boolean | null } | null
+  undoFollow: { login: string; viewerHasFollowed: boolean | null } | null
 }
 
 export type CommunityActivityConfigQueryVariables = Exact<{
@@ -2039,7 +2045,7 @@ export type CommunityActivityStatsQuery = {
 }
 
 export type PageAuthorFieldsFragment = {
-  login: string | null
+  login: string
   nickname: string | null
   avatar: string | null
   bio: string | null
@@ -2099,7 +2105,7 @@ export type PagePostFieldsFragment = {
   activeAt: string | null
   updatedAt: string | null
   author: {
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -2174,7 +2180,7 @@ export type PagePostDetailFieldsFragment = {
     toc: Array<{ id: string; level: number; title: string }>
   }
   commentsParticipants: Array<{
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -2192,7 +2198,7 @@ export type PageChangelogFieldsFragment = {
   activeAt: string | null
   updatedAt: string | null
   author: {
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -2267,7 +2273,7 @@ export type PageChangelogDetailFieldsFragment = {
     toc: Array<{ id: string; level: number; title: string }>
   }
   commentsParticipants: Array<{
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -2284,7 +2290,7 @@ export type PageDocFieldsFragment = {
   activeAt: string | null
   updatedAt: string | null
   author: {
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -2359,7 +2365,7 @@ export type PageDocDetailFieldsFragment = {
     toc: Array<{ id: string; level: number; title: string }>
   }
   commentsParticipants: Array<{
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -2539,7 +2545,7 @@ export type ChangelogQuery = {
     activeAt: string | null
     updatedAt: string | null
     author: {
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -2611,7 +2617,7 @@ export type ChangelogQuery = {
       toc: Array<{ id: string; level: number; title: string }>
     }
     commentsParticipants: Array<{
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -3133,7 +3139,7 @@ export type PageDocQuery = {
     activeAt: string | null
     updatedAt: string | null
     author: {
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -3205,7 +3211,7 @@ export type PageDocQuery = {
       toc: Array<{ id: string; level: number; title: string }>
     }
     commentsParticipants: Array<{
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -3484,7 +3490,7 @@ export type PostQuery = {
     activeAt: string | null
     updatedAt: string | null
     author: {
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -3556,7 +3562,7 @@ export type PostQuery = {
       toc: Array<{ id: string; level: number; title: string }>
     }
     commentsParticipants: Array<{
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -4203,8 +4209,7 @@ export type PostPageQuery = {
 }
 
 export type UserAuthorFieldsFragment = {
-  accountRef: string
-  login: string | null
+  login: string
   nickname: string | null
   avatar: string | null
   bio: string | null
@@ -4228,7 +4233,7 @@ export type MeQueryVariables = Exact<{ [key: string]: never }>
 
 export type MeQuery = {
   me: {
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -4251,8 +4256,7 @@ export type UserQuery = {
     viewerHasFollowed?: boolean | null
     subscribedCommunitiesCount: number | null
     insertedAt: string | null
-    accountRef: string
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -4298,8 +4302,7 @@ export type SessionStateQuery = {
       location: string | null
       passport: unknown
       subscribedCommunitiesCount: number | null
-      accountRef: string
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -4327,6 +4330,7 @@ export type AboutSimpleQueryQuery = { post: { innerId: string | null } }
 
 export type AlertItemsQueryVariables = Exact<{
   scope: ReviewBotScopeInput
+  filter?: AlertItemFilter | null | undefined
   pagi?: PagiInput | null | undefined
 }>
 
@@ -4336,13 +4340,13 @@ export type AlertItemsQuery = {
       id: string
       owner: AlertItemOwner
       targetType: AlertTargetType
-      targetId: string
-      subjectRef: string
+      targetId: string | null
       communityId: string | null
       aiSourceRef: string | null
       status: AlertItemStatus
       summary: string
       reportCount: number
+      totalReportCount: number
       version: number
       openedAt: string
       susNotes: Array<{ type: string; evidence: string; explanation: string }>
@@ -4350,6 +4354,30 @@ export type AlertItemsQuery = {
     pageInfo:
       | { hasPreviousPage: boolean; hasNextPage: boolean }
       | { totalCount: number; totalPages: number; hasPreviousPage: boolean; hasNextPage: boolean }
+  }
+}
+
+export type AlertItemReportsQueryVariables = Exact<{
+  id: string | number
+  pagi?: PagiInput | null | undefined
+}>
+
+export type AlertItemReportsQuery = {
+  alertItemReports: {
+    entries: Array<{
+      id: string
+      reportType: string
+      reporterLogin: string | null
+      details: string | null
+      observedVersion: number | null
+      insertedAt: string
+      withdrawnAt: string | null
+      outdatedAt: string | null
+      resolvedAt: string | null
+    }>
+    pageInfo:
+      | { totalPages: number; hasPreviousPage: boolean; hasNextPage: boolean }
+      | Record<PropertyKey, never>
   }
 }
 
@@ -4371,10 +4399,9 @@ export type MyReportsQuery = {
     entries: Array<{
       id: string
       targetType: AlertTargetType
-      targetId: string
+      targetId: string | null
       communityId: string | null
       itemId: string
-      subjectRef: string
       reportType: string
       details: string | null
       withdrawnAt: string | null
@@ -4404,7 +4431,7 @@ export type WithdrawReportMutationVariables = Exact<{
 export type WithdrawReportMutation = { withdrawReport: { id: string; withdrawnAt: string | null } }
 
 export type ArticleEditorAuthorFieldsFragment = {
-  login: string | null
+  login: string
   nickname: string | null
   avatar: string | null
   bio: string | null
@@ -4483,7 +4510,7 @@ export type UpdatePostFromEditorMutation = {
     innerId: string | null
     title: string | null
     author: {
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -4570,7 +4597,7 @@ export type ArticleEditorPostQuery = {
     copyRight: string | null
     lifecycle: { state: ArticleLifecycleState; version: number; archivedAt: string | null } | null
     author: {
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -4753,6 +4780,10 @@ export type ContentReviewQuery = {
     branchId: number | null
     communityId: string | null
     state: string
+    replacedAt: string | null
+    outdatedAt: string | null
+    failureCode: string | null
+    failureMessage: string | null
     reviewMode: string | null
     systemOpinion: {
       status: string | null
@@ -4767,8 +4798,18 @@ export type ContentReviewQuery = {
   } | null
 }
 
+export type ContentReviewNoticeQueryVariables = Exact<{
+  target: CmsReviewTargetInput
+}>
+
+export type ContentReviewNoticeQuery = {
+  contentReviewNotice: { status: string; failureCode: string | null } | null
+}
+
 export type PendingContentReviewsQueryVariables = Exact<{
   scope: ReviewBotScopeInput
+  limit?: number | null | undefined
+  offset?: number | null | undefined
 }>
 
 export type PendingContentReviewsQuery = {
@@ -4780,6 +4821,39 @@ export type PendingContentReviewsQuery = {
     branchId: number | null
     communityId: string | null
     state: string
+    replacedAt: string | null
+    outdatedAt: string | null
+    failureCode: string | null
+    failureMessage: string | null
+    reviewMode: string | null
+    systemOpinion: {
+      status: string | null
+      summary: string | null
+      susNotes: Array<{ type: string; evidence: string; explanation: string }>
+    } | null
+    communityOpinion: {
+      status: string | null
+      summary: string | null
+      susNotes: Array<{ type: string; evidence: string; explanation: string }>
+    } | null
+  }>
+}
+
+export type ContentReviewHistoryQueryVariables = Exact<{
+  target: CmsReviewTargetInput
+  limit?: number | null | undefined
+  offset?: number | null | undefined
+}>
+
+export type ContentReviewHistoryQuery = {
+  contentReviewHistory: Array<{
+    artimentReviewId: string | null
+    targetType: ReviewBotSubjectType
+    state: string
+    replacedAt: string | null
+    outdatedAt: string | null
+    failureCode: string | null
+    failureMessage: string | null
     reviewMode: string | null
     systemOpinion: {
       status: string | null
@@ -4852,6 +4926,20 @@ export type ApproveCommentReviewMutation = {
   }
 }
 
+export type ApproveDocReviewMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  commandId: string | number
+}>
+
+export type ApproveDocReviewMutation = {
+  approveDoc: {
+    commandId: string
+    targetType: ReviewBotSubjectType
+    targetId: string
+    action: string
+  }
+}
+
 export type DenyArticleReviewMutationVariables = Exact<{
   target: CmsReviewTargetInput
   commandId: string | number
@@ -4894,6 +4982,15 @@ export type DenyCommentReviewMutation = {
   }
 }
 
+export type DenyDocReviewMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  commandId: string | number
+}>
+
+export type DenyDocReviewMutation = {
+  denyDoc: { commandId: string; targetType: ReviewBotSubjectType; targetId: string; action: string }
+}
+
 export type ReleaseCommentReviewMutationVariables = Exact<{
   target: CmsReviewTargetInput
   commandId: string | number
@@ -4908,6 +5005,20 @@ export type ReleaseCommentReviewMutation = {
   }
 }
 
+export type ReleaseDocReviewMutationVariables = Exact<{
+  target: CmsReviewTargetInput
+  commandId: string | number
+}>
+
+export type ReleaseDocReviewMutation = {
+  releaseDoc: {
+    commandId: string
+    targetType: ReviewBotSubjectType
+    targetId: string
+    action: string
+  }
+}
+
 export type ChangelogSimpleQueryQueryVariables = Exact<{
   article: ArticlePathInput
 }>
@@ -4915,7 +5026,7 @@ export type ChangelogSimpleQueryQueryVariables = Exact<{
 export type ChangelogSimpleQueryQuery = { post: { innerId: string | null } }
 
 export type CommentAuthorFieldsFragment = {
-  login: string | null
+  login: string
   nickname: string | null
   avatar: string | null
   bio: string | null
@@ -4954,7 +5065,7 @@ export type CommentFieldsFragment = {
   updatedAt: string | null
   body: { html: string; json: string }
   author: {
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -4998,7 +5109,7 @@ export type CommentPublicFieldsFragment = {
   updatedAt: string | null
   body: { html: string; json: string }
   author: {
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -5031,7 +5142,7 @@ export type CommentPublicReplyFieldsFragment = {
   updatedAt: string | null
   body: { html: string; json: string }
   author: {
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -5062,7 +5173,7 @@ export type CommentPublicReplyFieldsFragment = {
     updatedAt: string | null
     body: { html: string; json: string }
     author: {
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -5140,7 +5251,7 @@ export type CommentPageQuery = {
         updatedAt: string | null
         body: { html: string; json: string }
         author: {
-          login: string | null
+          login: string
           nickname: string | null
           avatar: string | null
           bio: string | null
@@ -5172,7 +5283,7 @@ export type CommentPageQuery = {
         updatedAt: string | null
         body: { html: string; json: string }
         author: {
-          login: string | null
+          login: string
           nickname: string | null
           avatar: string | null
           bio: string | null
@@ -5203,7 +5314,7 @@ export type CommentPageQuery = {
           updatedAt: string | null
           body: { html: string; json: string }
           author: {
-            login: string | null
+            login: string
             nickname: string | null
             avatar: string | null
             bio: string | null
@@ -5223,7 +5334,7 @@ export type CommentPageQuery = {
       } | null> | null
       body: { html: string; json: string }
       author: {
-        login: string | null
+        login: string
         nickname: string | null
         avatar: string | null
         bio: string | null
@@ -5268,7 +5379,7 @@ export type CommentPageQuery = {
         updatedAt: string | null
         body: { html: string; json: string }
         author: {
-          login: string | null
+          login: string
           nickname: string | null
           avatar: string | null
           bio: string | null
@@ -5300,7 +5411,7 @@ export type CommentPageQuery = {
         updatedAt: string | null
         body: { html: string; json: string }
         author: {
-          login: string | null
+          login: string
           nickname: string | null
           avatar: string | null
           bio: string | null
@@ -5331,7 +5442,7 @@ export type CommentPageQuery = {
           updatedAt: string | null
           body: { html: string; json: string }
           author: {
-            login: string | null
+            login: string
             nickname: string | null
             avatar: string | null
             bio: string | null
@@ -5351,7 +5462,7 @@ export type CommentPageQuery = {
       } | null> | null
       body: { html: string; json: string }
       author: {
-        login: string | null
+        login: string
         nickname: string | null
         avatar: string | null
         bio: string | null
@@ -5411,7 +5522,7 @@ export type CommentReplyPageQuery = {
       updatedAt: string | null
       body: { html: string; json: string }
       author: {
-        login: string | null
+        login: string
         nickname: string | null
         avatar: string | null
         bio: string | null
@@ -5442,7 +5553,7 @@ export type CommentReplyPageQuery = {
         updatedAt: string | null
         body: { html: string; json: string }
         author: {
-          login: string | null
+          login: string
           nickname: string | null
           avatar: string | null
           bio: string | null
@@ -5505,7 +5616,7 @@ export type CreateCommentMutation = {
       updatedAt: string | null
       body: { html: string; json: string }
       author: {
-        login: string | null
+        login: string
         nickname: string | null
         avatar: string | null
         bio: string | null
@@ -5615,7 +5726,7 @@ export type OneCommentQuery = {
     article: { innerId: string | null; commentsRevision: number | null } | null
     body: { html: string; json: string }
     author: {
-      login: string | null
+      login: string
       nickname: string | null
       avatar: string | null
       bio: string | null
@@ -5662,7 +5773,7 @@ export type ReconcileCommentsQuery = {
         article: { innerId: string | null; commentsRevision: number | null } | null
         body: { html: string; json: string }
         author: {
-          login: string | null
+          login: string
           nickname: string | null
           avatar: string | null
           bio: string | null
@@ -5723,7 +5834,7 @@ export type ReplyCommentMutation = {
         updatedAt: string | null
         body: { html: string; json: string }
         author: {
-          login: string | null
+          login: string
           nickname: string | null
           avatar: string | null
           bio: string | null
@@ -5743,7 +5854,7 @@ export type ReplyCommentMutation = {
       } | null
       body: { html: string; json: string }
       author: {
-        login: string | null
+        login: string
         nickname: string | null
         avatar: string | null
         bio: string | null
@@ -5920,7 +6031,7 @@ export type SearchUsersQueryVariables = Exact<{
 
 export type SearchUsersQuery = {
   searchUsers: Array<{
-    login: string | null
+    login: string
     nickname: string | null
     avatar: string | null
     bio: string | null
@@ -5959,7 +6070,7 @@ export type PagedPublishedCommentsQuery = {
       } | null
       body: { html: string; json: string }
       author: {
-        login: string | null
+        login: string
         nickname: string | null
         avatar: string | null
         bio: string | null
@@ -6541,7 +6652,7 @@ export type DashboardSearchUsersQueryVariables = Exact<{
 
 export type DashboardSearchUsersQuery = {
   moderatorCandidates: Array<{
-    login: string | null
+    login: string
     avatar: string | null
     nickname: string | null
     bio: string | null
@@ -6675,7 +6786,7 @@ export type PagedCommunityAssetsQuery = {
       url: string | null
       deletedAt: string | null
       insertedAt: string | null
-      uploader: { login: string | null; nickname: string | null } | null
+      uploader: { login: string; nickname: string | null } | null
     } | null> | null
     pageInfo:
       | {
@@ -6787,7 +6898,7 @@ export type DashboardTrashedPostsQuery = {
       scheduledPermanentDeletionAt: string
       mentionedByCount: number
       deletedBy: {
-        login: string | null
+        login: string
         nickname: string | null
         avatar: string | null
         bio: string | null
@@ -6838,7 +6949,7 @@ export type DashboardTrashedPostsQuery = {
             innerId: string | null
             title: string | null
             author: {
-              login: string | null
+              login: string
               nickname: string | null
               avatar: string | null
               bio: string | null
@@ -7514,7 +7625,7 @@ export type DocDraftQuery = {
     digest: string | null
     insertedAt: string | null
     updatedAt: string | null
-    author: { login: string | null; nickname: string | null; avatar: string | null } | null
+    author: { login: string; nickname: string | null; avatar: string | null } | null
     body: {
       json: string
       markdown: string
@@ -7799,7 +7910,7 @@ export type UpdateDocDraftMutation = {
     digest: string | null
     insertedAt: string | null
     updatedAt: string | null
-    author: { login: string | null; nickname: string | null; avatar: string | null } | null
+    author: { login: string; nickname: string | null; avatar: string | null } | null
     body: {
       json: string
       markdown: string
@@ -8334,7 +8445,7 @@ export type UpdatePinnedDocAppearanceMutation = {
 }
 
 export type DashboardAuthorFieldsFragment = {
-  login: string | null
+  login: string
   nickname: string | null
   avatar: string | null
   bio: string | null
@@ -8975,7 +9086,7 @@ export type DashboardReindexCommunityTagGroupsMutation = {
 }
 
 export type KanbanAuthorFieldsFragment = {
-  login: string | null
+  login: string
   nickname: string | null
   avatar: string | null
   bio: string | null
@@ -10627,7 +10738,6 @@ export const UserAuthorFieldsFragmentDoc = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'accountRef' } },
           { kind: 'Field', name: { kind: 'Name', value: 'login' } },
           { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
@@ -21344,7 +21454,6 @@ export const UserDocument = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'accountRef' } },
           { kind: 'Field', name: { kind: 'Name', value: 'login' } },
           { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
@@ -21498,7 +21607,6 @@ export const SessionStateDocument = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'accountRef' } },
           { kind: 'Field', name: { kind: 'Name', value: 'login' } },
           { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
           { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
@@ -21594,6 +21702,11 @@ export const AlertItemsDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'AlertItemFilter' } },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
         },
@@ -21609,6 +21722,11 @@ export const AlertItemsDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'scope' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
               },
               {
                 kind: 'Argument',
@@ -21629,7 +21747,6 @@ export const AlertItemsDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'owner' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'subjectRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'aiSourceRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'status' } },
@@ -21647,6 +21764,7 @@ export const AlertItemsDocument = {
                       },
                       { kind: 'Field', name: { kind: 'Name', value: 'summary' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'reportCount' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalReportCount' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'version' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'openedAt' } },
                     ],
@@ -21699,6 +21817,99 @@ export const AlertItemsDocument = {
     },
   ],
 } as unknown as DocumentNode<AlertItemsQuery, AlertItemsQueryVariables>
+export const AlertItemReportsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'AlertItemReports' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'alertItemReports' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagi' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'reportType' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'reporterLogin' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'details' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'observedVersion' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'outdatedAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'resolvedAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AlertItemReportsQuery, AlertItemReportsQueryVariables>
 export const ResolveAlertItemDocument = {
   kind: 'Document',
   definitions: [
@@ -21822,7 +22033,6 @@ export const MyReportsDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'itemId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'subjectRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'reportType' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'details' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'withdrawnAt' } },
@@ -23483,6 +23693,10 @@ export const ContentReviewDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'branchId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'replacedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'outdatedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'failureCode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'failureMessage' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'reviewMode' } },
                 {
                   kind: 'Field',
@@ -23538,6 +23752,49 @@ export const ContentReviewDocument = {
     },
   ],
 } as unknown as DocumentNode<ContentReviewQuery, ContentReviewQueryVariables>
+export const ContentReviewNoticeDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ContentReviewNotice' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'contentReviewNotice' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'failureCode' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ContentReviewNoticeQuery, ContentReviewNoticeQueryVariables>
 export const PendingContentReviewsDocument = {
   kind: 'Document',
   definitions: [
@@ -23554,6 +23811,16 @@ export const PendingContentReviewsDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReviewBotScopeInput' } },
           },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'offset' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -23567,6 +23834,16 @@ export const PendingContentReviewsDocument = {
                 name: { kind: 'Name', value: 'scope' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'scope' } },
               },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'limit' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'offset' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'offset' } },
+              },
             ],
             selectionSet: {
               kind: 'SelectionSet',
@@ -23578,6 +23855,10 @@ export const PendingContentReviewsDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'branchId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'communityId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'replacedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'outdatedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'failureCode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'failureMessage' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'reviewMode' } },
                 {
                   kind: 'Field',
@@ -23633,6 +23914,121 @@ export const PendingContentReviewsDocument = {
     },
   ],
 } as unknown as DocumentNode<PendingContentReviewsQuery, PendingContentReviewsQueryVariables>
+export const ContentReviewHistoryDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ContentReviewHistory' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'offset' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'contentReviewHistory' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'limit' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'offset' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'offset' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'artimentReviewId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'replacedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'outdatedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'failureCode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'failureMessage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewMode' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'systemOpinion' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'summary' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'susNotes' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'evidence' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'explanation' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'communityOpinion' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'summary' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'susNotes' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'evidence' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'explanation' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ContentReviewHistoryQuery, ContentReviewHistoryQueryVariables>
 export const RecheckArticleDocument = {
   kind: 'Document',
   definitions: [
@@ -23891,6 +24287,64 @@ export const ApproveCommentReviewDocument = {
     },
   ],
 } as unknown as DocumentNode<ApproveCommentReviewMutation, ApproveCommentReviewMutationVariables>
+export const ApproveDocReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ApproveDocReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'approveDoc' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ApproveDocReviewMutation, ApproveDocReviewMutationVariables>
 export const DenyArticleReviewDocument = {
   kind: 'Document',
   definitions: [
@@ -24065,6 +24519,64 @@ export const DenyCommentReviewDocument = {
     },
   ],
 } as unknown as DocumentNode<DenyCommentReviewMutation, DenyCommentReviewMutationVariables>
+export const DenyDocReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'DenyDocReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'denyDoc' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DenyDocReviewMutation, DenyDocReviewMutationVariables>
 export const ReleaseCommentReviewDocument = {
   kind: 'Document',
   definitions: [
@@ -24123,6 +24635,64 @@ export const ReleaseCommentReviewDocument = {
     },
   ],
 } as unknown as DocumentNode<ReleaseCommentReviewMutation, ReleaseCommentReviewMutationVariables>
+export const ReleaseDocReviewDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ReleaseDocReview' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'CmsReviewTargetInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'releaseDoc' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'target' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'target' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'commandId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'targetId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReleaseDocReviewMutation, ReleaseDocReviewMutationVariables>
 export const ChangelogSimpleQueryDocument = {
   kind: 'Document',
   definitions: [

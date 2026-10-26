@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
          {:ok, requests} <- CMS.Review.Requests.current_for_scope_in_transaction(attrs),
          {:ok, :pass} <- ensure_ai_finished(requests, action),
          {:ok, :pass} <- update_restrictions(context, action, requests, actor, operation_ref),
-         {:ok, :pass} <- update_wall(requests, action, operation_ref),
+         {:ok, :pass} <- update_wall(attrs, action, operation_ref),
          {:ok, :pass} <- CMS.Review.Requests.supersede_scope_in_transaction(attrs, operation_ref) do
       {:ok, :pass}
     else
@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
     {:error, CMS.ErrorCat.invalid_review_block()}
   end
 
-  defp reject_author_review(%{kind: :comment, target: %{author_id: author_id}}, %{id: author_id}) do
+  defp reject_author_review(%{type: :comment, target: %{author_id: author_id}}, %{id: author_id}) do
     {:error, CMS.Passport.ErrorCat.permission_denied()}
   end
 
@@ -69,16 +69,16 @@ defmodule GroupherServer.CMS.Review.Decisions do
     end
   end
 
-  defp request_scope(%{kind: :article, target: article, scope_key: scope_key}) do
+  defp request_scope(%{type: :article, target: article, scope_key: scope_key}) do
     community_id = scope_community_id(scope_key)
     %{type: :article, article_id: article.id, community_id: community_id}
   end
 
-  defp request_scope(%{kind: :comment, target: comment, scope_key: scope_key}) do
+  defp request_scope(%{type: :comment, target: comment, scope_key: scope_key}) do
     %{type: :comment, comment_id: comment.id, community_id: scope_community_id(scope_key)}
   end
 
-  defp request_scope(%{kind: :doc, target: article, case_attrs: %{branch_id: branch_id}}) do
+  defp request_scope(%{type: :doc, target: article, branch_id: branch_id}) do
     %{type: :doc, article_id: article.id, branch_id: branch_id}
   end
 
@@ -117,17 +117,10 @@ defmodule GroupherServer.CMS.Review.Decisions do
   end
 
   defp maybe_deny(context, requests, :deny, _actor, operation_ref) do
-    subject_ref =
-      case requests do
-        [request | _] -> request.subject_ref
-        [] -> nil
-      end
-
     case CMS.ReviewBlocks.apply(context.lifecycle, %{
            scope_key: context.scope_key,
            type: :manual_hold,
            artiment_review_id: Enum.find_value(requests, & &1.id),
-           subject_ref: subject_ref,
            source_ref: "human:#{operation_ref}",
            source: :human,
            applied_at: DateTime.utc_now(:second)
@@ -137,15 +130,21 @@ defmodule GroupherServer.CMS.Review.Decisions do
     end
   end
 
-  defp update_wall(requests, action, operation_ref) do
+  defp update_wall(attrs, action, operation_ref) do
     resolution = if action == :deny, do: "human_confirmed_violation", else: "human_cleared"
+    AlertWall.resolve_target_in_transaction(wall_target(attrs), resolution, operation_ref)
+  end
 
-    Enum.reduce_while(requests, {:ok, :pass}, fn request, {:ok, :pass} ->
-      case AlertWall.resolve_ai_source_in_transaction(request.id, resolution, operation_ref) do
-        {:ok, :pass} -> {:cont, {:ok, :pass}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
+  defp wall_target(%{type: :article, article_id: id, community_id: community_id}) do
+    %{owner: :cms, target_type: :article, target_id: id, community_id: community_id}
+  end
+
+  defp wall_target(%{type: :comment, comment_id: id, community_id: community_id}) do
+    %{owner: :cms, target_type: :comment, target_id: to_string(id), community_id: community_id}
+  end
+
+  defp wall_target(%{type: :doc, article_id: id, branch_id: branch_id}) do
+    %{owner: :cms, target_type: :doc, target_id: "#{id}:#{branch_id}", community_id: nil}
   end
 
   defp scope_community_id("community:" <> id) do

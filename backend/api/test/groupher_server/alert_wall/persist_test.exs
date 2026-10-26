@@ -81,6 +81,7 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
   end
 
   test "report CommandPipeline accepts the canonical AlertWall target and stores its Receipt" do
+    {_community, article, _attrs, _author} = mock_article(:post)
     {:ok, reporter} = db_insert(:user)
     command_id = Ecto.UUID.generate()
 
@@ -89,9 +90,9 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
                %{
                  owner: :cms,
                  target_type: :article,
-                 target_id: "report-command-target",
-                 community_id: nil,
-                 subject_ref: "published-subject"
+                 target_id: article.id,
+                 observed_version: 1,
+                 community_id: nil
                },
                :spam,
                "Please review",
@@ -100,7 +101,8 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
              )
 
     assert report.reporter_id == reporter.id
-    assert report.target_id == "report-command-target"
+    assert report.target_id == article.id
+    assert report.observed_version == 1
 
     assert {:ok, account_report} =
              AlertWall.submit_report(
@@ -108,8 +110,7 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
                  owner: :accounts,
                  target_type: :user,
                  target_id: "108965",
-                 community_id: nil,
-                 subject_ref: "user:108965:profile-version-1"
+                 community_id: nil
                },
                :impersonation,
                "This account is impersonating another person",
@@ -119,6 +120,63 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
 
     assert account_report.owner == :accounts
     assert account_report.target_type == :user
+  end
+
+  test "a report for a previous public version does not create an item" do
+    {_community, article, _attrs, _author} = mock_article(:post)
+    {:ok, reporter} = db_insert(:user)
+
+    assert {:error, %{code: 4548}} =
+             AlertWall.submit_report(
+               %{
+                 owner: :cms,
+                 target_type: :article,
+                 target_id: article.id,
+                 observed_version: 2,
+                 community_id: nil
+               },
+               :spam,
+               "I saw version 2",
+               reporter,
+               Ecto.UUID.generate()
+             )
+
+    refute Repo.get_by(Item, target_type: :article, target_id: article.id)
+  end
+
+  test "only a reviewer in the item's scope can read report details" do
+    {community, article, _attrs, _author} = mock_article(:post)
+    {:ok, reporter} = db_insert(:user)
+    {:ok, reviewer} = db_insert(:user)
+
+    reviewer = %{
+      reviewer
+      | cur_passport: %{
+          "global" => %{},
+          community.slug => %{"cms" => %{"review.read" => true}}
+        }
+    }
+
+    assert {:ok, {:ok, report}} =
+             Repo.transaction(fn ->
+               AlertWall.submit_report_in_transaction(
+                 %{
+                   reporter_id: reporter.id,
+                   owner: :cms,
+                   target_type: :article,
+                   target_id: article.id,
+                   observed_version: 1,
+                   community_id: community.id,
+                   report_type: "SPAM",
+                   details: "A promotion link"
+                 },
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert {:ok, %{entries: [visible]}} = AlertWall.item_reports(report.item_id, reviewer)
+    assert visible.details == "A promotion link"
+    assert {:error, _reason} = AlertWall.item_reports(report.item_id, reporter)
   end
 
   test "resolve CommandPipeline returns GraphQL fields and rejects a stale item version" do
@@ -151,7 +209,7 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
 
   test "old reports become outdated while reports on current content can be resolved" do
     {:ok, reporter} = db_insert(:user)
-    first_attrs = Map.put(report_attrs(reporter.id), :subject_ref, "published-content-1")
+    first_attrs = report_attrs(reporter.id)
     first_operation = Ecto.UUID.generate()
 
     assert {:ok, {:ok, old_report}} =
@@ -170,10 +228,12 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
 
     outdated = Repo.get!(UserReport, old_report.id)
     assert outdated.outdated_at
+    assert AlertWall.active_report_count(old_report.item_id) == 0
+    assert AlertWall.total_report_count(old_report.item_id) == 1
     assert is_nil(outdated.resolved_at)
     assert AlertWall.active_report_count(old_report.item_id) == 0
 
-    current_attrs = Map.put(report_attrs(reporter.id), :subject_ref, "published-content-2")
+    current_attrs = report_attrs(reporter.id)
 
     assert {:ok, {:ok, current_report}} =
              Repo.transaction(fn ->
@@ -220,13 +280,38 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
              AlertWall.list_items(%{type: :platform}, %{has_reports: true}, reviewer)
   end
 
+  test "closed Wall items remain available in the review history" do
+    {:ok, reviewer} = db_insert(:user)
+    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
+
+    assert {:ok, {:ok, item}} =
+             Repo.transaction(fn ->
+               AlertWall.add_in_transaction(
+                 item_attrs(nil, [], "earlier report"),
+                 Ecto.UUID.generate()
+               )
+             end)
+
+    assert {:ok, {:ok, _item}} =
+             Repo.transaction(fn ->
+               AlertWall.supersede_in_transaction(item.id, Ecto.UUID.generate(), :cms)
+             end)
+
+    assert {:ok, %{entries: []}} = AlertWall.list_items(%{type: :platform}, nil, reviewer)
+
+    assert {:ok, %{entries: [historical]}} =
+             AlertWall.list_items(%{type: :platform}, %{closed: true}, reviewer)
+
+    assert historical.id == item.id
+    assert historical.status == :superseded
+  end
+
   test "account target deletion supersedes open account-owned items" do
     attrs = %{
       owner: :accounts,
       target_type: :user,
       target_id: "108965",
       community_id: nil,
-      subject_ref: "user:108965:profile-version-1",
       ai_source_ref: nil,
       sus_notes: [],
       summary: "impersonation"
@@ -262,33 +347,41 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     community_a_request = Enum.find(current_requests, &(&1.community_id == community_a.id))
     assert %ArtimentReview{} = system_request
     assert %ArtimentReview{} = community_a_request
-    subject_ref = system_request.subject_ref
-    community_b_request = review_request(article.id, community_b.id, subject_ref)
+    community_b_request = review_request(article.id, community_b.id)
 
-    system_item = review_item(article.id, nil, subject_ref, system_request.id)
+    system_item = review_item(article.id, nil, system_request.id)
 
     community_a_item =
-      review_item(article.id, community_a.id, subject_ref, community_a_request.id)
+      review_item(article.id, community_a.id, community_a_request.id)
 
     community_b_item =
-      review_item(article.id, community_b.id, subject_ref, community_b_request.id)
+      review_item(article.id, community_b.id, community_b_request.id)
 
     assert {:ok, {:ok, :pass}} =
              Repo.transaction(fn ->
-               AlertWall.supersede_ai_source_in_transaction(
-                 system_request.id,
+               AlertWall.mark_content_changed_in_transaction(
+                 :article,
+                 article.id,
                  Ecto.UUID.generate()
                )
              end)
 
     assert Repo.get!(Item, system_item.id).status == :superseded
-    assert Repo.get!(Item, community_a_item.id).status == :open
-    assert Repo.get!(Item, community_b_item.id).status == :open
+    assert Repo.get!(Item, community_a_item.id).status == :superseded
+    assert Repo.get!(Item, community_b_item.id).status == :superseded
+
+    community_a_item = review_item(article.id, community_a.id, community_a_request.id)
+    community_b_item = review_item(article.id, community_b.id, community_b_request.id)
 
     assert {:ok, {:ok, :pass}} =
              Repo.transaction(fn ->
-               AlertWall.resolve_ai_source_in_transaction(
-                 community_a_request.id,
+               AlertWall.resolve_target_in_transaction(
+                 %{
+                   owner: :cms,
+                   target_type: :article,
+                   target_id: article.id,
+                   community_id: community_a.id
+                 },
                  "human_cleared",
                  Ecto.UUID.generate()
                )
@@ -304,7 +397,6 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
       target_type: :article,
       target_id: "stable-article",
       community_id: nil,
-      subject_ref: "published-subject",
       ai_source_ref: ai_source_ref,
       sus_notes: sus_notes,
       summary: summary
@@ -317,14 +409,14 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
       owner: :cms,
       target_type: :article,
       target_id: "report-target",
+      observed_version: 1,
       community_id: nil,
-      subject_ref: "published-subject",
       report_type: "SPAM",
       details: "Please review"
     }
   end
 
-  defp review_request(article_id, community_id, subject_ref) do
+  defp review_request(article_id, community_id) do
     now = DateTime.utc_now(:second)
 
     {:ok, request} =
@@ -333,7 +425,6 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
         target_type: :article,
         article_id: article_id,
         community_id: community_id,
-        subject_ref: subject_ref,
         policy_snapshot: %{"scope" => if(community_id, do: "community", else: "system")},
         payload: %{"text" => %{"title" => "example", "body" => "example"}},
         state: :completed,
@@ -345,13 +436,12 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     request
   end
 
-  defp review_item(article_id, community_id, subject_ref, request_id) do
+  defp review_item(article_id, community_id, request_id) do
     attrs = %{
       owner: :cms,
       target_type: :article,
       target_id: article_id,
       community_id: community_id,
-      subject_ref: subject_ref,
       ai_source_ref: request_id,
       sus_notes: [],
       summary: "review"

@@ -67,7 +67,8 @@ defmodule GroupherServer.AI.Config do
     credential_env = Map.get(profile, :credential_env)
 
     with true <- valid_adapter?(Map.get(profile, :adapter)),
-         true <- valid_https_url?(base_url),
+         true <- supported_modalities?(Map.get(profile, :adapter), modalities),
+         true <- valid_endpoint_url?(base_url),
          true <- is_binary(model) and model != "",
          true <- is_binary(credential_env) and credential_env != "",
          true <-
@@ -93,6 +94,9 @@ defmodule GroupherServer.AI.Config do
 
   defp valid_adapter?(adapter), do: GroupherServer.AI.Adapters.supported?(adapter)
 
+  defp supported_modalities?(:judge_http, modalities), do: modalities == [:text]
+  defp supported_modalities?(_adapter, _modalities), do: true
+
   defp maybe_add_judge_profile(profiles, env) do
     url = Map.get(env, "REVIEW_BOT_JUDGE_URL")
     token = Map.get(env, "REVIEW_BOT_JUDGE_TOKEN")
@@ -103,7 +107,7 @@ defmodule GroupherServer.AI.Config do
         base_url: url,
         model: Map.get(env, "REVIEW_BOT_JUDGE_MODEL") || "default",
         credential_env: "REVIEW_BOT_JUDGE_TOKEN",
-        modalities: @modalities
+        modalities: [:text]
       })
     else
       profiles
@@ -126,16 +130,20 @@ defmodule GroupherServer.AI.Config do
 
   defp present?(value), do: is_binary(value) and String.trim(value) != ""
 
-  defp valid_https_url?(url) when is_binary(url) do
+  defp valid_endpoint_url?(url) when is_binary(url) do
     case URI.parse(url) do
       %URI{scheme: "https", host: host, userinfo: nil, query: nil, fragment: nil}
       when is_binary(host) and host != "" ->
         true
+
+      %URI{scheme: "http", host: host, userinfo: nil, query: nil, fragment: nil}
+      when host in ["localhost", "127.0.0.1", "::1"] ->
+        Application.get_env(:groupher_server, :env) in [:dev, :test]
 
       _ ->
         false
     end
   end
 
-  defp valid_https_url?(_url), do: false
+  defp valid_endpoint_url?(_url), do: false
 end

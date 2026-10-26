@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo, ReviewBot}
+  alias GroupherServer.{AlertWall, CMS, Repo, ReviewBot}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Articles.{Workflow, Tags.Assignment}
   alias CMS.Articles.{Bindings, Draft, Draft.Store, Lifecycle, Numbering, Public, Revision}
@@ -128,6 +128,17 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
            CMS.Review.Requests.supersede_scope_in_transaction(
              %{type: :article, article_id: article.id, community_id: community_id},
              operation_ref
+           ),
+         {:ok, :pass} <-
+           AlertWall.resolve_target_in_transaction(
+             %{
+               owner: :cms,
+               target_type: :article,
+               target_id: article.id,
+               community_id: community_id
+             },
+             "binding_removed",
+             operation_ref
            ) do
       {:ok, :pass}
     else
@@ -171,7 +182,8 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
              target,
              content,
              configs,
-             :binding
+             :binding,
+             {:community, community.id}
            ) do
       {:ok, :pass}
     else
