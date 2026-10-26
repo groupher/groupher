@@ -64,7 +64,7 @@ export const handlePressRequest = async (
     })
   }
 
-  const client = new Client({ connectionString })
+  const client = new Client({ connectionString, connectionTimeoutMillis: 5_000 })
   const pendingMetrics: Promise<void>[] = []
   let response: Response
 

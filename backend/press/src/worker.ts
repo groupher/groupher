@@ -68,7 +68,7 @@ export default {
 
   async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
     const connectionString = env.HYPERDRIVE.connectionString
-    const client = new Client({ connectionString })
+    const client = new Client({ connectionString, connectionTimeoutMillis: 5_000 })
 
     try {
       await runRetentionWithClient(client, (connection) =>

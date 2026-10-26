@@ -22,22 +22,22 @@
 
 当前源代码和文档的关键事实：
 
-| 项目         | 当前状态                                                                                                                                          | 迁移要求                                                                                                                        |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| HTTP app     | `backend/press/src/app.ts` 为 Hono；本地/生产入口是 `src/server.ts` + `@hono/node-server`                                                         | 新增 Worker fetch entrypoint；业务路由复用 `createApp`；Node 入口仅用于本地开发                                                 |
-| Worker 入口  | `backend/press/README.md` 提到 `src/worker.ts`，但当前源目录没有该文件                                                                            | 实施批次中新增，并修正文档，不得把未存在的入口视为已完成                                                                        |
-| 内容权威     | `src/origin.ts` 调用 Phoenix GraphQL Press projection；Article projection 复用公共 Gate/locator；Doc Feed 与 review invalidation 存在下述 P0 缺口 | 保持服务凭证、scope、限时和错误映射；不把数据库读取迁到 Worker                                                                  |
-| 数据库       | `src/db/client.ts` 使用 Postgres.js + Drizzle；schema 是 `analysis.press_*`                                                                       | Worker 只经 Hyperdrive 访问 analysis 数据；改用 Drizzle `node-postgres` adapter + `pg`；禁止 CMS schema 凭证                    |
-| 运行时副作用 | `createApp()` 初始化数据库、启动 retention timer，metrics 用未等待 Promise 写入                                                                   | 移除 Worker 初始化时的定时器和浮动 Promise；任务入口显式注入环境与 `ExecutionContext` 能力                                      |
-| 缓存失效     | Phoenix Outbox 调用 Press `/internal/invalidate`；当前 L2 在 PostgreSQL                                                                           | 保留 API、JWT resource/scope、键格式、TTL 和重试语义；切换时 endpoint hostname 仍为 `press.groupher.com`，由它直接解析到 Worker |
-| 公共转发     | `infra/edge-router` 使用 `PRESS_SITE=https://press.groupher.com` HTTP origin                                                                      | 生产路由改用 Worker Service Binding；本地可继续用 HTTP 到 Node Press                                                            |
-| 域名         | `press.groupher.com` 是当前 Press origin，也是 Phoenix invalidation endpoint/resource                                                             | 硬切时将该 hostname 直接绑定到 Press Worker；不增加第二个 host 或反向代理层                                                     |
-| Fly 发布     | `.github/workflows/deploy-press.yml` 会在 Press 文件 push 时自动发布；Dockerfile 的 prod deploy 不包含 devDependency `drizzle-kit`                | 切换前停止自动发布，切换后删除 Fly 发布流程；数据库 migration 交给独立 CI job                                                   |
-| 当前 Gate    | Phoenix public projection 按当前已部署 Gate/Doc 可见性规则提供输出                                                                                | Press P0 按生产当前规则验收；AlertBoard V2 生产切换单独排期，不把最终 preflight 当作只读检查                                    |
+| 项目         | 当前状态                                                                                                       | 迁移要求                                                                                             |
+| ------------ | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| HTTP app     | `backend/press/src/app.ts` 为 Hono；Cloudflare Worker 与本地 Node 入口都复用 `createApp`                       | Worker 使用 `pg.Client` + Hyperdrive；Node 入口仅用于本地开发                                        |
+| Worker 入口  | `backend/press/src/worker.ts` 已提供默认 health/invalidation 与 named `Public` 输出入口                        | 已完成代码实现；生产 Worker 尚待独立环境配置与 cutover                                               |
+| 内容权威     | `src/origin.ts` 调用 Phoenix GraphQL Press projection；Review invalidation 与 Doc Feed Gate Phoenix 修复已实现 | P0 仍须部署到当前生产 Gate 并复验；不把领域读取迁到 Worker                                           |
+| 数据库       | `src/db/client.ts` 使用 Drizzle `node-postgres` adapter；schema 是 `analysis.press_*`                          | Worker 只经 Hyperdrive 访问 analysis 数据；生产 Hyperdrive、最小权限角色和 schema migration 仍待配置 |
+| 运行时副作用 | 请求和 Cron 都使用独立 `pg.Client`；metrics 等待 durable cleanup；cache 无 per-isolate mutable L1              | 已完成代码实现；继续验证连接关闭、Cron retention 与跨 POP invalidation                               |
+| 缓存失效     | Phoenix Outbox 调用 Press `/internal/invalidate`；当前 L2 在 PostgreSQL                                        | API、JWT resource/scope、键格式、TTL 和重试语义已保留；切换后 hostname 仍为 `press.groupher.com`     |
+| 公共转发     | `infra/edge-router` 已通过 Worker Service Binding 调用 named `Public`；preview 只允许 Press/health 路由        | 生产 edge-router binding 仅在显式确认 Press cutover 的发布中生效                                     |
+| 域名         | `press.groupher.com` 当前仍是生产 Fly origin，也是 Phoenix invalidation endpoint/resource                      | best-effort 窗口内解绑 Fly 并将同一 hostname 绑定 Press Worker；不增加备用 host、代理层或双路由      |
+| Fly 发布     | 仓库中的 Press Fly workflow、Dockerfile 与 fly.toml 已移除；现有 Fly Machine 在 hard cutover 前继续运行        | 切换后停止 Fly Machine；数据库 migration 使用独立 CI job                                             |
+| 当前 Gate    | Phoenix public projection 按当前已部署 Gate/Doc 可见性规则提供输出；Phoenix 修复代码已实现                     | P0 按生产当前规则部署并验收；AlertBoard V2 生产切换单独排期，不把最终 preflight 当作只读检查         |
 
-### 当前 Fly 发布故障
+### Fly 发布链路
 
-仓库配置有确定的 release-command 问题：Dockerfile 以 `pnpm --filter @groupher/press --prod deploy` 生成 runtime，`drizzle-kit` 是 devDependency，故 runtime 中不会有该二进制；改成 `/app/press/node_modules/.bin/drizzle-kit` 仍不成立。本次直接迁往 Worker，不修复旧 Fly 发布链路；Worker 的数据库 migration 使用独立 CI job。
+本仓库不再提供 Press Fly 发布/回退路径。生产当前已运行的 Fly Machine 会在 best-effort hard cutover 前继续服务；切换后按 runbook 停止它。Cloudflare Worker 的数据库 migration 使用独立 CI job。
 
 ### 必须先完成的 Phoenix 正确性修复
 
@@ -109,7 +109,7 @@ preview 不是直接访问 Press origin 的内容路径：新增隔离的 stagin
 
 ### P0：完成切换准备并修复领域投影
 
-1. 停止 `.github/workflows/deploy-press.yml` 的自动 Fly 发布；使用 `.github/workflows/deploy-press-worker.yml` 将 Press 和 edge-router 发布到隔离 preview 与 production Environment，migration 使用独立 CI job。
+1. Press Fly 发布 workflow、Dockerfile 与 fly.toml 已移除，禁止再从当前分支发布旧运行时；使用 `.github/workflows/deploy-press-worker.yml` 将 Press 和 edge-router 发布到隔离 preview 与 production Environment，migration 使用独立 CI job。
 2. 准备将 `press.groupher.com` Custom Domain/DNS 绑定到 Worker 的步骤；Phoenix 的 URL 与 resource 沿用。
 3. 将 Review restriction Press invalidation 和 Doc Feed Gate/visibility 修复部署到当前生产 Phoenix；生产仍为 V1 时 backport，不等待 V2 切换。记录修复 release/revision、生产复验及 Phoenix 回滚步骤；回滚移除修复时阻断 P3，已上线 Press 通过 P1 停服机制返回 503。
 4. 核对生产 Press DB grant、host/port、DNS、TLS/CA 与防火墙，不输出密码。PublicDatabase origin 必须从 Cloudflare 公网可达；loopback、private/link-local 地址不能直接用于本文配置。按 P2 的 cf/schema/受保护文件流程创建 cache-disabled Hyperdrive，由最小 Worker probe 以受限角色执行 `SELECT 1` 和 analysis 表只读查询，并等待连接关闭。若仅私网可达，先完成独立网络边界调整与实测验证，再退出 P0。
@@ -117,7 +117,7 @@ preview 不是直接访问 Press origin 的内容路径：新增隔离的 stagin
 6. 记录迁移前公开 Markdown/Feed 的 status、headers、body hash、metrics 与 invalidation 基线；记录 analysis schema/version 和数据备份。生产切换前启用 Workers Paid。
 7. 登记 best-effort cutover window 与执行责任人；确认 Cloudflare 停服/修复步骤可执行。
 
-**退出条件：** Fly 自动发布已停止；Custom Domain 步骤与 Auth resource 已记录；生产 Hyperdrive probe 和 Phoenix 修复生产复验通过；preview Worker/DB/Hyperdrive/Phoenix/Auth 与 staging edge-router → named `Public` smoke 通过；best-effort 窗口与责任人已明确；生产 Paid 已启用。V2 production cutover 独立排期。
+**退出条件：** Press Fly 发布入口已从仓库移除；Custom Domain 步骤与 Auth resource 已记录；生产 Hyperdrive probe 和 Phoenix 修复生产复验通过；preview Worker/DB/Hyperdrive/Phoenix/Auth 与 staging edge-router → named `Public` smoke 通过；best-effort 窗口与责任人已明确；生产 Paid 已启用。V2 production cutover 独立排期。
 
 ### P1：分离 Node 与 Worker 生命周期
 
@@ -213,7 +213,7 @@ pnpm --filter @groupher/edge-router exec cf hyperdrive update <id> --caching-dis
 - `infra/edge-router/cloudflare.config.ts`
 - `infra/edge-router/src/index.ts` 及其 route tests
 - `backend/press/cloudflare.config.ts`
-- `.github/workflows/deploy-press.yml`、`backend/press/fly.toml`（硬切完成后删除旧 Fly 发布配置）
+- `.github/workflows/deploy-press.yml`、`backend/press/Dockerfile`、`backend/press/fly.toml`（已删除旧 Press Fly 发布配置）
 - `docs/deploy/README.md`
 - `docs/deploy/cloudflare.md`
 - `docs/architecture/apps.md`
@@ -226,7 +226,7 @@ pnpm --filter @groupher/edge-router exec cf hyperdrive update <id> --caching-dis
 3. 将 `press.groupher.com` 直接绑定到 Press Worker，作为 Phoenix invalidation endpoint。`PRESS_INTERNAL_URL=https://press.groupher.com` 与 `PRESS_INTERNAL_RESOURCE=https://press.groupher.com/internal` 均保持原值，不调整 Auth resource。
 4. 正式域名绑定 default 入口，只提供健康检查和内部签名接口。先经平台/社区域名 → `Public` 读取真实公开验收数据，再以相同路径/ID 直接请求 `press.groupher.com` 的 Markdown、Doc、RSS/Atom/JSON Feed、llms/sitemap。GET/HEAD/If-None-Match 在 disabled=false/true 下均应 no-store 404，不能用不存在的数据冒充入口拒绝；`/health` 可用、正确签名 invalidation 成功，匿名/错误签名拒绝。记录完整四组合矩阵，确认内容 URL 不能选择 named entrypoint。
 5. 进入 best-effort cutover window 后，显式将 Press 与 edge-router 的 `PRESS_PUBLIC_DISABLED` 设为 `false`，先从 Fly detach `press.groupher.com` 的 domain/DNS，再运行 production 部署流程：它先为 Press Worker attach Custom Domain 并部署，再发布 edge-router → named `Public` Service Binding。两步在同一窗口内完成；不做中间态可见性验收。随后检查 TLS、health、签名 invalidation、失败 Outbox 重试及 item 4 矩阵。平台公开输出不通过 default origin，不新增 canary 或双路由。
-6. 域名和 edge-router 硬切完成后停止旧 Fly Press Machines，移除 Fly 发布 workflow 与 Press Fly 部署配置。故障处理限定在 Cloudflare：先发布 503 停服 release，再修复或恢复已验收的 Worker version；`press.groupher.com` 始终绑定 Worker。
+6. 域名和 edge-router 硬切完成后停止旧 Fly Press Machines。故障处理限定在 Cloudflare：先发布 503 停服 release，再修复或恢复已验收的 Worker version；`press.groupher.com` 始终绑定 Worker。
 
 **退出条件：** 旧 Press Fly 已退役；平台/社区内容经 Service Binding → named `Public` 输出，正式域名只触达 default；default 内容路径始终 404，Public 在 disabled=false/true 下分别正常/503，health/签名 invalidation 可用；最终验收与窗口结束时间已记录；没有 HTTP loop。上述结果是恢复后的验收，不是窗口内的连续保证。
 
@@ -303,7 +303,7 @@ restriction 开始/结束均须触发 Press invalidation，且 outbox retry/fail
 5. 确认 production schema、Hyperdrive、secret、Paid 与 503 release 就绪，显式将 Press 与 edge-router 的 `PRESS_PUBLIC_DISABLED` 设为 `false`，记录 cutover window 开始时间；从 Fly detach `press.groupher.com` 的 domain/DNS，然后运行 production 部署流程。流程先为 Press Worker attach Custom Domain 并部署，再发布 named `Public` binding；允许服务中断，不做中间态可见性验收。完成后复验 TLS、default health/internal、default 内容 404 与 Outbox 重试。
 6. 停服/修复触发条件：任何 Draft/private/review-blocked 内容泄露；Phoenix invalidation 丢失/伪成功；5xx 或 p95 持续显著高于基线；Paid 预算告警触发；数据库连接耗尽。
 7. 硬切后的运行故障按 Cloudflare 停服/修复步骤处理并保持目标 hostname 绑定 Worker。Phoenix 修复必须回滚时，先验证平台/社区内容 503，再回滚 Phoenix；修复恢复并复验后才能恢复公开输出。
-8. 硬切验收后立即停止旧 Press Fly Machines，删除 Fly Press workflow 与部署配置。后续观察和恢复全部基于 Worker、edge-router 与 Phoenix。
+8. 硬切验收后立即停止旧 Press Fly Machines。后续观察和恢复全部基于 Worker、edge-router 与 Phoenix。
 
 ### Public 停服与恢复
 

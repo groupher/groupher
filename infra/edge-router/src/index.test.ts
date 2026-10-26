@@ -159,4 +159,31 @@ describe('edge-router', () => {
     expect((await dispatch(new Request('http://localhost/health'), env)).status).toBe(200)
     expect((await dispatch(new Request('http://127.0.0.1/health'), env)).status).toBe(200)
   })
+
+  it('keeps preview routing isolated to Press and health', async () => {
+    const env = {
+      ...createEnv(),
+      NODE_ENV: 'preview',
+      PREVIEW_PLATFORM_HOSTS: 'staging.groupher.com',
+    } as unknown as Env
+
+    expect((await dispatch(new Request('https://staging.groupher.com/health'), env)).status).toBe(
+      200,
+    )
+    expect((await dispatch(new Request('https://staging.groupher.com/pricing'), env)).status).toBe(
+      404,
+    )
+    expect((await dispatch(new Request('https://staging.groupher.com/home'), env)).status).toBe(404)
+    expect(
+      (await dispatch(new Request('https://staging.groupher.com/api/auth/session'), env)).status,
+    ).toBe(404)
+    expect(env.LANDING.fetch).not.toHaveBeenCalled()
+    expect(env.COMMUNITY.fetch).not.toHaveBeenCalled()
+    expect(env.AUTH.fetch).not.toHaveBeenCalled()
+
+    expect(
+      (await dispatch(new Request('https://staging.groupher.com/home/post/1.md'), env)).status,
+    ).toBe(200)
+    expect(env.PRESS.fetch).toHaveBeenCalledOnce()
+  })
 })

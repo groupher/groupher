@@ -11,7 +11,8 @@ export default defineConfig(({ mode }) => {
   const preview = mode === 'preview'
   const setting = (name: string, productionFallback: string): string => {
     const configured = process.env[name]
-    if (preview && !configured) throw new Error(`${name} is required for isolated edge-router preview`)
+    if (preview && !configured)
+      throw new Error(`${name} is required for isolated edge-router preview`)
     return configured || productionFallback
   }
 
@@ -48,7 +49,9 @@ export default defineConfig(({ mode }) => {
         ),
         CUSTOM_DOMAIN_COMMUNITIES: bindings.text(process.env.CUSTOM_DOMAIN_COMMUNITIES || '{}'),
         PREVIEW_PLATFORM_HOSTS: bindings.text(
-          preview ? setting('PREVIEW_PLATFORM_HOSTS', '') : process.env.PREVIEW_PLATFORM_HOSTS || '',
+          preview
+            ? setting('PREVIEW_PLATFORM_HOSTS', '')
+            : process.env.PREVIEW_PLATFORM_HOSTS || '',
         ),
         NODE_ENV: bindings.text(local ? 'development' : preview ? 'preview' : 'production'),
         LANDING: bindings.worker({ worker: 'landing' }),

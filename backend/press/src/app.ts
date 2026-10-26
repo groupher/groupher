@@ -247,7 +247,7 @@ export const createApp = (dependencies: Dependencies = {}) => {
           : Number(result.headers.get('content-length')) ||
             (renderedMeta.body ? new TextEncoder().encode(renderedMeta.body).byteLength : 0)
       const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-      void Promise.resolve(
+      void (async () =>
         recorder.record({
           requestTimeUtc: new Date(),
           communityRef: community,
@@ -265,8 +265,7 @@ export const createApp = (dependencies: Dependencies = {}) => {
           clientIpHash: hashClientIp(forwarded, environment.METRIC_IP_SALT),
           requestId: requestId(request.headers.get('x-request-id') || undefined),
           revision: renderedMeta.revision,
-        }),
-      ).catch((error) =>
+        }))().catch((error) =>
         console.error(
           JSON.stringify({
             event: 'press_metric_write_failed',

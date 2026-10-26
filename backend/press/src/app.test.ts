@@ -103,6 +103,23 @@ describe('Press HTTP app', () => {
     expect(body.status).toBe('ok')
   })
 
+  it('keeps a successful response when metric recording throws synchronously', async () => {
+    const app = createApp({
+      origin,
+      cache: createTestCache(),
+      recorder: {
+        record() {
+          throw new Error('metrics unavailable')
+        },
+      },
+    })
+
+    const response = await app.request('https://press.test/home/post/1.md')
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toContain('# Hello')
+  })
+
   it('keeps the default HTTP entrypoint limited to health and internal invalidation', async () => {
     const app = createApp({
       routes: 'internal',

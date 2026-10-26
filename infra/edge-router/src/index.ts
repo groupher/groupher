@@ -145,10 +145,12 @@ export default {
           ? healthResponse(env)
           : target.targetKind === 'not-found'
             ? notFound()
-            : target.targetKind === 'press' && env.PRESS_PUBLIC_DISABLED !== 'false'
-              ? pressDisabled()
-              : validateGraphQLRequest(request, target) ||
-                (await proxyRequest(request, target, env))
+            : env.NODE_ENV === 'preview' && target.targetKind !== 'press'
+              ? notFound()
+              : target.targetKind === 'press' && env.PRESS_PUBLIC_DISABLED !== 'false'
+                ? pressDisabled()
+                : validateGraphQLRequest(request, target) ||
+                  (await proxyRequest(request, target, env))
 
       console.log(
         JSON.stringify({

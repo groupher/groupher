@@ -18,6 +18,12 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
   workflow_dispatch:
+    inputs:
+      confirm_press_cutover:
+        description: Confirm Press has been provisioned and this deployment is the planned hard cutover
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -65,7 +71,7 @@ jobs:
     name: Deploy Edge Router Worker
     needs: validate
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_press_cutover == true
 
     steps:
       - uses: actions/checkout@v4

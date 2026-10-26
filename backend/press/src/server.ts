@@ -13,9 +13,10 @@ import { createHealthResponse } from '@groupher/service/health'
 import { serve } from '@hono/node-server'
 
 import './env'
+import { databaseUrlFromEnv } from './db/client'
 import { handlePressRequest } from './runtime'
 
-const environment = process.env
+const environment = { ...process.env, DATABASE_URL: databaseUrlFromEnv(process.env) }
 
 const fetch = async (request: Request): Promise<Response> => {
   const url = new URL(request.url)
