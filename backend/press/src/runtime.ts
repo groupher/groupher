@@ -12,6 +12,8 @@ import { Client } from 'pg'
 import { createApp } from './app'
 import { createDatabase } from './db/client'
 import { persistMetric, type MetricEvent } from './metrics'
+import { createPhoenixOrigin } from './origin'
+import { pressServiceAuthClient } from './service-auth'
 
 export type PressRuntimeEnvironment = {
   HYPERDRIVE?: { connectionString: string }
@@ -83,9 +85,16 @@ export const handlePressRequest = async (
       METRIC_IP_SALT: environment.METRIC_IP_SALT,
       PRESS_PUBLIC_DISABLED: environment.PRESS_PUBLIC_DISABLED,
     }
+    const origin = createPhoenixOrigin(
+      appEnvironment.PHOENIX_GRAPHQL_ENDPOINT,
+      fetch,
+      pressServiceAuthClient(appEnvironment),
+      appEnvironment,
+    )
     const app = createApp({
       database,
       environment: appEnvironment,
+      origin,
       routes: options.routes,
       recorder: {
         record(event: MetricEvent) {
