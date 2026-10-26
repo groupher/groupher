@@ -1,0 +1,49 @@
+# Isolated Phoenix origin for Press migration acceptance.
+# Deploy with the recorded production image; secrets belong to this app only.
+app = 'groupher-press-preview-api'
+primary_region = 'sin'
+kill_signal = 'SIGTERM'
+
+[build]
+dockerfile = 'Dockerfile'
+
+[deploy]
+release_command = '/app/bin/migrate'
+
+[env]
+PHX_HOST = 'groupher-press-preview-api.fly.dev'
+PORT = '8080'
+SERVICE_AUTH_ISSUER = 'https://auth-press-preview.groupher.workers.dev'
+SERVICE_AUTH_JWKS_URL = 'https://auth-press-preview.groupher.workers.dev/.well-known/jwks.json'
+SERVICE_AUTH_TOKEN_ENDPOINT = 'https://auth-press-preview.groupher.workers.dev/oauth2/token'
+PRESS_INTERNAL_URL = 'https://press-preview.groupher.workers.dev'
+PRESS_INTERNAL_RESOURCE = 'https://press-preview.groupher.workers.dev/internal'
+ALGOLIA_INDEX_NAME = 'groupher_press_preview'
+# Press acceptance does not provision Assets Hub or public-page CDN caching.
+# Keep those unrelated integrations isolated from all production endpoints.
+ASSETS_PUBLIC_ENDPOINT = 'https://assets.press-preview.invalid'
+ASSETS_HUB_BATCH_ENDPOINT = 'https://assets.press-preview.invalid/internal/generated-images'
+ASSETS_HUB_DELETE_ENDPOINT = 'https://assets.press-preview.invalid/internal/assets/delete'
+CLOUDFLARE_ZONE_ID = '00000000000000000000000000000000'
+CLOUDFLARE_API_TOKEN = 'press-preview-no-production-access'
+
+[http_service]
+internal_port = 8080
+force_https = true
+auto_stop_machines = 'stop'
+auto_start_machines = true
+min_machines_running = 0
+processes = ['app']
+
+[[http_service.checks]]
+grace_period = '10s'
+interval = '15s'
+method = 'GET'
+path = '/health'
+protocol = 'http'
+timeout = '2s'
+
+[[vm]]
+memory = '1gb'
+cpu_kind = 'shared'
+cpus = 1

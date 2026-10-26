@@ -12,6 +12,24 @@ import { bindings, defineConfig, triggers } from 'cf/config'
 const localDatabaseUrl = process.env.DATABASE_URL || 'postgresql://press:press@127.0.0.1:5432/press'
 
 export default defineConfig(({ mode }) => {
+  if (mode === 'probe') {
+    const id = process.env.PRESS_HYPERDRIVE_ID
+    if (!id) throw new Error('PRESS_HYPERDRIVE_ID is required for the database probe')
+    return {
+      worker: {
+        name: 'press-db-probe',
+        compatibilityDate: '2026-10-03',
+        compatibilityFlags: ['nodejs_compat'],
+        entrypoint: 'src/db-probe.ts',
+        workersDev: true,
+        env: {
+          HYPERDRIVE: bindings.hyperdrive({ id }),
+          PROBE_TOKEN: bindings.secret(),
+        },
+      },
+    }
+  }
+
   const local = mode === 'development'
   const preview = mode === 'preview'
   if (preview && !process.env.PRESS_HYPERDRIVE_ID) {
@@ -30,10 +48,13 @@ export default defineConfig(({ mode }) => {
     worker: {
       name: local ? 'press-local' : preview ? 'press-preview' : 'press',
       compatibilityDate: '2026-10-03',
-      compatibilityFlags: ['nodejs_compat'],
+      // Auth/JWKS public endpoints may be Workers on this same Cloudflare zone.
+      compatibilityFlags: local
+        ? ['nodejs_compat']
+        : ['nodejs_compat', 'global_fetch_strictly_public'],
       entrypoint: 'src/worker.ts',
       domains: local || mode === 'preview' ? undefined : ['press.groupher.com'],
-      workersDev: local,
+      workersDev: local || preview,
       previewUrls: local ? undefined : true,
       observability: local
         ? undefined
