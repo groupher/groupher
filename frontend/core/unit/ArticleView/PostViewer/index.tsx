@@ -83,12 +83,15 @@ export default function PostViewer({ isFullView = true }: TProps) {
               article: { community, thread: article.thread, innerId: article.innerId },
             }}
           />
-          <ReportAction
-            target={{
-              type: 'ARTICLE',
-              article: { community, thread: article.thread, innerId: article.innerId },
-            }}
-          />
+          {article.version && (
+            <ReportAction
+              target={{
+                type: 'ARTICLE',
+                article: { community, thread: article.thread, innerId: article.innerId },
+                observedVersion: article.version,
+              }}
+            />
+          )}
         </>
       )}
       {isFullView && (

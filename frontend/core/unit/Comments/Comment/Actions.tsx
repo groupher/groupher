@@ -28,13 +28,14 @@ const Actions: FC<TProps> = ({ data }) => {
   const { deleteComment } = useCommentModeration(data)
   const article = collection.article
   const reportTarget =
-    article?.innerId && article.thread
+    article?.innerId && article.thread && data.bodyVersion
       ? {
           type: 'COMMENT' as const,
           comment: {
             article,
             innerId: data.innerId,
           },
+          observedVersion: data.bodyVersion,
         }
       : null
 
