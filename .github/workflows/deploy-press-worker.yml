@@ -34,13 +34,14 @@ jobs:
     if: inputs.apply_migrations
     runs-on: ubuntu-latest
     environment: press-${{ inputs.target }}
-    env:
-      DATABASE_URL: ${{ secrets.PRESS_MIGRATION_DATABASE_URL }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Validate migration authorization and credential
         env:
+          DATABASE_URL: ${{ secrets.PRESS_MIGRATION_DATABASE_URL }}
           TARGET: ${{ inputs.target }}
           CONFIRM_PRESS_CUTOVER: ${{ inputs.confirm_press_cutover }}
         run: |
@@ -65,6 +66,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Apply analysis migrations
+        env:
+          DATABASE_URL: ${{ secrets.PRESS_MIGRATION_DATABASE_URL }}
         run: pnpm --filter @groupher/press run db:migrate
 
   deploy:
@@ -74,7 +77,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: press-${{ inputs.target }}
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       PRESS_HYPERDRIVE_ID: ${{ vars.PRESS_HYPERDRIVE_ID }}
       PHOENIX_GRAPHQL_ENDPOINT: ${{ vars.PHOENIX_GRAPHQL_ENDPOINT }}
       PHOENIX_PRESS_RESOURCE: ${{ vars.PHOENIX_PRESS_RESOURCE }}
@@ -85,12 +87,11 @@ jobs:
       PREVIEW_PLATFORM_HOSTS: ${{ vars.PREVIEW_PLATFORM_HOSTS }}
       CUSTOM_DOMAIN_COMMUNITIES: ${{ vars.CUSTOM_DOMAIN_COMMUNITIES }}
       PRESS_PUBLIC_DISABLED: ${{ vars.PRESS_PUBLIC_DISABLED || 'true' }}
-      SERVICE_AUTH_CLIENT_ID: ${{ secrets.SERVICE_AUTH_CLIENT_ID }}
-      SERVICE_AUTH_CLIENT_SECRET: ${{ secrets.SERVICE_AUTH_CLIENT_SECRET }}
-      METRIC_IP_SALT: ${{ secrets.METRIC_IP_SALT }}
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: pnpm/setup@v1
         with:
@@ -107,6 +108,10 @@ jobs:
 
       - name: Validate deployment inputs
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SERVICE_AUTH_CLIENT_ID: ${{ secrets.SERVICE_AUTH_CLIENT_ID }}
+          SERVICE_AUTH_CLIENT_SECRET: ${{ secrets.SERVICE_AUTH_CLIENT_SECRET }}
+          METRIC_IP_SALT: ${{ secrets.METRIC_IP_SALT }}
           TARGET: ${{ inputs.target }}
           CONFIRM_PRESS_CUTOVER: ${{ inputs.confirm_press_cutover }}
         run: |
@@ -142,6 +147,9 @@ jobs:
 
       - name: Create protected Worker secrets file
         env:
+          SERVICE_AUTH_CLIENT_ID: ${{ secrets.SERVICE_AUTH_CLIENT_ID }}
+          SERVICE_AUTH_CLIENT_SECRET: ${{ secrets.SERVICE_AUTH_CLIENT_SECRET }}
+          METRIC_IP_SALT: ${{ secrets.METRIC_IP_SALT }}
           PRESS_SECRETS_FILE: ${{ runner.temp }}/press-worker-secrets.json
         run: |
           set -euo pipefail
@@ -159,12 +167,14 @@ jobs:
 
       - name: Deploy Press Worker
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TARGET: ${{ inputs.target }}
           PRESS_SECRETS_FILE: ${{ runner.temp }}/press-worker-secrets.json
         run: pnpm --filter @groupher/press exec cf deploy --mode "$TARGET" --secrets-file "$PRESS_SECRETS_FILE"
 
       - name: Deploy edge-router Service Binding
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TARGET: ${{ inputs.target }}
         run: pnpm --filter @groupher/edge-router exec cf deploy --mode "$TARGET"
 

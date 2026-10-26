@@ -44,7 +44,10 @@ def main():
     source = base64.b64encode(source_file.read_bytes()).decode()
     expression = (
         f'try do Code.eval_string(Base.decode64!("{source}")); '
-        f"result = {actions[args.action]}; "
+        'previous = Application.fetch_env!(:groupher_server, :search_artiments); '
+        f"result = try do {actions[args.action]} after "
+        'if previous != Application.fetch_env!(:groupher_server, :search_artiments), '
+        'do: raise("Fixture leaked Search configuration") end; '
         'case result do {:ok, value} -> IO.puts("PRESS_ACCEPTANCE=" <> '
         'Jason.encode!(%{ok: true, result: value})); other -> '
         'IO.puts("PRESS_ACCEPTANCE=" <> Jason.encode!(%{ok: false, '

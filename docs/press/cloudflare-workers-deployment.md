@@ -30,6 +30,7 @@
 - staging 真实 HTTP 常规验收 24/24：Post/Blog/Changelog/Doc Markdown、RSS/Atom/JSON Feed、Doc Feed、llms、sitemap、压缩弱 ETag 的 304、default 内容 404、unsigned invalidation 401、Phoenix-signed invalidation 200。
 - Review restriction：Post 与 Doc 各自开始/结束共 4 次 transition，通过真实 CMS transaction → Outbox → Press invalidation，在 PDX、SIN 两个 Cloudflare colo 复验 Markdown 与 Feed。测试先将已存在的测试 cache pointer/negative entry 延长到 5 分钟，再确认 Outbox 后 pointer 被删除，因此结果不能由自然 TTL 到期解释。没有读到旧正文或旧 404。
 - 生产 Hyperdrive：临时受保护的只读 Worker 5 次并发读取三个 Press 表均成功；匿名请求 401；数据库角色为 `press_worker_cf`，timezone UTC。探测 Worker 已删除。
+- Schema parity：生产与 preview 均用实际 Drizzle schema 读取三个表的全部映射列，6/6 通过。
 - Retention：在 preview analysis 写入过期测试数据，执行实际清理函数；6 次并发覆盖正常与 SQL 失败，另覆盖连接失败；测试 backend PID 无残留，过期测试数据已删除。
 - Phoenix 冷启动：显式停止 preview Phoenix Machine，清除 Press pointer 后从公开路由首次读取；约 8.2 秒返回 200，并确认 Phoenix 是新启动实例。原 5 秒期限已改为 15 秒，service token 获取期限仍为 5 秒。
 - 本地检查：Press 35 tests、Auth 66 tests、相关 TypeScript type-check/lint 通过。
@@ -37,13 +38,17 @@
 
 ### staging 外围集成边界
 
-该环境只验收 Press 链路。Assets endpoints 指向 `.invalid`，Cloudflare 公共页面 purge 使用无权限占位配置；Search provider 使用 fixture 内的 sink，避免写入生产索引。CMS Gate、ReviewBlocks、Outbox、service JWT、Press HTTP、Hyperdrive、cache 与 metrics 均使用真实实现。
+该环境只验收 Press 链路。Assets endpoints 指向 `.invalid`，Cloudflare 公共页面 purge 使用无权限占位配置；Search provider 在 fixture 操作期间临时使用 sink，并在成功/失败后恢复原配置，避免写入生产索引；review 操作在恢复配置前通过真实 Outbox workflow 确认 Press invalidation。CMS Gate、ReviewBlocks、Outbox、service JWT、Press HTTP、Hyperdrive、cache 与 metrics 均使用真实实现。
 
 Review visibility Outbox 已实际完成 Press invalidation，随后在独立的公共页面 CDN purge 步骤返回 `cloudflare_rejected`。这验证了 Press 失效链路，不等于整个 CDN purge workflow 成功。生产硬切后必须另验 Outbox completion/retry；不能将此 staging 结果作为生产 CDN purge 的验收。
 
+## 切换前线上基线
+
+当前生产 Phoenix 的 `demo/home` manifest 投影成功，但公开条目为 0，Feed 未启用。旧公开 Press 路由在切换前已对本次抽测的 home Markdown、llms、sitemap、Feed 返回 Cloudflare 502；这不能作为 Worker 的回归基线。生产切换后须另验正向内容与完整失效链路。
+
 ## 尚未完成
 
-- 后续修复 CI/合并；首次受控 CI migration 及短时 migration secret 清理。
+- [后续修复 PR #603](https://github.com/groupher/groupher/pull/603) 合并与最新修订 CI。首次真实 [preview migration/deploy](https://github.com/groupher/groupher/actions/runs/40314465628) 已成功，短时 migration secret 已移除。
 - 确认 Workers Paid（当前账户订阅 API 未列出 Workers Paid）。
 - 生产受控可见性复验、best-effort domain/Service Binding 硬切、最终生产 HTTP/跨 POP/Outbox 验收与旧 Press Fly 退役。
 - 至少 7 天的容量、失败率与账单观察。

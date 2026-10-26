@@ -23,7 +23,7 @@ python3 ops/press/preview-rpc.py probe
 python3 ops/press/preview-rpc.py restore:doc
 ```
 
-`hold/restore` 调用真实 ReviewBlocks transaction 并创建 Outbox intent；`probe` 从 Singapore Phoenix Machine 访问公开 edge-router，可与本地请求的 Cloudflare colo 对照。发送 review transition 后先确认该 intent 已完成 Press invalidation，再断言即时读取结果；不能用等待 TTL 到期代替失效验收。
+`hold/restore` 调用真实 ReviewBlocks transaction，并通过真实 Outbox workflow 确认 Press invalidation 后返回 `deliveries`；restore 只结束 `press-preview-` 来源的测试限制。Search sink 仅在操作期间生效，`finally` 恢复原配置，RPC 同时检查没有配置泄漏。`probe` 从 Phoenix 投影推导预期状态与条目数，状态或计数不符时退出失败；`probe` 从 Singapore Phoenix Machine 访问公开 edge-router，可与本地请求的 Cloudflare colo 对照。发送 review transition 后先确认该 intent 已完成 Press invalidation，再断言即时读取结果；不能用等待 TTL 到期代替失效验收。
 
 fixture JSON 格式为：
 
