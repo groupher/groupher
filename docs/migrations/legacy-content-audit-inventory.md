@@ -219,7 +219,7 @@ Public/Binding 可见性初始化与写入、Moderate command、i18n、salon、�
 | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------- |
 | [docs/architecture/cms-facade-directory.md](../../docs/architecture/cms-facade-directory.md)                               | 当前正文（按旧协议词族定位） | 历史事实仅作退役证据；当前目标以 AlertBoard/ReviewBot 为准，不据此保留旧实现 |
 | [docs/architecture/resource-loading-boundary.md](../../docs/architecture/resource-loading-boundary.md)                     | 当前正文（按旧协议词族定位） | 历史事实仅作退役证据；当前目标以 AlertBoard/ReviewBot 为准，不据此保留旧实现 |
-| [docs/content-import/article-publish-import-refactor.md](../../docs/content-import/article-publish-import-refactor.md)     | 当前正文（按旧协议词族定位） | 历史事实仅作退役证据；当前目标以 AlertBoard/ReviewBot 为准，不据此保留旧实现 |
+| [docs/import/article-publish-import-refactor.md](../../docs/import/article-publish-import-refactor.md)                     | 当前正文（按旧协议词族定位） | 历史事实仅作退役证据；当前目标以 AlertBoard/ReviewBot 为准，不据此保留旧实现 |
 | [docs/feature/activity/v1.md](../../docs/feature/activity/v1.md)                                                           | 当前正文（按旧协议词族定位） | 历史事实仅作退役证据；当前目标以 AlertBoard/ReviewBot 为准，不据此保留旧实现 |
 | [docs/feature/article/revision-draft-target.md](../../docs/feature/article/revision-draft-target.md)                       | 当前正文（按旧协议词族定位） | 历史事实仅作退役证据；当前目标以 AlertBoard/ReviewBot 为准，不据此保留旧实现 |
 | [docs/feature/gate/lifecycle-cleanup.md](../../docs/feature/gate/lifecycle-cleanup.md)                                     | 当前正文（按旧协议词族定位） | 历史事实仅作退役证据；当前目标以 AlertBoard/ReviewBot 为准，不据此保留旧实现 |
