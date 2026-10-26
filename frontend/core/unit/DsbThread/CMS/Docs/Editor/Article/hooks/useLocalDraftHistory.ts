@@ -41,7 +41,7 @@ const emptyInspection: TLocalDraftInspection = { status: 'none' }
 export default function useLocalDraftHistory(
   draftState: TDraftEditorState,
 ): TLocalDraftHistoryController {
-  const { accountRef } = useAccount()
+  const { accountScope } = useAccount()
   const { slug: communityId } = useCommunity()
   const repository = localDraftRepository
   const writerSessionId = useRef(
@@ -55,15 +55,15 @@ export default function useLocalDraftHistory(
 
   const identity = useMemo<TLocalDraftWorkspaceIdentity | null>(() => {
     const articleId = draftState.draft.docId || draftState.activePage?.docId
-    if (!accountRef || !articleId) return null
+    if (!accountScope || !articleId) return null
     return {
-      accountId: accountRef,
+      accountId: accountScope,
       communityId,
       thread: 'doc',
       articleId,
       branchId: 'main',
     }
-  }, [accountRef, communityId, draftState.activePage?.docId, draftState.draft.docId])
+  }, [accountScope, communityId, draftState.activePage?.docId, draftState.draft.docId])
 
   const writeInput = useCallback(() => {
     if (!identity) return null

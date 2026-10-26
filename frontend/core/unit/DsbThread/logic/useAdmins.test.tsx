@@ -13,7 +13,7 @@ const state = vi.hoisted(() => ({
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: state.request }))
 vi.mock('~/query', () => ({ viewerQueryKeys: { all: ['viewer'] } }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: state.slug }) }))
-vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountRef: state.account }) }))
+vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: state.account }) }))
 vi.mock('~/stores/dsbEditorUi/hooks', () => ({
   useModeratorEditorUi: () => ({ activeModerator: null, patch: state.patch }),
 }))

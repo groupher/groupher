@@ -36,8 +36,8 @@ export default function useLogic() {
   const ui = useModeratorEditorUi()
   const activeModerator = ui.activeModerator
   const login = activeModerator?.login
-  const identity = `${account.accountRef}:${slug}:${login}`
-  const prefix = [...viewerQueryKeys.all, account.accountRef]
+  const identity = `${account.accountScope}:${slug}:${login}`
+  const prefix = [...viewerQueryKeys.all, account.accountScope]
   const passport = useQuery({
     queryKey: [...prefix, 'moderator-passport', slug, login],
     queryFn: async () => {
@@ -50,13 +50,13 @@ export default function useLogic() {
         root: scoped.root === true,
       }
     },
-    enabled: !!login && !!slug && !!account.accountRef,
+    enabled: !!login && !!slug && !!account.accountScope,
   })
   const registry = useQuery({
     queryKey: [...prefix, 'passport-registry'],
     queryFn: async () =>
       parse((await browserGraphQLRequest(S.allPassportRules)).allPassportRulesString?.cms),
-    enabled: !!account.accountRef,
+    enabled: !!account.accountScope,
   })
   const current = passport.data ?? { global: {}, rules: {}, root: false }
   const communityRules = current.rules

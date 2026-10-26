@@ -8,7 +8,7 @@ vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: state.request }))
 vi.mock('~/query', () => ({ viewerQueryKeys: { all: ['viewer'] } }))
 vi.mock('~/stores/account/hooks', () => ({
   default: () => ({
-    accountRef: 'owner',
+    accountScope: 'owner',
     user: { login: 'owner', passport: { xx: { root: true } } },
   }),
 }))

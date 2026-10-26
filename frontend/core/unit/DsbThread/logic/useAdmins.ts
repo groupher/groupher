@@ -15,16 +15,16 @@ import S from '~/unit/DsbThread/schema/admins'
 export default function useAdmins() {
   const client = useQueryClient()
   const { slug } = useCommunity()
-  const { accountRef } = useAccount()
+  const { accountScope } = useAccount()
   const ui = useModeratorEditorUi()
-  const position = usePagiPosition(`${accountRef}:${slug}`)
-  const prefix = [...viewerQueryKeys.all, accountRef, 'moderators', slug]
+  const position = usePagiPosition(`${accountScope}:${slug}`)
+  const prefix = [...viewerQueryKeys.all, accountScope, 'moderators', slug]
   const query = useQuery({
     queryKey: [...prefix, position.input],
     queryFn: async () =>
       (await browserGraphQLRequest(S.moderatorPage, { community: slug, pagi: position.input }))
         .pagedCommunityModerators,
-    enabled: !!slug && !!accountRef,
+    enabled: !!slug && !!accountScope,
   })
   return {
     moderators: query.data?.entries ?? [],
