@@ -54,9 +54,13 @@ export default defineConfig(({ mode }) => {
             : process.env.PREVIEW_PLATFORM_HOSTS || '',
         ),
         NODE_ENV: bindings.text(local ? 'development' : preview ? 'preview' : 'production'),
-        LANDING: bindings.worker({ worker: 'landing' }),
-        COMMUNITY: bindings.worker({ worker: 'community' }),
-        AUTH: bindings.worker({ worker: 'auth' }),
+        ...(preview
+          ? {}
+          : {
+              LANDING: bindings.worker({ worker: 'landing' }),
+              COMMUNITY: bindings.worker({ worker: 'community' }),
+              AUTH: bindings.worker({ worker: 'auth' }),
+            }),
         PRESS: bindings.worker({
           worker: local ? 'press-local' : preview ? 'press-preview' : 'press',
           exportName: 'Public',

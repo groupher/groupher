@@ -99,6 +99,7 @@ const proxyRequest = async (request: Request, target: PublicRoute, env: Env): Pr
         : target.targetKind === 'community'
           ? env.COMMUNITY
           : env.AUTH
+    if (!binding) return notFound()
     incomingUrl.pathname = target.pathname
     return binding.fetch(new Request(incomingUrl, init))
   }

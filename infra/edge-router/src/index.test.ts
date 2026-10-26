@@ -44,16 +44,16 @@ describe('edge-router', () => {
     await dispatch(new Request('https://groupher.com/home'), env)
     await dispatch(new Request('https://groupher.com/api/auth/session'), env)
 
-    expect(env.LANDING.fetch).toHaveBeenCalledOnce()
-    expect(env.COMMUNITY.fetch).toHaveBeenCalledOnce()
-    expect(env.AUTH.fetch).toHaveBeenCalledOnce()
+    expect(env.LANDING!.fetch).toHaveBeenCalledOnce()
+    expect(env.COMMUNITY!.fetch).toHaveBeenCalledOnce()
+    expect(env.AUTH!.fetch).toHaveBeenCalledOnce()
   })
 
   it('maps Landing public assets to the Vite static bundle', async () => {
     const env = createEnv()
     await dispatch(new Request('https://groupher.com/landing/assets/app.js'), env)
 
-    const request = vi.mocked(env.LANDING.fetch).mock.calls[0][0] as Request
+    const request = vi.mocked(env.LANDING!.fetch).mock.calls[0][0] as Request
     expect(new URL(request.url).pathname).toBe('/assets/app.js')
   })
 
@@ -177,9 +177,9 @@ describe('edge-router', () => {
     expect(
       (await dispatch(new Request('https://staging.groupher.com/api/auth/session'), env)).status,
     ).toBe(404)
-    expect(env.LANDING.fetch).not.toHaveBeenCalled()
-    expect(env.COMMUNITY.fetch).not.toHaveBeenCalled()
-    expect(env.AUTH.fetch).not.toHaveBeenCalled()
+    expect(env.LANDING!.fetch).not.toHaveBeenCalled()
+    expect(env.COMMUNITY!.fetch).not.toHaveBeenCalled()
+    expect(env.AUTH!.fetch).not.toHaveBeenCalled()
 
     expect(
       (await dispatch(new Request('https://staging.groupher.com/home/post/1.md'), env)).status,

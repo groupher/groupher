@@ -10,6 +10,11 @@ on:
         options:
           - preview
           - production
+      confirm_press_cutover:
+        description: Confirm production deployment is the planned best-effort Press hard cutover
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -58,6 +63,7 @@ jobs:
       - name: Validate deployment inputs
         env:
           TARGET: ${{ inputs.target }}
+          CONFIRM_PRESS_CUTOVER: ${{ inputs.confirm_press_cutover }}
         run: |
           set -euo pipefail
           test -n "$CLOUDFLARE_API_TOKEN"
@@ -74,6 +80,9 @@ jobs:
           if [ "$TARGET" = "preview" ]; then
             test -n "$API_SITE"
             test -n "$PREVIEW_PLATFORM_HOSTS"
+          elif [ "$CONFIRM_PRESS_CUTOVER" != "true" ]; then
+            echo "Production deployment requires explicit Press cutover confirmation." >&2
+            exit 1
           fi
 
       - name: Validate Press and edge-router
