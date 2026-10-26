@@ -8,6 +8,7 @@
 - 工程规则统一收录在 [`docs/rules/`](../rules/)，入口见 [`be.md`](../rules/be.md) 与 [`fe.md`](../rules/fe.md)。
 - [`apps.md`](./apps.md)：独立运行应用、平台能力和业务 Feature 的划分原则。
 - [`external-services-local-runtime.md`](./external-services-local-runtime.md)：外部依赖服务的本地等价实现、统一 Dev Hub 编排和线上/本地运行时边界。
+- [`graphql-mock-server.md`](./graphql-mock-server.md)：本地 GraphQL Mock Server 的职责、E2E 使用场景及其与正式 SDL 的关系。
 - [`backend-context-convention-over-configuration.md`](./backend-context-convention-over-configuration.md)：
   Backend Context、Facade、Owner 和可执行 lint 的通用设计。
 - [`backend-effects-and-job-contract.md`](./backend-effects-and-job-contract.md)：Effects、durable Job payload
