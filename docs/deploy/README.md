@@ -299,10 +299,14 @@ Phoenix / Fly secrets
   SERVICE_AUTH_CLIENT_SECRET=<phoenix client secret>
 
 Edge Router / Cloudflare Worker variables
-  PRESS_SITE=https://press.groupher.com
+  PRESS_PUBLIC_DISABLED=false  # only after the planned hard cutover
 ```
 
-部署顺序：
+以上 Press / Fly 与 `PRESS_SITE` 步骤属于 Fly 时期的历史部署记录；仓库现已移除 Press
+Fly 发布配置，正式切换后不保留 Fly fallback。Cloudflare Worker 的资源准备、部署、硬切窗口
+和验收步骤以 [`Press → Cloudflare Workers`](../press/cloudflare-workers-migration.md) 为准。
+
+Fly 时期的部署顺序（仅用于说明当前运行状态，不作为新部署指引）：
 
 1. 部署 Phoenix Ecto migration 和 `CMS.Press` GraphQL projection。
 2. 执行 `@groupher/press` Drizzle migration，建立 `analysis.press_*` 对象。
