@@ -82,8 +82,8 @@ config :groupher_server, :github_oauth,
   client_secret: System.get_env("OAUTH_GITHUB_CLIENT_SECRET")
 
 config :groupher_server, :search_artiments,
-  platform: GroupherServer.CMS.SearchArtiments.Platforms.Algolia,
-  queue: GroupherServer.CMS.SearchArtiments.Queues.Oban,
+  platform: GroupherServer.CMS.SearchArtiments.Algolia,
+  queue: GroupherServer.CMS.SearchArtiments.ObanQueue,
   algolia: [
     application_id: System.get_env("ALGOLIA_APPLICATION_ID"),
     search_api_key: System.get_env("ALGOLIA_SEARCH_API_KEY"),

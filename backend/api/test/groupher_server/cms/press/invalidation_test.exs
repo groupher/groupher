@@ -17,19 +17,42 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     def call(conn, _opts) do
       status = Application.fetch_env!(:groupher_server, :press_invalidation_test_status)
 
+      if pid = Application.get_env(:groupher_server, :press_invalidation_test_pid) do
+        send(pid, {:press_invalidation_received, conn.request_path})
+      end
+
       conn
       |> put_resp_content_type("application/json")
       |> send_resp(status, ~s({"ok":true}))
     end
   end
 
+  defmodule UnavailableSearch do
+    @moduledoc false
+    @behaviour CMS.SearchArtiments.PlatformAdapter
+    def upsert(_articles, _opts), do: {:error, :search_unavailable}
+    def delete(_refs), do: {:error, :search_unavailable}
+    def update_metrics(_updates), do: {:error, :search_unavailable}
+    def search(_query), do: {:error, :search_unavailable}
+  end
+
   setup do
+    search = Application.fetch_env!(:groupher_server, :search_artiments)
+    endpoint_pid = Application.get_env(:groupher_server, :press_invalidation_test_pid)
     endpoint = System.get_env("PRESS_INTERNAL_URL")
     resource = System.get_env("PRESS_INTERNAL_RESOURCE")
     service_auth = Application.get_env(:groupher_server, GroupherServer.ServiceAuth.Client)
     response_status = Application.get_env(:groupher_server, :press_invalidation_test_status)
 
     on_exit(fn ->
+      Application.put_env(:groupher_server, :search_artiments, search)
+
+      if endpoint_pid do
+        Application.put_env(:groupher_server, :press_invalidation_test_pid, endpoint_pid)
+      else
+        Application.delete_env(:groupher_server, :press_invalidation_test_pid)
+      end
+
       restore_env("PRESS_INTERNAL_URL", endpoint)
       restore_env("PRESS_INTERNAL_RESOURCE", resource)
 
@@ -142,6 +165,46 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
                max_attempts: 3
              })
 
+    assert Repo.get!(Event, event.id).status == :retrying
+  end
+
+  test "Search failure cannot prevent visibility cache invalidation" do
+    {community, article, _attrs, _user} = mock_article(:post)
+
+    {:ok, event} =
+      CMS.Outbox.send(%{
+        event: "article.visibility_changed",
+        worker: GroupherServer.Jobs.CMSOutboxArticle,
+        resource_type: "article",
+        resource_id: article.id,
+        command_id: Ecto.UUID.generate(),
+        data: %{
+          "community" => community.slug,
+          "community_id" => community.id,
+          "thread" => "post",
+          "inner_id" => article_inner_id(article, community)
+        }
+      })
+
+    endpoint = start_endpoint(200)
+    cache_token(endpoint)
+    Application.put_env(:groupher_server, :press_invalidation_test_pid, self())
+    config = Application.fetch_env!(:groupher_server, :search_artiments)
+
+    Application.put_env(
+      :groupher_server,
+      :search_artiments,
+      Keyword.put(config, :platform, UnavailableSearch)
+    )
+
+    assert {:error, :search_unavailable} =
+             CMS.Outbox.Workflow.Article.perform(%Oban.Job{
+               args: %{"event_id" => event.id},
+               attempt: 1,
+               max_attempts: 3
+             })
+
+    assert_receive {:press_invalidation_received, "/internal/invalidate"}, 1_000
     assert Repo.get!(Event, event.id).status == :retrying
   end
 
