@@ -1,56 +1,69 @@
 # Press Workers 部署记录
 
-> 2026-10-26：生产硬切尚未执行；以下记录已实际完成的资源配置与隔离验收。
+> 2026-10-26：生产已硬切到 Cloudflare，旧 `groupher-press` Fly 应用已删除。保持 Workers Free；超限拒绝服务，不升级、不回源到 Fly。
 
-## 代码与生产 Phoenix
+## 发布证据
 
-- [PR #602](https://github.com/groupher/groupher/pull/602) 已合并到 `dev`，提交 `d7db690f695533dc444035c7bb0f67d6c87a14fb`。
-- 同一提交的 [Phoenix 生产部署](https://github.com/groupher/groupher/actions/runs/40301883206) 成功；`https://api.groupher.com/health` 返回 200。
-- 公开输出仍由当前 Gate 负责。没有执行 AlertBoard V2 production cutover。
-- staging 发现并修复：同账号 Auth Worker HTTP 调用缺少 `global_fetch_strictly_public`；Cloudflare 压缩产生的弱 ETag 不能返回 304；5 秒 Phoenix 回源超时无法覆盖冷启动。后续变更须通过 CI 并合并后再做生产硬切。
+- [PR #602](https://github.com/groupher/groupher/pull/602)、[PR #603](https://github.com/groupher/groupher/pull/603)、[PR #604](https://github.com/groupher/groupher/pull/604) 已合并。Phoenix 当前修复基线为 `9f6e1eb856020eaeb7780a0c5af058d6228cf1b9`。
+- [Phoenix 生产部署](https://github.com/groupher/groupher/actions/runs/40338349954) 成功。更正 Search adapter/queue 的旧模块名，并将 review visibility delivery 的 Press invalidation 放在 Search 前面。
+- [Press + edge-router 生产部署](https://github.com/groupher/groupher/actions/runs/40339266045) 成功；production analysis migration 在窗口前已单独成功执行，Worker 不持有 migration owner credential。
+- 归档社区的线上检查发现 Absinthe 的 `extensions.code=5504` 被误报为 502。Worker 修正为读取 canonical error code，并识别 Community/Article 的公开资源缺失；40 项 Press 测试、type-check/lint 通过。已实际发布 source `b9c9ff99eaeecfc41758f7040a18fa4ebbe0bfe2`，Press version `2fcd728b-cd73-497c-95f1-84e88ff8d496`。
+- 窗口从 `2026-10-26T14:23:09.551Z` 到 `2026-10-26T14:51:00.799Z`（UTC）。窗口为 best-effort，接受中断、不保证输出；上述结束时间表示最终稳态验收完成，不表示整个窗口持续不可用。
+- 没有执行 AlertBoard V2 production cutover；生产 Gate/ReviewBlocks 使用当前生产实现。
 
-## 已配置资源
+## 当前生产拓扑
 
-| 环境       | 资源                                                                       | 状态                                                                                                        |
-| ---------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| production | Hyperdrive `press-analysis-production`：`32a99d5d789043f09c39d728d9ae2aeb` | query cache disabled；连接现有生产 analysis 数据                                                            |
-| production | PostgreSQL runtime role `press_worker_cf`                                  | 只授予三个 Press 表及所需 sequence 的权限；已验证无 CMS 表访问权限                                          |
-| production | GitHub Environment `press-production`                                      | Hyperdrive ID、Press service credential、原有 metric salt 与生产 endpoint 已配置；public disabled 保持 true |
-| preview    | Neon project `groupher-press-preview`：`spring-dew-46030887`               | Singapore，独立业务数据库 `groupher_preview` 和 analysis 数据库 `press_preview`；不复制生产业务数据         |
-| preview    | Hyperdrive `press-analysis-preview`：`b68f73b9cd9a4642819365c707ae3146`    | query cache disabled；独立角色 `press_preview_worker`                                                       |
-| preview    | Phoenix `groupher-press-preview-api.fly.dev`                               | 使用上述已发布的 Phoenix image，独立数据库、签名及 service client secrets                                   |
-| preview    | Auth `auth-press-preview.groupher.workers.dev`                             | 独立 RSA key/JWKS、Press/Phoenix/Auth service clients；不使用生产 secret                                    |
-| preview    | Press `press-preview.groupher.workers.dev`                                 | default 只开放 health/internal；public 内容经 Service Binding 调用                                          |
-| preview    | edge-router `edge-router-preview.groupher.workers.dev`                     | 仅允许 Press/health；绑定 preview Press 的 named `Public`                                                   |
+| 项目                 | 实际状态                                                                                                  |
+| -------------------- | --------------------------------------------------------------------------------------------------------- |
+| 用户公开内容         | 平台/社区路由 → edge-router → `press#Public` Service Binding                                              |
+| `press.groupher.com` | Worker Custom Domain；default 仅 health/internal，内容路径 404                                            |
+| edge-router          | version `0504ca9e-97a6-4695-b95e-1c466fef7971`；`PRESS` 指向 `press` 的 named `Public`；已无 `PRESS_SITE` |
+| 公开开关             | Press/edge-router 的 `PRESS_PUBLIC_DISABLED=false`                                                        |
+| 免费限额             | Workers Free；平台及 Auth 的 routes 均为 `request_limit_fail_open=false`，超限不绕过 Worker、不升级       |
+| Hyperdrive           | `press-analysis-production` / `32a99d5d789043f09c39d728d9ae2aeb`；query cache disabled 已复核             |
+| 数据库角色           | `press_worker_cf`，UTC；仅三个 `analysis.press_*` 表及所需 sequence，无 CMS 表访问权限                    |
+| 领域数据             | Worker 经生产 Phoenix Press projection 读取，Gate/Lifecycle/review 的权威仍在 Phoenix                     |
+| 旧 Press Fly         | app、Machine、IP 已删除，certificate 已解除；旧 DNS 已移除，没有备用 origin                               |
+| Phoenix              | 继续运行在 `groupher-api` Fly 应用，未迁移到 Worker                                                       |
 
-数据库 owner 连接和 API key 仅用于受控运维，不进入 Worker binding、源码、日志或本文。生产三个 Press 表已在角色授权前备份；当时包含 4 条 raw metric、44 条 hourly aggregate、0 条 cache。备份存放于受保护的本地运维目录，未提交仓库。
+生产三张 analysis 表与 ORM schema 一致，不需要删除重建；它们保留在现有数据库中。旧 output cache 已清空后切换，未增加兼容读取逻辑。迁移前备份及验收原始报告保存在受保护的本地运维目录，不含于仓库。
 
-## 已完成验收
+## 已完成生产验收
 
-- staging 真实 HTTP 常规验收 24/24：Post/Blog/Changelog/Doc Markdown、RSS/Atom/JSON Feed、Doc Feed、llms、sitemap、压缩弱 ETag 的 304、default 内容 404、unsigned invalidation 401、Phoenix-signed invalidation 200。
-- Review restriction：Post 与 Doc 各自开始/结束共 4 次 transition，通过真实 CMS transaction → Outbox → Press invalidation，在 PDX、SIN 两个 Cloudflare colo 复验 Markdown 与 Feed。测试先将已存在的测试 cache pointer/negative entry 延长到 5 分钟，再确认 Outbox 后 pointer 被删除，因此结果不能由自然 TTL 到期解释。没有读到旧正文或旧 404。
-- 生产 Hyperdrive：临时受保护的只读 Worker 5 次并发读取三个 Press 表均成功；匿名请求 401；数据库角色为 `press_worker_cf`，timezone UTC。探测 Worker 已删除。
-- Schema parity：生产与 preview 均用实际 Drizzle schema 读取三个表的全部映射列，6/6 通过。
-- Retention：在 preview analysis 写入过期测试数据，执行实际清理函数；6 次并发覆盖正常与 SQL 失败，另覆盖连接失败；测试 backend PID 无残留，过期测试数据已删除。
-- Phoenix 冷启动：显式停止 preview Phoenix Machine，清除 Press pointer 后从公开路由首次读取；约 8.2 秒返回 200，并确认 Phoenix 是新启动实例。原 5 秒期限已改为 15 秒，service token 获取期限仍为 5 秒。
-- 本地检查：Press 35 tests、Auth 66 tests、相关 TypeScript type-check/lint 通过。
-- 停服演练：Press/edge-router disabled 的四种组合均已验证。任一 guard 开启时公开内容为 no-store 503（携带 ETag 也不返回 304），default 内容始终 404，health/internal 保持可用。恢复两个 guard 为 false 后重新执行常规 24/24 HTTP 验收。
+- 公开 HTTP 23/23：四种 Article Markdown、RSS/Atom/JSON Feed、Doc Feed、llms、sitemap、弱 ETag 的空 304；default 内容 404；unsigned invalidation 401。
+- Phoenix 使用真实 service credential/JWT 调用生产 `/internal/invalidate` 成功，补足签名失效链路验收。
+- Post/Doc 各自开始、结束 review restriction 共四次，均通过真实 CMS transaction → Outbox → Press invalidation；在 PDX、LAX 两个 colo 复验 Markdown 与 Feed。预先将 warm pointer/negative entry 的 TTL 延长至 5 分钟，再确认 pointer 被删除，未读到旧正文或旧 404。
+- raw metrics 与 hourly aggregate 已实际写入；查询确认 runtime role 为 `press_worker_cf`、timezone UTC。
+- 删除旧 Fly 应用后，真实公开 Markdown 仍返回 200；随后归档生产合成社区 `press-acceptance`（id 10），签名失效成功，取消了 3 个该测试社区自己的 review retry jobs。
+- 最终稳态 HTTP 12/12：真实 home llms/sitemap 200、disabled Feed 404、已归档测试社区的 Markdown/Feed/llms 404、default 内容 404；平台首页、Auth 和 Phoenix health 正常。
+- 两次生产角色/schema 检查均通过；临时只读 DB probe Worker 已删除。迁移未向 Worker 注入数据库 owner credential。
 
-### staging 外围集成边界
+### Search 的独立遗留项
 
-该环境只验收 Press 链路。Assets endpoints 指向 `.invalid`，Cloudflare 公共页面 purge 使用无权限占位配置；Search provider 在 fixture 操作期间临时使用 sink，并在成功/失败后恢复原配置，避免写入生产索引；review 操作在恢复配置前通过真实 Outbox workflow 确认 Press invalidation。CMS Gate、ReviewBlocks、Outbox、service JWT、Press HTTP、Hyperdrive、cache 与 metrics 均使用真实实现。
+生产尚未配置 Algolia credentials。Search 同步仍返回 `4529`；它之后的公共页面 CDN purge 也不能视为完成。Press 现在先执行 invalidation，已通过上述真实 pointer 删除和跨 colo 验收证明不被 Search 故障阻塞。
 
-Review visibility Outbox 已实际完成 Press invalidation，随后在独立的公共页面 CDN purge 步骤返回 `cloudflare_rejected`。这验证了 Press 失效链路，不等于整个 CDN purge workflow 成功。生产硬切后必须另验 Outbox completion/retry；不能将此 staging 结果作为生产 CDN purge 的验收。
+不能把这些结果写成整条 Search/CDN workflow 成功。生产正常事件仍按 Outbox 的重试规则处理；只取消了已归档合成测试社区自己的 retry jobs。Algolia 接入属于后续独立事项。
 
-## 切换前线上基线
+## Free 上限实测与运行约束
 
-当前生产 Phoenix 的 `demo/home` manifest 投影成功，但公开条目为 0，Feed 未启用。旧公开 Press 路由在切换前已对本次抽测的 home Markdown、llms、sitemap、Feed 返回 Cloudflare 502；这不能作为 Worker 的回归基线。生产切换后须另验正向内容与完整失效链路。
+在隔离 preview 中，使用实际 Press Worker、Hyperdrive、L2 cache、metrics 和 Auth，以临时合成 GraphQL origin 提供上限 DTO；不把合成 origin 当作 Phoenix Gate 验收。共 14 个冷热请求全部返回 200，包含 5 MiB Markdown、500 项 manifest、50 项 RSS/Atom/JSON Feed。
 
-## 尚未完成
+Cloudflare live-tail 记录的 CPU 样本为 6–75ms，其中 5 MiB 为 61/75ms。**这些样本超过 Free 的标称 10ms/invocation，不能声称满足 10ms，也不能由本轮 HTTP 200 推导大内容持续可用。** 按用户确认的策略保持 Free，接受平台 CPU/每日请求/Hyperdrive SQL 超限时拒绝服务，不升级；不设置 Fly fallback。
 
-- [后续修复 PR #603](https://github.com/groupher/groupher/pull/603) 合并。凭据隔离修订的 [preview migration/deploy](https://github.com/groupher/groupher/actions/runs/40318711856) 已成功；四次 review 跨 POP 复验、24/24 HTTP、503 拒绝与测试限制清理隔离检查均通过。首次真实 [preview migration/deploy](https://github.com/groupher/groupher/actions/runs/40314465628) 已成功，短时 migration secret 已移除。
-- 用户决定暂时保留 Workers Free；不再要求立即开通 Paid，也不自动升级。生产切换前仍需完成 5 MiB Markdown、500 项 manifest、Feed/失效等真实路径的 Free CPU 测量，以及全账号剩余 Worker/Hyperdrive 额度核算；当前 HTTP smoke 不代表这些预检已完成。
-- 生产受控可见性复验、best-effort domain/Service Binding 硬切、最终生产 HTTP/跨 POP/Outbox 验收与旧 Press Fly 退役。
-- 至少 7 天的容量、失败率与账单观察。
+临时合成 origin `press-load-origin` 已删除，preview 已恢复真实 Phoenix endpoint。全账号共享额度和峰值下的拒绝率仍需通过后续真实流量观察；未配置主动预算告警，不将其写成已完成。
 
-生产域名仍为 `press.groupher.com`。硬切窗口接受中断、不保证输出；不添加 Fly fallback、兼容路由或备用 origin。
+## 隔离环境与验证边界
+
+保留用于后续发布前验收的独立环境：
+
+- Neon project `groupher-press-preview` / `spring-dew-46030887`：业务 DB `groupher_preview`，analysis DB `press_preview`；不复制生产业务数据。
+- Hyperdrive `press-analysis-preview` / `b68f73b9cd9a4642819365c707ae3146`，query cache disabled，独立最小权限角色。
+- Phoenix `groupher-press-preview-api.fly.dev`，Auth `auth-press-preview.groupher.workers.dev`，Press `press-preview.groupher.workers.dev`，edge-router `edge-router-preview.groupher.workers.dev`；各自使用 preview endpoint、数据与 secret。
+- [preview migration/deploy](https://github.com/groupher/groupher/actions/runs/40318711856) 已成功，临时 GitHub migration secret 已移除。staging 常规 24/24、review 四次 transition、四种 maintenance guard 组合及恢复 smoke 均通过。
+- Retention 在 preview 使用真实清理函数验证过期数据删除，6 次并发覆盖成功/SQL 失败，另覆盖连接失败，测试连接无残留；生产 Cron 已部署，尚未以生产定时执行记录宣称验收。
+- Phoenix 冷启动验收约 8.2 秒首次返回 200，因此回源期限为 15 秒，token 获取仍为 5 秒。
+- preview Assets endpoints 为 `.invalid`，CDN purge 为无权限占位配置；fixture 期间临时 Search sink 在成功/异常后恢复原配置。此类外围集成不代表生产 CDN purge 已通过。
+
+## 后续观察
+
+至少 7 天的实际 CPU、请求量、Hyperdrive SQL、连接数、错误率与账单观察仍待进行；不存在自动升级步骤。日额度用尽即拒绝服务，额度重置后由平台恢复。运行实现和验收命令见 [迁移方案](./cloudflare-workers-migration.md) 与 [运维工具](../../ops/press/README.md)。
