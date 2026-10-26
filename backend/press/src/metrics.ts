@@ -60,10 +60,7 @@ export const classifyUa = (userAgent = ''): string | undefined => {
 }
 
 /** Runs the hash client ip operation at the press boundary. */
-export const hashClientIp = (
-  ip: string | undefined,
-  salt = process.env.METRIC_IP_SALT,
-): string | undefined => {
+export const hashClientIp = (ip: string | undefined, salt?: string): string | undefined => {
   if (!ip || !salt) return undefined
   return createHash('sha256').update(`${salt}:${ip}`).digest('hex').slice(0, 24)
 }
@@ -73,11 +70,8 @@ export const requestId = (header?: string): string => header || randomUUID()
 
 /** Creates metric recorder from typed press inputs. */
 export const createMetricRecorder = (db: PressDatabase | null) => ({
-  record(event: MetricEvent): void {
-    if (!db) return
-    void persistMetric(db, event).catch((error) =>
-      console.error('Press metric write failed', error),
-    )
+  record(event: MetricEvent): Promise<void> {
+    return db ? persistMetric(db, event) : Promise.resolve()
   },
 })
 

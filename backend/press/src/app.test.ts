@@ -2,7 +2,7 @@ import { ServiceTokenAuthorizationError } from '@groupher/service/auth'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createApp } from './app'
-import { createOutputCache } from './cache'
+import type { CachedOutput, OutputCache } from './cache'
 import type { Origin } from './origin'
 
 const article = {
@@ -27,6 +27,22 @@ const origin = {
   threadFeed: vi.fn(),
   siteManifest: vi.fn(),
 } satisfies Origin
+
+const createTestCache = (): OutputCache => {
+  const values = new Map<string, CachedOutput>()
+  return {
+    async get(key) {
+      const value = values.get(key)
+      return value && value.expiresAt > new Date() ? value : null
+    },
+    async set(key, value) {
+      values.set(key, value)
+    },
+    async invalidate(prefix) {
+      for (const key of values.keys()) if (key.startsWith(prefix)) values.delete(key)
+    },
+  }
+}
 
 const feed = {
   community: {
@@ -74,18 +90,86 @@ describe('Press HTTP app', () => {
   }
 
   it('exposes the shared backend health contract', async () => {
-    const app = createApp({ origin, cache: createOutputCache(null), recorder: { record: vi.fn() } })
+    const app = createApp({ origin, cache: createTestCache(), recorder: { record: vi.fn() } })
     const response = await app.request('https://press.test/health')
-    const body = await response.json()
+    const body = (await response.json()) as {
+      schemaVersion: string
+      service: string
+      status: string
+    }
 
     expect(body.schemaVersion).toBe('health.v1')
     expect(body.service).toBe('press')
     expect(body.status).toBe('ok')
   })
 
+  it('keeps a successful response when metric recording throws synchronously', async () => {
+    const app = createApp({
+      origin,
+      cache: createTestCache(),
+      recorder: {
+        record() {
+          throw new Error('metrics unavailable')
+        },
+      },
+    })
+
+    const response = await app.request('https://press.test/home/post/1.md')
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toContain('# Hello')
+  })
+
+  it('keeps the default HTTP entrypoint limited to health and internal invalidation', async () => {
+    const app = createApp({
+      routes: 'internal',
+      origin,
+      cache: createTestCache(),
+      recorder: { record: vi.fn() },
+      serviceTokenVerifier,
+    })
+
+    expect((await app.request('https://press.test/health')).status).toBe(200)
+    expect((await app.request('https://press.test/home/post/1.md')).status).toBe(404)
+    expect(
+      (await app.request('https://press.test/internal/invalidate', { method: 'POST' })).status,
+    ).toBe(401)
+  })
+
+  it('keeps the named public entrypoint isolated and disabled by default', async () => {
+    origin.article.mockClear()
+    const disabledApp = createApp({
+      routes: 'public',
+      environment: {},
+      origin,
+      cache: createTestCache(),
+      recorder: { record: vi.fn() },
+    })
+
+    expect((await disabledApp.request('https://press.test/health')).status).toBe(404)
+    expect(
+      (await disabledApp.request('https://press.test/internal/invalidate', { method: 'POST' }))
+        .status,
+    ).toBe(404)
+    const disabledResponse = await disabledApp.request('https://press.test/home/post/1.md')
+    expect(disabledResponse.status).toBe(503)
+    expect(disabledResponse.headers.get('cache-control')).toBe('no-store')
+    expect(disabledResponse.headers.get('retry-after')).toBe('60')
+    expect(origin.article).not.toHaveBeenCalled()
+
+    const enabledApp = createApp({
+      routes: 'public',
+      environment: { PRESS_PUBLIC_DISABLED: 'false' },
+      origin,
+      cache: createTestCache(),
+      recorder: { record: vi.fn() },
+    })
+    expect((await enabledApp.request('https://press.test/home/post/1.md')).status).toBe(200)
+  })
+
   it('serves generic Article Markdown with canonical and conditional headers', async () => {
     const record = vi.fn()
-    const app = createApp({ origin, cache: createOutputCache(null), recorder: { record } })
+    const app = createApp({ origin, cache: createTestCache(), recorder: { record } })
     const first = await app.request('https://press.test/home/post/1.md')
     expect(first.status).toBe(200)
     expect(await first.text()).toBe('# Hello\n')
@@ -115,7 +199,7 @@ describe('Press HTTP app', () => {
     }
     const app = createApp({
       origin: missingOrigin,
-      cache: createOutputCache(null),
+      cache: createTestCache(),
       recorder: { record: vi.fn() },
     })
 
@@ -131,7 +215,7 @@ describe('Press HTTP app', () => {
     }
     const app = createApp({
       origin: feedOrigin,
-      cache: createOutputCache(null),
+      cache: createTestCache(),
       recorder: { record: vi.fn() },
     })
 
@@ -142,7 +226,8 @@ describe('Press HTTP app', () => {
     expect(rss.headers.get('content-type')).toContain('application/rss+xml')
     expect(await rss.text()).toContain('<guid isPermaLink="false">article-1</guid>')
     expect(atom.headers.get('content-type')).toContain('application/atom+xml')
-    expect((await json.json()).items[0].id).toBe('article-1')
+    const jsonBody = (await json.json()) as { items: Array<{ id: string }> }
+    expect(jsonBody.items[0].id).toBe('article-1')
     expect(feedOrigin.communityFeed).toHaveBeenCalledTimes(3)
   })
 
@@ -157,7 +242,7 @@ describe('Press HTTP app', () => {
     }
     const app = createApp({
       origin: siteOrigin,
-      cache: createOutputCache(null),
+      cache: createTestCache(),
       recorder: { record: vi.fn() },
     })
 
@@ -172,14 +257,14 @@ describe('Press HTTP app', () => {
     })
     const disabledApp = createApp({
       origin: siteOrigin,
-      cache: createOutputCache(null),
+      cache: createTestCache(),
       recorder: { record: vi.fn() },
     })
     expect((await disabledApp.request('https://press.test/home/llms.txt')).status).toBe(404)
   })
 
   it('validates community-scoped internal invalidation requests', async () => {
-    const cache = createOutputCache(null)
+    const cache = createTestCache()
     const invalidate = vi.spyOn(cache, 'invalidate')
     const app = createApp({ origin, cache, recorder: { record: vi.fn() }, serviceTokenVerifier })
 
@@ -225,7 +310,7 @@ describe('Press HTTP app', () => {
   it('returns 403 when a valid service token lacks the invalidation scope', async () => {
     const app = createApp({
       origin,
-      cache: createOutputCache(null),
+      cache: createTestCache(),
       recorder: { record: vi.fn() },
       serviceTokenVerifier: {
         verify: vi.fn().mockRejectedValue(new ServiceTokenAuthorizationError('scope', 403)),
@@ -249,7 +334,7 @@ describe('Press HTTP app', () => {
     }
     const app = createApp({
       origin: docOrigin,
-      cache: createOutputCache(null),
+      cache: createTestCache(),
       recorder: { record: vi.fn() },
     })
     const response = await app.request('https://press.test/home/doc/8/getting-started.md')

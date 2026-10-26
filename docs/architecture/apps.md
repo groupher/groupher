@@ -88,19 +88,19 @@ token 由 Phoenix 针对具体服务和操作签发。两者不能混用。
 
 ## 子应用清单
 
-| 子应用                          | 运行形态                            | UI 所在位置            | 定位                               | 当前状态                         |
-| ------------------------------- | ----------------------------------- | ---------------------- | ---------------------------------- | -------------------------------- |
-| [`import`](../import)           | Cloudflare Workers + Workflows + R2 | Dashboard              | 多来源内容导入和标准化             | 已独立承载 server implementation |
-| [`converter`](../converter)     | Cloudflare Worker + AnyDoc WASM     | 无独立 UI              | 单文件到 Markdown 的格式转换       | 已有独立服务                     |
-| [`assets-hub`](../assets-hub)   | Node/Hono                           | Dashboard              | 上传、校验、媒体处理和多存储执行层 | 分阶段推进                       |
-| [`apply`](../apply)             | 独立 TanStack Start 前端            | 独立 UI                | 社区申请与创建流程                 | V1 目标合同已确认                |
-| [`auth`](../auth)               | Node/Hono + Auth.js                 | 独立系统 UI            | OAuth、登录和统一会话入口          | 已建立独立应用并由 Gateway 接入  |
-| [`gateway`](../gateway)         | Node/Hono                           | 无独立 UI              | 稳定入口、反向代理和服务路由       | 迁移设计与实施记录               |
-| [`Press`](../press)             | Node/Hono                           | Dashboard 配置         | 单向、缓存友好的官方内容输出       | V1 已部署并完成线上冒烟验收      |
-| [`posthouse`](../posthouse)     | Node/Hono                           | Dashboard Integrations | Webhook、IM 和邮件的收发中心       | 规划中                           |
-| [`ai`](../ai)                   | Node/Hono                           | Dashboard、Docs 和 IM  | AI 能力编排和 provider 适配        | 规划中                           |
-| [`risk-center`](../risk-center) | Node/Hono                           | Dashboard              | 风险信号查询、聚合和低延迟判定     | 规划中                           |
-| [`umami`](../umami)             | 自托管 vendor application           | Dashboard              | 社区访问统计                       | Fly.io；Neon `umami-dev`         |
+| 子应用                          | 运行形态                             | UI 所在位置            | 定位                               | 当前状态                                 |
+| ------------------------------- | ------------------------------------ | ---------------------- | ---------------------------------- | ---------------------------------------- |
+| [`import`](../import)           | Cloudflare Workers + Workflows + R2  | Dashboard              | 多来源内容导入和标准化             | 已独立承载 server implementation         |
+| [`converter`](../converter)     | Cloudflare Worker + AnyDoc WASM      | 无独立 UI              | 单文件到 Markdown 的格式转换       | 已有独立服务                             |
+| [`assets-hub`](../assets-hub)   | Node/Hono                            | Dashboard              | 上传、校验、媒体处理和多存储执行层 | 分阶段推进                               |
+| [`apply`](../apply)             | 独立 TanStack Start 前端             | 独立 UI                | 社区申请与创建流程                 | V1 目标合同已确认                        |
+| [`auth`](../auth)               | Node/Hono + Auth.js                  | 独立系统 UI            | OAuth、登录和统一会话入口          | 已建立独立应用并由 Gateway 接入          |
+| [`gateway`](../gateway)         | Node/Hono                            | 无独立 UI              | 稳定入口、反向代理和服务路由       | 迁移设计与实施记录                       |
+| [`Press`](../press)             | Node/Hono；Worker runtime 已本地实现 | Dashboard 配置         | 单向、缓存友好的官方内容输出       | 当前生产为 Fly V1；Cloudflare 硬切未执行 |
+| [`posthouse`](../posthouse)     | Node/Hono                            | Dashboard Integrations | Webhook、IM 和邮件的收发中心       | 规划中                                   |
+| [`ai`](../ai)                   | Node/Hono                            | Dashboard、Docs 和 IM  | AI 能力编排和 provider 适配        | 规划中                                   |
+| [`risk-center`](../risk-center) | Node/Hono                            | Dashboard              | 风险信号查询、聚合和低延迟判定     | 规划中                                   |
+| [`umami`](../umami)             | 自托管 vendor application            | Dashboard              | 社区访问统计                       | Fly.io；Neon `umami-dev`                 |
 
 跨应用的 TanStack rewrite 基线、方案和评审统一放在 [`rewrite/`](../migrations/tanstack)，不与
 Dashboard 自身的版本迁移合同混放。

@@ -14,9 +14,11 @@ const createEnv = () =>
     LANDING: fetcher('landing'),
     COMMUNITY: fetcher('community'),
     AUTH: fetcher('auth'),
+    PRESS: fetcher('press'),
     API_SITE: 'https://api.groupher.com',
-    PRESS_SITE: 'https://press.groupher.com',
+    PRESS_PUBLIC_DISABLED: 'false',
     CUSTOM_DOMAIN_COMMUNITIES: '{"talk.example.com":"home"}',
+    PREVIEW_PLATFORM_HOSTS: '',
     NODE_ENV: 'test',
     CF_VERSION_METADATA: { id: 'version-1', tag: '', timestamp: '2026-08-24T00:00:00Z' },
   }) as unknown as Env
@@ -42,16 +44,16 @@ describe('edge-router', () => {
     await dispatch(new Request('https://groupher.com/home'), env)
     await dispatch(new Request('https://groupher.com/api/auth/session'), env)
 
-    expect(env.LANDING.fetch).toHaveBeenCalledOnce()
-    expect(env.COMMUNITY.fetch).toHaveBeenCalledOnce()
-    expect(env.AUTH.fetch).toHaveBeenCalledOnce()
+    expect(env.LANDING!.fetch).toHaveBeenCalledOnce()
+    expect(env.COMMUNITY!.fetch).toHaveBeenCalledOnce()
+    expect(env.AUTH!.fetch).toHaveBeenCalledOnce()
   })
 
   it('maps Landing public assets to the Vite static bundle', async () => {
     const env = createEnv()
     await dispatch(new Request('https://groupher.com/landing/assets/app.js'), env)
 
-    const request = vi.mocked(env.LANDING.fetch).mock.calls[0][0] as Request
+    const request = vi.mocked(env.LANDING!.fetch).mock.calls[0][0] as Request
     expect(new URL(request.url).pathname).toBe('/assets/app.js')
   })
 
@@ -75,17 +77,43 @@ describe('edge-router', () => {
   })
 
   it('cleans credentials from Press output', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('ok'))
+    const env = createEnv()
     await dispatch(
       new Request('https://groupher.com/home/post/a.md', {
         headers: { authorization: 'Bearer secret', cookie: 'private=yes' },
       }),
+      env,
     )
 
-    const forwarded = fetchSpy.mock.calls[0][0] as Request
-    expect(forwarded.url).toBe('https://press.groupher.com/home/post/a.md')
+    const forwarded = vi.mocked(env.PRESS.fetch).mock.calls[0][0] as Request
+    expect(forwarded.url).toBe('https://groupher.com/home/post/a.md')
     expect(forwarded.headers.has('authorization')).toBe(false)
     expect(forwarded.headers.has('cookie')).toBe(false)
+  })
+
+  it('uses the Press Service Binding and can stop Press output without affecting other routes', async () => {
+    const env = createEnv()
+    env.PRESS_PUBLIC_DISABLED = 'true'
+    const response = await dispatch(new Request('https://groupher.com/home/post/a.md'), env)
+    expect(response.status).toBe(503)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(env.PRESS.fetch).not.toHaveBeenCalled()
+
+    env.PRESS_PUBLIC_DISABLED = 'false'
+    expect((await dispatch(new Request('https://groupher.com/home'), env)).status).toBe(200)
+  })
+
+  it('fails closed when the Press output switch is missing or invalid', async () => {
+    for (const setting of [undefined, 'invalid']) {
+      const env = createEnv()
+      if (setting === undefined) delete (env as Partial<Env>).PRESS_PUBLIC_DISABLED
+      else env.PRESS_PUBLIC_DISABLED = setting
+
+      const response = await dispatch(new Request('https://groupher.com/home/feed.xml'), env)
+      expect(response.status).toBe(503)
+      expect(response.headers.get('cache-control')).toBe('no-store')
+      expect(env.PRESS.fetch).not.toHaveBeenCalled()
+    }
   })
 
   it('enforces browser GraphQL CSRF and keeps only the Groupher auth cookie', async () => {
@@ -130,5 +158,32 @@ describe('edge-router', () => {
     expect((await dispatch(new Request('https://groupher.localhost/health'), env)).status).toBe(200)
     expect((await dispatch(new Request('http://localhost/health'), env)).status).toBe(200)
     expect((await dispatch(new Request('http://127.0.0.1/health'), env)).status).toBe(200)
+  })
+
+  it('keeps preview routing isolated to Press and health', async () => {
+    const env = {
+      ...createEnv(),
+      NODE_ENV: 'preview',
+      PREVIEW_PLATFORM_HOSTS: 'staging.groupher.com',
+    } as unknown as Env
+
+    expect((await dispatch(new Request('https://staging.groupher.com/health'), env)).status).toBe(
+      200,
+    )
+    expect((await dispatch(new Request('https://staging.groupher.com/pricing'), env)).status).toBe(
+      404,
+    )
+    expect((await dispatch(new Request('https://staging.groupher.com/home'), env)).status).toBe(404)
+    expect(
+      (await dispatch(new Request('https://staging.groupher.com/api/auth/session'), env)).status,
+    ).toBe(404)
+    expect(env.LANDING!.fetch).not.toHaveBeenCalled()
+    expect(env.COMMUNITY!.fetch).not.toHaveBeenCalled()
+    expect(env.AUTH!.fetch).not.toHaveBeenCalled()
+
+    expect(
+      (await dispatch(new Request('https://staging.groupher.com/home/post/1.md'), env)).status,
+    ).toBe(200)
+    expect(env.PRESS.fetch).toHaveBeenCalledOnce()
   })
 })

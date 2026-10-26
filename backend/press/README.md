@@ -11,7 +11,7 @@ persistence authority.
 Dashboard -> Phoenix CMS.Press -> configuration/public projection
                                       |
                                       v
-Browser -> Gateway ----------------> Press -> cache/D1 projection
+Browser -> Gateway ----------------> Press -> analysis cache + metrics
                                       |
                                       +-> bounded Phoenix refresh/read
 ```
@@ -22,15 +22,17 @@ second authoring system and must not write Phoenix tables directly.
 ## Source layout
 
 - `src/app.ts`: Hono routes and response policy.
-- `src/config.ts`: runtime configuration.
-- `src/db`: Press-owned D1 projection schema and migrations.
-- `src/phoenix.ts`: bounded Phoenix client.
-- `src/server.ts` / `src/worker.ts`: local Node and Worker entrypoints.
+- `src/origin.ts`: bounded Phoenix Press projection client.
+- `src/db`: Press-owned PostgreSQL `analysis` schema and migrations.
+- `src/server.ts`: Node/Hono entrypoint for local development.
+- `src/worker.ts`: Cloudflare Worker default health/internal entrypoint and named `Public` content entrypoint.
+- `src/runtime.ts`: per-invocation database client and request lifecycle shared by Worker and Node entrypoints.
 
 ## Local development and validation
 
 ```sh
 pnpm --filter @groupher/press run dev
+pnpm --filter @groupher/press run dev:worker
 pnpm --filter @groupher/press run test
 pnpm --filter @groupher/press run type-check
 pnpm --filter @groupher/press run format:check
@@ -38,8 +40,11 @@ pnpm --filter @groupher/press run db:generate
 pnpm --filter @groupher/press run db:migrate
 ```
 
+Production Worker deployment is not complete. The migration runbook tracks the isolated staging resources, production Hyperdrive, Phoenix fixes, and `press.groupher.com` hard cut.
+
 ## Related documentation
 
 - [`docs/press/v1.md`](../../docs/press/v1.md)
+- [`docs/press/cloudflare-workers-migration.md`](../../docs/press/cloudflare-workers-migration.md)
 - [`docs/architecture/apps.md`](../../docs/architecture/apps.md)
 - [`docs/infra/contracts/health.md`](../../docs/infra/contracts/health.md)

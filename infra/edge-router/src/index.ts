@@ -16,6 +16,16 @@ let startedAt: number | undefined
 
 const notFound = (): Response => new Response('Not Found', { status: 404 })
 
+const pressDisabled = (): Response =>
+  new Response('Press public output is temporarily disabled.\n', {
+    headers: {
+      'cache-control': 'no-store',
+      'content-type': 'text/plain; charset=utf-8',
+      'retry-after': '60',
+    },
+    status: 503,
+  })
+
 const invalidGraphQLRequest = (message: string): Response =>
   Response.json(
     { errors: [{ extensions: { code: AUTH_ERROR.INVALID_CSRF }, message }] },
@@ -49,7 +59,14 @@ const readCustomDomains = (value: string): Record<string, string> => {
 const platformHosts = (env: Env): readonly string[] =>
   (env.NODE_ENV as string) === 'development'
     ? [...PRODUCTION_PLATFORM_HOSTS, 'groupher.localhost', 'localhost', '127.0.0.1']
-    : PRODUCTION_PLATFORM_HOSTS
+    : (env.NODE_ENV as string) === 'preview'
+      ? [
+          ...PRODUCTION_PLATFORM_HOSTS,
+          ...env.PREVIEW_PLATFORM_HOSTS.split(',')
+            .map((host) => host.trim().toLowerCase())
+            .filter(Boolean),
+        ]
+      : PRODUCTION_PLATFORM_HOSTS
 
 const targetUrl = (base: string, pathname: string, search: string): URL => {
   const url = new URL(base)
@@ -82,12 +99,17 @@ const proxyRequest = async (request: Request, target: PublicRoute, env: Env): Pr
         : target.targetKind === 'community'
           ? env.COMMUNITY
           : env.AUTH
+    if (!binding) return notFound()
     incomingUrl.pathname = target.pathname
     return binding.fetch(new Request(incomingUrl, init))
   }
 
-  const base = target.targetKind === 'phoenix' ? env.API_SITE : env.PRESS_SITE
-  return fetch(new Request(targetUrl(base, target.pathname, incomingUrl.search), init))
+  if (target.targetKind === 'press') {
+    incomingUrl.pathname = target.pathname
+    return env.PRESS.fetch(new Request(incomingUrl, init))
+  }
+
+  return fetch(new Request(targetUrl(env.API_SITE, target.pathname, incomingUrl.search), init))
 }
 
 const healthResponse = (env: Env): Response => {
@@ -124,7 +146,12 @@ export default {
           ? healthResponse(env)
           : target.targetKind === 'not-found'
             ? notFound()
-            : validateGraphQLRequest(request, target) || (await proxyRequest(request, target, env))
+            : env.NODE_ENV === 'preview' && target.targetKind !== 'press'
+              ? notFound()
+              : target.targetKind === 'press' && env.PRESS_PUBLIC_DISABLED !== 'false'
+                ? pressDisabled()
+                : validateGraphQLRequest(request, target) ||
+                  (await proxyRequest(request, target, env))
 
       console.log(
         JSON.stringify({

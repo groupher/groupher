@@ -9,10 +9,12 @@
  *     -> public response
  */
 
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres'
+import type { Client } from 'pg'
 
-export type PressDatabase = ReturnType<typeof drizzle>
+import * as schema from './schema'
+
+export type PressDatabase = NodePgDatabase<typeof schema> & { $client: Client }
 
 /** Runs the database url from env operation at the press boundary. */
 export const databaseUrlFromEnv = (
@@ -31,8 +33,4 @@ export const databaseUrlFromEnv = (
 }
 
 /** Creates database from typed press inputs. */
-export const createDatabase = (url = databaseUrlFromEnv()): PressDatabase | null => {
-  if (!url) return null
-  const client = postgres(url, { max: 4, idle_timeout: 20 })
-  return drizzle(client)
-}
+export const createDatabase = (client: Client): PressDatabase => drizzle({ client, schema })

@@ -9,17 +9,14 @@ defmodule GroupherServer.Test.CMS.Press do
     ArticleStats,
     ArticlePublic,
     CommunityLifecycle,
-    DocPublishRelease,
     DocPublic,
     DocTreeNode,
-    DocTreeSnapshot,
     PressConfig
   }
 
   alias CMS.Outbox.Event
 
   alias Ecto.Changeset
-  alias CMS.Docs.Branch
   alias GroupherServerWeb.Schema
 
   setup do
@@ -432,33 +429,36 @@ defmodule GroupherServer.Test.CMS.Press do
              MapSet.new(Enum.map(newer_posts, & &1.id))
   end
 
-  test "Docs Feed exposes only the latest main-branch publish release", ~m(community user)a do
-    {:ok, branch} = Branch.resolve(community, nil)
-    published_at = DateTime.utc_now(:second)
+  test "Docs Feed follows the current Gate projection and hides restricted branches",
+       ~m(community user)a do
+    {_, doc, _, _} = mock_article(:doc, community, user)
 
-    for release_number <- 1..2 do
-      snapshot =
-        %DocTreeSnapshot{}
-        |> DocTreeSnapshot.changeset(%{
+    for attrs <- [
+          %{node_id: "feed-tab", type: :tab, title: "Docs", index: 0},
+          %{
+            node_id: "feed-group",
+            parent_node_id: "feed-tab",
+            type: :group,
+            title: "Guide",
+            index: 0
+          },
+          %{
+            node_id: "feed-page",
+            parent_node_id: "feed-group",
+            doc_id: doc.id,
+            type: :page,
+            title: doc.title,
+            index: 0
+          }
+        ] do
+      %DocTreeNode{}
+      |> DocTreeNode.changeset(
+        Map.merge(attrs, %{
           community_id: community.id,
-          branch_id: branch.id,
-          author_id: user.id,
-          tree_json: %{},
-          tree_hash: "tree-#{release_number}",
-          published_at: DateTime.add(published_at, release_number, :second)
+          branch_id: doc.branch_id,
+          stage: :public
         })
-        |> Repo.insert!()
-
-      %DocPublishRelease{}
-      |> DocPublishRelease.changeset(%{
-        community_id: community.id,
-        branch_id: branch.id,
-        tree_snapshot_id: snapshot.id,
-        author_id: user.id,
-        release_number: release_number,
-        version_slug: "v#{release_number}",
-        published_at: DateTime.add(published_at, release_number, :second)
-      })
+      )
       |> Repo.insert!()
     end
 
@@ -471,9 +471,47 @@ defmodule GroupherServer.Test.CMS.Press do
              )
 
     assert {:ok, %{items: [item]}} = CMS.Press.thread_rss_feed(community, :doc)
-    assert item.item_id == "#{community.slug}:docs:v2"
-    assert item.article_revision == "release-2"
+    assert item.item_id == doc.id
     assert item.thread == :doc
+
+    branch = Repo.get!(CMS.Model.DocBranch, doc.branch_id)
+
+    lifecycle =
+      Repo.get_by!(CMS.Model.DocLifecycle, article_id: doc.id, branch_id: branch.id)
+
+    lock_lifecycle = fn ->
+      CMS.Model.DocLifecycle
+      |> where([row], row.id == ^lifecycle.id)
+      |> lock("FOR UPDATE")
+      |> Repo.one()
+    end
+
+    assert {:ok, {:ok, restriction}} =
+             Repo.transaction(fn ->
+               CMS.Docs.Lifecycle.apply_review_block(lock_lifecycle.(), %{
+                 scope_key: "platform",
+                 type: :manual_hold,
+                 source_ref: "press-doc-feed-review",
+                 source: :human,
+                 applied_at: DateTime.utc_now(:second)
+               })
+             end)
+
+    assert {:ok, %{items: []}} = CMS.Press.thread_rss_feed(community, :doc)
+
+    assert {:ok, {:ok, :pass}} =
+             Repo.transaction(fn ->
+               CMS.Docs.Lifecycle.end_review_blocks(
+                 lock_lifecycle.(),
+                 "platform",
+                 [restriction.id],
+                 Ecto.UUID.generate(),
+                 "review_approved"
+               )
+             end)
+
+    assert {:ok, %{items: [restored]}} = CMS.Press.thread_rss_feed(community, :doc)
+    assert restored.item_id == doc.id
   end
 
   test "feed validation rejects disabled or invalid configuration", ~m(community user)a do

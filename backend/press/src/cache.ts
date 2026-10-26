@@ -30,12 +30,8 @@ export type OutputCache = {
 
 /** Creates output cache from typed press inputs. */
 export const createOutputCache = (db: PressDatabase | null): OutputCache => {
-  const memory = new Map<string, CachedOutput>()
   return {
     async get(key) {
-      const local = memory.get(key)
-      if (local && local.expiresAt > new Date()) return local
-      memory.delete(key)
       if (!db) return null
       const [row] = await db
         .select()
@@ -50,11 +46,9 @@ export const createOutputCache = (db: PressDatabase | null): OutputCache => {
         metadata: row.metadata || undefined,
         expiresAt: row.expiresAt,
       }
-      memory.set(key, value)
       return value
     },
     async set(key, value) {
-      memory.set(key, value)
       if (!db) return
       await db
         .insert(pressOutputCache)
@@ -65,7 +59,6 @@ export const createOutputCache = (db: PressDatabase | null): OutputCache => {
         })
     },
     async invalidate(prefix) {
-      for (const key of memory.keys()) if (key.startsWith(prefix)) memory.delete(key)
       if (!db) return
       await db.delete(pressOutputCache).where(like(pressOutputCache.key, `${prefix}%`))
     },

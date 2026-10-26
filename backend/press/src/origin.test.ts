@@ -9,6 +9,7 @@ describe('Phoenix Press origin client', () => {
     const fetcher = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
       const request = JSON.parse(String(init?.body)) as { query: string }
       expect(request.query).toContain('pressCommunityRSSFeed: pressCommunityRssFeed')
+      expect(request.query).toContain('articleRef: itemId')
       expect(new Headers(init?.headers).get('authorization')).toBe('Bearer press-service-token')
       return Response.json({
         data: {
@@ -56,6 +57,32 @@ describe('Phoenix Press origin client', () => {
 
     await expect(origin.siteManifest('home')).rejects.toEqual(
       expect.objectContaining<Partial<OriginError>>({ status: 503 }),
+    )
+  })
+
+  it('aliases Phoenix article identifiers into the Press response contract', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
+      const request = JSON.parse(String(init?.body)) as { query: string }
+      expect(request.query).toContain('articleRef: articleId')
+      return Response.json({ data: { pressArticle: null } })
+    })
+    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
+
+    await expect(
+      origin.article({ community: 'home', thread: 'post', innerId: '1' }),
+    ).rejects.toEqual(expect.objectContaining<Partial<OriginError>>({ status: 404 }))
+  })
+
+  it('aliases Phoenix site manifest item identifiers into the Press response contract', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
+      const request = JSON.parse(String(init?.body)) as { query: string }
+      expect(request.query).toContain('articleRef: itemId')
+      return Response.json({ data: { pressSiteManifest: null } })
+    })
+    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
+
+    await expect(origin.siteManifest('home')).rejects.toEqual(
+      expect.objectContaining<Partial<OriginError>>({ status: 404 }),
     )
   })
 

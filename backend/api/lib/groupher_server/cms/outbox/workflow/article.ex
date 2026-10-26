@@ -66,8 +66,10 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
   defp sync_visibility(event) do
     with %Article{thread: thread} <- Repo.get(Article, event.resource_id),
          community_id when is_integer(community_id) <- Map.get(event.data, "community_id"),
+         %Community{} = community <- Repo.get(Community, community_id),
          {:ok, :pass} <-
            CMS.SearchArtiments.Indexer.sync_binding(thread, event.resource_id, community_id),
+         {:ok, :pass} <- CMS.Press.invalidate(community),
          {:ok, _} <- purge_cache(event) do
       {:ok, :pass}
     else

@@ -63,7 +63,7 @@ export type Origin = {
 
 const ARTICLE_QUERY = `query PressArticle($article: ArticlePathInput!) {
   pressArticle(article: $article) {
-    communityRef articleRef articleRevision thread canonicalPath canonicalOrigin canonicalUrl
+    communityRef articleRef: articleId articleRevision thread canonicalPath canonicalOrigin canonicalUrl
     title subtitle markdown html digest bodyHash publishedAt updatedAt visibility
     author { login name avatar } tags { slug title }
   }
@@ -72,7 +72,7 @@ const ARTICLE_QUERY = `query PressArticle($article: ArticlePathInput!) {
 const FEED_FIELDS = `community { publicRef slug title description locale canonicalOrigin canonicalPath }
   config { markdownEnabled feedEnabled feedType feedCount feedThreads llmsEnabled sitemapEnabled revision }
   configRevision feedRevision
-  items { articleRef articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }`
+  items { articleRef: itemId articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }`
 
 const COMMUNITY_FEED_QUERY = `query PressCommunityFeed($community: String!, $input: PressCommunityRSSFeedInput!) {
   pressCommunityRSSFeed: pressCommunityRssFeed(community: $community, input: $input) { ${FEED_FIELDS} }
@@ -90,16 +90,19 @@ const SITE_QUERY = `query PressSite($community: String!) {
     community { publicRef slug title description locale canonicalOrigin canonicalPath }
     config { markdownEnabled feedEnabled feedType feedCount feedThreads llmsEnabled sitemapEnabled revision }
     siteRevision threads
-    items { articleRef articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }
+    items { articleRef: itemId articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }
   }
 }`
 
 /** Creates phoenix origin from typed press inputs. */
 export const createPhoenixOrigin = (
-  endpoint = process.env.PHOENIX_GRAPHQL_ENDPOINT || LOCAL_PHOENIX_GRAPHQL_ENDPOINT,
+  endpoint: string | undefined = undefined,
   fetcher: typeof fetch = fetch,
   tokenProvider?: TServiceAuthClient,
+  environment: Record<string, string | undefined> = process.env,
 ): Origin => {
+  const activeEndpoint =
+    endpoint || environment.PHOENIX_GRAPHQL_ENDPOINT || LOCAL_PHOENIX_GRAPHQL_ENDPOINT
   let activeTokenProvider = tokenProvider
   const query = async <T>(
     document: string,
@@ -108,12 +111,12 @@ export const createPhoenixOrigin = (
   ): Promise<T> => {
     let response: Response
     try {
-      activeTokenProvider ??= createServiceAuthClientFromEnv(process.env, fetcher)
+      activeTokenProvider ??= createServiceAuthClientFromEnv(environment, fetcher)
       const token = await activeTokenProvider.getToken({
-        resource: process.env.PHOENIX_PRESS_RESOURCE || 'https://api.groupher.com/press',
+        resource: environment.PHOENIX_PRESS_RESOURCE || 'https://api.groupher.com/press',
         scopes: [scope],
       })
-      response = await fetcher(endpoint, {
+      response = await fetcher(activeEndpoint, {
         method: 'POST',
         headers: {
           authorization: `Bearer ${token}`,
