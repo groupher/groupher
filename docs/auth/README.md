@@ -304,10 +304,10 @@ canonical Auth 地址。
 
 Docs Import 使用两段互不复用的身份合同：
 
-| client         | resource                                       | audience                      | scope                  |
-| -------------- | ---------------------------------------------- | ----------------------------- | ---------------------- |
-| Dash           | `https://content-import.groupher.com/internal` | `content-import:internal-api` | `docs:import:proxy`    |
-| Content Import | `https://api.groupher.com/content-import`      | `phoenix:content-import-api`  | `content-import:write` |
+| client         | resource                                  | audience                      | scope                  |
+| -------------- | ----------------------------------------- | ----------------------------- | ---------------------- |
+| Dash           | `https://import.groupher.com/internal`    | `content-import:internal-api` | `docs:import:proxy`    |
+| Content Import | `https://api.groupher.com/content-import` | `phoenix:content-import-api`  | `content-import:write` |
 
 `SERVICE_AUTH_CLIENTS_JSON` 必须分别注册 `serviceName: dash` 和 `content-import` client，并只
 授予表内 audience/scope。实际 client id、credential hash 和 secret 属于部署配置，不提交到

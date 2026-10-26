@@ -36,8 +36,8 @@ GET /health
 - `phoenix`
 - `press`
 - `assets-hub`
-- `content-import`
-- `document-converter`
+- `import`
+- `converter`
 
 `edge-router` 是当前承接 `groupher.com` 生产流量的 Cloudflare Public Edge Router。
 `dev-gateway` 只表示本地 Node/Hono 开发入口；它与生产 `edge-router` 不是同一个 producer，
@@ -235,7 +235,7 @@ node contracts/services/health/scripts/assert-health.mjs \
 
 - 根目录已有 `contracts/services/health/schemas/v1.schema.json`。
 - `dev-gateway`、`landing`、`community`、`dash` 和 `inspire-me` 暴露 `GET /health`。
-- `auth`、`phoenix` 和 `document-converter` 暴露 `GET /health` 并返回统一 JSON。
+- `auth`、`phoenix`、`import` 和 `converter` 暴露 `GET /health` 并返回统一 JSON。
 - Dev Hub 服务清单使用各服务的 `/health` 作为基础可达性 URL。
 - E2E mock GraphQL server 仍有自己的 `GET /health`，用于 Playwright 等待 mock server。
   它不是 Dev Hub managed service，也不参与 `health.v1`；这个 endpoint 只保证 HTTP
@@ -256,7 +256,7 @@ v1 只做协议统一：
 v2 再扩展 readiness：
 
 - Phoenix 增加数据库、必要配置和关键依赖检查。
-- `document-converter` 增加 runtime 配置、临时目录和 converter 初始化检查。
+- `converter` 增加 runtime 配置和转换器初始化检查。
 - `auth` 增加必要 env、cookie domain 和内部 Phoenix endpoint 配置检查。
 - Next 子应用只检查 server boot、构建版本和必要 public env。
 

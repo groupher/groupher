@@ -135,7 +135,7 @@ Gatus 另外请求少量真实用户入口。这些请求必须使用生产公�
 | Content Delivery   | `https://press.groupher.com/health`     | 直连     | Press                                                       |
 | Asset Delivery     | `https://assets.groupher.com/health`    | 直连     | Assets public-read Worker                                   |
 
-`document-converter`、`content-import`、`inspire-me` 等服务只有在生产中作为常驻 HTTP 服务，并且故障会影响公开产品能力时才加入 Status。纯内部或非关键服务可以保留告警，但不一定公开展示。
+`converter`、`import`、`inspire-me` 等服务只有在生产中作为常驻 HTTP 服务，并且故障会影响公开产品能力时才加入 Status。纯内部或非关键服务可以保留告警，但不一定公开展示。
 
 ### 公共链路检查
 

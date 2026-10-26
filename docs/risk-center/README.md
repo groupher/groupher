@@ -95,7 +95,7 @@ sequenceDiagram
 - Gateway/Auth：IP、设备和登录异常。
 - `assets-hub`：文件 hash、MIME 欺骗和恶意资源。
 - `posthouse`：URL、域名、外部账号和消息来源。
-- `content-import`：来源 URL、archive 和批量内容预检查。
+- `import`：来源 URL、archive 和批量内容预检查。
 - Phoenix 业务 Context：用户、内容和历史行为，并执行最终业务决策。
 
 Node 子应用可以用 `risk-center` 做早期拒绝以节省资源，但封号、删除内容、禁止发布
