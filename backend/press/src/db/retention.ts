@@ -13,6 +13,24 @@ import { sql } from 'drizzle-orm'
 
 import type { PressDatabase } from './client'
 
+export type RetentionClient = {
+  connect(): Promise<unknown>
+  end(): Promise<unknown>
+}
+
+/** Owns the scheduled database connection and closes it on every result path. */
+export const runRetentionWithClient = async <T extends RetentionClient>(
+  client: T,
+  run: (client: T) => Promise<void>,
+): Promise<void> => {
+  try {
+    await client.connect()
+    await run(client)
+  } finally {
+    await client.end()
+  }
+}
+
 /** Runs the apply retention operation at the press boundary. */
 export const applyRetention = async (db: PressDatabase): Promise<void> => {
   await db.execute(sql`
@@ -27,14 +45,4 @@ export const applyRetention = async (db: PressDatabase): Promise<void> => {
     DELETE FROM analysis.press_output_cache
     WHERE expires_at < now()
   `)
-}
-
-/** Runs the start retention operation at the press boundary. */
-export const startRetention = (db: PressDatabase | null): void => {
-  if (!db) return
-
-  const run = () =>
-    void applyRetention(db).catch((error) => console.error('Press retention failed', error))
-  run()
-  setInterval(run, 24 * 60 * 60_000).unref()
 }

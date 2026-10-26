@@ -41,6 +41,10 @@ Dash 独立域名保留自己的同名实现。
 `groupher.com/:community/...` 这一公共 URL。`press.groupher.com` 只作为 Edge Router 和
 Phoenix 调用 Press 的稳定 origin，不建立第二套 canonical 内容地址。
 
+Press 生产当前仍运行在 Fly.io；Worker runtime 与 Service Binding 已在代码中实现，生产
+Hyperdrive、Phoenix 修复及正式域名切换尚未完成。硬切窗口接受中断且不保证输出，切换前后
+验收范围见 [`docs/press/cloudflare-workers-migration.md`](../press/cloudflare-workers-migration.md)。
+
 当前公共入口由 `edge-router` Worker 托管，静态 Landing 与应用 Worker 通过 Service Binding
 接入：
 
@@ -50,7 +54,8 @@ groupher.com/*, www.groupher.com/*
        -> landing Worker Static Assets
        -> community Worker
        -> auth Worker
-       -> Phoenix / Press HTTPS origins
+       -> Phoenix HTTPS origin
+       -> Press HTTPS origin (until its Cloudflare hard cut)
 ```
 
 生产入口只使用 Worker Routes 和 Service Bindings，不保留旧托管平台兼容入口或回滚通道。
@@ -121,10 +126,9 @@ Fly.io
     primary region: sin
 ```
 
-Press v1 使用 Docker 部署到 Fly.io，因为当前 Press 按常驻 Node/Hono 服务实现，并使用
-PostgreSQL TCP、进程内 L1 cache、异步
-metrics 和 retention timer。Fly 可以原样承载该模型，也与 Phoenix 的部署区域和运维方式
-一致；v1 不先为平台迁移改写进程生命周期。
+Press v1 当前仍以 Docker 部署在 Fly.io。Cloudflare Worker runtime 已在仓库实现：Worker
+每次 invocation 创建 `pg.Client`，Hyperdrive 管理底层连接，retention 由 Cron 执行。生产切换
+按硬切 runbook 完成后，Press 只运行在 Cloudflare Workers。
 
 代码、基础设施和域名使用不同命名空间：
 
@@ -194,14 +198,15 @@ www.groupher.com/*  -> edge-router
 不要删除这两条 proxied DNS 记录，也不要切成 DNS-only，除非同一次变更中改用 Worker Custom
 Domain 并完成 TLS 与公网 smoke。
 
-Press custom domain 应绑定到 Fly app `groupher-press`：
+目前 `press.groupher.com` 绑定 Fly app `groupher-press`；硬切时该 hostname 改绑到 Press
+Worker Custom Domain：
 
 ```text
 press.groupher.com  CNAME  groupher-press.fly.dev
 ```
 
-实际 DNS target 和证书验证记录以 Fly 为 `press.groupher.com` 生成的 domain instructions
-为准；证书和 `https://press.groupher.com/health` 未验证前，不能认为服务域名已经切换成功。
+当前 Fly DNS target 和证书验证记录以 Fly domain instructions 为准。Worker 切换步骤与
+DNS/TLS 收尾验收见 Press migration runbook。
 
 Cloudflare 会把 apex CNAME flatten 掉，因此在 Cloudflare DNS 中给 `groupher.com`
 使用 CNAME 是合法的。

@@ -9,16 +9,33 @@
  *     -> public response
  */
 
+import { createHealthResponse } from '@groupher/service/health'
 import { serve } from '@hono/node-server'
 
 import './env'
-import app from './app'
+import { handlePressRequest } from './runtime'
+
+const environment = process.env
+
+const fetch = async (request: Request): Promise<Response> => {
+  const url = new URL(request.url)
+  if (request.method === 'GET' && url.pathname === '/health') {
+    return Response.json(createHealthResponse({ service: 'press' }), {
+      headers: { 'cache-control': 'no-store' },
+    })
+  }
+
+  return handlePressRequest(request, environment, {
+    routes:
+      request.method === 'POST' && url.pathname === '/internal/invalidate' ? 'internal' : 'public',
+  })
+}
 
 const port = Number.parseInt(process.env.PORT || '8003', 10)
 const hostname =
   process.env.HOST?.trim() || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1')
 
-const server = serve({ fetch: app.fetch, hostname, port }, (info) => {
+const server = serve({ fetch, hostname, port }, (info) => {
   console.log(`Press is ready at http://${hostname}:${info.port}`)
 })
 

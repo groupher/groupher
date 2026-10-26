@@ -17,8 +17,6 @@ defmodule GroupherServer.CMS.Press.Query do
   """
 
   require GroupherServer.CMS.Const
-  require GroupherServer.CMS.Docs.Const
-
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
@@ -34,7 +32,6 @@ defmodule GroupherServer.CMS.Press.Query do
     DocBranch,
     DocBranchVersion,
     DocPublic,
-    DocPublishRelease,
     DocTreeNode,
     PressConfig
   }
@@ -214,17 +211,10 @@ defmodule GroupherServer.CMS.Press.Query do
     end
   end
 
-  defp current_feed_items(community, :doc, _limit, _hydrate) do
-    {:ok,
-     DocPublishRelease
-     |> join(:inner, [release], branch in DocBranch, on: branch.id == release.branch_id)
-     |> where([release, branch], release.community_id == ^community.id)
-     |> where([_release, branch], branch.type == ^CMS.Docs.Const.doc_branch_type(:main))
-     |> order_by([release], desc: release.release_number, desc: release.id)
-     |> preload([release], [:author, :articles])
-     |> limit(1)
-     |> Repo.all()
-     |> Enum.map(&Projection.doc_release_feed_item(community, &1))}
+  defp current_feed_items(community, :doc, limit, hydrate) do
+    with {:ok, articles} <- current_articles(community, :doc, limit, hydrate) do
+      {:ok, Enum.map(articles, &Projection.feed_item(community, :doc, &1))}
+    end
   end
 
   defp current_feed_items(community, thread, limit, hydrate) do

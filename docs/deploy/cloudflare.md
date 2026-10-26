@@ -63,7 +63,7 @@ edge-router Worker
   |-- Community paths ------ Service Binding --> community
   |-- Auth facade ---------- Service Binding --> auth
   |-- GraphQL facade ------- HTTPS -----------> Phoenix
-  `-- Press public outputs - HTTPS -----------> Press
+  `-- Press public outputs - HTTPS -----------> Press (current Fly origin)
 ```
 
 `edge-router` 当前通过 Worker Routes 绑定 `groupher.com/*` 和 `www.groupher.com/*`；社区
@@ -74,6 +74,11 @@ edge-router Worker
 Cloudflare Worker 下游使用 Service Binding，不通过公开的 `*.groupher.com` 或
 `*.workers.dev` 地址互相调用。Phoenix、Press 等非 Worker 目标继续使用 HTTPS fetch；这是
 Service Binding 只适用于 Worker-to-Worker 调用的边界，不是例外 fallback。
+
+Press Worker 硬切完成后，edge-router 的 Press public path 改为 Service Binding，选择 Press
+Worker 的 named `Public` entrypoint；`press.groupher.com` 绑定 Worker default entrypoint，
+只提供 health 与签名 invalidation。当前生产仍使用 Press Fly origin，迁移窗口和切换验收以
+[`docs/press/cloudflare-workers-migration.md`](../press/cloudflare-workers-migration.md) 为准。
 
 ## 路由契约
 

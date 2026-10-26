@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "cf dev --mode production",
-    "dev:local": "cf dev --mode local",
+    "dev:local": "cf dev --mode development",
     "test": "pnpm exec vitest --config vitest.config.mts run",
     "type-check": "pnpm run types && pnpm --workspace-root exec tsc --noEmit --project infra/edge-router/tsconfig.json",
     "types": "cf workers types --mode production",
@@ -23,7 +23,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "2.0.0-beta.sha-ad79608dd",
     "@cloudflare/workers-types": "^5.20261013.1",
-    "cf": "1.0.0-beta.13",
+    "cf": "1.0.0-beta.21",
     "typescript": "7.0.2",
     "vite": "^8.3.4",
     "vitest": "^5.0.4"

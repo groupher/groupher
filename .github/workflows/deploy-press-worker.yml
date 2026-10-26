@@ -1,0 +1,121 @@
+name: Deploy Press Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Cloudflare environment
+        required: true
+        type: choice
+        options:
+          - preview
+          - production
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-press-worker-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Press and edge-router to ${{ inputs.target }}
+    runs-on: ubuntu-latest
+    environment: press-${{ inputs.target }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      PRESS_HYPERDRIVE_ID: ${{ vars.PRESS_HYPERDRIVE_ID }}
+      PHOENIX_GRAPHQL_ENDPOINT: ${{ vars.PHOENIX_GRAPHQL_ENDPOINT }}
+      PHOENIX_PRESS_RESOURCE: ${{ vars.PHOENIX_PRESS_RESOURCE }}
+      SERVICE_AUTH_ISSUER: ${{ vars.SERVICE_AUTH_ISSUER }}
+      SERVICE_AUTH_JWKS_URL: ${{ vars.SERVICE_AUTH_JWKS_URL }}
+      SERVICE_AUTH_TOKEN_ENDPOINT: ${{ vars.SERVICE_AUTH_TOKEN_ENDPOINT }}
+      API_SITE: ${{ vars.API_SITE }}
+      PREVIEW_PLATFORM_HOSTS: ${{ vars.PREVIEW_PLATFORM_HOSTS }}
+      CUSTOM_DOMAIN_COMMUNITIES: ${{ vars.CUSTOM_DOMAIN_COMMUNITIES }}
+      PRESS_PUBLIC_DISABLED: ${{ vars.PRESS_PUBLIC_DISABLED || 'true' }}
+      SERVICE_AUTH_CLIENT_ID: ${{ secrets.SERVICE_AUTH_CLIENT_ID }}
+      SERVICE_AUTH_CLIENT_SECRET: ${{ secrets.SERVICE_AUTH_CLIENT_SECRET }}
+      METRIC_IP_SALT: ${{ secrets.METRIC_IP_SALT }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate deployment inputs
+        env:
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$PRESS_HYPERDRIVE_ID"
+          test "$PRESS_HYPERDRIVE_ID" != "00000000-0000-0000-0000-000000000000"
+          test -n "$PHOENIX_GRAPHQL_ENDPOINT"
+          test -n "$PHOENIX_PRESS_RESOURCE"
+          test -n "$SERVICE_AUTH_ISSUER"
+          test -n "$SERVICE_AUTH_JWKS_URL"
+          test -n "$SERVICE_AUTH_TOKEN_ENDPOINT"
+          test -n "$SERVICE_AUTH_CLIENT_ID"
+          test -n "$SERVICE_AUTH_CLIENT_SECRET"
+          test -n "$METRIC_IP_SALT"
+          if [ "$TARGET" = "preview" ]; then
+            test -n "$API_SITE"
+            test -n "$PREVIEW_PLATFORM_HOSTS"
+          fi
+
+      - name: Validate Press and edge-router
+        run: |
+          set -euo pipefail
+          pnpm --filter @groupher/press run type-check
+          pnpm --filter @groupher/press run test
+          pnpm --filter @groupher/press run build
+          pnpm --filter @groupher/edge-router run type-check
+          pnpm --filter @groupher/edge-router run test
+          pnpm --filter @groupher/edge-router run build
+
+      - name: Create protected Worker secrets file
+        env:
+          PRESS_SECRETS_FILE: ${{ runner.temp }}/press-worker-secrets.json
+        run: |
+          set -euo pipefail
+          umask 077
+          node --input-type=module -e '
+            import { writeFileSync } from "node:fs";
+            const file = process.env.PRESS_SECRETS_FILE;
+            const secrets = {
+              SERVICE_AUTH_CLIENT_ID: process.env.SERVICE_AUTH_CLIENT_ID,
+              SERVICE_AUTH_CLIENT_SECRET: process.env.SERVICE_AUTH_CLIENT_SECRET,
+              METRIC_IP_SALT: process.env.METRIC_IP_SALT,
+            };
+            writeFileSync(file, JSON.stringify(secrets), { mode: 0o600 });
+          '
+
+      - name: Deploy Press Worker
+        env:
+          TARGET: ${{ inputs.target }}
+          PRESS_SECRETS_FILE: ${{ runner.temp }}/press-worker-secrets.json
+        run: pnpm --filter @groupher/press exec cf deploy --mode "$TARGET" --secrets-file "$PRESS_SECRETS_FILE"
+
+      - name: Deploy edge-router Service Binding
+        env:
+          TARGET: ${{ inputs.target }}
+        run: pnpm --filter @groupher/edge-router exec cf deploy --mode "$TARGET"
+
+      - name: Remove temporary secret material
+        if: always()
+        env:
+          PRESS_SECRETS_FILE: ${{ runner.temp }}/press-worker-secrets.json
+        run: rm -f "$PRESS_SECRETS_FILE"

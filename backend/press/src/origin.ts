@@ -96,10 +96,13 @@ const SITE_QUERY = `query PressSite($community: String!) {
 
 /** Creates phoenix origin from typed press inputs. */
 export const createPhoenixOrigin = (
-  endpoint = process.env.PHOENIX_GRAPHQL_ENDPOINT || LOCAL_PHOENIX_GRAPHQL_ENDPOINT,
+  endpoint: string | undefined = undefined,
   fetcher: typeof fetch = fetch,
   tokenProvider?: TServiceAuthClient,
+  environment: Record<string, string | undefined> = process.env,
 ): Origin => {
+  const activeEndpoint =
+    endpoint || environment.PHOENIX_GRAPHQL_ENDPOINT || LOCAL_PHOENIX_GRAPHQL_ENDPOINT
   let activeTokenProvider = tokenProvider
   const query = async <T>(
     document: string,
@@ -108,12 +111,12 @@ export const createPhoenixOrigin = (
   ): Promise<T> => {
     let response: Response
     try {
-      activeTokenProvider ??= createServiceAuthClientFromEnv(process.env, fetcher)
+      activeTokenProvider ??= createServiceAuthClientFromEnv(environment, fetcher)
       const token = await activeTokenProvider.getToken({
-        resource: process.env.PHOENIX_PRESS_RESOURCE || 'https://api.groupher.com/press',
+        resource: environment.PHOENIX_PRESS_RESOURCE || 'https://api.groupher.com/press',
         scopes: [scope],
       })
-      response = await fetcher(endpoint, {
+      response = await fetcher(activeEndpoint, {
         method: 'POST',
         headers: {
           authorization: `Bearer ${token}`,

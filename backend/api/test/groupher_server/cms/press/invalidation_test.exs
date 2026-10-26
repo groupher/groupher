@@ -113,6 +113,38 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     assert Repo.get!(Event, event.id).status == :retrying
   end
 
+  test "Article visibility outbox retries when Press cache invalidation fails" do
+    {community, article_view, _attrs, _user} = mock_article(:post)
+
+    {:ok, event} =
+      CMS.Outbox.send(%{
+        event: "article.visibility_changed",
+        worker: GroupherServer.Jobs.CMSOutboxArticle,
+        resource_type: "article",
+        resource_id: article_view.id,
+        command_id: Ecto.UUID.generate(),
+        data: %{
+          "community" => community.slug,
+          "community_id" => community.id,
+          "thread" => "post",
+          "inner_id" => article_inner_id(article_view, community)
+        }
+      })
+
+    System.put_env("PRESS_INTERNAL_URL", "https://press.invalid")
+    System.put_env("PRESS_INTERNAL_RESOURCE", "https://press.invalid/#{System.unique_integer()}")
+    Application.put_env(:groupher_server, GroupherServer.ServiceAuth.Client, [])
+
+    assert {:error, :press_invalidation_auth_failed} =
+             GroupherServer.CMS.Outbox.Workflow.Article.perform(%Oban.Job{
+               args: %{"event_id" => event.id},
+               attempt: 1,
+               max_attempts: 3
+             })
+
+    assert Repo.get!(Event, event.id).status == :retrying
+  end
+
   test "a completed Command replay restores a missing durable invalidation intent" do
     {community, _post, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()

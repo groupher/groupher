@@ -22,8 +22,7 @@ import { Hono } from 'hono'
 
 import type { CachedOutput, OutputCache } from './cache'
 import { createOutputCache } from './cache'
-import { createDatabase } from './db/client'
-import { startRetention } from './db/retention'
+import type { PressDatabase } from './db/client'
 import {
   classifyBot,
   classifyUa,
@@ -44,10 +43,13 @@ const MAX_OUTPUT_BYTES = 5 * 1024 * 1024
 const THREADS = new Set<Thread>(['post', 'blog', 'changelog', 'doc'])
 
 type Dependencies = {
+  environment?: Record<string, string | undefined>
+  database?: PressDatabase | null
   origin?: Origin
   cache?: OutputCache
-  recorder?: ReturnType<typeof createMetricRecorder>
+  recorder?: { record(event: MetricEvent): Promise<void> | void }
   serviceTokenVerifier?: TServiceAuthVerifier
+  routes?: 'all' | 'internal' | 'public'
 }
 
 type Rendered = {
@@ -82,22 +84,65 @@ const responseFrom = (request: Request, output: CachedOutput): Response => {
 
 /** Creates the press application with injectable runtime dependencies. */
 export const createApp = (dependencies: Dependencies = {}) => {
-  const database = createDatabase()
-  startRetention(database)
-  const origin = dependencies.origin || createPhoenixOrigin()
+  const environment = dependencies.environment || {}
+  const routes = dependencies.routes || 'all'
+  const database = dependencies.database || null
+  const origin =
+    dependencies.origin || createPhoenixOrigin(undefined, fetch, undefined, environment)
   const cache = dependencies.cache || createOutputCache(database)
   const recorder = dependencies.recorder || createMetricRecorder(database)
   const serviceTokenVerifier =
     dependencies.serviceTokenVerifier ||
     createServiceAuthVerifier({
       audience: 'press:internal-api',
-      issuer: process.env.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
+      issuer: environment.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
       jwksUrl:
-        process.env.SERVICE_AUTH_JWKS_URL || 'https://auth.groupher.com/.well-known/jwks.json',
+        environment.SERVICE_AUTH_JWKS_URL || 'https://auth.groupher.com/.well-known/jwks.json',
     })
   const app = new Hono()
 
-  app.get('/health', (context) => context.json(createHealthResponse({ service: 'press' })))
+  if (routes !== 'public') {
+    app.get('/health', (context) => context.json(createHealthResponse({ service: 'press' })))
+
+    app.post('/internal/invalidate', async (context) => {
+      const token = bearerToken(context.req.header('authorization'))
+      if (!token) return context.json({ error: 'unauthorized' }, 401)
+
+      try {
+        const actor = await serviceTokenVerifier.verify(token, 'press:cache:invalidate')
+        if (actor.subject !== 'service:phoenix') return context.json({ error: 'forbidden' }, 403)
+      } catch (error) {
+        const status = serviceTokenErrorStatus(error)
+        return context.json({ error: status === 403 ? 'forbidden' : 'unauthorized' }, status)
+      }
+
+      const body = await context.req
+        .json<{ community?: string }>()
+        .catch((): { community?: string } => ({}))
+      if (!body.community || !/^[a-z0-9][a-z0-9-]*$/.test(body.community))
+        return context.json({ error: 'invalid community' }, 400)
+      await cache.invalidate(`pointer:${body.community}:`)
+      return context.json({ ok: true })
+    })
+  }
+
+  if (routes === 'internal') return app
+
+  if (routes === 'public') {
+    app.use('*', async (context, next) => {
+      const pathname = new URL(context.req.url).pathname
+      if (pathname === '/health' || pathname === '/internal/invalidate') return context.notFound()
+      if (environment.PRESS_PUBLIC_DISABLED === 'false') return next()
+      return new Response('Press public output is temporarily disabled.\n', {
+        headers: {
+          'cache-control': 'no-store',
+          'content-type': 'text/plain; charset=utf-8',
+          'retry-after': '60',
+        },
+        status: 503,
+      })
+    })
+  }
 
   const serve = async <T>(
     request: Request,
@@ -202,24 +247,33 @@ export const createApp = (dependencies: Dependencies = {}) => {
           : Number(result.headers.get('content-length')) ||
             (renderedMeta.body ? new TextEncoder().encode(renderedMeta.body).byteLength : 0)
       const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-      recorder.record({
-        requestTimeUtc: new Date(),
-        communityRef: community,
-        thread: renderedMeta.thread,
-        contentRef: renderedMeta.contentRef,
-        outputKind: kind,
-        statusCode: result.status,
-        cacheStatus,
-        durationMs: Math.round(performance.now() - started),
-        originDurationMs,
-        renderDurationMs,
-        responseBytes: bodyLength,
-        botFamily: classifyBot(request.headers.get('user-agent') || ''),
-        uaFamily: classifyUa(request.headers.get('user-agent') || ''),
-        clientIpHash: hashClientIp(forwarded),
-        requestId: requestId(request.headers.get('x-request-id') || undefined),
-        revision: renderedMeta.revision,
-      })
+      void Promise.resolve(
+        recorder.record({
+          requestTimeUtc: new Date(),
+          communityRef: community,
+          thread: renderedMeta.thread,
+          contentRef: renderedMeta.contentRef,
+          outputKind: kind,
+          statusCode: result.status,
+          cacheStatus,
+          durationMs: Math.round(performance.now() - started),
+          originDurationMs,
+          renderDurationMs,
+          responseBytes: bodyLength,
+          botFamily: classifyBot(request.headers.get('user-agent') || ''),
+          uaFamily: classifyUa(request.headers.get('user-agent') || ''),
+          clientIpHash: hashClientIp(forwarded, environment.METRIC_IP_SALT),
+          requestId: requestId(request.headers.get('x-request-id') || undefined),
+          revision: renderedMeta.revision,
+        }),
+      ).catch((error) =>
+        console.error(
+          JSON.stringify({
+            event: 'press_metric_write_failed',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          }),
+        ),
+      )
     }
   }
 
@@ -325,27 +379,6 @@ export const createApp = (dependencies: Dependencies = {}) => {
 
   app.get('/:community/llms.txt', (c) => site(c.req.raw, c.req.param('community'), 'llms'))
   app.get('/:community/sitemap.xml', (c) => site(c.req.raw, c.req.param('community'), 'sitemap'))
-
-  app.post('/internal/invalidate', async (context) => {
-    const token = bearerToken(context.req.header('authorization'))
-    if (!token) return context.json({ error: 'unauthorized' }, 401)
-
-    try {
-      const actor = await serviceTokenVerifier.verify(token, 'press:cache:invalidate')
-      if (actor.subject !== 'service:phoenix') return context.json({ error: 'forbidden' }, 403)
-    } catch (error) {
-      const status = serviceTokenErrorStatus(error)
-      return context.json({ error: status === 403 ? 'forbidden' : 'unauthorized' }, status)
-    }
-
-    const body = await context.req
-      .json<{ community?: string }>()
-      .catch((): { community?: string } => ({}))
-    if (!body.community || !/^[a-z0-9][a-z0-9-]*$/.test(body.community))
-      return context.json({ error: 'invalid community' }, 400)
-    await cache.invalidate(`pointer:${body.community}:`)
-    return context.json({ ok: true })
-  })
 
   return app
 }

@@ -1,17 +1,7 @@
-name: Deploy Press to Fly.io
+name: Deploy Press to Fly.io (manual only)
 
 on:
-  push:
-    branches:
-      - dev
-      - main
-    paths:
-      - 'backend/press/**'
-      - 'packages/service/**'
-      - 'packages/contracts/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
+  workflow_dispatch:
 
 jobs:
   deploy:

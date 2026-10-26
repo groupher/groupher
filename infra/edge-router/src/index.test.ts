@@ -14,9 +14,11 @@ const createEnv = () =>
     LANDING: fetcher('landing'),
     COMMUNITY: fetcher('community'),
     AUTH: fetcher('auth'),
+    PRESS: fetcher('press'),
     API_SITE: 'https://api.groupher.com',
-    PRESS_SITE: 'https://press.groupher.com',
+    PRESS_PUBLIC_DISABLED: 'false',
     CUSTOM_DOMAIN_COMMUNITIES: '{"talk.example.com":"home"}',
+    PREVIEW_PLATFORM_HOSTS: '',
     NODE_ENV: 'test',
     CF_VERSION_METADATA: { id: 'version-1', tag: '', timestamp: '2026-08-24T00:00:00Z' },
   }) as unknown as Env
@@ -75,17 +77,43 @@ describe('edge-router', () => {
   })
 
   it('cleans credentials from Press output', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('ok'))
+    const env = createEnv()
     await dispatch(
       new Request('https://groupher.com/home/post/a.md', {
         headers: { authorization: 'Bearer secret', cookie: 'private=yes' },
       }),
+      env,
     )
 
-    const forwarded = fetchSpy.mock.calls[0][0] as Request
-    expect(forwarded.url).toBe('https://press.groupher.com/home/post/a.md')
+    const forwarded = vi.mocked(env.PRESS.fetch).mock.calls[0][0] as Request
+    expect(forwarded.url).toBe('https://groupher.com/home/post/a.md')
     expect(forwarded.headers.has('authorization')).toBe(false)
     expect(forwarded.headers.has('cookie')).toBe(false)
+  })
+
+  it('uses the Press Service Binding and can stop Press output without affecting other routes', async () => {
+    const env = createEnv()
+    env.PRESS_PUBLIC_DISABLED = 'true'
+    const response = await dispatch(new Request('https://groupher.com/home/post/a.md'), env)
+    expect(response.status).toBe(503)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(env.PRESS.fetch).not.toHaveBeenCalled()
+
+    env.PRESS_PUBLIC_DISABLED = 'false'
+    expect((await dispatch(new Request('https://groupher.com/home'), env)).status).toBe(200)
+  })
+
+  it('fails closed when the Press output switch is missing or invalid', async () => {
+    for (const setting of [undefined, 'invalid']) {
+      const env = createEnv()
+      if (setting === undefined) delete (env as Partial<Env>).PRESS_PUBLIC_DISABLED
+      else env.PRESS_PUBLIC_DISABLED = setting
+
+      const response = await dispatch(new Request('https://groupher.com/home/feed.xml'), env)
+      expect(response.status).toBe(503)
+      expect(response.headers.get('cache-control')).toBe('no-store')
+      expect(env.PRESS.fetch).not.toHaveBeenCalled()
+    }
   })
 
   it('enforces browser GraphQL CSRF and keeps only the Groupher auth cookie', async () => {
