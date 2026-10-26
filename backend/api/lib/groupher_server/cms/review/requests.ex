@@ -142,8 +142,9 @@ defmodule GroupherServer.CMS.Review.Requests do
     {:ok, Repo.all(query)}
   end
 
-  def pending_for_scope(_attrs, _limit, _offset),
-    do: {:error, CMS.ErrorCat.invalid_review_block()}
+  def pending_for_scope(_attrs, _limit, _offset) do
+    {:error, CMS.ErrorCat.invalid_review_block()}
+  end
 
   @doc "Fails expired queued work and clears its private payload so it remains reviewable."
   @spec expire_payloads(pos_integer()) :: {:ok, non_neg_integer()} | {:error, term()}

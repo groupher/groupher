@@ -6,7 +6,8 @@ defmodule GroupherServer.CMS.Review do
         -> CMS.Review facade
         -> locked Lifecycle target
   """
-  alias GroupherServer.CMS.Review.{Notice, Target}
+  alias GroupherServer.CMS
+  alias CMS.Review.{Notice, Target}
 
   @doc "Loads and locks one canonical review target inside the caller transaction."
   @spec load_for_update(String.t(), String.t()) :: {:ok, map()} | {:error, term()}

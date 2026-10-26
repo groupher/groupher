@@ -48,14 +48,19 @@ defmodule GroupherServer.CMS.Review.Notice do
   def for_author(_target, _actor), do: {:error, CMS.Passport.ErrorCat.permission_denied()}
 
   defp target_query(%{type: :article, article_id: id, community_id: community_id})
-       when is_binary(id), do: {:ok, ArticleReviewBlock, :article_id, id, community_id, nil}
+       when is_binary(id) do
+    {:ok, ArticleReviewBlock, :article_id, id, community_id, nil}
+  end
 
   defp target_query(%{type: :comment, comment_id: id, community_id: community_id})
-       when is_integer(id), do: {:ok, CommentReviewBlock, :comment_id, id, community_id, nil}
+       when is_integer(id) do
+    {:ok, CommentReviewBlock, :comment_id, id, community_id, nil}
+  end
 
   defp target_query(%{type: :doc, article_id: id, branch_id: branch_id})
-       when is_binary(id) and is_integer(branch_id),
-       do: {:ok, DocReviewBlock, :article_id, id, nil, branch_id}
+       when is_binary(id) and is_integer(branch_id) do
+    {:ok, DocReviewBlock, :article_id, id, nil, branch_id}
+  end
 
   defp target_query(_target), do: {:error, CMS.ErrorCat.invalid_review_block()}
 

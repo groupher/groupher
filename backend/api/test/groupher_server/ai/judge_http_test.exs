@@ -1,7 +1,9 @@
 defmodule GroupherServer.Test.AI.JudgeHTTPTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.AI.{Adapters.JudgeHTTP, OpinionInput}
+  alias GroupherServer.AI
+  alias AI.Adapters.JudgeHTTP
+  alias AI.OpinionInput
 
   test "rejects a complete policy and content that exceed the worker context before HTTP" do
     assert {:ok, input} =

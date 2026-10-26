@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.AI.ConfigTest do
   use ExUnit.Case, async: false
 
-  alias GroupherServer.AI.Config
+  alias GroupherServer.AI
+  alias AI.Config
 
   setup do
     previous_env = Application.get_env(:groupher_server, :env)
