@@ -124,7 +124,8 @@ export const createPhoenixOrigin = (
           'x-groupher-client': 'press-v2',
         },
         body: JSON.stringify({ query: document, variables }),
-        signal: AbortSignal.timeout(5_000),
+        // The existing Phoenix origin may start a stopped Fly Machine on this request.
+        signal: AbortSignal.timeout(15_000),
       })
     } catch (error) {
       throw new OriginError(error instanceof Error ? error.message : 'Phoenix unavailable', 503)

@@ -205,7 +205,40 @@ describe('Press HTTP app', () => {
 
     expect((await app.request('https://press.test/home/post/404.md')).status).toBe(404)
     expect((await app.request('https://press.test/home/post/404.md')).status).toBe(404)
+    expect(
+      (
+        await app.request('https://press.test/home/post/404.md', {
+          headers: { 'if-none-match': '*' },
+        })
+      ).status,
+    ).toBe(404)
     expect(missingOrigin.article).toHaveBeenCalledTimes(1)
+  })
+
+  it('revalidates compressed weak ETags, tag lists and wildcard conditions', async () => {
+    const articleOrigin = { ...origin, article: vi.fn(async () => article) }
+    const app = createApp({
+      origin: articleOrigin,
+      cache: createTestCache(),
+      recorder: { record: vi.fn() },
+    })
+    const first = await app.request('https://press.test/home/post/1.md')
+    const tag = first.headers.get('etag')
+
+    for (const condition of [`W/${tag}`, `"another-revision", W/${tag}`, '*']) {
+      const response = await app.request('https://press.test/home/post/1.md', {
+        headers: { 'if-none-match': condition },
+      })
+      expect(response.status).toBe(304)
+      expect(await response.text()).toBe('')
+    }
+
+    const changed = await app.request('https://press.test/home/post/1.md', {
+      headers: { 'if-none-match': 'W/"another-revision"' },
+    })
+    expect(changed.status).toBe(200)
+    expect(await changed.text()).toBe('# Hello\n')
+    expect(articleOrigin.article).toHaveBeenCalledTimes(1)
   })
 
   it('renders RSS, Atom and JSON Feed from the same origin DTO', async () => {

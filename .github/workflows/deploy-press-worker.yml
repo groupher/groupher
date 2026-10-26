@@ -15,6 +15,11 @@ on:
         required: true
         type: boolean
         default: false
+      apply_migrations:
+        description: Run the separate analysis migration job before deploying
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -24,8 +29,48 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  migrate:
+    name: Migrate Press analysis in ${{ inputs.target }}
+    if: inputs.apply_migrations
+    runs-on: ubuntu-latest
+    environment: press-${{ inputs.target }}
+    env:
+      DATABASE_URL: ${{ secrets.PRESS_MIGRATION_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate migration authorization and credential
+        env:
+          TARGET: ${{ inputs.target }}
+          CONFIRM_PRESS_CUTOVER: ${{ inputs.confirm_press_cutover }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          if [ "$TARGET" = "production" ] && [ "$CONFIRM_PRESS_CUTOVER" != "true" ]; then
+            echo "Production migration requires explicit Press cutover confirmation." >&2
+            exit 1
+          fi
+
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply analysis migrations
+        run: pnpm --filter @groupher/press run db:migrate
+
   deploy:
     name: Deploy Press and edge-router to ${{ inputs.target }}
+    needs: migrate
+    if: ${{ always() && !cancelled() && (needs.migrate.result == 'success' || needs.migrate.result == 'skipped') }}
     runs-on: ubuntu-latest
     environment: press-${{ inputs.target }}
     env:

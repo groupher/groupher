@@ -75,8 +75,18 @@ const outputHeaders = (rendered: Rendered): Record<string, string> => ({
   ...(rendered.canonicalUrl ? { link: `<${rendered.canonicalUrl}>; rel="canonical"` } : {}),
 })
 
+const matchesIfNoneMatch = (condition: string | null, current: string | undefined): boolean => {
+  if (!condition || !current) return false
+  if (condition.trim() === '*') return true
+  const expected = current.replace(/^W\//, '')
+  return condition.split(',').some((candidate) => candidate.trim().replace(/^W\//, '') === expected)
+}
+
 const responseFrom = (request: Request, output: CachedOutput): Response => {
-  if (request.headers.get('if-none-match') === output.headers.etag) {
+  if (
+    output.status === 200 &&
+    matchesIfNoneMatch(request.headers.get('if-none-match'), output.headers.etag)
+  ) {
     return new Response(null, { status: 304, headers: output.headers })
   }
   return new Response(output.body, { status: output.status, headers: output.headers })
