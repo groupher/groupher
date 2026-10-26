@@ -10,6 +10,8 @@
 
 本方案不把迁移定义为“把 Node 服务原样搬上边缘”。Worker 不提供常驻进程保证；持久状态、数据库访问、请求后任务和周期清理必须使用明确的外部能力。
 
+当前计划保持 **Workers Free**，不自动开通 Paid。生产能否从 Free 起步由切换前 CPU 与账号剩余额度实测决定；预检不通过时先报告结果，不执行生产硬切，也不自动升级。
+
 ### 必须保持的业务边界
 
 - Phoenix `CMS.Press` / `CMS.Gate` 是内容读取、公开状态、可见性、Lifecycle 和 review restriction 的唯一权威。CMS resource command 根据 ReviewBot 或人工审核意见应用/结束 restriction；AlertWall 记录举报和处理事实。
@@ -114,10 +116,10 @@ preview 不是直接访问 Press origin 的内容路径：新增隔离的 stagin
 3. 将 Review restriction Press invalidation 和 Doc Feed Gate/visibility 修复部署到当前生产 Phoenix；生产仍为 V1 时 backport，不等待 V2 切换。记录修复 release/revision、生产复验及 Phoenix 回滚步骤；回滚移除修复时阻断 P3，已上线 Press 通过 P1 停服机制返回 503。
 4. 核对生产 Press DB grant、host/port、DNS、TLS/CA 与防火墙，不输出密码。PublicDatabase origin 必须从 Cloudflare 公网可达；loopback、private/link-local 地址不能直接用于本文配置。按 P2 的 cf/schema/受保护文件流程创建 cache-disabled Hyperdrive，由最小 Worker probe 以受限角色执行 `SELECT 1` 和 analysis 表只读查询，并等待连接关闭。若仅私网可达，先完成独立网络边界调整与实测验证，再退出 P0。
 5. 新增隔离 preview/staging：独立 Phoenix/Auth 部署、业务数据库及迁移/种子内容、service client/resource/scopes；独立 Press Worker、analysis 数据库、Hyperdrive 和 staging edge-router。登记 origin URL、staging 平台/社区测试 hostname、路由映射、binding ID、责任人与 revision；staging hostname 仅在 staging route-contract/config 中启用，生产映射不引用它们。P0 最小 probe Worker 导出 default health/internal 与 named `Public` probe，staging edge-router 通过 `exportName: 'Public'` 调用 probe，验证入口选择、Auth、staging Phoenix、preview DB 与签名调用；P1/P2 替换为完整 Press 输出。default origin 不能作为 preview public HTTP 入口。该环境不连接生产 Outbox/数据库，不使用生产 secret。
-6. 记录迁移前公开 Markdown/Feed 的 status、headers、body hash、metrics 与 invalidation 基线；记录 analysis schema/version 和数据备份。生产切换前启用 Workers Paid。
+6. 记录迁移前公开 Markdown/Feed 的 status、headers、body hash、metrics 与 invalidation 基线；记录 analysis schema/version 和数据备份。生产切换前完成 Free CPU 与账号剩余额度预检并记录 go/no-go。
 7. 登记 best-effort cutover window 与执行责任人；确认 Cloudflare 停服/修复步骤可执行。
 
-**退出条件：** Press Fly 发布入口已从仓库移除；Custom Domain 步骤与 Auth resource 已记录；生产 Hyperdrive probe 和 Phoenix 修复生产复验通过；preview Worker/DB/Hyperdrive/Phoenix/Auth 与 staging edge-router → named `Public` smoke 通过；best-effort 窗口与责任人已明确；生产 Paid 已启用。V2 production cutover 独立排期。
+**退出条件：** Press Fly 发布入口已从仓库移除；Custom Domain 步骤与 Auth resource 已记录；生产 Hyperdrive probe 和 Phoenix 修复生产复验通过；preview Worker/DB/Hyperdrive/Phoenix/Auth 与 staging edge-router → named `Public` smoke 通过；best-effort 窗口与责任人已明确；Free 上线预检通过（否则 P3 不得开始）。V2 production cutover 独立排期。
 
 ### P1：分离 Node 与 Worker 生命周期
 
@@ -206,7 +208,7 @@ pnpm --filter @groupher/edge-router exec cf hyperdrive update <id> --caching-dis
 
 本批次在 best-effort cutover window 内执行；窗口中的变更和 probe 不承担可用性、缓存新鲜度或可见性同步保证。
 
-**开始条件：** P0 环境 smoke、P1/P2 staging 完整验收与停服/恢复 smoke 通过；Phoenix 修复已生产复验并记录 revision；生产 Worker/Hyperdrive/Paid 已就绪。
+**开始条件：** P0 环境 smoke、P1/P2 staging 完整验收与停服/恢复 smoke 通过；Phoenix 修复已生产复验并记录 revision；生产 Worker/Hyperdrive 已就绪，Free 上线预检通过。
 
 涉及文件：
 
@@ -242,12 +244,13 @@ Cloudflare 当前公开额度（计划写作时核对，发布前需复核）：
 | Queue operations          | 10,000/day       | 如采用 durable Queue，按消息写/读/删除通常约 3 operations，Free 约覆盖 3,333 条消息/日，重试另计 |
 | Paid 起步                 | $5/month/account | 包含 10M Worker requests/month、30M CPU ms/month；超额按官方单价计费                             |
 
-生产硬切从 **Workers Paid** 开始；不能把 Free staging 测试当作生产容量验收。Free 超限操作会失败而非自动计费；若单独用 Free 账号跑隔离 staging，应按实测配置告警：`每日请求告警线 = 100,000 × 可用比例 ÷ 实测 queries/request`，并为 SQL/请求和 CPU 设独立门槛。Queue Free 10,000 operations/day 按每消息约 3 operations 仅约 3,333 条消息/日，重试另计。CPU 10ms 是每次 invocation 限制，低流量无法规避；5 MiB Markdown 和 500 项 manifest 必须在 preview 做 go/no-go。Paid 也不自动解决数据库容量或连接延迟。
+当前保留 **Workers Free**；Paid 是后续经用户确认的选项。Free staging smoke 不等于生产容量验收。Free 超限操作会失败而非自动计费；切换前须统计同账号所有 Worker、Auth、edge-router、preview 和 Hyperdrive 已有消耗，并按账号剩余额度及实测配置告警：`Press 每日请求告警线 = min(账号剩余 Worker request 预算 ÷ 实测计额 Worker requests/request, 账号剩余 Hyperdrive SQL 预算 ÷ 实测 queries/request) × 可用比例`，并为 SQL/请求和 CPU 设独立门槛。Queue Free 10,000 operations/day 按每消息约 3 operations 仅约 3,333 条消息/日，重试另计。CPU 10ms 是每次 invocation 限制，低流量无法规避；5 MiB Markdown、500 项 manifest、Feed、冷热缓存及签名失效路径必须在真实 Free Worker 测量 CPU 和错误率后给出 go/no-go；不能只用 HTTP smoke 成功证明 CPU 有余量。记录正常与突发流量估计、p95/p99 CPU、单次超限和每日预算，未完成时不得生产切换。Paid 也不自动解决数据库容量或连接延迟。
 
 成本评估公式：
 
 ```text
-Workers Paid 月成本 = $5 起步 + 超额 Worker requests + 超额 CPU ms
+Workers Free 平台基础费 = $0（受免费限额约束，数据库/Phoenix 等另计）
+如以后确认升级，Workers Paid 月成本 = $5 起步 + 超额 Worker requests + 超额 CPU ms
 额外平台成本 = Queue/KV/R2/observability 等按启用产品的实际用量
 总成本 = Workers 平台 + 现有 PostgreSQL/Hyperdrive 对应数据库账单 + Phoenix origin 运行成本
 ```
@@ -258,9 +261,9 @@ Workers Paid 月成本 = $5 起步 + 超额 Worker requests + 超额 CPU ms
 
 - 生产 Worker request、CPU ms、Hyperdrive query/request、失败率、Phoenix origin 调用均有 dashboard/alerts；按至少 7 天真实流量复核容量和账单。
 - Worker 请求量、Hyperdrive SQL/request、Phoenix GraphQL 回源数和 p50/p95 按真实流量记录；首发没有 Worker Cache API/CDN response cache 命中指标。
-- 5 MiB Markdown 与 500 条 manifest 的 Worker CPU 测量在 preview 完成；Free staging 的 10ms 结果只作为预检数据，生产使用 Paid 限额并按实测 CPU/成本监控。
+- 5 MiB Markdown 与 500 条 manifest 的 Worker CPU 测量在 preview 完成；Free 的 10ms/invocation 是生产 go/no-go 门槛，不能以流量小代替；未测或不通过时不硬切、不自动升级。
 - 真实成本列出 Workers、Hyperdrive/数据库、Queue（若启用）与日志；切换完成后关闭旧 Press Fly Machine，停止其计费。
-- 以至少 7 天生产请求样本和峰值日外推 Agent 突发流量，校准 Paid CPU 与成本预算。
+- 以至少 7 天生产请求样本和峰值日外推 Agent 突发流量，校准 Free 剩余额度和 CPU 预算；需要 Paid 时另行确认。
 
 ## 安全、缓存与可见性验收矩阵
 
@@ -300,8 +303,8 @@ restriction 开始/结束均须触发 Press invalidation，且 outbox retry/fail
 2. 执行 preview Press Drizzle migrations；确认 preview `analysis.press_*` schema/version 与该环境一致。需要 CI migration 时，只在对应 GitHub Environment 临时设置 `PRESS_MIGRATION_DATABASE_URL`，勾选 `apply_migrations`；记录 migration job 结果后移除该 secret。migration 不放在 Worker startup/Cron 中执行，Worker runtime secret 不包含数据库 owner URL。
 3. 通过 preview default origin 验证 health、签名 invalidation 与内容 404；通过 staging edge-router HTTP → named `Public` 验证真实 Markdown/Feed/llms/sitemap、cache/metrics 与四组合矩阵。确认所有请求只访问 staging Phoenix/Auth 和 preview 数据。
 4. 经 staging edge-router 跑平台/社区域名路由矩阵，比对迁移前基线，并确认 Cloudflare 停服/恢复流程可执行。
-5. 确认 production schema、Hyperdrive、secret、Paid 与 503 release 就绪，显式将 Press 与 edge-router 的 `PRESS_PUBLIC_DISABLED` 设为 `false`，记录 cutover window 开始时间；从 Fly detach `press.groupher.com` 的 domain/DNS，然后运行 production 部署流程并勾选 `confirm_press_cutover`。流程先为 Press Worker attach Custom Domain 并部署，再发布 named `Public` binding；允许服务中断，不做中间态可见性验收。完成后复验 TLS、default health/internal、default 内容 404 与 Outbox 重试。
-6. 停服/修复触发条件：任何 Draft/private/review-blocked 内容泄露；Phoenix invalidation 丢失/伪成功；5xx 或 p95 持续显著高于基线；Paid 预算告警触发；数据库连接耗尽。
+5. 确认 production schema、Hyperdrive、secret、Free CPU/账号剩余额度预检与 503 release 就绪，显式将 Press 与 edge-router 的 `PRESS_PUBLIC_DISABLED` 设为 `false`，记录 cutover window 开始时间；从 Fly detach `press.groupher.com` 的 domain/DNS，然后运行 production 部署流程并勾选 `confirm_press_cutover`。流程先为 Press Worker attach Custom Domain 并部署，再发布 named `Public` binding；允许服务中断，不做中间态可见性验收。完成后复验 TLS、default health/internal、default 内容 404 与 Outbox 重试。
+6. 停服/修复触发条件：任何 Draft/private/review-blocked 内容泄露；Phoenix invalidation 丢失/伪成功；5xx 或 p95 持续显著高于基线；Free CPU/账号额度告警触发（若以后升级则为对应 Paid 预算告警）；数据库连接耗尽。
 7. 硬切后的运行故障按 Cloudflare 停服/修复步骤处理并保持目标 hostname 绑定 Worker。Phoenix 修复必须回滚时，先验证平台/社区内容 503，再回滚 Phoenix；修复恢复并复验后才能恢复公开输出。
 8. 硬切验收后立即停止旧 Press Fly Machines。后续观察和恢复全部基于 Worker、edge-router 与 Phoenix。
 
@@ -332,14 +335,14 @@ restriction 开始/结束均须触发 Press invalidation，且 outbox retry/fail
 - [ ] Hyperdrive binding、token secrets、observability 和 Cron Trigger 有环境级声明；本地/CI 不读取生产 secret。
 - [ ] 生产 DB host/port/TLS/防火墙与受限角色已由 Hyperdrive Worker probe 实际验证；PublicDatabase 无私网/loopback origin，私网方案须先完成独立网络边界批次。
 - [ ] Metrics 失败可观察，执行语义已选择 `waitUntil` 或 Queue 并有重试/丢失边界说明。
-- [ ] 生产 Workers Paid 已启用，并设置 CPU、请求量、数据库连接及账单预算告警；Free 限额只作为隔离 staging 的预检项。
+- [ ] 生产 Free 上线预检有实测记录：最大 payload/manifest、Feed、冷热缓存、失效路径的 CPU 与错误率，以及全账号剩余 Worker/Hyperdrive 额度；告警与 go/no-go 明确。Paid 未获确认前不得自动开通。
 - [ ] Review restriction invalidation 与 Doc Feed Gate 修复已部署到当前生产 Phoenix（V1 时完成 backport）并复验；移除修复时阻断切流，或将平台/社区 → Public 的内容输出切为 503；default 内容仍 404。
 - [ ] AlertBoard V2 production cutover 独立排期；Press 验收仅按当前 production Gate 合同，不把最终 V2 preflight 当只读门槛。
 - [ ] Phoenix invalidation、HTTP cache、ETag、错误状态和无 stale-if-error 行为保持合同。
 - [ ] 生产与 staging edge-router 的 Press binding 均通过 `exportName: 'Public'` 选择命名入口；正式/preview origin 只触达 default；无 HTTP compatibility path 或代理环路。
 - [ ] P3 域名切换后，真实可公开 Markdown/Feed/llms/sitemap 在直接 origin 的 GET/HEAD/conditional request 全部 no-store 404；health 和签名 invalidation 正常。
 - [ ] preview Worker、Hyperdrive/PostgreSQL、Phoenix/Auth、staging edge-router → Public 的 P0 smoke 已通过；P1/P2 完整 HTTP 验收经 staging edge-router 执行；不连接生产 outbox/数据库。
-- [ ] 生产 Paid 已启用；`press.groupher.com` 和 edge-router 已切到 Worker；旧 Press Fly Machines、workflow 与部署配置已退役。
+- [ ] Free 上线预检通过；`press.groupher.com` 和 edge-router 已切到 Worker；旧 Press Fly Machines、workflow 与部署配置已退役。
 - [ ] 使用 `cf hyperdrive create --body @/absolute/protected-temporary-directory/hyperdrive.json`；完整 body 内含 `name` 和 `origin`，凭证不进入 argv/history/log；创建后 update 关闭缓存并验证配置，临时文件已清理。
 - [ ] Metrics promise 由 `ctx.waitUntil()` 跟踪，在该 Promise 中执行 `finally { await client.end() }`，直到关闭完成才 resolve；成功/失败/并发情形无连接泄漏。
 - [ ] Cron scheduled invocation 使用独立 Client，清理 Promise 的 `finally` 中 `await client.end()`；成功、连接/SQL 失败和重复 invocation 的泄漏验证通过。

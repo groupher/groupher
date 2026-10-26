@@ -48,8 +48,8 @@ Review visibility Outbox 已实际完成 Press invalidation，随后在独立的
 
 ## 尚未完成
 
-- [后续修复 PR #603](https://github.com/groupher/groupher/pull/603) 合并与最新修订 CI。首次真实 [preview migration/deploy](https://github.com/groupher/groupher/actions/runs/40314465628) 已成功，短时 migration secret 已移除。
-- 确认 Workers Paid（当前账户订阅 API 未列出 Workers Paid）。
+- [后续修复 PR #603](https://github.com/groupher/groupher/pull/603) 合并。凭据隔离修订的 [preview migration/deploy](https://github.com/groupher/groupher/actions/runs/40318711856) 已成功；四次 review 跨 POP 复验、24/24 HTTP、503 拒绝与测试限制清理隔离检查均通过。首次真实 [preview migration/deploy](https://github.com/groupher/groupher/actions/runs/40314465628) 已成功，短时 migration secret 已移除。
+- 用户决定暂时保留 Workers Free；不再要求立即开通 Paid，也不自动升级。生产切换前仍需完成 5 MiB Markdown、500 项 manifest、Feed/失效等真实路径的 Free CPU 测量，以及全账号剩余 Worker/Hyperdrive 额度核算；当前 HTTP smoke 不代表这些预检已完成。
 - 生产受控可见性复验、best-effort domain/Service Binding 硬切、最终生产 HTTP/跨 POP/Outbox 验收与旧 Press Fly 退役。
 - 至少 7 天的容量、失败率与账单观察。
 
