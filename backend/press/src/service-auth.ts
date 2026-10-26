@@ -1,3 +1,12 @@
+/**
+ * Reuses Phoenix service-auth token caches within a Worker isolate.
+ *
+ * Business position:
+ *
+ *   Press request
+ *     -> isolate-local service-auth client
+ *     -> token cache and in-flight request deduplication
+ */
 import {
   createServiceAuthClientFromEnv,
   type TServiceAuthClient,
