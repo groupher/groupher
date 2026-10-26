@@ -98,4 +98,33 @@ describe('Phoenix Press origin client', () => {
       expect.objectContaining<Partial<OriginError>>({ status: 404, message: 'Press Article' }),
     )
   })
+  it.each([
+    [5504, 'Public Community'],
+    ['5504', 'Public Community'],
+    [6008, 'Press Article'],
+    [6011, 'Published Doc'],
+  ])(
+    'maps Absinthe absence code %s to 404 without relying on message text',
+    async (code, message) => {
+      const fetcher = vi
+        .fn<typeof fetch>()
+        .mockResolvedValue(Response.json({ errors: [{ message, extensions: { code } }] }))
+      const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
+      await expect(origin.siteManifest('hidden')).rejects.toEqual(
+        expect.objectContaining<Partial<OriginError>>({ status: 404, message }),
+      )
+    },
+  )
+
+  it('keeps operational GraphQL failures as 502', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({
+        errors: [{ message: 'Search platform unavailable', extensions: { code: 4529 } }],
+      }),
+    )
+    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
+    await expect(origin.siteManifest('home')).rejects.toEqual(
+      expect.objectContaining<Partial<OriginError>>({ status: 502 }),
+    )
+  })
 })

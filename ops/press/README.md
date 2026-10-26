@@ -2,6 +2,8 @@
 
 实施方案和已执行证据分别见 [迁移方案](../../docs/press/cloudflare-workers-migration.md) 与 [部署记录](../../docs/press/cloudflare-workers-deployment.md)。这些工具用于运维验收，不提供产品路由或备用运行时。
 
+生产已切到 `press.groupher.com` Worker，旧 `groupher-press` Fly 应用已删除。保持 Free，超限拒绝服务、不升级；部署证据和 Search 独立遗留项见部署记录。下面的 fixture/RPC 工具仍严格限定在隔离 preview，不能替换 hostname 后直接对生产使用。
+
 ## 隔离环境
 
 - Phoenix：`backend/api/fly.press-preview.toml`；使用记录的 production image 发布，所有 secrets 和数据库均为 preview 专用。
