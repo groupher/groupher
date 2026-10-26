@@ -3,7 +3,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 import { enqueueOptimisticToggle } from './toggle'
@@ -16,13 +15,13 @@ export default function useOptimisticToggle<TTarget, TResult>(
 ) {
   const queryClient = useQueryClient()
   const account = useAccount()
-  const accountRef = account.accountRef || getAccountRef(account.user)
+  const accountScope = account.accountScope
   const [pendingState, setPendingState] = useState<boolean | null>(null)
   const [, forceRender] = useState(0)
   const targetKey = target ? operation.entityKey(target) : null
   const context = useMemo<TReadOperationContext>(
-    () => ({ queryClient, accountRef }),
-    [accountRef, queryClient],
+    () => ({ queryClient, accountScope }),
+    [accountScope, queryClient],
   )
 
   const currentState = target ? operation.read(context, target) : null
@@ -47,17 +46,17 @@ export default function useOptimisticToggle<TTarget, TResult>(
 
   const toggle = useCallback(
     (next?: boolean): void => {
-      if (!target || !targetKey || !accountRef) return
+      if (!target || !targetKey || !accountScope) return
       const nextState = next ?? !visibleState
       setPendingState(nextState)
-      void enqueueOptimisticToggle({ queryClient, accountRef, operation, target, next })
+      void enqueueOptimisticToggle({ queryClient, accountScope, operation, target, next })
         .catch(() => undefined)
         .finally(() => {
           setPendingState(null)
           forceRender((value) => value + 1)
         })
     },
-    [accountRef, operation, queryClient, target, targetKey, visibleState],
+    [accountScope, operation, queryClient, target, targetKey, visibleState],
   )
 
   return {

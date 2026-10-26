@@ -24,9 +24,9 @@ import { clearCommentFeedReceipts } from '~/query/mutation/commentReceipt'
 import { clearArticleViewAcks } from '~/query/viewAck'
 import { clearViewerSessionCache } from '~/query/viewer'
 import { sessionState } from '~/schemas/pages/user'
-import type { TUser } from '~/spec'
+import type { TAuthenticatedUser, TUser } from '~/spec'
 
-import { getAccountRef } from './accountRef'
+import { getAccountScope } from './accountScope'
 import { AccountContext, SessionSeedContext } from './context'
 import type { TInit } from './spec'
 
@@ -74,23 +74,26 @@ export default function Provider({ children, initData }: TProps) {
   const user = useMemo(
     () =>
       session?.isValid && session.user
-        ? ({ ...session.user, passport: session.user.passport as TUser['passport'] } as TUser)
+        ? ({
+            ...session.user,
+            passport: session.user.passport as TUser['passport'],
+          } as TAuthenticatedUser)
         : null,
     [session],
   )
-  const accountRef = getAccountRef(user)
+  const accountScope = getAccountScope(user)
   const refreshSession = useCallback(async (): Promise<void> => {
     await query.refetch()
   }, [query.refetch])
 
   const clearSession = useCallback(() => {
-    clearArticleUpvoteReceipts(accountRef)
-    clearCommentFeedReceipts(accountRef)
-    clearCommentReactionReceipts(accountRef)
+    clearArticleUpvoteReceipts(accountScope)
+    clearCommentFeedReceipts(accountScope)
+    clearCommentReactionReceipts(accountScope)
     clearArticleViewAcks()
     clearViewerSessionCache(queryClient)
-    if (accountRef) void localDraftRepository.clearAccount(accountRef)
-  }, [accountRef, queryClient])
+    if (accountScope) void localDraftRepository.clearAccount(accountScope)
+  }, [accountScope, queryClient])
 
   useEvent(EVENT.LOGOUT, clearSession, [clearSession])
 
@@ -110,25 +113,29 @@ export default function Provider({ children, initData }: TProps) {
     return () => channel.close()
   }, [clearSession, queryClient])
 
-  const previousAccountRef = useRef<string | null>(accountRef)
+  const previousAccountScope = useRef<string | null>(accountScope)
 
   useEffect(() => {
-    const previous = previousAccountRef.current
-    if (previous !== accountRef) {
+    const previous = previousAccountScope.current
+    if (previous !== accountScope) {
       if (previous) {
         clearArticleUpvoteReceipts(previous)
         clearCommentFeedReceipts(previous)
         clearCommentReactionReceipts(previous)
       }
+      void queryClient.removeQueries({
+        predicate: (query) =>
+          query.queryKey[0] === viewerQueryKeys.all[0] && query.queryKey[1] !== 'session',
+      })
       clearArticleViewAcks()
     }
-    previousAccountRef.current = accountRef
-  }, [accountRef])
+    previousAccountScope.current = accountScope
+  }, [accountScope, queryClient])
 
   const value = useMemo(
     () => ({
       user,
-      accountRef,
+      accountScope,
       refreshSession,
       // Anonymous initial data is renderable. Background Session recovery must
       // not block optional-auth products behind an account skeleton.
@@ -141,7 +148,7 @@ export default function Provider({ children, initData }: TProps) {
         isModerator: false,
       },
     }),
-    [accountRef, query.isPending, refreshSession, session, user],
+    [accountScope, query.isPending, refreshSession, session, user],
   )
 
   return (

@@ -101,6 +101,7 @@ defmodule GroupherServer.Accounts.Model.User do
   def changeset(%User{} = user, attrs) do
     user
     |> update_changeset(attrs)
+    |> cast(attrs, [:login])
     |> cast_embed(:meta, required: false, with: &Embeds.UserMeta.changeset/2)
     |> validate_required(@required_fields)
     |> unique_constraint(:login)
@@ -108,7 +109,7 @@ defmodule GroupherServer.Accounts.Model.User do
 
   def update_changeset(user, attrs) do
     user
-    |> cast(attrs, @optional_fields ++ @required_fields)
+    |> cast(attrs, @optional_fields ++ [:avatar])
     |> cast_embed(:meta, required: false, with: &Embeds.UserMeta.changeset/2)
     |> cast_embed(:mailbox, required: false, with: &Embeds.UserMailbox.changeset/2)
 

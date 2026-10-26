@@ -24,13 +24,13 @@ export const Route = createFileRoute('/review/$applicationRef')({
 
 function ReviewDetail() {
   const initialApplication = Route.useLoaderData()
-  const { accountRef } = useAccount()
-  const [seedOwner] = useState(accountRef)
-  const position = usePagiPosition(`${accountRef}:${initialApplication?.publicRef}`)
+  const { accountScope } = useAccount()
+  const [seedOwner] = useState(accountScope)
+  const position = usePagiPosition(`${accountScope}:${initialApplication?.publicRef}`)
   const events = useQuery({
     queryKey: [
       ...viewerQueryKeys.all,
-      accountRef,
+      accountScope,
       'application-events',
       initialApplication?.publicRef,
       position.input,
@@ -41,9 +41,9 @@ function ReviewDetail() {
           data: { ref: initialApplication!.publicRef, pagi: position.input },
         })
       )?.events ?? null,
-    enabled: !!accountRef && !!initialApplication,
+    enabled: !!accountScope && !!initialApplication,
     initialData:
-      accountRef === seedOwner && position.request.api === 'offset' && position.request.page === 1
+      accountScope === seedOwner && position.request.api === 'offset' && position.request.page === 1
         ? initialApplication?.events
         : undefined,
   })

@@ -109,7 +109,7 @@ CDN cache effect 随后由 server proxy 执行。purge 失败不得把已经成�
 | dashboard    | `Q.dsb.config(slug)`                               | `DsbEditStore.current/original/touched` 是编辑 working copy                | SSR seed、领域 save response、refetch                          | Community 展示、Dash editors、SavingBar          |
 | wallpaper    | `Q.wallpaper.config(slug)`                         | wallpaper store 是 draft/preview projection                                | SSR seed、wallpaper mutation response、refetch                 | Community renderer、Dash wallpaper editor        |
 | theme preset | `Q.dsb.config(slug).themePreset`                   | `ThemePresetStore` 只负责 CSS projection/preview                           | theme mutation response、Dsb refetch                           | pre-paint、Theme editor、CSS variable projection |
-| viewer       | `Q.viewer.*(accountRef, refs)`                     | render-time selector；unknown 保持 `undefined`                             | viewer batch、typed mutation、replay/reconcile response        | article/comment/account UI                       |
+| viewer       | `Q.viewer.*(accountScope, refs)`                   | render-time selector；unknown 保持 `undefined`                             | viewer batch、typed mutation、replay/reconcile response        | article/comment/account UI                       |
 | baseInfo     | `Q.community.config` + `Q.dsb.config` 各自领域字段 | 无独立 baseInfo cache/store                                                | baseInfo typed mutation response 同时 patch 两个 canonical key | Community brand/SEO、Dash baseInfo editor        |
 
 `loadCommunity` 可以只发起一次 GraphQL bootstrap；`projectCommunityConfig`、dashboard 和 wallpaper
@@ -234,7 +234,7 @@ Article/Comment operation definition 以 typed callbacks 提供。它不得扩�
 这是对早期“先竖切、后抽取”的有意调整；O3 Comment reaction 与 O4 create/delete 必须分别原样复用
 既定 Toggle/Action 公开合同，否则先重新评审通用层边界。
 
-若实施跨刷新 read-your-writes，允许保存有 TTL、按 accountRef 隔离的 confirmed write receipt。
+若实施跨刷新 read-your-writes，允许保存有 TTL、按从 immutable login 编码出的 accountScope 隔离的 confirmed write receipt。
 它只是在 public projection revision 追上前参与 render overlay 和按需 reconcile，不是第二份长期
 confirmed cache，也不得演化为 Valtio mirror 或通用 transaction engine。具体合同见
 [`optimistic_read_your_writes.md`](../migrations/tanstack/optimistic-read-your-writes.md)。

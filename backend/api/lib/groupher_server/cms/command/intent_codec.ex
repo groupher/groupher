@@ -114,7 +114,7 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
          "report_type" => :raw,
          "details" => :digest,
          "community_id" => :raw,
-         "subject_ref" => :raw
+         "observed_version" => :raw
        }},
     alert_wall_withdraw_report: :empty,
     community_create: :digest_each,

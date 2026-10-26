@@ -173,7 +173,7 @@ disabled observer。成功且返回完整 `ArticleStats` 的 mutation 直接 pat
 comment.list(articleRef)
 comment.replies(commentRef)
 comment.entity(commentRef)
-comment.viewerState(accountRef, commentRef)
+comment.viewerState(accountScope, commentRef)
 ```
 
 create/reply/update/delete mutation 可以组合多个 target。pending entity、rollback、tombstone 和
@@ -182,7 +182,7 @@ create/reply/update/delete mutation 可以组合多个 target。pending entity�
 ### 5.3 Community 与 viewer
 
 Community/Dsb/wallpaper 等 target 必须保持各自 confirmed owner，不借 invalidation 重新建立聚合 store。viewer target 强制
-包含 immutable `accountRef`；resolver 不允许 prefix 命中另一个账号的私有 Query。
+包含由 immutable `login` 编码的 `accountScope`；resolver 不允许 prefix 命中另一个账号的私有 Query。
 
 ## 6. 与 mutation、receipt 和 SSR 的边界
 
@@ -250,7 +250,7 @@ fallback。
 - active 立即 refetch、inactive 只 stale，await 语义稳定；
 - `article.stats(path)` 命中单篇 key 和所有包含 path 的 normalized `statsBatch`，不命中其他 Article；
 - list scope 覆盖 community/thread/filter family，但不清空无关列表；
-- accountRef 不匹配时 viewer target 不跨账号失效；logout/account switch 有独立清理测试；
+- accountScope 不匹配时 viewer target 不跨账号失效；logout/account switch 有独立清理测试；
 - 空 community、非法 thread/innerId、未知 target/version fail closed；
 - mutation rollback 不执行 success invalidation；confirmed/no-op/replayed response 的策略有明确测试；
 - executor failure 进入 production telemetry，不吞掉原 mutation 的业务成功结果；

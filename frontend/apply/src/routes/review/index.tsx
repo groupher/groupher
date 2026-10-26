@@ -16,15 +16,15 @@ export const Route = createFileRoute('/review/')({
 
 function ReviewQueue() {
   const initial = Route.useLoaderData()
-  const { accountRef } = useAccount()
-  const [seedOwner] = useState(accountRef)
-  const position = usePagiPosition(`application-review:${accountRef}`)
+  const { accountScope } = useAccount()
+  const [seedOwner] = useState(accountScope)
+  const position = usePagiPosition(`application-review:${accountScope}`)
   const query = useQuery({
-    queryKey: [...viewerQueryKeys.all, accountRef, 'application-review', position.input],
+    queryKey: [...viewerQueryKeys.all, accountScope, 'application-review', position.input],
     queryFn: () => loadReviewQueue({ data: { pagi: position.input } }),
-    enabled: !!accountRef && initial !== null,
+    enabled: !!accountScope && initial !== null,
     initialData:
-      accountRef === seedOwner && position.request.api === 'offset' && position.request.page === 1
+      accountScope === seedOwner && position.request.api === 'offset' && position.request.page === 1
         ? initial
         : undefined,
   })

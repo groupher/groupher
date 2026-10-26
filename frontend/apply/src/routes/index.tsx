@@ -44,8 +44,8 @@ function ApplyIndex() {
           </Link>
         </div>
       ) : null}
-      <ApplyFlowProvider accountRef={account.user.login}>
-        <ApplyFlow accountRef={account.user.login} />
+      <ApplyFlowProvider accountScope={account.user.login}>
+        <ApplyFlow accountScope={account.user.login} />
       </ApplyFlowProvider>
     </>
   )

@@ -21,7 +21,7 @@ import {
   writeSessionReceipt,
 } from '../sessionReceiptStorage'
 
-const RECEIPT_VERSION = 4
+const RECEIPT_VERSION = 5
 const storagePrefix = 'groupher:article-upvote-receipt:'
 
 type TArticleReceiptViewerState = {
@@ -31,9 +31,9 @@ type TArticleReceiptViewerState = {
 }
 
 export type TArticleUpvoteReceipt = {
-  schemaVersion: 4
+  schemaVersion: 5
   commandId: string
-  accountRef: string
+  accountScope: string
   entityKey: string
   interactionRevision?: number
   viewerState: TArticleReceiptViewerState
@@ -43,7 +43,7 @@ export type TArticleUpvoteReceipt = {
 
 type TArticleUpvoteConfirmation = {
   commandId: string
-  accountRef: string
+  accountScope: string
   entityKey: string
   viewerHasUpvoted: boolean
   interactionRevision?: number
@@ -51,30 +51,32 @@ type TArticleUpvoteConfirmation = {
   viewerEmotion?: EmotionType | null
 }
 
-const storageKey = (accountRef: string, entityKey: string): string =>
-  `${storagePrefix}${accountRef}:${entityKey}`
+const storageKey = (accountScope: string, entityKey: string): string =>
+  `${storagePrefix}${accountScope}:${entityKey}`
 
 const validReceipt = (receipt: TArticleUpvoteReceipt): boolean =>
-  Boolean(receipt.accountRef && receipt.entityKey && receipt.viewerState)
+  Boolean(receipt.accountScope && receipt.entityKey && receipt.viewerState)
 
 /** Reads one account/path-scoped confirmation and removes invalid or expired storage. */
 export const readArticleUpvoteReceipt = (
-  accountRef: string | null,
+  accountScope: string | null,
   entityKey: string,
 ): TArticleUpvoteReceipt | null => {
-  if (!accountRef) return null
+  if (!accountScope) return null
   return readSessionReceipt(
-    storageKey(accountRef, entityKey),
+    storageKey(accountScope, entityKey),
     RECEIPT_VERSION,
     (receipt: TArticleUpvoteReceipt) =>
-      validReceipt(receipt) && receipt.accountRef === accountRef && receipt.entityKey === entityKey,
+      validReceipt(receipt) &&
+      receipt.accountScope === accountScope &&
+      receipt.entityKey === entityKey,
   )
 }
 
 /** Writes the latest confirmed private state without replacing a newer receipt revision. */
 export const writeArticleUpvoteReceipt = (confirmation: TArticleUpvoteConfirmation): void => {
-  const { accountRef, entityKey, interactionRevision } = confirmation
-  const existing = readArticleUpvoteReceipt(accountRef, entityKey)
+  const { accountScope, entityKey, interactionRevision } = confirmation
+  const existing = readArticleUpvoteReceipt(accountScope, entityKey)
   const existingRevision = existing?.interactionRevision
   if (
     existing &&
@@ -88,7 +90,7 @@ export const writeArticleUpvoteReceipt = (confirmation: TArticleUpvoteConfirmati
   const receipt: TArticleUpvoteReceipt = {
     schemaVersion: RECEIPT_VERSION,
     commandId: confirmation.commandId,
-    accountRef,
+    accountScope,
     entityKey,
     interactionRevision,
     viewerState: {
@@ -101,17 +103,17 @@ export const writeArticleUpvoteReceipt = (confirmation: TArticleUpvoteConfirmati
   }
 
   listSessionReceipts(storagePrefix, RECEIPT_VERSION, validReceipt)
-  writeSessionReceipt(storageKey(accountRef, entityKey), receipt)
+  writeSessionReceipt(storageKey(accountScope, entityKey), receipt)
 }
 
 /** Removes one confirmation after public and private projections have caught up. */
-export const clearArticleUpvoteReceipt = (accountRef: string | null, entityKey: string): void => {
-  if (accountRef) removeSessionReceipt(storageKey(accountRef, entityKey))
+export const clearArticleUpvoteReceipt = (accountScope: string | null, entityKey: string): void => {
+  if (accountScope) removeSessionReceipt(storageKey(accountScope, entityKey))
 }
 
 /** Clears every Article upvote confirmation at an account/session boundary. */
-export const clearArticleUpvoteReceipts = (accountRef: string | null): void => {
-  if (accountRef) clearSessionReceipts(`${storagePrefix}${accountRef}:`)
+export const clearArticleUpvoteReceipts = (accountScope: string | null): void => {
+  if (accountScope) clearSessionReceipts(`${storagePrefix}${accountScope}:`)
 }
 
 /** Returns whether a receipt is newer than the public Interaction owner snapshot. */

@@ -17,6 +17,7 @@
 - [`query-store-boundary.md`](./query-store-boundary.md)：Query、Store、Draft 与缓存边界。
 - [`query-invalidation.md`](./query-invalidation.md)：TanStack Query typed target、领域 key resolver 与通用失效 executor。
 - [`frontend-account-passport-gate.md`](./frontend-account-passport-gate.md)：AccountStore、Passport、前端 Gate 与各应用的认证策略。
+- [`account-identity.md`](./account-identity.md)：`login`、`nickname`、`user.id` 的身份边界。
 - [`contracts.md`](./contracts.md)：跨运行时 contract 的归属、生成、freshness 与 Gate Action 目标合同。
 - [`protocol-constants.md`](./protocol-constants.md)：前端裸写协议字符串的历史审计和现有归属记录。
 - [`policy.md`](./policy.md)：后端 Policy 的准入决策职责，以及与 Gate、Lifecycle、Config、Workflow 和 Persist 的边界。

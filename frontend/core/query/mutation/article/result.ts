@@ -27,7 +27,7 @@ export type TArticleInteractionResult = {
 /** Normalizes and patches committed public/private owners while preserving their own revisions. */
 export const applyArticleInteractionResult = (
   queryClient: QueryClient,
-  accountRef: string | null,
+  accountScope: string | null,
   path: TArticlePath,
   result: TArticleInteractionResult,
 ): { stats: TArticleStats; interactionState: TArticleInteractionState } => {
@@ -39,7 +39,7 @@ export const applyArticleInteractionResult = (
   } as TArticleInteractionState
 
   articleStatsCache.apply(queryClient, stats)
-  if (accountRef) cacheArticleInteractionState(queryClient, accountRef, interactionState)
+  if (accountScope) cacheArticleInteractionState(queryClient, accountScope, interactionState)
 
   return { stats, interactionState }
 }

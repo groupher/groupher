@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
+import { viewerQueryKeys } from '~/query/key'
 import type { TUser } from '~/spec'
 
 import useAccount from './hooks'
@@ -65,6 +66,28 @@ describe('stores/account/provider', () => {
 
     await waitFor(() => expect(result.current.user?.login).toBe('e2e'))
     expect(request).not.toHaveBeenCalled()
+  })
+
+  it('clears private query data when the session changes accounts', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    const oldKey = viewerQueryKeys.myReports('user:e2e', 1)
+    queryClient.setQueryData(oldKey, { entries: ['private'] })
+
+    const { result } = renderHook(() => useAccount(), {
+      wrapper: wrapperFor(queryClient, sessionUser),
+    })
+    expect(result.current.accountScope).toBe('user:e2e')
+
+    act(() => {
+      queryClient.setQueryData(viewerQueryKeys.session(), {
+        sessionState: { isValid: true, user: { ...sessionUser, login: 'another' } },
+      })
+    })
+
+    await waitFor(() => expect(result.current.accountScope).toBe('user:another'))
+    await waitFor(() => expect(queryClient.getQueryData(oldKey)).toBeUndefined())
   })
 
   it('refreshes the canonical session after the current Passport changes', async () => {

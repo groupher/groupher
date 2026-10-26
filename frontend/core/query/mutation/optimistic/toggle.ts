@@ -22,19 +22,19 @@ const getIntents = (queryClient: QueryClient): Map<string, TToggleIntent> => {
 /** Executes a set-state toggle with one shared last-intent buffer per account/entity. */
 export const enqueueOptimisticToggle = <TTarget, TResult>({
   queryClient,
-  accountRef,
+  accountScope,
   operation,
   target,
   next,
 }: {
   queryClient: QueryClient
-  accountRef: string
+  accountScope: string
   operation: TOptimisticToggleOperation<TTarget, TResult>
   target: TTarget
   next?: boolean
 }): Promise<TResult | void> => {
-  const context: TReadOperationContext = { queryClient, accountRef }
-  const key = `${accountRef}:${operation.name}:${operation.entityKey(target)}`
+  const context: TReadOperationContext = { queryClient, accountScope }
+  const key = `${accountScope}:${operation.name}:${operation.entityKey(target)}`
   const map = getIntents(queryClient)
   const active = map.get(key)
   const current = active?.pendingState ?? operation.read(context, target)
@@ -55,7 +55,7 @@ export const enqueueOptimisticToggle = <TTarget, TResult>({
       applied = intent.pendingState
       result = await executeOptimisticOperation({
         queryClient,
-        accountRef,
+        accountScope,
         operation,
         target,
         input: applied,

@@ -17,6 +17,7 @@
 - [Policy Boundary 修复](./policy-boundary-fix.md)：清理 Policy 中的隐式加载、配置读取、重复决策和副作用，并收敛 Gate、Facts 与领域 capability 边界。
 - [CMS Command Receipt 重构](./cms-command-receipt-refactor.md)：从 `CommandReceipt.run_user_command/8`
   迁移到 `CMS.Command`、统一结果恢复并移除产品端 replay 状态。
+- [AccountRef 链路移除](./account-ref-removal-fix.md)：将客户端重复使用的 `accountRef` 收敛到不可变且唯一的 `login`，保留服务端 `user.id` 关系和可变 `nickname` 展示。
 - [CMS Command 入口、用例命名与 Elixir block style 修复](./cms-command-entry-and-naming-fix.md)：纠正
   facade/Command 边界，清理重复 use-case 命名，并增加折行 inline `do:` 的仓库约束。
 - [CMS Command、Gate、Lifecycle 与 Persistence 边界](./cms-command-gate-lifecycle-persist-boundary.md)：统一

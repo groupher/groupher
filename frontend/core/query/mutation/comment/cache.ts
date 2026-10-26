@@ -308,9 +308,9 @@ export const patchCommentViewerChanges = (
   value: boolean | { name: TEmotionType; enabled: boolean },
   context: TOperationContext,
 ): TOptimisticChange[] => {
-  if (!context.accountRef) return []
+  if (!context.accountScope) return []
   const changes: TOptimisticChange[] = []
-  const prefix = viewerQueryKeys.commentStatePrefix(context.accountRef, target.articleKey)
+  const prefix = viewerQueryKeys.commentStatePrefix(context.accountScope, target.articleKey)
   for (const { queryKey } of queryClient.getQueryCache().findAll({ queryKey: prefix })) {
     const previous = queryClient.getQueryData<TCommentViewerStates>(queryKey)
     const current = previous?.[target.commentInnerId]
@@ -438,13 +438,13 @@ export const reconcileCreatedComment = (
 /** Updates viewer-owned comment flags without replacing public aggregates. */
 export const patchCommentViewerState = (
   queryClient: QueryClient,
-  accountRef: string,
+  accountScope: string,
   articleKey: string,
   innerId: string | number,
   updater: (state: TCommentViewerStates[string]) => TCommentViewerStates[string],
 ): void => {
   queryClient.setQueriesData<TCommentViewerStates>(
-    { queryKey: viewerQueryKeys.commentStatePrefix(accountRef, articleKey) },
+    { queryKey: viewerQueryKeys.commentStatePrefix(accountScope, articleKey) },
     (states) => {
       if (!states) return states
       const key = String(innerId)
@@ -514,11 +514,11 @@ export const commentTargetQueries = (
   target: TCommentTarget,
 ): readonly TQueryTarget[] => [
   ...commentQueryTargets(context.queryClient, target.scope),
-  ...(context.accountRef
+  ...(context.accountScope
     ? context.queryClient
         .getQueryCache()
         .findAll({
-          queryKey: viewerQueryKeys.commentStatePrefix(context.accountRef, target.articleKey),
+          queryKey: viewerQueryKeys.commentStatePrefix(context.accountScope, target.articleKey),
         })
         .map(({ queryKey }) => ({ queryKey, exact: true }))
     : []),

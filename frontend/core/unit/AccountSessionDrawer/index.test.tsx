@@ -7,14 +7,14 @@ const state = vi.hoisted(() => ({
   list: vi.fn(),
   revoke: vi.fn(),
   others: vi.fn(),
-  accountRef: 'account-a',
+  accountScope: 'account-a',
 }))
 vi.mock('~/auth', () => ({
   listSessions: state.list,
   revokeSession: state.revoke,
   revokeOtherSessions: state.others,
 }))
-vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountRef: state.accountRef }) }))
+vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: state.accountScope }) }))
 vi.mock('~/ui/Drawer', () => ({
   default: ({ children, show }) => (show ? <div>{children}</div> : null),
 }))
@@ -47,7 +47,7 @@ const page = (entries: unknown[], number: number, total: number) => ({
 const client = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
 beforeEach(() => {
   vi.clearAllMocks()
-  state.accountRef = 'account-a'
+  state.accountScope = 'account-a'
 })
 it('uses the global total to keep revoke-others available on a page containing only the current device', async () => {
   let revoked = false
@@ -81,7 +81,7 @@ it('uses the global total to keep revoke-others available on a page containing o
 it('isolates device pages across accounts even when an old request resolves late', async () => {
   let resolveOld!: (value: unknown) => void
   state.list.mockImplementation(() =>
-    state.accountRef === 'account-a'
+    state.accountScope === 'account-a'
       ? new Promise((resolve) => {
           resolveOld = resolve
         })
@@ -95,7 +95,7 @@ it('isolates device pages across accounts even when an old request resolves late
   )
   const { rerender } = render(view())
   await waitFor(() => expect(state.list).toHaveBeenCalledTimes(1))
-  state.accountRef = 'account-b'
+  state.accountScope = 'account-b'
   rerender(view())
   await screen.findByText('device-b')
   resolveOld(page([session('device-a', true)], 1, 1))

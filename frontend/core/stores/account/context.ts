@@ -2,7 +2,7 @@
 
 import { createContext } from 'react'
 
-import type { TUser } from '~/spec'
+import type { TAuthenticatedUser, TUser } from '~/spec'
 
 import type { TInit } from './spec'
 
@@ -10,8 +10,8 @@ export const SessionSeedContext = createContext<TInit | null>(null)
 SessionSeedContext.displayName = 'AccountSessionSeed'
 
 export type TAccountContext = {
-  user: TUser | null
-  accountRef: string | null
+  user: TAuthenticatedUser | null
+  accountScope: string | null
   loading: boolean
   isLogin: boolean
   refreshSession: () => Promise<void>

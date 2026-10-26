@@ -107,7 +107,7 @@ const enqueue = <T>(queryClient: QueryClient, key: string, run: () => Promise<T>
 
 export type TExecuteOptimisticOperationArgs<TTarget, TInput, TResult> = {
   queryClient: QueryClient
-  accountRef: string | null
+  accountScope: string | null
   operation: TOptimisticOperation<TTarget, TInput, TResult>
   target: TTarget
   input: TInput
@@ -117,7 +117,7 @@ export type TExecuteOptimisticOperationArgs<TTarget, TInput, TResult> = {
 /** Runs one typed operation through cancel, optimistic apply, transport, reconcile, and rollback. */
 export const executeOptimisticOperation = async <TTarget, TInput, TResult>({
   queryClient,
-  accountRef,
+  accountScope,
   operation,
   target,
   input,
@@ -125,10 +125,10 @@ export const executeOptimisticOperation = async <TTarget, TInput, TResult>({
 }: TExecuteOptimisticOperationArgs<TTarget, TInput, TResult>): Promise<TResult> => {
   const queueKey =
     operation.queueKey?.(target) || `${operation.name}:${operation.entityKey(target)}`
-  const lane = `${accountRef || 'anonymous'}:${queueKey}`
+  const lane = `${accountScope || 'anonymous'}:${queueKey}`
 
   return enqueue(queryClient, lane, async () => {
-    const context = { queryClient, accountRef, commandId: commandId || createCommandId() }
+    const context = { queryClient, accountScope, commandId: commandId || createCommandId() }
     const cancelTargets = operation.queriesToCancel(context, target, input)
     await Promise.all(cancelTargets.map((target) => queryClient.cancelQueries(target)))
 

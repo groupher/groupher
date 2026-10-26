@@ -5,17 +5,20 @@ const prefix = (key: readonly unknown[]) => (queryKey: readonly unknown[]) =>
   key.every((part, index) => queryKey[index] === part)
 
 /** Invalidates viewer-specific article state for an account. */
-export const articleState = (accountRef: string): TQueryInvalidationTarget => ({
+export const articleState = (accountScope: string): TQueryInvalidationTarget => ({
   domain: 'viewer',
   target: 'article-state',
-  accountRef,
+  accountScope,
 })
 
 /** Invalidates viewer-specific comment state for an account and article. */
-export const commentState = (accountRef: string, articleKey: string): TQueryInvalidationTarget => ({
+export const commentState = (
+  accountScope: string,
+  articleKey: string,
+): TQueryInvalidationTarget => ({
   domain: 'viewer',
   target: 'comment-state',
-  accountRef,
+  accountScope,
   articleKey,
 })
 
@@ -25,8 +28,8 @@ export const resolve = (target: TQueryInvalidationTarget): TQueryInvalidationPla
 
   const key =
     target.target === 'article-state'
-      ? viewerQueryKeys.articleStatePrefix(target.accountRef)
-      : viewerQueryKeys.commentStatePrefix(target.accountRef, target.articleKey)
+      ? viewerQueryKeys.articleStatePrefix(target.accountScope)
+      : viewerQueryKeys.commentStatePrefix(target.accountScope, target.articleKey)
 
   return {
     matches: [{ domain: target.domain, target: target.target, matches: prefix(key) }],

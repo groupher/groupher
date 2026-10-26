@@ -29,7 +29,6 @@ import {
 } from '~/query/mutation/articleReceipt'
 import { clearArticleViewAck, readArticleViewAck } from '~/query/viewAck'
 import type { TArticle, TArticleState, TArticleStats, TArticleViewerState } from '~/spec'
-import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 type TStatsByPath = ReadonlyMap<string, TArticleStats>
@@ -122,13 +121,13 @@ export const useArticlePrivateStatesByChunks = (
   statsByPath: TStatsByPath,
 ) => {
   const account = useAccount()
-  const accountRef = account.accountRef || getAccountRef(account.user) || ''
+  const accountScope = account.accountScope || ''
   const paths = useMemo(() => pathChunks.flat(), [pathChunks])
   const viewerQueries = useQueries({
-    queries: pathChunks.map((chunk) => Q.viewer.articleStates(accountRef, chunk)),
+    queries: pathChunks.map((chunk) => Q.viewer.articleStates(accountScope, chunk)),
   })
   const interactionQueries = useQueries({
-    queries: pathChunks.map((chunk) => Q.viewer.articleInteractionStates(accountRef, chunk)),
+    queries: pathChunks.map((chunk) => Q.viewer.articleInteractionStates(accountScope, chunk)),
   })
   const viewerStates = useMemo(
     () => Object.assign({}, ...viewerQueries.map((query) => query.data || {})),
@@ -145,11 +144,11 @@ export const useArticlePrivateStatesByChunks = (
     for (const path of paths) {
       const key = articlePathKey(path)
       if (readArticleViewAck(key)) viewAcks.add(key)
-      const receipt = readArticleUpvoteReceipt(accountRef, key)
+      const receipt = readArticleUpvoteReceipt(accountScope, key)
       if (receipt) receipts.set(key, receipt)
     }
     return { viewAcks, receipts }
-  }, [accountRef, interactionStates, paths, statsByPath, viewerStates])
+  }, [accountScope, interactionStates, paths, statsByPath, viewerStates])
 
   useEffect(() => {
     for (const path of paths) {
@@ -167,13 +166,13 @@ export const useArticlePrivateStatesByChunks = (
         typeof privateRevision === 'number' &&
         privateRevision >= receiptRevision
       ) {
-        clearArticleUpvoteReceipt(accountRef, key)
+        clearArticleUpvoteReceipt(accountScope, key)
       }
     }
-  }, [accountRef, interactionStates, localState.receipts, paths, statsByPath, viewerStates])
+  }, [accountScope, interactionStates, localState.receipts, paths, statsByPath, viewerStates])
 
   return {
-    accountRef,
+    accountScope,
     interactionStates,
     viewerStates,
     viewAcks: localState.viewAcks,

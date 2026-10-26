@@ -57,7 +57,7 @@ export const articleCollectOperation = {
   reconcile: (context, target, _next, result) => {
     applyArticleInteractionResult(
       context.queryClient,
-      context.accountRef,
+      context.accountScope,
       articlePathOf(target.article),
       result,
     )
@@ -67,7 +67,7 @@ export const articleCollectOperation = {
 /** Executes one collect set-state intent and applies its committed folder/public/private payload. */
 export const setArticleCollected = (
   queryClient: QueryClient,
-  accountRef: string,
+  accountScope: string,
   article: TArticle,
   folderId: string,
   next: boolean,
@@ -75,7 +75,7 @@ export const setArticleCollected = (
 ): Promise<TArticleCollectResult> =>
   executeOptimisticOperation({
     queryClient,
-    accountRef,
+    accountScope,
     operation: articleCollectOperation,
     target: { article, folderId },
     input: next,

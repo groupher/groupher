@@ -6,7 +6,7 @@ import type { TOptimisticPlan, TOptimisticToggleOperation } from './types'
 import useOptimisticToggle from './useOptimisticToggle'
 
 vi.mock('~/stores/account/hooks', () => ({
-  default: () => ({ accountRef: 'acct-a', isLogin: true, user: null }),
+  default: () => ({ accountScope: 'acct-a', isLogin: true, user: null }),
 }))
 
 const emptyPlan: TOptimisticPlan = { changes: [], refetchOnFailure: [] }

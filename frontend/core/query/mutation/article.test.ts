@@ -92,11 +92,11 @@ const executeArticleUpvote = (
   queryClient: QueryClient,
   target: TArticle,
   nextState: boolean,
-  accountRef = 'alice',
+  accountScope = 'alice',
 ) =>
   executeOptimisticOperation({
     queryClient,
-    accountRef,
+    accountScope,
     operation: articleUpvoteOperation,
     target,
     input: nextState,
@@ -105,11 +105,11 @@ const executeArticleUpvote = (
 const queueArticleUpvoteToggle = (
   queryClient: QueryClient,
   target: TArticle,
-  accountRef = 'alice',
+  accountScope = 'alice',
 ) =>
   enqueueOptimisticToggle({
     queryClient,
-    accountRef,
+    accountScope,
     operation: articleUpvoteOperation,
     target,
   })
@@ -175,7 +175,7 @@ describe('article query mutation helpers', () => {
     queryClient.setQueryData(unrelatedViewerBatch, {})
 
     const targets = articleUpvoteOperation.queriesToCancel(
-      { queryClient, accountRef: 'alice', commandId: 'command-1' },
+      { queryClient, accountScope: 'alice', commandId: 'command-1' },
       article,
     )
     const keys = targets.map(({ queryKey }) => queryKey)
@@ -219,7 +219,7 @@ describe('article query mutation helpers', () => {
     await expect(
       enqueueOptimisticToggle({
         queryClient,
-        accountRef: 'alice',
+        accountScope: 'alice',
         operation: articleUpvoteOperation,
         target: article,
         next: true,
@@ -270,7 +270,7 @@ describe('article query mutation helpers', () => {
     queryClient.setQueryData(detailKey, current)
     queryClient.setQueryData(statsKey, currentStats)
     writeArticleUpvoteReceipt({
-      accountRef: 'alice',
+      accountScope: 'alice',
       entityKey: 'home:POST:42',
       commandId: 'old-confirmation',
       viewerHasUpvoted: false,
@@ -288,8 +288,8 @@ describe('article query mutation helpers', () => {
 
   it('does not restore an older optimistic value after a newer operation owns the field', () => {
     const queryClient = setupClient()
-    const firstContext = { queryClient, accountRef: 'alice', commandId: 'op-first' }
-    const secondContext = { queryClient, accountRef: 'alice', commandId: 'op-second' }
+    const firstContext = { queryClient, accountScope: 'alice', commandId: 'op-first' }
+    const secondContext = { queryClient, accountScope: 'alice', commandId: 'op-second' }
     const first = articleUpvoteOperation.apply(firstContext, article, true)
     for (const change of first.changes) markChange(queryClient, change)
     const second = articleUpvoteOperation.apply(secondContext, article, false)
@@ -307,7 +307,7 @@ describe('article query mutation helpers', () => {
 
   it('does not restore viewer state after its authority revision advances', () => {
     const queryClient = setupClient()
-    const context = { queryClient, accountRef: 'alice', commandId: 'op-stale-viewer' }
+    const context = { queryClient, accountScope: 'alice', commandId: 'op-stale-viewer' }
     const plan = articleUpvoteOperation.apply(context, article, true)
     for (const change of plan.changes) markChange(queryClient, change)
 
@@ -376,7 +376,7 @@ describe('article query mutation helpers', () => {
       staleTime: Number.POSITIVE_INFINITY,
     })
     const unsubscribe = observer.subscribe(() => undefined)
-    const context = { queryClient, accountRef: 'alice', commandId: 'op-batch-count' }
+    const context = { queryClient, accountScope: 'alice', commandId: 'op-batch-count' }
 
     articleUpvoteOperation.apply(context, article, true)
     unsubscribe()
@@ -455,7 +455,7 @@ describe('article query mutation helpers', () => {
     const unsubscribe = observer.subscribe(() => undefined)
 
     articleUpvoteOperation.apply(
-      { queryClient, accountRef: 'alice', commandId: 'op-undo-count' },
+      { queryClient, accountScope: 'alice', commandId: 'op-undo-count' },
       article,
       false,
     )

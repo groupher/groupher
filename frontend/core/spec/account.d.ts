@@ -15,9 +15,6 @@ type TUserSocial = {
 }
 
 export type TSimpleUser = {
-  /** Stable opaque account reference; unlike login, it never changes. */
-  accountRef?: string | null
-  /** Kept for local/test data that predates the accountRef contract. */
   id?: string | null
   login?: string
   nickname?: string | null
@@ -71,6 +68,9 @@ export type TUser = TSimpleUser & {
     publishedBlogsCount: number
   }
 }
+
+/** A validated signed-in user always has a Groupher login. */
+export type TAuthenticatedUser = TUser & { login: string }
 
 export type TPagedUsers = {
   entries: TUser[]

@@ -7,7 +7,6 @@ import { THREAD } from '~/const/thread'
 import { CONFIRMED_COMMENT_RECEIPT_MAX_REFS } from '~/constant/cache'
 import { stripCommentViewerState, type TCommentViewerStates } from '~/lib/commentViewerState'
 import type { TArticle, TComment } from '~/spec'
-import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 import { Q } from './client'
@@ -23,12 +22,12 @@ const publicComment = (comment: TComment): TComment => stripCommentViewerState(c
 
 const mergeViewerState = (
   queryClient: ReturnType<typeof useQueryClient>,
-  accountRef: string,
+  accountScope: string,
   articleKey: string,
   comment: TComment,
 ): void => {
   queryClient.setQueriesData<TCommentViewerStates>(
-    { queryKey: viewerQueryKeys.commentStatePrefix(accountRef, articleKey) },
+    { queryKey: viewerQueryKeys.commentStatePrefix(accountScope, articleKey) },
     (states) => {
       if (!states) return states
       const emotionFlags = Object.fromEntries(
@@ -53,7 +52,7 @@ const mergeViewerState = (
 export default function useCommentReceiptReconcile(article: TArticle | null | undefined) {
   const queryClient = useQueryClient()
   const account = useAccount()
-  const accountRef = account.accountRef || getAccountRef(account.user)
+  const accountScope = account.accountScope
 
   const scope = useMemo<TCommentScope | null>(() => {
     if (!article?.community?.slug || !article.meta?.thread || article.innerId === undefined)
@@ -68,16 +67,16 @@ export default function useCommentReceiptReconcile(article: TArticle | null | un
     ? `${scope.community}:${scope.thread}:${String(scope.articleInnerId)}`
     : ''
   const receipts = useMemo(() => {
-    if (!accountRef || !scope)
+    if (!accountScope || !scope)
       return { feedByRef: new Map(), reactionByRef: new Map(), refs: [] as string[] }
     const feedByRef = new Map(
-      readCommentFeedReceipts(accountRef, articleKey).map((receipt) => [
+      readCommentFeedReceipts(accountScope, articleKey).map((receipt) => [
         receipt.commentRef,
         receipt,
       ]),
     )
     const reactionByRef = new Map(
-      readCommentReactionReceipts(accountRef, articleKey).map((receipt) => [
+      readCommentReactionReceipts(accountScope, articleKey).map((receipt) => [
         receipt.commentRef,
         receipt,
       ]),
@@ -102,7 +101,7 @@ export default function useCommentReceiptReconcile(article: TArticle | null | un
       .map(([commentRef]) => commentRef)
       .sort()
     return { feedByRef, reactionByRef, refs }
-  }, [accountRef, articleKey, scope])
+  }, [accountScope, articleKey, scope])
 
   const query = useQuery(
     Q.comment.reconcile(
@@ -114,7 +113,7 @@ export default function useCommentReceiptReconcile(article: TArticle | null | un
   )
 
   useEffect(() => {
-    if (!accountRef || !scope || !query.data) return
+    if (!accountScope || !scope || !query.data) return
     const confirmedArticle = query.data.article
     for (const [commentRef, rawComment] of Object.entries(query.data.comments)) {
       const reactionReceipt = receipts.reactionByRef.get(commentRef)
@@ -122,12 +121,12 @@ export default function useCommentReceiptReconcile(article: TArticle | null | un
       const feedRevision = feedReceipt?.publicProjection.commentsRevision
 
       if (!rawComment) {
-        if (reactionReceipt) clearCommentReactionReceipt(accountRef, articleKey, commentRef)
+        if (reactionReceipt) clearCommentReactionReceipt(accountScope, articleKey, commentRef)
         if (
           feedReceipt?.type === 'delete' &&
           (typeof feedRevision !== 'number' || confirmedArticle.commentsRevision >= feedRevision)
         ) {
-          clearCommentFeedReceipt(accountRef, articleKey, commentRef)
+          clearCommentFeedReceipt(accountScope, articleKey, commentRef)
         }
         continue
       }
@@ -142,7 +141,7 @@ export default function useCommentReceiptReconcile(article: TArticle | null | un
           typeof publicRevision !== 'number' ||
           publicRevision >= reactionRevision)
       ) {
-        clearCommentReactionReceipt(accountRef, articleKey, commentRef)
+        clearCommentReactionReceipt(accountScope, articleKey, commentRef)
       }
 
       if (feedReceipt?.type === 'delete') {
@@ -150,14 +149,14 @@ export default function useCommentReceiptReconcile(article: TArticle | null | un
         // not converged yet; leave the tombstone active.
         const lifecycle = (comment as TComment & { lifecycle?: { state?: string } }).lifecycle
         if (lifecycle?.state === 'DELETED' || comment.body === undefined) {
-          clearCommentFeedReceipt(accountRef, articleKey, commentRef)
+          clearCommentFeedReceipt(accountScope, articleKey, commentRef)
         }
         continue
       }
 
       if (reactionReceipt && typeof reactionRevision === 'number') {
         if (typeof publicRevision === 'number' && publicRevision < reactionRevision) {
-          mergeViewerState(queryClient, accountRef, articleKey, comment)
+          mergeViewerState(queryClient, accountScope, articleKey, comment)
           continue
         }
       }
@@ -169,15 +168,15 @@ export default function useCommentReceiptReconcile(article: TArticle | null | un
         replies: current.replies,
         rootInnerId: current.rootInnerId,
       }))
-      mergeViewerState(queryClient, accountRef, articleKey, comment)
+      mergeViewerState(queryClient, accountScope, articleKey, comment)
       if (
         feedReceipt &&
         (typeof feedRevision !== 'number' || confirmedArticle.commentsRevision >= feedRevision)
       ) {
-        clearCommentFeedReceipt(accountRef, articleKey, commentRef)
+        clearCommentFeedReceipt(accountScope, articleKey, commentRef)
       }
     }
-  }, [accountRef, articleKey, query.data, queryClient, receipts, scope])
+  }, [accountScope, articleKey, query.data, queryClient, receipts, scope])
 
   return query
 }

@@ -236,8 +236,8 @@ Q.article.detail(path)
 Q.article.tagGroups(community, thread)
 Q.comment.list(articlePath, filter)
 Q.viewer.session()
-Q.viewer.articleStates(accountRef, articleRefs)
-Q.viewer.commentStates(accountRef, articleRef, commentRefs)
+Q.viewer.articleStates(accountScope, articleRefs)
+Q.viewer.commentStates(accountScope, articleRef, commentRefs)
 
 Q.SSR.article.posts(filter)
 Q.SSR.article.changelogs(filter)
@@ -329,7 +329,7 @@ const postsKey = ['article', 'posts', normalizedFilter]
 const changelogsKey = ['article', 'changelogs', normalizedFilter]
 const articleKey = ['article', 'detail', community, thread, innerId]
 const commentsKey = ['comment', 'list', community, thread, innerId, normalizedFilter]
-const viewerStateKey = ['viewer', accountRef, 'article-state', normalizedArticleRefs]
+const viewerStateKey = ['viewer', accountScope, 'article-state', normalizedArticleRefs]
 ```
 
 规则：
@@ -339,7 +339,7 @@ const viewerStateKey = ['viewer', accountRef, 'article-state', normalizedArticle
 - 空字符串、`null` 和 `undefined` 不得为同一筛选语义制造多个 key；
 - filter 对象字段顺序由 factory 固定，业务组件不得手写对象 key；
 - mutation 可以使用 `['article', 'posts']` 前缀更新所有已加载列表；
-- 所有用户实体 query 必须包含稳定的 `accountRef`；登录用户变化时清除所有 viewer queries；
+- 所有用户实体 query 必须包含稳定的 `accountScope`；登录用户变化时清除所有 viewer queries；
 - token、Cookie 和其他 secret 不得进入 query key。
 
 ## GraphQL transport
@@ -513,7 +513,7 @@ Browser hydrate
   -> 命中 dehydrated data
   -> staleTime 内不重复请求
   -> Q.viewer.session()
-  -> Q.viewer.articleStates(accountRef, visibleArticleRefs)
+  -> Q.viewer.articleStates(accountScope, visibleArticleRefs)
   -> 将当前用户状态合并进 view
 ```
 
@@ -603,16 +603,16 @@ type TArticleRef = {
   innerId: string
 }
 
-Q.viewer.articleStates(accountRef, articleRefs)
-Q.viewer.commentStates(accountRef, articleRef, commentRefs)
+Q.viewer.articleStates(accountScope, articleRefs)
+Q.viewer.commentStates(accountScope, articleRef, commentRefs)
 ```
 
 后端提供按 refs 批量查询 viewer state 的 operation。Query factory 对 refs 排序、去重，并让同一组
 refs 同时决定 query key 和 request variables。最终 key 不包含 list filter、page、mode 或 offset；
-`accountRef` 是所有用户实体 query key 的必需部分，且只能是 non-secret、opaque、immutable public
-account ref。生产实现不再以可变 login 作为 key；仅测试 fixture 在缺少该字段时保留 login fallback。
-`accountRef` 的 session contract 与原子迁移由
-[Optimistic Read Your Writes](../migrations/tanstack/optimistic-read-your-writes.md) Phase R0 冻结。
+`accountScope` 是所有登录用户实体 query key 的必需部分，从 Session 的不可变、全站唯一
+`login` 编码为 `user:${encodeURIComponent(login)}`。匿名用户使用独立的 `anonymous` 分区；
+它只隔离客户端缓存，不参与服务端身份认证和授权。身份合同见
+[Account identity](account-identity.md)。
 
 ### Viewer batch GraphQL 合同
 
@@ -661,7 +661,7 @@ query CommentViewerStates($article: ArticlePathInput!, $commentInnerIds: [ID!]!)
 - Query factory 对完整 paths 排序、去重并生成一个 query key；queryFn 再按 100 条自动分片、并行请求
   并按 canonical identity 合并，业务组件不感知分片；
 - 任一分片失败时整个 Query 失败，不返回可能被误认为完整结果的部分 record；
-- 服务端从 auth session 确定 viewer，`accountRef` 只进入客户端 query key，不作为 GraphQL variable；
+- 服务端从 auth session 确定 viewer，`accountScope` 只进入客户端 query key，不作为 GraphQL variable；
 - 未登录时在发起分片请求前直接返回空 record；服务端收到无有效 session 的请求也返回空数组，
   不返回身份业务错误；客户端将缺失 viewer state 保持为 unknown。
 - 输入在客户端排序、去重；服务端输出顺序不承担语义；
@@ -672,7 +672,7 @@ query CommentViewerStates($article: ArticlePathInput!, $commentInnerIds: [ID!]!)
   `viewerHasCollected`、`viewerHasCommented` 和 article emotions 均不在本轮范围；
 - `articleStates`、`changelogStates`、`articleState`、`commentStates` 全部由 batch operation 替换，
   并删除对应旧 queryFn、query key 和 GraphQL documents；不保留共存或 fallback；
-- `ArticleQueryProvider` 使用 `Q.viewer.articleStates(accountRef, [articleRef])`，再按 canonical
+- `ArticleQueryProvider` 使用 `Q.viewer.articleStates(accountScope, [articleRef])`，再按 canonical
   articleKey 从 record 读取单实体 viewer state；
 - `commentSummary` 及其 `isViewerJoined`、total/participants summary 保留，不属于 batch
   viewer-state 合同。
@@ -915,7 +915,7 @@ mutation confirmed
 - 重复/重叠 target 在一次执行中去重，active query 不重复 refetch；
 - active 立即 refetch、inactive 只 stale，await 语义与失败 telemetry 可预测；
 - `article.stats(ref)` 同时命中单篇 key 和包含 ref 的多个 normalized `statsBatch`，不命中其他 Article；
-- accountRef 不匹配时 viewer target 不跨账号失效；非法/空 ref fail closed；
+- accountScope 不匹配时 viewer target 不跨账号失效；非法/空 ref fail closed；
 - mutation domain 不再直接调用底层 `invalidateQueries`，executor 不触发 CDN purge 或修改 Query data。
 
 ### 与公共 CDN invalidation 的边界

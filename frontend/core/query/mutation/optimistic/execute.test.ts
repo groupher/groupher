@@ -61,7 +61,7 @@ describe('optimistic operation executor', () => {
 
     const first = executeOptimisticOperation({
       queryClient,
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       operation,
       target: { id: '42' },
       input: 1,
@@ -70,7 +70,7 @@ describe('optimistic operation executor', () => {
 
     const second = executeOptimisticOperation({
       queryClient,
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       operation,
       target: { id: '42' },
       input: 2,
@@ -117,7 +117,7 @@ describe('optimistic operation executor', () => {
 
     const first = enqueueOptimisticToggle({
       queryClient,
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       operation,
       target: { id: '42' },
       next: true,
@@ -126,7 +126,7 @@ describe('optimistic operation executor', () => {
 
     const second = enqueueOptimisticToggle({
       queryClient,
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       operation,
       target: { id: '42' },
       next: false,

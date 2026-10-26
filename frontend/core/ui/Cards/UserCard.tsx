@@ -43,8 +43,8 @@ const UserCard: FC<TProps> = ({ user }) => {
         </div>
       </div>
       <div className={s.desc}>{cutRest(bio ?? '', 50)}</div>
-      {user.id && user.id !== currentUser?.id && (
-        <ReportAction target={{ type: 'USER', userId: user.id }} />
+      {user.login && user.login !== currentUser?.login && (
+        <ReportAction target={{ type: 'USER', userLogin: user.login }} />
       )}
     </div>
   )

@@ -34,13 +34,13 @@ const formatTimestamp = (value?: string | null): string | null => {
 
 export default function AccountSessionDrawer({ show, onClose }: TProps) {
   const s = useSalon()
-  const { accountRef } = useAccount()
+  const { accountScope } = useAccount()
   const client = useQueryClient()
-  const position = usePagiPosition(`account-sessions:${accountRef}`)
+  const position = usePagiPosition(`account-sessions:${accountScope}`)
   const query = useQuery({
-    queryKey: [...viewerQueryKeys.all, accountRef, 'sessions', position.input],
+    queryKey: [...viewerQueryKeys.all, accountScope, 'sessions', position.input],
     queryFn: () => listSessions(position.input),
-    enabled: show && !!accountRef,
+    enabled: show && !!accountScope,
   })
   const sessions = query.data?.entries ?? []
   const loading = query.isFetching
@@ -55,7 +55,7 @@ export default function AccountSessionDrawer({ show, onClose }: TProps) {
     setError(null)
     try {
       await revokeSession(publicRef)
-      await invalidatePrefix(client, [...viewerQueryKeys.all, accountRef, 'sessions'])
+      await invalidatePrefix(client, [...viewerQueryKeys.all, accountScope, 'sessions'])
     } catch {
       setError('Could not revoke that device. Please try again.')
     } finally {
@@ -68,7 +68,7 @@ export default function AccountSessionDrawer({ show, onClose }: TProps) {
     setError(null)
     try {
       await revokeOtherSessions()
-      await invalidatePrefix(client, [...viewerQueryKeys.all, accountRef, 'sessions'])
+      await invalidatePrefix(client, [...viewerQueryKeys.all, accountScope, 'sessions'])
       position.reset()
     } catch {
       setError('Could not revoke the other devices. Please try again.')

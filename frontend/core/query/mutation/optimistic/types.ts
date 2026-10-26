@@ -39,7 +39,7 @@ export type TOptimisticPlan = {
 /** Context available while deriving current state; no command has started yet. */
 export type TReadOperationContext = {
   queryClient: QueryClient
-  accountRef: string | null
+  accountScope: string | null
 }
 
 /** Context available after the executor has assigned the command identity. */

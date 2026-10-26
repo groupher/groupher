@@ -42,6 +42,16 @@ defmodule GroupherServer.Test.Accounts.Profiles.User do
   end
 
   describe "[update user]" do
+    test "profile update cannot change the Groupher login" do
+      {:ok, user} = db_insert(:user)
+
+      assert {:error, :immutable_login} =
+               Accounts.Profiles.update_profile(user, %{login: "another-login"})
+
+      assert {:ok, persisted} = ORM.find(User, user.id)
+      assert persisted.login == user.login
+    end
+
     test "update user with valid attrs" do
       {:ok, user} = db_insert(:user)
 

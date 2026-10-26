@@ -30,7 +30,7 @@ describe('stores/account/hooks', () => {
   beforeEach(() => {
     document.cookie = `${GROUPHER_AUTH_SIGNED_IN_COOKIE}=1; Path=/`
     mockedUseQuery.mockReset()
-    mockedUseQueryClient.mockReturnValue({ setQueryData: vi.fn() } as never)
+    mockedUseQueryClient.mockReturnValue({ setQueryData: vi.fn(), removeQueries: vi.fn() } as never)
     mockedUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,

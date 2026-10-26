@@ -57,12 +57,7 @@ defmodule GroupherServerWeb.Schema.Account.Types do
   object :user do
     meta(:cache, max_age: 30)
 
-    field(:account_ref, non_null(:id),
-      resolve: fn %{id: id}, _, _ ->
-        digest = :crypto.hash(:sha256, "groupher-account:" <> to_string(id))
-        {:ok, "acct_" <> Base.url_encode64(digest, padding: false)}
-      end
-    )
+    field(:login, non_null(:string))
 
     field(:meta, :user_meta,
       resolve: fn %{id: user_id, meta: meta}, _, _ ->
@@ -71,7 +66,6 @@ defmodule GroupherServerWeb.Schema.Account.Types do
     )
 
     field(:nickname, :string)
-    field(:login, :string)
     field(:avatar, :string)
     field(:bio, :string)
     field(:shortbio, :string)

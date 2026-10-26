@@ -76,11 +76,11 @@ const reconcileCreated = (
     `pending:${context.commandId}`,
     stripCommentViewerState(confirmed),
   )
-  if (!context.accountRef) return
+  if (!context.accountScope) return
   writeCommentFeedReceipt({
     type: 'create',
     commandId: result.commandId,
-    accountRef: context.accountRef,
+    accountScope: context.accountScope,
     articleKey: target.articleKey,
     comment: stripCommentViewerState(confirmed),
     commentRef: String(result.comment.innerId),
@@ -196,11 +196,11 @@ export const updateCommentOperation = {
       replies: comment.replies,
       rootInnerId: comment.rootInnerId,
     }))
-    if (!context.accountRef) return
+    if (!context.accountScope) return
     writeCommentFeedReceipt({
       type: 'update',
       commandId: result.commandId,
-      accountRef: context.accountRef,
+      accountScope: context.accountScope,
       articleKey: target.articleKey,
       commentRef: target.commentInnerId,
       comment: stripCommentViewerState(result.comment),
@@ -248,11 +248,11 @@ export const deleteCommentOperation = {
       isCommentQueryForArticle(query, target.scope),
     )
     patchCommentEverywhere(context.queryClient, target.scope, target.commentInnerId, () => null)
-    if (!context.accountRef) return
+    if (!context.accountScope) return
     writeCommentFeedReceipt({
       type: 'delete',
       commandId: result.commandId,
-      accountRef: context.accountRef,
+      accountScope: context.accountScope,
       articleKey: target.articleKey,
       commentRef: target.commentInnerId,
       publicProjection: {

@@ -89,7 +89,7 @@ export const articleEmotionOperation = {
   reconcile: (context, target, _next, result) => {
     applyArticleInteractionResult(
       context.queryClient,
-      context.accountRef,
+      context.accountScope,
       articlePathOf(target.article),
       result,
     )
@@ -99,7 +99,7 @@ export const articleEmotionOperation = {
 /** Executes one emotion set-state intent and applies the committed public/private projections. */
 export const setArticleEmotion = (
   queryClient: QueryClient,
-  accountRef: string,
+  accountScope: string,
   article: TArticle,
   emotion: TEmotionType,
   next: boolean,
@@ -107,7 +107,7 @@ export const setArticleEmotion = (
 ): Promise<TArticleEmotionResult> =>
   executeOptimisticOperation({
     queryClient,
-    accountRef,
+    accountScope,
     operation: articleEmotionOperation,
     target: { article, emotion },
     input: next,

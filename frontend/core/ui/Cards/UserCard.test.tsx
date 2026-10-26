@@ -3,8 +3,6 @@ import type { ReactNode } from 'react'
 
 import UserCard from './UserCard'
 
-const state = vi.hoisted(() => ({ currentUserId: 'user-1' }))
-
 vi.mock('~/hooks/useTwBelt', () => ({
   default: () => ({
     cn: (...values: string[]) => values.join(' '),
@@ -13,7 +11,7 @@ vi.mock('~/hooks/useTwBelt', () => ({
   }),
 }))
 vi.mock('~/stores/account/hooks', () => ({
-  default: () => ({ user: { id: state.currentUserId } }),
+  default: () => ({ user: { login: 'me' } }),
 }))
 vi.mock('~/Img', () => ({ default: () => null }))
 vi.mock('~/platform', () => ({
@@ -27,13 +25,13 @@ vi.mock('~/unit/AlertWall/ReportAction', () => ({
 }))
 
 it('hides the report action on the current user card', () => {
-  render(<UserCard user={{ id: 'user-1', login: 'me', nickname: 'Me' }} />)
+  render(<UserCard user={{ login: 'me', nickname: 'Me' }} />)
 
   expect(screen.queryByTestId('report-action')).not.toBeInTheDocument()
 })
 
 it('shows the report action on another user card', () => {
-  render(<UserCard user={{ id: 'user-2', login: 'other', nickname: 'Other' }} />)
+  render(<UserCard user={{ login: 'other', nickname: 'Other' }} />)
 
   expect(screen.getByTestId('report-action')).toBeInTheDocument()
 })
