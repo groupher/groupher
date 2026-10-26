@@ -1,6 +1,6 @@
-import { siAlgolia, siCloudflare, siFlydotio, siVercel } from 'simple-icons'
+import { siAlgolia, siCloudflare, siFlydotio } from 'simple-icons'
 
-export type TInfraPlatformId = 'vercel' | 'cloudflare' | 'fly' | 'algolia'
+export type TInfraPlatformId = 'cloudflare' | 'fly' | 'algolia'
 export type TInfraLinkGroupId = 'major' | 'third-party'
 type TDeploymentPlatformId = Exclude<TInfraPlatformId, 'algolia'>
 
@@ -45,10 +45,6 @@ const fromSimpleIcon = (icon: { path: string; hex: string }) => ({
 })
 
 const INFRA_PLATFORM_META: Record<TInfraPlatformId, { name: string; icon: TInfraIcon }> = {
-  vercel: {
-    name: 'Vercel',
-    icon: fromSimpleIcon(siVercel),
-  },
   cloudflare: {
     name: 'Cloudflare',
     icon: fromSimpleIcon(siCloudflare),
@@ -80,19 +76,6 @@ export const INFRA_LINK_GROUPS: TInfraLinkGroup[] = [
     id: 'major',
     label: 'Major',
     platforms: [
-      {
-        id: 'vercel',
-        name: INFRA_PLATFORM_META.vercel.name,
-        icon: INFRA_PLATFORM_META.vercel.icon,
-        links: [
-          {
-            label: 'Domain',
-            url: 'https://vercel.com/groupher/~/domains/groupher.com',
-          },
-          { label: 'Storage', url: 'https://vercel.com/groupher/~/stores' },
-          { label: 'Builds', url: 'https://vercel.com/groupher/~/deployments' },
-        ],
-      },
       {
         id: 'cloudflare',
         name: INFRA_PLATFORM_META.cloudflare.name,

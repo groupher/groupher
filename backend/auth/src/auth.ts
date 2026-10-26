@@ -382,9 +382,9 @@ export const buildPhoenixTokenCookie = (token: string, maxAge = ACCESS_TOKEN_MAX
  * Builds a non-sensitive browser-readable login hint.
  *
  * The frontend cannot read `GROUPHER_AUTH_TOKEN_COOKIE` because it is HttpOnly,
- * and reading cookies from Next.js layouts would make the route dynamic on
- * Vercel. This hint lets client code decide whether to call `me` without
- * exposing the actual Phoenix token or changing route caching behavior.
+ * and reading cookies during server rendering would make the route dynamic.
+ * This hint lets client code decide whether to call `me` without exposing the
+ * actual Phoenix token or changing route caching behavior.
  *
  * @example
  * response.headers.append('set-cookie', buildSignedInHintCookie())

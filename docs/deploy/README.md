@@ -54,6 +54,18 @@ groupher.com/*, www.groupher.com/*
 ```
 
 生产入口只使用 Worker Routes 和 Service Bindings，不保留旧托管平台兼容入口或回滚通道。
+Groupher 生产应用不再使用 Vercel；旧 Vercel 项目、团队域名关联和指向 Vercel 的 DNS 记录
+已清理。账户中其他 demo 项目不属于 Groupher 生产部署。
+
+### Vercel 退役记录（2026-10-26）
+
+- 删除旧项目及其部署：`groupher-dashboard`、`dashboard`、`groupher-main`、
+  `groupher-landing`、`groupher-gateway`、`groupher-web`、`cache-test`。
+- 从 Vercel 团队移除 `groupher.com` 域名关联；域名注册商和 Cloudflare 权威 DNS 不变。
+- 删除 Cloudflare DNS 中指向旧 Vercel 的 `dashboard.groupher.com`、
+  `gateway.groupher.com`、`*.groupher.com` A 记录和 `_domainconnect` CNAME。
+- Vercel 团队内剩余的 `with-zustand`、`transition-demo`、`epam-nextjs-boilerplate`、
+  `auth-flow`、`sentry-test` 与 Groupher 生产服务无关，未删除。
 
 ## Cloudflare 应用
 
@@ -109,8 +121,8 @@ Fly.io
     primary region: sin
 ```
 
-Press v1 使用 Docker 部署到 Fly.io。该选择不是 Cloudflare/Vercel 的容器能力限制，而是
-当前 Press 已按常驻 Node/Hono 服务实现，并使用 PostgreSQL TCP、进程内 L1 cache、异步
+Press v1 使用 Docker 部署到 Fly.io，因为当前 Press 按常驻 Node/Hono 服务实现，并使用
+PostgreSQL TCP、进程内 L1 cache、异步
 metrics 和 retention timer。Fly 可以原样承载该模型，也与 Phoenix 的部署区域和运维方式
 一致；v1 不先为平台迁移改写进程生命周期。
 
@@ -321,5 +333,4 @@ Press 链路失败。Markdown、`llms.txt` 和 sitemap 是稳定的发布 smoke�
 落库和 Phoenix-to-Press invalidation。完整检查表见 `docs/press/v1.md`。
 
 Dev Hub 中 `press` 应显示 Fly logo 并链接到 `https://fly.io/apps/groupher-press`；Fly
-infrastructure links 增加 Press。Landing 的 deployment target 应显示 Cloudflare，而不是旧的
-Vercel 标识。
+infrastructure links 增加 Press。Landing 的 deployment target 显示 Cloudflare。

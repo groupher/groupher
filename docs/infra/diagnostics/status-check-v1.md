@@ -8,7 +8,7 @@
 
 ## 目标
 
-Groupher 的前端、后端和基础服务分布在 Cloudflare、Vercel 和 Fly.io。生产状态页需要回答两个不同问题：
+Groupher 的前端和边缘服务运行在 Cloudflare，Phoenix API、Press 与 Status 运行在 Fly.io。生产状态页需要回答两个不同问题：
 
 1. 每个子应用自身是否可以正常响应。
 2. 用户从 `groupher.com` 进入后，DNS、Cloudflare Public Edge Router 和下游子应用组成的完整链路是否正常。
@@ -31,7 +31,7 @@ Gatus 使用 Apache License 2.0，可以免费自托管，也可以在遵守许�
 
 Gatus 的 endpoint、group、说明文字、颜色和部分页面信息可以通过配置调整，足够支撑首版 Groupher Status。若要完全改变页面结构和交互，需要维护自定义 CSS 或 fork 前端；首版不做深度 UI 定制。
 
-Fly.io 比 Vercel 更贴合 Gatus 的运行模型：一个常驻容器持续执行 scheduler，并把 SQLite 文件写入持久化 Volume。部署在 Cloudflare Container 并非错误，但 Groupher 的公共入口本身大量依赖 Cloudflare；将 Status 放在 Fly 上，可以在 Cloudflare 故障时保留一个独立观察面。这是额外收益，不代表监控平台必须做到绝对独立。
+Fly.io 适合 Gatus 的运行模型：一个常驻容器持续执行 scheduler，并把 SQLite 文件写入持久化 Volume。部署在 Cloudflare Container 并非错误，但 Groupher 的公共入口本身大量依赖 Cloudflare；将 Status 放在 Fly 上，可以在 Cloudflare 故障时保留一个独立观察面。这是额外收益，不代表监控平台必须做到绝对独立。
 
 ## 整体结构
 
@@ -55,7 +55,7 @@ Gatus on Fly.io ──────┼──> Community direct origin /health
                   DNS -> Cloudflare Public Edge Router -> 子应用
 ```
 
-Gatus 不会自动发现 Fly、Vercel 或 Cloudflare 上的应用。所有检查目标、周期、成功条件和告警规则都需要显式写入配置文件。
+Gatus 不会自动发现 Fly.io 或 Cloudflare 上的应用。所有检查目标、周期、成功条件和告警规则都需要显式写入配置文件。
 
 ## 当前生产入口
 
@@ -194,25 +194,24 @@ endpoints:
 ```
 
 生产配置的检测频率按部署形态分层，而不是所有 endpoint 统一使用 30 秒。原因是
-`/health` 请求本身也是一次真实的公网请求：对于 Vercel Serverless 应用，高频检查会
-增加 Function invocation 和执行用量，可能降低冷启动概率，但不能保证实例持续 warm；
-对于 Cloudflare Worker、Fly 常驻服务和公共入口，检测频率主要影响故障发现速度，不需要
-用心跳来维持进程热状态。
+`/health` 请求本身也是一次真实的公网请求：对按请求计费的 Serverless 应用，高频检查会
+增加 Function invocation 和执行用量，但不能保证实例持续 warm；对于 Cloudflare Worker、
+Fly 常驻服务和公共入口，检测频率主要影响故障发现速度，不需要用心跳来维持进程热状态。
 
 当前生产架构的推荐列表如下：
 
-| 检查目标                 | 部署形态                        | 推荐频率 | 选择理由                            |
-| ------------------------ | ------------------------------- | -------- | ----------------------------------- |
-| Public Edge Router       | Cloudflare Worker / 公共入口    | 1 分钟   | 较快发现 DNS、TLS、路由和入口故障   |
-| API                      | Fly.io / Phoenix 常驻服务       | 1 分钟   | 核心后端，需要较快发现故障          |
-| Authentication           | Cloudflare Worker               | 2 分钟   | 核心能力，但不需要高频保活          |
-| Community                | Cloudflare Worker               | 2 分钟   | 目标社区页面服务                    |
-| Dash                     | 独立产品 origin                 | 5 分钟   | 与公共入口解耦，降低无意义探测开销  |
-| Dash                     | Cloudflare Worker               | 2 分钟   | Worker 不存在传统 Vercel 冷启动问题 |
-| Content Delivery / Press | Fly.io 常驻服务                 | 1 分钟   | 适合较高频探测                      |
-| Asset Delivery           | Cloudflare Worker               | 2 分钟   | 检查公共读取入口即可                |
-| Public Website           | edge-router + landing Worker    | 2 分钟   | 迁移后检查用户真实访问链路          |
-| Dash Product Route       | Cloudflare Worker custom domain | 2 分钟   | 检查 Dash 独立产品入口              |
+| 检查目标                 | 部署形态                        | 推荐频率 | 选择理由                           |
+| ------------------------ | ------------------------------- | -------- | ---------------------------------- |
+| Public Edge Router       | Cloudflare Worker / 公共入口    | 1 分钟   | 较快发现 DNS、TLS、路由和入口故障  |
+| API                      | Fly.io / Phoenix 常驻服务       | 1 分钟   | 核心后端，需要较快发现故障         |
+| Authentication           | Cloudflare Worker               | 2 分钟   | 核心能力，但不需要高频保活         |
+| Community                | Cloudflare Worker               | 2 分钟   | 目标社区页面服务                   |
+| Dash                     | 独立产品 origin                 | 5 分钟   | 与公共入口解耦，降低无意义探测开销 |
+| Dash                     | Cloudflare Worker               | 2 分钟   | Worker 不需要通过心跳维持常驻进程  |
+| Content Delivery / Press | Fly.io 常驻服务                 | 1 分钟   | 适合较高频探测                     |
+| Asset Delivery           | Cloudflare Worker               | 2 分钟   | 检查公共读取入口即可               |
+| Public Website           | edge-router + landing Worker    | 2 分钟   | 迁移后检查用户真实访问链路         |
+| Dash Product Route       | Cloudflare Worker custom domain | 2 分钟   | 检查 Dash 独立产品入口             |
 
 因此，Cloudflare/Fly 核心服务使用 1–2 分钟，独立 Dash 使用 5 分钟，公共页面使用
 2 分钟。已退役的 Main/Dashboard 不属于生产依赖，也不进入公开 Status 配置。
@@ -348,7 +347,7 @@ SQLite 保存检查结果和状态历史。Fly Volume 负责 Machine 重启或�
 
 不公开以下内容：
 
-- Fly/Vercel/Cloudflare 内部项目名和临时域名；
+- Fly/Cloudflare 内部项目名和临时域名；
 - direct origin 的完整 URL；
 - IP、端口、区域、版本 SHA 和内部依赖拓扑；
 - health body、异常堆栈、告警 webhook 和运维备注。
@@ -390,7 +389,9 @@ TXT   _fly-ownership.status.groupher.com -> app-rolpgx6
 
 成本主要来自常驻 Machine，其次是少量 Volume；健康检查请求和公开状态页的流量通常很小。具体价格随 Fly 当前计费变化，不在仓库文档中写死金额，部署时以 [Fly.io Pricing](https://fly.io/docs/about/pricing/) 为准。
 
-Vercel 不作为首选承载平台：Gatus 是常驻进程，需要后台定时调度和本地持久化文件；Vercel Functions 是按请求执行的无状态模型，不能直接保留一个持续运行的 Gatus scheduler 和 SQLite Volume。若部署到 Vercel，需要把定时任务、存储和 UI 拆开重写，失去直接使用 Gatus 的简单性。
+Gatus 需要常驻进程、后台定时调度和本地持久化文件，因此部署到按请求执行的无状态
+Function 平台需要额外拆分 scheduler、存储和 UI。Fly 的常驻 Machine 与持久化 Volume
+可以直接承载当前模型。
 
 ## 上线步骤
 

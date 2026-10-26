@@ -28,10 +28,10 @@ test('platform URLs can open public HTTPS destinations in browser mode', () => {
     },
   })
 
-  openPlatformUrl('https://vercel.com/groupher/main')
+  openPlatformUrl('https://dash.cloudflare.com/')
 
   assert.equal(calls.length, 1)
-  assert.equal(String(calls[0][0]), 'https://vercel.com/groupher/main')
+  assert.equal(String(calls[0][0]), 'https://dash.cloudflare.com/')
   assert.equal(calls[0][1], '_blank')
   assert.equal(calls[0][2], 'noopener,noreferrer')
 })

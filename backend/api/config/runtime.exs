@@ -220,7 +220,7 @@ if config_env() in [:prod, :seed_prod] do
   # You can generate a new secret by running:
   # mix phx.gen.secret
   # should use RDS 内网地址
-  # see https://neon.tech/docs/guides/elixir-ecto for Neon DB on vercel
+  # see https://neon.tech/docs/guides/elixir-ecto for Neon DB connection guidance
   config :groupher_server, GroupherServer.Repo,
     adapter: Ecto.Adapters.Postgres,
     url: System.get_env("DATABASE_URL"),

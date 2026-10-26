@@ -21,7 +21,7 @@ describe('proxyGraphQLRequest', () => {
         cookie: `theme=dark; groupher-auth.token=${encodeURIComponent(token)}; groupher-viewer=visitor-1`,
         'user-agent': 'GroupherBrowser/1.0',
         'x-forwarded-for': '203.0.113.2',
-        'x-vercel-id': 'sfo1::edge::request',
+        'x-edge-request-id': 'edge::request',
       },
     })
 
@@ -42,7 +42,7 @@ describe('proxyGraphQLRequest', () => {
     expect(headers.get('accept')).toBe('application/json')
     expect(headers.get('user-agent')).toBe('GroupherBrowser/1.0')
     expect(headers.has('x-forwarded-for')).toBe(false)
-    expect(headers.has('x-vercel-id')).toBe(false)
+    expect(headers.has('x-edge-request-id')).toBe(false)
   })
 
   it('forwards an anonymous viewer session without an auth cookie', async () => {

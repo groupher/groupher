@@ -30,7 +30,6 @@
     "**/.turbo/**",
     "**/.cache/**",
     "**/.tmp/**",
-    "**/.vercel/**",
     "**/storybook-static/**"
   ]
 }

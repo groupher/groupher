@@ -1,26 +1,10 @@
 import type { TDnsRecord, TStep, TVerifyingDomainRow } from './spec'
 
-export const DNS_RECORDS: TDnsRecord[] = [
-  {
-    type: 'A',
-    host: '@',
-    value: '76.76.21.21',
-  },
-  {
-    type: 'TXT',
-    host: '_vercel',
-    value: 'vc-domain-verify=groupher.com,47085e7b4e26138313ce',
-  },
-]
+// The custom-domain wizard has no live provisioning backend. Keep DNS examples
+// empty until Cloudflare custom-domain support exists.
+export const DNS_RECORDS: TDnsRecord[] = []
 
-export const VERIFYING_DOMAIN_ROWS: TVerifyingDomainRow[] = [
-  {
-    url: 'groupher.com',
-    status: 'verifying',
-    addedAt: null,
-  },
-  // { url: 'docs.groupher.com', status: 'failed', addedAt: '2026-01-13' },
-]
+export const VERIFYING_DOMAIN_ROWS: TVerifyingDomainRow[] = []
 
 export enum STEPS {
   ADD_DOMAIN = 'add_domain',

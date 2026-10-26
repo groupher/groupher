@@ -71,7 +71,7 @@ cdn.usefathom.com
 
 GTD 状态：
 
-- `Waiting`：确认生产当前是否在应用代码、Vercel、Cloudflare 或其他反向代理中
+- `Waiting`：确认生产当前是否在应用代码、Cloudflare 或其他反向代理中
   设置 CSP。
 - `Next`：如果存在 CSP，在启用第三方分析之前，把上述 provider 域名加到相关
   `script-src` 和 `connect-src` 指令。

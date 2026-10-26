@@ -281,7 +281,7 @@ defmodule Helper.Utils do
 
   @doc """
   get host from url for config, like
-  postgres://default:blajdife@example-db-host.aws.neon.tech:5432/verceldb?sslmode=require
+  postgres://user:password@example-db-host.aws.neon.tech:5432/example_db?sslmode=require
   => example-db-host
   """
   def get_host_from_url(url) do

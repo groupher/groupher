@@ -70,8 +70,8 @@ Worker `import` serves `https://import.groupher.com`. R2 stores previews
 and source artifacts; `import-analysis` and `import-apply` run durable steps.
 Phoenix remains the authority for user permissions, jobs and final writes.
 The default `dev` command runs the same Worker entrypoint in workerd on port
-8001, with locally simulated R2 and Workflows. No Node server or Vercel runtime
-is required. The local service name is `import`, matching production.
+8001, with locally simulated R2 and Workflows. The local service does not run a
+standalone Node API server. Its name is `import`, matching production.
 
 ```sh
 pnpm --filter @groupher/import run test:worker
