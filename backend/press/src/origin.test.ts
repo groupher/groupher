@@ -117,13 +117,11 @@ describe('Phoenix Press origin client', () => {
   )
 
   it('keeps operational GraphQL failures as 502', async () => {
-    const fetcher = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(
-        Response.json({
-          errors: [{ message: 'Search platform unavailable', extensions: { code: 4529 } }],
-        }),
-      )
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({
+        errors: [{ message: 'Search platform unavailable', extensions: { code: 4529 } }],
+      }),
+    )
     const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
     await expect(origin.siteManifest('home')).rejects.toEqual(
       expect.objectContaining<Partial<OriginError>>({ status: 502 }),
