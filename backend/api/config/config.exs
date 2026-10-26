@@ -206,8 +206,8 @@ config :groupher_server, :site_favicon_adapter, Helper.SiteFavicon
 config :groupher_server, :open_graph_adapter, OpenGraph
 
 config :groupher_server, :search_artiments,
-  platform: GroupherServer.CMS.SearchArtiments.Platforms.Algolia,
-  queue: GroupherServer.CMS.SearchArtiments.Queues.Oban,
+  platform: GroupherServer.CMS.SearchArtiments.Algolia,
+  queue: GroupherServer.CMS.SearchArtiments.ObanQueue,
   algolia: [
     application_id: nil,
     search_api_key: nil,
