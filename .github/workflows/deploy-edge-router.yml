@@ -71,6 +71,7 @@ jobs:
     name: Deploy Edge Router Worker
     needs: validate
     runs-on: ubuntu-latest
+    environment: press-production
     if: github.event_name == 'workflow_dispatch' && inputs.confirm_press_cutover == true
 
     steps:
@@ -92,6 +93,7 @@ jobs:
         run: pnpm --filter @groupher/edge-router run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PRESS_PUBLIC_DISABLED: ${{ vars.PRESS_PUBLIC_DISABLED || 'true' }}
 
       - name: Verify public Landing assets
         run: node scripts/check-public-landing.mjs
