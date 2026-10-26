@@ -10,8 +10,8 @@
 能够独立运行或部署的应用直接位于 `docs/` 一级目录：
 
 - [`auth/`](./auth)、[`dash/`](./dash)、[`community/`](./community)、[`apply/`](./apply)
-- [`assets-hub/`](./assets-hub)、[`content-import/`](./content-import)、
-  [`document-converter/`](./document-converter)
+- [`assets-hub/`](./assets-hub)、[`import/`](./import)、
+  [`converter/`](./converter)
 - [`gateway/`](./gateway)、[`press/`](./press)、[`umami/`](./umami)、[`widget/`](./widget)
 - [`ai/`](./ai)、[`posthouse/`](./posthouse)、[`risk-center/`](./risk-center)
 

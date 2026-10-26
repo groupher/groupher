@@ -135,9 +135,8 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   end
 
   defp maybe_put_body_digest(%Article{thread: :doc}, attrs, body) do
-    if Map.has_key?(attrs, :body_bag) and not Map.has_key?(attrs, :digest) and
-         not Map.has_key?(attrs, :subtitle) do
-      Map.put(attrs, :digest, body.plain_text)
+    if Map.has_key?(attrs, :body_bag) and not Map.has_key?(attrs, :digest) do
+      Map.put(attrs, :digest, first_present([body.plain_text, value(attrs, :title), "untitled"]))
     else
       attrs
     end

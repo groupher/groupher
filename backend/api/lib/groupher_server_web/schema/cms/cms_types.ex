@@ -1239,9 +1239,17 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :artiment_toc_item do
-    field(:id, non_null(:string))
-    field(:level, non_null(:integer))
-    field(:title, non_null(:string))
+    field(:id, non_null(:string),
+      resolve: fn item, _, _ -> {:ok, Map.get(item, :id) || Map.get(item, "id")} end
+    )
+
+    field(:level, non_null(:integer),
+      resolve: fn item, _, _ -> {:ok, Map.get(item, :level) || Map.get(item, "level")} end
+    )
+
+    field(:title, non_null(:string),
+      resolve: fn item, _, _ -> {:ok, Map.get(item, :title) || Map.get(item, "title")} end
+    )
   end
 
   input_object :artiment_body_bag_input do

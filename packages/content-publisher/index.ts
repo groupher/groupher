@@ -14,7 +14,7 @@ import type { TContentSource } from '@groupher/contracts/content-publish'
  *                    v
  *              canonical BodyBag
  *
- * @see docs/content-import/article-publish-import-refactor.md
+ * @see docs/import/article-publish-import-refactor.md
  */
 import {
   RICH_EDITOR_SCHEMA_VERSION,

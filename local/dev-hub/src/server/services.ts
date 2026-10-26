@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -84,7 +83,6 @@ export type TServiceDefinition = {
 
 export const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url))
 const fromRoot = (...parts: string[]): string => path.join(REPO_ROOT, ...parts)
-const converterPythonExecutable = fromRoot('backend/document-converter/.venv/bin/python')
 const MB = 1024 * 1024
 const FRONTEND_METRICS: TMetricThresholds = {
   serverCpuPercent: 90,
@@ -102,7 +100,7 @@ const BACKEND_METRICS: TMetricThresholds = {
 const DASH_CHAIN_POLICY = {
   defaultMode: 'chain',
   requiredDependencies: ['dev-gateway', 'auth', 'phoenix', 'assets-hub'],
-  optionalDependencies: ['content-import', 'document-converter'],
+  optionalDependencies: ['import', 'converter'],
 } satisfies TServiceStartPolicy
 
 const APPLY_CHAIN_POLICY = {
@@ -269,7 +267,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     env: {
       NEXT_PUBLIC_ASSETS_HUB_ENDPOINT: 'https://assets-hub.groupher.localhost',
       NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT: 'https://assets.groupher.localhost',
-      CONTENT_IMPORT_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.contentImport,
+      CONTENT_IMPORT_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.import,
       SERVICE_AUTH_ISSUER: LOCAL_SERVICE_AUTH_ISSUER,
       SERVICE_AUTH_JWKS_URL: `${LOCAL_SERVICE_ENDPOINTS.auth}/.well-known/jwks.json`,
       SERVICE_AUTH_TOKEN_ENDPOINT: `${LOCAL_SERVICE_ENDPOINTS.auth}/oauth2/token`,
@@ -370,22 +368,22 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     metrics: BACKEND_METRICS,
   },
   {
-    id: 'content-import',
-    name: 'Content Import',
+    id: 'import',
+    name: 'Import',
     description: 'External source import orchestration',
     group: 'backend',
     monogram: 'CI',
-    technologies: ['hono', 'nodejs', 'typescript', 'graphql'],
+    technologies: ['hono', 'cloudflare', 'typescript', 'graphql'],
     cwd: REPO_ROOT,
     config: {
       kind: 'env-files',
-      root: fromRoot('backend/content-import'),
+      root: fromRoot('backend/import'),
       environment: 'development',
     },
     command: 'make',
-    args: ['be.content-import.start'],
+    args: ['be.import.start'],
     env: {
-      DOCUMENT_CONVERTER_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.documentConverter,
+      DOCUMENT_CONVERTER_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.converter,
       PHOENIX_GRAPHQL_ENDPOINT: LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
       PORT: '8001',
       SERVICE_AUTH_ISSUER: LOCAL_SERVICE_AUTH_ISSUER,
@@ -394,8 +392,8 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     },
     port: 8001,
     url: 'http://127.0.0.1:8001/health',
-    portlessName: 'content-import',
-    portlessUrl: 'https://content-import.groupher.localhost/health',
+    portlessName: 'import',
+    portlessUrl: 'https://import.groupher.localhost/health',
     metrics: BACKEND_METRICS,
   },
   {
@@ -493,34 +491,19 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     },
   },
   {
-    id: 'document-converter',
-    name: 'Document-converter',
+    id: 'converter',
+    name: 'Converter',
     description: 'Documents to Markdown service',
     group: 'backend',
     monogram: 'CV',
-    technologies: ['python', 'fastapi', 'markitdown', 'uvicorn'],
+    technologies: ['cloudflare', 'wasm', 'typescript', 'hono'],
     cwd: REPO_ROOT,
-    config: {
-      kind: 'python-settings',
-      root: fromRoot('backend/document-converter'),
-      files: ['settings.py'],
-      environmentKeys: [
-        'DOCUMENT_CONVERTER_MAX_BYTES',
-        'DOCUMENT_CONVERTER_MAX_ARCHIVE_BYTES',
-        'DOCUMENT_CONVERTER_MAX_ARCHIVE_ENTRIES',
-        'DOCUMENT_CONVERTER_SPOOL_BYTES',
-        'DOCUMENT_CONVERTER_ALLOWED_ORIGINS',
-      ],
-    },
-    command: existsSync(converterPythonExecutable) ? 'make' : undefined,
-    args: ['be.document-converter.start'],
+    command: 'make',
+    args: ['be.converter.start'],
     port: 8000,
     url: 'http://127.0.0.1:8000/health',
     portlessName: 'converter',
     portlessUrl: 'https://converter.groupher.localhost/health',
-    unavailableReason: existsSync(converterPythonExecutable)
-      ? undefined
-      : 'Python 3.12 environment is not installed at backend/document-converter/.venv.',
     metrics: {
       ...BACKEND_METRICS,
       serverRssBytes: 1_024 * MB,
@@ -618,11 +601,11 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     label: 'Application Logo upload',
   },
   {
-    id: 'dash-content-import',
+    id: 'dash-import',
     source: 'dash',
-    target: 'content-import',
+    target: 'import',
     kind: 'api',
-    label: '/api/docs/import/*',
+    label: '/api/docs/import/*, /api/artiment/import',
   },
   {
     id: 'dash-assets-hub',
@@ -646,24 +629,17 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     label: 'asset callbacks',
   },
   {
-    id: 'content-import-phoenix',
-    source: 'content-import',
+    id: 'import-phoenix',
+    source: 'import',
     target: 'phoenix',
     kind: 'api',
     label: 'trusted GraphQL',
   },
   {
-    id: 'content-import-document-converter',
-    source: 'content-import',
-    target: 'document-converter',
+    id: 'import-converter',
+    source: 'import',
+    target: 'converter',
     kind: 'api',
     label: 'file conversion',
-  },
-  {
-    id: 'dash-document-converter',
-    source: 'dash',
-    target: 'document-converter',
-    kind: 'api',
-    label: '/api/artiment/import -> /convert',
   },
 ]

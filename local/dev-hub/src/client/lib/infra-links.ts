@@ -1,6 +1,6 @@
-import { siAlgolia, siCloudflare, siFlydotio, siVercel } from 'simple-icons'
+import { siAlgolia, siCloudflare, siFlydotio } from 'simple-icons'
 
-export type TInfraPlatformId = 'vercel' | 'cloudflare' | 'fly' | 'algolia'
+export type TInfraPlatformId = 'cloudflare' | 'fly' | 'algolia'
 export type TInfraLinkGroupId = 'major' | 'third-party'
 type TDeploymentPlatformId = Exclude<TInfraPlatformId, 'algolia'>
 
@@ -45,10 +45,6 @@ const fromSimpleIcon = (icon: { path: string; hex: string }) => ({
 })
 
 const INFRA_PLATFORM_META: Record<TInfraPlatformId, { name: string; icon: TInfraIcon }> = {
-  vercel: {
-    name: 'Vercel',
-    icon: fromSimpleIcon(siVercel),
-  },
   cloudflare: {
     name: 'Cloudflare',
     icon: fromSimpleIcon(siCloudflare),
@@ -80,19 +76,6 @@ export const INFRA_LINK_GROUPS: TInfraLinkGroup[] = [
     id: 'major',
     label: 'Major',
     platforms: [
-      {
-        id: 'vercel',
-        name: INFRA_PLATFORM_META.vercel.name,
-        icon: INFRA_PLATFORM_META.vercel.icon,
-        links: [
-          {
-            label: 'Domain',
-            url: 'https://vercel.com/groupher/~/domains/groupher.com',
-          },
-          { label: 'Storage', url: 'https://vercel.com/groupher/~/stores' },
-          { label: 'Builds', url: 'https://vercel.com/groupher/~/deployments' },
-        ],
-      },
       {
         id: 'cloudflare',
         name: INFRA_PLATFORM_META.cloudflare.name,
@@ -188,20 +171,20 @@ export const SERVICE_DEPLOYMENT_TARGETS: Partial<Record<string, TServiceDeployme
   ),
   phoenix: deploymentTarget('phoenix', 'fly', 'https://fly.io/apps/groupher-api'),
   press: deploymentTarget('press', 'fly', 'https://fly.io/apps/groupher-press'),
-  'content-import': deploymentTarget(
-    'content-import',
-    'vercel',
-    'https://vercel.com/groupher/content-import',
+  import: deploymentTarget(
+    'import',
+    'cloudflare',
+    'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers/services/view/import/production',
   ),
   'assets-hub': deploymentTarget(
     'assets-hub',
     'cloudflare',
     'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers-and-pages',
   ),
-  'document-converter': deploymentTarget(
-    'document-converter',
-    'vercel',
-    'https://vercel.com/groupher/document-converter',
+  converter: deploymentTarget(
+    'converter',
+    'cloudflare',
+    'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers/services/view/converter/production',
   ),
   gatus: deploymentTarget('gatus', 'fly', 'https://fly.io/apps/groupher-status'),
 }

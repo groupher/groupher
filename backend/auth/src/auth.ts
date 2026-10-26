@@ -28,6 +28,7 @@ import { serialize } from 'hono/utils/cookie'
 import './env'
 import { buildHostOnlyAuthCookies } from '../cookie-config'
 import { resolveAuthRedirect } from '../redirect-url'
+import { issueServiceToken } from './service-auth'
 
 const AUTH_BASE_PATH = '/api/auth'
 export const ACCESS_TOKEN_MAX_AGE = 60 * 30
@@ -38,8 +39,16 @@ const PHOENIX_GRAPHQL_ENDPOINT =
 const PHOENIX_AUTH_RESOURCE = 'https://api.groupher.com/auth'
 let serviceTokenProvider: TServiceAuthClient | undefined
 
+// Auth owns the issuer. Calling its public hostname from this Worker bypasses
+// the route and can reach an unavailable origin; keep the credential checks local.
+const issueLocalServiceToken: typeof fetch = async (input, init) => {
+  const result = await issueServiceToken(new Request(input, init), process.env)
+  return Response.json(result, { status: 'error' in result ? result.status : 200 })
+}
+
 const authServiceToken = (scope: string) => {
-  serviceTokenProvider ??= createServiceAuthClientFromEnv()
+  const tokenFetcher = process.env.E2E_AUTH_STACK === '1' ? fetch : issueLocalServiceToken
+  serviceTokenProvider ??= createServiceAuthClientFromEnv(process.env, tokenFetcher)
   return serviceTokenProvider.getToken({ resource: PHOENIX_AUTH_RESOURCE, scopes: [scope] })
 }
 
@@ -373,9 +382,9 @@ export const buildPhoenixTokenCookie = (token: string, maxAge = ACCESS_TOKEN_MAX
  * Builds a non-sensitive browser-readable login hint.
  *
  * The frontend cannot read `GROUPHER_AUTH_TOKEN_COOKIE` because it is HttpOnly,
- * and reading cookies from Next.js layouts would make the route dynamic on
- * Vercel. This hint lets client code decide whether to call `me` without
- * exposing the actual Phoenix token or changing route caching behavior.
+ * and reading cookies during server rendering would make the route dynamic.
+ * This hint lets client code decide whether to call `me` without exposing the
+ * actual Phoenix token or changing route caching behavior.
  *
  * @example
  * response.headers.append('set-cookie', buildSignedInHintCookie())

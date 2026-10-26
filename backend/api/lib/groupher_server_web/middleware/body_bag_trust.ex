@@ -12,7 +12,7 @@ defmodule GroupherServerWeb.Middleware.BodyBagTrust do
            `-- BodyBag + trusted? --+-> continue
                                     `-> reject
 
-  See `docs/content-import/article-publish-import-refactor.md` for publisher trust boundaries.
+  See `docs/import/article-publish-import-refactor.md` for publisher trust boundaries.
   """
 
   @behaviour Absinthe.Middleware

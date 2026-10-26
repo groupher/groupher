@@ -226,7 +226,7 @@ Main root layout
 
 - 在`frontend/main/src/app/layout.tsx`中把`WebAnalysisScript`挂载在`{children}`之后。
 - 保持`strategy="afterInteractive"`，这样 tracker 不会阻塞初始 HTML 或 hydration 关键工作。
-- 不要仅为了决定脚本注入而在 root layout 中读取请求 cookies；那会让该路由在 Vercel 上变成动态路由。
+- 不要仅为了决定脚本注入而在 root layout 中读取请求 cookies；那会让该路由变成动态渲染。
 - 不要创建按社区分别注入脚本的逻辑。 v1 中所有 Main 路由都使用同一个全局 website ID。
 
 ## v1 请求流程

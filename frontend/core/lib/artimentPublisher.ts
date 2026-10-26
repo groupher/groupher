@@ -19,7 +19,7 @@ export type TSaveDocDraftInput = {
  * Sends Plate value to the authenticated Node publisher and returns the draft
  * persisted by the downstream Elixir GraphQL mutation.
  *
- * @see docs/content-import/article-publish-import-refactor.md
+ * @see docs/import/article-publish-import-refactor.md
  */
 export const saveDocDraft = async <TDraft>({
   value,

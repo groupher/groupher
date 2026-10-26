@@ -8,7 +8,7 @@
 
 ## 背景
 
-随着 Groupher 拆出 `auth`、`apply`、`content-import`、`assets-hub`、`posthouse`
+随着 Groupher 拆出 `auth`、`apply`、`import`、`assets-hub`、`posthouse`
 等子应用，本地开发会出现越来越多固定端口。端口适合作为进程监听的实现细节，
 不适合作为开发者和 Agent 需要记忆、传播和写入回调配置的服务身份。
 
@@ -55,23 +55,23 @@ Portless 解决的是本地寻址问题；Gateway 解决的是产品路由问题
 
 ## 推荐域名
 
-| 应用               | 本地 URL                                    | 用途                           |
-| ------------------ | ------------------------------------------- | ------------------------------ |
-| Gateway            | `https://groupher.localhost`                | 唯一用户入口                   |
-| Main               | `https://main.groupher.localhost`           | 直接调试                       |
-| Dashboard          | `https://dashboard.groupher.localhost`      | 直接调试                       |
-| Landing            | `https://landing.groupher.localhost`        | 直接调试                       |
-| Phoenix API        | `https://api.groupher.localhost`            | 浏览器 GraphQL API             |
-| Auth               | `https://auth.groupher.localhost`           | 直接调试，用户入口仍走 Gateway |
-| Apply              | `https://apply.groupher.localhost`          | 直接调试，用户入口仍走 Gateway |
-| Content Import     | `https://content-import.groupher.localhost` | 服务调试                       |
-| Assets Hub Upload  | `https://assets-hub.groupher.localhost`     | 上传服务调试                   |
-| Assets Hub Read    | `https://assets.groupher.localhost`         | public read Worker 调试        |
-| Press              | `https://press.groupher.localhost`          | 服务调试                       |
-| Posthouse          | `https://posthouse.groupher.localhost`      | 服务调试                       |
-| AI                 | `https://ai.groupher.localhost`             | 服务调试                       |
-| Risk Center        | `https://risk.groupher.localhost`           | 服务调试                       |
-| Document Converter | `https://converter.groupher.localhost`      | 服务调试和健康检查             |
+| 应用              | 本地 URL                                | 用途                           |
+| ----------------- | --------------------------------------- | ------------------------------ |
+| Gateway           | `https://groupher.localhost`            | 唯一用户入口                   |
+| Main              | `https://main.groupher.localhost`       | 直接调试                       |
+| Dashboard         | `https://dashboard.groupher.localhost`  | 直接调试                       |
+| Landing           | `https://landing.groupher.localhost`    | 直接调试                       |
+| Phoenix API       | `https://api.groupher.localhost`        | 浏览器 GraphQL API             |
+| Auth              | `https://auth.groupher.localhost`       | 直接调试，用户入口仍走 Gateway |
+| Apply             | `https://apply.groupher.localhost`      | 直接调试，用户入口仍走 Gateway |
+| Import            | `https://import.groupher.localhost`     | 服务调试                       |
+| Assets Hub Upload | `https://assets-hub.groupher.localhost` | 上传服务调试                   |
+| Assets Hub Read   | `https://assets.groupher.localhost`     | public read Worker 调试        |
+| Press             | `https://press.groupher.localhost`      | 服务调试                       |
+| Posthouse         | `https://posthouse.groupher.localhost`  | 服务调试                       |
+| AI                | `https://ai.groupher.localhost`         | 服务调试                       |
+| Risk Center       | `https://risk.groupher.localhost`       | 服务调试                       |
+| Converter         | `https://converter.groupher.localhost`  | 服务调试和健康检查             |
 
 用户不应从 Main、Dashboard 或 Auth 的直接调试域名进入完整产品流程。登录、退出和
 跨应用导航统一从 `https://groupher.localhost` 进入，由 Gateway 模拟线上路由。

@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.ContentImport.Model.Job do
   @moduledoc """
   Persisted execution state for one confirmed Docs import preview.
 
-  See `docs/content-import/article-publish-import-refactor.md` for the Job state machine.
+  See `docs/import/article-publish-import-refactor.md` for the Job state machine.
 
   Business position:
 

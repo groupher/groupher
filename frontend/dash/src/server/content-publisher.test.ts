@@ -47,6 +47,21 @@ describe('handleContentPublishRequest', () => {
     expect(fetcher).toHaveBeenCalledWith('https://api.groupher.com/graphiql', expect.any(Object))
   })
 
+  it('calls the Workers fetch implementation without an object receiver', async () => {
+    const fetcher = vi.fn(async function (this: unknown) {
+      if (this !== undefined) throw new TypeError('Illegal invocation')
+      return Response.json({ data: { updateDocDraft: { docId: 'doc-id', version: 4 } } })
+    })
+    const response = await handleContentPublishRequest(request(), {
+      backendToken: 'user-token',
+      fetcher: fetcher as typeof fetch,
+      serviceAuthClient,
+    })
+
+    expect(response.status).toBe(200)
+    expect(fetcher.mock.contexts).toEqual([undefined])
+  })
+
   it('uses a fixed operation and separates service and user credentials', async () => {
     const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const upstream = JSON.parse(String(init?.body))

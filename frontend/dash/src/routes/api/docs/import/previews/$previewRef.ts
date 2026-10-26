@@ -1,10 +1,10 @@
 import { proxyContentImportRequest } from '@dash/server/content-import'
 import { createFileRoute } from '@tanstack/react-router'
 
-import { getPhoenixToken } from '~/app/phoenix-token'
+import { readPhoenixTokenCookie } from '~/app/phoenix-token'
 
 const proxyAuthenticatedRequest = (request: Request): Promise<Response> | Response => {
-  const backendToken = getPhoenixToken(request)
+  const backendToken = readPhoenixTokenCookie(request)
   if (!backendToken) return Response.json({ ok: false }, { status: 401 })
   return proxyContentImportRequest(request, { backendToken })
 }

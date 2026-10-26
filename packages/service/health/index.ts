@@ -20,7 +20,7 @@ export const createHealthResponse = ({
   environment = process.env.NODE_ENV || 'development',
   service,
   status = 'ok',
-  version = process.env.VERCEL_GIT_COMMIT_SHA || process.env.npm_package_version || 'dev',
+  version = process.env.npm_package_version || 'dev',
 }: TCreateHealthResponseOptions): TServiceHealthResponseV1 => ({
   schemaVersion: SERVICE_HEALTH_SCHEMA_VERSION,
   status,

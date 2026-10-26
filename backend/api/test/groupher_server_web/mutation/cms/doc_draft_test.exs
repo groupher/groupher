@@ -80,6 +80,27 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       assert updated["body"]["json"] == @plate_body
     end
 
+    test "an empty subtitle falls back to the BodyBag summary",
+         ~m(user_conn community page_payload)a do
+      doc_id = page_payload.node.doc_id
+
+      updated =
+        user_conn
+        |> gq_mutation(S.Doc.m(:update_draft), %{
+          community: community.slug,
+          id: doc_id,
+          expectedVersion: expected_version(community, doc_id),
+          title: "Imported Doc",
+          subtitle: "",
+          slug: "imported-doc",
+          bodyBag: body_bag(@plate_body, :base)
+        })
+
+      assert updated["digest"] == "Saved draft body"
+      assert updated["subtitle"] in [nil, ""]
+      assert updated["body"]["json"] == @plate_body
+    end
+
     test "requires slug when updating doc draft title", ~m(user_conn community page_payload)a do
       doc_id = page_payload.node.doc_id
 

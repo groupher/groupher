@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.ContentImport.Model.Job.Body do
   @moduledoc """
   Authoritative PostgreSQL staging row for one canonical BodyBag.
 
-  See `docs/content-import/article-publish-import-refactor.md` for staging and apply ownership.
+  See `docs/import/article-publish-import-refactor.md` for staging and apply ownership.
 
   Business position:
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "health.v1",
   "status": "down",
-  "service": "document-converter",
+  "service": "converter",
   "version": "a1b2c3d",
   "environment": "production",
   "timestamp": "2026-07-26T00:00:00Z",

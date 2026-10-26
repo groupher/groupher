@@ -24,7 +24,7 @@ describe('proxyContentImportRequest', () => {
   })
 
   it('forwards the delegated user and Dash service identity without browser cookies', async () => {
-    vi.stubEnv('CONTENT_IMPORT_APP_ENDPOINT', 'https://content-import.groupher.localhost')
+    vi.stubEnv('CONTENT_IMPORT_APP_ENDPOINT', 'https://import.groupher.localhost')
     const fetcher = vi.fn().mockResolvedValue(Response.json({ ok: true }))
     const serviceAuthClient = {
       getToken: vi.fn().mockResolvedValue('dash-service-token'),
@@ -45,12 +45,12 @@ describe('proxyContentImportRequest', () => {
     })
 
     expect(serviceAuthClient.getToken).toHaveBeenCalledWith({
-      resource: 'https://content-import.groupher.com/internal',
+      resource: 'https://import.groupher.com/internal',
       scopes: ['docs:import:proxy'],
     })
     const [url, init] = fetcher.mock.calls[0]!
     expect(String(url)).toBe(
-      'https://content-import.groupher.localhost/api/docs/import/previews?community=home',
+      'https://import.groupher.localhost/api/docs/import/previews?community=home',
     )
     expect(init.method).toBe('POST')
     expect(init.headers.get('authorization')).toBe('Bearer dash-service-token')

@@ -920,7 +920,7 @@ button {
   .terminal-panel,
   .metrics-drawer-popup,
   .config-drawer-popup
-)[data-service-id='content-import'] {
+)[data-service-id='import'] {
   --service-monogram-background: #47473a;
   --service-monogram-foreground: #efefe9;
 }
@@ -940,7 +940,7 @@ button {
   .terminal-panel,
   .metrics-drawer-popup,
   .config-drawer-popup
-)[data-service-id='document-converter'] {
+)[data-service-id='converter'] {
   --service-monogram-background: #435f70;
   --service-monogram-foreground: #e5edf1;
 }

@@ -11,8 +11,8 @@ export const SERVICE_HEALTH_SERVICES = [
   'phoenix',
   'press',
   'assets-hub',
-  'content-import',
-  'document-converter',
+  'import',
+  'converter',
 ] as const
 
 export type TServiceHealthService = (typeof SERVICE_HEALTH_SERVICES)[number]

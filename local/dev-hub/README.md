@@ -162,7 +162,7 @@ startPolicy: {
 }
 ```
 
-当前 `main` 和 `dashboard` 默认使用 `chain`，强依赖是 `gateway`、`auth` 和 `phoenix`，弱依赖是 `document-converter`。因此点击主 `Start` 会启动默认链路，菜单里显示 `Start chain (default)`；需要隔离调试时，可以从小三角菜单选择 `Start only this service`；需要把 converter 一起拉起时，选择 `Start all related`。
+当前 `main` 和 `dashboard` 默认使用 `chain`，强依赖是 `gateway`、`auth` 和 `phoenix`，弱依赖是 `converter`。因此点击主 `Start` 会启动默认链路，菜单里显示 `Start chain (default)`；需要隔离调试时，可以从小三角菜单选择 `Start only this service`；需要把 converter 一起拉起时，选择 `Start all related`。
 
 ### 进程接管、重启与日志
 
@@ -177,13 +177,14 @@ Dev Hub 的服务状态不仅由端口是否响应决定，还要区分进程是
 
 因此，重新打开 Dev Hub 后看到旧服务被重新启动且有日志是正常目标；看到 `external` 则表示 Dev Hub 无法安全证明该进程属于当前服务。
 
-Converter 依赖 `backend/document-converter/.venv` 中的 Python 3.12 环境。首次使用前在仓库根目录运行：
+Converter 和 Import 本地与线上使用同一份 Cloudflare Worker 入口，使用 `cf dev` 的 workerd、R2 和 Workflows 本地模拟，无需 Python 环境。
 
 ```sh
-make be.document-converter.install
+pnpm dev:converter  # http://127.0.0.1:8000
+pnpm dev:import     # http://127.0.0.1:8001
 ```
 
-安装完成后，Dev Hub 会通过 `make be.document-converter.start` 启动它，并使用 `http://127.0.0.1:8000/health` / `https://converter.groupher.localhost/health` 做健康检查。
+Dev Hub 使用 `make be.converter.start` / `make be.import.start`，服务 ID 为 `converter` / `import`。本地域名为 `converter.groupher.localhost` / `import.groupher.localhost`；线上域名也统一为 `converter.groupher.com` / `import.groupher.com`。两个部署链接均指向 Cloudflare Workers。
 
 `landing`、`gateway`、`inspire-me` 和当前后端服务没有声明强弱依赖时，只显示普通 `Start`，不显示小三角，也不显示依赖 Drawer 入口。
 

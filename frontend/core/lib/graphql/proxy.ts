@@ -55,9 +55,8 @@ const readCookie = (headers: Headers, name: string): string | null => {
 }
 
 const proxyHeaders = (request: Request): Headers => {
-  // Do not relay platform/client forwarding metadata to Phoenix. On Vercel,
-  // forwarding every incoming header can exceed the upstream header limit and
-  // turn an otherwise valid GraphQL request into HTTP 431.
+  // Do not relay arbitrary platform/client forwarding metadata to Phoenix.
+  // Forward only the request headers needed by the GraphQL contract.
   const headers = new Headers()
   const authToken = readCookie(request.headers, GROUPHER_AUTH_TOKEN_COOKIE)
   const viewerSession = readCookie(request.headers, GROUPHER_VIEWER_COOKIE)
