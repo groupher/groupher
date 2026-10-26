@@ -33,12 +33,7 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
 
     assert is_valid_kv?(results, "title", :string)
 
-    assert results["meta"] == %{
-             "isEdited" => false,
-             "illegalReason" => [],
-             "illegalWords" => [],
-             "isLegal" => true
-           }
+    assert results["meta"] == %{"isEdited" => false}
   end
 
   test "basic graphql query on blog with stranger(un-login user)",
@@ -57,46 +52,6 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
 
     assert results["innerId"] == to_string(article_inner_id(blog, community))
     assert is_valid_kv?(results, "title", :string)
-  end
-
-  test "pending state should in meta", ~m(guest_conn user_conn community user blog_attrs)a do
-    {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
-
-    variables = %{
-      article: %{
-        inner_id: article_inner_id(blog, community),
-        community: community.slug,
-        thread: "BLOG"
-      }
-    }
-
-    results = user_conn |> gq_query(S.Article.q(:article, :blog), variables)
-
-    assert results |> get_in(["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == []
-    assert results |> get_in(["meta", "illegalWords"]) == []
-
-    results = guest_conn |> gq_query(S.Article.q(:article, :blog), variables)
-    assert results |> get_in(["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == []
-    assert results |> get_in(["meta", "illegalWords"]) == []
-
-    {:ok, _} =
-      CMS.Articles.set_illegal(
-        blog.id,
-        %{
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        },
-        :operations,
-        community: community
-      )
-
-    results = user_conn |> gq_query(S.Article.q(:article, :blog), variables)
-
-    assert not get_in(results, ["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]
-    assert results |> get_in(["meta", "illegalWords"]) == ["some-word"]
   end
 
   test "returns cancan error when blog thread is disabled",

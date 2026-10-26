@@ -19,7 +19,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserContribute do
 
   alias Accounts.Model.Embeds
 
-  @optional_fields ~w(reported_count)a
+  @optional_fields []
 
   embedded_schema do
     field(:start_date, :date)

@@ -581,14 +581,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Comments.comment_reply_page/3)
     end
 
-    @desc "paged reports list"
-    field :paged_abuse_reports, :report_page do
-      arg(:pagi, :pagi_input)
-      arg(:filter, non_null(:report_filter))
-
-      resolve(&R.CMS.Reporting.paged_reports/3)
-    end
-
     @desc "mentions created by an artiment"
     field :mentions, :artiment_mention_page do
       arg(:source, non_null(:mention_source_input))

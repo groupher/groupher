@@ -2,28 +2,39 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Press do
   @moduledoc """
   Delivers durable Press cache-invalidation intents after config commits.
 
-      committed Press outbox event
-        -> Press Worker
+      Oban outbox job
+        -> Outbox.execute lease + fencing
         -> canonical Community reload
         -> authenticated Press invalidation endpoint
+        -> complete / retry / snooze / terminal failure
   """
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, ErrorCat, Repo}
   alias CMS.Model.Community
   alias CMS.Outbox
 
-  @doc "Delivers one versioned Press outbox event under the shared lease protocol."
+  @doc """
+  Delivers one versioned Press outbox event under the shared lease protocol.
+
+  Busy leases snooze; transient delivery errors retry; after exhaustion Outbox
+  records terminal failure and the job is acknowledged.
+  """
   @spec perform(Oban.Job.t()) :: Oban.Worker.result()
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
-    case Outbox.execute(event_id, &invalidate/1) do
+    case Outbox.execute(event_id, &invalidate/1,
+           on_error: if(job.attempt >= job.max_attempts, do: :fail, else: :classify)
+         ) do
       {:ok, _value} ->
         {:ok, :pass}
 
       {:busy, seconds} ->
         {:snooze, seconds}
 
-      {:error, _reason} when job.attempt >= job.max_attempts ->
-        _ = Outbox.mark_failed(event_id)
+      {:error,
+       %ErrorCat.Error{
+         namespace: {:cms},
+         reason: :outbox_delivery_exhausted
+       }} ->
         {:ok, :pass}
 
       {:error, reason} ->
@@ -40,9 +51,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Press do
         end
 
       _ ->
-        {:error, :invalid_press_community_id}
+        {:error, CMS.ErrorCat.invalid_press_community_id()}
     end
   end
 
-  defp invalidate(_event), do: {:error, :unknown_press_outbox_event}
+  defp invalidate(_event), do: {:error, CMS.ErrorCat.unknown_press_outbox_event()}
 end

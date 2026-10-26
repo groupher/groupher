@@ -2,13 +2,13 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
   @moduledoc """
   Versioned codec for DocTree command results that cannot be reconstructed by a Query.
 
-  `CMS.Command.Receipt` is the internal boundary; its `Runner` owns
+  `GroupherServer.CMS.Command.Receipt` is the internal boundary; its `Runner` owns
   claim/finalize/replay orchestration. DocTree owns the JSON representation and
   bounded atom decoding for its result payloads.
 
       DocTree execute result
         -> versioned JSON-safe receipt payload
-        -> CMS.Command.Receipt storage
+        -> GroupherServer.CMS.Command.Receipt storage
         -> replay decode into the DocTree result shape
   """
 

@@ -4,14 +4,12 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Model.{AbuseReport, ArticleCollect, ArticleUpvote}
+  alias CMS.Model.{ArticleCollect, ArticleUpvote}
 
   setup do
     {community, post, _, user} = mock_article(:post, preload: [author: :user])
 
-    {:ok, other_user} = db_insert(:user)
-
-    {:ok, ~m(community post user other_user)a}
+    {:ok, ~m(community post user)a}
   end
 
   describe "business writes keep polymorphic refs consistent" do
@@ -62,17 +60,5 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
       refute Map.has_key?(collect, :doc_id)
     end
 
-    test "article report persists at most one article ref", ~m(post other_user)a do
-      {:ok, _post} =
-        CMS.AbuseReports.article(post, "spam", "title", other_user, Ecto.UUID.generate())
-
-      assert {:ok, report} = ORM.find_by(AbuseReport, %{article_id: post.id})
-
-      assert report.article_id == post.id
-      refute Map.has_key?(report, :post_id)
-      refute Map.has_key?(report, :blog_id)
-      refute Map.has_key?(report, :changelog_id)
-      refute Map.has_key?(report, :doc_id)
-    end
   end
 end

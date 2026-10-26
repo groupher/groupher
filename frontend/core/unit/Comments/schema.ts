@@ -224,35 +224,6 @@ const undoUpvoteComment = graphql(`
   }
 `)
 
-const reportComment = graphql(`
-  mutation ReportComment(
-    $comment: CommentPathInput!
-    $reason: String!
-    $attr: String
-    $commandId: ID!
-  ) {
-    reportComment(comment: $comment, reason: $reason, attr: $attr, commandId: $commandId) {
-      innerId
-      viewerHasReported
-      meta {
-        reportedCount
-      }
-    }
-  }
-`)
-
-const undoReportComment = graphql(`
-  mutation UndoReportComment($comment: CommentPathInput!, $commandId: ID!) {
-    undoReportComment(comment: $comment, commandId: $commandId) {
-      innerId
-      viewerHasReported
-      meta {
-        reportedCount
-      }
-    }
-  }
-`)
-
 const emotionToComment = graphql(`
   mutation EmotionToComment(
     $comment: CommentPathInput!
@@ -345,8 +316,6 @@ export default {
   searchUsers,
   upvoteComment,
   undoUpvoteComment,
-  reportComment,
-  undoReportComment,
   emotionToComment,
   undoEmotionToComment,
   pagedPublishedComments,

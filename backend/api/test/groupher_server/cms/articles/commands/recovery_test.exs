@@ -89,7 +89,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
     events_before = Repo.aggregate(CMS.Outbox.Event, :count)
     assert {:ok, published} = CMS.Articles.publish(public.article_id, user, opts)
-    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 2
+    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 4
 
     assert Repo.all(from(event in CMS.Outbox.Event, where: event.command_id == ^command_id))
            |> Enum.map(& &1.event)
@@ -123,10 +123,10 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
     assert {:ok, published_b} = CMS.Articles.publish(public.article_id, user, opts_b)
     assert published_b.public.revision_id != first_revision_id
-    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 4
+    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 8
 
     assert {:ok, replayed} = CMS.Articles.publish(public.article_id, user, opts)
-    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 4
+    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 8
     assert replayed.article.id == published.article.id
     assert replayed.revision_id == first_revision_id
     assert replayed.public.revision_id == first_revision_id

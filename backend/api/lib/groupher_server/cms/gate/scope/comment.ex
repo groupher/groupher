@@ -20,12 +20,17 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   alias Accounts.Model.User
   alias CMS.Gate.{ErrorCat, Scope.Policy}
-  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain}
-  alias CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
+  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain, ReviewRead}
+
+  alias CMS.Model.{
+    ArticleLifecycle,
+    CommentLifecycle,
+    CommentReviewBlock,
+    DocBranch,
+    DocLifecycle
+  }
 
   @behaviour Policy
-
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
 
   @actions [:read, :list]
 
@@ -133,15 +138,45 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     )
   end
 
-  defp public_comment(query, %User{id: user_id}) do
+  defp public_comment(query, %User{id: user_id} = actor) do
+    %{platform?: platform_read?, community_slugs: community_slugs} = ReviewRead.grants(actor)
+
     from(comment in query,
-      where: comment.pending != ^@audit_illegal or comment.author_id == ^user_id
+      where:
+        comment.author_id == ^user_id or
+          ((not exists(
+              from(restriction in CommentReviewBlock,
+                where:
+                  restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
+                    is_nil(restriction.community_id) and is_nil(restriction.resolved_at),
+                select: 1
+              )
+            ) or ^platform_read?) and
+             (not exists(
+                from(restriction in CommentReviewBlock,
+                  where:
+                    restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
+                      restriction.community_id == parent_as(:gate_community).id and
+                      is_nil(restriction.resolved_at),
+                  select: 1
+                )
+              ) or as(:gate_community).slug in ^community_slugs))
     )
   end
 
   defp public_comment(query, _actor) do
     from(comment in query,
-      where: comment.pending != ^@audit_illegal
+      where:
+        not exists(
+          from(restriction in CommentReviewBlock,
+            where:
+              restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
+                is_nil(restriction.resolved_at) and
+                (is_nil(restriction.community_id) or
+                   restriction.community_id == parent_as(:gate_community).id),
+            select: 1
+          )
+        )
     )
   end
 end

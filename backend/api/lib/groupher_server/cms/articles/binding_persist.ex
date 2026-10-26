@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
   import Ecto.Query
 
   alias GroupherServer.{Accounts, Analysis, CMS, Repo}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias Accounts.Model.CollectFolderEntry
   alias CMS.Articles.Numbering
 
@@ -64,6 +65,31 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
   def move(%Article{thread: :doc}, %Community{}, %Community{}), do: {:error, :unsupported_for_doc}
 
   @doc """
+  Ensures the ordinary Article has its Community binding before publication.
+
+  The caller owns the surrounding publish transaction.
+
+  ## Examples
+
+      BindingPersist.ensure_binding(article, community)
+      #=> {:ok, %ArticleBinding{}} | {:error, reason}
+  """
+  @spec ensure_binding(Article.t(), Community.t()) ::
+          {:ok, ArticleBinding.t()} | {:error, term()}
+  def ensure_binding(%Article{thread: thread} = article, %Community{} = community)
+      when thread in @ordinary_threads do
+    with %Article{} = canonical <- lock_article(article.id),
+         {:ok, binding} <- upsert_binding(canonical, community) do
+      {:ok, binding}
+    else
+      nil -> {:error, :article_not_found}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def ensure_binding(%Article{thread: :doc}, %Community{}), do: {:error, :unsupported_for_doc}
+
+  @doc """
   Adds an ordinary Article to a Community without changing stable identity.
 
   ## Examples
@@ -104,7 +130,7 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
          {:ok, _deleted} <- Repo.delete(binding) do
       {:ok, :done}
     else
-      nil -> {:error, :article_binding_not_found}
+      nil -> {:error, ArticleErrorCat.binding_not_found()}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -128,31 +154,35 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     end
   end
 
-  defp ensure_can_remove_published_article(
-         _article_id,
-         %ArticleBinding{visible: visible, inner_id: inner_id}
-       )
-       when visible != true or is_nil(inner_id) do
+  defp ensure_can_remove_published_article(_article_id, %ArticleBinding{inner_id: nil}) do
     {:ok, :pass}
   end
 
   defp ensure_can_remove_published_article(article_id, %ArticleBinding{}) do
     lifecycle = Repo.get_by(ArticleLifecycle, article_id: article_id)
 
-    binding_count =
-      Repo.aggregate(
-        from(binding in ArticleBinding,
-          where:
-            binding.article_id == ^article_id and binding.visible == true and
-              not is_nil(binding.inner_id)
-        ),
-        :count
-      )
+    case lifecycle do
+      %ArticleLifecycle{state: :published, thread: thread} ->
+        public_binding_ids = CMS.Articles.Pagination.public_binding_ids(thread)
 
-    if lifecycle && lifecycle.state == :published && binding_count <= 1 do
-      {:error, :published_article_requires_community}
-    else
-      {:ok, :pass}
+        binding_count =
+          Repo.aggregate(
+            from(binding in ArticleBinding,
+              where:
+                binding.article_id == ^article_id and binding.id in subquery(public_binding_ids) and
+                  not is_nil(binding.inner_id)
+            ),
+            :count
+          )
+
+        if binding_count <= 1 do
+          {:error, :published_article_requires_community}
+        else
+          {:ok, :pass}
+        end
+
+      _lifecycle ->
+        {:ok, :pass}
     end
   end
 
@@ -239,14 +269,13 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     attrs = %{
       article_id: article.id,
       community_id: community.id,
-      visible: article.moderation_state != :illegal,
       inner_id: nil
     }
 
     %ArticleBinding{}
     |> ArticleBinding.changeset(attrs)
     |> Repo.insert(
-      on_conflict: [set: [visible: attrs.visible, updated_at: DateTime.utc_now(:second)]],
+      on_conflict: [set: [updated_at: DateTime.utc_now(:second)]],
       conflict_target: [:article_id, :community_id],
       returning: true
     )

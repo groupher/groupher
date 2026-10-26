@@ -26,7 +26,6 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:title, :string)
     field(:article_stats, :article_stats)
     field(:meta, :article_meta)
-    field(:pending, :integer)
     field(:cover_url, :string)
     field(:cover_url_dark, :string)
 
@@ -112,7 +111,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:this_year)
   end
 
-  enum :inserted_sort_enum do
+  enum :account_sort_enum do
     value(:asc_inserted)
     value(:desc_inserted)
   end
@@ -124,22 +123,14 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:desc_inserted)
   end
 
-  enum :sort_enum do
-    value(:desc_inserted)
-    value(:most_views)
-    value(:asc_active)
-    value(:desc_active)
-    value(:most_stars)
-    value(:least_views)
-    value(:least_stars)
-  end
-
   enum :length_enum do
     value(:most_words)
     value(:least_words)
   end
 
-  enum(:article_order_enum, do: enum_values(CMS.articles_const_order_values_ast()))
+  enum(:article_order_enum, do: enum_values(CMS.articles_query_order_values_ast()))
+  enum(:article_sort_enum, do: enum_values(CMS.articles_query_sort_values_ast()))
+  enum(:community_sort_enum, do: enum_values(CMS.communities_query_sort_values_ast()))
 
   enum(:article_cat_enum, do: enum_values(CMS.artiment_const_cat_values_ast()))
   enum(:article_status_enum, do: enum_values(CMS.artiment_const_status_values_ast()))
@@ -152,8 +143,10 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:timeline)
   end
 
+  enum(:comment_page_sort_enum, do: enum_values(CMS.comments_query_sort_values_ast()))
+
   input_object :communities_filter do
-    field(:sort, :sort_enum)
+    field(:sort, :community_sort_enum)
     field(:category, :string)
   end
 
@@ -251,40 +244,25 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   input_object :article_page_filter do
     article_filter_fields()
-    field(:sort, :sort_enum)
+    field(:sort, :article_sort_enum)
   end
 
   input_object :post_filter do
     article_filter_fields()
-    field(:sort, :sort_enum)
+    field(:sort, :article_sort_enum)
   end
 
   input_object :changelog_filter do
     article_filter_fields()
-    field(:sort, :sort_enum)
+    field(:sort, :article_sort_enum)
   end
 
   input_object :comment_page_filter do
-    field(:sort, :inserted_sort_enum)
+    field(:sort, :comment_page_sort_enum)
   end
 
   @desc "Thread scope for an account's Article/folder collections."
   input_object :article_collection_filter do
     field(:thread, :thread)
-  end
-
-  enum :report_content_type do
-    article_values()
-    value(:account)
-    value(:comment)
-    # value(:community)
-  end
-
-  @desc """
-  abuse report filter
-  """
-  input_object :report_filter do
-    field(:content_type, :report_content_type)
-    field(:content_id, :id)
   end
 end

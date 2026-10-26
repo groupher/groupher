@@ -8,6 +8,7 @@
 - 工程规则统一收录在 [`docs/rules/`](../rules/)，入口见 [`be.md`](../rules/be.md) 与 [`fe.md`](../rules/fe.md)。
 - [`apps.md`](./apps.md)：独立运行应用、平台能力和业务 Feature 的划分原则。
 - [`external-services-local-runtime.md`](./external-services-local-runtime.md)：外部依赖服务的本地等价实现、统一 Dev Hub 编排和线上/本地运行时边界。
+- [`graphql-mock-server.md`](./graphql-mock-server.md)：本地 GraphQL Mock Server 的职责、E2E 使用场景及其与正式 SDL 的关系。
 - [`backend-context-convention-over-configuration.md`](./backend-context-convention-over-configuration.md)：
   Backend Context、Facade、Owner 和可执行 lint 的通用设计。
 - [`backend-effects-and-job-contract.md`](./backend-effects-and-job-contract.md)：Effects、durable Job payload
@@ -17,6 +18,7 @@
 - [`query-store-boundary.md`](./query-store-boundary.md)：Query、Store、Draft 与缓存边界。
 - [`query-invalidation.md`](./query-invalidation.md)：TanStack Query typed target、领域 key resolver 与通用失效 executor。
 - [`frontend-account-passport-gate.md`](./frontend-account-passport-gate.md)：AccountStore、Passport、前端 Gate 与各应用的认证策略。
+- [`account-identity.md`](./account-identity.md)：`login`、`nickname`、`user.id` 的身份边界。
 - [`contracts.md`](./contracts.md)：跨运行时 contract 的归属、生成、freshness 与 Gate Action 目标合同。
 - [`protocol-constants.md`](./protocol-constants.md)：前端裸写协议字符串的历史审计和现有归属记录。
 - [`policy.md`](./policy.md)：后端 Policy 的准入决策职责，以及与 Gate、Lifecycle、Config、Workflow 和 Persist 的边界。

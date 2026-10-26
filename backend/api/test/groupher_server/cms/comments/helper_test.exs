@@ -172,7 +172,6 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       marked_comments = %{paged_comments | entries: entries}
 
       assert List.first(marked_comments.entries).viewer_has_upvoted == false
-      assert List.first(marked_comments.entries).viewer_has_reported == false
     end
   end
 

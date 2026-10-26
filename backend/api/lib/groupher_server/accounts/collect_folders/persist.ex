@@ -284,9 +284,14 @@ defmodule GroupherServer.Accounts.CollectFolders.Persist do
 
       _ ->
         case CMS.articles_bindings_all(article) do
-          {:ok, [%ArticleBinding{} = binding]} -> {:ok, binding}
-          {:ok, _bindings} -> {:error, :article_binding_context_required}
-          {:error, _reason} = error -> error
+          {:ok, [%ArticleBinding{} = binding]} ->
+            {:ok, binding}
+
+          {:ok, _bindings} ->
+            {:error, ErrorCat.binding_context_required()}
+
+          {:error, _reason} = error ->
+            error
         end
     end
   end

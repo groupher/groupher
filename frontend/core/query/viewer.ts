@@ -1,7 +1,7 @@
 /**
  * Owns viewer-scoped query options and precise cache updates for private read state.
  *
- *   Article/Comment paths + accountRef
+ *   Article/Comment paths + accountScope
  *     -> private GraphQL batch query
  *     -> path-keyed viewer maps
  *     -> mutation patch / hook composition
@@ -53,7 +53,6 @@ const commentViewerStates = graphql(`
     commentViewerStates(article: $article, commentInnerIds: $commentInnerIds) {
       innerId
       viewerHasUpvoted
-      viewerHasReported
       emotions {
         type
         viewerHasReacted
@@ -96,7 +95,7 @@ const normalizeArticlePaths = (articles: readonly TArticlePath[]): TArticlePath[
 }
 
 const articleStateQueryContains = (queryKey: readonly unknown[], articleKey: string): boolean => {
-  const [domain, _accountRef, target, articlePathKeys] = queryKey
+  const [domain, _accountScope, target, articlePathKeys] = queryKey
   return (
     domain === viewerQueryKeys.all[0] &&
     target === 'article-state' &&
@@ -109,7 +108,7 @@ const articleInteractionStateQueryContains = (
   queryKey: readonly unknown[],
   articleKey: string,
 ): boolean => {
-  const [domain, _accountRef, target, articlePathKeys] = queryKey
+  const [domain, _accountScope, target, articlePathKeys] = queryKey
   return (
     domain === viewerQueryKeys.all[0] &&
     target === 'article-interaction-state' &&
@@ -121,13 +120,13 @@ const articleInteractionStateQueryContains = (
 /** Finds loaded private interaction batches for one account that contain the target Article path. */
 export const articleInteractionStateQueries = (
   queryClient: QueryClient,
-  accountRef: string,
+  accountScope: string,
   article: TArticlePath,
 ) => {
   const articleKey = articlePathKey(article)
   return queryClient
     .getQueryCache()
-    .findAll({ queryKey: viewerQueryKeys.articleInteractionStatePrefix(accountRef) })
+    .findAll({ queryKey: viewerQueryKeys.articleInteractionStatePrefix(accountScope) })
     .filter((query) => articleInteractionStateQueryContains(query.queryKey, articleKey))
 }
 
@@ -219,12 +218,12 @@ export type TArticleInteractionState = {
  */
 export const cacheArticleInteractionState = (
   queryClient: QueryClient,
-  accountRef: string,
+  accountScope: string,
   state: TArticleInteractionState,
 ): void => {
   const queries = queryClient
     .getQueryCache()
-    .findAll({ queryKey: viewerQueryKeys.articleInteractionStatePrefix(accountRef) })
+    .findAll({ queryKey: viewerQueryKeys.articleInteractionStatePrefix(accountScope) })
     .filter((query) => articleInteractionStateQueryContains(query.queryKey, state.articleKey))
 
   for (const query of queries) {
@@ -315,36 +314,41 @@ const fetchCommentViewerStates = async (
       states[String(comment.innerId)] = {
         emotionFlags,
         viewerHasUpvoted: comment.viewerHasUpvoted ?? undefined,
-        viewerHasReported: comment.viewerHasReported ?? undefined,
       }
     }
   }
   return states
 }
 
-const articleStates = (accountRef: string, articles: readonly TArticlePath[]) => {
+const articleStates = (accountScope: string, articles: readonly TArticlePath[]) => {
   const normalized = normalizeArticlePaths(articles)
   return queryOptions({
-    queryKey: viewerQueryKeys.articleStates(accountRef, normalized.map(articlePathKey)),
-    queryFn: ({ signal }) => (accountRef ? fetchArticleViewerStates(normalized, signal) : {}),
-    enabled: !!accountRef && normalized.length > 0,
+    queryKey: viewerQueryKeys.articleStates(accountScope, normalized.map(articlePathKey)),
+    queryFn: ({ signal }) => (accountScope ? fetchArticleViewerStates(normalized, signal) : {}),
+    enabled: !!accountScope && normalized.length > 0,
     staleTime: 30_000,
   })
 }
 
-const articleInteractionStateOptions = (accountRef: string, articles: readonly TArticlePath[]) => {
+const articleInteractionStateOptions = (
+  accountScope: string,
+  articles: readonly TArticlePath[],
+) => {
   const normalized = normalizeArticlePaths(articles)
   return queryOptions({
-    queryKey: viewerQueryKeys.articleInteractionStates(accountRef, normalized.map(articlePathKey)),
+    queryKey: viewerQueryKeys.articleInteractionStates(
+      accountScope,
+      normalized.map(articlePathKey),
+    ),
     queryFn: ({ signal }) => fetchArticleInteractionStates(normalized, signal),
-    enabled: !!accountRef && normalized.length > 0,
+    enabled: !!accountScope && normalized.length > 0,
     staleTime: 0,
     gcTime: 30_000,
   })
 }
 
 const commentStates = (
-  accountRef: string,
+  accountScope: string,
   article: TArticlePath,
   commentInnerIds: readonly string[],
 ) => {
@@ -356,10 +360,10 @@ const commentStates = (
   const articleKeyValue = articlePathKey(normalizedArticle)
   const normalizedIds = [...new Set(commentInnerIds.map(String))].sort()
   return queryOptions({
-    queryKey: viewerQueryKeys.commentStates(accountRef, articleKeyValue, normalizedIds),
+    queryKey: viewerQueryKeys.commentStates(accountScope, articleKeyValue, normalizedIds),
     queryFn: ({ signal }) =>
-      accountRef ? fetchCommentViewerStates(normalizedArticle, normalizedIds, signal) : {},
-    enabled: !!accountRef && normalizedIds.length > 0,
+      accountScope ? fetchCommentViewerStates(normalizedArticle, normalizedIds, signal) : {},
+    enabled: !!accountScope && normalizedIds.length > 0,
     staleTime: 30_000,
   })
 }
@@ -372,14 +376,14 @@ const session = () =>
   })
 
 const commentSummary = (
-  accountRef: string,
+  accountScope: string,
   community: string,
   thread: TThread,
   innerId: string | number,
 ) =>
   queryOptions({
     queryKey: viewerQueryKeys.commentSummary(
-      accountRef,
+      accountScope,
       articlePathKey({ community, thread, innerId }),
     ),
     queryFn: async ({ signal }) => {

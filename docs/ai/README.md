@@ -6,7 +6,7 @@
 >
 > 状态：planned
 >
-> 当前进度：规划中；首期保持一个部署、内部按能力分模块
+> 当前进度：翻译、摘要、Docs Assistant 等统一 AI 平台能力仍在规划；审核使用现有 Phoenix AI adapter 和独立 Cloudflare Worker
 
 ## 定位
 
@@ -130,6 +130,48 @@ searchDuplicateCandidates(
 AI 内容审核返回的是可解释信号，不直接封禁用户或删除内容。结果可交给
 `risk-center` 聚合，也可由 Phoenix 在当前业务操作中使用；最终处罚、审计和人工
 处置仍由 Phoenix `Blackhole` 及对应领域 Context 完成。
+
+### Clef-flash 接入与请求链路
+
+当前审核调用由 Phoenix 内的 `ReviewBot` 发起。`GroupherServer.AI` 负责读取已配置的
+审核 profile、选择 adapter 并构造统一审核输入；`JudgeHTTP` adapter 将请求发送到
+Cloudflare Worker。Worker 使用 `env.AI` binding 调用 `@cf/cloudflare/clef-flash`，再将
+模型的分类决策映射回 Groupher 的 `OpinionOutput`：
+
+```text
+发布或评论审核请求
+  -> ReviewBot.check
+  -> GroupherServer.AI.check
+  -> AI profile / JudgeHTTP adapter
+  -> HTTPS POST /v1/judge 到 Cloudflare Worker
+  -> env.AI.run("@cf/cloudflare/clef-flash")
+  -> OpinionOutput
+  -> ReviewBot 汇总 system / community 审核结果
+```
+
+生产环境中 Phoenix 直接请求已部署 Worker 的 HTTPS 地址；不存在一个必须与 Phoenix
+同机运行的本地 AI 服务。只有本地开发时，`REVIEW_BOT_JUDGE_URL` 才指向 Wrangler
+启动的本地 Worker。Worker 在本地运行时仍使用 Cloudflare 远程 Workers AI，因此模型
+推理仍访问 Cloudflare 并计入对应账号的用量。
+
+单独部署 Worker 是为了让 Cloudflare AI binding 和模型调用留在 Cloudflare 侧，同时由
+Phoenix 保留审核策略、审核任务和结果处理的业务边界。Phoenix 通过
+`REVIEW_BOT_JUDGE_TOKEN` 以 Bearer token 认证 Worker；Worker 的 token 应通过 Worker
+secret 配置，Phoenix 的 token 应通过服务端运行环境配置。生产 profile 配置要求 HTTPS。
+
+Phoenix 运行时使用以下配置选择此链路：
+
+- `REVIEW_BOT_JUDGE_URL`：Worker 的 origin/base URL；adapter 会追加 `/v1/judge`。
+- `REVIEW_BOT_JUDGE_TOKEN`：与 Worker secret 一致的服务端凭证。
+- `REVIEW_BOT_PROFILE_ID=judge_http`：选择 HTTP judge profile。
+- Worker 模型当前固定为 `@cf/cloudflare/clef-flash`。
+
+Worker 代码、开发命令、请求限制和当前文本审核边界见
+[`backend/review-ai-worker/README.md`](../../backend/review-ai-worker/README.md)。当前完整调用
+曾在本地通过 Phoenix → 本地 Worker → Cloudflare AI 验证；Worker 尚未部署，因此生产
+HTTPS 请求路径仍需部署后验证。当前输入是标题和扁平化正文，不含富文本段落 ID；模型
+返回类别判断，但不提供精确违规原文定位。含图片且要求图片审核的请求会失败关闭，不能
+当作文本审核通过。
 
 ## 数据和安全边界
 

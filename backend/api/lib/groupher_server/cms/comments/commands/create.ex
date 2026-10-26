@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         -> CMS.Comments
         -> Comments.Commands.Create create/reply
         -> runner transaction + CMS.Gate.check_*_in_transaction
-        -> canonical aggregate transaction + required audition job
+        -> canonical aggregate transaction + durable Comment effects
         -> commit
         -> best-effort mention / notification / subscription jobs
   """
@@ -19,18 +19,17 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
 
   require GroupherServer.CMS.Comments.ErrorCat
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, ReviewBot}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias Accounts.Model.User
   alias CMS.{Comments.ErrorCat, FrontDesk}
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias CMS.Articles.Query, as: ArticleQuery
   alias CMS.Comments.{Effects, Persist, Query}
-  alias CMS.Communities.Query, as: CommunityQuery
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.ErrorCat, as: CmsErrorCat
 
   alias CMS.Comments.{
-    RequiredJobs,
     Lifecycle,
     Replies
   }
@@ -116,7 +115,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
   Creates a top-level comment on an article identified by community, thread,
   and article id.
 
-  Runs lifecycle creation, counters, participants and required audition enqueue
+  Runs lifecycle creation, counters, participants and durable Comment effects
   in one Article transaction. Optional mention, notification and subscription
   jobs are scheduled only after commit.
 
@@ -157,7 +156,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
 
   def create(thread, projection, body, %User{} = user, command_id) when is_map(projection) do
     with {:ok, article_id} <- projection_article_id(projection),
-         %Article{thread: ^thread} = article <- ArticleQuery.article(article_id),
+         {:ok, %Article{thread: ^thread} = article} <-
+           FrontDesk.article(article_id, mode: :internal),
          {:ok, info} <- CMS.Artiment.Matcher.match_interaction(article) do
       do_create(
         thread,
@@ -170,7 +170,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         Map.get(projection, :community)
       )
     else
-      nil -> {:error, CmsErrorCat.custom("article not found")}
       {:error, _reason} = error -> error
     end
   end
@@ -244,7 +243,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         end
 
       _ ->
-        {:error, :article_binding_context_required}
+        {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
@@ -257,19 +256,20 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         end
 
       _ ->
-        {:error, :article_binding_context_required}
+        {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
   defp create_new(thread, article, body, %User{} = user, info, command_id, community) do
     with {:ok, comment} <-
            create_comment_record(body, thread, info.foreign_key, article, community, user),
-         {:ok, _lifecycle} <- Lifecycle.ensure_created(comment.id),
+         {:ok, lifecycle} <- Lifecycle.ensure_created(comment.id),
+         {:ok, _review} <-
+           register_comment_review(comment, lifecycle, community, command_id, :submit),
          {:ok, counted_article} <- keep_article(article),
          {:ok, projected_comment} <- Persist.update_question_flag(article, comment),
          {:ok, participant_article} <- add_participant(article, user),
          {:ok, _active_article} <- update_active_timestamp(thread, article, comment),
-         {:ok, _job} <- RequiredJobs.audition(projected_comment),
          {:ok, _} <- CMS.ArticleStats.record_comment_change(participant_article),
          {:ok, _} <-
            record_article_metric(counted_article, community, command_id, :comment_created),
@@ -305,8 +305,10 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
        )
        when is_binary(result_key) do
     with {result_id, ""} <- Integer.parse(result_key),
-         %Comment{} = comment <- Query.comment(result_id),
-         %Community{} = community <- CommunityQuery.get(comment.community_id),
+         {:ok, %Comment{} = comment} <-
+           FrontDesk.comment(result_id, mode: :internal, view: :with_author),
+         {:ok, %Community{} = community} <-
+           FrontDesk.community(comment.community_id, mode: :internal),
          {:ok, canonical_article} <- replay_article(article) do
       {:ok,
        %{
@@ -341,8 +343,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     end
   end
 
-  defp replay_article(article) when is_struct(article) do
-    ArticleQuery.reload_with_author(article)
+  defp replay_article(%Article{id: article_id}) do
+    FrontDesk.article(article_id, mode: :internal, view: :with_author)
   end
 
   defp replay_article(%{id: article_id}) when is_binary(article_id) do
@@ -391,7 +393,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
   defp reply_new_from_canonical(canonical, article, body, %User{} = user, command_id) do
     with replying_comment <- Query.comment_with_reply_author(canonical),
          {:ok, thread} <- FrontDesk.thread_of(replying_comment),
-         %Community{} = community <- CommunityQuery.get(replying_comment.community_id),
+         {:ok, %Community{} = community} <-
+           FrontDesk.community(replying_comment.community_id, mode: :internal),
          article <- ArticleQuery.article_with_author(article),
          {:ok, info} <- CMS.Artiment.Matcher.match_interaction(article) do
       reply_new(
@@ -429,7 +432,9 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
              user,
              replying_comment
            ),
-         {:ok, _lifecycle} <- Lifecycle.ensure_created(replied_comment.id),
+         {:ok, lifecycle} <- Lifecycle.ensure_created(replied_comment.id),
+         {:ok, _review} <-
+           register_comment_review(replied_comment, lifecycle, community, command_id, :submit),
          {:ok, counted_article} <- keep_article(article),
          {:ok, _reply_binding} <- Persist.insert_reply_binding(replied_comment, replying_comment),
          {:ok, participant_article} <- add_participant(article, user),
@@ -440,7 +445,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          {:ok, _embedded_parent} <-
            Persist.update_replies_embed(parent_comment, associated_reply),
          {:ok, _parent} <- Persist.increment_replies_count(parent_comment),
-         {:ok, _job} <- RequiredJobs.audition(associated_reply),
          {:ok, _} <- CMS.ArticleStats.apply_comment_counts(participant_article),
          {:ok, _} <-
            record_article_metric(counted_article, community, command_id, :comment_created),
@@ -469,6 +473,35 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     case Persist.insert_comment(body, thread, foreign_key, article, community, user) do
       {:ok, comment} -> {:ok, comment}
       {:error, details} -> create_comment(details)
+    end
+  end
+
+  defp register_comment_review(
+         %Comment{} = comment,
+         lifecycle,
+         %Community{id: community_id},
+         _command_id,
+         trigger
+       ) do
+    with {:ok, configs} <- ReviewBot.configs(community_id, :comment) do
+      content = %{
+        title: "",
+        body: comment.body.plain_text,
+        images: CMS.Review.Media.comment_images(comment.body.json, community_id)
+      }
+
+      target = %{
+        type: :comment,
+        comment_id: comment.id,
+        lifecycle: lifecycle
+      }
+
+      CMS.Review.RequestSubmission.register_in_transaction(
+        target,
+        content,
+        configs,
+        if(trigger == :submit, do: :publish, else: :edit)
+      )
     end
   end
 

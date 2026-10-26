@@ -1036,7 +1036,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   ######
   # common stands for minimal info of the type
-  # usually used in abuse_report, feeds, etc ..
+  # used for small identity projections such as feeds
   object :common_user do
     field(:login, non_null(:string))
     field(:avatar, :string)
@@ -1847,7 +1847,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :viewer_comment_state do
     field(:inner_id, non_null(:id))
     field(:viewer_has_upvoted, :boolean)
-    field(:viewer_has_reported, :boolean)
     field(:emotions, non_null(list_of(non_null(:viewer_comment_emotion_state))))
   end
 
@@ -1855,11 +1854,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:is_article_author_upvoted, :boolean)
     field(:is_reply_to_others, :boolean)
 
-    # audit states
-    field(:is_legal, :boolean)
-    field(:illegal_reason, list_of(:string))
-    field(:illegal_words, list_of(:string))
-    field(:reported_count, :integer)
     # field(:is_solution, :boolean)
   end
 
@@ -1883,26 +1877,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:participants_count, :integer)
     field(:participants, list_of(:common_user))
     field(:is_viewer_joined, :boolean)
-  end
-
-  ####### reports
-  object :abuse_report_case do
-    field(:reason, :string)
-    field(:attr, :string)
-    field(:user, :common_user)
-  end
-
-  object :abuse_report do
-    field(:id, :id)
-    field(:article, :common_article)
-    field(:comment, :common_comment)
-    field(:account, :common_user)
-    field(:report_cases_count, :integer)
-    field(:deal_with, :string)
-    field(:operate_user, :user)
-    field(:report_cases, list_of(:abuse_report_case))
-
-    timestamp_fields()
   end
 
   object :artiment_mention do
@@ -2003,11 +1977,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:wip, :post_page)
     field(:done, :post_page)
     field(:rejected, :post_page)
-  end
-
-  object :report_page do
-    field(:entries, list_of(:abuse_report))
-    pagi_fields()
   end
 
   object :artiment_mention_page do
@@ -2132,10 +2101,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:is_comment_locked, :boolean)
     field(:last_active_at, :datetime)
     field(:latest_upvoted_users, list_of(:common_user))
-    # audit states
-    field(:is_legal, :boolean)
-    field(:illegal_reason, list_of(:string))
-    field(:illegal_words, list_of(:string))
   end
 
   object :community_meta do

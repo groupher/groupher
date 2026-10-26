@@ -166,7 +166,6 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
          communities: [community],
          community_tags: tags,
          comments_participants: stable_comment_participants(article.id),
-         moderation_state: article.moderation_state,
          active_at: Map.get(anchor, :active_at),
          inserted_at: Map.fetch!(anchor, :inserted_at),
          updated_at: Map.fetch!(anchor, :updated_at),
@@ -175,10 +174,8 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
          version: Map.fetch!(anchor, :publication_version),
          lifecycle: lifecycle,
          is_pinned: stable_pinned?(article.id, community.id),
-         pending: 0,
          viewer_has_collected: false,
          viewer_has_upvoted: false,
-         viewer_has_reported: false,
          viewer_has_viewed: false,
          meta: Map.fetch!(anchor, :meta)
        }
@@ -238,10 +235,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
           is_sunk: state.is_sunk,
           last_active_at: state.last_active_at,
           next_floor: state.next_floor,
-          next_comment_inner_id: state.next_comment_inner_id,
-          is_legal: state.moderation_state == :legal,
-          illegal_reason: List.wrap(state.illegal_reason),
-          illegal_words: state.illegal_words
+          next_comment_inner_id: state.next_comment_inner_id
         }
 
       nil ->
@@ -252,10 +246,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
           is_sunk: article.is_sunk,
           last_active_at: article.last_active_at,
           next_floor: article.next_floor,
-          next_comment_inner_id: article.next_comment_inner_id,
-          is_legal: article.moderation_state == :legal,
-          illegal_reason: List.wrap(article.illegal_reason),
-          illegal_words: article.illegal_words
+          next_comment_inner_id: article.next_comment_inner_id
         }
     end
   end
@@ -268,10 +259,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
       is_sunk: article.is_sunk,
       last_active_at: article.last_active_at,
       next_floor: article.next_floor,
-      next_comment_inner_id: article.next_comment_inner_id,
-      is_legal: article.moderation_state == :legal,
-      illegal_reason: List.wrap(article.illegal_reason),
-      illegal_words: article.illegal_words
+      next_comment_inner_id: article.next_comment_inner_id
     }
   end
 
@@ -286,10 +274,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
            is_sunk: state.is_sunk,
            last_active_at: state.last_active_at,
            next_floor: state.next_floor,
-           next_comment_inner_id: state.next_comment_inner_id,
-           is_legal: state.moderation_state == :legal,
-           illegal_reason: List.wrap(state.illegal_reason),
-           illegal_words: state.illegal_words
+           next_comment_inner_id: state.next_comment_inner_id
          }}
 
       nil ->

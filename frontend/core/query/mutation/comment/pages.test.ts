@@ -27,7 +27,7 @@ const page = (entries: TComment[], pinnedEntries: TComment[] = []) => ({
 })
 const context = (queryClient: QueryClient) => ({
   queryClient,
-  accountRef: 'alice',
+  accountScope: 'alice',
   commandId: 'cmd',
 })
 

@@ -89,7 +89,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   def access_check(_actor, _action, %{thread: :doc, branch_id: branch_id})
       when is_integer(branch_id) do
-    {:error, :article_binding_context_required}
+    {:error, ErrorCat.doc_branch_required()}
   end
 
   def access_check(
@@ -161,6 +161,24 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     {:error, ErrorCat.unsupported_resource()}
   end
 
+  @doc "Checks a Community workflow action within the caller transaction and row lock."
+  def check_community_workflow_in_transaction(actor, action, %Community{id: community_id}) do
+    query = from(record in Community, where: record.id == ^community_id, lock: "FOR UPDATE")
+
+    with {:ok, :pass} <- require_caller_transaction(),
+         %Community{} = canonical <- Repo.one(query) do
+      Check.with_authorized_community(actor, action, canonical, fn value -> {:ok, value} end)
+      |> normalize_join_decision()
+    else
+      nil -> {:error, ErrorCat.resource_not_found()}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def check_community_workflow_in_transaction(_actor, _action, _community) do
+    {:error, ErrorCat.unsupported_resource()}
+  end
+
   @doc "Joins the pipeline transaction for one Article or Comment interaction target."
   def check_interaction_in_transaction(actor, action, %Comment{} = comment) do
     check_in_transaction(actor, action, comment)
@@ -190,7 +208,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   end
 
   def check_interaction_in_transaction(_actor, _action, _resource) do
-    {:error, :article_binding_context_required}
+    {:error, ErrorCat.scope_context_missing()}
   end
 
   @doc "Returns the canonical Comment together with its canonical parent Article."
@@ -287,9 +305,17 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   defp require_transaction do
     cond do
-      not Repo.in_transaction?() -> {:error, :gate_transaction_required}
-      StageContext.current() != :gate -> {:error, :gate_stage_required}
+      not Repo.in_transaction?() -> {:error, ErrorCat.gate_transaction_required()}
+      StageContext.current() != :gate -> {:error, ErrorCat.gate_stage_required()}
       true -> {:ok, :pass}
+    end
+  end
+
+  defp require_caller_transaction do
+    if Repo.in_transaction?() do
+      {:ok, :pass}
+    else
+      {:error, ErrorCat.gate_transaction_required()}
     end
   end
 
@@ -362,7 +388,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   def with_check(actor, action, %model{} = article, callback)
       when model in @article_models and is_function(callback, 1) do
     _ = {actor, action, article, callback}
-    {:error, :article_binding_context_required}
+    {:error, ErrorCat.scope_context_missing()}
   end
 
   def with_check(
@@ -373,7 +399,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
       )
       when is_binary(article_id) and is_integer(branch_id) and is_function(callback, 1) do
     _ = {actor, action, article_id, branch_id, callback}
-    {:error, :article_binding_context_required}
+    {:error, ErrorCat.scope_context_missing()}
   end
 
   def with_check(actor, action, %{id: article_id, thread: thread}, callback)

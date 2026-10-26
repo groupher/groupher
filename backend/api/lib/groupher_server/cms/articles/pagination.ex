@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Accounts, CMS, Pagi, Repo}
-  alias CMS.Articles.ArticleLite
+  alias CMS.Articles.{ArticleLite, Query.Contract}
   alias CMS.Communities.Enable
   alias CMS.Dashboard.PagiMode
   alias CMS.ErrorCat
@@ -72,13 +72,13 @@ defmodule GroupherServer.CMS.Articles.Pagination do
 
   def page(thread, filter, pagi, viewer, opts)
       when is_atom(thread) and is_map(filter) and is_list(opts) do
-    with {:ok, :pass} <- validate_filter(filter),
+    with {:ok, :pass} <- Contract.validate_filter(filter),
          {:ok, effective} <- effective_pagination_config(thread, filter, pagi, opts),
          opts <- put_effective_config(opts, effective, filter),
          {:ok, _thread} <- Enable.thread?(Map.get(filter, :community), thread),
          {:ok, order} <- order_for(thread, filter),
          {:ok, params} <- Pagi.from_input(pagi, effective.config.default_size),
-         {:ok, page} <- run_page(thread, filter, params, order, opts),
+         {:ok, page} <- run_page(thread, filter, params, order, opts, viewer),
          {:ok, entries} <- present_entries(page.entries, viewer),
          {:ok, pinned_entries} <-
            present_pinned(thread, filter, viewer, params, order, opts) do
@@ -120,34 +120,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     |> Keyword.put(:resource, :articles)
   end
 
-  defp validate_filter(filter) do
-    cond do
-      Enum.any?([:page, :size, :first, :after, :config_revision], &Map.has_key?(filter, &1)) ->
-        {:error, ErrorCat.invalid_body("Pagination belongs in PagiInput")}
-
-      requested_order(filter) not in [
-        nil,
-        :publish,
-        :upvotes,
-        :comments,
-        :views,
-        :most_views,
-        :least_views,
-        :asc_inserted,
-        :desc_inserted,
-        :asc_active,
-        :desc_active
-      ] ->
-        {:error, GroupherServer.Pagi.unsupported_sort()}
-
-      Map.has_key?(filter, :status) and Map.has_key?(filter, :statuses) ->
-        {:error, ErrorCat.invalid_body("Select status or statuses")}
-
-      true ->
-        {:ok, :pass}
-    end
-  end
-
   @doc """
   Reads a bounded set of public ArticleLite rows by explicit Article paths.
 
@@ -163,15 +135,21 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   """
   @spec lite_paths([map()]) :: {:ok, [map()]} | {:error, term()}
   def lite_paths(paths) when is_list(paths) and length(paths) <= 100 do
-    case Enum.uniq_by(paths, &{&1.community, &1.thread, &1.inner_id}) do
+    paths = Enum.uniq_by(paths, &{&1.community, &1.thread, &1.inner_id})
+
+    case paths do
       [] ->
         {:ok, []}
 
       paths ->
         rows =
           paths
-          |> public_path_query()
-          |> Repo.all()
+          |> Enum.group_by(& &1.thread)
+          |> Enum.flat_map(fn {thread, thread_paths} ->
+            thread
+            |> public_path_query(thread_paths)
+            |> Repo.all()
+          end)
 
         {:ok, rows}
     end
@@ -182,20 +160,38 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   end
 
   @doc "Returns the binding identities admitted by the canonical public Lite scope."
-  def public_binding_ids do
-    public_path_query(:all)
+  def public_binding_ids(thread, actor \\ nil) do
+    context =
+      if thread == :doc do
+        CMS.Gate.Context.Scope.Doc.public_main()
+      else
+        CMS.Gate.Context.Scope.Article.public(thread)
+      end
+
+    Article
+    |> CMS.Gate.scope(actor, :list, context)
     |> exclude(:select)
-    |> select([lite_binding: binding], binding.id)
+    |> select([gate_article_binding: binding], binding.id)
   end
 
-  defp run_page(thread, filter, params, order, opts) do
+  @doc "Returns public binding identities across every Article thread."
+  def public_binding_ids do
+    queries =
+      [:doc | CMS.Gate.Config.ordinary_article_threads()]
+      |> Enum.map(&public_binding_ids/1)
+
+    [query | rest] = queries
+    Enum.reduce(rest, query, fn next, acc -> union_all(acc, ^next) end)
+  end
+
+  defp run_page(thread, filter, params, order, opts, viewer) do
     query_opts = [
       include_pinned: Keyword.get(opts, :include_pinned, false),
       public_tree: Keyword.get(opts, :public_tree, false)
     ]
 
-    query = public_query(thread, filter, order, query_opts)
-    count = count_query(thread, filter, query_opts)
+    query = public_query(thread, filter, order, query_opts, viewer)
+    count = count_query(thread, filter, query_opts, viewer)
 
     pagi_opts = [
       for: ArticleLite,
@@ -277,21 +273,21 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   defp active_field(:doc), do: :doc_active_at
   defp active_field(_thread), do: :active_at
 
-  defp public_query(thread, filter, order, opts) do
+  defp public_query(thread, filter, order, opts, viewer) do
     thread
-    |> public_scope(filter, opts)
+    |> public_scope(filter, opts, viewer)
     |> ArticleLite.select(order, thread)
   end
 
-  defp public_scope(thread, filter, opts) do
-    visible = public_binding_ids()
+  defp public_scope(thread, filter, opts, viewer) do
+    visible = public_binding_ids(thread, viewer)
     include_pinned = Keyword.get(opts, :include_pinned, false)
 
     from(article in Article,
       as: :article,
       join: binding in ArticleBinding,
       as: :article_binding,
-      on: binding.article_id == article.id and binding.visible == true,
+      on: binding.article_id == article.id,
       join: community in Community,
       as: :article_community,
       on: community.id == binding.community_id,
@@ -315,18 +311,14 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     )
     |> join(:inner, [article: article, doc_branch: branch], public in DocPublic,
       as: :stable_public,
-      on:
-        public.article_id == article.id and public.branch_id == branch.id and
-          public.visible == true
+      on: public.article_id == article.id and public.branch_id == branch.id
     )
     |> join(
       :inner,
       [article: article, doc_branch: branch],
       lifecycle in DocLifecycle,
       as: :doc_lifecycle,
-      on:
-        lifecycle.article_id == article.id and lifecycle.branch_id == branch.id and
-          lifecycle.state in [:published, :archived]
+      on: lifecycle.article_id == article.id and lifecycle.branch_id == branch.id
     )
   end
 
@@ -334,14 +326,14 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     query
     |> join(:inner, [article: article], public in ArticlePublic,
       as: :stable_public,
-      on: public.article_id == article.id and public.visible == true
+      on: public.article_id == article.id
     )
     |> join(
       :inner,
       [article: article],
       lifecycle in ArticleLifecycle,
       as: :article_lifecycle,
-      on: lifecycle.article_id == article.id and lifecycle.state in [:published, :archived]
+      on: lifecycle.article_id == article.id
     )
   end
 
@@ -442,8 +434,8 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     )
   end
 
-  defp count_query(thread, filter, opts) do
-    public_scope(thread, filter, opts)
+  defp count_query(thread, filter, opts, viewer) do
+    public_scope(thread, filter, opts, viewer)
     |> exclude(:distinct)
     |> select([article_binding: binding], count(binding.id, :distinct))
   end
@@ -485,9 +477,12 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     content_order = %{order | bindings: [], projection: []}
 
     pinned_query =
-      public_query(thread, filter, content_order,
-        include_pinned: true,
-        public_tree: Keyword.get(opts, :public_tree, false)
+      public_query(
+        thread,
+        filter,
+        content_order,
+        [include_pinned: true, public_tree: Keyword.get(opts, :public_tree, false)],
+        viewer
       )
 
     pinned_query
@@ -543,7 +538,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     |> Base.encode16(case: :lower)
   end
 
-  defp public_path_query(paths) do
+  defp public_path_query(thread, paths) do
     path_filter =
       if paths == :all do
         dynamic(true)
@@ -551,25 +546,18 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         Enum.reduce(paths, dynamic(false), fn path, acc ->
           dynamic(
             [lite_article: article, lite_binding: binding, lite_community: community],
-            ^acc or
-              (community.slug == ^path.community and article.thread == ^path.thread and
-                 binding.inner_id == ^path.inner_id)
+            ^acc or (community.slug == ^path.community and binding.inner_id == ^path.inner_id)
           )
         end)
       end
 
-    visible_communities =
-      Community
-      |> CMS.Gate.scope(nil, :list, CMS.Gate.Context.Scope.Community.public())
-      |> select([community], community.id)
+    visible_bindings = public_binding_ids(thread)
 
     from(article in Article,
       as: :lite_article,
       join: binding in ArticleBinding,
       as: :lite_binding,
-      on:
-        binding.article_id == article.id and binding.visible == true and
-          binding.inner_id > 0,
+      on: binding.article_id == article.id and binding.inner_id > 0,
       join: community in Community,
       as: :lite_community,
       on: community.id == binding.community_id,
@@ -578,7 +566,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
       join: user in User,
       on: user.id == author.user_id,
       left_join: public in ArticlePublic,
-      on: public.article_id == article.id and public.visible == true,
+      on: public.article_id == article.id,
       left_join: lifecycle in ArticleLifecycle,
       on:
         lifecycle.article_id == article.id and
@@ -596,12 +584,8 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         doc_lifecycle.article_id == article.id and doc_lifecycle.branch_id == branch.id and
           doc_lifecycle.state in [:published, :archived],
       where: ^path_filter,
-      where: community.id in subquery(visible_communities),
-      where:
-        (article.thread == :doc and doc_state.moderation_state == :legal and
-           not is_nil(doc_public.id) and not is_nil(doc_lifecycle.id)) or
-          (article.thread != :doc and article.moderation_state == :legal and
-             not is_nil(public.article_id) and not is_nil(lifecycle.id)),
+      where: article.thread == ^thread,
+      where: binding.id in subquery(visible_bindings),
       select: %{
         id: article.id,
         community_id: community.id,

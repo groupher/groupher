@@ -8,7 +8,14 @@ defmodule GroupherServer.CMS.Articles.Public do
   """
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Article, ArticleBodySnapshot, ArticlePublic, ArticleRevision, Author}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBodySnapshot,
+    ArticlePublic,
+    ArticleRevision,
+    Author
+  }
 
   @doc "Selects a Revision as current public content and atomically refreshes its projection."
   @spec select(Article.t(), ArticleRevision.t(), Author.t(), keyword()) ::
@@ -37,8 +44,7 @@ defmodule GroupherServer.CMS.Articles.Public do
       body_hash: body.body_hash,
       excerpt: body.plain_text,
       thumbnail: body.thumbnail,
-      active_at: article.active_at || published_at,
-      visible: article.moderation_state == :legal
+      active_at: article.active_at || published_at
     }
 
     (previous || %ArticlePublic{})

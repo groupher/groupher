@@ -164,6 +164,30 @@ defmodule RewriteWrappedInlineDo do
     end_index = rewrite.end_line - 1
     body_indent = rewrite.indent + 2
 
+    inline_do =
+      Enum.find_value(start_index..end_index, fn index ->
+        case Regex.run(~r/^(.*),\s*do:\s*(.+)$/, Enum.at(lines, index), capture: :all_but_first) do
+          [head, body] when index == end_index -> {index, head, body}
+          _ -> nil
+        end
+      end)
+
+    if inline_do && rewrite.clauses == [:do] do
+      {index, head, body} = inline_do
+      header = String.trim_trailing(head) <> " do"
+      body_line = String.duplicate(" ", body_indent) <> String.trim(body)
+      end_line = String.duplicate(" ", rewrite.indent) <> "end"
+
+      lines
+      |> List.replace_at(index, header)
+      |> List.insert_at(index + 1, body_line)
+      |> List.insert_at(index + 2, end_line)
+    else
+      rewrite_clause_lines(rewrite, lines, start_index, end_index, body_indent)
+    end
+  end
+
+  defp rewrite_clause_lines(rewrite, lines, start_index, end_index, body_indent) do
     {lines, parenthesized_close} =
       normalize_parenthesized_form(lines, start_index, end_index, rewrite)
 

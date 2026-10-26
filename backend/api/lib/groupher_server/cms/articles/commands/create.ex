@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.{Articles, Communities, Docs}
-  alias CMS.Articles.{Tags.Assignment, Effects, Query, RevisionResult}
+  alias CMS.Articles.{Bindings, Effects, RevisionProjection, RevisionResult, Tags.Assignment}
   alias CMS.FrontDesk
   alias CMS.Model.{Article, ArticleBinding, Community}
   alias CMS.Articles.Commands.RevisionConfirmation, as: Confirmation
@@ -94,8 +94,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
 
   defp confirmation_from_public(public, community, command_id) do
     with {:ok, %Article{} = article} <- FrontDesk.article(public.article_id, mode: :internal),
-         %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) <-
-           Query.binding(article.id, community.id),
+         {:ok, %ArticleBinding{inner_id: inner_id}} when is_integer(inner_id) <-
+           Bindings.fetch_binding(article.id, community.id),
          published_at when is_struct(published_at, DateTime) <- Map.get(public, :inserted_at),
          publication_version when is_integer(publication_version) <-
            Map.get(public, :publication_version, Map.get(public, :version, 1)) do
@@ -164,9 +164,16 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
              outbox_workflow_ref: "article-create:#{community.id}:#{article.id}"
            ] ++
              community_tag_opts(attrs),
-         {:ok, %{article: published}} <-
+         {:ok, publish_result} <-
            Articles.Commands.Publish.publish_after_gate(article, user, publish_opts),
-         {:ok, public} <- public_projection(published, community),
+         {:ok, public} <-
+           RevisionProjection.build(
+             publish_result.article,
+             community,
+             publish_result.revision,
+             publication_version: publish_result.public.publication_version,
+             published_at: publish_result.public.published_at
+           ),
          {:ok, _activity} <-
            Effects.activity(Map.put(public, :community_id, community.id), :created, actor: user) do
       {:ok, public}
@@ -174,8 +181,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   end
 
   defp public_projection(%Article{thread: thread, id: article_id}, community) do
-    case Query.binding(article_id, community.id) do
-      %ArticleBinding{inner_id: inner_id} when is_integer(inner_id) ->
+    case Bindings.fetch_binding(article_id, community.id) do
+      {:ok, %ArticleBinding{inner_id: inner_id}} when is_integer(inner_id) ->
         FrontDesk.article(%{
           community: community.slug,
           thread: thread,

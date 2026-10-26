@@ -3,7 +3,8 @@ defmodule GroupherServerWeb.Middleware.ServiceScopeTest do
 
   alias GroupherServer.Auth
   alias Auth.Contract, as: AuthContract
-  alias GroupherServerWeb.Middleware.ServiceScope
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+  alias GroupherServerWeb.Middleware.{GeneralError, GQLResultFmt, ServiceScope}
 
   @opts [audience: "phoenix:auth-api", scope: "auth:session:refresh"]
 
@@ -36,9 +37,10 @@ defmodule GroupherServerWeb.Middleware.ServiceScopeTest do
         },
         @opts
       )
+      |> finalize_error()
 
-    assert [[message: _message, extensions: %{code: code}]] = result.errors
-    assert code == AuthContract.service_scope_forbidden()
+    assert [%{message: _message, extensions: %{code: code}}] = result.errors
+    assert code == WebErrorCat.code(WebErrorCat.service_scope_forbidden())
   end
 
   test "preserves a verifier failure instead of collapsing it into scope denial" do
@@ -49,9 +51,10 @@ defmodule GroupherServerWeb.Middleware.ServiceScopeTest do
         },
         @opts
       )
+      |> finalize_error()
 
-    assert [[message: _message, extensions: %{code: code}]] = result.errors
-    assert code == AuthContract.service_jwks_unavailable()
+    assert [%{message: _message, extensions: %{code: code}}] = result.errors
+    assert code == WebErrorCat.code(WebErrorCat.jwks_unavailable())
   end
 
   test "rejects delegation verification failure before an otherwise authorized service" do
@@ -69,15 +72,23 @@ defmodule GroupherServerWeb.Middleware.ServiceScopeTest do
         },
         @opts
       )
+      |> finalize_error()
 
-    assert [[message: _message, extensions: %{code: code}]] = result.errors
+    assert [%{message: _message, extensions: %{code: code}}] = result.errors
     assert code == AuthContract.token_invalid()
   end
 
   test "returns an authentication code when no service identity is present" do
     result = ServiceScope.call(%Absinthe.Resolution{context: %{}}, @opts)
+    result = finalize_error(result)
 
-    assert [[message: _message, extensions: %{code: code}]] = result.errors
-    assert code == AuthContract.service_token_invalid()
+    assert [%{message: _message, extensions: %{code: code}}] = result.errors
+    assert code == WebErrorCat.code(WebErrorCat.invalid_service_token())
+  end
+
+  defp finalize_error(resolution) do
+    resolution
+    |> GQLResultFmt.call([])
+    |> GeneralError.call([])
   end
 end

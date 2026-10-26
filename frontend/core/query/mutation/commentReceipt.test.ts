@@ -9,7 +9,7 @@ describe('comment feed receipts', () => {
     writeCommentFeedReceipt({
       type: 'create',
       commandId: 'op-create',
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
       comment: { innerId: 'comment-1', bodyHtml: 'old' },
@@ -18,7 +18,7 @@ describe('comment feed receipts', () => {
     writeCommentFeedReceipt({
       type: 'update',
       commandId: 'op-update',
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
       comment: { innerId: 'comment-1', bodyHtml: 'new' },
@@ -33,7 +33,7 @@ describe('comment feed receipts', () => {
     writeCommentFeedReceipt({
       type: 'delete',
       commandId: 'op-delete',
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
       comment: { innerId: 'comment-1', bodyHtml: 'should-not-persist' },
@@ -50,7 +50,7 @@ describe('comment feed receipts', () => {
     writeCommentFeedReceipt({
       type: 'update',
       commandId: 'op-new',
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
       comment: { innerId: 'comment-1', bodyHtml: 'new' },
@@ -59,7 +59,7 @@ describe('comment feed receipts', () => {
     writeCommentFeedReceipt({
       type: 'update',
       commandId: 'op-legacy',
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
       comment: { innerId: 'comment-1', bodyHtml: 'old' },
@@ -74,7 +74,7 @@ describe('comment feed receipts', () => {
       writeCommentFeedReceipt({
         type: 'create',
         commandId: `op-${index}`,
-        accountRef: 'acct-a',
+        accountScope: 'acct-a',
         articleKey: 'home:POST:42',
         commentRef: `comment-${index}`,
         comment: { innerId: `comment-${index}` },

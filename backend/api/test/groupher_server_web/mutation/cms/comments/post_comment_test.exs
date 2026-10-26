@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -200,7 +200,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -305,79 +305,6 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert result["upvotesCount"] == 0
       assert not result["viewerHasUpvoted"]
-    end
-  end
-
-  describe "[article comment report]" do
-    test "login user can report a post comment",
-         ~m(community post user guest_conn user_conn)a do
-      {:ok, comment} =
-        CMS.Comments.create_comment(
-          community,
-          :post,
-          article_inner_id(post, community),
-          mock_comment(),
-          user,
-          Ecto.UUID.generate()
-        )
-
-      variables = %{
-        comment: comment_path(community, post, :post, comment),
-        reason: "reason",
-        attr: "attr"
-      }
-
-      assert guest_conn
-             |> mutation_error?(
-               S.Comment.m(:report_comment),
-               variables,
-               ErrorCat.code(ProfileErrorCat.account_login())
-             )
-
-      result = user_conn |> gq_mutation(S.Comment.m(:report_comment), variables)
-
-      assert result["innerId"] == to_string(comment.inner_id)
-      assert result["viewerHasReported"]
-      assert get_in(result, ["meta", "reportedCount"]) == 1
-    end
-
-    test "login user can undo report a post comment",
-         ~m(community post user guest_conn user_conn)a do
-      {:ok, comment} =
-        CMS.Comments.create_comment(
-          community,
-          :post,
-          article_inner_id(post, community),
-          mock_comment(),
-          user,
-          Ecto.UUID.generate()
-        )
-
-      variables = %{
-        comment: comment_path(community, post, :post, comment),
-        reason: "reason",
-        attr: "attr"
-      }
-
-      user_conn |> gq_mutation(S.Comment.m(:report_comment), variables)
-
-      undo_variables = %{
-        command_id: Ecto.UUID.generate(),
-        comment: comment_path(community, post, :post, comment)
-      }
-
-      assert guest_conn
-             |> mutation_error?(
-               S.Comment.m(:undo_report_comment),
-               undo_variables,
-               ErrorCat.code(ProfileErrorCat.account_login())
-             )
-
-      result = user_conn |> gq_mutation(S.Comment.m(:undo_report_comment), undo_variables)
-
-      assert result["innerId"] == to_string(comment.inner_id)
-      assert not result["viewerHasReported"]
-      assert get_in(result, ["meta", "reportedCount"]) == 0
     end
   end
 

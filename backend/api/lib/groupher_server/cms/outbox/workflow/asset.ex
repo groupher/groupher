@@ -4,25 +4,39 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Asset do
 
   Business position:
 
-      committed asset-delete outbox event
-        -> Asset.Cleanup worker
-        -> provider deletion delivery
+      Oban outbox job
+        -> Outbox.execute lease + fencing
+        -> Asset Effects provider deletion
+        -> complete / retry / snooze / terminal failure
   """
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, ErrorCat, Repo}
   alias CMS.Assets.Effects
+  alias CMS.Assets.ErrorCat, as: AssetErrorCat
   alias CMS.Model.CommunityAsset
 
+  @doc """
+  Delivers one asset-provider deletion event under the Outbox lease.
+
+  Busy leases snooze; transient provider errors retry; exhausted deliveries are
+  recorded as failed by Outbox and acknowledged so Oban stops retrying them.
+  """
+  @spec perform(Oban.Job.t()) :: Oban.Worker.result()
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
-    case CMS.Outbox.execute(event_id, &delete_provider_object/1) do
+    case CMS.Outbox.execute(event_id, &delete_provider_object/1,
+           on_error: if(job.attempt >= job.max_attempts, do: :fail, else: :classify)
+         ) do
       {:ok, _value} ->
         {:ok, :pass}
 
       {:busy, seconds} ->
         {:snooze, seconds}
 
-      {:error, _reason} when job.attempt >= job.max_attempts ->
-        _ = CMS.Outbox.mark_failed(event_id)
+      {:error,
+       %ErrorCat.Error{
+         namespace: {:cms},
+         reason: :outbox_delivery_exhausted
+       }} ->
         {:ok, :pass}
 
       {:error, reason} ->
@@ -46,7 +60,7 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Asset do
   end
 
   defp deliver_provider_object(resource_type, _event) do
-    {:error, {:unsupported_asset_cleanup_resource, resource_type}}
+    {:error, AssetErrorCat.unsupported_asset_cleanup_resource(%{resource_type: resource_type})}
   end
 
   defp normalize_delete_result({:ok, _result}), do: {:ok, :deleted}

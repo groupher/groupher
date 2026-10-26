@@ -346,15 +346,18 @@ defmodule GroupherServer.CMS.DocCover.Query do
       |> Enum.reject(&is_nil/1)
       |> Enum.uniq()
 
+    public_binding_ids = CMS.Articles.Pagination.public_binding_ids(:doc)
+
     Article
-    |> join(:inner, [article], binding in ArticleBinding,
-      on: binding.article_id == article.id and binding.visible == true
-    )
+    |> join(:inner, [article], binding in ArticleBinding, on: binding.article_id == article.id)
     |> join(:inner, [article, _binding], public in DocPublic, on: public.article_id == article.id)
     |> join(:inner, [article, _binding, public], branch in DocBranch,
       on: branch.id == public.branch_id and branch.type == :main
     )
-    |> where([_article, binding, _public, _branch], binding.community_id == ^community.id)
+    |> where(
+      [_article, binding, _public, _branch],
+      binding.community_id == ^community.id and binding.id in subquery(public_binding_ids)
+    )
     |> where([article, _binding, _public, _branch], article.id in ^doc_ids)
     |> where([_article, _binding, public, _branch], public.visible)
     |> select([article, binding, public, _branch], %{

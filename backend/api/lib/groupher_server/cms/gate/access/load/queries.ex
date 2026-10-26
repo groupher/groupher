@@ -25,6 +25,8 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     ArticleBinding,
     CommentLifecycle,
     CommunityLifecycle,
+    ArticleReviewBlock,
+    DocReviewBlock,
     DocBranch,
     DocBranchState,
     DocLifecycle
@@ -73,6 +75,40 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     |> Repo.one()
   end
 
+  @doc """
+  Checks for an active restriction matching one Article lifecycle and community.
+
+  ## Examples
+
+      Queries.article_review_restricted?(lifecycle_id, community_id)
+      #=> true | false
+  """
+  def article_review_restricted?(lifecycle_id, community_id) do
+    article_review_scope_keys(lifecycle_id, community_id) != []
+  end
+
+  @doc "Returns the active platform and community review scopes for an Article binding."
+  def article_review_scope_keys(lifecycle_id, community_id) do
+    case Repo.get(ArticleLifecycle, lifecycle_id) do
+      %ArticleLifecycle{article_id: article_id} ->
+        ArticleReviewBlock
+        |> where(
+          [restriction],
+          restriction.article_id == ^article_id and is_nil(restriction.resolved_at) and
+            (is_nil(restriction.community_id) or restriction.community_id == ^community_id)
+        )
+        |> select([restriction], restriction.community_id)
+        |> Repo.all()
+        |> Enum.map(fn
+          nil -> "platform"
+          id -> "community:#{id}"
+        end)
+
+      nil ->
+        []
+    end
+  end
+
   @doc "Loads a branch Lifecycle keyed by one stable Doc Article under `FOR UPDATE`."
   @spec doc_lifecycle(Ecto.UUID.t(), pos_integer()) :: DocLifecycle.t() | nil
   def doc_lifecycle(article_id, branch_id) do
@@ -83,6 +119,39 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     )
     |> lock("FOR UPDATE")
     |> Repo.one()
+  end
+
+  @doc """
+  Checks for an active platform restriction on one Doc branch lifecycle.
+
+  ## Examples
+
+      Queries.doc_review_restricted?(lifecycle_id)
+      #=> true | false
+  """
+  def doc_review_restricted?(lifecycle_id) do
+    doc_review_scope_keys(lifecycle_id) != []
+  end
+
+  @doc "Returns the active review scopes for a Doc branch."
+  def doc_review_scope_keys(lifecycle_id) do
+    case Repo.get(DocLifecycle, lifecycle_id) do
+      %DocLifecycle{article_id: article_id, branch_id: branch_id} ->
+        count =
+          Repo.aggregate(
+            from(restriction in DocReviewBlock,
+              where:
+                restriction.article_id == ^article_id and restriction.branch_id == ^branch_id and
+                  is_nil(restriction.resolved_at)
+            ),
+            :count
+          )
+
+        if count > 0, do: ["platform"], else: []
+
+      nil ->
+        []
+    end
   end
 
   @doc """

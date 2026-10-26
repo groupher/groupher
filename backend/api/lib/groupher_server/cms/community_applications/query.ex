@@ -76,6 +76,14 @@ defmodule GroupherServer.CMS.CommunityApplications.Query do
     error -> {:error, error}
   end
 
+  @doc """
+  Returns the user's most recent failed Application, if any.
+
+  ## Examples
+
+      Query.latest_failed(%User{id: 1})
+      #=> {:ok, %CommunityApplication{}} | {:ok, nil}
+  """
   @spec latest_failed(User.t()) :: {:ok, CommunityApplication.t() | nil}
   def latest_failed(%User{id: user_id}) do
     statuses = CommunityApplication.failed_statuses()
@@ -90,6 +98,14 @@ defmodule GroupherServer.CMS.CommunityApplications.Query do
     {:ok, application}
   end
 
+  @doc """
+  Returns a user's paginated application history, newest first.
+
+  ## Examples
+
+      Query.history(%User{id: 1}, %Pagi{})
+      #=> {:ok, %Pagi{entries: [%CommunityApplication{}]}}
+  """
   @spec history(User.t(), term()) :: {:ok, struct()} | {:error, term()}
   def history(%User{id: user_id}, pagi) do
     query =
@@ -110,6 +126,14 @@ defmodule GroupherServer.CMS.CommunityApplications.Query do
     )
   end
 
+  @doc """
+  Loads an Application by public reference only when it belongs to the user.
+
+  ## Examples
+
+      Query.owned("application-ref", %User{id: 1})
+      #=> {:ok, %CommunityApplication{}}
+  """
   @spec owned(String.t(), User.t()) ::
           {:ok, CommunityApplication.t()} | {:error, ErrorCat.error()}
   def owned(public_ref, %User{id: user_id}) when is_binary(public_ref) do
@@ -124,6 +148,17 @@ defmodule GroupherServer.CMS.CommunityApplications.Query do
     end
   end
 
+  @doc """
+  Loads an application with reviewer-facing associations for an authorized reviewer.
+
+  Authorization is enforced by the `CommunityApplications` facade before this
+  query is called.
+
+  ## Examples
+
+      Query.review_detail("application-ref")
+      #=> {:ok, %CommunityApplication{}}
+  """
   @spec review_detail(String.t()) ::
           {:ok, CommunityApplication.t()} | {:error, ErrorCat.error()}
   def review_detail(public_ref) when is_binary(public_ref) do
@@ -138,6 +173,17 @@ defmodule GroupherServer.CMS.CommunityApplications.Query do
     end
   end
 
+  @doc """
+  Returns the reviewer queue with the supported status, applicant, reviewer,
+  slug, and submission-time filters.
+
+  The public facade authorizes the reviewer before calling this query.
+
+  ## Examples
+
+      Query.review_queue(%{statuses: [:submitted]}, %Pagi{})
+      #=> {:ok, %Pagi{entries: [%CommunityApplication{}]}}
+  """
   @spec review_queue(map(), term()) :: {:ok, struct()} | {:error, term()}
   def review_queue(filter, pagi) when is_map(filter) do
     statuses = normalize_statuses(get(filter, :statuses, [])) |> Enum.sort()
@@ -165,6 +211,14 @@ defmodule GroupherServer.CMS.CommunityApplications.Query do
     )
   end
 
+  @doc """
+  Returns a paginated event history for an already loaded Application.
+
+  ## Examples
+
+      Query.events(%CommunityApplication{id: 1}, %Pagi{})
+      #=> {:ok, %Pagi{entries: [%CommunityApplicationEvent{}]}}
+  """
   @spec events(CommunityApplication.t(), term()) :: {:ok, struct()} | {:error, term()}
   def events(%CommunityApplication{id: application_id}, pagi) do
     query =
@@ -185,18 +239,68 @@ defmodule GroupherServer.CMS.CommunityApplications.Query do
     )
   end
 
+  @doc """
+  Loads the applicant for an Application result.
+
+  ## Examples
+
+      Query.applicant(%CommunityApplication{user_id: 1})
+      #=> {:ok, %User{}}
+  """
+  @spec applicant(CommunityApplication.t()) :: {:ok, User.t()} | {:error, term()}
   def applicant(%CommunityApplication{user_id: user_id}), do: fetch_user(user_id)
+
+  @doc """
+  Loads the reviewer for an Application result, returning `nil` when it has not
+  been assigned.
+
+  ## Examples
+
+      Query.reviewer(%CommunityApplication{reviewer_id: nil})
+      #=> {:ok, nil}
+  """
+  @spec reviewer(CommunityApplication.t()) :: {:ok, User.t() | nil} | {:error, term()}
   def reviewer(%CommunityApplication{reviewer_id: nil}), do: {:ok, nil}
   def reviewer(%CommunityApplication{reviewer_id: reviewer_id}), do: fetch_user(reviewer_id)
+
+  @doc """
+  Loads the related Community for an Application result, returning `nil` before
+  community creation.
+
+  ## Examples
+
+      Query.community(%CommunityApplication{community_id: nil})
+      #=> {:ok, nil}
+  """
+  @spec community(CommunityApplication.t()) :: {:ok, struct() | nil} | {:error, term()}
   def community(%CommunityApplication{community_id: nil}), do: {:ok, nil}
 
   def community(%CommunityApplication{community_id: community_id}) do
     CMSFrontDesk.community(community_id, mode: :internal)
   end
 
+  @doc """
+  Loads the actor for an event, returning `nil` for system-generated events.
+
+  ## Examples
+
+      Query.event_actor(%CommunityApplicationEvent{actor_id: nil})
+      #=> {:ok, nil}
+  """
+  @spec event_actor(CommunityApplicationEvent.t()) :: {:ok, User.t() | nil} | {:error, term()}
   def event_actor(%CommunityApplicationEvent{actor_id: nil}), do: {:ok, nil}
   def event_actor(%CommunityApplicationEvent{actor_id: actor_id}), do: fetch_user(actor_id)
 
+  @doc """
+  Returns the upload reference, promoted asset reference, and URL for an
+  Application logo.
+
+  ## Examples
+
+      Query.logo(%CommunityApplication{id: 1, logo_asset_ref: "upload-ref"})
+      #=> {:ok, %{application_upload_ref: "upload-ref", community_asset_ref: nil, url: "https://..."}}
+  """
+  @spec logo(CommunityApplication.t()) :: {:ok, map()} | {:error, ErrorCat.error()}
   def logo(%CommunityApplication{id: application_id, logo_asset_ref: upload_ref}) do
     case Repo.get_by(CommunityApplicationLogoUpload,
            application_id: application_id,
@@ -224,6 +328,15 @@ defmodule GroupherServer.CMS.CommunityApplications.Query do
     end
   end
 
+  @doc """
+  Finds a finalized or promoted upload by public reference.
+
+  ## Examples
+
+      Query.logo_origin("upload-ref")
+      #=> {:ok, %CommunityApplicationLogoUpload{}} | {:ok, nil}
+  """
+  @spec logo_origin(String.t()) :: {:ok, CommunityApplicationLogoUpload.t() | nil}
   def logo_origin(public_ref) when is_binary(public_ref) do
     case Repo.one(
            from(upload in CommunityApplicationLogoUpload,
@@ -270,15 +383,37 @@ defmodule GroupherServer.CMS.CommunityApplications.Query do
     Map.get(map, key, Map.get(map, Atom.to_string(key), default))
   end
 
-  @doc false
+  @doc """
+  Loads an Application by public reference or internal database ID.
+
+  This lookup is used by Community Application Commands to resolve targets and
+  recover command results. Product reads should use the public facade, which
+  applies ownership or reviewer authorization.
+
+  ## Examples
+
+      Query.application("application-ref")
+      #=> %CommunityApplication{} | nil
+  """
+  @spec application(String.t() | integer()) :: CommunityApplication.t() | nil
   def application(public_ref) when is_binary(public_ref) do
     Repo.get_by(CommunityApplication, public_ref: public_ref)
   end
 
-  @doc false
   def application(id), do: Repo.get(CommunityApplication, id)
 
-  @doc false
+  @doc """
+  Looks up the Application recorded for one submit command identity.
+
+  This is an internal idempotency query used by the submit Command; it is not a
+  product-facing lookup.
+
+  ## Examples
+
+      Query.by_submit_command(1, "command-id")
+      #=> %CommunityApplication{} | nil
+  """
+  @spec by_submit_command(integer(), String.t()) :: CommunityApplication.t() | nil
   def by_submit_command(user_id, key) do
     Repo.get_by(CommunityApplication, user_id: user_id, submit_command_id: key)
   end

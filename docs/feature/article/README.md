@@ -3,6 +3,7 @@
 > 状态：current
 
 - [`revision-draft-target.md`](./revision-draft-target.md)：Article Revision / Draft 目标架构与 `CMS.Articles` 全链路改造方案。
+- [ReviewBot / AlertWall V2](../alert-board/v2.md)：Article/Comment 提交审核、scope 限制、人工处理和 AI 结果应用的当前合同。
 - [`article-community.md`](./article-community.md)：Article 与 Community 的平级关系、Community-local 数据和当前实现偏差。
 - [`article-community-inner-id-fix.md`](./article-community-inner-id-fix.md)：公共 `inner_id` 从 stable Article 收敛到关系记录的迁移合同，以及后续 `ArticleBinding` 命名重构边界。
 - [`../../migrations/article-binding-naming-and-storage.md`](../../migrations/article-binding-naming-and-storage.md)：Article Binding 运行时命名、FrontDesk 路径边界和物理表重命名计划。

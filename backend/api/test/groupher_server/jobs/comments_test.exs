@@ -27,9 +27,6 @@ defmodule GroupherServer.Test.Jobs.Comments do
 
     calls = [
       {:sync_mentions, fn -> Jobs.sync_mentions(comment) end},
-      {:audition, fn -> Jobs.audition(comment) end},
-      {:notify_comment, fn -> Jobs.notify_comment(comment, actor) end},
-      {:notify_reply, fn -> Jobs.notify_reply(comment, actor) end},
       {:subscribe_community, fn -> Jobs.subscribe_community(community, actor) end},
       {:reconcile_comments_participants,
        fn -> Jobs.reconcile_comments_participants(:post, article_id, 7) end}

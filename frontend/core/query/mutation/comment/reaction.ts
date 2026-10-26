@@ -24,8 +24,8 @@ export const commentUpvoteOperation = {
   entityKey: (target: TCommentTarget) => `${target.articleKey}:${target.commentInnerId}`,
   queueKey: (target: TCommentTarget) => commentOperationQueueKey(target),
   read: (context: TReadOperationContext, target: TCommentTarget): boolean => {
-    if (context.accountRef) {
-      const prefix = viewerQueryKeys.commentStatePrefix(context.accountRef, target.articleKey)
+    if (context.accountScope) {
+      const prefix = viewerQueryKeys.commentStatePrefix(context.accountScope, target.articleKey)
       for (const { queryKey } of context.queryClient
         .getQueryCache()
         .findAll({ queryKey: prefix })) {
@@ -86,10 +86,10 @@ export const commentUpvoteOperation = {
         ? { commentInteractionRevision: result.commentInteractionRevision }
         : {}),
     }))
-    if (context.accountRef) {
+    if (context.accountScope) {
       patchCommentViewerState(
         context.queryClient,
-        context.accountRef,
+        context.accountScope,
         target.articleKey,
         target.commentInnerId,
         (state) => ({
@@ -101,10 +101,10 @@ export const commentUpvoteOperation = {
         }),
       )
     }
-    if (context.accountRef && result.reactionOutcome !== 'UNCHANGED') {
+    if (context.accountScope && result.reactionOutcome !== 'UNCHANGED') {
       writeCommentReactionReceipt({
         commandId: context.commandId,
-        accountRef: context.accountRef,
+        accountScope: context.accountScope,
         articleKey: target.articleKey,
         commentRef: target.commentInnerId,
         upvotesCount: result.upvotesCount || 0,
@@ -129,8 +129,8 @@ export const commentEmotionOperation = {
     `${target.articleKey}:${target.commentInnerId}:${target.emotionName.toUpperCase()}`,
   queueKey: (target: TCommentEmotionTarget) => commentOperationQueueKey(target),
   read: (context: TReadOperationContext, target: TCommentEmotionTarget): boolean => {
-    if (context.accountRef) {
-      const prefix = viewerQueryKeys.commentStatePrefix(context.accountRef, target.articleKey)
+    if (context.accountScope) {
+      const prefix = viewerQueryKeys.commentStatePrefix(context.accountScope, target.articleKey)
       for (const { queryKey } of context.queryClient
         .getQueryCache()
         .findAll({ queryKey: prefix })) {
@@ -193,13 +193,13 @@ export const commentEmotionOperation = {
         ? { commentInteractionRevision: result.commentInteractionRevision }
         : {}),
     }))
-    if (context.accountRef) {
+    if (context.accountScope) {
       const confirmed = (result.emotions || []).find(
         (emotion) => emotion.type === target.emotionName.toUpperCase(),
       )
       patchCommentViewerState(
         context.queryClient,
-        context.accountRef,
+        context.accountScope,
         target.articleKey,
         target.commentInnerId,
         (state) => ({
@@ -214,10 +214,10 @@ export const commentEmotionOperation = {
         }),
       )
     }
-    if (context.accountRef && result.reactionOutcome !== 'UNCHANGED') {
+    if (context.accountScope && result.reactionOutcome !== 'UNCHANGED') {
       writeCommentReactionReceipt({
         commandId: context.commandId,
-        accountRef: context.accountRef,
+        accountScope: context.accountScope,
         articleKey: target.articleKey,
         commentRef: target.commentInnerId,
         upvotesCount: result.upvotesCount || target.comment.upvotesCount || 0,

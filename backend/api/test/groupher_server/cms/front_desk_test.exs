@@ -25,4 +25,9 @@ defmodule GroupherServer.Test.CMS.FrontDeskTest do
     assert {:error, %ErrorCat.Error{reason: :unknown_policy_mode}} =
              CMS.FrontDesk.community(community.slug, owner, mode: :test)
   end
+
+  test "thread_of/1 does not infer a Doc thread from Article id alone" do
+    assert {:error, %ErrorCat.Error{}} =
+             CMS.FrontDesk.thread_of(%{article_id: Ecto.UUID.generate()})
+  end
 end

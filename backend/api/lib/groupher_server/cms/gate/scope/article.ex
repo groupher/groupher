@@ -1,12 +1,18 @@
 defmodule GroupherServer.CMS.Gate.Scope.Article do
   @moduledoc """
-  Builds complete public Article visibility into one query.
+  Builds complete public Article and Doc visibility into one query.
 
   Business position:
 
       Article query
         -> Gate Scope
-        -> public Article boundary
+        -> Lifecycle state + active review facts
+        -> public Article or Doc branch boundary
+
+  Ordinary Article visibility is evaluated from Lifecycle and active
+  `ArticleReviewBlock` rows. `ArticleBinding` carries the community
+  relationship only; `ArticlePublic` identifies the selected public head.
+  Doc visibility additionally requires the branch-scoped `DocPublic` head.
   """
 
   require GroupherServer.CMS.Docs.Const
@@ -19,14 +25,16 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.Gate.ErrorCat
-  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain, Policy}
+  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain, Policy, ReviewRead}
 
   alias CMS.Model.{
     ArticleDraft,
     ArticleLifecycle,
     ArticlePublic,
     Author,
+    ArticleReviewBlock,
     DocBranch,
+    DocReviewBlock,
     DocDraft,
     DocLifecycle,
     DocPublic
@@ -63,23 +71,6 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   end
 
   def scope(_query, _actor, _action, _context), do: {:error, ErrorCat.scope_context_missing()}
-
-  @doc false
-  @spec moderation_diagnostic_scope(Ecto.Queryable.t(), atom()) ::
-          Ecto.Query.t() | {:error, ErrorCat.error()}
-  def moderation_diagnostic_scope(queryable, thread) do
-    query = Ecto.Queryable.to_query(queryable)
-    branch_id = if thread == :doc, do: :main, else: nil
-
-    with {:ok, expected_schema} <- ArticleSchema.fetch(thread),
-         true <- root_schema(query) == expected_schema,
-         %Ecto.Query{} = query <- base_scope(query, thread, :public, branch_id) do
-      where(query, [article, ...], article.moderation_state == ^:illegal)
-    else
-      false -> {:error, ErrorCat.scope_root_mismatch()}
-      {:error, _reason} = error -> error
-    end
-  end
 
   defp base_scope(query, thread, policy_mode, branch_id)
 
@@ -219,7 +210,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   defp branch_id(%ArticleContext{}, _thread), do: {:ok, nil}
 
   defp apply_stage(query, :public, actor, _policy_mode, context) do
-    query = public_head_scope(query, context)
+    query = public_binding_scope(query, actor, context)
+
+    query = public_head_scope(query, context, actor)
 
     query =
       from([article, ...] in query,
@@ -238,6 +231,82 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
      query
      |> draft_head_scope(context)
      |> where([_article, ...], as(:gate_article_lifecycle).state in ^@draft_lifecycle_states)}
+  end
+
+  defp public_binding_scope(query, actor = %User{id: user_id}, %DocContext{}) do
+    author_ids = from(author in Author, where: author.user_id == ^user_id, select: author.id)
+    %{platform?: platform_read?} = ReviewRead.grants(actor)
+
+    from([article, ...] in query,
+      where:
+        not exists(
+          from(restriction in DocReviewBlock,
+            where:
+              restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                restriction.branch_id == parent_as(:gate_doc_branch).id and
+                is_nil(restriction.resolved_at),
+            select: 1
+          )
+        ) or article.author_id in subquery(author_ids) or ^platform_read?
+    )
+  end
+
+  defp public_binding_scope(query, actor = %User{id: user_id}, %ArticleContext{}) do
+    author_ids = from(author in Author, where: author.user_id == ^user_id, select: author.id)
+    %{platform?: platform_read?, community_slugs: community_slugs} = ReviewRead.grants(actor)
+
+    from([article, ...] in query,
+      where:
+        article.author_id in subquery(author_ids) or
+          ((not exists(
+              from(restriction in ArticleReviewBlock,
+                where:
+                  restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                    is_nil(restriction.community_id) and is_nil(restriction.resolved_at),
+                select: 1
+              )
+            ) or ^platform_read?) and
+             (not exists(
+                from(restriction in ArticleReviewBlock,
+                  where:
+                    restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                      restriction.community_id == parent_as(:gate_community).id and
+                      is_nil(restriction.resolved_at),
+                  select: 1
+                )
+              ) or ^platform_read? or as(:gate_community).slug in ^community_slugs))
+    )
+  end
+
+  defp public_binding_scope(query, _actor, %DocContext{}) do
+    from([_article, ...] in query,
+      where:
+        not exists(
+          from(restriction in DocReviewBlock,
+            where:
+              restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                restriction.branch_id == parent_as(:gate_doc_branch).id and
+                is_nil(restriction.resolved_at),
+            select: 1
+          )
+        )
+    )
+  end
+
+  defp public_binding_scope(query, _actor, _context) do
+    from([_article, ...] in query,
+      where:
+        not exists(
+          from(restriction in ArticleReviewBlock,
+            where:
+              restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                is_nil(restriction.resolved_at) and
+                (is_nil(restriction.community_id) or
+                   restriction.community_id == parent_as(:gate_community).id),
+            select: 1
+          )
+        )
+    )
   end
 
   defp apply_actor_policy(query, :public, :public, _context), do: {:ok, query}
@@ -309,42 +378,148 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     ArticleSchema.thread_for(schema)
   end
 
-  defp root_schema(%Ecto.Query{from: %{source: {_source, schema}}}), do: schema
-  defp root_schema(_query), do: nil
-
-  defp public_article(query, _actor, %{include_illegal: true}), do: query
-
-  defp public_article(query, %User{id: user_id}, _context) do
+  defp public_article(query, actor = %User{id: user_id}, %DocContext{}) do
     author_ids = from(author in Author, where: author.user_id == ^user_id, select: author.id)
+    %{platform?: platform_read?} = ReviewRead.grants(actor)
 
     from(article in query,
       where:
-        article.moderation_state != ^:illegal or
-          article.author_id in subquery(author_ids)
+        not exists(
+          from(restriction in DocReviewBlock,
+            where:
+              restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                restriction.branch_id == parent_as(:gate_doc_branch).id and
+                is_nil(restriction.resolved_at),
+            select: 1
+          )
+        ) or article.author_id in subquery(author_ids) or ^platform_read?
     )
   end
 
-  defp public_article(query, _actor, _context) do
+  defp public_article(query, actor = %User{id: user_id}, %ArticleContext{}) do
+    author_ids = from(author in Author, where: author.user_id == ^user_id, select: author.id)
+    %{platform?: platform_read?, community_slugs: community_slugs} = ReviewRead.grants(actor)
+
     from(article in query,
-      where: article.moderation_state != ^:illegal
+      where:
+        article.author_id in subquery(author_ids) or
+          ((not exists(
+              from(restriction in ArticleReviewBlock,
+                where:
+                  restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                    is_nil(restriction.community_id) and is_nil(restriction.resolved_at),
+                select: 1
+              )
+            ) or ^platform_read?) and
+             (not exists(
+                from(restriction in ArticleReviewBlock,
+                  where:
+                    restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                      restriction.community_id == parent_as(:gate_community).id and
+                      is_nil(restriction.resolved_at),
+                  select: 1
+                )
+              ) or as(:gate_community).slug in ^community_slugs))
     )
   end
 
-  defp public_head_scope(query, %DocContext{}) do
+  defp public_article(query, actor, %DocContext{}) do
+    %{platform?: platform_read?} = ReviewRead.grants(actor)
+
+    from(article in query,
+      where:
+        not exists(
+          from(restriction in DocReviewBlock,
+            where:
+              restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                restriction.branch_id == parent_as(:gate_doc_branch).id and
+                is_nil(restriction.resolved_at),
+            select: 1
+          )
+        ) or ^platform_read?
+    )
+  end
+
+  defp public_article(query, actor, %ArticleContext{}) do
+    %{platform?: platform_read?, community_slugs: community_slugs} = ReviewRead.grants(actor)
+
+    from(article in query,
+      where:
+        (not exists(
+           from(restriction in ArticleReviewBlock,
+             where:
+               restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                 is_nil(restriction.community_id) and is_nil(restriction.resolved_at),
+             select: 1
+           )
+         ) or ^platform_read?) and
+          (not exists(
+             from(restriction in ArticleReviewBlock,
+               where:
+                 restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                   restriction.community_id == parent_as(:gate_community).id and
+                   is_nil(restriction.resolved_at),
+               select: 1
+             )
+           ) or as(:gate_community).slug in ^community_slugs)
+    )
+  end
+
+  defp public_head_scope(query, %DocContext{}, %User{id: user_id} = actor) do
+    author_ids = from(author in Author, where: author.user_id == ^user_id, select: author.id)
+    %{platform?: platform_read?} = ReviewRead.grants(actor)
+
+    query =
+      from([article, ...] in query,
+        join: public in DocPublic,
+        as: :gate_article_public,
+        on: public.article_id == article.id and public.branch_id == as(:gate_doc_branch).id
+      )
+
     from([article, ...] in query,
-      join: public in DocPublic,
-      as: :gate_article_public,
-      on:
-        public.article_id == article.id and public.branch_id == as(:gate_doc_branch).id and
-          public.visible == true
+      where:
+        as(:gate_article_public).visible == true or
+          ((article.author_id in subquery(author_ids) or ^platform_read?) and
+             exists(
+               from(restriction in DocReviewBlock,
+                 where:
+                   restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                     restriction.branch_id == parent_as(:gate_doc_branch).id and
+                     is_nil(restriction.resolved_at),
+                 select: 1
+               )
+             ))
     )
   end
 
-  defp public_head_scope(query, %ArticleContext{}) do
+  defp public_head_scope(query, %DocContext{}, _actor) do
+    query =
+      from([article, ...] in query,
+        join: public in DocPublic,
+        as: :gate_article_public,
+        on: public.article_id == article.id and public.branch_id == as(:gate_doc_branch).id
+      )
+
+    from([article, ...] in query,
+      where:
+        as(:gate_article_public).visible == true and
+          not exists(
+            from(restriction in DocReviewBlock,
+              where:
+                restriction.article_id == parent_as(:gate_article_lifecycle).article_id and
+                  restriction.branch_id == parent_as(:gate_doc_branch).id and
+                  is_nil(restriction.resolved_at),
+              select: 1
+            )
+          )
+    )
+  end
+
+  defp public_head_scope(query, %ArticleContext{}, _actor) do
     from(article in query,
       join: public in ArticlePublic,
       as: :gate_article_public,
-      on: public.article_id == article.id and public.visible == true
+      on: public.article_id == article.id
     )
   end
 

@@ -34,24 +34,78 @@ const walk = (directory, accept, skip = () => false) =>
 /** Reports whether documentation contains the minimum syntax for an ASCII handoff or flow. */
 export const hasAsciiFlow = (text) => /-->|->|<->|\n\s*(?:\*\s*){0,1}[|+`]--?/.test(text)
 
+/** Masks Elixir comments and string literals while preserving offsets and line breaks. */
+const maskElixirCommentsAndStrings = (source) => {
+  const masked = source.split('')
+  let index = 0
+
+  const blank = (start, end) => {
+    for (let cursor = start; cursor < end; cursor += 1) {
+      if (masked[cursor] !== '\n' && masked[cursor] !== '\r') masked[cursor] = ' '
+    }
+  }
+
+  while (index < source.length) {
+    if (source[index] === '#') {
+      const start = index
+      while (index < source.length && source[index] !== '\n' && source[index] !== '\r') {
+        index += 1
+      }
+      blank(start, index)
+      continue
+    }
+
+    const quote = source[index]
+    if (quote !== '"' && quote !== "'") {
+      index += 1
+      continue
+    }
+
+    const delimiter = source.slice(index, index + 3) === quote.repeat(3) ? quote.repeat(3) : quote
+    const start = index
+    index += delimiter.length
+
+    while (index < source.length) {
+      if (source[index] === '\\') {
+        index += 2
+      } else if (source.slice(index, index + delimiter.length) === delimiter) {
+        index += delimiter.length
+        break
+      } else {
+        index += 1
+      }
+    }
+
+    blank(start, Math.min(index, source.length))
+  }
+
+  return masked.join('')
+}
+
 /** Returns module-documentation violations found in one Elixir source string. */
 export const findElixirModuleDocumentationIssues = (source) => {
   const issues = []
-  const modules = [...source.matchAll(/^\s*defmodule\s+([^\s]+)\s+do\s*$/gm)]
+  const structuralSource = maskElixirCommentsAndStrings(source)
+  const modules = [
+    ...structuralSource.matchAll(/^[\t ]*defmodule[\t ]+([^\s]+)[\t ]+do[\t ]*$/gm),
+  ]
 
   for (const [index, module] of modules.entries()) {
     const start = module.index + module[0].length
     const end = modules[index + 1]?.index ?? source.length
     const moduleHeader = source.slice(start, end)
+    const structuralHeader = structuralSource.slice(start, end)
     const name = module[1]
 
-    if (/^\s*@moduledoc\s+false/m.test(moduleHeader)) {
+    if (/^[\t ]*@moduledoc\s+false/m.test(structuralHeader)) {
       issues.push(`${name} uses @moduledoc false`)
       continue
     }
 
-    const heredoc = moduleHeader.match(/@moduledoc\s+"""([\s\S]*?)"""/)
-    const singleLine = moduleHeader.match(/@moduledoc\s+"([^"\n]*)"/)
+    const docAttribute = structuralHeader.search(/^[\t ]*@moduledoc\b/m)
+    const docSource = docAttribute < 0 ? '' : moduleHeader.slice(docAttribute)
+    const heredoc = docSource.match(/^\s*@moduledoc\s+"""([\s\S]*?)"""/)
+    const singleLine = docSource.match(/^\s*@moduledoc\s+"([^"\n]*)"/)
     const body = heredoc?.[1] ?? singleLine?.[1]
     if (!body) issues.push(`${name} is missing @moduledoc`)
     else if (!hasAsciiFlow(body))
@@ -384,10 +438,28 @@ const checkElixirSharedFunctions = () => {
   ].map((file) => path.join(root, file))
 
   const boundaryFiles = [
+    'backend/api/lib/groupher_server/front_desk.ex',
+    'backend/api/lib/groupher_server/cms/front_desk.ex',
+    'backend/api/lib/groupher_server/cms/front_desk/article.ex',
+    'backend/api/lib/groupher_server/cms/front_desk/comment.ex',
+    'backend/api/lib/groupher_server/cms/gate.ex',
+    'backend/api/lib/groupher_server/cms/communities/lifecycle.ex',
+    'backend/api/lib/groupher_server/cms/docs/lifecycle.ex',
+    'backend/api/lib/groupher_server/cms/passport/authorization.ex',
+    'backend/api/lib/groupher_server/cms/passport/registry.ex',
+    'backend/api/lib/groupher_server/cms/outbox/workflow.ex',
+    ...walk(path.join(root, 'backend/api/lib/groupher_server/cms/outbox/workflow'), (file) =>
+      file.endsWith('.ex'),
+    ).map((file) => relative(file)),
+    'backend/api/lib/groupher_server/cms/command/confirmation_definition.ex',
+    'backend/api/lib/groupher_server/cms/articles/query.ex',
+    'backend/api/lib/groupher_server/error_cat/workflow.ex',
+    'backend/api/lib/groupher_server/error_cat/validator.ex',
+    'backend/api/lib/groupher_server/command_pipeline.ex',
+    'backend/api/lib/groupher_server/command_pipeline/rejected.ex',
     'backend/api/lib/groupher_server/cms/comments/query.ex',
     'backend/api/lib/groupher_server/cms/comments/persist.ex',
     'backend/api/lib/groupher_server/cms/comments/lifecycle.ex',
-    'backend/api/lib/groupher_server/cms/comments/required_jobs.ex',
     'backend/api/lib/groupher_server/cms/comments/interaction_response.ex',
     'backend/api/lib/groupher_server/cms/articles/response.ex',
     'backend/api/lib/groupher_server/cms/articles/mutation_lock.ex',
@@ -445,9 +517,10 @@ const checkElixirSharedFunctions = () => {
       previousDefinition = index
       if (seen.has(identity)) return
       seen.add(identity)
-      const hasHiddenDoc = /^\s*@doc\s+false/m.test(prior)
+      const hasHiddenDoc = /^(?: {2}|\t)@doc[\t ]+false\b/m.test(prior)
       const acceptsHiddenDoc = contextDocFiles.includes(file) && hasHiddenDoc
-      if (!/^\s*@(doc|impl)\b/m.test(prior) || (hasHiddenDoc && !acceptsHiddenDoc)) {
+      const hasAdjacentDoc = /^(?: {2}|\t)@(doc|impl)\b/m.test(prior)
+      if (!hasAdjacentDoc || (hasHiddenDoc && !acceptsHiddenDoc)) {
         const label = strictArity ? identity : name
         fail(file, `shared public function ${label} is missing @doc or inherited @impl docs`)
       } else if (

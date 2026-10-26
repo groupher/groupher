@@ -2,7 +2,7 @@ defmodule GroupherServerWeb.PagiContractTest do
   use ExUnit.Case, async: true
   alias GroupherServerWeb.Schema
 
-  @pages ~w(community_moderator_page user_page community_page collect_folder_page article_collection_page comment_collection_page comment_page post_page blog_page changelog_page doc_page paged_mailbox_mentions paged_mailbox_notifications community_asset_page article_asset_ref_page report_page trash_page artiment_mention_page article_log_page community_activity_page community_application_page community_application_event_page search_artiment_page doc_tree_trash_page doc_branch_version_page browser_session_page)a
+  @pages ~w(community_moderator_page user_page community_page collect_folder_page article_collection_page comment_collection_page comment_page post_page blog_page changelog_page doc_page paged_mailbox_mentions paged_mailbox_notifications community_asset_page article_asset_ref_page trash_page artiment_mention_page article_log_page community_activity_page community_application_page community_application_event_page search_artiment_page doc_tree_trash_page doc_branch_version_page browser_session_page)a
 
   test "every paginated resource exposes entries and the single PageInfo union" do
     for name <- @pages do
@@ -21,7 +21,7 @@ defmodule GroupherServerWeb.PagiContractTest do
 
   test "obsolete pagination types and entry points are deleted" do
     for name <-
-          ~w(paged_posts paged_blogs paged_docs paged_changelogs paged_comments paged_users pagi_filter common_paged_filter paged_posts_filter community_application_connection community_application_event_connection)a do
+          ~w(paged_posts paged_blogs paged_docs paged_changelogs paged_comments paged_users pagi_filter common_paged_filter paged_posts_filter community_application_connection community_application_event_connection report_page report_filter abuse_report abuse_report_case)a do
       assert is_nil(Absinthe.Schema.lookup_type(Schema, name)), "obsolete type #{name} remains"
     end
 
@@ -35,7 +35,7 @@ defmodule GroupherServerWeb.PagiContractTest do
 
   test "business filters cannot carry a second pagination grammar" do
     for name <-
-          ~w(post_filter changelog_filter article_page_filter communities_filter user_list_filter mailbox_mentions_filter mailbox_notifications_filter community_asset_filter report_filter trash_filter community_applications_filter)a do
+          ~w(post_filter changelog_filter article_page_filter communities_filter user_list_filter mailbox_mentions_filter mailbox_notifications_filter community_asset_filter trash_filter community_applications_filter)a do
       type = Absinthe.Schema.lookup_type(Schema, name)
       assert type, "missing filter #{name}"
 

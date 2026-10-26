@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Docs.Commands.PublishBranch do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Articles.{Publish.Doc, Query}
+  alias CMS.Articles.Publish.Doc
   alias CMS.Docs.Editor
   alias CMS.Model.{Author, Community}
 
@@ -66,7 +66,10 @@ defmodule GroupherServer.CMS.Docs.Commands.PublishBranch do
         {:ok, community}
 
       _ ->
-        Query.branch_community(branch_id)
+        with {:ok, %{community_id: community_id}} <- CMS.Docs.Store.branch_context(branch_id),
+             {:ok, community} <- CMS.FrontDesk.community(community_id, mode: :internal) do
+          {:ok, community}
+        end
     end
   end
 end

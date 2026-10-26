@@ -9,7 +9,9 @@ import { cutRest } from '~/fmt'
 import Img from '~/Img'
 import { Link } from '~/platform'
 import type { TAccount, TUser } from '~/spec'
+import useAccount from '~/stores/account/hooks'
 import ImgFallback from '~/ui/ImgFallback'
+import ReportAction from '~/unit/AlertWall/ReportAction'
 
 import useSalon from './salon/user_card'
 
@@ -19,6 +21,7 @@ type TProps = {
 
 const UserCard: FC<TProps> = ({ user }) => {
   const s = useSalon()
+  const { user: currentUser } = useAccount()
 
   const { avatar, nickname, login, bio } = user
   const userLogin = login ?? ''
@@ -40,6 +43,9 @@ const UserCard: FC<TProps> = ({ user }) => {
         </div>
       </div>
       <div className={s.desc}>{cutRest(bio ?? '', 50)}</div>
+      {user.login && user.login !== currentUser?.login && (
+        <ReportAction target={{ type: 'USER', userLogin: user.login }} />
+      )}
     </div>
   )
 }

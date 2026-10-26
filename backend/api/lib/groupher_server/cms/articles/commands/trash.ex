@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
 
   alias GroupherServer.CommandPipeline
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias Accounts.Model.User
   alias CMS.Articles.Trash, as: TrashAgg
   alias CMS.Articles.{Bindings, Commands.TrashConfirmation}
@@ -90,7 +91,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
     execute_receipt(article, actor, opts, command_id)
   end
 
-  def execute(_article, _actor, _opts), do: {:error, :invalid_actor}
+  def execute(_article, _actor, _opts), do: {:error, CMS.Gate.ErrorCat.permission_denied()}
 
   @doc "Runs the internal Article Trash contract with the operations actor."
   @spec execute_internal(map(), keyword()) :: {:ok, TrashedArticle.t()} | {:error, term()}
@@ -127,24 +128,27 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
                   Bindings.get(article, community) |> normalize_binding()
 
                 nil ->
-                  {:error, :article_binding_not_found}
+                  {:error, ArticleErrorCat.binding_not_found()}
               end
 
             _ ->
-              {:error, :article_binding_context_required}
+              {:error, ArticleErrorCat.binding_context_required()}
           end
         else
           Bindings.get(article, Map.get(article, :community)) |> normalize_binding()
         end
 
       _ ->
-        {:error, :article_binding_context_required}
+        {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
   defp normalize_binding({:ok, %{community: %Community{} = community}}), do: {:ok, community}
   defp normalize_binding({:error, reason}), do: {:error, reason}
-  defp normalize_binding(_), do: {:error, :article_binding_not_found}
+
+  defp normalize_binding(_) do
+    {:error, ArticleErrorCat.binding_not_found()}
+  end
 
   defp build_rejection(%RejectionContext{
          arguments: %{article: article, opts: opts},

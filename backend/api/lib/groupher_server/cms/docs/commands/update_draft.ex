@@ -11,7 +11,6 @@ defmodule GroupherServer.CMS.Docs.Commands.UpdateDraft do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Docs.Editor
-  alias CMS.Articles.Query
   alias CMS.Model.Author
 
   @spec execute(Ecto.UUID.t(), pos_integer(), map(), User.t() | Author.t()) ::
@@ -80,6 +79,9 @@ defmodule GroupherServer.CMS.Docs.Commands.UpdateDraft do
   end
 
   defp branch_community(branch_id) do
-    Query.branch_community(branch_id)
+    with {:ok, %{community_id: community_id}} <- CMS.Docs.Store.branch_context(branch_id),
+         {:ok, community} <- CMS.FrontDesk.community(community_id, mode: :internal) do
+      {:ok, community}
+    end
   end
 end

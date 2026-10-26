@@ -62,6 +62,9 @@ defmodule Helper.PermissionConfig do
         "community.application.reject",
         "community.application.retry_creation",
         "community.application.retry_setup",
+        "review.platform.read",
+        "review.platform.decide",
+        "review.platform.configure",
         "category.create",
         "category.update",
         "category.delete",
@@ -112,7 +115,10 @@ defmodule Helper.PermissionConfig do
         "asset.upload",
         "doc.import",
         "community.update",
-        "article.insights.read"
+        "article.insights.read",
+        "review.read",
+        "review.decide",
+        "review.configure"
       ]
   end
 
@@ -163,6 +169,9 @@ defmodule Helper.PermissionConfig do
         scope: :global,
         grant: "community.application.retry_setup"
       },
+      "review.platform.read" => %{scope: :global, grant: "review.platform.read"},
+      "review.platform.decide" => %{scope: :global, grant: "review.platform.decide"},
+      "review.platform.configure" => %{scope: :global, grant: "review.platform.configure"},
       "article.mirror" => %{scope: :global, grant_by_thread: "community.mirror"},
       "article.unmirror" => %{scope: :global, grant_by_thread: "community.unmirror"},
       "article.move" => %{scope: :global, grant_by_thread: "community.move"},
@@ -208,6 +217,9 @@ defmodule Helper.PermissionConfig do
         context: :cms,
         grant: "article.insights.read"
       },
+      "review.read" => %{scope: :context, context: :cms, grant: "review.read"},
+      "review.decide" => %{scope: :context, context: :cms, grant: "review.decide"},
+      "review.configure" => %{scope: :context, context: :cms, grant: "review.configure"},
       "dashboard.theme.update" => %{scope: :context, context: :cms, grant: "community.update"},
       "dashboard.rss.update" => %{scope: :context, context: :cms, grant: "community.update"},
       "community_tag.create" => %{

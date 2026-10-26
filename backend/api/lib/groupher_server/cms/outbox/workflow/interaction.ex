@@ -4,27 +4,41 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
 
   Business position:
 
-      committed interaction outbox event
-        -> Interaction.Cleanup worker
-        -> notification and search effects
+      Oban outbox job
+        -> Outbox.execute lease + fencing
+        -> interaction notification / search effects
+        -> complete / retry / snooze / terminal failure
   """
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
   alias Accounts.Model.User
   alias CMS.Model.{Article, Comment}
+  alias CMS.Interactions.ErrorCat, as: InteractionErrorCat
   alias CMS.SearchArtiments.Indexer
   alias CMS.Events
 
+  @doc """
+  Delivers one interaction outbox event to notifications and search under a lease.
+
+  Busy leases snooze; transient delivery errors retry; after exhaustion Outbox
+  records terminal failure and the job is acknowledged.
+  """
+  @spec perform(Oban.Job.t()) :: Oban.Worker.result()
   def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
-    case CMS.Outbox.execute(event_id, &cleanup/1) do
+    case CMS.Outbox.execute(event_id, &cleanup/1,
+           on_error: if(job.attempt >= job.max_attempts, do: :fail, else: :classify)
+         ) do
       {:ok, _value} ->
         {:ok, :pass}
 
       {:busy, seconds} ->
         {:snooze, seconds}
 
-      {:error, _reason} when job.attempt >= job.max_attempts ->
-        _ = CMS.Outbox.mark_failed(event_id)
+      {:error,
+       %ErrorCat.Error{
+         namespace: {:cms},
+         reason: :outbox_delivery_exhausted
+       }} ->
         {:ok, :pass}
 
       {:error, reason} ->
@@ -46,27 +60,27 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
   defp load_target("article", id) do
     case Repo.get(Article, id) do
       %Article{} = article -> {:ok, article}
-      nil -> {:error, :interaction_target_not_found}
+      nil -> {:error, InteractionErrorCat.interaction_target_not_found()}
     end
   end
 
   defp load_target("comment", id) do
     case Repo.get(Comment, id) do
       %Comment{} = comment -> {:ok, comment}
-      nil -> {:error, :interaction_target_not_found}
+      nil -> {:error, InteractionErrorCat.interaction_target_not_found()}
     end
   end
 
-  defp load_target(_, _), do: {:error, :interaction_target_invalid}
+  defp load_target(_, _), do: {:error, InteractionErrorCat.interaction_target_invalid()}
 
   defp load_actor(id) when is_integer(id) or is_binary(id) do
     case Repo.get(User, id) do
       %User{} = actor -> {:ok, actor}
-      nil -> {:error, :interaction_actor_not_found}
+      nil -> {:error, InteractionErrorCat.interaction_actor_not_found()}
     end
   end
 
-  defp load_actor(_), do: {:error, :interaction_actor_invalid}
+  defp load_actor(_), do: {:error, InteractionErrorCat.interaction_actor_invalid()}
 
   defp emit_event("interaction.upvote_changed", target, actor, data) do
     with {:ok, _} <-

@@ -30,7 +30,6 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ProjectionContractTest do
     commentViewerStates(article: $article, commentInnerIds: $commentInnerIds) {
       innerId
       viewerHasUpvoted
-      viewerHasReported
       emotions {
         type
         viewerHasReacted
@@ -47,7 +46,6 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ProjectionContractTest do
           innerId
           commentInteractionRevision
           viewerHasUpvoted
-          viewerHasReported
           emotions {
             type
             count
@@ -122,7 +120,6 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ProjectionContractTest do
                %{
                  "innerId" => comment_inner_id,
                  "viewerHasUpvoted" => true,
-                 "viewerHasReported" => false,
                  "emotions" => [
                    %{"type" => "DOWNVOTE", "viewerHasReacted" => true}
                  ]
@@ -140,7 +137,6 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ProjectionContractTest do
                      "innerId" => comment_inner_id,
                      "commentInteractionRevision" => 2,
                      "viewerHasUpvoted" => true,
-                     "viewerHasReported" => false,
                      "emotions" => [
                        %{
                          "type" => "DOWNVOTE",
@@ -195,7 +191,6 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ProjectionContractTest do
                  "innerId" => Integer.to_string(comment.inner_id),
                  "commentInteractionRevision" => 0,
                  "viewerHasUpvoted" => false,
-                 "viewerHasReported" => false,
                  "emotions" => []
                }
              }

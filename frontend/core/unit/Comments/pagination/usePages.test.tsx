@@ -18,7 +18,9 @@ vi.mock('~/query', () => ({
     },
   },
 }))
-vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountRef: 'alice', user: null }) }))
+vi.mock('~/stores/account/hooks', () => ({
+  default: () => ({ accountScope: 'alice', user: null }),
+}))
 vi.mock('~/hooks/useViewingArticle', () => ({ default: () => ({ stats: {} }) }))
 const collection = {
   article: { community: 'home', thread: 'POST' as const, innerId: '1' },

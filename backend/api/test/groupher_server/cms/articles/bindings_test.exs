@@ -10,8 +10,24 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
   setup do
     {community, post, _, user} = mock_article(:post)
     {:ok, destination} = mock_community(user)
+    user = grant_binding_actions(user, [community, destination])
 
     {:ok, ~m(community destination post user)a}
+  end
+
+  defp grant_binding_actions(user, communities) do
+    grants =
+      Enum.into(communities, %{}, fn community ->
+        {community.slug, %{"cms" => %{"post.pin" => true}}}
+      end)
+
+    global = %{
+      "post.community.mirror" => true,
+      "post.community.move" => true,
+      "post.community.unmirror" => true
+    }
+
+    Map.put(user, :cur_passport, Map.merge(%{"global" => global}, grants))
   end
 
   test "all/1 returns every binding without selecting one implicitly",
@@ -39,6 +55,25 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
     assert Enum.map(bindings, & &1.community_id) |> Enum.sort() ==
              Enum.sort([community.id, destination.id])
+  end
+
+  test "fetch_binding/2 and fetch_pin/2 return tagged catalog errors for missing rows",
+       ~m(community post)a do
+    assert {:ok, %ArticleBinding{article_id: article_id, community_id: community_id}} =
+             Bindings.fetch_binding(post.article_id, community.id)
+
+    assert article_id == post.article_id
+    assert community_id == community.id
+
+    assert {:error,
+            %ErrorCat.Error{
+              namespace: {:cms, :article},
+              reason: :binding_not_found
+            }} =
+             Bindings.fetch_binding(Ecto.UUID.generate(), community.id)
+
+    assert {:error, %ErrorCat.Error{namespace: {:cms, :article}, reason: :pin_not_found}} =
+             Bindings.fetch_pin(post.article_id, community.id)
   end
 
   test "Tags.replace/2 and list/1 own binding-local assignments",

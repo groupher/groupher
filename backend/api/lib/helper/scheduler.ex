@@ -18,8 +18,6 @@ defmodule Helper.Scheduler do
 
   alias GroupherServer.CMS
 
-  alias CMS.Events
-
   @threads CMS.artiment_config_threads()
 
   @doc """
@@ -44,38 +42,4 @@ defmodule Helper.Scheduler do
     CMS.trash_purge_due()
   end
 
-  @doc "Emits audit events for failed Post and Blog moderation records."
-  def articles_audition do
-    audit_articles(:post)
-    audit_articles(:blog)
-  end
-
-  @doc "Emits audit events for the current page of failed comment moderation records."
-  def comments_audition do
-    with {:ok, paged_comments} <-
-           CMS.comments_paged_audit_failed_comments(%GroupherServer.Pagi.Params.Offset{
-             page: 1,
-             size: 30
-           }) do
-      Enum.map(paged_comments.entries, fn comment ->
-        Events.emit(:audition, %{artiment: comment})
-      end)
-      |> done
-    end
-  end
-
-  defp audit_articles(thread) do
-    with {:ok, paged_articles} <-
-           CMS.articles_paged_audit_failed(thread, %GroupherServer.Pagi.Params.Offset{
-             page: 1,
-             size: 30
-           }) do
-      Enum.map(paged_articles.entries, fn article ->
-        Events.emit(:audition, %{artiment: article})
-        # the free audition service's QPS is limit to 2
-        Process.sleep(500)
-      end)
-      |> done
-    end
-  end
 end

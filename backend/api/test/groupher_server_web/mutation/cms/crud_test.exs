@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @create_category_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @create_category_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
 
@@ -132,7 +132,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @update_category_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -146,7 +146,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @update_category_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
 
@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @set_category_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -234,14 +234,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @set_category_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert user_conn
              |> mutation_error?(
                @unset_category_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -255,7 +255,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @unset_category_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
   end
@@ -335,7 +335,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -349,7 +349,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
 
@@ -391,7 +391,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -405,7 +405,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
 
@@ -601,7 +601,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @set_moderator_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -615,7 +615,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @set_moderator_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
   end

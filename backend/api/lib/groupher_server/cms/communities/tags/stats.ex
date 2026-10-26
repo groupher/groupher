@@ -22,12 +22,14 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.{Articles.Trash, Communities.ErrorCat, FrontDesk}
+  alias CMS.{Communities.ErrorCat, FrontDesk}
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
 
   alias CMS.Model.{
     Article,
-    ArticleBinding,
+    ArticleLifecycle,
     ArticleBindingTag,
+    ArticleReviewBlock,
     Community,
     CommunityTag,
     CommunityTagStat
@@ -35,7 +37,6 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
 
   alias Helper.{Datetime, ORM, T}
 
-  @audit_illegal :illegal
   @tracked_threads CMS.Communities.Config.ordinary_article_threads()
   @default_thread :post
 
@@ -77,13 +78,14 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
 
   def update_many(article, tag_deltas) do
     trackable_tag_deltas =
-      Enum.filter(tag_deltas, fn {tag, _delta} -> trackable_tag?(tag) end)
+      Enum.filter(tag_deltas, fn {tag, _delta} ->
+        trackable_tag?(tag) and match?({:ok, true}, trackable_article?(article, tag.community_id))
+      end)
 
     if trackable_tag_deltas == [] do
       done(:pass)
     else
-      with {:ok, true} <- valid_article_tag_pairs?(article, trackable_tag_deltas),
-           {:ok, true} <- trackable_article?(article) do
+      with {:ok, true} <- valid_article_tag_pairs?(article, trackable_tag_deltas) do
         upsert_deltas(article, trackable_tag_deltas)
       end
     end
@@ -94,7 +96,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
     with {:ok, tag} <- ensure_tag(tag),
          true <- trackable_tag?(tag),
          {:ok, true} <- valid_article_tag_pair?(article, tag),
-         {:ok, true} <- trackable_article?(article) do
+         {:ok, true} <- trackable_article?(article, tag.community_id) do
       upsert_delta(article, tag, delta)
     else
       false -> done(:pass)
@@ -170,17 +172,13 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
 
   defp base_rebuild_query(%CommunityTag{thread: thread} = tag) do
     Article
-    |> Trash.not_trashed_scope(thread)
-    |> join(:inner, [article], binding in ArticleBinding,
-      on: binding.article_id == article.id and binding.community_id == ^tag.community_id
+    |> CMS.Gate.scope(nil, :list, ArticleContext.public(thread))
+    |> join(:inner, [article, ...], assignment in ArticleBindingTag,
+      on: assignment.article_binding_id == as(:gate_article_binding).id
     )
-    |> join(:inner, [_article, binding], assignment in ArticleBindingTag,
-      on: assignment.article_binding_id == binding.id
-    )
-    |> where([article, _binding, assignment], assignment.tag_id == ^tag.id)
     |> where(
-      [article, ...],
-      article.thread == ^thread and article.moderation_state != ^@audit_illegal
+      [article, ..., assignment],
+      assignment.tag_id == ^tag.id and article.thread == ^thread
     )
   end
 
@@ -337,9 +335,26 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
   defp ensure_tag(%CommunityTag{} = tag), do: done(tag)
   defp ensure_tag(id), do: FrontDesk.community_tag(id)
 
-  defp trackable_article?(article) do
+  defp trackable_article?(article, community_id) do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
-      done(thread in @tracked_threads and visible?(article))
+      if thread in @tracked_threads do
+        lifecycle = Repo.get_by(ArticleLifecycle, article_id: Map.get(article, :id))
+
+        visible? =
+          match?(%ArticleLifecycle{state: state} when state in [:published, :archived], lifecycle) and
+            not Repo.exists?(
+              from(restriction in ArticleReviewBlock,
+                where:
+                  restriction.article_id == ^lifecycle.article_id and
+                    is_nil(restriction.resolved_at) and
+                    (is_nil(restriction.community_id) or restriction.community_id == ^community_id)
+              )
+            )
+
+        done(visible?)
+      else
+        done(false)
+      end
     end
   end
 
@@ -368,10 +383,6 @@ defmodule GroupherServer.CMS.Communities.Tags.Stats do
         error -> {:halt, error}
       end
     end)
-  end
-
-  defp visible?(article) do
-    Map.get(article, :pending) != @audit_illegal
   end
 
   defp same_utc_day?(nil, _today), do: false

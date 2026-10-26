@@ -6,12 +6,12 @@ import LogoStep from './LogoStep'
 import StoryStep from './StoryStep'
 import TypeStep from './TypeStep'
 
-type Props = { accountRef: string }
+type Props = { accountScope: string }
 
-export default function ApplyFlow({ accountRef }: Props) {
+export default function ApplyFlow({ accountScope }: Props) {
   const { currentStep, canContinue, nextStep, previousStep } = useApplyStep()
-  const { draft, updateField } = useApplyDraft(accountRef)
-  const { submitting, submitError, submit } = useApplySubmit(accountRef)
+  const { draft, updateField } = useApplyDraft(accountScope)
+  const { submitting, submitError, submit } = useApplySubmit(accountScope)
 
   return (
     <section className='apply-card'>

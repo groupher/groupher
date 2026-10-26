@@ -25,9 +25,6 @@ export const CommentEmotionFields = graphql(`
 
 export const CommentMetaFields = graphql(`
   fragment CommentMetaFields on CommentMeta {
-    isLegal
-    illegalReason
-    illegalWords
     isArticleAuthorUpvoted
     isReplyToOthers
   }
@@ -58,7 +55,6 @@ export const CommentFields = graphql(`
     commentInteractionRevision
     isArticleAuthor
     viewerHasUpvoted
-    viewerHasReported
     repliesCount
     insertedAt
     updatedAt

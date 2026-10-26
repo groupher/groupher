@@ -6,7 +6,7 @@ import type { ApplyDraft } from '../spec'
 import { emptyDraft } from '../store'
 
 /** Exposes apply draft state and actions through the shared React hook boundary. */
-export const useApplyDraft = (accountRef: string) => {
+export const useApplyDraft = (accountScope: string) => {
   const store = useApplyStore()
   const snapshot = useSnapshot(store)
 
@@ -17,7 +17,7 @@ export const useApplyDraft = (accountRef: string) => {
     },
     clearDraft: () => {
       Object.assign(store, emptyDraft(), { hydrated: true })
-      removeDraft(accountRef)
+      removeDraft(accountScope)
     },
   }
 }

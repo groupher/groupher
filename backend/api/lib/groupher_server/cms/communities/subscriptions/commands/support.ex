@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Commands.Support do
   """
 
   alias GroupherServer.CMS
-  alias CMS.Communities.{ErrorCat, Query}
+  alias CMS.Communities.ErrorCat
   alias CMS.FrontDesk
   alias CMS.Model.Community
 
@@ -18,9 +18,9 @@ defmodule GroupherServer.CMS.Communities.Subscriptions.Commands.Support do
   end
 
   def community_result(%{data: %{"community_id" => id}}) do
-    case Query.get(id) do
-      %Community{slug: slug} -> FrontDesk.community(slug, mode: :internal)
-      nil -> {:error, ErrorCat.not_exist("Community")}
+    case FrontDesk.community(id, mode: :internal) do
+      {:ok, %Community{} = community} -> {:ok, community}
+      {:error, _reason} -> {:error, ErrorCat.not_exist("Community")}
     end
   end
 

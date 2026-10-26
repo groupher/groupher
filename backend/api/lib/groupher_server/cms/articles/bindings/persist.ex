@@ -19,10 +19,13 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, ErrorCat, Repo}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
 
   alias CMS.Articles.ArticleView
   alias CMS.Model.{Article, ArticleBinding, Community}
+  alias CMS.Articles.{ArticleView, ErrorCat}
+  alias CMS.Model.PinnedArticle
 
   @type t :: %{
           article_id: Ecto.UUID.t(),
@@ -45,8 +48,42 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
     binding(article_id, community)
   end
 
-  def get(_article, %Community{}), do: {:error, :article_binding_context_required}
-  def get(_article, _community), do: {:error, :article_binding_context_required}
+  def get(_article, %Community{}), do: {:error, ArticleErrorCat.binding_context_required()}
+  def get(_article, _community), do: {:error, ArticleErrorCat.binding_context_required()}
+
+  @doc "Fetches one binding by stable Article and Community ids with a structured not-found error."
+  @spec fetch_binding(Ecto.UUID.t(), pos_integer()) ::
+          {:ok, ArticleBinding.t()} | {:error, Error.t()}
+  def fetch_binding(article_id, community_id)
+      when is_binary(article_id) and is_integer(community_id) do
+    case Repo.get_by(ArticleBinding, article_id: article_id, community_id: community_id) do
+      %ArticleBinding{} = binding -> {:ok, binding}
+      nil -> {:error, ErrorCat.binding_not_found()}
+    end
+  end
+
+  def fetch_binding(_article_id, _community_id), do: {:error, ErrorCat.binding_not_found()}
+
+  @doc "Fetches one pinned Article row by stable Article and Community ids."
+  @spec fetch_pin(Ecto.UUID.t(), pos_integer()) ::
+          {:ok, PinnedArticle.t()} | {:error, Error.t()}
+  def fetch_pin(article_id, community_id)
+      when is_binary(article_id) and is_integer(community_id) do
+    query =
+      from(pin in PinnedArticle,
+        join: binding in ArticleBinding,
+        on: pin.article_binding_id == binding.id,
+        where: binding.article_id == ^article_id and binding.community_id == ^community_id,
+        select: pin
+      )
+
+    case Repo.one(query) do
+      %PinnedArticle{} = pin -> {:ok, pin}
+      nil -> {:error, ErrorCat.pin_not_found()}
+    end
+  end
+
+  def fetch_pin(_article_id, _community_id), do: {:error, ErrorCat.pin_not_found()}
 
   @doc "Resolves a Binding by id and verifies both Article and optional Community ownership."
   @spec get_by_id(map(), pos_integer(), integer() | nil) ::
@@ -64,7 +101,7 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
         {:error, :invalid_article_binding}
 
       nil ->
-        {:error, :article_binding_not_found}
+        {:error, ArticleErrorCat.binding_not_found()}
     end
   end
 
@@ -88,7 +125,7 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
 
       {:ok, bindings}
     else
-      {:error, :article_binding_context_required}
+      {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
@@ -107,7 +144,7 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
          }}
 
       _ ->
-        {:error, :article_binding_not_found}
+        {:error, ArticleErrorCat.binding_not_found()}
     end
   end
 end

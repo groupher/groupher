@@ -30,7 +30,7 @@ end
 
 defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
   @moduledoc """
-  Embedded account metadata for moderation, follows, and per-thread publication totals.
+  Embedded account metadata for follows and per-thread publication totals.
 
   Business position:
 
@@ -53,15 +53,8 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
 
   @general_options %{
     is_maker: false,
-    reported_count: 0,
-    reported_user_ids: [],
     follower_user_ids: [],
     following_user_ids: [],
-    # audit_artiment state
-    has_illegal_articles: false,
-    illegal_articles: [],
-    has_illegal_comments: false,
-    illegal_comments: [],
     subscribed_communities_ids: []
   }
 
@@ -80,17 +73,8 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
   embedded_schema do
     field(:is_maker, :boolean, default: false)
 
-    field(:reported_count, :integer, default: 0)
-    field(:reported_user_ids, {:array, :integer}, default: [])
-
     field(:follower_user_ids, {:array, :integer}, default: [])
     field(:following_user_ids, {:array, :integer}, default: [])
-
-    field(:has_illegal_articles, :boolean, default: false)
-    field(:has_illegal_comments, :boolean, default: false)
-
-    field(:illegal_articles, {:array, :string}, default: [])
-    field(:illegal_comments, {:array, :string}, default: [])
 
     field(:subscribed_communities_ids, {:array, :id}, default: [])
 

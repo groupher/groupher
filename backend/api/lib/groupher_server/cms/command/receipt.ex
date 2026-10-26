@@ -11,8 +11,8 @@ defmodule GroupherServer.CMS.Command.Receipt do
   writes. This facade exposes only the shared receipt protocol used around them.
   """
 
-  alias __MODULE__.{Key, Runner, Store}
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Command.Receipt.{Key, Runner, Store}
   alias Accounts.Model.User
   alias CMS.Command
   alias Helper.T

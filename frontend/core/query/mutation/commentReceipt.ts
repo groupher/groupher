@@ -12,7 +12,7 @@ import {
   writeSessionReceipt,
 } from '../sessionReceiptStorage'
 
-const RECEIPT_VERSION = 3
+const RECEIPT_VERSION = 4
 const storagePrefix = 'groupher:comment-feed-receipt:'
 
 type TCommentFeedProjection = {
@@ -32,8 +32,8 @@ export type TCommentFeedEffect = {
 }
 
 type TCommentFeedSlot = {
-  schemaVersion: 3
-  accountRef: string
+  schemaVersion: 4
+  accountScope: string
   articleKey: string
   effects: Record<string, TCommentFeedEffect>
   expiresAt: number
@@ -43,29 +43,29 @@ type TCommentFeedConfirmation = Omit<
   TCommentFeedEffect,
   'confirmedAt' | 'expiresAt' | 'tombstone'
 > & {
-  accountRef: string
+  accountScope: string
   articleKey: string
 }
 
-const storageKey = (accountRef: string, articleKey: string): string =>
-  `${storagePrefix}${accountRef}:${articleKey}`
+const storageKey = (accountScope: string, articleKey: string): string =>
+  `${storagePrefix}${accountScope}:${articleKey}`
 
 const validSlot = (slot: TCommentFeedSlot): boolean =>
-  Boolean(slot.accountRef && slot.articleKey && slot.effects)
+  Boolean(slot.accountScope && slot.articleKey && slot.effects)
 
-const readSlot = (accountRef: string, articleKey: string): TCommentFeedSlot | null =>
+const readSlot = (accountScope: string, articleKey: string): TCommentFeedSlot | null =>
   readSessionReceipt(
-    storageKey(accountRef, articleKey),
+    storageKey(accountScope, articleKey),
     RECEIPT_VERSION,
     (slot: TCommentFeedSlot) =>
-      validSlot(slot) && slot.accountRef === accountRef && slot.articleKey === articleKey,
+      validSlot(slot) && slot.accountScope === accountScope && slot.articleKey === articleKey,
   )
 
 /** Merges one confirmed create, update, or delete effect into the bounded Article slot. */
 export const writeCommentFeedReceipt = (confirmation: TCommentFeedConfirmation): void => {
-  const { accountRef, articleKey, commentRef } = confirmation
+  const { accountScope, articleKey, commentRef } = confirmation
   listSessionReceipts(storagePrefix, RECEIPT_VERSION, validSlot)
-  const current = readSlot(accountRef, articleKey)
+  const current = readSlot(accountScope, articleKey)
   const existing = current?.effects[commentRef]
   const existingRevision = existing?.publicProjection.commentsRevision
   const confirmedRevision = confirmation.publicProjection.commentsRevision
@@ -97,9 +97,9 @@ export const writeCommentFeedReceipt = (confirmation: TCommentFeedConfirmation):
       .sort(([, left], [, right]) => right.confirmedAt - left.confirmedAt)
       .slice(0, CONFIRMED_COMMENT_RECEIPT_MAX_REFS),
   )
-  writeSessionReceipt(storageKey(accountRef, articleKey), {
+  writeSessionReceipt(storageKey(accountScope, articleKey), {
     schemaVersion: RECEIPT_VERSION,
-    accountRef,
+    accountScope,
     articleKey,
     effects,
     expiresAt: Math.max(...Object.values(effects).map((item) => item.expiresAt)),
@@ -108,20 +108,21 @@ export const writeCommentFeedReceipt = (confirmation: TCommentFeedConfirmation):
 
 /** Reads live Comment feed effects while pruning expired entries from their slot. */
 export const readCommentFeedReceipts = (
-  accountRef: string | null,
+  accountScope: string | null,
   articleKey: string,
 ): TCommentFeedEffect[] => {
-  if (!accountRef) return []
-  const slot = readSlot(accountRef, articleKey)
+  if (!accountScope) return []
+  const slot = readSlot(accountScope, articleKey)
   if (!slot) return []
   const now = Date.now()
   const effects = Object.fromEntries(
     Object.entries(slot.effects).filter(([, effect]) => effect.expiresAt > now),
   )
   if (Object.keys(effects).length !== Object.keys(slot.effects).length) {
-    if (Object.keys(effects).length === 0) removeSessionReceipt(storageKey(accountRef, articleKey))
+    if (Object.keys(effects).length === 0)
+      removeSessionReceipt(storageKey(accountScope, articleKey))
     else
-      writeSessionReceipt(storageKey(accountRef, articleKey), {
+      writeSessionReceipt(storageKey(accountScope, articleKey), {
         ...slot,
         effects,
         expiresAt: Math.max(...Object.values(effects).map((effect) => effect.expiresAt)),
@@ -131,22 +132,22 @@ export const readCommentFeedReceipts = (
 }
 
 /** Clears every Comment feed confirmation owned by one account. */
-export const clearCommentFeedReceipts = (accountRef: string | null): void => {
-  if (accountRef) clearSessionReceipts(`${storagePrefix}${accountRef}:`)
+export const clearCommentFeedReceipts = (accountScope: string | null): void => {
+  if (accountScope) clearSessionReceipts(`${storagePrefix}${accountScope}:`)
 }
 
 /** Removes one entity effect without discarding other unconsumed Comment confirmations. */
 export const clearCommentFeedReceipt = (
-  accountRef: string | null,
+  accountScope: string | null,
   articleKey: string,
   commentRef: string,
 ): void => {
-  if (!accountRef) return
-  const slot = readSlot(accountRef, articleKey)
+  if (!accountScope) return
+  const slot = readSlot(accountScope, articleKey)
   if (!slot?.effects[commentRef]) return
   const effects = { ...slot.effects }
   delete effects[commentRef]
-  const key = storageKey(accountRef, articleKey)
+  const key = storageKey(accountScope, articleKey)
   if (Object.keys(effects).length === 0) {
     removeSessionReceipt(key)
     return

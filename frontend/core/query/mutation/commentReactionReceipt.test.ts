@@ -13,7 +13,7 @@ describe('comment reaction receipts', () => {
   it('keeps the newest revision for one comment slot', () => {
     writeCommentReactionReceipt({
       commandId: 'op-1',
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
       upvotesCount: 4,
@@ -23,7 +23,7 @@ describe('comment reaction receipts', () => {
     })
     writeCommentReactionReceipt({
       commandId: 'op-old',
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
       upvotesCount: 3,
@@ -34,7 +34,7 @@ describe('comment reaction receipts', () => {
 
     expect(readCommentReactionReceipt('acct-a', 'home:POST:42', 'comment-1')).toMatchObject({
       commandId: 'op-1',
-      schemaVersion: 3,
+      schemaVersion: 4,
       publicProjection: { commentInteractionRevision: 9 },
     })
   })
@@ -47,9 +47,9 @@ describe('comment reaction receipts', () => {
       emotions: [{ type: 'HEART', count: 0 }],
     }
     const receipt = {
-      schemaVersion: 3 as const,
+      schemaVersion: 4 as const,
       commandId: 'op-1',
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
       publicProjection: {
@@ -73,7 +73,7 @@ describe('comment reaction receipts', () => {
   it('does not let an unversioned late response replace a versioned receipt', () => {
     writeCommentReactionReceipt({
       commandId: 'op-new',
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
       upvotesCount: 4,
@@ -83,7 +83,7 @@ describe('comment reaction receipts', () => {
     })
     writeCommentReactionReceipt({
       commandId: 'op-legacy',
-      accountRef: 'acct-a',
+      accountScope: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
       upvotesCount: 3,
@@ -100,7 +100,7 @@ describe('comment reaction receipts', () => {
     for (let index = 0; index <= CONFIRMED_COMMENT_RECEIPT_MAX_REFS; index += 1) {
       writeCommentReactionReceipt({
         commandId: `op-${index}`,
-        accountRef: 'acct-a',
+        accountScope: 'acct-a',
         articleKey: 'home:POST:42',
         commentRef: `comment-${index}`,
         upvotesCount: index,

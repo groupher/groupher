@@ -4,18 +4,13 @@ type TCommentEmotionType = Exclude<TEmotionRawType, 'UPVOTE'>
 
 export type TCommentViewerState = {
   viewerHasUpvoted?: boolean
-  viewerHasReported?: boolean
   emotionFlags: Partial<Record<TCommentEmotionType, boolean>>
 }
 
 export type TCommentViewerStates = Record<string, TCommentViewerState>
 
 const stripComment = (comment: TComment): TComment => {
-  const {
-    viewerHasUpvoted: _viewerHasUpvoted,
-    viewerHasReported: _viewerHasReported,
-    ...publicComment
-  } = comment
+  const { viewerHasUpvoted: _viewerHasUpvoted, ...publicComment } = comment
   const emotions = (comment.emotions || []).map((emotion) => {
     const { viewerHasReacted: _viewerHasReacted, ...publicEmotion } = emotion
     return publicEmotion
@@ -66,9 +61,6 @@ export const mergeCommentViewerState = (
     ...comment,
     ...(typeof state?.viewerHasUpvoted === 'boolean'
       ? { viewerHasUpvoted: state.viewerHasUpvoted }
-      : {}),
-    ...(typeof state?.viewerHasReported === 'boolean'
-      ? { viewerHasReported: state.viewerHasReported }
       : {}),
     emotions,
     replies: comment.replies?.map((reply) => mergeCommentViewerState(reply, states)) || [],

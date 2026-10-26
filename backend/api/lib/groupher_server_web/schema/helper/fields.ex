@@ -124,8 +124,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
       field(:copy_right, :string)
       field(:link_addr, :string)
-
-      field(:pending, :integer)
     end
   end
 
@@ -295,7 +293,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:replies_count, :integer)
       field(:thread, :thread)
       field(:viewer_has_upvoted, :boolean)
-      field(:viewer_has_reported, :boolean)
 
       field(:reply_to_comment, :comment,
         resolve: fn parent, args, resolution ->

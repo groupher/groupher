@@ -2,20 +2,21 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   @moduledoc """
   Action admission for a loaded Article and its loaded Lifecycle context.
 
-  Passport continues to own role/action authorization at the API boundary.
-  This module owns the final resource-state admission that must remain true at
-  the point the command mutates the Article or one of its Comments.
+  Gate checks the current Passport action and owner fallback here, then checks
+  the resource and ancestor Lifecycle facts. GraphQL middleware may reject a
+  request earlier, but direct Commands use this same authoritative policy.
 
   Business position:
 
-      loaded Article + Context
-        -> Gate Access
-        -> lifecycle admission
+      loaded Article + Context + actor
+        -> Passport action / owner fallback
+        -> resource + ancestor Lifecycle
+        -> allow or deny
 
-  Example contract:
-
-      Access.Policy.Article.check_access(actor, :publish, article, %Context.Access.Article{})
-      #=> {:ok, :pass} | {:error, reason}
+  This is the policy stage only: callers must first build the typed Access
+  context, while Gate Access owns loading, transaction checks, and row locks.
+  A successful decision is `{:ok, :pass}`; a denial is a typed Gate ErrorCat
+  error. It does not write Lifecycle state.
   """
 
   alias GroupherServer.{Accounts, CMS}
@@ -40,6 +41,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     :delete,
     :permanently_delete,
     :restore,
+    :import_doc,
     :restore_revision_to_draft,
     :move,
     :mirror,
@@ -50,6 +52,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     :undo_sink,
     :set_category,
     :set_status,
+    :community_tag_set,
+    :community_tag_unset,
     :lock_comments,
     :unlock_comments,
     :moderate,
@@ -71,7 +75,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   end
 
   def check_access(:operations, action, article, context)
-      when action in @actions and is_map(article) and
+      when action in [:delete, :permanently_delete, :moderate] and is_map(article) and
              (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
     check_allowed(:operations, action, article, context)
   end
@@ -91,28 +95,31 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   def check_access(_user, _action, _article, _context), do: {:error, ErrorCat.unknown_action()}
 
   defp check_allowed(actor, :read_insights, article, context) do
-    with {:ok, lifecycle} <- article_lifecycle(context),
-         true <- lifecycle.state in [:published, :archived],
-         {:ok, community} <- community(context),
-         true <- insights_actor?(actor, article, community) do
+    with {:ok, community} <- community(context),
+         {:ok, :pass} <- authorize_insights(actor, article, community, context),
+         {:ok, lifecycle} <- article_lifecycle(context),
+         true <- lifecycle.state in [:published, :archived] do
       {:ok, :pass}
     else
       _ -> {:error, ErrorCat.permission_denied()}
     end
   end
 
-  defp check_allowed(_actor, :read, article, context) do
+  defp check_allowed(actor, :read, article, context) do
     with {:ok, lifecycle} <- article_lifecycle(context),
          true <- lifecycle.state in [:published, :archived],
-         true <- moderation_state(article, context) == :legal do
+         true <-
+           not Map.get(context, :review_restricted?, false) or article_owner?(actor, article) or
+             review_scopes_readable?(actor, context) do
       {:ok, :pass}
     else
       _ -> {:error, ErrorCat.permission_denied()}
     end
   end
 
-  defp check_allowed(_actor, action, article, context) do
-    with {:ok, lifecycle} <- article_lifecycle(context),
+  defp check_allowed(actor, action, article, context) do
+    with {:ok, :pass} <- authorize_action(actor, action, article, context),
+         {:ok, lifecycle} <- article_lifecycle(context),
          {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
          {:ok, _} <- doc_branch_allowed(action, context),
@@ -124,37 +131,193 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     end
   end
 
-  defp moderation_state(_article, %DocContext{doc_branch_state: %{moderation_state: state}}) do
-    state
+  defp review_scopes_readable?(%User{}, context) do
+    scopes = Map.get(context, :review_scope_keys, [])
+    passport_rules = Map.get(context, :passport_rules)
+    community = Map.get(context, :community)
+
+    is_list(scopes) and scopes != [] and match?(%Community{}, community) and
+      Enum.all?(scopes, fn
+        "platform" ->
+          CMS.Passport.Authorization.allowed?(
+            passport_rules,
+            nil,
+            CMS.GateAction.review_platform_read()
+          ) == {:ok, true}
+
+        "community:" <> _community_id ->
+          CMS.Passport.Authorization.allowed?(
+            passport_rules,
+            community.slug,
+            CMS.GateAction.review_read()
+          ) == {:ok, true}
+
+        _scope ->
+          false
+      end)
   end
 
-  defp moderation_state(article, %ArticleContext{}), do: Map.get(article, :moderation_state)
-  defp moderation_state(article, %DocContext{}), do: Map.get(article, :moderation_state)
+  defp authorize_insights(:operations, _article, _community, _context), do: {:ok, :pass}
 
-  defp insights_actor?(:operations, _article, _community), do: true
-
-  defp insights_actor?(%User{id: user_id} = user, article, community) do
+  defp authorize_insights(%User{id: user_id} = user, article, community, context) do
     owner? =
       Map.get(Map.get(article, :author, %{}), :user_id) == user_id or
         community.user_id == user_id
 
     if owner? do
-      true
+      {:ok, :pass}
     else
-      permissions =
-        user
-        |> Map.get(:cur_passport)
-        |> Helper.PermissionRegistry.normalize_rules()
-
-      get_in(permissions, ["global", "god"]) == true or
-        get_in(permissions, [community.slug, "cms", "article.insights.read"]) == true or
-        get_in(permissions, [community.slug, "root"]) == true
+      authorize_passport(
+        user,
+        CMS.GateAction.article_insights_read(),
+        false,
+        community,
+        nil,
+        context
+      )
     end
-  rescue
-    _ -> false
   end
 
-  defp insights_actor?(_actor, _article, _community), do: false
+  defp authorize_insights(_actor, _article, _community, _context) do
+    {:error, ErrorCat.permission_denied()}
+  end
+
+  defp authorize_action(%User{} = user, action, article, context)
+       when action in @interaction_actions or action == :create_comment do
+    # Interaction and comment creation are authenticated-user capabilities;
+    # they are not owner-only Passport actions.
+    _ = {user, article, context}
+    {:ok, :pass}
+  end
+
+  defp authorize_action(%User{} = user, action, article, context) do
+    with {:ok, passport_action} <- passport_action(action, article, context),
+         {:ok, community} <- community(context) do
+      owner? = action != :moderate and article_owner?(user, article)
+
+      authorize_passport(
+        user,
+        passport_action,
+        owner?,
+        community,
+        Map.get(article, :thread),
+        context
+      )
+    end
+  end
+
+  defp authorize_action(:operations, action, _article, _context)
+       when action in [:delete, :permanently_delete, :moderate] do
+    {:ok, :pass}
+  end
+
+  defp authorize_action(_actor, _action, _article, _context) do
+    {:error, ErrorCat.permission_denied()}
+  end
+
+  defp authorize_passport(user, action, owner?, community, thread, context) do
+    case CMS.GateAction.requirement(action) do
+      nil ->
+        {:error, ErrorCat.unknown_action()}
+
+      requirement ->
+        if owner? and Map.get(requirement, :owner_fallback, false) do
+          {:ok, :pass}
+        else
+          passport_rules = Map.get(context, :passport_rules) || Map.get(user, :cur_passport)
+
+          case CMS.Passport.Authorization.allowed?(passport_rules, community.slug, action, thread) do
+            {:ok, true} -> {:ok, :pass}
+            {:ok, false} -> {:error, ErrorCat.permission_denied()}
+            {:error, _} -> {:error, ErrorCat.permission_denied()}
+          end
+        end
+    end
+  end
+
+  defp passport_action(:publish, %{thread: :doc}, _context) do
+    {:ok, CMS.GateAction.doc_update()}
+  end
+
+  defp passport_action(:publish, %{thread: thread}, _context)
+       when thread in [:post, :blog, :changelog] do
+    {:ok, "#{thread}.draft.publish"}
+  end
+
+  defp passport_action(:edit, %{thread: :doc}, _context), do: {:ok, CMS.GateAction.doc_update()}
+
+  defp passport_action(:edit, %{thread: thread}, _context)
+       when thread in [:post, :blog, :changelog] do
+    {:ok, "#{thread}.update"}
+  end
+
+  defp passport_action(action, %{thread: :doc}, _context)
+       when action in [:discard_draft, :restore_revision_to_draft] do
+    {:ok, CMS.GateAction.doc_update()}
+  end
+
+  defp passport_action(action, %{thread: thread}, _context)
+       when action in [:discard_draft, :restore_revision_to_draft] and
+              thread in [:post, :blog, :changelog] do
+    {:ok, "#{thread}.draft.update"}
+  end
+
+  defp passport_action(:delete, _article, _context), do: {:ok, CMS.GateAction.article_trash()}
+
+  defp passport_action(:permanently_delete, _article, _context) do
+    {:ok, CMS.GateAction.article_permanent_delete()}
+  end
+
+  defp passport_action(:restore, _article, _context), do: {:ok, CMS.GateAction.article_restore()}
+
+  defp passport_action(:import_doc, %{thread: :doc}, _context) do
+    {:ok, CMS.GateAction.doc_import()}
+  end
+
+  defp passport_action(:move, _article, _context), do: {:ok, CMS.GateAction.article_move()}
+  defp passport_action(:mirror, _article, _context), do: {:ok, CMS.GateAction.article_mirror()}
+
+  defp passport_action(:unmirror, _article, _context) do
+    {:ok, CMS.GateAction.article_unmirror()}
+  end
+
+  defp passport_action(:moderate, _article, _context), do: {:ok, CMS.GateAction.article_trash()}
+
+  defp passport_action(:community_tag_set, _article, _context) do
+    {:ok, CMS.GateAction.community_tag_set()}
+  end
+
+  defp passport_action(:community_tag_unset, _article, _context) do
+    {:ok, CMS.GateAction.community_tag_unset()}
+  end
+
+  defp passport_action(action, %{thread: thread}, _context)
+       when thread in [:post, :blog, :changelog, :doc] do
+    suffix =
+      case action do
+        :pin -> "pin"
+        :unpin -> "undo_pin"
+        :sink -> "sink"
+        :undo_sink -> "undo_sink"
+        :set_category -> "set_category"
+        :set_status -> "set_status"
+        :lock_comments -> "lock_comment"
+        :unlock_comments -> "undo_lock_comment"
+        _ -> nil
+      end
+
+    if is_binary(suffix) do
+      {:ok, "#{thread}.#{suffix}"}
+    else
+      {:error, ErrorCat.unknown_action()}
+    end
+  end
+
+  defp passport_action(_action, _article, _context), do: {:error, ErrorCat.unknown_action()}
+
+  defp article_owner?(%User{id: user_id}, article) do
+    Map.get(Map.get(article, :author, %{}), :user_id) == user_id
+  end
 
   defp doc_branch_allowed(action, %{doc_branch: %{type: type}})
        when action in @interaction_actions and type != :main do
@@ -266,6 +429,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   defp action_allowed(:restore, %{state: :deleted}, _article), do: {:ok, :pass}
 
+  defp action_allowed(:import_doc, %{state: :deleted}, %{thread: :doc}), do: {:ok, :pass}
+
   defp action_allowed(:restore, _lifecycle, _article) do
     {:error, ErrorCat.article_not_deleted()}
   end
@@ -310,6 +475,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
               :undo_sink,
               :set_category,
               :set_status,
+              :community_tag_set,
+              :community_tag_unset,
               :lock_comments,
               :unlock_comments,
               :moderate

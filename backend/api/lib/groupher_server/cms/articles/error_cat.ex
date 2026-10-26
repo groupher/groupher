@@ -26,4 +26,11 @@ defmodule GroupherServer.CMS.Articles.ErrorCat do
   error(:draft_conflict, code: 6017)
   error(:lifecycle_conflict, code: 6018)
   error(:invalid_publish_actor, code: 6019)
+  error(:binding_not_found, code: 6020)
+  error(:pin_not_found, code: 6021)
+  error(:batch_limit_exceeded, code: 6022)
+  error(:projection_not_found, code: 6023, retryable: true)
+  error(:unknown_outbox_event, code: 6024)
+  error(:binding_context_required, code: 6025)
+  error(:invalid_command_input, code: 6026)
 end

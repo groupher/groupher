@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   alias Accounts.Model.User
   alias CMS.Articles.Trash
   alias CMS.Communities.ErrorCat
-  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Community, CommunityTag, DocPublic}
+  alias CMS.Model.{Article, ArticleBinding, Community, CommunityTag}
   alias Helper.{ORM, T, Transaction}
 
   @threads CMS.Communities.Config.threads()
@@ -88,28 +88,14 @@ defmodule GroupherServer.CMS.Communities.Count do
   def update(%Community{} = community, thread) do
     if thread in @threads do
       active_articles = Trash.not_trashed_scope(Article, thread)
+      public_binding_ids = CMS.Articles.Pagination.public_binding_ids(thread)
 
       query =
         from(article in active_articles,
           join: binding in ArticleBinding,
-          on:
-            binding.article_id == article.id and binding.community_id == ^community.id and
-              binding.visible == true,
-          where: article.thread == ^thread
+          on: binding.article_id == article.id and binding.community_id == ^community.id,
+          where: article.thread == ^thread and binding.id in subquery(public_binding_ids)
         )
-
-      query =
-        if thread == :doc do
-          from([article, _binding] in query,
-            join: public in DocPublic,
-            on: public.article_id == article.id and public.visible == true
-          )
-        else
-          from([article, _binding] in query,
-            join: public in ArticlePublic,
-            on: public.article_id == article.id and public.visible == true
-          )
-        end
 
       thread_article_count = Repo.aggregate(query, :count, :id)
 

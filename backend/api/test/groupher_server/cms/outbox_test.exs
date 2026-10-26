@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, ErrorCat, Repo}
   alias CMS.Outbox.Event
 
   test "an event is completed once and duplicate delivery is a no-op" do
@@ -197,17 +197,142 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
     assert Repo.get!(Event, event.id).attempts == 2
   end
 
-  test "a retrying event can be marked failed after the final attempt" do
+  test "terminal action failure is fenced and committed by execute/3" do
     {:ok, event} = CMS.Outbox.send(event_attrs("test.failed", Ecto.UUID.generate()))
 
-    assert {:error, :permanent_failure} =
-             CMS.Outbox.execute(event.id, fn _event -> {:error, :permanent_failure} end)
+    assert {:error, %ErrorCat.Error{reason: :outbox_delivery_exhausted}} =
+             CMS.Outbox.execute(
+               event.id,
+               fn _event -> {:error, :permanent_failure} end,
+               on_error: :fail
+             )
 
-    assert {:ok, :pass} = CMS.Outbox.mark_failed(event.id)
     assert Repo.get!(Event, event.id).status == :failed
 
     assert {:error, :outbox_event_failed} =
              CMS.Outbox.execute(event.id, fn _ -> {:ok, :nope} end)
+  end
+
+  test "an exhausted stale executor cannot fail an event claimed by a newer lease" do
+    {:ok, event} =
+      CMS.Outbox.send(event_attrs("test.stale_terminal_failure", Ecto.UUID.generate()))
+
+    assert {:error, :stale_lock} =
+             CMS.Outbox.execute(
+               event.id,
+               fn claimed ->
+                 claimed
+                 |> Event.changeset(%{locked_by: "newer-worker-lease"})
+                 |> Repo.update!()
+
+                 {:error, :old_worker_failure}
+               end,
+               on_error: :fail
+             )
+
+    assert %Event{status: :running, locked_by: "newer-worker-lease"} = Repo.get!(Event, event.id)
+  end
+
+  test "execute rejects unknown failure modes before claiming the event" do
+    {:ok, event} = CMS.Outbox.send(event_attrs("test.invalid_mode", Ecto.UUID.generate()))
+
+    assert {:error, %ErrorCat.Error{reason: :invalid_body}} =
+             CMS.Outbox.execute(event.id, fn _ -> {:error, :failure} end, on_error: :ignore)
+
+    assert Repo.get!(Event, event.id).status == :waiting
+  end
+
+  test "Asset cleanup persists an unsupported resource as terminal immediately" do
+    {:ok, event} =
+      CMS.Outbox.send(
+        Map.merge(event_attrs("asset.provider_delete", Ecto.UUID.generate()), %{
+          resource_type: "unsupported_asset"
+        })
+      )
+
+    job = %Oban.Job{args: %{"event_id" => event.id}, attempt: 1, max_attempts: 5}
+
+    assert {:ok, :pass} = CMS.Outbox.Workflow.Asset.perform(job)
+
+    assert %Event{status: :failed, last_error_code: "5604"} = Repo.get!(Event, event.id)
+  end
+
+  test "Interaction delivery preserves declared target and actor failures through retries" do
+    {:ok, article} = db_insert(:post)
+    missing_article_id = Ecto.UUID.generate()
+    missing_comment_id = (Repo.aggregate(CMS.Model.Comment, :max, :id) || 0) + 1
+    missing_actor_id = Repo.aggregate(GroupherServer.Accounts.Model.User, :max, :id) + 1
+
+    cases = [
+      {"unsupported_interaction", article.id, %{}, :interaction_target_invalid},
+      {"article", missing_article_id, %{}, :interaction_target_not_found},
+      {"comment", missing_comment_id, %{}, :interaction_target_not_found},
+      {"article", article.id, %{}, :interaction_actor_invalid},
+      {"article", article.id, %{"actor_id" => missing_actor_id}, :interaction_actor_not_found}
+    ]
+
+    for {resource_type, resource_id, data, reason} <- cases do
+      {:ok, event} =
+        CMS.Outbox.send(
+          Map.merge(event_attrs("interaction.upvote_changed", Ecto.UUID.generate()), %{
+            resource_type: resource_type,
+            resource_id: resource_id,
+            data: data
+          })
+        )
+
+      job = %Oban.Job{args: %{"event_id" => event.id}, attempt: 1, max_attempts: 5}
+
+      assert {:error, %ErrorCat.Error{namespace: {:cms, :interaction}, reason: ^reason} = error} =
+               CMS.Outbox.Workflow.Interaction.perform(job)
+
+      assert ErrorCat.valid?(error)
+      assert Repo.get!(Event, event.id).status == :retrying
+      assert {:ok, :pass} = CMS.Outbox.Workflow.Interaction.perform(%{job | attempt: 5})
+      assert Repo.get!(Event, event.id).status == :failed
+    end
+  end
+
+  test "all six delivery workers acknowledge only a persisted terminal failure" do
+    workers = [
+      {GroupherServer.CMS.Outbox.Workflow.Article, "article", "6024", false},
+      {GroupherServer.CMS.Outbox.Workflow.Comment, "comment", "4418", false},
+      {GroupherServer.CMS.Outbox.Workflow.Community, "community", "5538", false},
+      {GroupherServer.CMS.Outbox.Workflow.Press, "community", "4544", false},
+      {GroupherServer.CMS.Outbox.Workflow.Asset, "unsupported_asset", "5604", false},
+      {GroupherServer.CMS.Outbox.Workflow.Interaction, "unsupported_interaction", "4914", true}
+    ]
+
+    for {worker, resource_type, error_code, retryable?} <- workers do
+      event_name = "terminal.#{inspect(worker)}"
+
+      {:ok, event} =
+        CMS.Outbox.send(
+          Map.merge(event_attrs(event_name, Ecto.UUID.generate()), %{resource_type: resource_type})
+        )
+
+      job = %Oban.Job{args: %{"event_id" => event.id}, attempt: 1, max_attempts: 5}
+
+      if retryable? do
+        assert {:error, %ErrorCat.Error{retryable: true, code: 4914}} = worker.perform(job)
+        assert Repo.get!(Event, event.id).status == :retrying
+        assert {:ok, :pass} = worker.perform(%{job | attempt: 5})
+      else
+        assert {:ok, :pass} = worker.perform(job)
+      end
+
+      assert %Event{status: :failed, last_error_code: ^error_code} = Repo.get!(Event, event.id)
+    end
+  end
+
+  test "an unknown Article event is terminal without consuming the retry budget" do
+    {:ok, event} =
+      CMS.Outbox.send(event_attrs("unknown.article.event", Ecto.UUID.generate()))
+
+    job = %Oban.Job{args: %{"event_id" => event.id}, attempt: 1, max_attempts: 5}
+
+    assert {:ok, :pass} = CMS.Outbox.Workflow.Article.perform(job)
+    assert %Event{status: :failed, last_error_code: "6024"} = Repo.get!(Event, event.id)
   end
 
   defp event_attrs(event, command_id) do

@@ -32,7 +32,7 @@ vi.mock('~/stores/community/hooks', () => ({
   default: () => ({ slug: mocks.community }),
 }))
 
-vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountRef: 'viewer-1' }) }))
+vi.mock('~/stores/account/hooks', () => ({ default: () => ({ accountScope: 'viewer-1' }) }))
 
 vi.mock('~/ui/Toaster', () => ({ toast: mocks.toast }))
 

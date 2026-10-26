@@ -36,8 +36,6 @@ defmodule GroupherServer.Activity.Workflow do
           | :draft_updated
           | :published
           | :publish_restored
-          | :moderation_review_started
-          | :moderation_review_resolved
           | :blocker_created
           | :blocker_released
           | :blocker_terminated

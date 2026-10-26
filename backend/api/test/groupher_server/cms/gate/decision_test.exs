@@ -6,7 +6,6 @@ defmodule GroupherServer.Test.CMS.Gate.Decision do
   alias GroupherServer.{CMS, ErrorCat}
   alias CMS.Gate.Decision
   alias CMS.Gate.ErrorCat, as: GateErrorCat
-  alias GroupherServerWeb.Middleware.GQLResultFmt
 
   test "structured decisions preserve reasons and choose the stable primary" do
     decision =
@@ -24,23 +23,6 @@ defmodule GroupherServer.Test.CMS.Gate.Decision do
              :permission_denied,
              :ancestor_article_archived
            ]
-
-    assert %{
-             code: 4606,
-             retryable: false,
-             actions: ["READ_ONLY_NOTICE"],
-             message: "当前内容处于只读状态。"
-           } = GQLResultFmt.public_error(decision)
-
-    assert {:error,
-            [
-              message: "当前内容处于只读状态。",
-              extensions: %{
-                code: 4606,
-                retryable: false,
-                actions: ["READ_ONLY_NOTICE"]
-              }
-            ]} = GQLResultFmt.graphql_error(decision)
   end
 
   test "unknown reasons fail closed to the reserved Gate code" do

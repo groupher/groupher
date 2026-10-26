@@ -15,46 +15,7 @@ defmodule GroupherServer.CMS.Interactions do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Comments.InteractionResponse
   alias CMS.Interactions.{CommandResult, ErrorCat, Reactions, Projection, Scope}
-  alias CMS.Model.Comment
-
-  @doc """
-  Reports an Artiment using the immutable reporter identity.
-
-  ## Examples
-
-      CMS.Interactions.report(comment, "spam", %{}, actor, command_id)
-
-  """
-  @spec report(struct(), String.t(), term(), User.t(), Ecto.UUID.t()) ::
-          {:ok, struct()} | {:error, term()}
-  defdelegate report(artiment, reason, attrs, actor, command_id), to: Reactions
-
-  @doc """
-  Removes the current actor's Artiment report idempotently.
-
-  ## Examples
-
-      CMS.Interactions.undo_report(comment, actor, command_id)
-
-  """
-  @spec undo_report(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_report(artiment, actor, command_id), to: Reactions
-
-  @doc "Reports an Artiment and returns its stable report presentation."
-  def report_result(artiment, reason, attrs, %User{} = actor, command_id) do
-    artiment
-    |> Reactions.report(reason, attrs, actor, command_id)
-    |> present_report(actor)
-  end
-
-  @doc "Removes a report and returns its stable report presentation."
-  def undo_report_result(artiment, %User{} = actor, command_id) do
-    artiment
-    |> Reactions.undo_report(actor, command_id)
-    |> present_report(actor)
-  end
 
   @doc """
   Returns typed Interaction state for one Artiment and optional viewer.
@@ -83,14 +44,34 @@ defmodule GroupherServer.CMS.Interactions do
           {:ok, [map()]} | {:error, term()}
   defdelegate article_states_for_paths(paths, viewer, opts \\ []), to: Projection
 
-  @doc "Maps an already-read Article locator and private Interaction state without IO."
+  @doc """
+  Maps an already-read Article locator and private Interaction state without IO.
+
+  ## Examples
+
+      CMS.Interactions.article_state(article_locator, viewer_state)
+  """
   @spec article_state(map(), map()) :: map()
   defdelegate article_state(article, interaction), to: Projection
 
-  @doc "Returns public presentation state without current-viewer fields."
+  @doc """
+  Returns public presentation state without current-viewer fields.
+
+  ## Examples
+
+      CMS.Interactions.public_state(article)
+  """
+  @spec public_state(struct(), keyword()) :: map()
   defdelegate public_state(artiment, opts \\ []), to: Projection
 
-  @doc "Returns batched public presentation state without current-viewer fields."
+  @doc """
+  Returns batched public presentation state without current-viewer fields.
+
+  ## Examples
+
+      CMS.Interactions.public_states([article, comment])
+  """
+  @spec public_states([struct()], keyword()) :: map()
   defdelegate public_states(artiments, opts \\ []), to: Projection
 
   @doc """
@@ -103,16 +84,6 @@ defmodule GroupherServer.CMS.Interactions do
   """
   @spec counts([struct()]) :: map() | {:error, ErrorCat.error()}
   defdelegate counts(artiments), to: Projection
-
-  defp present_report({:ok, %Comment{} = comment}, viewer) do
-    InteractionResponse.one(comment, viewer, surface: :report)
-  end
-
-  defp present_report({:ok, article}, viewer) do
-    CMS.Articles.Response.one(article, viewer, surface: :report)
-  end
-
-  defp present_report({:error, _reason} = error, _viewer), do: error
 
   @doc """
   Collects an Article idempotently and returns the canonical Article.
@@ -159,7 +130,13 @@ defmodule GroupherServer.CMS.Interactions do
           {:ok, struct()} | {:error, term()}
   defdelegate emotion(artiment, emotion, actor, command_id), to: Reactions
 
-  @doc "Applies an emotion and returns the stable command result."
+  @doc """
+  Applies an emotion and returns the stable command result.
+
+  ## Examples
+
+      CMS.Interactions.emotion_result(comment, :heart, actor, command_id)
+  """
   @spec emotion_result(struct(), atom(), User.t(), Ecto.UUID.t()) ::
           {:ok, map() | struct()} | {:error, term()}
   def emotion_result(artiment, emotion, %User{} = actor, command_id) do
@@ -180,7 +157,13 @@ defmodule GroupherServer.CMS.Interactions do
           {:ok, struct()} | {:error, term()}
   defdelegate undo_emotion(artiment, emotion, actor, command_id), to: Reactions
 
-  @doc "Removes an emotion and returns the stable command result."
+  @doc """
+  Removes an emotion and returns the stable command result.
+
+  ## Examples
+
+      CMS.Interactions.undo_emotion_result(comment, :heart, actor, command_id)
+  """
   @spec undo_emotion_result(struct(), atom(), User.t(), Ecto.UUID.t()) ::
           {:ok, map() | struct()} | {:error, term()}
   def undo_emotion_result(artiment, emotion, %User{} = actor, command_id) do
@@ -200,7 +183,13 @@ defmodule GroupherServer.CMS.Interactions do
   @spec upvote(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
   defdelegate upvote(artiment, actor, command_id), to: Reactions
 
-  @doc "Applies an upvote and returns the stable command result."
+  @doc """
+  Applies an upvote and returns the stable command result.
+
+  ## Examples
+
+      CMS.Interactions.upvote_result(article, actor, command_id)
+  """
   @spec upvote_result(struct(), User.t(), Ecto.UUID.t()) ::
           {:ok, map() | struct()} | {:error, term()}
   def upvote_result(artiment, %User{} = actor, command_id) do
@@ -220,7 +209,13 @@ defmodule GroupherServer.CMS.Interactions do
   @spec undo_upvote(struct(), User.t(), Ecto.UUID.t()) :: {:ok, struct()} | {:error, term()}
   defdelegate undo_upvote(artiment, actor, command_id), to: Reactions
 
-  @doc "Removes an upvote and returns the stable command result."
+  @doc """
+  Removes an upvote and returns the stable command result.
+
+  ## Examples
+
+      CMS.Interactions.undo_upvote_result(article, actor, command_id)
+  """
   @spec undo_upvote_result(struct(), User.t(), Ecto.UUID.t()) ::
           {:ok, map() | struct()} | {:error, term()}
   def undo_upvote_result(artiment, %User{} = actor, command_id) do

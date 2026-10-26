@@ -101,4 +101,6 @@ defmodule GroupherServer.CMS.Gate.ErrorCat do
   error(:throttle_day, code: 4628)
   error(:unexpected_callback_result, code: 4629)
   error(:solution_not_supported, code: 4630)
+  error(:gate_transaction_required, code: 4631)
+  error(:gate_stage_required, code: 4632)
 end

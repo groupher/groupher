@@ -1,7 +1,6 @@
 'use client'
 
 import type { TArticle, TArticleStats, TArticleViewerState } from '~/spec'
-import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 import { articlePathKey, articlePathOf } from '../articlePath'
@@ -18,9 +17,9 @@ export default function useArticleUpvote(
   const account = useAccount()
   const { visibleState, toggle } = useOptimisticToggle(articleUpvoteOperation, article)
 
-  const accountRef = account.accountRef || getAccountRef(account.user)
+  const accountScope = account.accountScope
   const entityKey = article ? articlePathKey(articlePathOf(article)) : ''
-  const receipt = readArticleUpvoteReceipt(accountRef, entityKey)
+  const receipt = readArticleUpvoteReceipt(accountScope, entityKey)
   const canonicalStats = stats
   const receiptIsNewer = isArticleUpvoteReceiptNewer(canonicalStats, receipt)
   const visibleReceipt = receiptIsNewer ? receipt : null

@@ -16,10 +16,10 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
   end
 
   describe "[cms category]" do
-    test "legacy category facade routes command-aware writes through the receipt pipeline",
+    test "public category facade routes command-aware writes through the receipt pipeline",
          ~m(user community)a do
       assert {:ok, category} =
-               CMS.Communities.Categories.create(
+               CMS.Communities.create_category(
                  %{title: "Workflow category", slug: "workflow-category", community: community.slug},
                  user,
                  Ecto.UUID.generate()
@@ -29,9 +29,9 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
       assert {:ok, _binding} = ORM.find_by(CMS.Model.CommunityCategory, category_id: category.id)
     end
 
-    test "legacy category facade rejects implicit identity", ~m(user)a do
+    test "public category facade rejects implicit identity", ~m(user)a do
       assert {:error, %ErrorCat.Error{reason: :command_id_required}} =
-               CMS.Communities.Categories.create(%{title: "Implicit category"}, user)
+               CMS.Communities.create_category(%{title: "Implicit category"}, user)
     end
 
     test "create category with valid attrs", ~m(user)a do

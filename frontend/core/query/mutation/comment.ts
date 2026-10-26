@@ -17,7 +17,6 @@ export {
   replyCommentOperation,
   updateCommentOperation,
 } from './comment/lifecycle'
-export { reportCommentOperation } from './comment/moderation'
 export {
   commentEmotionOperation,
   commentUpvoteOperation,

@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Comment do
 
   Gate constructs this context from the CommentLifecycle and the parent Article
   and Community facts. Parent state remains inherited capability, not copied
-  Comment state.
+  Comment state. Current actor Passport rules are loaded alongside those facts.
 
       Gate.access_check -> Comment loader -> this context -> Comment policy
 
@@ -27,10 +27,12 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Comment do
     :comment_lifecycle,
     :article,
     :article_lifecycle,
+    :comment_author_user_id,
     :article_author_user_id,
     :article_cat,
     :community,
-    :community_lifecycle
+    :community_lifecycle,
+    :passport_rules
   ]
 
   @type t :: %__MODULE__{
@@ -38,9 +40,11 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Comment do
           comment_lifecycle: struct(),
           article: struct(),
           article_lifecycle: struct(),
+          comment_author_user_id: integer() | nil,
           article_author_user_id: integer() | nil,
           article_cat: atom() | nil,
           community: struct(),
-          community_lifecycle: struct()
+          community_lifecycle: struct(),
+          passport_rules: map() | nil
         }
 end

@@ -7,7 +7,6 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.TagSupport do
 
   alias GroupherServer.CMS
   alias CMS.{Communities.ErrorCat, FrontDesk, Marker}
-  alias CMS.Communities.Query, as: CommunitiesQuery
   alias CMS.Communities.Tags.Query
   alias CMS.Model.{Community, CommunityTag}
 
@@ -23,9 +22,9 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.TagSupport do
   def community(ref) when is_binary(ref), do: FrontDesk.community(ref, mode: :internal)
 
   def community(id) do
-    case CommunitiesQuery.get(id) do
-      %Community{} = community -> {:ok, community}
-      nil -> {:error, ErrorCat.not_exist("Community")}
+    case FrontDesk.community(id, mode: :internal) do
+      {:ok, %Community{} = community} -> {:ok, community}
+      {:error, _reason} -> {:error, ErrorCat.not_exist("Community")}
     end
   end
 

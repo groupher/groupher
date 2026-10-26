@@ -33,12 +33,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
 
     assert is_valid_kv?(results, "title", :string)
 
-    assert results["meta"] == %{
-             "isEdited" => false,
-             "illegalReason" => [],
-             "illegalWords" => [],
-             "isLegal" => true
-           }
+    assert results["meta"] == %{"isEdited" => false}
   end
 
   test "basic graphql query on doc with stranger(un-login user)",
@@ -57,47 +52,6 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
 
     assert results["innerId"] == to_string(article_inner_id(doc, community))
     assert is_valid_kv?(results, "title", :string)
-  end
-
-  test "pending state should in meta", ~m(guest_conn user_conn community user doc_attrs)a do
-    {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
-
-    variables = %{
-      article: %{
-        inner_id: article_inner_id(doc, community),
-        community: community.slug,
-        thread: "DOC"
-      }
-    }
-
-    results = user_conn |> gq_query(S.Article.q(:article, :doc), variables)
-
-    assert results |> get_in(["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == []
-    assert results |> get_in(["meta", "illegalWords"]) == []
-
-    results = guest_conn |> gq_query(S.Article.q(:article, :doc), variables)
-    assert results |> get_in(["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == []
-    assert results |> get_in(["meta", "illegalWords"]) == []
-
-    {:ok, _} =
-      CMS.Articles.set_illegal(
-        doc.id,
-        %{
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        },
-        :operations,
-        branch_id: doc.branch_id,
-        community: community
-      )
-
-    results = user_conn |> gq_query(S.Article.q(:article, :doc), variables)
-
-    assert not get_in(results, ["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]
-    assert results |> get_in(["meta", "illegalWords"]) == ["some-word"]
   end
 
   test "returns cancan error when doc thread is disabled",

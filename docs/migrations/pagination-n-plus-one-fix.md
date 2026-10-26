@@ -9,13 +9,13 @@ SearchArtiments 问题，以及本批修复后的验收合同。scanner-clean �
 
 ## 1. 结论和优先级
 
-| 优先级 | 位置                                                                                             | 事实                                                                                                      | 处置                                                                                  |
-| ------ | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| P0     | [`cms/press/query.ex`](../../backend/api/lib/groupher_server/cms/press/query.ex)                 | Press service-scoped request path 先分页拿 paths，再逐条 hydrate                                          | 复用 Articles Pagination 选择器，100 条一批调用 `FrontDesk.articles/1`                |
-| P0     | [`cms/press/query.ex`](../../backend/api/lib/groupher_server/cms/press/query.ex)                 | `site_manifest` 固定传 500，公共 Pagi 最大值为 100；当前错误会被转成 `[]`，manifest 普通 Article 必然为空 | 最多 5 页、每页 100；错误向上传播，不再静默为空                                       |
-| P0     | [`cms/assets/query.ex`](../../backend/api/lib/groupher_server/cms/assets/query.ex)               | draft ref 的逐项 `:edit` Gate 会启动 per-item transaction/lock                                            | draft 可见性下推到一次 page-level SQL；DocDraft 以 branch-aware 条件纳入              |
-| P1     | [`cms/abuse_reports/query.ex`](../../backend/api/lib/groupher_server/cms/abuse_reports/query.ex) | batch DB 结果合并使用 `Enum.find/2`，为 O(rows × targets)                                                 | 预建 `{article_id, community_id}` map，O(1) lookup                                    |
-| P1     | [`scripts/check-pagination-n-plus-one.mjs`](../../scripts/check-pagination-n-plus-one.mjs)       | 旧 allowlist 按函数和 symbol 放行，且把 Press 当 background                                               | Press 删除；SearchArtiments 保留唯一 `background` exception，并绑定精确 line identity |
+| 优先级 | 位置                                                                                       | 事实                                                                                                      | 处置                                                                                  |
+| ------ | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| P0     | [`cms/press/query.ex`](../../backend/api/lib/groupher_server/cms/press/query.ex)           | Press service-scoped request path 先分页拿 paths，再逐条 hydrate                                          | 复用 Articles Pagination 选择器，100 条一批调用 `CMS.Articles.locators/1`             |
+| P0     | [`cms/press/query.ex`](../../backend/api/lib/groupher_server/cms/press/query.ex)           | `site_manifest` 固定传 500，公共 Pagi 最大值为 100；当前错误会被转成 `[]`，manifest 普通 Article 必然为空 | 最多 5 页、每页 100；错误向上传播，不再静默为空                                       |
+| P0     | [`cms/assets/query.ex`](../../backend/api/lib/groupher_server/cms/assets/query.ex)         | draft ref 的逐项 `:edit` Gate 会启动 per-item transaction/lock                                            | draft 可见性下推到一次 page-level SQL；DocDraft 以 branch-aware 条件纳入              |
+| P1     | `cms/abuse_reports/query.ex` (removed by D5)                                               | 旧 Report query 曾用 `Enum.find/2` 合并 batch 结果，为 O(rows × targets)                                  | 模块已随 D5 退役；不迁移该查询                                                        |
+| P1     | [`scripts/check-pagination-n-plus-one.mjs`](../../scripts/check-pagination-n-plus-one.mjs) | 旧 allowlist 按函数和 symbol 放行，且把 Press 当 background                                               | Press 删除；SearchArtiments 保留唯一 `background` exception，并绑定精确 line identity |
 
 ## 2. 当前事实
 
@@ -79,7 +79,7 @@ feed_count (5..50) × 已选择 thread 数
    时仍只需一页/thread。
 3. Doc 的 public tree 使用 SQL `exists` 过滤，并发生在 Pagi limit 之前；不再
    对 page 结果做事后 tree 过滤。
-4. 每 100 条 path 调用一次 `FrontDesk.articles/1`。随后用
+4. 每 100 条 locator 调用一次 `CMS.Articles.locators/1`。随后用
    `CMS.Articles.Pagination.legacy_entries/2` 携带
    `include_public_projection: true` 做 page-level body projection，不恢复
    `FrontDesk.article/1` 逐条读取。
@@ -145,7 +145,7 @@ scanner 仍是 report-only，不宣称替代运行时 query-count 测试。它�
   `&helper?(&1, ...)` 形式；跨模块 helper 仍不由此静态规则证明；
 - allowlist 同时要求 `source + function + line + symbol`；
 - allowlist 记录 `path_kind=background`，不以“bounded”字样自动放行 request path；
-- `FrontDesk.articles/1` 不作为 per-item read；
+- `CMS.Articles.locators/1` 批量解析 locator，不作为 per-item read；
 - Press 不在 allowlist，SearchArtiments 是唯一登记项。
 
 ## 7. 验收矩阵
@@ -157,7 +157,7 @@ scanner 仍是 report-only，不宣称替代运行时 query-count 测试。它�
 | Press Doc manifest                                | public tree 过滤先于 limit；非 tree page 不进入结果；active/pinned 选择语义不变                                         |
 | Press public projection                           | `published_at`/`updated_at` 来自 `ArticlePublic`/`DocPublic`，不回退到稳定 Article 根表                                 |
 | Press Doc canonical URL                           | manifest 使用 `DocPublic.slug` 后缀，保留 stable public projection 语义                                                 |
-| Press batch hydrate                               | 每个 `FrontDesk.articles/1` 输入最多 100 条；manifest 500 条最多 5 个 hydrate batch                                     |
+| Press batch hydrate                               | 每个 `CMS.Articles.locators/1` 输入最多 100 条；manifest 500 条最多 5 个 hydrate batch                                  |
 | Press API 错误传播                                | `CMS.Press.site_manifest/1` 和 `thread_rss_feed/3` 原样返回 batch hydration/body projection 错误，不转为空列表          |
 | Press pinned + 超过 limit                         | pinned 先进入 thread 候选集，最终排序后再截断；pinned 不直接占用 limit 名额                                             |
 | Press 101 条跨页                                  | 选择器跨页取数、batch hydrate 和最终 projection 均保持结果完整                                                          |

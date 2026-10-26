@@ -25,11 +25,15 @@ defmodule GroupherServer.Accounts.Profiles.Persist do
   """
   @spec update_profile(User.t(), map()) :: {:ok, User.t()} | {:error, term()}
   def update_profile(%User{} = user, attrs) do
-    user_attrs = Map.drop(attrs, [:social])
-    changeset = Ecto.Changeset.change(user, user_attrs)
+    if Map.has_key?(attrs, :login) or Map.has_key?(attrs, "login") do
+      {:error, :immutable_login}
+    else
+      user_attrs = Map.drop(attrs, [:social])
+      changeset = Ecto.Changeset.change(user, user_attrs)
 
-    with {:ok, changeset} <- update_social_if_needed(changeset, user, attrs) do
-      changeset |> User.update_changeset(user_attrs) |> Repo.update()
+      with {:ok, changeset} <- update_social_if_needed(changeset, user, attrs) do
+        changeset |> User.update_changeset(user_attrs) |> Repo.update()
+      end
     end
   end
 

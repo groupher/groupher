@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Outbox do
   Transactional CMS effect outbox.
 
   `send/1` is called while the domain transaction is open and inserts both the
-  event and its Oban wakeup into that transaction. `execute/2` owns the shared
+  event and its Oban wakeup into that transaction. `execute/3` owns the shared
   claim, lease, retry and completion protocol; each Worker still owns the
   meaning of its event.
 
@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Outbox do
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.{Jobs, Repo}
+  alias GroupherServer.{ErrorCat, Jobs, Repo}
   alias CMS.Outbox.Event
 
   @lease_seconds 120
@@ -85,49 +85,48 @@ defmodule GroupherServer.CMS.Outbox do
     end
   end
 
-  @doc "Claims, executes and completes one event under a lease."
+  @doc "Claims, executes and completes one event under a lease, leaving action failures retryable."
   @spec execute(Ecto.UUID.t(), (Event.t() -> {:ok, term()} | {:error, term()})) ::
           {:ok, term()} | {:busy, pos_integer()} | {:error, term()}
   def execute(event_id, action) when is_binary(event_id) and is_function(action, 1) do
+    execute(event_id, action, on_error: :retry)
+  end
+
+  @doc """
+  Persists action failures as retryable, terminal, or classified by ErrorCat while holding the claim fence.
+
+  `:retry` preserves the original action error after writing retrying. `:fail`
+  always writes a terminal failure. `:classify` makes retryability explicit
+  ErrorCat values terminal or retryable and treats unstructured errors as
+  transient. A failed terminal-state write is returned as its persistence or
+  stale-lease error, never as successful exhaustion.
+
+  ## Examples
+
+      CMS.Outbox.execute(event_id, fn event -> {:ok, event.id} end, on_error: :classify)
+      #=> {:ok, value} | {:busy, seconds} | {:error, reason}
+  """
+  @spec execute(Ecto.UUID.t(), (Event.t() -> {:ok, term()} | {:error, term()}), keyword()) ::
+          {:ok, term()} | {:busy, pos_integer()} | {:error, term()}
+  def execute(event_id, action, opts)
+      when is_binary(event_id) and is_function(action, 1) and is_list(opts) do
+    case Keyword.get(opts, :on_error, :retry) do
+      mode when mode in [:retry, :fail, :classify] -> execute_claimed(event_id, action, mode)
+      _ -> {:error, CMS.ErrorCat.invalid_body("on_error must be :retry, :fail, or :classify")}
+    end
+  end
+
+  def execute(_event_id, _action, _opts), do: {:error, CMS.ErrorCat.invalid_body()}
+
+  defp execute_claimed(event_id, action, on_error) do
     lock_ref = "#{node()}:#{Ecto.UUID.generate()}"
 
     case claim(event_id, lock_ref) do
       {:ok, :done} -> {:ok, :done}
-      {:ok, %Event{} = event} -> run_action(event, lock_ref, action)
+      {:ok, %Event{} = event} -> run_action(event, lock_ref, action, on_error)
       {:busy, seconds} -> {:busy, seconds}
       {:error, reason} -> {:error, reason}
     end
-  end
-
-  @doc "Marks an event failed after its worker reaches the configured attempt limit."
-  def mark_failed(event_id) when is_binary(event_id) do
-    now = DateTime.utc_now(:second)
-
-    {updated, _} =
-      Repo.update_all(
-        from(event in Event,
-          where: event.id == ^event_id and event.status == :retrying
-        ),
-        set: [status: :failed, updated_at: now, last_error_at: now]
-      )
-
-    if updated == 1, do: {:ok, :pass}, else: {:error, :stale_event}
-  end
-
-  @doc false
-  def mark_failed(event_id, lock_ref) when is_binary(event_id) and is_binary(lock_ref) do
-    now = DateTime.utc_now(:second)
-
-    {updated, _} =
-      Repo.update_all(
-        from(event in Event,
-          where:
-            event.id == ^event_id and event.status == :retrying and event.locked_by == ^lock_ref
-        ),
-        set: [status: :failed, updated_at: now, last_error_at: now]
-      )
-
-    if updated == 1, do: {:ok, :pass}, else: {:error, :stale_lock}
   end
 
   defp claim(event_id, lock_ref) do
@@ -161,7 +160,7 @@ defmodule GroupherServer.CMS.Outbox do
     end
   end
 
-  defp run_action(event, lock_ref, action) do
+  defp run_action(event, lock_ref, action, on_error) do
     case action.(event) do
       {:ok, value} ->
         case complete(event.id, lock_ref) do
@@ -170,18 +169,45 @@ defmodule GroupherServer.CMS.Outbox do
         end
 
       {:error, reason} = error ->
-        _ = fail(event.id, lock_ref, reason)
-        error
+        action_failure(event.id, lock_ref, reason, on_error, error)
 
       other ->
         reason = {:invalid_outbox_result, other}
-        _ = fail(event.id, lock_ref, reason)
-        {:error, reason}
+        action_failure(event.id, lock_ref, reason, on_error, {:error, reason})
     end
   rescue
     exception ->
-      _ = fail(event.id, lock_ref, {:exception, exception.__struct__})
-      {:error, exception}
+      action_failure(
+        event.id,
+        lock_ref,
+        {:exception, exception.__struct__},
+        on_error,
+        {:error, exception}
+      )
+  end
+
+  defp action_failure(event_id, lock_ref, reason, :retry, original_error) do
+    case fail(event_id, lock_ref, reason) do
+      {:ok, :pass} -> original_error
+      {:error, persist_reason} -> {:error, persist_reason}
+    end
+  end
+
+  defp action_failure(event_id, lock_ref, reason, :fail, _original_error) do
+    case fail_terminal(event_id, lock_ref, reason) do
+      {:ok, :pass} -> {:error, CMS.ErrorCat.outbox_delivery_exhausted()}
+      {:error, persist_reason} -> {:error, persist_reason}
+    end
+  end
+
+  defp action_failure(event_id, lock_ref, reason, :classify, original_error) do
+    mode =
+      case reason do
+        %ErrorCat.Error{retryable: false} -> :fail
+        _ -> :retry
+      end
+
+    action_failure(event_id, lock_ref, reason, mode, original_error)
   end
 
   defp complete(event_id, lock_ref) do
@@ -221,6 +247,28 @@ defmodule GroupherServer.CMS.Outbox do
           locked_at: nil,
           locked_by: nil,
           available_at: now,
+          updated_at: now
+        ]
+      )
+
+    if updated == 1, do: {:ok, :pass}, else: {:error, :stale_lock}
+  end
+
+  defp fail_terminal(event_id, lock_ref, reason) do
+    now = DateTime.utc_now(:second)
+
+    {updated, _} =
+      Repo.update_all(
+        from(event in Event,
+          where:
+            event.id == ^event_id and event.status == :running and event.locked_by == ^lock_ref
+        ),
+        set: [
+          status: :failed,
+          last_error_code: error_code(reason),
+          last_error_at: now,
+          locked_at: nil,
+          locked_by: nil,
           updated_at: now
         ]
       )
@@ -350,6 +398,10 @@ defmodule GroupherServer.CMS.Outbox do
 
   defp remaining_lease(%Event{locked_at: locked_at}, now) do
     max(@lease_seconds - max(DateTime.diff(now, locked_at, :second), 0), 1)
+  end
+
+  defp error_code(%ErrorCat.Error{code: code}) when is_integer(code) do
+    Integer.to_string(code)
   end
 
   defp error_code(reason) when is_atom(reason), do: Atom.to_string(reason)

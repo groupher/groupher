@@ -16,8 +16,7 @@ Feature 文档为准。
 CMS
 ├─ Interactions       普通用户反应：upvote / collect / emotion
 ├─ ViewTracker        Article 有效阅读的 identity、去重和计数
-├─ Report             用户提交或撤销举报事实
-└─ Moderation         审核工作单、审核决定与资源处置编排
+└─ Review              内容审核请求、人工待办、Lifecycle 限制与结果应用
 
 RequestActor          平台级请求主体分类：human / agent / crawler / unknown
 
@@ -28,7 +27,9 @@ Analysis
 └─ Web                外部 Web Analytics provider 的适配和读取边界
 
 Activity              低频、可解释的业务活动历史，不承担高频统计
-Sentinel              自动识别违法、违规或高风险内容，并产生风险信号
+AI                    通用模型 provider 与意见调用能力
+ReviewBot             系统/社区审核策略与意见；不管理资源状态
+AlertWall             系统级风险/举报 item 与处理历史
 ```
 
 ## 边界速查
@@ -38,12 +39,12 @@ Sentinel              自动识别违法、违规或高风险内容，并产生�
 | `CMS.Interactions`         | existing，V5 partial         | `CMS.Interactions`            | upvote、collect、emotion 的事实与同步读取状态                    | [Interaction V5](../feature/interaction/v5.md)                    |
 | `RequestActor`             | implemented，入口持续补齐    | `GroupherServer.RequestActor` | 请求级 human/agent/crawler/unknown 分类结果；不包含业务策略      | [RequestActor](./request-actor.md)                                |
 | `CMS.ViewTracker`          | synchronous implemented      | `CMS.ViewTracker`             | tracking identity、有效阅读策略、watermark、receipt 与当前 views | [View 同步计数](../feature/view-tracker/article-view-counting.md) |
-| `CMS.Report`               | planned rename/refactor      | `CMS.AbuseReports`            | `Report.submit` / `withdraw` 与 ReportFact                       | [Report 设计](../feature/reporting/design.md)                     |
-| `CMS.Moderation`           | planned                      | 无独立模块                    | ReviewCase、Decision、调用资源正式 command                       | [Report 设计](../feature/reporting/design.md)                     |
 | `Analysis.ArticleInsights` | mixed                        | `Analysis.ArticleInsights`    | Article 业务指标的时间桶与产品查询                               | [Article Insights V1](../feature/analysis/article-insights-v1.md) |
 | `Analysis.Web`             | existing，后续阶段未全部完成 | `Analysis.Web`                | Umami provider adapter、权限与 Groupher DTO                      | [Web Analysis V2](../umami/web-analysis-v2.md)                    |
+| `AI`                       | implemented                  | `GroupherServer.AI`           | 共享 AI provider/profile 调用与结构化意见                        | [ReviewBot / AlertWall V2](../feature/alert-board/v2.md)          |
+| `ReviewBot`                | implemented                  | `GroupherServer.ReviewBot`    | 系统/社区配置、ban_words/prompt、审核意见                        | [ReviewBot / AlertWall V2](../feature/alert-board/v2.md)          |
+| `AlertWall`                | implemented                  | `GroupherServer.AlertWall`    | 风险 item、举报事实/关联和处理历史                               | [ReviewBot / AlertWall V2](../feature/alert-board/v2.md)          |
 | `Activity`                 | existing                     | `Activity`                    | 发布、审核、状态变化等业务活动历史                               | [Activity V1](../feature/activity/v1.md)                          |
-| `Sentinel`                 | planned                      | 无运行时模块                  | 自动内容风险检测与信号输出                                       | [Sentinel V1](../infra/diagnostics/sentinel-v1.md)                |
 
 第三方分析集成是已经实现的 Dashboard 能力：Community 可以接入 Google Analytics、GTM、
 Clarity、Plausible 或 Fathom。它们由用户自己的平台采集和解释，不是 `Analysis.ArticleInsights`

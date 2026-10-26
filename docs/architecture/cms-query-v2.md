@@ -12,6 +12,8 @@
 
 相关文档：
 
+- [FrontDesk 与 Query 收口计划](../migrations/frontdesk-query-convergence.md)：V2 命名迁移后的语义缺口、统一查询能力与 lint 验收，待实施；V2 已落地不代表全部调用已符合边界。
+
 - [FrontDesk](../feature/front-desk/README.md)：顶层资源的单资源唯一入口、mode/actor/view 与稳定关系；
 - [CMS Facade 与实现目录收口](./cms-facade-directory.md)：公开 facade 与内部实现目录的所有权；
 - [CMS 资源加载与 Canonical Reload 边界](./resource-loading-boundary.md)：transport、Gate、Command 与 async reload；

@@ -36,15 +36,18 @@ defmodule GroupherServer.CMS.Events.Notify do
   """
   @spec handle(Event.t()) :: handle_result()
   @impl true
-  def handle(%Event{type: :notify_comment, payload: %{comment: comment, from_user: from_user}}) do
-    handle(:comment, comment, from_user)
+  def handle(%Event{
+        type: :notify_comment,
+        payload: %{comment: comment, from_user: from_user} = payload
+      }) do
+    handle_comment_activity(comment, from_user, Map.get(payload, :delivery_key))
   end
 
   def handle(%Event{
         type: :notify_reply,
-        payload: %{reply_comment: reply_comment, from_user: from_user}
+        payload: %{reply_comment: reply_comment, from_user: from_user} = payload
       }) do
-    handle(:reply, reply_comment, from_user)
+    handle_reply_activity(reply_comment, from_user, Map.get(payload, :delivery_key))
   end
 
   def handle(%Event{
@@ -194,9 +197,52 @@ defmodule GroupherServer.CMS.Events.Notify do
     end
   end
 
-  defp handle_once(action, target, from_user, nil), do: handle(action, target, from_user)
+  defp handle_comment_activity(%Comment{} = comment, %User{} = from_user, delivery_key) do
+    with {:ok, article} <- FrontDesk.article_of(comment),
+         {:ok, thread} <- FrontDesk.thread_of(article),
+         {:ok, author} <- article_author(article) do
+      notify_attrs = %{
+        action: :comment,
+        thread: thread,
+        article_id: stable_article_id(article),
+        branch_id: Map.get(article, :branch_id),
+        title: article.title,
+        comment_id: comment.id,
+        user_id: author.id,
+        delivery_key: delivery_key
+      }
 
-  defp handle_once(action, %Comment{} = comment, %User{} = from_user, delivery_key) do
+      Messaging.send_notification(notify_attrs, from_user)
+    else
+      error -> handle_missing_target(error)
+    end
+  end
+
+  defp handle_reply_activity(%Comment{} = reply, %User{} = from_user, delivery_key) do
+    with %Comment{reply_to_comment: %{author_id: reply_to_author_id}} <-
+           Repo.preload(reply, reply_to_comment: :author),
+         {:ok, article} <- FrontDesk.article_of(reply),
+         {:ok, thread} <- FrontDesk.thread_of(article) do
+      notify_attrs = %{
+        action: :reply,
+        thread: thread,
+        article_id: stable_article_id(article),
+        branch_id: Map.get(article, :branch_id),
+        title: article.title,
+        comment_id: reply.id,
+        user_id: reply_to_author_id,
+        delivery_key: delivery_key
+      }
+
+      Messaging.send_notification(notify_attrs, from_user)
+    else
+      %Comment{reply_to_comment: nil} -> {:ok, :pass}
+      error -> handle_missing_target(error)
+    end
+  end
+
+  defp handle_once(action, %Comment{} = comment, %User{} = from_user, delivery_key)
+       when is_binary(delivery_key) do
     with {:ok, article} <- FrontDesk.article_of(comment),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       %{
@@ -215,7 +261,8 @@ defmodule GroupherServer.CMS.Events.Notify do
     end
   end
 
-  defp handle_once(action, article, %User{} = from_user, delivery_key) do
+  defp handle_once(action, article, %User{} = from_user, delivery_key)
+       when is_binary(delivery_key) do
     with {:ok, article} <- load_article_for_notification(article),
          {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, author} <- article_author(article) do
@@ -232,6 +279,10 @@ defmodule GroupherServer.CMS.Events.Notify do
     else
       error -> handle_missing_target(error)
     end
+  end
+
+  defp handle_once(action, target, %User{} = from_user, nil) do
+    handle(action, target, from_user)
   end
 
   defp article_author(%{author: %User{} = user}), do: {:ok, user}

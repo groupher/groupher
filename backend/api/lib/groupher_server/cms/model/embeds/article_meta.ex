@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
   @moduledoc """
   Embedded operational metadata shared by article-like CMS threads.
 
-  It carries moderation state, engagement projections, comment sequencing, and
+  It carries engagement projections, comment sequencing, and
   thread identity alongside the thread's primary schema.
 
   Business position:
@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
 
   alias CMS.Artiment.Threads
 
-  @optional_fields ~w(thread is_edited is_comment_locked comments_participant_user_ids reported_count upvoted_user_ids is_sunk can_undo_sink last_active_at is_legal illegal_reason illegal_words next_floor next_comment_inner_id)a
+  @optional_fields ~w(thread is_edited is_comment_locked comments_participant_user_ids upvoted_user_ids is_sunk can_undo_sink last_active_at next_floor next_comment_inner_id)a
 
   @doc "for test usage"
   def default_meta do
@@ -34,17 +34,12 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
       is_comment_locked: false,
       folded_comment_count: 0,
       comments_participant_user_ids: [],
-      reported_count: 0,
       upvoted_user_ids: [],
       is_sunk: false,
       can_undo_sink: true,
       last_active_at: nil,
       next_floor: 0,
-      next_comment_inner_id: 0,
-      # audit state
-      is_legal: true,
-      illegal_reason: [],
-      illegal_words: []
+      next_comment_inner_id: 0
     }
   end
 
@@ -54,8 +49,6 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
     field(:is_comment_locked, :boolean, default: false)
     field(:folded_comment_count, :integer, default: 0)
 
-    # `reported_count` remains a response projection; membership lives in reaction info.
-    field(:reported_count, :integer, default: 0)
     field(:upvoted_user_ids, {:array, :integer}, default: [])
 
     field(:comments_participant_user_ids, {:array, :integer}, default: [])
@@ -66,11 +59,6 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
     field(:last_active_at, :utc_datetime, default: nil)
     field(:next_floor, :integer, default: 0)
     field(:next_comment_inner_id, :integer, default: 0)
-
-    # audit state
-    field(:is_legal, :boolean, default: true)
-    field(:illegal_reason, {:array, :string}, default: [])
-    field(:illegal_words, {:array, :string}, default: [])
   end
 
   def changeset(struct, params) do

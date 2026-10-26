@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "groupher-review-ai",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-03",
+  "ai": {
+    "binding": "AI",
+    "remote": true,
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+}

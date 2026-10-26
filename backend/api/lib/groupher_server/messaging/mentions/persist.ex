@@ -2,29 +2,33 @@ defmodule GroupherServer.Messaging.Mentions.Persist do
   @moduledoc """
   Owns mention-row persistence primitives.
 
-  The module normalizes and replaces rows but never opens a transaction. The
-  surrounding SendMention command owns atomicity and mailbox projection sync.
+  The module normalizes and idempotently inserts delivery rows but never opens
+  a transaction. The surrounding SendMention command owns atomicity and mailbox
+  projection sync. A target/content token/recipient identity makes event replay
+  safe and leaves the existing `read` state untouched.
 
       article/comment + mentions
-          -> delete previous rows
-          -> insert current rows
+          -> resolve target and content token
+          -> insert current recipients once
           -> return affected recipients
   """
 
   import Ecto.Query, warn: false
-  import GroupherServer.FrontDesk, only: [thread_of: 1]
+  alias GroupherServer.{Accounts, CMS, Messaging, Repo}
 
-  alias GroupherServer.{Messaging, Accounts}
+  alias CMS.Model.{
+    Article,
+    ArticlePublic,
+    Comment,
+    CommentBody,
+    DocPublic
+  }
 
-  alias GroupherServer.{CMS, Repo}
-
-  alias CMS.Model.Comment
   alias Accounts.Model.User
   alias Messaging.Model.Mention
-  alias Helper.ORM
 
   @doc """
-  Replaces persisted mention rows for one content author.
+  Persists one delivery per target revision and recipient.
 
   ## Examples
 
@@ -32,9 +36,14 @@ defmodule GroupherServer.Messaging.Mentions.Persist do
   """
   @spec replace(struct(), list(), User.t()) :: {:ok, list()} | {:error, term()}
   def replace(content, mentions, %User{} = from_user) do
-    with {:ok, _deleted} <- delete_existing(content, from_user),
+    with {:ok, target_key, content_token} <- delivery_identity(content),
          {:ok, mentions} <- normalize_mentions(mentions),
          mentions <- reject_self_mentions(content, mentions, from_user),
+         mentions <-
+           Enum.map(
+             mentions,
+             &Map.merge(&1, %{target_key: target_key, content_token: content_token})
+           ),
          {:ok, _inserted} <- insert_mentions(mentions) do
       {:ok, mentions}
     end
@@ -43,7 +52,7 @@ defmodule GroupherServer.Messaging.Mentions.Persist do
   defp insert_mentions([]), do: {:ok, :pass}
 
   defp insert_mentions(mentions) do
-    case Repo.insert_all(Mention, mentions) do
+    case Repo.insert_all(Mention, mentions, on_conflict: :nothing) do
       {_count, _rows} -> {:ok, :pass}
     end
   end
@@ -78,22 +87,100 @@ defmodule GroupherServer.Messaging.Mentions.Persist do
   defp normalize_mention(%{thread: _thread}), do: {:error, "insert mentions error"}
   defp normalize_mention(mention), do: {:ok, mention}
 
-  defp delete_existing(%Comment{} = comment, %User{} = from_user) do
-    from(m in Mention,
-      where: m.comment_id == ^comment.id,
-      where: m.from_user_id == ^from_user.id
-    )
-    |> ORM.delete_all(:if_exist)
+  defp delivery_identity(%Comment{id: id} = comment) do
+    with {:ok, token} <- comment_token(comment) do
+      {:ok, "comment:#{id}", token}
+    end
   end
 
-  defp delete_existing(article, %User{} = from_user) do
-    with {:ok, thread} <- thread_of(article) do
-      from(m in Mention,
-        where: m.article_id == ^article.id,
-        where: m.thread == ^thread,
-        where: m.from_user_id == ^from_user.id
-      )
-      |> ORM.delete_all(:if_exist)
+  defp delivery_identity(%{comment_id: id} = comment) when is_integer(id) or is_binary(id) do
+    with {:ok, token} <- comment_token(comment) do
+      {:ok, "comment:#{id}", token}
+    end
+  end
+
+  defp delivery_identity(%{article_id: id, thread: :doc, branch_id: branch_id} = article)
+       when is_binary(id) and is_integer(branch_id) do
+    with {:ok, token} <- article_token(article, id, :doc, branch_id) do
+      {:ok, "doc:#{id}:#{branch_id}", token}
+    end
+  end
+
+  defp delivery_identity(%Article{id: id, thread: :doc} = article) do
+    with {:ok, branch_id} <- doc_branch_id(article, id),
+         {:ok, token} <- article_token(article, id, :doc, branch_id) do
+      {:ok, "doc:#{id}:#{branch_id}", token}
+    end
+  end
+
+  defp delivery_identity(%Article{id: id, thread: thread} = article) do
+    with {:ok, token} <- article_token(article, id, thread, nil) do
+      {:ok, "article:#{id}", token}
+    end
+  end
+
+  defp delivery_identity(%{article_id: id, thread: thread} = article)
+       when is_binary(id) and thread != :doc do
+    with {:ok, token} <- article_token(article, id, thread, nil) do
+      {:ok, "article:#{id}", token}
+    end
+  end
+
+  defp delivery_identity(%{article_id: id, thread: :doc} = article) when is_binary(id) do
+    with {:ok, branch_id} <- doc_branch_id(article, id),
+         {:ok, token} <- article_token(article, id, :doc, branch_id) do
+      {:ok, "doc:#{id}:#{branch_id}", token}
+    end
+  end
+
+  defp delivery_identity(_content), do: {:error, :mention_target_invalid}
+
+  defp article_token(%{revision_id: revision_id}, _article_id, _thread, _branch_id)
+       when is_binary(revision_id) do
+    {:ok, "revision:#{revision_id}"}
+  end
+
+  defp article_token(_content, article_id, :doc, branch_id) do
+    case Repo.get_by(DocPublic, article_id: article_id, branch_id: branch_id) do
+      %{revision_id: revision_id} when is_binary(revision_id) -> {:ok, "revision:#{revision_id}"}
+      _ -> {:error, :mention_content_token_missing}
+    end
+  end
+
+  defp article_token(_content, article_id, _thread, _branch_id) do
+    case Repo.get(ArticlePublic, article_id) do
+      %{revision_id: revision_id} when is_binary(revision_id) -> {:ok, "revision:#{revision_id}"}
+      _ -> {:error, :mention_content_token_missing}
+    end
+  end
+
+  defp comment_token(%{id: id}) when is_integer(id) do
+    body_token =
+      case Repo.get_by(CommentBody, comment_id: id) do
+        %CommentBody{version: version} when is_integer(version) and version > 0 ->
+          "body-version:#{version}"
+
+        _ ->
+          nil
+      end
+
+    case body_token do
+      token when is_binary(token) -> {:ok, token}
+      _ -> {:error, :mention_content_token_missing}
+    end
+  end
+
+  defp comment_token(_comment), do: {:error, :mention_content_token_missing}
+
+  defp doc_branch_id(_article, article_id) do
+    case Repo.one(
+           from(public in CMS.Model.DocPublic,
+             where: public.article_id == ^article_id,
+             select: public.branch_id
+           )
+         ) do
+      branch_id when is_integer(branch_id) -> {:ok, branch_id}
+      _ -> {:error, :mention_content_token_missing}
     end
   end
 end

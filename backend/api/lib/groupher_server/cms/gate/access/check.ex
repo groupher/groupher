@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
          %Community{} = community <- Repo.get(Community, comment.community_id),
          {:ok, result} <-
            with_parent_lock(community, article, comment.branch_id, fn ->
-             with {:ok, context} <- Load.comment(community, thread, article, comment),
+             with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
                   %Decision{allowed: true} <-
                     Decision.from_result(
                       Policy.comment(actor, action, comment, context),
@@ -136,7 +136,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   defp article_with_community(actor, action, %Article{} = resource, %Community{} = community) do
     with {:ok, thread} <- article_thread(resource) do
       Articles.MutationLock.with_article(community, resource, fn ->
-        with {:ok, context} <- Load.article(community, thread, resource),
+        with {:ok, context} <- Load.article(actor, community, thread, resource),
              %Decision{allowed: true} <-
                Decision.from_result(
                  Policy.article(actor, action, resource, context),
@@ -183,7 +183,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
           {:ok, term()} | {:error, term()}
   def with_authorized(actor, action, {community, thread, article, %Comment{} = comment}, callback)
       when is_function(callback, 1) do
-    with {:ok, context} <- Load.comment(community, thread, article, comment),
+    with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
              Policy.comment(actor, action, context.comment, context),
@@ -208,7 +208,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
           {:ok, term()} | {:error, term()}
   def with_authorized(actor, action, {community, thread, article, %Comment{} = comment}, callback)
       when is_function(callback, 2) do
-    with {:ok, context} <- Load.comment(community, thread, article, comment),
+    with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
              Policy.comment(actor, action, context.comment, context),
@@ -234,7 +234,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   def with_authorized(actor, action, {community, article}, callback)
       when is_function(callback, 1) do
     with {:ok, thread} <- article_thread(article),
-         {:ok, context} <- Load.article(community, thread, article),
+         {:ok, context} <- Load.article(actor, community, thread, article),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
              Policy.article(actor, action, context_resource(context), context),
@@ -257,7 +257,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   def with_authorized_article_binding(actor, action, {community, article}, callback)
       when is_function(callback, 1) do
     with {:ok, thread} <- article_thread(article),
-         {:ok, context} <- Load.article_in_community(community, thread, article),
+         {:ok, context} <- Load.article_in_community(actor, community, thread, article),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
              Policy.article(actor, action, context_resource(context), context),
@@ -284,7 +284,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
         callback
       )
       when is_integer(branch_id) and is_function(callback, 1) do
-    with {:ok, context} <- Load.doc(community, article, branch_id),
+    with {:ok, context} <- Load.doc(actor, community, article, branch_id),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
              Policy.article(actor, action, context_resource(context), context),

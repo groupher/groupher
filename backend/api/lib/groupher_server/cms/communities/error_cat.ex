@@ -45,4 +45,7 @@ defmodule GroupherServer.CMS.Communities.ErrorCat do
   error(:archive_recovery_window_active, code: 5533)
   error(:lifecycle_not_found, code: 5534)
   error(:apply_not_allowed, code: 5535)
+  error(:invalid_outbox_resource, code: 5536)
+  error(:invalid_pagination_invalidation, code: 5537)
+  error(:unknown_outbox_event, code: 5538)
 end

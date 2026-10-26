@@ -24,7 +24,6 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
     :thread,
     :stage,
     :policy_mode,
-    include_illegal: false,
     passport_granted_community_slugs: []
   ]
 
@@ -32,7 +31,6 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
           thread: atom(),
           stage: :public | :draft,
           policy_mode: atom(),
-          include_illegal: boolean(),
           passport_granted_community_slugs: [String.t()]
         }
 
@@ -67,7 +65,6 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
       thread: thread,
       stage: stage,
       policy_mode: policy_mode,
-      include_illegal: Keyword.get(opts, :include_illegal, false),
       passport_granted_community_slugs:
         opts
         |> Keyword.get(:passport_granted_community_slugs, [])

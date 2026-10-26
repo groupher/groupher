@@ -21,7 +21,7 @@ vi.mock('~/hooks/useViewingArticle', () => ({
   }),
 }))
 vi.mock('~/stores/account/hooks', () => ({
-  default: () => ({ isLogin: true, user: { login: 'alice' } }),
+  default: () => ({ isLogin: true, accountScope: 'user:alice', user: { login: 'alice' } }),
 }))
 
 const comment = {
@@ -37,7 +37,7 @@ describe('useCommentEmotion', () => {
   it('returns the reactive optimistic emotion projection', async () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const listKey = commentKeys.list('home', THREAD.POST, '42')
-    const viewerKey = viewerQueryKeys.commentStates('alice', 'home:POST:42', ['1'])
+    const viewerKey = viewerQueryKeys.commentStates('user:alice', 'home:POST:42', ['1'])
     queryClient.setQueryData(listKey, { entries: [comment] })
     queryClient.setQueryData(viewerKey, {
       '1': { emotionFlags: { HEART: false }, viewerHasUpvoted: false },

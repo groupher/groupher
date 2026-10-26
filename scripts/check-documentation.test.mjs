@@ -43,6 +43,25 @@ end
   ])
 })
 
+test('does not treat defmodule examples, strings, or comments as nested source modules', () => {
+  const source = `
+defmodule Example do
+  @moduledoc """
+  A module example is documentation, not a nested source module.
+
+      defmodule DocumentedExample do
+        Example -> DocumentedExample -> result
+      end
+  """
+
+  # defmodule CommentedOut do
+  # end
+end
+`
+
+  assert.deepEqual(findElixirModuleDocumentationIssues(source), [])
+})
+
 test('counts multiline Elixir arguments without counting nested commas', () => {
   const lines = [
     '  def resolve(',

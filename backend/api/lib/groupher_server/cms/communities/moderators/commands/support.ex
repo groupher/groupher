@@ -15,8 +15,7 @@ defmodule GroupherServer.CMS.Communities.Moderators.Commands.Support do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Communities.{ErrorCat, Query}
-  alias CMS.Communities.Moderators.Commands.Confirmation
+  alias CMS.Communities.{ErrorCat, Moderators.Commands.Confirmation}
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Gate.Decision
@@ -67,13 +66,11 @@ defmodule GroupherServer.CMS.Communities.Moderators.Commands.Support do
   defp present(%Confirmation{
          data: %{"community_id" => id, "command_id" => command_id, "results" => results}
        }) do
-    case Query.get(id) do
-      %Community{slug: slug} ->
-        with {:ok, community} <- FrontDesk.community(slug, mode: :internal) do
-          {:ok, %{community | command_id: command_id, moderator_results: results}}
-        end
+    case FrontDesk.community(id, mode: :internal) do
+      {:ok, %Community{} = community} ->
+        {:ok, %{community | command_id: command_id, moderator_results: results}}
 
-      nil ->
+      {:error, _reason} ->
         {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end

@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Articles.Tags.Assignment do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Communities.ErrorCat
   alias CMS.Communities.Tags.{Effects, Stats}
   alias CMS.FrontDesk
@@ -59,7 +60,7 @@ defmodule GroupherServer.CMS.Articles.Tags.Assignment do
   defp do_update_tags_assoc(article, tags, opt, community_id, opts) when is_list(tags) do
     case Ecto.UUID.cast(Map.get(article, :id)) do
       {:ok, article_id} -> update_stable_tags(article, article_id, tags, opt, community_id, opts)
-      :error -> {:error, :article_binding_context_required}
+      :error -> {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
@@ -109,7 +110,7 @@ defmodule GroupherServer.CMS.Articles.Tags.Assignment do
   end
 
   defp update_stable_tags(_article, _article_id, _tags, _opt, _community_id, _opts) do
-    {:error, :article_binding_context_required}
+    {:error, ArticleErrorCat.binding_context_required()}
   end
 
   defp maybe_invalidate_taxonomy(old_tags, new_tags, community, thread, effect_key, opts) do

@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Articles.Store do
   """
 
   alias GroupherServer.CMS
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
 
   alias CMS.Model.{
     Article,
@@ -68,12 +69,12 @@ defmodule GroupherServer.CMS.Articles.Store do
   end
 
   @doc "Ensures an Article has the Community association needed by an effect."
-  def with_community(%Article{}), do: {:error, :article_binding_context_required}
+  def with_community(%Article{}), do: {:error, ArticleErrorCat.binding_context_required()}
 
   def with_community(%ArticleView{community: %Community{}} = article), do: {:ok, article}
 
   def with_community(%ArticleView{} = _article) do
-    {:error, :article_binding_context_required}
+    {:error, ArticleErrorCat.binding_context_required()}
   end
 
   @doc "Loads one Draft cover edit projection."

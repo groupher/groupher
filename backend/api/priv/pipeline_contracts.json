@@ -2,6 +2,42 @@
   "app": "groupher_server",
   "pipelines": [
     {
+      "access": "user",
+      "arity": 5,
+      "confirmation": "GroupherServer.AlertWall.Commands.Resolve.Confirmation",
+      "module": "GroupherServer.AlertWall.Commands.Resolve",
+      "name": "execute_pipeline",
+      "operation": "alert_wall_resolve_item",
+      "pipeline": "receipt_pipeline",
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "item_id"
+    },
+    {
+      "access": "user",
+      "arity": 5,
+      "confirmation": "GroupherServer.AlertWall.Commands.SubmitReport.Confirmation",
+      "module": "GroupherServer.AlertWall.Commands.SubmitReport",
+      "name": "execute_pipeline",
+      "operation": "alert_wall_submit_report",
+      "pipeline": "receipt_pipeline",
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "target"
+    },
+    {
+      "access": "user",
+      "arity": 3,
+      "confirmation": "GroupherServer.AlertWall.Commands.WithdrawReport.Confirmation",
+      "module": "GroupherServer.AlertWall.Commands.WithdrawReport",
+      "name": "execute_pipeline",
+      "operation": "alert_wall_withdraw_report",
+      "pipeline": "receipt_pipeline",
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "report_id"
+    },
+    {
       "access": "internal",
       "arity": 1,
       "module": "GroupherServer.CMS.Articles.Commands.Archive",
@@ -102,17 +138,6 @@
       "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "article"
-    },
-    {
-      "access": "user",
-      "arity": 5,
-      "module": "GroupherServer.CMS.Articles.Commands.Moderate",
-      "name": "execute",
-      "operation": "article_moderate",
-      "pipeline": "direct_pipeline",
-      "stages": ["gate", "change"],
-      "steps": [],
-      "target": "article_id"
     },
     {
       "access": "user",
@@ -442,39 +467,6 @@
       "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "comment"
-    },
-    {
-      "access": "internal",
-      "arity": 2,
-      "module": "GroupherServer.CMS.Comments.Commands.Moderate",
-      "name": "set_audit_failed",
-      "operation": "comment_set_audit_failed",
-      "pipeline": "direct_pipeline",
-      "stages": ["change"],
-      "steps": [],
-      "target": "comment"
-    },
-    {
-      "access": "internal",
-      "arity": 2,
-      "module": "GroupherServer.CMS.Comments.Commands.Moderate",
-      "name": "set_illegal",
-      "operation": "comment_set_illegal",
-      "pipeline": "direct_pipeline",
-      "stages": ["load", "change"],
-      "steps": [],
-      "target": "comment_id"
-    },
-    {
-      "access": "internal",
-      "arity": 2,
-      "module": "GroupherServer.CMS.Comments.Commands.Moderate",
-      "name": "unset_illegal",
-      "operation": "comment_unset_illegal",
-      "pipeline": "direct_pipeline",
-      "stages": ["load", "change"],
-      "steps": [],
-      "target": "comment_id"
     },
     {
       "access": "user",
@@ -1503,30 +1495,6 @@
     },
     {
       "access": "user",
-      "arity": 5,
-      "confirmation": "GroupherServer.CMS.Interactions.Reactions.ReportConfirmation",
-      "module": "GroupherServer.CMS.Interactions.Reactions.Report",
-      "name": "execute_add",
-      "operation": "report_add",
-      "pipeline": "receipt_pipeline",
-      "stages": ["gate", "change", "confirm", "present"],
-      "steps": [],
-      "target": "input"
-    },
-    {
-      "access": "user",
-      "arity": 3,
-      "confirmation": "GroupherServer.CMS.Interactions.Reactions.ReportConfirmation",
-      "module": "GroupherServer.CMS.Interactions.Reactions.Report",
-      "name": "execute_remove",
-      "operation": "report_remove",
-      "pipeline": "receipt_pipeline",
-      "stages": ["gate", "change", "confirm", "present"],
-      "steps": [],
-      "target": "input"
-    },
-    {
-      "access": "user",
       "arity": 4,
       "confirmation": "GroupherServer.CMS.Interactions.Reactions.UpvoteConfirmation",
       "module": "GroupherServer.CMS.Interactions.Reactions.Upvote",
@@ -1607,6 +1575,30 @@
     },
     {
       "access": "user",
+      "arity": 5,
+      "confirmation": "GroupherServer.CMS.Review.Commands.Decide.Confirmation",
+      "module": "GroupherServer.CMS.Review.Commands.Decide",
+      "name": "execute_pipeline",
+      "operation": "cms_review_decision",
+      "pipeline": "receipt_pipeline",
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "target_key"
+    },
+    {
+      "access": "user",
+      "arity": 4,
+      "confirmation": "GroupherServer.CMS.Review.Commands.Recheck.Confirmation",
+      "module": "GroupherServer.CMS.Review.Commands.Recheck",
+      "name": "execute_pipeline",
+      "operation": "cms_review_recheck",
+      "pipeline": "receipt_pipeline",
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "target_key"
+    },
+    {
+      "access": "user",
       "arity": 4,
       "confirmation": "GroupherServer.CMS.Wallpaper.Commands.Confirmation",
       "module": "GroupherServer.CMS.Wallpaper.Commands.Publish",
@@ -1628,6 +1620,18 @@
       "stages": ["gate", "change", "confirm", "present"],
       "steps": [],
       "target": "community"
+    },
+    {
+      "access": "user",
+      "arity": 6,
+      "confirmation": "GroupherServer.ReviewBot.Commands.UpdateConfig.Confirmation",
+      "module": "GroupherServer.ReviewBot.Commands.UpdateConfig",
+      "name": "execute_pipeline",
+      "operation": "review_bot_update_config",
+      "pipeline": "receipt_pipeline",
+      "stages": ["prepare", "gate", "change", "confirm", "present"],
+      "steps": [],
+      "target": "scope"
     }
   ],
   "schema_version": 2

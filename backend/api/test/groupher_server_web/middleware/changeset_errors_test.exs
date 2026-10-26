@@ -3,6 +3,7 @@ defmodule GroupherServerWeb.Middleware.ChangesetErrorsTest do
 
   import Ecto.Changeset
 
+  alias GroupherServer.ErrorCat
   alias GroupherServerWeb.Middleware.ChangesetErrors
 
   test "formats number validation errors with the original gettext template" do
@@ -14,10 +15,14 @@ defmodule GroupherServerWeb.Middleware.ChangesetErrorsTest do
     result = ChangesetErrors.call(%Absinthe.Resolution{errors: [changeset]}, [])
 
     assert [
-             [
-               message: [%{key: "age", message: "must be greater than 10"}],
-               extensions: %{code: 4102}
-             ]
+             %ErrorCat.Error{
+               namespace: {:web},
+               reason: :changeset,
+               code: 4102,
+               details: %{
+                 message: [%{key: "age", message: "must be greater than 10"}]
+               }
+             }
            ] = result.errors
   end
 end

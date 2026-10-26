@@ -24,7 +24,7 @@ counter 分配，发布、mirror、move 使用绑定编号，FrontDesk（含有�
 Search、Press、Stats、Interaction、Comments、Mentions、异步事件和 Outbox payload 都使用显式
 ArticleBinding context。`Article.community_id`、`Article.inner_id` 和 `ArticleView.community_id`
 已从运行时模型中移除；旧 preload/fallback join 也已清理。路径批量读取已迁入
-`CMS.FrontDesk.articles/1`，原 `Articles.PathResolver` 已删除。具体分批合同和验收证据见 §8。
+`CMS.Articles.locators/1`，原 `Articles.PathResolver` 已删除。具体分批合同和验收证据见 §8。
 
 ## 1. 问题
 
@@ -205,7 +205,7 @@ Kanban 状态不因 mirror 或 move 自动复制到其他 ArticleBinding；Move 
 2. 将 Numbering owner 从 stable Article 改为 target ArticleBinding / Community counter。
 3. 修改 create、publish、mirror、move、unmirror，使所有路径编号写入 ArticleBinding。
 4. 修改 FrontDesk、GraphQL、List、Detail、Search、Feed、Press 和 PublicCache，使读取统一使用
-   ArticleBinding `inner_id`；批量读取调用方统一经过 `CMS.FrontDesk.articles/1`。
+   ArticleBinding `inner_id`；批量读取调用方统一经过 `CMS.Articles.locators/1`。
 5. 删除 `Article.community_id`、`Article.inner_id` 作为公共路径字段及其相关兼容代码。
 6. 删除当前 `Article.community_id` 路径锚点守卫，补充 published ArticleBinding 不变量。
 7. 更新测试、GraphQL contract、seed、fixture 和源级文档。（已完成）
@@ -317,7 +317,7 @@ git diff --check
 R1–R5 的数据归属迁移主体已经落地。本轮已完成的收口包括：
 
 1. `CMS.ArticlePath` 保留为共享纯 parse/validate helper；批量 binding/database lookup
-   已迁入 `CMS.FrontDesk.articles/1`，`Articles.PathResolver` 已删除；没有新增
+   已迁入 `CMS.Articles.locators/1`，`Articles.PathResolver` 已删除；没有新增
    `Articles.Path`、`Articles.PublicPath` 或 binding locator 查询 API。
 2. Move 的失效事件分别使用 source/destination binding 的 `inner_id`，并有不同编号回归测试。
 3. Publish 在 multi-binding Article 上要求显式 Community，不再从裸 Article 猜测唯一 Community。

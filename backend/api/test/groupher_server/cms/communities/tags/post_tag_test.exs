@@ -836,41 +836,6 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat.today_contents_count == 0
     end
 
-    test "Trash does not decrement stats for an already illegal post",
-         ~m(community post article_tag_attrs user)a do
-      {:ok, article_tag} =
-        CMS.Communities.create_tag(
-          community,
-          :post,
-          article_tag_attrs,
-          user,
-          Ecto.UUID.generate()
-        )
-
-      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
-
-      {:ok, _} =
-        CMS.Articles.set_illegal(
-          post.id,
-          %{
-            is_legal: false,
-            illegal_reason: ["some-reason"],
-            illegal_words: ["some-word"]
-          },
-          user,
-          community: community
-        )
-
-      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
-      assert stat.contents_count == 0
-
-      {:ok, _} = CMS.Articles.trash(post, user, community: community)
-
-      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
-      assert stat.contents_count == 0
-      assert stat.today_contents_count == 0
-    end
-
     test "can rebuild tag stats from source data",
          ~m(community post article_tag_attrs user)a do
       {:ok, article_tag} =

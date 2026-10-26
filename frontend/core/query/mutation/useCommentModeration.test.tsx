@@ -21,7 +21,7 @@ vi.mock('~/hooks/useViewingArticle', () => ({
   }),
 }))
 vi.mock('~/stores/account/hooks', () => ({
-  default: () => ({ user: { login: 'alice' } }),
+  default: () => ({ accountScope: 'user:alice', user: { login: 'alice' } }),
 }))
 
 const comment = { innerId: '1', replies: [] } as TComment

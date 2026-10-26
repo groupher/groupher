@@ -31,9 +31,6 @@ export type TArticleMeta = {
   isEdited?: boolean
   lastActiveAt?: string
   latestUpvotedUsers?: readonly TUser[]
-  isLegal?: boolean
-  illegalReason?: readonly string[]
-  illegalWords?: readonly string[]
 }
 
 export type TDocument = {
@@ -197,15 +194,11 @@ export type TComment = {
   commentInteractionRevision?: number
   reactionOutcome?: ReactionOutcome
   viewerHasUpvoted?: boolean
-  viewerHasReported?: boolean
   isArticleAuthor?: boolean
   emotions?: TEmotion[]
   meta?: {
     isArticleAuthorUpvoted?: boolean
     isReplyToOthers?: boolean
-    isLegal?: boolean
-    illegalReason?: string[]
-    illegalWords?: string[]
   }
   article?: {
     innerId?: string

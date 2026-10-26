@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.Press do
   @moduledoc false
 
-  use GroupherServer.TestMate
+  use GroupherServer.TestMate, async: false
 
   alias GroupherServer.CMS
 

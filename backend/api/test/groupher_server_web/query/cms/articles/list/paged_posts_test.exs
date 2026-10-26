@@ -436,13 +436,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       refute Map.has_key?(the_post, "viewerHasViewed")
       refute Map.has_key?(the_post, "viewerHasUpvoted")
       refute Map.has_key?(the_post, "viewerHasCollected")
-      refute Map.has_key?(the_post, "viewerHasReported")
 
       track_view(post, user)
 
       {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
       {:ok, _} = CMS.Interactions.collect(post, user, Ecto.UUID.generate())
-      {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user, Ecto.UUID.generate())
 
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
 
@@ -455,7 +453,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       refute Map.has_key?(the_post, "viewerHasViewed")
       refute Map.has_key?(the_post, "viewerHasUpvoted")
       refute Map.has_key?(the_post, "viewerHasCollected")
-      refute Map.has_key?(the_post, "viewerHasReported")
 
       refute Map.has_key?(the_post, "meta")
     end
