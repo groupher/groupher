@@ -63,7 +63,7 @@ export type Origin = {
 
 const ARTICLE_QUERY = `query PressArticle($article: ArticlePathInput!) {
   pressArticle(article: $article) {
-    communityRef articleRef articleRevision thread canonicalPath canonicalOrigin canonicalUrl
+    communityRef articleRef: articleId articleRevision thread canonicalPath canonicalOrigin canonicalUrl
     title subtitle markdown html digest bodyHash publishedAt updatedAt visibility
     author { login name avatar } tags { slug title }
   }
@@ -72,7 +72,7 @@ const ARTICLE_QUERY = `query PressArticle($article: ArticlePathInput!) {
 const FEED_FIELDS = `community { publicRef slug title description locale canonicalOrigin canonicalPath }
   config { markdownEnabled feedEnabled feedType feedCount feedThreads llmsEnabled sitemapEnabled revision }
   configRevision feedRevision
-  items { articleRef articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }`
+  items { articleRef: itemId articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }`
 
 const COMMUNITY_FEED_QUERY = `query PressCommunityFeed($community: String!, $input: PressCommunityRSSFeedInput!) {
   pressCommunityRSSFeed: pressCommunityRssFeed(community: $community, input: $input) { ${FEED_FIELDS} }
@@ -90,7 +90,7 @@ const SITE_QUERY = `query PressSite($community: String!) {
     community { publicRef slug title description locale canonicalOrigin canonicalPath }
     config { markdownEnabled feedEnabled feedType feedCount feedThreads llmsEnabled sitemapEnabled revision }
     siteRevision threads
-    items { articleRef articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }
+    items { articleRef: itemId articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }
   }
 }`
 
