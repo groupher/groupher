@@ -10,24 +10,24 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScope do
 
   @behaviour Absinthe.Middleware
 
-  import Helper.Utils, only: [handle_absinthe_error: 3]
-
+  alias GroupherServer.Accounts
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+  alias GroupherServerWeb.ErrorResponse
   alias GroupherServerWeb.Middleware.ServiceScope
 
   @impl Absinthe.Middleware
   def call(%{context: %{delegation_auth_failure: code}} = resolution, _opts) do
-    reject(resolution, "delegated user identity could not be verified", code)
+    reject(resolution, auth_error(code, "delegated user identity could not be verified"))
   end
 
   def call(%{context: %{service_auth_failure: code}} = resolution, _opts) do
-    reject(resolution, "service identity could not be verified", code)
+    reject(resolution, auth_error(code, "service identity could not be verified"))
   end
 
-  def call(%{context: %{request_actor_failure: code}} = resolution, _opts) do
+  def call(%{context: %{request_actor_failure: _code}} = resolution, _opts) do
     reject(
       resolution,
-      "request identity could not be classified",
-      normalize_failure_code(code)
+      WebErrorCat.request_identity_unavailable("request identity could not be classified")
     )
   end
 
@@ -40,8 +40,9 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScope do
     else
       reject(
         resolution,
-        "service identity is not authorized for this operation",
-        GroupherServer.Auth.contract_service_scope_forbidden()
+        WebErrorCat.service_scope_forbidden(
+          "service identity is not authorized for this operation"
+        )
       )
     end
   end
@@ -49,17 +50,32 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScope do
   def call(%{context: %{request_actor: _classification}} = resolution, _opts), do: resolution
 
   def call(resolution, _opts) do
-    reject(
-      resolution,
-      "request identity is unavailable",
-      GroupherServer.Auth.contract_service_token_invalid()
-    )
+    reject(resolution, WebErrorCat.invalid_service_token("request identity is unavailable"))
   end
 
-  defp normalize_failure_code(code) when is_binary(code) or is_integer(code), do: code
-  defp normalize_failure_code(_code), do: GroupherServer.Auth.contract_service_token_invalid()
+  defp reject(resolution, error) do
+    ErrorResponse.put_error(resolution, error)
+  end
 
-  defp reject(resolution, message, code) do
-    handle_absinthe_error(resolution, message, code)
+  defp auth_error(code, message) do
+    cond do
+      code == GroupherServer.Auth.contract_service_jwks_unavailable() ->
+        WebErrorCat.jwks_unavailable(message)
+
+      code == GroupherServer.Auth.contract_session_revoked() ->
+        Accounts.profiles_error_cat_session_revoked(message)
+
+      code == GroupherServer.Auth.contract_token_expired() ->
+        Accounts.profiles_error_cat_session_expired(message)
+
+      code == GroupherServer.Auth.contract_token_missing() ->
+        WebErrorCat.token_missing(message)
+
+      code == GroupherServer.Auth.contract_token_invalid() ->
+        Accounts.profiles_error_cat_invalid_browser_access_claims(message)
+
+      true ->
+        WebErrorCat.service_auth(message)
+    end
   end
 end

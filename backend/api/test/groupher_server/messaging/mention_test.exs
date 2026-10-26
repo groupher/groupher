@@ -6,14 +6,14 @@ defmodule GroupherServer.Test.Messaging.Mention do
   import Ecto.Query, warn: false
 
   alias GroupherServer.Messaging
+  alias Messaging.Model.Mention
+  alias CMS.Model.{ArticleLifecycle, ArticleReviewBlock}
 
   setup do
-    {:ok, post} = db_insert(:post)
+    {community, post, _attrs, _author} = mock_article(:post)
     {:ok, user} = db_insert(:user)
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
-    community_attrs = mock_attrs(:community)
-    {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
     mention_attr = %{
       thread: :post,
@@ -29,6 +29,25 @@ defmodule GroupherServer.Test.Messaging.Mention do
   end
 
   describe "mentions" do
+    test "does not deliver inbox mentions while Gate hides review-restricted content",
+         ~m(post user user2 mention_attr)a do
+      _lifecycle = Repo.get_by!(ArticleLifecycle, article_id: post.id)
+
+      Repo.insert!(%ArticleReviewBlock{
+        article_id: post.id,
+        type: :awaiting_human,
+        source_ref: "mention-test",
+        source: :request,
+        applied_at: DateTime.utc_now(:second)
+      })
+
+      mentions = [Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user2.id})]
+
+      assert {:error, :content_not_public} = Messaging.send_mention(post, mentions, user)
+
+      assert Repo.aggregate(from(m in Mention, where: m.article_id == ^post.id), :count) == 0
+    end
+
     test "can get unread mention count of a user", ~m(post user user2 user3 mention_attr)a do
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user3.id})
@@ -43,7 +62,7 @@ defmodule GroupherServer.Test.Messaging.Mention do
       {:ok, :pass} = Messaging.send_mention(post, mention_contents, user2)
       {:ok, count} = Messaging.unread_count(:mention, user3.id)
 
-      assert count == 2
+      assert count == 1
     end
 
     test "can batch send mentions", ~m(post user user2 mention_attr)a do
@@ -66,7 +85,7 @@ defmodule GroupherServer.Test.Messaging.Mention do
       assert mention.user.login == user.login
     end
 
-    test "mention multiable times on same article, will only have one record",
+    test "replaying a mention preserves its read state and does not duplicate it",
          ~m(post user user2 mention_attr)a do
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user2.id})
@@ -74,26 +93,33 @@ defmodule GroupherServer.Test.Messaging.Mention do
 
       {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
 
-      {:ok, result} =
+      {:ok, unread} =
         Messaging.paged_messages(:mention, user2, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
           size: 10
         })
 
-      assert result.total_count == 1
+      [mention] = unread.entries
+      {:ok, _} = Messaging.mark_read(:mention, [mention.id], user2)
 
       {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
 
       {:ok, result} =
-        Messaging.paged_messages(:mention, user2, %{}, %GroupherServer.Pagi.Params.Offset{
-          page: 1,
-          size: 10
-        })
+        Messaging.paged_messages(
+          :mention,
+          user2,
+          %{read: true},
+          %GroupherServer.Pagi.Params.Offset{
+            page: 1,
+            size: 10
+          }
+        )
 
       assert result.total_count == 1
+      assert hd(result.entries).read
     end
 
-    test "if mention before, update with no mention content will not do mention in final",
+    test "a new content revision delivers a new recipient without retracting history",
          ~m(post user user2 user3 mention_attr)a do
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user2.id})
@@ -117,11 +143,13 @@ defmodule GroupherServer.Test.Messaging.Mention do
 
       assert result.total_count == 0
 
+      next_revision = Map.put(post, :revision_id, Ecto.UUID.generate())
+
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user3.id})
       ]
 
-      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
+      {:ok, :pass} = Messaging.send_mention(next_revision, mention_contents, user)
 
       {:ok, result} =
         Messaging.paged_messages(:mention, user2, %{}, %GroupherServer.Pagi.Params.Offset{
@@ -129,7 +157,7 @@ defmodule GroupherServer.Test.Messaging.Mention do
           size: 10
         })
 
-      assert result.total_count == 0
+      assert result.total_count == 1
 
       {:ok, result} =
         Messaging.paged_messages(:mention, user3, %{}, %GroupherServer.Pagi.Params.Offset{
@@ -174,18 +202,21 @@ defmodule GroupherServer.Test.Messaging.Mention do
       assert mention.read
     end
 
-    test "can mark multi mention as read", ~m(post user user2 user3 mention_attr)a do
+    test "can mark multi mention as read", ~m(community post user user2 user3 mention_attr)a do
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user2.id, to_user_id: user.id})
       ]
 
       {:ok, :pass} = Messaging.send_mention(post, mention_contents, user2)
 
+      {_community, post2, _attrs, _author} = mock_article(:post, community, user3)
+      mention_attr2 = Map.merge(mention_attr, %{article_id: post2.id, title: post2.title})
+
       mention_contents = [
-        Map.merge(mention_attr, %{from_user_id: user3.id, to_user_id: user.id})
+        Map.merge(mention_attr2, %{from_user_id: user3.id, to_user_id: user.id})
       ]
 
-      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user3)
+      {:ok, :pass} = Messaging.send_mention(post2, mention_contents, user3)
 
       {:ok, result} =
         Messaging.paged_messages(:mention, user, %{}, %GroupherServer.Pagi.Params.Offset{
@@ -216,18 +247,21 @@ defmodule GroupherServer.Test.Messaging.Mention do
       assert mention2.read
     end
 
-    test "can mark read all", ~m(post user user2 user3 mention_attr)a do
+    test "can mark read all", ~m(community post user user2 user3 mention_attr)a do
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user2.id, to_user_id: user.id})
       ]
 
       {:ok, :pass} = Messaging.send_mention(post, mention_contents, user2)
 
+      {_community, post2, _attrs, _author} = mock_article(:post, community, user3)
+      mention_attr2 = Map.merge(mention_attr, %{article_id: post2.id, title: post2.title})
+
       mention_contents = [
-        Map.merge(mention_attr, %{from_user_id: user3.id, to_user_id: user.id})
+        Map.merge(mention_attr2, %{from_user_id: user3.id, to_user_id: user.id})
       ]
 
-      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user3)
+      {:ok, :pass} = Messaging.send_mention(post2, mention_contents, user3)
 
       {:ok, result} =
         Messaging.paged_messages(:mention, user, %{}, %GroupherServer.Pagi.Params.Offset{

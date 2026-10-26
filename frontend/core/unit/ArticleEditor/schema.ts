@@ -60,9 +60,6 @@ const updatePost = graphql(`
       }
       meta {
         thread
-        isLegal
-        illegalReason
-        illegalWords
       }
     }
   }
@@ -192,9 +189,6 @@ const post = graphql(`
       }
       meta {
         thread
-        isLegal
-        illegalReason
-        illegalWords
       }
       body {
         json

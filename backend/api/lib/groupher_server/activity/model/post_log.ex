@@ -22,8 +22,6 @@ defmodule GroupherServer.Activity.Model.PostLog do
       :comment_unpinned,
       :solution_accepted,
       :solution_replaced,
-      :solution_revoked,
-      :moderation_review_started,
-      :moderation_review_resolved
+      :solution_revoked
     ]
 end

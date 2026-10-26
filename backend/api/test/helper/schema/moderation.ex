@@ -41,40 +41,6 @@ defmodule GroupherServer.Test.Helper.Schema.Moderation do
     """
   end
 
-  def q(:paged_abuse_reports_2) do
-    """
-    query($filter: ReportFilter!, $pagi: PagiInput) {
-          pagedAbuseReports(filter: $filter, pagi: $pagi) {
-            entries {
-              id
-              dealWith
-              operateUser {
-                login
-              }
-              comment {
-                innerId
-                body { html }
-                author {
-                  login
-                }
-              }
-              account {
-                login
-              }
-              reportCases {
-                reason
-                attr
-                user {
-                  login
-                }
-              }
-            }
-            pageInfo { hasNextPage ... on OffsetPageInfo { page size totalCount totalPages } ... on CursorPageInfo { endCursor } }
-          }
-        }
-    """
-  end
-
   def q(:paged_community_moderators) do
     """
     query($community: String!, $filter: UserListFilter, $pagi: PagiInput) {
@@ -109,39 +75,4 @@ defmodule GroupherServer.Test.Helper.Schema.Moderation do
     """
   end
 
-  def q(:paged_abuse_reports) do
-    """
-    query($filter: ReportFilter!, $pagi: PagiInput) {
-          pagedAbuseReports(filter: $filter, pagi: $pagi) {
-            entries {
-              id
-              dealWith
-              article {
-                innerId
-                thread
-                title
-              }
-              operateUser {
-                login
-              }
-              comment {
-                innerId
-                body { html }
-                author {
-                  login
-                }
-              }
-              reportCases {
-                reason
-                attr
-                user {
-                  login
-                }
-              }
-            }
-            pageInfo { hasNextPage ... on OffsetPageInfo { page size totalCount totalPages } ... on CursorPageInfo { endCursor } }
-          }
-        }
-    """
-  end
 end

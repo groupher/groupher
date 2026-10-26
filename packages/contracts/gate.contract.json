@@ -88,6 +88,12 @@
     "post.undo_pin",
     "post.undo_sink",
     "post.update",
+    "review.configure",
+    "review.decide",
+    "review.platform.configure",
+    "review.platform.decide",
+    "review.platform.read",
+    "review.read",
     "thread.create",
     "thread.set",
     "thread.unset"
@@ -108,7 +114,10 @@
     "community.application.review",
     "community.create",
     "community.request_destroy",
-    "community.update"
+    "community.update",
+    "review.platform.configure",
+    "review.platform.decide",
+    "review.platform.read"
   ],
   "ownerFallbackActions": [
     "article.trash",

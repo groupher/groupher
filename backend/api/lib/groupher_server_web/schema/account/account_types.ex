@@ -48,32 +48,24 @@ defmodule GroupherServerWeb.Schema.Account.Types do
   end
 
   object :user_meta do
-    field(:reported_count, :integer)
     field(:is_maker, :boolean)
     field(:published_posts_count, :integer)
     field(:published_blogs_count, :integer)
-
-    # aduit
-    field(:has_illegal_articles, :boolean)
-    field(:has_illegal_comments, :boolean)
-
-    field(:illegal_articles, list_of(:string))
-    field(:illegal_comments, list_of(:string))
+    field(:reported_count, :integer, resolve: &R.AlertWall.reported_count/3)
   end
 
   object :user do
     meta(:cache, max_age: 30)
 
-    field(:account_ref, non_null(:id),
-      resolve: fn %{id: id}, _, _ ->
-        digest = :crypto.hash(:sha256, "groupher-account:" <> to_string(id))
-        {:ok, "acct_" <> Base.url_encode64(digest, padding: false)}
+    field(:login, non_null(:string))
+
+    field(:meta, :user_meta,
+      resolve: fn %{id: user_id, meta: meta}, _, _ ->
+        {:ok, Map.put(meta || %{}, :user_id, user_id)}
       end
     )
 
-    field(:meta, :user_meta)
     field(:nickname, :string)
-    field(:login, :string)
     field(:avatar, :string)
     field(:bio, :string)
     field(:shortbio, :string)

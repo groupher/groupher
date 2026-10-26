@@ -19,8 +19,8 @@ export type TQueryInvalidationTarget =
   | { domain: 'community'; target: 'wallpaper'; community: string }
   | { domain: 'community'; target: 'wallpaper-editor'; community: string }
   | { domain: 'community'; target: 'press-config'; community: string }
-  | { domain: 'viewer'; target: 'article-state'; accountRef: string }
-  | { domain: 'viewer'; target: 'comment-state'; accountRef: string; articleKey: string }
+  | { domain: 'viewer'; target: 'article-state'; accountScope: string }
+  | { domain: 'viewer'; target: 'comment-state'; accountScope: string; articleKey: string }
 
 export type TQueryMatch = {
   domain: TQueryInvalidationTarget['domain']

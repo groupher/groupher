@@ -134,13 +134,13 @@ const patchActiveStatsChanges = (
 
 const patchViewerChanges = (
   queryClient: QueryClient,
-  accountRef: string,
+  accountScope: string,
   articleKey: string,
   nextViewerState: boolean,
   context?: TOperationContext,
 ): TOptimisticChange[] => {
   const changes: TOptimisticChange[] = []
-  const prefix = viewerQueryKeys.articleInteractionStatePrefix(accountRef)
+  const prefix = viewerQueryKeys.articleInteractionStatePrefix(accountScope)
   for (const { queryKey } of queryClient.getQueryCache().findAll({ queryKey: prefix })) {
     const previous = queryClient.getQueryData<Record<string, TArticleInteractionState>>(queryKey)
     const before = previous?.[articleKey]?.viewerHasUpvoted
@@ -215,14 +215,14 @@ export const articleUpvoteOperation = {
   queueKey: (article: TArticle) => `article:${articlePathKey(articlePathOf(article))}:reaction`,
   read: (context: TReadOperationContext, article: TArticle): boolean => {
     const articleKey = articlePathKey(articlePathOf(article))
-    const receipt = readArticleUpvoteReceipt(context.accountRef, articleKey)
+    const receipt = readArticleUpvoteReceipt(context.accountScope, articleKey)
     const stats = articleStatsCache.find(context.queryClient, articlePathOf(article))
     if (receipt && isArticleUpvoteReceiptNewer(stats, receipt))
       return receipt.viewerState.viewerHasUpvoted
-    if (context.accountRef) {
+    if (context.accountScope) {
       const viewer = context.queryClient
         .getQueryCache()
-        .findAll({ queryKey: viewerQueryKeys.articleInteractionStatePrefix(context.accountRef) })
+        .findAll({ queryKey: viewerQueryKeys.articleInteractionStatePrefix(context.accountScope) })
         .map(({ queryKey }) =>
           context.queryClient.getQueryData<Record<string, TArticleInteractionState>>(queryKey),
         )
@@ -235,10 +235,10 @@ export const articleUpvoteOperation = {
     ...articleStatsCache
       .queries(context.queryClient, articlePathOf(article))
       .map(({ queryKey }) => ({ queryKey, exact: true as const })),
-    ...(context.accountRef
+    ...(context.accountScope
       ? articleInteractionStateQueries(
           context.queryClient,
-          context.accountRef,
+          context.accountScope,
           articlePathOf(article),
         ).map(({ queryKey }) => ({ queryKey, exact: true }))
       : []),
@@ -252,11 +252,11 @@ export const articleUpvoteOperation = {
     const articleKey = articlePathKey(path)
     const statsPlan = patchActiveStatsChanges(context.queryClient, path, nextViewerState, context)
     const changes: TOptimisticChange[] = [...statsPlan.changes]
-    if (context.accountRef) {
+    if (context.accountScope) {
       changes.push(
         ...patchViewerChanges(
           context.queryClient,
-          context.accountRef,
+          context.accountScope,
           articleKey,
           nextViewerState,
           context,
@@ -280,14 +280,14 @@ export const articleUpvoteOperation = {
     const key = articlePathKey(path)
     const { interactionState } = applyArticleInteractionResult(
       context.queryClient,
-      context.accountRef,
+      context.accountScope,
       path,
       result,
     )
     const viewerHasUpvoted = interactionState.viewerHasUpvoted
-    if (context.accountRef && result.reactionOutcome !== 'UNCHANGED') {
+    if (context.accountScope && result.reactionOutcome !== 'UNCHANGED') {
       writeArticleUpvoteReceipt({
-        accountRef: context.accountRef,
+        accountScope: context.accountScope,
         entityKey: key,
         commandId: context.commandId,
         viewerHasUpvoted,

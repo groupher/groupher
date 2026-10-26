@@ -78,6 +78,8 @@ defmodule GroupherServer.CMS.DocTree.Workflows.ContentImport do
 
   defp apply_locked(community, %Job{status: :ready} = job) do
     with %User{} = actor <- Repo.get(User, job.actor_id),
+         {:ok, _community} <-
+           CMS.Gate.check_community_workflow_in_transaction(actor, :import_docs, community),
          {:ok, branch} <- Branch.resolve(community, Branch.main_slug()) do
       case LockTransaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
              apply_to_main_draft(community, branch, actor, job)

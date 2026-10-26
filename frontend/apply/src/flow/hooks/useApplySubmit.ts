@@ -7,7 +7,7 @@ import { useApplyStore } from '../context'
 import { removeDraft } from '../persistence'
 
 /** Exposes apply submit state and actions through the shared React hook boundary. */
-export const useApplySubmit = (accountRef: string) => {
+export const useApplySubmit = (accountScope: string) => {
   const store = useApplyStore()
   const snapshot = useSnapshot(store)
   const navigate = useNavigate()
@@ -33,7 +33,7 @@ export const useApplySubmit = (accountRef: string) => {
           store.idempotencyKey,
         )
         store.submittedApplication = application
-        removeDraft(accountRef)
+        removeDraft(accountScope)
         await navigate({ to: `/status/${application.publicRef}` as never })
       } catch (error) {
         store.submitError =

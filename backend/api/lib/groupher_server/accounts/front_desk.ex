@@ -24,6 +24,17 @@ defmodule GroupherServer.Accounts.FrontDesk do
   defdelegate user(arg1), to: GroupherServer.Accounts.FrontDesk.Query
 
   @doc """
+  Delegates a validated mode/view User read to the owning Query.
+
+  ## Examples
+
+      FrontDesk.user("alice", mode: :public, view: :default)
+  """
+  @spec user(integer() | String.t(), keyword()) ::
+          {:ok, Accounts.Model.User.t()} | {:error, term()}
+  defdelegate user(ref, opts), to: GroupherServer.Accounts.FrontDesk.Query
+
+  @doc """
   Delegates userid/1 to the owning implementation.
 
   ## Examples

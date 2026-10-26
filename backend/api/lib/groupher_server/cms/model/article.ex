@@ -22,9 +22,8 @@ defmodule GroupherServer.CMS.Model.Article do
   @foreign_key_type Ecto.UUID
   @schema_prefix DBPrefix.cms()
   @threads CMS.Artiment.Config.threads()
-  @moderation_states [:legal, :audit_failed, :illegal]
-  @required_fields ~w(thread author_id moderation_state)a
-  @optional_fields ~w(illegal_reason illegal_words active_at is_sunk last_active_at
+  @required_fields ~w(thread author_id)a
+  @optional_fields ~w(active_at is_sunk last_active_at
                       is_edited comments_locked next_floor next_comment_inner_id)a
 
   @flop_options [
@@ -69,9 +68,6 @@ defmodule GroupherServer.CMS.Model.Article do
   schema "articles" do
     belongs_to(:author, Author, type: :id)
     field(:thread, Ecto.Enum, values: @threads)
-    field(:moderation_state, Ecto.Enum, values: @moderation_states, default: :legal)
-    field(:illegal_reason, {:array, :string}, default: [])
-    field(:illegal_words, {:array, :string}, default: [])
     field(:active_at, :utc_datetime)
     field(:is_sunk, :boolean, default: false)
     field(:last_active_at, :utc_datetime)
@@ -89,8 +85,7 @@ defmodule GroupherServer.CMS.Model.Article do
 
       Article.changeset(%Article{}, %{
         thread: :post,
-        author_id: Ecto.UUID.generate(),
-        moderation_state: :legal
+        author_id: Ecto.UUID.generate()
       })
 
   """

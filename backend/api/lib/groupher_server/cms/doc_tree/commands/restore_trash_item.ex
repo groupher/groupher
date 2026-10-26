@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreTrashItem do
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
+  alias GroupherServer.CMS
   alias GroupherServer.{CMS, Accounts}
 
   alias Accounts.Model.User

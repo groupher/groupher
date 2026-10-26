@@ -286,7 +286,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
              |> mutation_error?(
                S.Article.m(:update_article, :blog),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -300,7 +300,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
              |> mutation_error?(
                S.Article.m(:update_article, :blog),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
   end

@@ -24,4 +24,6 @@ defmodule GroupherServer.CMS.Comments.ErrorCat do
   error(:required_job_enqueue_failed, code: 4414)
   error(:already_pinned, code: 4415)
   error(:solution_target_mismatch, code: 4416)
+  error(:effect_target_not_found, code: 4417, retryable: true)
+  error(:unknown_outbox_event, code: 4418)
 end

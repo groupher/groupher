@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.FrontDesk
-  alias CMS.Comments.{Query, States}
+  alias CMS.Comments.States
   alias CMS.Comments.Commands.StateConfirmation, as: Confirmation
   alias CMS.Model.Comment
 
@@ -80,7 +80,7 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
 
   @pipeline operation: :comment_unpin, confirmation: Confirmation, target: :comment, params: []
   receipt_pipeline unpin_pipeline(comment, actor, command_id) do
-    gate(fn candidate -> CMS.Gate.check_comment_in_transaction(actor, :pin, candidate) end)
+    gate(fn candidate -> CMS.Gate.check_comment_in_transaction(actor, :undo_pin, candidate) end)
 
     change(fn {canonical, article} ->
       with {:ok, changed} <-
@@ -110,12 +110,12 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
   defp present_result(%Confirmation{
          data: %{"comment_id" => comment_id, "command_id" => command_id, "state" => state}
        }) do
-    case Query.comment(comment_id) do
-      %Comment{} = comment ->
+    case FrontDesk.comment(comment_id, mode: :internal) do
+      {:ok, %Comment{} = comment} ->
         {:ok,
          comment |> Map.put(:is_pinned, state == "pinned") |> Map.put(:command_id, command_id)}
 
-      nil ->
+      {:error, _reason} ->
         {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end

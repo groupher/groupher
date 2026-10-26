@@ -15,12 +15,19 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
 
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias CMS.Model.{Article, ArticleBodySnapshot, ArticleRevision, Comment, CommentLifecycle}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBodySnapshot,
+    ArticleRevision,
+    Comment,
+    CommentLifecycle,
+    CommentReviewBlock
+  }
+
   alias CMS.SearchArtiments.Config
 
   @article_threads Config.article_threads()
-
-  @legal CMS.Artiment.Const.moderation_state(:legal)
 
   @doc """
   Measures the source volume used for search platform cost estimates.
@@ -74,14 +81,28 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
 
   defp comment_counts do
     base =
-      Comment
+      from(comment in Comment, as: :capacity_comment)
       |> join(:inner, [comment], body in GroupherServer.CMS.Model.CommentBody,
         on: body.comment_id == comment.id
       )
       |> join(:inner, [comment], lifecycle in CommentLifecycle,
+        as: :capacity_comment_lifecycle,
         on: lifecycle.comment_id == comment.id
       )
-      |> where([comment, lifecycle], lifecycle.state == :visible and comment.pending == ^@legal)
+      |> where([comment, lifecycle], lifecycle.state == :visible)
+      |> where(
+        [comment, ...],
+        not exists(
+          from(restriction in CommentReviewBlock,
+            where:
+              restriction.comment_id == parent_as(:capacity_comment_lifecycle).comment_id and
+                is_nil(restriction.resolved_at) and
+                (is_nil(restriction.community_id) or
+                   restriction.community_id == parent_as(:capacity_comment).community_id),
+            select: 1
+          )
+        )
+      )
 
     {p50, p95, p99} = comment_body_percentiles(base)
 

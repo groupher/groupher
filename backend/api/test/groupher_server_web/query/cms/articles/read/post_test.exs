@@ -33,12 +33,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
 
     assert is_valid_kv?(results, "title", :string)
 
-    assert results["meta"] == %{
-             "isEdited" => false,
-             "illegalReason" => [],
-             "illegalWords" => [],
-             "isLegal" => true
-           }
+    assert results["meta"] == %{"isEdited" => false}
   end
 
   test "basic graphql query on post with stranger(un-login user)",
@@ -80,46 +75,6 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     assert created["payload"] == %{}
     refute Map.has_key?(created, "metadata")
     refute Map.has_key?(created, "source")
-  end
-
-  test "pending state should in meta", ~m(guest_conn user_conn community user post_attrs)a do
-    {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-
-    variables = %{
-      article: %{
-        inner_id: article_inner_id(post, community),
-        community: community.slug,
-        thread: "POST"
-      }
-    }
-
-    results = user_conn |> gq_query(S.Article.q(:article, :post), variables)
-
-    assert results |> get_in(["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == []
-    assert results |> get_in(["meta", "illegalWords"]) == []
-
-    results = guest_conn |> gq_query(S.Article.q(:article, :post), variables)
-    assert results |> get_in(["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == []
-    assert results |> get_in(["meta", "illegalWords"]) == []
-
-    {:ok, _} =
-      CMS.Articles.set_illegal(
-        post.id,
-        %{
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        },
-        :operations,
-        community: community
-      )
-
-    results = user_conn |> gq_query(S.Article.q(:article, :post), variables)
-
-    assert not get_in(results, ["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]
-    assert results |> get_in(["meta", "illegalWords"]) == ["some-word"]
   end
 
   test "returns cancan error when post thread is disabled",

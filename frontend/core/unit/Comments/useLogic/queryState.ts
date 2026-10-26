@@ -4,7 +4,6 @@ import { useSnapshot } from 'valtio'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { Q } from '~/query'
-import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 import { StoreContext } from '~/stores/comments/context'
 import type { TStore } from '~/stores/comments/spec'
@@ -21,7 +20,7 @@ export default function useCommentQueryState() {
   const { articlePath } = useViewingArticle()
   const summaryQuery = useQuery(
     Q.viewer.commentSummary(
-      account.accountRef || getAccountRef(account.user) || '',
+      account.accountScope || '',
       articlePath.community,
       articlePath.thread,
       articlePath.innerId,

@@ -13,6 +13,7 @@ defmodule GroupherServer.Test.Jobs.NonCommandWriteJobs do
     assert {:ok, :pass} = Jobs.ExpireCommunityApplications.perform(job)
     assert {:ok, :pass} = Jobs.ProfileViewDedupeCleanup.perform(job)
     assert {:ok, :pass} = Jobs.ReleaseExpiredCommunitySlugClaims.perform(job)
+    assert {:ok, :pass} = Jobs.CMSArtimentReviewRetention.perform(job)
     assert {:ok, :pass} = Jobs.ViewDedupeCleanup.perform(job)
     assert {:ok, :pass} = Jobs.WallpaperLifecycle.perform(job)
   end

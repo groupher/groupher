@@ -34,7 +34,7 @@ defmodule GroupherServer.Messaging.Model.Mention do
   @schema_prefix DBPrefix.messaging()
 
   @required_fields ~w(from_user_id to_user_id title article_id thread)a
-  @optional_fields ~w(branch_id comment_id read)a
+  @optional_fields ~w(branch_id comment_id read target_key content_token)a
 
   @type t :: %Mention{}
   schema "mentions" do
@@ -44,6 +44,8 @@ defmodule GroupherServer.Messaging.Model.Mention do
     field(:title, :string)
     field(:comment_id, :id)
     field(:read, :boolean)
+    field(:target_key, :string)
+    field(:content_token, :string)
 
     field(:block_linker, {:array, :string})
 
@@ -56,7 +58,10 @@ defmodule GroupherServer.Messaging.Model.Mention do
   def changeset(%Mention{} = mention, attrs) do
     mention
     |> cast(attrs, @optional_fields ++ @required_fields)
-    |> validate_required(@required_fields)
+    |> validate_required(@required_fields ++ [:target_key, :content_token])
+    |> unique_constraint([:target_key, :content_token, :to_user_id],
+      name: :mentions_delivery_identity_index
+    )
     |> foreign_key_constraint(:from_user_id)
     |> foreign_key_constraint(:to_user_id)
   end

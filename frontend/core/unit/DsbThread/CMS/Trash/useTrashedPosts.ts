@@ -40,15 +40,15 @@ const normalizePage = (page: TTrashedPostsData['trashedArticles']): TPagedTrashe
 export default function useTrashedPosts(initialData?: TRawPagedTrashedPosts | null) {
   const { slug: community } = useCommunity()
   const { t } = useTrans()
-  const { accountRef } = useAccount()
+  const { accountScope } = useAccount()
   const queryClient = useQueryClient()
-  const scope = `${accountRef}:${community}`
+  const scope = `${accountScope}:${community}`
   const [seedScope] = useState(scope)
   const position = usePagiPosition(scope, PAGE_SIZE)
   const page = position.request.api === 'offset' ? position.request.page : 1
   const setPage = position.setPage
   const [activeActionId, setActiveActionId] = useState<string | null>(null)
-  const queryRoot = [...viewerQueryKeys.all, accountRef, 'article-trash', community]
+  const queryRoot = [...viewerQueryKeys.all, accountScope, 'article-trash', community]
   const query = useQuery({
     queryKey: [...queryRoot, position.input],
     queryFn: async () =>
@@ -60,7 +60,7 @@ export default function useTrashedPosts(initialData?: TRawPagedTrashedPosts | nu
       ).trashedArticles,
     initialData: scope === seedScope && page === 1 ? (initialData ?? undefined) : undefined,
     select: normalizePage,
-    enabled: !!accountRef && !!community,
+    enabled: !!accountScope && !!community,
   })
   const pagedPosts = query.data ?? EMPTY_PAGE
 

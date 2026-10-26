@@ -146,7 +146,7 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
            }) do
       {:ok, :pass}
     else
-      nil -> Repo.rollback(:article_binding_not_found)
+      nil -> Repo.rollback(ArticleErrorCat.binding_not_found())
       {:error, reason} -> Repo.rollback(reason)
     end
   end

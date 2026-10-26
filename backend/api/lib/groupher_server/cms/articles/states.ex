@@ -13,7 +13,6 @@ defmodule GroupherServer.CMS.Articles.States do
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
-  import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{CMS, Repo}
 
@@ -142,13 +141,12 @@ defmodule GroupherServer.CMS.Articles.States do
   end
 
   def archive(thread) do
-    with {:ok, info} <- match(thread) do
+    with {:ok, _info} <- match(thread) do
       now = Datetime.now(:second)
       threshold = @archive_threshold[thread] || @archive_threshold[:default]
       archive_threshold = Datetime.shift(now, threshold)
 
-      Lifecycle.archive_before(thread, info.model, archive_threshold, now)
-      |> done()
+      Lifecycle.archive_before(thread, archive_threshold)
     end
   end
 

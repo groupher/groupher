@@ -147,7 +147,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       :upvote,
       :pin,
       :emotion,
-      :report,
       :sink,
       :lock_comment
     ])

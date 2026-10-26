@@ -289,7 +289,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
              |> mutation_error?(
                S.Article.m(:update_article, :changelog),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -303,7 +303,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
              |> mutation_error?(
                S.Article.m(:update_article, :changelog),
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
   end

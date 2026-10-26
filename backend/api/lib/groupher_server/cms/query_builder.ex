@@ -19,8 +19,6 @@ defmodule GroupherServer.CMS.QueryBuilder do
   @article_cat Const.cat_values()
   @article_status Const.status_values()
   @threads Threads.enums()
-  @audit_illegal Const.moderation_state(:illegal)
-  @audit_failed Const.moderation_state(:audit_failed)
 
   @doc "Applies CMS-owned filters, delegating generic clauses to `Helper.QueryBuilder`."
   @spec filter_pack(Ecto.Queryable.t(), map()) :: Ecto.Query.t()
@@ -90,12 +88,6 @@ defmodule GroupherServer.CMS.QueryBuilder do
 
       {:status, status}, query ->
         trans_article_status(query, status)
-
-      {:pending, :legal}, query ->
-        where(query, [article], article.pending != ^@audit_illegal)
-
-      {:pending, :audit_failed}, query ->
-        where(query, [article], article.pending == ^@audit_failed)
 
       {_, _}, query ->
         query

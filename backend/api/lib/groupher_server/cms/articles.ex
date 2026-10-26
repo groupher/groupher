@@ -22,12 +22,12 @@ defmodule GroupherServer.CMS.Articles do
     Commands,
     Pagination,
     Query,
-    Moderation,
     Store,
     Trash
   }
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias Helper.T
   alias Accounts.Model.User
   alias CMS.Artiment.Const
@@ -92,6 +92,10 @@ defmodule GroupherServer.CMS.Articles do
   @doc "Reads a bounded set of public ArticleLite rows by stable Article paths."
   @spec lite_paths([map()]) :: {:ok, [map()]} | {:error, term()}
   def lite_paths(paths), do: Pagination.lite_paths(paths)
+
+  @doc "Resolves a bounded batch of Article locators through the canonical Query and Gate scope."
+  @spec locators([map()]) :: T.domain_res([map()])
+  def locators(locators), do: Query.locators(locators)
 
   @doc "Returns the canonical public Article binding scope for joined collections."
   defdelegate public_binding_ids(), to: Pagination
@@ -289,7 +293,7 @@ defmodule GroupherServer.CMS.Articles do
             FrontDesk.community(community_id, mode: :internal)
 
           _ ->
-            {:error, :article_binding_context_required}
+            {:error, ArticleErrorCat.binding_context_required()}
         end
     end
   end
@@ -400,7 +404,8 @@ defmodule GroupherServer.CMS.Articles do
       when is_integer(community_id) and is_binary(command_id) do
     case FrontDesk.community(community_id, mode: :internal) do
       {:ok, %Community{} = community} ->
-        with {:ok, _command_id} <- CMS.Command.Receipt.validate_command_id(command_id) do
+        with {:ok, _command_id} <-
+               GroupherServer.CMS.Command.Receipt.validate_command_id(command_id) do
           Commands.StateChange.set_category(article_id, cat, actor, community)
         end
 
@@ -428,7 +433,8 @@ defmodule GroupherServer.CMS.Articles do
       when is_integer(community_id) and is_binary(command_id) do
     with {:ok, %Article{} = article} <- FrontDesk.article(article_id, mode: :internal),
          {:ok, %Community{} = community} <- FrontDesk.community(community_id, mode: :internal) do
-      with {:ok, _command_id} <- CMS.Command.Receipt.validate_command_id(command_id) do
+      with {:ok, _command_id} <-
+             GroupherServer.CMS.Command.Receipt.validate_command_id(command_id) do
         Commands.StateChange.set_status_in_community(article, status, actor, community)
       end
     else
@@ -442,7 +448,7 @@ defmodule GroupherServer.CMS.Articles do
          {:ok, updated} <- set_cat(article.id, cat, actor, community.id) do
       __MODULE__.ActionResult.merge(article, updated, %{cat: cat})
     else
-      _ -> {:error, :article_binding_context_required}
+      _ -> {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
@@ -451,7 +457,7 @@ defmodule GroupherServer.CMS.Articles do
          {:ok, updated} <- set_cat(article.id, cat, actor, community.id, command_id) do
       __MODULE__.ActionResult.merge(article, updated, %{cat: cat})
     else
-      _ -> {:error, :article_binding_context_required}
+      _ -> {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
@@ -460,7 +466,7 @@ defmodule GroupherServer.CMS.Articles do
     result =
       case Map.get(article, :community) do
         %Community{} = community -> set_status_in_community(article, status, actor, community)
-        _ -> {:error, :article_binding_context_required}
+        _ -> {:error, ArticleErrorCat.binding_context_required()}
       end
 
     with {:ok, updated} <- result do
@@ -472,12 +478,13 @@ defmodule GroupherServer.CMS.Articles do
     result =
       case Map.get(article, :community) do
         %Community{} = community ->
-          with {:ok, _command_id} <- CMS.Command.Receipt.validate_command_id(command_id) do
+          with {:ok, _command_id} <-
+                 GroupherServer.CMS.Command.Receipt.validate_command_id(command_id) do
             Commands.StateChange.set_status_in_community(article, status, actor, community)
           end
 
         _ ->
-          {:error, :article_binding_context_required}
+          {:error, ArticleErrorCat.binding_context_required()}
       end
 
     with {:ok, updated} <- result do
@@ -504,35 +511,6 @@ defmodule GroupherServer.CMS.Articles do
     Commands.StateChange.update_active_timestamp(thread, article)
   end
 
-  # Moderation
-
-  @doc "Marks one stable Article illegal through Gate; Doc callers pass `branch_id` in opts."
-  @spec set_illegal(Ecto.UUID.t(), map(), User.t() | :operations, keyword()) ::
-          T.domain_res(term())
-  def set_illegal(article_id, attrs, actor, opts \\ []) do
-    Commands.Moderate.execute(article_id, :illegal, attrs, actor, opts)
-  end
-
-  @doc "Clears illegal state through Gate; Doc callers pass `branch_id` in opts."
-  @spec unset_illegal(Ecto.UUID.t(), map(), User.t() | :operations, keyword()) ::
-          T.domain_res(term())
-  def unset_illegal(article_id, attrs, actor, opts \\ []) do
-    Commands.Moderate.execute(article_id, :legal, attrs, actor, opts)
-  end
-
-  @doc "Marks one stable Article audit-failed through Gate."
-  @spec set_audit_failed(Ecto.UUID.t(), map(), User.t() | :operations, keyword()) ::
-          T.domain_res(term())
-  def set_audit_failed(article_id, attrs, actor, opts \\ []) do
-    Commands.Moderate.execute(article_id, :audit_failed, attrs, actor, opts)
-  end
-
-  @doc "Returns paged audit failed from the `Articles` read boundary."
-  @spec paged_audit_failed(T.thread(), map()) :: T.domain_res(T.paged_data())
-  def paged_audit_failed(thread, filter) do
-    Moderation.paged_audit_failed(thread, filter)
-  end
-
   @doc "Locks comments on one stable Article through the shared Gate and aggregate lock."
   @spec lock_comments(Ecto.UUID.t(), User.t(), keyword()) :: T.domain_res(term())
   def lock_comments(article_id, %User{} = actor, opts \\ []) do
@@ -554,7 +532,7 @@ defmodule GroupherServer.CMS.Articles do
 
   def lock_comments_result(article, %User{} = actor, command_id) do
     with {:ok, _command_id} <-
-           CMS.Command.Receipt.validate_command_id(command_id),
+           GroupherServer.CMS.Command.Receipt.validate_command_id(command_id),
          {:ok, updated} <-
            Commands.CommentLock.execute(
              article.id,
@@ -575,7 +553,7 @@ defmodule GroupherServer.CMS.Articles do
 
   def undo_lock_comments_result(article, %User{} = actor, command_id) do
     with {:ok, _command_id} <-
-           CMS.Command.Receipt.validate_command_id(command_id),
+           GroupherServer.CMS.Command.Receipt.validate_command_id(command_id),
          {:ok, updated} <-
            Commands.CommentLock.execute(
              article.id,
@@ -596,7 +574,7 @@ defmodule GroupherServer.CMS.Articles do
 
   def sink_result(article, %User{} = actor, command_id) do
     with {:ok, _command_id} <-
-           CMS.Command.Receipt.validate_command_id(command_id),
+           GroupherServer.CMS.Command.Receipt.validate_command_id(command_id),
          {:ok, updated} <-
            Commands.StateChange.execute(
              :sink,
@@ -617,7 +595,7 @@ defmodule GroupherServer.CMS.Articles do
 
   def undo_sink_result(article, %User{} = actor, command_id) do
     with {:ok, _command_id} <-
-           CMS.Command.Receipt.validate_command_id(command_id),
+           GroupherServer.CMS.Command.Receipt.validate_command_id(command_id),
          {:ok, updated} <-
            Commands.StateChange.execute(
              :undo_sink,

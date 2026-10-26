@@ -3,7 +3,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useRef, useState } from 'react'
 
-import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 import { executeOptimisticOperation } from './execute'
@@ -16,14 +15,14 @@ export default function useOptimisticAction<TTarget, TInput, TResult>(
 ) {
   const queryClient = useQueryClient()
   const account = useAccount()
-  const accountRef = account.accountRef || getAccountRef(account.user)
+  const accountScope = account.accountScope
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const pendingCount = useRef(0)
 
   const submit = useCallback(
     async (input: TInput): Promise<TResult> => {
-      if (!target || !accountRef)
+      if (!target || !accountScope)
         return Promise.reject(new Error('Operation target is unavailable'))
       pendingCount.current += 1
       setIsSubmitting(true)
@@ -31,7 +30,7 @@ export default function useOptimisticAction<TTarget, TInput, TResult>(
       try {
         return await executeOptimisticOperation({
           queryClient,
-          accountRef,
+          accountScope,
           operation,
           target,
           input,
@@ -44,7 +43,7 @@ export default function useOptimisticAction<TTarget, TInput, TResult>(
         setIsSubmitting(pendingCount.current > 0)
       }
     },
-    [accountRef, operation, queryClient, target],
+    [accountScope, operation, queryClient, target],
   )
 
   return { submit, isSubmitting, error }

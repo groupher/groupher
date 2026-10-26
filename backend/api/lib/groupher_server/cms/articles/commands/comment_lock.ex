@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
   alias GroupherServer.CMS
-  alias CMS.Articles.{Bindings, Query, States}
+  alias CMS.Articles.{Bindings, States}
   alias CMS.Docs.Store, as: DocStore
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
@@ -85,9 +85,9 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
       _ ->
         case Keyword.get(opts, :community_id) do
           community_id when is_integer(community_id) ->
-            case Query.community(community_id) do
-              %Community{} = community -> {:ok, community}
-              _ -> {:error, :article_binding_not_found}
+            case FrontDesk.community(community_id, mode: :internal) do
+              {:ok, %Community{} = community} -> {:ok, community}
+              {:error, _reason} -> {:error, CMS.Communities.ErrorCat.not_exist()}
             end
 
           _ ->
@@ -99,7 +99,10 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
   defp resolve_branch_community(opts, article) do
     case Keyword.get(opts, :branch_id) do
       branch_id when is_integer(branch_id) ->
-        Query.branch_community(branch_id)
+        with {:ok, %{community_id: community_id}} <- CMS.Docs.Store.branch_context(branch_id),
+             {:ok, community} <- FrontDesk.community(community_id, mode: :internal) do
+          {:ok, community}
+        end
 
       _ ->
         case Bindings.get(article, Map.get(article, :community)) do

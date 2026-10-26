@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
              |> mutation_error?(
                @save_custom_theme_preset_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -135,7 +135,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
              |> mutation_error?(
                @save_custom_theme_preset_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
 
@@ -483,7 +483,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
              |> mutation_error?(
                @select_theme_preset_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -497,7 +497,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
              |> mutation_error?(
                @select_theme_preset_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
   end

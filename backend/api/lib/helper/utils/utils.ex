@@ -147,49 +147,6 @@ defmodule Helper.Utils do
     end
   end
 
-  @doc "Projects a domain failure into Absinthe's error result shape."
-  def handle_absinthe_error(
-        resolution,
-        %ErrorCat.Error{} = error,
-        _code
-      ) do
-    {:error, [message: message, code: error_code]} = ErrorCat.gq_format(error)
-
-    resolution
-    |> Absinthe.Resolution.put_result({:error, message: message, extensions: %{code: error_code}})
-  end
-
-  def handle_absinthe_error(resolution, {reason, meta}, code)
-      when is_integer(code) or is_binary(code) do
-    message = if is_binary(meta), do: meta, else: Atom.to_string(reason)
-
-    resolution
-    |> Absinthe.Resolution.put_result({:error, message: message, extensions: %{code: code}})
-  end
-
-  def handle_absinthe_error(resolution, err_msg, code)
-      when is_integer(code) or is_binary(code) do
-    resolution
-    |> Absinthe.Resolution.put_result({:error, message: err_msg, extensions: %{code: code}})
-  end
-
-  def handle_absinthe_error(resolution, err_msg) when is_list(err_msg) do
-    # %{resolution | value: [], errors: transform_errors(changeset)}
-    resolution
-    # |> Absinthe.Resolution.put_result({:error, err_msg})
-    |> Absinthe.Resolution.put_result(
-      {:error, message: err_msg, extensions: %{code: ErrorCat.code(ErrorCat.default())}}
-    )
-  end
-
-  def handle_absinthe_error(resolution, err_msg) when is_binary(err_msg) do
-    resolution
-    # |> Absinthe.Resolution.put_result({:error, err_msg})
-    |> Absinthe.Resolution.put_result(
-      {:error, message: err_msg, extensions: %{code: ErrorCat.code(ErrorCat.default())}}
-    )
-  end
-
   @doc "Repeats a scalar value and preserves the legacy single-integer-list string form."
   def repeat(times, [x]) when is_integer(x), do: to_string(for _ <- 1..times, do: x)
   def repeat(times, x), do: for(_ <- 1..times, do: x)

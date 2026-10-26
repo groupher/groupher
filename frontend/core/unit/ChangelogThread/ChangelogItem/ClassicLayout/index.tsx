@@ -58,7 +58,7 @@ const ClassicLayout: FC<TProps> = ({ viewModel }) => {
         </div>
         {article.author && <Author user={article.author} />}
         <div className={s.footer}>
-          <EmotionSelector emotions={demoEmotion} isLegal />
+          <EmotionSelector emotions={demoEmotion} />
           <div className='grow' />
           <CommentsCount count={stats?.commentsCount ?? 0} size='medium' right={15} />
           <ShareSVG className={s.shareIcon} />

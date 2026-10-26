@@ -33,12 +33,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
     assert is_valid_kv?(results, "title", :string)
 
-    assert results["meta"] == %{
-             "isEdited" => false,
-             "illegalReason" => [],
-             "illegalWords" => [],
-             "isLegal" => true
-           }
+    assert results["meta"] == %{"isEdited" => false}
   end
 
   test "basic graphql query on changelog with stranger(un-login user)",
@@ -57,46 +52,6 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
     assert results["innerId"] == to_string(article_inner_id(changelog, community))
     assert is_valid_kv?(results, "title", :string)
-  end
-
-  test "pending state should in meta", ~m(guest_conn user_conn community user changelog_attrs)a do
-    {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-
-    variables = %{
-      article: %{
-        inner_id: article_inner_id(changelog, community),
-        community: community.slug,
-        thread: "CHANGELOG"
-      }
-    }
-
-    results = user_conn |> gq_query(S.Article.q(:article, :changelog), variables)
-
-    assert results |> get_in(["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == []
-    assert results |> get_in(["meta", "illegalWords"]) == []
-
-    results = guest_conn |> gq_query(S.Article.q(:article, :changelog), variables)
-    assert results |> get_in(["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == []
-    assert results |> get_in(["meta", "illegalWords"]) == []
-
-    {:ok, _} =
-      CMS.Articles.set_illegal(
-        changelog.id,
-        %{
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        },
-        :operations,
-        community: community
-      )
-
-    results = user_conn |> gq_query(S.Article.q(:article, :changelog), variables)
-
-    assert not get_in(results, ["meta", "isLegal"])
-    assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]
-    assert results |> get_in(["meta", "illegalWords"]) == ["some-word"]
   end
 
   test "returns cancan error when changelog thread is disabled",

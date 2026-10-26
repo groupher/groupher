@@ -6,6 +6,9 @@
 
 FrontDesk 负责 User、Community、Article、Comment 等顶层资源的稳定单资源读取，以及少量稳定业务关系。
 
+单资源/批量转发与 list/pagi Query 的已确认边界、现存绕行和待实施验收见
+[FrontDesk 与 Query 收口计划](../../migrations/frontdesk-query-convergence.md)。该计划不表示现有调用已全部符合合同。
+
 ```text
 GraphQL / application / cross-domain caller
   -> GroupherServer.FrontDesk

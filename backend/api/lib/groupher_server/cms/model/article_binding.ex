@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Model.ArticleBinding do
 
       stable Article
         -> ArticleBinding(article, community)
-        -> community visibility, tags, and pin ownership
+        -> community-local identity and binding-owned relations
 
   Every row is a peer ArticleBinding. Product commands may call an insertion a
   mirror, but the binding itself does not have a home/mirror role.
@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Model.ArticleBinding do
 
   @schema_prefix DBPrefix.cms()
   @required_fields ~w(article_id community_id)a
-  @optional_fields ~w(inner_id visible)a
+  @optional_fields ~w(inner_id)a
 
   @type t :: %__MODULE__{}
 
@@ -30,7 +30,6 @@ defmodule GroupherServer.CMS.Model.ArticleBinding do
     belongs_to(:community, Community)
     has_one(:kanban_state, KanbanState, foreign_key: :article_binding_id)
     field(:inner_id, :integer)
-    field(:visible, :boolean, default: true)
     timestamps(type: :utc_datetime)
   end
 

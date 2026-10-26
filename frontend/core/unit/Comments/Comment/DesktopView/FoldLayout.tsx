@@ -11,7 +11,6 @@ import TimeAgo from '~/ui/TimeAgo'
 
 import useActions from '../../useLogic/useActions'
 import useSalon, { cn } from '../salon/desktop_view/fold_layout'
-import IllegalBar from './IllegalBar'
 
 type TProps = {
   data: TComment
@@ -25,8 +24,6 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
   const { t } = useTrans()
 
   const isSolution = data.isSolution
-  const { meta } = data
-  const { isLegal = false, illegalReason = [], illegalWords = [] } = meta ?? {}
   const author = data.author ?? {}
 
   return (
@@ -39,17 +36,13 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
         fallback={<ImgFallback user={author} />}
         noLazy
       />
-      {isLegal ? (
-        <div
-          className={s.commentBody}
-          // oxlint-disable-next-line react/no-danger -- Folded comment bodies use sanitized HTML from the backend renderer.
-          dangerouslySetInnerHTML={{
-            __html: data.body?.html ?? '',
-          }}
-        />
-      ) : (
-        <IllegalBar illegalReason={illegalReason} illegalWords={illegalWords} isFold />
-      )}
+      <div
+        className={s.commentBody}
+        // oxlint-disable-next-line react/no-danger -- Folded comment bodies use sanitized HTML from the backend renderer.
+        dangerouslySetInnerHTML={{
+          __html: data.body?.html ?? '',
+        }}
+      />
 
       {(data.repliesCount ?? 0) > 0 && (
         <div className={s.repliesHint}>

@@ -112,6 +112,15 @@ defmodule GroupherServer.Accounts do
   @doc "Delegates GroupherServer.Accounts.FrontDesk.user/1 through the Accounts Context boundary."
   defdelegate front_desk_user(arg1), to: GroupherServer.Accounts.FrontDesk, as: :user
 
+  @doc """
+  Delegates an explicitly configured User read through the Accounts Context boundary.
+
+  ## Examples
+
+      Accounts.front_desk_user("alice", mode: :internal, view: :default)
+  """
+  defdelegate front_desk_user(ref, opts), to: GroupherServer.Accounts.FrontDesk, as: :user
+
   @doc "Reloads one User and refreshes its cache through the Accounts FrontDesk seam."
   @spec front_desk_revalidate_user(String.t() | integer()) ::
           {:ok, struct()} | {:error, term()}
@@ -320,6 +329,41 @@ defmodule GroupherServer.Accounts do
   defdelegate profiles_error_cat_session_revoked(arg1),
     to: GroupherServer.Accounts.Profiles.ErrorCat,
     as: :session_revoked
+
+  @doc "Delegates Accounts.Profiles.ErrorCat.current_session/0 through the Accounts Context boundary."
+  defdelegate profiles_error_cat_current_session(),
+    to: GroupherServer.Accounts.Profiles.ErrorCat,
+    as: :current_session
+
+  @doc "Delegates Accounts.Profiles.ErrorCat.current_session/1 through the Accounts Context boundary."
+  defdelegate profiles_error_cat_current_session(arg1),
+    to: GroupherServer.Accounts.Profiles.ErrorCat,
+    as: :current_session
+
+  @doc "Delegates Accounts.Profiles.ErrorCat.session_expired/0 through the Accounts Context boundary."
+  defdelegate profiles_error_cat_session_expired(),
+    to: GroupherServer.Accounts.Profiles.ErrorCat,
+    as: :session_expired
+
+  @doc "Delegates Accounts.Profiles.ErrorCat.session_expired/1 through the Accounts Context boundary."
+  defdelegate profiles_error_cat_session_expired(arg1),
+    to: GroupherServer.Accounts.Profiles.ErrorCat,
+    as: :session_expired
+
+  @doc "Delegates Accounts.Profiles.ErrorCat.account_blocked/1 through the Accounts Context boundary."
+  defdelegate profiles_error_cat_account_blocked(arg1),
+    to: GroupherServer.Accounts.Profiles.ErrorCat,
+    as: :account_blocked
+
+  @doc "Delegates Accounts.Profiles.ErrorCat.session_unavailable/1 through the Accounts Context boundary."
+  defdelegate profiles_error_cat_session_unavailable(arg1),
+    to: GroupherServer.Accounts.Profiles.ErrorCat,
+    as: :session_unavailable
+
+  @doc "Delegates Accounts.Profiles.ErrorCat.invalid_browser_access_claims/1 through the Accounts Context boundary."
+  defdelegate profiles_error_cat_invalid_browser_access_claims(arg1),
+    to: GroupherServer.Accounts.Profiles.ErrorCat,
+    as: :invalid_browser_access_claims
 
   @doc "Delegates Accounts.Profiles.ErrorCat.not_exist/0 through the Accounts Context boundary."
   defdelegate profiles_error_cat_not_exist(),

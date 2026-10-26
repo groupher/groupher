@@ -166,42 +166,6 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
   end
 
   @doc """
-  report mutation for article
-
-  include:
-  -----
-  report_[thread]
-  undo_report_[thread]
-  """
-  defmacro article_report_mutation(thread) do
-    quote do
-      @desc unquote("report a #{thread}")
-      field unquote(:"report_#{thread}"), unquote(thread) do
-        arg(:command_id, non_null(:id))
-        arg(:article, non_null(:article_path_input))
-        arg(:reason, non_null(:string))
-        arg(:attr, :string, default_value: "")
-
-        middleware(M.Authorize, :login)
-        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
-
-        resolve(&R.CMS.Interactions.report_article/3)
-      end
-
-      @desc unquote("undo report a #{thread}")
-      field unquote(:"undo_report_#{thread}"), unquote(thread) do
-        arg(:command_id, non_null(:id))
-        arg(:article, non_null(:article_path_input))
-
-        middleware(M.Authorize, :login)
-        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
-
-        resolve(&R.CMS.Interactions.undo_report_article/3)
-      end
-    end
-  end
-
-  @doc """
   sink mutation for article
 
   include:

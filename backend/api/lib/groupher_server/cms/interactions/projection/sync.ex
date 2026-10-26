@@ -45,8 +45,8 @@ defmodule GroupherServer.CMS.Interactions.Projection.Sync do
           -> ProjectionSpec
           -> projection row update
     """
-    @enforce_keys [:schema, :bitmap_field]
-    defstruct [:count_field, :latest_field | @enforce_keys]
+    @enforce_keys [:schema]
+    defstruct [:bitmap_field, :count_field, :latest_field | @enforce_keys]
   end
 
   defmodule ProjectionChange do
@@ -361,16 +361,8 @@ defmodule GroupherServer.CMS.Interactions.Projection.Sync do
          %ProjectionSpec{} = spec,
          %ProjectionChange{} = change
        ) do
-    bitmap =
-      case change.operation do
-        :add ->
-          dynamic([info], RoaringBitmap.add(field(info, ^spec.bitmap_field), ^change.user_id))
-
-        :remove ->
-          dynamic([info], RoaringBitmap.remove(field(info, ^spec.bitmap_field), ^change.user_id))
-      end
-
-    set = [{spec.bitmap_field, bitmap}, {:updated_at, DateTime.utc_now(:second)}]
+    set = [{:updated_at, DateTime.utc_now(:second)}]
+    set = maybe_put_bitmap(set, spec.bitmap_field, change)
     set = maybe_put_latest(set, spec.latest_field, change.latest_users)
     updates = [set: set]
 
@@ -432,15 +424,26 @@ defmodule GroupherServer.CMS.Interactions.Projection.Sync do
   defp latest_field(_reaction), do: nil
 
   defp bitmap_field(:collect), do: :collected_user_ids
-  defp bitmap_field(:report), do: :reported_user_ids
+  defp bitmap_field(:report), do: nil
   defp bitmap_field(:upvote), do: :upvoted_user_ids
 
   defp count_field(:upvote), do: :upvotes_count
   defp count_field(:collect), do: :collects_count
-  defp count_field(_reaction), do: nil
-
+  defp count_field(:report), do: :reports_count
   defp maybe_put_latest(attrs, nil, _latest_users), do: attrs
   defp maybe_put_latest(attrs, field, latest_users), do: [{field, latest_users} | attrs]
+
+  defp maybe_put_bitmap(attrs, nil, _change), do: attrs
+
+  defp maybe_put_bitmap(attrs, field, %ProjectionChange{operation: :add, user_id: user_id}) do
+    bitmap = dynamic([info], RoaringBitmap.add(field(info, ^field), ^user_id))
+    [{field, bitmap} | attrs]
+  end
+
+  defp maybe_put_bitmap(attrs, field, %ProjectionChange{operation: :remove, user_id: user_id}) do
+    bitmap = dynamic([info], RoaringBitmap.remove(field(info, ^field), ^user_id))
+    [{field, bitmap} | attrs]
+  end
 
   defp interaction_info(artiment) do
     {:ok, info} = Matcher.match_interaction(artiment)

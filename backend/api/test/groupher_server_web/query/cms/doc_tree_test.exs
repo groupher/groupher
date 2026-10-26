@@ -2,7 +2,10 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer
   alias GroupherServer.Accounts
+  alias GroupherServer.CMS
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias Accounts.Profiles.ErrorCat
 
   @query S.DocTree.q(:doc_tree)
@@ -35,6 +38,7 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
        guest_conn: guest_conn,
        user_conn: user_conn,
        member_conn: member_conn,
+       member: member,
        user: user,
        community: community,
        group_payload: group_payload
@@ -64,8 +68,9 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
     assert [%{"pins" => [], "groups" => [%{"type" => "GROUP"}]}] = result["tabs"]
   end
 
-  test "logged-in user without passport can delete, list, and restore a trash item", %{
+  test "community members can edit the tree, while restoring Docs requires doc.restore", %{
     member_conn: member_conn,
+    member: member,
     user: user,
     community: community,
     group_payload: group_payload
@@ -106,7 +111,15 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
       baseRevision: deleted["revision"]
     }
 
-    restored = member_conn |> gq_mutation(@restore_mutation, restore_variables)
+    assert member_conn
+           |> mutation_error?(
+             @restore_mutation,
+             restore_variables,
+             ErrorCat.code(GateErrorCat.permission_denied())
+           )
+
+    restore_conn = simu_conn(:user, member, cms: %{community.slug => %{"doc.restore" => true}})
+    restored = restore_conn |> gq_mutation(@restore_mutation, restore_variables)
 
     assert restored["conflict"] == false
     assert restored["node"]["id"] == page_payload.node.id

@@ -15,10 +15,11 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, Repo, ReviewBot}
   alias CMS.ErrorCat
 
   alias CMS.Seeds.{Articles, Communities, Config, Tags}
+  alias ReviewBot.Model.ReviewBotConfig
 
   alias CMS.Model.{
     Community,
@@ -96,6 +97,10 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
             delete_all(from(upload in AssetUpload, where: upload.community_id == ^community.id))
             delete_all(from(run in AssetWorkflowRun, where: run.community_id == ^community.id))
             delete_all(from(article in Article, where: article.id in ^article_ids))
+
+            delete_all(
+              from(config in ReviewBotConfig, where: config.community_id == ^community.id)
+            )
 
             case Repo.delete(community, timeout: 300_000) do
               {:ok, _community} -> {:ok, :ok}

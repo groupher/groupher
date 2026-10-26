@@ -48,11 +48,7 @@ defmodule GroupherServer.Activity.Changelog do
     archived: Event.contract([], [:batch], [:article_log, :community_log]),
     permanently_deleted: Event.contract([], [], [:community_log]),
     comment_created: Event.contract([], [], []) |> Event.contract_only(),
-    comment_updated: Event.contract([], [], []) |> Event.contract_only(),
-    moderation_review_started:
-      Event.contract([], [:case_ref], [:community_log]) |> Event.contract_only(),
-    moderation_review_resolved:
-      Event.contract([], [:case_ref, :decision], [:community_log]) |> Event.contract_only()
+    comment_updated: Event.contract([], [], []) |> Event.contract_only()
   }
 
   @doc """

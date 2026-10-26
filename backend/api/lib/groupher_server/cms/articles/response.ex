@@ -163,6 +163,6 @@ defmodule GroupherServer.CMS.Articles.Response do
       |> Map.put(:latest_upvoted_users, state.latest_upvoted_users)
       |> Map.put(:latest_collected_users, state.latest_collected_users)
 
-    Map.put(meta, :reported_count, Map.get(state, :reported_count, 0))
+    meta
   end
 end

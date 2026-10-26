@@ -36,7 +36,6 @@ defmodule GroupherServer.CMS.Articles.ArticleView do
     :communities,
     :community_tags,
     :comments_participants,
-    :moderation_state,
     :active_at,
     :inserted_at,
     :updated_at,
@@ -45,10 +44,8 @@ defmodule GroupherServer.CMS.Articles.ArticleView do
     :version,
     :lifecycle,
     :is_pinned,
-    :pending,
     :viewer_has_collected,
     :viewer_has_upvoted,
-    :viewer_has_reported,
     :viewer_has_viewed,
     :meta
   ]

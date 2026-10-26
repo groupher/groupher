@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias GroupherServer.{Accounts, Activity, AlertWall, CMS, Repo}
   alias CMS.{Articles, ErrorCat}
   alias Accounts.Model.User
   alias CMS.Docs.Lifecycle
@@ -177,11 +177,14 @@ defmodule GroupherServer.CMS.Docs.Trash do
   @spec restore(TrashedDocArticle.t(), Community.t(), DocBranch.t(), term(), keyword()) ::
           {:ok, Article.t()} | {:error, term()}
   def restore(%TrashedDocArticle{} = item, community, branch, actor, opts) do
+    gate_action =
+      if Keyword.get(opts, :workflow) == :content_import, do: :import_doc, else: :restore
+
     with {:ok, _} <- ensure_group_action(item, opts),
          {:ok, article} <- representative_doc(community, branch, item.article_id) do
       CMS.Gate.with_branch_check(
         actor,
-        :restore,
+        gate_action,
         community,
         article,
         branch.id,
@@ -230,7 +233,20 @@ defmodule GroupherServer.CMS.Docs.Trash do
         article,
         branch.id,
         fn canonical ->
-          with {:ok, lifecycle} <- Lifecycle.transition(item.article_id, branch.id, :destroy),
+          operation_ref = Ecto.UUID.generate()
+
+          with {:ok, :pass} <-
+                 CMS.Review.Requests.supersede_scope_in_transaction(
+                   %{type: :doc, article_id: item.article_id, branch_id: branch.id},
+                   operation_ref
+                 ),
+               {:ok, :pass} <-
+                 AlertWall.mark_target_deleted_in_transaction(
+                   :doc,
+                   "#{item.article_id}:#{branch.id}",
+                   operation_ref
+                 ),
+               {:ok, lifecycle} <- Lifecycle.transition(item.article_id, branch.id, :destroy),
                {:ok, _} <- purge_branch(canonical, branch),
                {:ok, _} <- Repo.delete(item),
                {:ok, action} <- load_action(item.trash_action_id),
@@ -253,6 +269,18 @@ defmodule GroupherServer.CMS.Docs.Trash do
   @doc false
   def permanently_delete_loaded(%TrashedDocArticle{} = item, canonical, branch, actor, opts) do
     with {:ok, _} <- ensure_group_action(item, opts),
+         operation_ref <- Ecto.UUID.generate(),
+         {:ok, :pass} <-
+           CMS.Review.Requests.supersede_scope_in_transaction(
+             %{type: :doc, article_id: item.article_id, branch_id: branch.id},
+             operation_ref
+           ),
+         {:ok, :pass} <-
+           AlertWall.mark_target_deleted_in_transaction(
+             :doc,
+             "#{item.article_id}:#{branch.id}",
+             operation_ref
+           ),
          {:ok, lifecycle} <- Lifecycle.transition(item.article_id, branch.id, :destroy),
          {:ok, _} <- purge_branch(canonical, branch),
          {:ok, _} <- Repo.delete(item),

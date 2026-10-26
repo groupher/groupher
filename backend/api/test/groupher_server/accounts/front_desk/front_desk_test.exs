@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.Accounts.FrontDesk do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.FrontDesk
+  alias GroupherServer.{ErrorCat, FrontDesk}
   alias Helper.Cache
 
   @login_cache_pool :user_login
@@ -37,6 +37,26 @@ defmodule GroupherServer.Test.Accounts.FrontDesk do
 
       assert {:ok, cached_user} = Cache.get(@user_cache_pool, user_scope(user.login))
       assert cached_user.id == user.id
+    end
+
+    test "read mode options preserve public/internal reads and reject unsupported options" do
+      {:ok, user} = db_insert(:user)
+
+      assert {:ok, public_user} = FrontDesk.user(user.login, mode: :public)
+      assert {:ok, internal_user} = FrontDesk.user(user.id, mode: :internal, view: :default)
+      assert {:ok, facade_user} = Accounts.front_desk_user(user.id, mode: :public)
+      assert public_user.id == user.id
+      assert internal_user.id == user.id
+      assert facade_user.id == user.id
+
+      for opts <- [[mode: :audit], [view: :with_author], [mode: :public, unknown: true]] do
+        assert {:error,
+                %ErrorCat.Error{
+                  namespace: {:account, :authentication},
+                  reason: :invalid_user_read_options,
+                  code: 4310
+                }} = FrontDesk.user(user.id, opts)
+      end
     end
 
     test "fresh_user bypasses default user cache" do

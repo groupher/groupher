@@ -29,8 +29,7 @@ defmodule GroupherServer.CMS.Interactions.DefaultViewerState do
       latest_collected_users: [],
       emotions: emotions(:article),
       viewer_has_upvoted: false,
-      viewer_has_collected: false,
-      viewer_has_reported: false
+      viewer_has_collected: false
     }
   end
 
@@ -48,8 +47,7 @@ defmodule GroupherServer.CMS.Interactions.DefaultViewerState do
       upvotes_count: 0,
       latest_upvoted_users: [],
       emotions: emotions(:comment),
-      viewer_has_upvoted: false,
-      viewer_has_reported: false
+      viewer_has_upvoted: false
     }
   end
 
@@ -74,15 +72,4 @@ defmodule GroupherServer.CMS.Interactions.DefaultViewerState do
       }
     end)
   end
-
-  @doc """
-  Returns the moderation-only default fields.
-
-  ## Examples
-
-      DefaultViewerState.report()
-
-  """
-  @spec report() :: %{reported_count: 0}
-  def report, do: %{reported_count: 0}
 end

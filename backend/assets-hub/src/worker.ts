@@ -20,6 +20,7 @@ import {
   verifyBatchCapability,
   verifyPublishClaim,
   verifyCapability,
+  verifyReviewReadCapability,
 } from './capability'
 import { GeneratedImageBatchDO } from './generated-batch-do'
 import {
@@ -548,6 +549,47 @@ const serveAsset = async (request: Request, env: Env) => {
   return serveOriginalByStorageKey(env, originInfo, request.method)
 }
 
+const serveReviewImage = async (request: Request, env: Env, token: string) => {
+  if (!['GET', 'HEAD'].includes(request.method)) {
+    return errorResponse('method_not_allowed', 'Method not allowed.', 405, {
+      allow: 'GET, HEAD',
+      'cache-control': noStore,
+    })
+  }
+
+  try {
+    const capability = verifyReviewReadCapability(token, env)
+    const object = await env.ASSETS_BUCKET.get(capability.objectKey)
+    const contentType = object?.httpMetadata?.contentType
+
+    if (
+      !object ||
+      typeof object.size !== 'number' ||
+      object.size <= 0 ||
+      object.size > 10 * 1024 * 1024 ||
+      contentType !== capability.mimeType
+    ) {
+      return errorResponse('review_image_unavailable', 'Image is unavailable.', 404, {
+        'cache-control': noStore,
+        'x-content-type-options': 'nosniff',
+      })
+    }
+
+    const headers = new Headers({
+      'cache-control': noStore,
+      'content-length': String(object.size),
+      'content-type': contentType,
+      'x-content-type-options': 'nosniff',
+    })
+    return new Response(request.method === 'HEAD' ? null : object.body, { headers })
+  } catch {
+    return errorResponse('review_image_unavailable', 'Image is unavailable.', 404, {
+      'cache-control': noStore,
+      'x-content-type-options': 'nosniff',
+    })
+  }
+}
+
 const enqueueAssetDelete = async (request: Request, env: Env) => {
   if (request.method !== 'POST') {
     return errorResponse('method_not_allowed', 'Method not allowed.', 405, {
@@ -634,6 +676,9 @@ export default {
     }
 
     if (url.pathname === '/internal/assets/delete') return enqueueAssetDelete(request, env)
+
+    const reviewImageMatch = url.pathname.match(/^\/review\/([^/]+)$/)
+    if (reviewImageMatch) return serveReviewImage(request, env, reviewImageMatch[1]!)
 
     if (url.pathname === '/generated-batches' || url.pathname.startsWith('/generated-batches/')) {
       return handleGeneratedBatchRequest(request, env)

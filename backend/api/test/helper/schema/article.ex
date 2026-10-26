@@ -189,28 +189,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
-  def m(:report_article, thread) do
-    """
-    mutation($commandId: ID!, $article: ArticlePathInput!, $reason: String!, $attr: String) {
-      report#{t(thread)}(commandId: $commandId, article: $article, reason: $reason, attr: $attr) {
-        innerId
-        title
-      }
-    }
-    """
-  end
-
-  def m(:undo_report_article, thread) do
-    """
-    mutation($commandId: ID!, $article: ArticlePathInput!) {
-      undoReport#{t(thread)}(commandId: $commandId, article: $article) {
-        innerId
-        title
-      }
-    }
-    """
-  end
-
   def m(:pin_article, thread) do
     """
     mutation($article: ArticlePathInput!, $commandId: ID!){
@@ -686,9 +664,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         }
         meta {
           isEdited
-          isLegal
-          illegalReason
-          illegalWords
         }
         commentsParticipants {
           login

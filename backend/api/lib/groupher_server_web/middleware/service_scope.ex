@@ -12,11 +12,16 @@ defmodule GroupherServerWeb.Middleware.ServiceScope do
 
   @behaviour Absinthe.Middleware
 
-  import Helper.Utils, only: [handle_absinthe_error: 3]
+  alias GroupherServer.Accounts
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+  alias GroupherServerWeb.ErrorResponse
 
   @impl Absinthe.Middleware
   def call(%{context: %{delegation_auth_failure: code}} = resolution, _opts) do
-    reject(resolution, "delegated user identity could not be verified", code)
+    reject(
+      resolution,
+      auth_error(code, "delegated user identity could not be verified")
+    )
   end
 
   def call(%{context: %{service_actor: actor}} = resolution, opts) do
@@ -28,26 +33,48 @@ defmodule GroupherServerWeb.Middleware.ServiceScope do
     else
       reject(
         resolution,
-        "service identity is not authorized for this operation",
-        GroupherServer.Auth.contract_service_scope_forbidden()
+        WebErrorCat.service_scope_forbidden(
+          "service identity is not authorized for this operation"
+        )
       )
     end
   end
 
   def call(%{context: %{service_auth_failure: code}} = resolution, _opts) do
-    reject(resolution, "service identity could not be verified", code)
+    reject(resolution, auth_error(code, "service identity could not be verified"))
   end
 
   def call(resolution, _opts) do
     reject(
       resolution,
-      "service identity is required for this operation",
-      GroupherServer.Auth.contract_service_token_invalid()
+      WebErrorCat.invalid_service_token("service identity is required for this operation")
     )
   end
 
-  defp reject(resolution, message, code) do
-    handle_absinthe_error(resolution, message, code)
+  defp reject(resolution, error) do
+    ErrorResponse.put_error(resolution, error)
+  end
+
+  defp auth_error(code, message) do
+    cond do
+      code == GroupherServer.Auth.contract_service_jwks_unavailable() ->
+        WebErrorCat.jwks_unavailable(message)
+
+      code == GroupherServer.Auth.contract_session_revoked() ->
+        Accounts.profiles_error_cat_session_revoked(message)
+
+      code == GroupherServer.Auth.contract_token_expired() ->
+        Accounts.profiles_error_cat_session_expired(message)
+
+      code == GroupherServer.Auth.contract_token_invalid() ->
+        Accounts.profiles_error_cat_invalid_browser_access_claims(message)
+
+      code == GroupherServer.Auth.contract_token_missing() ->
+        WebErrorCat.token_missing(message)
+
+      true ->
+        WebErrorCat.invalid_service_token(message)
+    end
   end
 
   @doc "Checks one verified service credential against an exact audience and scope."

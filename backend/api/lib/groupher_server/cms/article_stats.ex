@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.ArticleStats do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.{Matcher, Threads}
-  alias CMS.Articles.Bindings
+  alias CMS.Articles.{Bindings, Pagination}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.FrontDesk
 
@@ -31,6 +31,7 @@ defmodule GroupherServer.CMS.ArticleStats do
     ArticleStats,
     Comment,
     CommentLifecycle,
+    CommentReviewBlock,
     Community
   }
 
@@ -64,7 +65,7 @@ defmodule GroupherServer.CMS.ArticleStats do
     end
   end
 
-  def for_article(_article, _community), do: {:error, :article_binding_context_required}
+  def for_article(_article, _community), do: {:error, ArticleErrorCat.binding_context_required()}
 
   @doc "Creates the zero-valued public row on first publish without overwriting an existing row."
   @spec initialize(struct()) :: {:ok, :pass} | {:error, term()}
@@ -419,15 +420,17 @@ defmodule GroupherServer.CMS.ArticleStats do
   defp read_public_batch(community_ref, thread, inner_ids) do
     case FrontDesk.community(community_ref) do
       {:ok, %Community{id: community_id}} ->
+        public_binding_ids = Pagination.public_binding_ids(thread)
+
         rows =
           Article
           |> join(:inner, [article], binding in ArticleBinding,
-            on: binding.article_id == article.id and binding.visible == true
+            on: binding.article_id == article.id
           )
           |> where(
             [article, binding],
             article.thread == ^thread and binding.community_id == ^community_id and
-              binding.inner_id in ^inner_ids
+              binding.inner_id in ^inner_ids and binding.id in subquery(public_binding_ids)
           )
           |> select([article, binding], %{article: article, inner_id: binding.inner_id})
           |> Repo.all()
@@ -596,8 +599,18 @@ defmodule GroupherServer.CMS.ArticleStats do
      Repo.aggregate(
        from(comment in Comment,
          join: lifecycle in CommentLifecycle,
+         as: :comment_lifecycle,
          on: lifecycle.comment_id == comment.id,
-         where: comment.article_id == ^article_id and lifecycle.state == :visible
+         where: comment.article_id == ^article_id and lifecycle.state == :visible,
+         where:
+           not exists(
+             from(restriction in CommentReviewBlock,
+               where:
+                 restriction.comment_id == parent_as(:comment_lifecycle).comment_id and
+                   is_nil(restriction.resolved_at),
+               select: 1
+             )
+           )
        ),
        :count
      )}
@@ -607,8 +620,18 @@ defmodule GroupherServer.CMS.ArticleStats do
     count =
       from(comment in Comment,
         join: lifecycle in CommentLifecycle,
+        as: :comment_lifecycle,
         on: lifecycle.comment_id == comment.id,
         where: comment.article_id == ^article_id and lifecycle.state == :visible,
+        where:
+          not exists(
+            from(restriction in CommentReviewBlock,
+              where:
+                restriction.comment_id == parent_as(:comment_lifecycle).comment_id and
+                  is_nil(restriction.resolved_at),
+              select: 1
+            )
+          ),
         select: count(comment.author_id, :distinct)
       )
       |> Repo.one()

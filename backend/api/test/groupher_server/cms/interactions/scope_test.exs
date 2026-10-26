@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ScopeTest do
   end
 
   test "infers the Article schema and compiles reaction ordering" do
-    base = from(article in Article, where: article.moderation_state == :legal)
+    base = from(article in Article)
 
     assert {:ok, query} = Interactions.scope(base, thread: :post, order: :upvotes)
     assert query.from.source == {"articles", Article}

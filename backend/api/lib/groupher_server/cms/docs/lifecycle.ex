@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
 
   alias CMS.Articles.ErrorCat
   alias CMS.Model.{DocBranch, DocLifecycle, DocPublic}
+  alias CMS.ReviewBlocks
 
   @states [:draft_only, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
@@ -39,35 +40,89 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
   @doc "Transitions one stable Doc Article lifecycle inside a branch."
   def transition(article_id, branch_id, state)
       when is_binary(article_id) and is_integer(branch_id) and state in @states do
-    lifecycle =
-      DocLifecycle
-      |> where([row], row.article_id == ^article_id and row.branch_id == ^branch_id)
-      |> lock("FOR UPDATE")
-      |> Repo.one()
+    Repo.transaction(fn ->
+      lifecycle =
+        DocLifecycle
+        |> where([row], row.article_id == ^article_id and row.branch_id == ^branch_id)
+        |> lock("FOR UPDATE")
+        |> Repo.one()
 
-    case lifecycle do
-      %DocLifecycle{} = lifecycle -> transition(lifecycle, state)
-      nil -> {:error, ErrorCat.lifecycle_not_found()}
+      case lifecycle do
+        %DocLifecycle{} = lifecycle ->
+          case transition(lifecycle, state) do
+            {:ok, updated} -> updated
+            {:error, reason} -> Repo.rollback(reason)
+          end
+
+        nil ->
+          Repo.rollback(ErrorCat.lifecycle_not_found())
+      end
+    end)
+    |> case do
+      {:ok, updated} -> {:ok, updated}
+      {:error, reason} -> {:error, reason}
     end
   end
 
+  @doc """
+  Applies an allowed transition to an already-loaded branch Lifecycle row.
+
+  This overload does not acquire the row lock. Call it only inside the owning
+  transaction after the caller has loaded/locked the lifecycle, or use the
+  article/branch ID overload to load it under `FOR UPDATE`.
+
+  ## Examples
+
+      Docs.Lifecycle.transition(locked_lifecycle, :published)
+  """
+  @spec transition(DocLifecycle.t(), atom()) ::
+          {:ok, DocLifecycle.t()} | {:error, Error.error() | Ecto.Changeset.t()}
   def transition(%DocLifecycle{} = lifecycle, state) when state in @states do
     if state in Map.fetch!(@allowed_transitions, lifecycle.state) do
       now = DateTime.utc_now(:second)
 
-      lifecycle
-      |> DocLifecycle.changeset(%{
-        state: state,
-        version: lifecycle.version + 1,
-        changed_at: now,
-        archived_at: state_time(state, :archived, now, lifecycle.archived_at),
-        deleted_at: state_time(state, :deleted, now, lifecycle.deleted_at),
-        destroyed_at: state_time(state, :destroy, now, lifecycle.destroyed_at)
-      })
-      |> Repo.update()
+      with {:ok, updated} <-
+             lifecycle
+             |> DocLifecycle.changeset(%{
+               state: state,
+               version: lifecycle.version + 1,
+               changed_at: now,
+               archived_at: state_time(state, :archived, now, lifecycle.archived_at),
+               deleted_at: state_time(state, :deleted, now, lifecycle.deleted_at),
+               destroyed_at: state_time(state, :destroy, now, lifecycle.destroyed_at)
+             })
+             |> Repo.update(),
+           {:ok, :pass} <- ReviewBlocks.recompute(updated) do
+        {:ok, updated}
+      end
     else
       {:error, ErrorCat.lifecycle_state_conflict()}
     end
+  end
+
+  @doc """
+  Applies a platform review restriction to a locked Doc branch lifecycle.
+
+  ## Examples
+
+      Docs.Lifecycle.apply_review_block(locked_lifecycle, attrs)
+  """
+  @spec apply_review_block(DocLifecycle.t(), map()) :: {:ok, struct()} | {:error, term()}
+  def apply_review_block(%DocLifecycle{} = lifecycle, attrs) do
+    ReviewBlocks.apply(lifecycle, attrs)
+  end
+
+  @doc """
+  Ends selected active restrictions on one Doc branch and updates its public projection.
+
+  ## Examples
+
+      Docs.Lifecycle.end_review_blocks(lifecycle, "platform", ids, operation_ref, reason)
+  """
+  @spec end_review_blocks(DocLifecycle.t(), String.t(), [term()], Ecto.UUID.t(), String.t()) ::
+          {:ok, :pass} | {:error, term()}
+  def end_review_blocks(%DocLifecycle{} = lifecycle, scope_key, ids, operation_ref, reason) do
+    ReviewBlocks.end_blocks(lifecycle, scope_key, ids, operation_ref, reason)
   end
 
   @doc "Archives stable public Docs older than the threshold in one active branch."

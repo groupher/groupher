@@ -54,7 +54,7 @@ const SimpleLayout: FC<TProps> = ({ viewModel }) => {
           （1450罪恶滔天啊！1450是九世恶人下凡！连孩子都不放过。
         </div>
         <div className={s.footer}>
-          <EmotionSelector emotions={demoEmotion} isLegal />
+          <EmotionSelector emotions={demoEmotion} />
           <div className='grow' />
           <CommentsCount count={stats?.commentsCount ?? 0} size='medium' right={15} />
           <ShareSVG className={s.shareIcon} />

@@ -187,34 +187,6 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
   end
 
-  def m(:report_comment) do
-    """
-    mutation($commandId: ID!, $comment: CommentPathInput!, $reason: String!, $attr: String) {
-      reportComment(commandId: $commandId, comment: $comment, reason: $reason, attr: $attr) {
-        innerId
-        viewerHasReported
-        meta {
-          reportedCount
-        }
-      }
-    }
-    """
-  end
-
-  def m(:undo_report_comment) do
-    """
-    mutation($commandId: ID!, $comment: CommentPathInput!) {
-      undoReportComment(commandId: $commandId, comment: $comment) {
-        innerId
-        viewerHasReported
-        meta {
-          reportedCount
-        }
-      }
-    }
-    """
-  end
-
   def m(:pin_comment) do
     """
     mutation($comment: CommentPathInput!, $commandId: ID!){
@@ -405,9 +377,6 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
                 isArticleAuthor
                 meta {
                   isArticleAuthorUpvoted
-                  isLegal
-                  illegalReason
-                  illegalWords
                 }
                 replyToComment {
                   innerId

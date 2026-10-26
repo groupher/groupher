@@ -25,20 +25,28 @@ defmodule GroupherServer.FrontDesk do
     GroupherServer.CMS.front_desk_community(ref, opts)
   end
 
+  @doc """
+  Reads a Community using the actor-aware public or management Gate contract.
+
+  ## Examples
+
+      FrontDesk.community(community_slug, actor, mode: :management)
+  """
+  @spec community(term(), term(), keyword()) :: {:ok, struct()} | {:error, term()}
   def community(ref, actor, opts), do: GroupherServer.CMS.front_desk_community(ref, actor, opts)
 
   @doc "Loads a User through the shared User cache by id or public login."
   def user(login) when is_binary(login), do: Accounts.front_desk_user(login)
   def user(id) when is_integer(id), do: Accounts.front_desk_user(id)
 
-  @doc "Loads a User with an explicit internal mode."
-  def user(ref, opts) when is_list(opts) do
-    case {Keyword.get(opts, :mode, :public), Keyword.get(opts, :view, :default)} do
-      {:internal, :default} -> Accounts.front_desk_user(ref)
-      {:public, :default} -> user(ref)
-      _ -> {:error, :unsupported_user_read_mode}
-    end
-  end
+  @doc """
+  Loads a User with validated mode/view options through Accounts Query.
+
+  ## Examples
+
+      FrontDesk.user("alice", mode: :internal, view: :default)
+  """
+  def user(ref, opts) when is_list(opts), do: Accounts.front_desk_user(ref, opts)
 
   @doc "Loads the current User record directly from Accounts, bypassing cached state."
   def fresh_user(id) when is_integer(id), do: Accounts.front_desk_fresh_user(id)
@@ -68,6 +76,14 @@ defmodule GroupherServer.FrontDesk do
     GroupherServer.CMS.front_desk_comment(comment_path, actor)
   end
 
+  @doc """
+  Reads a Comment beneath its Article path with an explicit actor and read options.
+
+  ## Examples
+
+      FrontDesk.comment(comment_path, actor, mode: :public, view: :default)
+  """
+  @spec comment(map(), term(), keyword()) :: {:ok, struct()} | {:error, term()}
   def comment(comment_path, actor, opts) when is_map(comment_path) and is_map(actor) do
     GroupherServer.CMS.front_desk_comment(comment_path, actor, opts)
   end
@@ -81,6 +97,16 @@ defmodule GroupherServer.FrontDesk do
     GroupherServer.CMS.front_desk_article(article_id)
   end
 
+  @doc """
+  Reads an Article path or stable ID with explicit mode/view options.
+
+  A public path is Gate-scoped; a stable ID requires `mode: :internal`.
+
+  ## Examples
+
+      FrontDesk.article(article_id, mode: :internal, view: :command_context)
+  """
+  @spec article(term(), keyword()) :: {:ok, struct()} | {:error, term()}
   def article(article_ref, opts) when is_list(opts) do
     GroupherServer.CMS.front_desk_article(article_ref, opts)
   end
@@ -89,13 +115,16 @@ defmodule GroupherServer.FrontDesk do
     GroupherServer.CMS.front_desk_article(article_path, actor)
   end
 
+  @doc """
+  Reads an Article path using the actor-aware public or management Gate contract.
+
+  ## Examples
+
+      FrontDesk.article(article_path, actor, mode: :management)
+  """
+  @spec article(map(), term(), keyword()) :: {:ok, struct()} | {:error, term()}
   def article(article_path, actor, opts) do
     GroupherServer.CMS.front_desk_article(article_path, actor, opts)
-  end
-
-  @doc "Loads a bounded batch of visible public Articles from ArticlePaths."
-  def articles(article_paths) when is_list(article_paths) do
-    GroupherServer.CMS.front_desk_articles(article_paths)
   end
 
   @doc "Returns the author of an Article or Comment."

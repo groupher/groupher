@@ -141,10 +141,6 @@ defmodule GroupherServer.CMS.Comments.States do
     end
   end
 
-  @doc false
-  @spec fold_for_report(Comment.t()) :: T.domain_res(Comment.t())
-  def fold_for_report(%Comment{} = comment), do: ORM.update(comment, %{is_folded: true})
-
   defp do_fold_comment(%Comment{} = comment, is_folded) when is_boolean(is_folded) do
     ORM.update(comment, %{is_folded: is_folded})
   end

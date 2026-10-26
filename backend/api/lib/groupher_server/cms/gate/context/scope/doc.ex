@@ -20,7 +20,6 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
     :policy_mode,
     :branch_id,
     :branch_policy,
-    include_illegal: false,
     passport_granted_community_slugs: []
   ]
 
@@ -29,7 +28,6 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
           policy_mode: atom(),
           branch_id: integer() | nil,
           branch_policy: :main | nil,
-          include_illegal: boolean(),
           passport_granted_community_slugs: [String.t()]
         }
 
@@ -69,7 +67,6 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
       policy_mode: policy_mode,
       branch_id: branch_id,
       branch_policy: branch_policy,
-      include_illegal: Keyword.get(opts, :include_illegal, false),
       passport_granted_community_slugs:
         opts
         |> Keyword.get(:passport_granted_community_slugs, [])

@@ -31,7 +31,7 @@ vi.mock('~/query', async () => ({
     },
   },
 }))
-vi.mock('~/stores/account/hooks', () => ({ default: () => ({ user: null, accountRef: '' }) }))
+vi.mock('~/stores/account/hooks', () => ({ default: () => ({ user: null, accountScope: '' }) }))
 vi.mock('~/hooks/useViewingArticle', () => ({ default: () => viewing }))
 vi.mock('~/hooks/useURLSearchParams', () => ({ default: () => new URLSearchParams() }))
 vi.mock('~/stores/dsbConfig/hooks', () => ({

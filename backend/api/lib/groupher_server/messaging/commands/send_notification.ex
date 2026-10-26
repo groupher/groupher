@@ -71,7 +71,11 @@ defmodule GroupherServer.Messaging.Commands.SendNotification do
     end
   end
 
-  defp deliver(attrs, from_user), do: persist_notification(attrs, from_user, nil)
+  defp deliver(attrs, from_user) do
+    attrs
+    |> Map.delete(:delivery_key)
+    |> persist_notification(from_user, nil)
+  end
 
   defp persist_notification(attrs, from_user, delivery_key) do
     with {:ok, notification} <- Persist.upsert(attrs, from_user),

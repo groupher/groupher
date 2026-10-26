@@ -37,19 +37,18 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
              GroupherServer.CMS.Dashboard,
              GroupherServer.CMS.DocCover,
              GroupherServer.CMS.DocTree,
-             GroupherServer.CMS.Docs,
-             GroupherServer.CMS.FrontDesk,
-             GroupherServer.CMS.Interactions,
-             GroupherServer.CMS.Kanban,
-             GroupherServer.CMS.Press,
-             GroupherServer.CMS.Snapshot,
-             GroupherServer.CMS.Wallpaper
+             CMS.Docs,
+             CMS.FrontDesk,
+             CMS.Interactions,
+             CMS.Kanban,
+             CMS.Press,
+             CMS.Snapshot,
+             CMS.Wallpaper,
+             GroupherServer.AlertWall,
+             GroupherServer.ReviewBot
            ])
 
-  @internal_entry_modules MapSet.new([
-                            GroupherServer.CMS.Articles.Maintenance,
-                            GroupherServer.CMS.Comments.Audit
-                          ])
+  @internal_entry_modules MapSet.new([CMS.Articles.Maintenance])
 
   @doc "Builds a deterministic call graph report from the supplied Elixir source files."
   def build_report(files, contracts \\ %{}) when is_list(files) and is_map(contracts) do
@@ -285,7 +284,12 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
   end
 
   defp cms_module?(module) do
-    String.starts_with?(inspect(module), "GroupherServer.CMS.")
+    inspect(module)
+    |> then(
+      &(String.starts_with?(&1, "GroupherServer.CMS.") or
+          String.starts_with?(&1, "GroupherServer.AlertWall.") or
+          String.starts_with?(&1, "GroupherServer.ReviewBot."))
+    )
   end
 
   defp pipeline_contracts do

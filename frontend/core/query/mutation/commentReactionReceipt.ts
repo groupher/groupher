@@ -12,7 +12,7 @@ import {
   writeSessionReceipt,
 } from '../sessionReceiptStorage'
 
-const RECEIPT_VERSION = 3
+const RECEIPT_VERSION = 4
 const storagePrefix = 'groupher:comment-reaction-receipt:'
 
 type TCommentReactionProjection = {
@@ -27,9 +27,9 @@ type TCommentViewerState = {
 }
 
 export type TCommentReactionReceipt = {
-  schemaVersion: 3
+  schemaVersion: 4
   commandId: string
-  accountRef: string
+  accountScope: string
   articleKey: string
   commentRef: string
   publicProjection: TCommentReactionProjection
@@ -40,7 +40,7 @@ export type TCommentReactionReceipt = {
 
 type TCommentReactionConfirmation = {
   commandId: string
-  accountRef: string
+  accountScope: string
   articleKey: string
   commentRef: string
   upvotesCount: number
@@ -50,12 +50,12 @@ type TCommentReactionConfirmation = {
   commentInteractionRevision?: number
 }
 
-const storageKey = (accountRef: string, articleKey: string, commentRef: string): string =>
-  `${storagePrefix}${accountRef}:${articleKey}:${commentRef}`
+const storageKey = (accountScope: string, articleKey: string, commentRef: string): string =>
+  `${storagePrefix}${accountScope}:${articleKey}:${commentRef}`
 
 const validReceipt = (receipt: TCommentReactionReceipt): boolean =>
   Boolean(
-    receipt.accountRef &&
+    receipt.accountScope &&
     receipt.articleKey &&
     receipt.commentRef &&
     receipt.publicProjection &&
@@ -64,8 +64,8 @@ const validReceipt = (receipt: TCommentReactionReceipt): boolean =>
 
 /** Stores the latest complete reaction projection for one account and Comment. */
 export const writeCommentReactionReceipt = (confirmation: TCommentReactionConfirmation): void => {
-  const { accountRef, articleKey, commentRef, commentInteractionRevision } = confirmation
-  const existing = readCommentReactionReceipt(accountRef, articleKey, commentRef)
+  const { accountScope, articleKey, commentRef, commentInteractionRevision } = confirmation
+  const existing = readCommentReactionReceipt(accountScope, articleKey, commentRef)
   const existingRevision = existing?.publicProjection.commentInteractionRevision
   if (
     existing &&
@@ -80,7 +80,7 @@ export const writeCommentReactionReceipt = (confirmation: TCommentReactionConfir
   const receipt: TCommentReactionReceipt = {
     schemaVersion: RECEIPT_VERSION,
     commandId: confirmation.commandId,
-    accountRef,
+    accountScope,
     articleKey,
     commentRef,
     publicProjection: {
@@ -96,16 +96,16 @@ export const writeCommentReactionReceipt = (confirmation: TCommentReactionConfir
     expiresAt: confirmedAt + CONFIRMED_WRITE_RECEIPT_TTL_MS,
   }
 
-  const articlePrefix = `${storagePrefix}${accountRef}:${articleKey}:`
+  const articlePrefix = `${storagePrefix}${accountScope}:${articleKey}:`
   const receipts = listSessionReceipts(
     articlePrefix,
     RECEIPT_VERSION,
     (item: TCommentReactionReceipt) =>
-      validReceipt(item) && item.accountRef === accountRef && item.articleKey === articleKey,
+      validReceipt(item) && item.accountScope === accountScope && item.articleKey === articleKey,
   )
-  writeSessionReceipt(storageKey(accountRef, articleKey, commentRef), receipt)
+  writeSessionReceipt(storageKey(accountScope, articleKey, commentRef), receipt)
   const staleReceipts = receipts
-    .filter((entry) => entry.key !== storageKey(accountRef, articleKey, commentRef))
+    .filter((entry) => entry.key !== storageKey(accountScope, articleKey, commentRef))
     .sort((left, right) => right.receipt.confirmedAt - left.receipt.confirmedAt)
     .slice(CONFIRMED_COMMENT_RECEIPT_MAX_REFS - 1)
   for (const entry of staleReceipts) removeSessionReceipt(entry.key)
@@ -113,17 +113,17 @@ export const writeCommentReactionReceipt = (confirmation: TCommentReactionConfir
 
 /** Reads one valid account-scoped Comment reaction confirmation. */
 export const readCommentReactionReceipt = (
-  accountRef: string | null,
+  accountScope: string | null,
   articleKey: string,
   commentRef: string,
 ): TCommentReactionReceipt | null => {
-  if (!accountRef) return null
+  if (!accountScope) return null
   return readSessionReceipt(
-    storageKey(accountRef, articleKey, commentRef),
+    storageKey(accountScope, articleKey, commentRef),
     RECEIPT_VERSION,
     (receipt: TCommentReactionReceipt) =>
       validReceipt(receipt) &&
-      receipt.accountRef === accountRef &&
+      receipt.accountScope === accountScope &&
       receipt.articleKey === articleKey &&
       receipt.commentRef === commentRef,
   )
@@ -131,16 +131,16 @@ export const readCommentReactionReceipt = (
 
 /** Lists bounded Comment reaction confirmations for one Article and account. */
 export const readCommentReactionReceipts = (
-  accountRef: string | null,
+  accountScope: string | null,
   articleKey: string,
 ): TCommentReactionReceipt[] => {
-  if (!accountRef) return []
+  if (!accountScope) return []
   return listSessionReceipts(
-    `${storagePrefix}${accountRef}:${articleKey}:`,
+    `${storagePrefix}${accountScope}:${articleKey}:`,
     RECEIPT_VERSION,
     (receipt: TCommentReactionReceipt) =>
       validReceipt(receipt) &&
-      receipt.accountRef === accountRef &&
+      receipt.accountScope === accountScope &&
       receipt.articleKey === articleKey,
   ).map(({ receipt }) => receipt)
 }
@@ -169,15 +169,15 @@ export const overlayCommentReactionReceipt = (
 }
 
 /** Clears every Comment reaction confirmation owned by one account. */
-export const clearCommentReactionReceipts = (accountRef: string | null): void => {
-  if (accountRef) clearSessionReceipts(`${storagePrefix}${accountRef}:`)
+export const clearCommentReactionReceipts = (accountScope: string | null): void => {
+  if (accountScope) clearSessionReceipts(`${storagePrefix}${accountScope}:`)
 }
 
 /** Removes one Comment reaction slot after its public revision catches up. */
 export const clearCommentReactionReceipt = (
-  accountRef: string | null,
+  accountScope: string | null,
   articleKey: string,
   commentRef: string,
 ): void => {
-  if (accountRef) removeSessionReceipt(storageKey(accountRef, articleKey, commentRef))
+  if (accountScope) removeSessionReceipt(storageKey(accountScope, articleKey, commentRef))
 }

@@ -110,7 +110,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :post),
              update_variables,
-             ErrorCat.code(ErrorCat.passport())
+             ErrorCat.code(ErrorCat.permission_denied())
            )
 
     assert privileged_non_author
@@ -122,7 +122,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
                expectedVersion: draft["version"],
                expectedLifecycleVersion: 1
              },
-             ErrorCat.code(ErrorCat.passport())
+             ErrorCat.code(ErrorCat.permission_denied())
            )
 
     assert {:ok, stored_draft} =
@@ -162,7 +162,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :post),
              variables,
-             ErrorCat.code(ErrorCat.passport())
+             ErrorCat.code(ErrorCat.permission_denied())
            )
 
     owner_draft =

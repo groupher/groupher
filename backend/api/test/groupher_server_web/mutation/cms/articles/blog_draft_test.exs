@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
 
   use GroupherServer.TestMate
   alias GroupherServer.CMS
-  alias CMS.Passport.ErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -110,7 +110,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :blog),
              update_variables,
-             ErrorCat.code(ErrorCat.passport())
+             ErrorCat.code(PassportErrorCat.permission_denied())
            )
 
     assert privileged_non_author
@@ -122,7 +122,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
                expectedVersion: draft["version"],
                expectedLifecycleVersion: 1
              },
-             ErrorCat.code(ErrorCat.passport())
+             ErrorCat.code(PassportErrorCat.permission_denied())
            )
 
     assert {:ok, stored_draft} =
@@ -162,7 +162,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :blog),
              variables,
-             ErrorCat.code(ErrorCat.passport())
+             ErrorCat.code(PassportErrorCat.permission_denied())
            )
 
     owner_draft =

@@ -21,7 +21,6 @@ const comment = (innerId: string, overrides: Partial<TComment> = {}): TComment =
     ],
     replies: [],
     upvotesCount: 5,
-    viewerHasReported: false,
     viewerHasUpvoted: false,
     ...overrides,
   }) as unknown as TComment
@@ -41,7 +40,6 @@ describe('comment viewer state boundary', () => {
 
     for (const current of [root, reply, quoted]) {
       expect(current).not.toHaveProperty('viewerHasUpvoted')
-      expect(current).not.toHaveProperty('viewerHasReported')
       expect(current?.emotions[0]).not.toHaveProperty('viewerHasReacted')
     }
   })
@@ -72,14 +70,12 @@ describe('comment viewer state boundary', () => {
     const result = mergeCommentViewerState(publicComment, {
       root: {
         emotionFlags: { HEART: true },
-        viewerHasReported: true,
         viewerHasUpvoted: true,
       },
     })
 
     expect(result.upvotesCount).toBe(12)
     expect(result.viewerHasUpvoted).toBe(true)
-    expect(result.viewerHasReported).toBe(true)
     expect(result.emotions).toEqual([
       { type: 'HEART', count: 8, latestUsers: [], viewerHasReacted: true },
       { type: 'BEER', count: 2, latestUsers: [] },

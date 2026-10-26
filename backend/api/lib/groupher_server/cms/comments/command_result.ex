@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Comments.CommandResult do
   """
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Model.{Comment, Community}
 
   @doc "Builds one Comment mutation result from its canonical command result."
@@ -29,7 +30,7 @@ defmodule GroupherServer.CMS.Comments.CommandResult do
          article_stats: article_stats
        }}
     else
-      nil -> {:error, :article_binding_context_required}
+      nil -> {:error, ArticleErrorCat.binding_context_required()}
       {:error, _reason} = error -> error
     end
   end

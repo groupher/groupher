@@ -98,6 +98,12 @@ defmodule GroupherServer.CMS.GateAction do
     "post.undo_pin",
     "post.undo_sink",
     "post.update",
+    "review.configure",
+    "review.decide",
+    "review.platform.configure",
+    "review.platform.decide",
+    "review.platform.read",
+    "review.read",
     "thread.create",
     "thread.set",
     "thread.unset"
@@ -192,6 +198,12 @@ defmodule GroupherServer.CMS.GateAction do
     "post.undo_pin" => %{scope: :context, context: :cms, grant: "post.undo_pin"},
     "post.undo_sink" => %{scope: :context, context: :cms, grant: "post.undo_sink"},
     "post.update" => %{scope: :context, context: :cms, grant: "post.edit", owner_fallback: true},
+    "review.configure" => %{scope: :context, context: :cms, grant: "review.configure"},
+    "review.decide" => %{scope: :context, context: :cms, grant: "review.decide"},
+    "review.platform.configure" => %{scope: :global, grant: "review.platform.configure"},
+    "review.platform.decide" => %{scope: :global, grant: "review.platform.decide"},
+    "review.platform.read" => %{scope: :global, grant: "review.platform.read"},
+    "review.read" => %{scope: :context, context: :cms, grant: "review.read"},
     "thread.create" => %{scope: :context, context: :cms, grant: "thread.create"},
     "thread.set" => %{scope: :context, context: :cms, grant: "thread.set"},
     "thread.unset" => %{scope: :context, context: :cms, grant: "thread.unset"}
@@ -556,6 +568,30 @@ defmodule GroupherServer.CMS.GateAction do
   @doc "Returns the stable `post.update` Gate action name."
   @spec post_update() :: String.t()
   def post_update, do: "post.update"
+
+  @doc "Returns the stable `review.configure` Gate action name."
+  @spec review_configure() :: String.t()
+  def review_configure, do: "review.configure"
+
+  @doc "Returns the stable `review.decide` Gate action name."
+  @spec review_decide() :: String.t()
+  def review_decide, do: "review.decide"
+
+  @doc "Returns the stable `review.platform.configure` Gate action name."
+  @spec review_platform_configure() :: String.t()
+  def review_platform_configure, do: "review.platform.configure"
+
+  @doc "Returns the stable `review.platform.decide` Gate action name."
+  @spec review_platform_decide() :: String.t()
+  def review_platform_decide, do: "review.platform.decide"
+
+  @doc "Returns the stable `review.platform.read` Gate action name."
+  @spec review_platform_read() :: String.t()
+  def review_platform_read, do: "review.platform.read"
+
+  @doc "Returns the stable `review.read` Gate action name."
+  @spec review_read() :: String.t()
+  def review_read, do: "review.read"
 
   @doc "Returns the stable `thread.create` Gate action name."
   @spec thread_create() :: String.t()

@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Docs.Store do
   """
 
   alias GroupherServer.CMS
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
 
   alias CMS.Model.{
     ArticleBodyDraft,
@@ -57,5 +58,22 @@ defmodule GroupherServer.CMS.Docs.Store do
   @doc "Loads one Community-scoped Docs branch by type."
   def branch(community_id, type) do
     ORM.find_by(DocBranch, community_id: community_id, type: type)
+  end
+
+  @doc "Loads one Docs-owned branch and its Community id as an explicit relationship fact."
+  @spec branch_context(pos_integer()) ::
+          {:ok, %{branch: DocBranch.t(), community_id: pos_integer()}} | {:error, term()}
+  def branch_context(branch_id) when is_integer(branch_id) do
+    case ORM.find(DocBranch, branch_id) do
+      {:ok, %DocBranch{} = branch} ->
+        {:ok, %{branch: branch, community_id: branch.community_id}}
+
+      {:error, _reason} ->
+        {:error, ArticleErrorCat.document_not_found("Docs branch not found")}
+    end
+  end
+
+  def branch_context(_branch_id) do
+    {:error, ArticleErrorCat.document_not_found("Docs branch not found")}
   end
 end

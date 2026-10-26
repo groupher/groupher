@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Docs.Commands.RestoreRevisionToDraft do
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
 
   alias Accounts.Model.User
   alias CMS.Docs.{BranchVersions, Editor}
@@ -30,7 +31,7 @@ defmodule GroupherServer.CMS.Docs.Commands.RestoreRevisionToDraft do
            %Community{} = community <- Keyword.get(opts, :community) do
         {:ok, {article, author, user, community}}
       else
-        nil -> {:error, :article_binding_context_required}
+        nil -> {:error, ArticleErrorCat.binding_context_required()}
         {:error, _reason} = error -> error
       end
     end)

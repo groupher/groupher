@@ -2,7 +2,8 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScopeTest do
   use ExUnit.Case, async: true
 
   alias GroupherServer.{Auth, RequestActor}
-  alias GroupherServerWeb.Middleware.ConditionalServiceScope
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+  alias GroupherServerWeb.Middleware.{ConditionalServiceScope, GeneralError, GQLResultFmt}
   alias Auth.Contract, as: AuthContract
   alias RequestActor.Classification
 
@@ -48,9 +49,10 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScopeTest do
           },
           @opts
         )
+        |> finalize_error()
 
-      assert [[message: _message, extensions: %{code: code}]] = result.errors
-      assert code == AuthContract.service_scope_forbidden()
+      assert [%{message: _message, extensions: %{code: code}}] = result.errors
+      assert code == WebErrorCat.service_scope_forbidden().code
     end
   end
 
@@ -66,8 +68,9 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScopeTest do
         },
         @opts
       )
+      |> finalize_error()
 
-    assert [[message: _message, extensions: %{code: code}]] = result.errors
+    assert [%{message: _message, extensions: %{code: code}}] = result.errors
     assert code == AuthContract.token_invalid()
   end
 
@@ -79,13 +82,22 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScopeTest do
         },
         @opts
       )
+      |> finalize_error()
 
-    missing = ConditionalServiceScope.call(%Absinthe.Resolution{context: %{}}, @opts)
+    missing =
+      ConditionalServiceScope.call(%Absinthe.Resolution{context: %{}}, @opts)
+      |> finalize_error()
 
-    assert [[message: _message, extensions: %{code: failed_code}]] = failed.errors
-    assert failed_code == AuthContract.service_jwks_unavailable()
-    assert [[message: _message, extensions: %{code: missing_code}]] = missing.errors
-    assert missing_code == AuthContract.service_token_invalid()
+    assert [%{message: _message, extensions: %{code: failed_code}}] = failed.errors
+    assert failed_code == WebErrorCat.jwks_unavailable().code
+    assert [%{message: _message, extensions: %{code: missing_code}}] = missing.errors
+    assert missing_code == WebErrorCat.invalid_service_token().code
+  end
+
+  defp finalize_error(resolution) do
+    resolution
+    |> GQLResultFmt.call([])
+    |> GeneralError.call([])
   end
 
   defp service_actor do

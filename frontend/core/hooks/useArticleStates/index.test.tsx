@@ -140,11 +140,11 @@ describe('useArticleStates', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
     })
-    const accountRef = 'alice'
+    const accountScope = 'user:alice'
     const key = 'home:POST:42'
     const statsKey = articleQueryKeys.statsBatch('home', THREAD.POST, ['42'])
-    const viewerKey = viewerQueryKeys.articleStates(accountRef, [key])
-    const interactionKey = viewerQueryKeys.articleInteractionStates(accountRef, [key])
+    const viewerKey = viewerQueryKeys.articleStates(accountScope, [key])
+    const interactionKey = viewerQueryKeys.articleInteractionStates(accountScope, [key])
     const interactionState = {
       articleKey: key,
       community: 'home',
@@ -163,7 +163,7 @@ describe('useArticleStates', () => {
     queryClient.setQueryData(interactionKey, { [key]: interactionState })
 
     const { result } = renderHook(() => useArticleStates([article]), {
-      wrapper: wrapperFor(queryClient, { accountRef, login: accountRef } as TUser),
+      wrapper: wrapperFor(queryClient, { login: 'alice' } as TUser),
     })
 
     expect(result.current[0]?.viewerState.viewerHasViewed).toBe(false)
@@ -172,7 +172,7 @@ describe('useArticleStates', () => {
     act(() => {
       writeArticleViewAck(key)
       writeArticleUpvoteReceipt({
-        accountRef,
+        accountScope,
         entityKey: key,
         commandId: 'confirmed-after-mount',
         interactionRevision: 2,
@@ -201,7 +201,7 @@ describe('useArticleStates', () => {
 
     await waitFor(() => {
       expect(readArticleViewAck(key)).toBeNull()
-      expect(readArticleUpvoteReceipt(accountRef, key)).toBeNull()
+      expect(readArticleUpvoteReceipt(accountScope, key)).toBeNull()
     })
   })
 })

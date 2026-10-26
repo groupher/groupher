@@ -131,9 +131,7 @@ defmodule GroupherServer.Activity.Event do
     setup_retried: %{message_key: "activity.setup_retried"},
     activated: %{message_key: "activity.activated"},
     config_updated: %{message_key: "activity.config_updated"},
-    draft_updated: %{message_key: "activity.draft_updated"},
-    moderation_review_started: %{message_key: "activity.moderation_review_started"},
-    moderation_review_resolved: %{message_key: "activity.moderation_review_resolved"}
+    draft_updated: %{message_key: "activity.draft_updated"}
   }
 
   @doc """
@@ -370,11 +368,6 @@ defmodule GroupherServer.Activity.Event do
 
   defp category_for(action)
        when action in [:blocker_created, :blocker_released, :blocker_terminated] do
-    :moderation
-  end
-
-  defp category_for(action)
-       when action in [:moderation_review_started, :moderation_review_resolved] do
     :moderation
   end
 

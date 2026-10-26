@@ -119,7 +119,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
              |> mutation_error?(
                @create_tag_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
              |> mutation_error?(
                @create_tag_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
 
@@ -223,7 +223,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
              |> mutation_error?(
                @delete_tag_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -237,7 +237,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleBindingTags.BlogTagCRUD do
              |> mutation_error?(
                @delete_tag_query,
                variables,
-               ErrorCat.code(PassportErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.permission_denied())
              )
     end
   end

@@ -193,26 +193,32 @@ export const commentKeys = {
 export const viewerQueryKeys = {
   all: ['viewer'] as const,
   session: () => [...viewerQueryKeys.all, 'session'] as const,
-  articleStatePrefix: (accountRef: string) =>
-    [...viewerQueryKeys.all, accountRef, 'article-state'] as const,
-  articleStates: (accountRef: string, articlePathKeys: readonly string[]) =>
-    [...viewerQueryKeys.articleStatePrefix(accountRef), [...articlePathKeys].sort()] as const,
-  articleInteractionStatePrefix: (accountRef: string) =>
-    [...viewerQueryKeys.all, accountRef, 'article-interaction-state'] as const,
-  articleInteractionStates: (accountRef: string, articlePathKeys: readonly string[]) =>
+  articleStatePrefix: (accountScope: string) =>
+    [...viewerQueryKeys.all, accountScope, 'article-state'] as const,
+  articleStates: (accountScope: string, articlePathKeys: readonly string[]) =>
+    [...viewerQueryKeys.articleStatePrefix(accountScope), [...articlePathKeys].sort()] as const,
+  articleInteractionStatePrefix: (accountScope: string) =>
+    [...viewerQueryKeys.all, accountScope, 'article-interaction-state'] as const,
+  articleInteractionStates: (accountScope: string, articlePathKeys: readonly string[]) =>
     [
-      ...viewerQueryKeys.articleInteractionStatePrefix(accountRef),
+      ...viewerQueryKeys.articleInteractionStatePrefix(accountScope),
       [...articlePathKeys].sort(),
     ] as const,
-  commentStatePrefix: (accountRef: string, articleKey: string) =>
-    [...viewerQueryKeys.all, accountRef, 'comment-state', articleKey] as const,
-  commentStates: (accountRef: string, articleKey: string, commentInnerIds: readonly string[]) =>
+  commentStatePrefix: (accountScope: string, articleKey: string) =>
+    [...viewerQueryKeys.all, accountScope, 'comment-state', articleKey] as const,
+  commentStates: (accountScope: string, articleKey: string, commentInnerIds: readonly string[]) =>
     [
-      ...viewerQueryKeys.commentStatePrefix(accountRef, articleKey),
+      ...viewerQueryKeys.commentStatePrefix(accountScope, articleKey),
       [...commentInnerIds].sort(),
     ] as const,
-  commentSummary: (accountRef: string, articleKey: string) =>
-    [...viewerQueryKeys.all, accountRef || 'anonymous', 'comment-summary', articleKey] as const,
+  commentSummary: (accountScope: string, articleKey: string) =>
+    [...viewerQueryKeys.all, accountScope || 'anonymous', 'comment-summary', articleKey] as const,
+  myReportsPrefix: (accountScope: string) =>
+    [...viewerQueryKeys.all, accountScope || 'anonymous', 'my-reports'] as const,
+  myReports: (accountScope: string, page: number) =>
+    [...viewerQueryKeys.myReportsPrefix(accountScope), page] as const,
+  contentReview: (accountScope: string, target: unknown) =>
+    [...viewerQueryKeys.all, accountScope || 'anonymous', 'content-review', target] as const,
 }
 
 /** Constructors for serialized optimistic mutation lanes. */

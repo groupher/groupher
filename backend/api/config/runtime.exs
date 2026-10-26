@@ -11,6 +11,10 @@ if System.get_env("WEB_ANALYSIS_API_TOKEN") do
   config :groupher_server, :web_analysis, api_token: System.get_env("WEB_ANALYSIS_API_TOKEN")
 end
 
+config :groupher_server, :ai,
+  profiles: GroupherServer.AI.Config.profiles_from_env(System.get_env()),
+  review_profile_id: System.get_env("REVIEW_BOT_PROFILE_ID")
+
 config :groupher_server, GroupherServerWeb.ServiceAuth.Verifier,
   issuer: System.get_env("SERVICE_AUTH_ISSUER") || service_auth_origin,
   jwks_url:
@@ -233,8 +237,6 @@ if config_env() in [:prod, :seed_prod] do
     client_id: System.get_env("OAUTH_GITHUB_CLIENT_ID"),
     client_secret: System.get_env("OAUTH_GITHUB_CLIENT_SECRET"),
     redirect_uri: System.get_env("OAUTH_GITHUB_REDIRECT_URI")
-
-  config :groupher_server, :audit, token: System.get_env("AUDIT_TOKEN")
 
   config :groupher_server, :search_artiments,
     platform: GroupherServer.CMS.SearchArtiments.Platforms.Algolia,

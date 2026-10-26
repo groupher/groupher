@@ -1,7 +1,6 @@
 defmodule GroupherServer.CMS.Comments do
   @moduledoc """
-  Public CMS boundary for Comment reads, aggregate commands, independent states
-  and moderation.
+  Public CMS boundary for Comment reads, aggregate commands and independent states.
 
   Business position:
 
@@ -9,14 +8,13 @@ defmodule GroupherServer.CMS.Comments do
         -> CMS.Comments
              -> Store / Query          -> batched response projection
              -> Commands.<Action>      -> canonical aggregate transaction
-             -> Persist / States / Moderation owners
+             -> Persist / States owners
   """
 
   alias __MODULE__.{
     CommandResult,
     InteractionResponse,
-    Query,
-    Moderation
+    Query
   }
 
   alias __MODULE__.Query.Reconcile, as: Reconcile
@@ -556,13 +554,4 @@ defmodule GroupherServer.CMS.Comments do
     end
   end
 
-  @doc """
-  Returns Comments whose automated audit failed.
-
-  ## Examples
-
-      CMS.Comments.paged_audit_failed_comments(filters)
-  """
-  @spec paged_audit_failed_comments(map()) :: T.domain_res(T.paged_data())
-  def paged_audit_failed_comments(pagi), do: Moderation.page_audit_failed(pagi)
 end

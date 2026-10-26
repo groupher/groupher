@@ -3,22 +3,30 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   Resolves public Comment paths and trusted internal Comment views for the
   CMS FrontDesk facade.
 
+  Public lookup follows the parent Article path and Comment Gate scope.
+  Stable Comment IDs are accepted only in internal mode. `:article_context`
+  is a trusted internal view used by command code that needs the Comment and
+  its resolved Article context; it does not bypass write authorization.
+
   Business position:
 
       CMS.FrontDesk facade
         -> FrontDesk.Comment
         -> FrontDesk.Article / Community / Relation
-        -> Repo
+      -> Comment Gate scope -> Repo -> Comment
+
+  For example, public callers use `read(comment_path, actor, mode: :public)`;
+  a command that already has a Comment ID may use
+  `read(comment_id, mode: :internal, view: :article_context)`.
   """
 
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Artiment.Matcher
-
   alias GroupherServer.{CMS, Repo}
   alias CMS.{ErrorCat, ArticlePath}
 
   alias CMS.Comments.ErrorCat, as: CommentErrorCat
   alias CMS.FrontDesk.Relation
+  alias CMS.Gate.Context.Scope.Comment, as: CommentScopeContext
   alias CMS.Model.{Article, ArticlePublic, Comment}
   alias Helper.{ORM, T}
 
@@ -26,7 +34,17 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   @spec read(map()) :: T.domain_res(Comment.t())
   def read(comment_path) when is_map(comment_path), do: read(comment_path, [])
 
-  @doc "Reads one Comment by stable id or named internal view."
+  @doc """
+  Reads a Comment by stable ID in internal mode, or a structured path with explicit options.
+
+  A stable ID is accepted only with `mode: :internal`; a structured public path
+  is Gate-scoped and may choose a named public view.
+
+  ## Examples
+
+      FrontDesk.Comment.read(comment_id, mode: :internal, view: :article_context)
+      FrontDesk.Comment.read(comment_path, mode: :public, view: :default)
+  """
   @spec read(integer(), keyword()) :: T.domain_res(Comment.t() | map())
   def read(comment_id, opts) when is_integer(comment_id) and is_list(opts) do
     case {Keyword.get(opts, :mode, :public), Keyword.get(opts, :view, :default)} do
@@ -36,11 +54,25 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
     end
   end
 
-  @spec read(map(), keyword()) :: T.domain_res(Comment.t())
+  def read(comment_id, opts) when is_binary(comment_id) and is_list(opts) do
+    case Integer.parse(comment_id) do
+      {parsed_id, ""} when parsed_id > 0 -> read(parsed_id, opts)
+      _ -> {:error, CommentErrorCat.not_exist("comment not found")}
+    end
+  end
+
+  @spec read(map(), keyword()) :: T.domain_res(Comment.t() | map())
   def read(comment_path, opts) when is_map(comment_path) and is_list(opts) do
     read(comment_path, nil, opts)
   end
 
+  @doc """
+  Reads a Comment path with the actor, or a Comment beneath an Article path.
+
+  ## Examples
+
+      FrontDesk.Comment.read(comment_path, actor, mode: :public, view: :with_author)
+  """
   @spec read(map(), term(), keyword()) :: T.domain_res(Comment.t())
   def read(%{article: _} = comment_path, actor, opts) when is_list(opts) do
     case Keyword.get(opts, :mode, :public) do
@@ -54,7 +86,6 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
     end
   end
 
-  @doc "Reads one Comment under a structured Article path."
   @spec read(map(), integer() | String.t(), keyword()) :: T.domain_res(Comment.t())
   def read(article_path, inner_id, opts) when is_map(article_path) and is_list(opts) do
     read(article_path, inner_id, nil, opts)
@@ -66,6 +97,13 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
     end
   end
 
+  @doc """
+  Reads a Comment beneath an Article path after the parent and Comment Gate checks.
+
+  ## Examples
+
+      FrontDesk.Comment.read(article_path, comment_inner_id, actor, mode: :public)
+  """
   @spec read(map(), integer() | String.t(), term(), keyword()) :: T.domain_res(Comment.t())
   def read(article_path, inner_id, actor, opts) do
     view = Keyword.get(opts, :view, :default)
@@ -79,27 +117,51 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
              actor,
              opts
            ),
-         query <- stable_comment_query(article, thread, inner_id),
+         %Ecto.Query{} = query <- stable_comment_query(article, thread, inner_id, actor),
          {:ok, comment} <- load_public_comment(query, view) do
       ORM.fill_meta(comment)
     end
   end
 
   defp load_public_comment(query, view) when view in [:default, :with_author] do
-    ORM.find_by(Comment, query, preload: :author)
+    case Repo.one(from(comment in query, preload: :author)) do
+      %Comment{} = comment -> {:ok, comment}
+      nil -> {:error, CommentErrorCat.not_exist("comment not found")}
+    end
   end
 
   defp load_public_comment(_query, _view) do
     {:error, CommentErrorCat.not_exist("unsupported Comment read view")}
   end
 
-  defp stable_comment_query(%{id: article_id}, thread, inner_id) when is_binary(article_id) do
-    %{thread: thread, inner_id: inner_id, article_id: article_id}
-  end
+  defp stable_comment_query(article, thread, inner_id, actor) do
+    scope_context =
+      if thread == :doc do
+        CommentScopeContext.for_thread(:doc, branch_policy: :main)
+      else
+        CommentScopeContext.for_thread(thread)
+      end
 
-  defp stable_comment_query(article, thread, inner_id) do
-    {:ok, info} = match(thread)
-    %{thread: thread, inner_id: inner_id} |> Map.put(info.foreign_key, article.id)
+    case CMS.Gate.scope(Comment, actor, :read, scope_context) do
+      %Ecto.Query{} = query when thread == :doc ->
+        where(
+          query,
+          [comment],
+          comment.article_id == ^article.id and comment.inner_id == ^inner_id and
+            comment.thread == ^thread and comment.branch_id == ^article.branch_id
+        )
+
+      %Ecto.Query{} = query ->
+        where(
+          query,
+          [comment],
+          comment.article_id == ^article.id and comment.inner_id == ^inner_id and
+            comment.thread == ^thread
+        )
+
+      {:error, _reason} = error ->
+        error
+    end
   end
 
   @doc "Returns the parent Article and author information for one Comment."

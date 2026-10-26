@@ -1,5 +1,9 @@
 # Article Revision / Draft 目标架构
 
+> 2026-10-22 审核合同更新：本文旧内容 legal/illegal/audit_failed 与 Sentinel/计划 Moderation
+> 相关目标已由 [AlertBoard / ReviewBot](../alert-board/design.md) 替代，运行时尚未切换。
+> 其他 Lifecycle、Draft/Revision/Public、Doc 历史与分支合同保持；普通 UGC 不新增待审版本。
+
 > 状态：implemented with known contract drift；Revision / Draft 主链已实现，
 > ArticleCommunity 的 `home | mirror` role 已移除，Community-local Kanban 与
 > `CMS.Kanban` command facade 已迁移；
@@ -43,19 +47,22 @@ Stable Article identity
    公共路径和编号规则按 [Article Community](./article-community.md)
    第 5 节及其 [`inner_id` fix contract](./article-community-inner-id-fix.md) 执行，不能从
    特殊 home relation 推导。
-9. PublicCache 的 durable internal target 使用 stable `article_id`，跨语言 wire tag 继续使用 `community + thread + inner_id`，不得改成 UUID tag。
-10. Doc 的内容发布、审核、编辑标志、运行状态和 Trash 均保持 branch-scoped；只有 stable identity、作者和明确的 aggregate-level abuse block 属于 article-global。
-11. Revision 公共表只保存共享版本内容；Post、Changelog、Doc 的专属字段分别进入强类型扩展表，不使用通用 `_data` 或 `_addon` JSONB。
-12. 正文工作区与快照分别命名为 `ArticleBodyDraft` / `ArticleBodySnapshot`，对应 `cms.article_body_drafts` / `cms.article_body_snapshots`。只改标题时创建新 Revision，但复用原 `body_snapshot_id`。
-13. 公共 ArticlePath 读取经过 `CMS.FrontDesk.article`，普通 Article 写命令和 editor
+9. `ArticleBinding` 只存 Article–Community 关系和社区内 locator；`ArticlePublic` 只选择当前公开
+   Revision 并保存内容查询投影。二者都不存可见状态；Gate 直接组合 ArticleLifecycle 与当前
+   ArticleReviewRestriction 决定读取范围。Article/Comment 不引入 `pending` 审核状态。
+10. PublicCache 的 durable internal target 使用 stable `article_id`，跨语言 wire tag 继续使用 `community + thread + inner_id`，不得改成 UUID tag。
+11. Doc 的内容发布、审核、编辑标志、运行状态和 Trash 均保持 branch-scoped；只有 stable identity、作者和明确的 aggregate-level abuse block 属于 article-global。
+12. Revision 公共表只保存共享版本内容；Post、Changelog、Doc 的专属字段分别进入强类型扩展表，不使用通用 `_data` 或 `_addon` JSONB。
+13. 正文工作区与快照分别命名为 `ArticleBodyDraft` / `ArticleBodySnapshot`，对应 `cms.article_body_drafts` / `cms.article_body_snapshots`。只改标题时创建新 Revision，但复用原 `body_snapshot_id`。
+14. 公共 ArticlePath 读取经过 `CMS.FrontDesk.article`，普通 Article 写命令和 editor
     workspace 经过 `CMS.Articles`，Doc 产品命令经过 `CMS.Docs` / `CMS.DocTree`；caller
     不直接读写 Draft、Revision、ArticlePublic 或 Projection persistence module。
-14. 本次是直接替换：不兼容旧数据，不保留旧逻辑、旧 GraphQL contract、双写、shadow read 或 backfill。
-15. `cms.articles.id` 直接使用 UUID，取代当前 `article_hash_id` 的逻辑身份；目标模型不再同时维护两套稳定 Article id。
-16. 普通 Article 不提供历史列表、历史 Diff 或 Restore；编辑事实由现有
+15. 本次是直接替换：不兼容旧数据，不保留旧逻辑、旧 GraphQL contract、双写、shadow read 或 backfill。
+16. `cms.articles.id` 直接使用 UUID，取代当前 `article_hash_id` 的逻辑身份；目标模型不再同时维护两套稳定 Article id。
+17. 普通 Article 不提供历史列表、历史 Diff 或 Restore；编辑事实由现有
     Activity V3 长期记录。Doc 才通过 `DocBranchVersion` 保留可浏览、可恢复的
     发布历史。
-17. 服务端不保存未发布 Draft 的 checkpoint 历史；每个实际交付的 Article 编辑器都必须
+18. 服务端不保存未发布 Draft 的 checkpoint 历史；每个实际交付的 Article 编辑器都必须
     使用 Core `LocalDraftHistory`，通过 IndexedDB 提供同账号、同浏览器内的工作副本与
     有限恢复记录。Doc 是 v1 必达基线；未交付编辑器的 thread 不预建空 adapter。
     它是尽力而为的编辑体验，不是跨设备、协作或审计合同。

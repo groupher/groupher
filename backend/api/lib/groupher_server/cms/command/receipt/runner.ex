@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
 
   require Logger
 
+  alias GroupherServer.CMS
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Helper.T
   alias Helper.ORM.TransactionSettings

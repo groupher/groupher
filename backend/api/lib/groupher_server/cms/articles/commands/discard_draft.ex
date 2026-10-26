@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Articles.Commands.DiscardDraft do
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
 
   alias Accounts.Model.User
   alias CMS.Articles.Draft.Store
@@ -37,12 +38,14 @@ defmodule GroupherServer.CMS.Articles.Commands.DiscardDraft do
     execute_pipeline(article_id, actor, opts)
   end
 
-  def execute(_article_id, _actor, _opts), do: {:error, :invalid_discard_draft_input}
+  def execute(_article_id, _actor, _opts) do
+    {:error, ArticleErrorCat.invalid_command_input()}
+  end
 
   defp stable_article(article_id) do
     case CMS.FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> {:ok, article}
-      {:error, _} -> {:error, :article_not_found}
+      {:error, _} -> {:error, ArticleErrorCat.article_not_found()}
     end
   end
 
@@ -56,9 +59,11 @@ defmodule GroupherServer.CMS.Articles.Commands.DiscardDraft do
   defp community_by_id(community_id) when is_integer(community_id) do
     case CMS.FrontDesk.community(community_id, mode: :internal) do
       {:ok, %Community{} = community} -> {:ok, community}
-      _ -> {:error, :article_binding_not_found}
+      _ -> {:error, ArticleErrorCat.binding_not_found()}
     end
   end
 
-  defp community_by_id(_community_id), do: {:error, :article_binding_context_required}
+  defp community_by_id(_community_id) do
+    {:error, ArticleErrorCat.binding_context_required()}
+  end
 end

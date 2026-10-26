@@ -21,8 +21,6 @@ defmodule GroupherServer.Activity.Model.DocLog do
       :archived,
       :permanently_deleted,
       :comment_created,
-      :comment_updated,
-      :moderation_review_started,
-      :moderation_review_resolved
+      :comment_updated
     ]
 end

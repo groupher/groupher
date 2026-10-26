@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Unset do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Articles.{Query, Tags.Assignment}
+  alias CMS.Articles.Tags.Assignment
   alias CMS.{FrontDesk, Gate}
   alias CMS.Communities.Tags.Commands.TagSupport
   alias CMS.Model.{Article, Community}
@@ -39,25 +39,25 @@ defmodule GroupherServer.CMS.Communities.Tags.Commands.Unset do
   end
 
   defp article_resource(%{article_id: article_id} = resource) do
-    case Query.article(article_id) do
-      %Article{} = article -> {:ok, article, Map.get(resource, :branch_id)}
-      nil -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{} = article} -> {:ok, article, Map.get(resource, :branch_id)}
+      {:error, _reason} -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end
 
   defp article_resource(_article), do: {:error, CMS.Gate.ErrorCat.resource_not_found()}
 
   defp check_article_gate(actor, community, article, branch_id) when is_integer(branch_id) do
-    Gate.check_in_transaction(actor, :edit, article, community, branch_id)
+    Gate.check_in_transaction(actor, :community_tag_unset, article, community, branch_id)
   end
 
   defp check_article_gate(actor, community, %Article{thread: :doc} = article, nil) do
     with {:ok, branch} <- CMS.Docs.Branch.resolve(community, []) do
-      Gate.check_in_transaction(actor, :edit, article, community, branch.id)
+      Gate.check_in_transaction(actor, :community_tag_unset, article, community, branch.id)
     end
   end
 
   defp check_article_gate(actor, community, article, _branch_id) do
-    Gate.check_in_transaction(actor, :edit, article, community)
+    Gate.check_in_transaction(actor, :community_tag_unset, article, community)
   end
 end

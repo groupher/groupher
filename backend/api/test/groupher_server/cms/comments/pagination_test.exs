@@ -3,6 +3,14 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
 
   use GroupherServer.TestMate, async: false
 
+  alias CMS.Comments.Query.Contract
+
+  test "comment query contract rejects unsupported sort and filter keys" do
+    assert {:error, %{reason: :unsupported_sort}} = Contract.validate_filter(%{sort: :most_views})
+    assert {:error, _} = Contract.validate_filter(%{author_id: 1})
+    assert {:ok, :pass} = Contract.validate_filter(%{sort: :desc_inserted})
+  end
+
   alias GroupherServer.{CMS, ErrorCat}
 
   test "returns an offset CommentPage and rejects an explicit branch without revision" do

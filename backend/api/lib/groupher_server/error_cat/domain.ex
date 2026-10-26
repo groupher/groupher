@@ -4,8 +4,21 @@ defmodule GroupherServer.ErrorCat.Domain do
   DSL used by a context-owned ErrorCat catalog.
 
   Catalog declaration -> compile-time validation -> structured error entries.
-  """
 
+  A catalog opts into the DSL with a namespace and declares each reason with a
+  unique code. The DSL generates the typed constructor and catalog metadata;
+  runtime validity is checked against the global registry.
+
+      defmodule ExampleCatalog do
+        use GroupherServer.ErrorCat.Domain, namespace: {:example, :records}
+
+        error :record_missing, code: 7001
+      end
+  """
+  alias GroupherServer.{ErrorCat}
+
+  @doc "Installs a context-owned ErrorCat catalog DSL in the calling module."
+  @spec __using__(keyword()) :: Macro.t()
   defmacro __using__(opts) do
     namespace_ast = Keyword.fetch!(opts, :namespace)
     {namespace, _binding} = Code.eval_quoted(namespace_ast, [], __CALLER__)
@@ -13,7 +26,7 @@ defmodule GroupherServer.ErrorCat.Domain do
 
     quote do
       import GroupherServer.ErrorCat.Domain, only: [error: 1, error: 2]
-      alias GroupherServer.ErrorCat.Error, as: GlobalError
+      alias ErrorCat.Error, as: GlobalError
 
       Module.register_attribute(__MODULE__, :error_cat_entries, accumulate: true)
       @error_cat_namespace unquote(Macro.escape(namespace))
@@ -66,6 +79,8 @@ defmodule GroupherServer.ErrorCat.Domain do
     end
   end
 
+  @doc "Declares one catalog reason and generates its structured error constructor."
+  @spec error(Macro.t(), keyword()) :: Macro.t()
   defmacro error(reason, opts \\ []) do
     caller = __CALLER__
     reason = Macro.expand(reason, caller)
@@ -89,6 +104,17 @@ defmodule GroupherServer.ErrorCat.Domain do
 
     validate_entry!(reason, code, retryable, actions, message_key)
 
+    constructor_doc = """
+    Builds the declared `#{inspect(reason)}` ErrorCat error.
+
+    `details` carries internal context; transport adapters must whitelist any
+    detail that is safe to expose.
+
+    ## Examples
+
+        #{reason}("record is unavailable")
+    """
+
     quote do
       @error_cat_entries %{
         reason: unquote(reason),
@@ -98,7 +124,8 @@ defmodule GroupherServer.ErrorCat.Domain do
         message_key: unquote(message_key)
       }
 
-      @doc false
+      @doc unquote(constructor_doc)
+      @spec unquote(reason)(term()) :: GroupherServer.ErrorCat.Error.t()
       def unquote(reason)(details \\ nil) do
         %GroupherServer.ErrorCat.Error{
           namespace: @error_cat_namespace,
@@ -118,6 +145,7 @@ defmodule GroupherServer.ErrorCat.Domain do
     end
   end
 
+  @doc false
   defmacro __before_compile__(env) do
     namespace = Module.get_attribute(env.module, :error_cat_namespace)
 

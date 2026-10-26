@@ -2,8 +2,9 @@ defmodule GroupherServerWeb.Middleware.ServiceIdentityMiddlewareTest do
   use ExUnit.Case, async: true
 
   alias GroupherServer.Auth
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
   alias Auth.Contract, as: AuthContract
-  alias GroupherServerWeb.Middleware.{BodyBagTrust, DelegatedScope}
+  alias GroupherServerWeb.Middleware.{BodyBagTrust, DelegatedScope, GeneralError, GQLResultFmt}
 
   test "DelegatedScope distinguishes verifier, user-proof, and scope failures" do
     verifier_failure =
@@ -15,7 +16,7 @@ defmodule GroupherServerWeb.Middleware.ServiceIdentityMiddlewareTest do
         scope: "auth:oauth:read"
       )
 
-    assert error_code(verifier_failure) == AuthContract.service_jwks_unavailable()
+    assert error_code(verifier_failure) == WebErrorCat.jwks_unavailable().code
 
     missing_user =
       DelegatedScope.call(
@@ -24,7 +25,7 @@ defmodule GroupherServerWeb.Middleware.ServiceIdentityMiddlewareTest do
         scope: "auth:oauth:read"
       )
 
-    assert error_code(missing_user) == AuthContract.token_missing()
+    assert error_code(missing_user) == WebErrorCat.token_missing().code
 
     under_scoped =
       DelegatedScope.call(
@@ -37,7 +38,7 @@ defmodule GroupherServerWeb.Middleware.ServiceIdentityMiddlewareTest do
         scope: "auth:oauth:read"
       )
 
-    assert error_code(under_scoped) == AuthContract.service_scope_forbidden()
+    assert error_code(under_scoped) == WebErrorCat.service_scope_forbidden().code
   end
 
   test "BodyBagTrust distinguishes verifier and publisher-scope failures" do
@@ -50,7 +51,7 @@ defmodule GroupherServerWeb.Middleware.ServiceIdentityMiddlewareTest do
         scope: "content:comment:write"
       )
 
-    assert error_code(verifier_failure) == AuthContract.service_jwks_unavailable()
+    assert error_code(verifier_failure) == WebErrorCat.jwks_unavailable().code
 
     under_scoped =
       BodyBagTrust.call(
@@ -61,7 +62,7 @@ defmodule GroupherServerWeb.Middleware.ServiceIdentityMiddlewareTest do
         scope: "content:comment:write"
       )
 
-    assert error_code(under_scoped) == AuthContract.service_scope_forbidden()
+    assert error_code(under_scoped) == WebErrorCat.service_scope_forbidden().code
   end
 
   defp actor(scope) do
@@ -72,7 +73,12 @@ defmodule GroupherServerWeb.Middleware.ServiceIdentityMiddlewareTest do
     }
   end
 
-  defp error_code(%Absinthe.Resolution{errors: [[message: _message, extensions: %{code: code}]]}) do
+  defp error_code(%Absinthe.Resolution{} = resolution) do
+    %{errors: [%{message: _message, extensions: %{code: code}}]} =
+      resolution
+      |> GQLResultFmt.call([])
+      |> GeneralError.call([])
+
     code
   end
 end

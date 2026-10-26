@@ -51,7 +51,6 @@ defmodule GroupherServer.CMS.Events do
 
   @spec route(atom()) :: {:ok, module()} | {:error, term()}
   defp route(:sync_mentions), do: {:ok, __MODULE__.SyncMentions}
-  defp route(:audition), do: {:ok, __MODULE__.Audition}
   defp route(:subscribe_community), do: {:ok, __MODULE__.SubscribeCommunity}
 
   defp route(type)

@@ -11,7 +11,6 @@ import {
 } from '~/query/mutation/commentReactionReceipt'
 import { readCommentFeedReceipts } from '~/query/mutation/commentReceipt'
 import type { TComment } from '~/spec'
-import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 import { overlayCommentFeed } from './overlay'
@@ -22,7 +21,7 @@ export default function useCommentPages(
   collection: TCommentCollection,
 ) {
   const account = useAccount()
-  const accountRef = account.accountRef || getAccountRef(account.user) || ''
+  const accountScope = account.accountScope || ''
   const { stats } = useViewingArticle()
   // Reading the revision makes persisted receipts observable after confirmed writes.
   void stats?.snapshotAt
@@ -30,15 +29,15 @@ export default function useCommentPages(
   const viewers = useQueries({
     queries: pages.map((page) =>
       Q.viewer.commentStates(
-        accountRef,
+        accountScope,
         collection.article,
         gatherCommentViewerIds({ entries: [...page.pinnedEntries, ...page.entries] }),
       ),
     ),
   })
-  const receipts = readCommentFeedReceipts(accountRef, articleKey)
+  const receipts = readCommentFeedReceipts(accountScope, articleKey)
   const reactions = new Map(
-    readCommentReactionReceipts(accountRef, articleKey).map((receipt) => [
+    readCommentReactionReceipts(accountScope, articleKey).map((receipt) => [
       receipt.commentRef,
       receipt,
     ]),

@@ -1,16 +1,20 @@
 # Gate / Lifecycle Cleanup：删除历史兼容与双权威
 
+> 2026-10-22 审核合同更新：本文旧内容 legal/illegal/audit_failed 与 Sentinel/计划 Moderation
+> 相关目标已由 [AlertBoard / ReviewBot](../alert-board/design.md) 替代，运行时尚未切换。
+> 其他 Lifecycle、Draft/Revision/Public、Doc 历史与分支合同保持；普通 UGC 不新增待审版本。
+
 > 状态：设计确认，待实施。
 >
 > 本文是独立清理文档，不修改 Gate V1–V4、Community Lifecycle 和 Interaction V1–V4 的历史正文。
-> 后续实现只服务新设计，不读取、迁移、回填或修复历史数据，也不保留长期兼容入口。
+> 后续实现只服务新设计，不读取、迁移、回填或修复历史数据，也不保留任何兼容入口。
 
 相关文档：
 
 - [Gate V4](./v4.md)：typed Access/Scope Context 与 canonical resource；
 - [Community Lifecycle](../lifecycle/contract.md)：Community state、Blocker 和 transition；
 - [Interaction V5](../interaction/v5.md)：同步 Projection、Audit 退役与 ReportFact；
-- [Sentinel V1](../../infra/diagnostics/sentinel-v1.md)：跨领域内容风险检测。
+- [AlertBoard / ReviewBot](../alert-board/design.md)：审核、举报与跨领域检测的新合同。
 
 ## 1. 背景
 
@@ -74,7 +78,7 @@ Gate 不拥有：
 - Lifecycle state；
 - Community setup state；
 - Passport/Membership facts；
-- Report/Moderation state；
+- Report/AlertBoard state；
 - 兼容数据转换；
 - missing-row recovery。
 
@@ -386,22 +390,19 @@ community.meta.moderators_ids
 
 Moderator 权限只来自正式 moderator/membership fact。Community meta 不参与授权。
 
-## 12. 与 Sentinel / Moderation 的后续清理
+## 12. 旧内容 Audit 全链路删除
 
-当前 Article/Comment `pending`、`is_legal`、`audit_failed`、`illegal_reason` 和 `illegal_words` 属于旧
-Audition 内容审核合同，不应长期留在 Gate/Lifecycle。
-
-Sentinel V1 切换后：
+当前合同见 [AlertBoard / ReviewBot](../alert-board/design.md) 与
+[全链路退役](../../migrations/legacy-content-audit-removal.md)。旧 Sentinel/计划 CMS.Moderation 目标废止。
 
 ```text
-Sentinel signal
-  -> Moderation Decision
-  -> resource command / Lifecycle
+ReviewBot 检查 -> AlertBoard 决定 -> 资源 Command / Lifecycle -> Gate 读取过滤
 ```
 
-届时删除 Gate Scope 中对旧 Article moderation `pending` 的直接过滤，并由正式 Moderation/Lifecycle
-状态表达资源可见性。该清理属于 Sentinel/Moderation 实施批次，不与 Community pending 清理混为同一
-字段迁移。
+删除旧内容审核 pending/is_legal/audit_failed/illegal_reason/illegal_words 及所有写入、过滤和对外消费者，
+不保留别名、默认值、兼容 facade、fallback 或双写。新的限制事实和准入按新合同建立。
+Article 对外 pending 占位、Comment 数据库 pending 均清除；Community.pending 属于另一项清理，不能混删。
+Moderator/Passport、Lifecycle 操作审计和 Activity 保留；它们不是旧内容检测机制。
 
 ## 13. 不属于兼容逻辑的机制
 
@@ -459,8 +460,8 @@ Sentinel signal
 ### Phase 6：治理域切换
 
 1. 按 Interaction V5 切换规范化 ReportFact；
-2. 按 Sentinel V1 切换内容检测；
-3. Moderation Decision 调用正式资源 command/Lifecycle；
+2. 按全链路退役清单删除旧 Audit，独立验收无旧协议残留，再按 ReviewBot 新合同实现检测；
+3. AlertBoard Decision 调用正式资源 command/Lifecycle；
 4. 删除旧 AbuseReport embed、threshold fold 和旧 moderation pending 字段。
 
 各 Phase 完成后直接删除旧路径，不双写、不保留 feature flag、不等待历史数据迁移。
@@ -495,7 +496,7 @@ Sentinel signal
 - fact 与同步 Projection 同事务；
 - 不存在全库 Audit/Repair Job；
 - Report 使用规范化 fact；
-- 举报数量和 Sentinel score 不能直接改变资源状态。
+- 举报数量和 ReviewBot signal 不能直接改变资源状态。
 
 ## 16. 验收标准
 

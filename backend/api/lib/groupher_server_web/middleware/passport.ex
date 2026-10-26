@@ -45,8 +45,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
   require GroupherServer.CMS.ErrorCat
   require GroupherServer.CMS.Passport.ErrorCat
 
-  import Helper.Utils
-  alias GroupherServer.{Accounts, CMS, ErrorCat, FrontDesk}
+  alias GroupherServer.{Accounts, CMS, FrontDesk}
+  alias GroupherServerWeb.ErrorResponse
 
   alias Accounts.Model.User
   alias CMS.ErrorCat, as: CmsErrorCat
@@ -80,10 +80,9 @@ defmodule GroupherServerWeb.Middleware.Passport do
         end
 
       {:error, PassportErrorCat.error_pattern(reason: :unknown_action)} ->
-        resolution
-        |> handle_absinthe_error(
-          "PassportError: unknown action #{action}.",
-          ErrorCat.code(GroupherServer.CMS.passport_error_cat_passport())
+        ErrorResponse.put_error(
+          resolution,
+          CMS.passport_error_cat_unknown_action("PassportError: unknown action #{action}.")
         )
     end
   end
@@ -133,23 +132,23 @@ defmodule GroupherServerWeb.Middleware.Passport do
   end
 
   defp missing_action(resolution) do
-    resolution
-    |> handle_absinthe_error(
-      "PassportError: action is required.",
-      ErrorCat.code(GroupherServer.CMS.passport_error_cat_passport())
+    ErrorResponse.put_error(
+      resolution,
+      CMS.passport_error_cat_passport("PassportError: action is required.")
     )
   end
 
   defp invalid_article_path(resolution) do
-    resolution
-    |> handle_absinthe_error("invalid article input", ErrorCat.code(ErrorCat.custom()))
+    ErrorResponse.put_error(
+      resolution,
+      CMS.error_cat_invalid_article_path("invalid article input")
+    )
   end
 
   defp passport_denied(resolution) do
-    resolution
-    |> handle_absinthe_error(
-      "PassportError: your passport not qualified.",
-      ErrorCat.code(GroupherServer.CMS.passport_error_cat_passport())
+    ErrorResponse.put_error(
+      resolution,
+      CMS.passport_error_cat_permission_denied("PassportError: your passport not qualified.")
     )
   end
 

@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Articles.Commands.UpdateDraft do
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
 
   alias Accounts.Model.User
   alias CMS.Articles
@@ -77,9 +78,9 @@ defmodule GroupherServer.CMS.Articles.Commands.UpdateDraft do
   defp community_by_id(community_id) when is_integer(community_id) do
     case CMS.FrontDesk.community(community_id, mode: :internal) do
       {:ok, %Community{} = community} -> {:ok, community}
-      _ -> {:error, :article_binding_not_found}
+      _ -> {:error, ArticleErrorCat.binding_not_found()}
     end
   end
 
-  defp community_by_id(_community_id), do: {:error, :article_binding_context_required}
+  defp community_by_id(_community_id), do: {:error, ArticleErrorCat.binding_context_required()}
 end
