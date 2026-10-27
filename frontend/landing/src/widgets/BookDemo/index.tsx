@@ -16,7 +16,7 @@ export default function BookDemo() {
   const [showV, setShowV] = useState(false)
 
   return (
-    <div className={s.wrapper}>
+    <div className={s.wrapper} data-testid='book-demo-page'>
       <HomeHeader />
       <div className={s.inner}>
         <div className={s.emoji}>🗓</div>

@@ -3,6 +3,7 @@ import { type FC, useState } from 'react'
 import SIZE from '~/const/size'
 import type { TUser } from '~/spec'
 import UserCard from '~/ui/Cards/UserCard'
+import StaticUserCard from '~/ui/Cards/UserCard/Static'
 import ImgFallback from '~/ui/ImgFallback'
 import Tooltip from '~/ui/Tooltip'
 
@@ -16,6 +17,7 @@ type TProps = {
   size?: TAvatarSize
   noLazyLoad: boolean
   popCardPlacement?: 'top' | 'bottom'
+  cardMode?: 'account' | 'static'
   onUserSelect?: (user: TUser) => void
 }
 
@@ -27,6 +29,7 @@ const AvatarItem: FC<TProps> = ({
   noLazyLoad,
   onUserSelect,
   popCardPlacement,
+  cardMode = 'account',
 }) => {
   const selectable = Boolean(user && onUserSelect)
   const s = useSalon({ size, isFirst, isLast, selectable })
@@ -59,7 +62,15 @@ const AvatarItem: FC<TProps> = ({
   return (
     <li className={s.wrapper}>
       <Tooltip
-        content={user ? <UserCard user={user} /> : null}
+        content={
+          user ? (
+            cardMode === 'static' ? (
+              <StaticUserCard user={user} />
+            ) : (
+              <UserCard user={user} />
+            )
+          ) : null
+        }
         offset={[5, 25]}
         delay={0}
         placement={popCardPlacement}

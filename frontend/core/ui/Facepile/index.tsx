@@ -46,6 +46,7 @@ export type TProps = {
   showMore?: boolean
   reverse?: boolean
   popCardPlacement?: 'top' | 'bottom'
+  cardMode?: 'account' | 'static'
   noLazyLoad?: boolean
   classNames?: string
 
@@ -66,6 +67,7 @@ const Facepile: FC<TProps> = ({
   showMore = true,
   reverse = false,
   popCardPlacement = 'bottom',
+  cardMode = 'account',
   classNames = '',
   ...spacing
 }) => {
@@ -93,6 +95,7 @@ const Facepile: FC<TProps> = ({
           noLazyLoad={noLazyLoad}
           onUserSelect={onUserSelect}
           popCardPlacement={popCardPlacement}
+          cardMode={cardMode}
         />
       ))}
 

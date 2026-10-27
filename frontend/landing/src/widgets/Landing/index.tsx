@@ -87,7 +87,7 @@ export default function Landing() {
           <div className={s.desc}>
             {t('landing.hero.desc.prefix')}
             <div className='ml-3 inline-block'>
-              <Facepile users={users} noLazyLoad showMore={false} />
+              <Facepile users={users} noLazyLoad showMore={false} cardMode='static' />
             </div>
             {t('landing.hero.desc.feedback')}
           </div>
