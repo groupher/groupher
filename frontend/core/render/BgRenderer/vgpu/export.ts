@@ -12,6 +12,7 @@ import {
   loadPatternTexture,
   type TPatternTexture,
 } from './pattern'
+import { createWallpaperPostProcess } from './postProcess'
 import './wgsl-env.d.ts'
 import wallpaperMeshShader from './wallpaper-mesh.wgsl'
 
@@ -210,6 +211,7 @@ export const exportVgpuWallpaperBatch = async (
       clearColor: [0, 0, 0, 0],
       label: `wallpaper-vgpu-export-surface-${targetKey}`,
     })
+    const postProcess = createWallpaperPostProcess(gpu)
 
     try {
       if (canvas.width !== size[0] || canvas.height !== size[1]) {
@@ -242,9 +244,11 @@ export const exportVgpuWallpaperBatch = async (
       })
 
       const errorCount = asyncErrors.length
-      await mesh.compile({ colors: [exportSurface.format], sampleCount: exportSurface.sampleCount })
+      postProcess.update(size, meshParams)
+      await mesh.compile(postProcess.scene)
+      await postProcess.compile(exportSurface)
       const currentFrame = frame(gpu, (gpuFrame) => {
-        gpuFrame.pass(exportSurface, mesh)
+        postProcess.encode(gpuFrame, exportSurface, mesh)
       })
       await currentFrame.done
       await gpu.settled()
@@ -270,6 +274,7 @@ export const exportVgpuWallpaperBatch = async (
       }
     } finally {
       exportSurface.dispose()
+      postProcess.destroy()
     }
   }
 

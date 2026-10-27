@@ -388,12 +388,6 @@ fn applyTexture(color: vec3f, uv: vec2f) -> vec3f {
   return color;
 }
 
-fn applyGlobalColorEffects(color: vec3f) -> vec3f {
-  let luminance = dot(color, vec3f(0.299, 0.587, 0.114));
-  let saturated = mix(vec3f(luminance), color, max(params.globalSaturation, 0.0));
-  return saturated * max(params.globalBrightness, 0.0);
-}
-
 fn sampleWallpaperBaseColor(uv: vec2f) -> vec3f {
   var color = sampleBaseColor(uv);
   color = applyTexture(color, uv);
@@ -403,39 +397,7 @@ fn sampleWallpaperBaseColor(uv: vec2f) -> vec3f {
   return color;
 }
 
-fn sampleWallpaperColor(uv: vec2f) -> vec3f {
-  return applyGlobalColorEffects(sampleWallpaperBaseColor(uv));
-}
-
-fn sampleBlurredWallpaperColor(uv: vec2f) -> vec3f {
-  if (params.blurRadius <= 0.001) { return sampleWallpaperColor(uv); }
-
-  // Nine-tap Gaussian approximation. The radius is expressed in backing-store pixels,
-  // matching the legacy CSS blur range while keeping preview and export on one path.
-  let texel = vec2f(
-    1.0 / max(params.resolution.x, 1.0),
-    1.0 / max(params.resolution.y, 1.0),
-  );
-  let radius = params.blurRadius;
-  let firstOffset = texel * radius * 1.384615;
-  let secondOffset = texel * radius * 3.230769;
-  var color = sampleWallpaperBaseColor(uv) * 0.227027;
-  color += (
-    sampleWallpaperBaseColor(clamp(uv + vec2f(firstOffset.x, 0.0), vec2f(0.0), vec2f(1.0))) +
-    sampleWallpaperBaseColor(clamp(uv - vec2f(firstOffset.x, 0.0), vec2f(0.0), vec2f(1.0))) +
-    sampleWallpaperBaseColor(clamp(uv + vec2f(0.0, firstOffset.y), vec2f(0.0), vec2f(1.0))) +
-    sampleWallpaperBaseColor(clamp(uv - vec2f(0.0, firstOffset.y), vec2f(0.0), vec2f(1.0)))
-  ) * 0.158108;
-  color += (
-    sampleWallpaperBaseColor(clamp(uv + vec2f(secondOffset.x, 0.0), vec2f(0.0), vec2f(1.0))) +
-    sampleWallpaperBaseColor(clamp(uv - vec2f(secondOffset.x, 0.0), vec2f(0.0), vec2f(1.0))) +
-    sampleWallpaperBaseColor(clamp(uv + vec2f(0.0, secondOffset.y), vec2f(0.0), vec2f(1.0))) +
-    sampleWallpaperBaseColor(clamp(uv - vec2f(0.0, secondOffset.y), vec2f(0.0), vec2f(1.0)))
-  ) * 0.035135;
-  return applyGlobalColorEffects(color);
-}
-
+// Generation runs once per pixel; blur and color effects sample this pass in wallpaper-post.wgsl.
 @fragment fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
-  let color = sampleBlurredWallpaperColor(uv);
-  return vec4f(clamp(color, vec3f(0.0), vec3f(1.0)), 1.0);
+  return vec4f(sampleWallpaperBaseColor(uv), 1.0);
 }

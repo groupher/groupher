@@ -10,6 +10,7 @@ import {
   loadPatternTexture,
   type TPatternTexture,
 } from './pattern'
+import { createWallpaperPostProcess } from './postProcess'
 import { resolvePreviewSurfaceSize } from './previewSize'
 import './wgsl-env.d.ts'
 import wallpaperMeshShader from './wallpaper-mesh.wgsl'
@@ -78,6 +79,7 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
   private readonly imageFallback: TPatternTexture
   private readonly patternSampler: GPUSampler
   private readonly mesh: ReturnType<typeof effect>
+  private readonly postProcess: ReturnType<typeof createWallpaperPostProcess>
   private readonly onFailure: (error: Error) => void
   private readonly unsubscribeError: () => void
   private renderSpec: TBgRenderSpec
@@ -155,14 +157,13 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
       if (this.ready) this.fail(error)
       else this.startupErrors.push(error)
     })
+    this.postProcess = createWallpaperPostProcess(gpu)
   }
 
   async prepare(): Promise<void> {
     await Promise.all([this.syncPatternTexture(), this.syncImageTexture()])
-    await this.mesh.compile({
-      colors: [this.canvasSurface.format],
-      sampleCount: this.canvasSurface.sampleCount,
-    })
+    await this.mesh.compile(this.postProcess.scene)
+    await this.postProcess.compile(this.canvasSurface)
     await this.renderImmediately()
     await this.gpu.settled()
     if (this.startupErrors.length > 0) throw this.startupErrors[0]
@@ -221,6 +222,7 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
     this.renderQueued = false
     this.unsubscribeError()
     this.canvasSurface.dispose()
+    this.postProcess.destroy()
     this.deferDestroy(this.patternTexture.texture)
     if (this.patternFallback.texture !== this.patternTexture.texture) {
       this.deferDestroy(this.patternFallback.texture)
@@ -233,7 +235,8 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
   }
 
   private scheduleRender(): void {
-    if (this.disposed) return
+    // Texture loading during prepare must not race the explicit first-frame compile/render.
+    if (this.disposed || !this.ready) return
 
     this.renderQueued = true
     if (this.renderInFlight || this.frameId !== null) return
@@ -321,8 +324,9 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
       imageSampler: this.patternSampler,
       imageTexture: this.imageTexture.texture,
     })
+    this.postProcess.update(size, this.meshParams)
     const currentFrame = frame(this.gpu, (gpuFrame) => {
-      gpuFrame.pass(this.canvasSurface, this.mesh)
+      this.postProcess.encode(gpuFrame, this.canvasSurface, this.mesh)
     })
     await currentFrame.done
   }
