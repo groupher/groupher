@@ -4,11 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler d1 migrations apply groupher-status --local && wrangler dev",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "deploy:dry-run": "wrangler deploy --dry-run",
     "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@groupher/contracts": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261013.1",

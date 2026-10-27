@@ -1,8 +1,19 @@
+import {
+  SERVICE_HEALTH_SCHEMA_VERSION,
+  type TServiceHealthResponseV1,
+} from '@groupher/contracts/health'
+
 import { checkAll, type ProbeBindings } from './probes'
 import { readStatuses, saveResults } from './state'
 import { renderPage, statusPayload } from './view'
 
-type Env = ProbeBindings & { DB: D1Database }
+type Env = ProbeBindings & {
+  CF_VERSION_METADATA?: WorkerVersionMetadata
+  DB: D1Database
+  ENVIRONMENT?: string
+}
+
+const workerStartedAt = Date.now()
 
 const responseHeaders = {
   'x-groupher-status-runtime': 'worker',
@@ -19,10 +30,17 @@ export default {
       return new Response(null, { status: 405 })
     const path = new URL(request.url).pathname
     if (path === '/health') {
-      return Response.json(
-        { schemaVersion: 'health.v1', service: 'status', status: 'ok' },
-        { headers: responseHeaders },
-      )
+      const health: TServiceHealthResponseV1 = {
+        schemaVersion: SERVICE_HEALTH_SCHEMA_VERSION,
+        status: 'ok',
+        service: 'status',
+        version: env.CF_VERSION_METADATA?.id ?? 'unknown',
+        environment: env.ENVIRONMENT ?? 'unknown',
+        timestamp: new Date().toISOString(),
+        uptimeMs: Date.now() - workerStartedAt,
+        checks: [],
+      }
+      return Response.json(health, { headers: responseHeaders })
     }
     if (path !== '/' && path !== '/api/status') return new Response(null, { status: 404 })
 
@@ -36,9 +54,15 @@ export default {
       })
     } catch (error) {
       console.error(JSON.stringify({ event: 'status_read_failed', error: String(error) }))
+      if (path === '/api/status') {
+        return Response.json(
+          { error: 'status_unavailable', message: 'Status temporarily unavailable' },
+          { status: 503, headers: responseHeaders },
+        )
+      }
       return new Response('Status temporarily unavailable', {
         status: 503,
-        headers: responseHeaders,
+        headers: { ...responseHeaders, 'content-type': 'text/plain; charset=utf-8' },
       })
     }
   },

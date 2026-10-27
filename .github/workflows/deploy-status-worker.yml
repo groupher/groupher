@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'ops/status/**'
+      - '.github/workflows/deploy-status-worker.yml'
       - 'pnpm-workspace.yaml'
       - 'pnpm-lock.yaml'
   push:
@@ -11,6 +12,7 @@ on:
       - dev
     paths:
       - 'ops/status/**'
+      - '.github/workflows/deploy-status-worker.yml'
       - 'pnpm-workspace.yaml'
       - 'pnpm-lock.yaml'
 
