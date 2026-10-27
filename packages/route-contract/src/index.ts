@@ -86,6 +86,7 @@ const LANDING_STATIC_ASSET_PREFIXES = [
   '/landing/products/',
   '/landing/seo/',
   '/landing/stacks/',
+  '/landing/wallpaper/',
   '/avatars/',
   '/icons/',
   '/locales/',

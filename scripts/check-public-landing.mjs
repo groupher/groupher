@@ -44,6 +44,10 @@ const checkPublicLanding = async () => {
     '/landing/intro/home.webp',
     '/landing/intro/home-dark.webp',
     '/landing/catpaw.png',
+    '/landing/wallpaper/amber-mauve-wide.webp',
+    '/landing/wallpaper/amber-mauve-desktop.webp',
+    '/landing/wallpaper/amber-mauve-tablet.webp',
+    '/landing/wallpaper/amber-mauve-phone.webp',
     ...[
       ...html.matchAll(
         /\/landing\/(?!assets\/)[^\s"'<>?#)]+\.(?:avif|gif|ico|jpe?g|json|png|svg|txt|webp|xml)/g,

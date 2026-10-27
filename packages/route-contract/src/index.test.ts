@@ -28,6 +28,7 @@ describe('platform root routes', () => {
     '/robots.txt',
     '/favicon.ico',
     '/landing/assets/app.js',
+    '/landing/wallpaper/amber-mauve-wide.webp',
     '/icons/logo.svg',
   ])('routes Landing asset %s', (pathname) => {
     expect(resolveRoot(pathname).targetKind).toBe('landing')
