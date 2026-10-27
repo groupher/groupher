@@ -7,9 +7,9 @@ defmodule GroupherServer.Test.CMS.Press.PreviewFixtureTest do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, PressPreview}
   alias CMS.Outbox.Event
-  alias GroupherServer.PressPreview.Fixtures
+  alias PressPreview.Fixtures
 
   setup do
     start_supervised!({Oban, repo: Repo, testing: :manual, plugins: false, queues: false})
@@ -17,9 +17,11 @@ defmodule GroupherServer.Test.CMS.Press.PreviewFixtureTest do
     System.delete_env("PRESS_INTERNAL_URL")
 
     on_exit(fn ->
-      if endpoint,
-        do: System.put_env("PRESS_INTERNAL_URL", endpoint),
-        else: System.delete_env("PRESS_INTERNAL_URL")
+      if endpoint do
+        System.put_env("PRESS_INTERNAL_URL", endpoint)
+      else
+        System.delete_env("PRESS_INTERNAL_URL")
+      end
     end)
 
     :ok

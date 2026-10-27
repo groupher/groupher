@@ -305,8 +305,9 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     end
   end
 
-  defp child(parent, kind),
-    do: Repo.get_by!(Event, command_id: parent.id, identity_type: :workflow, event: kind)
+  defp child(parent, kind) do
+    Repo.get_by!(Event, command_id: parent.id, identity_type: :workflow, event: kind)
+  end
 
   defp deliver(worker, event) do
     worker.perform(%Oban.Job{args: %{"event_id" => event.id}, attempt: 1, max_attempts: 3})
