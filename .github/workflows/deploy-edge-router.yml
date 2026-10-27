@@ -3,6 +3,7 @@ name: Deploy Edge Router Worker
 on:
   pull_request:
     paths:
+      - '.github/workflows/deploy-edge-router.yml'
       - 'infra/edge-router/**'
       - 'packages/route-contract/**'
       - 'packages/contracts/**'
@@ -12,6 +13,7 @@ on:
     branches:
       - dev
     paths:
+      - '.github/workflows/deploy-edge-router.yml'
       - 'infra/edge-router/**'
       - 'packages/route-contract/**'
       - 'packages/contracts/**'
@@ -19,8 +21,8 @@ on:
       - 'pnpm-lock.yaml'
   workflow_dispatch:
     inputs:
-      confirm_press_cutover:
-        description: Confirm Press has been provisioned and this deployment is the planned hard cutover
+      confirm_public_router_release:
+        description: Confirm release to the public domains, downstream Workers, and Press setting
         required: true
         type: boolean
         default: false
@@ -72,7 +74,7 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     environment: press-production
-    if: github.event_name == 'workflow_dispatch' && inputs.confirm_press_cutover == true
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_public_router_release == true
 
     steps:
       - uses: actions/checkout@v4
