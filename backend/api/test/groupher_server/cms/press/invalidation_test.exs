@@ -136,7 +136,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     assert Repo.get!(Event, event.id).status == :retrying
   end
 
-  test "Article visibility outbox retries when Press cache invalidation fails" do
+  test "Press failure retries only its child" do
     {community, article_view, _attrs, _user} = mock_article(:post)
 
     {:ok, event} =
@@ -158,14 +158,21 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     System.put_env("PRESS_INTERNAL_RESOURCE", "https://press.invalid/#{System.unique_integer()}")
     Application.put_env(:groupher_server, GroupherServer.ServiceAuth.Client, [])
 
-    assert {:error, :press_invalidation_auth_failed} =
-             GroupherServer.CMS.Outbox.Workflow.Article.perform(%Oban.Job{
-               args: %{"event_id" => event.id},
-               attempt: 1,
-               max_attempts: 3
-             })
+    assert {:ok, :pass} = deliver(GroupherServer.Jobs.CMSOutboxArticle, event)
+    press = child(event, "press.cache_invalidation")
 
-    assert Repo.get!(Event, event.id).status == :retrying
+    assert {:error, :press_invalidation_auth_failed} =
+             deliver(GroupherServer.Jobs.CMSOutboxPress, press)
+
+    assert Repo.get!(Event, event.id).status == :done
+    assert Repo.get!(Event, press.id).status == :retrying
+    assert child(event, "article.search_sync").status == :waiting
+    assert child(event, "article.cdn_purge").status == :waiting
+
+    assert {:ok, :pass} =
+             deliver(GroupherServer.Jobs.CMSOutboxSearch, child(event, "article.search_sync"))
+
+    assert Repo.get!(Event, press.id).status == :retrying
   end
 
   test "Search failure cannot prevent visibility cache invalidation" do
@@ -197,15 +204,113 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
       Keyword.put(config, :platform, UnavailableSearch)
     )
 
-    assert {:error, :search_unavailable} =
-             CMS.Outbox.Workflow.Article.perform(%Oban.Job{
-               args: %{"event_id" => event.id},
-               attempt: 1,
-               max_attempts: 3
-             })
+    assert {:ok, :pass} =
+             with_jobs(fn -> deliver(GroupherServer.Jobs.CMSOutboxArticle, event) end)
 
+    press = child(event, "press.cache_invalidation")
+    search = child(event, "article.search_sync")
+    cdn = child(event, "article.cdn_purge")
+    assert {:error, :search_unavailable} = deliver(GroupherServer.Jobs.CMSOutboxSearch, search)
+    assert {:ok, :pass} = deliver(GroupherServer.Jobs.CMSOutboxPress, press)
     assert_receive {:press_invalidation_received, "/internal/invalidate"}, 1_000
-    assert Repo.get!(Event, event.id).status == :retrying
+    assert {:error, _} = deliver(GroupherServer.Jobs.CMSOutboxCDN, cdn)
+    assert Repo.get!(Event, event.id).status == :done
+    assert Repo.get!(Event, press.id).status == :done
+    assert Repo.get!(Event, search.id).status == :retrying
+    assert Repo.get!(Event, cdn.id).attempts == 1
+
+    jobs_before = Repo.aggregate(Oban.Job, :count)
+    assert {:ok, _} = with_jobs(fn -> CMS.Articles.Effects.dispatch(event) end)
+    assert child(event, "press.cache_invalidation").id == press.id
+    assert Repo.get!(Event, press.id).status == :done
+    assert Repo.aggregate(Oban.Job, :count) == jobs_before
+    assert Repo.aggregate(from(e in Event, where: e.command_id == ^event.id), :count) == 3
+
+    for {worker, leaf, queue} <- [
+          {GroupherServer.Jobs.CMSOutboxPress, press, "press"},
+          {GroupherServer.Jobs.CMSOutboxSearch, search, "search"},
+          {GroupherServer.Jobs.CMSOutboxCDN, cdn, "public_cache"}
+        ] do
+      assert Repo.exists?(
+               from(j in Oban.Job,
+                 where:
+                   j.worker == ^Oban.Worker.to_string(worker) and j.queue == ^queue and
+                     fragment("?->>'event_id' = ?", j.args, ^leaf.id)
+               )
+             )
+    end
+  end
+
+  test "publication and review facts each create three independent intents" do
+    {community, article, _attrs, _user} = mock_article(:post)
+
+    for kind <- [
+          "article.published",
+          "article.updated",
+          "article.visibility_changed",
+          "article.review_changed"
+        ] do
+      {:ok, event} =
+        CMS.Outbox.send(%{
+          event: kind,
+          worker: GroupherServer.Jobs.CMSOutboxArticle,
+          resource_type: "article",
+          resource_id: article.id,
+          command_id: Ecto.UUID.generate(),
+          data: %{
+            community: community.slug,
+            community_id: community.id,
+            thread: "post",
+            inner_id: article_inner_id(article, community)
+          }
+        })
+
+      assert {:ok, :pass} = deliver(GroupherServer.Jobs.CMSOutboxArticle, event)
+      assert child(event, "article.cdn_purge").data["source_event"] == kind
+      assert child(event, "article.search_sync").resource_id == to_string(article.id)
+      assert child(event, "press.cache_invalidation").resource_id == to_string(community.id)
+    end
+  end
+
+  test "fanout rolls back all siblings if a later intent cannot be persisted" do
+    {community, _article, _attrs, _user} = mock_article(:post)
+    identity = Ecto.UUID.generate()
+
+    malformed = %{
+      id: identity,
+      event: "article.updated",
+      resource_type: nil,
+      resource_id: "invalid",
+      data: %{"community_id" => community.id}
+    }
+
+    jobs_before = Repo.aggregate(Oban.Job, :count)
+    assert {:error, _} = with_jobs(fn -> CMS.Articles.Effects.dispatch(malformed) end)
+    refute Repo.exists?(from(e in Event, where: e.command_id == ^identity))
+    assert Repo.aggregate(Oban.Job, :count) == jobs_before
+  end
+
+  defp with_jobs(action) do
+    unless Oban.Registry.whereis(Oban) do
+      start_supervised!({Oban, repo: Repo, testing: :manual, plugins: false, queues: false})
+    end
+
+    previous = Application.get_env(:groupher_server, :env)
+    Application.put_env(:groupher_server, :env, :dev)
+
+    try do
+      action.()
+    after
+      Application.put_env(:groupher_server, :env, previous)
+    end
+  end
+
+  defp child(parent, kind) do
+    Repo.get_by!(Event, command_id: parent.id, identity_type: :workflow, event: kind)
+  end
+
+  defp deliver(worker, event) do
+    worker.perform(%Oban.Job{args: %{"event_id" => event.id}, attempt: 1, max_attempts: 3})
   end
 
   test "a completed Command replay restores a missing durable invalidation intent" do

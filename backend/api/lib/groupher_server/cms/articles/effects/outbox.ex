@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
         -> CMS.Outbox event
   """
 
-  alias GroupherServer.{Activity, CMS}
+  alias GroupherServer.{Activity, CMS, Jobs, Repo}
 
   @doc "Records one Article effect in the caller-owned transaction."
   def enqueue(event, resource_type, resource_id, identity, data, opts)
@@ -29,6 +29,38 @@ defmodule GroupherServer.CMS.Articles.Effects.Outbox do
 
   def enqueue(_event, _resource_type, _resource_id, _identity, _data, _opts) do
     {:error, :invalid_article_effect_arguments}
+  end
+
+  @doc "Atomically fans out external effects with replay-stable child identities."
+  def dispatch(event) do
+    Repo.transact_result(fn ->
+      identity = {:workflow, event.id}
+
+      with {:ok, press} <-
+             CMS.Outbox.send(%{
+               event: "press.cache_invalidation",
+               worker: Jobs.CMSOutboxPress,
+               resource_type: "community",
+               resource_id: event.data["community_id"],
+               identity: identity,
+               data: %{}
+             }),
+           {:ok, search} <- child(event, "article.search_sync", Jobs.CMSOutboxSearch),
+           {:ok, cdn} <- child(event, "article.cdn_purge", Jobs.CMSOutboxCDN) do
+        {:ok, %{press: press, search: search, cdn: cdn}}
+      end
+    end)
+  end
+
+  defp child(event, kind, worker) do
+    CMS.Outbox.send(%{
+      event: kind,
+      worker: worker,
+      resource_type: event.resource_type,
+      resource_id: event.resource_id,
+      identity: {:workflow, event.id},
+      data: Map.put(event.data, "source_event", event.event)
+    })
   end
 
   @doc "Records one Article activity in the caller-owned transaction."

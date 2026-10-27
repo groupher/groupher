@@ -65,19 +65,24 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   @spec sync_binding(Artiment.thread(), Ecto.UUID.t(), pos_integer()) :: T.done()
   def sync_binding(thread, article_id, community_id) do
     with %Article{thread: ^thread} = article <- Repo.get(Article, article_id),
-         %Community{slug: community_slug} <- Repo.get(Community, community_id),
-         %ArticleBinding{id: binding_id, inner_id: inner_id} <-
-           Repo.get_by(ArticleBinding, article_id: article.id, community_id: community_id) do
-      visible_bindings = Pagination.public_binding_ids(thread)
+         %Community{slug: community_slug} <- Repo.get(Community, community_id) do
+      case Repo.get_by(ArticleBinding, article_id: article.id, community_id: community_id) do
+        nil ->
+          # Unmirror removes the binding before its durable visibility task runs.
+          delete_binding(thread, article_id, community_slug)
 
-      if Repo.exists?(
-           from(binding in ArticleBinding,
-             where: binding.id == ^binding_id and binding.id in subquery(visible_bindings)
-           )
-         ) do
-        sync_visible_binding(thread, article, community_slug, inner_id)
-      else
-        delete_binding(thread, article_id, community_slug)
+        %ArticleBinding{id: binding_id, inner_id: inner_id} ->
+          visible_bindings = Pagination.public_binding_ids(thread)
+
+          if Repo.exists?(
+               from(binding in ArticleBinding,
+                 where: binding.id == ^binding_id and binding.id in subquery(visible_bindings)
+               )
+             ) do
+            sync_visible_binding(thread, article, community_slug, inner_id)
+          else
+            delete_binding(thread, article_id, community_slug)
+          end
       end
     else
       _ -> {:error, ErrorCat.search_platform("Article visibility binding not found")}

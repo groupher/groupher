@@ -1,5 +1,5 @@
 # Isolated Phoenix origin for Press migration acceptance.
-# Deploy with the recorded production image; secrets belong to this app only.
+# Build the candidate backend image for preview; secrets belong to this app only.
 app = 'groupher-press-preview-api'
 primary_region = 'sin'
 kill_signal = 'SIGTERM'

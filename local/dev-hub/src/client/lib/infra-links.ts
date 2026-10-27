@@ -109,7 +109,6 @@ export const INFRA_LINK_GROUPS: TInfraLinkGroup[] = [
         icon: INFRA_PLATFORM_META.fly.icon,
         links: [
           { label: 'API', url: 'https://fly.io/apps/groupher-api' },
-          { label: 'Press', url: 'https://fly.io/apps/groupher-press' },
           { label: 'Status app', url: 'https://fly.io/apps/groupher-status' },
           { label: 'Status (production)', url: 'https://status.groupher.com' },
           { label: 'Status (local)', url: 'http://127.0.0.1:8080/' },
@@ -170,7 +169,11 @@ export const SERVICE_DEPLOYMENT_TARGETS: Partial<Record<string, TServiceDeployme
     'https://dash.cloudflare.com/groupher/workers',
   ),
   phoenix: deploymentTarget('phoenix', 'fly', 'https://fly.io/apps/groupher-api'),
-  press: deploymentTarget('press', 'fly', 'https://fly.io/apps/groupher-press'),
+  press: deploymentTarget(
+    'press',
+    'cloudflare',
+    'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers/services/view/press/production',
+  ),
   import: deploymentTarget(
     'import',
     'cloudflare',

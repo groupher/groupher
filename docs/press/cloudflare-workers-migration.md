@@ -33,19 +33,19 @@
 | 运行时副作用 | 请求和 Cron 都使用独立 `pg.Client`；metrics 等待 durable cleanup；cache 无 per-isolate mutable L1                              | 已完成代码实现；继续验证连接关闭、Cron retention 与跨 POP invalidation                           |
 | 缓存失效     | Phoenix Outbox 调用 Press `/internal/invalidate`；当前 L2 在 PostgreSQL                                                        | API、JWT resource/scope、键格式、TTL 和重试语义已保留；切换后 hostname 仍为 `press.groupher.com` |
 | 公共转发     | `infra/edge-router` 已通过 Worker Service Binding 调用 named `Public`；preview 仅声明 Press binding 并只允许 Press/health 路由 | Press 与 edge-router 的 production workflow 都要求显式确认 hard cutover                          |
-| 域名         | `press.groupher.com` 当前仍是生产 Fly origin，也是 Phoenix invalidation endpoint/resource                                      | best-effort 窗口内解绑 Fly 并将同一 hostname 绑定 Press Worker；不增加备用 host、代理层或双路由  |
-| Fly 发布     | 仓库中的 Press Fly workflow、Dockerfile 与 fly.toml 已移除；现有 Fly Machine 在 hard cutover 前继续运行                        | 切换后停止 Fly Machine；数据库 migration 使用独立 CI job                                         |
+| 域名         | `press.groupher.com` 已绑定 Worker default，仅开放 health/internal                                                             | best-effort 窗口内解绑 Fly 并将同一 hostname 绑定 Press Worker；不增加备用 host、代理层或双路由  |
+| Fly 发布     | 仓库中的 Press Fly workflow、Dockerfile 与 fly.toml 已移除；旧 Fly app 与 Machines 已删除                                      | Fly 已退役；数据库 migration 使用独立 CI job                                                     |
 | 当前 Gate    | Phoenix public projection 按当前已部署 Gate/Doc 可见性规则提供输出；Phoenix 修复代码已实现                                     | P0 按生产当前规则部署并验收；AlertBoard V2 生产切换单独排期，不把最终 preflight 当作只读检查     |
 
 ### Fly 发布链路
 
-本仓库不再提供 Press Fly 发布/回退路径。生产当前已运行的 Fly Machine 会在 best-effort hard cutover 前继续服务；切换后按 runbook 停止它。Cloudflare Worker 的数据库 migration 使用独立 CI job。
+旧 Press Fly app 已删除，仓库不提供 Fly 发布、备用或回退路径。下文 P0–P4 为已执行迁移的历史步骤，不能重新当作日常部署指令。Cloudflare Worker 的数据库 migration 使用独立 CI job。当前验收证据见部署记录；未完成项见文末验收状态。
 
 ### 必须先完成的 Phoenix 正确性修复
 
 这两项决定 Worker 是否能安全输出内容，不能靠 Worker 侧绕过：
 
-1. **Review restriction invalidation（代码及生产 API 发布已完成）：** `ReviewBlocks.apply/end_blocks` 发出 `article.visibility_changed`；对应 workflow 先调用 `CMS.Press.invalidate`，再执行 search sync 和 PublicCache purge，避免 Search 故障阻塞 Press 失效。Article、Community Binding、Doc branch restriction 开始/结束均保留 durable outbox retry/fail。隔离 staging 和生产均已验证限制生效与解除会清除共享 pointer；生产后续 Search 因缺少 Algolia 配置报 `4529`，不能宣称整条 Search/CDN workflow 完成。
+1. **Review restriction invalidation：** `ReviewBlocks.apply/end_blocks` 发出 `article.visibility_changed`。该事实事件仅在一个数据库事务内分发三个独立子任务：Press `press.cache_invalidation`（`press` 队列）、Algolia `article.search_sync`（`search` 队列）、CDN `article.cdn_purge`（`public_cache` 队列）。每个子任务各自持有 Outbox 状态、lease、8 次 Oban 重试与最终失败状态；任一下游故障不会阻止其它下游领取和执行。发布、内容更新、review 变化共用此分发路径；非 main Doc branch 仍不发公开发布事件。父事件 ID 用作子任务 workflow identity，父事件重复投递不会重复创建或重跑已完成子任务。分发失败整体回滚，不执行外部请求。生产缺少 Algolia 配置只影响 Search 子任务，不能据此宣称 Search 已成功。发布/更新刷新所有公开 bindings，visibility 只处理目标 binding；不兼容旧线上队列、不回填，详细边界与 ASCII 图见 [独立投递说明](./effect-delivery.md)。
 2. **Doc Feed Gate（代码及生产 API 发布已完成）：** Doc Feed 已改为读取当前 main branch 的公共 Doc 投影并应用 Gate、`DocPublic.visible` 与 review restriction，不再直接将 release 内文章作为可见性依据。隔离 staging 已验证受限 Doc 不进入 Markdown/Feed，解除后恢复；生产仍按当前 Gate 合同验收。
 
 AlertBoard V2 最终生产 preflight 依赖停旧写/worker，并在破坏性 DDL、新 Gate 启用前运行，不是当前可随时执行的只读检查。Press P0 以生产正在运行的 Gate 合同为准；V2 production cutover 是独立批次，需单独计划写入冻结、预检、DDL、启用与回滚。
@@ -142,7 +142,7 @@ preview 不是直接访问 Press origin 的内容路径：新增隔离的 stagin
 2. Node `server.ts` 仅用于本地开发，注入本地依赖。Worker default `fetch` 仅分发 health/internal，导出的 named `Public extends WorkerEntrypoint` 在 `fetch(Request)` 中调用 public Hono router；通过 `this.env`/`this.ctx` 取得请求依赖与 waitUntil 能力。两个入口复用业务函数和 `pg` adapter，但分别注册路由；local Node 可组合这两组路由供开发，不增加生产公开入口。
 3. 删除启动期 retention timer；清理统一由 scheduled handler 执行，本地用对应模拟事件验证。模块 import 不运行 SQL/migration。
 4. 把 Node `.env` 加载、`process.env` 全局读取和启动时数据库连接改为可注入边界。Press workspace 安装与 edge-router 一致的当前 `cf` devDependency；secret/binding 由 `cf/config` 声明，通过 `cf workers types --mode production` 生成 Env 类型。
-5. 服务 token 请求保持 5 秒超时；Phoenix GraphQL fetch 使用 15 秒超时，覆盖现有 Fly origin 的冷启动（隔离 staging 实测原 5 秒超时会让首个 cache miss 返回 503）。保持 service scopes 和 `502/503` 安全映射；不要把 secret 放入 `vars` 或源码。Press Worker 显式启用 `global_fetch_strictly_public`，保证同账号 Auth/JWKS Worker 的公开 HTTP 调用经过正确路由。HTTP 条件请求按弱比较处理 ETag，接受 Cloudflare 压缩产生的 `W/` 标记、ETag 列表和存在资源的 `*` 条件。
+5. 服务 token 请求保持 5 秒超时；Phoenix GraphQL fetch 使用 15 秒超时，覆盖 Phoenix Fly origin 的冷启动（隔离 staging 实测原 5 秒超时会让首个 cache miss 返回 503）。保持 service scopes 和 `502/503` 安全映射；不要把 secret 放入 `vars` 或源码。Press Worker 显式启用 `global_fetch_strictly_public`，保证同账号 Auth/JWKS Worker 的公开 HTTP 调用经过正确路由。HTTP 条件请求按弱比较处理 ETag，接受 Cloudflare 压缩产生的 `W/` 标记、ETag 列表和存在资源的 `*` 条件。
 6. Worker 数据库实现使用 Drizzle `node-postgres` adapter + `pg`（Cloudflare 当前要求 `pg` >= 8.16.3），并无条件启用 `nodejs_compat`；这是 `pg` Worker driver 的要求，不只是为了身份验证中的 `Buffer`。将现有 Postgres.js adapter 替换为 `pg`，本地开发复用同一实现。
 7. 每个 Worker invocation 创建并连接一个 `pg.Client`；metrics 若由 `ctx.waitUntil()` 在响应后写入，则由同一个 pending Promise 持有 client，并执行 `finally { await client.end() }`，直到关闭完成 Promise 才能 resolve。禁止 module-scope client、`pg.Pool` 或 Worker 自建连接池。逐项验证 `jose`/加密路径及 Node compatibility。
 8. 在 named `Public` 的 Hono guard 与 runtime config 中实现 `PRESS_PUBLIC_DISABLED`：配置 `false` 为正常状态，`true`、缺失或非法值均使经 edge-router → `Public` 的内容路径在 cache/ETag/304/Phoenix fetch 前返回 `503`、`Cache-Control: no-store`、`Retry-After: 60`。default 入口不进入该 guard：内容路径始终 404，health 与签名 invalidation 按各自合同工作。演练 true → 平台/社区 public 路径 503、直接 origin 内容路径 404、health/internal 可用 → false 后恢复可见性矩阵；记录版本与恢复耗时。
@@ -255,11 +255,11 @@ Paid 价格仅作历史成本对照，本次不采用、不升级
 总成本 = Workers 平台 + 现有 PostgreSQL/Hyperdrive 对应数据库账单 + Phoenix origin 运行成本
 ```
 
-对照当前 Fly 配置 `shared-cpu-1x / 512MB / auto_stop_machines=stop / min_machines_running=0`，按实际 Machine 启动时长核算，不用持续运行价冒充当前账单。首发不使用 Worker/CDN response cache，因此按实际 Worker 请求、SQL 与 Phoenix origin 调用量比较完整服务成本；以后若增加缓存，再纳入命中率和 purge 成本。Cloudflare 不按 Workers egress/带宽另收流量费，但请求、CPU、Hyperdrive 及日志/存储仍受各自限额与计价约束。
+历史 Fly 配置为 `shared-cpu-1x / 512MB / auto_stop_machines=stop / min_machines_running=0`；旧 app 已删除，不再产生 Press Machine 运行费。历史成本比较按当时实际启动时长核算，不作为当前账单。首发不使用 Worker/CDN response cache，因此按实际 Worker 请求、SQL 与 Phoenix origin 调用量比较完整服务成本；以后若增加缓存，再纳入命中率和 purge 成本。Cloudflare 不按 Workers egress/带宽另收流量费，但请求、CPU、Hyperdrive 及日志/存储仍受各自限额与计价约束。
 
 生产 cutover 后观察项：
 
-- 生产 Worker request、CPU ms、Hyperdrive query/request、失败率、Phoenix origin 调用均有 dashboard/alerts；按至少 7 天真实流量复核容量和账单。
+- Cloudflare dashboard 提供 Worker/Hyperdrive 数据；主动告警以外部 `Press Free guard` workflow 为准，合并到默认分支并成功运行前不能写成已启用。累计调用数为采样估算，不等于精确计费余额；CPU/失败与外部探针独立检查。Phoenix 回源专项告警和至少 7 天容量观察尚未完成。
 - Worker 请求量、Hyperdrive SQL/request、Phoenix GraphQL 回源数和 p50/p95 按真实流量记录；首发没有 Worker Cache API/CDN response cache 命中指标。
 - 5 MiB Markdown 与 500 条 manifest 的 Worker CPU 测量在 preview 完成；不得以流量小代替 CPU 测量。本轮部分样本超过 Free 名义 10ms，已如实记录并按用户接受的超限拒绝服务策略运行，不升级、不承诺大内容持续可用。
 - 真实成本列出 Workers、Hyperdrive/数据库、Queue（若启用）与日志；切换完成后关闭旧 Press Fly Machine，停止其计费。
@@ -326,29 +326,23 @@ restriction 开始/结束均须触发 Press invalidation，且 outbox retry/fail
 
 ## 验收与交付清单
 
-- [ ] `backend/press/src/worker.ts` 导出 default health/internal 入口与 named `Public` 内容入口；Node 入口仅用于本地开发。
-- [ ] `createApp` 不在 import/startup 时运行 migration、retention timer 或未等待 Promise。
-- [ ] `PRESS_PUBLIC_DISABLED` 正常/缺失/非法配置下，Public 内容正常/503、default 内容始终 404、default health/internal 保留；入口选择与四组合矩阵通过 P1/P2，独立 503 release 已演练。
-- [ ] Worker 只访问 Phoenix Press internal projection 和 Press analysis schema；无 `cms` SQL/read path。
-- [ ] Press mutable cache 使用 Hyperdrive query-cache-disabled binding；Worker L1/Cache API/CDN response cache 未启用；跨 POP publish/review transition → invalidate → immediate read 通过。
-- [ ] Worker 使用 Drizzle node-postgres adapter + `pg`，并在 workerd/Hyperdrive runtime 验证。
-- [ ] Hyperdrive binding、token secrets、observability 和 Cron Trigger 有环境级声明；本地/CI 不读取生产 secret。
-- [ ] 生产 DB host/port/TLS/防火墙与受限角色已由 Hyperdrive Worker probe 实际验证；PublicDatabase 无私网/loopback origin，私网方案须先完成独立网络边界批次。
-- [ ] Metrics 失败可观察，执行语义已选择 `waitUntil` 或 Queue 并有重试/丢失边界说明。
-- [ ] 生产 Free 上线预检有实测记录：最大 payload/manifest、Feed、冷热缓存、失效路径的 CPU 与错误率，以及全账号剩余 Worker/Hyperdrive 额度；告警与 go/no-go 明确。当前不升级；额度耗尽必须 fail-closed，不允许 fallback。
-- [ ] Review restriction invalidation 与 Doc Feed Gate 修复已部署到当前生产 Phoenix（V1 时完成 backport）并复验；移除修复时阻断切流，或将平台/社区 → Public 的内容输出切为 503；default 内容仍 404。
-- [ ] AlertBoard V2 production cutover 独立排期；Press 验收仅按当前 production Gate 合同，不把最终 V2 preflight 当只读门槛。
-- [ ] Phoenix invalidation、HTTP cache、ETag、错误状态和无 stale-if-error 行为保持合同。
-- [ ] 生产与 staging edge-router 的 Press binding 均通过 `exportName: 'Public'` 选择命名入口；正式/preview origin 只触达 default；无 HTTP compatibility path 或代理环路。
-- [ ] P3 域名切换后，真实可公开 Markdown/Feed/llms/sitemap 在直接 origin 的 GET/HEAD/conditional request 全部 no-store 404；health 和签名 invalidation 正常。
-- [ ] preview Worker、Hyperdrive/PostgreSQL、Phoenix/Auth、staging edge-router → Public 的 P0 smoke 已通过；P1/P2 完整 HTTP 验收经 staging edge-router 执行；不连接生产 outbox/数据库。
-- [ ] Free 实测与超限策略已记录；`press.groupher.com` 和 edge-router 已切到 Worker；旧 Press Fly Machines、workflow 与部署配置已退役。
-- [ ] 使用 `cf hyperdrive create --body @/absolute/protected-temporary-directory/hyperdrive.json`；完整 body 内含 `name` 和 `origin`，凭证不进入 argv/history/log；创建后 update 关闭缓存并验证配置，临时文件已清理。
-- [ ] Metrics promise 由 `ctx.waitUntil()` 跟踪，在该 Promise 中执行 `finally { await client.end() }`，直到关闭完成才 resolve；成功/失败/并发情形无连接泄漏。
-- [ ] Cron scheduled invocation 使用独立 Client，清理 Promise 的 `finally` 中 `await client.end()`；成功、连接/SQL 失败和重复 invocation 的泄漏验证通过。
-- [ ] 已准备 Cloudflare 503 停服和 Worker 修复/版本恢复步骤，记录 Worker/edge-router release ID；域名保持绑定 Worker。
-- [ ] cutover window 已明确为 best-effort/接受中断、不保证输出或可见性；记录开始/结束时间和切换后验收结果；验收矩阵只用于切换前预检与切换后验收。
-- [ ] 更新 `docs/press/v1.md`、`docs/deploy/README.md`、`docs/deploy/cloudflare.md`、`docs/architecture/apps.md` 的 current state；文档与实际部署 evidence 一致。
+以下状态按 [部署记录](./cloudflare-workers-deployment.md) 的既有证据填写；本地代码通过不等于生产已部署。
+
+- [x] Worker default health/internal 与 named `Public` 分离；Node 入口仅用于本地开发。
+- [x] 生产/preview Hyperdrive 关闭 query cache；受限 analysis 角色与生产连接已验证，无 CMS SQL。
+- [x] `pg.Client` + Drizzle、metrics waitUntil cleanup、独立 Cron retention 已实现。
+- [x] Review restriction invalidation / Doc Feed Gate 修复部署到生产，真实 review hold/restore 与跨 colo pointer 删除通过。
+- [x] 平台内容走 edge-router → named `Public`，直接 origin 内容 404；签名 invalidation 通过。
+- [x] 隔离 preview 的 Worker/Phoenix/Auth/DB/edge-router smoke 与合成负载测试已执行。
+- [x] 正式域名与路由已硬切 Worker，旧 Press Fly app、Machine 和发布配置已删除。
+- [x] 切换窗口 best-effort/接受中断；记录版本、切换结果与最终公开 HTTP 复验。
+- [x] 当前部署指南已统一为 Worker；V1 标记为历史设计。
+- [ ] **接受风险：** Free CPU 容量未通过（5 MiB 样本 61–75ms）；用户接受超限拒绝、不升级，不得记为容量达标。
+- [ ] **待部署并复验：** health 显示 version metadata 与正确环境；Press 调用异常映射 503，仅限 router 仍可执行。
+- [ ] **待启用：** 外部 Free guard 定时告警；需合并到默认分支并验证 token 的 Analytics/route read 权限和一次成功运行，不能用本地测试替代。
+- [ ] **待观察：** 至少 7 天实际流量、CPU/拒绝率、Hyperdrive SQL 额度与 Phoenix 回源；采样调用数不作为精确账单。
+- [ ] **未宣称完成：** 所有 Cron/metrics 并发和连接失败分支的生产泄漏验证、完整 HTTP 四组合线上演练；现有实现和局部测试不等于完整生产验收。
+- [ ] **独立批次：** AlertBoard V2 production cutover 与 Algolia credentials，不属于 Press 已完成的硬切验收。
 
 ## 官方平台资料
 

@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'backend/press/**'
+      - 'ops/press/free-guard*'
+      - '.github/workflows/press-free-guard.yml'
+      - '.github/workflows/build-press.yml'
       - 'packages/service/**'
       - 'packages/contracts/**'
       - 'package.json'
@@ -12,6 +15,9 @@ on:
   push:
     paths:
       - 'backend/press/**'
+      - 'ops/press/free-guard*'
+      - '.github/workflows/press-free-guard.yml'
+      - '.github/workflows/build-press.yml'
       - 'packages/service/**'
       - 'packages/contracts/**'
       - 'package.json'
@@ -52,6 +58,9 @@ jobs:
 
       - name: Run unit tests
         run: pnpm --filter @groupher/press run test
+
+      - name: Test external Free guard
+        run: node --test ops/press/free-guard.test.mjs
 
       - name: Build
         run: pnpm --filter @groupher/press run build
