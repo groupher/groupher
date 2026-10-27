@@ -176,6 +176,7 @@ const resolvePlatformRoute = (pathname: string, method: string): PublicRoute => 
   if (pathname.startsWith('/health/')) {
     return route('not-found', pathname, 'pass-through', undefined, 'reserved-health')
   }
+  if (isPressRoute(pathname)) return route('press', pathname, 'public-output')
   if (isLandingPath(pathname) || isLandingStaticAssetPath(pathname)) {
     return route(
       'landing',
@@ -192,7 +193,6 @@ const resolvePlatformRoute = (pathname: string, method: string): PublicRoute => 
   if (pathname === API_ROUTE.SLUGIFY) {
     return route('community', pathname, 'pass-through', undefined, 'community-tool')
   }
-  if (isPressRoute(pathname)) return route('press', pathname, 'public-output')
   if (isDeletedProductRoute(pathname) || isRetiredApiRoute(pathname)) {
     return route('not-found', pathname, 'pass-through', undefined, 'removed-product')
   }

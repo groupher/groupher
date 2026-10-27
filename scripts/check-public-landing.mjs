@@ -6,9 +6,13 @@ const sleep = (duration) => new Promise((resolve) => setTimeout(resolve, duratio
 
 const checkPublicLanding = async () => {
   const cacheBust = Date.now().toString()
-  const pagePaths = ['/', '/pricing/', '/book-demo/']
+  const pages = [
+    { pathname: '/', marker: 'landing-page' },
+    { pathname: '/pricing/', marker: 'pricing-page' },
+    { pathname: '/book-demo/', marker: 'book-demo-page' },
+  ]
   const pageHtml = await Promise.all(
-    pagePaths.map(async (pathname) => {
+    pages.map(async ({ pathname, marker }) => {
       const pageUrl = new URL(pathname, origin)
       pageUrl.searchParams.set('public-smoke', cacheBust)
       const response = await fetch(pageUrl, { headers: { 'cache-control': 'no-cache' } })
@@ -20,7 +24,12 @@ const checkPublicLanding = async () => {
           `${pathname} returned an unexpected content type: ${response.headers.get('content-type')}`,
         )
       }
-      return response.text()
+      const html = await response.text()
+      if (!html.includes(`data-testid="${marker}"`)) {
+        throw new Error(`${pathname} did not contain its page marker: ${marker}`)
+      }
+
+      return html
     }),
   )
   const html = pageHtml.join('\n')

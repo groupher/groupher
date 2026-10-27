@@ -79,6 +79,16 @@ describe('platform root routes', () => {
     })
   })
 
+  it.each(['/landing/feed.xml', '/landing/feed.json', '/landing/sitemap.xml', '/landing/llms.txt'])(
+    'keeps Press output for the landing community at %s',
+    (pathname) => {
+      expect(resolveRoot(pathname)).toMatchObject({
+        targetKind: 'press',
+        requestHeaderPolicy: 'public-output',
+      })
+    },
+  )
+
   it.each([
     '/home/dashboard',
     '/home/dashboard/settings',
