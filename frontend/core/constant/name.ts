@@ -22,6 +22,14 @@ const LANDING_COMMUNITY = {
   // },
 }
 
+// The light and dark Landing seeds use the same amber_mauve recipe.
+const LANDING_STATIC_WALLPAPER = {
+  wide: { url: '/landing/wallpaper/amber-mauve-wide.webp', width: 1920, height: 1080 },
+  desktop: { url: '/landing/wallpaper/amber-mauve-desktop.webp', width: 1440, height: 900 },
+  tablet: { url: '/landing/wallpaper/amber-mauve-tablet.webp', width: 1024, height: 1366 },
+  phone: { url: '/landing/wallpaper/amber-mauve-phone.webp', width: 390, height: 844 },
+}
+
 export const LANDING_INIT_DATA = {
   community: LANDING_COMMUNITY,
   footerLinks: {
@@ -31,11 +39,11 @@ export const LANDING_INIT_DATA = {
   },
   wallpaper: {
     wallpaper: {
-      version: 0,
+      version: 1,
       lightSource: 'amber_mauve',
       darkSource: 'amber_mauve',
-      light: null,
-      dark: null,
+      light: LANDING_STATIC_WALLPAPER,
+      dark: LANDING_STATIC_WALLPAPER,
     },
     light: {
       pattern: {
