@@ -14,6 +14,7 @@ const landingPort = Number.parseInt(process.env.PORT || '3002', 10)
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/landing/' : '/',
   publicDir: path.join(landingRoot, 'public'),
   resolve: { tsconfigPaths: true },
   server: {

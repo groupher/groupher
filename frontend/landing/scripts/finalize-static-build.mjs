@@ -1,4 +1,4 @@
-import { access, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { access, readdir, readFile, rename, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -40,19 +40,21 @@ const htmlFiles = entries
 const cssFiles = entries
   .filter((entry) => entry.isFile() && entry.name.endsWith('.css'))
   .map((entry) => path.join(entry.parentPath, entry.name))
+const jsFiles = entries
+  .filter((entry) => entry.isFile() && entry.name.endsWith('.js'))
+  .map((entry) => path.join(entry.parentPath, entry.name))
 
 for (const htmlFile of htmlFiles) {
   const html = await readFile(htmlFile, 'utf8')
-  const namespacedHtml = html.replaceAll('/assets/', '/landing/assets/')
-  if (namespacedHtml.includes('_next') || /(?:href|src)="\/assets\//.test(namespacedHtml)) {
+  if (html.includes('_next') || /(?:href|src)="\/assets\//.test(html)) {
     throw new Error(`Legacy or unowned asset path remains in ${htmlFile}`)
   }
 
   const assetReferences = [
     ...new Set(
-      [
-        ...namespacedHtml.matchAll(/(?:href|src)="(\/landing\/assets\/[^"?#]+)(?:[?#][^"]*)?"/g),
-      ].map(([, reference]) => reference),
+      [...html.matchAll(/(?:href|src)="(\/landing\/assets\/[^"?#]+)(?:[?#][^"]*)?"/g)].map(
+        ([, reference]) => reference,
+      ),
     ),
   ]
   if (assetReferences.length === 0) {
@@ -70,8 +72,17 @@ for (const htmlFile of htmlFiles) {
       throw new Error(`Landing asset is missing from the Cloudflare assets output: ${reference}`)
     })
   }
+}
 
-  await writeFile(htmlFile, namespacedHtml)
+let hasNamespacedPreloadBase = false
+for (const jsFile of jsFiles) {
+  const js = await readFile(jsFile, 'utf8')
+  if (js.includes('modulepreload') && js.includes('return`/landing/`+')) {
+    hasNamespacedPreloadBase = true
+  }
+}
+if (!hasNamespacedPreloadBase) {
+  throw new Error('Vite module preloads must resolve through the /landing/ public base')
 }
 
 for (const cssFile of cssFiles) {

@@ -81,13 +81,19 @@ export const COMMUNITY_SLUG_RE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
 const LANDING_PATHS = new Set(['/', '/pricing', '/book-demo'])
 const LANDING_STATIC_ASSET_PREFIXES = [
   '/landing/assets/',
+  '/landing/apply/',
+  '/landing/intro/',
+  '/landing/products/',
+  '/landing/seo/',
+  '/landing/stacks/',
   '/avatars/',
   '/icons/',
   '/locales/',
   '/pattern/',
   '/pwa/',
 ]
-const LANDING_ROOT_STATIC_ASSET_RE = /^\/[^/]+\.(?:ico|json|png|txt|webp|xml)$/
+const LANDING_ROOT_STATIC_ASSET_RE =
+  /^\/(?:landing\/)?[^/]+\.(?:avif|gif|ico|jpe?g|json|png|svg|txt|webp|xml)$/
 const DASHBOARD_API_PREFIXES = ['/api/content/', '/api/docs/import/', '/api/internal/docs-import/']
 const DELETED_DASHBOARD_API_PATHS = new Set(['/api/revalidate/community'])
 

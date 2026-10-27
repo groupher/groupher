@@ -14,7 +14,14 @@ export default function JoinOurCommunity() {
       <div className={s.divider} />
       <div className={s.paper}>
         <div className={s.slogan}>
-          <Facepile users={mockUsers(6)} total={6} left={1.5} bottom={3} showMore={false} />
+          <Facepile
+            users={mockUsers(6)}
+            total={6}
+            left={1.5}
+            bottom={3}
+            showMore={false}
+            cardMode='static'
+          />
           <h3 className={s.title}>{t('landing.join.title')}</h3>
           <div className={s.desc}>{t('landing.join.desc')}</div>
         </div>

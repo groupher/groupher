@@ -6,21 +6,24 @@ const sleep = (duration) => new Promise((resolve) => setTimeout(resolve, duratio
 
 const checkPublicLanding = async () => {
   const cacheBust = Date.now().toString()
-  const pageUrl = new URL(origin)
-  pageUrl.searchParams.set('public-smoke', cacheBust)
-  const pageResponse = await fetch(pageUrl, {
-    headers: { 'cache-control': 'no-cache' },
-  })
-  if (pageResponse.status !== 200) {
-    throw new Error(`Landing page returned HTTP ${pageResponse.status}`)
-  }
-  if (!pageResponse.headers.get('content-type')?.includes('text/html')) {
-    throw new Error(
-      `Landing page returned an unexpected content type: ${pageResponse.headers.get('content-type')}`,
-    )
-  }
-
-  const html = await pageResponse.text()
+  const pagePaths = ['/', '/pricing/', '/book-demo/']
+  const pageHtml = await Promise.all(
+    pagePaths.map(async (pathname) => {
+      const pageUrl = new URL(pathname, origin)
+      pageUrl.searchParams.set('public-smoke', cacheBust)
+      const response = await fetch(pageUrl, { headers: { 'cache-control': 'no-cache' } })
+      if (response.status !== 200) {
+        throw new Error(`${pathname} returned HTTP ${response.status}`)
+      }
+      if (!response.headers.get('content-type')?.includes('text/html')) {
+        throw new Error(
+          `${pathname} returned an unexpected content type: ${response.headers.get('content-type')}`,
+        )
+      }
+      return response.text()
+    }),
+  )
+  const html = pageHtml.join('\n')
   const assetPaths = [
     ...new Set(
       [...html.matchAll(/(?:href|src)="(\/landing\/assets\/[^"?#]+)(?:[?#][^"]*)?"/g)].map(
@@ -28,6 +31,17 @@ const checkPublicLanding = async () => {
       ),
     ),
   ]
+  const publicAssetPaths = new Set([
+    '/landing/intro/home.webp',
+    '/landing/intro/home-dark.webp',
+    '/landing/catpaw.png',
+    ...[
+      ...html.matchAll(
+        /\/landing\/(?!assets\/)[^\s"'<>?#)]+\.(?:avif|gif|ico|jpe?g|json|png|svg|txt|webp|xml)/g,
+      ),
+    ].map(([assetPath]) => assetPath),
+  ])
+  assetPaths.push(...publicAssetPaths)
   const cssPaths = assetPaths.filter((assetPath) => assetPath.endsWith('.css'))
   const jsPaths = assetPaths.filter((assetPath) => assetPath.endsWith('.js'))
 
@@ -58,7 +72,7 @@ const checkPublicLanding = async () => {
   }
 
   console.log(
-    `[public-landing] verified ${assetPaths.length} assets (${cssPaths.length} CSS, ${jsPaths.length} JS) from ${origin.origin}`,
+    `[public-landing] verified ${assetPaths.length} assets (${cssPaths.length} CSS, ${jsPaths.length} JS, ${publicAssetPaths.size} public) from ${origin.origin}`,
   )
 }
 
