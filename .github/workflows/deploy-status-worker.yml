@@ -1,0 +1,64 @@
+name: Deploy Status Worker
+
+on:
+  pull_request:
+    paths:
+      - 'ops/status/**'
+      - '.github/workflows/deploy-status-worker.yml'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+  push:
+    branches:
+      - dev
+    paths:
+      - 'ops/status/**'
+      - '.github/workflows/deploy-status-worker.yml'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-status-worker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @groupher/status run type-check
+      - run: pnpm --filter @groupher/status run test
+      - run: pnpm --filter @groupher/status run deploy:dry-run
+
+  deploy:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @groupher/status exec wrangler d1 migrations apply groupher-status --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - run: pnpm --filter @groupher/status run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

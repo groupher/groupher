@@ -1,6 +1,9 @@
 # Groupher Status V1
 
-> 状态：监控边界、Cloudflare 链路、Gatus/Fly V1 配置和 Fly 实例已落地；`status.groupher.com` DNS/TLS 仍待切换
+> 历史方案：本文记录 Gatus/Fly V1 的设计与上线过程。当前 Worker 实现及前端监控范围见
+> [`ops/status/README.md`](../../../ops/status/README.md)，请勿按本文重新部署 Fly Status。
+
+> 状态：Gatus/Fly 方案已于 2026-10-27 退役；公开域名已切至 Cloudflare Status Worker，旧 Fly 应用已删除。本文后续内容仅作历史记录。
 >
 > 公开地址：`https://status.groupher.com`
 >
@@ -151,7 +154,7 @@ Gatus 另外请求少量真实用户入口。这些请求必须使用生产公�
 
 ## Gatus 配置基线
 
-仓库中的 [`ops/status/config.yaml`](../../../ops/status/config.yaml) 已按前述清单配置生产 endpoint；本地配置位于 [`ops/status/config.local.yaml`](../../../ops/status/config.local.yaml)。下面保留配置形态作为阅读基线：
+迁移前的 `ops/status/config.yaml` 和 `ops/status/config.local.yaml` 已移除。下面保留当时的配置形态作为阅读基线：
 
 ```yaml
 storage:

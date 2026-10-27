@@ -1,36 +1,52 @@
 # Groupher Status
 
-`ops/status` 是 Groupher 的公共服务状态页与可用性监控配置，基于 Gatus 运行。它独立
-监控 Edge Router、Auth、Community、Dash、Press、Assets Hub 以及主要公开页面，不拥有任何
-业务数据，也不参与产品请求转发。
+`ops/status` 是公开状态页和前端可用性监控 Worker。每两分钟通过 Cloudflare
+Service Bindings 检查六个前端入口，D1 只保存当前状态与连续成功/失败次数；不保存或迁移
+Gatus 的历史结果。
 
-## 运行边界
+## 监控边界
 
-```text
-Gatus -> health.v1 endpoint checks
-      -> HTTP status / service / response body assertions
-      -> Status dashboard
-      -> optional Discord alerts
+| 显示名称           | Worker        | 请求      |
+| ------------------ | ------------- | --------- |
+| Public Edge Router | `edge-router` | `/health` |
+| Public Website     | `landing`     | `/`       |
+| Community          | `community`   | `/health` |
+| Dash               | `dash`        | `/health` |
+| Apply              | `apply`       | `/health` |
+| Inspire Me         | `inspire-me`  | `/health` |
+
+允许列表保存在 `src/probes.ts`。探测不请求 Phoenix、GraphQL、Fly 域名、社区内容页或
+依赖后端的 readiness endpoint。`groupher.com/health` 只代表 Edge Router；Landing 由
+自己的 Service Binding 检查。Service Binding 验证 Worker 本身，不覆盖公开 DNS 和完整
+业务页面。后端停机时前端 `/health` 仍可能是绿色，这是本阶段刻意保留的边界。
+状态页只反映监控目标的可用性，不替代应用日志、链路追踪、业务验收或发布回滚判断。
+
+三次连续失败才标为 unavailable；恢复时需要两次连续成功。最近一次检查超过六分钟，
+公开页面改为 `No recent check`，避免定时器中断后继续显示绿色。页面本身不触发检查。
+本阶段不发送 Discord 告警。
+
+## 开发与部署
+
+```bash
+pnpm --filter @groupher/status run type-check
+pnpm --filter @groupher/status run test
+pnpm --filter @groupher/status run deploy:dry-run
+pnpm --filter @groupher/status exec wrangler d1 migrations apply groupher-status --remote
+pnpm --filter @groupher/status run deploy
 ```
 
-生产配置位于 `config.yaml`，本地配置位于 `config.local.yaml`。生产使用 Docker 镜像和
-Fly.io 应用 `groupher-status`，SQLite 数据持久化到 Fly volume；Discord webhook 通过
-Fly secret 注入。生产配置校验由 `validate-config.sh` 完成，本地启动由 `start-local.sh`
-完成。
+生产 D1 数据库为 `groupher-status`，binding 名为 `DB`。Worker 名为 `status`；
+`wrangler.jsonc` 配置一个 `*/2 * * * *` Cron Trigger。部署前应确认六个目标 Worker
+均已存在。临时验证地址为 `https://status.groupher.workers.dev`，正式入口为
+`https://status.groupher.com`。
 
-## 本地与部署
+旧 Gatus/Fly 配置已从本目录移除，历史设计见
+[`status-check-v1.md`](../../docs/infra/diagnostics/status-check-v1.md)。生产 DNS 已切换到
+Cloudflare Worker，旧 Fly 应用 `groupher-status` 已删除。
 
-本地需要 Gatus v5.36.0，启动命令为：
+## 后续迁入 Container
 
-```sh
-./ops/status/start-local.sh
-```
-
-校验生产配置：
-
-```sh
-./ops/status/validate-config.sh
-```
-
-状态页只反映监控目标的可用性，不替代应用自身的日志、链路追踪、业务验收或发布回滚判断。
-监控目标和阈值应与 [`docs/deploy/README.md`](../../docs/deploy/README.md) 中的生产入口保持一致。
+当前 Worker 将调度、探测、状态和页面拆开。若未来检查复杂度超出 Workers Free 的
+10 ms CPU 限额，可保留公开页面与 D1，把重型探测执行器迁入 Container；若选择恢复
+Gatus，则需要重新实现配置映射、运行管理和持久化存储。Cloudflare Container 的本地
+文件系统默认不持久，不能把旧 SQLite 路径直接作为长期存储。

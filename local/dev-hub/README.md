@@ -18,6 +18,8 @@ Groupher 不是单进程项目。日常开发可能同时涉及 Community、Dash
 
 Dev Hub 把这些知识固化为服务定义，并提供一个只监听 `127.0.0.1` 的统一入口。它不是生产运维面板，也不会替代各服务自己的开发命令；它解决的是本地多服务开发的编排和可观测性。
 
+生产 [Status Worker](../../ops/status/README.md) 独立运行在 Cloudflare，负责前端入口可用性监控，不由 Dev Hub 启动、停止或管理。Dev Hub 中的 service status 反映本地服务进程和 readiness，不表示生产可用性。
+
 ## 三种运行方式
 
 在仓库根目录运行：

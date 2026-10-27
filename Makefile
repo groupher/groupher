@@ -158,10 +158,19 @@ be.deploy:
 	cd ./backend/api && flyctl deploy && cd -
 
 be.status.deploy:
-	cd ./ops/status && flyctl deploy --config fly.toml --remote-only && cd -
+	$(MAKE) status.deploy
 
 be.status.config.validate:
-	./ops/status/validate-config.sh
+	$(MAKE) status.validate
+
+status.validate:
+	pnpm --filter @groupher/status run type-check
+	pnpm --filter @groupher/status run test
+	pnpm --filter @groupher/status run deploy:dry-run
+
+status.deploy: status.validate
+	pnpm --filter @groupher/status exec wrangler d1 migrations apply groupher-status --remote
+	pnpm --filter @groupher/status run deploy
 
 be.status:
 	flyctl status -a groupher-api

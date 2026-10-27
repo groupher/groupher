@@ -103,6 +103,9 @@ Cloudflare Workers
   inspire-me
     prod route:
       inspire-me.groupher.com/*
+  status
+    prod route: status.groupher.com/*
+    frontend-only Cron checks; D1 current state
 ```
 
 Cloudflare Account 的显示名称为 `Groupher`，它是这些资源的账户级边界。账户内的

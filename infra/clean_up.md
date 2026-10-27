@@ -5,6 +5,9 @@
 > 目标：删除已经被 TanStack 应用替代的旧项目和全部真实 Next.js 依赖，收敛生产与本地
 > 路由基础设施，并清理失效的脚本、配置、测试和文档。
 
+> 后续变化：本文的 Status/Gatus 配置引用属于 2026-08-26 清理盘点快照。Gatus/Fly Status
+> 已于 2026-10-27 退役，当前实现见 [`ops/status/README.md`](../ops/status/README.md)。
+
 ## 最终形态
 
 产品应用统一使用 TanStack：

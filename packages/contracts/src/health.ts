@@ -13,6 +13,7 @@ export const SERVICE_HEALTH_SERVICES = [
   'assets-hub',
   'import',
   'converter',
+  'status',
 ] as const
 
 export type TServiceHealthService = (typeof SERVICE_HEALTH_SERVICES)[number]
