@@ -47,8 +47,21 @@ describe('current status', () => {
   it('requires three failures and two successes to recover', () => {
     expect(nextState(row('up', 2), false)).toEqual({ state: 'degraded', streak: -1 })
     expect(nextState(row('degraded', -2), false)).toEqual({ state: 'down', streak: -3 })
-    expect(nextState(row('down', -3), true)).toEqual({ state: 'degraded', streak: 1 })
-    expect(nextState(row('degraded', 1), true)).toEqual({ state: 'up', streak: 2 })
+    expect(nextState(row('down', -3), true)).toEqual({ state: 'down', streak: 1 })
+    expect(nextState(row('down', 1), true)).toEqual({ state: 'up', streak: 2 })
+  })
+
+  it('keeps the recovery threshold after an interrupted success', () => {
+    const firstSuccess = nextState(row('down', -3), true)
+    const failure = nextState(row(firstSuccess.state, firstSuccess.streak), false)
+    const nextSuccess = nextState(row(failure.state, failure.streak), true)
+
+    expect(failure).toEqual({ state: 'down', streak: -1 })
+    expect(nextSuccess).toEqual({ state: 'down', streak: 1 })
+    expect(nextState(row(nextSuccess.state, nextSuccess.streak), true)).toEqual({
+      state: 'up',
+      streak: 2,
+    })
   })
 
   it('shows unknown when monitoring stops', () => {

@@ -16,11 +16,12 @@ export function nextState(
 ): Pick<StatusRow, 'state' | 'streak'> {
   if (!ok) {
     const streak = Math.min(0, previous?.streak ?? 0) - 1
-    return { state: streak <= -3 ? 'down' : 'degraded', streak }
+    const state = previous?.state === 'down' || streak <= -3 ? 'down' : 'degraded'
+    return { state, streak }
   }
 
   const streak = Math.max(0, previous?.streak ?? 0) + 1
-  return { state: previous?.state === 'down' && streak < 2 ? 'degraded' : 'up', streak }
+  return { state: previous?.state === 'down' && streak < 2 ? 'down' : 'up', streak }
 }
 
 export async function readStatuses(db: D1Database): Promise<Map<string, StatusRow>> {
