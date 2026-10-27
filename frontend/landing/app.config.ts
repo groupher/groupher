@@ -52,6 +52,7 @@ export default defineConfig(({ command }) => ({
       },
     }),
     tanstackStart({
+      router: { basepath: '/' },
       spa: { enabled: false },
       sitemap: { enabled: false },
       pages: [
