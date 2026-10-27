@@ -2,7 +2,7 @@
 
 > 状态：架构约定
 >
-> 更新：2026-07-24
+> 更新：2026-10-27
 
 ## 背景
 
@@ -102,6 +102,14 @@ token 由 Phoenix 针对具体服务和操作签发。两者不能混用。
 | [`risk-center`](../risk-center) | Node/Hono                           | Dashboard              | 风险信号查询、聚合和低延迟判定     | 规划中                           |
 | [`umami`](../umami)             | 自托管 vendor application           | Dashboard              | 社区访问统计                       | Fly.io；Neon `umami-dev`         |
 
+## 运维服务
+
+| 服务                                 | 运行形态                      | 职责                                                  | 当前状态                                      |
+| ------------------------------------ | ----------------------------- | ----------------------------------------------------- | --------------------------------------------- |
+| [Status](../../ops/status/README.md) | Cloudflare Worker + Cron + D1 | 仅检查 Edge Router 和五个前端 Worker；D1 保存当前状态 | 生产运行；不探测 Phoenix、GraphQL 或 Fly 后端 |
+
+Status 是生产运维服务，不属于产品子应用，也不是本地开发进程。它通过 Cloudflare Service Bindings 检查前端 Worker，不会启动被监控服务。
+
 跨应用的 TanStack rewrite 基线、方案和评审统一放在 [`rewrite/`](../migrations/tanstack)，不与
 Dashboard 自身的版本迁移合同混放。
 
@@ -118,6 +126,10 @@ flowchart LR
   Apps["Node 子应用"]
   Converter["converter"]
   Umami["Umami"]
+  Status["Status Worker"]
+  StatusD1["Status D1: current state"]
+  StatusCron["Cloudflare Cron Trigger"]
+  FrontendWorkers["edge-router / landing / community / dash / apply / inspire-me"]
   Providers["外部平台、AI、邮件、IM 与对象存储"]
 
   User --> Gateway
@@ -137,9 +149,13 @@ flowchart LR
   Apps <--> Providers
   User --> Umami
   Dashboard --> Umami
+  User --> Status
+  StatusCron -->|every 2 minutes| Status
+  Status <--> StatusD1
+  Status -->|Service Bindings: frontend only| FrontendWorkers
 ```
 
-图中的双向连接只代表受信任的 API 或事件交换，不代表共享数据库。
+图中的双向连接只代表受信任的 API 或事件交换，不代表共享数据库。Status 的箭头代表健康探测和当前状态读写，不代表业务请求或后端唤醒。
 
 ## 不再单独拆分的概念
 

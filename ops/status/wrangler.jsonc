@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "status",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-27",
+  "workers_dev": true,
+  "routes": [{ "pattern": "status.groupher.com/*", "zone_name": "groupher.com" }],
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "triggers": { "crons": ["*/2 * * * *"] },
+  "services": [
+    { "binding": "EDGE_ROUTER", "service": "edge-router" },
+    { "binding": "LANDING", "service": "landing" },
+    { "binding": "COMMUNITY", "service": "community" },
+    { "binding": "DASH", "service": "dash" },
+    { "binding": "APPLY", "service": "apply" },
+    { "binding": "INSPIRE_ME", "service": "inspire-me" },
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "groupher-status",
+      "database_id": "ebdea705-7332-47d4-b2ca-c1c631231a63",
+      "migrations_dir": "migrations",
+    },
+  ],
+}

@@ -1,6 +1,6 @@
 # Landing TanStack Rewrite
 
-> 状态：代码迁移已落地；生产部署需在 Docker 可用环境完成固定 Gatus 校验后执行
+> 历史记录：Landing 迁移已完成。本文中的 Gatus/Fly Status 校验步骤记录当时的部署流程；该 Status 已于 2026-10-27 迁移到 Cloudflare Worker，现行监控说明见 [`ops/status/README.md`](../../../ops/status/README.md)。下文的“当前”均指这份迁移记录编写时。
 >
 > 目标：将 `frontend/landing` 从 Next.js App Router 直接迁移到 TanStack Start，保留现有产品页面、SEO、主题和交互体验，并继续以 Cloudflare Static Assets 作为生产部署边界。
 

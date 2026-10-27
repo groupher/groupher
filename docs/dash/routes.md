@@ -5,6 +5,9 @@
 > `https://dash.groupher.com`，不提供旧入口兼容。本文中的旧域名、部署平台和双应用
 > 描述仅记录迁移前的设计，不代表当前生产配置。
 
+> 后续变化：本文涉及的 Gatus 配置路径是当时的迁移依据。Gatus/Fly Status 已于
+> 2026-10-27 退役；当前生产监控由 [Status Worker](../../ops/status/README.md) 承担。
+
 ## 状态
 
 本文档定义了新 TanStack Dash 和旧版 Next.js Dashboard 的目标 URL

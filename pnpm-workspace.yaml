@@ -3,6 +3,7 @@ packages:
   - 'infra/*'
   - 'frontend/*'
   - 'local/*'
+  - 'ops/*'
   - 'packages/*'
 
 # Use pnpm's native symlinked virtual-store layout so each workspace resolves
