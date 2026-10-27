@@ -1,12 +1,12 @@
 defmodule GroupherServer.CMS.Outbox.Workflow.Article do
   @moduledoc """
-  Delivers Article public-cache cleanup intents after the Article transaction.
+  Dispatches Article effects and delivers independent Search and CDN intents.
 
   Business position:
 
       Oban outbox job
         -> Outbox.execute lease + fencing
-        -> Article projection effect or cache purge
+        -> transactional fanout or isolated projection / Search / CDN delivery
         -> complete / retry / snooze / terminal failure
   """
 
@@ -57,30 +57,54 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
 
   defp cleanup(event) do
     case event.event do
-      "article.projections" -> run_projections(event)
-      "article.visibility_changed" -> sync_visibility(event)
-      _ -> purge_cache(event)
+      "article.projections" ->
+        run_projections(event)
+
+      "article.search_sync" ->
+        sync_search(event)
+
+      "article.cdn_purge" ->
+        purge_cache(event)
+
+      kind
+      when kind in [
+             "article.published",
+             "article.updated",
+             "article.visibility_changed",
+             "article.review_changed"
+           ] ->
+        CMS.Articles.Effects.dispatch(event)
+
+      _ ->
+        {:error, ArticleErrorCat.unknown_outbox_event()}
     end
   end
 
-  defp sync_visibility(event) do
-    with %Article{thread: thread} <- Repo.get(Article, event.resource_id),
-         community_id when is_integer(community_id) <- Map.get(event.data, "community_id"),
-         %Community{} = community <- Repo.get(Community, community_id),
-         {:ok, :pass} <- CMS.Press.invalidate(community),
-         {:ok, :pass} <-
-           CMS.SearchArtiments.Indexer.sync_binding(thread, event.resource_id, community_id),
-         {:ok, _} <- purge_cache(event) do
-      {:ok, :pass}
+  defp sync_search(event) do
+    with %Article{thread: thread} <- Repo.get(Article, event.resource_id) do
+      case event.data["source_event"] do
+        kind when kind in ["article.published", "article.updated"] ->
+          CMS.SearchArtiments.Indexer.upsert_article(thread, event.resource_id)
+
+        kind when kind in ["article.visibility_changed", "article.review_changed"] ->
+          case event.data["community_id"] do
+            community_id when is_integer(community_id) ->
+              CMS.SearchArtiments.Indexer.sync_binding(thread, event.resource_id, community_id)
+
+            _ ->
+              {:error, ArticleErrorCat.projection_not_found()}
+          end
+
+        _ ->
+          {:error, ArticleErrorCat.unknown_outbox_event()}
+      end
     else
-      nil -> {:error, ArticleErrorCat.projection_not_found()}
-      {:error, _reason} = error -> error
       _ -> {:error, ArticleErrorCat.projection_not_found()}
     end
   end
 
   defp purge_cache(event) do
-    with {:ok, type} <- invalidation_type(event.event),
+    with {:ok, type} <- invalidation_type(event.data["source_event"]),
          {:ok, tags} <- GroupherServer.PublicCache.scope_tags(type, event.data),
          {:ok, _} <- GroupherServer.PublicCache.cloudflare_purge(tags) do
       {:ok, :purged}

@@ -6,7 +6,7 @@ defmodule GroupherServer.Jobs.CMSOutboxPress do
   """
 
   use Oban.Worker,
-    queue: :cms_outbox,
+    queue: :press,
     max_attempts: 8,
     unique: [period: 86_400, keys: [:event_id], states: :incomplete]
 

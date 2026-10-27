@@ -26,6 +26,14 @@ def main():
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
+    machines = subprocess.run(
+        ["fly", "machines", "list", "--app", "groupher-press-preview-api", "--json"],
+        capture_output=True, text=True, timeout=45, check=True,
+    )
+    machine_count = len(json.loads(machines.stdout))
+    if machine_count != 1:
+        raise RuntimeError("Press fixtures require exactly one preview Machine for queue isolation")
+
     health = subprocess.run(
         [
             "curl", "-sS", "--max-time", "40", "-o", os.devnull,
@@ -73,7 +81,7 @@ def main():
     if line is None:
         raise RuntimeError(f"Preview RPC failed (exit {process.returncode})")
     payload = json.loads(line)
-    print(json.dumps({"action": args.action, **payload}))
+    print(json.dumps({"action": args.action, "machine_count": machine_count, **payload}))
     if not payload.get("ok"):
         return 1
     if args.output:

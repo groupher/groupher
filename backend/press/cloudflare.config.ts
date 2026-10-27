@@ -65,6 +65,7 @@ export default defineConfig(({ mode }) => {
           },
       triggers: local ? undefined : [triggers.scheduled({ schedule: '17 4 * * *' })],
       env: {
+        NODE_ENV: bindings.text(local ? 'development' : preview ? 'preview' : 'production'),
         HYPERDRIVE: bindings.hyperdrive({
           id: hyperdriveId,
           ...(local ? { dev: { connectionString: localDatabaseUrl } } : {}),

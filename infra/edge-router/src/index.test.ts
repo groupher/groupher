@@ -116,6 +116,35 @@ describe('edge-router', () => {
     }
   })
 
+  it('returns no-store 503 when Press throws without falling back', async () => {
+    const env = createEnv()
+    vi.mocked(env.PRESS.fetch).mockRejectedValueOnce(new Error('Worker exceeded resource limits'))
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      const response = await dispatch(new Request('https://groupher.com/home/llms.txt'), env)
+      expect(response.status).toBe(503)
+      expect(response.headers.get('cache-control')).toBe('no-store')
+      expect(response.headers.get('retry-after')).toBe('60')
+      expect(env.COMMUNITY!.fetch).not.toHaveBeenCalled()
+      expect(errorLog).toHaveBeenCalledOnce()
+    } finally {
+      errorLog.mockRestore()
+    }
+  })
+
+  it('keeps non-Press exceptions as errors', async () => {
+    const env = createEnv()
+    vi.mocked(env.COMMUNITY!.fetch).mockRejectedValueOnce(new Error('community unavailable'))
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      await expect(dispatch(new Request('https://groupher.com/home'), env)).rejects.toThrow(
+        'community unavailable',
+      )
+    } finally {
+      errorLog.mockRestore()
+    }
+  })
+
   it('enforces browser GraphQL CSRF and keeps only the Groupher auth cookie', async () => {
     expect(
       (

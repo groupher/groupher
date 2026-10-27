@@ -234,25 +234,156 @@ defmodule GroupherServer.PressPreview.Fixtures do
     :global.trans({{__MODULE__, :search_sink}, self()}, fn ->
       previous = Application.fetch_env!(:groupher_server, :search_artiments)
 
-      Application.put_env(
-        :groupher_server,
-        :search_artiments,
-        Keyword.put(previous, :platform, GroupherServer.PressPreview.SearchSink)
-      )
+      queues =
+        for queue <- [:cms_outbox, :press, :search, :public_cache],
+            state = Oban.check_queue(queue: queue),
+            state != nil,
+            do: {queue, state.paused}
 
-      try do
-        fun.()
-      after
-        Application.put_env(:groupher_server, :search_artiments, previous)
+      if length(queues) != 4 and Oban.config().testing != :manual do
+        raise "Fixture requires all four local Outbox queues in the isolated single-node preview"
+      end
+
+      result =
+        try do
+          for {queue, _} <- queues, do: :ok = Oban.pause_queue(queue: queue, local_only: true)
+          await_paused(queues, System.monotonic_time(:millisecond) + 20_000)
+
+          Application.put_env(
+            :groupher_server,
+            :search_artiments,
+            Keyword.put(previous, :platform, GroupherServer.PressPreview.SearchSink)
+          )
+
+          fun.()
+        after
+          # Retire only this synthetic community's remaining jobs, even on exceptions.
+          # If cleanup fails, leave queues paused rather than deliver with a real adapter.
+          try do
+            retire_fixture_jobs()
+          after
+            Application.put_env(:groupher_server, :search_artiments, previous)
+          end
+
+          for {queue, was_paused} <- queues,
+              not was_paused,
+              do: :ok = Oban.resume_queue(queue: queue, local_only: true)
+
+          await_restored(queues, System.monotonic_time(:millisecond) + 20_000)
+        end
+
+      case result do
+        {:ok, data} when is_map(data) ->
+          {:ok,
+           Map.put(data, :queues, %{
+             before: Map.new(queues),
+             after: queue_states(queues),
+             confirmed: true
+           })}
+
+        other ->
+          other
       end
     end)
+  end
+
+  defp await_paused(queues, deadline) do
+    quiet =
+      Enum.all?(queues, fn {queue, _} ->
+        case Oban.check_queue(queue: queue) do
+          %{paused: true, running: []} -> true
+          _ -> false
+        end
+      end)
+
+    cond do
+      quiet ->
+        :ok
+
+      System.monotonic_time(:millisecond) < deadline ->
+        Process.sleep(50)
+        await_paused(queues, deadline)
+
+      true ->
+        raise "Preview queues did not quiesce before Search sink installation"
+    end
+  end
+
+  defp queue_states(queues) do
+    Map.new(queues, fn {queue, _} ->
+      state = Oban.check_queue(queue: queue)
+      {queue, if(state, do: state.paused, else: :missing)}
+    end)
+  end
+
+  defp await_restored(queues, deadline) do
+    cond do
+      queue_states(queues) == Map.new(queues) ->
+        :ok
+
+      System.monotonic_time(:millisecond) < deadline ->
+        Process.sleep(50)
+        await_restored(queues, deadline)
+
+      true ->
+        raise "Preview queues did not restore their original paused states"
+    end
+  end
+
+  defp retire_fixture_jobs do
+    case Repo.get_by(Community, slug: @slug) do
+      nil ->
+        :ok
+
+      community ->
+        article_ids =
+          Repo.all(
+            from(b in ArticleBinding,
+              where: b.community_id == ^community.id,
+              select: type(b.article_id, :string)
+            )
+          )
+
+        community_id = to_string(community.id)
+
+        events =
+          Repo.all(
+            from(e in CMS.Outbox.Event,
+              where:
+                (e.resource_type == "article" and e.resource_id in ^article_ids) or
+                  (e.resource_type == "community" and e.resource_id == ^community_id)
+            )
+          )
+
+        ids = Enum.map(events, & &1.id)
+
+        {:ok, _cancelled_count} =
+          Oban.cancel_all_jobs(
+            from(j in Oban.Job,
+              where: fragment("?->>'event_id'", j.args) in ^ids
+            )
+          )
+
+        for event <- events, event.status in [:waiting, :retrying] do
+          CMS.Outbox.execute(event.id, fn _ -> {:error, :preview_fixture_retired} end,
+            on_error: :fail
+          )
+
+          unless Repo.get!(CMS.Outbox.Event, event.id).status == :failed,
+            do: raise("Could not retire fixture intent #{event.id}")
+        end
+
+        if Enum.any?(events, &(&1.status == :running)),
+          do: raise("Fixture has an in-flight intent; keep queues paused for inspection")
+
+        :ok
+    end
   end
 
   defp acknowledge_transition({:error, _} = error), do: error
 
   defp acknowledge_transition({:ok, result}) do
-    # Run the real workflow before restoring Search config. The isolated CDN purge
-    # deliberately rejects; reaching that step proves Press invalidation succeeded.
+    # Dispatch the real event and settle all three children before restoring the sink.
     events =
       Repo.all(
         from(event in CMS.Outbox.Event,
@@ -281,18 +412,54 @@ defmodule GroupherServer.PressPreview.Fixtures do
         max_attempts: 20
       })
 
-    event = Repo.get!(CMS.Outbox.Event, id)
+    children =
+      Repo.all(
+        from(e in CMS.Outbox.Event,
+          where: e.command_id == ^id and e.identity_type == :workflow
+        )
+      )
+
+    for child <- children do
+      {worker, attempt} =
+        case child.event do
+          "press.cache_invalidation" -> {GroupherServer.Jobs.CMSOutboxPress, 1}
+          "article.search_sync" -> {GroupherServer.Jobs.CMSOutboxSearch, 1}
+          "article.cdn_purge" -> {GroupherServer.Jobs.CMSOutboxCDN, 8}
+        end
+
+      worker.perform(%Oban.Job{
+        args: %{"event_id" => child.id},
+        attempt: attempt,
+        max_attempts: 8
+      })
+    end
+
+    states =
+      Map.new(children, fn child ->
+        current = Repo.get!(CMS.Outbox.Event, child.id)
+        {current.event, %{status: current.status, error: current.last_error_code}}
+      end)
+
+    press = states["press.cache_invalidation"]
+    search = states["article.search_sync"]
+    cdn = states["article.cdn_purge"]
+
+    expected_cdn =
+      cdn &&
+        (cdn.status == :done or
+           (cdn.status == :failed and
+              cdn.error in ["cloudflare_rejected", "cloudflare_not_configured"]))
 
     cond do
-      event.status == :done or event.last_error_code == "cloudflare_rejected" ->
-        %{id: id, press_invalidated: true, downstream_error: event.last_error_code}
+      map_size(states) == 3 and press.status == :done and search.status == :done and expected_cdn ->
+        %{id: id, press_invalidated: true, children: states}
 
       System.monotonic_time(:millisecond) < deadline ->
         Process.sleep(250)
         deliver(id, deadline)
 
       true ->
-        raise "Review delivery did not reach Press invalidation: #{inspect(event.last_error_code)}"
+        raise "Preview child delivery did not settle: #{inspect(states)}"
     end
   end
 

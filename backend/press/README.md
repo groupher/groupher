@@ -40,7 +40,7 @@ pnpm --filter @groupher/press run db:generate
 pnpm --filter @groupher/press run db:migrate
 ```
 
-Production Worker deployment is not complete. The migration runbook tracks the isolated staging resources, production Hyperdrive, Phoenix fixes, and `press.groupher.com` hard cut.
+Production runs on Cloudflare Workers; the former Fly app has been deleted. Public content is served through edge-router → named `Public`. `press.groupher.com` exposes only health and signed invalidation. Workers Free remains in use: reject requests at limits, never upgrade or fall back. See the [deployment record](../../docs/press/cloudflare-workers-deployment.md) for evidence and remaining operational work.
 
 ## Related documentation
 

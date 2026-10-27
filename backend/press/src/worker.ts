@@ -56,9 +56,16 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url)
     if (request.method === 'GET' && url.pathname === '/health') {
-      return Response.json(createHealthResponse({ service: 'press' }), {
-        headers: { 'cache-control': 'no-store' },
-      })
+      return Response.json(
+        createHealthResponse({
+          service: 'press',
+          version: env.CF_VERSION_METADATA?.id || 'unknown',
+          environment: env.NODE_ENV,
+        }),
+        {
+          headers: { 'cache-control': 'no-store' },
+        },
+      )
     }
     if (request.method === 'POST' && url.pathname === '/internal/invalidate') {
       return handleInvalidation(request, env, ctx)

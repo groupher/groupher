@@ -38,12 +38,12 @@ Dashboard API/资产返回 `404`。
 Dash 独立域名保留自己的同名实现。
 
 `.md`、Feed、`llms.txt` 和 community sitemap 仍使用
-`groupher.com/:community/...` 这一公共 URL。`press.groupher.com` 只作为 Edge Router 和
-Phoenix 调用 Press 的稳定 origin，不建立第二套 canonical 内容地址。
+`groupher.com/:community/...` 这一公共 URL。`press.groupher.com` 只作为 Phoenix 调用 Press 的稳定 origin，不建立第二套 canonical 内容地址。
 
-Press 生产当前仍运行在 Fly.io；Worker runtime 与 Service Binding 已在代码中实现，生产
-Hyperdrive、Phoenix 修复及正式域名切换尚未完成。硬切窗口接受中断且不保证输出，切换前后
-验收范围见 [`docs/press/cloudflare-workers-migration.md`](../press/cloudflare-workers-migration.md)。
+Press 生产已硬切到 Cloudflare Workers，旧 `groupher-press` Fly app 已删除。公共输出经
+edge-router Service Binding 调用 named `Public`；`press.groupher.com` 为 default 入口，仅开放
+health 和签名 invalidation。保持 Workers Free，超限拒绝、不升级；不保留 Fly fallback。
+部署证据见 [Press 部署记录](../press/cloudflare-workers-deployment.md)。
 
 当前公共入口由 `edge-router` Worker 托管，静态 Landing 与应用 Worker 通过 Service Binding
 接入：
@@ -55,7 +55,7 @@ groupher.com/*, www.groupher.com/*
        -> community Worker
        -> auth Worker
        -> Phoenix HTTPS origin
-       -> Press HTTPS origin (until its Cloudflare hard cut)
+       -> press Worker named Public (Service Binding)
 ```
 
 生产入口只使用 Worker Routes 和 Service Bindings，不保留旧托管平台兼容入口或回滚通道。
@@ -94,6 +94,9 @@ Cloudflare Workers
   auth
     prod route:
       auth.groupher.com/*
+  press
+    custom domain: press.groupher.com (health/internal only)
+    consumed by edge-router named Public Service Binding
   assets-hub
     prod route:
       assets.groupher.com/*
@@ -118,31 +121,18 @@ Community 对不存在的 slug 返回 `404`。Phoenix 的匿名与登录读取�
 Fly.io
   groupher-api
     public origin: api.groupher.com
-
-  groupher-press
-    public service origin: press.groupher.com
-    package: @groupher/press
-    source: backend/press
-    primary region: sin
 ```
 
-Press v1 当前仍以 Docker 部署在 Fly.io。Cloudflare Worker runtime 已在仓库实现：Worker
-每次 invocation 创建 `pg.Client`，Hyperdrive 管理底层连接，retention 由 Cron 执行。生产切换
-按硬切 runbook 完成后，Press 只运行在 Cloudflare Workers。
+Press 不再属于 Fly 部署目标。Node 入口只用于本地开发；生产 Worker 每次 invocation 创建
+`pg.Client`，Hyperdrive 管理连接，retention 由 Cron 执行。
 
-代码、基础设施和域名使用不同命名空间：
-
-| 层级                  | 名称                     |
-| --------------------- | ------------------------ |
-| 产品                  | `Press`                  |
-| Workspace package     | `@groupher/press`        |
-| 代码目录              | `backend/press`          |
-| Dev Hub service id    | `press`                  |
-| Fly app id            | `groupher-press`         |
-| Production origin     | `press.groupher.com`     |
-| Fly diagnostic origin | `groupher-press.fly.dev` |
-
-`groupher-press.fly.dev` 只用于平台诊断，正式配置统一使用 `press.groupher.com`。
+| 层级                         | 名称                                         |
+| ---------------------------- | -------------------------------------------- |
+| 产品 / package               | `Press` / `@groupher/press`                  |
+| 代码 / Dev Hub service id    | `backend/press` / `press`                    |
+| Cloudflare Worker            | `press`                                      |
+| health / invalidation origin | `press.groupher.com`                         |
+| 用户内容入口                 | 平台/社区域名 → edge-router → named `Public` |
 
 ## 环境边界
 
@@ -198,15 +188,10 @@ www.groupher.com/*  -> edge-router
 不要删除这两条 proxied DNS 记录，也不要切成 DNS-only，除非同一次变更中改用 Worker Custom
 Domain 并完成 TLS 与公网 smoke。
 
-目前 `press.groupher.com` 绑定 Fly app `groupher-press`；硬切时该 hostname 改绑到 Press
-Worker Custom Domain：
-
-```text
-press.groupher.com  CNAME  groupher-press.fly.dev
-```
-
-当前 Fly DNS target 和证书验证记录以 Fly domain instructions 为准。Worker 切换步骤与
-DNS/TLS 收尾验收见 Press migration runbook。
+`press.groupher.com` 已绑定 Press Worker Custom Domain；DNS/TLS 由 Cloudflare 管理。
+不要为它创建指向旧 Fly app 或 `workers.dev` 的 CNAME。直接访问内容路径应返回 no-store 404；
+仅 `/health` 和签名 `/internal/invalidate` 可用。变更 zone/route 后按
+[Press 运维复核](../../ops/press/README.md#free-监控与-route-复核) 检查 fail-closed。
 
 Cloudflare 会把 apex CNAME flatten 掉，因此在 Cloudflare DNS 中给 `groupher.com`
 使用 CNAME 是合法的。
@@ -278,68 +263,27 @@ curl -i https://dash.groupher.com/home/dash/overview
 `groupher.com/health/dash` 和 `groupher.com/:community/dash/*` 保持 `404`，不属于 Dash 的
 发布 smoke。
 
-## Press 部署与切换
+## Press 部署
 
-Press 的生产依赖：
+生产已运行在 Cloudflare，使用 `Deploy Press Worker` workflow 的 `production` 目标。
+先部署 Press，再部署 edge-router；日常发布 `apply_migrations=false`，不执行切换回 Fly。
+Phoenix 领域修复需单独部署 API。Worker 资源、Secrets、独立 migration 与隔离 preview 的
+操作见 [运维工具](../../ops/press/README.md)；已执行证据见 [部署记录](../press/cloudflare-workers-deployment.md)。
 
-```text
-Press / Fly secrets
-  PHOENIX_GRAPHQL_ENDPOINT=https://api.groupher.com/graphiql
-  DATABASE_URL=<production PostgreSQL connection>
-  METRIC_IP_SALT=<secret>
-  SERVICE_AUTH_TOKEN_ENDPOINT=https://auth.groupher.com/oauth2/token
-  SERVICE_AUTH_CLIENT_ID=<press client id>
-  SERVICE_AUTH_CLIENT_SECRET=<press client secret>
+- Worker：`HYPERDRIVE`（query cache disabled、受限 analysis 角色）、Phoenix/Auth bindings、
+  service client secrets、`METRIC_IP_SALT`、`PRESS_PUBLIC_DISABLED=false`。
+- Phoenix：`PRESS_INTERNAL_URL=https://press.groupher.com`、
+  `PRESS_INTERNAL_RESOURCE=https://press.groupher.com/internal`，service identity 具备
+  `press:cache:invalidate` scope。token/失效调用失败必须由独立 Press Outbox 任务重试。
+- edge-router：`PRESS` Service Binding 指向 named `Public`，不使用 `PRESS_SITE`。
+- `/health` 仅证明进程可响应；发布后核对 Worker version/environment，并验证实际公开内容、
+  ETag、metrics 和真实签名 invalidation。Feed 关闭时 404 属于正常配置。
 
-Phoenix / Fly secrets
-  PRESS_INTERNAL_URL=https://press.groupher.com
-  PRESS_INTERNAL_RESOURCE=https://press.groupher.com/internal
-  SERVICE_AUTH_TOKEN_ENDPOINT=https://auth.groupher.com/oauth2/token
-  SERVICE_AUTH_CLIENT_ID=<phoenix client id>
-  SERVICE_AUTH_CLIENT_SECRET=<phoenix client secret>
-
-Edge Router / Cloudflare Worker variables
-  PRESS_PUBLIC_DISABLED=false  # only after the planned hard cutover
-```
-
-以上 Press / Fly 与 `PRESS_SITE` 步骤属于 Fly 时期的历史部署记录；仓库现已移除 Press
-Fly 发布配置，正式切换后不保留 Fly fallback。Cloudflare Worker 的资源准备、部署、硬切窗口
-和验收步骤以 [`Press → Cloudflare Workers`](../press/cloudflare-workers-migration.md) 为准。
-
-Fly 时期的部署顺序（仅用于说明当前运行状态，不作为新部署指引）：
-
-1. 部署 Phoenix Ecto migration 和 `CMS.Press` GraphQL projection。
-2. 执行 `@groupher/press` Drizzle migration，建立 `analysis.press_*` 对象。
-3. 部署 Fly app `groupher-press` 并绑定 `press.groupher.com`。
-4. 直接请求 `press.groupher.com`，验证 Press 到生产 Phoenix 和 PostgreSQL。
-5. Public Router 将 Press 公共输出规则放在 Community 通用路由之前，生产 `PRESS_SITE`
-   指向 `https://press.groupher.com`。
-6. 部署 Landing Worker 与 Edge Router 后，从 `groupher.com` 验证真实 `.md`、Feed、
-   `llms.txt` 和 sitemap。
-7. 验收通过后删除旧 Main Doc `.md` HTTP route/renderer；Phoenix 持久化 Markdown 和
-   `CMS.Press.article` projection 保留。
-
-Press `/health` 当前只证明 Node 进程可响应。部署完成还必须至少验证：
-
-```bash
+```sh
 curl -i https://press.groupher.com/health
-curl -i https://groupher.com/home/changelog/3.md
 curl -i https://groupher.com/home/llms.txt
 curl -i https://groupher.com/home/sitemap.xml
 ```
 
-Feed 是否返回内容取决于社区是否开启对应输出；未开启时 `404` 是正常产品配置，不用于判断
-Press 链路失败。Markdown、`llms.txt` 和 sitemap 是稳定的发布 smoke。
-
-生产 Phoenix 必须显式配置非空 `PRESS_INTERNAL_URL` 和正确的
-`PRESS_INTERNAL_RESOURCE`，并确认 Phoenix service identity 获得
-`press:cache:invalidate` scope。未配置 endpoint 的 dev/local 环境会把 invalidation 视为 no-op；
-该行为不能作为生产 fallback。endpoint 已配置时，service token 获取失败必须使 Outbox event 重试，
-不能静默标记完成。上线验收必须修改一次 Press config，确认对应 Outbox event 执行完成，
-并验证 Press 输出已经失效或刷新，不能只检查 mutation 成功。
-
-另选一篇真实 published Doc 验证 `.md`、ETag/`304`、不增加 Article human views、metrics
-落库和 Phoenix-to-Press invalidation。完整检查表见 `docs/press/v1.md`。
-
-Dev Hub 中 `press` 应显示 Fly logo 并链接到 `https://fly.io/apps/groupher-press`；Fly
-infrastructure links 增加 Press。Landing 的 deployment target 显示 Cloudflare。
+Dev Hub 的 Press 部署目标为 Cloudflare；不得链接已删除的 Fly app。Node 本地进程不是生产目标。
+保持 Workers Free、超限拒绝、不升级。账号整体限流时接受 Cloudflare 平台错误，不承诺应用 503。

@@ -24,6 +24,9 @@ defmodule GroupherServer.CMS.Articles.Effects do
 
   defdelegate enqueue(event, resource_type, resource_id, identity, data, opts), to: Outbox
 
+  @doc "Records independent Press, Search and CDN intents for a committed Article event."
+  defdelegate dispatch(event), to: Outbox
+
   @doc "Executes one typed Article effect after its Outbox event is claimed."
   @spec run(map()) :: {:ok, term()} | {:error, term()}
   defdelegate run(effect), to: Publish

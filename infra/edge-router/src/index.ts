@@ -177,6 +177,7 @@ export default {
           error: error instanceof Error ? error.message : 'Unknown error',
         }),
       )
+      if (target.targetKind === 'press') return pressDisabled()
       throw error
     }
   },
