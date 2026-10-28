@@ -8,6 +8,11 @@ const MESH_MODEL_LIQUID: u32 = 2u;
 const MESH_MODEL_RADIAL: u32 = 3u;
 const MESH_MODEL_IMAGE: u32 = 4u;
 
+// Numeric IDs stay stable through production minification. Controls remain uniforms;
+// only changing renderer/texture type creates a new compiled pipeline variant.
+@id(0) override wallpaperModel: u32 = 0u;
+@id(1) override wallpaperTexture: u32 = 0u;
+
 struct Params {
   color0: vec4f,
   color1: vec4f,
@@ -213,13 +218,13 @@ fn sampleBaseColor(uv: vec2f) -> vec3f {
   let feather = mix(0.16, 0.46, softness);
   var color: vec3f;
 
-  if (params.meshModel == MESH_MODEL_LINEAR) {
+  if (wallpaperModel == MESH_MODEL_LINEAR) {
     color = sampleLinearGradient(uv);
-  } else if (params.meshModel == MESH_MODEL_RADIAL) {
+  } else if (wallpaperModel == MESH_MODEL_RADIAL) {
     color = sampleRadialGradient(uv);
-  } else if (params.meshModel == MESH_MODEL_IMAGE) {
+  } else if (wallpaperModel == MESH_MODEL_IMAGE) {
     color = sampleImageColor(uv);
-  } else if (params.meshModel == MESH_MODEL_LIQUID) {
+  } else if (wallpaperModel == MESH_MODEL_LIQUID) {
     color = sampleLiquidMesh(uv, feather, warp);
   } else {
     color = sampleFlowMesh(uv, feather);
@@ -378,13 +383,13 @@ fn applyOilTexture(color: vec3f, uv: vec2f, strength: f32) -> vec3f {
 
 fn applyTexture(color: vec3f, uv: vec2f) -> vec3f {
   let strength = clamp(params.textureIntensity, 0.0, 1.0);
-  if (params.textureType == 0u || strength <= 0.0) { return color; }
-  if (params.textureType == 1u) { return applyNoiseTexture(color, uv, strength); }
-  if (params.textureType == 5u) { return applyBeamTexture(color, uv, strength); }
-  if (params.textureType == 6u) { return applyAsciiTexture(color, uv, strength); }
-  if (params.textureType == 7u) { return applyDotsTexture(color, uv, strength); }
-  if (params.textureType == 8u) { return applyTileTexture(color, uv, strength); }
-  if (params.textureType == 9u) { return applyOilTexture(color, uv, strength); }
+  if (wallpaperTexture == 0u || strength <= 0.0) { return color; }
+  if (wallpaperTexture == 1u) { return applyNoiseTexture(color, uv, strength); }
+  if (wallpaperTexture == 5u) { return applyBeamTexture(color, uv, strength); }
+  if (wallpaperTexture == 6u) { return applyAsciiTexture(color, uv, strength); }
+  if (wallpaperTexture == 7u) { return applyDotsTexture(color, uv, strength); }
+  if (wallpaperTexture == 8u) { return applyTileTexture(color, uv, strength); }
+  if (wallpaperTexture == 9u) { return applyOilTexture(color, uv, strength); }
   return color;
 }
 
@@ -398,6 +403,20 @@ fn sampleWallpaperBaseColor(uv: vec2f) -> vec3f {
 }
 
 // Generation runs once per pixel; blur and color effects sample this pass in wallpaper-post.wgsl.
+struct WallpaperVertexOut {
+  @builtin(position) position: vec4f,
+  @location(0) uv: vec2f,
+}
+
+@vertex fn vs_main(@builtin(vertex_index) index: u32) -> WallpaperVertexOut {
+  var positions = array<vec2f, 3>(vec2f(-1.0, -1.0), vec2f(3.0, -1.0), vec2f(-1.0, 3.0));
+  var uvs = array<vec2f, 3>(vec2f(0.0, 1.0), vec2f(2.0, 1.0), vec2f(0.0, -1.0));
+  var out: WallpaperVertexOut;
+  out.position = vec4f(positions[index], 0.0, 1.0);
+  out.uv = uvs[index];
+  return out;
+}
+
 @fragment fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   return vec4f(sampleWallpaperBaseColor(uv), 1.0);
 }

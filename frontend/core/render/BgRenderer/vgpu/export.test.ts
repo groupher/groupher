@@ -6,6 +6,7 @@ import { exportVgpuWallpaper, exportVgpuWallpaperBatch } from './export'
 
 const mocks = vi.hoisted(() => ({
   effect: vi.fn(),
+  draw: vi.fn(),
   frame: vi.fn(),
   init: vi.fn(),
   surface: vi.fn(),
@@ -85,6 +86,7 @@ describe('exportVgpuWallpaper', () => {
       resize: vi.fn(),
     })
     mocks.effect.mockReturnValue(mesh)
+    mocks.draw.mockReturnValue(mesh)
     mocks.frame.mockImplementation((_gpu, callback) => {
       callback({ pass: mocks.pass })
       return { done: Promise.resolve() }

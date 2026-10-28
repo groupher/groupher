@@ -1,10 +1,11 @@
-import { effect, frame, init, surface } from 'vgpu'
+import { frame, init, surface } from 'vgpu'
 import type { Gpu } from 'vgpu'
 
 import { DEFAULT_WALLPAPER_EXPORT_SIZE, DEFAULT_WALLPAPER_PATTERN_SIZE } from '~/lib/bg'
 import type { TBgRenderSpec } from '~/lib/bg'
 
 import { isVgpuWallpaperSpec } from './eligibility'
+import { createWallpaperMesh } from './mesh'
 import { toVgpuMeshParams } from './params'
 import {
   createPatternFallbackTexture,
@@ -14,7 +15,6 @@ import {
 } from './pattern'
 import { createWallpaperPostProcess } from './postProcess'
 import './wgsl-env.d.ts'
-import wallpaperMeshShader from './wallpaper-mesh.wgsl'
 
 const DEFAULT_WEBP_QUALITY = 0.86
 const DEFAULT_WEBP_BUDGET_BYTES = 800 * 1024
@@ -232,15 +232,13 @@ export const exportVgpuWallpaperBatch = async (
       meshParams.resolution = [size[0], size[1]]
       meshParams.imageSize = [imageTexture.width, imageTexture.height]
       meshParams.imageReady = renderSpec.type === 'image' ? 1 : 0
-      const mesh = effect(gpu, wallpaperMeshShader, {
-        label: `wallpaper-vgpu-export-mesh-${targetKey}`,
-        set: {
-          params: meshParams,
-          patternSampler,
-          patternTexture: patternTexture.texture,
-          imageSampler: patternSampler,
-          imageTexture: imageTexture.texture,
-        },
+      const mesh = createWallpaperMesh(gpu, meshParams, `wallpaper-vgpu-export-mesh-${targetKey}`)
+      mesh.set({
+        params: meshParams,
+        patternSampler,
+        patternTexture: patternTexture.texture,
+        imageSampler: patternSampler,
+        imageTexture: imageTexture.texture,
       })
 
       const errorCount = asyncErrors.length

@@ -1,5 +1,5 @@
 import { effect, target } from 'vgpu'
-import type { Effect, Frame, Gpu, Target } from 'vgpu'
+import type { Draw, Effect, Frame, Gpu, Target } from 'vgpu'
 
 import './wgsl-env.d.ts'
 import wallpaperPostShader from './wallpaper-post.wgsl'
@@ -14,7 +14,13 @@ export const createWallpaperPostProcess = (gpu: Gpu) => {
     minFilter: 'linear',
     magFilter: 'linear',
   })
-  const post = effect(gpu, wallpaperPostShader, { label: 'wallpaper-post' })
+  let post: ReturnType<typeof effect>
+  try {
+    post = effect(gpu, wallpaperPostShader, { label: 'wallpaper-post' })
+  } catch (error) {
+    scene.color.destroy()
+    throw error
+  }
 
   return {
     scene,
@@ -33,7 +39,7 @@ export const createWallpaperPostProcess = (gpu: Gpu) => {
         wallpaperTexture: scene.color,
       })
     },
-    encode: (currentFrame: Frame, output: Target, mesh: Effect) => {
+    encode: (currentFrame: Frame, output: Target, mesh: Effect | Draw) => {
       currentFrame.pass(scene, mesh)
       currentFrame.pass(output, post)
     },

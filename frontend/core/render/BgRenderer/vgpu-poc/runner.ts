@@ -1,7 +1,7 @@
 import { effect, frame, init, surface, target } from 'vgpu'
 import type { Gpu, Surface, Target } from 'vgpu'
 
-import wallpaperMeshShader from '../vgpu/wallpaper-mesh.wgsl'
+import { createWallpaperMesh } from '../vgpu/mesh'
 import orientationShader from './orientation.wgsl'
 import { toVgpuMeshParams } from './params'
 import type {
@@ -100,10 +100,7 @@ const renderMesh = async (
     format: 'rgba8unorm',
     label: `wallpaper-${spec.model}-export`,
   })
-  const mesh = effect(gpu, wallpaperMeshShader, {
-    label: `wallpaper-${spec.model}`,
-    set: { params: toVgpuMeshParams(spec) },
-  })
+  const mesh = createWallpaperMesh(gpu, toVgpuMeshParams(spec), `wallpaper-${spec.model}`)
 
   await Promise.all([
     mesh.compile(offscreen),
