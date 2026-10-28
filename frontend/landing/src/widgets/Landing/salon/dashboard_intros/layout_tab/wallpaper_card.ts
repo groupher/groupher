@@ -11,6 +11,5 @@ export default function useSalon() {
       shadow('sm'),
     ),
     background: cn('s-full rounded-xl trans-all-200', dimDark()),
-    edittool: 'absolute -bottom-3 left-28 z-30',
   }
 }
