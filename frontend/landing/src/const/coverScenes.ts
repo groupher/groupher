@@ -8,23 +8,24 @@ export type TCoverScene = {
   wallpaperImage: string
   wallpaperPreview: string
   wallpaperPanAxis?: 'x' | 'y'
+  coverImage: {
+    light: string
+    dark: string
+    alt: string
+  }
 }
 
 const picture = (name: string) => `/wallpaper/picture/${name}.webp`
 const preview = (name: string) => `/wallpaper/picture-preview/${name}.webp`
 const gradient = (name: string) => `/landing/wallpaper/${name.replaceAll('_', '-')}.svg`
+const currentCoverImage = {
+  light: '/landing/intro/home.webp',
+  dark: '/landing/intro/home-dark.webp',
+  alt: 'Groupher community forum preview',
+}
 
 /** Demo wallpaper selections around the original product cover. */
 export const COVER_SCENES: readonly TCoverScene[] = [
-  {
-    id: 'feedback',
-    label: 'Collect feedback',
-    wallpaperType: WALLPAPER_TYPE.GRADIENT,
-    wallpaperSource: 'amber_mauve',
-    wallpaperImage: '/landing/wallpaper/amber-mauve-wide.webp',
-    wallpaperPreview: '/landing/wallpaper/amber-mauve-phone.webp',
-    wallpaperPanAxis: 'y',
-  },
   {
     id: 'inspiration',
     label: 'Inspire ideas',
@@ -32,6 +33,7 @@ export const COVER_SCENES: readonly TCoverScene[] = [
     wallpaperSource: 'backiee-3',
     wallpaperImage: picture('backiee-3'),
     wallpaperPreview: preview('backiee-3'),
+    coverImage: { ...currentCoverImage },
   },
   {
     id: 'gaming',
@@ -40,6 +42,7 @@ export const COVER_SCENES: readonly TCoverScene[] = [
     wallpaperSource: 'openscreen-wallpaper14',
     wallpaperImage: picture('openscreen-wallpaper14'),
     wallpaperPreview: preview('openscreen-wallpaper14'),
+    coverImage: { ...currentCoverImage },
   },
   {
     id: 'travel',
@@ -48,6 +51,7 @@ export const COVER_SCENES: readonly TCoverScene[] = [
     wallpaperSource: 'openscreen-wallpaper18',
     wallpaperImage: picture('openscreen-wallpaper18'),
     wallpaperPreview: preview('openscreen-wallpaper18'),
+    coverImage: { ...currentCoverImage },
   },
   {
     id: 'hardware',
@@ -56,6 +60,17 @@ export const COVER_SCENES: readonly TCoverScene[] = [
     wallpaperSource: 'sky_mauve_blue',
     wallpaperImage: gradient('sky_mauve_blue'),
     wallpaperPreview: gradient('sky_mauve_blue'),
+    coverImage: { ...currentCoverImage },
+  },
+  {
+    id: 'feedback',
+    label: 'Collect feedback',
+    wallpaperType: WALLPAPER_TYPE.GRADIENT,
+    wallpaperSource: 'amber_mauve',
+    wallpaperImage: '/landing/wallpaper/amber-mauve-wide.webp',
+    wallpaperPreview: '/landing/wallpaper/amber-mauve-phone.webp',
+    wallpaperPanAxis: 'y',
+    coverImage: { ...currentCoverImage },
   },
   {
     id: 'learning',
@@ -64,6 +79,7 @@ export const COVER_SCENES: readonly TCoverScene[] = [
     wallpaperSource: 'sw-1',
     wallpaperImage: picture('sw-1'),
     wallpaperPreview: preview('sw-1'),
+    coverImage: { ...currentCoverImage },
   },
   {
     id: 'creative',
@@ -72,6 +88,7 @@ export const COVER_SCENES: readonly TCoverScene[] = [
     wallpaperSource: 'backiee-6',
     wallpaperImage: picture('backiee-6'),
     wallpaperPreview: preview('backiee-6'),
+    coverImage: { ...currentCoverImage },
   },
   {
     id: 'software',
@@ -80,6 +97,7 @@ export const COVER_SCENES: readonly TCoverScene[] = [
     wallpaperSource: 'stone_green',
     wallpaperImage: gradient('stone_green'),
     wallpaperPreview: gradient('stone_green'),
+    coverImage: { ...currentCoverImage },
   },
   {
     id: 'growth',
@@ -88,5 +106,6 @@ export const COVER_SCENES: readonly TCoverScene[] = [
     wallpaperSource: 'backiee-4',
     wallpaperImage: picture('backiee-4'),
     wallpaperPreview: preview('backiee-4'),
+    coverImage: { ...currentCoverImage },
   },
 ]

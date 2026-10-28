@@ -28,11 +28,11 @@ const publishedSceneWallpaper = (source: string, url: string): TPublishedWallpap
 }
 
 export default function CoverSceneShell({ children, localeData, theme }: TProps) {
-  const [sceneId, setSceneId] = useState(COVER_SCENES[0].id)
+  const [sceneId, setSceneId] = useState('feedback')
   const scene = COVER_SCENES.find((item) => item.id === sceneId) ?? COVER_SCENES[0]
   const context = useMemo(() => ({ scene, selectScene: setSceneId }), [scene])
   const sceneWallpaper =
-    scene.id === COVER_SCENES[0].id
+    scene.id === 'feedback'
       ? LANDING_INIT_DATA.wallpaper.wallpaper
       : publishedSceneWallpaper(scene.wallpaperSource, scene.wallpaperImage)
   const wallpaper = {

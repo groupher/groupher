@@ -1,32 +1,33 @@
 .cover-scene-gallery {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, min(940px, 52vw)) minmax(0, 1fr);
-  align-items: end;
-  gap: 16px;
+  position: relative;
+  height: 640px;
   width: calc(100vw - var(--container-landing-inset) - var(--container-landing-inset));
   margin: 64px 0 0;
-  padding-inline: 1em;
 }
 
 .cover-scene-device {
+  position: absolute;
+  inset: 0;
   min-width: 0;
   overflow: hidden;
   box-shadow: 0 12px 32px rgb(38 35 56 / 10%);
 }
 
-.cover-scene-rail-group {
-  display: flex;
-  align-items: end;
-  gap: 18px;
-  height: 632px;
+.cover-scene-loop {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
-.cover-scene-rail-group-left {
-  justify-content: flex-end;
+.cover-scene-card {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  z-index: 1;
 }
 
-.cover-scene-rail-group-right {
-  justify-content: flex-start;
+.cover-scene-card[data-featured] {
+  z-index: 2;
 }
 
 .cover-scene-rail {
@@ -43,9 +44,8 @@
   border-radius: 14px;
   background-color: #f7f7f7;
   cursor: pointer;
-  transition:
-    box-shadow 220ms ease,
-    filter 220ms ease;
+  transition-property: filter;
+  transition-timing-function: ease;
   filter: saturate(0.82);
 }
 
@@ -96,10 +96,26 @@
   height: calc(var(--spacing) * 32);
 }
 
+.cover-scene-card .cover-scene-rail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 100%;
+}
+
+.cover-scene-card[data-featured] .cover-scene-rail-label {
+  opacity: 0;
+}
+
+.cover-scene-card .cover-scene-content {
+  height: 100%;
+}
+
 .cover-scene-rail:hover,
 .cover-scene-rail:focus-visible {
   filter: saturate(1);
-  box-shadow: 0 10px 24px rgb(38 35 56 / 16%);
 }
 
 .cover-scene-rail:focus-visible {
@@ -152,14 +168,9 @@
 
 @media (max-width: 1650px) {
   .cover-scene-gallery {
-    display: block;
     width: min(920px, calc(100% - 32px));
     margin: 64px auto 0;
     padding-inline: 0;
-  }
-
-  .cover-scene-rail-group {
-    display: none;
   }
 
   .cover-scene-mobile-rail {
@@ -179,14 +190,6 @@
     border-radius: 11px;
   }
 
-  .cover-scene-mobile-rail .cover-scene-rail-image {
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: auto;
-  }
-
   .cover-scene-mobile-rail .cover-scene-rail-label {
     margin: 0 8px 12px;
     font-size: 11px;
@@ -199,6 +202,7 @@
 
 @media (max-width: 640px) {
   .cover-scene-gallery {
+    height: 300px;
     margin-top: 12px;
   }
 
