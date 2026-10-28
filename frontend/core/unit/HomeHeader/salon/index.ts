@@ -32,7 +32,7 @@ export default function useSalon({ extend = false, isSticky = false }: TProps = 
       zIndex('header'),
       br('divider'),
     ),
-    inner: 'row-between w-full px-28 h-16',
+    inner: 'row-between container-landing-content h-16',
     brand: linkable(),
     links: 'row-center gap-x-4 ml-16 mt-px',
     linkItem: hoverLink(),
@@ -40,7 +40,7 @@ export default function useSalon({ extend = false, isSticky = false }: TProps = 
     stackLink: cn(hoverLink(), 'pl-3 hover:no-underline'),
     linkActive: cn(fg('title'), bg('hoverBg')),
     //
-    requestDemoLink: hoverLink('text-sm'),
+    requestDemoLink: cn(hoverLink('text-sm'), 'pr-0!'),
     demoIcon: cn(hoverLinkIcon(), 'mt-px'),
     arrowIcon: cn(hoverLinkIcon(), '-rotate-90 mt-px mr-0 ml-1'),
     //

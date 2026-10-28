@@ -3,12 +3,10 @@ import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-r
 import type { ReactNode } from 'react'
 
 import { LOCALE } from '~/const/i18n'
-import { LANDING_INIT_DATA } from '~/const/name'
 import { loadLocaleFile } from '~/i18n'
 import landingMessages from '~/i18n/en/landing-meta'
 import { I18N_NS } from '~/i18n/namespaces'
 import StaticLayout from '~/shell/StaticLayout'
-import StaticShellProvider from '~/stores/StaticShellProvider'
 import {
   PUBLIC_THEME_SEED,
   prePaintRuntimeSeedScript,
@@ -18,6 +16,7 @@ import {
 import '../domain.css'
 import '../../../core/tailwind/global.css'
 import NotFound from '../NotFound'
+import CoverSceneShell from '../stores/coverScene/CoverSceneShell'
 import Main from '../widgets/Main'
 
 export const Route = createRootRoute({
@@ -58,18 +57,11 @@ function RootComponent() {
       {import.meta.env.DEV ? (
         <DevHubReporter serviceId='landing' endpoint={import.meta.env.VITE_DEV_HUB_URL} />
       ) : null}
-      <StaticShellProvider
-        community={LANDING_INIT_DATA.community}
-        footerLinks={LANDING_INIT_DATA.footerLinks}
-        wallpaper={LANDING_INIT_DATA.wallpaper}
-        locale={LOCALE.EN}
-        localeData={JSON.stringify(localeData)}
-        theme={theme}
-      >
+      <CoverSceneShell localeData={JSON.stringify(localeData)} theme={theme}>
         <StaticLayout mainBlock={Main}>
           <Outlet />
         </StaticLayout>
-      </StaticShellProvider>
+      </CoverSceneShell>
     </>
   )
 }

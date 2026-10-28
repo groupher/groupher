@@ -1,19 +1,21 @@
 'use client'
 
-import { type FC, type ReactNode, useEffect, useRef } from 'react'
+import { useMotionValue, useReducedMotion, useScroll } from 'motion/react'
+import { type FC, type ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { cn } from '~/css'
 import useTrans from '~/hooks/useTrans'
 import HomeHeader from '~/unit/HomeHeader'
 import Footer from '~/unit/SiteFooter'
 
+import { CoverMotionContext } from '../stores/coverMotion/context'
 import useSalon from './salon/main'
 
 const LANDING_WIDTH_VAR = '--container-landing-width'
 const DEFAULT_CONTAINER_WIDTH = 1420
+const COVER_EXIT_CLEARANCE = 64
 const LANDING_WRAPPER_CLASS = cn(
   'container-landing-wrapper column relative isolate s-full min-h-fit',
-  'transition-all',
   'bg-pageBg',
 )
 
@@ -24,89 +26,85 @@ type TProps = {
 const Main: FC<TProps> = ({ children }) => {
   const s = useSalon()
   const { locale } = useTrans()
-
-  const layoutRef = useRef({
-    fromWidth: DEFAULT_CONTAINER_WIDTH,
-    toWidth: DEFAULT_CONTAINER_WIDTH,
-    scrollRange: 1,
-  })
+  const { scrollY } = useScroll()
+  const coverProgress = useMotionValue(0)
+  const reduceMotion = useReducedMotion()
+  const coverElement = useRef<HTMLDivElement | null>(null)
+  const refreshGeometry = useRef<() => void>(() => {})
+  const registerCover = useCallback((element: HTMLDivElement | null) => {
+    coverElement.current = element
+    refreshGeometry.current()
+  }, [])
+  const motionContext = useMemo(
+    () => ({ progress: coverProgress, registerCover }),
+    [coverProgress, registerCover],
+  )
 
   useEffect(() => {
+    const root = document.documentElement
     const getConfiguredContainerWidth = (): number => {
-      const varValue = window
-        .getComputedStyle(document.documentElement)
-        .getPropertyValue(`${LANDING_WIDTH_VAR}-init`)
-        .trim()
+      const rootStyle = window.getComputedStyle(root)
+      const varValue = rootStyle.getPropertyValue(`${LANDING_WIDTH_VAR}-init`).trim()
 
-      let value = DEFAULT_CONTAINER_WIDTH
-      if (varValue?.endsWith('px') || varValue?.endsWith('rem')) {
-        const tempDiv = document.createElement('div')
-        tempDiv.style.cssText = `visibility:hidden;position:fixed;max-width:${varValue};`
-        document.body.appendChild(tempDiv)
-        const computedStyle = window.getComputedStyle(tempDiv)
-        value = parseFloat(computedStyle.maxWidth)
-        document.body.removeChild(tempDiv)
-      }
-      return value
+      const value = Number.parseFloat(varValue)
+      if (!Number.isFinite(value)) return DEFAULT_CONTAINER_WIDTH
+      if (varValue.endsWith('rem')) return value * Number.parseFloat(rootStyle.fontSize)
+      return varValue.endsWith('px') ? value : DEFAULT_CONTAINER_WIDTH
     }
 
-    const updateVars = () => {
-      const tokenWidth = getConfiguredContainerWidth()
+    let fromWidth = window.innerWidth
+    let toWidth = Math.min(getConfiguredContainerWidth(), fromWidth)
+    let scrollRange = Math.max(window.innerHeight, 1)
+    let lastWidth = ''
 
-      const vw = window.innerWidth
-      const vh = window.innerHeight || 1
-      layoutRef.current = {
-        fromWidth: vw,
-        toWidth: Math.min(tokenWidth, vw),
-        scrollRange: vh,
-      }
+    const update = (scrollTop: number) => {
+      const progress = Math.min(1, Math.max(0, scrollTop / scrollRange))
+      coverProgress.set(progress)
+
+      let width = '100vw'
+      if (reduceMotion) width = `${toWidth}px`
+      else if (scrollTop > 0) width = `${fromWidth + progress * (toWidth - fromWidth)}px`
+      if (width === lastWidth) return
+      root.style.setProperty(LANDING_WIDTH_VAR, width)
+      lastWidth = width
     }
 
-    const updateContainerWidth = () => {
-      const scrollTop = window.scrollY
-
-      if (scrollTop === 0) {
-        document.documentElement.style.setProperty(`${LANDING_WIDTH_VAR}`, '100vw')
-        return
-      }
-
-      const { fromWidth, toWidth, scrollRange } = layoutRef.current
-      const progress = Math.min(scrollTop / scrollRange, 1)
-      const width = fromWidth + progress * (toWidth - fromWidth)
-      document.documentElement.style.setProperty(`${LANDING_WIDTH_VAR}`, `${width}px`)
+    const updateSize = () => {
+      fromWidth = window.innerWidth
+      toWidth = Math.min(getConfiguredContainerWidth(), fromWidth)
+      const coverBottom = coverElement.current?.getBoundingClientRect().bottom
+      const coverBottomInDocument =
+        coverBottom === undefined ? window.innerHeight : coverBottom + window.scrollY
+      scrollRange = Math.max(coverBottomInDocument - COVER_EXIT_CLEARANCE, 1)
+      update(window.scrollY)
     }
 
-    const updateLayout = () => {
-      updateVars()
-      updateContainerWidth()
-    }
-
-    let raf: number | null = null
-    const requestUpdate = () => {
-      if (raf !== null) cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => {
-        updateLayout()
-        raf = null
-      })
-    }
-
-    updateLayout()
-    window.addEventListener('resize', requestUpdate)
-    window.addEventListener('scroll', requestUpdate, { passive: true })
+    refreshGeometry.current = updateSize
+    updateSize()
+    const unsubscribe = scrollY.on('change', update)
+    window.addEventListener('resize', updateSize)
+    let active = true
+    void document.fonts?.ready.then(() => {
+      if (active) updateSize()
+    })
 
     return () => {
-      window.removeEventListener('resize', requestUpdate)
-      window.removeEventListener('scroll', requestUpdate)
-      if (raf !== null) cancelAnimationFrame(raf)
+      active = false
+      refreshGeometry.current = () => {}
+      unsubscribe()
+      window.removeEventListener('resize', updateSize)
+      root.style.removeProperty(LANDING_WIDTH_VAR)
     }
-  }, [])
+  }, [coverProgress, reduceMotion, scrollY])
 
   return (
-    <main key={locale} className={LANDING_WRAPPER_CLASS}>
-      <HomeHeader />
-      <div className={s.body}>{children}</div>
-      <Footer />
-    </main>
+    <CoverMotionContext value={motionContext}>
+      <main key={locale} className={LANDING_WRAPPER_CLASS}>
+        <HomeHeader />
+        <div className={s.body}>{children}</div>
+        <Footer />
+      </main>
+    </CoverMotionContext>
   )
 }
 

@@ -23,7 +23,7 @@ import Tooltip from '~/ui/Tooltip'
 import LeftRightFaqList from '~/unit/FaqList/LeftRightList'
 
 import ArticlesIntroTabs from './ArticlesIntroTabs'
-import CoverImage from './CoverImage'
+import CoversPreview from './CoversPreview'
 import Footer from './Footer'
 import JoinOurCommunity from './JoinOurCommunity'
 import useSalon, { cn } from './salon'
@@ -132,7 +132,7 @@ export default function Landing() {
           </div>
         </div>
 
-        <CoverImage />
+        <CoversPreview />
 
         <ArticlesIntroTabs />
 

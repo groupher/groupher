@@ -1,0 +1,62 @@
+import type { TCoverScene } from '../../../const/coverScenes'
+
+export type THeightTier = 0 | 1 | 2 | 3
+
+type TTileMotion = {
+  movementOrder: number
+  travelDistance: number
+  imagePanDistance: number
+}
+
+const TIER_MOTION: Record<THeightTier, { fadeRange: [number, number]; imagePanScale: number }> = {
+  0: { fadeRange: [0.7, 0.95], imagePanScale: 1.75 },
+  1: { fadeRange: [0.45, 0.7], imagePanScale: 1.2 },
+  2: { fadeRange: [0.2, 0.45], imagePanScale: 0.7 },
+  3: { fadeRange: [0.015, 0.2], imagePanScale: 0.35 },
+}
+
+const hash = (value: string): number => {
+  let result = 2166136261
+
+  for (let index = 0; index < value.length; index += 1) {
+    result = Math.imul(result ^ value.charCodeAt(index), 16777619)
+  }
+
+  return result >>> 0
+}
+
+/** Creates stable per-scene variation so server rendering and hydration agree. */
+export const getWallpaperTileMotion = (
+  scenes: readonly TCoverScene[],
+): Record<string, TTileMotion> => {
+  const randomizedOrder = [...scenes].sort(
+    (left, right) => hash(`${left.id}:order`) - hash(`${right.id}:order`),
+  )
+  const orderById = new Map(randomizedOrder.map((scene, index) => [scene.id, index]))
+
+  return Object.fromEntries(
+    scenes.map((scene) => [
+      scene.id,
+      {
+        movementOrder: orderById.get(scene.id) ?? 0,
+        travelDistance: 120 + (hash(`${scene.id}:distance`) % 121),
+        imagePanDistance:
+          ((scene.wallpaperPanAxis === 'y' ? 24 : 36) +
+            (hash(`${scene.id}:image-pan`) % (scene.wallpaperPanAxis === 'y' ? 9 : 29))) *
+          2 *
+          (hash(`${scene.id}:image-direction`) % 2 === 0 ? 1 : -1),
+      },
+    ]),
+  )
+}
+
+export const getWallpaperTileAnimation = (
+  motion: TTileMotion,
+  heightTier: THeightTier,
+  sceneCount: number,
+) => ({
+  travelDistance: motion.travelDistance,
+  imagePanDistance: motion.imagePanDistance * TIER_MOTION[heightTier].imagePanScale,
+  movementStart: (motion.movementOrder / sceneCount) * 0.3,
+  fadeRange: TIER_MOTION[heightTier].fadeRange,
+})
