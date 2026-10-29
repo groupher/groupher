@@ -95,5 +95,7 @@ minimumReleaseAgeExclude:
   - sanitize-html@2.18.1
   - files-sdk@3.1.1
   - devalue@6.0.3
+  # Reviewed Redact runtime used by all TanStack apps in this PR.
+  - '@tanstack/redact@0.2.3'
 patchedDependencies:
   pinyin-pro@3.29.3: patches/pinyin-pro@3.29.3.patch

@@ -140,9 +140,6 @@ importers:
       react-error-boundary:
         specifier: ^6.1.6
         version: 6.1.6(@types/react@19.3.0)(react@19.3.0)
-      react-flip-numbers:
-        specifier: ^3.0.8
-        version: 3.0.9(react-dom@19.3.0(react@19.3.0))(react-simple-animate@3.5.3(react-dom@19.3.0(react@19.3.0)))(react@19.3.0)
       react-highlight-words:
         specifier: ^1.0.0
         version: 1.0.0(react@19.3.0)
@@ -152,9 +149,6 @@ importers:
       react-resizable-panels:
         specifier: ^4.14.5
         version: 4.14.5(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      react-scroll-snap-anime-slider:
-        specifier: ^1.5.3
-        version: 1.5.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react-select:
         specifier: ^5.10.2
         version: 5.10.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(supports-color@10.2.2)
@@ -690,6 +684,9 @@ importers:
       '@tailwindcss/vite':
         specifier: 4.3.3
         version: 4.3.3(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      '@tanstack/redact':
+        specifier: 0.2.3
+        version: 0.2.3(@cloudflare/vite-plugin@2.0.0-beta.sha-ad79608dd(@types/node@24.13.3)(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(workerd@1.20260926.1))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       '@tanstack/router-generator':
         specifier: 1.167.43
         version: 1.167.43(supports-color@10.2.2)
@@ -751,6 +748,9 @@ importers:
       '@tailwindcss/vite':
         specifier: 4.3.3
         version: 4.3.3(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      '@tanstack/redact':
+        specifier: 0.2.3
+        version: 0.2.3(@cloudflare/vite-plugin@2.0.0-beta.sha-ad79608dd(@types/node@24.13.3)(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(workerd@1.20260926.1))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       '@tanstack/router-generator':
         specifier: 1.167.43
         version: 1.167.43(supports-color@10.2.2)
@@ -886,9 +886,6 @@ importers:
       react-content-loader:
         specifier: ^7.1.2
         version: 7.1.2(react@19.3.0)
-      react-flip-numbers:
-        specifier: ^3.0.8
-        version: 3.0.9(react-dom@19.3.0(react@19.3.0))(react-simple-animate@3.5.3(react-dom@19.3.0(react@19.3.0)))(react@19.3.0)
       react-highlight-words:
         specifier: ^1.0.0
         version: 1.0.0(react@19.3.0)
@@ -1041,6 +1038,9 @@ importers:
       '@tailwindcss/vite':
         specifier: 4.3.3
         version: 4.3.3(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      '@tanstack/redact':
+        specifier: 0.2.3
+        version: 0.2.3(@cloudflare/vite-plugin@2.0.0-beta.sha-ad79608dd(@types/node@24.13.3)(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(workerd@1.20260926.1))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       '@tanstack/router-generator':
         specifier: 1.167.43
         version: 1.167.43(supports-color@10.2.2)
@@ -1093,6 +1093,9 @@ importers:
       '@tailwindcss/vite':
         specifier: 4.3.3
         version: 4.3.3(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      '@tanstack/redact':
+        specifier: 0.2.3
+        version: 0.2.3(@cloudflare/vite-plugin@2.0.0-beta.sha-ad79608dd(@types/node@26.6.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(workerd@1.20260926.1))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       '@tanstack/router-generator':
         specifier: 1.167.43
         version: 1.167.43(supports-color@10.2.2)
@@ -1141,9 +1144,6 @@ importers:
       react-dom:
         specifier: ^19.3.0
         version: 19.3.0(react@19.3.0)
-      react-scroll-snap-anime-slider:
-        specifier: ^1.5.3
-        version: 1.5.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react-trend:
         specifier: ^1.2.4
         version: 1.2.5(react@19.3.0)
@@ -1157,6 +1157,9 @@ importers:
       '@tailwindcss/vite':
         specifier: 4.3.3
         version: 4.3.3(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      '@tanstack/redact':
+        specifier: 0.2.3
+        version: 0.2.3(@cloudflare/vite-plugin@2.0.0-beta.sha-ad79608dd(@types/node@26.6.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(workerd@1.20260926.1))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       '@tanstack/router-generator':
         specifier: 1.167.43
         version: 1.167.43(supports-color@10.2.2)
@@ -4574,12 +4577,6 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
-  '@popmotion/easing@1.0.2':
-    resolution: {integrity: sha512-IkdW0TNmRnWTeWI7aGQIVDbKXPWHVEYdGgd5ZR4SH/Ty/61p63jCjrPxX1XrR7IGkl08bjhJROStD7j+RKgoIw==}
-
-  '@popmotion/popcorn@0.4.4':
-    resolution: {integrity: sha512-jYO/8319fKoNLMlY4ZJPiPu8Ea8occYwRZhxpaNn/kZsK4QG2E7XFlXZMJBsTWDw7I1i0uaqyC4zn1nwEezLzg==}
-
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
@@ -5483,6 +5480,23 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  '@tanstack/redact@0.2.3':
+    resolution: {integrity: sha512-a+KRpHdWPDfM9tOci9k8Oxm3YlEC8thBac8nxN5k7tzLWM6hagz+hZr0A0ZLjRcpHMOEHVxASx33WyUVvfpffw==}
+    peerDependencies:
+      '@cloudflare/vite-plugin': 1.65.0
+      next: ~15.5.0 || ~16.0.0 || ~16.1.0 || ~16.2.0 || ~16.3.0 || ~16.4.0
+      vinext: ~1.3.0
+      vite: '>=5'
+    peerDependenciesMeta:
+      '@cloudflare/vite-plugin':
+        optional: true
+      next:
+        optional: true
+      vinext:
+        optional: true
+      vite:
+        optional: true
 
   '@tanstack/router-core@1.171.37':
     resolution: {integrity: sha512-11Le36++mHNeeFIABz4C3PdTWyJ1ilOmGmANOQOypknZwC1xN674al5BUqWuimKasWane1/XSNcEx8NYNHh0+A==}
@@ -7665,9 +7679,6 @@ packages:
       react-dom:
         optional: true
 
-  framesync@4.1.0:
-    resolution: {integrity: sha512-MmgZ4wCoeVxNbx2xp5hN/zPDCbLSKiDt4BbbslK7j/pM2lg5S0vhTNv1v8BCVb99JPIo6hXBFdwzU7Q4qcAaoQ==}
-
   fresh@0.5.2:
     resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
     engines: {node: '>= 0.6'}
@@ -7876,9 +7887,6 @@ packages:
 
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
-
-  hey-listen@1.0.8:
-    resolution: {integrity: sha512-COpmrF2NOg4TBWUJ5UVyaCU2A88wEMkUPK4hNqyCkqHbxT92BbvfjoSozkAIIm6XhicGlJHhFdullInrdhwU8Q==}
 
   highlight-words-core@2.0.0:
     resolution: {integrity: sha512-dKFj8EZQ8yvU9b/88WGZGwsFC0wmKk5wEVOL4D4POzASma8Gct9LvWax6gPpIzBIF+z8N0si3t1mxyYxOHmjhw==}
@@ -9465,9 +9473,6 @@ packages:
     resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
     engines: {node: '>=14.19.0'}
 
-  popmotion@8.7.1:
-    resolution: {integrity: sha512-XVQQnlmc8nLKBbR9gGVtsjNe/g1mOzg9TzWR2cE2bztvZe/IaSDDV6OY8HZcbcL+yUg3lJn4hh4MWbV+J8mj9Q==}
-
   portless@0.15.4:
     resolution: {integrity: sha512-tOxEsdlDGuPHO6DPkuK3c3mMV5ctXEgVFm53Sa8nfZ2RsRGTq4By424C6z5+JWfNbd3ktR5SOd1FJBOlB1Woqg==}
     engines: {node: '>=24'}
@@ -9646,13 +9651,6 @@ packages:
       '@types/react':
         optional: true
 
-  react-flip-numbers@3.0.9:
-    resolution: {integrity: sha512-ZFpFIz5wxT00rPuMfmCfPOsnC09u9oxYV3zPlfG1X79N58a5bwFvZcfl6BIosowa2tI9t9KyJIYcJICFyr5Y5g==}
-    peerDependencies:
-      react: ^16.8.0 || ^17 || ^18 || ^19
-      react-dom: ^16.8.0 || ^17 || ^18 || ^19
-      react-simple-animate: ^3.0.1
-
   react-highlight-words@1.0.0:
     resolution: {integrity: sha512-783Dim5Q6X51x4yGlU2+XDr5L3r9P+3iI1zuRx4khbjqNOZObUoGOtZ5V7UdN8zrpz/IUo+cAdSoYJu4Y0Vo1w==}
     peerDependencies:
@@ -9716,22 +9714,11 @@ packages:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
 
-  react-scroll-snap-anime-slider@1.5.4:
-    resolution: {integrity: sha512-sp8RvOY/3NYzrte/P0Eci0FYw0genjN8IkXBEQ1e5K+XyphNIbM8ib1Htgs4JA2alsT/zYrQI2mOSwYBgBWZKA==}
-    peerDependencies:
-      react: '>=16.8'
-      react-dom: '>=16.8'
-
   react-select@5.10.2:
     resolution: {integrity: sha512-Z33nHdEFWq9tfnfVXaiM12rbJmk+QjFEztWLtmXqQhz6Al4UZZ9xc0wiatmGtUOCCnHN0WizL3tCMYRENX4rVQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
-  react-simple-animate@3.5.3:
-    resolution: {integrity: sha512-Ob+SmB5J1tXDEZyOe2Hf950K4M8VaWBBmQ3cS2BUnTORqHjhK0iKG8fB+bo47ZL15t8d3g/Y0roiqH05UBjG7A==}
-    peerDependencies:
-      react-dom: ^16.8.0 || ^17 || ^18 || ^19
 
   react-stately@3.51.0:
     resolution: {integrity: sha512-YJcmkAXu2XOQP97hO/qz/cC3qv9kni3oVhwBlxWr358BHePJUpY15XwL3YSRMKxYt4EkslPqAz11JRirMfANGw==}
@@ -10371,12 +10358,6 @@ packages:
   stubborn-utils@1.0.2:
     resolution: {integrity: sha512-zOh9jPYI+xrNOyisSelgym4tolKTJCQd5GBhK0+0xJvcYDcwlOoxF/rnFKQ2KRZknXSG9jWAp66fwP6AxN9STg==}
 
-  style-value-types@3.2.0:
-    resolution: {integrity: sha512-ih0mGsrYYmVvdDi++/66O6BaQPRPRMQHoZevNNdMMcPlP/cH28Rnfsqf1UEba/Bwfuw9T8BmIMwbGdzsPwQKrQ==}
-
-  stylefire@7.0.3:
-    resolution: {integrity: sha512-Q0l7NSeFz/OkX+o6/7Zg3VZxSAZeQzQpYomWmIpOehFM/rJNMSLVX5fgg6Q48ut2ETNKwdhm97mPNU643EBCoQ==}
-
   stylis@4.2.0:
     resolution: {integrity: sha512-Orov6g6BB1sDfYgzWfTHDOxamtX1bE/zo104Dh9e6fqJ3PooipYyfJ0pUmrZO2wAvO8YbEyeFrkV91XTsGMSrw==}
 
@@ -10576,9 +10557,6 @@ packages:
     hasBin: true
     peerDependencies:
       typescript: '>=3'
-
-  tslib@1.14.1:
-    resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
@@ -13330,7 +13308,7 @@ snapshots:
 
   '@groupher/contracts@file:packages/contracts': {}
 
-  '@groupher/frontend-core@file:frontend/core(@babel/core@7.29.7(supports-color@10.2.2))(@babel/template@7.29.7)(@tanstack/react-query@5.104.2(react@19.3.0))(@tanstack/react-router@1.170.44(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(immer@11.1.18)(react-dom@19.3.0(react@19.3.0))(react-simple-animate@3.5.3(react-dom@19.3.0(react@19.3.0)))(react@19.3.0)(scheduler@0.28.0)(supports-color@10.2.2)(typescript@7.0.2)(use-sync-external-store@1.6.0(react@19.3.0))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
+  '@groupher/frontend-core@file:frontend/core(@babel/core@7.29.7(supports-color@10.2.2))(@babel/template@7.29.7)(@tanstack/react-query@5.104.2(react@19.3.0))(@tanstack/react-router@1.170.44(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(immer@11.1.18)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(scheduler@0.28.0)(supports-color@10.2.2)(typescript@7.0.2)(use-sync-external-store@1.6.0(react@19.3.0))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)
@@ -13372,7 +13350,6 @@ snapshots:
       react-aria-components: 1.22.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react-content-loader: 7.1.2(react@19.3.0)
       react-dom: 19.3.0(react@19.3.0)
-      react-flip-numbers: 3.0.9(react-dom@19.3.0(react@19.3.0))(react-simple-animate@3.5.3(react-dom@19.3.0(react@19.3.0)))(react@19.3.0)
       react-highlight-words: 1.0.0(react@19.3.0)
       react-masonry-css: 1.0.16(react@19.3.0)
       react-resizable-panels: 4.14.5(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -13398,7 +13375,6 @@ snapshots:
       - '@vgpu/adapter-node'
       - immer
       - react-native
-      - react-simple-animate
       - scheduler
       - solid-js
       - supports-color
@@ -14697,16 +14673,6 @@ snapshots:
     dependencies:
       playwright: 1.64.0
 
-  '@popmotion/easing@1.0.2': {}
-
-  '@popmotion/popcorn@0.4.4':
-    dependencies:
-      '@popmotion/easing': 1.0.2
-      framesync: 4.1.0
-      hey-listen: 1.0.8
-      style-value-types: 3.2.0
-      tslib: 1.14.1
-
   '@popperjs/core@2.11.8': {}
 
   '@poppinss/colors@4.1.6':
@@ -15635,6 +15601,20 @@ snapshots:
       '@tanstack/virtual-core': 3.19.2
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
+
+  '@tanstack/redact@0.2.3(@cloudflare/vite-plugin@2.0.0-beta.sha-ad79608dd(@types/node@24.13.3)(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(workerd@1.20260926.1))(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
+    dependencies:
+      magic-string: 0.30.21
+    optionalDependencies:
+      '@cloudflare/vite-plugin': 2.0.0-beta.sha-ad79608dd(@types/node@24.13.3)(vite@8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(workerd@1.20260926.1)
+      vite: 8.3.4(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
+
+  '@tanstack/redact@0.2.3(@cloudflare/vite-plugin@2.0.0-beta.sha-ad79608dd(@types/node@26.6.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(workerd@1.20260926.1))(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
+    dependencies:
+      magic-string: 0.30.21
+    optionalDependencies:
+      '@cloudflare/vite-plugin': 2.0.0-beta.sha-ad79608dd(@types/node@26.6.5)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))(workerd@1.20260926.1)
+      vite: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
 
   '@tanstack/router-core@1.171.37':
     dependencies:
@@ -18087,10 +18067,6 @@ snapshots:
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
 
-  framesync@4.1.0:
-    dependencies:
-      hey-listen: 1.0.8
-
   fresh@0.5.2: {}
 
   fresh@2.0.0:
@@ -18321,8 +18297,6 @@ snapshots:
   hermes-parser@0.25.1:
     dependencies:
       hermes-estree: 0.25.1
-
-  hey-listen@1.0.8: {}
 
   highlight-words-core@2.0.0: {}
 
@@ -20345,16 +20319,6 @@ snapshots:
 
   pngjs@7.0.0: {}
 
-  popmotion@8.7.1:
-    dependencies:
-      '@popmotion/easing': 1.0.2
-      '@popmotion/popcorn': 0.4.4
-      framesync: 4.1.0
-      hey-listen: 1.0.8
-      style-value-types: 3.2.0
-      stylefire: 7.0.3
-      tslib: 1.14.1
-
   portless@0.15.4: {}
 
   possible-typed-array-names@1.1.0: {}
@@ -20553,12 +20517,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
 
-  react-flip-numbers@3.0.9(react-dom@19.3.0(react@19.3.0))(react-simple-animate@3.5.3(react-dom@19.3.0(react@19.3.0)))(react@19.3.0):
-    dependencies:
-      react: 19.3.0
-      react-dom: 19.3.0(react@19.3.0)
-      react-simple-animate: 3.5.3(react-dom@19.3.0(react@19.3.0))
-
   react-highlight-words@1.0.0(react@19.3.0):
     dependencies:
       highlight-words-core: 2.0.0
@@ -20611,12 +20569,6 @@ snapshots:
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
 
-  react-scroll-snap-anime-slider@1.5.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
-    dependencies:
-      popmotion: 8.7.1
-      react: 19.3.0
-      react-dom: 19.3.0(react@19.3.0)
-
   react-select@5.10.2(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(supports-color@10.2.2):
     dependencies:
       '@babel/runtime': 7.29.7
@@ -20633,10 +20585,6 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
       - supports-color
-
-  react-simple-animate@3.5.3(react-dom@19.3.0(react@19.3.0)):
-    dependencies:
-      react-dom: 19.3.0(react@19.3.0)
 
   react-stately@3.51.0(react@19.3.0):
     dependencies:
@@ -21595,19 +21543,6 @@ snapshots:
 
   stubborn-utils@1.0.2: {}
 
-  style-value-types@3.2.0:
-    dependencies:
-      hey-listen: 1.0.8
-      tslib: 1.14.1
-
-  stylefire@7.0.3:
-    dependencies:
-      '@popmotion/popcorn': 0.4.4
-      framesync: 4.1.0
-      hey-listen: 1.0.8
-      style-value-types: 3.2.0
-      tslib: 1.14.1
-
   stylis@4.2.0: {}
 
   stylis@4.4.0: {}
@@ -21786,8 +21721,6 @@ snapshots:
   tsc-files@1.1.4(typescript@7.0.2):
     dependencies:
       typescript: 7.0.2
-
-  tslib@1.14.1: {}
 
   tslib@2.8.1: {}
 

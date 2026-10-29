@@ -22,6 +22,7 @@ type TProps = {
 
 const Title: FC<TProps> = ({ docId = null, value, disabled = false, publishState, onChange }) => {
   const s = useSalon()
+  const [clientReady, setClientReady] = useState(false)
   const draft = needsPublishAttention(publishState)
   const [stageView, setStageView] = useState<TTitleStageView | null>(
     draft ? TITLE_STAGE_VIEW.DRAFT : null,
@@ -29,6 +30,8 @@ const Title: FC<TProps> = ({ docId = null, value, disabled = false, publishState
   const stageViewRef = useRef<TTitleStageView | null>(stageView)
   const docIdRef = useRef(docId)
   const hideTimerRef = useRef<number | null>(null)
+
+  useEffect(() => setClientReady(true), [])
 
   useEffect(() => {
     stageViewRef.current = stageView
@@ -90,7 +93,7 @@ const Title: FC<TProps> = ({ docId = null, value, disabled = false, publishState
   }
 
   return (
-    <div className={s.wrapper}>
+    <div className={s.wrapper} data-testid={clientReady ? 'doc-title-client-ready' : undefined}>
       <Input
         behavior='textarea'
         fgColor='title'

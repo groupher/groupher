@@ -5,6 +5,7 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import { createVgpuWgslVitePlugin } from '@groupher/frontend-core/vgpu-vite'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { redact } from '@tanstack/redact/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -20,12 +21,13 @@ export default defineConfig({
   },
   publicDir: path.join(dashRoot, 'public'),
   resolve: {
-    alias:
-      process.env.E2E_AUTH_STACK === '1'
-        ? {
-            'cloudflare:workers': path.join(dashRoot, 'src/server/cloudflare-workers.e2e.ts'),
-          }
-        : undefined,
+    alias: {
+      ...(process.env.E2E_AUTH_STACK === '1'
+        ? { 'cloudflare:workers': path.join(dashRoot, 'src/server/cloudflare-workers.e2e.ts') }
+        : {}),
+      'react-compiler-runtime': '@tanstack/redact/compiler-runtime',
+      'use-sync-external-store/shim/index.js': '@tanstack/redact',
+    },
     tsconfigPaths: true,
   },
   server: {
@@ -42,11 +44,7 @@ export default defineConfig({
       allow: [repoRoot],
     },
   },
-  ssr: {
-    // The package is CommonJS. Bundling it preserves the default component import
-    // used by the shared core Tooltip during SSR.
-    noExternal: ['@groupher/tooltip'],
-  },
+  ssr: { noExternal: process.env.E2E_AUTH_STACK === '1' ? ['@groupher/tooltip'] : true },
   plugins: [
     ...(process.env.E2E_AUTH_STACK === '1'
       ? []
@@ -54,6 +52,7 @@ export default defineConfig({
     tanstackStart(),
     createVgpuWgslVitePlugin(),
     viteReact(),
+    redact(),
     tailwindcss(),
   ],
 })

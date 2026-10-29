@@ -20,14 +20,3 @@ export const getFontSize = (size: TSize): number => {
     }
   }
 }
-
-export const getFlipNumOffset = (size: TSize): number => {
-  switch (size) {
-    case SIZE.MEDIUM: {
-      return 7
-    }
-    default: {
-      return 6
-    }
-  }
-}

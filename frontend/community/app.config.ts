@@ -5,6 +5,7 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import { createVgpuWgslVitePlugin } from '@groupher/frontend-core/vgpu-vite'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { redact } from '@tanstack/redact/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -20,7 +21,13 @@ export default defineConfig({
     'process.env.NEXT_PUBLIC_AUTH_ENDPOINT': JSON.stringify(process.env.NEXT_PUBLIC_AUTH_ENDPOINT),
   },
   publicDir: path.join(communityRoot, 'public'),
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    alias: {
+      'react-compiler-runtime': '@tanstack/redact/compiler-runtime',
+      'use-sync-external-store/shim/index.js': '@tanstack/redact',
+    },
+    tsconfigPaths: true,
+  },
   server: {
     port: communityPort,
     strictPort: true,
@@ -33,7 +40,7 @@ export default defineConfig({
     },
     fs: { allow: [repoRoot] },
   },
-  ssr: { noExternal: ['@groupher/tooltip'] },
+  ssr: { noExternal: process.env.E2E_AUTH_STACK === '1' ? ['@groupher/tooltip'] : true },
   plugins: [
     ...(process.env.E2E_AUTH_STACK === '1'
       ? []
@@ -47,6 +54,7 @@ export default defineConfig({
     }),
     createVgpuWgslVitePlugin(),
     viteReact(),
+    redact(),
     tailwindcss(),
   ],
 })
