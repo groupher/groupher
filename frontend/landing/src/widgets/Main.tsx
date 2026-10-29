@@ -6,7 +6,6 @@ import { type FC, type ReactNode, useCallback, useEffect, useMemo, useRef } from
 import { cn } from '~/css'
 import useTrans from '~/hooks/useTrans'
 import HomeHeader from '~/unit/HomeHeader'
-import Footer from '~/unit/SiteFooter'
 
 import { LANDING_COVER_EXIT_CLEARANCE, LANDING_COVER_RANGE_KEY } from '../landingCoverBootstrap'
 import {
@@ -17,6 +16,7 @@ import {
 } from '../landingOpening'
 import { CoverMotionContext } from '../stores/coverMotion/context'
 import useSalon from './salon/main'
+import StaticFooter from './StaticFooter'
 
 const LANDING_WRAPPER_CLASS = cn(
   'container-landing-wrapper column relative isolate s-full min-h-fit',
@@ -123,7 +123,7 @@ const Main: FC<TProps> = ({ children }) => {
         <main key={locale} className={LANDING_WRAPPER_CLASS}>
           <HomeHeader />
           <div className={s.body}>{children}</div>
-          <Footer />
+          <StaticFooter />
         </main>
       </div>
     </CoverMotionContext>

@@ -204,4 +204,13 @@ export default {
   'landing.footer.desc.chores': '杂活儿',
   'landing.footer.desc.suffix': '」交给 Groupher',
   'landing.footer.cta': '创建新社区',
+  'landing.static_footer.product': '产品',
+  'landing.static_footer.pricing': '价格',
+  'landing.static_footer.book_demo': '预约演示',
+  'landing.static_footer.create': '创建社区',
+  'landing.static_footer.community': '社区',
+  'landing.static_footer.forum': '官方社区',
+  'landing.static_footer.docs': '使用文档',
+  'landing.static_footer.feedback': '反馈建议',
+  'landing.static_footer.report': '违法信息举报',
 }

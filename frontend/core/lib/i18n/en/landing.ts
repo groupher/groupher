@@ -230,4 +230,13 @@ export default {
   'landing.footer.desc.chores': 'busywork',
   'landing.footer.desc.suffix': 'to Groupher',
   'landing.footer.cta': 'Create a Community',
+  'landing.static_footer.product': 'Product',
+  'landing.static_footer.pricing': 'Pricing',
+  'landing.static_footer.book_demo': 'Book a Demo',
+  'landing.static_footer.create': 'Create a Community',
+  'landing.static_footer.community': 'Community',
+  'landing.static_footer.forum': 'Official Community',
+  'landing.static_footer.docs': 'Documentation',
+  'landing.static_footer.feedback': 'Give Feedback',
+  'landing.static_footer.report': 'Report illegal content',
 }
