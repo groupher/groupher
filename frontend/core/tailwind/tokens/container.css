@@ -1,7 +1,8 @@
 :root {
   /* ===== containers ====== */
-  --container-landing-width: 100vw;
+  --container-landing-width: var(--container-landing-width-init);
   --container-landing-width-init: 1425px;
+  --container-landing-inset: 7rem;
   --container-article-width: 42rem;
   --container-article-left-shift: 4rem;
   --container-community-width: 1280px;

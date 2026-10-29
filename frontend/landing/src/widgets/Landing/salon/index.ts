@@ -18,7 +18,7 @@ export default function useSalon() {
   const colorFill = ''
 
   return {
-    wrapper: cn('column-align-both relative h-full w-full overflow-hidden', container()),
+    wrapper: cn('column-align-both relative h-full w-full', container()),
     inner: 'column-align-both relative s-full',
     banner: 'column-center relative w-full pt-16',
     githubInfo: cn('row-center mt-12 mb-3 hover:underline pointer', fg('digest')),

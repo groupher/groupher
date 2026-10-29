@@ -169,3 +169,63 @@
     }
   }
 }
+
+/* The opening is full width at the top while the page content keeps its fixed width. */
+.landing-opening-backdrop {
+  position: absolute;
+  top: -4rem;
+  left: 50%;
+  width: var(--landing-opening-width, 100vw);
+  height: clamp(1200px, 100vh, 1500px);
+  mask-image: linear-gradient(to bottom, black 25%, transparent 100%);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* Section gradients share the opening's changing width while their content stays fixed. */
+.landing-opening-surface {
+  left: 50%;
+  width: var(--landing-opening-width, 100vw);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+@keyframes landing-opening-collapse {
+  from {
+    width: 100vw;
+  }
+
+  to {
+    width: min(100vw, var(--container-landing-width-init));
+  }
+}
+
+@supports (animation-timeline: scroll(root block)) and (animation-range: 0px 1200px) {
+  .landing-opening-backdrop {
+    bottom: 0;
+    height: auto;
+    mask-image: none;
+  }
+
+  .landing-opening-backdrop,
+  .landing-opening-surface {
+    animation: landing-opening-collapse linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0px 1200px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-opening-backdrop {
+    bottom: auto;
+    width: 100vw;
+    height: clamp(1200px, 100vh, 1500px);
+    mask-image: linear-gradient(to bottom, black 25%, transparent 100%);
+    animation: none;
+  }
+
+  .landing-opening-surface {
+    width: 100vw;
+    animation: none;
+  }
+}

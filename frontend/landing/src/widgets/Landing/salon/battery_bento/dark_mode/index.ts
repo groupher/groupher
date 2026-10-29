@@ -10,7 +10,7 @@ export default function useSalon() {
   const base = useBase()
 
   return {
-    wrapper: cn(base.baseCard, 'overflow-hidden', `hover:${rainbow(COLOR.CYAN, 'border')}`),
+    wrapper: cn(base.baseCard, 'isolate overflow-hidden', `hover:${rainbow(COLOR.CYAN, 'border')}`),
     inner: cn(
       'absolute -top-16 -left-16 -ml-2 w-[150%] h-[150%] -z-10 trans-all-200',
       base.gradient(COLOR.CYAN),

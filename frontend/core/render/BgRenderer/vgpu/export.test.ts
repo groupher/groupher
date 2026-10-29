@@ -6,9 +6,12 @@ import { exportVgpuWallpaper, exportVgpuWallpaperBatch } from './export'
 
 const mocks = vi.hoisted(() => ({
   effect: vi.fn(),
+  draw: vi.fn(),
   frame: vi.fn(),
   init: vi.fn(),
   surface: vi.fn(),
+  target: vi.fn(),
+  pass: vi.fn(),
 }))
 
 vi.mock('vgpu', () => mocks)
@@ -71,13 +74,21 @@ describe('exportVgpuWallpaper', () => {
       format: 'rgba8unorm',
       sampleCount: 1,
     }
-    const mesh = { compile: vi.fn().mockResolvedValue(undefined) }
+    const mesh = { compile: vi.fn().mockResolvedValue(undefined), set: vi.fn() }
 
     mocks.init.mockResolvedValue(gpu)
     mocks.surface.mockReturnValue(surface)
+    mocks.target.mockReturnValue({
+      size: [1, 1],
+      format: 'rgba16float',
+      sampleCount: 1,
+      color: { destroy: vi.fn() },
+      resize: vi.fn(),
+    })
     mocks.effect.mockReturnValue(mesh)
+    mocks.draw.mockReturnValue(mesh)
     mocks.frame.mockImplementation((_gpu, callback) => {
-      callback({ pass: vi.fn() })
+      callback({ pass: mocks.pass })
       return { done: Promise.resolve() }
     })
 
@@ -116,6 +127,14 @@ describe('exportVgpuWallpaper', () => {
     })
 
     expect(exported.mimeType).toBe('image/webp')
+    expect(mocks.pass).toHaveBeenCalledTimes(2)
+    expect(mocks.pass.mock.calls[0][0]).toBe(mocks.target.mock.results[0].value)
+    expect(mocks.pass.mock.calls[1][0]).toBe(mocks.surface.mock.results[0].value)
+    expect(mocks.effect.mock.results[0].value.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: { resolution: [1200, 630], blurRadius: 3, brightness: 1, saturation: 1 },
+      }),
+    )
   })
 
   it('reuses one GPU device for a multi-target batch', async () => {

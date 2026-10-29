@@ -15,7 +15,7 @@ export default function useSalon() {
     ),
     mask: bg('hoverBg'),
 
-    bar: cn('absolute top-1 w-20 h-5 rounded-md opacity-20', bg('digest')),
-    redBg: rainbow(COLOR.RED, 'bg'),
+    bar: cn('absolute rounded-md', bg('digest')),
+    redBar: cn('absolute rounded-md', rainbow(COLOR.RED, 'bg')),
   }
 }

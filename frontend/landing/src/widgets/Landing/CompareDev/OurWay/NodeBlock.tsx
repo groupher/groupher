@@ -39,14 +39,14 @@ const NodeBlock: FC<TProps> = ({
   leftDot = 'bottom-4',
   rightDot = 'bottom-4',
 }) => {
-  const s = useSalon({ bgColor: bg })
+  const s = useSalon({ bgColor: bg, isDefault: cat === 'DEFAULT' })
   const { t } = useTrans()
   const users = mockUsers(10)
 
   const metric = getMetricMap(t)[cat]
 
   return (
-    <div className={cn(s.wrapper, className, cat === 'DEFAULT' && 'h-32')}>
+    <div className={cn(s.wrapper, className)}>
       {cat === ARTICLE_CAT.IDEA && <ClipSVG className={s.attachIcon} />}
       {cat === ARTICLE_CAT.QA && <PinSVG className={cn(s.attachIcon, 'rotate-12 size-5 -top-2')} />}
       {cat === ARTICLE_CAT.BUG && <TargetSVG className={s.attachIcon} />}
@@ -83,7 +83,7 @@ const NodeBlock: FC<TProps> = ({
 
         <div className={s.text}>{metric.title}</div>
       </div>
-      <div className={cn(s.innerCard, cat === 'DEFAULT' && 'h-20')}>
+      <div className={s.innerCard}>
         <div className={cn(s.bar, 'w-24')} />
         <div className={s.bar} />
 

@@ -20,7 +20,7 @@ export default function useSalon({ tab }: TProps) {
     title: landingTitle(),
     desc: cn('text-lg mt-3', fg('digest'), isDarkTheme && 'opacity-65'),
     //
-    content: 'column items-center relative w-full px-30 h-[720px] overflow-hidden',
+    content: 'column items-center relative isolate w-full px-30 h-[720px] overflow-hidden',
     inner: 'row-between w-10/12 h-full pl-16 -mt-8',
     graphDemo: 'align-both w-1/2 h-full mr-2',
 

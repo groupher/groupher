@@ -93,9 +93,8 @@ Dash 和 Community 的 `PUBLIC_THEME_SEED` 目前是 `light/system`。这可以�
 
 以下组件使用双分支资源和 `data-theme` CSS 选择：
 
-- [`frontend/landing/src/widgets/Landing/CoverImage/DesktopDevice.tsx`](../../../frontend/landing/src/widgets/Landing/CoverImage/DesktopDevice.tsx)
+- [`frontend/landing/src/widgets/Landing/CoversPreview/MainCover.tsx`](../../../frontend/landing/src/widgets/Landing/CoversPreview/MainCover.tsx)
 - [`frontend/landing/src/widgets/Landing/DashboardIntros/LayoutTab/WallpaperCard.tsx`](../../../frontend/landing/src/widgets/Landing/DashboardIntros/LayoutTab/WallpaperCard.tsx)
-- [`frontend/landing/src/widgets/Landing/CoverImage/ImageSlider.tsx`](../../../frontend/landing/src/widgets/Landing/CoverImage/ImageSlider.tsx)
 
 这些路径不再依赖 SSR 阶段的 React 主题布尔值选择首屏图片。
 

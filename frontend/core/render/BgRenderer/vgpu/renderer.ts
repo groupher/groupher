@@ -1,8 +1,9 @@
-import { effect, frame, init, surface } from 'vgpu'
-import type { Gpu, Surface } from 'vgpu'
+import { frame, surface } from 'vgpu'
+import type { Draw, Gpu, Surface } from 'vgpu'
 
 import type { TBgRenderSpec } from '~/lib/bg'
 
+import { createWallpaperMesh, getWallpaperVariantKey } from './mesh'
 import { toVgpuBlurRadius, toVgpuMeshParams } from './params'
 import {
   createPatternFallbackTexture,
@@ -10,11 +11,10 @@ import {
   loadPatternTexture,
   type TPatternTexture,
 } from './pattern'
+import { createWallpaperPostProcess } from './postProcess'
 import { resolvePreviewSurfaceSize } from './previewSize'
+import { acquireWallpaperGpu } from './sharedGpu'
 import './wgsl-env.d.ts'
-import wallpaperMeshShader from './wallpaper-mesh.wgsl'
-
-const GPU_INIT_TIMEOUT_MS = 10_000
 
 const getStaticParamsKey = (renderSpec: TBgRenderSpec): string => {
   const meshRecipe = renderSpec.meshRecipe
@@ -47,29 +47,6 @@ export type TBgVgpuRenderer = {
   destroy: () => void
 }
 
-const initGpuWithTimeout = async (): Promise<Gpu> => {
-  let timedOut = false
-  let timeoutId: ReturnType<typeof setTimeout> | undefined
-  const initPromise = init({ label: 'wallpaper-runtime', powerPreference: 'high-performance' })
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => {
-      timedOut = true
-      reject(new Error(`BG_VGPU_INIT_TIMEOUT: WebGPU init exceeded ${GPU_INIT_TIMEOUT_MS}ms`))
-    }, GPU_INIT_TIMEOUT_MS)
-  })
-
-  try {
-    return await Promise.race([initPromise, timeoutPromise])
-  } catch (error) {
-    if (timedOut) {
-      void initPromise.then((lateGpu) => lateGpu.dispose()).catch(() => undefined)
-    }
-    throw error
-  } finally {
-    if (timeoutId !== undefined) clearTimeout(timeoutId)
-  }
-}
-
 class BgVgpuRenderer implements TBgVgpuRenderer {
   private readonly gpu: Gpu
   private readonly canvas: HTMLCanvasElement
@@ -77,7 +54,9 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
   private readonly patternFallback: TPatternTexture
   private readonly imageFallback: TPatternTexture
   private readonly patternSampler: GPUSampler
-  private readonly mesh: ReturnType<typeof effect>
+  private readonly meshes = new Map<string, Draw>()
+  private readonly releaseGpu: () => void
+  private readonly postProcess: ReturnType<typeof createWallpaperPostProcess>
   private readonly onFailure: (error: Error) => void
   private readonly unsubscribeError: () => void
   private renderSpec: TBgRenderSpec
@@ -111,6 +90,7 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
 
   constructor(
     gpu: Gpu,
+    releaseGpu: () => void,
     canvas: HTMLCanvasElement,
     renderSpec: TBgRenderSpec,
     onFailure: (error: Error) => void,
@@ -119,50 +99,52 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
     renderLogicalSize?: readonly [number, number],
   ) {
     this.gpu = gpu
+    this.releaseGpu = releaseGpu
     this.canvas = canvas
     this.renderSpec = renderSpec
     this.patternSize = patternSize
     this.renderSize = renderSize
     this.renderLogicalSize = renderLogicalSize
     this.onFailure = onFailure
-    this.canvasSurface = surface(gpu, canvas, {
-      autoResize: false,
-      alphaMode: 'premultiplied',
-      clearColor: [0, 0, 0, 0],
-      label: 'wallpaper-runtime-surface',
-    })
-    this.patternFallback = createPatternFallbackTexture(gpu.gpu, 'wallpaper-vgpu-pattern-fallback')
-    this.patternTexture = this.patternFallback
-    this.imageFallback = createPatternFallbackTexture(gpu.gpu, 'wallpaper-vgpu-image-fallback')
-    this.imageTexture = this.imageFallback
-    this.patternSampler = gpu.gpu.createSampler({
-      addressModeU: 'clamp-to-edge',
-      addressModeV: 'clamp-to-edge',
-      magFilter: 'linear',
-      minFilter: 'linear',
-    })
-    this.mesh = effect(gpu, wallpaperMeshShader, {
-      label: 'wallpaper-runtime-mesh',
-      set: {
-        params: toVgpuMeshParams(renderSpec),
-        patternSampler: this.patternSampler,
-        patternTexture: this.patternTexture.texture,
-        imageSampler: this.patternSampler,
-        imageTexture: this.imageTexture.texture,
-      },
-    })
-    this.unsubscribeError = gpu.onError((error) => {
-      if (this.ready) this.fail(error)
-      else this.startupErrors.push(error)
-    })
+    const cleanup: Array<() => void> = []
+    try {
+      this.canvasSurface = surface(gpu, canvas, {
+        autoResize: false,
+        alphaMode: 'premultiplied',
+        clearColor: [0, 0, 0, 0],
+        label: 'wallpaper-runtime-surface',
+      })
+      cleanup.push(() => this.canvasSurface.dispose())
+      this.patternFallback = createPatternFallbackTexture(
+        gpu.gpu,
+        'wallpaper-vgpu-pattern-fallback',
+      )
+      cleanup.push(() => this.patternFallback.texture.destroy())
+      this.patternTexture = this.patternFallback
+      this.imageFallback = createPatternFallbackTexture(gpu.gpu, 'wallpaper-vgpu-image-fallback')
+      cleanup.push(() => this.imageFallback.texture.destroy())
+      this.imageTexture = this.imageFallback
+      this.patternSampler = gpu.gpu.createSampler({
+        addressModeU: 'clamp-to-edge',
+        addressModeV: 'clamp-to-edge',
+        magFilter: 'linear',
+        minFilter: 'linear',
+      })
+      this.unsubscribeError = gpu.onError((error) => {
+        if (this.ready) this.fail(error)
+        else this.startupErrors.push(error)
+      })
+      cleanup.push(this.unsubscribeError)
+      this.postProcess = createWallpaperPostProcess(gpu)
+    } catch (error) {
+      for (const dispose of cleanup.reverse()) dispose()
+      throw error
+    }
   }
 
   async prepare(): Promise<void> {
     await Promise.all([this.syncPatternTexture(), this.syncImageTexture()])
-    await this.mesh.compile({
-      colors: [this.canvasSurface.format],
-      sampleCount: this.canvasSurface.sampleCount,
-    })
+    await this.postProcess.compile(this.canvasSurface)
     await this.renderImmediately()
     await this.gpu.settled()
     if (this.startupErrors.length > 0) throw this.startupErrors[0]
@@ -221,19 +203,22 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
     this.renderQueued = false
     this.unsubscribeError()
     this.canvasSurface.dispose()
-    this.deferDestroy(this.patternTexture.texture)
+    this.postProcess.destroy()
+    this.deferDestroy(this.patternTexture.texture, true)
     if (this.patternFallback.texture !== this.patternTexture.texture) {
-      this.deferDestroy(this.patternFallback.texture)
+      this.deferDestroy(this.patternFallback.texture, true)
     }
-    this.deferDestroy(this.imageTexture.texture)
+    this.deferDestroy(this.imageTexture.texture, true)
     if (this.imageFallback.texture !== this.imageTexture.texture) {
-      this.deferDestroy(this.imageFallback.texture)
+      this.deferDestroy(this.imageFallback.texture, true)
     }
-    this.gpu.dispose()
+    this.meshes.clear()
+    this.releaseGpu()
   }
 
   private scheduleRender(): void {
-    if (this.disposed) return
+    // Texture loading during prepare must not race the explicit first-frame compile/render.
+    if (this.disposed || !this.ready) return
 
     this.renderQueued = true
     if (this.renderInFlight || this.frameId !== null) return
@@ -314,15 +299,26 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
       imageSize[1] = this.imageHeight
     }
     this.meshParams.imageReady = this.imageReady ? 1 : 0
-    this.mesh.set({
+    const variantKey = getWallpaperVariantKey(this.meshParams)
+    let mesh = this.meshes.get(variantKey)
+    if (!mesh) {
+      mesh = createWallpaperMesh(this.gpu, this.meshParams)
+      this.meshes.set(variantKey, mesh)
+    }
+    await mesh.compile(this.postProcess.scene)
+    if (this.disposed) return
+    // A pattern/image can finish loading while a new variant compiles. Bind the
+    // current textures after that await so the frame cannot use a retired texture.
+    mesh.set({
       params: this.meshParams,
       patternSampler: this.patternSampler,
       patternTexture: this.patternTexture.texture,
       imageSampler: this.patternSampler,
       imageTexture: this.imageTexture.texture,
     })
+    this.postProcess.update(size, this.meshParams)
     const currentFrame = frame(this.gpu, (gpuFrame) => {
-      gpuFrame.pass(this.canvasSurface, this.mesh)
+      this.postProcess.encode(gpuFrame, this.canvasSurface, mesh)
     })
     await currentFrame.done
   }
@@ -424,8 +420,12 @@ class BgVgpuRenderer implements TBgVgpuRenderer {
     this.scheduleRender()
   }
 
-  private deferDestroy(texture: GPUTexture): void {
-    if (texture === this.patternFallback.texture || texture === this.imageFallback.texture) return
+  private deferDestroy(texture: GPUTexture, includeFallback = false): void {
+    if (
+      !includeFallback &&
+      (texture === this.patternFallback.texture || texture === this.imageFallback.texture)
+    )
+      return
 
     void this.gpu.gpu.queue
       .onSubmittedWorkDone()
@@ -443,22 +443,24 @@ export const createBgVgpuRenderer = async (
   renderSize?: readonly [number, number],
   renderLogicalSize?: readonly [number, number],
 ): Promise<TBgVgpuRenderer> => {
-  const gpu = await initGpuWithTimeout()
-  const renderer = new BgVgpuRenderer(
-    gpu,
-    canvas,
-    renderSpec,
-    onFailure,
-    patternSize,
-    renderSize,
-    renderLogicalSize,
-  )
-
+  const lease = await acquireWallpaperGpu()
+  let renderer: BgVgpuRenderer | undefined
   try {
+    renderer = new BgVgpuRenderer(
+      lease.gpu,
+      lease.release,
+      canvas,
+      renderSpec,
+      onFailure,
+      patternSize,
+      renderSize,
+      renderLogicalSize,
+    )
     await renderer.prepare()
     return renderer
   } catch (error) {
-    renderer.destroy()
+    if (renderer) renderer.destroy()
+    else lease.release()
     throw error
   }
 }

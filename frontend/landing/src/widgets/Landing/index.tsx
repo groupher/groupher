@@ -22,8 +22,9 @@ import Facepile from '~/ui/Facepile'
 import Tooltip from '~/ui/Tooltip'
 import LeftRightFaqList from '~/unit/FaqList/LeftRightList'
 
+import CoverMotionProvider from '../../stores/coverMotion/Provider'
 import ArticlesIntroTabs from './ArticlesIntroTabs'
-import CoverImage from './CoverImage'
+import CoversPreview from './CoversPreview'
 import Footer from './Footer'
 import JoinOurCommunity from './JoinOurCommunity'
 import useSalon, { cn } from './salon'
@@ -58,6 +59,7 @@ export default function Landing() {
     <div className={s.wrapper} data-testid='landing-page'>
       {/* <DashboardIntros /> */}
       {/* <PatternBg /> */}
+      <div className='landing-opening-backdrop bg-pageBg' aria-hidden='true' />
       <div className={s.inner}>
         {/* <BgGlow wallpaper={wallpaper} /> */}
         <div className={s.banner}>
@@ -132,7 +134,9 @@ export default function Landing() {
           </div>
         </div>
 
-        <CoverImage />
+        <CoverMotionProvider>
+          <CoversPreview />
+        </CoverMotionProvider>
 
         <ArticlesIntroTabs />
 

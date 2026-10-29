@@ -1,0 +1,191 @@
+.cover-scene-gallery {
+  height: 640px;
+  width: calc(100vw - var(--container-landing-inset) - var(--container-landing-inset));
+}
+
+.cover-scene-device {
+  box-shadow: 0 12px 32px rgb(38 35 56 / 10%);
+}
+
+.cover-scene-card[data-featured] {
+  z-index: 2;
+}
+
+.cover-scene-rail {
+  flex: 1 0 0;
+  border: 1px solid rgb(255 255 255 / 52%);
+  border-radius: 14px;
+  background-color: #f7f7f7;
+  transition-property: filter;
+  transition-timing-function: ease;
+  filter: saturate(0.82);
+}
+
+.cover-scene-rail-image {
+  left: calc(0px - var(--rail-pan-overflow));
+  width: calc(100% + var(--rail-pan-overflow) + var(--rail-pan-overflow));
+  background-image:
+    linear-gradient(rgb(255 255 255 / 15%), rgb(255 255 255 / 18%) 60%, rgb(255 255 255 / 35%)),
+    var(--rail-wallpaper);
+}
+
+.cover-scene-rail-image[data-pan-axis='y'] {
+  top: calc(0px - var(--rail-pan-overflow));
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: calc(100% + var(--rail-pan-overflow) + var(--rail-pan-overflow));
+}
+
+/* The head script paints restored rails before their Motion values hydrate. */
+html[data-landing-cover-booting='true'] .cover-scene-card:not([data-featured]) .cover-scene-rail {
+  opacity: var(--landing-cover-boot-opacity) !important;
+  visibility: var(--landing-cover-boot-visibility) !important;
+  transform: translateY(var(--landing-cover-boot-y)) !important;
+}
+
+html[data-landing-cover-booting='true'] .cover-scene-rail-image[data-pan-axis='x'] {
+  transform: translateX(var(--landing-cover-boot-pan)) !important;
+}
+
+html[data-landing-cover-booting='true'] .cover-scene-rail-image[data-pan-axis='y'] {
+  transform: translateY(var(--landing-cover-boot-pan)) !important;
+}
+
+.cover-scene-rail[data-wallpaper-type='gradient'] .cover-scene-rail-image {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 5%), rgb(255 255 255 / 10%)), var(--rail-wallpaper);
+}
+
+.cover-scene-rail[data-wallpaper-type='gradient'] {
+  filter: saturate(1);
+}
+
+.cover-scene-rail[data-scene-id='gaming'] .cover-scene-rail-image {
+  background-size: 100% 100%;
+}
+
+.cover-scene-rail[data-height-tier='1'] {
+  height: calc(var(--spacing) * 96);
+}
+
+.cover-scene-rail[data-height-tier='2'] {
+  height: calc(var(--spacing) * 64);
+}
+
+.cover-scene-rail[data-height-tier='3'] {
+  height: calc(var(--spacing) * 32);
+}
+
+.cover-scene-card .cover-scene-rail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 100%;
+}
+
+.cover-scene-card[data-featured] .cover-scene-rail-label {
+  opacity: 0;
+}
+
+.cover-scene-card .cover-scene-content {
+  height: 100%;
+}
+
+.cover-scene-rail:hover,
+.cover-scene-rail:focus-visible {
+  filter: saturate(1);
+}
+
+.cover-scene-rail:focus-visible {
+  outline: 3px solid #6461a7;
+  outline-offset: 3px;
+}
+
+.cover-scene-rail-label {
+  margin-bottom: 22px;
+  color: #302b36;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 8px rgb(255 255 255 / 80%);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.cover-scene-content {
+  height: 640px;
+}
+
+.cover-scene-stage {
+  aspect-ratio: 1.405;
+  border: 1px solid rgb(255 255 255 / 75%);
+  border-radius: 15px 15px 0 0;
+  background: #f8f6f8;
+  box-shadow: 0 24px 60px rgb(24 28 38 / 20%);
+}
+
+.cover-scene-product-image {
+  width: 111%;
+  transform: translate(-5%, -7.3%);
+}
+
+@media (max-width: 1650px) {
+  .cover-scene-loop {
+    display: none;
+  }
+
+  .cover-scene-gallery {
+    width: min(920px, calc(100% - 32px));
+    margin: 64px auto 0;
+    padding-inline: 0;
+  }
+
+  .cover-scene-mobile-rail {
+    display: flex;
+    gap: 14px;
+    max-width: calc(100% - 32px);
+    margin: 36px auto 0;
+    overflow-x: auto;
+    padding: 4px 4px 18px;
+  }
+
+  .cover-scene-mobile-rail .cover-scene-rail {
+    flex: 0 0 118px;
+    min-width: 118px;
+    max-width: 118px;
+    height: calc(var(--spacing) * 20);
+    border-radius: 11px;
+  }
+
+  .cover-scene-mobile-rail .cover-scene-rail-label {
+    margin: 0 8px 12px;
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: normal;
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .cover-scene-gallery {
+    height: 300px;
+    margin-top: 12px;
+  }
+
+  .cover-scene-content {
+    height: 300px;
+  }
+
+  .cover-scene-stage {
+    max-width: 420px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-scene-rail {
+    transition: none;
+  }
+}

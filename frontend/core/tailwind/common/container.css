@@ -11,6 +11,11 @@
   max-width: var(--container-landing-width);
 }
 
+@utility container-landing-content {
+  width: calc(100% - var(--container-landing-inset) - var(--container-landing-inset));
+  margin-inline: auto;
+}
+
 @utility container-article-wrapper {
   margin-left: max(
     0px,

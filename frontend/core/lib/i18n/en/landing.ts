@@ -125,29 +125,21 @@ export default {
   'landing.battery.desc':
     'Skip the tedious setup and get a fully functional feedback community instantly.',
   'landing.battery.bundle.title': 'Lean & Lightweight',
-  'landing.battery.bundle.desc':
-    'Smaller bundle size compared with similar products in China and overseas.',
+  'landing.battery.bundle.desc': 'Smaller bundles than comparable feedback tools.',
   'landing.battery.mobile.title': 'Mobile Friendly',
-  'landing.battery.mobile.desc':
-    'Everything adapts to phones, tablets, and other small screens with full feature parity.',
+  'landing.battery.mobile.desc': 'Works smoothly across phones, tablets, and desktops.',
   'landing.battery.rich.title': 'Rich Content',
-  'landing.battery.rich.desc':
-    'Supports mainstream rich text and multimedia content, with Markdown compatibility.',
+  'landing.battery.rich.desc': 'Rich text, media, and Markdown in every post.',
   'landing.battery.dark.title': 'Dark Mode',
-  'landing.battery.dark.desc':
-    'A carefully designed dual-theme system that also works with custom settings.',
+  'landing.battery.dark.desc': 'A polished dark theme with custom color support.',
   'landing.battery.integration.title': 'One-Line Integration',
-  'landing.battery.integration.desc':
-    'Embed feedback components into your site via sidebar, modal, iframe, and more with one line of code.',
+  'landing.battery.integration.desc': 'Add feedback with a sidebar, modal, or iframe.',
   'landing.battery.security.title': 'Control Your Data',
-  'landing.battery.security.desc':
-    'Manage community content securely and move or deploy seamlessly when needed.',
+  'landing.battery.security.desc': 'Own your content and move or deploy it anytime.',
   'landing.battery.statistics.title': 'Analytics',
-  'landing.battery.statistics.desc':
-    'Track visits, regions, traffic sources, and more to understand your users better.',
+  'landing.battery.statistics.desc': 'See visits, regions, and traffic sources at a glance.',
   'landing.battery.design.title': 'Beautiful by Default',
-  'landing.battery.design.desc':
-    'Thoughtful design and rich customization details add polish to your product ecosystem.',
+  'landing.battery.design.desc': 'Flexible themes and thoughtful details, built in.',
   'landing.dashboard.title': 'A Complete Admin Dashboard',
   'landing.dashboard.desc':
     'Powerful customization and management controls for your brand and content workflows.',
@@ -230,4 +222,13 @@ export default {
   'landing.footer.desc.chores': 'busywork',
   'landing.footer.desc.suffix': 'to Groupher',
   'landing.footer.cta': 'Create a Community',
+  'landing.static_footer.product': 'Product',
+  'landing.static_footer.pricing': 'Pricing',
+  'landing.static_footer.book_demo': 'Book a Demo',
+  'landing.static_footer.create': 'Create a Community',
+  'landing.static_footer.community': 'Community',
+  'landing.static_footer.forum': 'Official Community',
+  'landing.static_footer.docs': 'Documentation',
+  'landing.static_footer.feedback': 'Give Feedback',
+  'landing.static_footer.report': 'Report illegal content',
 }

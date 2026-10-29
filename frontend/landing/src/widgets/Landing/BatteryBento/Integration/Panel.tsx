@@ -17,11 +17,11 @@ const Panel: FC<TProps> = ({ hovering }) => {
       <div className={cn(s.block, hovering && s.mask)}>
         <Header />
 
-        <div className={cn(s.bar, 'left-5 top-10 h-3.5 opacity-50')} />
-        <div className={cn(s.bar, 'left-5 top-16 h-1.5 opacity-20')} />
+        <div className={cn(s.bar, 'left-5 top-10 h-3.5 w-20 opacity-50')} />
+        <div className={cn(s.bar, 'left-5 top-16 h-1.5 w-20 opacity-20')} />
         <div className={cn(s.bar, 'left-5 top-20 h-1.5 w-16 opacity-15')} />
 
-        <div className={cn(s.bar, s.redBg, 'left-5 top-24 h-3 w-10 opacity-50')} />
+        <div className={cn(s.redBar, 'left-5 top-24 h-3 w-10 opacity-50')} />
 
         <div className={cn(s.bar, 'right-20 top-10 h-14 w-12 opacity-15')} />
         <div className={cn(s.bar, 'right-4 top-10 h-16 w-12 opacity-10')} />
