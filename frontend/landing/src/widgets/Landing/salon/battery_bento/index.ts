@@ -28,6 +28,6 @@ export default function useSalon() {
       return cn(`gradient-${color$}`, `hover:${rainbow(color, 'border')}`)
     },
     introTitle: cn('text-base mb-1', fg('title')),
-    introDesc: cn('text-sm break-all', fg('digest')),
+    introDesc: cn('text-sm leading-5 line-clamp-2 break-words', fg('digest')),
   }
 }

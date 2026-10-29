@@ -12,7 +12,12 @@ const Header: FC<TProps> = ({ hovering }) => {
   const s = useSalon()
 
   return (
-    <div className={cn(s.wrapper, !hovering && '-top-8')}>
+    <div
+      className={cn(
+        s.wrapper,
+        hovering ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0',
+      )}
+    >
       <div className={s.actions}>
         <div className={cn(s.dot, s.redBg)} />
         <div className={cn(s.dot, s.yellowBg)} />
