@@ -40,7 +40,7 @@ export default defineConfig({
     },
     fs: { allow: [repoRoot] },
   },
-  ssr: { noExternal: true },
+  ssr: { noExternal: process.env.E2E_AUTH_STACK === '1' ? ['@groupher/tooltip'] : true },
   plugins: [
     ...(process.env.E2E_AUTH_STACK === '1'
       ? []

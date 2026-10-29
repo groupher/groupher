@@ -95,10 +95,7 @@ const clearAccessCookie = async (context: BrowserContext): Promise<void> => {
 }
 
 const waitForTitleHydration = async (page: Page): Promise<void> => {
-  await page.waitForFunction(() => {
-    const input = document.querySelector('textarea[placeholder="Title"]')
-    return Boolean(input && Object.keys(input).some((key) => key.startsWith('__reactProps$')))
-  })
+  await expect(page.getByTestId('doc-title-client-ready')).toBeVisible()
 }
 
 const runProtectedOperation = async (
