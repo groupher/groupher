@@ -56,10 +56,10 @@ export const COVER_SCENES: readonly TCoverScene[] = [
   {
     id: 'hardware',
     label: 'Share updates',
-    wallpaperType: WALLPAPER_TYPE.GRADIENT,
-    wallpaperSource: 'sky_mauve_blue',
-    wallpaperImage: gradient('sky_mauve_blue'),
-    wallpaperPreview: gradient('sky_mauve_blue'),
+    wallpaperType: WALLPAPER_TYPE.PATTERN,
+    wallpaperSource: 'swt',
+    wallpaperImage: picture('swt'),
+    wallpaperPreview: preview('swt'),
     coverImage: { ...currentCoverImage },
   },
   {
