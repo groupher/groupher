@@ -7,6 +7,7 @@ const LANDING_WIDE_BREAKPOINT = 1680
 const LANDING_DEFAULT_WIDTH = 1425
 const LANDING_WIDE_WIDTH = 1520
 
+/** Interpolates the opening container width from the viewport to its desktop limit during scroll. */
 export const getLandingOpeningWidth = (viewportWidth: number, scrollTop: number): number => {
   const limit =
     viewportWidth >= LANDING_WIDE_BREAKPOINT ? LANDING_WIDE_WIDTH : LANDING_DEFAULT_WIDTH

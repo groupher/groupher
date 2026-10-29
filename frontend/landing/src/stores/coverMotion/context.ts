@@ -15,6 +15,11 @@ const useCoverMotion = (): TCoverMotionContext => {
   return context
 }
 
+/** Shares the opening cover's scroll progress with its animated descendants. */
 export const useCoverMotionProgress = (): MotionValue<number> => useCoverMotion().progress
+
+/** Registers the cover element used as the scroll animation target. */
 export const useCoverMotionTarget = () => useCoverMotion().registerCover
+
+/** Starts the cover animation after its scene is ready. */
 export const useCoverMotionActivation = () => useCoverMotion().activateCover

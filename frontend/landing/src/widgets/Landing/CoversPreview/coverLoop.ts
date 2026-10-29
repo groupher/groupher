@@ -18,6 +18,7 @@ export const getCoverSlot = (sceneIndex: number, activeIndex: number): number =>
   return forward > SIDE_COUNT ? forward - COVER_SCENES.length : forward
 }
 
+/** Fits the active cover and side tiles into the measured gallery width. */
 export const getCoverGeometry = (slot: number, galleryWidth: number): TCoverSlot => {
   const tileWidth = Math.min(96, Math.max(64, galleryWidth * 0.05))
   const coverWidth = Math.min(

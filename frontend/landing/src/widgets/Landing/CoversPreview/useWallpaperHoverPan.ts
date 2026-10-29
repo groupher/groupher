@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef } from 'react'
 
 type TAnimation = ReturnType<typeof animate>
 
+/** Combines hover panning with scroll panning and stops the previous hover animation on change. */
 export default function useWallpaperHoverPan(
   hoverDistance: number,
   scrollPan?: MotionValue<number>,

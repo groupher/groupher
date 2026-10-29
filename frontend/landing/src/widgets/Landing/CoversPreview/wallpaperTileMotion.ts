@@ -15,6 +15,7 @@ export type TWallpaperTileFrameInput = {
   fadeRange: [number, number]
 }
 
+/** Resolves a tile's fade and pan at scroll progress, suppressing movement for reduced motion. */
 export const getWallpaperTileFrame = (
   progress: number,
   motion: TWallpaperTileFrameInput,
@@ -76,6 +77,7 @@ export const getWallpaperTileMotion = (
   )
 }
 
+/** Applies height-tier timing and pan scale to a scene's stable motion settings. */
 export const getWallpaperTileAnimation = (
   motion: TTileMotion,
   heightTier: THeightTier,
