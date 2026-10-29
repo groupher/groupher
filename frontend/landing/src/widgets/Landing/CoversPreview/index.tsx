@@ -1,7 +1,8 @@
 import { AnimatePresence, LazyMotion, domAnimation, useReducedMotion } from 'motion/react'
+import { useEffect } from 'react'
 
 import { COVER_SCENES } from '../../../const/coverScenes'
-import { useCoverMotionTarget } from '../../../stores/coverMotion/context'
+import { useCoverMotionActivation, useCoverMotionTarget } from '../../../stores/coverMotion/context'
 import { useCoverScene } from '../../../stores/coverScene/context'
 import useSalon from '../salon/covers_preview'
 import DesktopCoverLoop from './DesktopCoverLoop'
@@ -15,8 +16,13 @@ export default function CoversPreview() {
   const s = useSalon()
   const { scene: activeScene } = useCoverScene()
   const registerCover = useCoverMotionTarget()
+  const activateCover = useCoverMotionActivation()
   const reducedMotion = useReducedMotion() ?? false
   const desktopLayout = useDesktopCoverLayout()
+
+  useEffect(() => {
+    if (!desktopLayout) activateCover()
+  }, [activateCover, desktopLayout])
 
   return (
     <LazyMotion features={domAnimation}>

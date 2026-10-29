@@ -2,7 +2,10 @@ import { useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { COVER_SCENES } from '../../../const/coverScenes'
-import { useCoverMotionProgress } from '../../../stores/coverMotion/context'
+import {
+  useCoverMotionActivation,
+  useCoverMotionProgress,
+} from '../../../stores/coverMotion/context'
 import { useCoverScene } from '../../../stores/coverScene/context'
 import { getCoverSlot, SIDE_COUNT, type TCoverTransition } from './coverLoop'
 import CoverLoopScene from './CoverLoopScene'
@@ -10,6 +13,7 @@ import CoverLoopScene from './CoverLoopScene'
 export default function DesktopCoverLoop() {
   const { scene, selectScene } = useCoverScene()
   const coverProgress = useCoverMotionProgress()
+  const activateCover = useCoverMotionActivation()
   const reducedMotion = useReducedMotion() ?? false
   const [activeIndex, setActiveIndex] = useState(() =>
     COVER_SCENES.findIndex((item) => item.id === scene.id),
@@ -37,6 +41,8 @@ export default function DesktopCoverLoop() {
     observer.observe(element)
     return () => observer.disconnect()
   }, [])
+
+  useEffect(() => activateCover(), [activateCover])
 
   const select = useCallback(
     (id: string) => {

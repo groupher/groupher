@@ -13,6 +13,9 @@ import {
   prePaintThemeDetectScript,
 } from '~/utils/ssr/script'
 
+import { prePaintLandingCoverScript } from '../landingCoverBootstrap'
+import { prePaintLandingOpeningScript } from '../landingOpening'
+
 import '../domain.css'
 import '../../../core/tailwind/global.css'
 import NotFound from '../NotFound'
@@ -81,7 +84,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <script
           // oxlint-disable-next-line react/no-danger -- Theme and time must be seeded before paint.
           dangerouslySetInnerHTML={{
-            __html: `${prePaintThemeDetectScript(theme)}\n${prePaintRuntimeSeedScript(renderedAt)}`,
+            __html: `${prePaintThemeDetectScript(theme)}\n${prePaintRuntimeSeedScript(renderedAt)}\n${prePaintLandingOpeningScript}\n${prePaintLandingCoverScript}`,
           }}
         />
         <HeadContent />

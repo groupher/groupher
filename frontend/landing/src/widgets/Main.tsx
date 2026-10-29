@@ -1,6 +1,6 @@
 'use client'
 
-import { useMotionValue, useReducedMotion, useScroll } from 'motion/react'
+import { useMotionValue, useScroll } from 'motion/react'
 import { type FC, type ReactNode, useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { cn } from '~/css'
@@ -8,12 +8,16 @@ import useTrans from '~/hooks/useTrans'
 import HomeHeader from '~/unit/HomeHeader'
 import Footer from '~/unit/SiteFooter'
 
+import { LANDING_COVER_EXIT_CLEARANCE, LANDING_COVER_RANGE_KEY } from '../landingCoverBootstrap'
+import {
+  getLandingOpeningWidth,
+  LANDING_OPENING_END,
+  LANDING_OPENING_SCROLL_KEY,
+  LANDING_OPENING_WIDTH_VAR,
+} from '../landingOpening'
 import { CoverMotionContext } from '../stores/coverMotion/context'
 import useSalon from './salon/main'
 
-const LANDING_WIDTH_VAR = '--container-landing-width'
-const DEFAULT_CONTAINER_WIDTH = 1420
-const COVER_EXIT_CLEARANCE = 64
 const LANDING_WRAPPER_CLASS = cn(
   'container-landing-wrapper column relative isolate s-full min-h-fit',
   'bg-pageBg',
@@ -28,54 +32,64 @@ const Main: FC<TProps> = ({ children }) => {
   const { locale } = useTrans()
   const { scrollY } = useScroll()
   const coverProgress = useMotionValue(0)
-  const reduceMotion = useReducedMotion()
   const coverElement = useRef<HTMLDivElement | null>(null)
+  const coverReady = useRef(false)
   const refreshGeometry = useRef<() => void>(() => {})
   const registerCover = useCallback((element: HTMLDivElement | null) => {
     coverElement.current = element
     refreshGeometry.current()
   }, [])
+  const activateCover = useCallback(() => {
+    if (coverReady.current) return
+    coverReady.current = true
+    refreshGeometry.current()
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.documentElement.removeAttribute('data-landing-cover-booting')
+      })
+    })
+  }, [])
   const motionContext = useMemo(
-    () => ({ progress: coverProgress, registerCover }),
-    [coverProgress, registerCover],
+    () => ({ progress: coverProgress, registerCover, activateCover }),
+    [coverProgress, registerCover, activateCover],
   )
 
   useEffect(() => {
     const root = document.documentElement
-    const getConfiguredContainerWidth = (): number => {
-      const rootStyle = window.getComputedStyle(root)
-      const varValue = rootStyle.getPropertyValue(`${LANDING_WIDTH_VAR}-init`).trim()
-
-      const value = Number.parseFloat(varValue)
-      if (!Number.isFinite(value)) return DEFAULT_CONTAINER_WIDTH
-      if (varValue.endsWith('rem')) return value * Number.parseFloat(rootStyle.fontSize)
-      return varValue.endsWith('px') ? value : DEFAULT_CONTAINER_WIDTH
-    }
-
-    let fromWidth = window.innerWidth
-    let toWidth = Math.min(getConfiguredContainerWidth(), fromWidth)
+    const cssDrivesOpening =
+      CSS.supports('animation-timeline', 'scroll(root block)') &&
+      CSS.supports('animation-range', `0px ${LANDING_OPENING_END}px`)
     let scrollRange = Math.max(window.innerHeight, 1)
-    let lastWidth = ''
 
     const update = (scrollTop: number) => {
       const progress = Math.min(1, Math.max(0, scrollTop / scrollRange))
-      coverProgress.set(progress)
+      if (coverReady.current) coverProgress.set(progress)
+      if (!cssDrivesOpening) {
+        root.style.setProperty(
+          LANDING_OPENING_WIDTH_VAR,
+          `${getLandingOpeningWidth(window.innerWidth, scrollTop)}px`,
+        )
+      }
+    }
 
-      let width = '100vw'
-      if (reduceMotion) width = `${toWidth}px`
-      else if (scrollTop > 0) width = `${fromWidth + progress * (toWidth - fromWidth)}px`
-      if (width === lastWidth) return
-      root.style.setProperty(LANDING_WIDTH_VAR, width)
-      lastWidth = width
+    const persistScroll = () => {
+      try {
+        window.sessionStorage.setItem(
+          LANDING_OPENING_SCROLL_KEY + window.location.pathname,
+          String(window.scrollY),
+        )
+        window.sessionStorage.setItem(
+          LANDING_COVER_RANGE_KEY + window.location.pathname,
+          String(scrollRange),
+        )
+      } catch (_error) {}
     }
 
     const updateSize = () => {
-      fromWidth = window.innerWidth
-      toWidth = Math.min(getConfiguredContainerWidth(), fromWidth)
       const coverBottom = coverElement.current?.getBoundingClientRect().bottom
       const coverBottomInDocument =
         coverBottom === undefined ? window.innerHeight : coverBottom + window.scrollY
-      scrollRange = Math.max(coverBottomInDocument - COVER_EXIT_CLEARANCE, 1)
+      scrollRange = Math.max(coverBottomInDocument - LANDING_COVER_EXIT_CLEARANCE, 1)
       update(window.scrollY)
     }
 
@@ -83,6 +97,9 @@ const Main: FC<TProps> = ({ children }) => {
     updateSize()
     const unsubscribe = scrollY.on('change', update)
     window.addEventListener('resize', updateSize)
+    window.addEventListener('pagehide', persistScroll)
+    window.addEventListener('pageshow', updateSize)
+    document.addEventListener('visibilitychange', persistScroll)
     let active = true
     void document.fonts?.ready.then(() => {
       if (active) updateSize()
@@ -93,17 +110,22 @@ const Main: FC<TProps> = ({ children }) => {
       refreshGeometry.current = () => {}
       unsubscribe()
       window.removeEventListener('resize', updateSize)
-      root.style.removeProperty(LANDING_WIDTH_VAR)
+      window.removeEventListener('pagehide', persistScroll)
+      window.removeEventListener('pageshow', updateSize)
+      document.removeEventListener('visibilitychange', persistScroll)
+      root.style.removeProperty(LANDING_OPENING_WIDTH_VAR)
     }
-  }, [coverProgress, reduceMotion, scrollY])
+  }, [coverProgress, scrollY])
 
   return (
     <CoverMotionContext value={motionContext}>
-      <main key={locale} className={LANDING_WRAPPER_CLASS}>
-        <HomeHeader />
-        <div className={s.body}>{children}</div>
-        <Footer />
-      </main>
+      <div className='relative w-full overflow-x-clip'>
+        <main key={locale} className={LANDING_WRAPPER_CLASS}>
+          <HomeHeader />
+          <div className={s.body}>{children}</div>
+          <Footer />
+        </main>
+      </div>
     </CoverMotionContext>
   )
 }

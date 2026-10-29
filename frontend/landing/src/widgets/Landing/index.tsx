@@ -4,8 +4,6 @@
  * LandingPage
  */
 
-import { lazy, Suspense } from 'react'
-
 import { DASH_SITE_URL } from '~/config'
 import { ROUTE } from '~/const/route'
 import useTheme from '~/hooks/useTheme'
@@ -23,16 +21,15 @@ import Tooltip from '~/ui/Tooltip'
 import LeftRightFaqList from '~/unit/FaqList/LeftRightList'
 
 import ArticlesIntroTabs from './ArticlesIntroTabs'
+import BatteryBento from './BatteryBento'
+import CompareDev from './CompareDev'
 import CoversPreview from './CoversPreview'
+import DashboardIntros from './DashboardIntros'
 import Footer from './Footer'
 import JoinOurCommunity from './JoinOurCommunity'
 import useSalon, { cn } from './salon'
 import TechStacks from './TechStacks'
-
-const BatteryBento = lazy(() => import('./BatteryBento'))
-const DashboardIntros = lazy(() => import('./DashboardIntros'))
-const CompareDev = lazy(() => import('./CompareDev'))
-const UsersWall = lazy(() => import('./UsersWall'))
+import UsersWall from './UsersWall'
 
 export default function Landing() {
   const s = useSalon()
@@ -58,6 +55,7 @@ export default function Landing() {
     <div className={s.wrapper} data-testid='landing-page'>
       {/* <DashboardIntros /> */}
       {/* <PatternBg /> */}
+      <div className='landing-opening-backdrop bg-pageBg' aria-hidden='true' />
       <div className={s.inner}>
         {/* <BgGlow wallpaper={wallpaper} /> */}
         <div className={s.banner}>
@@ -136,23 +134,15 @@ export default function Landing() {
 
         <ArticlesIntroTabs />
 
-        <Suspense fallback={null}>
-          <BatteryBento />
-        </Suspense>
+        <BatteryBento />
 
-        <Suspense fallback={null}>
-          <DashboardIntros />
-        </Suspense>
+        <DashboardIntros />
 
         <TechStacks />
 
-        <Suspense fallback={null}>
-          <CompareDev />
-        </Suspense>
+        <CompareDev />
 
-        <Suspense fallback={null}>
-          <UsersWall />
-        </Suspense>
+        <UsersWall />
 
         <section className={s.faqWrapper}>
           <LeftRightFaqList sections={faqs} />

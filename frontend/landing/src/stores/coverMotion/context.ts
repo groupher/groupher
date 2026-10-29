@@ -4,6 +4,7 @@ import { createContext, use } from 'react'
 type TCoverMotionContext = {
   progress: MotionValue<number>
   registerCover: (element: HTMLDivElement | null) => void
+  activateCover: () => void
 }
 
 export const CoverMotionContext = createContext<TCoverMotionContext | null>(null)
@@ -16,3 +17,4 @@ const useCoverMotion = (): TCoverMotionContext => {
 
 export const useCoverMotionProgress = (): MotionValue<number> => useCoverMotion().progress
 export const useCoverMotionTarget = () => useCoverMotion().registerCover
+export const useCoverMotionActivation = () => useCoverMotion().activateCover

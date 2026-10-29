@@ -71,6 +71,22 @@
   height: calc(100% + var(--rail-pan-overflow) + var(--rail-pan-overflow));
 }
 
+/* The head script paints restored rails before their Motion values hydrate. */
+html[data-landing-cover-booting='true']
+  .cover-scene-card:not([data-featured])
+  .cover-scene-rail {
+  opacity: var(--landing-cover-boot-opacity) !important;
+  transform: translateY(var(--landing-cover-boot-y)) !important;
+}
+
+html[data-landing-cover-booting='true'] .cover-scene-rail-image[data-pan-axis='x'] {
+  transform: translateX(var(--landing-cover-boot-pan)) !important;
+}
+
+html[data-landing-cover-booting='true'] .cover-scene-rail-image[data-pan-axis='y'] {
+  transform: translateY(var(--landing-cover-boot-pan)) !important;
+}
+
 .cover-scene-rail[data-wallpaper-type='gradient'] .cover-scene-rail-image {
   background-image:
     linear-gradient(rgb(255 255 255 / 5%), rgb(255 255 255 / 10%)), var(--rail-wallpaper);

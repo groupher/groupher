@@ -1,5 +1,5 @@
 import { m, useMotionValueEvent, useTransform, type MotionValue } from 'motion/react'
-import { useEffect, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 
 import type { TCoverScene } from '../../../const/coverScenes'
 import useWallpaperHoverPan from './useWallpaperHoverPan'
@@ -42,7 +42,7 @@ export default function WallpaperTile({
     hoverDistance,
     reducedMotion ? undefined : imagePan,
   )
-  const [hidden, setHidden] = useState(() => coverProgress.get() >= fadeRange[1])
+  const [hidden, setHidden] = useState(false)
   const hiddenRef = useRef(hidden)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -52,17 +52,23 @@ export default function WallpaperTile({
     setHovered(false)
   }, [featured, setHovered])
 
-  useMotionValueEvent(coverProgress, 'change', (latest) => {
-    const nextHidden = latest >= fadeRange[1]
-    if (hiddenRef.current === nextHidden) return
+  const syncVisibility = useCallback(
+    (latest: number) => {
+      const nextHidden = latest >= fadeRange[1]
+      if (hiddenRef.current === nextHidden) return
 
-    if (nextHidden) {
-      if (document.activeElement === buttonRef.current) buttonRef.current?.blur()
-      setHovered(false)
-    }
-    hiddenRef.current = nextHidden
-    setHidden(nextHidden)
-  })
+      if (nextHidden) {
+        if (document.activeElement === buttonRef.current) buttonRef.current?.blur()
+        setHovered(false)
+      }
+      hiddenRef.current = nextHidden
+      setHidden(nextHidden)
+    },
+    [fadeRange[1], setHovered],
+  )
+
+  useMotionValueEvent(coverProgress, 'change', syncVisibility)
+  useEffect(() => syncVisibility(coverProgress.get()), [coverProgress, syncVisibility])
 
   return (
     <m.button
@@ -72,14 +78,23 @@ export default function WallpaperTile({
       data-height-tier={heightTier}
       data-scene-id={scene.id}
       data-wallpaper-type={scene.wallpaperType}
+      data-cover-fade-start={fadeRange[0]}
+      data-cover-fade-end={fadeRange[1]}
+      data-cover-travel={travelDistance}
+      data-cover-movement-start={movementStart}
+      data-cover-pan-distance={imagePanDistance}
       aria-label={`Preview ${scene.label}`}
       aria-hidden={hidden || featured || undefined}
       tabIndex={hidden || featured ? -1 : 0}
-      style={{
-        opacity: featured ? 1 : opacity,
-        y: featured || reducedMotion ? 0 : y,
-        pointerEvents: hidden || featured ? 'none' : 'auto',
-      }}
+      style={
+        {
+          '--landing-cover-boot-opacity': `var(--landing-cover-boot-opacity-${scene.id}, 0)`,
+          '--landing-cover-boot-y': `var(--landing-cover-boot-y-${scene.id}, 0px)`,
+          opacity: featured ? 1 : opacity,
+          y: featured || reducedMotion ? 0 : y,
+          pointerEvents: hidden || featured ? 'none' : 'auto',
+        } as CSSProperties
+      }
       onClick={() => onSelect(scene.id)}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}

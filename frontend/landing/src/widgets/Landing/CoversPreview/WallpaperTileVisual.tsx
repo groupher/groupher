@@ -14,6 +14,7 @@ export default function WallpaperTileVisual({ scene, panDistance, imagePan }: TP
   const style = {
     '--rail-wallpaper': `url("${scene.wallpaperPreview}")`,
     '--rail-pan-overflow': `${Math.abs(panDistance)}px`,
+    '--landing-cover-boot-pan': `var(--landing-cover-boot-pan-${scene.id}, 0px)`,
     ...(imagePan ? { [panAxis]: imagePan } : {}),
   } as CSSProperties
 
