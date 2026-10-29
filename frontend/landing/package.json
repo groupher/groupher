@@ -25,13 +25,13 @@
     "ramda": "^0.32.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-scroll-snap-anime-slider": "^1.5.3",
     "react-trend": "^1.2.4",
     "typewriter-effect": "^2.19.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "2.0.0-beta.sha-ad79608dd",
     "@tailwindcss/vite": "4.3.3",
+    "@tanstack/redact": "0.2.3",
     "@tanstack/router-generator": "1.167.43",
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",

@@ -6,6 +6,7 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import { createVgpuWgslVitePlugin } from '@groupher/frontend-core/vgpu-vite'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { redact } from '@tanstack/redact/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
 
@@ -99,7 +100,7 @@ export default defineConfig(({ command }) => ({
     },
     fs: { allow: [repoRoot] },
   },
-  ssr: { noExternal: ['@groupher/tooltip'] },
+  ssr: { noExternal: true },
   plugins: [
     landingPreviewAssetRewrite,
     cloudflare({
@@ -142,6 +143,7 @@ export default defineConfig(({ command }) => ({
     }),
     createVgpuWgslVitePlugin(),
     viteReact(),
+    redact(),
     tailwindcss(),
   ],
 }))

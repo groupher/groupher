@@ -1,44 +1,33 @@
-import { type FC, useEffect, useRef, useState } from 'react'
-import FlipNumbers from 'react-flip-numbers'
+import { AnimatePresence, domAnimation, LazyMotion, m, useReducedMotion } from 'motion/react'
+import type { FC } from 'react'
 
 import SIZE from '~/const/size'
-import useDidMount from '~/hooks/useDidMount'
 
 import type { TProps } from '.'
 import useSalon from './salon'
-import { getFlipNumOffset, getFontSize } from './salon/metric'
+import { getFontSize } from './salon/metric'
 
 const AnimatedCount: FC<TProps> = ({ count = 0, size = SIZE.SMALL, active = false }) => {
   const s = useSalon({ count, active })
-  const didMount = useDidMount()
-  const initialCountRef = useRef(count)
-  const [useFlip, setUseFlip] = useState(false)
-
-  const numSize = getFontSize(size)
-  const offset = getFlipNumOffset(size)
-
-  useEffect(() => {
-    if (!didMount || useFlip) return
-    if (count !== initialCountRef.current) {
-      setUseFlip(true)
-    }
-  }, [count, didMount, useFlip])
+  const reduceMotion = useReducedMotion()
 
   return (
-    <div className={s.wrapper}>
-      {!didMount || !useFlip ? (
-        <span>{count}</span>
-      ) : (
-        <FlipNumbers
-          height={numSize}
-          width={numSize - offset}
-          color='inherit'
-          perspective={400}
-          duration={0.8}
-          numbers={String(count)}
-          play
-        />
-      )}
+    <div className={s.wrapper} style={{ fontSize: getFontSize(size), perspective: 400 }}>
+      <LazyMotion features={domAnimation}>
+        <AnimatePresence initial={false} mode='wait'>
+          <m.span
+            key={count}
+            className='inline-block'
+            initial={{ opacity: 0, y: '100%', rotateX: -90 }}
+            animate={{ opacity: 1, y: 0, rotateX: 0 }}
+            exit={{ opacity: 0, y: '-100%', rotateX: 90 }}
+            transition={{ duration: reduceMotion ? 0 : 0.4, ease: 'easeInOut' }}
+            style={{ transformOrigin: 'center' }}
+          >
+            {count}
+          </m.span>
+        </AnimatePresence>
+      </LazyMotion>
     </div>
   )
 }

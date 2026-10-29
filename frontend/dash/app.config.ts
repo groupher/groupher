@@ -5,6 +5,7 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import { createVgpuWgslVitePlugin } from '@groupher/frontend-core/vgpu-vite'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { redact } from '@tanstack/redact/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -12,6 +13,7 @@ const dashRoot = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.join(dashRoot, '../..')
 const dashPort = Number.parseInt(process.env.PORT || '3005', 10)
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const useRedactPoc = process.env.REDACT_POC === '1'
 
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? 'https://dash.groupher.com/' : '/',
@@ -45,7 +47,7 @@ export default defineConfig({
   ssr: {
     // The package is CommonJS. Bundling it preserves the default component import
     // used by the shared core Tooltip during SSR.
-    noExternal: ['@groupher/tooltip'],
+    noExternal: useRedactPoc ? true : ['@groupher/tooltip'],
   },
   plugins: [
     ...(process.env.E2E_AUTH_STACK === '1'
@@ -54,6 +56,7 @@ export default defineConfig({
     tanstackStart(),
     createVgpuWgslVitePlugin(),
     viteReact(),
+    ...(useRedactPoc ? [redact()] : []),
     tailwindcss(),
   ],
 })
