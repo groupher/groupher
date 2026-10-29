@@ -171,10 +171,10 @@ export default function Keyboard() {
             active={activeCount >= 8}
           />
           <TechKey
-            path='nextjs.png'
-            name='Next.js'
+            path='tanstack.svg'
+            name='TanStack Start'
             desc='web framework'
-            iconSize='size-12'
+            iconSize='size-6'
             active={activeCount >= 5}
           />
           <HolderKey name='F' prefix='' />

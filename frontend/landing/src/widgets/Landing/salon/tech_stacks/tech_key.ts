@@ -33,8 +33,8 @@ export default function useSalon({ active, name }: TProps) {
       name === 'Phoenix' && 'group-hover:text-[#EA5C29]',
       name === 'GraphQL' && 'group-hover:text-[#f65ac4]',
       name === 'Elixir' && 'group-hover:text-[#b16bb1]',
-      name === 'Next.js' && 'group-hover:text-white group-hover:bg-black',
+      name === 'TanStack Start' && 'group-hover:text-emerald-600',
     ),
-    techIcon: 'size-8 block',
+    techIcon: cn('block', name !== 'TanStack Start' && 'size-8'),
   }
 }
