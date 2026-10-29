@@ -5,6 +5,7 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import { createVgpuWgslVitePlugin } from '@groupher/frontend-core/vgpu-vite'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { redact } from '@tanstack/redact/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -16,7 +17,13 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? 'https://inspire-me.groupher.com/' : '/',
   publicDir: path.join(appRoot, 'public'),
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    alias: {
+      'react-compiler-runtime': '@tanstack/redact/compiler-runtime',
+      'use-sync-external-store/shim/index.js': '@tanstack/redact',
+    },
+    tsconfigPaths: true,
+  },
   server: {
     port,
     strictPort: true,
@@ -29,11 +36,13 @@ export default defineConfig({
     },
     fs: { allow: [repoRoot] },
   },
+  ssr: { noExternal: true },
   plugins: [
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     tanstackStart(),
     createVgpuWgslVitePlugin(),
     viteReact(),
+    redact(),
     tailwindcss(),
   ],
 })

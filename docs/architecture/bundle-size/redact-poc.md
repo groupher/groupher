@@ -1,6 +1,6 @@
 # TanStack Redact Landing POC (2026-10-27)
 
-Status: Landing now uses Redact by default in this worktree. Earlier sections record the historical POC; see the final section for the current state.
+Status: Landing, Dash, Community, Apply, and Inspire-me now use Redact by default in this worktree. Earlier sections record historical POC stages; see the final section for the current state.
 
 ## Scope and reproduction
 
@@ -81,3 +81,33 @@ The redesigned Landing page no longer imports `react-scroll-snap-anime-slider`. 
 ## Landing default switch (2026-10-29)
 
 Landing's Vite config now enables Redact without `REDACT_POC=1` and keeps `ssr.noExternal: true`, matching the validated POC settings. The carousel and flip-number packages are absent from the manifests and lockfile. Inspire has not been switched or validated. Dash remains an opt-in POC with its separate Worker SSR failure.
+
+## Dash Worker SSR root cause (2026-10-29)
+
+With Dash's `REDACT_POC=1` and a forced Vite dependency re-optimization, `/home/overview` returned HTTP 500. The Worker reported `Calling require for "react" in an environment that doesn't expose the require function`. The only `__require("react")` in the SSR prebundle was inside `react-compiler-runtime@1.0.0`, imported by PlateJS. Redact's Vite plugin aliases `react/compiler-runtime`, but neither the installed 0.2.0 nor 0.2.3 plugin aliases the separate `react-compiler-runtime` package.
+
+The Dash-only POC config now aliases `react-compiler-runtime` to `@tanstack/redact/compiler-runtime` when `REDACT_POC=1`. The PlateJS modules in this dependency graph import only `c`, which the target provides. After forcing re-optimization, `/home/overview` returned HTTP 200, the previous `__require("react")` disappeared from SSR prebundled JS, and the Redact production build passed. This identifies and removes the first Worker SSR blocker; editor interaction and broader Dash behavior still need browser validation. The normal React config is unchanged.
+
+Browser follow-up: an initial anonymous `/home/doc/editor` load exposed another Redact-only dev transform error. A Vite prebundled client chunk imported `use-sync-external-store/shim/index.js`, a path absent from Redact 0.2.0 and 0.2.3 plugin alias maps. The Dash POC now aliases that exact path to `@tanstack/redact`. After a forced rebuild, anonymous `/home/overview` and `/home/doc/editor` loaded without browser console errors or failing static requests. The dashboard showed its sign-in boundary, so the PlateJS editor itself was not exercised.
+
+For authenticated testing, the first shared mock GraphQL process disappeared mid-run, which caused a test-login HTTP 500. A fresh mock and independent E2E auth server then returned HTTP 204 from login and the browser stored all three auth cookies, including the Phoenix access token. However, the normal Cloudflare Worker dev mode did not use the shell-provided mock GraphQL endpoint: its route error was `[groupher-error-code:TOKEN_INVALID] Authorize: browser token is invalid`, a message from the real Phoenix API. The E2E token is invalid there. Clearing the signed-in hint restored HTTP 200 on the anonymous page; a React control also rendered the sign-in boundary. This authenticated-flow HTTP 500 is an environment mismatch, not evidence of a Redact-specific incompatibility. Running Vite directly with `E2E_AUTH_STACK=1` returned `Cannot GET /home/overview`, so a functioning complete E2E stack or a valid real-backend session is still needed to exercise the editor.
+
+## Dash default switch and browser verification (2026-10-29)
+
+Dash now uses Redact 0.2.3 by default with the two exact aliases above. The old `REDACT_POC` switch is removed. The default production build and Dash TypeScript check passed.
+
+A separate HTTPS portless alias, mock GraphQL server, and E2E auth server supplied an isolated browser session. The Worker needed a temporary build-time GraphQL endpoint override to use the mock rather than the real Phoenix API; that override was removed after testing. In Chromium, the signed-in overview, Posts list, and Docs editor rendered. PlateJS accepted text input in the document body and `Meta+Z` restored its original content. No Redact or Slate runtime error occurred with a ten-minute test token. Console errors were missing mock image assets and `/api/content/publish` HTTP 502 responses. The latter came from the local Content Publisher boundary, whose `process.env` service-auth settings were not supplied by this isolated Worker test fixture; publish/save was not accepted. A previous Slate DOM-node error occurred only while the original 60-second test token expired and the editor unmounted, so it is not reproducible with the longer-lived token.
+
+This is a focused browser smoke result. It validates rendering, hydration, navigation, and basic PlateJS editing in the isolated fixture; it does not validate real-backend authenticated flows, publishing, or every Dash route.
+
+## Community, Apply, and Inspire-me follow-up (2026-10-29)
+
+The remaining TanStack Start applications now use Redact 0.2.3 by default. They share Dash's exact aliases for `react-compiler-runtime` and `use-sync-external-store/shim/index.js` and bundle SSR dependencies with `ssr.noExternal: true`. Their existing routes and components were not changed.
+
+All three production Vite builds and TypeScript checks passed. Development Worker smoke requests returned HTTP 200 for Community `/home/post` and `/home/doc`, Apply `/apply/health`, and Inspire-me `/`. In Chromium, anonymous Community `/home/post`, Apply `/apply/`, and Inspire-me `/` rendered. The browser consoles showed no Redact runtime error. Community's missing avatar/favicon requests, Apply's loopback HMR and browser-metrics requests, and Inspire-me's unavailable browser-metrics endpoint are local fixture issues. Apply's authenticated application flow and broader Community interactions were not exercised.
+
+Inspire-me initially returned HTTP 500 because direct Vite startup skipped its `generate:data` step. After generating the feedback assets and restarting, both React control and Redact development requests returned HTTP 200.
+
+The repository's pnpm install hook attempted a full supply-chain metadata check and could not complete from the available package mirror/cache. The new importers were added to the lockfile using the already-resolved Redact 0.2.3 peer snapshots. An offline frozen install with the repository's pnpm 12.6.0, `--trust-lockfile`, and `--ignore-scripts` passed for all 23 workspace projects. This validates lockfile consistency and local package linking; it skips the separate registry-backed supply-chain policy check and install scripts.
+
+Additional browser checks used the normal local HTTPS hostnames. Community `/home/kanban` rendered, and client navigation to `/home/changelog` worked. The changelog list showed `count_failed`; the same error reproduced after restarting the Worker with the original React Vite config, so it is not introduced by Redact. Inspire-me client navigation from `/` to `/announcekit` rendered the 44-post list. Apply client navigation from `/apply/` to `/apply/review` reached the expected sign-in boundary. Apply's pre-existing HMR WebSocket target (`groupher.localhost`) did not connect from this isolated subdomain preview, and the browser-metrics listener was unavailable. The temporary Community and Apply portless mappings were restored to their original ports after validation.

@@ -37,7 +37,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "2.0.0-beta.sha-ad79608dd",
     "@tailwindcss/vite": "4.3.3",
-    "@tanstack/redact": "0.2.0",
+    "@tanstack/redact": "0.2.3",
     "@tanstack/router-generator": "1.167.43",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

@@ -5,6 +5,7 @@ import { cloudflare } from '@cloudflare/vite-plugin'
 import { createVgpuWgslVitePlugin } from '@groupher/frontend-core/vgpu-vite'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import { redact } from '@tanstack/redact/vite'
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -17,7 +18,13 @@ export default defineConfig({
     'process.env.NEXT_PUBLIC_AUTH_ENDPOINT': JSON.stringify(process.env.NEXT_PUBLIC_AUTH_ENDPOINT),
   },
   publicDir: path.join(applyRoot, 'public'),
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    alias: {
+      'react-compiler-runtime': '@tanstack/redact/compiler-runtime',
+      'use-sync-external-store/shim/index.js': '@tanstack/redact',
+    },
+    tsconfigPaths: true,
+  },
   server: {
     port: Number.parseInt(process.env.PORT || '3006', 10),
     strictPort: true,
@@ -30,6 +37,7 @@ export default defineConfig({
     },
     fs: { allow: [repoRoot] },
   },
+  ssr: { noExternal: true },
   plugins: [
     ...(process.env.E2E_AUTH_STACK === '1'
       ? []
@@ -37,6 +45,7 @@ export default defineConfig({
     tanstackStart({ router: { basepath: '/apply' } }),
     createVgpuWgslVitePlugin(),
     viteReact(),
+    redact(),
     tailwindcss(),
   ],
 })

@@ -13,7 +13,6 @@ const dashRoot = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.join(dashRoot, '../..')
 const dashPort = Number.parseInt(process.env.PORT || '3005', 10)
 const isDevelopment = process.env.NODE_ENV !== 'production'
-const useRedactPoc = process.env.REDACT_POC === '1'
 
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? 'https://dash.groupher.com/' : '/',
@@ -22,12 +21,13 @@ export default defineConfig({
   },
   publicDir: path.join(dashRoot, 'public'),
   resolve: {
-    alias:
-      process.env.E2E_AUTH_STACK === '1'
-        ? {
-            'cloudflare:workers': path.join(dashRoot, 'src/server/cloudflare-workers.e2e.ts'),
-          }
-        : undefined,
+    alias: {
+      ...(process.env.E2E_AUTH_STACK === '1'
+        ? { 'cloudflare:workers': path.join(dashRoot, 'src/server/cloudflare-workers.e2e.ts') }
+        : {}),
+      'react-compiler-runtime': '@tanstack/redact/compiler-runtime',
+      'use-sync-external-store/shim/index.js': '@tanstack/redact',
+    },
     tsconfigPaths: true,
   },
   server: {
@@ -44,11 +44,7 @@ export default defineConfig({
       allow: [repoRoot],
     },
   },
-  ssr: {
-    // The package is CommonJS. Bundling it preserves the default component import
-    // used by the shared core Tooltip during SSR.
-    noExternal: useRedactPoc ? true : ['@groupher/tooltip'],
-  },
+  ssr: { noExternal: true },
   plugins: [
     ...(process.env.E2E_AUTH_STACK === '1'
       ? []
@@ -56,7 +52,7 @@ export default defineConfig({
     tanstackStart(),
     createVgpuWgslVitePlugin(),
     viteReact(),
-    ...(useRedactPoc ? [redact()] : []),
+    redact(),
     tailwindcss(),
   ],
 })
