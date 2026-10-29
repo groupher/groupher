@@ -3,6 +3,7 @@ import { type CSSProperties, useCallback, useEffect, useRef, useState } from 're
 
 import type { TCoverScene } from '../../../const/coverScenes'
 import useWallpaperHoverPan from './useWallpaperHoverPan'
+import { getWallpaperTileFrame } from './wallpaperTileMotion'
 import WallpaperTileVisual from './WallpaperTileVisual'
 
 type TProps = {
@@ -30,12 +31,19 @@ export default function WallpaperTile({
   reducedMotion,
   onSelect,
 }: TProps) {
-  const opacity = useTransform(coverProgress, fadeRange, [1, 0])
-  const y = useTransform(coverProgress, (progress) => {
-    const staggeredProgress = Math.max(0, (progress - movementStart) / (1 - movementStart))
-    return -travelDistance * (0.06 * progress + 0.94 * staggeredProgress)
-  })
-  const imagePan = useTransform(coverProgress, [0, fadeRange[1]], [0, imagePanDistance])
+  const motion = { travelDistance, imagePanDistance, movementStart, fadeRange }
+  const opacity = useTransform(
+    coverProgress,
+    (progress) => getWallpaperTileFrame(progress, motion, reducedMotion).opacity,
+  )
+  const y = useTransform(
+    coverProgress,
+    (progress) => getWallpaperTileFrame(progress, motion, reducedMotion).y,
+  )
+  const imagePan = useTransform(
+    coverProgress,
+    (progress) => getWallpaperTileFrame(progress, motion, reducedMotion).pan,
+  )
   const hoverDistance =
     -Math.sign(imagePanDistance) * Math.min(36, Math.max(12, Math.abs(imagePanDistance) * 0.25))
   const { pan, setHovered } = useWallpaperHoverPan(
@@ -89,6 +97,7 @@ export default function WallpaperTile({
       style={
         {
           '--landing-cover-boot-opacity': `var(--landing-cover-boot-opacity-${scene.id}, 0)`,
+          '--landing-cover-boot-visibility': `var(--landing-cover-boot-visibility-${scene.id}, hidden)`,
           '--landing-cover-boot-y': `var(--landing-cover-boot-y-${scene.id}, 0px)`,
           opacity: featured ? 1 : opacity,
           y: featured || reducedMotion ? 0 : y,

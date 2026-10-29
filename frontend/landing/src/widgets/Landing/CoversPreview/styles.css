@@ -76,6 +76,7 @@ html[data-landing-cover-booting='true']
   .cover-scene-card:not([data-featured])
   .cover-scene-rail {
   opacity: var(--landing-cover-boot-opacity) !important;
+  visibility: var(--landing-cover-boot-visibility) !important;
   transform: translateY(var(--landing-cover-boot-y)) !important;
 }
 

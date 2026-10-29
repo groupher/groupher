@@ -20,6 +20,7 @@ import Facepile from '~/ui/Facepile'
 import Tooltip from '~/ui/Tooltip'
 import LeftRightFaqList from '~/unit/FaqList/LeftRightList'
 
+import CoverMotionProvider from '../../stores/coverMotion/Provider'
 import ArticlesIntroTabs from './ArticlesIntroTabs'
 import BatteryBento from './BatteryBento'
 import CompareDev from './CompareDev'
@@ -130,7 +131,9 @@ export default function Landing() {
           </div>
         </div>
 
-        <CoversPreview />
+        <CoverMotionProvider>
+          <CoversPreview />
+        </CoverMotionProvider>
 
         <ArticlesIntroTabs />
 

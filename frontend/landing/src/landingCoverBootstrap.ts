@@ -7,7 +7,6 @@ export const LANDING_COVER_EXIT_CLEARANCE = 64
 export const prePaintLandingCoverScript = `
 (function() {
   try {
-    if (window.location.pathname !== '/') return;
     var navigation = window.performance.getEntriesByType('navigation')[0];
     if (!navigation || (navigation.type !== 'reload' && navigation.type !== 'back_forward')) return;
 
@@ -17,10 +16,15 @@ export const prePaintLandingCoverScript = `
     var savedRange = Number(window.sessionStorage.getItem(${JSON.stringify(LANDING_COVER_RANGE_KEY)} + window.location.pathname)) || window.innerHeight;
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     root.setAttribute('data-landing-cover-booting', 'true');
+    var frameCount = 0;
 
     var paint = function() {
       if (!root.hasAttribute('data-landing-cover-booting')) return;
       var gallery = document.querySelector('.cover-scene-gallery');
+      if (!gallery && document.readyState !== 'loading') {
+        root.removeAttribute('data-landing-cover-booting');
+        return;
+      }
       var range = gallery
         ? Math.max(gallery.getBoundingClientRect().bottom + window.scrollY - ${LANDING_COVER_EXIT_CLEARANCE}, 1)
         : Math.max(savedRange, 1);
@@ -40,11 +44,12 @@ export const prePaintLandingCoverScript = `
         var y = reducedMotion ? 0 : -travel * (0.06 * progress + 0.94 * staggered);
         var pan = reducedMotion ? 0 : panDistance * Math.min(1, progress / fadeEnd);
         root.style.setProperty('--landing-cover-boot-opacity-' + id, String(opacity));
+        root.style.setProperty('--landing-cover-boot-visibility-' + id, opacity === 0 ? 'hidden' : 'visible');
         root.style.setProperty('--landing-cover-boot-y-' + id, y + 'px');
         root.style.setProperty('--landing-cover-boot-pan-' + id, pan + 'px');
       });
 
-      window.requestAnimationFrame(paint);
+      if (++frameCount < 180) window.requestAnimationFrame(paint);
     };
     window.requestAnimationFrame(paint);
   } catch (error) {}

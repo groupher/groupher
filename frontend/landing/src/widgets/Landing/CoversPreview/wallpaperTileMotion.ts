@@ -8,6 +8,32 @@ type TTileMotion = {
   imagePanDistance: number
 }
 
+export type TWallpaperTileFrameInput = {
+  travelDistance: number
+  imagePanDistance: number
+  movementStart: number
+  fadeRange: [number, number]
+}
+
+export const getWallpaperTileFrame = (
+  progress: number,
+  motion: TWallpaperTileFrameInput,
+  reducedMotion: boolean,
+) => {
+  const { fadeRange, travelDistance, movementStart, imagePanDistance } = motion
+  const opacity = Math.min(
+    1,
+    Math.max(0, (fadeRange[1] - progress) / (fadeRange[1] - fadeRange[0])),
+  )
+  const staggered = Math.max(0, (progress - movementStart) / (1 - movementStart))
+
+  return {
+    opacity,
+    y: reducedMotion ? 0 : -travelDistance * (0.06 * progress + 0.94 * staggered),
+    pan: reducedMotion ? 0 : imagePanDistance * Math.min(1, progress / fadeRange[1]),
+  }
+}
+
 const TIER_MOTION: Record<THeightTier, { fadeRange: [number, number]; imagePanScale: number }> = {
   0: { fadeRange: [0.7, 0.95], imagePanScale: 1.75 },
   1: { fadeRange: [0.45, 0.7], imagePanScale: 1.2 },
