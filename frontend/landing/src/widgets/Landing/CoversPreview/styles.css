@@ -1,29 +1,10 @@
 .cover-scene-gallery {
-  position: relative;
   height: 640px;
   width: calc(100vw - var(--container-landing-inset) - var(--container-landing-inset));
-  margin: 64px 0 0;
 }
 
 .cover-scene-device {
-  position: absolute;
-  inset: 0;
-  min-width: 0;
-  overflow: hidden;
   box-shadow: 0 12px 32px rgb(38 35 56 / 10%);
-}
-
-.cover-scene-loop {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.cover-scene-card {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  z-index: 1;
 }
 
 .cover-scene-card[data-featured] {
@@ -31,36 +12,21 @@
 }
 
 .cover-scene-rail {
-  position: relative;
-  display: flex;
   flex: 1 0 0;
-  align-items: end;
-  justify-content: center;
-  min-width: 64px;
-  max-width: 96px;
-  height: calc(var(--spacing) * 128);
-  overflow: hidden;
   border: 1px solid rgb(255 255 255 / 52%);
   border-radius: 14px;
   background-color: #f7f7f7;
-  cursor: pointer;
   transition-property: filter;
   transition-timing-function: ease;
   filter: saturate(0.82);
 }
 
 .cover-scene-rail-image {
-  position: absolute;
-  top: 0;
-  bottom: 0;
   left: calc(0px - var(--rail-pan-overflow));
   width: calc(100% + var(--rail-pan-overflow) + var(--rail-pan-overflow));
-  pointer-events: none;
   background-image:
     linear-gradient(rgb(255 255 255 / 15%), rgb(255 255 255 / 18%) 60%, rgb(255 255 255 / 35%)),
     var(--rail-wallpaper);
-  background-position: center;
-  background-size: cover;
 }
 
 .cover-scene-rail-image[data-pan-axis='y'] {
@@ -72,9 +38,7 @@
 }
 
 /* The head script paints restored rails before their Motion values hydrate. */
-html[data-landing-cover-booting='true']
-  .cover-scene-card:not([data-featured])
-  .cover-scene-rail {
+html[data-landing-cover-booting='true'] .cover-scene-card:not([data-featured]) .cover-scene-rail {
   opacity: var(--landing-cover-boot-opacity) !important;
   visibility: var(--landing-cover-boot-visibility) !important;
   transform: translateY(var(--landing-cover-boot-y)) !important;
@@ -141,33 +105,21 @@ html[data-landing-cover-booting='true'] .cover-scene-rail-image[data-pan-axis='y
 }
 
 .cover-scene-rail-label {
-  position: relative;
   margin-bottom: 22px;
   color: #302b36;
   font-size: 15px;
-  font-weight: 600;
   letter-spacing: 0.02em;
-  line-height: 1;
   text-shadow: 0 1px 8px rgb(255 255 255 / 80%);
-  white-space: nowrap;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
 }
 
-.cover-scene-mobile-rail {
-  display: none;
-}
-
 .cover-scene-content {
   height: 640px;
-  align-items: flex-end;
 }
 
 .cover-scene-stage {
-  position: relative;
-  width: 90%;
   aspect-ratio: 1.405;
-  overflow: hidden;
   border: 1px solid rgb(255 255 255 / 75%);
   border-radius: 15px 15px 0 0;
   background: #f8f6f8;
@@ -175,15 +127,15 @@ html[data-landing-cover-booting='true'] .cover-scene-rail-image[data-pan-axis='y
 }
 
 .cover-scene-product-image {
-  position: absolute;
-  display: block;
   width: 111%;
-  max-width: none;
-  height: auto;
   transform: translate(-5%, -7.3%);
 }
 
 @media (max-width: 1650px) {
+  .cover-scene-loop {
+    display: none;
+  }
+
   .cover-scene-gallery {
     width: min(920px, calc(100% - 32px));
     margin: 64px auto 0;
@@ -228,7 +180,7 @@ html[data-landing-cover-booting='true'] .cover-scene-rail-image[data-pan-axis='y
   }
 
   .cover-scene-stage {
-    width: 90%;
+    max-width: 420px;
   }
 }
 

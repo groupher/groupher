@@ -4,6 +4,8 @@
  * LandingPage
  */
 
+import { lazy, Suspense } from 'react'
+
 import { DASH_SITE_URL } from '~/config'
 import { ROUTE } from '~/const/route'
 import useTheme from '~/hooks/useTheme'
@@ -22,15 +24,16 @@ import LeftRightFaqList from '~/unit/FaqList/LeftRightList'
 
 import CoverMotionProvider from '../../stores/coverMotion/Provider'
 import ArticlesIntroTabs from './ArticlesIntroTabs'
-import BatteryBento from './BatteryBento'
-import CompareDev from './CompareDev'
 import CoversPreview from './CoversPreview'
-import DashboardIntros from './DashboardIntros'
 import Footer from './Footer'
 import JoinOurCommunity from './JoinOurCommunity'
 import useSalon, { cn } from './salon'
 import TechStacks from './TechStacks'
-import UsersWall from './UsersWall'
+
+const BatteryBento = lazy(() => import('./BatteryBento'))
+const DashboardIntros = lazy(() => import('./DashboardIntros'))
+const CompareDev = lazy(() => import('./CompareDev'))
+const UsersWall = lazy(() => import('./UsersWall'))
 
 export default function Landing() {
   const s = useSalon()
@@ -137,15 +140,23 @@ export default function Landing() {
 
         <ArticlesIntroTabs />
 
-        <BatteryBento />
+        <Suspense fallback={null}>
+          <BatteryBento />
+        </Suspense>
 
-        <DashboardIntros />
+        <Suspense fallback={null}>
+          <DashboardIntros />
+        </Suspense>
 
         <TechStacks />
 
-        <CompareDev />
+        <Suspense fallback={null}>
+          <CompareDev />
+        </Suspense>
 
-        <UsersWall />
+        <Suspense fallback={null}>
+          <UsersWall />
+        </Suspense>
 
         <section className={s.faqWrapper}>
           <LeftRightFaqList sections={faqs} />

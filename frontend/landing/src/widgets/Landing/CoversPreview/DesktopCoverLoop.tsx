@@ -27,7 +27,8 @@ export default function DesktopCoverLoop() {
 
   useEffect(
     () => () => {
-      if (pendingScene.current) selectScene(pendingScene.current)
+      const selected = queuedScene.current ?? pendingScene.current
+      if (selected) selectScene(selected)
     },
     [selectScene],
   )
@@ -88,7 +89,7 @@ export default function DesktopCoverLoop() {
   }, [select, transition])
 
   return (
-    <div ref={loopRef} className='cover-scene-loop'>
+    <div ref={loopRef} className='cover-scene-loop relative size-full'>
       {COVER_SCENES.map((item, index) => (
         <CoverLoopScene
           key={item.id}

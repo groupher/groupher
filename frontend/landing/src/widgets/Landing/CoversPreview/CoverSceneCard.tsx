@@ -37,9 +37,11 @@ export default function CoverSceneCard({
 }: TProps) {
   return (
     <m.div
-      className='cover-scene-card'
+      className='cover-scene-card absolute bottom-0 left-1/2 z-1'
       data-scene-id={scene.id}
       data-featured={featured || undefined}
+      aria-hidden={exiting || undefined}
+      style={{ pointerEvents: exiting ? 'none' : undefined }}
       initial={initialGeometry ? { ...initialGeometry, opacity: 0 } : false}
       animate={{ ...geometry, opacity: exiting ? 0 : 1 }}
       transition={reducedMotion ? { duration: 0 } : { duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
@@ -55,6 +57,7 @@ export default function CoverSceneCard({
         movementStart={tileMotion.movementStart}
         fadeRange={tileMotion.fadeRange}
         featured={featured}
+        exiting={exiting}
         reducedMotion={reducedMotion}
         onSelect={onSelect}
       />

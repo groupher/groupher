@@ -27,12 +27,12 @@ export default function CoversPreview() {
   return (
     <LazyMotion features={domAnimation}>
       <section className={s.wrapper}>
-        <div className='cover-scene-mobile-rail' role='group' aria-label='Explore wallpaper scenes'>
+        <div className={s.mobileRail} role='group' aria-label='Explore wallpaper scenes'>
           {COVER_SCENES.filter((scene) => scene.id !== activeScene.id).map((scene) => (
             <StaticWallpaperTile key={scene.id} scene={scene} heightTier={0} />
           ))}
         </div>
-        <div ref={registerCover} className='cover-scene-gallery'>
+        <div ref={registerCover} className={s.gallery}>
           {desktopLayout ? (
             <DesktopCoverLoop />
           ) : (

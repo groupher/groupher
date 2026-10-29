@@ -12,12 +12,15 @@ export const prePaintLandingCoverScript = `
 
     var root = document.documentElement;
     var scrollKey = ${JSON.stringify(LANDING_OPENING_SCROLL_KEY)} + window.location.pathname;
-    var savedY = Number(window.sessionStorage.getItem(scrollKey)) || 0;
-    var savedRange = Number(window.sessionStorage.getItem(${JSON.stringify(LANDING_COVER_RANGE_KEY)} + window.location.pathname)) || window.innerHeight;
+    var savedY = 0;
+    var savedRange = window.innerHeight;
+    try {
+      savedY = Number(window.sessionStorage.getItem(scrollKey)) || 0;
+      savedRange = Number(window.sessionStorage.getItem(${JSON.stringify(LANDING_COVER_RANGE_KEY)} + window.location.pathname)) || window.innerHeight;
+    } catch (storageError) {}
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     root.setAttribute('data-landing-cover-booting', 'true');
-    var frameCount = 0;
-
+    var firstPaint = true;
     var paint = function() {
       if (!root.hasAttribute('data-landing-cover-booting')) return;
       var gallery = document.querySelector('.cover-scene-gallery');
@@ -28,7 +31,8 @@ export const prePaintLandingCoverScript = `
       var range = gallery
         ? Math.max(gallery.getBoundingClientRect().bottom + window.scrollY - ${LANDING_COVER_EXIT_CLEARANCE}, 1)
         : Math.max(savedRange, 1);
-      var scrollTop = window.scrollY || savedY;
+      var scrollTop = firstPaint ? (window.scrollY || savedY) : window.scrollY;
+      firstPaint = false;
       var progress = Math.min(1, Math.max(0, scrollTop / range));
 
       document.querySelectorAll('.cover-scene-card .cover-scene-rail').forEach(function(rail) {
@@ -49,7 +53,7 @@ export const prePaintLandingCoverScript = `
         root.style.setProperty('--landing-cover-boot-pan-' + id, pan + 'px');
       });
 
-      if (++frameCount < 180) window.requestAnimationFrame(paint);
+      window.requestAnimationFrame(paint);
     };
     window.requestAnimationFrame(paint);
   } catch (error) {}

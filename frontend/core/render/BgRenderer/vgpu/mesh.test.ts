@@ -33,4 +33,17 @@ describe('wallpaper shader specialization', () => {
       expect.objectContaining({ constants: { '0': 2, '1': 9 }, set: { params } }),
     )
   })
+
+  it('uses the shader defaults when a pipeline variant is omitted', () => {
+    const params = { flow: 42 }
+    const gpu = {} as Parameters<typeof createWallpaperMesh>[0]
+    createWallpaperMesh(gpu, params)
+    expect(mocks.draw).toHaveBeenCalledWith(
+      gpu,
+      expect.objectContaining({ constants: { '0': 0, '1': 0 }, set: { params } }),
+    )
+    expect(getWallpaperVariantKey(params)).toBe(
+      getWallpaperVariantKey({ meshModel: 0, textureType: 0 }),
+    )
+  })
 })

@@ -2,6 +2,7 @@ import { m, useMotionValueEvent, useTransform, type MotionValue } from 'motion/r
 import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 
 import type { TCoverScene } from '../../../const/coverScenes'
+import useSalon from '../salon/covers_preview/wallpaper_tile'
 import useWallpaperHoverPan from './useWallpaperHoverPan'
 import { getWallpaperTileFrame } from './wallpaperTileMotion'
 import WallpaperTileVisual from './WallpaperTileVisual'
@@ -15,6 +16,7 @@ type TProps = {
   movementStart: number
   fadeRange: [number, number]
   featured?: boolean
+  exiting?: boolean
   reducedMotion: boolean
   onSelect: (id: string) => void
 }
@@ -28,9 +30,11 @@ export default function WallpaperTile({
   movementStart,
   fadeRange,
   featured = false,
+  exiting = false,
   reducedMotion,
   onSelect,
 }: TProps) {
+  const s = useSalon()
   const motion = { travelDistance, imagePanDistance, movementStart, fadeRange }
   const opacity = useTransform(
     coverProgress,
@@ -82,7 +86,7 @@ export default function WallpaperTile({
     <m.button
       ref={buttonRef}
       type='button'
-      className='cover-scene-rail duration-200'
+      className={s.rail}
       data-height-tier={heightTier}
       data-scene-id={scene.id}
       data-wallpaper-type={scene.wallpaperType}
@@ -92,8 +96,8 @@ export default function WallpaperTile({
       data-cover-movement-start={movementStart}
       data-cover-pan-distance={imagePanDistance}
       aria-label={`Preview ${scene.label}`}
-      aria-hidden={hidden || featured || undefined}
-      tabIndex={hidden || featured ? -1 : 0}
+      aria-hidden={hidden || featured || exiting || undefined}
+      tabIndex={hidden || featured || exiting ? -1 : 0}
       style={
         {
           '--landing-cover-boot-opacity': `var(--landing-cover-boot-opacity-${scene.id}, 0)`,
@@ -101,7 +105,7 @@ export default function WallpaperTile({
           '--landing-cover-boot-y': `var(--landing-cover-boot-y-${scene.id}, 0px)`,
           opacity: featured ? 1 : opacity,
           y: featured || reducedMotion ? 0 : y,
-          pointerEvents: hidden || featured ? 'none' : 'auto',
+          pointerEvents: hidden || featured || exiting ? 'none' : 'auto',
         } as CSSProperties
       }
       onClick={() => onSelect(scene.id)}

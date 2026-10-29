@@ -19,6 +19,7 @@ const getBootFrame = (
   progress: number,
   motion: ReturnType<typeof getWallpaperTileAnimation>,
   reducedMotion: boolean,
+  savedProgress = progress,
 ) => {
   const styles = new Map<string, string>()
   const attributes = new Set<string>()
@@ -49,7 +50,7 @@ const getBootFrame = (
     location: { pathname: '/' },
     sessionStorage: {
       getItem: (key: string) => {
-        if (key === `${LANDING_OPENING_SCROLL_KEY}/`) return String(scrollY)
+        if (key === `${LANDING_OPENING_SCROLL_KEY}/`) return String(savedProgress * SCROLL_RANGE)
         if (key === `${LANDING_COVER_RANGE_KEY}/`) return String(SCROLL_RANGE)
         return null
       },
@@ -68,6 +69,8 @@ const getBootFrame = (
     visibility: styles.get(`--landing-cover-boot-visibility-${SCENE_ID}`),
     y: Number.parseFloat(styles.get(`--landing-cover-boot-y-${SCENE_ID}`) ?? ''),
     pan: Number.parseFloat(styles.get(`--landing-cover-boot-pan-${SCENE_ID}`) ?? ''),
+    frames,
+    styles,
   }
 }
 
@@ -89,5 +92,20 @@ describe('cover scroll frame', () => {
         }
       }
     }
+  })
+
+  it('uses saved scroll only for the first frame and keeps painting until activation', () => {
+    const sceneMotion = getWallpaperTileMotion(COVER_SCENES)[SCENE_ID]
+    const motion = getWallpaperTileAnimation(sceneMotion, 0, COVER_SCENES.length)
+    const boot = getBootFrame(0, motion, false, 0.5)
+    expect(boot.opacity).toBeCloseTo(getWallpaperTileFrame(0.5, motion, false).opacity)
+
+    boot.frames.shift()?.()
+    expect(Number(boot.styles.get(`--landing-cover-boot-opacity-${SCENE_ID}`))).toBeCloseTo(
+      getWallpaperTileFrame(0, motion, false).opacity,
+    )
+
+    for (let frame = 0; frame < 181; frame += 1) boot.frames.shift()?.()
+    expect(boot.frames).toHaveLength(1)
   })
 })

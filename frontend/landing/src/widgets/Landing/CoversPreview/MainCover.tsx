@@ -11,7 +11,7 @@ export default function MainCover({ scene, direction = 1, reducedMotion = false 
 
   return (
     <m.div
-      className={`${s.wrapper} cover-scene-device`}
+      className={s.wrapper}
       initial={{ opacity: 0, x: offset, scale: reducedMotion ? 1 : 0.985 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit='exit'
@@ -25,18 +25,18 @@ export default function MainCover({ scene, direction = 1, reducedMotion = false 
       }}
       transition={reducedMotion ? { duration: 0 } : { duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
     >
-      <div className={`${s.content} cover-scene-content`}>
-        <div className='cover-scene-stage'>
+      <div className={s.content}>
+        <div className={s.stage}>
           <img
             src={scene.coverImage.light}
             alt={scene.coverImage.alt}
-            className='cover-scene-product-image theme-light-branch'
+            className={`${s.productImage} theme-light-branch`}
             loading='eager'
           />
           <img
             src={scene.coverImage.dark}
             alt={`${scene.coverImage.alt} in dark theme`}
-            className='cover-scene-product-image theme-dark-branch'
+            className={`${s.productImage} theme-dark-branch`}
             loading='eager'
           />
         </div>

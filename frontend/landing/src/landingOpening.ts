@@ -26,15 +26,15 @@ export const prePaintLandingOpeningScript = `
     var navigation = window.performance.getEntriesByType('navigation')[0];
     if (navigation && (navigation.type === 'reload' || navigation.type === 'back_forward')) {
       try {
-        var savedY = window.sessionStorage.getItem(key);
-        if (savedY !== null) {
-          restoredY = Number(savedY);
+        var routeKey = window.history.state && window.history.state.__TSR_key;
+        var routerPositions = window.sessionStorage.getItem('tsr-scroll-restoration-v1_3');
+        var entryY = routeKey && routerPositions
+          ? JSON.parse(routerPositions)[routeKey]?.window?.scrollY
+          : undefined;
+        if (entryY != null) {
+          restoredY = Number(entryY);
         } else {
-          var routeKey = window.history.state && window.history.state.__TSR_key;
-          var routerPositions = window.sessionStorage.getItem('tsr-scroll-restoration-v1_3');
-          if (routeKey && routerPositions) {
-            restoredY = JSON.parse(routerPositions)[routeKey]?.window?.scrollY ?? 0;
-          }
+          restoredY = Number(window.sessionStorage.getItem(key)) || 0;
         }
       } catch (error) {}
     }

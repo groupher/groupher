@@ -190,12 +190,6 @@
   pointer-events: none;
 }
 
-html[data-landing-opening-ready='true'] .landing-opening-backdrop {
-  bottom: 0;
-  height: auto;
-  mask-image: none;
-}
-
 @keyframes landing-opening-collapse {
   from {
     width: 100vw;

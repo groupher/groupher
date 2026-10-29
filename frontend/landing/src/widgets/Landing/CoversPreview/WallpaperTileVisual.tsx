@@ -22,11 +22,13 @@ export default function WallpaperTileVisual({ scene, panDistance, imagePan }: TP
     <>
       <m.span
         aria-hidden='true'
-        className='cover-scene-rail-image'
+        className='cover-scene-rail-image pointer-events-none absolute inset-y-0 bg-cover bg-center'
         data-pan-axis={panAxis}
         style={style}
       />
-      <span className='cover-scene-rail-label'>{scene.label}</span>
+      <span className='cover-scene-rail-label relative leading-none font-semibold whitespace-nowrap'>
+        {scene.label}
+      </span>
     </>
   )
 }
