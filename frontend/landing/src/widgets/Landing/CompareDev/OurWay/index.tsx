@@ -21,26 +21,26 @@ export default function OurWay() {
         <NodeBlock index={0} cat='DEFAULT' rightDot='bottom-10 mt-0.5' leftDot='bottom-10' />
         <NodeBlock
           cat={ARTICLE_CAT.IDEA}
-          className='absolute top-16 left-56 mt-2 rotate-3'
+          className='top-16 left-56 mt-2 rotate-3'
           rightDot='bottom-8 mb-1'
           bg={COLOR.PURPLE}
         />
         <NodeBlock
           cat={ARTICLE_CAT.DISCUSSION}
-          className='absolute bottom-20 left-56 -rotate-6'
+          className='bottom-20 left-56 -rotate-6'
           rightDot='top-12 mt-1'
           bg={COLOR.BLUE}
         />
         <NodeBlock index={1} cat='DEFAULT' rightDot='bottom-10 mt-0.5' leftDot='bottom-10' />
         <NodeBlock
           cat={ARTICLE_CAT.BUG}
-          className='absolute top-16 right-80 z-10 mt-2 mr-12 -rotate-6'
+          className='top-16 right-80 z-10 mt-2 mr-12 -rotate-6'
           rightDot='bottom-5'
           bg={COLOR.ORANGE}
         />
         <NodeBlock
           cat={ARTICLE_CAT.QA}
-          className='absolute right-96 bottom-14 ml-20 rotate-3'
+          className='right-96 bottom-14 ml-20 rotate-3'
           rightDot='top-5'
           bg={COLOR.GREEN}
         />

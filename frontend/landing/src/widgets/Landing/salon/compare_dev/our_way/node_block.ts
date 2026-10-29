@@ -6,9 +6,10 @@ export { cn } from '~/css'
 
 type TProps = {
   bgColor?: TColorName
+  isDefault: boolean
 }
 
-export default function useSalon({ bgColor }: TProps) {
+export default function useSalon({ bgColor, isDefault }: TProps) {
   const { cn, br, fg, bg, fill, shadow, rainbow } = useTwBelt()
 
   const liteBg = bgColor ? rainbow(COLOR[bgColor], 'bgLite') : ''
@@ -18,7 +19,8 @@ export default function useSalon({ bgColor }: TProps) {
 
   return {
     wrapper: cn(
-      'column relative w-36 h-36 border p-1.5 rounded-t-2xl rounded-b-xl',
+      'column w-36 border p-1.5 rounded-t-2xl rounded-b-xl',
+      isDefault ? 'relative h-32' : 'absolute h-36',
       br('divider'),
       bg('sandBox'),
       shadow('sm'),
@@ -26,7 +28,8 @@ export default function useSalon({ bgColor }: TProps) {
     ),
 
     innerCard: cn(
-      'column absolute bottom-1.5 left-2 w-32 h-24 p-2.5 pt-5 z-50 rounded-t-xl rounded-b-lg',
+      'column absolute bottom-1.5 left-2 w-32 p-2.5 pt-5 z-50 rounded-t-xl rounded-b-lg',
+      isDefault ? 'h-20' : 'h-24',
       shadow('sm'),
       bg('card'),
     ),
