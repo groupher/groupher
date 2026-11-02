@@ -7,13 +7,21 @@
 import type { UIEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
+import type { TTicketFilter } from '~/spec'
+
 import Actions from './Actions'
 import { BodyRow, HeaderRow, useColumnsData } from './Columns'
 import useSalon from './salon'
 
-export default function ClassicLayout() {
+export default function ClassicLayout({
+  internal = false,
+  ticketFilter = {},
+}: {
+  internal?: boolean
+  ticketFilter?: TTicketFilter
+}) {
   const s = useSalon()
-  const columns = useColumnsData()
+  const columns = useColumnsData(internal, ticketFilter)
   const boardRef = useRef<HTMLDivElement | null>(null)
   const headerRef = useRef<HTMLDivElement | null>(null)
   const bodyScrollRef = useRef<HTMLDivElement | null>(null)

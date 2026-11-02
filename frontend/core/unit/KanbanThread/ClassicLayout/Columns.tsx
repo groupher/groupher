@@ -6,15 +6,14 @@
 import type { ReactNode, RefObject, UIEvent } from 'react'
 
 import { KANBAN_BOARD } from '~/const/thread'
-import useKanbanPosts, { type TKanbanPage } from '~/hooks/useKanbanPosts'
+import useKanbanTickets, { type TKanbanPage } from '~/hooks/useKanbanTickets'
 import useLayout from '~/hooks/useLayout'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
 import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
-import RejectSVG from '~/icons/Reject'
-import type { TKanbanBoard } from '~/spec'
+import type { TKanbanBoard, TTicketFilter } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
 import EmptyItem from '../KanbanItem/EmptyItem'
@@ -28,6 +27,7 @@ type TColumn = {
   title: string
   bodyClassName: string
   posts: TKanbanPage
+  internal: boolean
 }
 
 function HeaderColumn({ column, className = '' }: { column: TColumn; className?: string }) {
@@ -55,7 +55,7 @@ function BodyColumn({ column, className = '' }: { column: TColumn; className?: s
         {!hasEntries && <EmptyItem />}
         {hasEntries &&
           column.posts.entries.map((item) => (
-            <KanbanItem key={item.content.innerId} viewModel={item} />
+            <KanbanItem key={item.content.id} viewModel={item} internal={column.internal} />
           ))}
         <PageControls page={column.posts} />
       </div>
@@ -64,77 +64,52 @@ function BodyColumn({ column, className = '' }: { column: TColumn; className?: s
 }
 
 /** Exposes columns data state and actions through the shared React hook boundary. */
-export function useColumnsData() {
+export function useColumnsData(internal = false, ticketFilter: TTicketFilter = {}) {
   const s = useSalon()
   const { t } = useTrans()
   const kanbanAlias = useNameAlias('kanban')
   const { kanbanBoards } = useLayout()
 
-  const {
-    backlog: backlogPosts,
-    todo: todoPosts,
-    wip: wipPosts,
-    done: donePosts,
-    rejected: rejectedPosts,
-  } = useKanbanPosts()
+  const { todo, wip, done } = useKanbanTickets(internal, ticketFilter)
 
   const resolveTitle = (key: string, fallback: string) => kanbanAlias[key]?.name || fallback
 
   const columnMap: Record<TKanbanBoard, TColumn> = {
-    [KANBAN_BOARD.BACKLOG]: {
-      key: 'backlog',
-      title: resolveTitle('backlog', t('article.status.backlog')),
-      count:
-        (backlogPosts.pageInfo?.__typename === 'OffsetPageInfo'
-          ? backlogPosts.pageInfo.totalCount
-          : backlogPosts.entries.length) ?? 0,
-      icon: <GtdTodoSVG className={s.backlogIcon} />,
-      bodyClassName: s.backlogBody,
-      posts: backlogPosts,
-    },
     [KANBAN_BOARD.TODO]: {
       key: 'todo',
       title: resolveTitle('todo', t('article.status.todo')),
       count:
-        (todoPosts.pageInfo?.__typename === 'OffsetPageInfo'
-          ? todoPosts.pageInfo.totalCount
-          : todoPosts.entries.length) ?? 0,
+        (todo.pageInfo?.__typename === 'OffsetPageInfo'
+          ? todo.pageInfo.totalCount
+          : todo.entries.length) ?? 0,
       icon: <GtdTodoSVG className={s.todoIcon} />,
       bodyClassName: s.todoBody,
-      posts: todoPosts,
+      posts: todo,
+      internal,
     },
     [KANBAN_BOARD.WIP]: {
       key: 'wip',
       title: resolveTitle('wip', t('article.status.wip')),
       count:
-        (wipPosts.pageInfo?.__typename === 'OffsetPageInfo'
-          ? wipPosts.pageInfo.totalCount
-          : wipPosts.entries.length) ?? 0,
+        (wip.pageInfo?.__typename === 'OffsetPageInfo'
+          ? wip.pageInfo.totalCount
+          : wip.entries.length) ?? 0,
       icon: <GtdWipSVG className={s.wipIcon} />,
       bodyClassName: s.wipBody,
-      posts: wipPosts,
+      posts: wip,
+      internal,
     },
     [KANBAN_BOARD.DONE]: {
       key: 'done',
       title: resolveTitle('done', t('article.status.done')),
       count:
-        (donePosts.pageInfo?.__typename === 'OffsetPageInfo'
-          ? donePosts.pageInfo.totalCount
-          : donePosts.entries.length) ?? 0,
+        (done.pageInfo?.__typename === 'OffsetPageInfo'
+          ? done.pageInfo.totalCount
+          : done.entries.length) ?? 0,
       icon: <GtdDoneSVG className={s.doneIcon} />,
       bodyClassName: s.doneBody,
-      posts: donePosts,
-    },
-    [KANBAN_BOARD.REJECTED]: {
-      key: 'rejected',
-      title: resolveTitle('rejected', t('article.status.reject')),
-      count:
-        (rejectedPosts.pageInfo?.__typename === 'OffsetPageInfo'
-          ? rejectedPosts.pageInfo.totalCount
-          : rejectedPosts.entries.length) ?? 0,
-      icon: <RejectSVG className={s.rejectedIcon} />,
-      bodyClassName: s.rejectedBody,
-      posts: rejectedPosts,
+      posts: done,
+      internal,
     },
   }
 

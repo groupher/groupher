@@ -34,7 +34,13 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     with {:ok, :pass} <- require_transaction(),
          {:ok, schema, target_attrs} <- restriction_target(lifecycle, attrs),
          {:ok, :pass} <- validate_scope(lifecycle, target_attrs),
-         attrs <- attrs |> defaults() |> Map.delete(:scope_key) |> Map.merge(target_attrs),
+         attrs <-
+           attrs
+           |> defaults()
+           |> Map.delete(:scope_key)
+           |> Map.delete(:actor)
+           |> Map.delete(:operation_ref)
+           |> Map.merge(target_attrs),
          {:ok, restriction} <- insert_or_get(schema, attrs),
          {:ok, :pass} <- recompute(lifecycle),
          {:ok, _event} <- enqueue_visibility_change(lifecycle, target_attrs, attrs.source_ref) do
@@ -61,6 +67,9 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   def end_blocks(_lifecycle, _scope_key, _ids, _operation_ref, _resolution) do
     {:error, CMS.ErrorCat.invalid_review_block()}
   end
+
+  @doc "Resolves the canonical restriction identity for orchestration within the existing transaction."
+  def scope_target(lifecycle, attrs), do: restriction_target(lifecycle, attrs)
 
   @doc "Returns active restrictions for one resource scope."
   def active_for(lifecycle, scope_key) when is_binary(scope_key) do

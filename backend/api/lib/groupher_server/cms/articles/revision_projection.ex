@@ -35,7 +35,6 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
     DocBranchState,
     DocLifecycle,
     DocRevision,
-    KanbanState,
     PinnedArticle,
     PostState
   }
@@ -203,24 +202,14 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
     |> Enum.take(10)
   end
 
-  defp stable_operational_extension(%Article{thread: :post, id: article_id}, community_id) do
+  defp stable_operational_extension(%Article{thread: :post, id: article_id}, _community_id) do
     cat =
       case Repo.get(PostState, article_id) do
         %PostState{cat: cat} -> cat
         nil -> nil
       end
 
-    status =
-      Repo.one(
-        from(binding in ArticleBinding,
-          left_join: state in KanbanState,
-          on: state.article_binding_id == binding.id,
-          where: binding.article_id == ^article_id and binding.community_id == ^community_id,
-          select: state.status
-        )
-      )
-
-    %{cat: cat, status: status}
+    %{cat: cat}
   end
 
   defp stable_operational_extension(%Article{}, _community_id), do: %{}

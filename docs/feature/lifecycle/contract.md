@@ -1,5 +1,7 @@
 # Community Lifecycle
 
+> Ticket V2 集成已落地：[Ticket V2](../tickets/v2.md)第 4 节规定的 Community 状态/Blocker Command 会在同一事务中调用 Ticket 来源 reconcile，并提交 Activity 与缓存 Outbox；单来源 Ticket 随 Post 可见性变为 Draft，Community 恢复不会自动重新发布。Community Lifecycle 仍只拥有本文的状态与 Blocker 投影；事务入口、锁序和回归证据见 [V2 实施追踪 R06](../tickets/inventory.md#v2-实施追踪)。生产规模锁时及外部 CDN purge 仍待目标环境 smoke。
+
 Community Lifecycle 只拥有 Community 自身状态、Blocker 投影、状态转换和并发 guard。Gate V2 的读取与操作准入合同统一记录在 [gate_v2.md](../gate/v2.md)，本文不再定义另一套 Gate facade 或读取绕过入口。
 
 Interaction mutation 对这些能力的消费与当前缺口记录在

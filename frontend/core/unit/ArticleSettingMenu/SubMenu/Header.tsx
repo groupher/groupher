@@ -2,7 +2,6 @@ import type { FC, ReactNode } from 'react'
 
 import CategorySVG from '~/icons/Category'
 import EditSVG from '~/icons/EditPen'
-import WipSVG from '~/icons/GtdWip'
 import InfoSVG from '~/icons/Info'
 import SlugSVG from '~/icons/Slug'
 import TagNode from '~/ui/TagNode'
@@ -41,19 +40,6 @@ const Header: FC<TProps> = ({ type }) => {
         <>
           <CategorySVG className={s.icon} />
           设置分类
-          <div className='grow' />
-          <InfoSVG className={s.questionIcon} />
-        </>
-      )
-
-      break
-    }
-
-    case SUB_MENU.STATUS: {
-      Content = (
-        <>
-          <WipSVG className={s.icon} />
-          设置状态
           <div className='grow' />
           <InfoSVG className={s.questionIcon} />
         </>

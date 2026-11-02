@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Model.TrashedDocArticle do
     belongs_to(:community, Community)
     belongs_to(:branch, DocBranch)
     belongs_to(:stable_article, Article, foreign_key: :article_id, type: Ecto.UUID)
-    field(:restore_state, Ecto.Enum, values: [:draft_only, :published, :archived])
+    field(:restore_state, Ecto.Enum, values: [:draft, :published, :archived])
     belongs_to(:deleted_by, User)
     field(:deleted_at, :utc_datetime)
     field(:article, :map, virtual: true)

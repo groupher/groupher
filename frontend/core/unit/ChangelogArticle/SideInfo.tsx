@@ -1,6 +1,7 @@
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import Img from '~/Img'
 import useArticleUpvote from '~/query/mutation/useArticleUpvote'
+import type { TChangelog } from '~/spec'
 import useArticle from '~/stores/article/hooks'
 import ReadableDate from '~/ui/ReadableDate'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
@@ -18,7 +19,7 @@ export default function SideInfo() {
     return <h1>Error article</h1>
   }
 
-  const { insertedAt, communityTags, meta, cat, status } = article
+  const { insertedAt, communityTags, meta, cat, status } = article as TChangelog
   const latestUpvotedUsers = meta?.latestUpvotedUsers ?? []
 
   return (

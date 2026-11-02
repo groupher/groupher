@@ -30,7 +30,6 @@ export const trashedPosts = graphql(`
           }
           ... on Post {
             cat
-            status
             insertedAt
             activeAt
             author {

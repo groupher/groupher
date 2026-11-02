@@ -258,7 +258,6 @@ export const PagePostLiteFields = graphql(`
     digest
     isPinned
     cat
-    status
     insertedAt
     activeAt
     author {

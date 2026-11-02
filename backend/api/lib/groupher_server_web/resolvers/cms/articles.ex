@@ -48,12 +48,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     CMS.articles_set_cat_result(article, cat, user, command_id)
   end
 
-  def set_post_status(_root, %{article: article, status: status, command_id: command_id}, %{
-        context: %{cur_user: user}
-      }) do
-    CMS.articles_set_status_result(article, status, user, command_id)
-  end
-
   @doc "Resolves an Article Page without interpreting resource query policy."
   def article_page(_root, %{thread: thread} = args, %{context: context}) do
     CMS.articles_page(
@@ -62,14 +56,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
       Map.get(args, :pagi),
       Map.get(context, :cur_user)
     )
-  end
-
-  def grouped_kanban_posts(_root, %{community: community}, _info) do
-    CMS.articles_grouped_kanban(community)
-  end
-
-  def kanban_page(_root, %{community: community} = args, _info) do
-    CMS.articles_kanban_page(community, Map.get(args, :filter) || %{}, Map.get(args, :pagi))
   end
 
   def create_post(root, args, info) do

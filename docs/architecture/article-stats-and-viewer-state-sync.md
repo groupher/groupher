@@ -10,7 +10,9 @@
 > [Article View 计数简化方案](../feature/view-tracker/article-view-counting-simplification.md)
 
 本文定义 Article 的 view、upvote、collect、emotion 和 comment 写入完成后，后端如何返回权威的
-`ArticleStats` 与 owner-specific private state，以及前端如何让 Detail、Posts、Changelogs 和 Kanban 立即看到同一结果。
+`ArticleStats` 与 owner-specific private state，以及前端如何让 Detail、Posts、Changelogs 和 Ticket Kanban 的关联 Post 计数立即收敛。
+
+Ticket Kanban 不创建 Ticket `ArticleStats`。Ticket 查询返回关联 Post refs；卡片按最多 100 个 Post path 分批读取现有 statsBatch 并求和。Post 的 upvote/comment 写后继续更新 Post ArticleStats，前端重算其 Ticket 卡片聚合；服务端 interaction/comment outbox 同时清理受影响 Ticket 详情与 Kanban cache tags。
 
 这不是 Gate、Lifecycle、Interactions 或 ViewTracker 的重做。领域事实、准入、事务和计数机制保持不变；改造集中在
 GraphQL 写后返回合同与前端 Query cache 同步方式。
@@ -128,7 +130,7 @@ ArticleStats
        useArticleStates 合并结果
               |
               v
- Detail / Posts / Changelogs / Kanban
+ Detail / Posts / Changelogs / Ticket Kanban
 ```
 
 旧 `useArticleStates` 对每个 Article 创建一个 `enabled: false` 的 entity query。它不是网络请求，但仍是一个 TanStack
@@ -238,7 +240,7 @@ frontend apply result
   └─维护必要的 ViewAck / confirmed-write receipt
                     |
                     v
-Detail / Posts / Changelogs / Kanban 同步重渲染
+Detail / Posts / Changelogs / Ticket Kanban 同步重渲染
 ```
 
 失败仍由现有 Gate、Lifecycle、scope 和领域事务决定。为了拼响应不得绕过 admission，也不得在失败后伪造 stats/viewer state。
@@ -412,7 +414,7 @@ type TArticleState<T> = {
 
 ```text
 Detail                    单篇 stats query
-Posts/Changelogs/Kanban   按 community/thread 分组的 stats batch query
+Posts/Changelogs/Ticket Kanban   按 community/thread 与 Ticket 的关联 Post refs 加载 stats batch query
 ViewerArticleState        按 viewer + paths 的 ViewTracker private batch query
 ArticleInteractionState   按 viewer + paths 的 Interactions private batch query
 ```
@@ -586,7 +588,7 @@ patch；不能重新加入无条件 stats invalidation/refetch，也不能根据
 Detail / Drawer SSR
   -> prefetch articleQueryKeys.stats(path)
 
-Posts / Changelogs / Kanban SSR
+Posts / Changelogs / Ticket Kanban SSR
   -> prefetch articleQueryKeys.statsBatch(paths)
 ```
 
@@ -700,7 +702,7 @@ SSR/CDN 或较慢 query 可能晚于 mutation 返回。任何进入前端的 `Ar
 - `useArticleStates` 不再创建 per-article disabled query observer；
 - 一个列表只按 community/thread 创建必要的 stats batches；
 - `articleQueryKeys.stats(path)` 继续作为 Detail/Drawer 的真实 query；
-- view 成功后 Detail、Posts、Changelogs、Kanban 中已挂载的同一 Article 立即显示新 views；
+- view 成功后 Detail、Posts、Changelogs 及其关联 Post 计数的 Ticket Kanban 卡片立即显示新 views；
 - upvote、collect、emotion 和 comment 成功后所有已挂载 surface 立即显示新 count；
 - updateComment 直接应用返回的完整 ArticleStats；即使 comments count 不变，也接受前进后的 `commentsRevision`，不再依赖
   stats invalidation/refetch；

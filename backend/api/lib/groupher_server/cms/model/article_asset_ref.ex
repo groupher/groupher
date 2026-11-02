@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Model.ArticleAssetRef do
     CommunityAsset
   }
 
-  alias CMS.Artiment.Threads
+  alias CMS.Assets.ThreadIdentity
 
   alias Helper.Constant.DBPrefix
 
@@ -44,7 +44,7 @@ defmodule GroupherServer.CMS.Model.ArticleAssetRef do
     belongs_to(:body_draft, ArticleBodyDraft, type: Ecto.UUID)
     belongs_to(:revision, ArticleRevision, type: Ecto.UUID)
     field(:article_id, Ecto.UUID, virtual: true)
-    field(:thread, Ecto.Enum, values: Threads.article_enums(), virtual: true)
+    field(:thread, Ecto.Enum, values: ThreadIdentity.values(), virtual: true)
     field(:usage, Ecto.Enum, values: @usage_values, default: :inline)
     field(:block_id, :string)
     field(:block_type, :string)

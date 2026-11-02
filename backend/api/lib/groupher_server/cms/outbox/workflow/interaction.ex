@@ -52,6 +52,7 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
     with {:ok, target} <- load_target(event.resource_type, event.resource_id),
          {:ok, actor} <- load_actor(data["actor_id"]),
          {:ok, _} <- emit_event(event.event, target, actor, data),
+         {:ok, _} <- purge_ticket_cache(target),
          {:ok, _} <- maybe_sync_search(target) do
       {:ok, :delivered}
     end
@@ -116,6 +117,12 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
   defp maybe_sync_search(%Article{} = article) do
     normalize_search(Indexer.enqueue_metrics(article))
   end
+
+  defp purge_ticket_cache(%Article{thread: :post, id: article_id}) do
+    CMS.Tickets.Cache.purge_post(article_id)
+  end
+
+  defp purge_ticket_cache(_target), do: {:ok, :pass}
 
   defp normalize_search(:ok), do: {:ok, :pass}
   defp normalize_search({:ok, _}), do: {:ok, :pass}

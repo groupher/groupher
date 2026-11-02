@@ -25,14 +25,20 @@ import { changelog, changelogPage } from '~/schemas/pages/changelog'
 import { commentPage } from '~/schemas/pages/comment'
 import { community as communityDocument } from '~/schemas/pages/community'
 import { doc, docPublicTree } from '~/schemas/pages/doc'
-import { groupedKanbanPosts, post as postDocument, postPage } from '~/schemas/pages/post'
+import { post as postDocument, postPage } from '~/schemas/pages/post'
+import {
+  postTicketProgress as postTicketProgressDocument,
+  ticket as ticketDocument,
+  ticketKanban,
+} from '~/schemas/pages/ticket'
 import type {
   TCommunity,
   TDoc,
   TDocPublicTree,
   TPagiGraphQLInput,
   TPagedArticlesParams,
-  TPagedPosts,
+  TPagedTickets,
+  TPostTicketProgress,
   TPost,
   TParseDashboard,
   TThread,
@@ -106,13 +112,19 @@ const withArticlePageCachePolicy = async <T>(read: () => Promise<T>): Promise<T>
   }
 }
 
+const setCommunityPageCacheHeaders = (community: string, tags: readonly string[]): void => {
+  setPublicCacheHeaders([CACHE_TAG.communityCache(community), ...tags])
+}
+
 const loadPosts = createServerFn({ method: 'GET', strict: false })
   .validator(
     (data: { community: string; filter?: TPagedArticlesParams; pagi?: TPagiGraphQLInput }) => data,
   )
   .handler(async ({ data }) =>
     withArticlePageCachePolicy(async () => {
-      setPublicCacheHeaders([CACHE_TAG.articlesCache(data.community, THREAD.POST)])
+      setCommunityPageCacheHeaders(data.community, [
+        CACHE_TAG.articlesCache(data.community, THREAD.POST),
+      ])
       const filter = data.filter || { community: data.community }
       const result = await fetchGraphQL<ResultOf<typeof postPage>>(postPage, {
         filter: toArticlePageFilter(filter),
@@ -126,7 +138,7 @@ const loadPosts = createServerFn({ method: 'GET', strict: false })
 const loadPost = createServerFn({ method: 'GET', strict: false })
   .validator((data: { community: string; innerId: string }) => data)
   .handler(async ({ data }) => {
-    setPublicCacheHeaders([
+    setCommunityPageCacheHeaders(data.community, [
       CACHE_TAG.articleCache(data.community, THREAD.POST, data.innerId),
       CACHE_TAG.articlesCache(data.community, THREAD.POST),
     ])
@@ -139,7 +151,7 @@ const loadPost = createServerFn({ method: 'GET', strict: false })
 const loadArticleStats = createServerFn({ method: 'GET', strict: false })
   .validator((data: { community: string; thread: TThread; innerIds: string[] }) => data)
   .handler(async ({ data }) => {
-    setPublicCacheHeaders([
+    setCommunityPageCacheHeaders(data.community, [
       CACHE_TAG.articlesCache(data.community, data.thread),
       ...data.innerIds.map((innerId) =>
         CACHE_TAG.articleCache(data.community, data.thread, innerId),
@@ -159,7 +171,9 @@ const loadChangelogs = createServerFn({ method: 'GET', strict: false })
   )
   .handler(async ({ data }) =>
     withArticlePageCachePolicy(async () => {
-      setPublicCacheHeaders([CACHE_TAG.articlesCache(data.community, THREAD.CHANGELOG)])
+      setCommunityPageCacheHeaders(data.community, [
+        CACHE_TAG.articlesCache(data.community, THREAD.CHANGELOG),
+      ])
       const filter = data.filter || { community: data.community }
       const result = await fetchGraphQL<ResultOf<typeof changelogPage>>(changelogPage, {
         filter: toArticlePageFilter(filter),
@@ -173,7 +187,7 @@ const loadChangelogs = createServerFn({ method: 'GET', strict: false })
 const loadChangelog = createServerFn({ method: 'GET', strict: false })
   .validator((data: { community: string; innerId: string }) => data)
   .handler(async ({ data }) => {
-    setPublicCacheHeaders([
+    setCommunityPageCacheHeaders(data.community, [
       CACHE_TAG.articleCache(data.community, THREAD.CHANGELOG, data.innerId),
       CACHE_TAG.articlesCache(data.community, THREAD.CHANGELOG),
     ])
@@ -184,19 +198,49 @@ const loadChangelog = createServerFn({ method: 'GET', strict: false })
   })
 
 const loadKanban = createServerFn({ method: 'GET', strict: false })
-  .validator((data: { community: string }) => data)
+  .validator((data: { community: string; pagi: TPagiGraphQLInput }) => data)
   .handler(async ({ data }) => {
-    setPublicCacheHeaders([CACHE_TAG.articlesCache(data.community, THREAD.KANBAN)])
-    const result = await fetchGraphQL<ResultOf<typeof groupedKanbanPosts>>(groupedKanbanPosts, {
+    setCommunityPageCacheHeaders(data.community, [CACHE_TAG.ticketListCache(data.community)])
+    const result = await fetchGraphQL<ResultOf<typeof ticketKanban>>(ticketKanban, {
       community: data.community,
+      pagi: data.pagi,
     })
-    return result.data?.groupedKanbanPosts as unknown as Record<string, TPagedPosts> | null
+    return result.data?.ticketKanban as unknown as Record<
+      'todo' | 'wip' | 'done',
+      TPagedTickets
+    > | null
+  })
+
+const loadTicket = createServerFn({ method: 'GET', strict: false })
+  .validator((data: { community: string; innerId: number }) => data)
+  .handler(async ({ data }) => {
+    setCommunityPageCacheHeaders(data.community, [
+      CACHE_TAG.ticketDetailCache(data.community, data.innerId),
+    ])
+    const result = await fetchGraphQL<ResultOf<typeof ticketDocument>>(ticketDocument, {
+      community: data.community,
+      innerId: data.innerId,
+    })
+    return result.data?.ticket ?? null
+  })
+
+const loadPostTicketProgress = createServerFn({ method: 'GET', strict: false })
+  .validator((data: { community: string; postInnerIds: number[] }) => data)
+  .handler(async ({ data }) => {
+    setCommunityPageCacheHeaders(data.community, [
+      CACHE_TAG.articlesCache(data.community, THREAD.POST),
+    ])
+    const result = await fetchGraphQL<ResultOf<typeof postTicketProgressDocument>>(
+      postTicketProgressDocument,
+      { community: data.community, postInnerIds: data.postInnerIds },
+    )
+    return (result.data?.postTicketProgress ?? []) as unknown as readonly TPostTicketProgress[]
   })
 
 const loadDocTree = createServerFn({ method: 'GET', strict: false })
   .validator((data: { community: string }) => data)
   .handler(async ({ data }) => {
-    setPublicCacheHeaders([CACHE_TAG.docTreeCache(data.community)])
+    setCommunityPageCacheHeaders(data.community, [CACHE_TAG.docTreeCache(data.community)])
     const result = await fetchGraphQL<ResultOf<typeof docPublicTree>>(docPublicTree, {
       community: data.community,
     })
@@ -206,7 +250,9 @@ const loadDocTree = createServerFn({ method: 'GET', strict: false })
 const loadDoc = createServerFn({ method: 'GET', strict: false })
   .validator((data: { community: string; innerId: string }) => data)
   .handler(async ({ data }) => {
-    setPublicCacheHeaders([CACHE_TAG.articleCache(data.community, THREAD.DOC, data.innerId)])
+    setCommunityPageCacheHeaders(data.community, [
+      CACHE_TAG.articleCache(data.community, THREAD.DOC, data.innerId),
+    ])
     const result = await fetchGraphQL<ResultOf<typeof doc>>(doc, {
       article: { community: data.community, innerId: data.innerId, thread: THREAD.DOC },
     })
@@ -217,7 +263,7 @@ const loadComments = createServerFn({ method: 'GET', strict: false })
   .validator((data: { collection: TCommentCollection; pagi: TPagiGraphQLInput }) => data)
   .handler(async ({ data: { collection, pagi } }) => {
     const { community, thread, innerId } = collection.article
-    setPublicCacheHeaders([
+    setCommunityPageCacheHeaders(community, [
       CACHE_TAG.commentsListCache(community),
       CACHE_TAG.commentsCache(community, thread, innerId),
     ])
@@ -241,5 +287,7 @@ export {
   loadDocTree,
   loadKanban,
   loadPost,
+  loadTicket,
+  loadPostTicketProgress,
   loadPosts,
 }

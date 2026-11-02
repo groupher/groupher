@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 
 import ArticleBody from '~/render/ArtimentBody'
+import type { TChangelog } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import GotoTop from '~/ui/GotoTop'
 import { ArticleContentLoading } from '~/ui/Loading'
@@ -58,7 +59,7 @@ export default function ChangelogViewer({ isFullView = true }: TProps) {
     <>
       {isFullView && (
         <FixedHeader
-          article={article}
+          article={article as TChangelog}
           stats={stats}
           viewerState={viewerState}
           visible={fixedHeaderVisible}

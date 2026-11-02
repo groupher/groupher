@@ -91,13 +91,20 @@ defmodule GroupherServer.CMS.GateAction do
     "post.pin",
     "post.restore",
     "post.set_category",
-    "post.set_status",
     "post.sink",
     "post.trash",
     "post.undo_lock_comment",
     "post.undo_pin",
     "post.undo_sink",
     "post.update",
+    "ticket.assign",
+    "ticket.create",
+    "ticket.link_source",
+    "ticket.manage_case",
+    "ticket.manage_visibility",
+    "ticket.read_internal",
+    "ticket.transition",
+    "ticket.update",
     "review.configure",
     "review.decide",
     "review.platform.configure",
@@ -191,13 +198,20 @@ defmodule GroupherServer.CMS.GateAction do
     "post.pin" => %{scope: :context, context: :cms, grant: "post.pin"},
     "post.restore" => %{scope: :context, context: :cms, grant: "post.restore"},
     "post.set_category" => %{scope: :context, context: :cms, grant: "post.edit", owner_fallback: true},
-    "post.set_status" => %{scope: :context, context: :cms, grant: "post.edit", owner_fallback: true},
     "post.sink" => %{scope: :context, context: :cms, grant: "post.sink"},
     "post.trash" => %{scope: :context, context: :cms, grant: "post.trash"},
     "post.undo_lock_comment" => %{scope: :context, context: :cms, grant: "post.undo_lock_comment"},
     "post.undo_pin" => %{scope: :context, context: :cms, grant: "post.undo_pin"},
     "post.undo_sink" => %{scope: :context, context: :cms, grant: "post.undo_sink"},
     "post.update" => %{scope: :context, context: :cms, grant: "post.edit", owner_fallback: true},
+    "ticket.assign" => %{scope: :context, context: :cms, grant: "ticket.assign"},
+    "ticket.create" => %{scope: :context, context: :cms, grant: "ticket.create"},
+    "ticket.link_source" => %{scope: :context, context: :cms, grant: "ticket.link_source"},
+    "ticket.manage_case" => %{scope: :context, context: :cms, grant: "ticket.manage_case"},
+    "ticket.manage_visibility" => %{scope: :context, context: :cms, grant: "ticket.manage_visibility"},
+    "ticket.read_internal" => %{scope: :context, context: :cms, grant: "ticket.read_internal"},
+    "ticket.transition" => %{scope: :context, context: :cms, grant: "ticket.transition"},
+    "ticket.update" => %{scope: :context, context: :cms, grant: "ticket.update"},
     "review.configure" => %{scope: :context, context: :cms, grant: "review.configure"},
     "review.decide" => %{scope: :context, context: :cms, grant: "review.decide"},
     "review.platform.configure" => %{scope: :global, grant: "review.platform.configure"},
@@ -541,10 +555,6 @@ defmodule GroupherServer.CMS.GateAction do
   @spec post_set_category() :: String.t()
   def post_set_category, do: "post.set_category"
 
-  @doc "Returns the stable `post.set_status` Gate action name."
-  @spec post_set_status() :: String.t()
-  def post_set_status, do: "post.set_status"
-
   @doc "Returns the stable `post.sink` Gate action name."
   @spec post_sink() :: String.t()
   def post_sink, do: "post.sink"
@@ -568,6 +578,38 @@ defmodule GroupherServer.CMS.GateAction do
   @doc "Returns the stable `post.update` Gate action name."
   @spec post_update() :: String.t()
   def post_update, do: "post.update"
+
+  @doc "Returns the stable `ticket.assign` Gate action name."
+  @spec ticket_assign() :: String.t()
+  def ticket_assign, do: "ticket.assign"
+
+  @doc "Returns the stable `ticket.create` Gate action name."
+  @spec ticket_create() :: String.t()
+  def ticket_create, do: "ticket.create"
+
+  @doc "Returns the stable `ticket.link_source` Gate action name."
+  @spec ticket_link_source() :: String.t()
+  def ticket_link_source, do: "ticket.link_source"
+
+  @doc "Returns the stable `ticket.manage_case` Gate action name."
+  @spec ticket_manage_case() :: String.t()
+  def ticket_manage_case, do: "ticket.manage_case"
+
+  @doc "Returns the stable `ticket.manage_visibility` Gate action name."
+  @spec ticket_manage_visibility() :: String.t()
+  def ticket_manage_visibility, do: "ticket.manage_visibility"
+
+  @doc "Returns the stable `ticket.read_internal` Gate action name."
+  @spec ticket_read_internal() :: String.t()
+  def ticket_read_internal, do: "ticket.read_internal"
+
+  @doc "Returns the stable `ticket.transition` Gate action name."
+  @spec ticket_transition() :: String.t()
+  def ticket_transition, do: "ticket.transition"
+
+  @doc "Returns the stable `ticket.update` Gate action name."
+  @spec ticket_update() :: String.t()
+  def ticket_update, do: "ticket.update"
 
   @doc "Returns the stable `review.configure` Gate action name."
   @spec review_configure() :: String.t()

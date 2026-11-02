@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
     :purple,
     :custom
   ]
-  @kanban_bg_colors_default [:black, :yellow, :purple, :green, :red]
+  @kanban_bg_colors_default [:yellow, :purple, :green]
   @theme_presets [:default, :claude, :solarized, :hn, :custom]
   @default_wallpaper_type "gradient"
   # Keep this in sync with frontend/core/stores/wallpaper/constant.ts

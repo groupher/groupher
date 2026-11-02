@@ -20,6 +20,8 @@ export const CACHE_TAG = {
   articlesCache: (community: string, thread: TThread) =>
     publicCacheTags.articleList(community, thread),
   articleCache: publicCacheTags.articleDetail,
+  ticketListCache: publicCacheTags.ticketList,
+  ticketDetailCache: publicCacheTags.ticketDetail,
   commentsCache: publicCacheTags.comments,
   commentsListCache: publicCacheTags.commentsList,
   docTreeCache: publicCacheTags.docTree,

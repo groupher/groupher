@@ -51,7 +51,8 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
   defp cleanup(event) do
     case event.event do
       "comment.changed" ->
-        with {:ok, _} <- purge_comment_cache(event) do
+        with {:ok, _} <- purge_comment_cache(event),
+             {:ok, _} <- purge_ticket_cache(event.data) do
           {:ok, :purged}
         end
 
@@ -109,6 +110,12 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
       {:ok, result}
     end
   end
+
+  defp purge_ticket_cache(%{"thread" => "post", "article_id" => article_id}) do
+    GroupherServer.CMS.Tickets.Cache.purge_post(article_id)
+  end
+
+  defp purge_ticket_cache(_data), do: {:ok, :pass}
 
   defp normalize(:ok), do: {:ok, :pass}
   defp normalize({:ok, _}), do: {:ok, :pass}

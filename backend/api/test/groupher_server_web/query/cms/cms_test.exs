@@ -294,7 +294,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
         CMS.Dashboard.update(
           community,
           :layout,
-          %{kanban_bg_colors: [:green, :red]},
+          %{kanban_bg_colors: [:green, :red, :purple]},
           user,
           Ecto.UUID.generate()
         )
@@ -337,7 +337,10 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert get_in(results, ["dashboard", "seo", "ogTitle"]) == "groupher"
       assert get_in(results, ["dashboard", "layout", "postLayout"]) == "COVER"
       assert get_in(results, ["dashboard", "layout", "topbarEnabled"]) == true
-      assert get_in(results, ["dashboard", "layout", "kanbanBgColors"]) == ["GREEN", "RED"]
+
+      assert get_in(results, ["dashboard", "layout", "kanbanBgColors"]) ==
+               ["GREEN", "RED", "PURPLE"]
+
       assert get_in(results, ["dashboard", "baseInfo", "favicon"]) == "new favicon"
 
       assert get_in(results, ["dashboard", "rss", "rssFeedType"]) == "DIGEST"

@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Model.TrashedArticle do
     belongs_to(:community, Community)
     field(:thread, Ecto.Enum, values: @threads)
     belongs_to(:article, Article, type: Ecto.UUID)
-    field(:restore_state, Ecto.Enum, values: [:draft_only, :published, :archived])
+    field(:restore_state, Ecto.Enum, values: [:draft, :published, :archived])
     belongs_to(:deleted_by, User)
     field(:deleted_at, :utc_datetime)
     field(:mentioned_by_count, :integer, virtual: true, default: 0)

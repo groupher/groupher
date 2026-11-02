@@ -1,3 +1,3 @@
-import { groupedKanbanPosts } from '~/schemas/pages/post'
+import { ticketKanbanInternal } from '~/schemas/pages/ticket'
 
-export default { groupedKanbanPosts }
+export default { ticketKanbanInternal }

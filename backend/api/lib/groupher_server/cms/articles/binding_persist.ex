@@ -26,9 +26,10 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     ArticleBindingTag,
     ArticleLifecycle,
     Community,
-    KanbanState,
     PinnedArticle
   }
+
+  alias CMS.Tickets.Model.Source, as: TicketSource
 
   @ordinary_threads [:post, :blog, :changelog]
 
@@ -51,6 +52,7 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
       when thread in @ordinary_threads do
     with %Article{} = article <- lock_article(article.id),
          {:ok, binding} <- source_binding(article.id, source_community_id),
+         {:ok, :pass} <- ensure_no_ticket_link(thread, article.id, source_community_id),
          {:ok, :different_community} <- ensure_different_community(source, destination),
          {:ok, destination_binding} <- prepare_destination(article, destination),
          {:ok, binding} <- move_binding(binding, destination_binding, destination),
@@ -63,6 +65,9 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
   end
 
   def move(%Article{thread: :doc}, %Community{}, %Community{}), do: {:error, :unsupported_for_doc}
+
+  def move(%Article{thread: :ticket}, %Community{}, %Community{}),
+    do: {:error, ArticleErrorCat.ticket_binding_unsupported()}
 
   @doc """
   Ensures the ordinary Article has its Community binding before publication.
@@ -125,6 +130,7 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
       when thread in @ordinary_threads do
     with %Article{} = locked_article <- lock_article(article.id),
          %ArticleBinding{} = binding <- lock_binding(locked_article.id, community.id),
+         {:ok, :pass} <- ensure_no_ticket_link(thread, locked_article.id, community.id),
          {:ok, :pass} <- ensure_can_remove_published_article(locked_article.id, binding),
          {:ok, :pass} <- ensure_binding_not_collected(binding),
          {:ok, _deleted} <- Repo.delete(binding) do
@@ -136,6 +142,22 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
   end
 
   def unmirror(%Article{thread: :doc}, %Community{}), do: {:error, :unsupported_for_doc}
+
+  def unmirror(%Article{thread: :ticket}, %Community{}),
+    do: {:error, ArticleErrorCat.ticket_binding_unsupported()}
+
+  defp ensure_no_ticket_link(:post, post_id, _community_id) do
+    linked_ticket =
+      from(link in TicketSource,
+        where: link.post_id == ^post_id
+      )
+
+    if Repo.exists?(linked_ticket),
+      do: {:error, ArticleErrorCat.post_linked_to_ticket()},
+      else: {:ok, :pass}
+  end
+
+  defp ensure_no_ticket_link(_thread, _post_id, _community_id), do: {:ok, :pass}
 
   defp lock_binding(article_id, community_id) do
     ArticleBinding
@@ -259,8 +281,6 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     Repo.delete_all(from(tag in ArticleBindingTag, where: tag.article_binding_id in ^binding_ids))
 
     Repo.delete_all(from(pin in PinnedArticle, where: pin.article_binding_id in ^binding_ids))
-
-    Repo.delete_all(from(state in KanbanState, where: state.article_binding_id in ^binding_ids))
 
     {:ok, :pass}
   end

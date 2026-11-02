@@ -9,6 +9,7 @@ import {
   revokeOtherAuthSessions,
 } from './auth-state.js'
 import { mockPage } from './pagination.js'
+import { ticketQueries, ticketMutations } from './tickets.js'
 
 const nowISO = () => new Date().toISOString()
 const todayISO = () => new Date().toISOString().slice(0, 10)
@@ -461,6 +462,7 @@ const makePost = (idx, community = 'home') => {
 
 export const resolvers = {
   RootQueryType: {
+    ...ticketQueries,
     browserSessions: (_parent, args) =>
       mockPage(
         listAuthSessions(args.browserSessionRef),
@@ -543,6 +545,7 @@ export const resolvers = {
     commentReplyPage: (_parent, args) => mockPage([], args.pagi, `replies:${args.commentId}`),
   },
   RootMutationType: {
+    ...ticketMutations,
     updateDocDraft: (_parent, args) => {
       docDraftState.calls += 1
       const receipt = docDraftState.receipts.get(args.commandId)

@@ -1,16 +1,27 @@
-import { loadKanban, loadPagedChangelogs, loadPagedPosts } from '@dash/server/cms'
+import {
+  loadKanban,
+  loadPagedChangelogs,
+  loadPagedPosts,
+  loadTicketInternal,
+} from '@dash/server/cms'
 import { queryOptions } from '@tanstack/react-query'
 
 import { DEFAULT_EFFECTIVE_PAGI_CONFIG } from '~/lib/pagination/params'
-import { articleQueries } from '~/query/article'
+import { articleQueryKeys, ticketQueryKeys } from '~/query'
 
 export const dashQueries = {
+  ticketInternal: (community: string, id: string) =>
+    queryOptions({
+      queryKey: ticketQueryKeys.internalDetail(community, id),
+      queryFn: () => loadTicketInternal({ data: { community, id } }),
+      staleTime: 60_000,
+    }),
   posts: (community: string, config = DEFAULT_EFFECTIVE_PAGI_CONFIG) =>
     queryOptions({
-      queryKey: articleQueries.posts(
+      queryKey: articleQueryKeys.pagiPosts(
         { community, page: 1, size: config.defaultSize },
         { ...config, api: 'offset', mode: 'page' },
-      ).queryKey,
+      ),
       queryFn: () =>
         loadPagedPosts({
           data: {
@@ -24,10 +35,10 @@ export const dashQueries = {
     }),
   changelogs: (community: string, config = DEFAULT_EFFECTIVE_PAGI_CONFIG) =>
     queryOptions({
-      queryKey: articleQueries.changelogs(
+      queryKey: articleQueryKeys.pagiChangelogs(
         { community, page: 1, size: config.defaultSize },
         { ...config, api: 'offset', mode: 'page' },
-      ).queryKey,
+      ),
       queryFn: () =>
         loadPagedChangelogs({
           data: {
@@ -41,8 +52,20 @@ export const dashQueries = {
     }),
   kanban: (community: string, config = DEFAULT_EFFECTIVE_PAGI_CONFIG) =>
     queryOptions({
-      queryKey: articleQueries.kanban(community, config).queryKey,
-      queryFn: () => loadKanban({ data: { community } }),
+      queryKey: ticketQueryKeys.kanban(community, 'internal', config.defaultSize),
+      queryFn: () =>
+        loadKanban({
+          data: {
+            community,
+            pagi: {
+              offset: {
+                page: 1,
+                size: config.defaultSize,
+                configRevision: config.revision,
+              },
+            },
+          },
+        }),
       staleTime: 60_000,
     }),
 }

@@ -1,4 +1,4 @@
-import type { TKanbanPage } from '~/hooks/useKanbanPosts'
+import type { TKanbanPage } from '~/hooks/useKanbanTickets'
 import Pagi from '~/ui/Pagi'
 import CursorPagination from '~/ui/Pagi/CursorPagination'
 
@@ -10,7 +10,7 @@ export default function PageControls({ page }: { page: TKanbanPage }) {
         重试
       </button>
     )
-  if (page.pageInfo?.__typename === 'OffsetPageInfo')
+  if (page.pageInfo?.__typename === 'OffsetPageInfo' && page.mode === 'page')
     return <Pagi pageInfo={page.pageInfo} onChange={page.setPage} />
   return (
     <CursorPagination

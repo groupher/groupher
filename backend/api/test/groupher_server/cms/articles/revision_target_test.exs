@@ -10,6 +10,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
   alias CMS.Articles.{Draft.Store, Public, Revision}
   alias CMS.Articles.Publish.Target
   alias CMS.Articles.Publish.Doc, as: DocPublish
+  alias CMS.Tickets.Content
 
   alias CMS.Model.{
     Article,
@@ -24,7 +25,9 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     DocBranchState,
     DocBranchVersion,
     PinnedArticle,
-    PostDraft
+    PostDraft,
+    PostRevision,
+    TicketState
   }
 
   test "publish materialization keeps stable identity and reuses unchanged body snapshots" do
@@ -56,6 +59,114 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert public_two.publication_version == 2
     assert Repo.aggregate(ArticleRevision, :count) == 2
     assert Repo.aggregate(ArticlePublic, :count) == 1
+  end
+
+  test "Ticket Draft and Revision use shared content rows without ordinary typed extensions" do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = db_insert(:community)
+    {:ok, author} = CMS.Articles.Persist.ensure_author_exists(user)
+
+    assert {:ok, result} =
+             Repo.transaction(fn ->
+               assert {:ok, %{article: article, draft: draft}} =
+                        Content.create_workspace(
+                          community,
+                          %{
+                            title: "Ticket draft",
+                            digest: "Ticket summary",
+                            body_bag: mock_body_bag(mock_rich_text("Ticket body"))
+                          },
+                          author
+                        )
+
+               assert article.thread == :ticket
+               assert draft.version == 1
+
+               lifecycle = Repo.get_by!(ArticleLifecycle, article_id: article.id)
+               assert lifecycle.thread == :ticket
+               assert lifecycle.state == :draft
+               assert is_nil(lifecycle.first_published_at)
+
+               Repo.query!("SAVEPOINT ticket_draft_first_published_guard")
+
+               assert_raise Postgrex.Error, fn ->
+                 Repo.query!(
+                   "UPDATE cms.article_lifecycles SET first_published_at = $2 WHERE article_id = $1",
+                   [Ecto.UUID.dump!(article.id), DateTime.utc_now(:second)]
+                 )
+               end
+
+               Repo.query!("ROLLBACK TO SAVEPOINT ticket_draft_first_published_guard")
+               Repo.query!("RELEASE SAVEPOINT ticket_draft_first_published_guard")
+
+               assert {:ok, revision} = Content.create_revision(article, draft)
+               assert revision.title == "Ticket draft"
+               assert Repo.get_by(PostRevision, revision_id: revision.id) == nil
+
+               binding = Repo.get_by!(ArticleBinding, article_id: article.id)
+
+               assert {:ok, _state} =
+                        %TicketState{}
+                        |> TicketState.changeset(%{
+                          article_id: article.id,
+                          article_binding_id: binding.id,
+                          type: :user,
+                          status: :todo,
+                          priority: 1,
+                          rank: 0,
+                          workflow_version: 1
+                        })
+                        |> Repo.insert()
+
+               {:ok, numbered_binding} =
+                 CMS.Articles.Numbering.assign_binding_inner_id(binding)
+
+               assert {:ok, published_lifecycle} =
+                        lifecycle
+                        |> ArticleLifecycle.changeset(%{
+                          state: :published,
+                          version: lifecycle.version + 1,
+                          changed_at: DateTime.utc_now(:second)
+                        })
+                        |> Repo.update()
+
+               assert numbered_binding.inner_id > 0
+               assert published_lifecycle.first_published_at
+
+               Repo.query!("SAVEPOINT ticket_published_first_published_guard")
+
+               assert_raise Postgrex.Error, fn ->
+                 Repo.query!(
+                   "UPDATE cms.article_lifecycles SET first_published_at = $2 WHERE article_id = $1",
+                   [
+                     Ecto.UUID.dump!(article.id),
+                     DateTime.add(published_lifecycle.first_published_at, 1, :second)
+                   ]
+                 )
+               end
+
+               Repo.query!("ROLLBACK TO SAVEPOINT ticket_published_first_published_guard")
+               Repo.query!("RELEASE SAVEPOINT ticket_published_first_published_guard")
+
+               assert {:ok, public} = Content.select_public(article, revision, author)
+               assert public.revision_id == revision.id
+
+               assert {:ok, :pass} = Content.delete_workspace(article, draft)
+               assert {:error, :not_found} = Store.get(article)
+
+               assert {:ok, reopened} =
+                        Content.ensure_workspace(article, author,
+                          expected_lifecycle_version: published_lifecycle.version
+                        )
+
+               assert reopened.version == 1
+               assert reopened.base_revision_id == revision.id
+               assert Repo.get!(ArticlePublic, article.id).revision_id == revision.id
+
+               {:ok, article.id}
+             end)
+
+    assert {:ok, _ticket_id} = result
   end
 
   test "autosave updates only Draft and discard preserves the selected Public Revision" do
@@ -997,7 +1108,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
              article_id: article.id,
              community_id: community_id,
              thread: :post,
-             state: :draft_only,
+             state: :draft,
              version: 1,
              changed_at: DateTime.utc_now(:second)
            })

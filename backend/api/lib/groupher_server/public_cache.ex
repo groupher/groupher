@@ -124,6 +124,83 @@ defmodule GroupherServer.PublicCache do
   defdelegate scope_tags(arg1, arg2), to: GroupherServer.PublicCache.Scope, as: :tags
 
   @doc """
+  Builds the canonical public-cache tag for one Ticket list.
+
+  ## Examples
+
+      PublicCache.ticket_list_tag("acme")
+      #=> "community[acme]-tickets"
+  """
+  defdelegate ticket_list_tag(community), to: GroupherServer.PublicCache.Tags, as: :ticket_list
+
+  @doc """
+  Builds the canonical public-cache tag for one Ticket detail.
+
+  ## Examples
+
+      PublicCache.ticket_detail_tag("acme", 42)
+      #=> "community[acme]-ticket[42]"
+  """
+  defdelegate ticket_detail_tag(community, inner_id),
+    to: GroupherServer.PublicCache.Tags,
+    as: :ticket_detail
+
+  @doc """
+  Builds the canonical Article-list tag for a public thread.
+
+  ## Examples
+
+      PublicCache.article_list_tag("acme", :post)
+      #=> "community[acme]-thread[post]-articles"
+  """
+  defdelegate article_list_tag(community, thread),
+    to: GroupherServer.PublicCache.Tags,
+    as: :article_list
+
+  @doc """
+  Builds the canonical Article-detail tag for a public thread.
+
+  ## Examples
+
+      PublicCache.article_detail_tag("acme", :post, 42)
+      #=> "community[acme]-thread[post]-article[42]"
+  """
+  defdelegate article_detail_tag(community, thread, inner_id),
+    to: GroupherServer.PublicCache.Tags,
+    as: :article_detail
+
+  @doc """
+  Validates a batch against the public cache tag contract.
+
+  ## Examples
+
+      PublicCache.validate_tags([PublicCache.ticket_list_tag("acme")])
+      #=> {:ok, ["community[acme]-tickets"]}
+  """
+  defdelegate validate_tags(tags), to: GroupherServer.PublicCache.Tags, as: :validate
+
+  @doc """
+  Returns the maximum number of tags accepted in one purge request.
+
+  ## Examples
+
+      PublicCache.max_tags_per_request()
+      #=> 100
+  """
+  defdelegate max_tags_per_request(),
+    to: GroupherServer.PublicCache.DeliveryConfig,
+    as: :max_tags_per_request
+
+  @doc """
+  Purges an already validated batch of public-cache tags through the configured adapter.
+
+  ## Examples
+
+      PublicCache.purge_tags([PublicCache.ticket_list_tag("acme")])
+  """
+  def purge_tags(tags) when is_list(tags), do: cloudflare_purge(tags)
+
+  @doc """
   Delegates PublicCache.Cloudflare.purge/1 through the PublicCache Context boundary.
 
   ## Examples

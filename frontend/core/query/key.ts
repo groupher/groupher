@@ -18,7 +18,6 @@ export type TNormalizedArticleFilter = {
   communityTag: string | null
   communityTags: string[]
   cat: string | null
-  status: string | null
   order: string | null
   when: string | null
   sort: string | null
@@ -42,7 +41,6 @@ export const normalizeArticleFilter = (filter: TPagedArticlesParams): TNormalize
   communityTag: normalizeText(filter.communityTag),
   communityTags: normalizeTextList(filter.communityTags),
   cat: normalizeText(filter.cat),
-  status: normalizeText(filter.status),
   order: normalizeText(filter.order),
   when: normalizeText(filter.when),
   sort: normalizeText(filter.sort),
@@ -88,7 +86,6 @@ export const isCanonicalDefaultArticleFilter = (filter: TPagedArticlesParams): b
     normalized.communityTag === null &&
     normalized.communityTags.length === 0 &&
     normalized.cat === null &&
-    normalized.status === null &&
     normalized.order === null &&
     normalized.when === null &&
     normalized.sort === null
@@ -124,8 +121,6 @@ export const articleQueryKeys = {
       normalizeArticlePageFilter(filter),
       pagiRequestKey(request, config, filter),
     ] as const,
-  kanban: (community: string, config = DEFAULT_EFFECTIVE_PAGI_CONFIG) =>
-    [...articleQueryKeys.all, 'kanban', community, pagiConfigKey(config)] as const,
   detail: (community: string, thread: TThread, innerId: string | number) =>
     [...articleQueryKeys.all, 'detail', community, thread, String(innerId)] as const,
   statsPrefix: (community: string, thread: TThread) =>

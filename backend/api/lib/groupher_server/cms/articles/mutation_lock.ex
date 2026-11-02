@@ -60,6 +60,27 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     end
   end
 
+  @doc "Locks all binding Communities before a global Article mutation acquires its Article lock."
+  def lock_community_admission(article_id) do
+    import Ecto.Query
+
+    ids =
+      from(binding in CMS.Model.ArticleBinding,
+        where: binding.article_id == ^article_id,
+        select: binding.community_id
+      )
+
+    Repo.all(
+      from(lifecycle in CMS.Model.CommunityLifecycle,
+        where: lifecycle.community_id in subquery(ids),
+        order_by: lifecycle.community_id,
+        lock: "FOR SHARE"
+      )
+    )
+
+    {:ok, :pass}
+  end
+
   @doc "Uses an already-loaded Article struct to select its aggregate lock identity."
   @spec with_article(Community.t(), struct(), (-> term())) ::
           {:ok, term()} | {:error, term()}

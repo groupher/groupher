@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Model.Article do
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   @foreign_key_type Ecto.UUID
   @schema_prefix DBPrefix.cms()
-  @threads CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Threads.identity_values_list()
   @required_fields ~w(thread author_id)a
   @optional_fields ~w(active_at is_sunk last_active_at
                       is_edited comments_locked next_floor next_comment_inner_id)a

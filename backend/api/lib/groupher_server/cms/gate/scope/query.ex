@@ -14,8 +14,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Query do
   alias CMS.Gate.Context.Scope.Comment, as: CommentContext
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.Context.Scope.Ticket, as: TicketContext
   alias CMS.Gate.ErrorCat
-  alias CMS.Model.{Article, Comment, Community}
+  alias CMS.Model.{Article, Comment, Community, TicketState}
 
   @doc "Builds a resource Scope query selected by root schema and Context type."
   def build(query, actor, action, Community, %CommunityContext{} = context) do
@@ -28,6 +29,10 @@ defmodule GroupherServer.CMS.Gate.Scope.Query do
 
   def build(query, actor, action, Article, %DocContext{} = context) do
     CMS.Gate.Scope.Article.scope(query, actor, action, context)
+  end
+
+  def build(query, actor, action, TicketState, %TicketContext{} = context) do
+    CMS.Gate.Scope.Ticket.scope(query, actor, action, context)
   end
 
   def build(query, actor, action, Comment, %CommentContext{} = context) do

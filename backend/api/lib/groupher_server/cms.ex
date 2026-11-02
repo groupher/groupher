@@ -498,9 +498,6 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles,
     as: :get_trashed
 
-  @doc "Delegates GroupherServer.CMS.Articles.grouped_kanban/1 through the CMS Context boundary."
-  defdelegate articles_grouped_kanban(arg1), to: GroupherServer.CMS.Articles, as: :grouped_kanban
-
   @doc "Pages current Trash memberships through the CMS Context boundary."
   defdelegate articles_list_trashed(community, filter, pagi),
     to: GroupherServer.CMS.Articles,
@@ -537,6 +534,301 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles,
     as: :page
 
+  @doc "Pages public User Tickets through the dedicated Ticket query boundary."
+  defdelegate tickets_page_public(community, filter, pagi),
+    to: GroupherServer.CMS.Tickets,
+    as: :page_public
+
+  @doc "Pages internal User Tickets after Ticket Gate admission."
+  defdelegate tickets_page_internal(community, actor, filter, pagi),
+    to: GroupherServer.CMS.Tickets,
+    as: :page_internal
+
+  @doc "Loads a public User Ticket by its Community-shared number."
+  defdelegate tickets_get_public(community, inner_id),
+    to: GroupherServer.CMS.Tickets,
+    as: :get_public
+
+  @doc "Loads an internal Ticket after Ticket Gate admission."
+  defdelegate tickets_get_internal(community, ticket_id, actor),
+    to: GroupherServer.CMS.Tickets,
+    as: :get_internal
+
+  @doc "Pages internal Ticket Activity through the Ticket Gate."
+  defdelegate tickets_activity_internal(community, ticket_id, actor, pagi \\ nil),
+    to: GroupherServer.CMS.Tickets,
+    as: :activity_internal
+
+  @doc "Builds public Ticket columns for the Community Kanban."
+  defdelegate tickets_grouped_public(community, pagi),
+    to: GroupherServer.CMS.Tickets,
+    as: :grouped_public
+
+  @doc "Builds internal Ticket columns after Ticket Gate admission."
+  defdelegate tickets_grouped_internal(community, actor, pagi),
+    to: GroupherServer.CMS.Tickets,
+    as: :grouped_internal
+
+  defdelegate tickets_grouped_internal(community, actor, pagi, filter),
+    to: GroupherServer.CMS.Tickets,
+    as: :grouped_internal
+
+  @doc "Searches internal Ticket titles through the Ticket-only PostgreSQL query."
+  defdelegate tickets_search_internal(community, query, actor, pagi),
+    to: GroupherServer.CMS.Tickets,
+    as: :search_internal
+
+  @doc "Searches internal Tickets by title and optional type."
+  defdelegate tickets_search_internal(community, query, actor, pagi, type),
+    to: GroupherServer.CMS.Tickets,
+    as: :search_internal
+
+  @doc "Computes current public User Ticket progress for a batch of Post ids."
+  defdelegate tickets_post_progress(community, post_ids),
+    to: GroupherServer.CMS.Tickets,
+    as: :post_progress
+
+  @doc "Returns all internally readable User Tickets linked to one Post."
+  defdelegate tickets_linked_to_post_internal(community, post_id, actor),
+    to: GroupherServer.CMS.Tickets,
+    as: :linked_to_post_internal
+
+  @doc "Creates a public User Ticket from one public Post."
+  defdelegate tickets_create_from_post(community, post_id, attrs, actor, command_id),
+    to: GroupherServer.CMS.Tickets,
+    as: :create_from_post
+
+  @doc "Creates a private Worker Ticket under a User Ticket."
+  defdelegate tickets_create_worker(
+                community,
+                parent_id,
+                attrs,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :create_worker
+
+  @doc "Creates an internal Case Ticket."
+  defdelegate tickets_create_case(community, attrs, actor, command_id),
+    to: GroupherServer.CMS.Tickets,
+    as: :create_case
+
+  @doc "Adds a User Ticket to a Case."
+  defdelegate tickets_add_case_member(
+                community,
+                case_id,
+                ticket_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :add_case_member
+
+  @doc "Removes a User Ticket from a Case."
+  defdelegate tickets_remove_case_member(
+                community,
+                case_id,
+                ticket_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :remove_case_member
+
+  @doc "Links a Worker as a Case's shared fix."
+  defdelegate tickets_add_case_worker(
+                community,
+                case_id,
+                worker_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :add_case_worker
+
+  @doc "Replaces the users assigned to a Ticket."
+  defdelegate tickets_set_assignees(
+                community,
+                ticket_id,
+                user_ids,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :set_assignees
+
+  @doc "Replaces internal Post tags assigned to a Ticket."
+  defdelegate tickets_set_tags(
+                community,
+                ticket_id,
+                tag_ids,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :set_tags
+
+  @doc "Replaces normalized internal Ticket facets."
+  defdelegate tickets_set_facets(
+                community,
+                ticket_id,
+                facets,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :set_facets
+
+  @doc "Applies a versioned Ticket work-state transition."
+  defdelegate tickets_transition(
+                community,
+                ticket_id,
+                status,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :transition
+
+  @doc "Moves a Ticket within or between work columns."
+  defdelegate tickets_move(
+                community,
+                ticket_id,
+                status,
+                rank,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :move_ticket
+
+  @doc "Updates Ticket content, priority and planned dates."
+  defdelegate tickets_update(community, ticket_id, attrs, expected_version, actor, command_id),
+    to: GroupherServer.CMS.Tickets,
+    as: :update_ticket
+
+  @doc "Ensures a Ticket Article Draft workspace."
+  defdelegate tickets_ensure_draft(community, ticket_id, lifecycle_version, actor, command_id),
+    to: GroupherServer.CMS.Tickets,
+    as: :ensure_draft
+
+  @doc "Saves a Ticket Article Draft with Draft and Lifecycle versions."
+  defdelegate tickets_save_draft(
+                community,
+                ticket_id,
+                attrs,
+                draft_version,
+                lifecycle_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :save_draft
+
+  @doc "Publishes a Ticket Draft with all three concurrency versions."
+  defdelegate tickets_publish(
+                community,
+                ticket_id,
+                reason,
+                draft_version,
+                lifecycle_version,
+                workflow_version,
+                actor,
+                command_id,
+                expected_preview
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :publish
+
+  @doc "Moves a Ticket to Article Draft state."
+  defdelegate tickets_move_to_draft(
+                community,
+                ticket_id,
+                reason,
+                lifecycle_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :move_to_draft
+
+  @doc "Appends an internal or public Ticket progress update."
+  defdelegate tickets_add_update(
+                community,
+                ticket_id,
+                body,
+                visibility,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :add_update
+
+  @doc "Appends a Ticket update that may correct a prior public update."
+  defdelegate tickets_add_update(
+                community,
+                ticket_id,
+                body,
+                visibility,
+                supersedes_id,
+                lifecycle_version,
+                workflow_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :add_update
+
+  @doc "Appends a Ticket update that may correct a prior public update."
+  defdelegate tickets_add_update(
+                community,
+                ticket_id,
+                body,
+                visibility,
+                supersedes_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :add_update
+
+  @doc "Links a typed source to a User Ticket."
+  defdelegate tickets_link_source(
+                community,
+                ticket_id,
+                type,
+                source_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :link_source
+
+  @doc "Unlinks a source relation by its TicketSource identity."
+  defdelegate tickets_unlink_source(
+                community,
+                ticket_id,
+                source_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :unlink_source
+
   @doc "Delegates the bounded ArticleLite path batch through the CMS Context boundary."
   defdelegate articles_lite_paths(arg1),
     to: GroupherServer.CMS.Articles,
@@ -546,11 +838,6 @@ defmodule GroupherServer.CMS do
   defdelegate articles_public_binding_ids(),
     to: GroupherServer.CMS.Articles,
     as: :public_binding_ids
-
-  @doc "Pages a canonical Kanban column."
-  defdelegate articles_kanban_page(community, filter, pagi),
-    to: GroupherServer.CMS.Articles,
-    as: :kanban_page
 
   @doc "Delegates GroupherServer.CMS.Articles.paged_published/4 through the CMS Context boundary."
   defdelegate articles_paged_published(arg1, arg2, arg3, arg4),
@@ -605,16 +892,6 @@ defmodule GroupherServer.CMS do
   defdelegate articles_set_cat_result(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Articles,
     as: :set_cat_result
-
-  @doc "Delegates GroupherServer.CMS.Articles.set_status_result/3 through the CMS Context boundary."
-  defdelegate articles_set_status_result(arg1, arg2, arg3),
-    to: GroupherServer.CMS.Articles,
-    as: :set_status_result
-
-  @doc "Delegates GroupherServer.CMS.Articles.set_status_result/4 through the CMS Context boundary."
-  defdelegate articles_set_status_result(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Articles,
-    as: :set_status_result
 
   @doc "Delegates GroupherServer.CMS.Articles.sink_result/2 through the CMS Context boundary."
   defdelegate articles_sink_result(arg1, arg2), to: GroupherServer.CMS.Articles, as: :sink_result

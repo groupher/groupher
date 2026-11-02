@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Model.ArticleBinding do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.{Article, Community, KanbanState}
+  alias CMS.Model.{Article, Community}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -28,7 +28,6 @@ defmodule GroupherServer.CMS.Model.ArticleBinding do
   schema "article_bindings" do
     belongs_to(:article, Article, type: Ecto.UUID)
     belongs_to(:community, Community)
-    has_one(:kanban_state, KanbanState, foreign_key: :article_binding_id)
     field(:inner_id, :integer)
     timestamps(type: :utc_datetime)
   end

@@ -18,15 +18,15 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   alias CMS.Model.{Article, ArticleLifecycle}
   alias CMS.ReviewBlocks
 
-  @article_threads CMS.Artiment.Config.threads() -- [:doc]
+  @article_threads CMS.Artiment.Threads.identity_values_list() -- [:doc]
 
-  @states [:draft_only, :published, :archived, :deleted, :destroy]
+  @states [:draft, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
   @allowed_transitions %{
-    draft_only: [:draft_only, :published, :deleted, :destroy],
-    published: [:published, :archived, :deleted, :destroy],
+    draft: [:draft, :published, :deleted, :destroy],
+    published: [:published, :draft, :archived, :deleted, :destroy],
     archived: [:archived, :deleted, :destroy],
-    deleted: [:draft_only, :published, :deleted, :destroy],
+    deleted: [:draft, :published, :deleted, :destroy],
     destroy: [:destroy]
   }
 
@@ -74,7 +74,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   @spec apply_review_block(ArticleLifecycle.t(), map()) ::
           {:ok, struct()} | {:error, term()}
   def apply_review_block(%ArticleLifecycle{} = lifecycle, attrs) do
-    ReviewBlocks.apply(lifecycle, attrs)
+    CMS.Review.Restrictions.apply(lifecycle, attrs)
   end
 
   @doc """
@@ -99,12 +99,14 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
         operation_ref,
         reason
       ) do
-    ReviewBlocks.end_blocks(lifecycle, scope_key, ids, operation_ref, reason)
+    CMS.Review.Restrictions.end_blocks(lifecycle, scope_key, ids, operation_ref, reason)
   end
 
   @doc "Locks and returns the Lifecycle row belonging to a stable Article."
   @spec lock(Article.t()) :: {:ok, ArticleLifecycle.t()} | {:error, ErrorCat.error()}
   def lock(%Article{id: article_id}) do
+    {:ok, :pass} = CMS.Articles.MutationLock.lock_community_admission(article_id)
+
     ArticleLifecycle
     |> where([lifecycle], lifecycle.article_id == ^article_id)
     |> lock("FOR UPDATE")
@@ -224,7 +226,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   def editable?(%{state: state}), do: editable_state(state)
   def editable?(_lifecycle), do: {:error, ErrorCat.lifecycle_not_found()}
 
-  defp editable_state(state) when state in [:draft_only, :published], do: {:ok, true}
+  defp editable_state(state) when state in [:draft, :published], do: {:ok, true}
   defp editable_state(state) when state in @states, do: {:ok, false}
   defp editable_state(_state), do: {:error, ErrorCat.lifecycle_not_found()}
 

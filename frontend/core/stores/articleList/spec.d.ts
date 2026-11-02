@@ -1,4 +1,4 @@
-import type { TArticleCat, TArticleOrder, TArticleStatus, TThread } from '~/spec'
+import type { TArticleCat, TArticleOrder, TThread } from '~/spec'
 
 export type TInit = {
   thread?: TThread | null
@@ -7,7 +7,6 @@ export type TInit = {
 export type TStore = TInit & {
   activeOrder: TArticleOrder | null | undefined
   activeCat: TArticleCat | null | undefined
-  activeStatus: TArticleStatus | null | undefined
 
   updateActiveFilter: (filter: TArticleFilter) => void
   commit: (patch: Partial<TStore>) => void

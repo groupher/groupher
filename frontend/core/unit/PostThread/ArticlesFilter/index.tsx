@@ -12,7 +12,7 @@ import useArticlesFilter from '~/hooks/useArticlesFilter'
 import useLayout from '~/hooks/useLayout'
 import usePagedPosts from '~/hooks/usePagedPosts'
 import { callGEditor, callSyncSelector } from '~/signal'
-import type { TArticleCat, TArticleOrder, TArticleStatus, TSpace } from '~/spec'
+import type { TArticleCat, TArticleOrder, TSpace } from '~/spec'
 import PublishButton from '~/ui/Buttons/PublishButton'
 import ConditionSelector from '~/unit/ConditionSelector'
 
@@ -28,12 +28,7 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
   const isLoading = resState === TYPE.RES_STATE.LOADING
   const { communityLayout } = useLayout()
 
-  const {
-    cat: activeCat,
-    status: activeStatus,
-    order: activeOrder,
-    updateActiveFilter,
-  } = useArticlesFilter()
+  const { cat: activeCat, order: activeOrder, updateActiveFilter } = useArticlesFilter()
 
   return (
     <div className={s.wrapper}>
@@ -56,15 +51,6 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
         selected={!!activeCat}
         prefixIcon={BUTTON_PREFIX.CATEGORY}
         right={0.5}
-      />
-      <ConditionSelector
-        mode={CONDITION_MODE.STATUS}
-        active={activeStatus}
-        onSelect={(status: TArticleStatus) => {
-          updateActiveFilter({ status })
-        }}
-        selected={!!activeStatus}
-        prefixIcon={BUTTON_PREFIX.STATUS}
       />
       <div className='mr-2.5' />
       <div className='grow' />

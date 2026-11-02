@@ -100,13 +100,6 @@ defmodule GroupherServer.CMS.Articles do
   @doc "Returns the canonical public Article binding scope for joined collections."
   defdelegate public_binding_ids(), to: Pagination
 
-  @doc "Runs `grouped_kanban` through the public `Articles` boundary."
-  @spec grouped_kanban(Community.t()) :: T.domain_res(term())
-  def grouped_kanban(%Community{} = community), do: Query.grouped_kanban(community)
-
-  @doc "Pages one Kanban column or status set."
-  defdelegate kanban_page(community, filter, pagi), to: Query
-
   @doc "Pages an author's public Article bindings."
   def paged_published(thread, filter, pagi, user, viewer \\ nil) do
     Query.paged_published(thread, filter, pagi, user, viewer)
@@ -414,34 +407,6 @@ defmodule GroupherServer.CMS.Articles do
     end
   end
 
-  @doc "Sets a Post's Kanban status in one explicit ArticleBinding binding."
-  @spec set_status(Ecto.UUID.t(), Const.status_enum() | nil, User.t(), integer()) ::
-          T.domain_res(Article.t())
-  def set_status(article_id, status, %User{} = actor, community_id)
-      when is_integer(community_id) do
-    with {:ok, %Article{} = article} <- FrontDesk.article(article_id, mode: :internal),
-         {:ok, %Community{} = community} <- FrontDesk.community(community_id, mode: :internal) do
-      set_status_in_community(article, status, actor, community)
-    else
-      {:error, _reason} -> {:error, GateErrorCat.resource_not_found()}
-    end
-  end
-
-  @spec set_status(Ecto.UUID.t(), Const.status_enum() | nil, User.t(), integer(), Ecto.UUID.t()) ::
-          T.domain_res(Article.t())
-  def set_status(article_id, status, %User{} = actor, community_id, command_id)
-      when is_integer(community_id) and is_binary(command_id) do
-    with {:ok, %Article{} = article} <- FrontDesk.article(article_id, mode: :internal),
-         {:ok, %Community{} = community} <- FrontDesk.community(community_id, mode: :internal) do
-      with {:ok, _command_id} <-
-             GroupherServer.CMS.Command.Receipt.validate_command_id(command_id) do
-        Commands.StateChange.set_status_in_community(article, status, actor, community)
-      end
-    else
-      {:error, _reason} -> {:error, GateErrorCat.resource_not_found()}
-    end
-  end
-
   @doc "Updates Post category and returns the caller-facing canonical projection shape."
   def set_cat_result(article, cat, %User{} = actor) do
     with %Community{} = community <- Map.get(article, :community),
@@ -459,50 +424,6 @@ defmodule GroupherServer.CMS.Articles do
     else
       _ -> {:error, ArticleErrorCat.binding_context_required()}
     end
-  end
-
-  @doc "Updates Post status and returns the caller-facing canonical projection shape."
-  def set_status_result(article, status, %User{} = actor) do
-    result =
-      case Map.get(article, :community) do
-        %Community{} = community -> set_status_in_community(article, status, actor, community)
-        _ -> {:error, ArticleErrorCat.binding_context_required()}
-      end
-
-    with {:ok, updated} <- result do
-      __MODULE__.ActionResult.merge(article, updated, %{status: status})
-    end
-  end
-
-  def set_status_result(article, status, %User{} = actor, command_id) do
-    result =
-      case Map.get(article, :community) do
-        %Community{} = community ->
-          with {:ok, _command_id} <-
-                 GroupherServer.CMS.Command.Receipt.validate_command_id(command_id) do
-            Commands.StateChange.set_status_in_community(article, status, actor, community)
-          end
-
-        _ ->
-          {:error, ArticleErrorCat.binding_context_required()}
-      end
-
-    with {:ok, updated} <- result do
-      __MODULE__.ActionResult.merge(article, updated, %{status: status})
-    end
-  end
-
-  defp set_status_in_community(
-         %Article{} = article,
-         status,
-         %User{} = actor,
-         %Community{} = community
-       ) do
-    Commands.StateChange.set_status_in_community(article, status, actor, community)
-  end
-
-  defp set_status_in_community(article, status, %User{} = actor, %Community{} = community) do
-    Commands.StateChange.set_status_in_community(article, status, actor, community)
   end
 
   @doc "Updates active timestamp through the `Articles` write boundary."

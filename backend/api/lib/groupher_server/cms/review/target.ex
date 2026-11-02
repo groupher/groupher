@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Review.Target do
   Locks the CMS target and its Lifecycle before a review result or report is applied.
 
       CMS target key
-        -> parent Article lock
+        -> Community admission -> parent Article lock
         -> resource Lifecycle lock
         -> CMS review request or report write
   """
@@ -205,6 +205,8 @@ defmodule GroupherServer.CMS.Review.Target do
   end
 
   defp lock_article(article_id) do
+    {:ok, :pass} = CMS.Articles.MutationLock.lock_community_admission(article_id)
+
     case Repo.one(from(article in Article, where: article.id == ^article_id, lock: "FOR UPDATE")) do
       %Article{} = article -> {:ok, article}
       nil -> {:error, CMS.ErrorCat.lifecycle_not_found()}

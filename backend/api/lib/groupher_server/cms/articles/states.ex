@@ -22,10 +22,8 @@ defmodule GroupherServer.CMS.Articles.States do
 
   alias CMS.Model.{
     Article,
-    ArticleBinding,
     DocBranch,
     DocBranchState,
-    KanbanState,
     PostState
   }
 
@@ -53,42 +51,6 @@ defmodule GroupherServer.CMS.Articles.States do
       nil -> {:error, ErrorCat.article_not_found("article not found")}
       {:error, reason} -> {:error, reason}
     end
-  end
-
-  @spec set_status(Article.t(), Const.status_enum() | nil, pos_integer()) ::
-          T.domain_res(Article.t())
-  def set_status(%Article{thread: :post} = article, status, community_id)
-      when is_integer(community_id) do
-    with %ArticleBinding{} = binding <-
-           Repo.get_by(ArticleBinding, article_id: article.id, community_id: community_id),
-         {:ok, _state} <- put_kanban_state(binding, status) do
-      {:ok, article}
-    else
-      nil -> {:error, ErrorCat.article_not_found("article binding not found")}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  def set_status(%Article{}, _status, _community_id) do
-    {:error, ErrorCat.article_not_found("post not found")}
-  end
-
-  defp put_kanban_state(%ArticleBinding{id: article_binding_id}, nil) do
-    Repo.delete_all(
-      from(state in KanbanState, where: state.article_binding_id == ^article_binding_id)
-    )
-
-    {:ok, :removed}
-  end
-
-  defp put_kanban_state(%ArticleBinding{id: article_binding_id}, status) do
-    %KanbanState{}
-    |> KanbanState.changeset(%{article_binding_id: article_binding_id, status: status})
-    |> Repo.insert(
-      on_conflict: [set: [status: status, updated_at: DateTime.utc_now(:second)]],
-      conflict_target: [:article_binding_id],
-      returning: true
-    )
   end
 
   @spec update_active_timestamp(atom(), term()) :: T.domain_res(term())

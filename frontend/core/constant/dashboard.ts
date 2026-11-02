@@ -4,7 +4,7 @@ import type { TKanbanBoard } from '~/spec'
 
 export const ONE_LINK_GROUP = '__ONE_LINK_GROUP__'
 
-export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]
+export const INIT_KANBAN_COLORS = [COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN]
 export const INIT_KANBAN_BOARDS = [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE]
 
 /** Normalizes kanban boards into the canonical frontend shared shape. */
@@ -13,7 +13,11 @@ export const normalizeKanbanBoards = (
 ): readonly TKanbanBoard[] => {
   if (!boards?.length) return INIT_KANBAN_BOARDS
 
-  return boards as readonly TKanbanBoard[]
+  const allowedBoards = new Set(Object.values(KANBAN_BOARD))
+  const normalized = [
+    ...new Set(boards.filter((board) => allowedBoards.has(board as TKanbanBoard))),
+  ]
+  return normalized.length > 0 ? (normalized as TKanbanBoard[]) : INIT_KANBAN_BOARDS
 }
 
 /** Serializes kanban boards for the frontend shared protocol boundary. */

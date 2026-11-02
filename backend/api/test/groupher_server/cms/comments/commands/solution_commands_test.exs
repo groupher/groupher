@@ -9,16 +9,13 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   alias CMS.Model.{
     Article,
-    ArticleBinding,
     Comment,
     CommentLifecycle,
-    KanbanState,
     PinnedComment,
     PostSolution
   }
 
   @article_cat CMS.Artiment.Const.cat_map()
-  @article_status CMS.Artiment.Const.status_map()
 
   setup do
     {community, post, _, actor} = mock_article(:post, preload: [author: :user])
@@ -50,11 +47,8 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     {:ok, ~m(community post actor outsider first second)a}
   end
 
-  test "accept is idempotent and does not alter workflow status or pin", context do
-    ~m(community post actor first)a = context
-
-    {:ok, _article} =
-      CMS.Articles.set_status(post.article_id, @article_status.wip, actor, community.id)
+  test "accept is idempotent and does not alter Ticket workflow or pin", context do
+    ~m(post actor first)a = context
 
     pin_command_id = Ecto.UUID.generate()
     {:ok, pinned} = CMS.Comments.pin_comment(first.id, actor, pin_command_id)
@@ -74,10 +68,9 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert Repo.get_by!(PostSolution, article_id: post.article_id).comment_id == first.id
     assert Repo.get_by!(PinnedComment, comment_id: first.id)
 
-    binding =
-      Repo.get_by!(ArticleBinding, article_id: post.article_id, community_id: community.id)
-
-    assert Repo.get!(KanbanState, binding.id).status == @article_status.wip
+    refute Repo.exists?(
+             from(ticket in CMS.Model.TicketState, where: ticket.article_id == ^post.article_id)
+           )
 
     assert Repo.aggregate(
              from(log in PostLog,
@@ -89,10 +82,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
   end
 
   test "revoke without a current solution is side-effect-free", context do
-    ~m(community post actor first)a = context
-
-    {:ok, _} =
-      CMS.Articles.set_status(post.article_id, @article_status.done, actor, community.id)
+    ~m(post actor first)a = context
 
     {:ok, _} = CMS.Comments.pin_comment(first.id, actor, Ecto.UUID.generate())
 
@@ -102,10 +92,10 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     refute Repo.get_by(PostSolution, article_id: post.article_id)
     assert Repo.get_by!(PinnedComment, comment_id: first.id)
 
-    binding =
-      Repo.get_by!(ArticleBinding, article_id: post.article_id, community_id: community.id)
+    refute Repo.exists?(
+             from(ticket in CMS.Model.TicketState, where: ticket.article_id == ^post.article_id)
+           )
 
-    assert Repo.get!(KanbanState, binding.id).status == @article_status.done
     refute Repo.get_by(PostLog, article_id: post.article_id, action: :solution_revoked)
   end
 

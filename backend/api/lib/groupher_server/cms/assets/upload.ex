@@ -20,8 +20,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
   alias CMS.ErrorCat
 
   alias Accounts.Model.User
-  alias CMS.Artiment.Threads
-  alias CMS.Assets.{Capability, Persist}
+  alias CMS.Assets.{Capability, Persist, ThreadIdentity}
   alias CMS.Model.{AssetUpload, Community, CommunityAsset}
   alias Helper.{T, Utils}
 
@@ -620,10 +619,10 @@ defmodule GroupherServer.CMS.Assets.Upload do
   defp asset_type_from_mime("image/" <> _), do: :image
   defp asset_type_from_mime(_), do: :file
 
-  defp valid_thread?(thread), do: match?({:ok, _}, Threads.to_atom(thread))
+  defp valid_thread?(thread), do: match?({:ok, _}, ThreadIdentity.to_atom(thread))
 
   defp normalize_thread(thread) do
-    {:ok, thread} = Threads.to_atom(thread)
+    {:ok, thread} = ThreadIdentity.to_atom(thread)
     thread
   end
 

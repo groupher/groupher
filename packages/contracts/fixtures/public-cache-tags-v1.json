@@ -17,6 +17,16 @@
       "expected": "community[home]-thread[POST]-article[42]"
     },
     {
+      "kind": "ticketList",
+      "input": { "community": "home" },
+      "expected": "community[home]-tickets"
+    },
+    {
+      "kind": "ticketDetail",
+      "input": { "community": "home", "innerId": "42" },
+      "expected": "community[home]-ticket[42]"
+    },
+    {
       "kind": "comments",
       "input": { "community": "home", "thread": "POST", "innerId": "42" },
       "expected": "community[home]-thread[POST]-article[42]-comments"

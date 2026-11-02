@@ -3,7 +3,6 @@ import { useMemo } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 
-import { StatusCell } from '../Cell'
 import ActionsCell from './ActionsCell'
 import DeletedByCell from './DeletedByCell'
 import useSalon, { cn } from './salon'
@@ -34,13 +33,6 @@ export default function useColumns({
         cell: ({ row }) => <TitleCell item={row.original} />,
         size: 340,
         meta: { sticky: 'left', align: 'left' },
-      },
-      {
-        id: 'status',
-        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.status')}</div>,
-        cell: ({ row }) =>
-          row.original.article ? <StatusCell rowData={row.original.article} /> : null,
-        size: 130,
       },
       {
         id: 'upvotesCount',

@@ -2,10 +2,12 @@
  * ArticleViewer
  */
 
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
 import useBroadcast from '~/hooks/useBroadcast'
+import { Q } from '~/query'
 import ArticleBody from '~/render/ArtimentBody'
 import useCommunity from '~/stores/community/hooks'
 import GotoTop from '~/ui/GotoTop'
@@ -13,6 +15,7 @@ import { ArticleContentLoading } from '~/ui/Loading'
 import ViewportTracker from '~/ui/ViewportTracker'
 import ReportAction from '~/unit/AlertWall/ReportAction'
 import ReviewNotice from '~/unit/AlertWall/ReviewNotice'
+import PostTicketProgress from '~/unit/PostTicketProgress'
 
 import ArticleBroadcast from '../ArticleBroadcast'
 import ArticleFooter from '../ArticleFooter'
@@ -37,6 +40,14 @@ export default function PostViewer({ isFullView = true }: TProps) {
 
   const { loading, article, stats, viewerState } = useLogic()
   const { slug: community } = useCommunity()
+  const postInnerId = Number(article.innerId)
+  const ticketProgressQuery = useQuery(
+    Q.ticket.postProgress(
+      community,
+      Number.isSafeInteger(postInnerId) && postInnerId > 0 ? [postInnerId] : [],
+    ),
+  )
+  const ticketProgress = ticketProgressQuery.data?.find((item) => item.postInnerId === postInnerId)
   const broadcastConfig = useBroadcast()
 
   const [viewState, setViewState] = useState(INIT_VIEW_STATE)
@@ -75,6 +86,9 @@ export default function PostViewer({ isFullView = true }: TProps) {
         <div className={s.subTitle}>{article.innerId}</div>
       </div>
       <ArticleInfo article={article} stats={stats} viewerState={viewerState} />
+      <div className='mt-3'>
+        <PostTicketProgress progress={ticketProgress} cat={article.cat} />
+      </div>
       {article.thread && article.thread !== 'DOC' && article.innerId && (
         <>
           <ReviewNotice

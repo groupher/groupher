@@ -5,18 +5,23 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   alias GroupherServer.{Activity, AlertWall, CMS}
   alias AlertWall.Model.{Item, UserReport}
+  alias GroupherServer.CMS.Outbox.Event
+  alias GroupherServer.PublicCache.Tags
 
   alias CMS.Model.{
     ArticleEmotionCount,
+    Article,
     ArticleLifecycle,
     ArticleStats,
     ArtimentMention,
     Comment,
     TrashAction,
-    TrashedArticle
+    TrashedArticle,
+    TicketState
   }
 
   alias Activity.Model.PostLog
+  alias CMS.Tickets.Model.Source, as: TicketSource
 
   @site_host CMS.ArtimentMentions.Config.site_host()
 
@@ -90,58 +95,6 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert Repo.get_by(TrashedArticle, hash_id: item.hash_id)
   end
 
-  test "Trash excludes Posts from scalar, grouped and multi-status Kanban lists" do
-    {community, post, _attrs, user} = mock_article(:post)
-    assert {:ok, post} = CMS.Articles.set_status(post.id, :todo, user, community.id)
-
-    assert {:ok, %{entries: [listed]}} =
-             CMS.Articles.kanban_page(
-               community,
-               %{status: :todo},
-               %GroupherServer.Pagi.Params.Offset{
-                 page: 1,
-                 size: 20,
-                 config_revision: 0
-               }
-             )
-
-    assert listed.id == post.id
-
-    assert {:ok, %{entries: [listed]}} =
-             CMS.Articles.kanban_page(
-               community,
-               %{statuses: [:todo, :wip]},
-               %GroupherServer.Pagi.Params.Offset{page: 1, size: 20, config_revision: 0}
-             )
-
-    assert listed.id == post.id
-    assert {:ok, %{todo: %{entries: [listed]}}} = CMS.Articles.grouped_kanban(community)
-    assert listed.id == post.id
-
-    assert {:ok, _item} = CMS.Articles.trash(post, user, community: community)
-
-    assert {:ok, %{entries: [], page_info: %{total_count: 0}}} =
-             CMS.Articles.kanban_page(
-               community,
-               %{status: :todo},
-               %GroupherServer.Pagi.Params.Offset{
-                 page: 1,
-                 size: 20,
-                 config_revision: 0
-               }
-             )
-
-    assert {:ok, %{entries: [], page_info: %{total_count: 0}}} =
-             CMS.Articles.kanban_page(
-               community,
-               %{statuses: [:todo, :wip]},
-               %GroupherServer.Pagi.Params.Offset{page: 1, size: 20, config_revision: 0}
-             )
-
-    assert {:ok, %{todo: %{entries: [], page_info: %{total_count: 0}}}} =
-             CMS.Articles.grouped_kanban(community)
-  end
-
   test "Trash excludes Articles from an author's published list and count" do
     {community, post, _attrs, user} = mock_article(:post)
 
@@ -196,6 +149,133 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                %{thread: :post},
                %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
              )
+  end
+
+  test "Post permanent deletion unlinks its TicketSource and keeps the Ticket in Draft" do
+    {community, post, _attrs, user} = mock_article(:post)
+    passport = user.cur_passport || %{}
+    community_passport = Map.get(passport, community.slug, %{})
+    cms_grants = Map.get(community_passport, "cms", %{})
+
+    ticket_actor = %{
+      user
+      | cur_passport:
+          passport
+          |> Map.put_new("global", %{})
+          |> Map.put(
+            community.slug,
+            Map.put(
+              community_passport,
+              "cms",
+              Map.merge(cms_grants, %{
+                "ticket.create" => true,
+                "ticket.read_internal" => true,
+                "ticket.manage_visibility" => true
+              })
+            )
+          )
+    }
+
+    assert {:ok, ticket} =
+             CMS.Tickets.create_from_post(
+               community,
+               post.id,
+               %{title: "Source post will be removed"},
+               ticket_actor,
+               Ecto.UUID.generate()
+             )
+
+    assert Repo.get_by!(TicketSource, ticket_id: ticket.id, post_id: post.id)
+
+    assert {:ok, %TrashedArticle{} = trash_item} =
+             CMS.Articles.trash(post, user, community: community)
+
+    assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state == :draft
+
+    assert {:ok, %{done: true}} =
+             CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
+
+    refute Repo.get(Article, post.id)
+    refute Repo.get_by(TicketSource, ticket_id: ticket.id, post_id: post.id)
+    assert Repo.get_by!(TicketState, article_id: ticket.id).type == :user
+    assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state == :draft
+  end
+
+  test "restoring a Ticket source Post purges both surfaces without republishing the Ticket" do
+    {community, post, _attrs, user} = mock_article(:post)
+    passport = user.cur_passport || %{}
+    community_passport = Map.get(passport, community.slug, %{})
+    cms_grants = Map.get(community_passport, "cms", %{})
+
+    ticket_actor = %{
+      user
+      | cur_passport:
+          passport
+          |> Map.put_new("global", %{})
+          |> Map.put(
+            community.slug,
+            Map.put(
+              community_passport,
+              "cms",
+              Map.merge(cms_grants, %{
+                "ticket.create" => true,
+                "ticket.read_internal" => true,
+                "ticket.manage_visibility" => true
+              })
+            )
+          )
+    }
+
+    assert {:ok, ticket} =
+             CMS.Tickets.create_from_post(
+               community,
+               post.id,
+               %{title: "Ticket source restore"},
+               ticket_actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, internal} = CMS.Tickets.get_internal(community, ticket.id, ticket_actor)
+
+    assert {:ok, _ticket_id} =
+             CMS.Tickets.publish(
+               community,
+               ticket.id,
+               "Publish before testing source restore",
+               internal.draft_version,
+               internal.lifecycle_version,
+               internal.workflow_version,
+               ticket_actor,
+               Ecto.UUID.generate(),
+               CMS.Tickets.Publication.preview_anchor(community.id, ticket.id)
+             )
+
+    assert {:ok, ticket} = CMS.Tickets.get_internal(community, ticket.id, ticket_actor)
+    assert is_integer(ticket.inner_id)
+
+    assert {:ok, trash_item} = CMS.Articles.trash(post, user)
+    assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state == :draft
+
+    events_before_restore =
+      Repo.all(Event)
+      |> Enum.count(fn event ->
+        event.event == "ticket.cache_invalidation" and event.resource_id == ticket.id and
+          Tags.ticket_detail(community.slug, ticket.inner_id) in event.data["cache_tags"] and
+          Tags.article_detail(community.slug, :post, post.inner_id) in event.data["cache_tags"]
+      end)
+
+    assert {:ok, _restored_post} = CMS.Articles.restore_trashed(trash_item.hash_id, user)
+    assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state == :draft
+
+    events_after_restore =
+      Repo.all(Event)
+      |> Enum.count(fn event ->
+        event.event == "ticket.cache_invalidation" and event.resource_id == ticket.id and
+          Tags.ticket_detail(community.slug, ticket.inner_id) in event.data["cache_tags"] and
+          Tags.article_detail(community.slug, :post, post.inner_id) in event.data["cache_tags"]
+      end)
+
+    assert events_after_restore > events_before_restore
   end
 
   test "permanent delete supersedes Wall items and preserves report history" do

@@ -81,13 +81,20 @@
     "post.pin",
     "post.restore",
     "post.set_category",
-    "post.set_status",
     "post.sink",
     "post.trash",
     "post.undo_lock_comment",
     "post.undo_pin",
     "post.undo_sink",
     "post.update",
+    "ticket.assign",
+    "ticket.create",
+    "ticket.link_source",
+    "ticket.manage_case",
+    "ticket.manage_visibility",
+    "ticket.read_internal",
+    "ticket.transition",
+    "ticket.update",
     "review.configure",
     "review.decide",
     "review.platform.configure",
@@ -135,7 +142,6 @@
     "post.draft.publish",
     "post.draft.update",
     "post.set_category",
-    "post.set_status",
     "post.update"
   ],
   "ownerOnlyActions": [
@@ -159,7 +165,6 @@
     "dashboard.theme.update": "community.update",
     "doc.update": "doc.edit",
     "post.set_category": "post.edit",
-    "post.set_status": "post.edit",
     "post.update": "post.edit"
   },
   "threadGrantSuffixes": {

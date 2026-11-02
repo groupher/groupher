@@ -34,7 +34,6 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   @tag_threads Config.tag_threads()
   @content_threads Config.content_threads()
   @post_cats [:idea, :bug, :qa, :discussion]
-  @post_statuses [:backlog, :todo, :wip, :done, :resolved, :reject]
 
   @tag_count_range Config.tag_count_range()
   @article_count_per_thread Config.article_count_per_thread()
@@ -192,24 +191,14 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
   defp post_seed_mode(0), do: :none
   defp post_seed_mode(1), do: :cat_only
-  defp post_seed_mode(2), do: :cat_and_state
-  defp post_seed_mode(_idx), do: Enum.random([:none, :cat_and_state, :cat_and_state, :cat_only])
+  defp post_seed_mode(2), do: :cat_only
+  defp post_seed_mode(_idx), do: Enum.random([:none, :cat_only, :cat_only, :cat_only])
 
   defp seed_post_state(_post, :none, _community), do: {:cont, {:ok, :ok}}
 
   defp seed_post_state(post, :cat_only, _community) do
     case CMS.Articles.States.set_cat(post, Enum.random(@post_cats)) do
       {:ok, _post} -> {:cont, {:ok, :ok}}
-      {:error, reason} -> {:halt, {:error, reason}}
-    end
-  end
-
-  defp seed_post_state(post, :cat_and_state, community) do
-    with {:ok, post} <- CMS.Articles.States.set_cat(post, Enum.random(@post_cats)),
-         {:ok, _post} <-
-           CMS.Articles.States.set_status(post, Enum.random(@post_statuses), community.id) do
-      {:cont, {:ok, :ok}}
-    else
       {:error, reason} -> {:halt, {:error, reason}}
     end
   end

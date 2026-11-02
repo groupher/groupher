@@ -49,6 +49,7 @@ defmodule GroupherServerWeb.Schema do
   import_types(CMS.Mutations.Comment)
   import_types(CMS.Mutations.Dashboard)
   import_types(CMS.Mutations.DocTree)
+  import_types(CMS.Mutations.Ticket)
 
   import_article_fields(:mutations, :module)
 
@@ -72,6 +73,7 @@ defmodule GroupherServerWeb.Schema do
     import_article_fields(:mutations)
 
     import_fields(:cms_comment_mutations)
+    import_fields(:cms_ticket_mutations)
     import_fields(:cms_dsb_mutations)
     import_fields(:cms_press_mutations)
     import_fields(:cms_doc_tree_mutations)

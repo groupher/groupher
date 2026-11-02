@@ -353,8 +353,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:when, :when_enum)
       field(:community_tag, :string)
       field(:cat, :article_cat_enum)
-      field(:status, :article_status_enum)
-      field(:statuses, list_of(non_null(:article_status_enum)))
       field(:order, :article_order_enum)
       field(:community_tags, list_of(:string))
       field(:community, :string)

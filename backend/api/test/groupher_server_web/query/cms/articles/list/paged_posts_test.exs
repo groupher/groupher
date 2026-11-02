@@ -8,7 +8,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   alias GroupherServer.CMS
 
   @article_cat CMS.Artiment.Const.cat_map()
-  @article_status CMS.Artiment.Const.status_map()
 
   @page_size Helper.ORM.Pagi.Config.default().default_size
 
@@ -115,7 +114,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
         )
 
       results =
-        guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat status"), variables)
+        guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat"), variables)
 
       first_post = results["entries"] |> List.first()
       assert first_post["innerId"] === to_string(article_inner_id(post_last_week, community))
@@ -136,19 +135,15 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert first_post["innerId"] == to_string(article_inner_id(post, community))
     end
 
-    test "should get valid cat & status", ~m(guest_conn community post_last_week user)a do
+    test "should get valid post category", ~m(guest_conn community post_last_week user)a do
       variables = %{pagi: %{offset: %{page: 1, size: 20}}, filter: %{}}
 
       {:ok, _} = CMS.Articles.set_cat(post_last_week.id, @article_cat.idea, user, community.id)
 
-      {:ok, _} =
-        CMS.Articles.set_status(post_last_week.id, @article_status.wip, user, community.id)
-
       results =
-        guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat status"), variables)
+        guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat"), variables)
 
       assert results["entries"] |> Enum.any?(&(&1["cat"] == "IDEA"))
-      assert results["entries"] |> Enum.any?(&(&1["status"] == "WIP"))
     end
 
     test "explicit null filters behave like omitted filters", ~m(guest_conn)a do
@@ -156,7 +151,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       explicit_nulls = %{
         pagi: %{offset: %{page: 1, size: 20}},
-        filter: %{cat: nil, status: nil, order: nil, when: nil, sort: nil}
+        filter: %{cat: nil, order: nil, when: nil, sort: nil}
       }
 
       omitted_result = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), omitted)
@@ -167,43 +162,26 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert explicit_nulls_result == omitted_result
     end
 
-    test "should get valid cat & status by filter",
+    test "post category filter works and old status filter is rejected",
          ~m(guest_conn community post_last_week user)a do
       {:ok, _} = CMS.Articles.set_cat(post_last_week.id, @article_cat.idea, user, community.id)
-
-      {:ok, _} =
-        CMS.Articles.set_status(post_last_week.id, @article_status.wip, user, community.id)
 
       variables = %{pagi: %{offset: %{page: 1, size: 20}}, filter: %{cat: "IDEA"}}
 
       results =
-        guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat status"), variables)
+        guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat"), variables)
 
       assert results["pageInfo"]["totalCount"] == 1
 
       variables = %{pagi: %{offset: %{page: 1, size: 20}}, filter: %{cat: "NOT_EXIST"}}
 
       assert guest_conn
-             |> query_error?(S.Article.q(:paged_articles, :post, "cat status"), variables)
+             |> query_error?(S.Article.q(:paged_articles, :post, "cat"), variables)
 
       variables = %{pagi: %{offset: %{page: 1, size: 20}}, filter: %{status: "WIP"}}
 
-      results =
-        guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat status"), variables)
-
-      assert results["pageInfo"]["totalCount"] == 1
-
-      variables = %{pagi: %{offset: %{page: 1, size: 20}}, filter: %{status: "NOT_EXIST"}}
-
       assert guest_conn
-             |> query_error?(S.Article.q(:paged_articles, :post, "cat status"), variables)
-
-      variables = %{pagi: %{offset: %{page: 1, size: 20}}, filter: %{cat: "IDEA", status: "WIP"}}
-
-      results =
-        guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat status"), variables)
-
-      assert results["pageInfo"]["totalCount"] == 1
+             |> query_error?(S.Article.q(:paged_articles, :post, "cat"), variables)
     end
 
     test "should get valid article document", ~m(guest_conn community user)a do

@@ -22,6 +22,12 @@ export const Route = createFileRoute('/$community/post/$id')({
       ),
     ])
     if (!post) throw notFound()
+    const postInnerId = Number(post.innerId)
+    if (Number.isSafeInteger(postInnerId) && postInnerId > 0) {
+      await context.queryClient.ensureQueryData(
+        communityQueries.postTicketProgress(params.community, [postInnerId]),
+      )
+    }
     await context.queryClient.ensureQueryData(
       communityQueries.stat(context.queryClient, params.community, THREAD.POST, params.id),
     )

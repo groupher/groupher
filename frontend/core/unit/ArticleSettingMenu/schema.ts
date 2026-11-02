@@ -33,19 +33,6 @@ const setPostCat = graphql(`
   }
 `)
 
-const setPostStatus = graphql(`
-  mutation SetPostStatus(
-    $article: ArticlePathInput!
-    $status: ArticleStatusEnum!
-    $commandId: ID!
-  ) {
-    setPostStatus(article: $article, status: $status, commandId: $commandId) {
-      innerId
-      status
-    }
-  }
-`)
-
 const pinPost = graphql(`
   mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {
     pinPost(article: $article, commandId: $commandId) {
@@ -79,7 +66,6 @@ const communityTagGroups = graphql(`
 export default {
   updatePost,
   setPostCat,
-  setPostStatus,
   pinPost,
   undoPinPost,
   communityTagGroups,

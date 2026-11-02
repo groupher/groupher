@@ -12,7 +12,8 @@ defmodule GroupherServer.Test.ActivityTest do
     DocLog,
     DocTreeLog,
     PostLog,
-    PressLog
+    PressLog,
+    TicketLog
   }
 
   alias CMS.Artiment.Threads
@@ -461,7 +462,8 @@ defmodule GroupherServer.Test.ActivityTest do
       {"doc_logs", DocLog},
       {"community_logs", CommunityLog},
       {"doc_tree_logs", DocTreeLog},
-      {"press_logs", PressLog}
+      {"press_logs", PressLog},
+      {"ticket_logs", TicketLog}
     ]
 
     expected_sources = Enum.map(ActivityConst.source_values(), &to_string/1)

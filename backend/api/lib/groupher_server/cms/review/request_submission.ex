@@ -229,10 +229,11 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
     scope_key =
       if is_nil(request.community_id), do: "platform", else: "community:#{request.community_id}"
 
-    case CMS.ReviewBlocks.apply(lifecycle, %{
+    case CMS.Review.Restrictions.apply(lifecycle, %{
            scope_key: scope_key,
            type: :awaiting_ai,
            artiment_review_id: request.id,
+           operation_ref: request.id,
            source_ref: "request:#{request.id}:awaiting_ai",
            source: :request,
            applied_at: DateTime.utc_now(:second)

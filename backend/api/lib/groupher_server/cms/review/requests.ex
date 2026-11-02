@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Review.Requests do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo, ReviewBot}
-  alias CMS.Review.{Effects, Results}
+  alias CMS.Review.Effects
   alias CMS.Model.ArtimentReview
 
   @doc "Creates the current request inside the resource command's transaction."
@@ -383,9 +383,7 @@ defmodule GroupherServer.CMS.Review.Requests do
          {:ok, payload} <- CMS.Review.Media.attach_signed_urls(request.payload),
          {:ok, opinion} <- ReviewBot.check(payload, request.policy_snapshot),
          {:ok, applied} <-
-           Repo.transact_result(fn ->
-             Results.apply_in_transaction(request_id, normalize_opinion(opinion))
-           end) do
+           CMS.Review.apply_result_internal(request_id, normalize_opinion(opinion)) do
       {:ok, applied}
     else
       {:error, _reason} = error -> error

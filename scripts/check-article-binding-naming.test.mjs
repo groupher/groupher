@@ -30,3 +30,23 @@ test('ignores migration history and accepts canonical binding names', () => {
 
   assert.deepEqual(namingFindings(files, (file) => sources[file]), [])
 })
+
+test('keeps TicketSource and Ticket workflow relations outside ArticleBinding terminology', () => {
+  const files = [
+    'backend/api/lib/groupher_server/cms/tickets/model/source.ex',
+    'backend/api/lib/groupher_server/cms/tickets.ex',
+    'backend/api/lib/groupher_server/cms/model/ticket_case_member.ex',
+    'backend/api/lib/groupher_server/cms/articles/bindings.ex',
+  ]
+  const sources = {
+    [files[0]]: 'Stores a TicketSource relation.',
+    [files[1]]: '@doc "Unlinks a source relation by its TicketSource identity."',
+    [files[2]]: 'relation belongs to a Case Ticket.',
+    [files[3]]: 'ArticleBinding relation terminology is forbidden.',
+  }
+
+  assert.deepEqual(
+    namingFindings(files, (file) => sources[file]).map(({ file, message }) => ({ file, message })),
+    [{ file: files[3], message: 'ArticleBinding relation terminology' }],
+  )
+})

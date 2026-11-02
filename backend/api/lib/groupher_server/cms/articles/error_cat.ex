@@ -33,4 +33,6 @@ defmodule GroupherServer.CMS.Articles.ErrorCat do
   error(:unknown_outbox_event, code: 6024)
   error(:binding_context_required, code: 6025)
   error(:invalid_command_input, code: 6026)
+  error(:ticket_binding_unsupported, code: 6027)
+  error(:post_linked_to_ticket, code: 6028)
 end

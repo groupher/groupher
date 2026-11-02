@@ -2,7 +2,7 @@ import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
 
 import { ASSETS_HUB_ENDPOINT } from '~/config'
 import { browserGraphQLRequest } from '~/graphql/client'
-import type { TThread } from '~/spec'
+import type { AssetThread } from '~/lib/graphql/generated/graphql'
 import S from '~/unit/DsbThread/schema/assets'
 
 import {
@@ -28,7 +28,7 @@ export type TCommunityAssetUploadOptions = {
     state: TCommunityAssetUploadStageState,
     duration?: number,
   ) => void
-  thread?: TThread
+  thread?: AssetThread
 }
 
 export type TCommunityAssetUploadResult = {

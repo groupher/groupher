@@ -5,6 +5,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.BodyBag
+  alias CMS.Assets.ThreadIdentity
   alias CMS.Hash
 
   alias CMS.Model.{
@@ -13,6 +14,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     ArticleBinding,
     ArticleBodyDraft,
     ArticleDraft,
+    ArticleLifecycle,
     ArticlePublic,
     ArticleRevision,
     AssetUpload,
@@ -65,6 +67,126 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                CMS.Assets.page(community, %{query: "pagi-1"}, %{
                  cursor: %{first: 2, after: cursor}
                })
+    end
+
+    test "asset thread identity includes Ticket without expanding ordinary Article threads",
+         ~m(community)a do
+      assert {:ok, :ticket} = ThreadIdentity.to_atom("TICKET")
+      assert :ticket in ThreadIdentity.values()
+      refute :ticket in CMS.Artiment.Threads.article_enums()
+
+      assert {:error, :invalid_asset_thread} =
+               CMS.Assets.page(community, %{thread: "not-a-thread"}, %{
+                 offset: %{page: 1, size: 10}
+               })
+    end
+
+    test "Ticket asset usage is Gate-scoped, cloned from a public Post, and protects deletion",
+         ~m(community post user)a do
+      {:ok, asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("ticket-source-ref.png", 96),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      public = Repo.get_by!(ArticlePublic, article_id: post.id)
+
+      %ArticleAssetRef{}
+      |> ArticleAssetRef.changeset(%{
+        community_id: community.id,
+        asset_id: asset.id,
+        revision_id: public.revision_id,
+        usage: :inline,
+        block_id: "ticket-source-ref"
+      })
+      |> Repo.insert!()
+
+      grants =
+        ~w(ticket.create ticket.read_internal ticket.update ticket.manage_visibility)
+        |> Map.new(&{&1, true})
+
+      ticket_actor = %{
+        user
+        | cur_passport: %{
+            "global" => %{},
+            community.slug => %{"cms" => grants}
+          }
+      }
+
+      assert {:ok, ticket} =
+               CMS.Tickets.create_from_post(
+                 community,
+                 post.id,
+                 %{title: "Ticket with inherited asset"},
+                 ticket_actor,
+                 Ecto.UUID.generate()
+               )
+
+      ticket_article = Repo.get!(Article, ticket.id)
+      ticket_draft = Repo.get_by!(ArticleDraft, article_id: ticket.id)
+
+      assert [%ArticleAssetRef{asset_id: asset_id}] =
+               Repo.all(
+                 from(ref in ArticleAssetRef,
+                   where: ref.body_draft_id == ^ticket_draft.body_draft_id
+                 )
+               )
+
+      assert asset_id == asset.id
+
+      assert {:ok, internal_usages} = CMS.Assets.usages(community, asset.id, ticket_actor)
+      assert Enum.any?(internal_usages, &(&1.thread == :ticket and &1.lifecycle == :draft))
+      assert Enum.any?(internal_usages, &(&1.thread == :post and &1.lifecycle == :live))
+
+      assert {:ok, public_usages} = CMS.Assets.usages(community, asset.id, nil)
+      refute Enum.any?(public_usages, &(&1.thread == :ticket))
+
+      assert {:ok, internal} = CMS.Tickets.get_internal(community, ticket.id, ticket_actor)
+
+      assert {:ok, _published} =
+               CMS.Tickets.publish(
+                 community,
+                 ticket.id,
+                 "Reviewed Ticket assets",
+                 internal.draft_version,
+                 internal.lifecycle_version,
+                 internal.workflow_version,
+                 ticket_actor,
+                 Ecto.UUID.generate(),
+                 CMS.Tickets.Publication.preview_anchor(community.id, ticket.id)
+               )
+
+      assert {:ok, internal_usages} = CMS.Assets.usages(community, asset.id, ticket_actor)
+      assert Enum.any?(internal_usages, &(&1.thread == :ticket and &1.lifecycle == :live))
+
+      assert {:ok, public_usages} = CMS.Assets.usages(community, asset.id, nil)
+      assert Enum.any?(public_usages, &(&1.thread == :ticket and &1.lifecycle == :live))
+
+      assert {:ok, published} = CMS.Tickets.get_internal(community, ticket.id, ticket_actor)
+
+      assert {:ok, _draft} =
+               CMS.Tickets.ensure_draft(
+                 community,
+                 ticket.id,
+                 published.lifecycle_version,
+                 ticket_actor,
+                 Ecto.UUID.generate()
+               )
+
+      assert {:ok, usages} = CMS.Assets.usages(community, asset.id, ticket_actor)
+      ticket_usages = Enum.filter(usages, &(&1.thread == :ticket))
+      assert Enum.frequencies_by(ticket_usages, & &1.lifecycle) == %{draft: 1, live: 1}
+
+      assert {:error, _reason} =
+               CMS.Assets.Refs.copy_refs(post, ticket_article)
+
+      assert {:error, _reason} =
+               CMS.Assets.delete(community, asset.id, user, Ecto.UUID.generate())
+
+      assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state ==
+               :published
     end
 
     test "registers community assets and counts active storage once", ~m(community user)a do
@@ -474,14 +596,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert length(items) == 101
       assert Enum.all?(items, &((&1[:decision] || &1["decision"]) == "editable"))
       assert Enum.count(plan_queries, &String.contains?(&1, "article_asset_refs")) == 2
+      assert Enum.count(plan_queries, &String.contains?(&1, ~s("cms"."ticket_states"))) <= 2
 
       refute Enum.any?(plan_queries, &String.contains?(&1, "pg_advisory_xact_lock"))
-
-      refute Enum.any?(plan_queries, fn query ->
-               String.contains?(query, ~s(FROM "cms"."article_drafts")) or
-                 String.contains?(query, ~s(FROM "cms"."article_publics")) or
-                 String.contains?(query, ~s(FROM "cms"."articles"))
-             end)
     end
 
     test "includes branch-owned DocDraft asset refs in the batch usage query" do

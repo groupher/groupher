@@ -103,25 +103,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
-  def m(:set_post_status) do
-    """
-    mutation(
-          $article: ArticlePathInput!
-          $status: ArticleStatusEnum!
-          $commandId: ID!
-        ) {
-          setPostStatus(
-            article: $article
-            status: $status
-            commandId: $commandId
-          ) {
-            innerId
-            status
-          }
-        }
-    """
-  end
-
   def m(:unset_community_tag) do
     """
     mutation($article: ArticlePathInput!, $communityTagId: ID!, $commandId: ID!) {
@@ -581,26 +562,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           nickname
         }
         pageInfo { hasNextPage ... on OffsetPageInfo { page size totalCount totalPages } ... on CursorPageInfo { endCursor } }
-      }
-    }
-    """
-  end
-
-  def q(:grouped_kanban_posts) do
-    boards =
-      Enum.map_join([:backlog, :todo, :wip, :done, :rejected], "\n", fn board ->
-        "#{board} { entries { innerId title cat status } pageInfo { __typename hasNextPage hasPreviousPage ... on OffsetPageInfo { page size totalCount totalPages } ... on CursorPageInfo { startCursor endCursor } } }"
-      end)
-
-    "query($community: String!) { groupedKanbanPosts(community: $community) { #{boards} } }"
-  end
-
-  def q(:paged_kanban_posts) do
-    """
-    query($community: String!, $filter: PostFilter, $pagi: PagiInput) {
-      kanbanPage(community: $community, filter: $filter, pagi: $pagi) {
-        entries {innerId title cat status}
-        pageInfo { __typename hasNextPage hasPreviousPage ... on OffsetPageInfo { page size totalCount totalPages } ... on CursorPageInfo { startCursor endCursor } }
       }
     }
     """

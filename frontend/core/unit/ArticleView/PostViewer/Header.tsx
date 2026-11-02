@@ -13,11 +13,11 @@ type TProps = {
 
 const Header: FC<TProps> = ({ article }) => {
   const s = useSalon()
-  const { meta, cat, status, communityTags } = article
+  const { meta, cat, communityTags } = article
 
   return (
     <div className={s.wrapper}>
-      <ArticleCatStatus cat={cat} status={status} smaller={false} right={4} />
+      <ArticleCatStatus cat={cat} smaller={false} right={4} />
       <TagsList items={communityTags ?? []} size='medium' />
       <div className={s.publishWrapper}>
         {meta?.isEdited && (

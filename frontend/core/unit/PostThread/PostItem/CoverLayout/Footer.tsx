@@ -3,6 +3,7 @@ import type { FC } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import type { TArticleStats, TArticleViewerState, TPost } from '~/spec'
 import TimeAgo from '~/ui/TimeAgo'
+import PostTicketProgress from '~/unit/PostTicketProgress'
 import Upvote from '~/unit/Upvote'
 
 import useSalon from '../salon/cover_layout/footer'
@@ -11,9 +12,10 @@ type TProps = {
   article: TPost
   stats: TArticleStats | null
   viewerState: TArticleViewerState
+  ticketProgress?: import('~/spec').TPostTicketProgress | null
 }
 
-const Footer: FC<TProps> = ({ article, stats, viewerState }) => {
+const Footer: FC<TProps> = ({ article, stats, viewerState, ticketProgress }) => {
   const s = useSalon()
 
   const { meta, insertedAt } = article
@@ -29,6 +31,7 @@ const Footer: FC<TProps> = ({ article, stats, viewerState }) => {
         top={-1}
       />
       <div className='grow' />
+      <PostTicketProgress progress={ticketProgress} cat={article.cat} />
       <div className={s.createTime}>{insertedAt && <TimeAgo datetime={insertedAt} />}</div>
     </div>
   )

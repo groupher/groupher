@@ -104,7 +104,7 @@ helper 共享：
 Query 的入口，也不能与领域 Query 自己的 `order_by` 叠加。分页迁移的逐调用点状态以
 [`pagination_inventory.json`](../../backend/api/priv/pagination_inventory.json) 为准。
 
-Article pin、Kanban status、Comment solution、Community subscription、AbuseReport target shape 等规则
+Article pin、Ticket status、Comment solution、Community subscription、AbuseReport target shape 等规则
 必须留在 owning Domain Query。不得为了复用把资源语义提升到 FrontDesk 或通用 QueryBuilder。
 
 ## 3. 目标结构
@@ -164,14 +164,17 @@ AbuseReports.List -> AbuseReports.Query
 
 ```text
 Articles.Query.Page
-Articles.Query.Kanban
 Articles.Query.Published
+
+CMS.Tickets.Query.page_public / page_internal / grouped_public / grouped_internal
 
 Comments.Query.Thread
 Comments.Query.Replies
 Comments.Query.Participants
 Comments.Query.Published
 ```
+
+Article Query 不再承载 Post Kanban 状态。Ticket Kanban 通过独立 Ticket Query 和 typed Ticket scope 读取，按 status 分页；Post 关联进度使用 Ticket Query 的批量 progress reader。
 
 拆分以业务合同为准，不以控制文件行数为目标；两个 use case 如果共享完全相同的 policy、query shape
 和 response hydration，可以继续同模块实现。

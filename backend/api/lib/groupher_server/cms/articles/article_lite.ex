@@ -16,14 +16,14 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
   import Ecto.Query, except: [select: 3], warn: false
 
   alias GroupherServer.{CMS}
+
   alias CMS.Model.{
     ArticleBindingTag,
     ArticleStats,
     Author,
     CommunityTag,
     CommunityTagGroup,
-    PostState,
-    KanbanState
+    PostState
   }
 
   alias Helper.ORM.Pagi.Order
@@ -84,7 +84,7 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
     |> join_tags()
     |> maybe_join_stats(order)
     |> select_content(thread)
-    |> select_post_state(thread)
+    |> select_post_category(thread)
     |> select_sort_projection(order)
   end
 
@@ -125,7 +125,7 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
     end)
   end
 
-  defp select_post_state(query, :post) do
+  defp select_post_category(query, :post) do
     query =
       if has_named_binding?(query, :post_state),
         do: query,
@@ -135,22 +135,10 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
             on: state.article_id == article.id
           )
 
-    query =
-      if has_named_binding?(query, :kanban_state),
-        do: query,
-        else:
-          join(query, :left, [article_binding: binding], state in KanbanState,
-            as: :kanban_state,
-            on: state.article_binding_id == binding.id
-          )
-
-    Ecto.Query.select_merge(query, [post_state: post, kanban_state: kanban], %{
-      cat: post.cat,
-      status: kanban.status
-    })
+    Ecto.Query.select_merge(query, [post_state: post], %{cat: post.cat})
   end
 
-  defp select_post_state(query, _thread), do: query
+  defp select_post_category(query, _thread), do: query
 
   defp join_author(query) do
     query

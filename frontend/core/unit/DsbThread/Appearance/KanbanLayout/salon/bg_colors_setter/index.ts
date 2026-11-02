@@ -9,7 +9,7 @@ export default function useSalon() {
   const { cn, fg, br, bg, fill, rainbowLite, rainbow } = useTwBelt()
 
   const { kanbanBgColors } = useKanban()
-  const [BG1, BG2, BG3, BG4, BG5] =
+  const [BG1, BG2, BG3] =
     kanbanBgColors.length === INIT_KANBAN_COLORS.length ? kanbanBgColors : INIT_KANBAN_COLORS
 
   return {
@@ -20,11 +20,9 @@ export default function useSalon() {
       br('divider'),
     ),
     colorBall: 'size-4 circle border pointer hover:scale-110 trans-all-100',
-    backlogBall: cn(rainbowLite(BG1), rainbow(BG1, 'border')),
-    todoBall: cn(rainbowLite(BG2), rainbow(BG2, 'border')),
-    wipBall: cn(rainbowLite(BG3), rainbow(BG3, 'border')),
-    doneBall: cn(rainbowLite(BG4), rainbow(BG4, 'border')),
-    rejectedBall: cn(rainbowLite(BG5), rainbow(BG5, 'border')),
+    todoBall: cn(rainbowLite(BG1), rainbow(BG1, 'border')),
+    wipBall: cn(rainbowLite(BG2), rainbow(BG2, 'border')),
+    doneBall: cn(rainbowLite(BG3), rainbow(BG3, 'border')),
     action: cn('row-center group text-xs mt-1 mr-1 pointer', fg('digest'), `hover:${fg('title')}`),
     resetIcon: cn('size-3 mr-1 group-hover:rotate-180 trans-all-200', fill('digest')),
   }

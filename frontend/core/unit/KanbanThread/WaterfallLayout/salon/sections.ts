@@ -4,7 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const [backlogBg, todoBg, wipBg, doneBg, rejectedBg] = useKanbanBgColors()
+  const [todoBg, wipBg, doneBg] = useKanbanBgColors()
   const { cn, rainbow, fill, fg } = useTwBelt()
 
   const head = 'row-center h-10 px-5 rounded-xl w-full'
@@ -18,23 +18,17 @@ export default function useSalon() {
     label: cn('text-sm bold-sm ml-2.5', fg('title')),
     count: 'row-center pretty-num mt-0.5 ml-2.5 text-xs bold-sm',
 
-    backlogText: cn('text-xs', rainbow(backlogBg, 'fg')),
     todoText: cn('text-xs', rainbow(todoBg, 'fg')),
     wipText: cn('text-xs', rainbow(wipBg, 'fg')),
     doneText: cn('text-xs', rainbow(doneBg, 'fg')),
-    rejectedText: cn('text-xs', rainbow(rejectedBg, 'fg')),
 
-    backlogIcon: cn('size-3', rainbow(backlogBg, 'fill')),
     todoIcon: cn('size-3', rainbow(todoBg, 'fill')),
     wipIcon: cn('size-3.5', rainbow(wipBg, 'fill')),
     doneIcon: cn('size-3', rainbow(doneBg, 'fill')),
-    rejectedIcon: cn('size-3', rainbow(rejectedBg, 'fill')),
     //
-    backlogHead: cn(head, rainbow(backlogBg, 'bgLite')),
     todoHead: cn(head, rainbow(todoBg, 'bgLite')),
     wipHead: cn(head, rainbow(wipBg, 'bgLite')),
     doneHead: cn(head, rainbow(doneBg, 'bgLite')),
-    rejectedHead: cn(head, rainbow(rejectedBg, 'bgLite')),
     //
     arrowIcon: cn('size-4 pointer -rotate-90', fill('digest')),
   }

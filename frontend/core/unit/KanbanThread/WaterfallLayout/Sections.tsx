@@ -6,7 +6,7 @@
 import type { ReactNode } from 'react'
 
 import { KANBAN_BOARD } from '~/const/thread'
-import useKanbanPosts, { type TKanbanPage } from '~/hooks/useKanbanPosts'
+import useKanbanTickets, { type TKanbanPage } from '~/hooks/useKanbanTickets'
 import useLayout from '~/hooks/useLayout'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
@@ -14,8 +14,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
-import RejectSVG from '~/icons/Reject'
-import type { TKanbanBoard } from '~/spec'
+import type { TKanbanBoard, TTicketFilter } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
 import EmptyItem from '../KanbanItem/EmptyItem'
@@ -31,36 +30,28 @@ type TSection = {
   posts: TKanbanPage
 }
 
-export default function Sections() {
+export default function Sections({
+  internal = false,
+  ticketFilter = {},
+}: {
+  internal?: boolean
+  ticketFilter?: TTicketFilter
+}) {
   const { t } = useTrans()
   const { kanbanBoards } = useLayout()
   const kanbanAlias = useNameAlias('kanban')
-  const {
-    backlog: backlogPosts,
-    todo: todoPosts,
-    wip: wipPosts,
-    done: donePosts,
-    rejected: rejectedPosts,
-  } = useKanbanPosts()
+  const { todo, wip, done } = useKanbanTickets(internal, ticketFilter)
 
   const s = useSalon()
   const resolveTitle = (key: string, fallback: string) => kanbanAlias[key]?.name || fallback
   const sectionMap: Record<TKanbanBoard, TSection> = {
-    [KANBAN_BOARD.BACKLOG]: {
-      key: KANBAN_BOARD.BACKLOG,
-      title: resolveTitle('backlog', t('article.status.backlog')),
-      countClassName: s.backlogText,
-      headClassName: s.backlogHead,
-      icon: <GtdTodoSVG className={s.backlogIcon} />,
-      posts: backlogPosts,
-    },
     [KANBAN_BOARD.TODO]: {
       key: KANBAN_BOARD.TODO,
       title: resolveTitle('todo', t('article.status.todo')),
       countClassName: s.todoText,
       headClassName: s.todoHead,
       icon: <GtdTodoSVG className={s.todoIcon} />,
-      posts: todoPosts,
+      posts: todo,
     },
     [KANBAN_BOARD.WIP]: {
       key: KANBAN_BOARD.WIP,
@@ -68,7 +59,7 @@ export default function Sections() {
       countClassName: s.wipText,
       headClassName: s.wipHead,
       icon: <GtdWipSVG className={s.wipIcon} />,
-      posts: wipPosts,
+      posts: wip,
     },
     [KANBAN_BOARD.DONE]: {
       key: KANBAN_BOARD.DONE,
@@ -76,15 +67,7 @@ export default function Sections() {
       countClassName: s.doneText,
       headClassName: s.doneHead,
       icon: <GtdDoneSVG className={s.doneIcon} />,
-      posts: donePosts,
-    },
-    [KANBAN_BOARD.REJECTED]: {
-      key: KANBAN_BOARD.REJECTED,
-      title: resolveTitle('rejected', t('article.status.reject')),
-      countClassName: s.rejectedText,
-      headClassName: s.rejectedHead,
-      icon: <RejectSVG className={s.rejectedIcon} />,
-      posts: rejectedPosts,
+      posts: done,
     },
   }
   const sections = kanbanBoards.flatMap((board) => sectionMap[board] || [])
@@ -113,7 +96,7 @@ export default function Sections() {
               ? section.posts.pageInfo.totalCount
               : section.posts.entries.length) !== 0 &&
               section.posts.entries.map((item) => (
-                <KanbanItem key={item.content.innerId} viewModel={item} />
+                <KanbanItem key={item.content.id} viewModel={item} internal={internal} />
               ))}
             <PageControls page={section.posts} />
           </div>

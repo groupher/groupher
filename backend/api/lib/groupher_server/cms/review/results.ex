@@ -130,7 +130,7 @@ defmodule GroupherServer.CMS.Review.Results do
     if ids == [] do
       {:ok, :pass}
     else
-      CMS.ReviewBlocks.end_blocks(
+      CMS.Review.Restrictions.end_blocks(
         context.lifecycle,
         context.scope_key,
         ids,
@@ -162,10 +162,11 @@ defmodule GroupherServer.CMS.Review.Results do
   end
 
   defp restriction(request, context, type) do
-    CMS.ReviewBlocks.apply(context.lifecycle, %{
+    CMS.Review.Restrictions.apply(context.lifecycle, %{
       scope_key: context.scope_key,
       type: type,
       artiment_review_id: request.id,
+      operation_ref: request.id,
       source_ref: "request:#{request.id}:#{type}",
       source: :request,
       applied_at: DateTime.utc_now(:second)

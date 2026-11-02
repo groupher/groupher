@@ -1,7 +1,7 @@
 import { type FC, memo } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
-import type { TArticle, TArticleStats, TArticleViewerState } from '~/spec'
+import type { TChangelog, TArticleStats, TArticleViewerState } from '~/spec'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import Upvote from '~/unit/Upvote'
 // import ArticleBaseStats from '~/ui/ArticleBaseStats'
@@ -9,7 +9,7 @@ import Upvote from '~/unit/Upvote'
 import useSalon from './salon/fixed_header'
 
 type TProps = {
-  article: TArticle
+  article: TChangelog
   stats: TArticleStats | null
   viewerState: TArticleViewerState
   visible?: boolean

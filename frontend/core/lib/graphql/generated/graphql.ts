@@ -72,7 +72,7 @@ export type ArticleEmotion =
   | 'PILL'
   | 'POPCORN'
 
-export type ArticleLifecycleState = 'ARCHIVED' | 'DELETED' | 'DESTROY' | 'DRAFT_ONLY' | 'PUBLISHED'
+export type ArticleLifecycleState = 'ARCHIVED' | 'DELETED' | 'DESTROY' | 'DRAFT' | 'PUBLISHED'
 
 export type ArticleOrderEnum = 'COMMENTS' | 'PUBLISH' | 'UPVOTES' | 'VIEWS'
 
@@ -83,8 +83,6 @@ export type ArticlePageFilter = {
   communityTags?: Array<string | null | undefined> | null | undefined
   order?: ArticleOrderEnum | null | undefined
   sort?: ArticleSortEnum | null | undefined
-  status?: ArticleStatusEnum | null | undefined
-  statuses?: Array<ArticleStatusEnum> | null | undefined
   when?: WhenEnum | null | undefined
 }
 
@@ -136,6 +134,8 @@ export type ArtimentTocItemInput = {
   title: string
 }
 
+export type AssetThread = 'BLOG' | 'CHANGELOG' | 'DOC' | 'POST' | 'TICKET'
+
 export type ChangelogFilter = {
   cat?: ArticleCatEnum | null | undefined
   community?: string | null | undefined
@@ -143,8 +143,6 @@ export type ChangelogFilter = {
   communityTags?: Array<string | null | undefined> | null | undefined
   order?: ArticleOrderEnum | null | undefined
   sort?: ArticleSortEnum | null | undefined
-  status?: ArticleStatusEnum | null | undefined
-  statuses?: Array<ArticleStatusEnum> | null | undefined
   when?: WhenEnum | null | undefined
 }
 
@@ -247,7 +245,7 @@ export type CommunityAssetFilter = {
   assetType?: CommunityAssetType | null | undefined
   query?: string | null | undefined
   subtypes?: Array<string> | null | undefined
-  thread?: Thread | null | undefined
+  thread?: AssetThread | null | undefined
 }
 
 export type CommunityAssetStatus = 'ACTIVE' | 'DELETED'
@@ -260,7 +258,7 @@ export type CommunityAssetUploadFileInput = {
   filename: string
   mimeType: string
   sizeBytes: unknown
-  thread?: Thread | null | undefined
+  thread?: AssetThread | null | undefined
 }
 
 export type CommunitySortEnum = 'ASC_INSERTED' | 'DESC_INSERTED' | 'LEAST_VIEWS' | 'MOST_VIEWS'
@@ -453,7 +451,7 @@ export type ForwardCursorPagiInput = {
   first?: number | null | undefined
 }
 
-export type KanbanBoard = 'BACKLOG' | 'DONE' | 'REJECTED' | 'TODO' | 'WIP'
+export type KanbanBoard = 'DONE' | 'TODO' | 'WIP'
 
 export type MarkerAppearanceInput = {
   dark: MarkerThemeAppearanceInput
@@ -497,8 +495,6 @@ export type PostFilter = {
   communityTags?: Array<string | null | undefined> | null | undefined
   order?: ArticleOrderEnum | null | undefined
   sort?: ArticleSortEnum | null | undefined
-  status?: ArticleStatusEnum | null | undefined
-  statuses?: Array<ArticleStatusEnum> | null | undefined
   when?: WhenEnum | null | undefined
 }
 
@@ -560,6 +556,44 @@ export type Thread =
   | 'KANBAN'
   | 'POST'
   | 'USER'
+
+export type TicketContentInput = {
+  body?: unknown
+  digest?: string | null | undefined
+  title?: string | null | undefined
+}
+
+export type TicketFacetInput = {
+  key: string
+  value: string
+}
+
+export type TicketFilter = {
+  assigneeId?: number | null | undefined
+  createdAfter?: string | null | undefined
+  createdBefore?: string | null | undefined
+  modules?: Array<string | null | undefined> | null | undefined
+  operatingSystems?: Array<string | null | undefined> | null | undefined
+  plannedAfter?: string | null | undefined
+  plannedBefore?: string | null | undefined
+  priority?: number | null | undefined
+  status?: TicketStatusEnum | null | undefined
+  tagIds?: Array<number | null | undefined> | null | undefined
+  type?: TicketTypeEnum | null | undefined
+  updatedAfter?: string | null | undefined
+  updatedBefore?: string | null | undefined
+  versions?: Array<string | null | undefined> | null | undefined
+}
+
+export type TicketPublicationState = 'DRAFT' | 'PUBLISHED'
+
+export type TicketSourceTypeEnum = 'POST'
+
+export type TicketStatusEnum = 'DONE' | 'OPEN' | 'RESOLVED' | 'TODO' | 'WIP'
+
+export type TicketTypeEnum = 'CASE' | 'USER' | 'WORKER'
+
+export type TicketUpdateVisibilityEnum = 'INTERNAL' | 'PUBLIC'
 
 export type UpdatePressConfigInput = {
   community: string
@@ -2402,7 +2436,6 @@ export type PagePostLiteFieldsFragment = {
   digest: string | null
   isPinned: boolean
   cat: ArticleCatEnum | null
-  status: ArticleStatusEnum | null
   insertedAt: string
   activeAt: string | null
   author: {
@@ -3588,7 +3621,6 @@ export type PagedPublishedPostsQuery = {
       digest: string | null
       isPinned: boolean
       cat: ArticleCatEnum | null
-      status: ArticleStatusEnum | null
       insertedAt: string
       activeAt: string | null
       author: {
@@ -3616,7 +3648,6 @@ export type PagedPublishedPostsQuery = {
       digest: string | null
       isPinned: boolean
       cat: ArticleCatEnum | null
-      status: ArticleStatusEnum | null
       insertedAt: string
       activeAt: string | null
       author: {
@@ -3654,474 +3685,6 @@ export type PagedPublishedPostsQuery = {
           hasPreviousPage: boolean
         }
   } | null
-}
-
-export type PagesGroupedKanbanPostsQueryVariables = Exact<{
-  community: string
-}>
-
-export type PagesGroupedKanbanPostsQuery = {
-  groupedKanbanPosts: {
-    backlog: {
-      pinnedEntries: Array<{
-        id: string
-        thread: PostThread
-        innerId: string
-        title: string
-        digest: string | null
-        isPinned: boolean
-        cat: ArticleCatEnum | null
-        status: ArticleStatusEnum | null
-        insertedAt: string
-        activeAt: string | null
-        author: {
-          login: string
-          nickname: string | null
-          avatar: string | null
-          bio: string | null
-          shortbio: string | null
-        }
-        community: { title: string; slug: string; logo: string | null }
-        communityTags: Array<{
-          id: string
-          title: string
-          layout: string | null
-          slug: string
-          color: RainbowColor
-          thread: ArticleThread
-        }>
-      }>
-      entries: Array<{
-        id: string
-        thread: PostThread
-        innerId: string
-        title: string
-        digest: string | null
-        isPinned: boolean
-        cat: ArticleCatEnum | null
-        status: ArticleStatusEnum | null
-        insertedAt: string
-        activeAt: string | null
-        author: {
-          login: string
-          nickname: string | null
-          avatar: string | null
-          bio: string | null
-          shortbio: string | null
-        }
-        community: { title: string; slug: string; logo: string | null }
-        communityTags: Array<{
-          id: string
-          title: string
-          layout: string | null
-          slug: string
-          color: RainbowColor
-          thread: ArticleThread
-        }>
-      }>
-      pageInfo:
-        | {
-            __typename: 'CursorPageInfo'
-            startCursor: string | null
-            endCursor: string | null
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-          }
-        | {
-            __typename: 'OffsetPageInfo'
-            page: number
-            size: number
-            totalCount: number
-            totalPages: number
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-          }
-    } | null
-    todo: {
-      pinnedEntries: Array<{
-        id: string
-        thread: PostThread
-        innerId: string
-        title: string
-        digest: string | null
-        isPinned: boolean
-        cat: ArticleCatEnum | null
-        status: ArticleStatusEnum | null
-        insertedAt: string
-        activeAt: string | null
-        author: {
-          login: string
-          nickname: string | null
-          avatar: string | null
-          bio: string | null
-          shortbio: string | null
-        }
-        community: { title: string; slug: string; logo: string | null }
-        communityTags: Array<{
-          id: string
-          title: string
-          layout: string | null
-          slug: string
-          color: RainbowColor
-          thread: ArticleThread
-        }>
-      }>
-      entries: Array<{
-        id: string
-        thread: PostThread
-        innerId: string
-        title: string
-        digest: string | null
-        isPinned: boolean
-        cat: ArticleCatEnum | null
-        status: ArticleStatusEnum | null
-        insertedAt: string
-        activeAt: string | null
-        author: {
-          login: string
-          nickname: string | null
-          avatar: string | null
-          bio: string | null
-          shortbio: string | null
-        }
-        community: { title: string; slug: string; logo: string | null }
-        communityTags: Array<{
-          id: string
-          title: string
-          layout: string | null
-          slug: string
-          color: RainbowColor
-          thread: ArticleThread
-        }>
-      }>
-      pageInfo:
-        | {
-            __typename: 'CursorPageInfo'
-            startCursor: string | null
-            endCursor: string | null
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-          }
-        | {
-            __typename: 'OffsetPageInfo'
-            page: number
-            size: number
-            totalCount: number
-            totalPages: number
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-          }
-    } | null
-    wip: {
-      pinnedEntries: Array<{
-        id: string
-        thread: PostThread
-        innerId: string
-        title: string
-        digest: string | null
-        isPinned: boolean
-        cat: ArticleCatEnum | null
-        status: ArticleStatusEnum | null
-        insertedAt: string
-        activeAt: string | null
-        author: {
-          login: string
-          nickname: string | null
-          avatar: string | null
-          bio: string | null
-          shortbio: string | null
-        }
-        community: { title: string; slug: string; logo: string | null }
-        communityTags: Array<{
-          id: string
-          title: string
-          layout: string | null
-          slug: string
-          color: RainbowColor
-          thread: ArticleThread
-        }>
-      }>
-      entries: Array<{
-        id: string
-        thread: PostThread
-        innerId: string
-        title: string
-        digest: string | null
-        isPinned: boolean
-        cat: ArticleCatEnum | null
-        status: ArticleStatusEnum | null
-        insertedAt: string
-        activeAt: string | null
-        author: {
-          login: string
-          nickname: string | null
-          avatar: string | null
-          bio: string | null
-          shortbio: string | null
-        }
-        community: { title: string; slug: string; logo: string | null }
-        communityTags: Array<{
-          id: string
-          title: string
-          layout: string | null
-          slug: string
-          color: RainbowColor
-          thread: ArticleThread
-        }>
-      }>
-      pageInfo:
-        | {
-            __typename: 'CursorPageInfo'
-            startCursor: string | null
-            endCursor: string | null
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-          }
-        | {
-            __typename: 'OffsetPageInfo'
-            page: number
-            size: number
-            totalCount: number
-            totalPages: number
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-          }
-    } | null
-    done: {
-      pinnedEntries: Array<{
-        id: string
-        thread: PostThread
-        innerId: string
-        title: string
-        digest: string | null
-        isPinned: boolean
-        cat: ArticleCatEnum | null
-        status: ArticleStatusEnum | null
-        insertedAt: string
-        activeAt: string | null
-        author: {
-          login: string
-          nickname: string | null
-          avatar: string | null
-          bio: string | null
-          shortbio: string | null
-        }
-        community: { title: string; slug: string; logo: string | null }
-        communityTags: Array<{
-          id: string
-          title: string
-          layout: string | null
-          slug: string
-          color: RainbowColor
-          thread: ArticleThread
-        }>
-      }>
-      entries: Array<{
-        id: string
-        thread: PostThread
-        innerId: string
-        title: string
-        digest: string | null
-        isPinned: boolean
-        cat: ArticleCatEnum | null
-        status: ArticleStatusEnum | null
-        insertedAt: string
-        activeAt: string | null
-        author: {
-          login: string
-          nickname: string | null
-          avatar: string | null
-          bio: string | null
-          shortbio: string | null
-        }
-        community: { title: string; slug: string; logo: string | null }
-        communityTags: Array<{
-          id: string
-          title: string
-          layout: string | null
-          slug: string
-          color: RainbowColor
-          thread: ArticleThread
-        }>
-      }>
-      pageInfo:
-        | {
-            __typename: 'CursorPageInfo'
-            startCursor: string | null
-            endCursor: string | null
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-          }
-        | {
-            __typename: 'OffsetPageInfo'
-            page: number
-            size: number
-            totalCount: number
-            totalPages: number
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-          }
-    } | null
-    rejected: {
-      pinnedEntries: Array<{
-        id: string
-        thread: PostThread
-        innerId: string
-        title: string
-        digest: string | null
-        isPinned: boolean
-        cat: ArticleCatEnum | null
-        status: ArticleStatusEnum | null
-        insertedAt: string
-        activeAt: string | null
-        author: {
-          login: string
-          nickname: string | null
-          avatar: string | null
-          bio: string | null
-          shortbio: string | null
-        }
-        community: { title: string; slug: string; logo: string | null }
-        communityTags: Array<{
-          id: string
-          title: string
-          layout: string | null
-          slug: string
-          color: RainbowColor
-          thread: ArticleThread
-        }>
-      }>
-      entries: Array<{
-        id: string
-        thread: PostThread
-        innerId: string
-        title: string
-        digest: string | null
-        isPinned: boolean
-        cat: ArticleCatEnum | null
-        status: ArticleStatusEnum | null
-        insertedAt: string
-        activeAt: string | null
-        author: {
-          login: string
-          nickname: string | null
-          avatar: string | null
-          bio: string | null
-          shortbio: string | null
-        }
-        community: { title: string; slug: string; logo: string | null }
-        communityTags: Array<{
-          id: string
-          title: string
-          layout: string | null
-          slug: string
-          color: RainbowColor
-          thread: ArticleThread
-        }>
-      }>
-      pageInfo:
-        | {
-            __typename: 'CursorPageInfo'
-            startCursor: string | null
-            endCursor: string | null
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-          }
-        | {
-            __typename: 'OffsetPageInfo'
-            page: number
-            size: number
-            totalCount: number
-            totalPages: number
-            hasNextPage: boolean
-            hasPreviousPage: boolean
-          }
-    } | null
-  } | null
-}
-
-export type KanbanPageQueryVariables = Exact<{
-  community: string
-  filter?: PostFilter | null | undefined
-  pagi?: PagiInput | null | undefined
-}>
-
-export type KanbanPageQuery = {
-  kanbanPage: {
-    pinnedEntries: Array<{
-      id: string
-      thread: PostThread
-      innerId: string
-      title: string
-      digest: string | null
-      isPinned: boolean
-      cat: ArticleCatEnum | null
-      status: ArticleStatusEnum | null
-      insertedAt: string
-      activeAt: string | null
-      author: {
-        login: string
-        nickname: string | null
-        avatar: string | null
-        bio: string | null
-        shortbio: string | null
-      }
-      community: { title: string; slug: string; logo: string | null }
-      communityTags: Array<{
-        id: string
-        title: string
-        layout: string | null
-        slug: string
-        color: RainbowColor
-        thread: ArticleThread
-      }>
-    }>
-    entries: Array<{
-      id: string
-      thread: PostThread
-      innerId: string
-      title: string
-      digest: string | null
-      isPinned: boolean
-      cat: ArticleCatEnum | null
-      status: ArticleStatusEnum | null
-      insertedAt: string
-      activeAt: string | null
-      author: {
-        login: string
-        nickname: string | null
-        avatar: string | null
-        bio: string | null
-        shortbio: string | null
-      }
-      community: { title: string; slug: string; logo: string | null }
-      communityTags: Array<{
-        id: string
-        title: string
-        layout: string | null
-        slug: string
-        color: RainbowColor
-        thread: ArticleThread
-      }>
-    }>
-    pageInfo:
-      | {
-          __typename: 'CursorPageInfo'
-          startCursor: string | null
-          endCursor: string | null
-          hasNextPage: boolean
-          hasPreviousPage: boolean
-        }
-      | {
-          __typename: 'OffsetPageInfo'
-          page: number
-          size: number
-          totalCount: number
-          totalPages: number
-          hasNextPage: boolean
-          hasPreviousPage: boolean
-        }
-  }
 }
 
 export type PostPageQueryVariables = Exact<{
@@ -4140,7 +3703,6 @@ export type PostPageQuery = {
       digest: string | null
       isPinned: boolean
       cat: ArticleCatEnum | null
-      status: ArticleStatusEnum | null
       insertedAt: string
       activeAt: string | null
       author: {
@@ -4168,7 +3730,6 @@ export type PostPageQuery = {
       digest: string | null
       isPinned: boolean
       cat: ArticleCatEnum | null
-      status: ArticleStatusEnum | null
       insertedAt: string
       activeAt: string | null
       author: {
@@ -4206,6 +3767,4903 @@ export type PostPageQuery = {
           hasPreviousPage: boolean
         }
   }
+}
+
+export type TicketFieldsFragment = {
+  id: string
+  innerId: number | null
+  type: TicketTypeEnum
+  status: TicketStatusEnum
+  publicationState: TicketPublicationState
+  canPublishPublicUpdates: boolean
+  priority: number
+  lifecycleVersion: number | null
+  workflowVersion: number | null
+  draftVersion: number | null
+  publicationPreview: string | null
+  hasUnpublishedChanges: boolean | null
+  rank: number
+  title: string
+  digest: string
+  body: string
+  plainText: string
+  plannedStartAt: string | null
+  plannedEndAt: string | null
+  startedAt: string | null
+  completedAt: string | null
+  createdAt: string
+  updatedAt: string
+  draftContent: { title: string; digest: string; body: string } | null
+  publishedContent: { title: string; digest: string; body: string } | null
+  assignees: Array<{ id: string; login: string; nickname: string | null }>
+  tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+  facets: Array<{ key: string; value: string }>
+  sources: Array<{
+    id: string
+    type: TicketSourceTypeEnum
+    innerId: number | null
+    title: string | null
+    isPublic: boolean
+    reviewBlockTypes: Array<string>
+  }>
+  workers: Array<{
+    id: string
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    priority: number
+    workflowVersion: number
+    rank: number
+    innerId: number | null
+    title: string
+    digest: string | null
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+  }>
+  members: Array<{
+    id: string
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    priority: number
+    workflowVersion: number
+    rank: number
+    innerId: number | null
+    title: string
+    digest: string | null
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+  }>
+  cases: Array<{
+    id: string
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    priority: number
+    workflowVersion: number
+    rank: number
+    innerId: number | null
+    title: string
+    digest: string | null
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+  }>
+  sharedWorkers: Array<{
+    id: string
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    priority: number
+    workflowVersion: number
+    rank: number
+    innerId: number | null
+    title: string
+    digest: string | null
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+  }>
+  parent: {
+    id: string
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    priority: number
+    workflowVersion: number
+    rank: number
+    innerId: number | null
+    title: string
+    digest: string | null
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+  } | null
+  activity: {
+    entries: Array<{
+      id: string
+      action: string
+      payload: unknown
+      occurredAt: string
+      actorRef: string | null
+    }>
+    pageInfo:
+      | {
+          __typename: 'CursorPageInfo'
+          startCursor: string | null
+          endCursor: string | null
+          hasNextPage: boolean
+          hasPreviousPage: boolean
+        }
+      | {
+          __typename: 'OffsetPageInfo'
+          page: number
+          size: number
+          totalCount: number
+          totalPages: number
+          hasNextPage: boolean
+          hasPreviousPage: boolean
+        }
+  } | null
+  updates: Array<{
+    id: string
+    body: string
+    visibility: TicketUpdateVisibilityEnum
+    authorId: string
+    publishedAt: string | null
+    supersedesId: string | null
+  }>
+}
+
+export type TicketPageFieldsFragment = {
+  entries: Array<{
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  }>
+  pageInfo:
+    | {
+        __typename: 'CursorPageInfo'
+        startCursor: string | null
+        endCursor: string | null
+        hasNextPage: boolean
+        hasPreviousPage: boolean
+      }
+    | {
+        __typename: 'OffsetPageInfo'
+        page: number
+        size: number
+        totalCount: number
+        totalPages: number
+        hasNextPage: boolean
+        hasPreviousPage: boolean
+      }
+}
+
+export type TicketKanbanQueryVariables = Exact<{
+  community: string
+  pagi?: PagiInput | null | undefined
+}>
+
+export type TicketKanbanQuery = {
+  ticketKanban: {
+    todo: {
+      entries: Array<{
+        id: string
+        innerId: number | null
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        publicationState: TicketPublicationState
+        canPublishPublicUpdates: boolean
+        priority: number
+        lifecycleVersion: number | null
+        workflowVersion: number | null
+        draftVersion: number | null
+        publicationPreview: string | null
+        hasUnpublishedChanges: boolean | null
+        rank: number
+        title: string
+        digest: string
+        body: string
+        plainText: string
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+        startedAt: string | null
+        completedAt: string | null
+        createdAt: string
+        updatedAt: string
+        draftContent: { title: string; digest: string; body: string } | null
+        publishedContent: { title: string; digest: string; body: string } | null
+        assignees: Array<{ id: string; login: string; nickname: string | null }>
+        tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+        facets: Array<{ key: string; value: string }>
+        sources: Array<{
+          id: string
+          type: TicketSourceTypeEnum
+          innerId: number | null
+          title: string | null
+          isPublic: boolean
+          reviewBlockTypes: Array<string>
+        }>
+        workers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        members: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        cases: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        sharedWorkers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        parent: {
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        } | null
+        activity: {
+          entries: Array<{
+            id: string
+            action: string
+            payload: unknown
+            occurredAt: string
+            actorRef: string | null
+          }>
+          pageInfo:
+            | {
+                __typename: 'CursorPageInfo'
+                startCursor: string | null
+                endCursor: string | null
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+            | {
+                __typename: 'OffsetPageInfo'
+                page: number
+                size: number
+                totalCount: number
+                totalPages: number
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+        } | null
+        updates: Array<{
+          id: string
+          body: string
+          visibility: TicketUpdateVisibilityEnum
+          authorId: string
+          publishedAt: string | null
+          supersedesId: string | null
+        }>
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    }
+    wip: {
+      entries: Array<{
+        id: string
+        innerId: number | null
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        publicationState: TicketPublicationState
+        canPublishPublicUpdates: boolean
+        priority: number
+        lifecycleVersion: number | null
+        workflowVersion: number | null
+        draftVersion: number | null
+        publicationPreview: string | null
+        hasUnpublishedChanges: boolean | null
+        rank: number
+        title: string
+        digest: string
+        body: string
+        plainText: string
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+        startedAt: string | null
+        completedAt: string | null
+        createdAt: string
+        updatedAt: string
+        draftContent: { title: string; digest: string; body: string } | null
+        publishedContent: { title: string; digest: string; body: string } | null
+        assignees: Array<{ id: string; login: string; nickname: string | null }>
+        tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+        facets: Array<{ key: string; value: string }>
+        sources: Array<{
+          id: string
+          type: TicketSourceTypeEnum
+          innerId: number | null
+          title: string | null
+          isPublic: boolean
+          reviewBlockTypes: Array<string>
+        }>
+        workers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        members: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        cases: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        sharedWorkers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        parent: {
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        } | null
+        activity: {
+          entries: Array<{
+            id: string
+            action: string
+            payload: unknown
+            occurredAt: string
+            actorRef: string | null
+          }>
+          pageInfo:
+            | {
+                __typename: 'CursorPageInfo'
+                startCursor: string | null
+                endCursor: string | null
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+            | {
+                __typename: 'OffsetPageInfo'
+                page: number
+                size: number
+                totalCount: number
+                totalPages: number
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+        } | null
+        updates: Array<{
+          id: string
+          body: string
+          visibility: TicketUpdateVisibilityEnum
+          authorId: string
+          publishedAt: string | null
+          supersedesId: string | null
+        }>
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    }
+    done: {
+      entries: Array<{
+        id: string
+        innerId: number | null
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        publicationState: TicketPublicationState
+        canPublishPublicUpdates: boolean
+        priority: number
+        lifecycleVersion: number | null
+        workflowVersion: number | null
+        draftVersion: number | null
+        publicationPreview: string | null
+        hasUnpublishedChanges: boolean | null
+        rank: number
+        title: string
+        digest: string
+        body: string
+        plainText: string
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+        startedAt: string | null
+        completedAt: string | null
+        createdAt: string
+        updatedAt: string
+        draftContent: { title: string; digest: string; body: string } | null
+        publishedContent: { title: string; digest: string; body: string } | null
+        assignees: Array<{ id: string; login: string; nickname: string | null }>
+        tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+        facets: Array<{ key: string; value: string }>
+        sources: Array<{
+          id: string
+          type: TicketSourceTypeEnum
+          innerId: number | null
+          title: string | null
+          isPublic: boolean
+          reviewBlockTypes: Array<string>
+        }>
+        workers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        members: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        cases: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        sharedWorkers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        parent: {
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        } | null
+        activity: {
+          entries: Array<{
+            id: string
+            action: string
+            payload: unknown
+            occurredAt: string
+            actorRef: string | null
+          }>
+          pageInfo:
+            | {
+                __typename: 'CursorPageInfo'
+                startCursor: string | null
+                endCursor: string | null
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+            | {
+                __typename: 'OffsetPageInfo'
+                page: number
+                size: number
+                totalCount: number
+                totalPages: number
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+        } | null
+        updates: Array<{
+          id: string
+          body: string
+          visibility: TicketUpdateVisibilityEnum
+          authorId: string
+          publishedAt: string | null
+          supersedesId: string | null
+        }>
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    }
+  }
+}
+
+export type TicketKanbanInternalQueryVariables = Exact<{
+  community: string
+  filter?: TicketFilter | null | undefined
+  pagi?: PagiInput | null | undefined
+}>
+
+export type TicketKanbanInternalQuery = {
+  ticketKanbanInternal: {
+    todo: {
+      entries: Array<{
+        id: string
+        innerId: number | null
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        publicationState: TicketPublicationState
+        canPublishPublicUpdates: boolean
+        priority: number
+        lifecycleVersion: number | null
+        workflowVersion: number | null
+        draftVersion: number | null
+        publicationPreview: string | null
+        hasUnpublishedChanges: boolean | null
+        rank: number
+        title: string
+        digest: string
+        body: string
+        plainText: string
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+        startedAt: string | null
+        completedAt: string | null
+        createdAt: string
+        updatedAt: string
+        draftContent: { title: string; digest: string; body: string } | null
+        publishedContent: { title: string; digest: string; body: string } | null
+        assignees: Array<{ id: string; login: string; nickname: string | null }>
+        tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+        facets: Array<{ key: string; value: string }>
+        sources: Array<{
+          id: string
+          type: TicketSourceTypeEnum
+          innerId: number | null
+          title: string | null
+          isPublic: boolean
+          reviewBlockTypes: Array<string>
+        }>
+        workers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        members: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        cases: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        sharedWorkers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        parent: {
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        } | null
+        activity: {
+          entries: Array<{
+            id: string
+            action: string
+            payload: unknown
+            occurredAt: string
+            actorRef: string | null
+          }>
+          pageInfo:
+            | {
+                __typename: 'CursorPageInfo'
+                startCursor: string | null
+                endCursor: string | null
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+            | {
+                __typename: 'OffsetPageInfo'
+                page: number
+                size: number
+                totalCount: number
+                totalPages: number
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+        } | null
+        updates: Array<{
+          id: string
+          body: string
+          visibility: TicketUpdateVisibilityEnum
+          authorId: string
+          publishedAt: string | null
+          supersedesId: string | null
+        }>
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    }
+    wip: {
+      entries: Array<{
+        id: string
+        innerId: number | null
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        publicationState: TicketPublicationState
+        canPublishPublicUpdates: boolean
+        priority: number
+        lifecycleVersion: number | null
+        workflowVersion: number | null
+        draftVersion: number | null
+        publicationPreview: string | null
+        hasUnpublishedChanges: boolean | null
+        rank: number
+        title: string
+        digest: string
+        body: string
+        plainText: string
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+        startedAt: string | null
+        completedAt: string | null
+        createdAt: string
+        updatedAt: string
+        draftContent: { title: string; digest: string; body: string } | null
+        publishedContent: { title: string; digest: string; body: string } | null
+        assignees: Array<{ id: string; login: string; nickname: string | null }>
+        tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+        facets: Array<{ key: string; value: string }>
+        sources: Array<{
+          id: string
+          type: TicketSourceTypeEnum
+          innerId: number | null
+          title: string | null
+          isPublic: boolean
+          reviewBlockTypes: Array<string>
+        }>
+        workers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        members: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        cases: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        sharedWorkers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        parent: {
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        } | null
+        activity: {
+          entries: Array<{
+            id: string
+            action: string
+            payload: unknown
+            occurredAt: string
+            actorRef: string | null
+          }>
+          pageInfo:
+            | {
+                __typename: 'CursorPageInfo'
+                startCursor: string | null
+                endCursor: string | null
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+            | {
+                __typename: 'OffsetPageInfo'
+                page: number
+                size: number
+                totalCount: number
+                totalPages: number
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+        } | null
+        updates: Array<{
+          id: string
+          body: string
+          visibility: TicketUpdateVisibilityEnum
+          authorId: string
+          publishedAt: string | null
+          supersedesId: string | null
+        }>
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    }
+    done: {
+      entries: Array<{
+        id: string
+        innerId: number | null
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        publicationState: TicketPublicationState
+        canPublishPublicUpdates: boolean
+        priority: number
+        lifecycleVersion: number | null
+        workflowVersion: number | null
+        draftVersion: number | null
+        publicationPreview: string | null
+        hasUnpublishedChanges: boolean | null
+        rank: number
+        title: string
+        digest: string
+        body: string
+        plainText: string
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+        startedAt: string | null
+        completedAt: string | null
+        createdAt: string
+        updatedAt: string
+        draftContent: { title: string; digest: string; body: string } | null
+        publishedContent: { title: string; digest: string; body: string } | null
+        assignees: Array<{ id: string; login: string; nickname: string | null }>
+        tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+        facets: Array<{ key: string; value: string }>
+        sources: Array<{
+          id: string
+          type: TicketSourceTypeEnum
+          innerId: number | null
+          title: string | null
+          isPublic: boolean
+          reviewBlockTypes: Array<string>
+        }>
+        workers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        members: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        cases: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        sharedWorkers: Array<{
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        }>
+        parent: {
+          id: string
+          type: TicketTypeEnum
+          status: TicketStatusEnum
+          priority: number
+          workflowVersion: number
+          rank: number
+          innerId: number | null
+          title: string
+          digest: string | null
+          plannedStartAt: string | null
+          plannedEndAt: string | null
+        } | null
+        activity: {
+          entries: Array<{
+            id: string
+            action: string
+            payload: unknown
+            occurredAt: string
+            actorRef: string | null
+          }>
+          pageInfo:
+            | {
+                __typename: 'CursorPageInfo'
+                startCursor: string | null
+                endCursor: string | null
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+            | {
+                __typename: 'OffsetPageInfo'
+                page: number
+                size: number
+                totalCount: number
+                totalPages: number
+                hasNextPage: boolean
+                hasPreviousPage: boolean
+              }
+        } | null
+        updates: Array<{
+          id: string
+          body: string
+          visibility: TicketUpdateVisibilityEnum
+          authorId: string
+          publishedAt: string | null
+          supersedesId: string | null
+        }>
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    }
+  }
+}
+
+export type TicketPageQueryVariables = Exact<{
+  community: string
+  filter?: TicketFilter | null | undefined
+  pagi?: PagiInput | null | undefined
+}>
+
+export type TicketPageQuery = {
+  ticketPage: {
+    entries: Array<{
+      id: string
+      innerId: number | null
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      publicationState: TicketPublicationState
+      canPublishPublicUpdates: boolean
+      priority: number
+      lifecycleVersion: number | null
+      workflowVersion: number | null
+      draftVersion: number | null
+      publicationPreview: string | null
+      hasUnpublishedChanges: boolean | null
+      rank: number
+      title: string
+      digest: string
+      body: string
+      plainText: string
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+      startedAt: string | null
+      completedAt: string | null
+      createdAt: string
+      updatedAt: string
+      draftContent: { title: string; digest: string; body: string } | null
+      publishedContent: { title: string; digest: string; body: string } | null
+      assignees: Array<{ id: string; login: string; nickname: string | null }>
+      tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+      facets: Array<{ key: string; value: string }>
+      sources: Array<{
+        id: string
+        type: TicketSourceTypeEnum
+        innerId: number | null
+        title: string | null
+        isPublic: boolean
+        reviewBlockTypes: Array<string>
+      }>
+      workers: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      members: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      cases: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      sharedWorkers: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      parent: {
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      } | null
+      activity: {
+        entries: Array<{
+          id: string
+          action: string
+          payload: unknown
+          occurredAt: string
+          actorRef: string | null
+        }>
+        pageInfo:
+          | {
+              __typename: 'CursorPageInfo'
+              startCursor: string | null
+              endCursor: string | null
+              hasNextPage: boolean
+              hasPreviousPage: boolean
+            }
+          | {
+              __typename: 'OffsetPageInfo'
+              page: number
+              size: number
+              totalCount: number
+              totalPages: number
+              hasNextPage: boolean
+              hasPreviousPage: boolean
+            }
+      } | null
+      updates: Array<{
+        id: string
+        body: string
+        visibility: TicketUpdateVisibilityEnum
+        authorId: string
+        publishedAt: string | null
+        supersedesId: string | null
+      }>
+    }>
+    pageInfo:
+      | {
+          __typename: 'CursorPageInfo'
+          startCursor: string | null
+          endCursor: string | null
+          hasNextPage: boolean
+          hasPreviousPage: boolean
+        }
+      | {
+          __typename: 'OffsetPageInfo'
+          page: number
+          size: number
+          totalCount: number
+          totalPages: number
+          hasNextPage: boolean
+          hasPreviousPage: boolean
+        }
+  }
+}
+
+export type TicketPageInternalQueryVariables = Exact<{
+  community: string
+  filter?: TicketFilter | null | undefined
+  pagi?: PagiInput | null | undefined
+}>
+
+export type TicketPageInternalQuery = {
+  ticketPageInternal: {
+    entries: Array<{
+      id: string
+      innerId: number | null
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      publicationState: TicketPublicationState
+      canPublishPublicUpdates: boolean
+      priority: number
+      lifecycleVersion: number | null
+      workflowVersion: number | null
+      draftVersion: number | null
+      publicationPreview: string | null
+      hasUnpublishedChanges: boolean | null
+      rank: number
+      title: string
+      digest: string
+      body: string
+      plainText: string
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+      startedAt: string | null
+      completedAt: string | null
+      createdAt: string
+      updatedAt: string
+      draftContent: { title: string; digest: string; body: string } | null
+      publishedContent: { title: string; digest: string; body: string } | null
+      assignees: Array<{ id: string; login: string; nickname: string | null }>
+      tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+      facets: Array<{ key: string; value: string }>
+      sources: Array<{
+        id: string
+        type: TicketSourceTypeEnum
+        innerId: number | null
+        title: string | null
+        isPublic: boolean
+        reviewBlockTypes: Array<string>
+      }>
+      workers: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      members: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      cases: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      sharedWorkers: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      parent: {
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      } | null
+      activity: {
+        entries: Array<{
+          id: string
+          action: string
+          payload: unknown
+          occurredAt: string
+          actorRef: string | null
+        }>
+        pageInfo:
+          | {
+              __typename: 'CursorPageInfo'
+              startCursor: string | null
+              endCursor: string | null
+              hasNextPage: boolean
+              hasPreviousPage: boolean
+            }
+          | {
+              __typename: 'OffsetPageInfo'
+              page: number
+              size: number
+              totalCount: number
+              totalPages: number
+              hasNextPage: boolean
+              hasPreviousPage: boolean
+            }
+      } | null
+      updates: Array<{
+        id: string
+        body: string
+        visibility: TicketUpdateVisibilityEnum
+        authorId: string
+        publishedAt: string | null
+        supersedesId: string | null
+      }>
+    }>
+    pageInfo:
+      | {
+          __typename: 'CursorPageInfo'
+          startCursor: string | null
+          endCursor: string | null
+          hasNextPage: boolean
+          hasPreviousPage: boolean
+        }
+      | {
+          __typename: 'OffsetPageInfo'
+          page: number
+          size: number
+          totalCount: number
+          totalPages: number
+          hasNextPage: boolean
+          hasPreviousPage: boolean
+        }
+  }
+}
+
+export type TicketQueryVariables = Exact<{
+  community: string
+  innerId: number
+}>
+
+export type TicketQuery = {
+  ticket: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type TicketInternalQueryVariables = Exact<{
+  community: string
+  id: string | number
+}>
+
+export type TicketInternalQuery = {
+  ticketInternal: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type PostTicketLinksInternalQueryVariables = Exact<{
+  community: string
+  postId: string | number
+}>
+
+export type PostTicketLinksInternalQuery = {
+  postTicketLinksInternal: Array<{
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  }>
+}
+
+export type TicketSearchQueryVariables = Exact<{
+  community: string
+  query: string
+  type?: TicketTypeEnum | null | undefined
+  pagi?: PagiInput | null | undefined
+}>
+
+export type TicketSearchQuery = {
+  ticketSearch: {
+    entries: Array<{
+      id: string
+      innerId: number | null
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      publicationState: TicketPublicationState
+      canPublishPublicUpdates: boolean
+      priority: number
+      lifecycleVersion: number | null
+      workflowVersion: number | null
+      draftVersion: number | null
+      publicationPreview: string | null
+      hasUnpublishedChanges: boolean | null
+      rank: number
+      title: string
+      digest: string
+      body: string
+      plainText: string
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+      startedAt: string | null
+      completedAt: string | null
+      createdAt: string
+      updatedAt: string
+      draftContent: { title: string; digest: string; body: string } | null
+      publishedContent: { title: string; digest: string; body: string } | null
+      assignees: Array<{ id: string; login: string; nickname: string | null }>
+      tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+      facets: Array<{ key: string; value: string }>
+      sources: Array<{
+        id: string
+        type: TicketSourceTypeEnum
+        innerId: number | null
+        title: string | null
+        isPublic: boolean
+        reviewBlockTypes: Array<string>
+      }>
+      workers: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      members: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      cases: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      sharedWorkers: Array<{
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      }>
+      parent: {
+        id: string
+        type: TicketTypeEnum
+        status: TicketStatusEnum
+        priority: number
+        workflowVersion: number
+        rank: number
+        innerId: number | null
+        title: string
+        digest: string | null
+        plannedStartAt: string | null
+        plannedEndAt: string | null
+      } | null
+      activity: {
+        entries: Array<{
+          id: string
+          action: string
+          payload: unknown
+          occurredAt: string
+          actorRef: string | null
+        }>
+        pageInfo:
+          | {
+              __typename: 'CursorPageInfo'
+              startCursor: string | null
+              endCursor: string | null
+              hasNextPage: boolean
+              hasPreviousPage: boolean
+            }
+          | {
+              __typename: 'OffsetPageInfo'
+              page: number
+              size: number
+              totalCount: number
+              totalPages: number
+              hasNextPage: boolean
+              hasPreviousPage: boolean
+            }
+      } | null
+      updates: Array<{
+        id: string
+        body: string
+        visibility: TicketUpdateVisibilityEnum
+        authorId: string
+        publishedAt: string | null
+        supersedesId: string | null
+      }>
+    }>
+    pageInfo:
+      | {
+          __typename: 'CursorPageInfo'
+          startCursor: string | null
+          endCursor: string | null
+          hasNextPage: boolean
+          hasPreviousPage: boolean
+        }
+      | {
+          __typename: 'OffsetPageInfo'
+          page: number
+          size: number
+          totalCount: number
+          totalPages: number
+          hasNextPage: boolean
+          hasPreviousPage: boolean
+        }
+  }
+}
+
+export type PostTicketProgressQueryVariables = Exact<{
+  community: string
+  postInnerIds: Array<number> | number
+}>
+
+export type PostTicketProgressQuery = {
+  postTicketProgress: Array<{
+    postInnerId: number
+    status: TicketStatusEnum
+    completed: number
+    total: number
+    tickets: Array<{ id: string; innerId: number; title: string; status: TicketStatusEnum }>
+  }>
+}
+
+export type TicketAssigneeCandidatesQueryVariables = Exact<{
+  community: string
+  pagi?: PagiInput | null | undefined
+}>
+
+export type TicketAssigneeCandidatesQuery = {
+  pagedCommunityModerators: {
+    entries: Array<{ userId: string; user: { login: string; nickname: string | null } }>
+  } | null
+}
+
+export type TicketTagGroupsQueryVariables = Exact<{
+  community: string
+  thread?: Thread | null | undefined
+}>
+
+export type TicketTagGroupsQuery = {
+  communityTagGroups: Array<{
+    id: string | null
+    title: string | null
+    tags: Array<{ id: string; title: string; slug: string; color: RainbowColor } | null> | null
+  } | null> | null
+}
+
+export type CreateTicketFromPostMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  postId: string | number
+  title?: string | null | undefined
+  digest?: string | null | undefined
+}>
+
+export type CreateTicketFromPostMutation = {
+  createTicketFromPost: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type LinkTicketSourceMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  ticketId: string | number
+  type: TicketSourceTypeEnum
+  sourceId: string | number
+  expectedWorkflowVersion: number
+}>
+
+export type LinkTicketSourceMutation = {
+  linkTicketSource: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type UnlinkTicketSourceMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  ticketId: string | number
+  sourceId: string | number
+  expectedWorkflowVersion: number
+}>
+
+export type UnlinkTicketSourceMutation = {
+  unlinkTicketSource: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type CreateWorkerTicketMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  parentId: string | number
+  expectedWorkflowVersion: number
+  title?: string | null | undefined
+  digest?: string | null | undefined
+}>
+
+export type CreateWorkerTicketMutation = {
+  createWorkerTicket: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type CreateTicketCaseMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  title: string
+  digest?: string | null | undefined
+  body?: string | null | undefined
+  memberTicketId?: string | number | null | undefined
+}>
+
+export type CreateTicketCaseMutation = {
+  createTicketCase: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type TransitionTicketMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  id: string | number
+  status: TicketStatusEnum
+  expectedWorkflowVersion: number
+}>
+
+export type TransitionTicketMutation = {
+  transitionTicket: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type UpdateTicketMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  id: string | number
+  priority?: number | null | undefined
+  plannedStartAt?: string | null | undefined
+  plannedEndAt?: string | null | undefined
+  expectedWorkflowVersion: number
+}>
+
+export type UpdateTicketMutation = {
+  updateTicket: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type AddTicketUpdateMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  id: string | number
+  body: string
+  visibility: TicketUpdateVisibilityEnum
+  supersedesId?: string | number | null | undefined
+  expectedLifecycleVersion?: number | null | undefined
+  expectedWorkflowVersion: number
+}>
+
+export type AddTicketUpdateMutation = {
+  addTicketUpdate: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type EnsureTicketDraftMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  id: string | number
+  expectedLifecycleVersion: number
+}>
+
+export type EnsureTicketDraftMutation = {
+  ensureTicketDraft: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type SaveTicketDraftMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  id: string | number
+  content: TicketContentInput
+  expectedDraftVersion: number
+  expectedLifecycleVersion: number
+}>
+
+export type SaveTicketDraftMutation = {
+  saveTicketDraft: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type PublishTicketMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  id: string | number
+  reason: string
+  expectedPreview: string
+  expectedDraftVersion: number
+  expectedLifecycleVersion: number
+  expectedWorkflowVersion: number
+}>
+
+export type PublishTicketMutation = {
+  publishTicket: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type MoveTicketToDraftMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  id: string | number
+  reason: string
+  expectedLifecycleVersion: number
+}>
+
+export type MoveTicketToDraftMutation = {
+  moveTicketToDraft: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type AddTicketCaseMemberMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  caseId: string | number
+  ticketId: string | number
+  expectedWorkflowVersion: number
+}>
+
+export type AddTicketCaseMemberMutation = {
+  addTicketCaseMember: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type RemoveTicketCaseMemberMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  caseId: string | number
+  ticketId: string | number
+  expectedWorkflowVersion: number
+}>
+
+export type RemoveTicketCaseMemberMutation = {
+  removeTicketCaseMember: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type AddTicketCaseWorkerMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  caseId: string | number
+  workerId: string | number
+  expectedWorkflowVersion: number
+}>
+
+export type AddTicketCaseWorkerMutation = {
+  addTicketCaseWorker: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type SetTicketAssigneesMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  ticketId: string | number
+  assigneeIds: Array<number> | number
+  expectedWorkflowVersion: number
+}>
+
+export type SetTicketAssigneesMutation = {
+  setTicketAssignees: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type SetTicketTagsMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  ticketId: string | number
+  tagIds: Array<number> | number
+  expectedWorkflowVersion: number
+}>
+
+export type SetTicketTagsMutation = {
+  setTicketTags: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
+}
+
+export type SetTicketFacetsMutationVariables = Exact<{
+  commandId: string | number
+  community: string
+  ticketId: string | number
+  facets: Array<TicketFacetInput> | TicketFacetInput
+  expectedWorkflowVersion: number
+}>
+
+export type SetTicketFacetsMutation = {
+  setTicketFacets: {
+    id: string
+    innerId: number | null
+    type: TicketTypeEnum
+    status: TicketStatusEnum
+    publicationState: TicketPublicationState
+    canPublishPublicUpdates: boolean
+    priority: number
+    lifecycleVersion: number | null
+    workflowVersion: number | null
+    draftVersion: number | null
+    publicationPreview: string | null
+    hasUnpublishedChanges: boolean | null
+    rank: number
+    title: string
+    digest: string
+    body: string
+    plainText: string
+    plannedStartAt: string | null
+    plannedEndAt: string | null
+    startedAt: string | null
+    completedAt: string | null
+    createdAt: string
+    updatedAt: string
+    draftContent: { title: string; digest: string; body: string } | null
+    publishedContent: { title: string; digest: string; body: string } | null
+    assignees: Array<{ id: string; login: string; nickname: string | null }>
+    tags: Array<{ id: number; title: string; slug: string; color: string | null }>
+    facets: Array<{ key: string; value: string }>
+    sources: Array<{
+      id: string
+      type: TicketSourceTypeEnum
+      innerId: number | null
+      title: string | null
+      isPublic: boolean
+      reviewBlockTypes: Array<string>
+    }>
+    workers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    members: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    cases: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    sharedWorkers: Array<{
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    }>
+    parent: {
+      id: string
+      type: TicketTypeEnum
+      status: TicketStatusEnum
+      priority: number
+      workflowVersion: number
+      rank: number
+      innerId: number | null
+      title: string
+      digest: string | null
+      plannedStartAt: string | null
+      plannedEndAt: string | null
+    } | null
+    activity: {
+      entries: Array<{
+        id: string
+        action: string
+        payload: unknown
+        occurredAt: string
+        actorRef: string | null
+      }>
+      pageInfo:
+        | {
+            __typename: 'CursorPageInfo'
+            startCursor: string | null
+            endCursor: string | null
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+        | {
+            __typename: 'OffsetPageInfo'
+            page: number
+            size: number
+            totalCount: number
+            totalPages: number
+            hasNextPage: boolean
+            hasPreviousPage: boolean
+          }
+    } | null
+    updates: Array<{
+      id: string
+      body: string
+      visibility: TicketUpdateVisibilityEnum
+      authorId: string
+      publishedAt: string | null
+      supersedesId: string | null
+    }>
+  } | null
 }
 
 export type UserAuthorFieldsFragment = {
@@ -4706,16 +9164,6 @@ export type SetPostCatMutationVariables = Exact<{
 
 export type SetPostCatMutation = {
   setPostCat: { innerId: string | null; cat: ArticleCatEnum | null } | null
-}
-
-export type SetPostStatusMutationVariables = Exact<{
-  article: ArticlePathInput
-  status: ArticleStatusEnum
-  commandId: string | number
-}>
-
-export type SetPostStatusMutation = {
-  setPostStatus: { innerId: string | null; status: ArticleStatusEnum | null } | null
 }
 
 export type PinPostMutationVariables = Exact<{
@@ -6772,7 +11220,7 @@ export type PagedCommunityAssetsQuery = {
     entries: Array<{
       id: string | null
       publicRef: string | null
-      thread: Thread | null
+      thread: AssetThread | null
       assetType: CommunityAssetType | null
       status: CommunityAssetStatus | null
       filename: string | null
@@ -6818,7 +11266,7 @@ export type CommunityAssetStatsQuery = {
     totalCount: number
     storageBytes: unknown
     storageLimitBytes: unknown
-    byThread: Array<{ thread: Thread; count: number }>
+    byThread: Array<{ thread: AssetThread; count: number }>
     byAssetType: Array<{
       assetType: CommunityAssetType
       count: number
@@ -6837,7 +11285,7 @@ export type CommunityAssetRefsQuery = {
   communityAssetRefs: {
     entries: Array<{
       id: string | null
-      thread: Thread | null
+      thread: AssetThread | null
       articleId: string | null
       usage: ArticleDocumentAssetUsage | null
       blockId: string | null
@@ -6943,7 +11391,6 @@ export type DashboardTrashedPostsQuery = {
           }
         | {
             cat: ArticleCatEnum | null
-            status: ArticleStatusEnum | null
             insertedAt: string | null
             activeAt: string | null
             innerId: string | null
@@ -10208,7 +14655,6 @@ export const PagePostLiteFieldsFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
           { kind: 'Field', name: { kind: 'Name', value: 'cat' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'activeAt' } },
           {
@@ -10728,6 +15174,654 @@ export const PageDocPublicTreeGroupFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<PageDocPublicTreeGroupFieldsFragment, unknown>
+export const TicketFieldsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketFieldsFragment, unknown>
+export const TicketPageFieldsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketPageFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketPage' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entries' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pageInfo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'OffsetPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'CursorPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketPageFieldsFragment, unknown>
 export const UserAuthorFieldsFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -20371,7 +25465,6 @@ export const PagedPublishedPostsDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
           { kind: 'Field', name: { kind: 'Name', value: 'cat' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'activeAt' } },
           {
@@ -20420,683 +25513,6 @@ export const PagedPublishedPostsDocument = {
     },
   ],
 } as unknown as DocumentNode<PagedPublishedPostsQuery, PagedPublishedPostsQueryVariables>
-export const PagesGroupedKanbanPostsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'PagesGroupedKanbanPosts' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'groupedKanbanPosts' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'community' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'backlog' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pinnedEntries' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'PagePostLiteFields' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'entries' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'PagePostLiteFields' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pageInfo' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: {
-                                kind: 'NamedType',
-                                name: { kind: 'Name', value: 'OffsetPageInfo' },
-                              },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'page' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'size' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
-                                ],
-                              },
-                            },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: {
-                                kind: 'NamedType',
-                                name: { kind: 'Name', value: 'CursorPageInfo' },
-                              },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
-                                ],
-                              },
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'todo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pinnedEntries' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'PagePostLiteFields' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'entries' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'PagePostLiteFields' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pageInfo' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: {
-                                kind: 'NamedType',
-                                name: { kind: 'Name', value: 'OffsetPageInfo' },
-                              },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'page' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'size' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
-                                ],
-                              },
-                            },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: {
-                                kind: 'NamedType',
-                                name: { kind: 'Name', value: 'CursorPageInfo' },
-                              },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
-                                ],
-                              },
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'wip' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pinnedEntries' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'PagePostLiteFields' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'entries' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'PagePostLiteFields' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pageInfo' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: {
-                                kind: 'NamedType',
-                                name: { kind: 'Name', value: 'OffsetPageInfo' },
-                              },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'page' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'size' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
-                                ],
-                              },
-                            },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: {
-                                kind: 'NamedType',
-                                name: { kind: 'Name', value: 'CursorPageInfo' },
-                              },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
-                                ],
-                              },
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'done' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pinnedEntries' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'PagePostLiteFields' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'entries' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'PagePostLiteFields' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pageInfo' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: {
-                                kind: 'NamedType',
-                                name: { kind: 'Name', value: 'OffsetPageInfo' },
-                              },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'page' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'size' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
-                                ],
-                              },
-                            },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: {
-                                kind: 'NamedType',
-                                name: { kind: 'Name', value: 'CursorPageInfo' },
-                              },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
-                                ],
-                              },
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'rejected' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pinnedEntries' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'PagePostLiteFields' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'entries' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'PagePostLiteFields' },
-                            },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'pageInfo' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: {
-                                kind: 'NamedType',
-                                name: { kind: 'Name', value: 'OffsetPageInfo' },
-                              },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'page' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'size' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
-                                ],
-                              },
-                            },
-                            {
-                              kind: 'InlineFragment',
-                              typeCondition: {
-                                kind: 'NamedType',
-                                name: { kind: 'Name', value: 'CursorPageInfo' },
-                              },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
-                                ],
-                              },
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'PagePostLiteFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'PostLite' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'thread' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'cat' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'activeAt' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'author' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'bio' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'shortbio' } },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'community' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'logo' } },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'communityTags' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'layout' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'thread' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<PagesGroupedKanbanPostsQuery, PagesGroupedKanbanPostsQueryVariables>
-export const KanbanPageDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'KanbanPage' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PostFilter' } },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'kanbanPage' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'community' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'filter' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'pagi' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pinnedEntries' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: { kind: 'Name', value: 'PagePostLiteFields' },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'entries' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'FragmentSpread',
-                        name: { kind: 'Name', value: 'PagePostLiteFields' },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pageInfo' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: {
-                          kind: 'NamedType',
-                          name: { kind: 'Name', value: 'OffsetPageInfo' },
-                        },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'InlineFragment',
-                        typeCondition: {
-                          kind: 'NamedType',
-                          name: { kind: 'Name', value: 'CursorPageInfo' },
-                        },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'PagePostLiteFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'PostLite' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'thread' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'cat' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'activeAt' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'author' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'bio' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'shortbio' } },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'community' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'logo' } },
-              ],
-            },
-          },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'communityTags' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'layout' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'thread' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<KanbanPageQuery, KanbanPageQueryVariables>
 export const PostPageDocument = {
   kind: 'Document',
   definitions: [
@@ -21236,7 +25652,6 @@ export const PostPageDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
           { kind: 'Field', name: { kind: 'Name', value: 'cat' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
           { kind: 'Field', name: { kind: 'Name', value: 'activeAt' } },
           {
@@ -21285,6 +25700,10432 @@ export const PostPageDocument = {
     },
   ],
 } as unknown as DocumentNode<PostPageQuery, PostPageQueryVariables>
+export const TicketKanbanDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'TicketKanban' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'ticketKanban' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagi' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'todo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketPageFields' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'wip' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketPageFields' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'done' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketPageFields' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketPageFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketPage' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entries' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pageInfo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'OffsetPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'CursorPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketKanbanQuery, TicketKanbanQueryVariables>
+export const TicketKanbanInternalDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'TicketKanbanInternal' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketFilter' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'ticketKanbanInternal' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagi' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'todo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketPageFields' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'wip' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketPageFields' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'done' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketPageFields' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketPageFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketPage' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entries' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pageInfo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'OffsetPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'CursorPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketKanbanInternalQuery, TicketKanbanInternalQueryVariables>
+export const TicketPageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'TicketPage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketFilter' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'ticketPage' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagi' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketPageFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketPageFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketPage' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entries' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pageInfo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'OffsetPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'CursorPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketPageQuery, TicketPageQueryVariables>
+export const TicketPageInternalDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'TicketPageInternal' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketFilter' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'ticketPageInternal' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagi' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketPageFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketPageFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketPage' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entries' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pageInfo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'OffsetPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'CursorPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketPageInternalQuery, TicketPageInternalQueryVariables>
+export const TicketDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'Ticket' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'innerId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'ticket' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'innerId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'innerId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketQuery, TicketQueryVariables>
+export const TicketInternalDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'TicketInternal' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'ticketInternal' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketInternalQuery, TicketInternalQueryVariables>
+export const PostTicketLinksInternalDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'PostTicketLinksInternal' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'postId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'postTicketLinksInternal' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'postId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'postId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PostTicketLinksInternalQuery, PostTicketLinksInternalQueryVariables>
+export const TicketSearchDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'TicketSearch' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'query' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'type' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketTypeEnum' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'ticketSearch' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'query' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'query' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'type' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'type' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagi' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketPageFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketPageFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketPage' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'entries' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pageInfo' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'OffsetPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: {
+                    kind: 'NamedType',
+                    name: { kind: 'Name', value: 'CursorPageInfo' },
+                  },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketSearchQuery, TicketSearchQueryVariables>
+export const PostTicketProgressDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'PostTicketProgress' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'postInnerIds' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+              },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'postTicketProgress' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'postInnerIds' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'postInnerIds' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'postInnerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'completed' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'tickets' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PostTicketProgressQuery, PostTicketProgressQueryVariables>
+export const TicketAssigneeCandidatesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'TicketAssigneeCandidates' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pagedCommunityModerators' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagi' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'userId' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'user' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketAssigneeCandidatesQuery, TicketAssigneeCandidatesQueryVariables>
+export const TicketTagGroupsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'TicketTagGroups' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Thread' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'communityTagGroups' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'thread' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'thread' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'tags' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TicketTagGroupsQuery, TicketTagGroupsQueryVariables>
+export const CreateTicketFromPostDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateTicketFromPost' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'postId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'title' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'digest' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createTicketFromPost' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'postId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'postId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'title' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'title' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'digest' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'digest' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateTicketFromPostMutation, CreateTicketFromPostMutationVariables>
+export const LinkTicketSourceDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'LinkTicketSource' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'type' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketSourceTypeEnum' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'sourceId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'linkTicketSource' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ticketId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'type' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'type' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'sourceId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'sourceId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<LinkTicketSourceMutation, LinkTicketSourceMutationVariables>
+export const UnlinkTicketSourceDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UnlinkTicketSource' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'sourceId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'unlinkTicketSource' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ticketId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'sourceId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'sourceId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UnlinkTicketSourceMutation, UnlinkTicketSourceMutationVariables>
+export const CreateWorkerTicketDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateWorkerTicket' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'parentId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'title' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'digest' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createWorkerTicket' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'parentId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'parentId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'title' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'title' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'digest' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'digest' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateWorkerTicketMutation, CreateWorkerTicketMutationVariables>
+export const CreateTicketCaseDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'CreateTicketCase' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'title' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'digest' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'body' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'memberTicketId' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'createTicketCase' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'title' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'title' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'digest' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'digest' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'body' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'body' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'memberTicketId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'memberTicketId' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CreateTicketCaseMutation, CreateTicketCaseMutationVariables>
+export const TransitionTicketDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'TransitionTicket' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'status' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketStatusEnum' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'transitionTicket' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'status' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'status' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<TransitionTicketMutation, TransitionTicketMutationVariables>
+export const UpdateTicketDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'UpdateTicket' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'priority' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'plannedStartAt' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'DateTime' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'plannedEndAt' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'DateTime' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updateTicket' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'priority' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'priority' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'plannedStartAt' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'plannedStartAt' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'plannedEndAt' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'plannedEndAt' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UpdateTicketMutation, UpdateTicketMutationVariables>
+export const AddTicketUpdateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'AddTicketUpdate' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'body' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'visibility' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'TicketUpdateVisibilityEnum' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'supersedesId' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedLifecycleVersion' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'addTicketUpdate' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'body' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'body' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'visibility' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'visibility' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'supersedesId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'supersedesId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedLifecycleVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedLifecycleVersion' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddTicketUpdateMutation, AddTicketUpdateMutationVariables>
+export const EnsureTicketDraftDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'EnsureTicketDraft' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedLifecycleVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'ensureTicketDraft' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedLifecycleVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedLifecycleVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EnsureTicketDraftMutation, EnsureTicketDraftMutationVariables>
+export const SaveTicketDraftDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SaveTicketDraft' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketContentInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedDraftVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedLifecycleVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'saveTicketDraft' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'content' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'content' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedDraftVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedDraftVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedLifecycleVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedLifecycleVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SaveTicketDraftMutation, SaveTicketDraftMutationVariables>
+export const PublishTicketDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'PublishTicket' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reason' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedPreview' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedDraftVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedLifecycleVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishTicket' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'reason' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'reason' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedPreview' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedPreview' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedDraftVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedDraftVersion' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedLifecycleVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedLifecycleVersion' },
+                },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PublishTicketMutation, PublishTicketMutationVariables>
+export const MoveTicketToDraftDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'MoveTicketToDraft' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'reason' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedLifecycleVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'moveTicketToDraft' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'id' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'reason' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'reason' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedLifecycleVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedLifecycleVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MoveTicketToDraftMutation, MoveTicketToDraftMutationVariables>
+export const AddTicketCaseMemberDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'AddTicketCaseMember' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'caseId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'addTicketCaseMember' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'caseId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'caseId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ticketId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddTicketCaseMemberMutation, AddTicketCaseMemberMutationVariables>
+export const RemoveTicketCaseMemberDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'RemoveTicketCaseMember' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'caseId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'removeTicketCaseMember' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'caseId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'caseId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ticketId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  RemoveTicketCaseMemberMutation,
+  RemoveTicketCaseMemberMutationVariables
+>
+export const AddTicketCaseWorkerDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'AddTicketCaseWorker' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'caseId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'workerId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'addTicketCaseWorker' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'caseId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'caseId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'workerId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'workerId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AddTicketCaseWorkerMutation, AddTicketCaseWorkerMutationVariables>
+export const SetTicketAssigneesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SetTicketAssignees' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'assigneeIds' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+              },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'setTicketAssignees' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ticketId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'assigneeIds' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'assigneeIds' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetTicketAssigneesMutation, SetTicketAssigneesMutationVariables>
+export const SetTicketTagsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SetTicketTags' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'tagIds' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+              },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'setTicketTags' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ticketId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'tagIds' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'tagIds' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetTicketTagsMutation, SetTicketTagsMutationVariables>
+export const SetTicketFacetsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'SetTicketFacets' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'facets' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: {
+                kind: 'NonNullType',
+                type: { kind: 'NamedType', name: { kind: 'Name', value: 'TicketFacetInput' } },
+              },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedWorkflowVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'setTicketFacets' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'ticketId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'ticketId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'facets' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'facets' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                value: {
+                  kind: 'Variable',
+                  name: { kind: 'Name', value: 'expectedWorkflowVersion' },
+                },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'TicketFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'TicketFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Ticket' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationState' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'canPublishPublicUpdates' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lifecycleVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'draftVersion' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'publicationPreview' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'draftContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'publishedContent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+              ],
+            },
+          },
+          { kind: 'Field', name: { kind: 'Name', value: 'hasUnpublishedChanges' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plainText' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'completedAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'createdAt' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'assignees' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'tags' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'facets' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sources' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'isPublic' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'reviewBlockTypes' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'workers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'members' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'cases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'sharedWorkers' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'parent' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'priority' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'workflowVersion' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'rank' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedStartAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'plannedEndAt' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'activity' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'actorRef' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'hasPreviousPage' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'OffsetPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'size' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'startCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'updates' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'body' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'authorId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'supersedesId' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<SetTicketFacetsMutation, SetTicketFacetsMutationVariables>
 export const MeDocument = {
   kind: 'Document',
   definitions: [
@@ -23363,75 +38204,6 @@ export const SetPostCatDocument = {
     },
   ],
 } as unknown as DocumentNode<SetPostCatMutation, SetPostCatMutationVariables>
-export const SetPostStatusDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'SetPostStatus' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'status' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticleStatusEnum' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'setPostStatus' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'article' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'status' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'status' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'commandId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'status' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<SetPostStatusMutation, SetPostStatusMutationVariables>
 export const PinPostDocument = {
   kind: 'Document',
   definitions: [
@@ -30572,7 +45344,6 @@ export const DashboardTrashedPostsDocument = {
                                 kind: 'SelectionSet',
                                 selections: [
                                   { kind: 'Field', name: { kind: 'Name', value: 'cat' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'status' } },
                                   { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
                                   { kind: 'Field', name: { kind: 'Name', value: 'activeAt' } },
                                   {

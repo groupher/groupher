@@ -40,7 +40,7 @@ const DigestView: FC<TProps> = ({ viewModel }) => {
       <div className={s.main}>
         <Header article={article} stats={stats} viewerState={viewerState} />
         <div className={s.digest}>{article.digest}</div>
-        <Footer article={article} />
+        <Footer article={article} ticketProgress={viewModel.ticketProgress} />
       </div>
     </article>
   )

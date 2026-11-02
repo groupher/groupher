@@ -35,7 +35,9 @@ defmodule GroupherServer.CMS.Articles.Workflow do
   @doc "Publishes one Gate-authorized Article and commits all first-publish side effects atomically."
   def publish(%Article{} = article, %Author{} = author, actor, opts) do
     transaction(fn ->
-      with {:ok, published} <- CMS.Articles.Publish.Target.publish(article, author, opts),
+      with {:ok, identity} <- outbox_identity(opts),
+           {:ok, published} <- CMS.Articles.Publish.Target.publish(article, author, opts),
+           {:ok, _ticket_cache} <- invalidate_linked_ticket_cache(published, identity),
            {:ok, _finalized} <- finalize_first_publish(published, actor),
            {:ok, _events} <- enqueue_publish_events(published, opts) do
         published
@@ -44,6 +46,19 @@ defmodule GroupherServer.CMS.Articles.Workflow do
       end
     end)
   end
+
+  defp invalidate_linked_ticket_cache(
+         %{article: %Article{thread: :post, id: post_id}},
+         identity
+       ) do
+    CMS.Tickets.PostVisibility.invalidate_linked_post_cache_in_transaction(
+      post_id,
+      identity,
+      "post_public_revision_changed:#{post_id}"
+    )
+  end
+
+  defp invalidate_linked_ticket_cache(_published, _identity), do: {:ok, :pass}
 
   @doc "Returns or creates the CMS Author row associated with a User."
   @spec ensure_author_exists(User.t()) :: {:ok, Author.t()}

@@ -53,7 +53,12 @@ const ArticleCard: FC<TProps> = ({ viewModel }) => {
       <ArticleImgWindow />
       <div className='mt-4' />
       <div className='grow' />
-      <Footer article={data} stats={stats} viewerState={viewerState} />
+      <Footer
+        article={data}
+        stats={stats}
+        viewerState={viewerState}
+        ticketProgress={viewModel.ticketProgress}
+      />
     </div>
   )
 }

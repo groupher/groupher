@@ -24,7 +24,7 @@ const FixedHeader: FC<TProps> = ({
   footerVisible: _footerVisible,
 }) => {
   const s = useSalon({ visible: Boolean(visible) })
-  const { cat, status } = article
+  const { cat } = article
 
   return (
     <div className={s.wrapper}>
@@ -37,7 +37,7 @@ const FixedHeader: FC<TProps> = ({
         />
         <div className={s.articleTitle}>{article.title}</div>
       </div>
-      <ArticleCatStatus cat={cat} status={status} />
+      <ArticleCatStatus cat={cat} />
       <div className={s.divider} />
     </div>
   )

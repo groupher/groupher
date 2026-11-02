@@ -102,7 +102,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
         end
       end)
 
-    CMS.ReviewBlocks.end_blocks(
+    CMS.Review.Restrictions.end_blocks(
       context.lifecycle,
       context.scope_key,
       Enum.map(rows, & &1.id),
@@ -116,13 +116,15 @@ defmodule GroupherServer.CMS.Review.Decisions do
     {:ok, :pass}
   end
 
-  defp maybe_deny(context, requests, :deny, _actor, operation_ref) do
-    case CMS.ReviewBlocks.apply(context.lifecycle, %{
+  defp maybe_deny(context, requests, :deny, actor, operation_ref) do
+    case CMS.Review.Restrictions.apply(context.lifecycle, %{
            scope_key: context.scope_key,
            type: :manual_hold,
            artiment_review_id: Enum.find_value(requests, & &1.id),
+           operation_ref: operation_ref,
            source_ref: "human:#{operation_ref}",
            source: :human,
+           actor: actor,
            applied_at: DateTime.utc_now(:second)
          }) do
       {:ok, _restriction} -> {:ok, :pass}

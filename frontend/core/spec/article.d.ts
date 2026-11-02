@@ -100,7 +100,6 @@ type TBaseArticle = {
   activeAt?: string | null
 
   cat?: TArticleCat | null
-  status?: TArticleStatus | null
 
   // for dashboard cmd tmp check status
   _checked?: boolean
@@ -115,6 +114,7 @@ export type TPost = TBaseArticle & {
 
 export type TChangelog = TBaseArticle & {
   digest?: string | null
+  status?: TArticleStatus | null
 }
 
 export type TDoc = TBaseArticle & {
@@ -146,6 +146,7 @@ export type TArticleState<T extends TArticle = TArticle> = {
   content: T
   stats: TArticleStats | null
   viewerState: TArticleViewerState
+  ticketProgress?: import('./ticket').TPostTicketProgress | null
 }
 
 export type TPagedArticleViewModels<T extends TArticle = TArticle> = {
@@ -221,7 +222,6 @@ export type TPagedComments = {
 export type TArticleFilter = {
   order?: TArticleOrder
   cat?: TArticleCat | null
-  status?: TArticleStatus | null
 }
 
 export type TArticleFilterMode = 'default' | 'modeline'
@@ -275,8 +275,6 @@ export type TPagedArticlesParams = {
   communityTag?: string
   communityTags?: string[]
   cat?: string
-  status?: string
-  statuses?: string[]
   order?: string
   when?: string
   sort?: string

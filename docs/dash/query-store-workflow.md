@@ -55,7 +55,7 @@ Phase 0 冻结的 Community 公共入口如下；所有公开 SSR loader 都不�
 | `loadPost`       | `Post(userHasLogin: false)`；`articleKeys.detail`                                                 | POST article + articles tag                |
 | `loadChangelogs` | `PagedChangelogs(userHasLogin: false)`；`articleKeys.changelogs(default filter)`                  | CHANGELOG articles tag                     |
 | `loadChangelog`  | `Changelog(userHasLogin: false)`；`articleKeys.detail`                                            | CHANGELOG article + articles tag           |
-| `loadKanban`     | `PagesGroupedKanbanPosts`；`articleKeys.kanban`                                                   | KANBAN articles tag                        |
+| `loadKanban`     | `TicketKanbanInternal`；`ticketQueryKeys.kanban(community, internal, size)`                       | 内部 Ticket query；不进入公共 HTML cache   |
 | `loadDocTree`    | `PageDocPublicTree`；`docTreeClientQuery`                                                         | `community[slug]-doc-tree`                 |
 | `loadDoc`        | `PageDoc(userHasLogin: false)`；`articleKeys.detail`                                              | DOC article tag                            |
 | `loadComments`   | `PublicPagedComments`；`commentKeys.list`                                                         | comments tag；selection 不含 viewer fields |

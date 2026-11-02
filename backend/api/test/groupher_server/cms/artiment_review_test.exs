@@ -91,18 +91,17 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
              Repo.transact_result(fn -> Requests.claim_in_transaction(request.id) end)
 
     assert {:error, _reason} =
-             Repo.transact_result(fn ->
-               CMS.Review.Results.apply_in_transaction(request.id, %{
-                 "status" => "suspect",
-                 "summary" => "Possible violation",
-                 "sus_notes" => [
-                   %{"type" => "unknown", "evidence" => "x", "explanation" => "invalid type"}
-                 ]
-               })
-             end)
+             CMS.Review.apply_result_internal(request.id, %{
+               "status" => "suspect",
+               "summary" => "Possible violation",
+               "sus_notes" => [
+                 %{"type" => "unknown", "evidence" => "x", "explanation" => "invalid type"}
+               ]
+             })
 
     assert %ArtimentReview{state: :running, applied_at: nil} =
              Repo.get!(ArtimentReview, request.id)
+
     refute Repo.get_by(ArticleReviewBlock, artiment_review_id: request.id)
     refute Repo.get_by(Item, target_type: :article, target_id: article.id)
   end
@@ -127,14 +126,18 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     }
 
     assert {:ok, _applied} =
-             Repo.transact_result(fn ->
-               CMS.Review.Results.apply_in_transaction(first.id, suspect)
-             end)
+             CMS.Review.apply_result_internal(first.id, suspect)
 
     assert %Item{id: item_id, ai_source_ref: source_ref} =
              Repo.get_by!(Item, target_type: :article, target_id: article.id)
 
     assert source_ref == first.id
+    assert {:ok, :stale} = CMS.Review.apply_result_internal(first.id, suspect)
+
+    assert Repo.aggregate(
+             from(block in ArticleReviewBlock, where: block.artiment_review_id == ^first.id),
+             :count
+           ) == 1
 
     assert {:ok, second} =
              Repo.transact_result(fn ->
@@ -151,9 +154,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     }
 
     assert {:ok, _applied} =
-             Repo.transact_result(fn ->
-               CMS.Review.Results.apply_in_transaction(second.id, uncertain)
-             end)
+             CMS.Review.apply_result_internal(second.id, uncertain)
 
     assert %Item{
              id: ^item_id,

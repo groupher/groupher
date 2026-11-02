@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.{CollectFolderEntry, Embeds}
   alias CMS.Articles.{BindingPersist, Bindings}
+  alias CMS.Articles.Commands.BindingSupport
   alias CMS.Articles.Bindings.Tags
   alias CMS.Model.{Article, ArticleBinding, ArticleBindingTag}
 
@@ -212,5 +213,103 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
              Repo.transact(fn -> BindingPersist.unmirror(article, community) end)
 
     assert Repo.get(ArticleBinding, source_binding.id)
+  end
+
+  test "a Post with a Draft Ticket link cannot move or unmirror after source review hiding",
+       ~m(community destination post user)a do
+    passport = user.cur_passport
+    community_grants = get_in(passport, [community.slug, "cms"])
+
+    community_grants =
+      Map.merge(community_grants, %{
+        "ticket.create" => true,
+        "ticket.link_source" => true,
+        "ticket.read_internal" => true
+      })
+
+    user = %{
+      user
+      | cur_passport: put_in(user.cur_passport, [community.slug, "cms"], community_grants)
+    }
+
+    {:ok, ticket} =
+      CMS.Tickets.create_from_post(
+        community,
+        post.article_id,
+        %{title: "Linked Ticket", digest: "Public summary"},
+        user,
+        Ecto.UUID.generate()
+      )
+
+    assert {:ok, _mirrored} =
+             CMS.Articles.mirror(
+               destination,
+               post.article_id,
+               [],
+               user,
+               community,
+               Ecto.UUID.generate()
+             )
+
+    {:ok, other_destination} = mock_community(user)
+
+    article = Repo.get!(Article, post.article_id)
+
+    assert {:ok, _restriction} =
+             Repo.transaction(fn ->
+               with {:ok, lifecycle} <- CMS.Articles.Lifecycle.lock(article),
+                    {:ok, restriction} <-
+                      CMS.Articles.Lifecycle.apply_review_block(lifecycle, %{
+                        scope_key: "community:#{community.id}",
+                        type: :manual_hold,
+                        source_ref: "ticket-binding-review:#{Ecto.UUID.generate()}",
+                        source: :human,
+                        actor: user,
+                        applied_at: DateTime.utc_now(:second)
+                      }) do
+                 restriction
+               else
+                 {:error, reason} -> Repo.rollback(reason)
+               end
+             end)
+
+    source_binding =
+      Repo.get_by!(ArticleBinding, article_id: post.article_id, community_id: community.id)
+
+    assert {:error, %ErrorCat.Error{reason: :post_linked_to_ticket}} =
+             Repo.transact(fn -> BindingPersist.unmirror(article, community) end)
+
+    assert {:error, %ErrorCat.Error{reason: :post_linked_to_ticket}} =
+             Repo.transact(fn -> BindingPersist.move(article, community, destination) end)
+
+    assert {:error, %ErrorCat.Error{reason: :post_linked_to_ticket}} =
+             Repo.transact(fn -> BindingPersist.unmirror(article, destination) end)
+
+    assert {:error, %ErrorCat.Error{reason: :post_linked_to_ticket}} =
+             Repo.transact(fn ->
+               BindingPersist.move(article, destination, other_destination)
+             end)
+
+    assert Repo.get(ArticleBinding, source_binding.id)
+    assert Repo.get_by(ArticleBinding, article_id: post.article_id, community_id: destination.id)
+
+    refute Repo.get_by(ArticleBinding,
+             article_id: post.article_id,
+             community_id: other_destination.id
+           )
+
+    ticket_article = Repo.get!(Article, ticket.id)
+    assert {:error, _reason} = BindingSupport.ensure_ordinary(ticket_article)
+
+    assert_raise Postgrex.Error, fn ->
+      Repo.query!("DELETE FROM cms.article_bindings WHERE id = $1", [source_binding.id])
+    end
+
+    destination_binding =
+      Repo.get_by!(ArticleBinding, article_id: post.article_id, community_id: destination.id)
+
+    assert_raise Postgrex.Error, fn ->
+      Repo.query!("DELETE FROM cms.article_bindings WHERE id = $1", [destination_binding.id])
+    end
   end
 end

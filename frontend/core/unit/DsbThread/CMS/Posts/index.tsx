@@ -8,12 +8,13 @@ import useTrans from '~/hooks/useTrans'
 import type { TArticleState } from '~/spec'
 import Pagi from '~/ui/Pagi'
 
-import { ArticleCell, AuthorCell, DateCell, StatusCell } from '../Cell'
+import { ArticleCell, AuthorCell, DateCell } from '../Cell'
 import CmsDataTable from '../Table/CmsDataTable'
 import CmsTableToolbar from '../Table/CmsTableToolbar'
 import useCmsTableController from '../Table/useCmsTableController'
 import useCmsArticles from '../useCmsArticles'
 import useSalon, { cn } from './salon'
+import TicketActions from './TicketActions'
 
 export default function Posts() {
   const { pagedArticles: pagedPosts, loading, setPage } = useCmsArticles('post')
@@ -31,12 +32,6 @@ export default function Posts() {
         cell: ({ row }) => <ArticleCell rowData={row.original.content} />,
         size: 350,
         meta: { sticky: 'left', align: 'left' },
-      },
-      {
-        id: 'status',
-        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.status')}</div>,
-        cell: ({ row }) => <StatusCell rowData={row.original.content} />,
-        size: 140,
       },
       {
         accessorFn: (row) => row.stats?.upvotesCount ?? 0,
@@ -86,6 +81,15 @@ export default function Posts() {
         size: 140,
         meta: { align: 'right' },
       },
+      {
+        id: 'ticket',
+        header: () => (
+          <div className={cn(s.title, 'text-center')}>{t('ticket.management.title')}</div>
+        ),
+        cell: ({ row }) => <TicketActions post={row.original.content} />,
+        size: 120,
+        meta: { align: 'center' },
+      },
     ]
   }, [s.title, s.cell, t])
 
@@ -101,7 +105,6 @@ export default function Posts() {
           placeholder: t('dsb.cms.filter.search_placeholder'),
         }}
         withCategory
-        withStatus
         withDateRange
         withReset
         onResetAction={table.resetFilters}

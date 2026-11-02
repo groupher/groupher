@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Docs.Editor do
          {:ok, %Article{} = article} <- stable_doc(doc_id),
          {:ok, %{community: %Community{id: ^community_id}}} <- Bindings.get(article, community),
          {:ok, state} <- CMS.Docs.Lifecycle.state(article.id, branch.id),
-         true <- state in [:draft_only, :published, :archived] do
+         true <- state in [:draft, :published, :archived] do
       case CMS.Articles.Draft.Store.get(article, branch_id: branch.id) do
         {:ok, draft} -> materialize_draft(draft, article, community)
         {:error, :not_found} -> materialize_public(article, branch.id, community)

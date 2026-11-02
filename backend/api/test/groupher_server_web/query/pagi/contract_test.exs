@@ -28,7 +28,7 @@ defmodule GroupherServerWeb.PagiContractTest do
     query = Absinthe.Schema.lookup_type(Schema, :query)
 
     for field <-
-          ~w(paged_posts paged_blogs paged_docs paged_changelogs paged_kanban_posts paged_categories)a do
+          ~w(paged_posts paged_blogs paged_docs paged_changelogs paged_categories)a do
       refute Map.has_key?(query.fields, field), "obsolete query #{field} remains"
     end
   end

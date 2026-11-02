@@ -261,14 +261,35 @@ type RootQueryType {
   "search communities by title"
   searchCommunities(title: String!, category: String): [Community!]!
 
-  "kanban posts grouped by backlog\/todo\/wip\/done\/rejected"
-  groupedKanbanPosts(community: String!): KanbanPages
+  "Public User Ticket Kanban columns"
+  ticketKanban(community: String!, pagi: PagiInput): TicketKanbanColumns!
+
+  "Internal User Ticket Kanban columns"
+  ticketKanbanInternal(community: String!, filter: TicketFilter, pagi: PagiInput): TicketKanbanColumns!
+
+  "One public User Ticket page"
+  ticketPage(community: String!, filter: TicketFilter, pagi: PagiInput): TicketPage!
+
+  "One internal User Ticket page"
+  ticketPageInternal(community: String!, filter: TicketFilter, pagi: PagiInput): TicketPage!
+
+  "One public User Ticket by Community-shared number"
+  ticket(community: String!, innerId: Int!): Ticket
+
+  "One internal User, Worker or Case Ticket"
+  ticketInternal(community: String!, id: ID!): Ticket
+
+  "Internally visible User Tickets linked to one Post"
+  postTicketLinksInternal(community: String!, postId: ID!): [Ticket!]!
+
+  "Internal Ticket title prefix search"
+  ticketSearch(community: String!, query: String!, type: TicketTypeEnum, pagi: PagiInput): TicketPage!
+
+  "Batched public Ticket progress for a Post page"
+  postTicketProgress(community: String!, postInnerIds: [Int!]!): [PostTicketProgress!]!
 
   "get open graph info by url"
   openGraphInfo(url: String!): OpenGraph
-
-  "One Kanban column using the canonical Article Page contract"
-  kanbanPage(community: String!, filter: PostFilter, pagi: PagiInput): PostPage!
 
   "Article Lite page using the shared offset\/cursor pagination contract"
   postPage(pagi: PagiInput, filter: PostFilter, thread: PostThread): PostPage!
@@ -564,9 +585,6 @@ type RootMutationType {
   "set cat for a post"
   setPostCat(article: ArticlePathInput!, cat: ArticleCatEnum!, commandId: ID!): Post
 
-  "set status for a post"
-  setPostStatus(article: ArticlePathInput!, status: ArticleStatusEnum!, commandId: ID!): Post
-
   "upvote to post"
   upvotePost(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
@@ -764,6 +782,83 @@ type RootMutationType {
 
   "undo pin a comment"
   undoPinComment(comment: CommentPathInput!, commandId: ID!): Comment
+
+  "Create a User Ticket Draft from a public Post"
+  createTicketFromPost(commandId: ID!, community: String!, postId: ID!, title: String, digest: String): Ticket
+
+  "Create a private Worker Ticket under a User Ticket"
+  createWorkerTicket(
+    commandId: ID!, community: String!, parentId: ID!, expectedWorkflowVersion: Int!, title: String, digest: String
+  ): Ticket
+
+  "Create an internal Case Ticket"
+  createTicketCase(commandId: ID!, community: String!, title: String!, digest: String, body: String, memberTicketId: ID): Ticket
+
+  "Transition Ticket work status with an expected version"
+  transitionTicket(
+    commandId: ID!, community: String!, id: ID!, status: TicketStatusEnum!, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Move a Ticket within or between work columns"
+  moveTicket(
+    commandId: ID!, community: String!, id: ID!, status: TicketStatusEnum, rank: Int!, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Update Ticket priority or planned dates"
+  updateTicket(
+    commandId: ID!, community: String!, id: ID!, priority: Int, plannedStartAt: DateTime, plannedEndAt: DateTime, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Create a content Draft workspace for an already published Ticket"
+  ensureTicketDraft(commandId: ID!, community: String!, id: ID!, expectedLifecycleVersion: Int!): Ticket
+
+  "Save the Ticket content Draft with Draft and Lifecycle versions"
+  saveTicketDraft(
+    commandId: ID!, community: String!, id: ID!, content: TicketContentInput!, expectedDraftVersion: Int!, expectedLifecycleVersion: Int!
+  ): Ticket
+
+  "Publish the reviewed Ticket Draft with all three expected versions"
+  publishTicket(
+    commandId: ID!, community: String!, id: ID!, expectedPreview: String!, reason: String!, expectedDraftVersion: Int!, expectedLifecycleVersion: Int!, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Move a published Ticket to Draft with its lifecycle version"
+  moveTicketToDraft(commandId: ID!, community: String!, id: ID!, reason: String!, expectedLifecycleVersion: Int!): Ticket
+
+  "Append an internal or public Ticket progress update"
+  addTicketUpdate(
+    commandId: ID!, community: String!, id: ID!, body: String!, visibility: TicketUpdateVisibilityEnum!, supersedesId: ID, expectedLifecycleVersion: Int, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Link a typed source to a User Ticket; currently only POST is supported"
+  linkTicketSource(
+    commandId: ID!, community: String!, ticketId: ID!, type: TicketSourceTypeEnum!, sourceId: ID!, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Unlink a TicketSource relation by its relation ID"
+  unlinkTicketSource(commandId: ID!, community: String!, ticketId: ID!, sourceId: ID!, expectedWorkflowVersion: Int!): Ticket
+
+  "Add a User Ticket to a Case"
+  addTicketCaseMember(commandId: ID!, community: String!, caseId: ID!, ticketId: ID!, expectedWorkflowVersion: Int!): Ticket
+
+  "Remove a User Ticket from a Case"
+  removeTicketCaseMember(commandId: ID!, community: String!, caseId: ID!, ticketId: ID!, expectedWorkflowVersion: Int!): Ticket
+
+  "Reference a member-owned Worker as a shared Case fix"
+  addTicketCaseWorker(commandId: ID!, community: String!, caseId: ID!, workerId: ID!, expectedWorkflowVersion: Int!): Ticket
+
+  "Replace assigned Community moderators on a Ticket"
+  setTicketAssignees(
+    commandId: ID!, community: String!, ticketId: ID!, assigneeIds: [Int!]!, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Replace internal Post tags on a Ticket"
+  setTicketTags(commandId: ID!, community: String!, ticketId: ID!, tagIds: [Int!]!, expectedWorkflowVersion: Int!): Ticket
+
+  "Replace normalized internal Ticket facets"
+  setTicketFacets(
+    commandId: ID!, community: String!, ticketId: ID!, facets: [TicketFacetInput!]!, expectedWorkflowVersion: Int!
+  ): Ticket
 
   "Exports Activity evidence and records the export before returning the artifact"
   exportCommunityActivity(
@@ -1786,6 +1881,196 @@ type ArticleStats {
   snapshotAt: DateTime!
 }
 
+enum TicketTypeEnum {
+  USER
+  WORKER
+  CASE
+}
+
+enum TicketStatusEnum {
+  TODO
+  WIP
+  DONE
+  OPEN
+  RESOLVED
+}
+
+enum TicketPublicationState {
+  DRAFT
+  PUBLISHED
+}
+
+enum TicketSourceTypeEnum {
+  POST
+}
+
+enum TicketUpdateVisibilityEnum {
+  PUBLIC
+  INTERNAL
+}
+
+input TicketFilter {
+  type: TicketTypeEnum
+  status: TicketStatusEnum
+  assigneeId: Int
+  priority: Int
+  tagIds: [Int]
+  versions: [String]
+  operatingSystems: [String]
+  modules: [String]
+  createdAfter: DateTime
+  createdBefore: DateTime
+  updatedAfter: DateTime
+  updatedBefore: DateTime
+  plannedAfter: DateTime
+  plannedBefore: DateTime
+}
+
+input TicketFacetInput {
+  key: String!
+  value: String!
+}
+
+type TicketAssignee {
+  id: ID!
+  login: String!
+  nickname: String
+}
+
+type TicketTagRef {
+  id: Int!
+  title: String!
+  slug: String!
+  color: String
+}
+
+type TicketFacet {
+  key: String!
+  value: String!
+}
+
+type TicketSourceRef {
+  id: ID!
+  type: TicketSourceTypeEnum!
+  innerId: Int
+  title: String
+  isPublic: Boolean!
+  reviewBlockTypes: [String!]!
+}
+
+type TicketProgressRef {
+  id: ID!
+  innerId: Int!
+  title: String!
+  status: TicketStatusEnum!
+}
+
+type TicketRelationRef {
+  id: ID!
+  type: TicketTypeEnum!
+  status: TicketStatusEnum!
+  priority: Int!
+  workflowVersion: Int!
+  rank: Int!
+  innerId: Int
+  title: String!
+  digest: String
+  plannedStartAt: DateTime
+  plannedEndAt: DateTime
+}
+
+type Ticket {
+  id: ID!
+  innerId: Int
+  type: TicketTypeEnum!
+  status: TicketStatusEnum!
+  publicationState: TicketPublicationState!
+  canPublishPublicUpdates: Boolean!
+  priority: Int!
+  lifecycleVersion: Int
+  workflowVersion: Int
+  draftVersion: Int
+  rank: Int!
+  title: String!
+  digest: String!
+  body: String!
+  plainText: String!
+  publicationPreview: String
+  draftContent: TicketContent
+  publishedContent: TicketContent
+  hasUnpublishedChanges: Boolean
+  plannedStartAt: DateTime
+  plannedEndAt: DateTime
+  startedAt: DateTime
+  completedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  assignees: [TicketAssignee!]!
+  tags: [TicketTagRef!]!
+  facets: [TicketFacet!]!
+  sources: [TicketSourceRef!]!
+  workers: [TicketRelationRef!]!
+  members: [TicketRelationRef!]!
+  cases: [TicketRelationRef!]!
+  sharedWorkers: [TicketRelationRef!]!
+  parent: TicketRelationRef
+  activity(pagi: PagiInput): TicketActivityConnection
+  updates: [TicketUpdate!]!
+}
+
+type TicketContent {
+  title: String!
+  digest: String!
+  body: String!
+}
+
+type TicketActivityConnection {
+  entries: [TicketActivity!]!
+  pageInfo: PageInfo!
+}
+
+input TicketContentInput {
+  title: String
+  digest: String
+  body: Json
+}
+
+type TicketActivity {
+  id: ID!
+  action: String!
+  payload: Json
+  occurredAt: DateTime!
+  actorRef: ID
+}
+
+type TicketPage {
+  entries: [Ticket!]!
+  pageInfo: PageInfo!
+}
+
+type TicketKanbanColumns {
+  todo: TicketPage!
+  wip: TicketPage!
+  done: TicketPage!
+}
+
+type PostTicketProgress {
+  postInnerId: Int!
+  status: TicketStatusEnum!
+  completed: Int!
+  total: Int!
+  tickets: [TicketProgressRef!]!
+}
+
+type TicketUpdate {
+  id: ID!
+  body: String!
+  visibility: TicketUpdateVisibilityEnum!
+  authorId: ID!
+  publishedAt: DateTime
+  supersedesId: ID
+}
+
 type ArticleReactionResult {
   commandId: ID!
   reactionOutcome: ReactionOutcome!
@@ -1845,7 +2130,7 @@ enum CommunityLifecycleState {
 }
 
 enum ArticleLifecycleState {
-  DRAFT_ONLY
+  DRAFT
   PUBLISHED
   ARCHIVED
   DELETED
@@ -2208,6 +2493,14 @@ enum CommunityAssetType {
   VIDEO
   AUDIO
   FILE
+}
+
+enum AssetThread {
+  POST
+  BLOG
+  CHANGELOG
+  DOC
+  TICKET
 }
 
 enum CommunityAssetStatus {
@@ -2593,7 +2886,7 @@ type CommonArticle {
 type CommunityAsset {
   id: ID
   publicRef: String
-  thread: Thread
+  thread: AssetThread
   assetType: CommunityAssetType
   status: CommunityAssetStatus
   title: String
@@ -2616,7 +2909,7 @@ type CommunityAsset {
 
 type ArticleAssetRef {
   id: ID
-  thread: Thread
+  thread: AssetThread
   articleId: ID
   usage: ArticleDocumentAssetUsage
   blockId: String
@@ -2637,7 +2930,7 @@ type CommunityAssetUsage {
 }
 
 type CommunityAssetThreadStat {
-  thread: Thread!
+  thread: AssetThread!
   count: Int!
 }
 
@@ -2676,7 +2969,7 @@ type CommunityAssetOriginInfo {
 }
 
 input CommunityAssetInput {
-  thread: Thread
+  thread: AssetThread
   assetType: CommunityAssetType
   title: String
   filename: String
@@ -2706,13 +2999,13 @@ input CommunityAssetUploadFileInput {
   mimeType: String!
   sizeBytes: BigInt!
   checksumSha256: String
-  thread: Thread
+  thread: AssetThread
   assetType: CommunityAssetType
 }
 
 input CommunityAssetFilter {
   query: String
-  thread: Thread
+  thread: AssetThread
   assetType: CommunityAssetType
   subtypes: [String!]
 }
@@ -2730,7 +3023,7 @@ input CommunityAssetUploadCompletionInput {
   sizeBytes: BigInt!
   filename: String
   mimeType: String
-  thread: Thread
+  thread: AssetThread
   assetType: CommunityAssetType
   width: Int
   height: Int
@@ -2830,7 +3123,6 @@ type Post implements Article {
   linkAddr: String
   commentsParticipants: [User]
   cat: ArticleCatEnum
-  status: ArticleStatusEnum
   isSolved: Boolean!
   solutionCommentId: ID
   solutionDigest: String
@@ -3362,6 +3654,7 @@ type Dsb {
 
 type CommunityModerator {
   id: ID!
+  userId: ID!
   isRoot: Boolean!
   passportItemCount: Int!
   user: CommonUser!
@@ -3625,7 +3918,6 @@ type PostLite {
   activeAt: DateTime
   insertedAt: DateTime!
   cat: ArticleCatEnum
-  status: ArticleStatusEnum
   isPinned: Boolean!
 }
 
@@ -3727,14 +4019,6 @@ type CommentPage {
   pinnedEntries: [Comment!]!
   entries: [Comment!]!
   pageInfo: PageInfo!
-}
-
-type KanbanPages {
-  backlog: PostPage
-  todo: PostPage
-  wip: PostPage
-  done: PostPage
-  rejected: PostPage
 }
 
 type ArtimentMentionPage {
@@ -4166,8 +4450,6 @@ input ArticlePageFilter {
   when: WhenEnum
   communityTag: String
   cat: ArticleCatEnum
-  status: ArticleStatusEnum
-  statuses: [ArticleStatusEnum!]
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
@@ -4178,8 +4460,6 @@ input PostFilter {
   when: WhenEnum
   communityTag: String
   cat: ArticleCatEnum
-  status: ArticleStatusEnum
-  statuses: [ArticleStatusEnum!]
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
@@ -4190,8 +4470,6 @@ input ChangelogFilter {
   when: WhenEnum
   communityTag: String
   cat: ArticleCatEnum
-  status: ArticleStatusEnum
-  statuses: [ArticleStatusEnum!]
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
@@ -4333,11 +4611,9 @@ enum RainbowColor {
 }
 
 enum KanbanBoard {
-  BACKLOG
   TODO
   WIP
   DONE
-  REJECTED
 }
 
 enum DsbPostLayout {

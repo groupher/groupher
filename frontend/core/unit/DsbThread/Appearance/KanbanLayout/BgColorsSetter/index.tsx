@@ -19,22 +19,14 @@ import useSalon, { cn } from '../salon/bg_colors_setter'
 import ClassicLayout from './ClassicLayout'
 import WaterfallLayout from './WaterfallLayout'
 
-const BOARD_ORDER = [
-  KANBAN_BOARD.BACKLOG,
-  KANBAN_BOARD.TODO,
-  KANBAN_BOARD.WIP,
-  KANBAN_BOARD.DONE,
-  KANBAN_BOARD.REJECTED,
-] as const
+const BOARD_ORDER = [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE] as const
 
 const BOARD_INDEX = new Map<string, number>(BOARD_ORDER.map((board, index) => [board, index]))
 
 const BOARD_COLOR_KEY = {
-  [KANBAN_BOARD.BACKLOG]: 'backlogBall',
   [KANBAN_BOARD.TODO]: 'todoBall',
   [KANBAN_BOARD.WIP]: 'wipBall',
   [KANBAN_BOARD.DONE]: 'doneBall',
-  [KANBAN_BOARD.REJECTED]: 'rejectedBall',
 } as const
 
 export default function BgColorsSetter() {

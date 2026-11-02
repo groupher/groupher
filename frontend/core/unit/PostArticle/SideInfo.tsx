@@ -18,7 +18,7 @@ export default function SideInfo() {
     return <h1>Error article</h1>
   }
 
-  const { insertedAt, communityTags, meta, cat, status } = article
+  const { insertedAt, communityTags, meta, cat } = article
   const latestUpvotedUsers = meta?.latestUpvotedUsers ?? []
 
   return (
@@ -47,7 +47,7 @@ export default function SideInfo() {
         <TagsList items={communityTags ?? []} size='medium' left={1} max={20} bottom={2} />
         <div className='mb-6' />
         <div className={s.label}>分类</div>
-        <ArticleCatStatus cat={cat} status={status} smaller={false} />
+        <ArticleCatStatus cat={cat} smaller={false} />
         <div className='mb-6' />
         <div className={s.label}>发布时间</div>
         <div className={s.value}>

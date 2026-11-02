@@ -1,11 +1,10 @@
-import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS, CAT, ORDER, STATUS } from '~/const/gtd'
+import { ARTICLE_CAT, ARTICLE_ORDER, CAT, ORDER } from '~/const/gtd'
 import URL_PARAM from '~/const/url_param'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
-import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleStatus } from '~/spec'
+import type { TArticleCat, TArticleFilter, TArticleOrder } from '~/spec'
 
 type TRes = {
   cat: TArticleCat | null
-  status: TArticleStatus | null
   order: TArticleOrder | null
   updateActiveFilter: (filter: TArticleFilter) => void
 }
@@ -29,10 +28,6 @@ export default function useArticlesFilter(): TRes {
     searchParams.get(URL_PARAM.ORDER),
     Object.values(ARTICLE_ORDER),
   ) as TArticleOrder | null
-  const status = toValidFilterValue(
-    searchParams.get(URL_PARAM.STATUS),
-    Object.values(ARTICLE_STATUS),
-  ) as TArticleStatus | null
   const cat = toValidFilterValue(
     searchParams.get(URL_PARAM.CAT),
     Object.values(ARTICLE_CAT),
@@ -50,13 +45,7 @@ export default function useArticlesFilter(): TRes {
       }
     }
 
-    if (Object.hasOwn(filter, STATUS)) {
-      if (filter.status) {
-        nextSearchParams.set(URL_PARAM.STATUS, filter.status)
-      } else {
-        nextSearchParams.delete(URL_PARAM.STATUS)
-      }
-    }
+    nextSearchParams.delete('status')
 
     if (Object.hasOwn(filter, ORDER)) {
       if (filter.order) {
@@ -79,7 +68,6 @@ export default function useArticlesFilter(): TRes {
   return {
     order,
     cat,
-    status,
     updateActiveFilter,
   }
 }

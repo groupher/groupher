@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
     ArticleBinding,
     ArticleBindingTag,
     ArticleLifecycle,
-    KanbanState
+    TicketState
   }
 
   describe "[lite home seeds]" do
@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
       assert count(:post, community.id) == 4
       assert count(:changelog, community.id) == 3
       assert count(:doc, community.id) == 0
-      assert seeded_community.seed_summary.kanban_posts == 4
+      assert seeded_community.seed_summary.user_tickets == 0
 
       assert_tag_groups_and_article_tags(community, :post, "一次线上故障复盘记录")
 
@@ -38,36 +38,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
         "Cloudflare preview routing enabled"
       )
 
-      kanban_posts =
-        Repo.all(
-          from(article in Article,
-            join: binding in ArticleBinding,
-            on: binding.article_id == article.id,
-            join: state in KanbanState,
-            on: state.article_binding_id == binding.id,
-            where:
-              binding.community_id == ^community.id and article.thread == :post and
-                not is_nil(state.status),
-            select: state
-          )
-        )
-
-      assert length(kanban_posts) == 4
-      assert Enum.sort(Enum.map(kanban_posts, & &1.status)) == [:backlog, :done, :todo, :wip]
-
-      assert {:ok, %{todo: %{entries: [_ | _]}}} = CMS.Articles.grouped_kanban(community)
-
-      post = article_by_title!(community.id, "一次线上故障复盘记录")
-
-      {1, _} =
-        from(state in KanbanState,
-          join: binding in ArticleBinding,
-          on: binding.id == state.article_binding_id,
-          where: binding.article_id == ^post.id and binding.community_id == ^community.id
-        )
-        |> Repo.delete_all()
-
-      assert kanban_count(community.id) == 3
+      assert ticket_count(community.id) == 0
 
       {:ok, community} = LiteHome.seed(wallpaper: false)
 
@@ -75,8 +46,8 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
       assert count(:changelog, community.id) == 3
       assert count(:doc, community.id) == 0
       assert count(:post, community.id) == community.seed_summary.posts
-      assert kanban_count(community.id) == 4
-      assert community.seed_summary.kanban_posts == 4
+      assert ticket_count(community.id) == 0
+      assert community.seed_summary.user_tickets == 0
 
       post = article_by_title!(community.id, "一次线上故障复盘记录")
 
@@ -92,20 +63,21 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
     end
   end
 
-  defp kanban_count(community_id) do
-    Article
-    |> join(:inner, [article], binding in ArticleBinding, on: binding.article_id == article.id)
-    |> join(:inner, [article], lifecycle in ArticleLifecycle,
-      on: lifecycle.article_id == article.id and lifecycle.state in [:published, :archived]
+  defp ticket_count(community_id) do
+    TicketState
+    |> join(:inner, [ticket], binding in ArticleBinding,
+      on: binding.id == ticket.article_binding_id
     )
-    |> join(:inner, [article, binding], state in KanbanState,
-      on: state.article_binding_id == binding.id
+    |> join(:inner, [ticket], lifecycle in ArticleLifecycle,
+      on:
+        lifecycle.article_id == ticket.article_id and lifecycle.thread == :ticket and
+          lifecycle.state == :published
     )
     |> where(
-      [article, binding],
-      article.thread == :post and binding.community_id == ^community_id
+      [ticket, binding, _lifecycle],
+      ticket.type == :user and binding.community_id == ^community_id
     )
-    |> Repo.aggregate(:count, :id)
+    |> Repo.aggregate(:count, :article_id)
   end
 
   defp count(thread, community_id) do

@@ -1,14 +1,15 @@
 # Article Revision / Draft 目标架构
 
+> Ticket V2 的 Lifecycle 与内容接入已落地：[Ticket V2](../tickets/v2.md)统一 `draft`、由数据库 trigger 保证只写一次的 `first_published_at`，并通过 Ticket Content 适配层使用 Article Draft/Revision/Public。Ticket 首次编辑由 EnsureDraft 建立工作区；Ticket 不进入普通 Article typed extension。相关本地测试见 [V2 实施追踪 R02–R04/R08](../tickets/inventory.md#v2-实施追踪)。旧 Article/Ticket 数据清理只在指定环境切换时执行，尚未运行。
+
 > 2026-10-22 审核合同更新：本文旧内容 legal/illegal/audit_failed 与 Sentinel/计划 Moderation
 > 相关目标已由 [AlertBoard / ReviewBot](../alert-board/design.md) 替代，运行时尚未切换。
 > 其他 Lifecycle、Draft/Revision/Public、Doc 历史与分支合同保持；普通 UGC 不新增待审版本。
 
-> 状态：implemented with known contract drift；Revision / Draft 主链已实现，
-> ArticleCommunity 的 `home | mirror` role 已移除，Community-local Kanban 与
-> `CMS.Kanban` command facade 已迁移；
-> 公共路径与编号仍需按 [article-community.md](./article-community.md) 对齐。生产 cutover、
-> 全量重建和线上 smoke 仍待验收。
+> 状态：Revision / Draft 主链已实现；ArticleCommunity 的 `home | mirror` role 已移除。
+> Ticket V2 已把 `Article(thread=:ticket)` 接入 ArticleLifecycle、Draft/Revision/Public，并独立维护 Ticket 工作 Lifecycle；它不进入普通 Article typed extension 或列表自动生成面。
+> 下文未迁移的 KanbanState/add_post/move_post 示例是历史设计文本，不代表当前 API 或数据库；现行合同见 [Tickets](../tickets/README.md)。
+> Article/Ticket 历史数据重建与线上 smoke 仍待指定目标环境，运行时合同已切换。
 >
 > 本文定义的 stable Article、mutable Draft、immutable Revision、ArticlePublic、
 > DocBranchVersion 与 LocalDraftHistory 已替代 Gate V3 的 Article 内容 head、
@@ -373,7 +374,7 @@ article-global 字段。普通 Article 暂不为它们新建总括表；字段�
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `title/digest/slug/body`                             | Draft → Revision                                                                                         | Publish 时投影                                                              |
 | `cat`                                                | stable Post-specific category                                                                            | 直接更新并刷新 Projection；不创建 Draft/Revision                            |
-| Kanban membership/status                             | `KanbanState` under `ArticleCommunity`（已实现）                                                         | 查询当前 Community relation；不创建 Draft/Revision                          |
+| Ticket workflow status                               | `TicketState` for dedicated `Article(thread=:ticket)`                                                    | Ticket 专属查询与缓存；不写入 Post `ArticlePublic` 或 Draft/Revision        |
 | `copy_right/link_addr`                               | typed Draft → typed Revision                                                                             | Publish 时投影                                                              |
 | `cover_url/cover_url_dark`                           | Draft/Revision 的 immutable asset relation                                                               | Publish 时投影 URL/thumbnail                                                |
 | content tags                                         | Draft relation → revision-scoped relation                                                                | 通过当前 `ArticlePublic.revision_id` join，不复制第二套 Public tag relation |
@@ -396,7 +397,7 @@ Revision-derived content projection
   title / digest / slug / cover / body summary ...
 
 Operational public projection
-  cat / Community-local Kanban status / moderation visibility / active_at /
+  cat / moderation visibility / active_at /
   ArticleCommunity flags ...
 ```
 
@@ -408,7 +409,7 @@ tags 是多值 immutable relation，不作为 `ArticlePublic` scalar/json 列复
 设计 Public tag projection，不在本次目标模型中预建第二套关系。
 
 Post 的即时内容分类不塞进通用 Article。`PostState` 只保存 Post-global category，
-`KanbanState` 保存 Community-local Kanban state：
+Ticket 工作状态由独立 Ticket aggregate 保存，不写入 PostState 或 Post projection：
 
 这里保留 `PostState` 这个名称是有意的：它表示 Post 专属、Article-global 的即时状态
 容器，而不是 Kanban 状态；当前只有 `cat` 不构成重命名或拆表的理由。后续若增加同一作用域
@@ -419,16 +420,14 @@ Post category
 ├── article_id  PK / FK -> articles
 └── cat
 
-ArticleCommunity
-└── KanbanState?  PK / FK -> article_communities
-    ├── status
-    └── rank
+Ticket Article
+└── TicketState (status, rank, schedule, version)
 ```
 
-`cat` 与 Kanban status 都可在存在 Draft 时直接修改，不进入内容版本历史。`set_cat`
-仍在同一事务内联动 Comment question flag；两者都必须刷新对应的 Public
-Projection、cache/search 和 Activity。Kanban 状态必须按当前 ArticleCommunity 关系修改，
-不能通过 stable `article_id` 全局影响其他 mirror Community。content tags 和 cover 是内容
+`cat` 可在存在 Draft 时直接修改，不进入内容版本历史。`set_cat`
+仍在同一事务内联动 Comment question flag；必须刷新对应的 Public
+Projection、cache/search 和 Activity。Ticket 状态只作用于 Ticket 自己的唯一 Community binding。
+content tags 和 cover 是内容
 关系：它们先写 Draft，Publish 后进入 Revision，Doc Restore 时一起恢复。Community-local
 tags 是运营呈现关系，跟随具体 ArticleCommunity 关系，不创建 Revision。
 
@@ -456,7 +455,7 @@ Article
 - Move 如保留，只是原子地添加目标关系并移除来源关系；
 - Revision tags 只表达内容 tags；Community-local tags 使用
   `ArticleCommunityTag(article_community_id, tag_id)`；
-- `PinnedArticle`、KanbanState 等 Community-local 事实引用 `article_community_id`；
+- `PinnedArticle` 等 Community-local 事实引用 `article_community_id`；Ticket 使用独立 `ArticleBinding` 与 `TicketState`，见 [Article Community](./article-community.md)；
 - Article Lifecycle、Moderation 和目标 Community Lifecycle 继续作为独立可见性输入；
 - public `inner_id`、URL、redirect/tombstone 和 cache wire scope 的归属必须先完成 ArticleCommunity
   路径合同，不能继续从特殊 `home relation` 推导。
@@ -1473,8 +1472,7 @@ CMS.FrontDesk.article(article_path, actor \\ nil, opts \\ [])
 
 # public lists and aggregate queries remain in the existing CMS.Articles query facade
 CMS.Articles.page(thread, filter, actor \\ nil)
-CMS.Articles.grouped_kanban(community, actor \\ nil)
-CMS.Articles.paged_kanban(community, filter, actor \\ nil)
+# Ticket Kanban, progress, and mutations use the dedicated CMS.Tickets facade.
 CMS.Articles.paged_published(thread, filter, target_user, actor \\ nil)
 CMS.Articles.count_published(thread, target_user, actor \\ nil)
 CMS.Articles.paged_audit_failed(thread, filter, actor)
@@ -1506,10 +1504,7 @@ CMS.Articles.get_trashed(trash_item_id)
 # stable Post category; does not create Revision
 CMS.Articles.set_cat(article_id, cat, actor)
 
-# Community-local Kanban state; does not create Revision
-CMS.Kanban.add_post(community, article_id, status, actor)
-CMS.Kanban.move_post(community, article_id, status, actor)
-CMS.Kanban.remove_post(community, article_id, actor)
+# Post status-to-Kanban commands were retired with the Ticket cutover.
 
 # stable Article operation state; does not create Revision
 CMS.Articles.sink(article_id, actor)
@@ -1579,15 +1574,13 @@ set_cat
   != create Draft or Revision
   != publish or overwrite the user's existing Draft
 
-add_post / move_post / remove_post
-  = create / update / delete current ArticleCommunity's KanbanState
-  = never update another Community ArticleCommunity relation of the same Article
-  != create Draft or Revision
+# Post-targeted Kanban commands were retired by the Ticket cutover.
+# Ticket commands update a separate Article(thread=:ticket) aggregate and TicketState.
 ```
 
-Post category 和 Community-local Kanban status 都是即时运营状态，而不是可恢复的文章
-内容。因此看板拖拽或管理员切换分类不会制造一个发布版本，也不会因为用户已有 Draft
-而被拒绝。KanbanState 是否存在表达当前 ArticleCommunity 关系是否进入 Kanban，存在时 status 必填。
+Post category 是即时运营状态，而不是可恢复的文章内容。Ticket 看板拖动修改 TicketState/rank，
+Timeline 拖动修改 Ticket 计划日期；二者都不制造 Post Article Revision。管理员调整 Post 分类
+也不会因为用户已有 Draft 而被拒绝。
 `set_cat` 必须在同一事务中保留现有语义：
 `cat == :qa` 时设置关联 Comment `question` flag，离开 `:qa` 时清除。
 `update` 仍然是内容 Draft 路径。
@@ -1692,9 +1685,9 @@ root `GroupherServer.FrontDesk` 对应的三参数入口；不得保留为 publi
 FrontDesk 内部实现若已持有 `%Community{}`，只能通过 private helper 继续查询，不能形成第二个
 caller 可见的 locator contract。
 
-FrontDesk 的“唯一读取入口”只指 public Article detail 的 ArticlePath locator。分页列表、
-Kanban、用户发布列表、计数和审核队列明确保留在现有 `CMS.Articles` query facade；它们以
-filter/scope 查询集合，不是 ArticlePath 的第二种解析方式。
+FrontDesk 的“唯一读取入口”只指 public Article detail 的 ArticlePath locator。普通 Article
+分页、用户发布列表、计数和审核队列保留在 `CMS.Articles` query facade；Ticket Kanban、
+Ticket 搜索和 Post 进度由 `CMS.Tickets` 查询，不是 ArticlePath 的第二种解析方式。
 
 公共查询：
 
@@ -1853,7 +1846,7 @@ Permanently Delete 可删除整个 aggregate，不受这个安全期约束。
 - 新建 stable `cms.articles`、Draft、Revision、typed Revision、`DocBranchVersion`、
   `cms.doc_branch_version_counters`、`cms.article_body_drafts`、
   `cms.article_body_snapshots`、Post category、`cms.doc_branch_states`、
-  `cms.article_communities`、`cms.article_community_tags`、Community-local Kanban state、
+  `cms.article_communities`、`cms.article_community_tags`、独立 Ticket domain tables、
   ArticlePublic/DocPublic/Projection 表；
 - 当前 Post/Blog/Changelog/Doc 表中的 `stage`、运行时 identity 和版本字段拆到新 owner；
 - 删除 `cms.posts`、`cms.blogs`、`cms.changelogs`、`cms.docs` 旧内容表；不重命名、不复用为 Projection，也不留下第二套 authority；
@@ -2083,7 +2076,7 @@ no mixed old/new database authority
 1. 锁定目标 schema、invariants、GraphQL contract 和 public DTO；
 2. 建立 stable Article、Draft、Revision、DocBranchVersion、
    `doc_branch_version_counters`、ArticleBodyDraft/ArticleBodySnapshot、Post category、
-   `doc_branch_states`、`article_communities`、`article_community_tags`、Kanban state、
+   `doc_branch_states`、`article_communities`、`article_community_tags`、Ticket domain state、
    `post_draft_tags`、`blog_draft_tags`、`changelog_draft_tags`、`doc_draft_tags`、
    `post_revision_tags`、`blog_revision_tags`、`changelog_revision_tags`、
    `doc_revision_tags`、ArticlePublic/DocPublic；
@@ -2235,9 +2228,8 @@ orphan relation、Search physical ref、cache tag contract mismatch 或 Doc Rele
     这里的 pin 仅表示文章置顶，与 Revision 保留无关。
 14. branch A 的 DocBranchVersion 不出现在 branch B 的 RevisionDrawer；创建
     preview branch 时只从 source branch Public 初始化 Draft。
-15. 无论是否存在未发布 Draft，`set_cat` 与 Community-local Kanban status 都不创建或发布
-    Revision；`set_cat` 同步保留 Comment question flag 语义，Kanban status 只修改当前
-    `ArticleCommunity` 下的状态，不影响其他 Community 关系。
+15. 无论是否存在未发布 Draft，`set_cat` 都不创建或发布 Revision，并保留 Comment
+    question flag 语义；Ticket 工作状态只修改独立 TicketState，不影响 Post 的 ArticleCommunity 关系。
 16. Trash 后 Draft 被保留但不可编辑；restore 后同一 Draft 恢复可编辑；只有 permanently delete 删除它。
 17. 普通 Article 编辑发布继续写入 Activity V3 的 `title_changed/body_updated`，
     Activity 不因旧 Revision 被 Cleanup 而悬空。

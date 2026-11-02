@@ -18,6 +18,7 @@
 - [`view-tracker/`](./view-tracker)：Article 有效阅读的身份识别、分类、去重与计数。
 - [`lifecycle/`](./lifecycle)：资源状态、转换和 blocker。
 - [`post/`](./post)：Post 合同、Solution 与 Merge。
+- [`tickets/`](./tickets)：Ticket V2 当前合同与实现追踪，覆盖 Article Draft/Lifecycle、TicketSource、Review/Community 可见性、Post 进度、工作台、Timeline 与通知；实现与定向验收完成，完整后端门禁仍有批量用例超时，目标环境数据切换和 CDN smoke 未执行。
 - [`reporting/`](./reporting)：举报事实与审核聚合。
 - [`search/`](./search)：搜索链路与重构。
 - [`wallpaper/`](./wallpaper)：编辑、保存、SSR、渲染和导出。

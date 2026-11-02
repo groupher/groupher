@@ -164,7 +164,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   @spec apply_review_block(CommentLifecycle.t(), map()) ::
           {:ok, struct()} | {:error, term()}
   def apply_review_block(%CommentLifecycle{} = lifecycle, attrs) do
-    ReviewBlocks.apply(lifecycle, attrs)
+    CMS.Review.Restrictions.apply(lifecycle, attrs)
   end
 
   @doc """
@@ -189,7 +189,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
         operation_ref,
         reason
       ) do
-    ReviewBlocks.end_blocks(lifecycle, scope_key, ids, operation_ref, reason)
+    CMS.Review.Restrictions.end_blocks(lifecycle, scope_key, ids, operation_ref, reason)
   end
 
   defp state_time(state, state, now, _current), do: now

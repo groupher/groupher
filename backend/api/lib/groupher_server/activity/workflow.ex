@@ -76,6 +76,10 @@ defmodule GroupherServer.Activity.Workflow do
     Activity.Press.log(resource, action, opts)
   end
 
+  def log(%{thread: :ticket} = resource, action, opts) do
+    Activity.Ticket.log(resource, action, opts)
+  end
+
   def log(%{activity_type: :community} = resource, action, opts) do
     Activity.Community.log(resource, action, opts)
   end

@@ -49,7 +49,14 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
     :restore,
     :schedule_destroy,
     :cancel_destroy,
-    :destroy
+    :destroy,
+    :ticket_create,
+    :ticket_link_source,
+    :ticket_update,
+    :ticket_transition,
+    :ticket_assign,
+    :ticket_manage_case,
+    :ticket_manage_visibility
   ]
 
   @doc """
@@ -181,6 +188,19 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
     passport_allowed?(community, CMS.GateAction.doc_import(), context)
   end
 
+  defp command_binding_allowed?(_user, community, action, context)
+       when action in [
+              :ticket_create,
+              :ticket_link_source,
+              :ticket_update,
+              :ticket_transition,
+              :ticket_assign,
+              :ticket_manage_case,
+              :ticket_manage_visibility
+            ] do
+    passport_allowed?(community, ticket_passport_action(action), context)
+  end
+
   defp command_binding_allowed?(user, community, action, context)
        when action in [
               :category_create,
@@ -203,6 +223,16 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp category_passport_action(:category_delete), do: Const.passport_action(:category_delete)
   defp category_passport_action(:category_set), do: Const.passport_action(:category_set)
   defp category_passport_action(:category_unset), do: Const.passport_action(:category_unset)
+
+  defp ticket_passport_action(:ticket_create), do: CMS.GateAction.ticket_create()
+  defp ticket_passport_action(:ticket_link_source), do: CMS.GateAction.ticket_link_source()
+  defp ticket_passport_action(:ticket_update), do: CMS.GateAction.ticket_update()
+  defp ticket_passport_action(:ticket_transition), do: CMS.GateAction.ticket_transition()
+  defp ticket_passport_action(:ticket_assign), do: CMS.GateAction.ticket_assign()
+  defp ticket_passport_action(:ticket_manage_case), do: CMS.GateAction.ticket_manage_case()
+
+  defp ticket_passport_action(:ticket_manage_visibility),
+    do: CMS.GateAction.ticket_manage_visibility()
 
   defp management_binding_allowed?(:operations, _community, _context), do: true
   defp management_binding_allowed?(%{type: :operations}, _community, _context), do: true
