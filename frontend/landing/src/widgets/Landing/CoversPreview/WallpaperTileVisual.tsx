@@ -12,7 +12,8 @@ type TProps = {
 export default function WallpaperTileVisual({ scene, panDistance, imagePan }: TProps) {
   const panAxis = scene.wallpaperPanAxis ?? 'x'
   const style = {
-    '--rail-wallpaper': `url("${scene.wallpaperPreview}")`,
+    '--rail-wallpaper-light': `url("${scene.wallpaper.light.preview}")`,
+    '--rail-wallpaper-dark': `url("${scene.wallpaper.dark.preview}")`,
     '--rail-pan-overflow': `${Math.abs(panDistance)}px`,
     '--landing-cover-boot-pan': `var(--landing-cover-boot-pan-${scene.id}, 0px)`,
     ...(imagePan ? { [panAxis]: imagePan } : {}),

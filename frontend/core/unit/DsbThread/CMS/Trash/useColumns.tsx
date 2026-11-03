@@ -66,17 +66,6 @@ export default function useColumns({
         size: 80,
       },
       {
-        id: 'mentionedByCount',
-        accessorFn: (item) => item.mentionedByCount,
-        header: () => (
-          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.trash.mentioned_by')}</div>
-        ),
-        cell: ({ getValue }) => (
-          <div className={cn(s.cell, 'text-center')}>{Number(getValue())}</div>
-        ),
-        size: 90,
-      },
-      {
         id: 'deletedBy',
         header: () => (
           <div className={cn(s.title, 'text-right')}>{t('dsb.cms.trash.deleted_by')}</div>

@@ -2,7 +2,7 @@
 
 > 状态：架构约定
 >
-> 更新：2026-10-27
+> 更新：2026-10-30
 
 ## 背景
 
@@ -99,6 +99,7 @@ token 由 Phoenix 针对具体服务和操作签发。两者不能混用。
 | [`Press`](../press)             | Cloudflare Workers / Hono           | Dashboard 配置         | 单向、缓存友好的官方内容输出       | 生产已硬切 Worker；Fly 已退役    |
 | [`posthouse`](../posthouse)     | Node/Hono                           | Dashboard Integrations | Webhook、IM 和邮件的收发中心       | 规划中                           |
 | [`ai`](../ai)                   | Node/Hono                           | Dashboard、Docs 和 IM  | AI 能力编排和 provider 适配        | 规划中                           |
+| [`co-edit`](./co-edit.md)       | 独立同步服务（POC 选 Node）         | Dashboard / Community  | 富文本实时同步、在线光标和连接管理 | POC 方案，未实施                 |
 | [`risk-center`](../risk-center) | Node/Hono                           | Dashboard              | 风险信号查询、聚合和低延迟判定     | 规划中                           |
 | [`umami`](../umami)             | 自托管 vendor application           | Dashboard              | 社区访问统计                       | Fly.io；Neon `umami-dev`         |
 

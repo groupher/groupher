@@ -24,11 +24,6 @@ const ConfirmPermanentDeleteModal: FC<TProps> = ({ item, loading, onClose, onCon
     if (deleted) onClose()
   }
 
-  const mentionWarning = t('dsb.cms.trash.confirm_mentions').replace(
-    '{count}',
-    String(item?.mentionedByCount ?? 0),
-  )
-
   return (
     <Modal
       show={item !== null}
@@ -42,9 +37,6 @@ const ConfirmPermanentDeleteModal: FC<TProps> = ({ item, loading, onClose, onCon
         <h3 className={s.modalTitle}>{t('dsb.cms.trash.confirm_title')}</h3>
         <div className={s.modalArticleTitle}>{item?.article?.title || item?.articleId}</div>
         <p className={s.modalDesc}>{t('dsb.cms.trash.confirm_desc')}</p>
-        {(item?.mentionedByCount ?? 0) > 0 ? (
-          <p className={s.mentionWarning}>{mentionWarning}</p>
-        ) : null}
         <div className={s.modalActions}>
           <Button ghost noBorder className={s.modalButton} disabled={loading} onClick={onClose}>
             {t('dsb.cms.trash.cancel')}

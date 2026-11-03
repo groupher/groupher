@@ -60,9 +60,17 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
       Repo.get_by!(TrashedDocArticle, article_id: page.node.doc_id)
 
     assert {:ok, %{entries: [trash_item]}} = CMS.DocTree.trash_items(community, nil, actor: user)
-    assert {:ok, %{entries: [cursor_item], end_cursor: cursor, has_next_page: false}} = CMS.DocTree.trash_items(community, %{cursor: %{first: 1}}, actor: user)
+
+    assert {:ok, %{entries: [cursor_item], end_cursor: cursor, has_next_page: false}} =
+             CMS.DocTree.trash_items(community, %{cursor: %{first: 1}}, actor: user)
+
     assert cursor_item.id == trash_item.id
-    assert {:ok, %{entries: []}} = CMS.DocTree.trash_items(community, %{cursor: %{first: 1, after: cursor}}, actor: user)
+
+    assert {:ok, %{entries: []}} =
+             CMS.DocTree.trash_items(community, %{cursor: %{first: 1, after: cursor}},
+               actor: user
+             )
+
     action = Repo.get_by!(TrashAction, hash_id: trash_item.id)
     item = Repo.get_by!(TrashedDocTreeNode, trash_action_id: action.id, node_id: page.node.id)
     assert item.draft_snapshot
@@ -370,7 +378,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
                user
              )
 
-    assert {:ok, {1, nil}} = CMS.ArtimentMentions.sync(original_draft)
+    assert {:ok, :pass} = CMS.ArtimentMentions.sync(original_draft)
 
     {:ok, duplicate} =
       CMS.DocTree.duplicate_node_internal(community, page.node.id, %{
@@ -386,7 +394,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
     assert original_doc.body.json == copied_doc.body.json
 
-    assert Repo.get_by(CMS.Model.ArtimentMention,
+    refute Repo.get_by(CMS.Model.ArtimentMention,
              mentioner_type: :doc,
              mentioner_article_id: original_doc.article_id,
              mentioner_branch_id: original_doc.branch_id,
@@ -394,7 +402,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
              mentioned_article_id: target.article_id
            )
 
-    assert Repo.get_by(CMS.Model.ArtimentMention,
+    refute Repo.get_by(CMS.Model.ArtimentMention,
              mentioner_type: :doc,
              mentioner_article_id: copied_doc.article_id,
              mentioner_branch_id: copied_doc.branch_id,

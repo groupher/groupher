@@ -10,7 +10,7 @@ export default function Security() {
   const [cardRef, isCardHovered] = useHover<HTMLDivElement>()
 
   return (
-    <div className={s.wrapper} ref={cardRef}>
+    <div className={s.wrapper} data-landing-card='security' ref={cardRef}>
       <Panel hovering={isCardHovered} />
       <div className={s.footer}>
         <h3 className={s.title}>{t('landing.battery.security.title')}</h3>

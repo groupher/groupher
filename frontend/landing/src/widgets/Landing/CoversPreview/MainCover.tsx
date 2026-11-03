@@ -1,6 +1,8 @@
 import { m } from 'motion/react'
+import type { CSSProperties } from 'react'
 
 import type { TCoverScene } from '../../../const/coverScenes'
+import { LANDING_COVER_IMAGE } from '../../../const/scenes/shared'
 import useSalon from '../salon/covers_preview/main_cover'
 
 type TProps = { scene: TCoverScene; direction?: number; reducedMotion?: boolean }
@@ -28,14 +30,14 @@ export default function MainCover({ scene, direction = 1, reducedMotion = false 
       <div className={s.content}>
         <div className={s.stage}>
           <img
-            src={scene.coverImage.light}
-            alt={scene.coverImage.alt}
+            src={LANDING_COVER_IMAGE.light}
+            alt={LANDING_COVER_IMAGE.alt}
             className={`${s.productImage} theme-light-branch`}
             loading='eager'
           />
           <img
-            src={scene.coverImage.dark}
-            alt={`${scene.coverImage.alt} in dark theme`}
+            src={LANDING_COVER_IMAGE.dark}
+            alt={`${LANDING_COVER_IMAGE.alt} in dark theme`}
             className={`${s.productImage} theme-dark-branch`}
             loading='eager'
           />
@@ -44,12 +46,15 @@ export default function MainCover({ scene, direction = 1, reducedMotion = false 
 
       <div
         aria-hidden='true'
-        className={s.background}
-        style={{
-          backgroundImage: `url("${scene.wallpaperImage}")`,
-          backgroundPosition: 'center',
-          backgroundSize: 'cover',
-        }}
+        className={`${s.background} cover-scene-wallpaper-bg`}
+        style={
+          {
+            '--cover-image-light': `url("${scene.wallpaper.light.cover}")`,
+            '--cover-image-dark': `url("${scene.wallpaper.dark.cover}")`,
+            backgroundPosition: 'center',
+            backgroundSize: 'cover',
+          } as CSSProperties
+        }
       />
     </m.div>
   )

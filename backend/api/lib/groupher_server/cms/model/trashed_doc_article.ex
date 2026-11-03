@@ -32,7 +32,6 @@ defmodule GroupherServer.CMS.Model.TrashedDocArticle do
     belongs_to(:deleted_by, User)
     field(:deleted_at, :utc_datetime)
     field(:article, :map, virtual: true)
-    field(:mentioned_by_count, :integer, virtual: true, default: 0)
     timestamps(type: :utc_datetime)
   end
 

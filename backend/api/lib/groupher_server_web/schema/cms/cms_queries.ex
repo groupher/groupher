@@ -583,6 +583,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "mentions created by an artiment"
     field :mentions, :artiment_mention_page do
+      arg(:community, non_null(:string))
       arg(:source, non_null(:mention_source_input))
       arg(:pagi, :pagi_input)
 
@@ -591,10 +592,33 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "artiments mentioning an internal target"
     field :mentioned_by, :artiment_mention_page do
+      arg(:community, non_null(:string))
       arg(:target, non_null(:mention_target_input))
       arg(:pagi, :pagi_input)
 
       resolve(&R.CMS.ArtimentMentions.mentioned_by/3)
+    end
+
+    field :reference_map, non_null(:reference_map_page) do
+      arg(:community, non_null(:string))
+      arg(:focus, non_null(:reference_map_locator_input))
+      arg(:frontiers, non_null(list_of(non_null(:reference_map_frontier_input))))
+      arg(:first, :integer, default_value: 20)
+      resolve(&R.CMS.ArtimentMentions.reference_map/3)
+    end
+
+    field :reference_map_revision, non_null(:id) do
+      arg(:community, non_null(:string))
+      arg(:focus, non_null(:reference_map_locator_input))
+      resolve(&R.CMS.ArtimentMentions.reference_map_revision/3)
+    end
+
+    field :reference_map_article_comments, non_null(:reference_map_article_comments_page) do
+      arg(:community, non_null(:string))
+      arg(:focus, non_null(:reference_map_locator_input))
+      arg(:after, :id)
+      arg(:first, :integer, default_value: 20)
+      resolve(&R.CMS.ArtimentMentions.reference_map_article_comments/3)
     end
 
     @desc "search communities by title"

@@ -85,7 +85,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   def comment(actor, action, %Comment{} = comment) do
     with {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, comment.community_id),
+         {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment),
          {:ok, result} <-
            with_parent_lock(community, article, comment.branch_id, fn ->
              with {:ok, context} <- Load.comment(actor, community, thread, article, comment),

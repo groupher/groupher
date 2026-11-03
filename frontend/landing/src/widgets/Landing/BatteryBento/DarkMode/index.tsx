@@ -56,7 +56,7 @@ export default function DarkMode() {
   const showStars = isHovered || theme === THEME.DARK
 
   return (
-    <div className={s.wrapper} ref={ref}>
+    <div className={s.wrapper} data-landing-card='darkMode' ref={ref}>
       <div className={cn(s.inner, isHovered && '-rotate-180')} />
       {showStars && <StarSVG className={cn(s.starIcon, 'top-3 right-8')} />}
       {showStars && <StarSVG className={cn(s.starIcon, 'top-6 right-3 !opacity-50')} />}

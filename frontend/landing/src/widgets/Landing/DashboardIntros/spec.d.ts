@@ -1,3 +1,3 @@
-import type { TDsbPath } from '~/spec'
+import type INTROS from './constant'
 
-export type TIntroTab = TDsbPath | 'richeditor'
+export type TIntroTab = keyof typeof INTROS

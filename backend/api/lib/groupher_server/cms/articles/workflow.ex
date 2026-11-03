@@ -21,6 +21,7 @@ defmodule GroupherServer.CMS.Articles.Workflow do
   alias Accounts.Model.User
   alias CMS.Model.{Article, ArticleBinding, Author, Community}
   alias CMS.Articles.Effects
+  alias CMS.ArtimentMentions.{GraphRevision, SyncProgress}
   alias Helper.ORM
 
   @doc "Runs an Article workflow in the current transaction or opens one."
@@ -121,14 +122,49 @@ defmodule GroupherServer.CMS.Articles.Workflow do
                  },
                  effect_key: "article-projections:#{community.id}:#{inner_id}",
                  retry_failed: true
-               ) do
-          {:ok, %{cache: cache_event, projections: projection_event}}
+               ),
+             {:ok, mention_event} <- enqueue_mention_sync(article, public, identity),
+             {:ok, :pass} <- GraphRevision.bump_for_article(article.id) do
+          {:ok, %{cache: cache_event, projections: projection_event, mentions: mention_event}}
         else
           {:error, reason} -> {:error, reason}
         end
 
       _ ->
         {:error, CMS.ErrorCat.command_id_required()}
+    end
+  end
+
+  defp enqueue_mention_sync(%Article{thread: :doc} = article, public, identity) do
+    source = %{article_id: article.id, thread: :doc, branch_id: public.branch_id}
+    token = "#{public.branch_id}:#{public.branch_version_id}:#{public.publication_version}"
+
+    with {:ok, _state} <- SyncProgress.mark_pending_in_transaction(source, token) do
+      Effects.enqueue(
+        "article.mention_sync",
+        "article",
+        article.id,
+        identity,
+        %{source_type: "doc", content_token: token, branch_id: public.branch_id},
+        effect_key: "article.mention_sync:doc:#{article.id}:#{token}",
+        retry_failed: true
+      )
+    end
+  end
+
+  defp enqueue_mention_sync(%Article{} = article, public, identity) do
+    token = "#{public.revision_id}:#{public.publication_version}"
+
+    with {:ok, _state} <- SyncProgress.mark_pending_in_transaction(article, token) do
+      Effects.enqueue(
+        "article.mention_sync",
+        "article",
+        article.id,
+        identity,
+        %{source_type: Atom.to_string(article.thread), content_token: token},
+        effect_key: "article.mention_sync:#{article.thread}:#{article.id}:#{token}",
+        retry_failed: true
+      )
     end
   end
 

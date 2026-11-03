@@ -12,7 +12,7 @@ export default function ArticlesIntroTabs() {
   const [tab, setTab] = useState<TThread>(THREAD.POST)
 
   return (
-    <section className={s.wrapper}>
+    <section className={s.wrapper} data-landing-section='articles'>
       <Tabs tab={tab} onChange={(tab) => setTab(tab)} />
       <Content tab={tab} />
     </section>

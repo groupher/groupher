@@ -3,6 +3,7 @@ import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
 import { THREAD } from '~/const/thread'
 import { browserGraphQLRequest } from '~/graphql/client'
 import { DEFAULT_EFFECTIVE_PAGI_CONFIG, toPagiGraphQLInput } from '~/lib/pagination/params'
+import { blog } from '~/schemas/pages/blog'
 import { changelog, changelogPage } from '~/schemas/pages/changelog'
 import { doc } from '~/schemas/pages/doc'
 import { communityTagGroups, communityTagStats } from '~/schemas/pages/misc'
@@ -127,6 +128,10 @@ const detail = (community: string, thread: TThread, innerId: string | number) =>
           article,
         })
         return data.changelog as unknown as TPost
+      }
+      if (thread === THREAD.BLOG) {
+        const data = await browserGraphQLRequest(blog, { article })
+        return data.blog as unknown as TPost
       }
       if (thread === THREAD.DOC) {
         const data = await browserGraphQLRequest(doc, {

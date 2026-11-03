@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Config do
         }
 
   @site_host get_config(:general, :site_host)
-  @threads ArtimentConfig.threads()
+  @threads (ArtimentConfig.threads() ++ [:ticket]) |> Enum.uniq()
 
   defstruct site_host: @site_host,
             threads: @threads,

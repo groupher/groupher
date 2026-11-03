@@ -26,7 +26,13 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
+
+  alias CMS.{
+    ArtimentMentions.Config,
+    ArtimentMentions.PublicUrl,
+    ErrorCat,
+    FrontDesk
+  }
 
   alias CMS.Model.{
     ArticleBinding,
@@ -34,6 +40,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     ArticlePublic,
     ArticleRevision,
     Comment,
+    Community,
     DocBranch,
     DocBranchVersion,
     DocPublic
@@ -233,9 +240,71 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   defp do_parse_link_mention(_, _, _, _), do: nil
 
   defp classify_url(url) do
-    case site_article_link?(url) do
-      true -> internal_mention_from_url(url)
-      false -> {:ok, %{scope: :external, url: url, hash: hash_url(url)}}
+    case public_article_link(url) do
+      {:ok, mention} ->
+        {:ok, mention}
+
+      :external ->
+        if site_article_link?(url) do
+          internal_mention_from_url(url)
+        else
+          {:ok, %{scope: :external, url: url, hash: hash_url(url)}}
+        end
+    end
+  end
+
+  # The host is part of the locator's trust boundary. A custom domain has no
+  # backend host registry, so it remains an external URL even if its path fits.
+  defp public_article_link(url) do
+    uri = URI.parse(url)
+    site = URI.parse(Config.site_host())
+
+    trusted_host? =
+      (uri.scheme == site.scheme and uri.host == site.host and uri.port == site.port) or
+        (is_nil(uri.scheme) and is_nil(uri.host) and is_binary(uri.path) and
+           String.starts_with?(uri.path, "/"))
+
+    if trusted_host? and is_nil(uri.userinfo) do
+      case String.split(uri.path || "", "/", trim: true) do
+        [community, thread_slug, inner_id | rest] when rest == [] or length(rest) == 1 ->
+          with {:ok, thread} <- parse_thread_slug(thread_slug),
+               {inner, ""} when inner > 0 <- Integer.parse(inner_id),
+               true <- thread == :doc or rest == [] do
+            case uri.fragment do
+              nil ->
+                {:ok,
+                 %{
+                   scope: :internal,
+                   type: thread,
+                   value: {:public, community, inner}
+                 }}
+
+              "comment-" <> comment_inner_id ->
+                case Integer.parse(comment_inner_id) do
+                  {comment_inner, ""} when comment_inner > 0 ->
+                    {:ok,
+                     %{
+                       scope: :internal,
+                       type: :comment,
+                       value: {:public_comment, community, thread, inner, comment_inner}
+                     }}
+
+                  _ ->
+                    :external
+                end
+
+              _ ->
+                :external
+            end
+          else
+            _ -> :external
+          end
+
+        _ ->
+          :external
+      end
+    else
+      :external
     end
   end
 
@@ -318,13 +387,14 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   defp resolve_internal_mention(%{type: :user}, _), do: nil
 
   defp resolve_internal_mention(%{type: :comment, value: value} = candidate, cache) do
-    with id when not is_nil(id) <- cast_id(value),
-         %{comment: comment, article: article, thread: thread} <- Map.get(cache.comments, id) do
+    with id when not is_nil(id) <- comment_locator(value),
+         %{comment: comment, article: article} <- Map.get(cache.comments, id),
+         url when is_binary(url) <- PublicUrl.comment(article, comment.inner_id) do
       candidate
       |> resolved_internal_mention(%{
         type: :comment,
         id: comment.id,
-        url: "#{article_url(thread, article.id)}?comment_id=#{comment.id}",
+        url: url,
         snapshot: %{title: article.title},
         artiment: comment,
         parent_article: article
@@ -336,14 +406,14 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp resolve_internal_mention(%{type: type, value: value} = candidate, cache)
        when type in @threads do
-    with id when not is_nil(id) <- cast_article_id(value),
-         articles <- Map.get(cache.articles_by_thread, type, %{}),
-         article when not is_nil(article) <- Map.get(articles, id) do
+    with articles <- Map.get(cache.articles_by_thread, type, %{}),
+         article when not is_nil(article) <- Map.get(articles, article_locator(value)),
+         url when is_binary(url) <- PublicUrl.article(article) do
       candidate
       |> resolved_internal_mention(%{
         type: type,
         id: article.id,
-        url: article_url(type, article.id),
+        url: url,
         snapshot: %{title: article.title},
         artiment: article
       })
@@ -427,9 +497,117 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
         |> Enum.reject(&is_nil/1)
         |> Enum.uniq()
 
-      {thread, load_articles(thread, ids, community_id)}
+      public_locators =
+        candidates
+        |> Enum.filter(&(&1.type == thread))
+        |> Enum.map(& &1.value)
+        |> Enum.filter(&match?({:public, _, _}, &1))
+        |> Enum.uniq()
+
+      {thread,
+       Map.merge(
+         load_articles(thread, ids, community_id),
+         load_public_articles(thread, public_locators)
+       )}
     end)
   end
+
+  defp load_public_articles(_thread, []), do: %{}
+
+  defp load_public_articles(:ticket, locators) do
+    Enum.reduce(locators, %{}, fn {:public, slug, inner_id} = locator, acc ->
+      with %Community{} = community <- Repo.get_by(Community, slug: slug),
+           {:ok, %{article: article, title: title, binding: binding}} <-
+             CMS.Tickets.get_public(community, inner_id) do
+        Map.put(acc, locator, %{
+          id: article.id,
+          article_id: article.id,
+          branch_id: nil,
+          thread: :ticket,
+          community_id: community.id,
+          community_slug: community.slug,
+          inner_id: binding.inner_id,
+          title: title
+        })
+      else
+        _ -> acc
+      end
+    end)
+  end
+
+  defp load_public_articles(thread, locators) do
+    pair_filter =
+      Enum.reduce(locators, dynamic(false), fn {:public, slug, inner_id}, filter ->
+        dynamic(
+          [_article, binding, community, ...],
+          ^filter or (community.slug == ^slug and binding.inner_id == ^inner_id)
+        )
+      end)
+
+    query =
+      case thread do
+        :doc ->
+          from(article in Article,
+            join: binding in ArticleBinding,
+            on: binding.article_id == article.id,
+            join: community in Community,
+            on: community.id == binding.community_id,
+            join: branch in DocBranch,
+            on: branch.community_id == community.id and branch.type == :main,
+            join: public in DocPublic,
+            on: public.article_id == article.id and public.branch_id == branch.id,
+            join: version in DocBranchVersion,
+            on: version.id == public.branch_version_id,
+            join: revision in ArticleRevision,
+            on: revision.id == version.revision_id,
+            where: article.thread == :doc,
+            where: ^pair_filter,
+            select: %{
+              id: article.id,
+              article_id: article.id,
+              branch_id: branch.id,
+              thread: article.thread,
+              community_id: community.id,
+              community_slug: community.slug,
+              inner_id: binding.inner_id,
+              slug: public.slug,
+              title: revision.title
+            }
+          )
+
+        _ ->
+          from(article in Article,
+            join: binding in ArticleBinding,
+            on: binding.article_id == article.id,
+            join: community in Community,
+            on: community.id == binding.community_id,
+            join: public in ArticlePublic,
+            on: public.article_id == article.id,
+            join: revision in ArticleRevision,
+            on: revision.id == public.revision_id,
+            where: article.thread == ^thread,
+            where: ^pair_filter,
+            select: %{
+              id: article.id,
+              article_id: article.id,
+              branch_id: nil,
+              thread: article.thread,
+              community_id: community.id,
+              community_slug: community.slug,
+              inner_id: binding.inner_id,
+              slug: public.slug,
+              title: revision.title
+            }
+          )
+      end
+
+    query
+    |> Repo.all()
+    |> Map.new(&{{:public, &1.community_slug, &1.inner_id}, &1})
+  end
+
+  defp article_locator({:public, _, _} = locator), do: locator
+  defp article_locator(value), do: cast_article_id(value)
 
   defp load_articles(_thread, [], _community_id), do: %{}
 
@@ -440,6 +618,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
           from(article in Article,
             join: binding in ArticleBinding,
             on: binding.article_id == article.id,
+            join: community in Community,
+            on: community.id == binding.community_id,
             join: branch in DocBranch,
             on: branch.community_id == binding.community_id and branch.type == :main,
             join: public in DocPublic,
@@ -455,6 +635,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
               branch_id: branch.id,
               thread: article.thread,
               community_id: binding.community_id,
+              community_slug: community.slug,
+              inner_id: binding.inner_id,
+              slug: public.slug,
               title: revision.title
             }
           )
@@ -463,6 +646,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
           from(article in Article,
             join: binding in ArticleBinding,
             on: binding.article_id == article.id,
+            join: community in Community,
+            on: community.id == binding.community_id,
             join: public in ArticlePublic,
             on: public.article_id == article.id,
             join: revision in ArticleRevision,
@@ -474,6 +659,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
               branch_id: nil,
               thread: article.thread,
               community_id: binding.community_id,
+              community_slug: community.slug,
+              inner_id: binding.inner_id,
+              slug: public.slug,
               title: revision.title
             }
           )
@@ -517,19 +705,82 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
         {thread, load_articles(thread, Enum.uniq(ids), community_id)}
       end)
 
-    comments
-    |> Enum.reduce(%{}, fn comment, acc ->
-      with {:ok, thread} <- FrontDesk.thread_of(comment),
-           {:ok, info} <- match(thread),
-           article_id when not is_nil(article_id) <- Map.get(comment, info.foreign_key),
-           articles <- Map.get(articles_by_thread, thread, %{}),
-           article when not is_nil(article) <- Map.get(articles, article_id) do
-        Map.put(acc, comment.id, %{comment: comment, article: article, thread: thread})
-      else
-        _ -> acc
-      end
-    end)
+    id_comments =
+      comments
+      |> Enum.reduce(%{}, fn comment, acc ->
+        with {:ok, thread} <- FrontDesk.thread_of(comment),
+             {:ok, info} <- match(thread),
+             article_id when not is_nil(article_id) <- Map.get(comment, info.foreign_key),
+             articles <- Map.get(articles_by_thread, thread, %{}),
+             article when not is_nil(article) <- Map.get(articles, article_id) do
+          Map.put(acc, comment.id, %{comment: comment, article: article, thread: thread})
+        else
+          _ -> acc
+        end
+      end)
+
+    Map.merge(id_comments, load_public_comments(candidates))
   end
+
+  defp load_public_comments(candidates) do
+    locators =
+      candidates
+      |> Enum.filter(&(&1.type == :comment))
+      |> Enum.map(& &1.value)
+      |> Enum.filter(&match?({:public_comment, _, _, _, _}, &1))
+      |> Enum.uniq()
+
+    case locators do
+      [] ->
+        %{}
+
+      _ ->
+        filter =
+          Enum.reduce(locators, dynamic(false), fn
+            {:public_comment, slug, thread, article_inner, comment_inner}, condition ->
+              dynamic(
+                [comment, binding, community],
+                ^condition or
+                  (community.slug == ^slug and comment.thread == ^thread and
+                     binding.inner_id == ^article_inner and comment.inner_id == ^comment_inner)
+              )
+          end)
+
+        matches =
+          from(comment in Comment,
+            join: binding in ArticleBinding,
+            on: binding.article_id == comment.article_id,
+            join: community in Community,
+            on: community.id == binding.community_id,
+            where: ^filter,
+            select: {comment, community.slug, binding.inner_id}
+          )
+          |> Repo.all()
+
+        parents =
+          matches
+          |> Enum.group_by(fn {comment, _, _} -> comment.thread end, fn
+            {_comment, slug, inner_id} -> {:public, slug, inner_id}
+          end)
+          |> Map.new(fn {thread, parent_locators} ->
+            {thread, load_public_articles(thread, Enum.uniq(parent_locators))}
+          end)
+
+        Enum.reduce(matches, %{}, fn {comment, slug, article_inner}, acc ->
+          key = {:public_comment, slug, comment.thread, article_inner, comment.inner_id}
+          article = get_in(parents, [comment.thread, {:public, slug, article_inner}])
+
+          if article && (comment.thread != :doc or comment.branch_id == article.branch_id) do
+            Map.put(acc, key, %{comment: comment, article: article, thread: comment.thread})
+          else
+            acc
+          end
+        end)
+    end
+  end
+
+  defp comment_locator({:public_comment, _, _, _, _} = locator), do: locator
+  defp comment_locator(value), do: cast_id(value)
 
   defp comment_article_ids_by_thread(comments) do
     Enum.reduce(comments, %{}, fn comment, acc ->
@@ -588,7 +839,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
         {:ok, :comment}
 
       normalized ->
-        case Enum.find(Threads.article_enums(), &(Atom.to_string(&1) == normalized)) do
+        case Enum.find(@threads, &(Atom.to_string(&1) == normalized)) do
           nil -> {:error, ErrorCat.invalid_mention_type()}
           thread -> {:ok, thread}
         end
@@ -598,7 +849,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   defp parse_thread_slug(slug) when is_binary(slug) do
     normalized = String.downcase(slug)
 
-    case Enum.find(Threads.article_enums(), fn thread -> Atom.to_string(thread) == normalized end) do
+    case Enum.find(@threads, fn thread -> Atom.to_string(thread) == normalized end) do
       nil -> {:error, ErrorCat.invalid_thread()}
       thread -> {:ok, thread}
     end
@@ -615,8 +866,6 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
       not is_nil(query) and String.starts_with?(query, "comment_id=")
     end
   end
-
-  defp article_url(thread, id), do: Config.article_url(thread, id)
 
   defp hash_url(url) do
     :sha256

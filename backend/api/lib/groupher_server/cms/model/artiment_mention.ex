@@ -1,175 +1,175 @@
 defmodule GroupherServer.CMS.Model.ArtimentMention do
   @moduledoc """
-  Ecto schema for CMS mention graph facts.
+  Persists one stable, Community-independent directed Mention fact.
 
-  A row records one mentioner artiment, one mentioned internal/external target,
-  and occurrence details. Messaging delivery consumes these facts but does not
-  own this schema.
-
-  Business position:
-
-      CMS context
-        -> ArtimentMention schema/changeset
-        -> GroupherServer.Repo
-        -> PostgreSQL
+      parsed occurrence -> typed source/target IDs -> public graph projection
   """
 
   use Ecto.Schema
   use Flop.Schema
 
-  @flop_options [filterable: [], sortable: [:id, :inserted_at], pagination_types: [:page, :first]]
-
   import Ecto.Changeset
 
   alias __MODULE__
-  alias GroupherServer.CMS
-  alias CMS.Artiment.Threads
   alias Helper.Constant.DBPrefix
 
+  @flop_options [filterable: [], sortable: [:id, :inserted_at], pagination_types: [:page, :first]]
   @schema_prefix DBPrefix.cms()
-  @timestamps_opts [type: :utc_datetime]
-
-  @mentioner_types Threads.article_values_list() ++ [:comment]
-  @mentioned_types Threads.article_values_list() ++ [:comment, :user, :url]
-  @mentioned_scopes [:internal, :external]
-  @mention_cases [:inline_mention, :link]
-
-  @required_fields ~w(
-    mentioner_type
-    mentioner_community_id
-    mentioned_scope
-    mentioned_type
-    mention_case
-    mentioned_at
-  )a
-
-  @optional_fields ~w(
-    mentioner_url
-    mentioner_id
-    mentioner_article_id
-    mentioner_branch_id
-    mentioned_id
-    mentioned_article_id
-    mentioned_branch_id
-    mentioned_community_id
-    mentioned_url
-    mentioned_url_hash
-    occurrences
-    mentioner_snapshot
-    mentioned_snapshot
-    meta
-  )a
+  @mentioner_types [:post, :blog, :changelog, :doc, :ticket, :comment]
+  @mentioned_types @mentioner_types ++ [:user, :url]
 
   @type t :: %ArtimentMention{}
 
   schema "artiment_mentions" do
     field(:mentioner_type, Ecto.Enum, values: @mentioner_types)
-    field(:mentioner_id, :id)
     field(:mentioner_article_id, Ecto.UUID)
+    field(:mentioner_comment_id, :id)
     field(:mentioner_branch_id, :id)
-    field(:mentioner_community_id, :id)
-    field(:mentioner_url, :string)
 
-    field(:mentioned_scope, Ecto.Enum, values: @mentioned_scopes)
+    field(:mentioned_scope, Ecto.Enum, values: [:internal, :external])
     field(:mentioned_type, Ecto.Enum, values: @mentioned_types)
-    field(:mentioned_id, :id)
     field(:mentioned_article_id, Ecto.UUID)
+    field(:mentioned_comment_id, :id)
+    field(:mentioned_user_id, :id)
     field(:mentioned_branch_id, :id)
-    field(:mentioned_community_id, :id)
-    field(:mentioned_url, :string)
-    field(:mentioned_url_hash, :string)
+    field(:external_url, :string)
+    field(:external_url_hash, :string)
 
-    field(:mention_case, Ecto.Enum, values: @mention_cases)
-    field(:occurrences, {:array, :map}, default: [])
-    field(:mentioner_snapshot, :map, default: %{})
-    field(:mentioned_snapshot, :map, default: %{})
-    field(:meta, :map, default: %{})
+    field(:mention_case, Ecto.Enum, values: [:inline_mention, :link])
+    field(:occurrences, ArtimentMention.Occurrences)
+    field(:edge_key, :string)
     field(:mentioned_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
 
+  @fields ~w(
+    mentioner_type mentioner_article_id mentioner_comment_id mentioner_branch_id
+    mentioned_scope mentioned_type mentioned_article_id mentioned_comment_id
+    mentioned_user_id mentioned_branch_id external_url external_url_hash
+    mention_case occurrences mentioned_at
+  )a
+
   def changeset(%ArtimentMention{} = mention, attrs) do
     mention
-    |> cast(attrs, @optional_fields ++ @required_fields)
-    |> validate_required(@required_fields)
-    |> validate_mentioner_identity()
-    |> validate_internal_mention()
-    |> validate_external_mention()
-    |> validate_scope_case()
-    |> validate_scope_fields()
+    |> cast(attrs, @fields)
+    |> validate_required([
+      :mentioner_type,
+      :mentioned_scope,
+      :mentioned_type,
+      :mention_case,
+      :occurrences,
+      :mentioned_at
+    ])
+    |> validate_source_identity()
+    |> validate_target_identity()
+    |> validate_case()
+    |> validate_occurrences()
+    |> unique_constraint(:edge_key)
+    |> check_constraint(:mentioner_article_id, name: :mention_source_identity_check)
+    |> check_constraint(:mentioned_article_id, name: :mention_target_identity_check)
+    |> check_constraint(:occurrences, name: :mention_occurrences_check)
   end
 
-  def update_changeset(%ArtimentMention{} = mention, attrs) do
-    mention
-    |> cast(attrs, @optional_fields ++ @required_fields)
-    |> validate_mentioner_identity()
-    |> validate_internal_mention()
-    |> validate_external_mention()
-    |> validate_scope_case()
-    |> validate_scope_fields()
-  end
+  defp validate_source_identity(changeset) do
+    source_type = get_field(changeset, :mentioner_type)
+    source_article = get_field(changeset, :mentioner_article_id)
+    source_comment = get_field(changeset, :mentioner_comment_id)
 
-  defp validate_mentioner_identity(changeset) do
-    case {get_field(changeset, :mentioner_id), get_field(changeset, :mentioner_article_id)} do
-      {nil, nil} -> add_error(changeset, :mentioner_id, "requires a comment id or Article id")
-      {_id, nil} -> changeset
-      {nil, _article_id} -> changeset
-      {_id, _article_id} -> add_error(changeset, :mentioner_id, "cannot accompany Article id")
-    end
-  end
-
-  defp validate_internal_mention(changeset) do
-    case get_field(changeset, :mentioned_scope) do
-      :internal -> validate_internal_identity(changeset)
-      _ -> changeset
-    end
-  end
-
-  defp validate_internal_identity(changeset) do
-    case {get_field(changeset, :mentioned_id), get_field(changeset, :mentioned_article_id)} do
-      {nil, nil} -> add_error(changeset, :mentioned_id, "requires an entity id or Article id")
-      _ -> changeset
-    end
-  end
-
-  defp validate_external_mention(changeset) do
-    case get_field(changeset, :mentioned_scope) do
-      :external -> validate_required(changeset, [:mentioned_url, :mentioned_url_hash])
-      _ -> changeset
-    end
-  end
-
-  defp validate_scope_case(changeset) do
-    case {get_field(changeset, :mentioned_scope), get_field(changeset, :mention_case)} do
-      {:internal, :inline_mention} -> changeset
-      {:external, :link} -> changeset
-      {nil, _} -> changeset
-      {_, nil} -> changeset
-      {:internal, _} -> add_error(changeset, :mention_case, "must be inline_mention")
-      {:external, _} -> add_error(changeset, :mention_case, "must be link")
-    end
-  end
-
-  defp validate_scope_fields(changeset) do
-    case get_field(changeset, :mentioned_scope) do
-      :internal ->
-        reject_present(changeset, :mentioned_url_hash)
-
-      :external ->
+    case {source_type, source_article, source_comment} do
+      {:comment, nil, id} when not is_nil(id) ->
         changeset
-        |> reject_present(:mentioned_id)
-        |> reject_present(:mentioned_community_id)
+
+      {:doc, id, nil} when not is_nil(id) ->
+        validate_required(changeset, [:mentioner_branch_id])
+
+      {type, id, nil} when type in [:post, :blog, :changelog, :ticket] and not is_nil(id) ->
+        reject_present(changeset, :mentioner_branch_id)
 
       _ ->
+        add_error(changeset, :mentioner_type, "does not match source identity")
+    end
+  end
+
+  defp validate_target_identity(changeset) do
+    scope = get_field(changeset, :mentioned_scope)
+    type = get_field(changeset, :mentioned_type)
+    article_id = get_field(changeset, :mentioned_article_id)
+    comment_id = get_field(changeset, :mentioned_comment_id)
+    user_id = get_field(changeset, :mentioned_user_id)
+    branch_id = get_field(changeset, :mentioned_branch_id)
+    url = get_field(changeset, :external_url)
+    hash = get_field(changeset, :external_url_hash)
+
+    case {scope, type} do
+      {:external, :url} ->
         changeset
+        |> validate_required([:external_url, :external_url_hash])
+        |> reject_present(:mentioned_article_id)
+        |> reject_present(:mentioned_comment_id)
+        |> reject_present(:mentioned_user_id)
+        |> reject_present(:mentioned_branch_id)
+
+      {:internal, type} when type in [:post, :blog, :changelog, :doc, :ticket] ->
+        changeset
+        |> validate_required([:mentioned_article_id])
+        |> reject_present(:mentioned_comment_id)
+        |> reject_present(:mentioned_user_id)
+        |> reject_present(:external_url)
+        |> reject_present(:external_url_hash)
+        |> validate_branch(type, branch_id)
+
+      {:internal, :comment} ->
+        changeset
+        |> validate_required([:mentioned_comment_id])
+        |> reject_present(:mentioned_article_id)
+        |> reject_present(:mentioned_user_id)
+        |> reject_present(:external_url)
+        |> reject_present(:external_url_hash)
+
+      {:internal, :user} ->
+        changeset
+        |> validate_required([:mentioned_user_id])
+        |> reject_present(:mentioned_article_id)
+        |> reject_present(:mentioned_comment_id)
+        |> reject_present(:mentioned_branch_id)
+        |> reject_present(:external_url)
+        |> reject_present(:external_url_hash)
+
+      _ ->
+        if is_nil(scope) or is_nil(type) or
+             Enum.any?([article_id, comment_id, user_id, url, hash], &(not is_nil(&1))) do
+          add_error(changeset, :mentioned_type, "does not match target identity")
+        else
+          changeset
+        end
+    end
+  end
+
+  defp validate_branch(changeset, :doc, _branch),
+    do: validate_required(changeset, [:mentioned_branch_id])
+
+  defp validate_branch(changeset, _type, _branch),
+    do: reject_present(changeset, :mentioned_branch_id)
+
+  defp validate_case(changeset) do
+    case {get_field(changeset, :mentioned_scope), get_field(changeset, :mention_case)} do
+      {:internal, :link} -> add_error(changeset, :mention_case, "must be inline_mention")
+      {:external, :inline_mention} -> add_error(changeset, :mention_case, "must be link")
+      _ -> changeset
+    end
+  end
+
+  defp validate_occurrences(changeset) do
+    case get_field(changeset, :occurrences) do
+      [_ | _] -> changeset
+      _ -> add_error(changeset, :occurrences, "must contain at least one position")
     end
   end
 
   defp reject_present(changeset, field) do
-    case get_field(changeset, field) do
-      nil -> changeset
-      _ -> add_error(changeset, field, "must be blank")
-    end
+    if is_nil(get_field(changeset, field)),
+      do: changeset,
+      else: add_error(changeset, field, "must be blank")
   end
 end

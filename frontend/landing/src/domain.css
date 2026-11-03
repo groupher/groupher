@@ -6,7 +6,7 @@
     top: 0;
     bottom: 0;
     width: 1.125rem; /* w-4.5 */
-    background-image: radial-gradient(circle, #e9e9e9 4px, transparent 4px);
+    background-image: radial-gradient(circle, var(--landing-scene-paperPunch) 4px, transparent 4px);
     background-size: 8px 32px;
     background-repeat: repeat-y;
   }
@@ -14,7 +14,11 @@
   [data-theme='dark'] {
     .letter-paper::before,
     .letter-paper::after {
-      background-image: radial-gradient(circle, #323232 4px, transparent 4px);
+      background-image: radial-gradient(
+        circle,
+        var(--landing-scene-paperPunch) 4px,
+        transparent 4px
+      );
     }
   }
 
@@ -26,7 +30,7 @@
   }
 
   .diff-bar-green {
-    background: #eaffdfc9;
+    background: var(--landing-scene-comparePositive);
   }
   .diff-bar-green::before {
     content: '';
@@ -42,7 +46,7 @@
   }
 
   .diff-bar-red {
-    background: #ffa5a57d;
+    background: var(--landing-scene-compareNegative);
   }
   .diff-bar-red::before {
     content: '';
@@ -59,7 +63,7 @@
 
   [data-theme='dark'] {
     .diff-bar-green {
-      background: #314228c9;
+      background: var(--landing-scene-comparePositive);
     }
 
     .diff-bar-green::before {
@@ -67,7 +71,7 @@
     }
 
     .diff-bar-red {
-      background: #823a3a7d;
+      background: var(--landing-scene-compareNegative);
     }
 
     .diff-bar-red::before {
@@ -76,12 +80,12 @@
   }
 
   .diff-area-red-stripes {
-    background: repeating-linear-gradient(245deg, #ffecec 0 10px, transparent 10px 20px);
+    background: var(--landing-scene-compareStripes);
   }
 
   [data-theme='dark'] {
     .diff-area-red-stripes {
-      background: repeating-linear-gradient(245deg, #352424 0 10px, #0000 10px 20px);
+      background: var(--landing-scene-compareStripes);
     }
   }
 
@@ -96,14 +100,14 @@
   }
 
   .keyboard-wall {
-    background: #1d1d1d;
+    background: var(--landing-scene-keyboardWall);
   }
 
   .keyboard-block {
     /* --key-bg-start-color: #0f0f0f;
-     --key-bg-end-color: #181818; */
-    --key-bg-start-color: #232323;
-    --key-bg-end-color: #181818;
+     --key-bg-end-color: var(--landing-scene-keyboardEnd); */
+    --key-bg-start-color: var(--landing-scene-keyboardStart);
+    --key-bg-end-color: var(--landing-scene-keyboardEnd);
 
     display: grid;
     flex-shrink: 0;
@@ -160,12 +164,12 @@
 
   [data-theme='dark'] {
     .keyboard-block {
-      --key-bg-start-color: #2d2c2c;
-      --key-bg-end-color: #212121;
+      --key-bg-start-color: var(--landing-scene-keyboardStart);
+      --key-bg-end-color: var(--landing-scene-keyboardEnd);
     }
 
     .keyboard-wall {
-      background: #181818;
+      background: var(--landing-scene-keyboardWall);
     }
   }
 }

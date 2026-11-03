@@ -1,7 +1,8 @@
 # Article Community
 
 > 状态：ArticleBinding relation normalization 与公共路径编号合同已实现；Ticket 于 2026-11-01 取代 Post 的 Community-local Kanban 状态。
-> 本文第 1.1 节的 Comment 跨 mirror 共享、审核与归属 FK 是 Reference Map M1/M2 的目标合同，当前 Gate/Schema 尚未实现。
+> 本文第 1.1 节的 Comment 跨 mirror 共享、审核与归属 FK 是 Reference Map M1/M2 的实现合同；落地入口与验证见 [Reference Map inventory](reference-map-inventory.md)。
+> 下一轮 ArticleLifecycle/Comment 社区解耦及统一审核的目标、迁移顺序与验收见 [解耦重构合同](article-lifecycle-comment-decoupling.md)。该目标尚未实施；切换完成后替换第 1.1 节有关创建地归属与审核权限的现行条款。
 >
 > 本文是 Article 与 Community 关系的唯一产品合同。Revision、Draft、Lifecycle、
 > Moderation、Kanban 等文档只能引用本文，不能重新定义一套 `home` / `mirror` 关系角色。
@@ -30,7 +31,7 @@ Article
 
 普通 Article 的正文引用（Mention）同样是 Article 级事实：同一公开正文只解析、同步和保存一次。`mirror`/`move`/`unmirror` 不复制、重建或清除该 Article 的引用事实，也不重新发送 Mention 通知。引用的目标按正文中的明确公开 locator 解析为稳定资源身份；不能以当前展示 Community 重新解释同一链接。
 
-Community 的引用 Map 是读取投影：在请求的 Community 中用当前 binding、Lifecycle 和 public Gate 判断引用两端是否可见，再生成该 Community 的路径。binding 增减只改变投影可见性与缓存版本；Article 级正文或引用事实不随之改变。Comment 是挂在 Article 下的独立资源；其创建 Community 只记录操作发生的位置，不因父 Article 被 mirror 而复制 Comment 或 Comment Mention。Doc 的公开 main branch、Ticket 的单 Community 身份分别按其 owner 选版，不套用普通 Article 的 mirror 规则。目标合同见 [Reference Map](./reference-map.md)。
+Community 的引用 Map 是读取投影：在请求的 Community 中用当前 binding、Lifecycle 和 public Gate 判断引用两端是否可见，再生成该 Community 的路径。binding 增减只改变投影可见性与缓存版本；Article 级正文或引用事实不随之改变。Comment 是挂在 Article 下的独立资源；其创建 Community 只记录操作发生的位置，不因父 Article 被 mirror 而复制 Comment 或 Comment Mention。Article MiniMap 可分页发现本篇可读 Comment 的显式引用及待同步状态，但父子归属不产生引用边；Comment 提及父 Article 是 Comment→Article，Article 自引用则过滤。Doc 的公开 main branch、Ticket 的单 Community 身份分别按其 owner 选版，不套用普通 Article 的 mirror 规则。目标合同见 [Reference Map](./reference-map.md)。
 
 `ArticleBinding` 的最小合同是：
 
@@ -55,7 +56,13 @@ Comment ReviewBlock 对普通 Article Comment 只允许 `community_id = NULL` �
 
 Article 的评论数和参与人数按全局 Comment 集合统计，在所有 mirror 页面展示同一 Article 级值；Comment 创建、回复和作者/被回复者通知只产生一次，不按 mirror 数量复制。Community 的活动/运营计数仅归属实际提交评论时的 Community；回复从当前请求 Community 创建自己的归属，不沿用被回复 Comment 的归属；删除或新增其他 binding 不回放这些计数/通知。评论缓存、搜索投影与 Map 刷新在共享 Comment 变化时覆盖父 Article 的全部当前 binding，而非仅创建 Community。
 
-`Comment.community_id` 改成可空的 `origin_community_id` 归属 FK：创建时必填并校验其为父 Article 的有效 binding，之后不参与共享 Comment 的读取身份或 public Gate。FK 使用 `ON DELETE SET NULL`；创建 Community 被永久删除而父 Article 仍在其他 Community 时，Comment、CommentBody、互动和 Mention 均保留，并可从其余有效 binding 读取。归属变 null 后，作者和平台审核员仍可管理；已删除 Community 的管理员权限不再存在。M0 清点所有当前依赖 `comment.community_id` 的 Gate、FrontDesk、Review、通知、统计、缓存和 Job 入口，M1/M2 按此合同改造，不允许只修 Map 查询。公开 Article 的最后一条 binding 仍受现有禁止删除约束。
+普通 Article Comment 的 `Comment.community_id` 改成可空的 `origin_community_id` 归属 FK：每条 Comment 至多记录一个创建 Community；`origin_` 仅用于区分该创建归属与本次请求 Community，不表示 Comment 自身有多个 Community binding。创建时必填并校验其为父 Article 的有效 binding，之后不参与共享 Comment 的读取身份或 public Gate。FK 使用 `ON DELETE SET NULL`；创建 Community 被永久删除而父 Article 仍在其他 Community 时，Comment、CommentBody、互动和 Mention 均保留，并可从其余有效 binding 读取。归属变 null 后，作者和平台审核员仍可管理；已删除 Community 的管理员权限不再存在。M0 清点所有当前依赖 `comment.community_id` 的 Gate、FrontDesk、Review、通知、统计、缓存和 Job 入口，M1/M2 按此合同改造，不允许只修 Map 查询。公开 Article 的最后一条 binding 仍受现有禁止删除约束。
+
+`FrontDesk.Relation.article_of/1` 是现有的 origin 侧 public 父 Article 投影 API，保留签名与既有职责；跨 mirror 的新路径不得拿它推断请求 Community，也不因本功能改成 `/2` 或移除。请求侧从现有 `FrontDesk.comment(comment_path)` 取得经过父 Article 与 Comment Gate 校验的 Comment；需要父 Article 公开投影时，使用该路径中的 ArticlePath 调 `FrontDesk.article(article_path)`，必要时以现有 `FrontDesk.resolve_binding(comment.article_id, request_community)` 校验当前 binding。内部父资源使用现有 `FrontDesk.article(comment.article_id, mode: :internal)`；已有 Comment `:article_context` view 可供只需父资源摘要的内部调用方使用。reply、upvote、emotion、编辑、`oneComment` 和对应 public URL 都从请求 path/binding 取得上下文，不从 `origin_community_id` 回退；origin 已删除时不能调用只识别 origin 的 `article_of/1`。后台通知/Job 不得通过 origin 选择父资源：事件只发送一次，记录触发请求 Community；投递时该 binding 已消失则按 Community ID 稳定排序选一个当前公开 binding 生成链接，若一个也没有则通知不带深链，不指向已删除 origin。M0 inventory 列出 `article_of/1` 全部调用方，逐一标明保留 origin 语义或迁移到上述现有 API，并登记事件 payload；R12 用 origin 删除后的真实命令和 Job 验证。
+
+举报入口和处置权限分开：用户在 Y 举报 X 创建的共享 Comment，现有 `AlertWall.UserReport.community_id=Y` 记录举报发生地，`AlertWall.Item.community_id=NULL` 表示平台决策队列；Y 管理员无权凭 Y 的 `review.decide` 生成全局 ReviewBlock。若举报发生在仍存在的 origin X，可进入 X 的审核队列，由 X 审核员按既有权限决定全局隐藏；origin 已删除或为空时一律进入平台队列。无论哪条队列，普通 Article Comment 的最终 ReviewBlock 均为 `community_id=NULL`，作者看到的 Review Notice 按稳定 Comment ID 读取全局结果，不按当前请求 Community 切分。现有 `SubmitReport.Target.community_id` 与 `Persist.submit_report_in_transaction` 把一个值写到 UserReport 和 Item；M1 对 Comment 举报增加可选的 `reported_in_community_id` 输入，原 `community_id` 仍表示决策队列，旧 `SubmitReport.execute/5` 签名及其他 target 的调用合同不变。Comment 写入时分别落现有 UserReport/Item 两列，不能因举报发生在 Y 就把 Item 放进 Y 队列；同一 item 若汇集 X/Y 举报，决策队列只可提升到 platform。Community 硬删时先把仍引用它的 Comment Item（包括已结案）当前决策队列转为 platform，原决定者与 scope 保存在审核历史；UserReport 的发生地 FK 对物理删除采用 `ON DELETE SET NULL`。按现有 Item 的平台/Community 两套 partial unique 索引与授权路径查询，不新增 `decision_scope` 或 `decision_community_id` 第二套权限事实。用户举报属于 AlertWall；`CMS.Review.Requests` 的内容审核请求不是举报队列。M0 清点 `Review.Decisions`、`Review.Requests`、`Review.Target`、`Review.Notice`、Review resolver、AlertWall 的 Comment target、授权、索引/FK 和事务入口。平台/创建地决定及释放均推进父 Article 所有当前 binding 的 GraphRevision。
+
+上述全局 ReviewBlock、origin 删除与跨 mirror 规则**只适用于普通 Post/Blog/Changelog Comment**。Doc Comment 保留 Doc owner 的 Community/main branch 审核作用域，不改为 `community_id=NULL` 的全局块；其归属与公开读取按 Doc branch 校验。Comment FK/Schema 统一把列命名为 `origin_community_id`；M1 同时使 `comments.thread` 为 `NOT NULL`，并用 DB CHECK 限定允许的 thread 值，避免 SQL 的 NULL 三值逻辑绕过类型约束。另一个行内 CHECK 为 `thread <> 'doc' OR origin_community_id IS NOT NULL`：普通 Comment 的 origin 可空且删除 Community 时由 FK `ON DELETE SET NULL`，Doc Comment 在 Doc 存续期间必须非空。FK 对 Doc Comment 尝试置空时 CHECK 使整条 Community 删除语句失败，不留下已提交的中间态；Doc Comment 的 origin 与 main branch Community 一致属于跨表关系，由 Doc owner 在写入/迁移事务校验，M0 固定其并发保护。Community 硬删前必须由 Doc owner 先删除/迁出相关 Doc Comment；R12 用真实 DB 验证仍有 Doc Comment 时删除整体失败、Community 与 Comment 都未改变。M1/M2 不得把普通 Comment 的审核/读取重写误用到 Doc Comment。
 
 ## 2. 为什么需要独立关系
 

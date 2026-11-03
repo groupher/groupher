@@ -8,27 +8,36 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArtimentMentions do
   alias GroupherServer.Pagi
   alias GroupherServer.CMS
 
-  def trashed_article_mentioned_by(item, args, _info) do
+  def mentions(_root, %{community: community, source: source} = args, _info) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.artiment_mentions_mentioned_by(item.thread, item.article.id, pagi)
+      CMS.artiment_mentions_public_mentions(community, source, pagi)
     end
   end
 
-  def trashed_article_mentions(item, args, _info) do
+  def mentioned_by(_root, %{community: community, target: target} = args, _info) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.artiment_mentions_mentions(item.thread, item.article.id, pagi)
+      CMS.artiment_mentions_public_mentioned_by(community, target, pagi)
     end
   end
 
-  def mentions(_root, %{source: source} = args, _info) do
-    with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.artiment_mentions_mentions(source, pagi)
-    end
+  def reference_map(
+        _root,
+        %{community: community, focus: focus, frontiers: frontiers} = args,
+        _info
+      ) do
+    CMS.reference_map_page(community, focus, frontiers, Map.get(args, :first, 20))
   end
 
-  def mentioned_by(_root, %{target: target} = args, _info) do
-    with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.artiment_mentions_mentioned_by(target, pagi)
-    end
+  def reference_map_article_comments(_root, %{community: community, focus: focus} = args, _info) do
+    CMS.reference_map_article_comments(
+      community,
+      focus,
+      Map.get(args, :after),
+      Map.get(args, :first, 20)
+    )
+  end
+
+  def reference_map_revision(_root, %{community: community, focus: focus}, _info) do
+    CMS.reference_map_revision(community, focus)
   end
 end

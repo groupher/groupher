@@ -1,7 +1,9 @@
-import type { CSSProperties, FC } from 'react'
+import { useState, type CSSProperties, type FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+import useViewingArticle from '~/hooks/useViewingArticle'
 import type { TComment, TID } from '~/spec'
+import ReferenceMap from '~/unit/ReferenceMap'
 
 import Comment from '../Comment'
 import { MODE } from '../constant'
@@ -28,6 +30,8 @@ const List: FC<TProps> = ({ mode, apiMode, entries, foldedIdSet }) => {
   const s = useSalon()
   const { t } = useTrans()
   const { foldComment } = useActions()
+  const { articlePath } = useViewingArticle()
+  const [focusCommentId, setFocusCommentId] = useState<string | null>(null)
 
   return (
     <>
@@ -35,13 +39,36 @@ const List: FC<TProps> = ({ mode, apiMode, entries, foldedIdSet }) => {
         const isFolded = foldedIdSet.has(comment.innerId)
 
         return (
-          <div key={comment.innerId} className={s.wrapper} style={COMMENT_VISIBILITY_STYLE}>
+          <div
+            key={comment.innerId}
+            id={`comment-${comment.innerId}`}
+            className={s.wrapper}
+            style={COMMENT_VISIBILITY_STYLE}
+          >
             <Comment
               data={comment}
               apiMode={apiMode}
               hasReplies={(comment.repliesCount ?? 0) > 0}
               isFolded={isFolded}
             />
+
+            <button
+              type='button'
+              className='text-accent text-sm hover:underline'
+              onClick={() => setFocusCommentId(String(comment.innerId))}
+            >
+              {t('reference_map.title')}
+            </button>
+            {focusCommentId === String(comment.innerId) && (
+              <ReferenceMap
+                community={articlePath.community}
+                focus={{
+                  type: 'COMMENT',
+                  articleInnerId: String(articlePath.innerId),
+                  commentInnerId: String(comment.innerId),
+                }}
+              />
+            )}
 
             {mode === MODE.TIMELINE && (
               <DateDivider text={passedDate(entries[index], entries[index + 1])} />

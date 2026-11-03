@@ -14,7 +14,8 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Comments.ErrorCat
-  alias CMS.Model.CommentLifecycle
+  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.Model.{Comment, CommentLifecycle}
   alias CMS.ReviewBlocks
 
   @states [:visible, :deleted, :destroy]
@@ -146,11 +147,19 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
                destroyed_at: state_time(state, :destroy, now, lifecycle.destroyed_at)
              })
              |> Repo.update(),
-           {:ok, :pass} <- ReviewBlocks.recompute(updated) do
+           {:ok, :pass} <- ReviewBlocks.recompute(updated),
+           {:ok, :pass} <- bump_graph(updated.comment_id) do
         {:ok, updated}
       end
     else
       {:error, ErrorCat.lifecycle_state_conflict()}
+    end
+  end
+
+  defp bump_graph(comment_id) do
+    case Repo.get(Comment, comment_id) do
+      %Comment{} = comment -> GraphRevision.bump_for_comment(comment)
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
     end
   end
 

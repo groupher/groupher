@@ -122,7 +122,7 @@ defmodule GroupherServer.CMS.Comments.Query do
            ),
          {:ok, params} <- Pagi.from_input(pagi_input, effective.config.default_size),
          {:ok, article} <- stable_article(thread, article_id),
-         query <- comment_page_query(article, thread, filter, mode, user),
+         query <- comment_page_query(article, thread, community_slug, filter, mode, user),
          order <- comment_order(filter),
          {:ok, page} <-
            ORM.pagi(query, params,
@@ -136,9 +136,15 @@ defmodule GroupherServer.CMS.Comments.Query do
              query_fingerprint: comment_fingerprint(article.id, thread, filter, mode, order)
            ),
          {:ok, pinned_entries} <-
-           comment_pinned_entries(article, thread, params, user),
+           comment_pinned_entries(article, thread, community_slug, params, user),
          {:ok, hydrated} <-
-           PageProjection.many(pinned_entries ++ page.entries, article, user, mode == :replies) do
+           PageProjection.many(
+             pinned_entries ++ page.entries,
+             article,
+             user,
+             mode == :replies,
+             community_slug
+           ) do
       {:ok,
        %{
          entries: Enum.drop(hydrated, length(pinned_entries)),
@@ -172,7 +178,7 @@ defmodule GroupherServer.CMS.Comments.Query do
          order <- comment_order(filter),
          {:ok, page} <-
            ORM.pagi(
-             PageProjection.descendants(article.id, [root.id], root.thread, user),
+             PageProjection.descendants(article.id, [root.id], root.thread, user, community_slug),
              params,
              for: Comment,
              order: order,
@@ -190,12 +196,12 @@ defmodule GroupherServer.CMS.Comments.Query do
                  order
                )
            ),
-         {:ok, entries} <- PageProjection.many(page.entries, article, user, false) do
+         {:ok, entries} <- PageProjection.many(page.entries, article, user, false, community_slug) do
       {:ok, %{entries: entries, page_info: Page.info(page)}}
     end
   end
 
-  defp comment_page_query(article, thread, _filter, mode, user) do
+  defp comment_page_query(article, thread, community_slug, _filter, mode, user) do
     where_query =
       case mode do
         :timeline ->
@@ -212,20 +218,21 @@ defmodule GroupherServer.CMS.Comments.Query do
     from(comment in Comment, as: :comment)
     |> preload([:body, :author])
     |> CMS.Gate.scope(user, :list, comment_scope(thread))
+    |> where([gate_community: community], community.slug == ^community_slug)
     |> where([comment], comment.article_id == ^article.id)
     |> where(^where_query)
     |> exclude_page_solution(thread, article.id)
   end
 
-  defp comment_pinned_entries(article, thread, params, user) do
+  defp comment_pinned_entries(article, thread, community_slug, params, user) do
     if collection_start?(params) do
-      page_pinned_comments(article, thread, user)
+      page_pinned_comments(article, thread, community_slug, user)
     else
       {:ok, []}
     end
   end
 
-  defp page_pinned_comments(article, thread, user) do
+  defp page_pinned_comments(article, thread, community_slug, user) do
     special_where =
       if thread == :post do
         dynamic(
@@ -247,6 +254,7 @@ defmodule GroupherServer.CMS.Comments.Query do
     )
     |> where(^special_where)
     |> CMS.Gate.scope(user, :list, comment_scope(thread))
+    |> where([gate_community: community], community.slug == ^community_slug)
     |> order_by([comment, pin, solution],
       desc: fragment("? IS NOT NULL", solution.id),
       desc: pin.inserted_at,
@@ -325,7 +333,7 @@ defmodule GroupherServer.CMS.Comments.Query do
                  order
                )
            ) do
-      paged |> assign_stable_articles() |> done()
+      paged |> assign_stable_articles(actor) |> done()
     end
   end
 
@@ -335,12 +343,7 @@ defmodule GroupherServer.CMS.Comments.Query do
         dynamic(
           [comment],
           ^filter or
-            fragment(
-              "?::text || ':' || ?::text IN (?)",
-              comment.article_id,
-              comment.community_id,
-              subquery(visible_parent_bindings(actor, thread))
-            )
+            comment.article_id in subquery(visible_parent_article_ids(actor, thread))
         )
       end)
 
@@ -351,58 +354,66 @@ defmodule GroupherServer.CMS.Comments.Query do
     where(
       query,
       [comment],
-      fragment(
-        "?::text || ':' || ?::text IN (?)",
-        comment.article_id,
-        comment.community_id,
-        subquery(visible_parent_bindings(actor, thread))
-      )
+      comment.article_id in subquery(visible_parent_article_ids(actor, thread))
     )
   end
 
-  defp visible_parent_bindings(actor, :doc) do
+  defp visible_parent_article_ids(actor, :doc) do
     Article
     |> CMS.Gate.scope(actor, :list, DocContext.public_main())
-    |> select(
-      [article, ...],
-      fragment("?::text || ':' || ?::text", article.id, as(:gate_community).id)
-    )
+    |> select([article, ...], article.id)
   end
 
-  defp visible_parent_bindings(actor, thread) do
+  defp visible_parent_article_ids(actor, thread) do
     Article
     |> CMS.Gate.scope(actor, :list, ArticleContext.public(thread))
-    |> select(
-      [article, ...],
-      fragment("?::text || ':' || ?::text", article.id, as(:gate_community).id)
-    )
+    |> select([article, ...], article.id)
   end
 
-  defp assign_stable_articles(%{entries: entries} = page) do
+  defp assign_stable_articles(%{entries: entries} = page, actor) do
     article_ids = Enum.map(entries, & &1.article_id)
-    community_ids = Enum.map(entries, & &1.community_id)
+
+    visible_pairs =
+      entries
+      |> Enum.map(& &1.thread)
+      |> Enum.uniq()
+      |> Enum.flat_map(fn thread ->
+        scope =
+          if thread == :doc,
+            do: DocContext.public_main(),
+            else: ArticleContext.public(thread)
+
+        Article
+        |> CMS.Gate.scope(actor, :list, scope)
+        |> where([article, ...], article.id in ^article_ids)
+        |> select([article, ...], {article.id, as(:gate_community).id})
+        |> Repo.all()
+      end)
+
+    visible_pair_set = MapSet.new(visible_pairs)
 
     binding_by_identity =
       from(binding in ArticleBinding,
         join: community in Community,
         on: community.id == binding.community_id,
-        where: binding.article_id in ^article_ids and binding.community_id in ^community_ids,
+        where: binding.article_id in ^article_ids,
         select: {binding.article_id, binding.community_id, community.slug, binding.inner_id}
       )
       |> Repo.all()
-      |> Map.new(fn {article_id, community_id, community, inner_id} ->
-        {{article_id, community_id}, {community, inner_id}}
+      |> Enum.filter(fn {article_id, community_id, _, _} ->
+        MapSet.member?(visible_pair_set, {article_id, community_id})
+      end)
+      |> Enum.group_by(fn {article_id, _, _, _} -> article_id end, fn {_, _, community, inner_id} ->
+        {community, inner_id}
       end)
 
     paths =
       Enum.flat_map(entries, fn comment ->
-        case Map.get(binding_by_identity, {comment.article_id, comment.community_id}) do
-          {community, inner_id} ->
-            [%{community: community, thread: comment.thread, inner_id: inner_id}]
-
-          nil ->
-            []
-        end
+        binding_by_identity
+        |> Map.get(comment.article_id, [])
+        |> Enum.map(fn {community, inner_id} ->
+          %{community: community, thread: comment.thread, inner_id: inner_id}
+        end)
       end)
 
     with {:ok, resolved} <- Pagination.lite_paths(paths) do
@@ -413,15 +424,18 @@ defmodule GroupherServer.CMS.Comments.Query do
 
       entries =
         Enum.flat_map(entries, fn comment ->
-          case Map.get(binding_by_identity, {comment.article_id, comment.community_id}) do
-            {community, inner_id} ->
-              case Map.get(articles_by_path, {community, comment.thread, inner_id}) do
-                nil -> []
-                article -> [Map.put(comment, :article, article)]
-              end
-
-            nil ->
-              []
+          binding_by_identity
+          |> Map.get(comment.article_id, [])
+          |> Enum.sort()
+          |> Enum.find_value(fn {community, inner_id} ->
+            case Map.get(articles_by_path, {community, comment.thread, inner_id}) do
+              nil -> nil
+              article -> Map.put(comment, :article, article)
+            end
+          end)
+          |> case do
+            nil -> []
+            value -> [value]
           end
         end)
 

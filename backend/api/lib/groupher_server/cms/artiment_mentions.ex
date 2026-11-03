@@ -10,9 +10,8 @@ defmodule GroupherServer.CMS.ArtimentMentions do
         -> Repo / external boundary
   """
 
-  alias __MODULE__.Store
-  alias GroupherServer.{CMS, FrontDesk}
-  alias CMS.Model.Comment
+  alias __MODULE__.{CanonicalSource, PublicLocator, Store}
+  alias GroupherServer.CMS.Model.Comment
   alias Helper.T
 
   @type target_state :: Store.target_state()
@@ -22,6 +21,15 @@ defmodule GroupherServer.CMS.ArtimentMentions do
   @doc "Runs `sync` through the public `ArtimentMentions` boundary."
   @spec sync(Comment.t() | T.article() | map()) :: sync_result()
   defdelegate sync(artiment), to: Store
+
+  @doc "Rebuilds a canonical published source with its durable desired token."
+  defdelegate sync_public(article), to: Store
+
+  @doc "Rebuilds a current Comment source with its durable desired token."
+  defdelegate sync_comment_public(comment), to: Store
+
+  @doc "Rebuilds one stable source from its current canonical publication."
+  def sync_current(locator, opts \\ []), do: CanonicalSource.sync_current(locator, opts)
 
   @doc "Runs `purge` through the public `ArtimentMentions` boundary."
   @spec purge(Comment.t() | T.article() | map()) :: T.domain_res(term())
@@ -57,53 +65,15 @@ defmodule GroupherServer.CMS.ArtimentMentions do
           T.domain_res(T.paged_data())
   defdelegate mentioned_by(mentioned_type, mentioned_id, pagi), to: Store
 
-  @doc "Resolves one public mention source and returns its outgoing mentions."
-  @spec mentions(map(), GroupherServer.Pagi.Params.t() | nil) :: T.domain_res(T.paged_data())
-  def mentions(source, pagi) when is_map(source) do
-    with {:ok, type, id} <- resolve_locator(source, [:article, :comment], :source) do
-      Store.mentions(type, id, pagi)
-    end
-  end
+  @doc "Resolves a public Mention source through its stable identity."
+  defdelegate mentions(source, pagi), to: PublicLocator
 
-  @doc "Resolves one public mention target and returns incoming mentions."
-  @spec mentioned_by(map(), GroupherServer.Pagi.Params.t() | nil) :: T.domain_res(T.paged_data())
-  def mentioned_by(target, pagi) when is_map(target) do
-    with {:ok, type, id} <- resolve_locator(target, [:article, :comment, :user_login], :target) do
-      Store.mentioned_by(type, id, pagi)
-    end
-  end
+  @doc "Resolves a public Mention target through its stable identity."
+  defdelegate mentioned_by(target, pagi), to: PublicLocator
 
-  defp resolve_locator(input, keys, label) do
-    with {:ok, key, value} <- one_of(input, keys, label) do
-      resolve_value(key, value)
-    end
-  end
+  @doc "Returns Community-scoped public outgoing Mention DTOs."
+  defdelegate public_mentions(community, source, pagi), to: PublicLocator
 
-  defp resolve_value(:article, path) do
-    with {:ok, article} <- FrontDesk.article(path) do
-      {:ok, article.thread, article.id}
-    end
-  end
-
-  defp resolve_value(:comment, path) do
-    with {:ok, comment} <- FrontDesk.comment(path) do
-      {:ok, :comment, comment.id}
-    end
-  end
-
-  defp resolve_value(:user_login, login) do
-    with {:ok, user} <- FrontDesk.user(login) do
-      {:ok, :user, user.id}
-    end
-  end
-
-  defp one_of(input, keys, label) do
-    present = Enum.filter(keys, &(not is_nil(Map.get(input, &1))))
-
-    case present do
-      [key] -> {:ok, key, Map.get(input, key)}
-      [] -> {:error, "missing mention #{label}"}
-      _ -> {:error, "ambiguous mention #{label}"}
-    end
-  end
+  @doc "Returns Community-scoped public incoming Mention DTOs."
+  defdelegate public_mentioned_by(community, target, pagi), to: PublicLocator
 end

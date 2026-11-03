@@ -23,7 +23,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
     ArticleBindingTag,
     ArticlePublic,
     ArticleStats,
-    ArtimentMention,
     Comment,
     Community,
     CommunityTag,
@@ -446,22 +445,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   defp hydrate_page_items(entries) do
-    article_ids =
-      Enum.map(entries, fn {_item, article, _community, _public, _stats, _inner_id, _action} ->
-        article.id
-      end)
-
-    mention_counts =
-      from(mention in ArtimentMention,
-        where:
-          mention.mentioned_scope == :internal and
-            mention.mentioned_article_id in ^article_ids,
-        group_by: mention.mentioned_article_id,
-        select: {mention.mentioned_article_id, count(mention.id)}
-      )
-      |> Repo.all()
-      |> Map.new()
-
     Enum.map(entries, fn {item, article, community, public, stats, inner_id, action} ->
       projection =
         article
@@ -474,7 +457,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> Map.put(:article, projection)
       |> Map.put(:community, community)
       |> Map.put(:trash_action, action)
-      |> Map.put(:mentioned_by_count, Map.get(mention_counts, article.id, 0))
     end)
   end
 
@@ -493,17 +475,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> Map.put(:inner_id, inner_id)
       |> Map.put(:article_stats, stats)
 
-    mentioned_by_count =
-      Repo.aggregate(
-        from(mention in ArtimentMention,
-          where:
-            mention.mentioned_scope == :internal and
-              mention.mentioned_article_id == ^article.id
-        ),
-        :count
-      )
-
-    %{item | article: projection, mentioned_by_count: mentioned_by_count}
+    %{item | article: projection}
   end
 
   defp create_trash_membership(

@@ -52,9 +52,18 @@ defmodule GroupherServer.CMS.Review.Notice do
     {:ok, ArticleReviewBlock, :article_id, id, community_id, nil}
   end
 
-  defp target_query(%{type: :comment, comment_id: id, community_id: community_id})
+  defp target_query(%{type: :comment, comment_id: id})
        when is_integer(id) do
-    {:ok, CommentReviewBlock, :comment_id, id, community_id, nil}
+    case Repo.get(Comment, id) do
+      %Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
+        {:ok, CommentReviewBlock, :comment_id, id, :all, nil}
+
+      %Comment{thread: :doc, origin_community_id: community_id} ->
+        {:ok, CommentReviewBlock, :comment_id, id, community_id, nil}
+
+      _ ->
+        {:error, CMS.ErrorCat.invalid_review_block()}
+    end
   end
 
   defp target_query(%{type: :doc, article_id: id, branch_id: branch_id})
@@ -85,6 +94,7 @@ defmodule GroupherServer.CMS.Review.Notice do
     end
   end
 
+  defp scope(query, :all), do: query
   defp scope(query, nil), do: where(query, [row], is_nil(row.community_id))
 
   defp scope(query, community_id) do
@@ -92,6 +102,7 @@ defmodule GroupherServer.CMS.Review.Notice do
   end
 
   defp block_scope(query, :doc, _community_id), do: query
+  defp block_scope(query, :comment, :all), do: where(query, [row], is_nil(row.community_id))
   defp block_scope(query, _type, community_id), do: scope(query, community_id)
 
   defp branch(query, nil), do: query

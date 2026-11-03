@@ -119,7 +119,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
            ),
          %Ecto.Query{} = query <- stable_comment_query(article, thread, inner_id, actor),
          {:ok, comment} <- load_public_comment(query, view) do
-      ORM.fill_meta(comment)
+      ORM.fill_meta(%{comment | request_community_slug: community})
     end
   end
 
@@ -146,17 +146,18 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
       %Ecto.Query{} = query when thread == :doc ->
         where(
           query,
-          [comment],
+          [comment, gate_community: community],
           comment.article_id == ^article.id and comment.inner_id == ^inner_id and
-            comment.thread == ^thread and comment.branch_id == ^article.branch_id
+            comment.thread == ^thread and comment.branch_id == ^article.branch_id and
+            community.id == ^article.community.id
         )
 
       %Ecto.Query{} = query ->
         where(
           query,
-          [comment],
+          [comment, gate_community: community],
           comment.article_id == ^article.id and comment.inner_id == ^inner_id and
-            comment.thread == ^thread
+            comment.thread == ^thread and community.id == ^article.community.id
         )
 
       {:error, _reason} = error ->

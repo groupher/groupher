@@ -66,4 +66,9 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:review_transition_requires_transaction, code: 4546)
   error(:review_block_not_found, code: 4547)
   error(:review_content_changed, code: 4548)
+  error(:reference_map_not_found, code: 4549)
+  error(:reference_map_invalid_locator, code: 4550)
+  error(:reference_map_invalid_cursor, code: 4551)
+  error(:reference_map_duplicate_frontier, code: 4552)
+  error(:reference_map_invalid_request, code: 4553)
 end

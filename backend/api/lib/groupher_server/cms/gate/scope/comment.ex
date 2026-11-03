@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with {:ok, _} <- validate_thread(context),
-         %Ecto.Query{} = query <- CommunityChain.direct(query) do
+         %Ecto.Query{} = query <- CommunityChain.comment_parent(query) do
       query
       |> maybe_filter_thread(context)
       |> lifecycle_scope(context)
@@ -152,15 +152,16 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
                 select: 1
               )
             ) or ^platform_read?) and
-             (not exists(
-                from(restriction in CommentReviewBlock,
-                  where:
-                    restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
-                      restriction.community_id == parent_as(:gate_community).id and
-                      is_nil(restriction.resolved_at),
-                  select: 1
-                )
-              ) or as(:gate_community).slug in ^community_slugs))
+             (comment.thread != :doc or
+                not exists(
+                  from(restriction in CommentReviewBlock,
+                    where:
+                      restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
+                        restriction.community_id == parent_as(:gate_community).id and
+                        is_nil(restriction.resolved_at),
+                    select: 1
+                  )
+                ) or as(:gate_community).slug in ^community_slugs))
     )
   end
 
@@ -171,12 +172,20 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
           from(restriction in CommentReviewBlock,
             where:
               restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
-                is_nil(restriction.resolved_at) and
-                (is_nil(restriction.community_id) or
-                   restriction.community_id == parent_as(:gate_community).id),
+                is_nil(restriction.resolved_at) and is_nil(restriction.community_id),
             select: 1
           )
-        )
+        ) and
+          (comment.thread != :doc or
+             not exists(
+               from(restriction in CommentReviewBlock,
+                 where:
+                   restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
+                     restriction.community_id == parent_as(:gate_community).id and
+                     is_nil(restriction.resolved_at),
+                 select: 1
+               )
+             ))
     )
   end
 end

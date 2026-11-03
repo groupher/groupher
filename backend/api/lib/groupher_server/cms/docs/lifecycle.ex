@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
   alias CMS.Articles.ErrorCat
   alias CMS.Model.{DocBranch, DocLifecycle, DocPublic}
   alias CMS.ReviewBlocks
+  alias CMS.ArtimentMentions.GraphRevision
 
   @states [:draft, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
@@ -92,7 +93,8 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
                destroyed_at: state_time(state, :destroy, now, lifecycle.destroyed_at)
              })
              |> Repo.update(),
-           {:ok, :pass} <- ReviewBlocks.recompute(updated) do
+           {:ok, :pass} <- ReviewBlocks.recompute(updated),
+           {:ok, :pass} <- GraphRevision.bump_for_article(updated.article_id) do
         {:ok, updated}
       end
     else

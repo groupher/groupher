@@ -11,7 +11,7 @@ export default function RichContent() {
   const [cardRef, isCardHovered] = useHover<HTMLDivElement>()
 
   return (
-    <div ref={cardRef} className={s.wrapper}>
+    <div ref={cardRef} className={s.wrapper} data-landing-card='richContent'>
       <Panel hovering={isCardHovered} />
       <div className={s.footer}>
         <h3 className={s.title}>{t('landing.battery.rich.title')}</h3>

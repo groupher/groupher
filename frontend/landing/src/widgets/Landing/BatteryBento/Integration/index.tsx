@@ -10,7 +10,7 @@ export default function Integration() {
   const { t } = useTrans()
 
   return (
-    <div ref={cardRef} className={s.wrapper}>
+    <div ref={cardRef} className={s.wrapper} data-landing-card='integration'>
       <Panel hovering={isCardHovered} />
       <div className={s.footer}>
         <h3 className={s.title}>{t('landing.battery.integration.title')}</h3>

@@ -164,7 +164,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
        %{
          title: public.title || "",
          body: body.plain_text || "",
-         images: CMS.Review.Media.comment_images(body.json, comment.community_id)
+         images: CMS.Review.Media.comment_images(body.json, comment.origin_community_id)
        }}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}

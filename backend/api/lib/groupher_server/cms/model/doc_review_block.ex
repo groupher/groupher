@@ -14,11 +14,12 @@ defmodule GroupherServer.CMS.Model.DocReviewBlock do
   import Ecto.Changeset
   alias GroupherServer.CMS
   alias CMS.Model.{Article, DocBranch, ArtimentReview}
+  alias CMS.Review.Const
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @types [:awaiting_ai, :awaiting_human, :ai_suspect, :manual_hold]
-  @sources [:request, :human, :domain]
+  @types Const.restriction_type_values()
+  @sources Const.restriction_source_values()
 
   @type t :: %__MODULE__{}
 

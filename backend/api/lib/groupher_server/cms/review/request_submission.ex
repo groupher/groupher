@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
   alias GroupherServer.ReviewBot
   alias GroupherServer.{AlertWall, CMS, Repo}
   alias CMS.Model.ArtimentReview
+  alias CMS.Model.Comment
   alias ReviewBot.Model.ReviewBotConfig
 
   @doc "Creates scoped requests with immutable content and complete configuration snapshots."
@@ -226,19 +227,19 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
   end
 
   defp apply_initial_hold(%ArtimentReview{} = request, %{lifecycle: lifecycle}) do
-    scope_key =
-      if is_nil(request.community_id), do: "platform", else: "community:#{request.community_id}"
-
-    case CMS.Review.Restrictions.apply(lifecycle, %{
-           scope_key: scope_key,
-           type: :awaiting_ai,
-           artiment_review_id: request.id,
-           operation_ref: request.id,
-           source_ref: "request:#{request.id}:awaiting_ai",
-           source: :request,
-           applied_at: DateTime.utc_now(:second)
-         }) do
-      {:ok, _restriction} -> {:ok, :pass}
+    with {:ok, scope_key} <- restriction_scope(request),
+         {:ok, _restriction} <-
+           CMS.Review.Restrictions.apply(lifecycle, %{
+             scope_key: scope_key,
+             type: :awaiting_ai,
+             artiment_review_id: request.id,
+             operation_ref: request.id,
+             source_ref: "request:#{request.id}:awaiting_ai",
+             source: :request,
+             applied_at: DateTime.utc_now(:second)
+           }) do
+      {:ok, :pass}
+    else
       {:error, _reason} = error -> error
     end
   end
@@ -246,6 +247,24 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
   defp apply_initial_hold(_request, _target) do
     {:error, CMS.ErrorCat.invalid_review_block()}
   end
+
+  defp restriction_scope(%ArtimentReview{target_type: :comment, comment_id: id} = request) do
+    case Repo.get(Comment, id) do
+      %Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
+        {:ok, "platform"}
+
+      %Comment{} ->
+        {:ok, request_scope(request)}
+
+      nil ->
+        {:error, CMS.ErrorCat.invalid_review_block()}
+    end
+  end
+
+  defp restriction_scope(request), do: {:ok, request_scope(request)}
+
+  defp request_scope(%ArtimentReview{community_id: nil}), do: "platform"
+  defp request_scope(%ArtimentReview{community_id: id}), do: "community:#{id}"
 
   defp end_previous_wall_items(_target, trigger) when trigger in [:recheck, :binding] do
     {:ok, :pass}

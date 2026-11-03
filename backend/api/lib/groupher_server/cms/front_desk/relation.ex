@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
   alias CMS.FrontDesk.Article, as: ArticleFrontDesk
-  alias CMS.Model.{Article, Comment}
+  alias CMS.Model.{Article, ArticleBinding, Comment, Community}
 
   @doc "Returns the author of an Article or Comment."
   @spec author_of(Comment.t()) :: {:ok, map()} | {:error, map()}
@@ -40,18 +40,17 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
     |> done()
   end
 
-  @doc "Returns the parent Article of a Comment."
+  @doc "Returns the parent Article through the Comment's origin Community."
   @spec article_of(Comment.t()) :: {:ok, map()} | {:error, map()}
 
-  def article_of(%Comment{} = comment) do
-    with {:stable, article_id} when is_binary(article_id) <-
-           {:stable, comment.article_id},
-         {:ok, thread} <- thread_of(comment),
-         %CMS.Model.Community{} = community <- Repo.get(CMS.Model.Community, comment.community_id),
-         %CMS.Model.ArticleBinding{inner_id: inner_id} <-
-           Repo.get_by(CMS.Model.ArticleBinding,
-             article_id: article_id,
-             community_id: comment.community_id
+  def article_of(%Comment{origin_community_id: community_id} = comment)
+      when is_integer(community_id) do
+    with {:ok, thread} <- thread_of(comment),
+         %Community{} = community <- Repo.get(Community, community_id),
+         %ArticleBinding{inner_id: inner_id} <-
+           Repo.get_by(ArticleBinding,
+             article_id: comment.article_id,
+             community_id: community_id
            ),
          {:ok, projection} <-
            ArticleFrontDesk.read(
@@ -61,7 +60,6 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
            ) do
       {:ok, projection}
     else
-      {:stable, nil} -> {:error, ErrorCat.custom("invalid article")}
       nil -> {:error, ErrorCat.custom("invalid article")}
       {:error, _} = error -> error
     end
@@ -75,7 +73,12 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
     Threads.to_atom(thread)
   end
 
+  def thread_of(%Article{thread: :ticket}), do: {:ok, :ticket}
   def thread_of(%Article{thread: thread}) when is_atom(thread), do: Threads.to_atom(thread)
+
+  def thread_of(%{article_id: article_id, thread: :ticket}) when is_binary(article_id) do
+    {:ok, :ticket}
+  end
 
   def thread_of(%{article_id: article_id, thread: thread})
       when is_binary(article_id) and is_atom(thread) do

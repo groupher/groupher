@@ -26,7 +26,7 @@ export default function CoversPreview() {
 
   return (
     <LazyMotion features={domAnimation}>
-      <section className={s.wrapper}>
+      <section className={s.wrapper} data-landing-section='cover'>
         <div className={s.mobileRail} role='group' aria-label='Explore wallpaper scenes'>
           {COVER_SCENES.filter((scene) => scene.id !== activeScene.id).map((scene) => (
             <StaticWallpaperTile key={scene.id} scene={scene} heightTier={0} />

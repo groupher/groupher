@@ -5,6 +5,7 @@
 当前实现为 ReviewBot / AlertWall V2。目录暂保留 `alert-board/`，避免历史链接失效；当前模块名为 `AlertWall`。
 
 - **[V2 边界、配置与重构实施合同](./v2.md)**：已实施的 ReviewBot / AlertWall、`review_mode`、`ban_words`、`sus_notes`、`review_bot_configs`、CMS review requests、事务与无兼容替换合同。生产切换前，目标环境仍须通过限制、待审及隐藏投影预检。
+- [Review restrictions、举报阈值与 Ticket 来源可见性 fix 方案](./review-visibility-fix.md)：后续命名、人工决定、举报阈值和 Ticket 来源可见性处理建议；这是待实施方案，不代表当前代码行为。
 
 以下 V1 文档和退役记录仅作历史参考；当前运行合同以 V2 文档和代码为准。目标环境维护切换需单独取得真实数据库、worker 和浏览器证据。
 

@@ -31,6 +31,10 @@ defmodule GroupherServer.CMS.Gate.Access do
   defdelegate check_comment_in_transaction(actor, action, comment),
     to: GroupherServer.CMS.Gate.Access.Query
 
+  @doc "Delegates the request-Community Comment check without falling back to its origin."
+  defdelegate check_comment_in_transaction(actor, action, comment, community),
+    to: GroupherServer.CMS.Gate.Access.Query
+
   @doc "Delegates the Community Application join-only check to the owning implementation."
   defdelegate check_application_in_transaction(actor, action, application),
     to: GroupherServer.CMS.Gate.Access.Query

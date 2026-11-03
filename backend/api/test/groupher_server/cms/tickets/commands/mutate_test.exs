@@ -53,6 +53,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     refute Repo.get(ArticlePublic, draft.id)
 
     {:ok, internal} = CMS.Tickets.get_internal(community, draft.id, actor)
+    publish_command_id = Ecto.UUID.generate()
 
     assert {:ok, _ticket_id} =
              CMS.Tickets.publish(
@@ -63,7 +64,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                internal.lifecycle_version,
                internal.workflow_version,
                actor,
-               Ecto.UUID.generate(),
+               publish_command_id,
                CMS.Tickets.Publication.preview_anchor(community.id, draft.id)
              )
 
@@ -72,6 +73,39 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     assert is_integer(published.inner_id)
     assert published.published_content.title == "Drafted ticket"
     assert Repo.get_by!(ArticleLifecycle, article_id: draft.id).first_published_at
+
+    mention_event =
+      Repo.get_by!(Event,
+        command_id: publish_command_id,
+        event: "article.mention_sync",
+        resource_id: draft.id
+      )
+
+    assert {:ok, :pass} =
+             GroupherServer.Jobs.CMSOutboxArticle.perform(%Oban.Job{
+               args: %{"event_id" => mention_event.id},
+               attempt: 1,
+               max_attempts: 3
+             })
+
+    assert %{desired_content_token: token, synced_content_token: token} =
+             Repo.get_by!(CMS.ArtimentMentions.Model.SyncState,
+               source_article_id: draft.id,
+               source_type: :ticket
+             )
+  end
+
+  test "public Ticket URLs resolve to a stable User Ticket target", %{
+    community: community,
+    ticket: ticket
+  } do
+    url = "https://groupher.com/#{community.slug}/ticket/#{ticket.inner_id}"
+    ast = [%{"type" => "p", "id" => "ticket-link", "children" => [%{"text" => url}]}]
+
+    assert [%{mentioned_scope: :internal, mentioned_type: :ticket, mentioned_id: id}] =
+             CMS.ArtimentMentions.Parser.parse(ast, community_id: community.id)
+
+    assert id == ticket.id
   end
 
   test "single-source Post ReviewBlock downgrades a Ticket and never auto republishes", context do

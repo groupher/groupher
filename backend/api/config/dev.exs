@@ -55,6 +55,10 @@ config :groupher_server, GroupherServerWeb.Endpoint,
       "0iBUiKYT+sUJxPPD3+aUyOPlsvl/Uk9K9VFBTzoC+zc8PEKQfW4Ay4SH7piuXpVA"
     )
 
+config :groupher_server, :reference_map_key,
+  System.get_env("REFERENCE_MAP_KEY", "dev-reference-map-key-with-32-bytes")
+config :groupher_server, :reference_map_key_version, 1
+
 config :groupher_server, Helper.Guardian,
   issuer: "groupher_server",
   secret_key: System.get_env("PHX_JWT_SECRET", "hello")

@@ -29,6 +29,7 @@ import type { TEffectivePagiConfig, TPagedArticlesParams, TPagiRequest } from '~
 import type { TDocPublicTreeQuery, TThread, TArticleThread } from '~/spec'
 
 import {
+  loadBlog,
   loadChangelog,
   loadChangelogs,
   loadArticleStats,
@@ -50,6 +51,13 @@ const toCursorArticlePageRequest = (
 
 /** Community host query options that preserve Core keys, normalization, and merge policies. */
 export const communityQueries = {
+  blog: (community: string, innerId: string) =>
+    queryOptions({
+      queryKey: articleQueryKeys.detail(community, THREAD.BLOG, innerId),
+      queryFn: () => loadBlog({ data: { community, innerId } }),
+      gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
+    }),
   posts: (
     community: string,
     config: TEffectivePagiConfig = DEFAULT_EFFECTIVE_PAGI_CONFIG,

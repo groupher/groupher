@@ -89,7 +89,8 @@ export default function WallpaperTile({
       className={s.rail}
       data-height-tier={heightTier}
       data-scene-id={scene.id}
-      data-wallpaper-type={scene.wallpaperType}
+      data-wallpaper-type-light={scene.wallpaper.light.type}
+      data-wallpaper-type-dark={scene.wallpaper.dark.type}
       data-cover-fade-start={fadeRange[0]}
       data-cover-fade-end={fadeRange[1]}
       data-cover-travel={travelDistance}

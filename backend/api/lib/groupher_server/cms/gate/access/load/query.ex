@@ -297,7 +297,8 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
   end
 
   defp same_comment_identity?(canonical, input, article, community, thread) do
-    canonical.community_id == community.id and canonical.thread == thread and
+    (thread != :doc or canonical.origin_community_id == community.id) and
+      canonical.thread == thread and
       canonical.article_id == article.id and canonical.branch_id == input.branch_id and
       canonical.id == input.id
   end

@@ -24,7 +24,7 @@ export default function DashboardIntros() {
   const s = useSalon({ tab })
 
   return (
-    <section className={s.wrapper}>
+    <section className={s.wrapper} data-landing-section='dashboard'>
       <div className={s.slogan}>
         <h3 className={s.title}>{t('landing.dashboard.title')}</h3>
         <div className={s.desc}>{t('landing.dashboard.desc')}</div>
@@ -53,7 +53,7 @@ export default function DashboardIntros() {
             {tab === DSB_ROUTE.CLASSIC && <LinksTab />}
             {tab === DSB_ROUTE.WIDGETS && <IntegrateTab />}
             {tab === DSB_ROUTE.INOUT && <ImportTab />}
-            {tab === DSB_ROUTE.TREND && <TrendTab />}
+            {tab === DSB_ROUTE.ANALYSIS && <TrendTab />}
           </div>
         </div>
       </div>

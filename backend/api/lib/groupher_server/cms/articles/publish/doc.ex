@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
   alias GroupherServer.{CMS, Repo, ReviewBot}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Articles.Workflow
+  alias CMS.ArtimentMentions.{GraphRevision, SyncProgress}
   alias CMS.Articles.{Bindings, Draft.Store, Effects, Numbering, Revision}
 
   alias CMS.Model.{
@@ -99,6 +100,8 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
                  first_publish?,
                  opts
                ),
+             {:ok, _mention_event} <-
+               enqueue_public_mention(article, branch, public, community, opts),
              {:ok, _} <- Store.delete_workspace(article, draft) do
           %{
             article: article,
@@ -117,6 +120,35 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
       end)
     end
   end
+
+  defp enqueue_public_mention(
+         %Article{} = article,
+         %DocBranch{type: :main} = branch,
+         %DocPublic{} = public,
+         community,
+         opts
+       ) do
+    token = "#{branch.id}:#{public.branch_version_id}:#{public.publication_version}"
+    source = %{article_id: article.id, thread: :doc, branch_id: branch.id}
+
+    with {:ok, identity} <- outbox_identity(opts),
+         {:ok, _state} <- SyncProgress.mark_pending_in_transaction(source, token),
+         {:ok, event} <-
+           Effects.enqueue(
+             "article.mention_sync",
+             "article",
+             article.id,
+             identity,
+             %{source_type: "doc", content_token: token, branch_id: branch.id},
+             effect_key: "article.mention_sync:doc:#{article.id}:#{token}",
+             retry_failed: true
+           ),
+         {:ok, :pass} <- GraphRevision.bump_many([community.id]) do
+      {:ok, event}
+    end
+  end
+
+  defp enqueue_public_mention(_article, _branch, _public, _community, _opts), do: {:ok, :pass}
 
   defp register_review(
          article,

@@ -4,7 +4,11 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
   use GroupherServer.TestMate
 
   alias GroupherServer.{CMS, Messaging}
+  alias GroupherServer.Repo
   alias CMS.Events
+  alias CMS.Model.{Article, Comment}
+
+  import Ecto.Query
 
   setup do
     {community, post, _, user} = mock_article(:post)
@@ -25,6 +29,33 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
   end
 
   describe "[upvote notify]" do
+    test "shared Comment notification uses a current binding after origin is unavailable",
+         ~m(user2 community post comment)a do
+      {:ok, destination} = mock_community(user2)
+      article = Repo.get!(Article, post.article_id)
+      assert {:ok, _} = CMS.Articles.BindingPersist.mirror(article, destination)
+      assert {:ok, :done} = CMS.Articles.BindingPersist.unmirror(article, community)
+
+      {1, nil} =
+        Repo.update_all(
+          from(row in Comment, where: row.id == ^comment.id),
+          set: [origin_community_id: nil]
+        )
+
+      retained = Repo.get!(Comment, comment.id)
+      assert {:ok, _} = Events.emit(:notify_upvote, %{target: retained, from_user: user2})
+
+      {:ok, notifications} =
+        Messaging.paged_messages(
+          :notification,
+          Repo.get!(GroupherServer.Accounts.Model.User, comment.author_id),
+          %{},
+          %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
+        )
+
+      assert Enum.any?(notifications.entries, &(&1.comment_id == comment.id))
+    end
+
     test "upvote hook should work on post", ~m(user2 community post)a do
       {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id, community)
 

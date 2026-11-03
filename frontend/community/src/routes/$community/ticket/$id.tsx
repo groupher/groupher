@@ -8,6 +8,7 @@ import { loadTicketSourceStats } from '~/query/ticketStats'
 import type { TTicket } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
+import ReferenceMap from '~/unit/ReferenceMap'
 
 const STATUS_LABEL = {
   TODO: 'article.status.todo',
@@ -131,6 +132,10 @@ function TicketDetail() {
           <p className='text-digest text-sm'>{t('ticket.public.no_updates')}</p>
         )}
       </section>
+      <ReferenceMap
+        community={slug}
+        focus={{ type: 'TICKET', articleInnerId: String(ticket.innerId) }}
+      />
     </article>
   )
 }

@@ -2,10 +2,16 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
   @moduledoc false
 
   use GroupherServer.TestMate, async: false
+  import Ecto.Query
   import GroupherServer.DataCase, only: [errors_on: 1]
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, Repo}
   alias CMS.ArtimentMentions
+  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.ArtimentMentions.Opaque
+  alias CMS.ArtimentMentions.Rebuild
+  alias CMS.ArtimentMentions.PublicUrl
+  alias CMS.ArtimentMentions.Model.SyncState
   alias CMS.Model.{Article, ArtimentMention}
 
   @site_host CMS.ArtimentMentions.Config.site_host()
@@ -19,7 +25,806 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
     {:ok, ~m(community post post_attrs blog changelog user mentioned_user)a}
   end
 
+  test "rotating the Map signing key changes opaque identities and revision digests",
+       ~m(community post)a do
+    old_key = Application.fetch_env!(:groupher_server, :reference_map_key)
+    old_version = Application.fetch_env!(:groupher_server, :reference_map_key_version)
+
+    on_exit(fn ->
+      Application.put_env(:groupher_server, :reference_map_key, old_key)
+      Application.put_env(:groupher_server, :reference_map_key_version, old_version)
+    end)
+
+    node_key = {:post, post.article_id, nil, nil}
+    old_node = Opaque.id(:node, community.id, node_key)
+    old_revision = Opaque.id(:revision, community.id, 1)
+
+    Application.put_env(
+      :groupher_server,
+      :reference_map_key,
+      "rotated-reference-map-key-with-at-least-32-bytes"
+    )
+
+    Application.put_env(:groupher_server, :reference_map_key_version, old_version + 1)
+
+    refute Opaque.id(:node, community.id, node_key) == old_node
+    refute Opaque.id(:revision, community.id, 1) == old_revision
+  end
+
+  test "rebuild still reports a live Comment whose body is missing", ~m(community post user)a do
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_body_bag(plate_body([block("comment", [text("current body")])])),
+        user,
+        Ecto.UUID.generate()
+      )
+
+    Repo.delete_all(from(body in CMS.Model.CommentBody, where: body.comment_id == ^comment.id))
+
+    source_key = Rebuild.key(%{type: :comment, comment_id: comment.id})
+    assert Enum.any?(Rebuild.report(nil, 100).issues, &(&1.source_key == source_key))
+
+    manifest =
+      Path.join(System.tmp_dir!(), "mention-rebuild-missing-body-#{comment.id}.json")
+
+    on_exit(fn -> File.rm(manifest) end)
+    result = Rebuild.apply(nil, 100, false, manifest)
+    assert Enum.any?(result.failures, &(&1["source_key"] == source_key))
+  end
+
+  test "failure manifest records a category without leaking invalid Comment body",
+       ~m(community post user)a do
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_body_bag(plate_body([block("comment", [text("valid body")])])),
+        user,
+        Ecto.UUID.generate()
+      )
+
+    Repo.update_all(
+      from(body in CMS.Model.CommentBody, where: body.comment_id == ^comment.id),
+      set: [json: "{private-body-marker"]
+    )
+
+    manifest =
+      Path.join(System.tmp_dir!(), "mention-rebuild-invalid-body-#{comment.id}.json")
+
+    on_exit(fn -> File.rm(manifest) end)
+    result = Rebuild.apply(nil, 100, true, manifest)
+    source_key = Rebuild.key(%{type: :comment, comment_id: comment.id})
+
+    assert Enum.any?(result.failures, fn failure ->
+             failure["source_key"] == source_key and failure["category"] == "invalid_json"
+           end)
+
+    refute File.read!(manifest) =~ "private-body-marker"
+  end
+
+  test "rebuild traverses every keyset page and resumes after a checkpoint" do
+    sources = Rebuild.sources()
+    assert length(sources) >= 3
+
+    report = Rebuild.report_all(nil, 1)
+    assert report.scanned == length(sources)
+    refute report.more
+
+    {first_locator, _} = hd(sources)
+    after_key = Rebuild.key(first_locator)
+    assert Rebuild.report_all(after_key, 1).scanned == length(sources) - 1
+
+    manifest =
+      Path.join(System.tmp_dir!(), "mention-rebuild-pages-#{System.unique_integer()}.json")
+
+    on_exit(fn -> File.rm(manifest) end)
+
+    result = Rebuild.apply_all(nil, 1, false, manifest)
+    assert result.processed == length(sources)
+    refute Map.has_key?(result, :results)
+    assert result.failures == []
+    refute result.more
+  end
+
   describe "sync/1" do
+    test "soft-deleting a Comment clears its outgoing facts and advances the tombstone watermark",
+         ~m(community post blog user)a do
+      body =
+        plate_body([
+          block("mention", [text("#{@site_host}/#{community.slug}/blog/#{blog.inner_id}")])
+        ])
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_body_bag(body),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      assert {:ok, {1, nil}} =
+               CMS.Comments.Effects.deliver(:sync_mentions, %{"comment_id" => comment.id})
+
+      assert Repo.exists?(
+               from(m in ArtimentMention, where: m.mentioner_comment_id == ^comment.id)
+             )
+
+      command_id = Ecto.UUID.generate()
+
+      assert {:ok, %{comment: _deleted}} =
+               CMS.Comments.delete_comment_result(comment, user, command_id, community.slug)
+
+      state = Repo.get_by!(SyncState, source_comment_id: comment.id)
+      assert state.desired_content_token != state.synced_content_token
+
+      event =
+        Repo.get_by!(CMS.Outbox.Event,
+          event: "comment.mention_sync",
+          resource_id: to_string(comment.id),
+          command_id: command_id
+        )
+
+      assert {:ok, :pass} =
+               GroupherServer.Jobs.CMSOutboxComment.perform(%Oban.Job{
+                 args: %{"event_id" => event.id},
+                 attempt: 1,
+                 max_attempts: 3
+               })
+
+      assert %SyncState{desired_content_token: token, synced_content_token: token} =
+               Repo.get_by!(SyncState, source_comment_id: comment.id)
+
+      refute Repo.exists?(
+               from(m in ArtimentMention, where: m.mentioner_comment_id == ^comment.id)
+             )
+
+      source_key = Rebuild.key(%{type: :comment, comment_id: comment.id})
+      refute Enum.any?(Rebuild.report(nil, 100).issues, &(&1.source_key == source_key))
+    end
+
+    test "Comment creation persists a token and reconciles facts in one committed sync",
+         ~m(community post blog user)a do
+      body =
+        plate_body([
+          block("mention", [text("#{@site_host}/#{community.slug}/blog/#{blog.inner_id}")])
+        ])
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_body_bag(body),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      assert %SyncState{desired_content_token: token, synced_content_token: nil} =
+               Repo.get_by!(SyncState, source_comment_id: comment.id)
+
+      assert is_binary(token)
+
+      assert {:ok, {1, nil}} =
+               CMS.Comments.Effects.deliver(:sync_mentions, %{"comment_id" => comment.id})
+
+      assert %SyncState{desired_content_token: ^token, synced_content_token: ^token} =
+               Repo.get_by!(SyncState, source_comment_id: comment.id)
+
+      {:ok, result} =
+        ArtimentMentions.mentions(:comment, comment.id, %GroupherServer.Pagi.Params.Offset{
+          page: 1,
+          size: 10
+        })
+
+      assert [%{mentioned_article_id: target_id}] = result.entries
+      assert target_id == blog.article_id
+
+      assert {:ok, public_page} =
+               ArtimentMentions.public_mentions(
+                 community.slug,
+                 %{
+                   comment: %{
+                     article: %{
+                       community: community.slug,
+                       thread: :post,
+                       inner_id: article_inner_id(post, community)
+                     },
+                     inner_id: comment.inner_id
+                   }
+                 },
+                 %GroupherServer.Pagi.Params.Offset{page: 1, size: 10}
+               )
+
+      assert [%{id: opaque_id, mentioned_url: url, occurrences_count: 1}] = public_page.entries
+      assert String.starts_with?(opaque_id, "v1_")
+      assert url == "/#{community.slug}/blog/#{article_inner_id(blog, community)}"
+    end
+
+    test "keeps a shared ordinary Comment after its origin binding becomes unavailable",
+         ~m(community post user)a do
+      {:ok, destination} = mock_community(user)
+      article = Repo.get!(Article, post.article_id)
+      assert {:ok, _binding} = CMS.Articles.BindingPersist.mirror(article, destination)
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_body_bag(
+            plate_body([block("comment", [text("A comment that survives origin deletion")])])
+          ),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      assert {:ok, :done} = CMS.Articles.BindingPersist.unmirror(article, community)
+
+      {1, nil} =
+        Repo.update_all(
+          from(comment_row in CMS.Model.Comment, where: comment_row.id == ^comment.id),
+          set: [origin_community_id: nil]
+        )
+
+      retained = Repo.get!(CMS.Model.Comment, comment.id)
+      assert retained.origin_community_id == nil
+      assert {:error, _} = CMS.FrontDesk.article_of(retained)
+
+      assert {:ok, resolved_community} = CMS.Comments.RequestCommunity.resolve(retained)
+      assert resolved_community.id == destination.id
+
+      assert {:ok, %{entries: profile_comments}} =
+               CMS.Comments.paged_published_comments(
+                 user,
+                 nil,
+                 %{},
+                 %GroupherServer.Pagi.Params.Offset{page: 1, size: 20},
+                 nil
+               )
+
+      assert Enum.any?(profile_comments, &(&1.id == comment.id))
+
+      assert {:ok, requested_article} =
+               CMS.FrontDesk.article(%{
+                 community: destination.slug,
+                 thread: :post,
+                 inner_id: article_inner_id(post, destination)
+               })
+
+      assert requested_article.community.id == destination.id
+
+      assert {:ok, visible} =
+               CMS.FrontDesk.comment(%{
+                 article: %{
+                   community: destination.slug,
+                   thread: :post,
+                   inner_id: article_inner_id(post, destination)
+                 },
+                 inner_id: comment.inner_id
+               })
+
+      assert visible.id == comment.id
+      assert visible.request_community_slug == destination.slug
+
+      {:ok, reactor} = db_insert(:user)
+
+      assert {:ok, _upvoted} =
+               CMS.Interactions.upvote_result(visible, reactor, Ecto.UUID.generate())
+
+      assert {:ok, _reacted} =
+               CMS.Interactions.emotion_result(visible, :heart, reactor, Ecto.UUID.generate())
+
+      assert {:ok, %{comment: reply}} =
+               CMS.Comments.reply_comment_result(
+                 retained,
+                 mock_body_bag(plate_body([block("reply", [text("Reply after deletion")])])),
+                 user,
+                 Ecto.UUID.generate(),
+                 destination.slug
+               )
+
+      assert reply.reply_to_comment_id == comment.id
+
+      assert {:ok, %{comment: updated}} =
+               CMS.Comments.update_comment_result(
+                 retained,
+                 mock_body_bag(
+                   plate_body([block("update", [text("Edited after origin deletion")])])
+                 ),
+                 1,
+                 user,
+                 Ecto.UUID.generate(),
+                 destination.slug
+               )
+
+      assert updated.id == comment.id
+
+      assert {:ok, :pass} =
+               CMS.Comments.Effects.deliver(:sync_mentions, %{"comment_id" => comment.id})
+
+      assert %SyncState{desired_content_token: current_token, synced_content_token: current_token} =
+               Repo.get_by!(SyncState, source_comment_id: comment.id)
+    end
+
+    test "builds a navigable Doc path when the public slug is empty" do
+      assert PublicUrl.article(%{
+               community_slug: "home",
+               thread: :doc,
+               inner_id: 42,
+               slug: nil
+             }) == "/home/doc/42/doc"
+    end
+
+    test "resolves a shared Comment parent through the requested mirror binding",
+         ~m(community post user)a do
+      {:ok, destination} = mock_community(user)
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_body_bag(plate_body([block("comment", [text("A shared comment body")])])),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      assert {:ok, _binding} =
+               CMS.Articles.BindingPersist.mirror(
+                 Repo.get!(Article, post.article_id),
+                 destination
+               )
+
+      assert {:ok, article} =
+               CMS.FrontDesk.article(%{
+                 community: destination.slug,
+                 thread: :post,
+                 inner_id: article_inner_id(post, destination)
+               })
+
+      assert article.article_id == post.article_id
+      assert article.community.id == destination.id
+
+      assert {:ok, shared_comment} =
+               CMS.FrontDesk.comment(%{
+                 article: %{
+                   community: destination.slug,
+                   thread: :post,
+                   inner_id: article.inner_id
+                 },
+                 inner_id: comment.inner_id
+               })
+
+      assert shared_comment.id == comment.id
+
+      assert {:ok, page} =
+               CMS.Comments.page(:post, post.article_id, destination.slug, %{}, nil, :replies)
+
+      assert Enum.any?(page.entries, &(&1.id == comment.id))
+
+      assert {:ok, %{comment: reply}} =
+               CMS.Comments.reply_comment_result(
+                 comment,
+                 mock_body_bag(plate_body([block("reply", [text("A reply from destination")])])),
+                 user,
+                 Ecto.UUID.generate(),
+                 destination.slug
+               )
+
+      assert reply.reply_to_comment_id == comment.id
+      assert reply.origin_community_id == destination.id
+
+      assert {:ok, reply_article} =
+               CMS.FrontDesk.article(%{
+                 community: destination.slug,
+                 thread: :post,
+                 inner_id: article_inner_id(post, destination)
+               })
+
+      assert reply_article.community.id == destination.id
+
+      assert {:ok, %{comment: updated}} =
+               CMS.Comments.update_comment_result(
+                 comment,
+                 mock_body_bag(plate_body([block("update", [text("Updated from destination")])])),
+                 1,
+                 user,
+                 Ecto.UUID.generate(),
+                 destination.slug
+               )
+
+      assert updated.id == comment.id
+
+      assert {:ok, %{comment: deleted}} =
+               CMS.Comments.delete_comment_result(
+                 updated,
+                 user,
+                 Ecto.UUID.generate(),
+                 destination.slug
+               )
+
+      assert deleted.id == comment.id
+    end
+
+    test "publishing records one durable Article-level Mention intent and syncs its token",
+         ~m(community blog user)a do
+      body =
+        plate_body([
+          block("mention", [text("#{@site_host}/#{community.slug}/blog/#{blog.inner_id}")])
+        ])
+
+      {:ok, %{article: article, draft: draft}} =
+        CMS.Articles.create_stable_draft(
+          community,
+          :post,
+          %{
+            title: "Mention source",
+            digest: "A publishable mention source",
+            body_bag: mock_body_bag(body)
+          },
+          user
+        )
+
+      command_id = Ecto.UUID.generate()
+
+      assert {:ok, %{public: public}} =
+               CMS.Articles.publish(article.id, user,
+                 community: community,
+                 expected_draft_version: draft.version,
+                 expected_lifecycle_version: 1,
+                 command_id: command_id
+               )
+
+      token = "#{public.revision_id}:#{public.publication_version}"
+
+      assert %SyncState{desired_content_token: ^token, synced_content_token: nil} =
+               Repo.get_by!(SyncState, source_article_id: article.id)
+
+      events = Repo.all(CMS.Outbox.Event) |> Enum.filter(&(&1.command_id == command_id))
+      assert Enum.count(events, &(&1.event == "article.mention_sync")) == 1
+
+      event =
+        events
+        |> Enum.find(&(&1.event == "article.mention_sync"))
+        |> Ecto.Changeset.change(
+          data: %{"source_type" => "post", "content_token" => "late-event-token"}
+        )
+        |> Repo.update!()
+
+      assert {:ok, :pass} =
+               GroupherServer.Jobs.CMSOutboxArticle.perform(%Oban.Job{
+                 args: %{"event_id" => event.id},
+                 attempt: 1,
+                 max_attempts: 3
+               })
+
+      assert %SyncState{desired_content_token: ^token, synced_content_token: ^token} =
+               Repo.get_by!(SyncState, source_article_id: article.id)
+
+      assert {:ok, :pass} =
+               ArtimentMentions.sync_current(%{type: :post, article_id: article.id})
+
+      source_key = Rebuild.key(%{type: :post, article_id: article.id})
+
+      assert Enum.any?(Rebuild.sources(), fn {locator, _} ->
+               Rebuild.key(locator) == source_key
+             end)
+
+      assert [] == Enum.filter(Rebuild.report(nil, 100).issues, &(&1.source_key == source_key))
+
+      Repo.delete_all(from(state in SyncState, where: state.source_article_id == ^article.id))
+
+      assert Enum.any?(
+               Rebuild.report(nil, 100).issues,
+               &(&1.source_key == source_key and &1.category == :missing_watermark)
+             )
+
+      manifest =
+        Path.join(System.tmp_dir!(), "mention-rebuild-#{System.unique_integer([:positive])}.json")
+
+      on_exit(fn -> File.rm(manifest) end)
+      result = Rebuild.apply(nil, 100, false, manifest)
+      assert result.failures == []
+
+      assert %SyncState{synced_content_token: ^token} =
+               Repo.get_by!(SyncState, source_article_id: article.id)
+
+      Repo.get_by!(SyncState, source_article_id: article.id)
+      |> SyncState.changeset(%{desired_content_token: "stale-desired-token"})
+      |> Repo.update!()
+
+      assert Enum.any?(Rebuild.report(nil, 100).issues, fn issue ->
+               issue.source_key == source_key and issue.category == :canonical_drift
+             end)
+
+      assert Rebuild.apply(nil, 100, false, manifest).failures == []
+
+      assert %SyncState{desired_content_token: ^token, synced_content_token: ^token} =
+               Repo.get_by!(SyncState, source_article_id: article.id)
+
+      {:ok, result} =
+        ArtimentMentions.mentions(:post, article.id, %GroupherServer.Pagi.Params.Offset{
+          page: 1,
+          size: 10
+        })
+
+      assert [%{mentioned_article_id: target_id}] = result.entries
+      assert target_id == blog.article_id
+
+      event
+      |> Ecto.Changeset.change(status: :failed)
+      |> Repo.update!()
+
+      assert Enum.any?(Rebuild.report(nil, 100).issues, fn issue ->
+               issue.source_key == source_key and issue.category == :exhausted_outbox
+             end)
+
+      File.write!(manifest, "not JSON")
+
+      assert_raise RuntimeError, ~r/invalid Mention rebuild failure manifest JSON/, fn ->
+        Rebuild.read_manifest(manifest)
+      end
+
+      {:ok, destination} = mock_community(user)
+      assert {:ok, 0} = GraphRevision.current(destination.id)
+
+      assert {:ok, _binding} =
+               CMS.Articles.BindingPersist.mirror(Repo.get!(Article, article.id), destination)
+
+      assert {:ok, 1} = GraphRevision.current(destination.id)
+
+      assert Repo.aggregate(
+               from(state in SyncState, where: state.source_article_id == ^article.id),
+               :count,
+               :id
+             ) == 1
+
+      {:ok, mirrored_result} =
+        ArtimentMentions.mentions(:post, article.id, %GroupherServer.Pagi.Params.Offset{
+          page: 1,
+          size: 10
+        })
+
+      assert mirrored_result.total_count == 1
+    end
+
+    test "advances the source Community graph even when no mentions are found",
+         ~m(community post_attrs user)a do
+      {:ok, post} =
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{
+            body_bag:
+              mock_body_bag(plate_body([block("plain", [text("plain body without mentions")])]))
+          }),
+          user
+        )
+
+      assert {:ok, before_revision} = GraphRevision.current(community.id)
+      assert {:ok, :pass} = ArtimentMentions.sync(post)
+      assert {:ok, after_revision} = GraphRevision.current(community.id)
+      assert after_revision == before_revision + 1
+    end
+
+    test "recognizes a public community article URL as an internal mention",
+         ~m(community post_attrs blog user)a do
+      body =
+        plate_body([
+          block("block-a", [
+            text("#{@site_host}/#{community.slug}/blog/#{blog.inner_id}")
+          ])
+        ])
+
+      {:ok, post} =
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
+
+      assert {:ok, {1, nil}} = ArtimentMentions.sync(post)
+
+      {:ok, result} =
+        ArtimentMentions.mentions(:post, post.id, %GroupherServer.Pagi.Params.Offset{
+          page: 1,
+          size: 10
+        })
+
+      assert [%{mentioned_scope: :internal, mentioned_article_id: article_id}] = result.entries
+      assert article_id == blog.article_id
+    end
+
+    test "sync/1 ignores a stale loaded body and keeps the canonical public target",
+         ~m(community post_attrs blog changelog user)a do
+      current_body =
+        plate_body([
+          block("current", [text("#{@site_host}/#{community.slug}/blog/#{blog.inner_id}")])
+        ])
+
+      {:ok, post} =
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(current_body)}),
+          user
+        )
+
+      assert {:ok, {1, nil}} = ArtimentMentions.sync(post)
+
+      stale_body =
+        plate_body([
+          block("stale", [text("#{@site_host}/#{community.slug}/changelog/#{changelog.inner_id}")])
+        ])
+
+      assert {:ok, :pass} = ArtimentMentions.sync(Map.put(post, :body, stale_body))
+
+      {:ok, result} =
+        ArtimentMentions.mentions(:post, post.id, %GroupherServer.Pagi.Params.Offset{
+          page: 1,
+          size: 10
+        })
+
+      assert [%{mentioned_article_id: target_id}] = result.entries
+      assert target_id == blog.article_id
+    end
+
+    test "resolves the URL Community independently of the source binding",
+         ~m(post_attrs user)a do
+      {:ok, source_community} = mock_community(user)
+      {:ok, target_community} = mock_community(user)
+      {_, target, _, _} = mock_article(:blog, target_community, user)
+
+      body =
+        plate_body([
+          block("block-a", [
+            text("#{@site_host}/#{target_community.slug}/blog/#{target.inner_id}")
+          ])
+        ])
+
+      {:ok, source} =
+        CMS.Articles.create(
+          source_community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
+
+      assert {:ok, {1, nil}} = ArtimentMentions.sync(source)
+
+      {:ok, result} =
+        ArtimentMentions.mentions(:post, source.id, %GroupherServer.Pagi.Params.Offset{
+          page: 1,
+          size: 10
+        })
+
+      assert [%{mentioned_article_id: article_id}] = result.entries
+      assert article_id == target.article_id
+    end
+
+    test "keeps custom domain and forged platform host links external",
+         ~m(community post_attrs blog user)a do
+      body =
+        plate_body([
+          block("block-a", [
+            text("https://example.com/#{community.slug}/blog/#{blog.inner_id}"),
+            text("https://groupher.com.evil/#{community.slug}/blog/#{blog.inner_id}")
+          ])
+        ])
+
+      {:ok, source} =
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
+
+      assert {:ok, {2, nil}} = ArtimentMentions.sync(source)
+
+      {:ok, result} =
+        ArtimentMentions.mentions(:post, source.id, %GroupherServer.Pagi.Params.Offset{
+          page: 1,
+          size: 10
+        })
+
+      assert Enum.all?(result.entries, &(&1.mentioned_scope == :external))
+    end
+
+    test "resolves public Comment fragments by comment inner ID",
+         ~m(community post post_attrs user)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_body_bag(plate_body([block("comment", [text("A public comment body")])])),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      url =
+        "#{@site_host}/#{community.slug}/post/#{article_inner_id(post, community)}" <>
+          "#comment-#{comment.inner_id}"
+
+      {:ok, source} =
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{
+            body_bag: mock_body_bag(plate_body([block("source", [text(url)])]))
+          }),
+          user
+        )
+
+      assert {:ok, {1, nil}} = ArtimentMentions.sync(source)
+
+      {:ok, result} =
+        ArtimentMentions.mentions(:post, source.id, %GroupherServer.Pagi.Params.Offset{
+          page: 1,
+          size: 10
+        })
+
+      expected_path =
+        "/#{community.slug}/post/#{article_inner_id(post, community)}#comment-#{comment.inner_id}"
+
+      assert [%{mentioned_type: :comment, mentioned_comment_id: comment_id}] = result.entries
+      assert comment_id == comment.id
+
+      assert PublicUrl.comment(
+               %{
+                 community_slug: community.slug,
+                 thread: :post,
+                 inner_id: article_inner_id(post, community)
+               },
+               comment.inner_id
+             ) == expected_path
+    end
+
+    test "keeps distinct article targets when merging occurrences",
+         ~m(community post_attrs blog user)a do
+      {_, other_blog, _, _} = mock_article(:blog, community, user)
+
+      body =
+        plate_body([
+          block("block-a", [
+            text("#{@site_host}/blog/#{blog.id}"),
+            text("#{@site_host}/blog/#{other_blog.id}"),
+            text("#{@site_host}/blog/#{blog.id}")
+          ])
+        ])
+
+      {:ok, post} =
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
+
+      assert {:ok, {2, nil}} = ArtimentMentions.sync(post)
+
+      {:ok, result} =
+        ArtimentMentions.mentions(:post, post.id, %GroupherServer.Pagi.Params.Offset{
+          page: 1,
+          size: 10
+        })
+
+      assert MapSet.new(Enum.map(result.entries, & &1.mentioned_article_id)) ==
+               MapSet.new([blog.article_id, other_blog.article_id])
+
+      assert length(
+               Enum.find(result.entries, &(&1.mentioned_article_id == blog.article_id)).occurrences
+             ) == 2
+    end
+
     test "normalizes internal links to inline mentions and keeps external links as links",
          ~m(community post_attrs blog user)a do
       body =
@@ -55,8 +860,6 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert result.total_count == 2
 
       internal = Enum.find(entries, &(&1.mentioned_type == :blog))
-      assert internal.mentioner_community_id == community.id
-      assert internal.mentioned_community_id == community.id
       assert internal.mentioned_scope == :internal
       assert internal.mention_case == :inline_mention
       assert internal.mentioned_article_id == blog.article_id
@@ -64,12 +867,10 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert Enum.all?(internal.occurrences, &(&1["normalized_from"] == "link"))
 
       external = Enum.find(entries, &(&1.mentioned_type == :url))
-      assert external.mentioner_community_id == community.id
-      assert external.mentioned_community_id == nil
       assert external.mentioned_scope == :external
       assert external.mention_case == :link
-      assert external.mentioned_url == "https://example.com/doc"
-      assert external.mentioned_url_hash
+      assert external.external_url == "https://example.com/doc"
+      assert external.external_url_hash
     end
 
     test "stores inline user mentions as internal mentions",
@@ -104,9 +905,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
 
       assert mention.mentioned_scope == :internal
       assert mention.mentioned_type == :user
-      assert mention.mentioned_id == mentioned_user.id
-      assert mention.mentioner_community_id == community.id
-      assert mention.mentioned_community_id == nil
+      assert mention.mentioned_user_id == mentioned_user.id
       assert mention.mention_case == :inline_mention
       assert mention.occurrences |> List.first() |> Map.get("display") == mentioned_user.login
     end
@@ -169,18 +968,18 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         })
 
       user_mention = Enum.find(result.entries, &(&1.mentioned_type == :user))
-      assert user_mention.mentioned_id == mentioned_user.id
+      assert user_mention.mentioned_user_id == mentioned_user.id
       assert user_mention.mention_case == :inline_mention
       assert user_mention.occurrences |> List.first() |> Map.get("block_id") == "mention-block"
       assert user_mention.occurrences |> List.first() |> Map.get("path") == [1, 1]
 
       external = Enum.find(result.entries, &(&1.mentioned_type == :url))
-      assert external.mentioned_url == "https://example.com/doc"
+      assert external.external_url == "https://example.com/doc"
       assert external.mention_case == :link
     end
 
     test "supports cross article mentions among post, blog, and changelog",
-         ~m(community post blog changelog user)a do
+         ~m(post blog changelog user)a do
       blog_body =
         plate_body([
           block("block-blog", [text(~s(<a href="#{@site_host}/post/#{post.id}">post</a>))])
@@ -227,14 +1026,10 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert post_mentions.total_count == 1
       post_mention = post_mentions.entries |> List.first()
       assert post_mention.mentioner_type == :blog
-      assert post_mention.mentioner_community_id == community.id
-      assert post_mention.mentioned_community_id == community.id
 
       assert blog_mentions.total_count == 1
       blog_mention = blog_mentions.entries |> List.first()
       assert blog_mention.mentioner_type == :changelog
-      assert blog_mention.mentioner_community_id == community.id
-      assert blog_mention.mentioned_community_id == community.id
     end
 
     test "ignores self mentions for artiments and authors", ~m(community post_attrs user)a do
@@ -262,7 +1057,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         |> Jason.decode!()
         |> put_in(
           [Access.at(0), "children", Access.at(0), "text"],
-          ~s(<a href="#{@site_host}/post/#{post.id}">self</a>)
+          ~s(<a href="#{@site_host}/#{community.slug}/post/#{article_inner_id(post, community)}">self</a>)
         )
         |> Jason.encode!()
 
@@ -310,9 +1105,6 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         })
 
       assert result.total_count == 1
-      mention = result.entries |> List.first()
-      assert mention.mentioner_community_id == community.id
-      assert mention.mentioned_community_id == community.id
 
       {:ok, %{comment: comment}} =
         CMS.Comments.update_comment(
@@ -334,10 +1126,8 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       mention = result.entries |> List.first()
 
       assert result.total_count == 1
-      assert mention.mentioner_community_id == community.id
-      assert mention.mentioned_community_id == nil
       assert mention.mentioned_type == :url
-      assert mention.mentioned_url == "https://example.com/changed"
+      assert mention.external_url == "https://example.com/changed"
     end
 
     test "keeps Comment parent lookups constant as Comment mentions grow",
@@ -382,7 +1172,9 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert {:ok, {1, nil}} = ArtimentMentions.sync(mentioner)
 
       {single_result, single_queries} =
-        capture_repo_queries(fn -> ArtimentMentions.sync(mentioner) end)
+        capture_repo_queries(fn ->
+          ArtimentMentions.sync_current(%{type: :comment, comment_id: mentioner.id}, force: true)
+        end)
 
       {:ok, %{comment: mentioner}} =
         CMS.Comments.update_comment(
@@ -394,11 +1186,13 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         )
 
       {many_result, many_queries} =
-        capture_repo_queries(fn -> ArtimentMentions.sync(mentioner) end)
+        capture_repo_queries(fn ->
+          ArtimentMentions.sync_current(%{type: :comment, comment_id: mentioner.id}, force: true)
+        end)
 
       assert {:ok, {1, nil}} = single_result
       assert {:ok, {3, nil}} = many_result
-      assert data_query_count(many_queries) <= data_query_count(single_queries)
+      assert data_query_count(many_queries) <= data_query_count(single_queries) + 1
 
       assert {:ok, %{total_count: 3}} =
                ArtimentMentions.mentions(
@@ -453,7 +1247,8 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert result.total_count == 0
     end
 
-    test "supports mentioned_by for internal content", ~m(community post_attrs blog user)a do
+    test "keeps stable incoming facts when a source is review blocked",
+         ~m(community post_attrs blog user)a do
       body =
         plate_body([
           block("block-a", [text(~s(<a href="#{@site_host}/blog/#{blog.id}">blog</a>))])
@@ -480,8 +1275,6 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert result.total_count == 1
       assert mention.mentioner_type == :post
       assert mention.mentioner_article_id == post.article_id
-      assert mention.mentioner_community_id == community.id
-      assert mention.mentioned_community_id == community.id
 
       article = Repo.get!(Article, post.article_id)
 
@@ -504,7 +1297,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
           size: 10
         })
 
-      assert result.total_count == 0
+      assert result.total_count == 1
     end
 
     test "purges mentions when an article is hard deleted", ~m(community post_attrs blog user)a do
@@ -545,218 +1338,80 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert result.total_count == 0
     end
 
-    test "rejects invalid external mentions without url hash", ~m(community)a do
+    test "changeset rejects missing external URL hash", ~m(post)a do
       attrs = %{
         mentioner_type: :post,
-        mentioner_id: 1,
-        mentioner_community_id: community.id,
+        mentioner_article_id: post.article_id,
         mentioned_scope: :external,
         mentioned_type: :url,
-        mentioned_url: "https://example.com",
+        external_url: "https://example.com",
         mention_case: :link,
-        mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
+        occurrences: [%{path: [0, 0]}],
+        mentioned_at: DateTime.utc_now(:second)
       }
 
       changeset = ArtimentMention.changeset(%ArtimentMention{}, attrs)
-
       refute changeset.valid?
-      assert %{mentioned_url_hash: ["can't be blank"]} = errors_on(changeset)
+      assert %{external_url_hash: ["can't be blank"]} = errors_on(changeset)
     end
 
-    test "rejects inconsistent mention scope fields", ~m(community)a do
-      now = DateTime.utc_now() |> DateTime.truncate(:second)
+    test "database owns edge key and rejects a duplicate logical edge", ~m(post blog)a do
+      now = DateTime.utc_now(:second)
 
-      internal_attrs = %{
+      row = %{
         mentioner_type: :post,
-        mentioner_id: 1,
-        mentioner_community_id: community.id,
+        mentioner_article_id: post.article_id,
         mentioned_scope: :internal,
         mentioned_type: :blog,
-        mentioned_id: 2,
-        mentioned_url_hash: "hash",
-        mention_case: :link,
-        mentioned_at: now
-      }
-
-      external_attrs = %{
-        mentioner_type: :post,
-        mentioner_id: 1,
-        mentioner_community_id: community.id,
-        mentioned_scope: :external,
-        mentioned_type: :url,
-        mentioned_id: 2,
-        mentioned_community_id: community.id,
-        mentioned_url: "https://example.com",
-        mentioned_url_hash: "hash",
+        mentioned_article_id: blog.article_id,
         mention_case: :inline_mention,
-        mentioned_at: now
+        occurrences: [%{path: [0, 0]}],
+        edge_key: "forged",
+        mentioned_at: now,
+        inserted_at: now,
+        updated_at: now
       }
 
-      internal_changeset = ArtimentMention.changeset(%ArtimentMention{}, internal_attrs)
-      external_changeset = ArtimentMention.changeset(%ArtimentMention{}, external_attrs)
+      assert {1, nil} = Repo.insert_all(ArtimentMention, [row])
+      mention = Repo.get_by!(ArtimentMention, mentioner_article_id: post.article_id)
+      refute mention.edge_key == "forged"
 
-      refute internal_changeset.valid?
-
-      assert %{mention_case: ["must be inline_mention"], mentioned_url_hash: ["must be blank"]} =
-               errors_on(internal_changeset)
-
-      refute external_changeset.valid?
-
-      assert %{
-               mention_case: ["must be link"],
-               mentioned_id: ["must be blank"],
-               mentioned_community_id: ["must be blank"]
-             } = errors_on(external_changeset)
-    end
-  end
-
-  describe "mark_target_state/2" do
-    test "updates every lifecycle state with one statement and preserves unrelated JSON",
-         ~m(community post)a do
-      old_updated_at = Datetime.shift(DateTime.utc_now(:second), days: -1)
-      insert_incoming_mentions(community, post, 3, old_updated_at)
-
-      {trashed_result, trashed_queries} =
-        capture_repo_queries(fn -> ArtimentMentions.mark_target_state(post, :trashed) end)
-
-      assert {:ok, :pass} = trashed_result
-      assert mention_update_query_count(trashed_queries) == 1
-
-      trashed_mentions = incoming_mentions(post)
-      assert length(trashed_mentions) == 3
-
-      Enum.each(trashed_mentions, fn mention ->
-        assert mention.mentioned_snapshot["keep"] == "snapshot"
-        assert mention.mentioned_snapshot["deletionState"] == "trashed"
-        assert is_binary(mention.mentioned_snapshot["deletedAt"])
-        assert mention.meta["keep"] == "meta"
-        assert mention.meta["mentionedDeleted"]
-        assert mention.meta["mentionedTrashed"]
-        assert is_binary(mention.meta["mentionedDeletedAt"])
-        assert DateTime.compare(mention.updated_at, old_updated_at) == :gt
-      end)
-
-      {deleted_result, deleted_queries} =
-        capture_repo_queries(fn ->
-          ArtimentMentions.mark_target_state(post, :permanently_deleted)
+      assert_raise Postgrex.Error, fn ->
+        Repo.transaction(fn ->
+          Repo.insert_all(ArtimentMention, [%{row | edge_key: "another"}])
         end)
-
-      assert {:ok, :pass} = deleted_result
-      assert mention_update_query_count(deleted_queries) == 1
-
-      Enum.each(incoming_mentions(post), fn mention ->
-        assert mention.mentioned_snapshot["deletionState"] == "permanently_deleted"
-        assert mention.meta["mentionedDeleted"]
-        refute mention.meta["mentionedTrashed"]
-      end)
-
-      {active_result, active_queries} =
-        capture_repo_queries(fn -> ArtimentMentions.mark_target_state(post, :active) end)
-
-      assert {:ok, :pass} = active_result
-      assert mention_update_query_count(active_queries) == 1
-
-      Enum.each(incoming_mentions(post), fn mention ->
-        assert mention.mentioned_snapshot["keep"] == "snapshot"
-        refute Map.has_key?(mention.mentioned_snapshot, "deletionState")
-        refute Map.has_key?(mention.mentioned_snapshot, "deletedAt")
-        assert mention.meta["keep"] == "meta"
-        refute Map.has_key?(mention.meta, "mentionedDeleted")
-        refute Map.has_key?(mention.meta, "mentionedTrashed")
-        refute Map.has_key?(mention.meta, "mentionedDeletedAt")
-      end)
+      end
     end
 
-    test "participates in the caller transaction", ~m(community post)a do
-      old_updated_at = Datetime.shift(DateTime.utc_now(:second), days: -1)
-      insert_incoming_mentions(community, post, 2, old_updated_at)
+    test "database rejects a wrong Article target type and an empty occurrence list",
+         ~m(post blog)a do
+      now = DateTime.utc_now(:second)
 
-      rollback_error = ErrorCat.custom("forced rollback")
+      row = %{
+        mentioner_type: :post,
+        mentioner_article_id: post.article_id,
+        mentioned_scope: :internal,
+        mentioned_type: :post,
+        mentioned_article_id: blog.article_id,
+        mention_case: :inline_mention,
+        occurrences: [%{path: [0, 0]}],
+        mentioned_at: now,
+        inserted_at: now,
+        updated_at: now
+      }
 
-      assert {:error, ^rollback_error} =
-               Repo.transaction(fn ->
-                 assert {:ok, :pass} =
-                          ArtimentMentions.mark_target_state(post, :permanently_deleted)
+      assert_raise Postgrex.Error, fn ->
+        Repo.transaction(fn -> Repo.insert_all(ArtimentMention, [row]) end)
+      end
 
-                 Repo.rollback(rollback_error)
-               end)
-
-      Enum.each(incoming_mentions(post), fn mention ->
-        refute Map.has_key?(mention.mentioned_snapshot, "deletionState")
-        refute Map.has_key?(mention.meta, "mentionedDeleted")
-        assert mention.updated_at == old_updated_at
-      end)
+      assert_raise Postgrex.Error, fn ->
+        Repo.transaction(fn ->
+          Repo.insert_all(ArtimentMention, [
+            %{row | mentioned_type: :blog, occurrences: []}
+          ])
+        end)
+      end
     end
-  end
-
-  defp insert_incoming_mentions(community, post, count, timestamp) do
-    target = Repo.get!(Article, post.article_id)
-    mentioner_ids = Enum.map(1..count, fn _index -> Ecto.UUID.generate() end)
-
-    Repo.insert_all(
-      Article,
-      Enum.map(mentioner_ids, fn article_id ->
-        %{
-          id: article_id,
-          author_id: target.author_id,
-          thread: :blog,
-          inserted_at: timestamp,
-          updated_at: timestamp
-        }
-      end)
-    )
-
-    now = DateTime.utc_now(:second)
-
-    Repo.insert_all(
-      CMS.Model.ArticleBinding,
-      Enum.map(mentioner_ids, fn article_id ->
-        %{
-          article_id: article_id,
-          community_id: community.id,
-          inner_id: 10_000 + :erlang.phash2(article_id, 1_000),
-          inserted_at: now,
-          updated_at: now
-        }
-      end)
-    )
-
-    rows =
-      Enum.with_index(mentioner_ids, 1)
-      |> Enum.map(fn {mentioner_id, index} ->
-        %{
-          mentioner_type: :blog,
-          mentioner_article_id: mentioner_id,
-          mentioner_community_id: community.id,
-          mentioner_url: "#{@site_host}/blog/#{10_000 + index}",
-          mentioned_scope: :internal,
-          mentioned_type: :post,
-          mentioned_article_id: post.article_id,
-          mentioned_community_id: community.id,
-          mentioned_url: "#{@site_host}/post/#{post.id}",
-          mention_case: :inline_mention,
-          occurrences: [],
-          mentioner_snapshot: %{},
-          mentioned_snapshot: %{"keep" => "snapshot"},
-          meta: %{"keep" => "meta"},
-          mentioned_at: timestamp,
-          inserted_at: timestamp,
-          updated_at: timestamp
-        }
-      end)
-
-    assert {^count, nil} = Repo.insert_all(ArtimentMention, rows)
-  end
-
-  defp incoming_mentions(post) do
-    ArtimentMention
-    |> where(
-      [mention],
-      mention.mentioned_scope == :internal and mention.mentioned_type == :post and
-        mention.mentioned_article_id == ^post.article_id
-    )
-    |> order_by([mention], asc: mention.id)
-    |> Repo.all()
   end
 
   defp capture_repo_queries(fun) do
@@ -795,14 +1450,6 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       query
       |> String.trim_leading()
       |> String.match?(~r/^(SELECT|INSERT|UPDATE|DELETE)/)
-    end)
-  end
-
-  defp mention_update_query_count(queries) do
-    Enum.count(queries, fn query ->
-      query
-      |> String.trim_leading()
-      |> String.starts_with?(~s(UPDATE "cms"."artiment_mentions"))
     end)
   end
 

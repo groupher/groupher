@@ -11,7 +11,6 @@ export const trashedPosts = graphql(`
         articleId
         deletedAt
         scheduledPermanentDeletionAt
-        mentionedByCount
         deletedBy {
           ...DashboardAuthorFields
         }

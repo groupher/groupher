@@ -267,7 +267,7 @@ defmodule GroupherServer.CMS.Review.Target do
 
   defp lock_comment_scope(_comment, "platform"), do: {:ok, :pass}
 
-  defp lock_comment_scope(%Comment{community_id: community_id}, scope_key) do
+  defp lock_comment_scope(%Comment{origin_community_id: community_id}, scope_key) do
     if scope_key == "community:#{community_id}" do
       {:ok, :pass}
     else

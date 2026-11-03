@@ -1,65 +1,13 @@
 defmodule GroupherServer.CMS.ArtimentMentions.Store do
   @moduledoc """
-  Stores the product-level mention graph for CMS artiments.
+  Stores stable Mention facts and synchronizes each canonical public source.
 
-  In product language, a mention means "this content mentioned another entity".
-  `mentioner_*` always points to the artiment that contains the mention, while
-  `mentioned_*` points to the entity or external URL being mentioned.
-
-  Examples:
-
-    * post A links to blog B:
-      `mentioner_type = :post`, `mentioner_id = A.id`,
-      `mentioner_community_id` is resolved from explicit ArticleBinding context,
-      `mentioned_scope = :internal`, `mentioned_type = :blog`,
-      `mentioned_id = B.id`, `mentioned_community_id = B.community_id`,
-      `mention_case = :inline_mention`
-
-    * comment A mentions user B with an inline mention:
-      `mentioner_type = :comment`, `mentioner_id = A.id`,
-      `mentioner_community_id` is resolved from explicit ArticleBinding context,
-      `mentioned_scope = :internal`, `mentioned_type = :user`,
-      `mentioned_id = B.id`, `mention_case = :inline_mention`
-
-    * post A links to an external URL:
-      `mentioner_type = :post`, `mentioner_id = A.id`,
-      `mentioner_community_id` is resolved from explicit ArticleBinding context,
-      `mentioned_scope = :external`, `mentioned_type = :url`,
-      `mentioned_url = "https://..."`, `mention_case = :link`
-
-  Important rules:
-
-    * Internal URLs are normalized to inline mentions. A pasted
-      `https://groupher.com/post/123` is stored the same way as an editor
-      inline mention of that post.
-    * `:url` is only for external links. Internal content and users are always
-      represented by their concrete type and id.
-    * Community ids are first-class query dimensions. `mentioner_community_id`
-      is required because the mentioner is always CMS content; `mentioned_community_id`
-      is filled for mentioned articles/comments and left empty for users and URLs.
-    * `sync/1` rebuilds mentions for one mentioner by deleting its old rows and
-      inserting the current parse result. This handles the common update case
-      where a user removes or changes a mention in the editor.
-    * Self mentions are ignored: an article/comment mentioning itself is not
-      stored, and an author mentioning their own user account is not stored.
-    * `occurrences` keeps block-level locations and raw input details so the UI
-      can jump to the exact paragraph and debug parser normalization.
-
-  This module is the fact store only. Notification behavior should consume
-  these facts downstream instead of being coupled to sync.
-
-  Business position:
-
-      GraphQL resolver / job
-        -> CMS facade
-        -> Store
-        -> Repo / external boundary
+      canonical BodyBag -> parsed targets -> locked fact replacement + synced token
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
 
   alias CMS.ErrorCat
 
@@ -67,14 +15,15 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     Artiment.Matcher,
     Artiment.PlateJSON,
     ArtimentMentions.Config,
+    ArtimentMentions.CanonicalSource,
+    ArtimentMentions.GraphRevision,
+    ArtimentMentions.SyncProgress,
     ArtimentMentions.Parser,
     Articles.Bindings,
     FrontDesk
   }
 
-  alias CMS.Model.{Article, ArtimentMention, Comment, CommentBody}
-  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
-  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
+  alias CMS.Model.{Article, ArticlePublic, ArtimentMention, Comment, CommentBody, DocPublic}
   alias Helper.{ORM, T}
   alias Helper.ORM.Pagi.{Order}
   alias GroupherServer.{Pagi}
@@ -86,10 +35,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   @type target_state :: :active | :trashed | :permanently_deleted
   @type sync_output :: :pass | {non_neg_integer(), nil}
   @type sync_result :: {:ok, sync_output()} | {:error, term()}
-  @typep artiment_context :: %{
-           required(:artiment) => term(),
-           optional(:parent_article) => T.article() | nil
-         }
+  @typep artiment_context :: %{required(:artiment) => term()}
 
   @doc """
   Rebuilds all Mention facts emitted by one Article or Comment.
@@ -109,50 +55,140 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   context; snapshot construction must not perform queries per occurrence.
   """
   @spec sync(Comment.t() | T.article() | map()) :: sync_result()
-  def sync(%Comment{body: %CommentBody{json: body}} = comment) when is_binary(body) do
-    with {:ok, ast} <- PlateJSON.decode(body) do
-      do_sync(comment, ast)
-    end
+  def sync(%Comment{id: comment_id}) when is_integer(comment_id),
+    do: sync_current_legacy(%{type: :comment, comment_id: comment_id})
+
+  def sync(%{article_id: article_id, thread: thread} = source)
+      when is_binary(article_id) and thread in [:post, :blog, :changelog, :ticket, :doc] do
+    sync_current_legacy(%{
+      type: thread,
+      article_id: article_id,
+      branch_id: Map.get(source, :branch_id)
+    })
   end
 
-  def sync(%Comment{id: comment_id} = comment) do
-    case Repo.get_by(CommentBody, comment_id: comment_id) do
-      %CommentBody{json: body} when is_binary(body) ->
-        with {:ok, ast} <- PlateJSON.decode(body) do
-          do_sync(comment, ast)
-        end
-
-      _ ->
-        {:ok, :pass}
-    end
-  end
-
-  def sync(%{body: body} = artiment) when is_binary(body) do
-    with {:ok, ast} <- PlateJSON.decode(body),
-         {:ok, artiment} <- load_article_for_mentions(artiment) do
-      do_sync(artiment, ast)
-    end
-  end
-
-  def sync(%{body: _body} = article) do
-    with {:ok, ast} <- load_body_ast(article),
-         {:ok, article} <- load_article_for_mentions(article) do
-      do_sync(article, ast)
-    end
-  end
-
-  def sync(%{id: article_id, thread: thread, community: %CMS.Model.Community{} = community})
-      when is_binary(article_id) and thread in [:post, :blog, :changelog, :doc] do
-    with %Article{} <- Repo.get(Article, article_id),
-         {:ok, projection} <- CMS.Articles.Store.load_article_for_mentions(article_id, community) do
-      sync(projection)
-    else
-      nil -> {:error, ErrorCat.custom(%{reason: :not_exist})}
-      {:error, _reason} = error -> error
-    end
+  def sync(%{id: article_id, thread: thread} = source)
+      when is_binary(article_id) and thread in [:post, :blog, :changelog, :ticket, :doc] do
+    sync_current_legacy(%{
+      type: thread,
+      article_id: article_id,
+      branch_id: Map.get(source, :branch_id)
+    })
   end
 
   def sync(_), do: {:ok, :pass}
+
+  defp sync_current_legacy(locator) do
+    case CanonicalSource.sync_current(locator, []) do
+      {:ok, :source_gone} ->
+        {:ok, :pass}
+
+      {:error, :source_publication_missing} ->
+        if public_head_absent?(locator),
+          do: {:ok, :pass},
+          else: {:error, :source_publication_missing}
+
+      result ->
+        result
+    end
+  end
+
+  defp public_head_absent?(%{type: :doc, article_id: id, branch_id: branch_id}) do
+    is_nil(Repo.get_by(DocPublic, article_id: id, branch_id: branch_id))
+  end
+
+  defp public_head_absent?(%{article_id: id}), do: is_nil(Repo.get(ArticlePublic, id))
+  defp public_head_absent?(_), do: false
+
+  @doc "Rebuilds a published source against its desired token in one locked transaction."
+  def sync_public(source, opts \\ [])
+
+  def sync_public(%{article_id: article_id} = source, opts) when is_binary(article_id) do
+    with {:ok, ast} <- load_body_ast(source) do
+      Repo.transaction(fn ->
+        {state, token} =
+          case SyncProgress.lock_current(source) do
+            {:ok, result} -> result
+            {:error, reason} -> Repo.rollback(reason)
+          end
+
+        if state.synced_content_token == token and not Keyword.get(opts, :force, false) do
+          :pass
+        else
+          mentioner_context = artiment_context(source)
+
+          mentions =
+            ast
+            |> Parser.parse(community_id: community_id(mentioner_context))
+            |> Enum.reject(&mentioning_itself?(source, &1))
+            |> hydrate_comment_bodies()
+            |> Enum.map(&shape(mentioner_context, &1))
+            |> merge_occurrences()
+
+          {:ok, _} = delete_by_mentioner(source)
+          result = insert_mentions(mentions)
+          {:ok, _state} = SyncProgress.mark_synced_in_transaction(state, token)
+          {:ok, :pass} = bump_source_graph(source)
+          result
+        end
+      end)
+      |> source_gone_result()
+    end
+  end
+
+  @doc "Rebuilds one current Comment body with its persisted desired token."
+  def sync_comment_public(comment, opts \\ [])
+
+  def sync_comment_public(%Comment{} = comment, opts) do
+    Repo.transaction(fn ->
+      {state, token} =
+        case SyncProgress.lock_current(comment) do
+          {:ok, result} -> result
+          {:error, reason} -> Repo.rollback(reason)
+        end
+
+      if state.synced_content_token == token and not Keyword.get(opts, :force, false) do
+        :pass
+      else
+        ast =
+          case Repo.get_by(CommentBody, comment_id: comment.id) do
+            %CommentBody{version: version, body_hash: hash, json: json}
+            when is_binary(json) ->
+              if "#{comment.id}:#{version}:#{hash}" == token do
+                case PlateJSON.decode(json) do
+                  {:ok, decoded} -> decoded
+                  {:error, reason} -> Repo.rollback(reason)
+                end
+              else
+                Repo.rollback(:stale_comment_body)
+              end
+
+            _ ->
+              Repo.rollback(:source_body_missing)
+          end
+
+        mentioner_context = artiment_context(comment)
+
+        mentions =
+          ast
+          |> Parser.parse(community_id: community_id(mentioner_context))
+          |> Enum.reject(&mentioning_itself?(comment, &1))
+          |> hydrate_comment_bodies()
+          |> Enum.map(&shape(mentioner_context, &1))
+          |> merge_occurrences()
+
+        {:ok, _} = delete_by_mentioner(comment)
+        result = insert_mentions(mentions)
+        {:ok, _state} = SyncProgress.mark_synced_in_transaction(state, token)
+        {:ok, :pass} = bump_source_graph(comment)
+        result
+      end
+    end)
+    |> source_gone_result()
+  end
+
+  defp source_gone_result({:error, :source_deleted}), do: {:ok, :source_gone}
+  defp source_gone_result(result), do: result
 
   @doc """
   Removes Mention facts owned by a deleted Comment, or removes outgoing facts
@@ -164,8 +200,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
     from(m in ArtimentMention,
       where:
-        (m.mentioner_type == ^type and m.mentioner_id == ^id) or
-          (m.mentioned_scope == :internal and m.mentioned_type == ^type and m.mentioned_id == ^id)
+        (m.mentioner_type == ^type and m.mentioner_comment_id == ^id) or
+          (m.mentioned_scope == :internal and m.mentioned_type == ^type and
+             m.mentioned_comment_id == ^id)
     )
     |> ORM.delete_all(:if_exist)
   end
@@ -195,9 +232,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
         ids ->
           from(mention in ArtimentMention,
             where:
-              (mention.mentioner_type == :comment and mention.mentioner_id in ^ids) or
+              (mention.mentioner_type == :comment and mention.mentioner_comment_id in ^ids) or
                 (mention.mentioned_scope == :internal and mention.mentioned_type == :comment and
-                   mention.mentioned_id in ^ids)
+                   mention.mentioned_comment_id in ^ids)
           )
           |> ORM.delete_all(:if_exist)
       end
@@ -214,86 +251,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     |> ORM.delete_all(:if_exist)
   end
 
-  @doc "Keeps incoming Mention facts and marks their stored target snapshot as permanently deleted."
-  @spec preserve_incoming_deleted(T.article() | map()) :: T.domain_res(:pass)
-  def preserve_incoming_deleted(artiment) do
-    mark_target_state(artiment, :permanently_deleted)
-  end
+  @doc "Target rows are removed by their FK when a target is permanently deleted."
+  def preserve_incoming_deleted(_artiment), do: {:ok, :pass}
 
-  @doc """
-  Updates stored target snapshots so Mention UIs can render deletion badges.
-
-      target identity + lifecycle state
-                    |
-                    v
-      select matching incoming facts
-                    |
-                    v
-      one JSONB UPDATE for snapshot + meta + updated_at
-
-  The update is atomic as one SQL statement. Article lifecycle callers still
-  own the surrounding lock/transaction that coordinates this write with the
-  rest of trash, restore, or permanent deletion.
-  """
-  @spec mark_target_state(T.article() | map(), target_state()) :: T.domain_res(:pass)
-  def mark_target_state(artiment, state)
-      when state in [:active, :trashed, :permanently_deleted] do
-    {type, identity} = mentioner_identity(artiment)
-    updated_at = DateTime.utc_now(:second)
-    changed_at = DateTime.to_iso8601(updated_at)
-
-    query = mentioned_query(ArtimentMention, type, identity)
-
-    query
-    |> update_target_state(state, changed_at, updated_at)
-    |> Repo.update_all([])
-
-    {:ok, :pass}
-  end
-
-  defp update_target_state(query, :active, _changed_at, updated_at) do
-    update(query, [m],
-      set: [
-        mentioned_snapshot:
-          fragment(
-            "COALESCE(?, '{}'::jsonb) - 'deletionState' - 'deletedAt'",
-            m.mentioned_snapshot
-          ),
-        meta:
-          fragment(
-            "COALESCE(?, '{}'::jsonb) - 'mentionedDeleted' - 'mentionedTrashed' - 'mentionedDeletedAt'",
-            m.meta
-          ),
-        updated_at: ^updated_at
-      ]
-    )
-  end
-
-  defp update_target_state(query, state, changed_at, updated_at) do
-    snapshot_patch = %{
-      "deletionState" => to_string(state),
-      "deletedAt" => changed_at
-    }
-
-    meta_patch = %{
-      "mentionedDeleted" => true,
-      "mentionedTrashed" => state == :trashed,
-      "mentionedDeletedAt" => changed_at
-    }
-
-    update(query, [m],
-      set: [
-        mentioned_snapshot:
-          fragment(
-            "COALESCE(?, '{}'::jsonb) || ?",
-            m.mentioned_snapshot,
-            type(^snapshot_patch, :map)
-          ),
-        meta: fragment("COALESCE(?, '{}'::jsonb) || ?", m.meta, type(^meta_patch, :map)),
-        updated_at: ^updated_at
-      ]
-    )
-  end
+  @doc "Lifecycle visibility is evaluated at read time; facts contain no deletion snapshot."
+  def mark_target_state(_artiment, _state), do: {:ok, :pass}
 
   @doc "Pages outgoing Mention facts for an internal source."
   @spec mentions(atom(), T.id(), Params.t() | nil) :: tuple()
@@ -332,10 +294,10 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
           |> where(
             [mention],
             mention.mentioner_type == ^normalized and mention.mentioned_scope == :internal and
-              mention.mentioned_type == :user and not is_nil(mention.mentioned_id)
+              mention.mentioned_type == :user and not is_nil(mention.mentioned_user_id)
           )
           |> where_mentioner(normalized, id)
-          |> select([mention], fragment("DISTINCT ?", mention.mentioned_id))
+          |> select([mention], fragment("DISTINCT ?", mention.mentioned_user_id))
           |> Repo.all()
 
         {:ok, user_ids}
@@ -349,7 +311,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   end
 
   defp where_mentioner(query, _type, comment_id) do
-    where(query, [mention], mention.mentioner_id == ^comment_id)
+    where(query, [mention], mention.mentioner_comment_id == ^comment_id)
   end
 
   @doc "Pages incoming Mention facts for an internal target."
@@ -370,85 +332,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     end
   end
 
-  defp visible_mentioners(query) do
-    article_pairs =
-      Enum.reduce(@threads, dynamic(false), fn thread, filter ->
-        scope =
-          if thread == :doc,
-            do: CMS.Gate.Context.Scope.Doc.public_main(),
-            else: ArticleContext.public(thread)
-
-        dynamic(
-          [mention],
-          ^filter or
-            (mention.mentioner_type == ^thread and
-               fragment(
-                 "?::text || ':' || ?::text IN (?)",
-                 mention.mentioner_article_id,
-                 mention.mentioner_community_id,
-                 subquery(
-                   Article
-                   |> CMS.Gate.scope(nil, :list, scope)
-                   |> select(
-                     [article, ...],
-                     fragment("?::text || ':' || ?::text", article.id, as(:gate_community).id)
-                   )
-                 )
-               ))
-        )
-      end)
-
-    visible_comment_parents =
-      Enum.reduce(@threads, dynamic(false), fn thread, filter ->
-        parent_scope =
-          if thread == :doc,
-            do: CMS.Gate.Context.Scope.Doc.public_main(),
-            else: ArticleContext.public(thread)
-
-        dynamic(
-          [comment],
-          ^filter or
-            (comment.thread == ^thread and
-               fragment(
-                 "?::text || ':' || ?::text IN (?)",
-                 comment.article_id,
-                 comment.community_id,
-                 subquery(
-                   Article
-                   |> CMS.Gate.scope(nil, :list, parent_scope)
-                   |> select(
-                     [article, ...],
-                     fragment("?::text || ':' || ?::text", article.id, as(:gate_community).id)
-                   )
-                 )
-               ))
-        )
-      end)
-
-    comments =
-      Comment
-      |> CMS.Gate.scope(nil, :list, CommentContext.all_public())
-      |> where(^visible_comment_parents)
-      |> select(
-        [comment],
-        fragment("?::text || ':' || ?::text", comment.id, comment.community_id)
-      )
-
-    comment_filter =
-      dynamic(
-        [mention],
-        mention.mentioner_type == :comment and
-          fragment(
-            "?::text || ':' || ?::text IN (?)",
-            mention.mentioner_id,
-            mention.mentioner_community_id,
-            subquery(comments)
-          )
-      )
-
-    combined_filter = dynamic(^article_pairs or ^comment_filter)
-    where(query, ^combined_filter)
-  end
+  defp visible_mentioners(query), do: query
 
   defp page_mentions(query, pagi, collection) do
     ORM.pagi(query, pagi,
@@ -473,7 +357,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   end
 
   defp mentioner_list_query(query, type, entity_id) do
-    where(query, [m], m.mentioner_type == ^type and m.mentioner_id == ^entity_id)
+    where(query, [m], m.mentioner_type == ^type and m.mentioner_comment_id == ^entity_id)
   end
 
   defp mentioned_list_query(query, type, article_id) when type in @threads do
@@ -490,30 +374,14 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
       query,
       [m],
       m.mentioned_scope == :internal and m.mentioned_type == ^type and
-        m.mentioned_id == ^entity_id
+        m.mentioned_comment_id == ^entity_id
     )
   end
 
-  defp do_sync(artiment, ast) do
-    mentioner_context = artiment_context(artiment)
-    community_id = community_id(mentioner_context)
+  defp bump_source_graph(%Comment{} = comment), do: GraphRevision.bump_for_comment(comment)
 
-    mentions =
-      ast
-      |> Parser.parse(community_id: community_id)
-      |> Enum.reject(&mentioning_itself?(artiment, &1))
-      |> hydrate_comment_bodies()
-      |> Enum.map(&shape(mentioner_context, &1))
-      |> merge_occurrences()
-
-    Repo.transaction(fn ->
-      {:ok, _} = delete_by_mentioner(artiment)
-      insert_mentions(mentions)
-    end)
-    |> case do
-      {:ok, result} -> {:ok, result}
-      {:error, reason} -> {:error, reason}
-    end
+  defp bump_source_graph(%{article_id: article_id}) when is_binary(article_id) do
+    GraphRevision.bump_for_article(article_id)
   end
 
   defp delete_by_mentioner(artiment) do
@@ -525,7 +393,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   end
 
   defp mentioner_query(query, type, %{entity_id: id}) do
-    where(query, [m], m.mentioner_type == ^type and m.mentioner_id == ^id)
+    where(query, [m], m.mentioner_type == ^type and m.mentioner_comment_id == ^id)
   end
 
   defp mentioner_query(query, type, %{article_id: article_id, branch_id: nil}) do
@@ -546,32 +414,6 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     )
   end
 
-  defp mentioned_query(query, type, %{entity_id: id}) do
-    where(
-      query,
-      [m],
-      m.mentioned_scope == :internal and m.mentioned_type == ^type and m.mentioned_id == ^id
-    )
-  end
-
-  defp mentioned_query(query, type, %{article_id: article_id, branch_id: nil}) do
-    where(
-      query,
-      [m],
-      m.mentioned_scope == :internal and m.mentioned_type == ^type and
-        m.mentioned_article_id == ^article_id and is_nil(m.mentioned_branch_id)
-    )
-  end
-
-  defp mentioned_query(query, type, %{article_id: article_id, branch_id: branch_id}) do
-    where(
-      query,
-      [m],
-      m.mentioned_scope == :internal and m.mentioned_type == ^type and
-        m.mentioned_article_id == ^article_id and m.mentioned_branch_id == ^branch_id
-    )
-  end
-
   defp insert_mentions([]), do: :pass
 
   defp insert_mentions(mentions) do
@@ -585,60 +427,41 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     Repo.insert_all(ArtimentMention, mentions)
   end
 
-  defp shape(%{artiment: artiment} = mentioner_context, mention) do
-    {mentioner_type, mentioner_identity} = mentioner_identity(artiment)
-    mentioned_at = artiment.updated_at |> DateTime.truncate(:second)
-    mentioned_context = mentioned_context(mention)
+  defp shape(%{artiment: artiment}, mention) do
+    {mentioner_type, source} = mentioner_identity(artiment)
+    target_type = mention.mentioned_type
+    target_id = Map.get(mention, :mentioned_id)
 
     %{
       mentioner_type: mentioner_type,
-      mentioner_id: Map.get(mentioner_identity, :entity_id),
-      mentioner_article_id: Map.get(mentioner_identity, :article_id),
-      mentioner_branch_id: Map.get(mentioner_identity, :branch_id),
-      mentioner_community_id: community_id(mentioner_context),
-      mentioner_url: artiment_url(mentioner_context),
+      mentioner_article_id: Map.get(source, :article_id),
+      mentioner_comment_id: Map.get(source, :entity_id),
+      mentioner_branch_id: Map.get(source, :branch_id),
       mentioned_scope: mention.mentioned_scope,
-      mentioned_type: mention.mentioned_type,
-      mentioned_id:
-        if(mention.mentioned_type in @threads, do: nil, else: Map.get(mention, :mentioned_id)),
-      mentioned_article_id:
-        if(mention.mentioned_type in @threads, do: Map.get(mention, :mentioned_id), else: nil),
+      mentioned_type: target_type,
+      mentioned_article_id: if(target_type in @threads, do: target_id, else: nil),
+      mentioned_comment_id: if(target_type == :comment, do: target_id, else: nil),
+      mentioned_user_id: if(target_type == :user, do: target_id, else: nil),
       mentioned_branch_id:
-        if(mention.mentioned_type in @threads,
+        if(target_type in [:doc, :comment],
           do: get_in(mention, [:artiment, :branch_id]),
           else: nil
         ),
-      mentioned_community_id: community_id(mentioned_context),
-      mentioned_url: Map.get(mention, :mentioned_url),
-      mentioned_url_hash: Map.get(mention, :mentioned_url_hash),
+      external_url:
+        if(mention.mentioned_scope == :external, do: Map.get(mention, :mentioned_url), else: nil),
+      external_url_hash:
+        if(mention.mentioned_scope == :external,
+          do: Map.get(mention, :mentioned_url_hash),
+          else: nil
+        ),
       mention_case: mention.mention_case,
       occurrences: [mention.occurrence],
-      mentioner_snapshot: snapshot(mentioner_context),
-      mentioned_snapshot: snapshot(mentioned_context, mention),
-      meta: %{},
-      mentioned_at: mentioned_at
+      mentioned_at: DateTime.truncate(artiment.updated_at, :second)
     }
   end
 
   @spec artiment_context(term()) :: artiment_context()
-  defp artiment_context(%Comment{} = comment) do
-    parent_article =
-      case FrontDesk.article_of(comment) do
-        {:ok, article} -> article
-        _ -> nil
-      end
-
-    %{artiment: comment, parent_article: parent_article}
-  end
-
   defp artiment_context(artiment), do: %{artiment: artiment}
-
-  defp mentioned_context(mention) do
-    %{
-      artiment: Map.get(mention, :artiment),
-      parent_article: Map.get(mention, :parent_article)
-    }
-  end
 
   defp merge_occurrences(mentions) do
     {keys, mentions_by_key} =
@@ -672,12 +495,16 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   defp merge_key(mention) do
     [
       mention.mentioner_type,
-      mention.mentioner_id,
+      mention.mentioner_article_id,
+      mention.mentioner_comment_id,
+      mention.mentioner_branch_id,
       mention.mentioned_scope,
       mention.mentioned_type,
-      mention.mentioned_id,
-      mention.mentioned_community_id,
-      mention.mentioned_url_hash,
+      mention.mentioned_article_id,
+      mention.mentioned_comment_id,
+      mention.mentioned_user_id,
+      mention.mentioned_branch_id,
+      mention.external_url_hash,
       mention.mention_case
     ]
   end
@@ -686,20 +513,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     PlateJSON.decode(json)
   end
 
-  defp load_article_for_mentions(%{id: article_id} = article) when is_binary(article_id) do
-    case Map.get(article, :community) do
-      %CMS.Model.Community{} = community ->
-        CMS.Articles.Store.load_article_for_mentions(article_id, community)
-
-      _ ->
-        {:error, ArticleErrorCat.binding_context_required()}
-    end
+  defp mentioner_identity(%Comment{id: id, branch_id: branch_id}) do
+    {:comment, %{entity_id: id, branch_id: branch_id}}
   end
-
-  defp load_article_for_mentions(%{article_id: _article_id} = article), do: {:ok, article}
-  defp load_article_for_mentions(article), do: {:ok, article}
-
-  defp mentioner_identity(%Comment{id: id}), do: {:comment, %{entity_id: id}}
 
   defp mentioner_identity(%Article{id: article_id, thread: thread}) do
     {thread, %{article_id: article_id, branch_id: nil}}
@@ -713,44 +529,6 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   defp mentioner_identity(article) do
     {:ok, thread} = FrontDesk.thread_of(article)
     {thread, %{entity_id: article.id}}
-  end
-
-  defp artiment_url(%{artiment: %Comment{} = comment, parent_article: article})
-       when is_map(article) do
-    case FrontDesk.thread_of(article) do
-      {:ok, thread} -> "#{article_url(thread, article.id)}?comment_id=#{comment.id}"
-      _ -> nil
-    end
-  end
-
-  defp artiment_url(%{artiment: %Comment{}}), do: nil
-
-  defp artiment_url(%{artiment: article}) do
-    case FrontDesk.thread_of(article) do
-      {:ok, thread} -> article_url(thread, stable_or_entity_id(article))
-      _ -> nil
-    end
-  end
-
-  defp article_url(thread, id), do: Config.article_url(thread, id)
-
-  defp community_id(%{artiment: %Comment{}, parent_article: article}) when is_map(article) do
-    case Map.get(article, :community) do
-      %CMS.Model.Community{id: community_id} ->
-        community_id
-
-      _ ->
-        case explicit_community_id(article) do
-          community_id when is_integer(community_id) ->
-            community_id
-
-          _ ->
-            case Bindings.get(article, Map.get(article, :community)) do
-              {:ok, %{community: %{id: community_id}}} -> community_id
-              _ -> nil
-            end
-        end
-    end
   end
 
   defp community_id(%{artiment: %Comment{}}), do: nil
@@ -782,46 +560,6 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     end
   end
 
-  defp snapshot(context, mention \\ %{})
-
-  defp snapshot(%{artiment: nil}, %{mentioned_scope: :external, mentioned_url: url}) do
-    %{url: url}
-  end
-
-  defp snapshot(%{artiment: nil}, _), do: %{}
-
-  defp snapshot(%{artiment: %Comment{} = comment} = context, _mention) do
-    article = Map.get(context, :parent_article)
-
-    %{
-      id: comment.id,
-      type: :comment,
-      title: article && Map.get(article, :title),
-      digest: comment_digest(comment),
-      url: artiment_url(context)
-    }
-  end
-
-  defp snapshot(%{artiment: %{login: login} = user}, _mention) do
-    %{
-      id: user.id,
-      type: :user,
-      login: login,
-      nickname: Map.get(user, :nickname),
-      avatar: Map.get(user, :avatar)
-    }
-  end
-
-  defp snapshot(%{artiment: article} = context, _mention) do
-    %{
-      id: stable_or_entity_id(article),
-      type: article_type(article),
-      title: Map.get(article, :title),
-      digest: Map.get(article, :digest),
-      url: artiment_url(context)
-    }
-  end
-
   defp hydrate_comment_bodies(mentions) do
     comment_ids =
       mentions
@@ -846,22 +584,6 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     end)
   end
 
-  defp comment_digest(%Comment{body: %CommentBody{digest: digest}}), do: digest
-
-  defp comment_digest(%Comment{id: comment_id}) do
-    case Repo.get_by(CommentBody, comment_id: comment_id) do
-      %CommentBody{digest: digest} -> digest
-      nil -> ""
-    end
-  end
-
-  defp article_type(article) do
-    case FrontDesk.thread_of(article) do
-      {:ok, thread} -> thread
-      _ -> nil
-    end
-  end
-
   defp mentioning_itself?(%Comment{id: id}, %{mentioned_type: :comment, mentioned_id: id}) do
     true
   end
@@ -876,6 +598,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
       _ -> false
     end
   end
+
+  # A Comment is its own source even when it links to its parent Article.
+  defp mentioning_itself?(%Comment{}, %{mentioned_type: type}) when type in @threads, do: false
 
   defp mentioning_itself?(article, %{mentioned_type: mentioned_type, mentioned_id: id})
        when mentioned_type in @threads do

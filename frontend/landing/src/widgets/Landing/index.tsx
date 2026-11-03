@@ -56,7 +56,7 @@ export default function Landing() {
   }))
 
   return (
-    <div className={s.wrapper} data-testid='landing-page'>
+    <div className={cn(s.wrapper, 'landing-scene')} data-testid='landing-page'>
       {/* <DashboardIntros /> */}
       {/* <PatternBg /> */}
       <div className='landing-opening-backdrop bg-pageBg' aria-hidden='true' />

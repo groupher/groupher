@@ -253,10 +253,18 @@ type RootQueryType {
   commentReplyPage(comment: CommentPathInput!, filter: CommentPageFilter, pagi: PagiInput): CommentReplyPage!
 
   "mentions created by an artiment"
-  mentions(source: MentionSourceInput!, pagi: PagiInput): ArtimentMentionPage
+  mentions(community: String!, source: MentionSourceInput!, pagi: PagiInput): ArtimentMentionPage
 
   "artiments mentioning an internal target"
-  mentionedBy(target: MentionTargetInput!, pagi: PagiInput): ArtimentMentionPage
+  mentionedBy(community: String!, target: MentionTargetInput!, pagi: PagiInput): ArtimentMentionPage
+
+  referenceMap(
+    community: String!, focus: ReferenceMapLocatorInput!, frontiers: [ReferenceMapFrontierInput!]!, first: Int
+  ): ReferenceMapPage!
+
+  referenceMapRevision(community: String!, focus: ReferenceMapLocatorInput!): ID!
+
+  referenceMapArticleComments(community: String!, focus: ReferenceMapLocatorInput!, after: ID, first: Int): ReferenceMapArticleCommentsPage!
 
   "search communities by title"
   searchCommunities(title: String!, category: String): [Community!]!
@@ -1833,6 +1841,82 @@ type CmsContentReview {
   communityOpinion: CmsReviewOpinion
 }
 
+enum ReferenceMapNodeType {
+  POST
+  BLOG
+  CHANGELOG
+  DOC
+  TICKET
+  COMMENT
+}
+
+enum ReferenceMapSyncState {
+  READY
+  PENDING
+}
+
+enum ReferenceMapFrontierState {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+input ReferenceMapLocatorInput {
+  type: ReferenceMapNodeType!
+  articleInnerId: ID!
+  commentInnerId: ID
+}
+
+input ReferenceMapFrontierInput {
+  node: ReferenceMapLocatorInput!
+  after: String
+}
+
+type ReferenceMapNode {
+  id: ID!
+  type: ReferenceMapNodeType!
+  articleInnerId: ID!
+  commentInnerId: ID
+  branchId: ID
+  title: String!
+  url: String!
+  syncState: ReferenceMapSyncState!
+}
+
+type ReferenceMapEdge {
+  id: ID!
+  from: ID!
+  to: ID!
+  occurrencesCount: Int!
+}
+
+type ReferenceMapNeighborhood {
+  requestIndex: Int!
+  state: ReferenceMapFrontierState!
+  nodeId: ID
+  edgeIds: [ID!]!
+  hasNextPage: Boolean!
+  endCursor: String
+}
+
+type ReferenceMapPage {
+  nodes: [ReferenceMapNode!]!
+  edges: [ReferenceMapEdge!]!
+  neighborhoods: [ReferenceMapNeighborhood!]!
+  projectionPending: Boolean!
+}
+
+type ReferenceMapArticleCommentsPage {
+  comments: [ReferenceMapLocator!]!
+  hasNextPage: Boolean!
+  endCursor: ID
+}
+
+type ReferenceMapLocator {
+  type: ReferenceMapNodeType!
+  articleInnerId: ID!
+  commentInnerId: ID
+}
+
 type CommunityNameCheck {
   "Result of checking a community name against the shared namespace."
   normalizedSlug: String
@@ -2310,11 +2394,8 @@ type TrashedArticle {
   article: Article
   deletedBy: User
   deletedAt: DateTime!
-  mentionedByCount: Int!
   commandId: ID
   scheduledPermanentDeletionAt: DateTime!
-  mentionedBy(pagi: PagiInput): ArtimentMentionPage
-  mentions(pagi: PagiInput): ArtimentMentionPage
 }
 
 type TrashPage {
@@ -3885,25 +3966,15 @@ type CommentsListState {
 }
 
 type ArtimentMention {
-  id: ID
-  mentionerType: MentionType
-  mentionerId: ID
-  mentionerCommunityId: ID
-  mentionerUrl: String
-  mentionedScope: MentionScope
-  mentionedType: MentionType
-  mentionedId: ID
-  mentionedCommunityId: ID
-  mentionedUrl: String
-  mentionedUrlHash: String
-  mentionCase: MentionCase
-  occurrences: [Json]
-  mentionerSnapshot: Json
-  mentionedSnapshot: Json
-  meta: Json
-  mentionedAt: DateTime
-  insertedAt: DateTime
-  updatedAt: DateTime
+  id: ID!
+  mentionerType: MentionType!
+  mentionerUrl: String!
+  mentionedScope: MentionScope!
+  mentionedType: MentionType!
+  mentionedUrl: String!
+  mentionCase: MentionCase!
+  occurrencesCount: Int!
+  mentionedAt: DateTime!
 }
 
 type PostLite {
@@ -4266,6 +4337,8 @@ enum MentionType {
 
   DOC
 
+  TICKET
+
   COMMENT
 
   USER
@@ -4386,12 +4459,19 @@ input CommentPathInput {
 input MentionSourceInput {
   article: ArticlePathInput
   comment: CommentPathInput
+  ticket: TicketPathInput
 }
 
 input MentionTargetInput {
   article: ArticlePathInput
   comment: CommentPathInput
+  ticket: TicketPathInput
   userLogin: String
+}
+
+input TicketPathInput {
+  community: String!
+  innerId: ID!
 }
 
 input TrashFilter {

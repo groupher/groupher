@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
 
   alias GroupherServer.{Accounts, Analysis, CMS, Repo}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.ArtimentMentions.GraphRevision
   alias Accounts.Model.CollectFolderEntry
   alias CMS.Articles.Numbering
 
@@ -56,7 +57,8 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
          {:ok, :different_community} <- ensure_different_community(source, destination),
          {:ok, destination_binding} <- prepare_destination(article, destination),
          {:ok, binding} <- move_binding(binding, destination_binding, destination),
-         {:ok, _binding} <- Numbering.assign_binding_inner_id(binding) do
+         {:ok, _binding} <- Numbering.assign_binding_inner_id(binding),
+         {:ok, :pass} <- GraphRevision.bump_many([source.id, destination.id]) do
       {:ok, article}
     else
       nil -> {:error, :article_not_found}
@@ -107,7 +109,8 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
       when thread in @ordinary_threads do
     with %Article{} = article <- lock_article(article.id),
          {:ok, binding} <- upsert_binding(article, community),
-         {:ok, binding} <- Numbering.assign_binding_inner_id(binding) do
+         {:ok, binding} <- Numbering.assign_binding_inner_id(binding),
+         {:ok, :pass} <- GraphRevision.bump_many([community.id]) do
       {:ok, binding}
     else
       nil -> {:error, :article_not_found}
@@ -133,7 +136,8 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
          {:ok, :pass} <- ensure_no_ticket_link(thread, locked_article.id, community.id),
          {:ok, :pass} <- ensure_can_remove_published_article(locked_article.id, binding),
          {:ok, :pass} <- ensure_binding_not_collected(binding),
-         {:ok, _deleted} <- Repo.delete(binding) do
+         {:ok, _deleted} <- Repo.delete(binding),
+         {:ok, :pass} <- GraphRevision.bump_many([community.id]) do
       {:ok, :done}
     else
       nil -> {:error, ArticleErrorCat.binding_not_found()}

@@ -34,7 +34,7 @@ export default function UsersWall() {
   const { t } = useTrans()
 
   return (
-    <section className={s.wrapper}>
+    <section className={s.wrapper} data-landing-section='users'>
       <div className={s.slogan}>
         <div className={s.topping}>{t('landing.users.topping')}</div>
         <h3 className={s.title}>{t('landing.users.title')}</h3>

@@ -21,6 +21,7 @@ import { normalizeArticleStats } from '~/query/articleStatsNormalize'
 import { normalizeCommentPage, type TCommentCollection } from '~/query/commentPage'
 import { toArticlePageFilter } from '~/query/filter'
 import { articleStats as articleStatsDocument } from '~/schemas/pages/articleStats'
+import { blog as blogDocument } from '~/schemas/pages/blog'
 import { changelog, changelogPage } from '~/schemas/pages/changelog'
 import { commentPage } from '~/schemas/pages/comment'
 import { community as communityDocument } from '~/schemas/pages/community'
@@ -146,6 +147,19 @@ const loadPost = createServerFn({ method: 'GET', strict: false })
       article: { community: data.community, innerId: data.innerId, thread: 'POST' },
     })
     return (result.data?.post ?? null) as unknown as TPost | null
+  })
+
+const loadBlog = createServerFn({ method: 'GET', strict: false })
+  .validator((data: { community: string; innerId: string }) => data)
+  .handler(async ({ data }) => {
+    setCommunityPageCacheHeaders(data.community, [
+      CACHE_TAG.articleCache(data.community, THREAD.BLOG, data.innerId),
+      CACHE_TAG.articlesCache(data.community, THREAD.BLOG),
+    ])
+    const result = await fetchGraphQL<ResultOf<typeof blogDocument>>(blogDocument, {
+      article: { community: data.community, innerId: data.innerId, thread: THREAD.BLOG },
+    })
+    return (result.data?.blog ?? null) as unknown as TPost | null
   })
 
 const loadArticleStats = createServerFn({ method: 'GET', strict: false })
@@ -278,6 +292,7 @@ const loadComments = createServerFn({ method: 'GET', strict: false })
   })
 
 export {
+  loadBlog,
   loadChangelog,
   loadChangelogs,
   loadArticleStats,

@@ -247,7 +247,7 @@ defmodule GroupherServer.Test.ActivityTest do
     comment = %Comment{
       thread: :post,
       article_id: post.article_id,
-      community_id: community.id,
+      origin_community_id: community.id,
       inner_id: 42
     }
 

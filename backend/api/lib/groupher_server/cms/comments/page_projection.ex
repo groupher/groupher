@@ -20,9 +20,10 @@ defmodule GroupherServer.CMS.Comments.PageProjection do
   @preview_size 3
 
   @doc "Scopes the flat descendant collection independently of its paging method."
-  def descendants(article_id, root_ids, thread, viewer) do
+  def descendants(article_id, root_ids, thread, viewer, community_slug \\ nil) do
     Comment
     |> CMS.Gate.scope(viewer, :list, context(thread))
+    |> scope_community(community_slug)
     |> where([c], c.article_id == ^article_id and not c.is_folded)
     |> where(
       [c],
@@ -31,10 +32,10 @@ defmodule GroupherServer.CMS.Comments.PageProjection do
   end
 
   @doc "Hydrates entries and optional root previews with a constant number of batch queries."
-  def many(entries, article, viewer, previews?) do
+  def many(entries, article, viewer, previews?, community_slug \\ nil) do
     roots = Enum.filter(entries, &is_nil(&1.reply_to_comment_id))
     ids = Enum.map(roots, & &1.id)
-    {previews, counts} = preview_batch(article, ids, viewer, previews?)
+    {previews, counts} = preview_batch(article, ids, viewer, previews?, community_slug)
 
     entries =
       Enum.map(entries, fn entry ->
@@ -51,6 +52,7 @@ defmodule GroupherServer.CMS.Comments.PageProjection do
     parents =
       Comment
       |> CMS.Gate.scope(viewer, :list, context(article.thread))
+      |> scope_community(community_slug)
       |> where([c], c.article_id == ^article.id and c.id in ^parent_ids and not c.is_folded)
       |> preload([:body, :author])
       |> Repo.all()
@@ -84,10 +86,10 @@ defmodule GroupherServer.CMS.Comments.PageProjection do
     InteractionResponse.many(entries, viewer)
   end
 
-  defp preview_batch(_article, [], _viewer, _enabled), do: {%{}, %{}}
+  defp preview_batch(_article, [], _viewer, _enabled, _community_slug), do: {%{}, %{}}
 
-  defp preview_batch(article, ids, viewer, enabled) do
-    base = descendants(article.id, ids, article.thread, viewer)
+  defp preview_batch(article, ids, viewer, enabled, community_slug) do
+    base = descendants(article.id, ids, article.thread, viewer, community_slug)
 
     counts =
       base
@@ -134,4 +136,10 @@ defmodule GroupherServer.CMS.Comments.PageProjection do
 
   defp context(:doc), do: CommentContext.for_thread(:doc, branch_policy: :main)
   defp context(thread), do: CommentContext.for_thread(thread)
+
+  defp scope_community(query, nil), do: query
+
+  defp scope_community(query, slug) when is_binary(slug) do
+    where(query, [gate_community: community], community.slug == ^slug)
+  end
 end

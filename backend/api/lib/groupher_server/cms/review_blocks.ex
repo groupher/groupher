@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.ArtimentMentions.GraphRevision
 
   alias CMS.Model.{
     Article,
@@ -43,7 +44,8 @@ defmodule GroupherServer.CMS.ReviewBlocks do
            |> Map.merge(target_attrs),
          {:ok, restriction} <- insert_or_get(schema, attrs),
          {:ok, :pass} <- recompute(lifecycle),
-         {:ok, _event} <- enqueue_visibility_change(lifecycle, target_attrs, attrs.source_ref) do
+         {:ok, _event} <- enqueue_visibility_change(lifecycle, target_attrs, attrs.source_ref),
+         {:ok, :pass} <- bump_graph(lifecycle) do
       {:ok, restriction}
     end
   end
@@ -59,13 +61,27 @@ defmodule GroupherServer.CMS.ReviewBlocks do
          {:ok, restrictions} <- load_active(schema, target_attrs, ids),
          {:ok, :pass} <- resolve_rows(restrictions, operation_ref, resolution),
          {:ok, :pass} <- recompute(lifecycle),
-         {:ok, _event} <- enqueue_visibility_change(lifecycle, target_attrs, operation_ref) do
+         {:ok, _event} <- enqueue_visibility_change(lifecycle, target_attrs, operation_ref),
+         {:ok, :pass} <- bump_graph(lifecycle) do
       {:ok, :pass}
     end
   end
 
   def end_blocks(_lifecycle, _scope_key, _ids, _operation_ref, _resolution) do
     {:error, CMS.ErrorCat.invalid_review_block()}
+  end
+
+  defp bump_graph(%ArticleLifecycle{article_id: article_id}),
+    do: GraphRevision.bump_for_article(article_id)
+
+  defp bump_graph(%DocLifecycle{article_id: article_id}),
+    do: GraphRevision.bump_for_article(article_id)
+
+  defp bump_graph(%CommentLifecycle{comment_id: comment_id}) do
+    case Repo.get(Comment, comment_id) do
+      %Comment{} = comment -> GraphRevision.bump_for_comment(comment)
+      nil -> {:ok, :pass}
+    end
   end
 
   @doc "Resolves the canonical restriction identity for orchestration within the existing transaction."
@@ -249,7 +265,9 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   defp validate_scope(%CommentLifecycle{comment_id: comment_id}, %{community_id: community_id}) do
     if Repo.exists?(
          from(comment in Comment,
-           where: comment.id == ^comment_id and comment.community_id == ^community_id
+           where:
+             comment.id == ^comment_id and comment.thread == :doc and
+               comment.origin_community_id == ^community_id
          )
        ) do
       {:ok, :pass}

@@ -11,17 +11,14 @@ defmodule GroupherServer.CMS.Comments.CommandResult do
   projection from the mutation input.
   """
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Model.{Comment, Community}
 
   @doc "Builds one Comment mutation result from its canonical command result."
   @spec build({:ok, map()} | {:error, term()}) :: {:ok, map()} | {:error, term()}
-  def build(
-        {:ok,
-         %{comment: %Comment{community_id: community_id} = comment, article: article} = result}
-      ) do
-    with %Community{} = community <- Repo.get(Community, community_id),
+  def build({:ok, %{comment: %Comment{} = comment, article: article} = result}) do
+    with %Community{} = community <- Map.get(article, :community),
          {:ok, article_stats} <- CMS.ArticleStats.for_article(article, community) do
       {:ok,
        %{

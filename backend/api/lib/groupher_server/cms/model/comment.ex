@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   @type t :: %__MODULE__{}
 
   # alias Helper.HTML
-  @required_fields ~w(author_id community_id)a
+  @required_fields ~w(author_id origin_community_id)a
   @optional_fields ~w(reply_to_comment_id root_comment_id replies_count is_folded inner_id floor is_article_author thread is_for_question)a
   @updatable_fields ~w(
     is_folded
@@ -87,7 +87,7 @@ defmodule GroupherServer.CMS.Model.Comment do
 
   schema "comments" do
     belongs_to(:author, User, foreign_key: :author_id)
-    belongs_to(:community, Community)
+    belongs_to(:community, Community, foreign_key: :origin_community_id)
     has_one(:lifecycle, CommentLifecycle)
     belongs_to(:article, Article, type: Ecto.UUID)
     belongs_to(:branch, DocBranch)
@@ -113,6 +113,7 @@ defmodule GroupherServer.CMS.Model.Comment do
     field(:viewer_has_upvoted, :boolean, default: false, virtual: true)
     # Command metadata is attached to mutation responses only.
     field(:command_id, Ecto.UUID, virtual: true)
+    field(:request_community_slug, :string, virtual: true)
 
     belongs_to(:reply_to_comment, Comment, foreign_key: :reply_to_comment_id)
     field(:root_comment_id, :integer, default: nil)
@@ -153,9 +154,9 @@ defmodule GroupherServer.CMS.Model.Comment do
   defp geneal_changeset(content) do
     content
     |> foreign_key_constraint(:author_id)
-    |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:origin_community_id, name: :comments_community_id_fkey)
     |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:branch_id)
-    |> check_constraint(:community_id, name: :comments_community_matches_article)
+    |> check_constraint(:origin_community_id, name: :comments_community_matches_article)
   end
 end

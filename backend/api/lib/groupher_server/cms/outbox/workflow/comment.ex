@@ -64,6 +64,12 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
           nil -> {:error, CommentErrorCat.not_exist("Comment parent Article")}
         end
 
+      "comment.mention_sync" ->
+        case Repo.get(Comment, event.resource_id) do
+          nil -> {:ok, :source_deleted}
+          comment -> CMS.ArtimentMentions.sync_comment_public(comment)
+        end
+
       action ->
         comment_effects(action, event)
     end
@@ -83,9 +89,8 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
 
   defp comment_effects(_action, _event), do: {:error, CommentErrorCat.unknown_outbox_event()}
 
-  defp enqueue_comment_job("comment.created", comment, actor, community) do
-    with {:ok, _} <- enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end),
-         {:ok, _} <-
+  defp enqueue_comment_job("comment.created", _comment, actor, community) do
+    with {:ok, _} <-
            enqueue(:subscribe_community, community.id, fn ->
              Jobs.subscribe_community(community, actor)
            end) do
@@ -93,13 +98,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
     end
   end
 
-  defp enqueue_comment_job("comment.replied", comment, _actor, _community) do
-    enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end)
-  end
+  defp enqueue_comment_job("comment.replied", _comment, _actor, _community), do: {:ok, :pass}
 
-  defp enqueue_comment_job("comment.updated", comment, _actor, _community) do
-    enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end)
-  end
+  defp enqueue_comment_job("comment.updated", _comment, _actor, _community), do: {:ok, :pass}
 
   defp enqueue(type, key, fun), do: Jobs.enqueue_best_effort(type, key, fun)
 

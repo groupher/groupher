@@ -145,7 +145,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     with {:ok, :pass} <- require_transaction(),
          {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, comment.community_id),
+         {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment),
          {:ok, :pass} <- acquire_comment_parent_lock(community, article, comment) do
       Check.with_authorized(actor, action, {community, thread, article, comment}, fn value ->
         {:ok, value}
@@ -213,10 +213,20 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   @doc "Returns the canonical Comment together with its canonical parent Article."
   def check_comment_in_transaction(actor, action, %Comment{} = comment) do
+    case CMS.Comments.RequestCommunity.resolve(comment) do
+      {:ok, %Community{} = community} ->
+        check_comment_in_transaction(actor, action, comment, community)
+
+      {:error, _reason} = error ->
+        error
+    end
+  end
+
+  @doc "Locks the requested parent binding before checking Comment write permission."
+  def check_comment_in_transaction(actor, action, %Comment{} = comment, %Community{} = community) do
     with {:ok, :pass} <- require_transaction(),
          {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, comment.community_id),
          {:ok, :pass} <- acquire_comment_parent_lock(community, article, comment) do
       Check.with_authorized(
         actor,
@@ -373,7 +383,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
       when is_function(callback, 1) or is_function(callback, 2) do
     with {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, comment.community_id) do
+         %Community{} = community <- Repo.get(Community, comment.origin_community_id) do
       transact_parent(community, article, comment.branch_id, fn ->
         Check.with_authorized(actor, action, {community, thread, article, comment}, callback)
       end)

@@ -80,6 +80,63 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     assert AlertWall.active_report_count(item_id) == 0
   end
 
+  test "Comment report keeps reporting Community separate from platform decision scope" do
+    {:ok, reporter} = db_insert(:user)
+    {:ok, reporting_community} = db_insert(:community)
+
+    attrs =
+      report_attrs(reporter.id)
+      |> Map.merge(%{
+        target_type: :comment,
+        target_id: "987654",
+        community_id: nil,
+        reported_in_community_id: reporting_community.id
+      })
+
+    assert {:ok, {:ok, report}} =
+             Repo.transaction(fn ->
+               AlertWall.submit_report_in_transaction(attrs, Ecto.UUID.generate())
+             end)
+
+    assert report.community_id == reporting_community.id
+    assert is_nil(Repo.get!(Item, report.item_id).community_id)
+  end
+
+  test "a cross Community Comment report promotes the origin queue to platform" do
+    {:ok, origin_reporter} = db_insert(:user)
+    {:ok, mirror_reporter} = db_insert(:user)
+    {:ok, origin} = db_insert(:community)
+    {:ok, mirror} = db_insert(:community)
+
+    origin_attrs =
+      report_attrs(origin_reporter.id)
+      |> Map.merge(%{
+        target_type: :comment,
+        target_id: "876543",
+        community_id: origin.id,
+        reported_in_community_id: origin.id
+      })
+
+    assert {:ok, {:ok, first}} =
+             Repo.transaction(fn ->
+               AlertWall.submit_report_in_transaction(origin_attrs, Ecto.UUID.generate())
+             end)
+
+    mirror_attrs =
+      %{origin_attrs | reporter_id: mirror_reporter.id, community_id: nil}
+      |> Map.put(:reported_in_community_id, mirror.id)
+
+    assert {:ok, {:ok, second}} =
+             Repo.transaction(fn ->
+               AlertWall.submit_report_in_transaction(mirror_attrs, Ecto.UUID.generate())
+             end)
+
+    assert first.item_id == second.item_id
+    assert Repo.get!(Item, first.item_id).community_id == nil
+    assert Repo.get!(UserReport, first.id).community_id == origin.id
+    assert second.community_id == mirror.id
+  end
+
   test "report CommandPipeline accepts the canonical AlertWall target and stores its Receipt" do
     {_community, article, _attrs, _author} = mock_article(:post)
     {:ok, reporter} = db_insert(:user)

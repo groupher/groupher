@@ -383,16 +383,24 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              )
 
     assert {:ok, {1, nil}} = CMS.ArtimentMentions.sync(comment)
-    assert Repo.get_by(ArtimentMention, mentioner_type: :comment, mentioner_id: comment.id)
+
+    assert Repo.get_by(ArtimentMention,
+             mentioner_type: :comment,
+             mentioner_comment_id: comment.id
+           )
 
     assert {:ok, item} = CMS.Articles.trash(post, user)
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
     refute Repo.get(Comment, comment.id)
-    refute Repo.get_by(ArtimentMention, mentioner_type: :comment, mentioner_id: comment.id)
+
+    refute Repo.get_by(ArtimentMention,
+             mentioner_type: :comment,
+             mentioner_comment_id: comment.id
+           )
   end
 
-  test "Mention badges follow Trash, restore and permanent deletion while incoming facts remain" do
+  test "incoming Mention facts survive Trash and restore, then cascade on permanent deletion" do
     {community, target, _attrs, user} = mock_article(:post)
     {_, mentioner, _, _} = mock_article(:blog, community, user)
 
@@ -428,8 +436,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
         mentioned_article_id: target.article_id
       )
 
-    assert mention.mentioned_snapshot["deletionState"] == "trashed"
-    assert mention.meta["mentionedDeleted"]
+    assert mention.mentioned_article_id == target.article_id
 
     assert {:ok, %{entries: [listed]}} =
              CMS.Articles.list_trashed(
@@ -437,8 +444,6 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                %{thread: :post},
                %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
              )
-
-    assert listed.mentioned_by_count == 1
 
     assert {:ok, %{total_count: 1}} =
              CMS.ArtimentMentions.mentioned_by(
@@ -448,17 +453,12 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              )
 
     assert {:ok, _} = CMS.Articles.restore_trashed(item.hash_id, user)
-    mention = Repo.get!(ArtimentMention, mention.id)
-    refute Map.has_key?(mention.mentioned_snapshot, "deletionState")
-    refute Map.has_key?(mention.meta, "mentionedDeleted")
+    assert Repo.get!(ArtimentMention, mention.id).mentioned_article_id == target.article_id
 
     assert {:ok, item} = CMS.Articles.trash(target, user)
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
-    mention = Repo.get!(ArtimentMention, mention.id)
-    assert mention.mentioned_snapshot["deletionState"] == "permanently_deleted"
-    assert mention.meta["mentionedDeleted"]
-    refute mention.meta["mentionedTrashed"]
+    refute Repo.get(ArtimentMention, mention.id)
   end
 
   test "scheduler permanently deletes due actions and records a system audit" do

@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   alias CMS.Artiment.BodyBag
   alias Accounts.Model.User
   alias CMS.Articles.{Numbering, Persist}
+  alias CMS.ArtimentMentions.{GraphRevision, SyncProgress}
 
   alias CMS.Model.{
     Article,
@@ -24,6 +25,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     ArticleBodyDraft,
     ArticleBodySnapshot,
     ArticleLifecycle,
+    ArticlePublic,
     ArticleRevision,
     ArticleReviewBlock,
     Author,
@@ -944,6 +946,9 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, updated_binding} <- ensure_ticket_number(binding, target_lifecycle_state),
          {:ok, _public} <-
            maybe_select_ticket_public(article, revision, target_lifecycle_state, context.actor),
+         {:ok, _mention_intent} <-
+           record_mention_visibility(article, target_lifecycle_state, context.command_id),
+         {:ok, :pass} <- GraphRevision.bump_for_article(article.id),
          {:ok, activity} <-
            log_ticket_activity(
              article,
@@ -1048,6 +1053,30 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, _public} <- CMS.Tickets.Content.select_public(article, revision, author),
          {:ok, :pass} <- CMS.Tickets.Content.delete_workspace(article, draft) do
       {:ok, :pass}
+    end
+  end
+
+  defp record_mention_visibility(_article, :draft, _command_id), do: {:ok, :pass}
+
+  defp record_mention_visibility(%Article{} = article, :published, command_id) do
+    case Repo.get(ArticlePublic, article.id) do
+      %ArticlePublic{} = public ->
+        token = "#{public.revision_id}:#{public.publication_version}"
+
+        with {:ok, _state} <- SyncProgress.mark_pending_in_transaction(article, token) do
+          CMS.Articles.Effects.enqueue(
+            "article.mention_sync",
+            "article",
+            article.id,
+            {:command, command_id},
+            %{source_type: "ticket", content_token: token},
+            effect_key: "article.mention_sync:ticket:#{article.id}:#{token}",
+            retry_failed: true
+          )
+        end
+
+      nil ->
+        {:error, :ticket_publication_missing}
     end
   end
 

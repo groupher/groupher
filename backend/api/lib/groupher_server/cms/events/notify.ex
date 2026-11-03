@@ -15,11 +15,12 @@ defmodule GroupherServer.CMS.Events.Notify do
   """
 
   require GroupherServer.CMS.ErrorCat
+  import Ecto.Query
 
   alias GroupherServer.{Accounts, CMS, Messaging, Repo}
   alias Accounts.Model.User
   alias CMS.{ErrorCat, Events.Event, FrontDesk}
-  alias CMS.Model.{Comment, Community}
+  alias CMS.Model.{ArticleBinding, Comment, Community}
 
   @behaviour CMS.Events.Handler
 
@@ -77,7 +78,7 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   @spec handle(:comment, Comment.t(), User.t()) :: notify_result()
   def handle(:comment, %Comment{} = comment, %User{} = from_user) do
-    with {:ok, article} <- FrontDesk.article_of(comment),
+    with {:ok, article} <- parent_article_for_notification(comment),
          {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, author} <- article_author(article) do
       notify_attrs = %{
@@ -100,7 +101,7 @@ defmodule GroupherServer.CMS.Events.Notify do
   def handle(:reply, %Comment{} = reply_comment, %User{} = from_user) do
     with %Comment{reply_to_comment: %{author_id: reply_to_author_id}} = reply_comment <-
            Repo.preload(reply_comment, reply_to_comment: :author),
-         {:ok, article} <- FrontDesk.article_of(reply_comment),
+         {:ok, article} <- parent_article_for_notification(reply_comment),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       notify_attrs = %{
         action: :reply,
@@ -121,7 +122,7 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   @spec handle(notify_action(), Comment.t(), User.t()) :: notify_result()
   def handle(action, %Comment{} = comment, %User{} = from_user) do
-    with {:ok, article} <- FrontDesk.article_of(comment),
+    with {:ok, article} <- parent_article_for_notification(comment),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       notify_attrs = %{
         action: action,
@@ -161,7 +162,7 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   @spec handle(:undo, notify_action(), Comment.t(), User.t()) :: notify_result()
   def handle(:undo, action, %Comment{} = comment, %User{} = from_user) do
-    with {:ok, article} <- FrontDesk.article_of(comment),
+    with {:ok, article} <- parent_article_for_notification(comment),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       notify_attrs = %{
         action: action,
@@ -198,7 +199,7 @@ defmodule GroupherServer.CMS.Events.Notify do
   end
 
   defp handle_comment_activity(%Comment{} = comment, %User{} = from_user, delivery_key) do
-    with {:ok, article} <- FrontDesk.article_of(comment),
+    with {:ok, article} <- parent_article_for_notification(comment),
          {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, author} <- article_author(article) do
       notify_attrs = %{
@@ -221,7 +222,7 @@ defmodule GroupherServer.CMS.Events.Notify do
   defp handle_reply_activity(%Comment{} = reply, %User{} = from_user, delivery_key) do
     with %Comment{reply_to_comment: %{author_id: reply_to_author_id}} <-
            Repo.preload(reply, reply_to_comment: :author),
-         {:ok, article} <- FrontDesk.article_of(reply),
+         {:ok, article} <- parent_article_for_notification(reply),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       notify_attrs = %{
         action: :reply,
@@ -243,7 +244,7 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   defp handle_once(action, %Comment{} = comment, %User{} = from_user, delivery_key)
        when is_binary(delivery_key) do
-    with {:ok, article} <- FrontDesk.article_of(comment),
+    with {:ok, article} <- parent_article_for_notification(comment),
          {:ok, thread} <- FrontDesk.thread_of(article) do
       %{
         action: action,
@@ -288,6 +289,34 @@ defmodule GroupherServer.CMS.Events.Notify do
   defp article_author(%{author: %User{} = user}), do: {:ok, user}
   defp article_author(%{author: %{user: %User{} = user}}), do: {:ok, user}
   defp article_author(_article), do: {:error, ErrorCat.custom("article author not found")}
+
+  defp parent_article_for_notification(%Comment{} = comment) do
+    with {:ok, thread} <- FrontDesk.thread_of(comment) do
+      candidates =
+        from(binding in ArticleBinding,
+          join: community in Community,
+          on: community.id == binding.community_id,
+          where: binding.article_id == ^comment.article_id,
+          order_by: [asc: binding.community_id],
+          select: {community.slug, community.id, binding.inner_id}
+        )
+        |> Repo.all()
+        |> Enum.filter(fn {_slug, community_id, _inner_id} ->
+          thread != :doc or comment.origin_community_id == community_id
+        end)
+        |> Enum.sort_by(fn {slug, community_id, _inner_id} ->
+          {slug != comment.request_community_slug, community_id}
+        end)
+
+      Enum.reduce_while(candidates, {:error, ErrorCat.custom(%{reason: :not_exist})}, fn
+        {slug, _community_id, inner_id}, _acc ->
+          case FrontDesk.article(%{community: slug, thread: thread, inner_id: inner_id}) do
+            {:ok, _} = result -> {:halt, result}
+            {:error, _} -> {:cont, {:error, ErrorCat.custom(%{reason: :not_exist})}}
+          end
+      end)
+    end
+  end
 
   defp load_article_for_notification(%{id: article_id, community: %Community{} = community}) do
     CMS.Articles.Store.load_article_for_notification(article_id, community)

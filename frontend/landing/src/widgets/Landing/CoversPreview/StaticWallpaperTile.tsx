@@ -24,7 +24,8 @@ export default function StaticWallpaperTile({ scene, heightTier }: TProps) {
       className={s.rail}
       data-height-tier={heightTier}
       data-scene-id={scene.id}
-      data-wallpaper-type={scene.wallpaperType}
+      data-wallpaper-type-light={scene.wallpaper.light.type}
+      data-wallpaper-type-dark={scene.wallpaper.dark.type}
       aria-label={`Preview ${scene.label}`}
       onClick={() => selectScene(scene.id)}
       onMouseEnter={() => setHovered(true)}

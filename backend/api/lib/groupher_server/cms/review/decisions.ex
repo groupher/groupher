@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
   """
 
   alias GroupherServer.{AlertWall, CMS, Repo}
+  alias CMS.ArtimentMentions.GraphRevision
   alias CMS.Model.Author
 
   @actions [:approve, :deny, :release]
@@ -29,7 +30,8 @@ defmodule GroupherServer.CMS.Review.Decisions do
          {:ok, :pass} <- ensure_ai_finished(requests, action),
          {:ok, :pass} <- update_restrictions(context, action, requests, actor, operation_ref),
          {:ok, :pass} <- update_wall(attrs, action, operation_ref),
-         {:ok, :pass} <- CMS.Review.Requests.supersede_scope_in_transaction(attrs, operation_ref) do
+         {:ok, :pass} <- CMS.Review.Requests.supersede_scope_in_transaction(attrs, operation_ref),
+         {:ok, :pass} <- bump_graph(context) do
       {:ok, :pass}
     else
       false -> {:error, CMS.ErrorCat.review_transition_requires_transaction()}
@@ -85,7 +87,8 @@ defmodule GroupherServer.CMS.Review.Decisions do
   defp request_scope(_context), do: %{}
 
   defp update_restrictions(context, action, requests, actor, operation_ref) do
-    with {:ok, active} <- CMS.ReviewBlocks.active_for(context.lifecycle, context.scope_key),
+    with {:ok, active} <-
+           CMS.ReviewBlocks.active_for(context.lifecycle, restriction_scope(context)),
          {:ok, :pass} <- end_blocks(context, active, action, operation_ref),
          {:ok, :pass} <- maybe_deny(context, requests, action, actor, operation_ref) do
       {:ok, :pass}
@@ -104,7 +107,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
 
     CMS.Review.Restrictions.end_blocks(
       context.lifecycle,
-      context.scope_key,
+      restriction_scope(context),
       Enum.map(rows, & &1.id),
       operation_ref,
       "human_#{action}"
@@ -118,7 +121,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
 
   defp maybe_deny(context, requests, :deny, actor, operation_ref) do
     case CMS.Review.Restrictions.apply(context.lifecycle, %{
-           scope_key: context.scope_key,
+           scope_key: restriction_scope(context),
            type: :manual_hold,
            artiment_review_id: Enum.find_value(requests, & &1.id),
            operation_ref: operation_ref,
@@ -136,6 +139,16 @@ defmodule GroupherServer.CMS.Review.Decisions do
     resolution = if action == :deny, do: "human_confirmed_violation", else: "human_cleared"
     AlertWall.resolve_target_in_transaction(wall_target(attrs), resolution, operation_ref)
   end
+
+  defp restriction_scope(%{type: :comment, target: %{thread: thread}})
+       when thread in [:post, :blog, :changelog],
+       do: "platform"
+
+  defp restriction_scope(context), do: context.scope_key
+
+  defp bump_graph(%{type: :comment, target: comment}), do: GraphRevision.bump_for_comment(comment)
+  defp bump_graph(%{target: %{id: article_id}}), do: GraphRevision.bump_for_article(article_id)
+  defp bump_graph(_), do: {:ok, :pass}
 
   defp wall_target(%{type: :article, article_id: id, community_id: community_id}) do
     %{owner: :cms, target_type: :article, target_id: id, community_id: community_id}

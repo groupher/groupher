@@ -59,6 +59,8 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
       set: [state: :queued]
     )
 
+    {:ok, before_revision} = CMS.ArtimentMentions.GraphRevision.current(community.id)
+
     assert {:ok, _result} =
              CMS.decide_review_target(
                target_key,
@@ -78,6 +80,9 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                )
              )
 
+    assert {:ok, denied_revision} = CMS.ArtimentMentions.GraphRevision.current(community.id)
+    assert denied_revision > before_revision
+
     assert {:ok, _result} =
              CMS.decide_review_target(
                target_key,
@@ -96,6 +101,9 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
              ),
              :count
            ) == 0
+
+    assert {:ok, released_revision} = CMS.ArtimentMentions.GraphRevision.current(community.id)
+    assert released_revision > denied_revision
   end
 
   test "a CMS decision resolves a report-only Wall item in its own scope" do

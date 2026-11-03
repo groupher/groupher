@@ -11,7 +11,7 @@ export default function MobileFirst() {
   const [ref, isHovered] = useHover<HTMLDivElement>()
 
   return (
-    <div ref={ref} className={s.wrapper}>
+    <div ref={ref} className={s.wrapper} data-landing-card='mobileFirst'>
       <div className={s.header}>
         <h3 className={s.title}>{t('landing.battery.mobile.title')}</h3>
         <div className={s.desc}>{t('landing.battery.mobile.desc')}</div>

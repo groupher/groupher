@@ -527,7 +527,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           id
           thread
           articleId
-          mentionedByCount
           article {
             innerId
             title
@@ -538,12 +537,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
               commentsCount
               snapshotAt
             }
-          }
-          mentionedBy(pagi: {offset: {page: 1, size: 20}}) {
-            pageInfo { ... on OffsetPageInfo { totalCount } }
-          }
-          mentions(pagi: {offset: {page: 1, size: 20}}) {
-            pageInfo { ... on OffsetPageInfo { totalCount } }
           }
         }
         pageInfo { ... on OffsetPageInfo { totalCount } }

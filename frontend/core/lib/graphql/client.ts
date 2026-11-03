@@ -6,7 +6,7 @@ import {
   GROUPHER_AUTH_SIGNED_IN_COOKIE,
 } from '@groupher/contracts/auth'
 import { API_ROUTE } from '@groupher/route-contract'
-import { print, type DocumentNode } from 'graphql'
+import { getOperationAST, print, type DocumentNode } from 'graphql'
 
 import { invalidateAuthState, resolveAuthFailure, withAuthRetry } from '~/auth'
 
@@ -200,6 +200,57 @@ export type TBrowserGraphQLRequestOptions = {
   signal?: AbortSignal
 }
 
+export const REFERENCE_MAP_CONTENT_CHANGE = 'groupher:reference-map-content-change'
+
+const referenceMapMutations = new Set([
+  'CreatePost',
+  'CreateBlogFromPublisher',
+  'CreateChangelogFromPublisher',
+  'UpdatePostFromEditor',
+  'UpdatePostFromMenu',
+  'UpdateBlogFromPublisher',
+  'UpdateChangelogFromPublisher',
+  'CreateComment',
+  'ReplyComment',
+  'UpdateComment',
+  'DeleteComment',
+  'ApproveArticleReview',
+  'DenyArticleReview',
+  'ReleaseArticleReview',
+  'ApproveCommentReview',
+  'DenyCommentReview',
+  'ReleaseCommentReview',
+  'ApproveDocReview',
+  'DenyDocReview',
+  'ReleaseDocReview',
+  'RecheckArticle',
+  'RecheckComment',
+  'ResolveAlertItem',
+  'publishDocChanges',
+  'moveDocToDraft',
+  'moveDocTreeSubtreeToDraft',
+  'CreateDocTreeNode',
+  'UpdateDocTreeNode',
+  'DeleteDocTreeNode',
+  'MoveDocTreeNode',
+  'restoreTrashedPost',
+  'permanentlyDeleteTrashedPost',
+  'RestoreDocTreeTrashItem',
+  'PublishTicket',
+  'MoveTicketToDraft',
+  'TransitionTicket',
+  'UpdateTicket',
+  'CreateTicketFromPost',
+])
+
+const affectsReferenceMap = (document: string | DocumentNode): boolean => {
+  const operation =
+    typeof document === 'string'
+      ? /^\s*mutation\s+([A-Za-z_][A-Za-z0-9_]*)/m.exec(document)?.[1]
+      : getOperationAST(document)?.name?.value
+  return operation !== undefined && referenceMapMutations.has(operation)
+}
+
 const browserGraphQLEndpoint = (): string =>
   typeof window === 'undefined'
     ? API_ROUTE.GRAPHQL
@@ -246,6 +297,10 @@ export const browserGraphQLRequest = async <
     (payload as TGraphQLPayload<TResult>).data === undefined
   ) {
     throw new GraphQLResponseError('GraphQL response did not include data.', response, { payload })
+  }
+
+  if (typeof window !== 'undefined' && affectsReferenceMap(document)) {
+    window.dispatchEvent(new Event(REFERENCE_MAP_CONTENT_CHANGE))
   }
 
   return (payload as TGraphQLPayload<TResult>).data as TResult

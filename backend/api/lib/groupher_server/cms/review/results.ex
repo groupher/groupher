@@ -58,7 +58,16 @@ defmodule GroupherServer.CMS.Review.Results do
   end
 
   defp lock_target(%ArtimentReview{target_type: :comment} = request) do
-    CMS.Review.load_for_update("comment:#{request.comment_id}", scope_key(request))
+    scope =
+      case Repo.get(CMS.Model.Comment, request.comment_id) do
+        %CMS.Model.Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
+          "platform"
+
+        _ ->
+          scope_key(request)
+      end
+
+    CMS.Review.load_for_update("comment:#{request.comment_id}", scope)
   end
 
   defp lock_target(%ArtimentReview{target_type: :doc} = request) do
@@ -125,6 +134,10 @@ defmodule GroupherServer.CMS.Review.Results do
     ids =
       active
       |> Enum.reject(&(&1.source == :human))
+      |> Enum.filter(fn block ->
+        context.type != :comment or context.target.thread == :doc or
+          block.artiment_review_id == request.id
+      end)
       |> Enum.map(& &1.id)
 
     if ids == [] do

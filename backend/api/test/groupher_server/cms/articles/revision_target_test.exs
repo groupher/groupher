@@ -412,7 +412,27 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert Repo.all(from(event in CMS.Outbox.Event, where: event.command_id == ^command_id))
            |> Enum.map(& &1.event)
-           |> Enum.sort() == ["article.projections", "article.published"]
+           |> Enum.sort() == ["article.mention_sync", "article.projections", "article.published"]
+
+    mention_event =
+      Repo.one!(
+        from(event in CMS.Outbox.Event,
+          where: event.command_id == ^command_id and event.event == "article.mention_sync"
+        )
+      )
+
+    assert {:ok, :pass} =
+             GroupherServer.Jobs.CMSOutboxArticle.perform(%Oban.Job{
+               args: %{"event_id" => mention_event.id},
+               attempt: 1,
+               max_attempts: 3
+             })
+
+    assert %{desired_content_token: token, synced_content_token: token} =
+             Repo.get_by!(CMS.ArtimentMentions.Model.SyncState,
+               source_article_id: article.id,
+               source_branch_id: branch.id
+             )
 
     assert Repo.get_by!(ArticleBinding, article_id: article.id, community_id: community.id).inner_id ==
              1

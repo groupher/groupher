@@ -1,6 +1,9 @@
 import Config
 
 config :groupher_server, :allow_test_service_auth, true
+config :groupher_server, :reference_map_key, "test-reference-map-key-with-32-bytes"
+config :groupher_server, :reference_map_key_version, 1
+config :groupher_server, :reference_map_test_sandbox, true
 
 config :groupher_server, :pagination_cursor_keyring,
   current_version: 1,

@@ -72,17 +72,22 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     end)
 
     confirm(fn result -> created_confirmation(result, article) end)
-    present(fn confirmation -> replay_created(confirmation, article, command_id) end)
+    present(fn confirmation -> replay_created(confirmation, article, command_id, community) end)
   end
 
   @pipeline operation: :comment_reply,
             confirmation: Confirmation,
             target: :target_comment,
             params: :body
-  receipt_pipeline run_reply(target_comment, body, user, command_id) do
+  receipt_pipeline run_reply(target_comment, body, user, command_id, community) do
     gate(fn _target ->
       with {:ok, {canonical, article}} <-
-             CMS.Gate.check_comment_in_transaction(user, :reply_comment, target_comment) do
+             CMS.Gate.check_comment_in_transaction(
+               user,
+               :reply_comment,
+               target_comment,
+               community
+             ) do
         {:ok, %{comment: canonical, article: article}}
       end
     end)
@@ -102,7 +107,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
        }}
     end)
 
-    present(fn confirmation -> reply_result(confirmation, target_comment) end)
+    present(fn confirmation -> reply_result(confirmation, target_comment, community) end)
   end
 
   @doc "Executes the top-level Comment `receipt_pipeline`."
@@ -301,15 +306,16 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
   defp replay_created(
          %Confirmation{data: %{"comment_id" => result_key}},
          article,
-         command_id
+         command_id,
+         request_community
        )
        when is_binary(result_key) do
     with {result_id, ""} <- Integer.parse(result_key),
          {:ok, %Comment{} = comment} <-
            FrontDesk.comment(result_id, mode: :internal, view: :with_author),
          {:ok, %Community{} = community} <-
-           FrontDesk.community(comment.community_id, mode: :internal),
-         {:ok, canonical_article} <- replay_article(article) do
+           replay_community(comment, request_community),
+         {:ok, canonical_article} <- replay_article(article, community) do
       {:ok,
        %{
          comment: Query.comment_with_reply_author(comment),
@@ -323,9 +329,26 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     end
   end
 
-  defp replay_created(_receipt, _article, _command_id) do
+  defp replay_created(_receipt, _article, _command_id, _community) do
     {:error, CmsErrorCat.command_result_unavailable()}
   end
+
+  defp replay_community(_comment, %Community{} = community), do: {:ok, community}
+
+  defp replay_community(comment, _request_community),
+    do: CMS.Comments.RequestCommunity.resolve(comment)
+
+  defp replay_article(%Article{id: article_id, thread: thread}, %Community{} = community) do
+    with {:ok, binding} <- FrontDesk.resolve_binding(article_id, community.id) do
+      FrontDesk.article(%{
+        community: community.slug,
+        thread: thread,
+        inner_id: binding.inner_id
+      })
+    end
+  end
+
+  defp replay_article(article, _community), do: replay_article(article)
 
   defp replay_article(
          %CMS.Articles.ArticleView{
@@ -365,11 +388,9 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
   @doc "Creates a reply using an optional command id."
   @spec reply(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(map())
   def reply(%Comment{} = target_comment, body, %User{} = user, command_id) do
-    if is_nil(command_id) do
-      {:error, CmsErrorCat.command_id_required()}
-    else
-      run_reply(target_comment, body, user, command_id)
-      |> normalize_comments_locked()
+    with {:ok, %Community{} = community} <-
+           CMS.Comments.RequestCommunity.resolve(target_comment) do
+      reply(target_comment, body, user, command_id, community)
     end
   end
 
@@ -379,13 +400,35 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     end
   end
 
-  defp reply_result(%Confirmation{data: data}, target_comment) do
-    with {:ok, article} <-
-           FrontDesk.article_of(target_comment) do
+  def reply(
+        %Comment{} = target_comment,
+        body,
+        %User{} = user,
+        command_id,
+        %Community{} = community
+      ) do
+    if is_nil(command_id) do
+      {:error, CmsErrorCat.command_id_required()}
+    else
+      run_reply(target_comment, body, user, command_id, community)
+      |> normalize_comments_locked()
+    end
+  end
+
+  defp reply_result(%Confirmation{data: data}, target_comment, community) do
+    with {:ok, binding} <- FrontDesk.resolve_binding(target_comment.article_id, community.id),
+         {:ok, thread} <- FrontDesk.thread_of(target_comment),
+         {:ok, article} <-
+           FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: binding.inner_id
+           }) do
       replay_created(
         %Confirmation{data: data},
         article,
-        data["command_id"]
+        data["command_id"],
+        community
       )
     end
   end
@@ -393,8 +436,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
   defp reply_new_from_canonical(canonical, article, body, %User{} = user, command_id) do
     with replying_comment <- Query.comment_with_reply_author(canonical),
          {:ok, thread} <- FrontDesk.thread_of(replying_comment),
-         {:ok, %Community{} = community} <-
-           FrontDesk.community(replying_comment.community_id, mode: :internal),
+         %Community{} = community <- Map.get(article, :community),
          article <- ArticleQuery.article_with_author(article),
          {:ok, info} <- CMS.Artiment.Matcher.match_interaction(article) do
       reply_new(
@@ -522,21 +564,27 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     end
   end
 
-  defp invalidate_public_comments(article, community, thread, command_id) do
-    with {:ok, inner_id} <- article_inner_id(article, community) do
-      Effects.enqueue(
-        "comment.changed",
-        "article",
-        article.id,
-        command_id,
-        %{
-          community: community.slug,
-          community_id: community.id,
-          thread: thread,
-          inner_id: inner_id,
-          article_id: article.id
-        }
-      )
+  defp invalidate_public_comments(article, _community, thread, command_id) do
+    with {:ok, bindings} <- CMS.Articles.Bindings.all(article) do
+      Enum.reduce_while(bindings, {:ok, :pass}, fn binding, _acc ->
+        case Effects.enqueue(
+               "comment.changed",
+               "article",
+               article.id,
+               command_id,
+               %{
+                 community: binding.community.slug,
+                 community_id: binding.community_id,
+                 thread: thread,
+                 inner_id: binding.inner_id,
+                 article_id: article.id
+               },
+               effect_key: "comment.changed:#{binding.community_id}"
+             ) do
+          {:ok, _event} -> {:cont, {:ok, :pass}}
+          {:error, _} = error -> {:halt, error}
+        end
+      end)
     end
   end
 

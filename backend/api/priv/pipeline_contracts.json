@@ -446,7 +446,7 @@
     },
     {
       "access": "user",
-      "arity": 4,
+      "arity": 5,
       "confirmation": "GroupherServer.CMS.Comments.Commands.CommentConfirmation",
       "module": "GroupherServer.CMS.Comments.Commands.Create",
       "name": "run_reply",
@@ -458,7 +458,7 @@
     },
     {
       "access": "user",
-      "arity": 3,
+      "arity": 4,
       "confirmation": "GroupherServer.CMS.Comments.Commands.CommentConfirmation",
       "module": "GroupherServer.CMS.Comments.Commands.Delete",
       "name": "execute_pipeline",
@@ -540,7 +540,7 @@
     },
     {
       "access": "user",
-      "arity": 5,
+      "arity": 6,
       "confirmation": "GroupherServer.CMS.Comments.Commands.CommentConfirmation",
       "module": "GroupherServer.CMS.Comments.Commands.Update",
       "name": "execute_pipeline",

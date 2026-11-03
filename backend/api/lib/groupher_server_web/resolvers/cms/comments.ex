@@ -131,18 +131,32 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
       body_bag,
       expected_version,
       user,
-      Map.get(args, :command_id)
+      Map.get(args, :command_id),
+      get_in(args, [:comment_path, :article, :community])
     )
   end
 
   def delete_comment(_root, ~m(comment)a = args, %{context: %{cur_user: user}}) do
-    CMS.comments_delete_comment_result(comment, user, Map.get(args, :command_id))
+    CMS.comments_delete_comment_result(
+      comment,
+      user,
+      Map.get(args, :command_id),
+      get_in(args, [:comment_path, :article, :community])
+    )
   end
 
   def reply_comment(_root, %{comment: comment, body_bag: body_bag} = args, %{
         context: %{cur_user: user}
       }) do
-    CMS.comments_reply_comment_result(comment, body_bag, user, Map.get(args, :command_id))
+    community_slug = get_in(args, [:comment_path, :article, :community])
+
+    CMS.comments_reply_comment_result(
+      comment,
+      body_bag,
+      user,
+      Map.get(args, :command_id),
+      community_slug
+    )
   end
 
   def upvote_comment(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do

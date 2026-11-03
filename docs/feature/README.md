@@ -8,7 +8,7 @@
 - [`alert-board/`](./alert-board)：ReviewBot / AlertWall 审核与举报；V1 基线、V2 本地实现已完成，生产切换尚未完成。
 - [`activity/`](./activity)：业务事件、产品活动日志与审计面。
 - [`analysis/`](./analysis)：Article 业务指标事件、小时趋势与产品查询。
-- [`article/`](./article)：Article 版本、Trash 与 Audit。
+- [`article/`](./article)：Article 版本、Trash 与 Audit，以及待实施的 Article / User Ticket / Comment 引用 Map 合同（Post 首个 UI 验证入口）。
 - [`artiment/`](./artiment)：Artiment 公共命令边界。
 - [`community/`](./community)：Community 成员、计费和产品能力。
 - [`docs/`](./docs)：Docs Tree、Snapshot、Cover 和 ID 模型。

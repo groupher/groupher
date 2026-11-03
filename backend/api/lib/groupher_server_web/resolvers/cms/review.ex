@@ -195,7 +195,8 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   defp resolve_target(%{type: :comment, comment: path}, actor) when is_map(path) do
     case FrontDesk.comment(path, actor) do
       {:ok, comment} ->
-        {:ok, %{type: :comment, comment_id: comment.id, community_id: comment.community_id}}
+        {:ok,
+         %{type: :comment, comment_id: comment.id, community_id: comment.origin_community_id}}
 
       {:error, _reason} = error ->
         error
@@ -205,15 +206,20 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   defp resolve_target(%{type: :comment, comment_id: id} = input, _actor) when is_binary(id) do
     case FrontDesk.comment(id, mode: :internal, view: :with_author) do
       {:ok, comment} ->
-        requested_community_id = Map.get(input, :community_id, comment.community_id)
+        requested_community_id = Map.get(input, :community_id, comment.origin_community_id)
 
         case requested_community_id do
           nil ->
             {:ok, %{type: :comment, comment_id: comment.id, community_id: nil}}
 
           community_id ->
-            if to_string(community_id) == to_string(comment.community_id) do
-              {:ok, %{type: :comment, comment_id: comment.id, community_id: comment.community_id}}
+            if to_string(community_id) == to_string(comment.origin_community_id) do
+              {:ok,
+               %{
+                 type: :comment,
+                 comment_id: comment.id,
+                 community_id: comment.origin_community_id
+               }}
             else
               {:error, CMS.invalid_review_block_error()}
             end

@@ -53,6 +53,7 @@
   当前合同已合并到前两篇。
 - [`content-publisher.md`](./content-publisher.md)：Plate/Markdown 到 canonical BodyBag、可信 Node
   Publisher、delegated user、service capability，以及 Docs、Article、Comment 原子写入的当前合同。
+- [`co-edit.md`](./co-edit.md)：多人富文本编辑的子应用边界、Phoenix 持久化、审阅发布交接与全链路 POC 验收合同（方案，未实施）。
 - [`ci-contract-gaps.md`](./ci-contract-gaps.md)：GraphQL operation、Command Receipt、Outbox、scope、并发与分页的 CI/测试覆盖缺口及门禁计划。
 - [`error-cat.md`](./error-cat.md)：领域错误目录、全局注册和协议边界。
 - [`orm-raw-sql-inventory.md`](./orm-raw-sql-inventory.md)：仍需保留或收口的裸 SQL 清单与 owner 判断。

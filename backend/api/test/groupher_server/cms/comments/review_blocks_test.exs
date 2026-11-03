@@ -9,6 +9,89 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
   alias CMS.Model.{CommentLifecycle, CommentReviewBlock}
   alias CMS.Outbox.Event, as: OutboxEvent
 
+  test "Comment creation persists a dedicated Mention sync intent with the body watermark" do
+    {community, article, _attrs, author} = mock_article(:post)
+
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               article_inner_id(article, community),
+               mock_comment("durable mention intent"),
+               author,
+               Ecto.UUID.generate()
+             )
+
+    assert %OutboxEvent{data: %{"content_token" => token}} =
+             Repo.get_by!(OutboxEvent,
+               event: "comment.mention_sync",
+               resource_id: to_string(comment.id)
+             )
+
+    assert String.starts_with?(token, "#{comment.id}:")
+  end
+
+  test "creating a shared Comment invalidates every current Article binding" do
+    {community, article_view, _attrs, author} = mock_article(:post)
+    {:ok, destination} = mock_community(author)
+    article = Repo.get!(CMS.Model.Article, article_view.article_id)
+    assert {:ok, _binding} = CMS.Articles.BindingPersist.mirror(article, destination)
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, _comment} =
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               article_inner_id(article_view, community),
+               mock_comment("Shared comment"),
+               author,
+               command_id
+             )
+
+    events =
+      Repo.all(
+        from(event in OutboxEvent,
+          where: event.event == "comment.changed" and event.command_id == ^command_id
+        )
+      )
+
+    assert MapSet.new(Enum.map(events, & &1.data["community_id"])) ==
+             MapSet.new([community.id, destination.id])
+  end
+
+  test "database rejects a Community ReviewBlock for an ordinary Comment" do
+    {community, article, _attrs, author} = mock_article(:post)
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(article, community),
+        mock_comment("Global restriction only"),
+        author,
+        Ecto.UUID.generate()
+      )
+
+    lifecycle = Repo.get_by!(CommentLifecycle, comment_id: comment.id)
+
+    assert {:ok, restriction} =
+             Repo.transact_result(fn ->
+               CMS.Comments.Lifecycle.apply_review_block(
+                 lifecycle,
+                 restriction_attrs(lifecycle, "platform", "global-only")
+               )
+             end)
+
+    assert_raise Postgrex.Error, fn ->
+      Repo.transaction(fn ->
+        Repo.update_all(
+          from(block in CommentReviewBlock, where: block.id == ^restriction.id),
+          set: [community_id: community.id]
+        )
+      end)
+    end
+  end
+
   test "single Comment responses filter restricted embedded replies through Gate" do
     {community, article, _article_attrs, parent_author} = mock_article(:post)
     {:ok, reply_author} = db_insert(:user)

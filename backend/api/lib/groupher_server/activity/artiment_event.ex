@@ -43,7 +43,7 @@ defmodule GroupherServer.Activity.ArtimentEvent do
         {:ok,
          %{
            @stream_field => comment.article_id,
-           community_id: comment.community_id,
+           community_id: comment.origin_community_id,
            stream_snapshot: %{},
            subject_type: "comment",
            subject_ref: Event.stringify(comment.inner_id || comment.id),

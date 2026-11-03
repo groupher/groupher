@@ -20,10 +20,11 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
   alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Articles.Bindings
+  alias CMS.ArtimentMentions.GraphRevision
   alias CMS.Comments.{Lifecycle, ErrorCat, Persist, Solution}
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias CMS.Comments.Effects
-  alias CMS.Model.{Article, Comment, PinnedComment}
+  alias CMS.Model.{Article, Comment, Community, PinnedComment}
 
   alias Helper.{ORM, T}
 
@@ -45,7 +46,14 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
   @doc "Deletes a Comment while binding retries to the supplied command id."
   @spec execute(Comment.t(), User.t(), String.t()) :: T.domain_res(result())
   def execute(%Comment{} = comment, %User{} = actor, command_id) do
-    execute_pipeline(comment, actor, command_id)
+    with {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      execute(comment, actor, command_id, community)
+    end
+  end
+
+  @doc "Deletes a Comment through the Community named by the public request path."
+  def execute(%Comment{} = comment, %User{} = actor, command_id, %Community{} = community) do
+    execute_pipeline(comment, actor, command_id, community)
   end
 
   @pipeline operation: :comment_delete,
@@ -53,20 +61,30 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
             target: :comment,
             params: []
 
-  receipt_pipeline execute_pipeline(comment, actor, command_id) do
-    gate(fn candidate -> CMS.Gate.check_comment_in_transaction(actor, :delete, candidate) end)
+  receipt_pipeline execute_pipeline(comment, actor, command_id, community) do
+    gate(fn candidate ->
+      CMS.Gate.check_comment_in_transaction(actor, :delete, candidate, community)
+    end)
+
     change(fn {canonical, article} -> delete_new(canonical, article, actor, command_id) end)
     confirm(fn result -> {:ok, confirmation(result)} end)
-    present(fn confirmation -> delete_result(confirmation, comment.id) end)
+    present(fn confirmation -> delete_result(confirmation, comment.id, community) end)
   end
 
-  defp delete_result(%Confirmation{data: data}, comment_id) do
-    delete_result(%{command_id: data["command_id"]}, comment_id)
+  defp delete_result(%Confirmation{data: data}, comment_id, community) do
+    delete_result(%{command_id: data["command_id"]}, comment_id, community)
   end
 
-  defp delete_result(receipt, comment_id) do
+  defp delete_result(receipt, comment_id, community) do
     with {:ok, current} <- ORM.find(Comment, comment_id),
-         {:ok, article} <- FrontDesk.article_of(current) do
+         {:ok, binding} <- FrontDesk.resolve_binding(current.article_id, community.id),
+         {:ok, thread} <- FrontDesk.thread_of(current),
+         {:ok, article} <-
+           FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: binding.inner_id
+           }) do
       {:ok,
        %{
          comment: GroupherServer.Repo.preload(current, :body),
@@ -96,7 +114,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
            ),
          {:ok, :pass} <-
            CMS.Review.Requests.supersede_scope_in_transaction(
-             %{type: :comment, comment_id: comment.id, community_id: comment.community_id},
+             %{type: :comment, comment_id: comment.id, community_id: comment.origin_community_id},
              operation_ref
            ),
          {:ok, :pass} <-
@@ -107,9 +125,11 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
            ),
          {:ok, _} <- Lifecycle.transition(comment.id, :deleted),
          {:ok, deleted} <- Persist.tombstone(comment, @delete_hint),
+         {:ok, :pass} <- Effects.enqueue_deleted_mention_sync(deleted, command_id),
          {:ok, _} <- record_article_metric(article, command_id, :comment_deleted),
          {:ok, _invalidation} <-
            invalidate_public_comments(article, comment.thread, command_id),
+         {:ok, :pass} <- GraphRevision.bump_for_comment(comment),
          {:ok, _} <- enqueue_delete_effects(comment, article, actor, command_id) do
       {:ok, %{comment: deleted, article: article, command_id: command_id}}
     end
@@ -155,21 +175,29 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
   end
 
   defp invalidate_public_comments(article, thread, command_id) do
-    with {:ok, %{community: community, inner_id: inner_id}} <-
-           Bindings.get(article, Map.get(article, :community)) do
-      Effects.enqueue(
-        "comment.changed",
-        "article",
-        article.id,
-        command_id,
-        %{
-          community: community.slug,
-          community_id: community.id,
-          thread: thread,
-          inner_id: inner_id,
-          article_id: article.id
-        }
-      )
+    with {:ok, bindings} <- Bindings.all(article) do
+      Enum.reduce_while(bindings, {:ok, :pass}, fn binding, _acc ->
+        result =
+          Effects.enqueue(
+            "comment.changed",
+            "article",
+            article.id,
+            command_id,
+            %{
+              community: binding.community.slug,
+              community_id: binding.community_id,
+              thread: thread,
+              inner_id: binding.inner_id,
+              article_id: article.id
+            },
+            effect_key: "comment.changed:#{binding.community_id}"
+          )
+
+        case result do
+          {:ok, _event} -> {:cont, {:ok, :pass}}
+          {:error, _} = error -> {:halt, error}
+        end
+      end)
     end
   end
 

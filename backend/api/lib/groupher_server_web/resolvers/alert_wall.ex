@@ -183,14 +183,22 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
 
   defp resolve_report_target(%{type: :comment, comment: path} = input, actor)
        when is_map(path) do
-    with {:ok, %Comment{} = comment} <- FrontDesk.comment(path, actor) do
+    with {:ok, %Comment{} = comment} <- FrontDesk.comment(path, actor),
+         {:ok, %Community{} = reported_in} <-
+           FrontDesk.community(path.article.community, actor, []) do
+      decision_community_id =
+        if comment.origin_community_id == reported_in.id,
+          do: reported_in.id,
+          else: nil
+
       {:ok,
        %{
          owner: :cms,
          target_type: :comment,
          target_id: to_string(comment.id),
          observed_version: Map.get(input, :observed_version),
-         community_id: comment.community_id
+         community_id: decision_community_id,
+         reported_in_community_id: reported_in.id
        }}
     else
       _ -> {:error, AlertWall.invalid_report_error()}

@@ -11,7 +11,9 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
   alias CMS.Model.{
     ArticleLifecycle,
     ArticleReviewBlock,
-    ArtimentReview
+    ArtimentReview,
+    CommentLifecycle,
+    CommentReviewBlock
   }
 
   alias AlertWall.Model.{Item, UserReport}
@@ -410,6 +412,109 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
              )
 
     assert community_request.policy_snapshot["review_mode"] == "ai_first"
+  end
+
+  test "ordinary Comment AI hold is global across mirrored Article bindings" do
+    {community, article_view, _attrs, author} = mock_article(:post)
+    {:ok, destination} = mock_community(author)
+    article = Repo.get!(CMS.Model.Article, article_view.article_id)
+    assert {:ok, _binding} = CMS.Articles.BindingPersist.mirror(article, destination)
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(article_view, community),
+        mock_comment("Shared review candidate"),
+        author,
+        Ecto.UUID.generate()
+      )
+
+    {:ok, %{community: config}} = ReviewBot.configs(community.id, :comment)
+
+    config
+    |> ReviewBotConfig.changeset(%{review_mode: :ai_first, version: config.version + 1})
+    |> Repo.update!()
+
+    assert {:ok, configs} = ReviewBot.configs(community.id, :comment)
+    lifecycle = Repo.get_by!(CommentLifecycle, comment_id: comment.id)
+
+    assert {:ok, {:ok, [_system_request, request]}} =
+             Repo.transaction(fn ->
+               CMS.Review.RequestSubmission.register_in_transaction(
+                 %{type: :comment, comment_id: comment.id, lifecycle: lifecycle},
+                 %{title: "", body: "Shared review candidate", images: []},
+                 configs,
+                 :edit
+               )
+             end)
+
+    assert %CommentReviewBlock{community_id: nil, type: :awaiting_ai} =
+             Repo.get_by!(CommentReviewBlock, artiment_review_id: request.id)
+
+    for current <- [community, destination] do
+      path = %{
+        article: %{
+          community: current.slug,
+          thread: :post,
+          inner_id: article_inner_id(article_view, current)
+        },
+        inner_id: comment.inner_id
+      }
+
+      assert {:error, %ErrorCat.Error{reason: :not_exist}} = CMS.FrontDesk.comment(path)
+    end
+
+    {:ok, %{community: destination_config}} = ReviewBot.configs(destination.id, :comment)
+
+    destination_config
+    |> ReviewBotConfig.changeset(%{
+      review_mode: :ai_first,
+      version: destination_config.version + 1
+    })
+    |> Repo.update!()
+
+    assert {:ok, destination_configs} = ReviewBot.configs(destination.id, :comment)
+
+    assert {:ok, {:ok, [destination_request]}} =
+             Repo.transaction(fn ->
+               CMS.Review.RequestSubmission.register_in_transaction(
+                 %{type: :comment, comment_id: comment.id, lifecycle: lifecycle},
+                 %{title: "", body: "Shared review candidate", images: []},
+                 destination_configs,
+                 :recheck,
+                 {:community, destination.id}
+               )
+             end)
+
+    for current_request <- [request, destination_request] do
+      assert {:ok, _} =
+               Repo.transact_result(fn ->
+                 CMS.Review.Requests.claim_in_transaction(current_request.id)
+               end)
+    end
+
+    assert {:ok, _applied} =
+             CMS.Review.apply_result_internal(request.id, %{"status" => "clear"})
+
+    assert %CommentReviewBlock{resolved_at: nil} =
+             Repo.get_by!(CommentReviewBlock, artiment_review_id: destination_request.id)
+
+    assert {:ok, _applied} =
+             CMS.Review.apply_result_internal(destination_request.id, %{"status" => "clear"})
+
+    for current <- [community, destination] do
+      path = %{
+        article: %{
+          community: current.slug,
+          thread: :post,
+          inner_id: article_inner_id(article_view, current)
+        },
+        inner_id: comment.inner_id
+      }
+
+      assert {:ok, _visible} = CMS.FrontDesk.comment(path)
+    end
   end
 
   defp request_attrs(article_id) do

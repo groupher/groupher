@@ -11,7 +11,7 @@ export default function CompareDev() {
   const { t } = useTrans()
 
   return (
-    <section className={s.wrapper}>
+    <section className={s.wrapper} data-landing-section='compare'>
       <div className={s.slogan}>
         <div className={s.topping}>{t('landing.compare.topping')}</div>
         <h3 className={s.title}>{t('landing.compare.title')}</h3>

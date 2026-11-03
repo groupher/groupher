@@ -46,7 +46,6 @@ defmodule GroupherServer.CMS.Model.TrashedArticle do
     field(:restore_state, Ecto.Enum, values: [:draft, :published, :archived])
     belongs_to(:deleted_by, User)
     field(:deleted_at, :utc_datetime)
-    field(:mentioned_by_count, :integer, virtual: true, default: 0)
     field(:command_id, Ecto.UUID, virtual: true)
 
     timestamps(type: :utc_datetime)

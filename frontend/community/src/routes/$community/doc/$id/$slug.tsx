@@ -5,6 +5,7 @@ import { createFileRoute, notFound } from '@tanstack/react-router'
 import { THREAD } from '~/const/thread'
 import ArticleQueryProvider from '~/query/ArticleQueryProvider'
 import DocThread from '~/unit/DocThread'
+import ReferenceMap from '~/unit/ReferenceMap'
 
 export const Route = createFileRoute('/$community/doc/$id/$slug')({
   loader: async ({ context, params }) => {
@@ -34,7 +35,10 @@ function DocArticle() {
   const { community, id } = Route.useParams()
   return (
     <ArticleQueryProvider community={community} innerId={id} thread={THREAD.DOC}>
-      <DocThread article community={community} innerId={Number(id)} />
+      <>
+        <DocThread article community={community} innerId={Number(id)} />
+        <ReferenceMap community={community} focus={{ type: 'DOC', articleInnerId: id }} />
+      </>
     </ArticleQueryProvider>
   )
 }

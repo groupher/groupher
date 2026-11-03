@@ -31,6 +31,82 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   import_types(Schema.CMS.Metrics)
 
+  enum :reference_map_node_type do
+    value(:post)
+    value(:blog)
+    value(:changelog)
+    value(:doc)
+    value(:ticket)
+    value(:comment)
+  end
+
+  enum :reference_map_sync_state do
+    value(:ready)
+    value(:pending)
+  end
+
+  enum :reference_map_frontier_state do
+    value(:available)
+    value(:unavailable)
+  end
+
+  input_object :reference_map_locator_input do
+    field(:type, non_null(:reference_map_node_type))
+    field(:article_inner_id, non_null(:id))
+    field(:comment_inner_id, :id)
+  end
+
+  input_object :reference_map_frontier_input do
+    field(:node, non_null(:reference_map_locator_input))
+    field(:after, :string)
+  end
+
+  object :reference_map_node do
+    field(:id, non_null(:id))
+    field(:type, non_null(:reference_map_node_type))
+    field(:article_inner_id, non_null(:id))
+    field(:comment_inner_id, :id)
+    field(:branch_id, :id)
+    field(:title, non_null(:string))
+    field(:url, non_null(:string))
+    field(:sync_state, non_null(:reference_map_sync_state))
+  end
+
+  object :reference_map_edge do
+    field(:id, non_null(:id))
+    field(:from, non_null(:id))
+    field(:to, non_null(:id))
+    field(:occurrences_count, non_null(:integer))
+  end
+
+  object :reference_map_neighborhood do
+    field(:request_index, non_null(:integer))
+    field(:state, non_null(:reference_map_frontier_state))
+    field(:node_id, :id)
+    field(:edge_ids, non_null(list_of(non_null(:id))))
+    field(:has_next_page, non_null(:boolean))
+    field(:end_cursor, :string)
+  end
+
+  object :reference_map_page do
+    field(:nodes, non_null(list_of(non_null(:reference_map_node))))
+    field(:edges, non_null(list_of(non_null(:reference_map_edge))))
+    field(:neighborhoods, non_null(list_of(non_null(:reference_map_neighborhood))))
+    field(:projection_pending, non_null(:boolean))
+  end
+
+  object :reference_map_article_comments_page do
+    field(:comments, non_null(list_of(non_null(:reference_map_locator))))
+    field(:has_next_page, non_null(:boolean))
+    field(:end_cursor, :id)
+  end
+
+  object :reference_map_locator do
+    field(:type, non_null(:reference_map_node_type))
+    field(:article_inner_id, non_null(:id))
+    field(:comment_inner_id, :id)
+  end
+
   object :community_name_check do
     @desc "Result of checking a community name against the shared namespace."
     field(:normalized_slug, :string)
@@ -559,22 +635,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:article, :article)
     field(:deleted_by, :user, resolve: dataloader(CMS, :deleted_by))
     field(:deleted_at, non_null(:datetime))
-    field(:mentioned_by_count, non_null(:integer))
     field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
 
     field(:scheduled_permanent_deletion_at, non_null(:datetime),
       resolve: fn item, _, _ -> {:ok, item.trash_action.scheduled_permanent_deletion_at} end
     )
-
-    field :mentioned_by, :artiment_mention_page do
-      arg(:pagi, :pagi_input)
-      resolve(&GroupherServerWeb.Resolvers.CMS.ArtimentMentions.trashed_article_mentioned_by/3)
-    end
-
-    field :mentions, :artiment_mention_page do
-      arg(:pagi, :pagi_input)
-      resolve(&GroupherServerWeb.Resolvers.CMS.ArtimentMentions.trashed_article_mentions/3)
-    end
   end
 
   object :trash_page do
@@ -2095,39 +2160,15 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :artiment_mention do
-    field(:id, :id)
-    field(:mentioner_type, :mention_type)
-
-    field(:mentioner_id, :id,
-      resolve: fn mention, _, _ ->
-        {:ok, mention.mentioner_article_id || mention.mentioner_id}
-      end
-    )
-
-    field(:mentioner_community_id, :id)
-    field(:mentioner_url, :string)
-
-    field(:mentioned_scope, :mention_scope)
-    field(:mentioned_type, :mention_type)
-
-    field(:mentioned_id, :id,
-      resolve: fn mention, _, _ ->
-        {:ok, mention.mentioned_article_id || mention.mentioned_id}
-      end
-    )
-
-    field(:mentioned_community_id, :id)
-    field(:mentioned_url, :string)
-    field(:mentioned_url_hash, :string)
-
-    field(:mention_case, :mention_case)
-    field(:occurrences, list_of(:json))
-    field(:mentioner_snapshot, :json)
-    field(:mentioned_snapshot, :json)
-    field(:meta, :json)
-    field(:mentioned_at, :datetime)
-
-    timestamp_fields()
+    field(:id, non_null(:id))
+    field(:mentioner_type, non_null(:mention_type))
+    field(:mentioner_url, non_null(:string))
+    field(:mentioned_scope, non_null(:mention_scope))
+    field(:mentioned_type, non_null(:mention_type))
+    field(:mentioned_url, non_null(:string))
+    field(:mention_case, non_null(:mention_case))
+    field(:occurrences_count, non_null(:integer))
+    field(:mentioned_at, non_null(:datetime))
   end
 
   object :blog_feed do

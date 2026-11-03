@@ -90,6 +90,34 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     end
   end
 
+  @doc "Scopes a Comment by a current parent binding; Doc stays in its owner Community."
+  def comment_parent(%Ecto.Query{} = query) do
+    with {:ok, _} <-
+           reject_conflicting_scope_joins(query, [
+             CommentLifecycle,
+             ArticleLifecycle,
+             Community,
+             CommunityLifecycle
+           ]) do
+      from(comment in query,
+        join: binding in ArticleBinding,
+        on:
+          binding.article_id == comment.article_id and
+            (comment.thread != :doc or binding.community_id == comment.origin_community_id),
+        as: :gate_comment_binding,
+        join: community in Community,
+        on: community.id == binding.community_id,
+        as: :gate_community,
+        left_join: lifecycle in CommunityLifecycle,
+        as: :gate_community_lifecycle,
+        on: lifecycle.community_id == community.id,
+        where:
+          lifecycle.state in ^[:active, :read_only] or
+            (is_nil(lifecycle.id) and community.pending == ^@community_normal)
+      )
+    end
+  end
+
   @doc false
   def community_actor(query, :public, _actor), do: query
 

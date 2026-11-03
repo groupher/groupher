@@ -992,6 +992,46 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.ArtimentMentions,
     as: :mentioned_user_ids
 
+  @doc "Returns public outgoing Mention rows in one Community."
+  defdelegate artiment_mentions_public_mentions(community, source, pagi),
+    to: GroupherServer.CMS.ArtimentMentions,
+    as: :public_mentions
+
+  @doc "Returns public incoming Mention rows in one Community."
+  defdelegate artiment_mentions_public_mentioned_by(community, target, pagi),
+    to: GroupherServer.CMS.ArtimentMentions,
+    as: :public_mentioned_by
+
+  @doc "Projects a bounded, anonymous public Reference Map page."
+  defdelegate reference_map_page(community, focus, frontiers, first),
+    to: GroupherServer.CMS.ArtimentMentions.ReferenceMap,
+    as: :page
+
+  @doc "Discovers public Comment frontiers belonging to an Article focus."
+  defdelegate reference_map_article_comments(community, focus, after_cursor, first),
+    to: GroupherServer.CMS.ArtimentMentions.ReferenceMap,
+    as: :article_comments
+
+  @doc "Reads the opaque public graph revision after validating its focus."
+  defdelegate reference_map_revision(community, focus),
+    to: GroupherServer.CMS.ArtimentMentions.ReferenceMap,
+    as: :revision
+
+  @doc "Reports current Mention watermarks for the scheduled health job."
+  defdelegate artiment_mentions_rebuild_report(after_key, batch_size),
+    to: GroupherServer.CMS.ArtimentMentions.Rebuild,
+    as: :report
+
+  @doc "Reads the durable failed-source manifest for the scheduled health job."
+  defdelegate artiment_mentions_failed_manifest(path),
+    to: GroupherServer.CMS.ArtimentMentions.Rebuild,
+    as: :read_manifest
+
+  @doc "Returns the configured Mention rebuild failure manifest path."
+  defdelegate artiment_mentions_failure_manifest_path(),
+    to: GroupherServer.CMS.ArtimentMentions.Rebuild,
+    as: :default_manifest
+
   @doc "Delegates GroupherServer.CMS.Artiment.Threads.article_enums/0 through the CMS Context boundary."
   defdelegate artiment_threads_article_enums(),
     to: GroupherServer.CMS.Artiment.Threads,
@@ -1094,6 +1134,10 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments,
     as: :delete_comment_result
 
+  defdelegate comments_delete_comment_result(arg1, arg2, arg3, arg4),
+    to: GroupherServer.CMS.Comments,
+    as: :delete_comment_result
+
   @doc "Delegates GroupherServer.CMS.Comments.one_comment/1 through the CMS Context boundary."
   defdelegate comments_one_comment(arg1), to: GroupherServer.CMS.Comments, as: :one_comment
 
@@ -1146,6 +1190,10 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments,
     as: :reply_comment_result
 
+  defdelegate comments_reply_comment_result(arg1, arg2, arg3, arg4, arg5),
+    to: GroupherServer.CMS.Comments,
+    as: :reply_comment_result
+
   @doc "Delegates GroupherServer.CMS.Comments.revoke_solution/2 through the CMS Context boundary."
   defdelegate comments_revoke_solution(arg1, arg2),
     to: GroupherServer.CMS.Comments,
@@ -1173,6 +1221,10 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates GroupherServer.CMS.Comments.update_comment_result/5 through the CMS Context boundary."
   defdelegate comments_update_comment_result(arg1, arg2, arg3, arg4, arg5),
+    to: GroupherServer.CMS.Comments,
+    as: :update_comment_result
+
+  defdelegate comments_update_comment_result(arg1, arg2, arg3, arg4, arg5, arg6),
     to: GroupherServer.CMS.Comments,
     as: :update_comment_result
 

@@ -23,7 +23,8 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
     Community,
     DocBranch,
     DocBranchVersion,
-    DocPublic
+    DocPublic,
+    TicketState
   }
 
   @doc """
@@ -60,6 +61,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
       "article.projections" ->
         run_projections(event)
 
+      "article.mention_sync" ->
+        sync_mentions(event)
+
       "article.search_sync" ->
         sync_search(event)
 
@@ -77,6 +81,32 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
 
       _ ->
         {:error, ArticleErrorCat.unknown_outbox_event()}
+    end
+  end
+
+  defp sync_mentions(event) do
+    case Repo.get(Article, event.resource_id) do
+      nil ->
+        {:ok, :source_deleted}
+
+      %Article{thread: :doc} = article ->
+        CMS.ArtimentMentions.sync_current(%{
+          type: :doc,
+          article_id: article.id,
+          branch_id: event.data["branch_id"]
+        })
+
+      %Article{thread: :ticket} = article ->
+        case Repo.get(TicketState, article.id) do
+          %TicketState{type: :user} ->
+            CMS.ArtimentMentions.sync_current(%{type: :ticket, article_id: article.id})
+
+          _ ->
+            {:ok, :ticket_not_public}
+        end
+
+      %Article{} = article ->
+        CMS.ArtimentMentions.sync_current(%{type: article.thread, article_id: article.id})
     end
   end
 

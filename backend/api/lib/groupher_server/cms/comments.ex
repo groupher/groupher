@@ -298,6 +298,22 @@ defmodule GroupherServer.CMS.Comments do
     |> CommandResult.build()
   end
 
+  def update_comment_result(
+        %Comment{} = comment,
+        body_bag,
+        expected_version,
+        %User{} = user,
+        command_id,
+        community_slug
+      )
+      when is_binary(community_slug) do
+    with {:ok, %Community{} = community} <- FrontDesk.community(community_slug) do
+      comment
+      |> Update.execute(body_bag, expected_version, user, command_id, community)
+      |> CommandResult.build()
+    end
+  end
+
   @doc """
   Rejects an unauthenticated Comment deletion.
 
@@ -337,6 +353,15 @@ defmodule GroupherServer.CMS.Comments do
     comment
     |> Delete.execute(user, command_id)
     |> CommandResult.build()
+  end
+
+  def delete_comment_result(%Comment{} = comment, %User{} = user, command_id, community_slug)
+      when is_binary(community_slug) do
+    with {:ok, %Community{} = community} <- FrontDesk.community(community_slug) do
+      comment
+      |> Delete.execute(user, command_id, community)
+      |> CommandResult.build()
+    end
   end
 
   @doc """
@@ -450,6 +475,16 @@ defmodule GroupherServer.CMS.Comments do
     end
   end
 
+  @doc "Replies through the Community binding selected by the public Comment path."
+  def reply_comment_result(%Comment{} = comment, body, %User{} = user, command_id, community_slug)
+      when is_binary(community_slug) do
+    with {:ok, %Community{} = community} <- FrontDesk.community(community_slug) do
+      comment
+      |> Create.reply(body, user, command_id, community)
+      |> CommandResult.build()
+    end
+  end
+
   @doc """
   Rejects an unauthenticated pin operation.
 
@@ -553,5 +588,4 @@ defmodule GroupherServer.CMS.Comments do
       unfold_comment(comment, user)
     end
   end
-
 end
