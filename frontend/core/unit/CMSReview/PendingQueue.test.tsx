@@ -20,7 +20,7 @@ it('retries a recheck with the same command id after an ambiguous failure', asyn
           failFirst = false
           throw new Error('response lost after request')
         }
-        return { recheckArticle: { action: 'recheck' } }
+        return { recheckArticleV2: { action: 'RECHECK' } }
       }
 
       return {
@@ -64,10 +64,14 @@ it('retries a recheck with the same command id after an ambiguous failure', asyn
   expect(rechecks[1][1].scope).toEqual({ type: 'COMMUNITY', community: 'home' })
 })
 
-it('offers the existing Doc decision command for platform review work', async () => {
+it('offers Doc decision and recheck commands for platform review work', async () => {
   state.request.mockImplementation(
     async (_document: unknown, variables: Record<string, unknown> = {}) => {
-      if ('commandId' in variables) return { approveDoc: { action: 'approve' } }
+      if ('commandId' in variables) {
+        return 'scope' in variables
+          ? { recheckDocV2: { action: 'RECHECK' } }
+          : { approveDocV2: { action: 'APPROVE' } }
+      }
       return {
         pendingContentReviews: [
           {
@@ -76,6 +80,18 @@ it('offers the existing Doc decision command for platform review work', async ()
             articleId: 'article-1',
             commentId: null,
             branchId: 7,
+            communityId: null,
+            state: 'COMPLETED',
+            reviewMode: null,
+            systemOpinion: { summary: 'Needs review' },
+            communityOpinion: null,
+          },
+          {
+            artimentReviewId: 'doc-review-branch-8',
+            targetType: 'DOC',
+            articleId: 'article-1',
+            commentId: null,
+            branchId: 8,
             communityId: null,
             state: 'COMPLETED',
             reviewMode: null,
@@ -93,12 +109,28 @@ it('offers the existing Doc decision command for platform review work', async ()
     </QueryClientProvider>,
   )
 
-  fireEvent.click(await screen.findByRole('button', { name: 'cms_review.action.approve' }))
+  fireEvent.click((await screen.findAllByRole('button', { name: 'cms_review.action.approve' }))[0])
+  const recheckButtons = await screen.findAllByRole('button', {
+    name: 'cms_review.action.recheck',
+  })
+  fireEvent.click(recheckButtons[0])
+  fireEvent.click(recheckButtons[1])
 
   await waitFor(() =>
-    expect(state.request.mock.calls.some((call) => 'commandId' in (call[1] || {}))).toBe(true),
+    expect(
+      state.request.mock.calls.some(
+        (call) => 'scope' in (call[1] || {}) && 'commandId' in (call[1] || {}),
+      ),
+    ).toBe(true),
   )
   const decision = state.request.mock.calls.find((call) => 'commandId' in (call[1] || {}))![1]
   expect(decision.target).toEqual({ type: 'DOC', articleId: 'article-1', branchId: 7 })
-  expect(screen.queryByRole('button', { name: 'cms_review.action.recheck' })).toBeNull()
+  const rechecks = state.request.mock.calls.filter(
+    (call) => 'scope' in (call[1] || {}) && 'commandId' in (call[1] || {}),
+  )
+  expect(rechecks).toHaveLength(2)
+  expect(rechecks[0][1].commandId).not.toBe(rechecks[1][1].commandId)
+  expect(rechecks.map((call) => call[1].target.branchId)).toEqual([7, 8])
+  expect(rechecks[0][1].scope).toEqual({ type: 'PLATFORM' })
+  expect(rechecks[0][1].target).toEqual(decision.target)
 })

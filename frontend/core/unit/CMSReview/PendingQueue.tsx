@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
-import type { CmsReviewTargetInput } from '~/graphql/generated/graphql'
+import type { CmsReviewTargetInput, ReviewAction } from '~/graphql/generated/graphql'
 import useTrans from '~/hooks/useTrans'
 import { invalidatePrefix } from '~/query/invalidation'
 
@@ -11,16 +11,19 @@ import {
   approveArticleReview,
   approveCommentReview,
   approveDocReview,
-  denyArticleReview,
-  denyCommentReview,
-  denyDocReview,
+  rejectArticleReview,
+  rejectCommentReview,
+  rejectDocReview,
   pendingContentReviews,
   recheckArticleReview,
   recheckCommentReview,
-  releaseArticleReview,
-  releaseCommentReview,
-  releaseDocReview,
+  recheckDocReview,
 } from './schema'
+
+const DECISION_ACTIONS = [
+  { action: 'APPROVE', labelKey: 'cms_review.action.approve' },
+  { action: 'REJECT', labelKey: 'cms_review.action.reject' },
+] as const
 
 /** Shows CMS-owned review work and submits the resource decision once. */
 export default function PendingQueue({ community }: { community?: string }) {
@@ -49,7 +52,7 @@ export default function PendingQueue({ community }: { community?: string }) {
       action,
     }: {
       target: CmsReviewTargetInput
-      action: 'approve' | 'deny' | 'release'
+      action: Extract<ReviewAction, 'APPROVE' | 'REJECT'>
     }) => {
       const type = target.type
       if (type !== 'ARTICLE' && type !== 'COMMENT' && type !== 'DOC') {
@@ -60,33 +63,27 @@ export default function PendingQueue({ community }: { community?: string }) {
       commandIds.current.set(key, commandId)
       if (type === 'ARTICLE') {
         switch (action) {
-          case 'approve':
+          case 'APPROVE':
             return browserGraphQLRequest(approveArticleReview, { target, commandId })
-          case 'deny':
-            return browserGraphQLRequest(denyArticleReview, { target, commandId })
-          case 'release':
-            return browserGraphQLRequest(releaseArticleReview, { target, commandId })
+          case 'REJECT':
+            return browserGraphQLRequest(rejectArticleReview, { target, commandId })
         }
       }
 
       if (type === 'DOC') {
         switch (action) {
-          case 'approve':
+          case 'APPROVE':
             return browserGraphQLRequest(approveDocReview, { target, commandId })
-          case 'deny':
-            return browserGraphQLRequest(denyDocReview, { target, commandId })
-          case 'release':
-            return browserGraphQLRequest(releaseDocReview, { target, commandId })
+          case 'REJECT':
+            return browserGraphQLRequest(rejectDocReview, { target, commandId })
         }
       }
 
       switch (action) {
-        case 'approve':
+        case 'APPROVE':
           return browserGraphQLRequest(approveCommentReview, { target, commandId })
-        case 'deny':
-          return browserGraphQLRequest(denyCommentReview, { target, commandId })
-        case 'release':
-          return browserGraphQLRequest(releaseCommentReview, { target, commandId })
+        case 'REJECT':
+          return browserGraphQLRequest(rejectCommentReview, { target, commandId })
       }
     },
     onSuccess: async (_result, variables) => {
@@ -110,6 +107,13 @@ export default function PendingQueue({ community }: { community?: string }) {
       }
       if (target.type === 'COMMENT') {
         return browserGraphQLRequest(recheckCommentReview, {
+          target,
+          scope,
+          commandId,
+        })
+      }
+      if (target.type === 'DOC') {
+        return browserGraphQLRequest(recheckDocReview, {
           target,
           scope,
           commandId,
@@ -178,7 +182,7 @@ export default function PendingQueue({ community }: { community?: string }) {
                 </div>
                 {target && (
                   <div className='flex flex-wrap gap-2'>
-                    {(['approve', 'deny', 'release'] as const).map((action) => (
+                    {DECISION_ACTIONS.map(({ action, labelKey }) => (
                       <button
                         key={action}
                         type='button'
@@ -186,24 +190,22 @@ export default function PendingQueue({ community }: { community?: string }) {
                         disabled={decide.isPending}
                         onClick={() => decide.mutate({ target, action })}
                       >
-                        {t(`cms_review.action.${action}`)}
+                        {t(labelKey)}
                       </button>
                     ))}
-                    {type !== 'DOC' && (
-                      <button
-                        type='button'
-                        className='border-divider rounded-md border px-3 py-2 text-sm disabled:opacity-50'
-                        disabled={recheck.isPending}
-                        onClick={() =>
-                          recheck.mutate({
-                            target,
-                            key: `recheck:${scope.type}:${scope.community || 'platform'}:${type}:${target.articleId || target.commentId}`,
-                          })
-                        }
-                      >
-                        {t('cms_review.action.recheck')}
-                      </button>
-                    )}
+                    <button
+                      type='button'
+                      className='border-divider rounded-md border px-3 py-2 text-sm disabled:opacity-50'
+                      disabled={recheck.isPending}
+                      onClick={() =>
+                        recheck.mutate({
+                          target,
+                          key: `recheck:${scope.type}:${scope.community || 'platform'}:${type}:${target.articleId || target.commentId}:${target.branchId ?? 'main'}`,
+                        })
+                      }
+                    >
+                      {t('cms_review.action.recheck')}
+                    </button>
                   </div>
                 )}
                 {target && <History target={target} />}

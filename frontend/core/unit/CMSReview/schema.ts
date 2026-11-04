@@ -1,5 +1,9 @@
 import { graphql } from '~/graphql/authoring'
-import type { RecheckArticleDocument, RecheckCommentDocument } from '~/graphql/generated/graphql'
+import type {
+  RecheckArticleDocument,
+  RecheckCommentDocument,
+  RecheckDocDocument,
+} from '~/graphql/generated/graphql'
 
 export const contentReview = graphql(`
   query ContentReview($target: CmsReviewTargetInput!) {
@@ -123,7 +127,7 @@ export const recheckArticleReview = graphql(`
     $scope: ReviewBotScopeInput!
     $commandId: ID!
   ) {
-    recheckArticle(target: $target, scope: $scope, commandId: $commandId) {
+    recheckArticleV2(target: $target, scope: $scope, commandId: $commandId) {
       commandId
       targetType
       targetId
@@ -138,7 +142,7 @@ export const recheckCommentReview = graphql(`
     $scope: ReviewBotScopeInput!
     $commandId: ID!
   ) {
-    recheckComment(target: $target, scope: $scope, commandId: $commandId) {
+    recheckCommentV2(target: $target, scope: $scope, commandId: $commandId) {
       commandId
       targetType
       targetId
@@ -147,9 +151,24 @@ export const recheckCommentReview = graphql(`
   }
 `) as typeof RecheckCommentDocument
 
+export const recheckDocReview = graphql(`
+  mutation RecheckDoc(
+    $target: CmsReviewTargetInput!
+    $scope: ReviewBotScopeInput!
+    $commandId: ID!
+  ) {
+    recheckDocV2(target: $target, scope: $scope, commandId: $commandId) {
+      commandId
+      targetType
+      targetId
+      action
+    }
+  }
+`) as typeof RecheckDocDocument
+
 export const approveArticleReview = graphql(`
   mutation ApproveArticleReview($target: CmsReviewTargetInput!, $commandId: ID!) {
-    approveArticle(target: $target, commandId: $commandId) {
+    approveArticleV2(target: $target, commandId: $commandId) {
       commandId
       targetType
       targetId
@@ -160,7 +179,7 @@ export const approveArticleReview = graphql(`
 
 export const approveCommentReview = graphql(`
   mutation ApproveCommentReview($target: CmsReviewTargetInput!, $commandId: ID!) {
-    approveComment(target: $target, commandId: $commandId) {
+    approveCommentV2(target: $target, commandId: $commandId) {
       commandId
       targetType
       targetId
@@ -171,7 +190,7 @@ export const approveCommentReview = graphql(`
 
 export const approveDocReview = graphql(`
   mutation ApproveDocReview($target: CmsReviewTargetInput!, $commandId: ID!) {
-    approveDoc(target: $target, commandId: $commandId) {
+    approveDocV2(target: $target, commandId: $commandId) {
       commandId
       targetType
       targetId
@@ -180,9 +199,9 @@ export const approveDocReview = graphql(`
   }
 `)
 
-export const denyArticleReview = graphql(`
+export const rejectArticleReview = graphql(`
   mutation DenyArticleReview($target: CmsReviewTargetInput!, $commandId: ID!) {
-    denyArticle(target: $target, commandId: $commandId) {
+    rejectArticleV2(target: $target, commandId: $commandId) {
       commandId
       targetType
       targetId
@@ -191,20 +210,9 @@ export const denyArticleReview = graphql(`
   }
 `)
 
-export const releaseArticleReview = graphql(`
-  mutation ReleaseArticleReview($target: CmsReviewTargetInput!, $commandId: ID!) {
-    releaseArticle(target: $target, commandId: $commandId) {
-      commandId
-      targetType
-      targetId
-      action
-    }
-  }
-`)
-
-export const denyCommentReview = graphql(`
+export const rejectCommentReview = graphql(`
   mutation DenyCommentReview($target: CmsReviewTargetInput!, $commandId: ID!) {
-    denyComment(target: $target, commandId: $commandId) {
+    rejectCommentV2(target: $target, commandId: $commandId) {
       commandId
       targetType
       targetId
@@ -213,31 +221,9 @@ export const denyCommentReview = graphql(`
   }
 `)
 
-export const denyDocReview = graphql(`
+export const rejectDocReview = graphql(`
   mutation DenyDocReview($target: CmsReviewTargetInput!, $commandId: ID!) {
-    denyDoc(target: $target, commandId: $commandId) {
-      commandId
-      targetType
-      targetId
-      action
-    }
-  }
-`)
-
-export const releaseCommentReview = graphql(`
-  mutation ReleaseCommentReview($target: CmsReviewTargetInput!, $commandId: ID!) {
-    releaseComment(target: $target, commandId: $commandId) {
-      commandId
-      targetType
-      targetId
-      action
-    }
-  }
-`)
-
-export const releaseDocReview = graphql(`
-  mutation ReleaseDocReview($target: CmsReviewTargetInput!, $commandId: ID!) {
-    releaseDoc(target: $target, commandId: $commandId) {
+    rejectDocV2(target: $target, commandId: $commandId) {
       commandId
       targetType
       targetId
