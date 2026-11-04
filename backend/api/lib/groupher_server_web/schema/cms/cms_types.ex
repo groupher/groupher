@@ -1320,6 +1320,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :common_article do
     field(:thread, :thread)
     field(:inner_id, :id)
+    field(:community, :community)
     field(:title, :string)
     field(:comments_revision, :integer)
     field(:article_stats, :article_stats)

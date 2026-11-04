@@ -10665,6 +10665,7 @@ export type PagedPublishedCommentsQuery = {
         innerId: string | null
         title: string | null
         thread: Thread | null
+        community: { slug: string } | null
         author: { nickname: string | null; login: string } | null
       } | null
       body: { html: string; json: string }
@@ -42602,6 +42603,16 @@ export const PagedPublishedCommentsDocument = {
                             { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
                             { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                             { kind: 'Field', name: { kind: 'Name', value: 'thread' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'community' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                                ],
+                              },
+                            },
                             {
                               kind: 'Field',
                               name: { kind: 'Name', value: 'author' },

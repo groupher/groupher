@@ -314,6 +314,7 @@ defmodule GroupherServer.CMS.Comments.Query do
          query <-
            Comment
            |> CMS.Gate.scope(actor, :list, scope)
+           |> distinct(true)
            |> preload([:body, :author])
            |> where([comment], comment.author_id == ^user_id),
          query <- if(thread, do: where(query, [comment], comment.thread == ^thread), else: query),

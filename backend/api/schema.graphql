@@ -2963,6 +2963,7 @@ type CommonUser {
 type CommonArticle {
   thread: Thread
   innerId: ID
+  community: Community
   title: String
   commentsRevision: Int
   articleStats: ArticleStats

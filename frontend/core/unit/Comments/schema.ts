@@ -290,6 +290,9 @@ const pagedPublishedComments = graphql(`
           innerId
           title
           thread
+          community {
+            slug
+          }
           author {
             nickname
             login
