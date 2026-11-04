@@ -14,6 +14,11 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
   alias AlertWall.Model.UserReport
   alias CMS.Model.{Article, Comment, Community}
 
+  @doc "Reads a validated opinion's JSON keys without depending on atom-keyed fixtures."
+  def sus_note_field(note, _args, %{definition: %{schema_node: %{identifier: field}}}) do
+    {:ok, Map.get(note, field, Map.get(note, Atom.to_string(field)))}
+  end
+
   def alert_items(_parent, %{scope: %{type: :platform}} = args, %{context: %{cur_user: actor}}) do
     AlertWall.list_items(%{type: :platform}, Map.get(args, :filter), actor, Map.get(args, :pagi))
   end

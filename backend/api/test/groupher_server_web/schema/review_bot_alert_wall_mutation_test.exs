@@ -511,8 +511,10 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
                    target_type: :article,
                    target_id: "graphql-history",
                    community_id: nil,
-                   ai_source_ref: nil,
-                   sus_notes: [],
+                   ai_source_ref: Ecto.UUID.generate(),
+                   sus_notes: [
+                     %{type: "spam", evidence: "seed evidence", explanation: "seed explanation"}
+                   ],
                    summary: "earlier concern"
                  },
                  Ecto.UUID.generate()
@@ -527,7 +529,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     query = """
     query WallHistory($scope: ReviewBotScopeInput!, $filter: AlertItemFilter) {
       alertItems(scope: $scope, filter: $filter) {
-        entries { id status reportCount totalReportCount }
+        entries { id status reportCount totalReportCount susNotes { type evidence explanation } }
       }
     }
     """
@@ -541,7 +543,18 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
                context: %{cur_user: reviewer}
              )
 
-    assert Enum.any?(entries, &(&1["id"] == to_string(item.id) and &1["status"] == "SUPERSEDED"))
+    persisted = Repo.get!(Item, item.id)
+    assert [%{"explanation" => "seed explanation"}] = persisted.sus_notes
+    earlier = Enum.find(entries, &(&1["id"] == to_string(item.id)))
+    assert earlier["status"] == "SUPERSEDED"
+
+    assert earlier["susNotes"] == [
+             %{
+               "type" => "spam",
+               "evidence" => "seed evidence",
+               "explanation" => "seed explanation"
+             }
+           ]
   end
 
   defp put_community_permission(user, slug, permission) do
