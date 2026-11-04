@@ -37,7 +37,9 @@ defmodule GroupherServer.ErrorCat.Workflow do
     {:activity} => 6100..6199,
     {:messaging, :notification} => 6200..6249,
     {:account, :profile_view_tracker} => 6250..6299,
-    {:review_bot, :check} => 7400..7499
+    {:review_bot, :check} => 7400..7499,
+    {:ai, :check} => 7500..7599,
+    {:alert_wall, :item} => 7600..7699
   }
 
   @reserved [
@@ -87,7 +89,9 @@ defmodule GroupherServer.ErrorCat.Workflow do
     GroupherServer.Accounts.ProfileViewTracker.ErrorCat,
     GroupherServer.Activity.ErrorCat,
     GroupherServer.Messaging.ErrorCat,
-    GroupherServer.ReviewBot.ErrorCat
+    GroupherServer.ReviewBot.ErrorCat,
+    GroupherServer.AI.ErrorCat,
+    GroupherServer.AlertWall.ErrorCat
   ]
 
   @doc "Returns the namespace-to-code-range registry used by ErrorCat validation."
