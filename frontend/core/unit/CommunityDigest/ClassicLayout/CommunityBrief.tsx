@@ -21,6 +21,7 @@ export default function CommunityBrief() {
   const disableTippyJumpRef = useRef(false)
   const { slug } = useCommunity()
   const dsb$ = useDsb()
+  const homepage = dsb$.homepage?.trim()
 
   const [ref, isHovering] = useHover<HTMLDivElement>()
 
@@ -50,13 +51,15 @@ export default function CommunityBrief() {
             <div className={s.menuTitle}>社区主页</div>
           </Link>
 
-          <Link navigation='document' className={s.menuItem} href={dsb$.homepage}>
-            <div className={s.menuIconBox}>
-              <GlobalSVG className={s.menuIcon} />
-            </div>
-            <div className={s.menuTitle}>返回官网</div>
-            <ArrowSVG className={s.linkArrow} />
-          </Link>
+          {homepage && (
+            <Link navigation='document' className={s.menuItem} href={homepage}>
+              <div className={s.menuIconBox}>
+                <GlobalSVG className={s.menuIcon} />
+              </div>
+              <div className={s.menuTitle}>返回官网</div>
+              <ArrowSVG className={s.linkArrow} />
+            </Link>
+          )}
 
           <Link navigation='router' className={s.menuItem} href={`/${slug}`}>
             <div className={s.menuIconBox}>
