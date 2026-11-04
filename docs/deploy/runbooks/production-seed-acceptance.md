@@ -191,7 +191,9 @@ PY
 
 `OAUTH_GITHUB_*` 不作为本轮固定账号登录的前提；如果正式站点继续开放 GitHub OAuth，独立保留该服务需要的配置，不把本轮验收解释为 OAuth 回归。P0 必须从固定 SHA 的 runtime、各服务配置和 secret 清单补齐实际部署所需项，不能仅凭以上通用表断言全部环境齐备。
 
-当前 Fly 配置 `auto_stop_machines = 'stop'`、`min_machines_running = 0` 不能保证 Oban Cron 执行。开跑前选择并落实一项：
+prod release migration 强制要求 `MIGRATION_EXPECTED_DATABASE`。在任何 migration DDL 前，入口通过同一 Repo 会话核对 `current_database()`；缺失或不匹配即拒绝。secret 的 dotenv 文件交给对应 CLI 解析，不直接 shell source；必须使用 shell 时，逐值严格引用并先执行真实连接身份断言。
+
+原生产 Fly 配置 `auto_stop_machines = 'stop'`、`min_machines_running = 0` 不能保证 Oban Cron 执行。开跑前选择并落实一项：
 
 1. 让运行 Oban 的 API 至少一台常驻。登记自动停机策略、最低实例数及生效区域，验证目标 machine 不因无流量停止。
 2. 独立常驻 worker process，明确启动 Oban/Cron/所需队列及故障恢复方式；仅加 process 名称不算交付。
