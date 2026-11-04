@@ -57,7 +57,6 @@ type TClefModel = {
 export type TReviewWorkerEnv = Omit<Env, 'AI'> & {
   AI: Pick<Ai<TClefModel>, 'run'>
   REVIEW_BOT_TOKEN: string
-  ACCEPTANCE_DELAY_UNTIL?: string
 }
 
 const json = (body: unknown, status = 200): Response =>
@@ -289,10 +288,6 @@ export default {
     }
 
     try {
-      const delayUntil = Date.parse(env.ACCEPTANCE_DELAY_UNTIL || '')
-      if (delayUntil > Date.now() && delayUntil - Date.now() <= 180_000) {
-        await new Promise((resolve) => setTimeout(resolve, 4_000))
-      }
       const result = await env.AI.run(MODEL, clefInput)
       return json(normalizeResult(result, value))
     } catch {
