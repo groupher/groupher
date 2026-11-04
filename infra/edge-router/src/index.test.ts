@@ -27,6 +27,29 @@ const dispatch = (request: Request, env = createEnv()) =>
   worker.fetch(request as Parameters<typeof worker.fetch>[0], env)
 
 describe('edge-router', () => {
+  it('forwards Publisher POST body and caller cookies to the Community binding', async () => {
+    const env = createEnv()
+    const body = JSON.stringify({ action: 'comment.create', commandId: 'acceptance-command' })
+    await dispatch(
+      new Request('https://groupher.com/api/content/publish', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-groupher-csrf': '1',
+          cookie: 'groupher-auth.token=access-proof',
+        },
+        body,
+      }),
+      env,
+    )
+    const forwarded = vi.mocked(env.COMMUNITY!.fetch).mock.calls[0][0] as Request
+    expect(forwarded.url).toBe('https://groupher.com/api/content/publish')
+    expect(forwarded.method).toBe('POST')
+    expect(forwarded.headers.get('cookie')).toBe('groupher-auth.token=access-proof')
+    expect(forwarded.headers.get('x-groupher-csrf')).toBe('1')
+    expect(await forwarded.text()).toBe(body)
+  })
+
   it('owns only the exact health endpoint', async () => {
     const health = await dispatch(new Request('https://groupher.com/health'))
     expect(health.status).toBe(200)

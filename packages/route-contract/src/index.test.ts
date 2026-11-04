@@ -97,13 +97,33 @@ describe('platform root routes', () => {
     '/apply',
     '/apply/start',
     '/api/artiment/post',
-    '/api/content/publish',
+    '/api/content/unknown',
     '/api/docs/import/start',
     '/api/internal/docs-import/status',
     '/api/revalidate/community',
     '/api/unknown',
   ])('keeps removed or unknown route %s at 404', (pathname) => {
     expect(resolveRoot(pathname).targetKind).toBe('not-found')
+  })
+
+  it('routes the exact same-origin publisher to Community', () => {
+    expect(resolveRoot('/api/content/publish')).toMatchObject({
+      targetKind: 'community',
+      pathname: '/api/content/publish',
+      requestHeaderPolicy: 'pass-through',
+    })
+    expect(resolveRoot('/api/content/publish/unknown').targetKind).toBe('not-found')
+    expect(
+      resolvePublicRoute({
+        hostname: 'talk.example.com',
+        pathname: '/api/content/publish',
+        customDomainCommunities: { 'talk.example.com': 'dev' },
+      }),
+    ).toMatchObject({
+      targetKind: 'community',
+      pathname: '/api/content/publish',
+      communitySlug: 'dev',
+    })
   })
 
   it('routes a valid first segment to Community', () => {
