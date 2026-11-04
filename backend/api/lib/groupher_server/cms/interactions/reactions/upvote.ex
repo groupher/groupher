@@ -159,13 +159,16 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   defp enqueue_effect(_canonical, _operation, _actor, _command_id, :unchanged), do: {:ok, :pass}
 
   defp enqueue_effect(canonical, operation, actor, command_id, :changed) do
-    Effects.enqueue_reaction_changed(
-      "interaction.upvote_changed",
-      interaction_resource_type(canonical),
-      canonical.id,
-      command_id,
-      %{actor_id: actor.id, operation: operation}
-    )
+    with {:ok, data} <-
+           Effects.reaction_data(canonical, %{actor_id: actor.id, operation: operation}) do
+      Effects.enqueue_reaction_changed(
+        "interaction.upvote_changed",
+        interaction_resource_type(canonical),
+        canonical.id,
+        command_id,
+        data
+      )
+    end
   end
 
   defp interaction_resource_type(%Comment{}), do: "comment"

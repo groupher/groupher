@@ -13,6 +13,16 @@ defmodule GroupherServer.CMS.Interactions.Effects do
   """
 
   alias GroupherServer.CMS
+  alias CMS.Model.Comment
+
+  @doc "Freezes the Comment request Community identity before asynchronous delivery."
+  def reaction_data(%Comment{} = comment, data) do
+    with {:ok, community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      {:ok, Map.put(data, :community_id, community.id)}
+    end
+  end
+
+  def reaction_data(_article, data), do: {:ok, data}
 
   @doc "Records one changed reaction intent for the current interaction transaction."
   @spec enqueue_reaction_changed(

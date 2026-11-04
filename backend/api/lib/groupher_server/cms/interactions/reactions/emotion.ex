@@ -131,13 +131,20 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   end
 
   defp enqueue_effect(canonical, actor, operation, emotion, command_id, :changed) do
-    Effects.enqueue_reaction_changed(
-      "interaction.emotion_changed",
-      interaction_resource_type(canonical),
-      canonical.id,
-      command_id,
-      %{actor_id: actor.id, operation: operation, emotion: emotion}
-    )
+    with {:ok, data} <-
+           Effects.reaction_data(canonical, %{
+             actor_id: actor.id,
+             operation: operation,
+             emotion: emotion
+           }) do
+      Effects.enqueue_reaction_changed(
+        "interaction.emotion_changed",
+        interaction_resource_type(canonical),
+        canonical.id,
+        command_id,
+        data
+      )
+    end
   end
 
   defp interaction_resource_type(%Comment{}), do: "comment"
