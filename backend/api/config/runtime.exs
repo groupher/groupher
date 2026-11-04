@@ -202,6 +202,7 @@ if config_env() in [:prod, :seed_prod] do
   # import_config "prod.secret.exs"
 
   config :groupher_server, GroupherServerWeb.Endpoint, secret_key_base: secret_key_base
+
   reference_map_key =
     System.get_env("REFERENCE_MAP_KEY") ||
       raise "REFERENCE_MAP_KEY is required for public Reference Map identities"
@@ -218,6 +219,7 @@ if config_env() in [:prod, :seed_prod] do
 
   config :groupher_server, :reference_map_key, reference_map_key
   config :groupher_server, :reference_map_key_version, reference_map_key_version
+
   mention_failure_manifest =
     System.get_env("MENTION_REBUILD_FAILURE_MANIFEST") ||
       raise "MENTION_REBUILD_FAILURE_MANIFEST must point to persistent storage"
@@ -263,7 +265,11 @@ if config_env() in [:prod, :seed_prod] do
     redirect_uri: System.get_env("OAUTH_GITHUB_REDIRECT_URI")
 
   config :groupher_server, :search_artiments,
-    platform: GroupherServer.CMS.SearchArtiments.Algolia,
+    platform:
+      if(System.get_env("SEARCH_ARTIMENTS_ENABLED", "true") == "false",
+        do: GroupherServer.CMS.SearchArtiments.Disabled,
+        else: GroupherServer.CMS.SearchArtiments.Algolia
+      ),
     queue: GroupherServer.CMS.SearchArtiments.ObanQueue,
     algolia: [
       application_id: System.get_env("ALGOLIA_APPLICATION_ID"),

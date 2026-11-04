@@ -13,6 +13,7 @@ kill_signal = 'SIGTERM'
 release_command = '/app/bin/migrate'
 
 [env]
+  SEARCH_ARTIMENTS_ENABLED = 'false'
 PHX_HOST = 'api.groupher.com'
 PORT = '8080'
 MIGRATION_EXPECTED_DATABASE = 'groupher_prod_seed_20261104'

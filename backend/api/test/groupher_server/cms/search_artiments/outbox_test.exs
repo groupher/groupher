@@ -12,6 +12,27 @@ defmodule GroupherServer.Test.CMS.SearchArtiments.OutboxTest do
     :ok
   end
 
+  test "explicit disabled provider drains indexing without publishing search records" do
+    {source, article, _attrs, _user} = mock_article(:post)
+    original = Application.fetch_env!(:groupher_server, :search_artiments)
+
+    on_exit(fn -> Application.put_env(:groupher_server, :search_artiments, original) end)
+
+    Application.put_env(
+      :groupher_server,
+      :search_artiments,
+      Keyword.put(original, :platform, CMS.SearchArtiments.Disabled)
+    )
+
+    event = enqueue("article.updated", source, article)
+    assert {:ok, :pass} = deliver(event)
+    assert Repo.get!(Event, event.id).status == :done
+    assert entries(article) == []
+    assert {:error, _} = CMS.SearchArtiments.search(%Query{text: article.title})
+    assert {:ok, :search_disabled} = CMS.SearchArtiments.delete([article.id])
+    assert {:ok, :search_disabled} = CMS.SearchArtiments.update_metrics([{article.id, %{}}])
+  end
+
   test "published and updated children refresh every public mirror" do
     {source, article, _attrs, _user} = mock_article(:post)
     {:ok, mirror} = db_insert(:community)
