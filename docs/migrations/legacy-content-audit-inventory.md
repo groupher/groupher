@@ -240,5 +240,5 @@ Public/Binding 可见性初始化与写入、Moderate command、i18n、salon、�
 - 生产 Oban/cron 执行状态、百度账户与部署 secret store：本轮未访问。
 - 数据库实际旧列、CHECK/index 和 JSON 残留规模：本轮未连接数据库。
 - `frontend/mock-server/schema.graphql` 的共享 schema 链接随来源检查，不能单独保留旧协议。
-- 举报迁入 AlertBoard 的命令/权限矩阵见 [实施合同](../feature/alert-board/implementation.md) §5/§8/§11；代码迁移尚未实施。
+- 举报迁入 AlertBoard 的命令/权限矩阵见 [实施合同](../feature/alert-wall/implementation.md) §5/§8/§11；代码迁移尚未实施。
 - Tesla 的共享消费者包含 Umami、Algolia、Assets provider deletion，保留对应业务；html_sanitize_ex 是旧 Audit 专用依赖，删除。

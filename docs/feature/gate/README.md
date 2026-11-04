@@ -21,7 +21,7 @@ write command
 - Lifecycle 是状态权威，Gate 只消费状态并给出 admission decision；ReviewBot 的意见通过 CMS 资源 Command 更新限制，Gate 不直接调用 ReviewBot；
 - Resolver、Job 和其他 Context 不得直接进入 Gate internal module；
 - 新代码以本文、V4 typed context 和对应资源 Lifecycle 合同为准，不从历史版本恢复旧入口。
-- 审核限制、内容待审、AI 意见和 AlertWall 的职责见 [ReviewBot / AlertWall V2](../alert-board/v2.md)。
+- 审核限制、内容待审、AI 意见和 AlertWall 的职责见 [ReviewBot / AlertWall V2](../alert-wall/v2.md)。
 
 ## 版本状态
 

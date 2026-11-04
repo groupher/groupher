@@ -1,6 +1,6 @@
 # Review restrictions, reports, and Ticket source visibility fix
 
-> Status: proposed follow-up based on the November 2026 review. This document records the intended contract; the changes below are not implemented yet.
+> Status: application implementation and local verification are complete. The hard-cutover runbook is operational guidance and has not been executed against a deployed environment.
 
 ## 1. Product behavior
 
@@ -29,7 +29,7 @@ Count active reports for the same Alert item. The item is bound to one observed 
 
 The `SubmitReport` command owns threshold evaluation. For CMS targets, in the existing target-locked transaction it records the report, counts distinct active reporters for that item, and applies `report_threshold_hold` once the configured threshold is reached. Use the stable source reference `report_threshold:item:<item_id>` for idempotency. Keep the lock order target -> Alert item/report -> restriction rows; do not acquire the target lock after locking the Alert item. Account reports do not apply content restrictions.
 
-If threshold restriction application fails, the transaction rolls back the threshold-crossing report too; retry uses the same `commandId`. This keeps accepted report state and the visibility restriction atomic. The threshold number, optional time window, and platform-wide versus per-Community policy remain runtime configuration decisions and must be settled before implementation.
+If threshold restriction application fails, the transaction rolls back the threshold-crossing report too; retry uses the same `commandId`. This keeps accepted report state and the visibility restriction atomic. Runtime policy is three distinct active reporters per Wall item and current observed version, with no time window and platform-wide scope. `CMS.Review.Config` reads the threshold from `:cms_review_report_threshold`.
 
 `resolveAlertItem` resolves only the Wall item. It must never clear `report_threshold_hold`; only `approve` or `reject` in the matching CMS review scope may clear it. `reject` clears the automatic threshold restriction and applies `manual_hold`, so the content stays hidden pending any later human approval.
 
@@ -50,7 +50,7 @@ P7 becomes private
          remains Published (current contract)
 ```
 
-Ticket state and Activity history are written synchronously in the caller's transaction. Cache invalidation intent and TicketState version increments are also persisted transactionally. An Outbox worker asynchronously purges affected Ticket list/detail and linked Post cache tags after commit.
+Ticket state and Activity history are written synchronously in the caller's transaction. Cache invalidation intent and `TicketState.workflow_version` increments are also persisted transactionally. An Outbox worker asynchronously purges affected Ticket list/detail and linked Post cache tags after commit.
 
 ## 2. Canonical const/enum contract
 
@@ -76,9 +76,9 @@ Cutover order is fixed:
 2. Export the initial target snapshot before processing: resource/scope, active restriction IDs/types/sources, current `artiment_reviews` IDs/state/`replaced_at`/`outdated_at`, relevant Oban job IDs/state, open AlertWall item IDs, and active report IDs/status/observed version. Record which targets an authorized owner explicitly requests for fresh AI recheck; also record the dedicated canary Article and hold-producing scope. It must be current published content with an `ArticlePublic` projection, no active review restriction, and a baseline visibility condition (such as a non-public Community) that keeps it inaccessible to ordinary readers while still passing `recheckArticleV2` validation. The snapshot defines audit/recheck scope and is not an instruction to rescan the whole site.
 3. Keep existing review workers running only to drain jobs that were already queued/running when producers were paused. Do not invoke `recheck` or any command that enqueues a new job during this phase. For a stuck/failed request, only a current V2 moderator decision command may resolve it; there is no public request-invalidation command in this runbook. Allow only audited moderator commands through the external write freeze. Resolve active `manual_hold` only through an authorized V2 moderator command—never a cleanup script or direct SQL. Do not delete Oban rows or requests to fake `pending_target_count=0`. If a request cannot safely drain or a moderator cannot formally resolve it, abort the cutover.
 4. Once no queued/running job can write and all requests/targets are in terminal business states, stop the review workers and verify no executing/retryable job can start. Refresh the target/status snapshot after worker drain. Run the V2 zero-count and visibility-consistency preflight against this final snapshot. If any count is nonzero, hidden state is unexplained, or a query fails, abort; do not run destructive DDL.
-5. With the gate passed and writes still frozen, delete review-block rows first: assert there are no active rows, then delete all ended rows so none can retain an old `type` or block request deletion. Next define the retained request set by the actual string reference: retain an `artiment_reviews` row iff an `alert_wall.items.ai_source_ref` exactly equals `artiment_reviews.id::text`; delete unreferenced request rows. Before retaining a referenced request, set `replaced_at` to the cutover timestamp if it is nil, making it terminal and excluding it from `Requests.pending_for_scope`; keep it read-only for Wall history only. Add a cutover test proving these rows cannot appear in `pendingContentReviews`. Clear `cms.command_receipts` only for `cms.review_decision`, `cms.review_recheck`, and `cms.review_apply_result`; preserve receipts for every other operation. Do not truncate the shared receipt table.
+5. With the gate passed and writes still frozen, delete review-block rows first: assert there are no active rows, then delete all ended rows so none can retain an old `type` or block request deletion. Next define the retained request set by the actual string reference: retain an `artiment_reviews` row iff an `alert_wall.items.ai_source_ref` exactly equals `artiment_reviews.id::text`; delete unreferenced request rows. Before retaining a referenced request, set `replaced_at` to the cutover timestamp if it is nil, making it terminal and excluding it from `Requests.pending_for_scope`; keep it read-only for Wall history only. Add a cutover test proving these rows cannot appear in `pendingContentReviews`. Clear `cms.command_receipts` only for `cms.review_decision`, `cms.review_recheck`, and `cms.review_apply_result`; preserve receipts for every other operation. Do not truncate the shared receipt table. Finish this cleanup before running `mix ecto.migrate`: the review-vocabulary migration preflights every retained restriction row and aborts if any `type` or `source` is outside the new enum. Do not bypass that guard; stop and complete the authorized cleanup or abort the cutover.
 6. With the old `cms_review` consumer stopped, delete all pre-cutover Oban jobs in that queue; verify no job is executing before deletion and the queue is empty afterward. If undelivered `cms.artiment_review` Outbox events for pre-cutover request IDs are not needed for audit/history, they may also be deleted or marked terminal, scoped by event and request ID. These events do not recreate jobs; `CMS.Outbox.send/1` created each event and Oban wakeup together. Preserve unrelated queues and Outbox events. Keep current V2 AlertWall items/reports; they are active product facts, not legacy V1 data.
-7. Apply DDL and new code: replace old restriction checks with the new enum checks and switch the GraphQL/UI contract. Before creating any new cutover recheck jobs, verify the old `cms_review` queue is still empty; no Outbox dispatcher can recreate the deleted jobs.
+7. Run the guarded DDL migration only after Step 5 cleanup and then deploy the new code: it replaces old restriction checks with the new enum checks and switches the GraphQL/UI contract. The migration checks all three review-block tables before changing any constraint and fails fast if retired values remain. There is one vocabulary migration; do not deploy code or migration past a failed preflight. Before creating any new cutover recheck jobs, verify the old `cms_review` queue is still empty; no Outbox dispatcher can recreate the deleted jobs.
 8. Perform the canary as the first accepted new-contract write, before threshold initialization or any other new-contract write. Keep ordinary ingress frozen. Through the audited maintenance exception, issue one `recheckArticleV2` for the dedicated canary from Step 2. Verify the normal transaction created its `artiment_reviews` request, active waiting hold, `cms.artiment_review` Outbox event, and matching `cms_review` Oban job. Start the new `cms_review` worker and verify the canary job is consumed without making the target publicly visible; finish/retire the canary through the V2 business path. Then gracefully stop the consumer and confirm no job is executing before Step 9. If the canary transaction did not commit, restore the verified backup and old images. If it committed but validation failed, there is no in-place rollback: choose a full database restore (discarding the canary write) or a forward fix.
 9. Keep ordinary ingress, ReviewBot/recheck/report producers, cron, and the new `cms_review` consumer paused while applying threshold/recheck initialization. Use the report snapshot only to select candidate item IDs. For each candidate, lock/re-read the current target and item, then re-read report status, `observed_version`, and current public version. Count only distinct reports that are still active for the current item/version; skip candidates whose item is resolved/superseded, whose reports are withdrawn/outdated/resolved, or whose observed version is no longer public. Apply `report_threshold_hold` only from that fresh locked state. V1 legacy reports are not imported. Verify the threshold initialization separately from request/job verification: for every candidate still eligible at the locked re-read, assert a `report_threshold_hold` exists iff the fresh distinct-active count meets the configured threshold; when present, assert `source_ref == "report_threshold:item:<item_id>"` and that repeating initialization does not create a second active `report_threshold_hold`; below threshold, assert no `report_threshold_hold` exists (other restriction types may still exist). Record the locked item/version, counted report IDs/statuses, threshold decision, and resulting restriction ID/source_ref as the evidence set.
 
@@ -95,35 +95,42 @@ Rollback contract: before the canary commits, keep writes frozen and restore the
 Keep a small fixed module, not a generic workflow framework. Preserve distinct composite entry points because a source/community pair cannot represent a whole Community change or a global Post deletion:
 
 ```elixir
-SourceVisibility.update_in_transaction(source, community, actor, cause, operation_id)
-SourceVisibility.update_community_in_transaction(community, actor, cause, operation_id)
-SourceVisibility.update_all_in_transaction(source, actor, cause, operation_id)
-SourceVisibility.revalidate_cache_in_transaction(source, community, operation_id)
+SourceVisibility.update_in_transaction(post_id, community, actor, cause, operation_ref)
+SourceVisibility.update_community_in_transaction(community, actor, operation_ref)
+SourceVisibility.update_all_in_transaction(post_id, actor, cause, operation_ref)
+SourceVisibility.revalidate_cache_in_transaction(post_id, identity, effect_key)
 ```
 
-`update_in_transaction/5` is for a source change scoped to one Community. Each lifecycle wrapper supplies `visibility_cause` from `Tickets.Const.visibility_cause`, preserving the existing values `:post_trash`, `:post_review_block`, `:community_visibility`, and `:ticket_review_block_resolved`. Do not rename these observable values: they appear in Activity metadata and Outbox effect keys. The Community wrapper visits every linked Post and retains the existing `FOR UPDATE` row locks while determining affected Tickets. The global wrapper visits all linked Communities and preserves the current global lock scope. `revalidate_cache_in_transaction/3` is the publish-revision cache-only path: it must not change Ticket lifecycle or Activity.
+`update_in_transaction/5` handles one Post/Community pair. Each lifecycle wrapper supplies `visibility_cause` from `Tickets.Const.visibility_cause`, preserving the existing values `:post_trash`, `:post_restore`, `:post_review_block`, `:community_visibility`, and `:ticket_review_block_resolved`. Do not rename these observable values: they appear in Activity metadata and Outbox effect keys. `update_community_in_transaction/3` visits every linked Post and retains the existing `FOR UPDATE` row locks. `update_all_in_transaction/4` visits all linked Communities and preserves the current global lock scope. `revalidate_cache_in_transaction/3` is the publish-revision cache-only path: it must not change Ticket lifecycle or Activity.
 
-The shared path is:
+The public flow is:
 
 ```elixir
-def update_in_transaction(source, community, actor, cause, operation_id) do
-  with {:ok, :pass} <- ensure_in_transaction(),
-       {:ok, related} <- linked_to(source, community),
-       {:ok, changed} <- recheck_visibility(source, related, community, actor, cause),
-       {:ok, :pass} <- record_activities(changed, actor, cause, operation_id),
-       {:ok, :pass} <- cache_revalidate(related, operation_id) do
-    {:ok, :pass}
-  end
+update_all_in_transaction(post, actor, cause, operation_ref)
+  -> linked_to(post) # Communities bound to the Post
+  -> update_in_transaction(post, community, actor, cause, operation_ref) per Community
+  -> PublicPosts.public?(community.id, post)
+  -> recheck_visibility(public?, post, community, actor, cause, operation_ref)
+```
+
+`update_all_in_transaction/4` enumerates bound Communities through `linked_to/1`. For each binding, `update_in_transaction/5` asks `PublicPosts.public?/2` whether the source is public in that Community. The private `recheck_visibility/6` then chooses the fixed branch:
+
+```elixir
+if public? do
+  cache_revalidate(community, source, operation_ref, effect_key)
+else
+  Persist.hold_linked_to_post(community, source, actor, operation_ref, cause)
 end
 ```
 
+`Persist` owns the synchronous Ticket lifecycle update, Activity insert, workflow-version increment, and Outbox intent in the caller's transaction. The Outbox worker purges cache tags after commit. `update_community_in_transaction/3` first locks every bound Post with `FOR UPDATE`, then runs the same per-Community path. `revalidate_cache_in_transaction/3` is the publish-revision path and calls cache invalidation only.
+
 Within `CMS.Tickets.SourceVisibility`, omit redundant `ticket_` prefixes:
 
-- `linked_to/2` loads User Tickets related to the source in the Community.
-- `recheck_visibility/5` applies the fixed single-source rule and persists lifecycle changes. Every related Ticket still gets its `TicketState.version` increment on each source visibility transition/cache revalidation, even when its lifecycle state does not change; this preserves current `hold_linked_to_post` and `invalidate_cache_linked_to_post` behavior.
-- `record_activities/4` writes Activity rows synchronously in the same transaction as the state change and includes `visibility_cause` in the Activity payload.
-- `cache_revalidate/2` writes invalidation intents for affected Ticket list/detail and source cache tags to Outbox synchronously; actual purge is asynchronous.
-- `ensure_in_transaction/0` returns `{:ok, :pass}` only inside an active Repo transaction; otherwise it returns `{:error, reason}`.
+- `linked_to/1` loads bound Communities for a Post; Ticket selection happens in `Persist`.
+- `recheck_visibility/6` chooses the public cache-only path or private visibility path. `Persist` applies the fixed single-source rule; multiple-source Ticket behavior remains unchanged.
+- `cache_revalidate/4` synchronously writes invalidation intents for affected Ticket list/detail and source cache tags to Outbox; actual purge is asynchronous.
+- Every public entry point checks `Repo.in_transaction?/0` and returns `{:error, reason}` when called outside its caller-owned transaction.
 
 The publish-revision cache-only caller must preserve the existing version/cache behavior without recording a lifecycle Activity. All wrappers must preserve caller-owned transaction and operation identity.
 
@@ -157,11 +164,13 @@ Tests should stub the stable adapter boundary and simulate provider outcomes; lo
 - threshold initialization re-reads item/report state under the target lock and skips a snapshot candidate resolved or outdated before application;
 - threshold initialization asserts the `report_threshold_hold` threshold boundary, stable `source_ref`, idempotent application, and absence of `report_threshold_hold` below threshold independently of other restriction types and recheck request/job assertions;
 - account reports never apply a content restriction; `resolveAlertItem` never clears `report_threshold_hold`;
+- threshold integration covers platform-scoped Post Comments reported from different Communities, Doc Comments using their origin Community scope, and platform-scoped Docs; an author sees a threshold hold as `waiting_human`;
+- the single vocabulary migration checks all restriction tables for retired type/source values before changing any constraint, and aborts without modifying constraints when stale rows remain;
 - single-source Ticket downgrade caused by `report_threshold_hold`, multi-source Ticket preservation when one or all sources are hidden;
 - cutover recheck tests cover each public Community scope independently; a multi-Community Article is selected only when every exposed scope is held by its own waiting hold or another verified active restriction. A system-only/`immediate` pre-write recheck without a request-bound hold requires `manual_hold`, `report_threshold_hold`, or another explicitly AI-unclearable restriction on every exposed scope; after consumer result application, assert that restriction still hides the target before reopening reads. Otherwise keep reads frozen through Step 10 or defer the recheck until reads reopen;
 - cutover job cleanup verifies the old consumer is stopped before deletion, the canary consumer is stopped before Step 9 jobs are created, only Step 9 request IDs remain queued during hold/effect verification, and the consumer resumes only afterward;
 - canary preflight verifies current published content/`ArticlePublic`, a hold-producing scope, zero active review restrictions, and a non-public baseline visibility condition;
-- Ticket state, `TicketState.version`, and Activity roll back together; Outbox intent commits with state and worker purges the expected cache tags;
+- Ticket state, `TicketState.workflow_version`, and Activity roll back together; Outbox intent commits with state and worker purges the expected cache tags;
 - GraphQL/UI contract tests cover fresh `...V2` approve/reject/recheck mutation fields, assert old root fields are absent, and verify typed `ReviewCommandResult.action` serialization for `APPROVE`, `REJECT`, and `RECHECK`;
 - a shared AI schema contract test verifies Phoenix request/response fields, status values, coverage values, and note bounds against the language-neutral schema and generated Worker types;
 - hard-cutover deployment verification covers all affected write paths frozen, read-only fallback behavior, producers/cron/consumer paused during Step 9 job audit, target/job snapshot, V2 zero-count gate, per-table retention predicates, operation-filtered receipt cleanup, DDL order, old Oban job removal and optional scoped Outbox event cleanup, threshold initialization from re-read current V2 reports, per-scope pre-write rechecks, canary as first new-contract write, canary eligibility and failure restore/forward-fix path, and coordinated producer/cron/write-ingress restart with no old client/command-ID support;
@@ -173,7 +182,7 @@ Local Worker tests mock `env.AI.run`; Phoenix tests inject a fake adapter and ex
 1. Add closed review enums to `GroupherServer.CMS.Review.Const`, runtime policy to `GroupherServer.CMS.Review.Config` (or `ReviewBotConfig`), and the language-neutral AI request/response schema to `packages/contracts`; add boundary/contract tests.
 2. Perform the breaking cutover in the ordered maintenance procedure above: satisfy the V2 zero-count gate through formal commands, snapshot targets/jobs/reports, filter receipt cleanup by review operation, then apply DDL and new code. No aliases, data translation, or old-client support.
 3. Add the atomic report-threshold transaction, stable `source_ref`, and tests for version isolation, idempotency, concurrency, rollback, account scope, and Wall-only resolution.
-4. Add `Tickets.Const.visibility_cause` with the existing values, then introduce `Tickets.SourceVisibility` wrappers and shared steps, preserving multi-source behavior, row locks, transaction guards, all-related TicketState.version increments, Activities, and Outbox delivery.
-5. Run focused CMS review, AlertWall report, Ticket visibility, GraphQL contract, and AI adapter/Worker mock tests. Keep real Cloudflare integration opt-in.
+4. Add `Tickets.Const.visibility_cause` with the existing values, then route Post trash/restore, review restriction changes, Community readability changes, and Post revision cache revalidation through `Tickets.SourceVisibility`. Ticket state, synchronous Activity, workflow version increments, and cache invalidation intent remain in the caller transaction; cache purge remains asynchronous.
+5. Focused local verification passed: backend AI/review/GraphQL/Ticket tests (95), Review AI Worker tests (8), contracts tests (26), and CMSReview UI tests (2). Backend `mix compile --warnings-as-errors`, Worker/contracts/Core type-checks, GraphQL SDL and TS code generation, AI contract generation check, and `pnpm docs:check` also passed. The hard-cutover runbook has not been executed against a deployed environment.
 
-Before threshold implementation, finalize numeric threshold, optional time window, and platform-wide versus per-Community policy. Those values are policy config; action/restriction/status vocabulary remains defined once by typed const/enum contracts.
+The configured threshold is three distinct reporters per current Wall item/version, with no time window and platform-wide scope. Action, restriction, provider result, and visibility-cause vocabularies remain in their domain `Const` modules; runtime threshold policy remains in `CMS.Review.Config`.

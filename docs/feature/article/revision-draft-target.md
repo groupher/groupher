@@ -3,7 +3,7 @@
 > Ticket V2 的 Lifecycle 与内容接入已落地：[Ticket V2](../tickets/v2.md)统一 `draft`、由数据库 trigger 保证只写一次的 `first_published_at`，并通过 Ticket Content 适配层使用 Article Draft/Revision/Public。Ticket 首次编辑由 EnsureDraft 建立工作区；Ticket 不进入普通 Article typed extension。相关本地测试见 [V2 实施追踪 R02–R04/R08](../tickets/inventory.md#v2-实施追踪)。旧 Article/Ticket 数据清理只在指定环境切换时执行，尚未运行。
 
 > 2026-10-22 审核合同更新：本文旧内容 legal/illegal/audit_failed 与 Sentinel/计划 Moderation
-> 相关目标已由 [AlertBoard / ReviewBot](../alert-board/design.md) 替代，运行时尚未切换。
+> 相关目标已由 [AlertBoard / ReviewBot](../alert-wall/design.md) 替代，运行时尚未切换。
 > 其他 Lifecycle、Draft/Revision/Public、Doc 历史与分支合同保持；普通 UGC 不新增待审版本。
 
 > 状态：Revision / Draft 主链已实现；ArticleCommunity 的 `home | mirror` role 已移除。

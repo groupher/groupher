@@ -1,7 +1,7 @@
 # Gate / Lifecycle Cleanup：删除历史兼容与双权威
 
 > 2026-10-22 审核合同更新：本文旧内容 legal/illegal/audit_failed 与 Sentinel/计划 Moderation
-> 相关目标已由 [AlertBoard / ReviewBot](../alert-board/design.md) 替代，运行时尚未切换。
+> 相关目标已由 [AlertBoard / ReviewBot](../alert-wall/design.md) 替代，运行时尚未切换。
 > 其他 Lifecycle、Draft/Revision/Public、Doc 历史与分支合同保持；普通 UGC 不新增待审版本。
 
 > 状态：设计确认，待实施。
@@ -14,7 +14,7 @@
 - [Gate V4](./v4.md)：typed Access/Scope Context 与 canonical resource；
 - [Community Lifecycle](../lifecycle/contract.md)：Community state、Blocker 和 transition；
 - [Interaction V5](../interaction/v5.md)：同步 Projection、Audit 退役与 ReportFact；
-- [AlertBoard / ReviewBot](../alert-board/design.md)：审核、举报与跨领域检测的新合同。
+- [AlertBoard / ReviewBot](../alert-wall/design.md)：审核、举报与跨领域检测的新合同。
 
 ## 1. 背景
 
@@ -392,7 +392,7 @@ Moderator 权限只来自正式 moderator/membership fact。Community meta 不�
 
 ## 12. 旧内容 Audit 全链路删除
 
-当前合同见 [AlertBoard / ReviewBot](../alert-board/design.md) 与
+当前合同见 [AlertBoard / ReviewBot](../alert-wall/design.md) 与
 [全链路退役](../../migrations/legacy-content-audit-removal.md)。旧 Sentinel/计划 CMS.Moderation 目标废止。
 
 ```text

@@ -1,7 +1,7 @@
 # Article / Ticket / Comment 引用 Map 实施合同
 
 > 状态：M0–M4 已在本地实现并回归；M5 按用户指定的本地隔离环境完成 report/apply、失败续跑、巡检遥测和六类公开入口验收（2026-11-03）。生产环境尚未切换。本文定义存储、同步、读取、展示与验收合同；文件级落点与环境证据见 [实施 inventory](reference-map-inventory.md)。不要求兼容旧 Mention 数据或旧 GraphQL/URL 合同；后续生产切换仍须按第 10.2 节执行。
-> 后续 [ArticleLifecycle 与 Comment 社区解耦重构合同](article-lifecycle-comment-decoupling.md) 统一替换本文对普通 Comment 创建地审核权限及持久归属的现行要求；该重构尚未实施。
+> 普通 Comment 不持久化创建 Community；ArticleLifecycle 只按 Article ID 管理状态。具体审核与迁移验收规则见 [ArticleLifecycle 与 Comment 社区解耦重构合同](article-lifecycle-comment-decoupling.md)。
 
 ## 1. 目标、范围与完成定义
 
@@ -120,7 +120,7 @@ nodes + edges ──布局算法──> 节点坐标、方向线、当前节点�
 
 复用 `cms.artiment_mentions`，由 CMS.ArtimentMentions 唯一写入；不新增平行边表、每篇内容一份 Map JSON 或持久化图坐标。Article/Comment/Ticket/Doc 的引用事实归正文 owner，不归公开 URL 或 mirror binding。反向列表只反查同一条有向事实，不写反向边。
 
-普通 Post/Blog/Changelog 的来源键为 `type + Article UUID`；无论有多少 Community binding，一份 ArticlePublic 正文只解析一次、保存一组 outgoing 边。User Ticket 来源键为 Ticket Article UUID；Ticket 仅有一个 Community binding。Doc 来源键为 `Doc Article UUID + 实际 main branch ID`，因为不同 branch 的正文选版由 Doc owner 决定。Comment 来源键为 `Comment ID`，Doc Comment 还包含实际 branch ID；普通 Article Comment 的目标 `origin_community_id` 只是创建归属/入口元数据，不因父 Article mirror 而复制事实或水位；Doc Comment 的 Community/main branch 仍按 Doc owner 校验。目标同样以稳定资源身份和必要的 Doc branch 标识，不以 Community binding、innerId 或 URL 为边身份。Comment 目标身份包含 Comment ID，读取时再验证其父 Article。URL/User 事实继续由原 Mention owner 管理，不进入首版 Map。
+普通 Post/Blog/Changelog 的来源键为 `type + Article UUID`；无论有多少 Community binding，一份 ArticlePublic 正文只解析一次、保存一组 outgoing 边。User Ticket 来源键为 Ticket Article UUID；Ticket 仅有一个 Community binding。Doc 来源键为 `Doc Article UUID + 实际 main branch ID`，因为不同 branch 的正文选版由 Doc owner 决定。Comment 来源键为 `Comment ID`，Doc Comment 还包含实际 branch ID；普通 Article Comment 不保存 Community；Doc Comment 的 branch 仍按 Doc owner 校验。目标同样以稳定资源身份和必要的 Doc branch 标识，不以 Community binding、innerId 或 URL 为边身份。Comment 目标身份包含 Comment ID，读取时再验证其父 Article。URL/User 事实继续由原 Mention owner 管理，不进入首版 Map。
 
 ```text
 Article A 的同一正文引用 Article B
@@ -274,7 +274,7 @@ Post/Blog/Changelog、Ticket URL、Community-local innerId、Comment fragment、
 
 只返回指定 Community 的有效节点与边。事实解析保留链接明确指向的稳定目标；图在请求 Community 只投影两端均有当前可读 binding 的边，跨 Community 事实不在单 Community 图展示。本响应不返回另一 Community 的标题、边、计数或“还有隐藏节点”提示，也不跨不可读节点继续遍历。
 
-Comment 父 Article 隐藏时自身也退出图；普通 Article 的 Comment 在父 Article 的任一可读 mirror binding 下共享同一 Comment ID。M1 按 Article/Community 合同将普通 Comment 的归属改为可空 `origin_community_id`；M2 将普通 Comment public Scope 改为请求 Community 的父 Article binding、Comment Lifecycle 与全局 ReviewBlock 的交集，不能再由 origin 决定。Doc Comment 继续按 Doc main branch 的 Community/branch Scope 和 ReviewBlock 判定；不能把普通 Comment 的 `community_id=NULL` 审核规则套到 Doc Comment。Ticket 仅 public Gate 可读的 User Ticket；Worker/Case 即使管理员有权限也不进入本公开端点。事实不存历史快照，当前读取授权由两端 Gate 决定。
+Comment 父 Article 隐藏时自身也退出图；普通 Article 的 Comment 在父 Article 的任一可读 mirror binding 下共享同一 Comment ID。普通 Comment 不保存 Community；public Scope 是请求 Community 的父 Article binding、Comment Lifecycle 与全局 ReviewBlock 的交集。Doc Comment 继续按 Doc main branch 的 Community/branch Scope 和 ReviewBlock 判定；不能把普通 Comment 的 `community_id=NULL` 审核规则套到 Doc Comment。Ticket 仅 public Gate 可读的 User Ticket；Worker/Case 即使管理员有权限也不进入本公开端点。事实不存历史快照，当前读取授权由两端 Gate 决定。
 
 公开图首版不投影被删除节点占位；一跳 Mention 列表按第 4.3 节直接切换；Trash 不再提供嵌套 Mention 历史列表。未知 type、非法 branch、locator 错配 fail closed，不能猜测目标。
 
