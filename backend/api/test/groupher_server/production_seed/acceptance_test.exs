@@ -5,6 +5,21 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
   alias ProductionSeed.{Run, LoginGrant, Logins}
   alias GroupherServer.Accounts.Model.{User, OauthProvider, BrowserSession}
 
+  test "closed-out release no longer exposes CLI credential issuance", %{database: database} do
+    output = "/tmp/production-seed-p7-#{Ecto.UUID.generate()}.json"
+
+    assert {:error, :seed_unknown_command} =
+             ProductionSeed.CLI.execute(%{
+               "command" => "issue",
+               "runId" => "first",
+               "database" => database,
+               "alias" => "author",
+               "outputFile" => output
+             })
+
+    refute File.exists?(output)
+  end
+
   setup do
     previous = System.get_env("PRODUCTION_SEED_ENABLED")
     System.put_env("PRODUCTION_SEED_ENABLED", "true")

@@ -48,7 +48,6 @@ import {
   type TLinkIntentNamespace,
   type TLinkIntentStore,
 } from './link-intent'
-import { redeemAcceptanceRequest } from './production-seed'
 import { createMemoryRateLimiter, type TRateLimitBinding } from './rate-limit'
 import { issueServiceToken, serviceJwks } from './service-auth'
 
@@ -77,6 +76,18 @@ type TOptions = {
   serviceTokenRateLimiter?: TRateLimitBinding
   testLogin?: (request: Request) => Promise<Response>
 }
+
+const AUTH_CORE_ACTIONS = new Set([
+  'callback',
+  'csrf',
+  'error',
+  'providers',
+  'session',
+  'signin',
+  'signout',
+  'verify-request',
+  'webauthn-options',
+])
 
 const FIRST_PARTY_AUTH_HOSTS = new Set([
   'groupher.com',
@@ -261,10 +272,6 @@ export const createApp = ({
 
   app.use(AUTH_ROUTE.ROOT, authCors)
   app.use(AUTH_ROUTE.WILDCARD, authCors)
-
-  app.post('/api/auth/production-seed/redeem', (context) =>
-    redeemAcceptanceRequest(context.req.raw, isAllowedAuthOrigin, process.env),
-  )
 
   app.get('/health', (context) => context.json(createHealthResponse({ service: 'auth' })))
 
@@ -739,7 +746,11 @@ export const createApp = ({
   })
 
   app.on(['GET', 'POST'], AUTH_ROUTE.ROOT, (context) => authHandler(context.req.raw))
-  app.on(['GET', 'POST'], AUTH_ROUTE.WILDCARD, (context) => authHandler(context.req.raw))
+  app.on(['GET', 'POST'], AUTH_ROUTE.WILDCARD, (context) => {
+    const action = new URL(context.req.url).pathname.slice(AUTH_ROUTE.ROOT.length + 1).split('/')[0]
+    if (!AUTH_CORE_ACTIONS.has(action)) return context.notFound()
+    return authHandler(context.req.raw)
+  })
 
   return app
 }

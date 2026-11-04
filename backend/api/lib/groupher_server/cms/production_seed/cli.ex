@@ -5,11 +5,10 @@ defmodule GroupherServer.CMS.ProductionSeed.CLI do
       production_seed.sh request.json -> base64 RPC -> fixed command allowlist
         -> domain admission -> JSON report or non-zero RPC exception
 
-  No arbitrary function, SQL, user ID or evaluator is accepted. Issue writes its
-  secret to an exclusive mode-0600 file; RPC output contains only the filename.
+  No arbitrary function, SQL, user ID or evaluator is accepted. Credential
+  issuance was removed after the production acceptance window.
   """
   alias GroupherServer.CMS.ProductionSeed
-  alias GroupherServer.Repo
 
   @doc "Decodes a non-secret request and fails the release command on business error."
   def run_base64(encoded) do
@@ -39,9 +38,6 @@ defmodule GroupherServer.CMS.ProductionSeed.CLI do
       "report" ->
         ProductionSeed.report(run_id, database)
 
-      "issue" ->
-        issue(run_id, database, input["alias"], input["outputFile"])
-
       "close" ->
         ProductionSeed.Logins.close(run_id, database)
 
@@ -66,35 +62,4 @@ defmodule GroupherServer.CMS.ProductionSeed.CLI do
   end
 
   def execute(_), do: {:error, :seed_invalid_request}
-
-  defp issue(run_id, database, name, output) when is_binary(output) do
-    if Regex.match?(~r/\A\/tmp\/production-seed-[a-zA-Z0-9_-]+\.json\z/, output) do
-      Repo.transaction(fn ->
-        case ProductionSeed.Logins.issue(run_id, name, database) do
-          {:ok, grant} ->
-            case File.open(output, [:write, :exclusive]) do
-              {:ok, file} ->
-                try do
-                  File.chmod!(output, 0o600)
-                  IO.binwrite(file, Jason.encode!(grant))
-                after
-                  File.close(file)
-                end
-
-                %{credential_file: output, expires_at: grant.expires_at}
-
-              {:error, _} ->
-                Repo.rollback(:seed_credential_file_exists_or_unwritable)
-            end
-
-          {:error, reason} ->
-            Repo.rollback(reason)
-        end
-      end)
-    else
-      {:error, :seed_invalid_credential_filename}
-    end
-  end
-
-  defp issue(_, _, _, _), do: {:error, :seed_invalid_credential_filename}
 end
