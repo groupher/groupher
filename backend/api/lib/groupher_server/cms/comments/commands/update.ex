@@ -128,7 +128,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
          {:ok, _invalidation} <-
            invalidate_public_comments(article, community_id, canonical.thread, command_id),
          {:ok, :pass} <- GraphRevision.bump_for_comment(canonical),
-         {:ok, _} <- enqueue_comment_effects(canonical, actor, command_id) do
+         {:ok, _} <- enqueue_comment_effects(canonical, actor, command_id, community_id) do
       {:ok, %{comment: synced, article: article, command_id: command_id}}
     end
   end
@@ -190,13 +190,13 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
     end
   end
 
-  defp enqueue_comment_effects(%Comment{} = comment, %User{} = actor, command_id) do
+  defp enqueue_comment_effects(%Comment{} = comment, %User{} = actor, command_id, community_id) do
     case Effects.enqueue(
            "comment.updated",
            "comment",
            comment.id,
            command_id,
-           %{actor_id: actor.id, article_id: comment.article_id}
+           %{actor_id: actor.id, article_id: comment.article_id, community_id: community_id}
          ) do
       {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}

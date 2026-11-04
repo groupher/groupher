@@ -119,6 +119,24 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
     assert code == 0, output
     assert {:ok, linked} = ProductionSeed.References.apply("content", db, reference_file)
     assert length(linked["expectedEdges"]) == 27
+    comment_id = to_string(linked["resources"]["CM"]["commentId"])
+
+    event =
+      Repo.one!(
+        from(e in CMS.Outbox.Event,
+          where: e.event == "comment.updated" and e.resource_id == ^comment_id
+        )
+      )
+
+    assert event.data["community_id"] == linked["communities"]["dev"]
+
+    assert {:ok, :pass} =
+             CMS.Outbox.Workflow.Comment.perform(%Oban.Job{
+               args: %{"event_id" => event.id},
+               attempt: 1,
+               max_attempts: 8
+             })
+
     assert {:ok, ^linked} = ProductionSeed.References.apply("content", db, reference_file)
 
     for name <- ~w(PX BX CX DX TX CM self) do
@@ -184,6 +202,23 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
     assert {:ok, _} = ProductionSeed.Cleanup.delete_tmp("content", db)
     refute Repo.get(CMS.Model.Community, old_tmp)
     assert Repo.get(CMS.Model.Comment, linked["resources"]["deleteProbeComment"]["commentId"])
+    probe_comment_id = to_string(linked["resources"]["deleteProbeComment"]["commentId"])
+
+    created_event =
+      Repo.one!(
+        from(e in CMS.Outbox.Event,
+          where: e.event == "comment.created" and e.resource_id == ^probe_comment_id
+        )
+      )
+
+    assert {:ok, :pass} =
+             CMS.Outbox.Workflow.Comment.perform(%Oban.Job{
+               args: %{"event_id" => created_event.id},
+               attempt: 1,
+               max_attempts: 8
+             })
+
+    assert Repo.get!(CMS.Outbox.Event, created_event.id).status == :done
     {:ok, after_delete} = ProductionSeed.report("content", db)
     assert String.starts_with?(after_delete["resources"]["deleteProbe"]["url"], "/mock/")
     {:ok, rebuilt} = ProductionSeed.bootstrap("content", db)

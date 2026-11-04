@@ -6,6 +6,26 @@ defmodule GroupherServer.Test.CMS.OutboxTest do
   alias GroupherServer.{CMS, ErrorCat, Repo}
   alias CMS.Outbox.Event
 
+  for action <- ["comment.updated", "comment.replied"] do
+    @action action
+    test "#{action} completes after its resource and Community no longer exist" do
+      assert {:ok, event} =
+               CMS.Outbox.send(%{
+                 event: @action,
+                 worker: GroupherServer.Jobs.CMSOutboxComment,
+                 resource_type: "comment",
+                 resource_id: "0",
+                 command_id: Ecto.UUID.generate(),
+                 data: %{actor_id: 0, community_id: 0}
+               })
+
+      job = %Oban.Job{args: %{"event_id" => event.id}, attempt: 1, max_attempts: 8}
+      assert {:ok, :pass} = CMS.Outbox.Workflow.Comment.perform(job)
+      assert {:ok, :pass} = CMS.Outbox.Workflow.Comment.perform(job)
+      assert Repo.get!(Event, event.id).status == :done
+    end
+  end
+
   test "an event is completed once and duplicate delivery is a no-op" do
     assert {:ok, event} =
              CMS.Outbox.send(%{

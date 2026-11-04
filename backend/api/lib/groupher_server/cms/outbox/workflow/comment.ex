@@ -70,20 +70,32 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
           comment -> CMS.ArtimentMentions.sync_comment_public(comment)
         end
 
+      action when action in ["comment.updated", "comment.replied"] ->
+        # Required cache, mention and review effects have their own intents.
+        # This acknowledged intent must not depend on a Community still existing.
+        {:ok, :effects_not_required}
+
       action ->
         comment_effects(action, event)
     end
   end
 
   defp comment_effects(action, event)
-       when action in ["comment.created", "comment.replied", "comment.updated"] do
+       when action == "comment.created" do
     with %Comment{} = comment <- Repo.get(Comment, event.resource_id),
          %User{} = actor <- Repo.get(User, event.data["actor_id"]),
-         %Community{} = community <- Repo.get(Community, event.data["community_id"]),
-         {:ok, _} <- enqueue_comment_job(action, comment, actor, community) do
-      {:ok, :effects_enqueued}
+         community_id when is_integer(community_id) <- event.data["community_id"] do
+      case Repo.get(Community, community_id) do
+        nil ->
+          {:ok, :community_gone}
+
+        community ->
+          with {:ok, _} <- enqueue_comment_job(action, comment, actor, community) do
+            {:ok, :effects_enqueued}
+          end
+      end
     else
-      nil -> {:error, CommentErrorCat.effect_target_not_found()}
+      _ -> {:error, CommentErrorCat.effect_target_not_found()}
     end
   end
 
@@ -97,10 +109,6 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
       {:ok, :pass}
     end
   end
-
-  defp enqueue_comment_job("comment.replied", _comment, _actor, _community), do: {:ok, :pass}
-
-  defp enqueue_comment_job("comment.updated", _comment, _actor, _community), do: {:ok, :pass}
 
   defp enqueue(type, key, fun), do: Jobs.enqueue_best_effort(type, key, fun)
 
