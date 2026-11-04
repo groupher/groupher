@@ -324,7 +324,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         )
 
       {:ok, post_comment} = ORM.find(Comment, post_comment.id)
+
+      post_comment = %{post_comment | request_community_slug: community.slug}
       {:ok, post_comment2} = ORM.find(Comment, post_comment2.id)
+      post_comment2 = %{post_comment2 | request_community_slug: community.slug}
 
       assert post_comment.floor == 1
       assert post_comment2.floor == 2
@@ -352,7 +355,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         )
 
       {:ok, post_comment} = ORM.find(Comment, post_comment.id)
+
+      post_comment = %{post_comment | request_community_slug: community.slug}
       {:ok, post_comment2} = ORM.find(Comment, post_comment2.id)
+      post_comment2 = %{post_comment2 | request_community_slug: community.slug}
 
       assert post_comment.inner_id == 1
       assert post_comment2.inner_id == 2
@@ -449,6 +455,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
 
+      comment = %{comment | request_community_slug: community.slug}
+
       assert 1 == length(comment.upvotes)
       assert List.first(comment.upvotes).user_id == user.id
     end
@@ -494,6 +502,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
+
+      comment = %{comment | request_community_slug: community.slug}
       assert 1 == length(comment.upvotes)
     end
 
@@ -513,6 +523,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       CMS.Interactions.upvote(comment, author_user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
+
+      comment = %{comment | request_community_slug: community.slug}
       {:ok, comment} = InteractionResponse.one(comment, author_user)
       assert comment.meta.is_article_author_upvoted
     end
@@ -616,12 +628,16 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         )
 
       {:ok, comment} = ORM.find(Comment, comment.id)
+
+      comment = %{comment | request_community_slug: community.slug}
       assert comment.upvotes_count == 0
 
       {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
       {:ok, _} = CMS.Interactions.upvote(comment, user2, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id)
+
+      comment = %{comment | request_community_slug: community.slug}
       {:ok, comment} = InteractionResponse.one(comment, nil)
       assert comment.upvotes_count == 2
     end
@@ -640,6 +656,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
+
+      comment = %{comment | request_community_slug: community.slug}
       assert 1 == length(comment.upvotes)
 
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user, Ecto.UUID.generate())
@@ -680,7 +698,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         )
 
       {:ok, replied_comment} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(parent_comment, mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _} = CMS.Interactions.upvote(parent_comment, user, Ecto.UUID.generate())
       {:ok, _} = CMS.Interactions.upvote(replied_comment, user, Ecto.UUID.generate())
@@ -719,10 +737,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       {:ok, comment} = ORM.find(Comment, comment.id)
 
+      comment = %{comment | request_community_slug: community.slug}
+
       assert not comment.is_folded
 
-      {:ok, comment} = CMS.Comments.fold_comment(comment.id, user)
+      {:ok, comment} = CMS.Comments.fold_comment(comment, user)
       {:ok, comment} = ORM.find(Comment, comment.id)
+      comment = %{comment | request_community_slug: community.slug}
       assert comment.is_folded
 
       {:ok, folded} =
@@ -747,13 +768,15 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Comments.fold_comment(comment.id, user)
+      {:ok, _} = CMS.Comments.fold_comment(comment, user)
       {:ok, comment} = ORM.find(Comment, comment.id)
+      comment = %{comment | request_community_slug: community.slug}
 
       assert comment.is_folded
 
-      {:ok, _} = CMS.Comments.unfold_comment(comment.id, user)
+      {:ok, _} = CMS.Comments.unfold_comment(comment, user)
       {:ok, comment} = ORM.find(Comment, comment.id)
+      comment = %{comment | request_community_slug: community.slug}
       assert not comment.is_folded
 
       {:ok, folded} =
@@ -782,10 +805,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       {:ok, comment} = ORM.find(Comment, comment.id)
 
+      comment = %{comment | request_community_slug: community.slug}
+
       assert not comment.is_pinned
 
-      {:ok, comment} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
+      {:ok, comment} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
       {:ok, comment} = ORM.find(Comment, comment.id)
+      comment = %{comment | request_community_slug: community.slug}
 
       assert comment.is_pinned
 
@@ -804,8 +830,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
-      {:ok, comment} = CMS.Comments.undo_pin_comment(comment.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
+      {:ok, comment} = CMS.Comments.undo_pin_comment(comment, user, Ecto.UUID.generate())
 
       assert not comment.is_pinned
       assert {:error, _} = PinnedComment |> ORM.find_by(%{comment_id: comment.id})
@@ -823,7 +849,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
             Ecto.UUID.generate()
           )
 
-        {:ok, _} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
+        {:ok, _} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
       end)
 
       {:ok, extra_comment} =
@@ -841,7 +867,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
                 reason: :comment_pin_limit,
                 details: @pinned_comment_limit
               }} =
-               CMS.Comments.pin_comment(extra_comment.id, user, Ecto.UUID.generate())
+               CMS.Comments.pin_comment(extra_comment, user, Ecto.UUID.generate())
     end
   end
 
@@ -861,9 +887,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     #   {:ok, comment} = ORM.find(Comment, comment.id)
     # end
-
-
-
   end
 
   describe "paged article comments" do
@@ -1000,10 +1023,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         )
 
       {:ok, pined_comment_1} =
-        CMS.Comments.pin_comment(random_comment_1.id, user, Ecto.UUID.generate())
+        CMS.Comments.pin_comment(random_comment_1, user, Ecto.UUID.generate())
 
       {:ok, pined_comment_2} =
-        CMS.Comments.pin_comment(random_comment_2.id, user, Ecto.UUID.generate())
+        CMS.Comments.pin_comment(random_comment_2, user, Ecto.UUID.generate())
 
       {:ok, paged_comments} =
         comment_page(
@@ -1060,10 +1083,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         )
 
       {:ok, pined_comment_1} =
-        CMS.Comments.pin_comment(random_comment_1.id, user, Ecto.UUID.generate())
+        CMS.Comments.pin_comment(random_comment_1, user, Ecto.UUID.generate())
 
       {:ok, pined_comment_2} =
-        CMS.Comments.pin_comment(random_comment_2.id, user, Ecto.UUID.generate())
+        CMS.Comments.pin_comment(random_comment_2, user, Ecto.UUID.generate())
 
       {:ok, paged_comments} =
         comment_page(
@@ -1078,7 +1101,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       assert paged_comments.page_info.total_count == total_count
     end
-
 
     test "can loaded paged folded comment", ~m(community user post)a do
       total_count = 10
@@ -1097,7 +1119,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
               Ecto.UUID.generate()
             )
 
-          CMS.Comments.fold_comment(comment.id, user)
+          CMS.Comments.fold_comment(comment, user)
 
           acc ++ [comment]
         end)
@@ -1249,7 +1271,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       random_comment = all_comments |> Enum.at(1)
 
-      {:ok, _} = CMS.Comments.pin_comment(random_comment.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Comments.pin_comment(random_comment, user, Ecto.UUID.generate())
       {:ok, _} = ORM.find(Comment, random_comment.id)
 
       {:ok, _} = CMS.Comments.delete_comment(random_comment, user, Ecto.UUID.generate())
@@ -1338,19 +1360,19 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         )
 
       {:ok, _} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(parent_comment, mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _} = CMS.Articles.lock_comments(post.id, user, community: community)
 
       {:error, reason} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(parent_comment, mock_comment(), user, Ecto.UUID.generate())
 
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
       {:ok, _} = CMS.Articles.undo_lock_comments(post.id, user, community: community)
 
       {:ok, _} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(parent_comment, mock_comment(), user, Ecto.UUID.generate())
     end
   end
 
@@ -1441,8 +1463,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, _} = CMS.Articles.set_cat(post.article_id, @article_cat.qa, user, community.id)
 
       {:ok, comment1} = ORM.find(Comment, comment1.id)
+
+      comment1 = %{comment1 | request_community_slug: community.slug}
       {:ok, comment2} = ORM.find(Comment, comment2.id)
+      comment2 = %{comment2 | request_community_slug: community.slug}
       {:ok, comment3} = ORM.find(Comment, comment3.id)
+      comment3 = %{comment3 | request_community_slug: community.slug}
 
       assert comment1.is_for_question
       assert comment2.is_for_question
@@ -1451,8 +1477,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, _} = CMS.Articles.set_cat(post.article_id, @article_cat.idea, user, community.id)
 
       {:ok, comment1} = ORM.find(Comment, comment1.id)
+
+      comment1 = %{comment1 | request_community_slug: community.slug}
       {:ok, comment2} = ORM.find(Comment, comment2.id)
+      comment2 = %{comment2 | request_community_slug: community.slug}
       {:ok, comment3} = ORM.find(Comment, comment3.id)
+      comment3 = %{comment3 | request_community_slug: community.slug}
 
       assert not comment1.is_for_question
       assert not comment2.is_for_question

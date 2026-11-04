@@ -65,12 +65,12 @@ defmodule GroupherServer.CMS.Review.Restrictions do
         Enum.reduce_while(community_ids, {:ok, :pass}, fn community_id, {:ok, :pass} ->
           case Repo.get(Community, community_id) do
             %Community{} = community ->
-              case CMS.Tickets.PostVisibility.reconcile_in_transaction(
-                     community,
+              case CMS.Tickets.SourceVisibility.update_in_transaction(
                      article_id,
+                     community,
                      actor,
-                     operation_ref,
-                     "post_review_block"
+                     :post_review_block,
+                     operation_ref
                    ) do
                 {:ok, :pass} -> {:cont, {:ok, :pass}}
                 {:error, reason} -> {:halt, {:error, reason}}
@@ -126,7 +126,7 @@ defmodule GroupherServer.CMS.Review.Restrictions do
                    article.id,
                    actor,
                    operation_ref,
-                   "ticket_review_block_resolved:#{article.id}"
+                   "#{CMS.Tickets.Const.cause_value(:ticket_review_block_resolved)}:#{article.id}"
                  ) do
               {:ok, _lifecycle} -> {:ok, :pass}
               {:error, reason} -> {:error, reason}
@@ -172,12 +172,12 @@ defmodule GroupherServer.CMS.Review.Restrictions do
     |> Enum.reduce_while({:ok, :pass}, fn community_id, {:ok, :pass} ->
       case Repo.get(Community, community_id) do
         %Community{} = community ->
-          case CMS.Tickets.PostVisibility.reconcile_in_transaction(
-                 community,
+          case CMS.Tickets.SourceVisibility.update_in_transaction(
                  article_id,
+                 community,
                  nil,
-                 operation_ref,
-                 "ticket_review_block_resolved"
+                 :ticket_review_block_resolved,
+                 operation_ref
                ) do
             {:ok, :pass} -> {:cont, {:ok, :pass}}
             {:error, reason} -> {:halt, {:error, reason}}

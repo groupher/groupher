@@ -120,6 +120,22 @@ defmodule GroupherServer.AlertWall.Persist do
 
   def active_report_count(_item_id), do: 0
 
+  @doc "Counts distinct active reporters for one Wall item and observed public version."
+  def active_reporter_count(item_id, observed_version)
+      when is_integer(item_id) and is_integer(observed_version) and observed_version > 0 do
+    Repo.one(
+      from(report in UserReport,
+        where:
+          report.item_id == ^item_id and report.observed_version == ^observed_version and
+            is_nil(report.withdrawn_at) and is_nil(report.outdated_at) and
+            is_nil(report.resolved_at),
+        select: count(report.reporter_id, :distinct)
+      )
+    ) || 0
+  end
+
+  def active_reporter_count(_item_id, _observed_version), do: 0
+
   @doc "Replaces one open item's complete AI opinion without creating an absent item."
   @spec replace_ai_opinion_in_transaction(map()) :: {:ok, Item.t() | :absent} | {:error, term()}
   def replace_ai_opinion_in_transaction(attrs) when is_map(attrs) do

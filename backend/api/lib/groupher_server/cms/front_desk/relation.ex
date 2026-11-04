@@ -40,17 +40,16 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
     |> done()
   end
 
-  @doc "Returns the parent Article through the Comment's origin Community."
+  @doc "Returns the parent Article through an explicit current Comment request Community."
   @spec article_of(Comment.t()) :: {:ok, map()} | {:error, map()}
 
-  def article_of(%Comment{origin_community_id: community_id} = comment)
-      when is_integer(community_id) do
+  def article_of(%Comment{} = comment) do
     with {:ok, thread} <- thread_of(comment),
-         %Community{} = community <- Repo.get(Community, community_id),
+         {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment),
          %ArticleBinding{inner_id: inner_id} <-
            Repo.get_by(ArticleBinding,
              article_id: comment.article_id,
-             community_id: community_id
+             community_id: community.id
            ),
          {:ok, projection} <-
            ArticleFrontDesk.read(

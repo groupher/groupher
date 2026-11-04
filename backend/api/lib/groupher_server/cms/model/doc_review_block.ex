@@ -18,8 +18,8 @@ defmodule GroupherServer.CMS.Model.DocReviewBlock do
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @types Const.restriction_type_values()
-  @sources Const.restriction_source_values()
+  @types Const.restriction_types()
+  @sources Const.restriction_sources()
 
   @type t :: %__MODULE__{}
 

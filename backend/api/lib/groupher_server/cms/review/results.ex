@@ -123,20 +123,38 @@ defmodule GroupherServer.CMS.Review.Results do
   end
 
   defp apply_restrictions(request, context, result) do
-    with {:ok, active} <- CMS.ReviewBlocks.active_for(context.lifecycle, context.scope_key),
-         {:ok, :pass} <- end_automatic_restrictions(request, context, active),
-         {:ok, :pass} <- maybe_apply_restriction(request, context, result) do
+    if shared_comment_community_request?(request) do
       {:ok, :pass}
+    else
+      with {:ok, active} <- CMS.ReviewBlocks.active_for(context.lifecycle, context.scope_key),
+           {:ok, :pass} <- end_automatic_restrictions(request, context, active),
+           {:ok, :pass} <- maybe_apply_restriction(request, context, result) do
+        {:ok, :pass}
+      end
     end
   end
+
+  defp shared_comment_community_request?(%ArtimentReview{
+         target_type: :comment,
+         community_id: community_id,
+         comment_id: comment_id
+       })
+       when is_integer(community_id) do
+    case Repo.get(CMS.Model.Comment, comment_id) do
+      %CMS.Model.Comment{thread: thread} when thread in [:post, :blog, :changelog] -> true
+      _ -> false
+    end
+  end
+
+  defp shared_comment_community_request?(_request), do: false
 
   defp end_automatic_restrictions(request, context, active) do
     ids =
       active
-      |> Enum.reject(&(&1.source == :human))
       |> Enum.filter(fn block ->
-        context.type != :comment or context.target.thread == :doc or
-          block.artiment_review_id == request.id
+        block.type in CMS.Review.Const.ai_clearable_restriction_types() and
+          block.source == :request and
+          (block.artiment_review_id == request.id or outdated_request?(block))
       end)
       |> Enum.map(& &1.id)
 
@@ -153,18 +171,27 @@ defmodule GroupherServer.CMS.Review.Results do
     end
   end
 
+  defp outdated_request?(%{artiment_review_id: id}) when is_binary(id) do
+    case Repo.get(ArtimentReview, id) do
+      %ArtimentReview{outdated_at: outdated_at} when not is_nil(outdated_at) -> true
+      _ -> false
+    end
+  end
+
+  defp outdated_request?(_block), do: false
+
   defp maybe_apply_restriction(request, context, %{"status" => "suspect"}) do
-    restriction(request, context, :ai_suspect)
+    restriction(request, context, :ai_suspect_hold)
   end
 
   defp maybe_apply_restriction(request, context, %{"status" => "uncertain"}) do
-    restriction(request, context, :awaiting_human)
+    restriction(request, context, :human_review_hold)
   end
 
   defp maybe_apply_restriction(request, context, %{"status" => "clear"}) do
     if request.policy_snapshot["review_mode"] == "human_first" and
          request.policy_snapshot["trigger"] in ["publish", "binding"] do
-      restriction(request, context, :awaiting_human)
+      restriction(request, context, :human_review_hold)
     else
       {:ok, :pass}
     end

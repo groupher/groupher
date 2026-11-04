@@ -869,11 +869,10 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     |> Repo.insert()
   end
 
-  defp insert_lifecycle(%Article{} = article, community, _opts) do
+  defp insert_lifecycle(%Article{} = article, _community, _opts) do
     %ArticleLifecycle{}
     |> ArticleLifecycle.changeset(%{
       article_id: article.id,
-      community_id: community.id,
       thread: article.thread,
       state: :draft,
       version: 1,

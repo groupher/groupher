@@ -104,7 +104,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
       {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
     end)
 
-    ORM.find(Comment, comment.id)
+    find_with_request_context(comment)
   end
 
   defp seed_upvotes(%Comment{} = comment, _) do
@@ -115,7 +115,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
     with {:ok, user} <- db_insert(:user),
          emotion <- Enum.random(@comment_emotions),
          {:ok, _} <- CMS.Interactions.emotion(comment, emotion, user, Ecto.UUID.generate()),
-         {:ok, comment} <- ORM.find(Comment, comment.id),
+         {:ok, comment} <- find_with_request_context(comment),
          emotions <- randomize_emotions(comment.emotions) do
       ORM.update_embed(comment, :emotions, emotions)
     end
@@ -151,7 +151,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
   defp create_reply(comment, text, user) do
     body = mock_comment(text)
-    CMS.Comments.reply_comment(comment.id, body, user, Ecto.UUID.generate())
+    CMS.Comments.reply_comment(comment, body, user, Ecto.UUID.generate())
   end
 
   defp create_top_comment(community, thread, article, user, floor) do
@@ -160,6 +160,12 @@ defmodule GroupherServer.CMS.Seeds.Comments do
     with {:ok, %{inner_id: inner_id}} <-
            CMS.Articles.Bindings.get(%{article_id: article.id}, community) do
       CMS.Comments.create_comment(community, thread, inner_id, body, user, Ecto.UUID.generate())
+    end
+  end
+
+  defp find_with_request_context(%Comment{} = comment) do
+    with {:ok, reloaded} <- ORM.find(Comment, comment.id) do
+      {:ok, Map.put(reloaded, :request_community_slug, comment.request_community_slug)}
     end
   end
 end

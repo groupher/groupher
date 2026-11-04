@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Tickets.PostVisibility do
+defmodule GroupherServer.CMS.Tickets.SourceVisibility do
   @moduledoc """
   Reconciles Ticket publication eligibility and cache effects when a linked Post
   or its Community changes public readability.
@@ -18,65 +18,56 @@ defmodule GroupherServer.CMS.Tickets.PostVisibility do
   alias CMS.Tickets.{Persist, Model.Source, PublicPosts}
 
   @doc "Reconciles all User Tickets linked to a Post after its visibility changes."
-  def reconcile_in_transaction(
-        %Community{} = community,
+  def update_in_transaction(
         post_id,
+        %Community{} = community,
         actor,
-        operation_ref,
-        visibility_cause
+        visibility_cause,
+        operation_ref
       )
-      when is_binary(post_id) and is_binary(operation_ref) and is_binary(visibility_cause) do
+      when is_binary(post_id) and is_atom(visibility_cause) and is_binary(operation_ref) do
+    cause = CMS.Tickets.Const.cause_value(visibility_cause)
+
     with true <- Repo.in_transaction?(),
-         {:ok, public?} <- PublicPosts.public?(community.id, post_id) do
-      if public? do
-        Persist.invalidate_cache_linked_to_post(
-          community,
-          post_id,
-          operation_ref,
-          "ticket_post_visibility:#{visibility_cause}:#{post_id}"
-        )
-      else
-        Persist.hold_linked_to_post(community, post_id, actor, operation_ref, visibility_cause)
-      end
+         {:ok, public?} <- PublicPosts.public?(community.id, post_id),
+         {:ok, :pass} <-
+           recheck_visibility(public?, post_id, community, actor, cause, operation_ref) do
+      {:ok, :pass}
     else
       false -> {:error, CMS.ErrorCat.review_transition_requires_transaction()}
       {:error, _reason} = error -> error
     end
   end
 
-  def reconcile_in_transaction(
-        _community,
+  def update_in_transaction(
         _post_id,
+        _community,
         _actor,
-        _operation_ref,
-        _visibility_cause
+        _visibility_cause,
+        _operation_ref
       ) do
     {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
   end
 
   @doc "Reconciles every Community binding after a global Post visibility change."
-  def reconcile_all_in_transaction(post_id, actor, operation_ref, cause) do
-    communities =
-      Repo.all(
-        from(binding in ArticleBinding,
-          join: community in Community,
-          on: community.id == binding.community_id,
-          where: binding.article_id == ^post_id,
-          order_by: community.id,
-          select: community
-        )
-      )
+  def update_all_in_transaction(post_id, actor, visibility_cause, operation_ref)
+      when is_binary(post_id) and is_atom(visibility_cause) and is_binary(operation_ref) do
+    with true <- Repo.in_transaction?() do
+      communities = linked_to(post_id)
 
-    Enum.reduce_while(communities, {:ok, :pass}, fn community, _ ->
-      case reconcile_in_transaction(community, post_id, actor, operation_ref, cause) do
-        {:ok, _} -> {:cont, {:ok, :pass}}
-        {:error, _} = error -> {:halt, error}
-      end
-    end)
+      Enum.reduce_while(communities, {:ok, :pass}, fn community, _ ->
+        case update_in_transaction(post_id, community, actor, visibility_cause, operation_ref) do
+          {:ok, _} -> {:cont, {:ok, :pass}}
+          {:error, _} = error -> {:halt, error}
+        end
+      end)
+    else
+      false -> {:error, CMS.ErrorCat.review_transition_requires_transaction()}
+    end
   end
 
   @doc "Reconciles linked Tickets after the Community public-readability boundary changes."
-  def reconcile_community_in_transaction(%Community{} = community, actor, operation_ref)
+  def update_community_in_transaction(%Community{} = community, actor, operation_ref)
       when is_binary(operation_ref) do
     with true <- Repo.in_transaction?() do
       post_ids =
@@ -100,12 +91,12 @@ defmodule GroupherServer.CMS.Tickets.PostVisibility do
         |> Repo.all()
 
       Enum.reduce_while(locked_post_ids, {:ok, :pass}, fn post_id, {:ok, :pass} ->
-        case reconcile_in_transaction(
-               community,
+        case update_in_transaction(
                post_id,
+               community,
                actor,
-               operation_ref,
-               "community_visibility"
+               :community_visibility,
+               operation_ref
              ) do
           {:ok, _result} -> {:cont, {:ok, :pass}}
           {:error, reason} -> {:halt, {:error, reason}}
@@ -116,12 +107,12 @@ defmodule GroupherServer.CMS.Tickets.PostVisibility do
     end
   end
 
-  def reconcile_community_in_transaction(_community, _actor, _operation_ref) do
+  def update_community_in_transaction(_community, _actor, _operation_ref) do
     {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
   end
 
   @doc "Invalidates Ticket and Post cache tags after a newly selected Post revision."
-  def invalidate_linked_post_cache_in_transaction(post_id, identity, effect_key)
+  def revalidate_cache_in_transaction(post_id, identity, effect_key)
       when is_binary(post_id) and is_tuple(identity) and is_binary(effect_key) do
     with true <- Repo.in_transaction?() do
       community_ids =
@@ -157,7 +148,39 @@ defmodule GroupherServer.CMS.Tickets.PostVisibility do
     end
   end
 
-  def invalidate_linked_post_cache_in_transaction(_post_id, _identity, _effect_key) do
+  def revalidate_cache_in_transaction(_post_id, _identity, _effect_key) do
     {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
+  end
+
+  defp linked_to(post_id) do
+    Repo.all(
+      from(binding in ArticleBinding,
+        join: community in Community,
+        on: community.id == binding.community_id,
+        where: binding.article_id == ^post_id,
+        order_by: community.id,
+        select: community
+      )
+    )
+  end
+
+  defp recheck_visibility(true, post_id, community, _actor, cause, operation_ref) do
+    cache_revalidate(
+      community,
+      post_id,
+      operation_ref,
+      "ticket_post_visibility:#{cause}:#{post_id}"
+    )
+  end
+
+  defp recheck_visibility(false, post_id, community, actor, cause, operation_ref) do
+    Persist.hold_linked_to_post(community, post_id, actor, operation_ref, cause)
+  end
+
+  defp cache_revalidate(community, post_id, operation_ref, effect_key) do
+    case Persist.invalidate_cache_linked_to_post(community, post_id, operation_ref, effect_key) do
+      {:ok, _result} -> {:ok, :pass}
+      {:error, _reason} = error -> error
+    end
   end
 end

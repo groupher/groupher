@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ProjectionTest do
   end
 
   test "article interactions reject archived targets and keep existing facts unchanged" do
-    {community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
+    {_community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
     {:ok, other_user} = db_insert(:user)
 
     assert {:ok, _} = CMS.Interactions.upvote(post, user, Ecto.UUID.generate())
@@ -73,7 +73,6 @@ defmodule GroupherServer.Test.CMS.Interactions.ProjectionTest do
     assert {:ok, _} = CMS.Interactions.collect(post, user, Ecto.UUID.generate())
 
     Repo.get_by!(ArticleLifecycle,
-      community_id: community.id,
       thread: :post,
       article_id: post.id
     )

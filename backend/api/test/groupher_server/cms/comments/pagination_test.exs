@@ -175,7 +175,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
       Enum.map(1..3, fn _ ->
         {:ok, reply} =
           CMS.Comments.reply_comment(
-            root.id,
+            root,
             mock_comment("paged reply"),
             user,
             Ecto.UUID.generate()
@@ -236,7 +236,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
 
         {:ok, reply} =
           CMS.Comments.reply_comment(
-            parent.id,
+            parent,
             mock_comment("reply #{n}"),
             user,
             Ecto.UUID.generate()
@@ -267,7 +267,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
     second = create_root(community, article, user)
 
     {:ok, reply} =
-      CMS.Comments.reply_comment(first.id, mock_comment("nested"), user, Ecto.UUID.generate())
+      CMS.Comments.reply_comment(first, mock_comment("nested"), user, Ecto.UUID.generate())
 
     Repo.update_all(from(c in Comment, where: c.id in ^[first.id, second.id, reply.id]),
       set: [inserted_at: first.inserted_at]
@@ -308,7 +308,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
 
     for _ <- 1..2 do
       {:ok, _} =
-        CMS.Comments.reply_comment(first.id, mock_comment("reply"), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(first, mock_comment("reply"), user, Ecto.UUID.generate())
     end
 
     {:ok, %{page_info: %{end_cursor: position}}} =
@@ -349,10 +349,10 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
     root = create_root(community, article, user)
 
     {:ok, hidden} =
-      CMS.Comments.reply_comment(root.id, mock_comment("hidden"), user, Ecto.UUID.generate())
+      CMS.Comments.reply_comment(root, mock_comment("hidden"), user, Ecto.UUID.generate())
 
     {:ok, visible} =
-      CMS.Comments.reply_comment(hidden.id, mock_comment("visible"), user, Ecto.UUID.generate())
+      CMS.Comments.reply_comment(hidden, mock_comment("visible"), user, Ecto.UUID.generate())
 
     Repo.update_all(from(c in Comment, where: c.id == ^hidden.id), set: [is_folded: true])
 
@@ -377,7 +377,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
       root = create_root(community, article, user)
 
       {:ok, _} =
-        CMS.Comments.reply_comment(root.id, mock_comment("preview"), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(root, mock_comment("preview"), user, Ecto.UUID.generate())
     end
 
     # Warm configuration/snapshot caches so this measures collection growth rather than cache misses.

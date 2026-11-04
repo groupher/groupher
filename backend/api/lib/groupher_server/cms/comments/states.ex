@@ -231,11 +231,14 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   defp record_pin_activity(%Comment{thread: :post} = comment, _article, action, user, opts) do
-    Effects.activity(comment, action,
-      actor: user,
-      operation_ref: Keyword.fetch!(opts, :operation_ref),
-      occurred_at: Keyword.get(opts, :occurred_at, DateTime.utc_now(:second))
-    )
+    with {:ok, community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      Effects.activity(comment, action,
+        actor: user,
+        community_id: community.id,
+        operation_ref: Keyword.fetch!(opts, :operation_ref),
+        occurred_at: Keyword.get(opts, :occurred_at, DateTime.utc_now(:second))
+      )
+    end
   end
 
   defp record_pin_activity(_comment, _article, _action, _user, _opts), do: {:ok, :skipped}

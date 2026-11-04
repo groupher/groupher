@@ -16,7 +16,8 @@ defmodule GroupherServer.CMS.Review.Notice do
     Author,
     Comment,
     CommentReviewBlock,
-    DocReviewBlock
+    DocReviewBlock,
+    DocBranch
   }
 
   @doc "Returns only the state that the target's author may see."
@@ -58,8 +59,14 @@ defmodule GroupherServer.CMS.Review.Notice do
       %Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
         {:ok, CommentReviewBlock, :comment_id, id, :all, nil}
 
-      %Comment{thread: :doc, origin_community_id: community_id} ->
-        {:ok, CommentReviewBlock, :comment_id, id, community_id, nil}
+      %Comment{thread: :doc, branch_id: branch_id} when is_integer(branch_id) ->
+        case Repo.get(DocBranch, branch_id) do
+          %DocBranch{community_id: community_id} ->
+            {:ok, CommentReviewBlock, :comment_id, id, community_id, branch_id}
+
+          _ ->
+            {:error, CMS.ErrorCat.invalid_review_block()}
+        end
 
       _ ->
         {:error, CMS.ErrorCat.invalid_review_block()}
@@ -116,13 +123,14 @@ defmodule GroupherServer.CMS.Review.Notice do
       :manual_hold in types ->
         %{status: "restricted", failure_code: nil}
 
-      :ai_suspect in types or :awaiting_human in types ->
+      :ai_suspect_hold in types or :human_review_hold in types or
+          :report_threshold_hold in types ->
         %{status: "waiting_human", failure_code: nil}
 
       failed ->
         %{status: "failed", failure_code: failure_code(failed)}
 
-      :awaiting_ai in types or Enum.any?(requests, &(&1.state in [:queued, :running])) ->
+      :ai_review_hold in types or Enum.any?(requests, &(&1.state in [:queued, :running])) ->
         %{status: "checking", failure_code: nil}
 
       true ->

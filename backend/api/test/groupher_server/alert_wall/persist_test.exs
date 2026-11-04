@@ -80,6 +80,32 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     assert AlertWall.active_report_count(item_id) == 0
   end
 
+  test "report threshold counts distinct reporters within one observed version" do
+    {:ok, first_reporter} = db_insert(:user)
+    {:ok, second_reporter} = db_insert(:user)
+    {:ok, third_reporter} = db_insert(:user)
+
+    submit = fn reporter, version ->
+      attrs = %{report_attrs(reporter.id) | observed_version: version}
+
+      assert {:ok, {:ok, report}} =
+               Repo.transaction(fn ->
+                 AlertWall.submit_report_in_transaction(attrs, Ecto.UUID.generate())
+               end)
+
+      report
+    end
+
+    first = submit.(first_reporter, 1)
+    same_version = submit.(second_reporter, 1)
+    new_version = submit.(third_reporter, 2)
+
+    assert first.item_id == same_version.item_id
+    assert first.item_id == new_version.item_id
+    assert AlertWall.Persist.active_reporter_count(first.item_id, 1) == 2
+    assert AlertWall.Persist.active_reporter_count(first.item_id, 2) == 1
+  end
+
   test "Comment report keeps reporting Community separate from platform decision scope" do
     {:ok, reporter} = db_insert(:user)
     {:ok, reporting_community} = db_insert(:community)

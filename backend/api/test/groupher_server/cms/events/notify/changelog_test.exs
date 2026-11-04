@@ -215,7 +215,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
         )
 
       {:ok, replied_comment} =
-        CMS.Comments.reply_comment(comment.id, mock_comment(), user3, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(comment, mock_comment(), user3, Ecto.UUID.generate())
 
       Events.emit(:notify_reply, %{reply_comment: replied_comment, from_user: user3})
 

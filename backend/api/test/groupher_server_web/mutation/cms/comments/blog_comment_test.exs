@@ -458,7 +458,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
 
       variables = %{comment: comment_path(community, blog, :blog, comment)}
       result = owner_conn |> gq_mutation(S.Comment.m(:undo_pin_comment), variables)
@@ -478,7 +478,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
       variables = %{comment: comment_path(community, blog, :blog, comment)}
 
       assert guest_conn

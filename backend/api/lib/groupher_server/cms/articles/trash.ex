@@ -177,7 +177,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
                  community,
                  actor,
                  Keyword.get(opts, :command_id) || trash_operation_ref(item),
-                 "post_restore"
+                 :post_restore
                ),
              {:ok, _} <- update_tag_stats(canonical, 1),
              {:ok, _} <- update_community_count(canonical, community),
@@ -209,7 +209,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
              community,
              actor,
              Keyword.get(opts, :command_id) || trash_operation_ref(item),
-             "post_restore"
+             :post_restore
            ),
          {:ok, _} <- update_tag_stats(canonical, 1),
          {:ok, _} <- update_community_count(canonical, community),
@@ -503,7 +503,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
              community,
              actor,
              Keyword.get(opts, :command_id) || action.hash_id,
-             "post_trash"
+             :post_trash
            ),
          {:ok, _} <- update_community_count(article, community),
          {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :trashed),
@@ -524,11 +524,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
          visibility_cause
        )
        when is_binary(command_id) do
-    CMS.Tickets.PostVisibility.reconcile_all_in_transaction(
+    CMS.Tickets.SourceVisibility.update_all_in_transaction(
       post_id,
       actor,
-      command_id,
-      visibility_cause
+      visibility_cause,
+      command_id
     )
   end
 

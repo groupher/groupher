@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Events.Notify do
   alias GroupherServer.{Accounts, CMS, Messaging, Repo}
   alias Accounts.Model.User
   alias CMS.{ErrorCat, Events.Event, FrontDesk}
-  alias CMS.Model.{ArticleBinding, Comment, Community}
+  alias CMS.Model.{ArticleBinding, Comment, Community, DocBranch}
 
   @behaviour CMS.Events.Handler
 
@@ -292,24 +292,28 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   defp parent_article_for_notification(%Comment{} = comment) do
     with {:ok, thread} <- FrontDesk.thread_of(comment) do
+      branch_id = comment.branch_id || -1
+
       candidates =
         from(binding in ArticleBinding,
           join: community in Community,
           on: community.id == binding.community_id,
+          left_join: branch in DocBranch,
+          on: branch.id == ^branch_id,
           where: binding.article_id == ^comment.article_id,
           order_by: [asc: binding.community_id],
-          select: {community.slug, community.id, binding.inner_id}
+          select: {community.slug, community.id, binding.inner_id, branch.community_id}
         )
         |> Repo.all()
-        |> Enum.filter(fn {_slug, community_id, _inner_id} ->
-          thread != :doc or comment.origin_community_id == community_id
+        |> Enum.filter(fn {_slug, community_id, _inner_id, branch_community_id} ->
+          thread != :doc or branch_community_id == community_id
         end)
-        |> Enum.sort_by(fn {slug, community_id, _inner_id} ->
+        |> Enum.sort_by(fn {slug, community_id, _inner_id, _branch_community_id} ->
           {slug != comment.request_community_slug, community_id}
         end)
 
       Enum.reduce_while(candidates, {:error, ErrorCat.custom(%{reason: :not_exist})}, fn
-        {slug, _community_id, inner_id}, _acc ->
+        {slug, _community_id, inner_id, _branch_community_id}, _acc ->
           case FrontDesk.article(%{community: slug, thread: thread, inner_id: inner_id}) do
             {:ok, _} = result -> {:halt, result}
             {:error, _} -> {:cont, {:error, ErrorCat.custom(%{reason: :not_exist})}}

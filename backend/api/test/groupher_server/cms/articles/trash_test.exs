@@ -133,7 +133,6 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
     refute Repo.get_by(ArticleLifecycle,
-             community_id: community.id,
              thread: :post,
              article_id: post.article_id
            )

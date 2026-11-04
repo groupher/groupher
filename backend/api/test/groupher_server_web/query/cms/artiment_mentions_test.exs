@@ -3,7 +3,10 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
   use GroupherServer.TestMate
 
+  import Ecto.Query
+
   alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.ReviewBot.Model.ReviewBotConfig
   alias CMS.ArtimentMentions
 
   @site_host ArtimentMentions.Config.site_host()
@@ -254,6 +257,54 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     encoded = Jason.encode!(page)
     refute String.contains?(encoded, article.id)
     refute String.contains?(encoded, blog.article_id)
+  end
+
+  test "public Map and Article Comments remain readable from Y after physically deleting X",
+       %{guest_conn: guest_conn, community: source_community, post: post, user: user} do
+    {:ok, destination} = mock_community(user)
+    article = Repo.get!(CMS.Model.Article, post.article_id)
+
+    assert {:ok, _binding} = CMS.Articles.BindingPersist.mirror(article, destination)
+
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               source_community,
+               :post,
+               article_inner_id(post, source_community),
+               mock_comment(),
+               user,
+               Ecto.UUID.generate()
+             )
+
+    Repo.delete_all(
+      from(config in ReviewBotConfig, where: config.community_id == ^source_community.id)
+    )
+
+    Repo.query!("DELETE FROM cms.artiment_reviews WHERE community_id = $1", [source_community.id])
+    Repo.delete!(source_community)
+
+    focus = %{type: "POST", article_inner_id: article_inner_id(post, destination)}
+
+    map =
+      gq_query(guest_conn, @map_query, %{
+        community: destination.slug,
+        focus: focus,
+        frontiers: [%{node: focus}],
+        first: 10
+      })
+
+    assert Enum.any?(map["nodes"], &(&1["articleInnerId"] == to_string(focus.article_inner_id)))
+
+    comments =
+      gq_query(guest_conn, @article_comments_query, %{
+        community: destination.slug,
+        focus: focus,
+        first: 10
+      })
+
+    assert [%{"commentInnerId" => comment_inner_id}] = comments["comments"]
+    assert comment_inner_id == to_string(comment.inner_id)
+    refute String.contains?(Jason.encode!(map), comment.id |> to_string())
   end
 
   test "map stays within the single-frontier SQL budget",

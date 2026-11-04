@@ -318,7 +318,10 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          {:ok, canonical_article} <- replay_article(article, community) do
       {:ok,
        %{
-         comment: Query.comment_with_reply_author(comment),
+         comment:
+           comment
+           |> Query.comment_with_reply_author()
+           |> Map.put(:request_community_slug, community.slug),
          article: canonical_article,
          community: community,
          command_id: command_id

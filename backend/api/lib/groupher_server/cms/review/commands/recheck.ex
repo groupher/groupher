@@ -156,7 +156,8 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
          type: :comment,
          target: comment,
          parent: article,
-         lifecycle: %CommentLifecycle{state: :visible}
+         lifecycle: %CommentLifecycle{state: :visible},
+         scope_key: scope_key
        }) do
     with %CommentBody{} = body <- Repo.get_by(CommentBody, comment_id: comment.id),
          %ArticlePublic{} = public <- Repo.get_by(ArticlePublic, article_id: article.id) do
@@ -164,7 +165,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
        %{
          title: public.title || "",
          body: body.plain_text || "",
-         images: CMS.Review.Media.comment_images(body.json, comment.origin_community_id)
+         images: CMS.Review.Media.comment_images(body.json, scope_community_id(scope_key))
        }}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
@@ -194,6 +195,15 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
     end
   end
+
+  defp scope_community_id("community:" <> value) do
+    case Integer.parse(value) do
+      {id, ""} when id > 0 -> id
+      _ -> nil
+    end
+  end
+
+  defp scope_community_id(_scope_key), do: nil
 
   defp current_configs(%{type: :article}, scope_key) do
     with {:ok, community_id} <- parse_scope(scope_key) do
@@ -273,7 +283,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
        command_id: command_id,
        target_type: target_type(data["target_type"]),
        target_id: data["target_id"],
-       action: "recheck",
+       action: :recheck,
        request_count: data["request_count"]
      }}
   end

@@ -186,7 +186,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
       |> limit(20),
       Comment
       |> CMS.Gate.scope(nil, :list, CommentContext.all_public())
-      |> where([comment], comment.origin_community_id == ^0)
+      |> where([gate_community: community], community.id == ^0)
       |> order_by([comment], desc: comment.inserted_at)
       |> limit(20)
     ]
@@ -230,7 +230,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
         Ecto.UUID.generate()
       )
 
-    assert comment.origin_community_id == community.id
+    assert comment.article_id == post.id
 
     assert {:ok, %{entries: articles}} =
              CMS.Articles.paged_published(

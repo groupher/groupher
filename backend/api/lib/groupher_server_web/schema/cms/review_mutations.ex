@@ -10,16 +10,21 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
   """
 
   use Helper.GqlSchemaSuite
+  import GroupherServerWeb.Schema.Helper.Fields, only: [enum_values: 1]
+  alias GroupherServer.CMS
+  require CMS
 
-  object :cms_review_command_result do
+  enum(:review_action, do: enum_values(CMS.review_result_action_values_ast()))
+
+  object :review_command_result do
     field(:command_id, non_null(:id))
     field(:target_type, non_null(:review_bot_subject_type))
     field(:target_id, non_null(:string))
-    field(:action, non_null(:string))
+    field(:action, non_null(:review_action))
   end
 
   object :cms_review_mutations do
-    field :recheck_article, non_null(:cms_review_command_result) do
+    field :recheck_article_v2, non_null(:review_command_result) do
       arg(:target, non_null(:cms_review_target_input))
       arg(:scope, non_null(:review_bot_scope_input))
       arg(:command_id, non_null(:id))
@@ -27,7 +32,7 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
       resolve(&R.CMS.Review.recheck_article/3)
     end
 
-    field :recheck_comment, non_null(:cms_review_command_result) do
+    field :recheck_comment_v2, non_null(:review_command_result) do
       arg(:target, non_null(:cms_review_target_input))
       arg(:scope, non_null(:review_bot_scope_input))
       arg(:command_id, non_null(:id))
@@ -35,63 +40,50 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
       resolve(&R.CMS.Review.recheck_comment/3)
     end
 
-    field :approve_article, non_null(:cms_review_command_result) do
+    field :recheck_doc_v2, non_null(:review_command_result) do
+      arg(:target, non_null(:cms_review_target_input))
+      arg(:scope, non_null(:review_bot_scope_input))
+      arg(:command_id, non_null(:id))
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.Review.recheck_doc/3)
+    end
+
+    field :approve_article_v2, non_null(:review_command_result) do
       arg(:target, non_null(:cms_review_target_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Review.decide_content/3)
     end
 
-    field :deny_article, non_null(:cms_review_command_result) do
+    field :reject_article_v2, non_null(:review_command_result) do
       arg(:target, non_null(:cms_review_target_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Review.decide_content/3)
     end
 
-    field :release_article, non_null(:cms_review_command_result) do
+    field :approve_comment_v2, non_null(:review_command_result) do
       arg(:target, non_null(:cms_review_target_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Review.decide_content/3)
     end
 
-    field :approve_comment, non_null(:cms_review_command_result) do
+    field :reject_comment_v2, non_null(:review_command_result) do
       arg(:target, non_null(:cms_review_target_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Review.decide_content/3)
     end
 
-    field :deny_comment, non_null(:cms_review_command_result) do
+    field :approve_doc_v2, non_null(:review_command_result) do
       arg(:target, non_null(:cms_review_target_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Review.decide_content/3)
     end
 
-    field :release_comment, non_null(:cms_review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
-      arg(:command_id, non_null(:id))
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.Review.decide_content/3)
-    end
-
-    field :approve_doc, non_null(:cms_review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
-      arg(:command_id, non_null(:id))
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.Review.decide_content/3)
-    end
-
-    field :deny_doc, non_null(:cms_review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
-      arg(:command_id, non_null(:id))
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.Review.decide_content/3)
-    end
-
-    field :release_doc, non_null(:cms_review_command_result) do
+    field :reject_doc_v2, non_null(:review_command_result) do
       arg(:target, non_null(:cms_review_target_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)

@@ -6,6 +6,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
   import GroupherServer.DataCase, only: [errors_on: 1]
 
   alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.ReviewBot.Model.ReviewBotConfig
   alias CMS.ArtimentMentions
   alias CMS.ArtimentMentions.GraphRevision
   alias CMS.ArtimentMentions.Opaque
@@ -266,17 +267,21 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
 
       assert {:ok, :done} = CMS.Articles.BindingPersist.unmirror(article, community)
 
-      {1, nil} =
-        Repo.update_all(
-          from(comment_row in CMS.Model.Comment, where: comment_row.id == ^comment.id),
-          set: [origin_community_id: nil]
-        )
-
       retained = Repo.get!(CMS.Model.Comment, comment.id)
-      assert retained.origin_community_id == nil
       assert {:error, _} = CMS.FrontDesk.article_of(retained)
+      assert {:error, _} = CMS.Comments.RequestCommunity.resolve(retained)
 
-      assert {:ok, resolved_community} = CMS.Comments.RequestCommunity.resolve(retained)
+      assert {:ok, visible} =
+               CMS.FrontDesk.comment(%{
+                 article: %{
+                   community: destination.slug,
+                   thread: :post,
+                   inner_id: article_inner_id(post, destination)
+                 },
+                 inner_id: comment.inner_id
+               })
+
+      assert {:ok, resolved_community} = CMS.Comments.RequestCommunity.resolve(visible)
       assert resolved_community.id == destination.id
 
       assert {:ok, %{entries: profile_comments}} =
@@ -361,6 +366,60 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
              }) == "/home/doc/42/doc"
     end
 
+    test "keeps Article lifecycle and shared Comments after the source Community is physically deleted",
+         ~m(community post user)a do
+      {:ok, destination} = mock_community(user)
+      article = Repo.get!(Article, post.article_id)
+      assert {:ok, _binding} = CMS.Articles.BindingPersist.mirror(article, destination)
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_body_bag(
+            plate_body([block("comment", [text("Survives source Community deletion")])])
+          ),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      lifecycle_before = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: post.article_id)
+
+      Repo.delete_all(
+        from(config in ReviewBotConfig, where: config.community_id == ^community.id)
+      )
+
+      Repo.query!("DELETE FROM cms.artiment_reviews WHERE community_id = $1", [community.id])
+
+      Repo.delete!(community)
+
+      assert Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: post.article_id).id ==
+               lifecycle_before.id
+
+      assert {:ok, public_article} =
+               CMS.FrontDesk.article(%{
+                 community: destination.slug,
+                 thread: :post,
+                 inner_id: article_inner_id(post, destination)
+               })
+
+      assert public_article.article_id == post.article_id
+
+      assert {:ok, public_comment} =
+               CMS.FrontDesk.comment(%{
+                 article: %{
+                   community: destination.slug,
+                   thread: :post,
+                   inner_id: article_inner_id(post, destination)
+                 },
+                 inner_id: comment.inner_id
+               })
+
+      assert public_comment.id == comment.id
+      assert public_comment.article_id == post.article_id
+    end
+
     test "resolves a shared Comment parent through the requested mirror binding",
          ~m(community post user)a do
       {:ok, destination} = mock_community(user)
@@ -418,7 +477,6 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
                )
 
       assert reply.reply_to_comment_id == comment.id
-      assert reply.origin_community_id == destination.id
 
       assert {:ok, reply_article} =
                CMS.FrontDesk.article(%{

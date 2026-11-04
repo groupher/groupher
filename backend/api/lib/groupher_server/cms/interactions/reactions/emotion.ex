@@ -144,7 +144,10 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   defp interaction_resource_type(_article), do: "article"
 
   defp allow_emotion(%Comment{} = comment, _info, emotion) do
-    Enable.emotion?(comment.community.slug, :comment, comment.thread, emotion)
+    case comment.request_community_slug do
+      slug when is_binary(slug) -> Enable.emotion?(slug, :comment, comment.thread, emotion)
+      _ -> {:error, CMS.Gate.ErrorCat.scope_context_missing()}
+    end
   end
 
   defp allow_emotion(_article, _info, emotion) when emotion in @reserved_article_emotions do

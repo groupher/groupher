@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Messaging.Mention do
 
       Repo.insert!(%ArticleReviewBlock{
         article_id: post.id,
-        type: :awaiting_human,
+        type: :human_review_hold,
         source_ref: "mention-test",
         source: :request,
         applied_at: DateTime.utc_now(:second)

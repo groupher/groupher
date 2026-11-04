@@ -120,6 +120,19 @@ defmodule GroupherServer.CMS do
   defdelegate validate_report_target_in_transaction(target),
     to: GroupherServer.CMS.Review
 
+  @doc "Applies the report threshold restriction from the current locked CMS target."
+  defdelegate apply_report_threshold_in_transaction(report),
+    to: GroupherServer.CMS.Review.Threshold,
+    as: :apply_report_in_transaction
+
+  @doc "Returns the closed CMS moderator decision action set."
+  def review_decision_actions, do: GroupherServer.CMS.Review.Const.decision_actions()
+
+  @doc "Expands the closed CMS review result action values for GraphQL enum declarations."
+  defmacro review_result_action_values_ast do
+    Macro.escape(GroupherServer.CMS.Review.Const.result_actions())
+  end
+
   @doc "Returns a safe review status for the author of a CMS target."
   defdelegate review_notice_for_author(target, actor),
     to: GroupherServer.CMS.Review,
@@ -2519,8 +2532,9 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.FrontDesk,
     as: :article_author
 
-  @doc "Delegates CMS.FrontDesk.article_of/1 through the CMS Context boundary."
-  defdelegate front_desk_article_of(arg1), to: GroupherServer.CMS.FrontDesk, as: :article_of
+  @doc "Delegates the deprecated legacy CMS.FrontDesk.article_of/1 API."
+  def front_desk_article_of(arg1),
+    do: apply(GroupherServer.CMS.FrontDesk, :article_of, [arg1])
 
   @doc "Delegates CMS.FrontDesk.thread_of/1 through the CMS Context boundary."
   defdelegate front_desk_thread_of(arg1), to: GroupherServer.CMS.FrontDesk, as: :thread_of

@@ -48,7 +48,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   alias GroupherServer.Activity.Model.TicketLog
 
   @doc "Reconciles every Ticket linked to a Post that became hidden."
-  def hold_linked_to_post(community, post_id, actor, command_id, visibility_cause \\ "post_trash")
+  def hold_linked_to_post(community, post_id, actor, command_id, visibility_cause)
       when is_binary(post_id) and is_binary(command_id) and is_binary(visibility_cause) do
     states =
       from(state in TicketState,
@@ -353,7 +353,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
     target_state =
       if state.type == :user and lifecycle.state == :published and
-           Enum.any?(active_types, &(&1 != :awaiting_ai)) do
+           Enum.any?(active_types, &(&1 != :ai_review_hold)) do
         :draft
       else
         lifecycle.state

@@ -189,12 +189,11 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
 
-
       {:ok, replied_comment_1} =
-        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(random_comment, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(random_comment, mock_comment(), user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{
@@ -250,10 +249,10 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
 
       {:ok, replied_comment_1} =
-        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(random_comment, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(random_comment, mock_comment(), user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{
@@ -309,10 +308,10 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         )
 
       {:ok, replied_comment_1} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(parent_comment, mock_comment(), user2, Ecto.UUID.generate())
 
       {:ok, replied_comment_2} =
-        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(parent_comment, mock_comment(), user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{
@@ -410,7 +409,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, pinned_comment} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
+      {:ok, pinned_comment} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
 
       Process.sleep(1000)
 
@@ -424,7 +423,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
+      {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
 
       variables = %{
         article: %{
@@ -612,10 +611,10 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         )
 
       {:ok, _reply_comment} =
-        CMS.Comments.reply_comment(comment.id, mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(comment, mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _reply_comment} =
-        CMS.Comments.reply_comment(comment.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(comment, mock_comment(), user2, Ecto.UUID.generate())
 
       Process.sleep(1000)
 
@@ -630,10 +629,10 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         )
 
       {:ok, _reply_comment} =
-        CMS.Comments.reply_comment(comment2.id, mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(comment2, mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _reply_comment} =
-        CMS.Comments.reply_comment(comment2.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(comment2, mock_comment(), user2, Ecto.UUID.generate())
 
       Process.sleep(1000)
 
@@ -648,10 +647,10 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         )
 
       {:ok, _reply_comment} =
-        CMS.Comments.reply_comment(comment3.id, mock_comment(), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(comment3, mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _reply_comment} =
-        CMS.Comments.reply_comment(comment3.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(comment3, mock_comment(), user2, Ecto.UUID.generate())
 
       variables = %{
         article: %{
@@ -1019,7 +1018,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       Enum.reduce(1..total_count, [], fn i, acc ->
         {:ok, reply_comment} =
           CMS.Comments.reply_comment(
-            parent_comment.id,
+            parent_comment,
             mock_comment("reply #{i}"),
             user2,
             Ecto.UUID.generate()
@@ -1030,7 +1029,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
 
       {:ok, author_reply_comment} =
         CMS.Comments.reply_comment(
-          parent_comment.id,
+          parent_comment,
           mock_comment("author reply"),
           author_user,
           Ecto.UUID.generate()

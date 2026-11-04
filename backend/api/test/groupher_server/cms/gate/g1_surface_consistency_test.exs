@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
       Repo.insert!(%ArticleReviewBlock{
         article_id: article.id,
         community_id: community.id,
-        type: :ai_suspect,
+        type: :ai_suspect_hold,
         source_ref: "test-rule",
         source: :request,
         applied_at: DateTime.utc_now(:second)
@@ -126,7 +126,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
     Repo.insert!(%CMS.Model.DocReviewBlock{
       article_id: article.id,
       branch_id: branch.id,
-      type: :ai_suspect,
+      type: :ai_suspect_hold,
       source_ref: "test-rule",
       source: :request,
       applied_at: DateTime.utc_now(:second)

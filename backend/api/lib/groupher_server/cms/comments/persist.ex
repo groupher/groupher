@@ -49,7 +49,6 @@ defmodule GroupherServer.CMS.Comments.Persist do
          {:ok, floor} <- Numbering.next_floor(stable_article, foreign_key) do
       attrs = %{
         author_id: user_id,
-        origin_community_id: community.id,
         emotions: @default_emotions,
         inner_id: inner_id,
         floor: floor,

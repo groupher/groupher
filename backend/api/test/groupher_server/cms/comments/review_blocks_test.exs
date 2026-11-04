@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
 
     {:ok, reply} =
       CMS.Comments.reply_comment(
-        parent.id,
+        parent,
         mock_comment("restricted reply"),
         reply_author,
         Ecto.UUID.generate()

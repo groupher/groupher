@@ -1075,27 +1075,23 @@ type RootMutationType {
   "cancel an unfinished import Job and discard its staged BodyBags"
   cancelDocContentImport(community: String!, jobRef: ID!): ContentImportJob!
 
-  recheckArticle(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): CmsReviewCommandResult!
+  recheckArticleV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
-  recheckComment(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): CmsReviewCommandResult!
+  recheckCommentV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
-  approveArticle(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  recheckDocV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
-  denyArticle(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  approveArticleV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  releaseArticle(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  rejectArticleV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  approveComment(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  approveCommentV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  denyComment(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  rejectCommentV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  releaseComment(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  approveDocV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  approveDoc(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
-
-  denyDoc(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
-
-  releaseDoc(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  rejectDocV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
   updateReviewBotConfig(input: UpdateReviewBotConfigInput!, commandId: ID!): ReviewBotConfig!
 
@@ -1796,11 +1792,17 @@ type PressSiteManifest {
   items: [PressRSSFeedItem!]!
 }
 
-type CmsReviewCommandResult {
+enum ReviewAction {
+  APPROVE
+  REJECT
+  RECHECK
+}
+
+type ReviewCommandResult {
   commandId: ID!
   targetType: ReviewBotSubjectType!
   targetId: String!
-  action: String!
+  action: ReviewAction!
 }
 
 input CmsReviewTargetInput {

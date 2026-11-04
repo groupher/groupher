@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.Review.Target do
     Comment,
     CommentBody,
     CommentLifecycle,
+    DocBranch,
     DocLifecycle,
     DocPublic
   }
@@ -267,11 +268,36 @@ defmodule GroupherServer.CMS.Review.Target do
 
   defp lock_comment_scope(_comment, "platform"), do: {:ok, :pass}
 
-  defp lock_comment_scope(%Comment{origin_community_id: community_id}, scope_key) do
-    if scope_key == "community:#{community_id}" do
+  defp lock_comment_scope(
+         %Comment{article_id: article_id, branch_id: branch_id} = comment,
+         "community:" <> value
+       ) do
+    with {community_id, ""} when community_id > 0 <- Integer.parse(value),
+         true <-
+           Repo.exists?(
+             from(binding in ArticleBinding,
+               where: binding.article_id == ^article_id and binding.community_id == ^community_id
+             )
+           ),
+         true <-
+           comment.thread != :doc or doc_branch_in_community?(branch_id, article_id, community_id) do
       {:ok, :pass}
     else
-      {:error, CMS.ErrorCat.invalid_review_block()}
+      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
     end
+  end
+
+  defp lock_comment_scope(_comment, _scope_key), do: {:error, CMS.ErrorCat.invalid_review_block()}
+
+  defp doc_branch_in_community?(branch_id, article_id, community_id) do
+    Repo.exists?(
+      from(branch in DocBranch,
+        join: lifecycle in DocLifecycle,
+        on: lifecycle.branch_id == branch.id,
+        where:
+          branch.id == ^branch_id and branch.community_id == ^community_id and
+            lifecycle.article_id == ^article_id
+      )
+    )
   end
 end

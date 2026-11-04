@@ -76,6 +76,32 @@ describe('review AI Worker', () => {
     })
   })
 
+  it('maps an uncertain decision to the judge response contract', async () => {
+    const { env } = makeEnv('review')
+    const response = await worker.fetch(request(input), env)
+
+    expect(await response.json()).toMatchObject({
+      status: 'uncertain',
+      susNotes: [],
+      coverage: { text: 'complete', image: 'complete' },
+    })
+  })
+
+  it('fails closed on malformed model output and provider exceptions', async () => {
+    const malformed = makeEnv()
+    malformed.run.mockResolvedValue({ answers: {} })
+    const malformedResponse = await worker.fetch(request(input), malformed.env)
+    expect(malformedResponse.status).toBe(503)
+    expect(await malformedResponse.json()).toEqual({
+      error: 'model_unavailable_or_invalid_response',
+    })
+
+    const unavailable = makeEnv()
+    unavailable.run.mockRejectedValue(new Error('provider timeout'))
+    const unavailableResponse = await worker.fetch(request(input), unavailable.env)
+    expect(unavailableResponse.status).toBe(503)
+  })
+
   it('fails closed when the request requires image review', async () => {
     const { env, run } = makeEnv()
     const response = await worker.fetch(
@@ -88,6 +114,15 @@ describe('review AI Worker', () => {
     )
 
     expect(response.status).toBe(422)
+    expect(run).not.toHaveBeenCalled()
+  })
+
+  it('rejects request fields outside the shared contract', async () => {
+    const { env, run } = makeEnv()
+    const response = await worker.fetch(request({ ...input, cmsTargetId: 'article-1' }), env)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: 'invalid_request' })
     expect(run).not.toHaveBeenCalled()
   })
 

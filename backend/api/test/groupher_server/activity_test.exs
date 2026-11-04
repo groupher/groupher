@@ -247,11 +247,12 @@ defmodule GroupherServer.Test.ActivityTest do
     comment = %Comment{
       thread: :post,
       article_id: post.article_id,
-      origin_community_id: community.id,
       inner_id: 42
     }
 
-    assert {:ok, log} = Activity.log(comment, :comment_pinned, actor: user)
+    assert {:ok, log} =
+             Activity.log(comment, :comment_pinned, actor: user, community_id: community.id)
+
     assert log.article_id == post.article_id
     assert log.subject_type == "comment"
     assert log.subject_ref == "42"

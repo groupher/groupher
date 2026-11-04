@@ -104,7 +104,9 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
 
     with {:ok, :pass} <- validate_current_target(attrs),
          {:ok, %UserReport{id: report_id}} <-
-           AlertWall.Persist.submit_report_in_transaction(attrs, command_id) do
+           AlertWall.Persist.submit_report_in_transaction(attrs, command_id),
+         %UserReport{} = report <- Repo.get(UserReport, report_id),
+         {:ok, :pass} <- CMS.apply_report_threshold_in_transaction(report) do
       {:ok, %Confirmation{data: %{"report_id" => report_id}}}
     end
   end

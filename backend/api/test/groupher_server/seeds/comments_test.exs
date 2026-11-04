@@ -21,6 +21,7 @@ defmodule GroupherServer.Test.Seeds.CommentsTest do
 
       [first | _] = comments
       {:ok, first} = ORM.find(Comment, first.id)
+      first = %{first | request_community_slug: community.slug}
       counts = CMS.Interactions.counts([first]) |> Map.fetch!({:comment, first.id})
 
       assert counts.upvotes_count > 0

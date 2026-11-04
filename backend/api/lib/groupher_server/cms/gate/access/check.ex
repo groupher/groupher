@@ -94,7 +94,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
                       Policy.comment(actor, action, comment, context),
                       context
                     ) do
-               {:ok, Map.put(context.comment, :community, context.community)}
+               {:ok,
+                context.comment
+                |> Map.put(:community, context.community)
+                |> Map.put(:request_community_slug, context.community.slug)}
              else
                %Decision{} = decision ->
                  {:error, decision}
@@ -191,6 +194,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
            ) do
       decision.context.comment
       |> Map.put(:community, decision.context.community)
+      |> Map.put(:request_community_slug, decision.context.community.slug)
       |> callback.()
       |> normalize_callback_result()
     else
@@ -343,7 +347,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     end
   end
 
-  defp parent_article(comment), do: FrontDesk.article_of(comment)
+  defp parent_article(_comment), do: {:error, ErrorCat.resource_not_found()}
 
   defp with_parent_lock(community, %Article{thread: :doc, id: article_id}, branch_id, fun)
        when is_integer(branch_id) do

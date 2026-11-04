@@ -40,6 +40,6 @@ defmodule GroupherServer.Test.CMS.Comments.Persist do
     {:ok, _} = CMS.Articles.lock_comments(post.id, actor, community: community)
 
     assert {:error, %{reason: :article_comments_locked}} =
-             CMS.Comments.reply_comment(parent.id, mock_comment(), actor, Ecto.UUID.generate())
+             CMS.Comments.reply_comment(parent, mock_comment(), actor, Ecto.UUID.generate())
   end
 end

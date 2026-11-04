@@ -176,7 +176,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     assert {:ok, _published} = CMS.Tickets.get_public(community, ticket.inner_id)
   end
 
-  test "Ticket awaiting_ai hides public reads, purges cache and suppresses queued notifications",
+  test "Ticket ai_review_hold hides public reads, purges cache and suppresses queued notifications",
        context do
     %{community: community, post: post, actor: actor, ticket: ticket} = context
     article = Repo.get!(Article, ticket.id)
@@ -224,7 +224,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                     {:ok, restriction} <-
                       CMS.Articles.Lifecycle.apply_review_block(lifecycle, %{
                         scope_key: "community:#{community.id}",
-                        type: :awaiting_ai,
+                        type: :ai_review_hold,
                         source_ref: "ticket-review:#{Ecto.UUID.generate()}",
                         source: :human,
                         actor: actor,
@@ -309,7 +309,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
            end) >= 2
   end
 
-  test "Ticket ReviewBlock other than awaiting_ai moves publication to Draft", context do
+  test "Ticket ReviewBlock other than ai_review_hold moves publication to Draft", context do
     %{community: community, actor: actor, ticket: ticket} = context
     article = Repo.get!(Article, ticket.id)
 
@@ -449,6 +449,48 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
 
     assert {:ok, public_ticket} = CMS.Tickets.get_public(community, ticket.inner_id)
     assert public_ticket.sources == []
+  end
+
+  test "report threshold hold moves a single-source Ticket to Draft", context do
+    %{community: community, post: post, ticket: ticket} = context
+    ticket_state = Repo.get_by!(TicketState, article_id: ticket.id)
+
+    for _ <- 1..3 do
+      {:ok, reporter} = db_insert(:user)
+
+      assert {:ok, _report} =
+               GroupherServer.AlertWall.Commands.SubmitReport.execute(
+                 %{
+                   owner: :cms,
+                   target_type: :article,
+                   target_id: post.id,
+                   community_id: community.id,
+                   observed_version: 1
+                 },
+                 :spam,
+                 "Please review this Post",
+                 reporter,
+                 Ecto.UUID.generate()
+               )
+    end
+
+    lifecycle = Repo.get_by!(ArticleLifecycle, article_id: ticket.id)
+    assert lifecycle.state == :draft
+
+    updated_ticket_state = Repo.get_by!(TicketState, article_id: ticket.id)
+    assert updated_ticket_state.workflow_version > ticket_state.workflow_version
+
+    assert %TicketLog{action: :moved_to_draft, metadata: metadata} =
+             Repo.one!(
+               from(log in TicketLog,
+                 where: log.article_id == ^ticket.id and log.action == :moved_to_draft,
+                 order_by: [desc: log.recorded_at],
+                 limit: 1
+               )
+             )
+
+    assert metadata["visibility_cause"] == "post_review_block"
+    assert Repo.exists?(from(event in Event, where: event.event == "ticket.cache_invalidation"))
   end
 
   test "TicketSource deletion requires the controlled database role", context do

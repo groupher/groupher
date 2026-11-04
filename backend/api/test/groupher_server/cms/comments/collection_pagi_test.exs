@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.CMS.Comments.CollectionPagi do
     %ArticleReviewBlock{}
     |> ArticleReviewBlock.changeset(%{
       article_id: hidden_article.id,
-      type: :awaiting_human,
+      type: :human_review_hold,
       source_ref: "profile-parent-restricted",
       source: :request,
       applied_at: DateTime.utc_now(:second)

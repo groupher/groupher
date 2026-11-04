@@ -9,6 +9,7 @@ import Config
 config :groupher_server, ecto_repos: [GroupherServer.Repo]
 config :groupher_server, env: config_env()
 config :groupher_server, :allow_test_service_auth, false
+config :groupher_server, :cms_review_report_threshold, 3
 
 config :groupher_server,
        :view_tracker_pepper,

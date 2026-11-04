@@ -383,7 +383,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
       when is_function(callback, 1) or is_function(callback, 2) do
     with {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, comment.origin_community_id) do
+         {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment) do
       transact_parent(community, article, comment.branch_id, fn ->
         Check.with_authorized(actor, action, {community, thread, article, comment}, callback)
       end)
@@ -570,7 +570,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     end
   end
 
-  defp parent_article(comment), do: FrontDesk.article_of(comment)
+  defp parent_article(_comment), do: {:error, ErrorCat.resource_not_found()}
 
   defp transact_parent(community, %Article{thread: :doc} = article, branch_id, fun)
        when is_integer(branch_id) do

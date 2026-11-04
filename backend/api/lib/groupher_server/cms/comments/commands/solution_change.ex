@@ -27,9 +27,11 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionChange do
           {:ok, Comment.t()} | {:error, term()}
   def execute(action, %Comment{} = comment, %User{} = actor, command_id)
       when action in @actions do
-    case action do
-      :accept_solution -> accept_pipeline(comment, actor, command_id)
-      :revoke_solution -> revoke_pipeline(comment, actor, command_id)
+    with {:ok, community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      case action do
+        :accept_solution -> accept_pipeline(comment, actor, command_id, community)
+        :revoke_solution -> revoke_pipeline(comment, actor, command_id, community)
+      end
     end
   end
 
@@ -46,9 +48,9 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionChange do
             target: :comment,
             params: []
 
-  receipt_pipeline accept_pipeline(comment, actor, command_id) do
+  receipt_pipeline accept_pipeline(comment, actor, command_id, community) do
     gate(fn candidate ->
-      CMS.Gate.check_comment_in_transaction(actor, :accept_solution, candidate)
+      CMS.Gate.check_comment_in_transaction(actor, :accept_solution, candidate, community)
     end)
 
     change(fn {canonical, post} ->
@@ -70,9 +72,9 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionChange do
             target: :comment,
             params: []
 
-  receipt_pipeline revoke_pipeline(comment, actor, command_id) do
+  receipt_pipeline revoke_pipeline(comment, actor, command_id, community) do
     gate(fn candidate ->
-      CMS.Gate.check_comment_in_transaction(actor, :revoke_solution, candidate)
+      CMS.Gate.check_comment_in_transaction(actor, :revoke_solution, candidate, community)
     end)
 
     change(fn {canonical, post} ->

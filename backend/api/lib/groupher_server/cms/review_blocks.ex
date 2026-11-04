@@ -115,7 +115,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
           from(restriction in ArticleReviewBlock,
             where:
               restriction.artiment_review_id == ^artiment_review_id and
-                restriction.type == :ai_suspect and
+                restriction.type == :ai_suspect_hold and
                 is_nil(restriction.item_id)
           ),
           set: [item_id: item_id]
@@ -126,7 +126,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
           from(restriction in CommentReviewBlock,
             where:
               restriction.artiment_review_id == ^artiment_review_id and
-                restriction.type == :ai_suspect and
+                restriction.type == :ai_suspect_hold and
                 is_nil(restriction.item_id)
           ),
           set: [item_id: item_id]
@@ -137,7 +137,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
           from(restriction in DocReviewBlock,
             where:
               restriction.artiment_review_id == ^artiment_review_id and
-                restriction.type == :ai_suspect and
+                restriction.type == :ai_suspect_hold and
                 is_nil(restriction.item_id)
           ),
           set: [item_id: item_id]
@@ -265,9 +265,13 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   defp validate_scope(%CommentLifecycle{comment_id: comment_id}, %{community_id: community_id}) do
     if Repo.exists?(
          from(comment in Comment,
+           join: branch in DocBranch,
+           on: branch.id == comment.branch_id,
+           join: lifecycle in DocLifecycle,
+           on: lifecycle.article_id == comment.article_id and lifecycle.branch_id == branch.id,
            where:
              comment.id == ^comment_id and comment.thread == :doc and
-               comment.origin_community_id == ^community_id
+               branch.community_id == ^community_id
          )
        ) do
       {:ok, :pass}

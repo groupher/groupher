@@ -13,17 +13,26 @@ defmodule GroupherServer.CMS.Review.Decisions do
   alias GroupherServer.{AlertWall, CMS, Repo}
   alias CMS.ArtimentMentions.GraphRevision
   alias CMS.Model.Author
+  alias CMS.Review.Const
 
-  @actions [:approve, :deny, :release]
+  @actions Const.decision_actions()
 
   @doc "Applies one human decision for a single CMS target scope in the caller transaction."
   @spec apply_in_transaction(String.t(), String.t(), atom(), struct(), Ecto.UUID.t()) ::
           {:ok, :pass} | {:error, term()}
   def apply_in_transaction(target_key, scope_key, action, actor, operation_ref)
-      when is_binary(target_key) and is_binary(scope_key) and action in @actions and
-             is_binary(operation_ref) do
+      when is_binary(target_key) and is_binary(scope_key) and is_binary(operation_ref) do
+    if action in @actions do
+      do_apply_in_transaction(target_key, scope_key, action, actor, operation_ref)
+    else
+      {:error, CMS.ErrorCat.invalid_review_block()}
+    end
+  end
+
+  defp do_apply_in_transaction(target_key, scope_key, action, actor, operation_ref) do
     with true <- Repo.in_transaction?(),
          {:ok, context} <- CMS.Review.load_for_update(target_key, scope_key),
+         {:ok, :pass} <- require_platform_scope_for_shared_comment(context, scope_key),
          {:ok, :pass} <- reject_author_review(context, actor),
          attrs <- request_scope(context),
          {:ok, requests} <- CMS.Review.Requests.current_for_scope_in_transaction(attrs),
@@ -40,9 +49,15 @@ defmodule GroupherServer.CMS.Review.Decisions do
     end
   end
 
-  def apply_in_transaction(_target_key, _scope_key, _action, _actor, _operation_ref) do
-    {:error, CMS.ErrorCat.invalid_review_block()}
+  defp require_platform_scope_for_shared_comment(
+         %{type: :comment, target: %{thread: thread}},
+         scope_key
+       )
+       when thread in [:post, :blog, :changelog] and scope_key != "platform" do
+    {:error, CMS.Passport.ErrorCat.permission_denied()}
   end
+
+  defp require_platform_scope_for_shared_comment(_context, _scope_key), do: {:ok, :pass}
 
   defp reject_author_review(%{type: :comment, target: %{author_id: author_id}}, %{id: author_id}) do
     {:error, CMS.Passport.ErrorCat.permission_denied()}
@@ -61,10 +76,10 @@ defmodule GroupherServer.CMS.Review.Decisions do
 
   defp reject_author_review(_context, _actor), do: {:ok, :pass}
 
-  defp ensure_ai_finished(_requests, action) when action in [:deny, :release], do: {:ok, :pass}
+  defp ensure_ai_finished(_requests, :reject), do: {:ok, :pass}
 
   defp ensure_ai_finished(requests, :approve) do
-    if Enum.any?(requests, &(&1.state in [:queued, :running, :failed])) do
+    if Enum.any?(requests, &(&1.state in [:queued, :running])) do
       {:error, CMS.ErrorCat.invalid_review_block()}
     else
       {:ok, :pass}
@@ -90,7 +105,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
     with {:ok, active} <-
            CMS.ReviewBlocks.active_for(context.lifecycle, restriction_scope(context)),
          {:ok, :pass} <- end_blocks(context, active, action, operation_ref),
-         {:ok, :pass} <- maybe_deny(context, requests, action, actor, operation_ref) do
+         {:ok, :pass} <- maybe_reject(context, requests, action, actor, operation_ref) do
       {:ok, :pass}
     end
   end
@@ -99,9 +114,11 @@ defmodule GroupherServer.CMS.Review.Decisions do
     rows =
       Enum.filter(active, fn restriction ->
         case action do
-          :approve -> restriction.type in [:awaiting_ai, :awaiting_human, :ai_suspect]
-          :deny -> restriction.type in [:awaiting_ai, :awaiting_human, :ai_suspect]
-          :release -> true
+          :approve ->
+            restriction.type in Const.restriction_types()
+
+          :reject ->
+            restriction.type in Const.automated_restriction_types()
         end
       end)
 
@@ -114,12 +131,12 @@ defmodule GroupherServer.CMS.Review.Decisions do
     )
   end
 
-  defp maybe_deny(_context, _requests, action, _actor, _operation_ref)
-       when action != :deny do
+  defp maybe_reject(_context, _requests, action, _actor, _operation_ref)
+       when action != :reject do
     {:ok, :pass}
   end
 
-  defp maybe_deny(context, requests, :deny, actor, operation_ref) do
+  defp maybe_reject(context, requests, :reject, actor, operation_ref) do
     case CMS.Review.Restrictions.apply(context.lifecycle, %{
            scope_key: restriction_scope(context),
            type: :manual_hold,
@@ -136,7 +153,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
   end
 
   defp update_wall(attrs, action, operation_ref) do
-    resolution = if action == :deny, do: "human_confirmed_violation", else: "human_cleared"
+    resolution = if action == :reject, do: "human_confirmed_violation", else: "human_cleared"
     AlertWall.resolve_target_in_transaction(wall_target(attrs), resolution, operation_ref)
   end
 

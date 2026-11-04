@@ -12,9 +12,11 @@ defmodule GroupherServer.AI.OpinionOutput do
   @enforce_keys [:status, :sus_notes, :coverage, :summary]
   defstruct [:status, :sus_notes, :coverage, :summary, :provider_request_id]
 
-  @statuses ~w(clear suspect uncertain)a
-  @note_types ~w(spam harassment illegal_content impersonation other)
-  @coverage_values ~w(complete unsupported failed)a
+  alias GroupherServer.AI.Const
+
+  @statuses Const.statuses()
+  @note_types Const.note_types()
+  @coverage_values Const.coverages()
 
   @type t :: %__MODULE__{
           status: :clear | :suspect | :uncertain,

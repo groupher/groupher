@@ -297,7 +297,21 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
   end
 
   defp same_comment_identity?(canonical, input, article, community, thread) do
-    (thread != :doc or canonical.origin_community_id == community.id) and
+    doc_branch =
+      if thread == :doc do
+        Queries.doc_branch(community.id, canonical.branch_id)
+      else
+        nil
+      end
+
+    branch_matches? =
+      thread != :doc or
+        match?(
+          %DocBranch{community_id: community_id} when community_id == community.id,
+          doc_branch
+        )
+
+    branch_matches? and
       canonical.thread == thread and
       canonical.article_id == article.id and canonical.branch_id == input.branch_id and
       canonical.id == input.id

@@ -122,5 +122,8 @@ jobs:
             groupher-postgres:15-roaringbitmap
           until docker exec groupher-postgres pg_isready -U postgres -d groupher_server_test; do sleep 1; done
 
+      - name: Verify migrations from a fresh database
+        run: bash scripts/fresh_db_migrations.sh
+
       - name: Run tests
         run: mix test --exclude skip_ci --max-cases 8 --max-failures 1

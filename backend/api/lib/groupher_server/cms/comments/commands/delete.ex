@@ -108,15 +108,10 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
     with {:ok, _} <- revoke_if_current(article, comment, actor, operation_ref, occurred_at),
          {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),
          {:ok, :pass} <-
-           CMS.Review.Requests.supersede_scope_in_transaction(
-             %{type: :comment, comment_id: comment.id, community_id: nil},
-             operation_ref
-           ),
-         {:ok, :pass} <-
-           CMS.Review.Requests.supersede_scope_in_transaction(
-             %{type: :comment, comment_id: comment.id, community_id: comment.origin_community_id},
-             operation_ref
-           ),
+           CMS.Review.Requests.mark_content_changed_in_transaction(%{
+             type: :comment,
+             comment_id: comment.id
+           }),
          {:ok, :pass} <-
            GroupherServer.AlertWall.mark_target_deleted_in_transaction(
              :comment,

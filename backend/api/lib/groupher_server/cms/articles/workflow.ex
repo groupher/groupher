@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.Articles.Workflow do
          %{article: %Article{thread: :post, id: post_id}},
          identity
        ) do
-    CMS.Tickets.PostVisibility.invalidate_linked_post_cache_in_transaction(
+    CMS.Tickets.SourceVisibility.revalidate_cache_in_transaction(
       post_id,
       identity,
       "post_public_revision_changed:#{post_id}"

@@ -8,8 +8,6 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
   alias CMS.Events
   alias CMS.Model.{Article, Comment}
 
-  import Ecto.Query
-
   setup do
     {community, post, _, user} = mock_article(:post)
     {:ok, user2} = db_insert(:user)
@@ -29,20 +27,14 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
   end
 
   describe "[upvote notify]" do
-    test "shared Comment notification uses a current binding after origin is unavailable",
+    test "shared Comment notification uses the event's explicit request binding",
          ~m(user2 community post comment)a do
       {:ok, destination} = mock_community(user2)
       article = Repo.get!(Article, post.article_id)
       assert {:ok, _} = CMS.Articles.BindingPersist.mirror(article, destination)
       assert {:ok, :done} = CMS.Articles.BindingPersist.unmirror(article, community)
 
-      {1, nil} =
-        Repo.update_all(
-          from(row in Comment, where: row.id == ^comment.id),
-          set: [origin_community_id: nil]
-        )
-
-      retained = Repo.get!(Comment, comment.id)
+      retained = %{Repo.get!(Comment, comment.id) | request_community_slug: destination.slug}
       assert {:ok, _} = Events.emit(:notify_upvote, %{target: retained, from_user: user2})
 
       {:ok, notifications} =
@@ -259,8 +251,14 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, replied_comment} =
-        CMS.Comments.reply_comment(comment.id, mock_comment(), user3, Ecto.UUID.generate())
+      {:ok, %{comment: replied_comment}} =
+        CMS.Comments.reply_comment_result(
+          comment,
+          mock_comment(),
+          user3,
+          Ecto.UUID.generate(),
+          community.slug
+        )
 
       Events.emit(:notify_reply, %{reply_comment: replied_comment, from_user: user3})
 

@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Communities.Effects do
     else
       with {:ok, community} <- load_community(new_lifecycle.community_id),
            {:ok, :pass} <-
-             CMS.Tickets.PostVisibility.reconcile_community_in_transaction(
+             CMS.Tickets.SourceVisibility.update_community_in_transaction(
                community,
                nil,
                operation_ref

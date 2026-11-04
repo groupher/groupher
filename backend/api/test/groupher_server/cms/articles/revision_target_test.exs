@@ -20,6 +20,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     ArticleLifecycle,
     ArticlePublic,
     ArticleRevision,
+    Comment,
     ArtimentReview,
     DocBranch,
     DocBranchState,
@@ -29,6 +30,50 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     PostRevision,
     TicketState
   }
+
+  test "ArticleLifecycle is keyed by Article ID and has no Community column" do
+    {_community, article_view, _attrs, _author} = mock_article(:post)
+    article_id = article_view.article_id
+
+    assert :community_id not in ArticleLifecycle.__schema__(:fields)
+    assert :origin_community_id not in Comment.__schema__(:fields)
+
+    assert [[false]] =
+             Repo.query!("""
+             SELECT EXISTS (
+               SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'cms'
+                 AND table_name = 'article_lifecycles'
+                 AND column_name = 'community_id'
+             )
+             """).rows
+
+    assert [[false]] =
+             Repo.query!("""
+             SELECT EXISTS (
+               SELECT 1 FROM information_schema.columns
+               WHERE table_schema = 'cms'
+                 AND table_name = 'comments'
+                 AND column_name = 'origin_community_id'
+             )
+             """).rows
+
+    assert %ArticleLifecycle{article_id: ^article_id} =
+             Repo.get_by!(ArticleLifecycle, article_id: article_id)
+
+    assert {:error, changeset} =
+             %ArticleLifecycle{}
+             |> ArticleLifecycle.changeset(%{
+               article_id: article_id,
+               thread: :post,
+               state: :draft,
+               version: 1,
+               changed_at: DateTime.utc_now(:second)
+             })
+             |> Repo.insert()
+
+    assert Keyword.has_key?(changeset.errors, :article_id)
+  end
 
   test "publish materialization keeps stable identity and reuses unchanged body snapshots" do
     {:ok, user} = db_insert(:user)
@@ -1117,7 +1162,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     Map.put(user, :cur_passport, Map.merge(%{"global" => global}, grants))
   end
 
-  defp insert_article(author_id, community_id) do
+  defp insert_article(author_id, _community_id) do
     with {:ok, article} <-
            %Article{}
            |> Article.changeset(%{author_id: author_id, thread: :post})
@@ -1126,7 +1171,6 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
            %ArticleLifecycle{}
            |> ArticleLifecycle.changeset(%{
              article_id: article.id,
-             community_id: community_id,
              thread: :post,
              state: :draft,
              version: 1,

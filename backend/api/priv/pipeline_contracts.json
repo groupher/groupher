@@ -470,7 +470,7 @@
     },
     {
       "access": "user",
-      "arity": 3,
+      "arity": 4,
       "confirmation": "GroupherServer.CMS.Comments.Commands.SolutionConfirmation",
       "module": "GroupherServer.CMS.Comments.Commands.SolutionChange",
       "name": "accept_pipeline",
@@ -482,7 +482,7 @@
     },
     {
       "access": "user",
-      "arity": 3,
+      "arity": 4,
       "confirmation": "GroupherServer.CMS.Comments.Commands.SolutionConfirmation",
       "module": "GroupherServer.CMS.Comments.Commands.SolutionChange",
       "name": "revoke_pipeline",
@@ -494,7 +494,7 @@
     },
     {
       "access": "user",
-      "arity": 2,
+      "arity": 3,
       "module": "GroupherServer.CMS.Comments.Commands.StateChange",
       "name": "fold_pipeline",
       "operation": "comment_fold",
@@ -505,7 +505,7 @@
     },
     {
       "access": "user",
-      "arity": 3,
+      "arity": 4,
       "confirmation": "GroupherServer.CMS.Comments.Commands.StateConfirmation",
       "module": "GroupherServer.CMS.Comments.Commands.StateChange",
       "name": "pin_pipeline",
@@ -517,7 +517,7 @@
     },
     {
       "access": "user",
-      "arity": 2,
+      "arity": 3,
       "module": "GroupherServer.CMS.Comments.Commands.StateChange",
       "name": "unfold_pipeline",
       "operation": "comment_unfold",
@@ -528,7 +528,7 @@
     },
     {
       "access": "user",
-      "arity": 3,
+      "arity": 4,
       "confirmation": "GroupherServer.CMS.Comments.Commands.StateConfirmation",
       "module": "GroupherServer.CMS.Comments.Commands.StateChange",
       "name": "unpin_pipeline",
