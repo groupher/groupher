@@ -1,6 +1,6 @@
 # 生产环境全新 Schema 与 Seed 验收手册
 
-> 状态：BLOCKED，执行前交付物尚未齐备；尚未执行。用户于 2026-11-04 明确生产环境没有实际用户、历史数据和旧逻辑无需兼容；该决定须与执行前盘点一起登记在执行单。本手册评审通过不等于具备开跑条件，也不代表已执行生产验收。
+> 状态：生产验收及 P7 收口已完成，25 PASS / 2 用户授权 SKIP，证据已共享归档并完成独立下载校验；详见 [2026-11-04 执行记录](./production-seed-acceptance-2026-11-04.md)。搜索与告警实际送达由用户明确记 SKIP；旧库误迁移事故及尚未完成的旧库恢复评估必须保留。本手册仍是后续执行的前置合同，不能据既有结果直接重开生产窗口。
 
 ## 1. 目标与执行边界
 
@@ -258,6 +258,37 @@ P7 必须按顺序关闭入口，单纯撤销 session 或删除凭据不足以�
 4. 临时禁用阶段可返回 401/404；最终移除后，实际兑换路径及签发 HTTP 路径（如有）须返回 404。从真实公共域名测试未兑换旧凭据、已兑换凭据和过期凭据均不能兑换；核对所有服务实例/部署及缓存不会返回旧有效入口。
 5. 对正常 Auth session 刷新/登出、业务 API 和后台任务做收口版本复核，避免移除旁路时破坏正常服务；将移除发布、密钥销毁、路由 404、会话撤销证据纳入 §11。若保留固定账号，记录保留清单，不能保留可用的平台审核会话或本次旁路。
 
+### P7 的短期 access token 收口
+
+当前标准 Auth V1 的 Phoenix Cookie 是最长 30 分钟的无状态 JWT；撤销持久 BrowserSession 会立即拒绝刷新，但不会改写已经签发的 JWT 到期时间。不能只凭 `active_sessions=0` 宣称所有旧 access token 立即不可用。P7 必须同时关闭签发入口、撤销 session、删除临时明文材料并清理本轮浏览器 Cookie，再等待本轮所有已签发 token 的最晚到期时间经过。
+
+下面的只读 SQL 按 ledger 关联本次全部 run，不输出 session ref 或 token。执行人把四个示例 runId 换成执行单实际列表，记录数据库时钟及截止时间；在截止时间后预留 60 秒余量，再查 `remaining_windows=0` 才完成凭据收口。TTL 不是部署变量；未来 release 若改变 BrowserAccess TTL，必须同步调整该查询。
+
+```sql
+WITH token_windows AS (
+  SELECT least(
+    coalesce(b.last_refreshed_at, b.inserted_at) + interval '30 minutes',
+    b.absolute_expires_at
+  ) AS access_expiry
+  FROM account.browser_sessions b
+  WHERE b.ref IN (
+    SELECT l.session_ref
+    FROM public.production_seed_logins l
+    JOIN public.production_seed_runs r ON r.id = l.run_id
+    WHERE r.run_id IN (
+      'prod-seed-20261104T061010Z', 'prod-seed-20261104T094400Z',
+      'prod-seed-20261104T115500Z', 'prod-seed-20261104T123000Z'
+    )
+  )
+)
+SELECT clock_timestamp() AS now_utc,
+       max(access_expiry) AS latest_access_expiry,
+       count(*) FILTER (
+         WHERE access_expiry + interval '60 seconds' > clock_timestamp()
+       ) AS remaining_windows
+FROM token_windows;
+```
+
 ## 6. Reference Map 线上验收
 
 开始前确认 seed 正文含 canonical 内部引用，非手工插入图边；等待实际 Outbox 同步，先验收正常同步，再测重建。在线 RPC 可调用现有领域模块，不依赖 Mix。
@@ -367,9 +398,9 @@ Seed 清理的 report、apply、verify 是独立 P0 交付物，必须有准确�
 | Run ID、实际开始/结束时间、执行人         | 待填                                                                                                                   |
 | API / 前端 / Worker revision 与数据库身份 | 待填                                                                                                                   |
 | P0–P7、schema migration、约束证据         | 待填                                                                                                                   |
-| PS-M01–PS-M08                             | 每项 PASS / FAIL / BLOCKED + 证据路径                                                                                  |
-| PS-V01–PS-V09                             | 每项 PASS / FAIL / BLOCKED + 证据路径                                                                                  |
-| PS-A01–PS-A07、PS-T01–PS-T02              | 每项 PASS / FAIL / BLOCKED + 证据路径                                                                                  |
+| PS-M01–PS-M08                             | 每项 PASS / FAIL / BLOCKED / SKIP + 证据路径；SKIP 必须附用户授权和未覆盖范围                                          |
+| PS-V01–PS-V09                             | 每项 PASS / FAIL / BLOCKED / SKIP + 证据路径；SKIP 必须附用户授权和未覆盖范围                                          |
+| PS-A01–PS-A07、PS-T01–PS-T02              | 每项 PASS / FAIL / BLOCKED / SKIP + 证据路径；SKIP 必须附用户授权和未覆盖范围                                          |
 | 无实际用户确认与旧数据处理范围            | 确认人/时间/声明来源、盘点/审计结果、冲突处理记录                                                                      |
 | 社区/账号/session                         | P0 静态保留/受控初始化证据；tmp 删除后名称仍保留及重建 ID；Auth 双 Cookie/session 签发、刷新、登出、失败补偿及撤销证据 |
 | 临时登录旁路移除                          | Auth 收口 SHA/deployment IDs、无旧实例证据、flag/路由/签发入口移除、专用材料销毁、最终 404 与旧凭据拒绝、正常服务复核  |
@@ -380,4 +411,4 @@ Seed 清理的 report、apply、verify 是独立 P0 交付物，必须有准确�
 | 未覆盖、故障与修复记录                    | 不得空白；无则写无                                                                                                     |
 | 最终结论                                  | 未执行 / 失败 / 部分完成 / 完成                                                                                        |
 
-只有必测项全 PASS、实际部署版本与执行记录一致、后台任务正常、清理/保留策略完成、临时登录旁路已移除且共享证据归档验证通过，才更新各功能文档的生产完成状态。Auth P7 收口版本须单独登记并复核，不能把它与最初验收版本的差异遗漏。线上 seed 验收关闭的是本手册列出的真实环境链路；本地后端全量门禁、Ticket R12 其他条目仍按其合同独立核对，不能仅凭线上 seed 全绿批量勾选。
+只有未豁免必测项全 PASS、所有 SKIP 均有用户明确授权和范围记录、实际部署版本与执行记录一致、后台任务正常、清理/保留策略完成、临时登录旁路已移除且共享证据归档验证通过，才更新各功能文档的生产完成状态。Auth P7 收口版本须单独登记并复核，不能把它与最初验收版本的差异遗漏。线上 seed 验收关闭的是本手册列出的真实环境链路；本地后端全量门禁、Ticket R12 其他条目仍按其合同独立核对，不能仅凭线上 seed 全绿批量勾选。
