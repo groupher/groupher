@@ -15,6 +15,11 @@ defmodule GroupherServer.CMS do
 
   alias __MODULE__.{ArticlePath, Comments, EmotionFormatter, ErrorCat, Insights, Query}
 
+  @doc "Redeems one bounded acceptance credential for the trusted Auth service."
+  defdelegate production_seed_redeem_login(credential, metadata),
+    to: GroupherServer.CMS.ProductionSeed.Logins,
+    as: :redeem
+
   @doc "Returns community-scoped moderator picker candidates."
   defdelegate communities_moderator_candidates(community, name),
     to: GroupherServer.CMS.Communities,
@@ -2532,9 +2537,8 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.FrontDesk,
     as: :article_author
 
-  @doc "Delegates the deprecated legacy CMS.FrontDesk.article_of/1 API."
-  def front_desk_article_of(arg1),
-    do: apply(GroupherServer.CMS.FrontDesk, :article_of, [arg1])
+  @doc "Delegates CMS.FrontDesk.article_of/1 through the CMS Context boundary."
+  defdelegate front_desk_article_of(arg1), to: GroupherServer.CMS.FrontDesk, as: :article_of
 
   @doc "Delegates CMS.FrontDesk.thread_of/1 through the CMS Context boundary."
   defdelegate front_desk_thread_of(arg1), to: GroupherServer.CMS.FrontDesk, as: :thread_of

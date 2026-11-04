@@ -16,6 +16,14 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
   use Helper.GqlSchemaSuite
 
   object :account_mutations do
+    @desc "Redeem a bounded acceptance credential for canonical Auth only."
+    field :redeem_production_seed_login, :browser_signin_result do
+      arg(:credential, non_null(:string))
+      arg(:browser_session, :browser_session_metadata_input)
+      middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:signin")
+      resolve(&R.Accounts.Sessions.redeem_production_seed_login/3)
+    end
+
     @desc "Records one visible public Profile read through ProfileViewTracker"
     field :track_profile_view, non_null(:profile_view_track_result) do
       arg(:login, non_null(:string))

@@ -38,4 +38,10 @@ if ! grep -q '^  up        20261104110000  remove_comment_origin_community$' <<<
   exit 1
 fi
 
-echo "Fresh database migrations passed through remove_comment_origin_community."
+if ! grep -q '^  up        20261104120000  create_production_seed_ledger$' <<<"$status"; then
+  printf '%s\n' "$status"
+  echo "Fresh database migration did not apply create_production_seed_ledger" >&2
+  exit 1
+fi
+
+echo "Fresh database migrations passed through create_production_seed_ledger."

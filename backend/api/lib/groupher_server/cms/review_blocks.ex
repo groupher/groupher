@@ -314,7 +314,10 @@ defmodule GroupherServer.CMS.ReviewBlocks do
 
       {:error, changeset} ->
         case Repo.one(
-               where_target(schema, attrs)
+               where_target(
+                 schema,
+                 Map.take(attrs, [:article_id, :comment_id, :branch_id, :community_id])
+               )
                |> where(
                  [restriction],
                  restriction.source_ref == ^attrs.source_ref and is_nil(restriction.resolved_at)

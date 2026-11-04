@@ -55,6 +55,10 @@ export default defineConfig(({ mode }) => {
         SERVICE_AUTH_TOKEN_ENDPOINT: bindings.text(`${authOrigin}/oauth2/token`),
         PHOENIX_GRAPHQL_ENDPOINT: bindings.text(`${apiOrigin}/graphiql`),
         NODE_ENV: bindings.text('production'),
+        PRODUCTION_SEED_LOGIN_ENABLED: bindings.text(
+          process.env.PRODUCTION_SEED_LOGIN_ENABLED === 'true' ? 'true' : 'false',
+        ),
+        PRODUCTION_SEED_LOGIN_UNTIL: bindings.text(process.env.PRODUCTION_SEED_LOGIN_UNTIL || ''),
         AUTH_GITHUB_ID: bindings.secret(),
         AUTH_GITHUB_SECRET: bindings.secret(),
         NEXTAUTH_SECRET: bindings.secret(),

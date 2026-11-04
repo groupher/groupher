@@ -247,8 +247,6 @@ defmodule GroupherServer.CMS.Docs.Trash do
                    operation_ref
                  ),
                {:ok, lifecycle} <- Lifecycle.transition(item.article_id, branch.id, :destroy),
-               {:ok, _} <- purge_branch(canonical, branch),
-               {:ok, _} <- Repo.delete(item),
                {:ok, action} <- load_action(item.trash_action_id),
                {:ok, _activity} <-
                  maybe_activity(
@@ -258,7 +256,9 @@ defmodule GroupherServer.CMS.Docs.Trash do
                    action,
                    lifecycle.changed_at,
                    opts
-                 ) do
+                 ),
+               {:ok, _} <- Repo.delete(item),
+               {:ok, _} <- purge_branch(canonical, branch) do
             {:ok, :done}
           end
         end
@@ -282,8 +282,6 @@ defmodule GroupherServer.CMS.Docs.Trash do
              operation_ref
            ),
          {:ok, lifecycle} <- Lifecycle.transition(item.article_id, branch.id, :destroy),
-         {:ok, _} <- purge_branch(canonical, branch),
-         {:ok, _} <- Repo.delete(item),
          {:ok, action} <- load_action(item.trash_action_id),
          {:ok, _activity} <-
            maybe_activity(
@@ -293,7 +291,9 @@ defmodule GroupherServer.CMS.Docs.Trash do
              action,
              lifecycle.changed_at,
              opts
-           ) do
+           ),
+         {:ok, _} <- Repo.delete(item),
+         {:ok, _} <- purge_branch(canonical, branch) do
       {:ok, :done}
     end
   end
@@ -386,8 +386,12 @@ defmodule GroupherServer.CMS.Docs.Trash do
 
   defp maybe_activity(action, doc, actor, %TrashAction{} = trash_action, occurred_at, opts) do
     if Keyword.get(opts, :audit, true) do
+      # The TrashAction records the explicit Community even after the final
+      # branch purge removes the Article's bindings.
+      doc = Map.put(doc, :community, Repo.get!(Community, trash_action.community_id))
+
       Activity.log(doc, action,
-        actor: actor,
+        actor: if(actor == :operations, do: :system, else: actor),
         operation_ref: trash_action.hash_id,
         source: activity_source(opts),
         occurred_at: occurred_at

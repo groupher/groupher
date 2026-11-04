@@ -160,10 +160,10 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
          scope_key: scope_key
        }) do
     with %CommentBody{} = body <- Repo.get_by(CommentBody, comment_id: comment.id),
-         %ArticlePublic{} = public <- Repo.get_by(ArticlePublic, article_id: article.id) do
+         {:ok, title} <- comment_parent_title(article, comment) do
       {:ok,
        %{
-         title: public.title || "",
+         title: title,
          body: body.plain_text || "",
          images: CMS.Review.Media.comment_images(body.json, scope_community_id(scope_key))
        }}
@@ -192,6 +192,24 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
          images: CMS.Review.Media.article_images(revision.id)
        }}
     else
+      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+    end
+  end
+
+  defp comment_parent_title(%{thread: :doc, id: article_id}, %{branch_id: branch_id}) do
+    with %DocPublic{branch_version_id: version_id, title: title} <-
+           Repo.get_by(DocPublic, article_id: article_id, branch_id: branch_id),
+         %DocBranchVersion{revision_id: revision_id} <- Repo.get(DocBranchVersion, version_id),
+         %ArticleRevision{title: revision_title} <- Repo.get(ArticleRevision, revision_id) do
+      {:ok, title || revision_title || ""}
+    else
+      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+    end
+  end
+
+  defp comment_parent_title(%{id: article_id}, _comment) do
+    case Repo.get_by(ArticlePublic, article_id: article_id) do
+      %ArticlePublic{title: title} -> {:ok, title || ""}
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
     end
   end

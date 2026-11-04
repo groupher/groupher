@@ -588,7 +588,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
            } = Repo.get_by!(CommentReviewBlock, comment_id: comment.id)
   end
 
-  test "the report threshold for a Doc Comment uses its origin Community scope" do
+  test "the report threshold for a Doc Comment uses its branch Community scope" do
     {community, doc, _attrs, author} = mock_article(:doc)
 
     {:ok, comment} =

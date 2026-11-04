@@ -5,6 +5,8 @@
 # is restricted to this project.
 import Config
 
+config :phoenix, :filter_parameters, ["password", "credential"]
+
 # General application configuration
 config :groupher_server, ecto_repos: [GroupherServer.Repo]
 config :groupher_server, env: config_env()

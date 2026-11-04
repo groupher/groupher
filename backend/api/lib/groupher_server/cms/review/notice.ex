@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.Review.Notice do
       %Comment{thread: :doc, branch_id: branch_id} when is_integer(branch_id) ->
         case Repo.get(DocBranch, branch_id) do
           %DocBranch{community_id: community_id} ->
-            {:ok, CommentReviewBlock, :comment_id, id, community_id, branch_id}
+            {:ok, CommentReviewBlock, :comment_id, id, community_id, nil}
 
           _ ->
             {:error, CMS.ErrorCat.invalid_review_block()}

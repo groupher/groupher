@@ -652,6 +652,32 @@ const UNLINK_OAUTH_IDENTITY_MUTATION = `
   }
 `
 
+/** Redeems the bounded acceptance credential using canonical Auth's sign-in scope. */
+export const redeemProductionSeedLogin = async (
+  credential: string,
+  userAgentSummary?: string,
+): Promise<TBrowserSigninResult> => {
+  const data = await callPhoenix<{ redeemProductionSeedLogin?: Partial<TBrowserSigninResult> }>(
+    `mutation RedeemProductionSeedLogin($credential: String!, $browserSession: BrowserSessionMetadataInput) {
+      redeemProductionSeedLogin(credential: $credential, browserSession: $browserSession) {
+        accessToken accessExpiresAt browserSessionRef sessionAbsoluteExpiresAt
+      }
+    }`,
+    { credential, browserSession: { userAgentSummary } },
+    'auth:session:signin',
+  )
+  const result = data.redeemProductionSeedLogin
+  if (
+    !result ||
+    typeof result.accessToken !== 'string' ||
+    typeof result.accessExpiresAt !== 'string' ||
+    typeof result.browserSessionRef !== 'string' ||
+    typeof result.sessionAbsoluteExpiresAt !== 'string'
+  )
+    throw new Error('Acceptance credential unavailable.')
+  return result as TBrowserSigninResult
+}
+
 const callPhoenix = async <TData>(
   query: string,
   variables: Record<string, unknown>,

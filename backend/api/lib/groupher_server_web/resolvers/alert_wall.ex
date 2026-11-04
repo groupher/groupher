@@ -192,7 +192,7 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
          target_type: :comment,
          target_id: to_string(comment.id),
          observed_version: Map.get(input, :observed_version),
-         community_id: nil,
+         community_id: if(comment.thread == :doc, do: reported_in.id, else: nil),
          reported_in_community_id: reported_in.id
        }}
     else

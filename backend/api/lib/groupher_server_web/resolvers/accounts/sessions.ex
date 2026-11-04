@@ -24,6 +24,17 @@ defmodule GroupherServerWeb.Resolvers.Accounts.Sessions do
     {:ok, %{is_valid: false}}
   end
 
+  @doc "Adapts Auth-only acceptance redemption without disclosing failure details."
+  def redeem_production_seed_login(_root, args, _info) do
+    case GroupherServer.CMS.production_seed_redeem_login(
+           args.credential,
+           Map.get(args, :browser_session, %{})
+         ) do
+      {:ok, result} -> {:ok, result}
+      {:error, _} -> {:error, "Acceptance credential unavailable"}
+    end
+  end
+
   def signin_oauth(_root, %{provider: provider} = args, _info) do
     Accounts.profiles_signin_oauth(provider, Map.get(args, :browser_session, %{}))
   end

@@ -52,7 +52,12 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
   end
 
   defp create_community(args, %User{} = user, command_id) do
-    with {:ok, community} <- CreationPersist.create_core(with_defaults(args), user),
+    with {:ok, _slug} <-
+           CMS.Communities.NameRules.check_seed_slug_change(
+             nil,
+             Map.get(args, :slug, Map.get(args, "slug"))
+           ),
+         {:ok, community} <- CreationPersist.create_core(with_defaults(args), user),
          {:ok, _lifecycle} <- Lifecycle.ensure_created(community.id),
          {:ok, _review_bot_configs} <-
            ReviewBot.create_default_configs_for_community(community.id),

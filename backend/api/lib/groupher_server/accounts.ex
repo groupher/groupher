@@ -11,6 +11,11 @@ defmodule GroupherServer.Accounts do
 
   alias __MODULE__.Query
 
+  @doc "Creates an official session bounded by a trusted operational deadline."
+  defdelegate profiles_create_bounded_browser_session(user, metadata, deadline),
+    to: GroupherServer.Accounts.Profiles.BrowserSessions,
+    as: :create_until
+
   @doc "Enriches a User collection with the viewer's follow state."
   defdelegate fans_mark_viewer_follow_status(result, viewer),
     to: GroupherServer.Accounts.Fans,

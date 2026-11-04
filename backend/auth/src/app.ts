@@ -48,6 +48,7 @@ import {
   type TLinkIntentNamespace,
   type TLinkIntentStore,
 } from './link-intent'
+import { redeemAcceptanceRequest } from './production-seed'
 import { createMemoryRateLimiter, type TRateLimitBinding } from './rate-limit'
 import { issueServiceToken, serviceJwks } from './service-auth'
 
@@ -260,6 +261,10 @@ export const createApp = ({
 
   app.use(AUTH_ROUTE.ROOT, authCors)
   app.use(AUTH_ROUTE.WILDCARD, authCors)
+
+  app.post('/api/auth/production-seed/redeem', (context) =>
+    redeemAcceptanceRequest(context.req.raw, isAllowedAuthOrigin, process.env),
+  )
 
   app.get('/health', (context) => context.json(createHealthResponse({ service: 'auth' })))
 

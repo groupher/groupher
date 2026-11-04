@@ -56,6 +56,37 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
   end
 
   @doc """
+  Creates an official BrowserSession bounded by an earlier operational deadline.
+
+      trusted caller -> bounded create -> persisted expiry -> normal access token
+
+  ## Examples
+
+      BrowserSessions.create_until(user, %{}, DateTime.add(DateTime.utc_now(:second), 300))
+      #=> {:ok, signin_result} | {:error, reason}
+  """
+  def create_until(%User{} = user, metadata, %DateTime{} = deadline) do
+    now = DateTime.utc_now(:second)
+
+    if DateTime.compare(deadline, now) == :gt and
+         DateTime.diff(deadline, now) <= @absolute_ttl_seconds do
+      Repo.transact_result(fn ->
+        with {:ok, result} <- create(user, metadata),
+             session <- Repo.get_by!(BrowserSession, ref: result.browser_session_ref),
+             {:ok, _} <-
+               session
+               |> Ecto.Changeset.change(absolute_expires_at: DateTime.truncate(deadline, :second))
+               |> Repo.update(),
+             {:ok, bounded} <- refresh(result.browser_session_ref) do
+          {:ok, bounded}
+        end
+      end)
+    else
+      {:error, :invalid_browser_session_deadline}
+    end
+  end
+
+  @doc """
   Refreshes an active browser session token.
 
   ## Examples

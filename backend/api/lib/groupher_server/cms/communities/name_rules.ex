@@ -11,8 +11,9 @@ defmodule GroupherServer.CMS.Communities.NameRules do
   alias GroupherServer.{CMS}
   alias CMS.Communities.ErrorCat
 
+  @seed_reserved ~w(dev mock tmp)
   @reserved ~w(
-    home dash dashboard apply api auth login logout pricing assets static _next
+    home dev mock tmp dash dashboard apply api auth login logout pricing assets static _next
     graphql health press docs admin settings
   )
   @slug_pattern ~r/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
@@ -67,4 +68,22 @@ defmodule GroupherServer.CMS.Communities.NameRules do
   """
   @spec reserved_slugs() :: [String.t()]
   def reserved_slugs, do: @reserved
+
+  @doc """
+  Rejects public renames into or out of the fixed acceptance namespace.
+
+  ## Examples
+
+      NameRules.check_seed_slug_change("dev", "other")
+      #=> {:error, ErrorCat.reserved_slug()}
+  """
+  def check_seed_slug_change(current, candidate) do
+    target = normalize(candidate)
+
+    if target != current and (current in @seed_reserved or target in @seed_reserved) do
+      {:error, ErrorCat.reserved_slug()}
+    else
+      {:ok, :unchanged_or_unprotected}
+    end
+  end
 end

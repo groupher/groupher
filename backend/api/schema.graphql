@@ -371,6 +371,9 @@ type RootQueryType {
 }
 
 type RootMutationType {
+  "Redeem a bounded acceptance credential for canonical Auth only."
+  redeemProductionSeedLogin(credential: String!, browserSession: BrowserSessionMetadataInput): BrowserSigninResult
+
   "Records one visible public Profile read through ProfileViewTracker"
   trackProfileView(login: String!): ProfileViewTrackResult!
 
