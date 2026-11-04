@@ -31,6 +31,7 @@ export default function CommunityBrief() {
   const threads = usePublicThreads()
   const { title, logo, slug } = useCommunity()
   const dsb$ = useDsb()
+  const homepage = dsb$.homepage?.trim()
   const { brandLayout } = useLayout()
   const { t } = useTrans()
 
@@ -39,12 +40,14 @@ export default function CommunityBrief() {
       <Tooltip
         content={
           <div className={s.topPanel}>
-            <Link navigation='document' className={cn(s.panelItem, s.outside)} href={dsb$.homepage}>
-              <GlobalSVG className={s.icon} />
-              <div>{t('dsb.community_brief.back_home')}</div>
-              <div className='grow' />
-              <ArrowSVG className={s.arrowIcon} />
-            </Link>
+            {homepage && (
+              <Link navigation='document' className={cn(s.panelItem, s.outside)} href={homepage}>
+                <GlobalSVG className={s.icon} />
+                <div>{t('dsb.community_brief.back_home')}</div>
+                <div className='grow' />
+                <ArrowSVG className={s.arrowIcon} />
+              </Link>
+            )}
 
             <Link navigation='document' className={cn(s.panelItem, s.outside)} href={`/${slug}`}>
               <GithubSVG className={s.icon} />
