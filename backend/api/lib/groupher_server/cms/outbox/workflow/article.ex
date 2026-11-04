@@ -111,6 +111,14 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
   end
 
   defp sync_search(event) do
+    if CMS.SearchArtiments.platform() == CMS.SearchArtiments.Disabled do
+      {:ok, :search_disabled}
+    else
+      sync_enabled_search(event)
+    end
+  end
+
+  defp sync_enabled_search(event) do
     with %Article{thread: thread} <- Repo.get(Article, event.resource_id) do
       case event.data["source_event"] do
         kind when kind in ["article.published", "article.updated"] ->

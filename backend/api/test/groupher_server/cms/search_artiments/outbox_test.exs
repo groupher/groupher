@@ -31,6 +31,11 @@ defmodule GroupherServer.Test.CMS.SearchArtiments.OutboxTest do
     assert {:error, _} = CMS.SearchArtiments.search(%Query{text: article.title})
     assert {:ok, :search_disabled} = CMS.SearchArtiments.delete([article.id])
     assert {:ok, :search_disabled} = CMS.SearchArtiments.update_metrics([{article.id, %{}}])
+
+    # A disabled external sink must not resolve a Community that has since gone.
+    delayed = enqueue("article.visibility_changed", %{source | id: -1}, article)
+    assert {:ok, :pass} = deliver(delayed)
+    assert Repo.get!(Event, delayed.id).status == :done
   end
 
   test "published and updated children refresh every public mirror" do
