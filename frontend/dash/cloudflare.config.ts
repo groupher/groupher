@@ -22,6 +22,9 @@ export default defineConfig(({ mode }) => {
       observability,
       ...(production ? { domains: ['dash.groupher.com'] } : {}),
       env: {
+        DASH_DEFAULT_COMMUNITY: bindings.text(
+          process.env.DASH_DEFAULT_COMMUNITY || (production ? 'dev' : 'home'),
+        ),
         CONTENT_IMPORT_APP_ENDPOINT: bindings.text(
           production ? 'https://import.groupher.com' : 'http://127.0.0.1:8001',
         ),
