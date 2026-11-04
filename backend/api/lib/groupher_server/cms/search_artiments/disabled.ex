@@ -4,6 +4,10 @@ defmodule GroupherServer.CMS.SearchArtiments.Disabled do
 
   Queries fail visibly; indexing intents are acknowledged as disabled without
   making external requests. Re-enabling requires a complete index rebuild.
+
+      CMS search / indexing -> configured Disabled adapter
+                            -> search: explicit error
+                            -> index writes: disabled acknowledgement, no provider I/O
   """
   @behaviour GroupherServer.CMS.SearchArtiments.PlatformAdapter
 
