@@ -24,14 +24,22 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     CMS.articles_undo_lock_comments_result(article, user, command_id)
   end
 
-  def comments_state(_root, %{article: article, article_path: %{thread: thread}}, %{
-        context: %{cur_user: user}
-      }) do
-    CMS.comments_comments_state(thread, article.id, user)
+  def comments_state(
+        _root,
+        %{article: article, article_path: %{thread: thread, community: community}},
+        %{
+          context: %{cur_user: user}
+        }
+      ) do
+    CMS.comments_comments_state(thread, article.id, user, community)
   end
 
-  def comments_state(_root, %{article: article, article_path: %{thread: thread}}, _) do
-    CMS.comments_comments_state(thread, article.id)
+  def comments_state(
+        _root,
+        %{article: article, article_path: %{thread: thread, community: community}},
+        _
+      ) do
+    CMS.comments_comments_state(thread, article.id, nil, community)
   end
 
   def comment_viewer_states(
@@ -92,11 +100,11 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
 
   def paged_comments_participants(
         _root,
-        %{article: article, article_path: %{thread: thread}} = args,
+        %{article: article, article_path: %{thread: thread, community: community}} = args,
         _info
       ) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.comments_paged_comments_participants(thread, article.id, pagi)
+      CMS.comments_paged_comments_participants(thread, article.id, pagi, community)
     end
   end
 

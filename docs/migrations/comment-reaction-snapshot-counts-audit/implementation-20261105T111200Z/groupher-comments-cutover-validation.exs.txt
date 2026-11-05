@@ -1,0 +1,30 @@
+alias GroupherServer.CMS.Comments.SchemaGeneration, as: Generation
+Application.ensure_all_started(:ecto_sql)
+database = "groupher_comments_20261105_cutover_validation"
+generation = "9a6be54e-c745-4bdc-a7ea-531e61c06017"
+hash = File.read!("/tmp/groupher-comments-approved-schema.sha256") |> String.trim()
+{:ok, result, _} = Ecto.Migrator.with_repo(GroupherServer.Repo, fn repo ->
+  opts = [database: database, generation: generation, schema_sha256: hash]
+  {:ok, :bootstrapped} = Generation.bootstrap!(repo, database, generation, "isolated-local-validation", "shared-comments-20261105")
+  {:ok, :verified} = Generation.verify_before_migration!(repo, opts)
+  Ecto.Migrator.run(repo, :up, all: true)
+  rejected = try do
+    Generation.verify_ready!(repo, opts)
+    false
+  rescue
+    error in RuntimeError -> String.contains?(error.message, "not ready")
+  end
+  true = rejected
+  {:ok, ready} = Generation.mark_ready!(repo, opts)
+  {:ok, :verified} = Generation.verify_ready!(repo, opts)
+  true = try do
+    Generation.verify_ready!(repo, Keyword.put(opts, :database, "not-this-database"))
+    false
+  rescue
+    error in RuntimeError -> String.contains?(error.message, "identity mismatch")
+  end
+  %{database: database, generation: generation, schema_sha256: ready.schema_sha256,
+    unready_rejected: true, wrong_database_rejected: true, phase: "ready"}
+end)
+File.write!("/tmp/groupher-comments-cutover-validation.json", Jason.encode!(result, pretty: true))
+IO.puts("Fresh generation verified: #{database}")

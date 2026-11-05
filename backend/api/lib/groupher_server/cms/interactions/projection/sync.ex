@@ -23,7 +23,6 @@ defmodule GroupherServer.CMS.Interactions.Projection.Sync do
     Comment,
     CommentReactionInfo,
     DocReactionInfo,
-    Embeds,
     PostReactionInfo
   }
 
@@ -226,11 +225,22 @@ defmodule GroupherServer.CMS.Interactions.Projection.Sync do
 
     latest_users =
       case latest_field do
-        nil -> nil
-        field -> next_latest_users(Map.get(reaction_info, field, []), user, operation)
+        nil ->
+          {:ok, nil}
+
+        field ->
+          next_latest_users(
+            Map.get(reaction_info, field, []),
+            user,
+            operation,
+            info,
+            target_id,
+            reaction
+          )
       end
 
-    with {:ok, _} <-
+    with {:ok, latest_users} <- latest_users,
+         {:ok, _} <-
            update_projection!(
              reaction_info.id,
              %ProjectionSpec{
@@ -252,9 +262,17 @@ defmodule GroupherServer.CMS.Interactions.Projection.Sync do
 
   defp sync_emotion(info, target_id, emotion, user, operation) do
     emotion_info = lock_emotion_info(info, target_id, emotion)
-    latest_users = next_latest_users(emotion_info.latest_users, user, operation)
 
-    with {:ok, _} <-
+    with {:ok, latest_users} <-
+           next_latest_users(
+             emotion_info.latest_users,
+             user,
+             operation,
+             info,
+             target_id,
+             {:emotion, emotion}
+           ),
+         {:ok, _} <-
            update_projection!(
              emotion_info.id,
              %ProjectionSpec{
@@ -383,7 +401,16 @@ defmodule GroupherServer.CMS.Interactions.Projection.Sync do
         updates
       end
 
-    case from(info in spec.schema, where: info.id == ^info_id) |> Repo.update_all(updates) do
+    query = from(info in spec.schema, where: info.id == ^info_id)
+
+    query =
+      if change.operation == :remove and not is_nil(spec.count_field) do
+        where(query, [info], field(info, ^spec.count_field) > 0)
+      else
+        query
+      end
+
+    case Repo.update_all(query, updates) do
       {1, _} -> {:ok, :pass}
       {0, _} -> {:error, ErrorCat.projection_not_updated()}
     end
@@ -399,25 +426,46 @@ defmodule GroupherServer.CMS.Interactions.Projection.Sync do
     end
   end
 
-  defp next_latest_users(users, %User{} = user, :add) do
-    [snapshot(user) | users]
-    |> Enum.uniq_by(&snapshot_user_id/1)
-    |> Enum.take(Config.latest_users_limit())
+  defp next_latest_users(users, %User{} = user, :add, _info, _target_id, _reaction) do
+    with {:ok, users} <- CMS.Snapshot.Members.promote(users, user, Config.latest_users_limit()) do
+      {:ok, Enum.map(users, &Map.from_struct/1)}
+    end
   end
 
-  defp next_latest_users(users, %User{id: user_id}, :remove) do
-    Enum.reject(users, &(snapshot_user_id(&1) == user_id))
+  defp next_latest_users(_users, %User{}, :remove, info, target_id, reaction) do
+    schema = reaction_fact_schema(info.artiment, reaction)
+    foreign_key = info.foreign_key
+    query = from(fact in schema, where: field(fact, ^foreign_key) == ^target_id)
+
+    query =
+      if info.artiment == :comment, do: query, else: where(query, [fact], is_nil(fact.branch_id))
+
+    query =
+      case reaction do
+        {:emotion, emotion} -> where(query, [fact], fact.emotion == ^to_string(emotion))
+        _ -> query
+      end
+
+    users =
+      from(fact in query,
+        join: user in User,
+        on: user.id == fact.user_id,
+        order_by: [desc: fact.inserted_at, desc: fact.id],
+        limit: ^Config.latest_users_limit(),
+        select: struct(user, [:id, :login, :nickname, :avatar])
+      )
+      |> Repo.all()
+
+    with {:ok, members} <- CMS.Snapshot.Members.bounded(users, Config.latest_users_limit()) do
+      {:ok, Enum.map(members, &Map.from_struct/1)}
+    end
   end
 
-  defp snapshot(%User{} = user) do
-    user
-    |> Embeds.User.from_account_user()
-    |> Map.from_struct()
-  end
-
-  defp snapshot_user_id(%{user_id: user_id}), do: user_id
-  defp snapshot_user_id(%{"user_id" => user_id}), do: user_id
-  defp snapshot_user_id(_snapshot), do: nil
+  defp reaction_fact_schema(:comment, :upvote), do: CMS.Model.CommentUpvote
+  defp reaction_fact_schema(:comment, {:emotion, _}), do: CMS.Model.CommentUserEmotion
+  defp reaction_fact_schema(_thread, :upvote), do: CMS.Model.ArticleUpvote
+  defp reaction_fact_schema(_thread, :collect), do: CMS.Model.ArticleCollect
+  defp reaction_fact_schema(_thread, {:emotion, _}), do: CMS.Model.ArticleUserEmotion
 
   defp latest_field(:upvote), do: :latest_upvoted_users
   defp latest_field(:collect), do: :latest_collected_users

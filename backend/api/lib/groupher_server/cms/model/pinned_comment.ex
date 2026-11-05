@@ -19,19 +19,18 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   import Ecto.Changeset
   alias __MODULE__
   alias GroupherServer.CMS
-  alias CMS.Model.{Article, Comment, DocBranch}
+  alias CMS.Model.{Article, Comment}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   # alias Helper.HTML
   @required_fields ~w(comment_id article_id)a
-  @optional_fields ~w(branch_id)a
+  @optional_fields []
   @type t :: %__MODULE__{}
 
   schema "pinned_comments" do
     belongs_to(:comment, Comment, foreign_key: :comment_id)
     belongs_to(:article, Article, type: Ecto.UUID)
-    belongs_to(:branch, DocBranch)
 
     timestamps(type: :utc_datetime)
   end
@@ -44,7 +43,6 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:comment_id)
     |> foreign_key_constraint(:article_id)
-    |> foreign_key_constraint(:branch_id)
     |> stable_unique_constraints()
   end
 
@@ -54,7 +52,6 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> foreign_key_constraint(:comment_id)
     |> foreign_key_constraint(:article_id)
-    |> foreign_key_constraint(:branch_id)
     |> stable_unique_constraints()
   end
 
@@ -62,9 +59,6 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
     changeset
     |> unique_constraint([:article_id, :comment_id],
       name: :pinned_comments_stable_article_target_index
-    )
-    |> unique_constraint([:article_id, :branch_id, :comment_id],
-      name: :pinned_comments_stable_doc_target_index
     )
   end
 end

@@ -458,7 +458,9 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
       command!(CMS.Docs.Trash.attach(action, community, branch, article.id, actor), "doc-attach")
 
     command!(
-      CMS.Docs.Trash.permanently_delete(item, community, branch, actor, []),
+      CMS.Docs.Trash.permanently_delete(item, community, branch, actor,
+        purge_stable_article: true
+      ),
       "doc-permanent"
     )
 

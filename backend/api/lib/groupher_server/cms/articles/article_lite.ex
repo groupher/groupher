@@ -13,6 +13,8 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
   use Flop.Schema
 
   require Ecto.Query
+  require GroupherServer.CMS.Articles.ActivityTime
+
   import Ecto.Query, except: [select: 3], warn: false
 
   alias GroupherServer.{CMS}
@@ -47,11 +49,15 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
     adapter_opts: [
       join_fields: [
         published_at: [binding: :stable_public, field: :published_at, ecto_type: :utc_datetime],
-        doc_active_at: [binding: :stable_doc_state, field: :active_at, ecto_type: :utc_datetime],
         inner_id: [binding: :article_binding, field: :inner_id, ecto_type: :integer],
         binding_id: [binding: :article_binding, field: :id, ecto_type: :integer]
       ],
       custom_fields: [
+        doc_active_at: [
+          field_dynamic: {GroupherServer.CMS.Articles.ActivityTime, :effective_doc, []},
+          ecto_type: :utc_datetime,
+          bindings: [:stable_doc_state, :stable_public]
+        ],
         views: [
           field_dynamic: {__MODULE__, :stats_field, [field: :views]},
           ecto_type: :integer,
@@ -127,13 +133,14 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
 
   defp select_post_category(query, :post) do
     query =
-      if has_named_binding?(query, :post_state),
-        do: query,
-        else:
-          join(query, :left, [article: article], state in PostState,
-            as: :post_state,
-            on: state.article_id == article.id
-          )
+      if has_named_binding?(query, :post_state) do
+        query
+      else
+        join(query, :left, [article: article], state in PostState,
+          as: :post_state,
+          on: state.article_id == article.id
+        )
+      end
 
     Ecto.Query.select_merge(query, [post_state: post], %{cat: post.cat})
   end
@@ -219,9 +226,9 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         binding_id: binding.id,
         title: public.title,
         digest: public.digest,
-        active_at: state.active_at,
+        active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, state, public),
         published_at: public.published_at,
-        doc_active_at: state.active_at,
+        doc_active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, state, public),
         inserted_at: article.inserted_at
       }
     )

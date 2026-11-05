@@ -90,15 +90,6 @@ defmodule GroupherServer.Jobs do
   defdelegate public_cache_purge_new(arg1, arg2), to: GroupherServer.Jobs.Workflow
 
   @doc """
-  Delegates reconcile_comments_participants/3 to the Jobs workflow owner.
-
-  ## Examples
-
-      Jobs.reconcile_comments_participants(:post, Ecto.UUID.generate(), 12)
-  """
-  defdelegate reconcile_comments_participants(arg1, arg2, arg3), to: GroupherServer.Jobs.Workflow
-
-  @doc """
   Delegates search_index/3 to the Jobs workflow owner.
 
   ## Examples

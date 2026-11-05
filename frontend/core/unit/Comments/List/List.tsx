@@ -48,7 +48,7 @@ const List: FC<TProps> = ({ mode, apiMode, entries, foldedIdSet }) => {
             <Comment
               data={comment}
               apiMode={apiMode}
-              hasReplies={(comment.repliesCount ?? 0) > 0}
+              hasReplies={comment.hasReplyEntries === true}
               isFolded={isFolded}
             />
 
@@ -74,13 +74,15 @@ const List: FC<TProps> = ({ mode, apiMode, entries, foldedIdSet }) => {
               <DateDivider text={passedDate(entries[index], entries[index + 1])} />
             )}
 
-            {mode === MODE.REPLIES && (comment.repliesCount ?? 0) > 0 && !isFolded && (
+            {mode === MODE.REPLIES && comment.hasReplyEntries && !isFolded && (
               <RepliesList
                 key={`${comment.innerId}`}
                 parentId={comment.innerId}
                 apiMode={apiMode}
                 entries={comment.replies ?? []}
                 repliesCount={comment.repliesCount ?? 0}
+                participants={comment.replyParticipants ?? []}
+                lastReplyAt={comment.lastReplyAt}
                 foldedIdSet={foldedIdSet}
               />
             )}

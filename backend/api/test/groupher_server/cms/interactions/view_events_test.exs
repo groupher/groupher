@@ -352,18 +352,20 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
            end)
 
     stats_reads = Enum.filter(queries, &article_stats_select_query?/1)
-    assert length(stats_reads) == 1
-    assert hd(stats_reads) =~ ~s["cms"."article_emotion_counts"]
+    # Parent content reads its bounded participant snapshot; the counted result
+    # independently reads the post-increment aggregate. Neither reads Comment facts.
+    assert length(stats_reads) == 2
+    assert Enum.count(stats_reads, &String.contains?(&1, ~s["cms"."article_emotion_counts"])) == 1
+    assert Enum.any?(stats_reads, &String.starts_with?(&1, ~s[SELECT a0."comments_participants"]))
+    refute Enum.any?(queries, &String.contains?(&1, ~s[FROM "cms"."comments"]))
   end
 
-  test "ArticleStats derives comment counts from the stable Article aggregate" do
+  test "ArticleStats reads persisted comment summaries without relationship aggregation" do
     {_community, post, _attrs, _user} = mock_article(:post)
-    article = Repo.get!(CMS.Model.Article, post.article_id)
-
-    assert {:ok, :pass} = CMS.ArticleStats.apply_comment_counts(article)
-
-    assert {:ok, %{comments_count: 0, comments_revision: 0}} =
-             CMS.ArticleStats.fetch(:post, post.id)
+    {result, queries} = capture_repo_queries(fn -> CMS.ArticleStats.fetch(:post, post.id) end)
+    assert {:ok, %{comments_count: 0, comments_revision: 1, comments_participants: []}} = result
+    refute Enum.any?(queries, &String.contains?(&1, ~s("cms"."comments")))
+    refute function_exported?(CMS.ArticleStats, :apply_comment_counts, 1)
   end
 
   test "ArticleStats rebuilds advance the repaired owner revision" do
@@ -373,11 +375,8 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     from(stats in ArticleStats,
       where: stats.thread == :post and stats.article_id == ^post.id
     )
-    |> Repo.update_all(
-      set: [comments_count: 9, upvotes_count: 9, comments_revision: 0, interaction_revision: 0]
-    )
+    |> Repo.update_all(set: [upvotes_count: 9, interaction_revision: 0])
 
-    assert {:ok, :pass} = CMS.ArticleStats.rebuild_comment_fields(article)
     assert {:ok, :pass} = CMS.ArticleStats.rebuild_interaction_fields(article)
 
     assert {:ok,
@@ -390,7 +389,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
   end
 
   test "ArticleStats snapshot default and every owner update use database clock" do
-    {_community, post, _attrs, user} = mock_article(:post)
+    {community, post, _attrs, user} = mock_article(:post)
     article = Repo.get!(CMS.Model.Article, post.article_id)
 
     %{rows: [[default_expression]]} =
@@ -405,7 +404,16 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     assert String.contains?(default_expression, "clock_timestamp()")
 
     {_result, comment_queries} =
-      capture_repo_queries(fn -> CMS.ArticleStats.apply_comment_counts(article) end)
+      capture_repo_queries(fn ->
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          post.inner_id,
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+      end)
 
     {_result, interaction_queries} =
       capture_repo_queries(fn -> CMS.ArticleStats.apply_interaction_counts(article) end)
@@ -417,7 +425,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
 
     for queries <- [comment_queries, interaction_queries, view_queries] do
       assert Enum.any?(queries, fn query ->
-               article_stats_upsert_query?(query) and String.contains?(query, "clock_timestamp()")
+               (article_stats_upsert_query?(query) or
+                  String.contains?(query, ~s(UPDATE "cms"."article_stats"))) and
+                 String.contains?(query, "clock_timestamp()")
              end)
     end
   end

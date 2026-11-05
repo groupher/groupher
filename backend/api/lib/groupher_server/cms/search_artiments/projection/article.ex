@@ -32,9 +32,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          true <- is_binary(plain_text) and is_binary(body_hash),
          true <- is_binary(article.id),
          true <- is_binary(article.revision_id),
-         inner_id when not is_nil(inner_id) <- Map.get(article, :inner_id) do
+         inner_id when not is_nil(inner_id) <- Map.get(article, :inner_id),
+         {:ok, counts} <- CMS.ArticleStats.search_counts(thread, article.id) do
       ref = Artiment.article_key(thread, article.id, community_ref)
-      counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
 
       {:ok,
        %Artiment{
@@ -54,8 +54,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          },
          author_ref: author_ref(article),
          locale: article.community.locale,
-         upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
-         comments_count: Map.get(article, :comments_count, 0) || 0,
+         upvotes_count: counts.upvotes_count,
+         comments_count: counts.comments_count,
          published_at: article.active_at,
          inserted_at: article.inserted_at,
          updated_at: article.updated_at,

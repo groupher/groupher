@@ -208,7 +208,7 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
              Comment,
              nil,
              :list,
-             CommentScope.for_thread(:post)
+             CommentScope.for_thread(:post, community_id: community_id)
            ) do
       linked_post_ids =
         from(public_post in subquery(public_post_ids),

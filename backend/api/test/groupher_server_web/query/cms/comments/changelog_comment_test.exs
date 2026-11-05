@@ -42,11 +42,14 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
     assert results["participantsCount"] == 1
     assert results["totalCount"] == 1
-    assert not results["isViewerJoined"]
+    refute Map.has_key?(results, "isViewerJoined")
     assert user_exist_in?(user, results["participants"])
+    assert Enum.all?(results["participants"], &(byte_size(&1["ref"]) == 43))
 
     results = user_conn |> gq_query(@query, variables)
-    assert results["isViewerJoined"]
+    assert results["participantsCount"] == 1
+    assert results["totalCount"] == 1
+    refute Map.has_key?(results, "isViewerJoined")
   end
 
   @query S.Comment.q(:one_comment)

@@ -1,0 +1,8 @@
+{
+  "phase": "ready",
+  "database": "groupher_comments_20261105_cutover_validation",
+  "generation": "9a6be54e-c745-4bdc-a7ea-531e61c06017",
+  "schema_sha256": "dc181bea607252628bef669ef3fa89809f475e9489c9eb11ec93085a42d6bdad",
+  "unready_rejected": true,
+  "wrong_database_rejected": true
+}

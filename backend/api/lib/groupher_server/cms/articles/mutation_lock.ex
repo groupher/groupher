@@ -89,8 +89,9 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     lock(key(community, thread, article_id), fun)
   end
 
-  def with_article(%Community{}, %Article{thread: :doc}, _fun) do
-    {:error, ErrorCat.doc_branch_required()}
+  def with_article(%Community{} = community, %Article{thread: :doc, id: article_id}, fun)
+      when is_function(fun, 0) do
+    lock(key(community, :doc, article_id), fun)
   end
 
   @doc """
@@ -112,8 +113,9 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     transact_lock(key(community, thread, article_id), fun)
   end
 
-  def transact_article(%Community{}, %Article{thread: :doc}, _fun) do
-    {:error, ErrorCat.doc_branch_required()}
+  def transact_article(%Community{} = community, %Article{thread: :doc, id: article_id}, fun)
+      when is_function(fun, 0) do
+    transact_lock(key(community, :doc, article_id), fun)
   end
 
   @doc "Starts a strict branch-scoped transaction for one stable Doc Article."

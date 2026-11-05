@@ -1,0 +1,14 @@
+$ node --test scripts/check-command-identity.test.mjs && node scripts/check-command-identity.mjs
+✔ scans every CMS persist filename, including BindingPersist (0.435ms)
+✔ detects bare and aliased Persist calls in executable source (0.138959ms)
+✔ ignores Persist wording in Elixir docs and comments (0.064917ms)
+✔ detects command identity fallbacks but ignores infrastructure ids (0.070125ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 713.06525
+command identity and CMS boundary gates: clean (21 Persist files scanned)

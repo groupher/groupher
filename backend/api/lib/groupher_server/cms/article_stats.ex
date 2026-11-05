@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.ArticleStats do
 
       Publish       -> initialize
       ViewTracker   -> increment_views
-      Comments      -> apply_comment_counts
+      Comments      -> Comments.Summary atomic delta
       Interactions  -> apply_interaction_counts
                          + apply_emotion_count
                               |
@@ -29,9 +29,6 @@ defmodule GroupherServer.CMS.ArticleStats do
     ArticleBinding,
     ArticleEmotionCount,
     ArticleStats,
-    Comment,
-    CommentLifecycle,
-    CommentReviewBlock,
     Community
   }
 
@@ -73,7 +70,14 @@ defmodule GroupherServer.CMS.ArticleStats do
     with {:ok, thread} <- article_thread(article) do
       Repo.insert_all(
         ArticleStats,
-        [%{thread: thread, article_id: article.id}],
+        [
+          %{
+            thread: thread,
+            article_id: article.id,
+            comments_revision: 1,
+            comments_participants: []
+          }
+        ],
         on_conflict: :nothing,
         conflict_target: @conflict_target
       )
@@ -106,99 +110,6 @@ defmodule GroupherServer.CMS.ArticleStats do
          ) do
       {1, [_stats]} -> fetch(thread, article_id)
       _ -> {:error, :article_stats_not_updated}
-    end
-  end
-
-  @doc "UPSERTs every Comments-owned ArticleStats field from one physical Article row."
-  @spec apply_comment_counts(struct()) :: {:ok, :pass} | {:error, term()}
-  def apply_comment_counts(article) when is_struct(article) do
-    with {:ok, thread} <- article_thread(article),
-         {:ok, comments_count} <- owner_count(article, :comments_count),
-         {:ok, participants_count} <- owner_count(article, :comments_participants_count),
-         {:ok, comments_revision} <- owner_count(article, :comments_revision) do
-      conflict_query =
-        from(stats in ArticleStats,
-          update: [
-            set: [
-              comments_count: ^comments_count,
-              comments_participants_count: ^participants_count,
-              comments_revision: ^comments_revision,
-              snapshot_at: fragment("date_trunc('second', clock_timestamp())"),
-              updated_at: fragment("date_trunc('second', clock_timestamp())")
-            ]
-          ]
-        )
-
-      Repo.insert_all(
-        ArticleStats,
-        [
-          %{
-            thread: thread,
-            article_id: article.id,
-            comments_count: comments_count,
-            comments_participants_count: participants_count,
-            comments_revision: comments_revision
-          }
-        ],
-        on_conflict: conflict_query,
-        conflict_target: @conflict_target
-      )
-
-      {:ok, :pass}
-    end
-  end
-
-  @doc "Refreshes Comment-owned counts and atomically advances the public comments revision."
-  @spec record_comment_change(Article.t()) :: {:ok, :pass} | {:error, term()}
-  def record_comment_change(%Article{} = article) do
-    with {:ok, comments_count} <- owner_count(article, :comments_count),
-         {:ok, participants_count} <- owner_count(article, :comments_participants_count) do
-      now = DateTime.utc_now(:second)
-
-      conflict_query =
-        from(stats in ArticleStats,
-          update: [
-            inc: [comments_revision: 1],
-            set: [
-              comments_count: ^comments_count,
-              comments_participants_count: ^participants_count,
-              snapshot_at: ^now,
-              updated_at: ^now
-            ]
-          ]
-        )
-
-      Repo.insert_all(
-        ArticleStats,
-        [
-          %{
-            thread: article.thread,
-            article_id: article.id,
-            comments_count: comments_count,
-            comments_participants_count: participants_count,
-            comments_revision: 1,
-            snapshot_at: now,
-            inserted_at: now,
-            updated_at: now
-          }
-        ],
-        on_conflict: conflict_query,
-        conflict_target: @conflict_target
-      )
-
-      {:ok, :pass}
-    end
-  end
-
-  @doc "Repairs Comments-owned fields from the current canonical Article state."
-  @spec reconcile_comment_participants_count(atom(), Ecto.UUID.t(), non_neg_integer()) ::
-          {:ok, :pass} | {:error, :article_stats_not_found}
-  def reconcile_comment_participants_count(thread, article_id, observed_total_count)
-      when thread in @article_threads and is_binary(article_id) and
-             is_integer(observed_total_count) and observed_total_count >= 0 do
-    case Repo.get_by(Article, id: article_id, thread: thread) do
-      %Article{} = article -> apply_comment_counts(article)
-      nil -> {:error, :article_not_found}
     end
   end
 
@@ -278,47 +189,6 @@ defmodule GroupherServer.CMS.ArticleStats do
 
   def apply_emotion_count(_article, emotion), do: {:error, {:unsupported_emotion, emotion}}
 
-  @doc "Repairs only Comments-owned fields from the current physical Article row."
-  @spec rebuild_comment_fields(struct()) :: {:ok, :pass} | {:error, term()}
-  def rebuild_comment_fields(%Article{id: article_id}) do
-    Repo.transaction(fn ->
-      current =
-        Article
-        |> where([article], article.id == ^article_id)
-        |> lock("FOR UPDATE")
-        |> Repo.one()
-
-      case current do
-        %Article{} -> record_comment_change(current)
-        nil -> Repo.rollback(:article_not_found)
-      end
-    end)
-    |> transaction_result()
-  end
-
-  def rebuild_comment_fields(article) when is_struct(article) do
-    schema = article.__struct__
-
-    Repo.transaction(fn ->
-      current =
-        from(item in schema, where: item.id == ^article.id, lock: "FOR UPDATE")
-        |> Repo.one()
-
-      with %{} = current <- current,
-           {:ok, current} <-
-             current
-             |> Ecto.Changeset.change(comments_revision: current.comments_revision + 1)
-             |> Repo.update(),
-           {:ok, _} <- apply_comment_counts(current) do
-        {:ok, :pass}
-      else
-        nil -> Repo.rollback(:article_not_found)
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
-    |> transaction_result()
-  end
-
   @doc "Repairs fixed and typed Interactions-owned fields from current owner facts."
   @spec rebuild_interaction_fields(struct()) :: {:ok, :pass} | {:error, term()}
   def rebuild_interaction_fields(article) when is_struct(article) do
@@ -365,12 +235,40 @@ defmodule GroupherServer.CMS.ArticleStats do
     {:ok, :pass}
   end
 
+  @doc "Reads the persisted count fields needed by search, without profile refresh."
+  def search_counts(thread, article_id) when thread in @article_threads do
+    case Repo.one(
+           from(stats in ArticleStats,
+             where: stats.thread == ^thread and stats.article_id == ^article_id,
+             select: %{upvotes_count: stats.upvotes_count, comments_count: stats.comments_count}
+           )
+         ) do
+      nil -> {:error, ArticleErrorCat.projection_not_updated()}
+      counts -> {:ok, counts}
+    end
+  end
+
   @doc "Returns one complete row by stable Article identity."
   @spec fetch(atom(), Ecto.UUID.t()) :: {:ok, map()} | {:error, :article_stats_not_found}
   def fetch(thread, article_id) when thread in @article_threads and is_binary(article_id) do
     case Map.get(load_snapshots(thread, [article_id]), article_id) do
       nil -> {:error, :article_stats_not_found}
       stats -> {:ok, stats}
+    end
+  end
+
+  @doc "Reads stored members for response assembly; the final page refresh owns profile IO."
+  @spec comment_participants(atom(), Ecto.UUID.t()) :: {:ok, list()} | {:error, atom()}
+  def comment_participants(thread, article_id) when thread in @article_threads do
+    query =
+      from(stats in ArticleStats,
+        where: stats.thread == ^thread and stats.article_id == ^article_id,
+        select: stats.comments_participants
+      )
+
+    case Repo.one(query) do
+      nil -> {:error, :article_stats_not_found}
+      members -> {:ok, members}
     end
   end
 
@@ -543,9 +441,11 @@ defmodule GroupherServer.CMS.ArticleStats do
       }
     )
     |> Repo.all()
-    |> Map.new(fn %{stats: stats, emotion_counts: emotion_counts} ->
-      {stats.article_id, normalize(stats, emotion_counts)}
+    |> Enum.map(fn %{stats: stats, emotion_counts: emotion_counts} ->
+      normalize(stats, emotion_counts)
     end)
+    |> CMS.ShadowSync.refresh_articles()
+    |> Map.new(&{&1.article_id, &1})
   end
 
   defp article_thread(article) do
@@ -568,6 +468,7 @@ defmodule GroupherServer.CMS.ArticleStats do
       comments_count: stats.comments_count,
       collects_count: stats.collects_count,
       comments_participants_count: stats.comments_participants_count,
+      comments_participants: stats.comments_participants,
       interaction_revision: stats.interaction_revision,
       comments_revision: stats.comments_revision,
       emotion_counts: normalize_emotion_counts(emotion_counts),
@@ -592,58 +493,6 @@ defmodule GroupherServer.CMS.ArticleStats do
       _ ->
         {:error, {:invalid_owner_facts, identity}}
     end
-  end
-
-  defp owner_count(%Article{id: article_id}, :comments_count) do
-    {:ok,
-     Repo.aggregate(
-       from(comment in Comment,
-         join: lifecycle in CommentLifecycle,
-         as: :comment_lifecycle,
-         on: lifecycle.comment_id == comment.id,
-         where: comment.article_id == ^article_id and lifecycle.state == :visible,
-         where:
-           not exists(
-             from(restriction in CommentReviewBlock,
-               where:
-                 restriction.comment_id == parent_as(:comment_lifecycle).comment_id and
-                   is_nil(restriction.resolved_at),
-               select: 1
-             )
-           )
-       ),
-       :count
-     )}
-  end
-
-  defp owner_count(%Article{id: article_id}, :comments_participants_count) do
-    count =
-      from(comment in Comment,
-        join: lifecycle in CommentLifecycle,
-        as: :comment_lifecycle,
-        on: lifecycle.comment_id == comment.id,
-        where: comment.article_id == ^article_id and lifecycle.state == :visible,
-        where:
-          not exists(
-            from(restriction in CommentReviewBlock,
-              where:
-                restriction.comment_id == parent_as(:comment_lifecycle).comment_id and
-                  is_nil(restriction.resolved_at),
-              select: 1
-            )
-          ),
-        select: count(comment.author_id, :distinct)
-      )
-      |> Repo.one()
-
-    {:ok, count}
-  end
-
-  defp owner_count(%Article{id: article_id}, :comments_revision) do
-    count =
-      Repo.aggregate(from(comment in Comment, where: comment.article_id == ^article_id), :count)
-
-    {:ok, count}
   end
 
   defp owner_count(owner, field) do

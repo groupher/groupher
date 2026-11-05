@@ -1,0 +1,69 @@
+Application.ensure_all_started(:ecto_sql)
+{:ok, result, _} = Ecto.Migrator.with_repo(GroupherServer.Repo, fn repo ->
+  {:ok, result} = repo.transaction(fn ->
+    repo.query!("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY", [])
+    effective = """
+    SELECT c.* FROM cms.comments c JOIN cms.comment_lifecycles l ON l.comment_id=c.id
+    WHERE l.state='visible' AND NOT EXISTS(SELECT 1 FROM cms.comment_review_blocks b WHERE b.comment_id=c.id AND b.resolved_at IS NULL)
+    """
+    article_mismatches = repo.query!("""
+    WITH effective AS (#{effective}), facts AS (
+      SELECT article_id, count(*) AS total, count(DISTINCT author_id) AS authors FROM effective GROUP BY article_id)
+    SELECT s.article_id FROM cms.article_stats s LEFT JOIN facts f ON f.article_id=s.article_id
+    WHERE s.comments_count<>coalesce(f.total,0) OR s.comments_participants_count<>coalesce(f.authors,0)
+    """, []).rows
+    root_mismatches = repo.query!("""
+    WITH effective AS (#{effective}), facts AS (
+      SELECT root_comment_id, count(*) AS total, max(inserted_at) AS latest FROM effective
+      WHERE reply_to_comment_id IS NOT NULL GROUP BY root_comment_id), entries AS (
+      SELECT c.root_comment_id,count(*) AS total FROM cms.comments c JOIN cms.comment_lifecycles l ON l.comment_id=c.id
+      WHERE c.reply_to_comment_id IS NOT NULL AND l.state IN ('visible','deleted')
+        AND NOT EXISTS(SELECT 1 FROM cms.comment_review_blocks b WHERE b.comment_id=c.id AND b.resolved_at IS NULL)
+      GROUP BY c.root_comment_id)
+    SELECT c.id FROM cms.comments c LEFT JOIN facts f ON f.root_comment_id=c.id
+      LEFT JOIN entries e ON e.root_comment_id=c.id
+    WHERE c.reply_to_comment_id IS NULL AND
+      (c.replies_count<>coalesce(f.total,0) OR c.reply_entries_count<>coalesce(e.total,0)
+       OR c.last_reply_at IS DISTINCT FROM f.latest)
+    """, []).rows
+    member_mismatches = repo.query!("""
+    WITH effective AS (#{effective})
+    SELECT 'article' AS kind,s.article_id::text AS id FROM cms.article_stats s WHERE
+      ARRAY(SELECT (member->>'id')::bigint FROM jsonb_array_elements(s.comments_participants) member) IS DISTINCT FROM
+      ARRAY(SELECT recent.author_id FROM (SELECT DISTINCT ON(e.author_id) e.author_id,e.inserted_at,e.id
+        FROM effective e WHERE e.article_id=s.article_id ORDER BY e.author_id,e.inserted_at DESC,e.id DESC) recent
+        ORDER BY inserted_at DESC,id DESC LIMIT 10)
+    UNION ALL
+    SELECT 'root',c.id::text FROM cms.comments c WHERE c.reply_to_comment_id IS NULL AND
+      ARRAY(SELECT (member->>'id')::bigint FROM jsonb_array_elements(c.reply_participants) member) IS DISTINCT FROM
+      ARRAY(SELECT recent.author_id FROM (SELECT DISTINCT ON(e.author_id) e.author_id,e.inserted_at,e.id
+        FROM effective e WHERE e.root_comment_id=c.id ORDER BY e.author_id,e.inserted_at DESC,e.id DESC) recent
+        ORDER BY inserted_at DESC,id DESC LIMIT 4)
+    """, []).rows
+    [] = member_mismatches
+    revision_mismatches = repo.query!("""
+    SELECT s.article_id FROM cms.article_stats s WHERE s.comments_revision <> COALESCE(
+      (SELECT max((e.data->>'comments_revision')::bigint) FROM cms.outbox_events e
+       WHERE e.event='comment.changed' AND e.resource_id=s.article_id::text),1)
+    """, []).rows
+    [] = revision_mismatches
+    observed_root_versions = repo.query!("SELECT id,replies_revision,replies_count,reply_entries_count FROM cms.comments WHERE reply_to_comment_id IS NULL ORDER BY id", []).rows
+    [] = article_mismatches
+    [] = root_mismatches
+    [[article_id]] = repo.query!("SELECT article_id FROM cms.article_stats LIMIT 1", []).rows
+    plan = repo.query!("EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) SELECT comments_count,comments_participants_count,comments_revision,comments_participants FROM cms.article_stats WHERE article_id=$1", [article_id]).rows
+    plan_queries = %{
+      first_or_last_author: "SELECT EXISTS (SELECT 1 FROM (#{effective}) e WHERE e.article_id=$1 AND e.author_id=(SELECT author_id FROM cms.comments WHERE article_id=$1 LIMIT 1) AND e.id<>(SELECT id FROM cms.comments WHERE article_id=$1 LIMIT 1))",
+      bounded_replenishment: "SELECT * FROM (SELECT DISTINCT ON (e.author_id) e.author_id,e.inserted_at,e.id FROM (#{effective}) e WHERE e.article_id=$1 ORDER BY e.author_id,e.inserted_at DESC,e.id DESC) recent ORDER BY inserted_at DESC,id DESC LIMIT 10",
+      last_reply: "SELECT inserted_at FROM (#{effective}) e WHERE e.article_id=$1 AND e.root_comment_id=(SELECT id FROM cms.comments WHERE article_id=$1 AND reply_to_comment_id IS NULL ORDER BY id LIMIT 1) ORDER BY inserted_at DESC,id DESC LIMIT 1"
+    }
+    write_side_plans = Map.new(plan_queries, fn {name, sql} ->
+      {name, repo.query!("EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) " <> sql, [article_id]).rows}
+    end)
+    %{isolation: "REPEATABLE READ READ ONLY", article_mismatches: article_mismatches,
+      root_mismatches: root_mismatches, member_mismatches: member_mismatches, revision_mismatches: revision_mismatches, observed_root_versions: observed_root_versions, summary_plan: plan, write_side_plans: write_side_plans}
+  end)
+  result
+end)
+File.write!("/tmp/groupher-comments-readonly-validation.json", Jason.encode!(result, pretty: true))
+IO.puts("Read-only fact/summary comparison passed")

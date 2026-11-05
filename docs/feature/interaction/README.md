@@ -12,3 +12,10 @@
 
 新代码不再使用 V1–V4 的 ViewEvents、异步 view worker 或 Audit repair 合同。Article view 当前写协议见
 [Article View 计数写链路](../view-tracker/article-view-counting.md)。
+
+## 共享评论与快照
+
+- [Comments、Replies 与 Reaction 快照和计数](../../migrations/comment-reaction-snapshot-counts.md)：
+  共享 Doc 评论、持久化/原子 count、有界快照/资料刷新、folded 同页访问、版本 guard 和 replies UI 已在工作区实现；
+  独立新库与真实本地页面证据见 [实施记录](../../migrations/comment-reaction-snapshot-counts-implementation.md)。
+  生产切换仍受 fresh-generation、旧 writer drain 与缓存失效等 B5 条件阻断，不支持旧数据转换或旧逻辑 fallback。

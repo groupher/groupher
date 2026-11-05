@@ -19,8 +19,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
   alias GroupherServer.{Accounts, CMS, ReviewBot}
   alias Accounts.Model.User
   alias CMS.{FrontDesk, Comments}
-  alias CMS.Articles.Bindings
-  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias CMS.Comments.Effects
   alias Comments.Persist
@@ -119,17 +118,35 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
   end
 
   defp update_new(canonical, article, body_bag, expected_version, actor, command_id, community_id) do
+    CMS.Comments.Summary.with_change(canonical, fn ->
+      update_content_new(
+        canonical,
+        article,
+        body_bag,
+        expected_version,
+        actor,
+        command_id,
+        community_id
+      )
+    end)
+  end
+
+  defp update_content_new(
+         canonical,
+         article,
+         body_bag,
+         expected_version,
+         actor,
+         command_id,
+         community_id
+       ) do
     with {:ok, lifecycle} <- Comments.Lifecycle.lock(canonical.id),
          {:ok, updated} <- Persist.update_content(canonical, body_bag, expected_version),
          {:ok, _review} <-
            register_comment_review(updated, lifecycle, community_id, command_id),
-         {:ok, _} <- CMS.ArticleStats.record_comment_change(article),
-         {:ok, synced} <- CMS.Comments.Replies.sync_embed_replies(updated),
-         {:ok, _invalidation} <-
-           invalidate_public_comments(article, community_id, canonical.thread, command_id),
-         {:ok, :pass} <- GraphRevision.bump_for_comment(canonical),
-         {:ok, _} <- enqueue_comment_effects(canonical, actor, command_id, community_id) do
-      {:ok, %{comment: synced, article: article, command_id: command_id}}
+         {:ok, :pass} <- Revision.bump(),
+         {:ok, _} <- enqueue_comment_effects(updated, actor, command_id, community_id) do
+      {:ok, %{comment: updated, article: article, command_id: command_id}}
     end
   end
 
@@ -159,35 +176,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
         "command_id" => command_id
       }
     }
-  end
-
-  defp invalidate_public_comments(article, community_id, thread, command_id) do
-    with {:ok, community} <- FrontDesk.community(community_id, mode: :internal),
-         {:ok, _request_binding} <- Bindings.get(article, community),
-         {:ok, bindings} <- Bindings.all(article) do
-      Enum.reduce_while(bindings, {:ok, :pass}, fn binding, _acc ->
-        result =
-          Effects.enqueue(
-            "comment.changed",
-            "article",
-            article.id,
-            command_id,
-            %{
-              community: binding.community.slug,
-              community_id: binding.community_id,
-              thread: thread,
-              inner_id: binding.inner_id,
-              article_id: article.id
-            },
-            effect_key: "comment.changed:#{binding.community_id}"
-          )
-
-        case result do
-          {:ok, _event} -> {:cont, {:ok, :pass}}
-          {:error, _} = error -> {:halt, error}
-        end
-      end)
-    end
   end
 
   defp enqueue_comment_effects(%Comment{} = comment, %User{} = actor, command_id, community_id) do

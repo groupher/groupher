@@ -103,9 +103,9 @@ const commentsState = graphql(`
   query CommentsState($article: ArticlePathInput!, $freshkey: String) {
     commentsState(article: $article, freshkey: $freshkey) {
       totalCount
-      isViewerJoined
       participantsCount
       participants {
+        ref
         login
         nickname
         avatar

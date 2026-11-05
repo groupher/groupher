@@ -146,6 +146,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:comments_count, non_null(:integer))
     field(:collects_count, non_null(:integer))
     field(:comments_participants_count, non_null(:integer))
+    field(:comments_participants, non_null(list_of(non_null(:participant_snapshot_user))))
     field(:interaction_revision, non_null(:integer))
     field(:comments_revision, non_null(:integer))
     field(:emotion_counts, non_null(list_of(non_null(:article_emotion_count))))
@@ -1309,6 +1310,18 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   ######
   # common stands for minimal info of the type
   # used for small identity projections such as feeds
+  object :participant_snapshot_user do
+    field(:ref, non_null(:id),
+      resolve: fn member, _, _ ->
+        GroupherServer.CMS.snapshot_member_ref_encode(member)
+      end
+    )
+
+    field(:login, non_null(:string))
+    field(:avatar, :string)
+    field(:nickname, :string)
+  end
+
   object :common_user do
     field(:login, non_null(:string))
     field(:avatar, :string)
@@ -2156,8 +2169,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :comments_list_state do
     field(:total_count, :integer)
     field(:participants_count, :integer)
-    field(:participants, list_of(:common_user))
-    field(:is_viewer_joined, :boolean)
+    field(:participants, list_of(:participant_snapshot_user))
   end
 
   object :artiment_mention do

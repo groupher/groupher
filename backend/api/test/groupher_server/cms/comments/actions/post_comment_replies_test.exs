@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
 
   use GroupherServer.TestMate
 
-  @max_parent_replies_count Comment.max_parent_replies_count()
+  @max_parent_replies_count Comment.reply_preview_limit()
 
   setup do
     {community, post, _, user} = mock_article(:post)
@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
 
       assert replied_comment.reply_to_comment.id == parent_comment.id
 
-      {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
+      {:ok, parent_comment} = project_root(parent_comment, community)
 
       parent_comment = %{parent_comment | request_community_slug: community.slug}
 
@@ -70,7 +70,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
       {:ok, replied_comment_2} =
         CMS.Comments.reply_comment(parent_comment, mock_comment(), user2, Ecto.UUID.generate())
 
-      {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
+      {:ok, parent_comment} = project_root(parent_comment, community)
 
       parent_comment = %{parent_comment | request_community_slug: community.slug}
 
@@ -109,7 +109,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
           Ecto.UUID.generate()
         )
 
-      {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
+      {:ok, parent_comment} = project_root(parent_comment, community)
 
       parent_comment = %{parent_comment | request_community_slug: community.slug}
 
@@ -165,7 +165,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
           Ecto.UUID.generate()
         )
 
-      {:ok, _parent_comment} = ORM.find(Comment, parent_comment.id)
+      {:ok, _parent_comment} = project_root(parent_comment, community)
 
       {:ok, replied_comment_1} = ORM.find(Comment, replied_comment_1.id)
 
@@ -211,7 +211,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
           acc ++ [replied_comment]
         end)
 
-      {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
+      {:ok, parent_comment} = project_root(parent_comment, community)
 
       parent_comment = %{parent_comment | request_community_slug: community.slug}
 
@@ -237,7 +237,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
       {:ok, _} =
         CMS.Comments.reply_comment(parent_comment, mock_comment(), user2, Ecto.UUID.generate())
 
-      {:ok, state} = CMS.Comments.comments_state(:post, post.article_id)
+      {:ok, state} = CMS.Comments.comments_state(:post, post.article_id, nil, community.slug)
 
       assert exist_in?(user, state.participants)
       assert exist_in?(user2, state.participants)
@@ -259,7 +259,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
       {:ok, _} =
         CMS.Comments.reply_comment(parent_comment, mock_comment(), user2, Ecto.UUID.generate())
 
-      {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
+      {:ok, parent_comment} = project_root(parent_comment, community)
 
       parent_comment = %{parent_comment | request_community_slug: community.slug}
       assert parent_comment.replies_count === 1
@@ -267,7 +267,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
       {:ok, _} =
         CMS.Comments.reply_comment(parent_comment, mock_comment(), user2, Ecto.UUID.generate())
 
-      {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
+      {:ok, parent_comment} = project_root(parent_comment, community)
 
       parent_comment = %{parent_comment | request_community_slug: community.slug}
       assert parent_comment.replies_count === 2
@@ -304,7 +304,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
           Ecto.UUID.generate()
         )
 
-      {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
+      {:ok, parent_comment} = project_root(parent_comment, community)
 
       parent_comment = %{parent_comment | request_community_slug: community.slug}
       assert parent_comment.replies_count === 3
@@ -411,5 +411,19 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentReplies do
 
       assert reply_comment2.reply_to_comment.author.id == parent_comment.author_id
     end
+  end
+
+  defp project_root(comment, community) do
+    {:ok, page} =
+      CMS.Comments.page(
+        comment.thread,
+        comment.article_id,
+        community.slug,
+        %{},
+        %{offset: %{page: 1, size: 100, config_revision: 0}},
+        :replies
+      )
+
+    {:ok, Enum.find(page.entries ++ page.pinned_entries, &(&1.id == comment.id))}
   end
 end

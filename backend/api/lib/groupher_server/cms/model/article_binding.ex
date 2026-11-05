@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Model.ArticleBinding do
 
   @schema_prefix DBPrefix.cms()
   @required_fields ~w(article_id community_id)a
-  @optional_fields ~w(inner_id)a
+  @optional_fields ~w(inner_id thread)a
 
   @type t :: %__MODULE__{}
 
@@ -29,6 +29,12 @@ defmodule GroupherServer.CMS.Model.ArticleBinding do
     belongs_to(:article, Article, type: Ecto.UUID)
     belongs_to(:community, Community)
     field(:inner_id, :integer)
+
+    field(:thread, Ecto.Enum,
+      values: CMS.Artiment.Threads.identity_values_list(),
+      read_after_writes: true
+    )
+
     timestamps(type: :utc_datetime)
   end
 
@@ -41,6 +47,10 @@ defmodule GroupherServer.CMS.Model.ArticleBinding do
     |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:community_id)
     |> unique_constraint([:article_id, :community_id])
+    |> unique_constraint(:article_id, name: :article_bindings_doc_single_owner_index)
+    |> check_constraint(:thread, name: :article_bindings_canonical_thread_check)
+    |> check_constraint(:community_id, name: :doc_binding_identity_check)
+    |> foreign_key_constraint(:article_id, name: :article_bindings_article_thread_fkey)
     |> unique_constraint(:inner_id, name: :article_bindings_community_inner_id_index)
   end
 end

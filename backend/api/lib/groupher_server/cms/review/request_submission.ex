@@ -45,17 +45,19 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
                 (trigger in [:recheck, :binding] and is_tuple(requested_scope) and
                    tuple_size(requested_scope) == 2 and elem(requested_scope, 0) == :community and
                    is_integer(elem(requested_scope, 1)))) do
-    with true <- Repo.in_transaction?(),
-         {:ok, scopes} <- policy_scopes(configs, requested_scope),
-         {:ok, attrs} <- target_attrs(target, content, trigger, scopes),
-         {:ok, :pass} <- end_previous_wall_items(target, trigger),
-         {:ok, requests} <- insert_scoped_requests(attrs, target) do
-      {:ok, requests}
-    else
-      false -> {:error, CMS.ErrorCat.review_transition_requires_transaction()}
-      {:error, _reason} = error -> error
-      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
-    end
+    CMS.Comments.Summary.for_lifecycle(Map.get(target, :lifecycle), fn ->
+      with true <- Repo.in_transaction?(),
+           {:ok, scopes} <- policy_scopes(configs, requested_scope),
+           {:ok, attrs} <- target_attrs(target, content, trigger, scopes),
+           {:ok, :pass} <- end_previous_wall_items(target, trigger),
+           {:ok, requests} <- insert_scoped_requests(attrs, target) do
+        {:ok, requests}
+      else
+        false -> {:error, CMS.ErrorCat.review_transition_requires_transaction()}
+        {:error, _reason} = error -> error
+        _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+      end
+    end)
   end
 
   def register_in_transaction(_target, _content, _configs, _trigger, _scope) do

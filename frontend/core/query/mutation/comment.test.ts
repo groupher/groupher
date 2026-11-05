@@ -39,6 +39,7 @@ const articleStats = {
   upvotesCount: 2,
   commentsCount: 8,
   collectsCount: 1,
+  commentsParticipants: [],
   commentsParticipantsCount: 3,
   interactionRevision: 2,
   commentsRevision: 2,

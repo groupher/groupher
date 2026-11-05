@@ -1,0 +1,88 @@
+defmodule GroupherServer.CMS.Outbox.Workflow.MentionProjection do
+  @moduledoc """
+  Claims and delivers one Mention projection event.
+
+      event_id -> Outbox lease -> event identity check -> current-set projection
+  """
+
+  alias GroupherServer.{CMS, ErrorCat}
+  alias GroupherServer.CMS.ArtimentMentions.{Store, Notifications, CurrentSource}
+  alias GroupherServer.CMS.Outbox
+
+  @doc """
+  Validates event identity before calling the projection Store.
+
+  ## Examples
+
+      perform(%Oban.Job{args: %{"event_id" => event_id}})
+  """
+  @spec perform(Oban.Job.t()) :: Oban.Worker.result()
+  def perform(%Oban.Job{args: %{"event_id" => event_id}} = job) do
+    case Outbox.execute(event_id, &project/1,
+           on_error: if(job.attempt >= job.max_attempts, do: :fail, else: :classify)
+         ) do
+      {:ok, _value} ->
+        {:ok, :pass}
+
+      {:busy, seconds} ->
+        {:snooze, seconds}
+
+      {:error, %ErrorCat.Error{namespace: {:cms}, reason: :outbox_delivery_exhausted}} ->
+        {:ok, :pass}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def perform(_job), do: {:error, CMS.ErrorCat.invalid_mention_projection_event()}
+
+  defp project(%{event: "mention.set_project", data: data} = event) when is_map(data) do
+    source_endpoint_id = data["source_endpoint_id"]
+    set_id = data["set_id"]
+
+    with true <-
+           not Map.has_key?(data, "projection_epoch"),
+         true <-
+           event.resource_type == "mention_source" and event.resource_id == source_endpoint_id,
+         true <- is_binary(set_id),
+         {:ok, projected_edges} <-
+           Store.project_set(source_endpoint_id, set_id, verify_current: true),
+         {:ok, _delivery} <-
+           Notifications.deliver(source_endpoint_id, set_id, Map.get(data, "notify_user_ids", [])) do
+      {:ok, %{projected_edges: projected_edges}}
+    else
+      {:error, :mention_projection_set_not_desired} ->
+        {:ok, :stale_set}
+
+      {:error, :mention_projection_source_unselected} ->
+        {:ok, :stale_source}
+
+      {:error, :mention_projection_source_deleted} ->
+        {:ok, :stale_source}
+
+      {:error, :mention_projection_source_missing} ->
+        case GroupherServer.Repo.get(
+               GroupherServer.CMS.ArtimentMentions.Model.Endpoint,
+               source_endpoint_id
+             ) do
+          nil ->
+            {:error, :mention_projection_source_missing}
+
+          endpoint ->
+            case CurrentSource.load(endpoint) do
+              {:error, :mention_current_source_missing} -> {:ok, :stale_source}
+              _ -> {:error, :mention_projection_source_missing}
+            end
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+
+      _ ->
+        {:error, CMS.ErrorCat.invalid_mention_projection_event()}
+    end
+  end
+
+  defp project(_event), do: {:error, CMS.ErrorCat.invalid_mention_projection_event()}
+end

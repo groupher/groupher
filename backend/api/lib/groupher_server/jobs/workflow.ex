@@ -141,25 +141,6 @@ defmodule GroupherServer.Jobs.Workflow do
   end
 
   @doc """
-  Enqueues repair of an article's persisted comment participant count.
-
-  ## Examples
-
-      Jobs.reconcile_comments_participants(:post, article_id, 12)
-  """
-  @spec reconcile_comments_participants(atom(), Ecto.UUID.t(), non_neg_integer()) ::
-          {:ok, Oban.Job.t() | :pass} | {:error, term()}
-  def reconcile_comments_participants(thread, article_id, total_count)
-      when is_atom(thread) and is_binary(article_id) and is_integer(total_count) and
-             total_count >= 0 do
-    comments_job(:reconcile_comments_participants, %{
-      thread: thread,
-      article_id: article_id,
-      total_count: total_count
-    })
-  end
-
-  @doc """
   Enqueues an artiment search-index update unless job insertion is disabled.
 
   ## Examples

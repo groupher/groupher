@@ -123,33 +123,14 @@ defmodule GroupherServer.CMS.Comments do
     Reconcile.reconcile_states(article_path, inner_ids, viewer)
   end
 
-  @doc """
-  Returns aggregate comment state for an Article without a viewer.
-
-  ## Examples
-
-      CMS.Comments.comments_state(:post, post_id)
-  """
-  @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
-  def comments_state(thread, article_id), do: Query.comments_state(thread, article_id)
-
-  @doc "Repairs the persisted Comment participant count by stable Article identity."
-  @spec reconcile_participants_count(T.thread(), Ecto.UUID.t(), non_neg_integer()) ::
-          {:ok, :pass} | {:error, term()}
-  def reconcile_participants_count(thread, article_id, total_count) do
-    CMS.ArticleStats.reconcile_comment_participants_count(thread, article_id, total_count)
+  @doc "Reads the public discussion summary in the requested Community."
+  def comments_state(thread, article_id, viewer, community_slug) do
+    Query.comments_state(thread, article_id, viewer, community_slug)
   end
 
-  @doc """
-  Returns aggregate comment state including whether the viewer participated.
-
-  ## Examples
-
-      CMS.Comments.comments_state(:post, post_id, viewer)
-  """
-  @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
-  def comments_state(thread, article_id, %User{} = user) do
-    Query.comments_state(thread, article_id, user)
+  @doc "Pages all effective participants in the requested Community."
+  def paged_comments_participants(thread, article_id, pagi, community_slug) do
+    Query.paged_comments_participants(thread, article_id, pagi, community_slug)
   end
 
   @doc "Returns an independently paged flat reply collection for one root."
@@ -164,23 +145,6 @@ defmodule GroupherServer.CMS.Comments do
 
   @doc "Pages published Comments with separate thread/filter and Pagi position."
   defdelegate paged_published_comments(user, thread, filter, pagi, viewer), to: Query
-
-  @doc "Pages folded Comments through the common engine."
-  defdelegate paged_folded_comments(thread, article_id, filter, pagi), to: Query
-  defdelegate paged_folded_comments(thread, article_id, filter, pagi, viewer), to: Query
-
-  @doc """
-  Returns the distinct participants in an Article's Comments.
-
-  ## Examples
-
-      CMS.Comments.paged_comments_participants(:post, post_id, filters)
-  """
-  @spec paged_comments_participants(T.thread(), T.id(), map()) ::
-          T.domain_res(T.paged_users())
-  def paged_comments_participants(thread, article_id, filters) do
-    Query.paged_comments_participants(thread, article_id, filters)
-  end
 
   @doc """
   Creates a Comment from an already resolved Article and returns the Comment.

@@ -1,0 +1,9 @@
+{
+  "phase": "ready",
+  "database": "groupher_user_delete_guard_cutover_20261105",
+  "generation": "76896cc8-0cdd-494a-a21c-10c904a81501",
+  "schema_sha256": "fbc51ba8c1750dfd6205d144c79ac6aa2e90af46563fe44a0b9e463d9cacb5ae",
+  "disabled_guard_rejected": true,
+  "weakened_guard_rejected": true,
+  "previous_schema_hash_rejected": true
+}

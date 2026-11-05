@@ -45,13 +45,13 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.id)
+      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.id, nil, community.slug)
 
       assert state.participants_count == 1
       assert state.total_count == 2
 
       assert state.participants |> length == 1
-      assert not state.is_viewer_joined
+      refute Map.has_key?(state, :is_viewer_joined)
     end
 
     test "can get viewer joined state", ~m(community user changelog)a do
@@ -75,12 +75,12 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.id, user)
+      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.id, user, community.slug)
 
       assert state.participants_count == 1
       assert state.total_count == 2
       assert state.participants |> length == 1
-      assert state.is_viewer_joined
+      refute Map.has_key?(state, :is_viewer_joined)
     end
 
     test "can get viewer joined state 2", ~m(community user user2 user3 changelog)a do
@@ -104,12 +104,12 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.id, user)
+      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.id, user, community.slug)
 
       assert state.participants_count == 2
       assert state.total_count == 2
       assert state.participants |> length == 2
-      assert not state.is_viewer_joined
+      refute Map.has_key?(state, :is_viewer_joined)
     end
   end
 
@@ -335,7 +335,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.article_id)
+      {:ok, state} =
+        CMS.Comments.comments_state(:changelog, changelog.article_id, nil, community.slug)
 
       participator = List.first(state.participants)
       assert participator.id == user.id
@@ -362,7 +363,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.article_id)
+      {:ok, state} =
+        CMS.Comments.comments_state(:changelog, changelog.article_id, nil, community.slug)
 
       assert 1 == length(state.participants)
     end
@@ -389,7 +391,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, state} = CMS.Comments.comments_state(:changelog, changelog.article_id)
+      {:ok, state} =
+        CMS.Comments.comments_state(:changelog, changelog.article_id, nil, community.slug)
 
       participator = List.first(state.participants)
 
@@ -658,14 +661,15 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       assert comment.is_folded
 
       {:ok, folded} =
-        CMS.Comments.paged_folded_comments(
+        shared_comment_page(
           :changelog,
           changelog.article_id,
           %{},
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
         )
 
-      assert folded.total_count == 1
+      assert folded.page_info.total_count == 1
+      assert hd(folded.entries).is_folded
     end
 
     test "user can unfold a comment", ~m(community changelog user)a do
@@ -691,14 +695,15 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       assert not comment.is_folded
 
       {:ok, folded} =
-        CMS.Comments.paged_folded_comments(
+        shared_comment_page(
           :changelog,
           changelog.article_id,
           %{},
           %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
         )
 
-      assert folded.total_count == 0
+      assert folded.page_info.total_count == 1
+      refute hd(folded.entries).is_folded
     end
   end
 
@@ -846,7 +851,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         CMS.Comments.paged_comments_participants(
           thread,
           changelog.id,
-          %GroupherServer.Pagi.Params.Offset{page: 1, size: page_size}
+          %GroupherServer.Pagi.Params.Offset{page: 1, size: page_size},
+          community.slug
         )
 
       assert %Helper.ORM.Pagi.Page.Offset{} = results
@@ -1037,7 +1043,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       random_comment_3 = all_folded_comments |> Enum.at(5)
 
       {:ok, paged_comments} =
-        CMS.Comments.paged_folded_comments(
+        shared_comment_page(
           :changelog,
           changelog.id,
           %{},
@@ -1048,9 +1054,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       assert exist_in?(random_comment_2, paged_comments.entries)
       assert exist_in?(random_comment_3, paged_comments.entries)
 
-      assert page_number == paged_comments.page
-      assert page_size == paged_comments.size
-      assert total_count == paged_comments.total_count
+      assert page_number == paged_comments.page_info.page
+      assert page_size == paged_comments.page_info.size
+      assert total_count == paged_comments.page_info.total_count
     end
   end
 
@@ -1280,5 +1286,26 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       {:ok, _} =
         CMS.Comments.reply_comment(parent_comment, mock_comment(), user, Ecto.UUID.generate())
     end
+  end
+
+  defp shared_comment_page(thread, article_id, filter, pagi) do
+    community =
+      Repo.one!(
+        from(binding in CMS.Model.ArticleBinding,
+          join: community in CMS.Model.Community,
+          on: community.id == binding.community_id,
+          where: binding.article_id == ^article_id,
+          select: community
+        )
+      )
+
+    CMS.Comments.page(
+      thread,
+      article_id,
+      community.slug,
+      filter,
+      %{offset: %{page: pagi.page, size: pagi.size, config_revision: 0}},
+      :replies
+    )
   end
 end

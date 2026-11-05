@@ -339,15 +339,11 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   defp acquire_comment_parent_lock(
          %Community{} = community,
-         %Article{thread: :doc} = article,
-         %Comment{branch_id: branch_id}
-       )
-       when is_integer(branch_id) do
-    acquire_doc_lock(community, article, branch_id)
-  end
-
-  defp acquire_comment_parent_lock(%Community{} = community, %Article{} = article, _comment) do
-    acquire_article_lock(community, article)
+         %Article{thread: thread, id: id},
+         _comment
+       ) do
+    AdvisoryLock.acquire!(MutationLock.key(community, thread, id))
+    {:ok, :pass}
   end
 
   defp acquire_doc_lock(%Community{} = community, %Article{id: article_id}, branch_id) do
@@ -384,7 +380,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     with {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
          {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment) do
-      transact_parent(community, article, comment.branch_id, fn ->
+      transact_parent(community, article, nil, fn ->
         Check.with_authorized(actor, action, {community, thread, article, comment}, callback)
       end)
       |> normalize_decision()
@@ -571,11 +567,6 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   end
 
   defp parent_article(_comment), do: {:error, ErrorCat.resource_not_found()}
-
-  defp transact_parent(community, %Article{thread: :doc} = article, branch_id, fun)
-       when is_integer(branch_id) do
-    Articles.MutationLock.transact_doc(community, article, branch_id, fun)
-  end
 
   defp transact_parent(community, article, _branch_id, fun) do
     Articles.MutationLock.transact_article(community, article, fun)

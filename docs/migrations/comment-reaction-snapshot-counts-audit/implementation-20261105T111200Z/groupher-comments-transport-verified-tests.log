@@ -1,0 +1,15 @@
+Compiling 1 file (.ex)
+
+19:26:03.582 [info] Migrations already up
+Running ExUnit with seed: 721202, max_cases: 1
+Excluding tags: [:later]
+
+...................................................................................................................................................................................B2 one-hop GraphQL SQL count: 13
+B2 one-hop GraphQL SQL count: 13
+B2 one-hop GraphQL SQL count: 12
+B2 one-hop GraphQL SQL count: 12
+.............
+Finished in 223.0 seconds (223.0s async, 0.00s sync)
+
+Result: 192 passed
+]2;ExUnit - 192 tests, 0 failures in 223.0 seconds 

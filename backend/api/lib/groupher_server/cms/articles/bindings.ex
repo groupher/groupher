@@ -8,6 +8,9 @@ defmodule GroupherServer.CMS.Articles.Bindings do
   @doc "Delegates all/1 to the owning implementation."
   defdelegate all(arg1), to: GroupherServer.CMS.Articles.Bindings.Persist
 
+  @doc "Resolves the unique stable Doc owner; this lookup grants no permissions."
+  defdelegate doc_owner(article_id), to: GroupherServer.CMS.Articles.Bindings.Persist
+
   @doc "Delegates get/2 to the owning implementation."
   defdelegate get(arg1, arg2), to: GroupherServer.CMS.Articles.Bindings.Persist
 

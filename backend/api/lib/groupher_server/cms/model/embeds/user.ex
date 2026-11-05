@@ -94,7 +94,7 @@ defmodule GroupherServer.CMS.Model.Embeds.User do
   Returns a stable key for de-duplication.
   """
   @spec uniq_key(t()) :: String.t() | integer() | nil
-  def uniq_key(%__MODULE__{login: login, user_id: user_id, id: id}), do: login || user_id || id
+  def uniq_key(%__MODULE__{user_id: user_id, id: id}), do: id || user_id
 
   def changeset(struct, params) do
     changeset =

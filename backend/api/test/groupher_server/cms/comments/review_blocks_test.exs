@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
     events =
       Repo.all(
         from(event in OutboxEvent,
-          where: event.event == "comment.changed" and event.command_id == ^command_id
+          where: event.event == "comment.changed" and event.resource_id == ^article.id
         )
       )
 
@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
     end
   end
 
-  test "single Comment responses filter restricted embedded replies through Gate" do
+  test "single Comment responses carry summaries and scoped pages filter actual reply rows" do
     {community, article, _article_attrs, parent_author} = mock_article(:post)
     {:ok, reply_author} = db_insert(:user)
 
@@ -137,7 +137,33 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
     assert public_parent.replies == []
 
     assert {:ok, reply_author_parent} = CMS.Comments.one_comment(parent.id, reply_author)
-    assert Enum.map(reply_author_parent.replies, & &1.id) == [reply.id]
+    assert reply_author_parent.replies == []
+    assert reply_author_parent.replies_count == 0
+
+    assert {:ok, public_page} =
+             CMS.Comments.page(
+               :post,
+               article.id,
+               community.slug,
+               %{},
+               %{offset: %{page: 1, size: 20, config_revision: 0}},
+               :replies
+             )
+
+    assert hd(public_page.entries).replies == []
+
+    assert {:ok, author_page} =
+             CMS.Comments.page(
+               :post,
+               article.id,
+               community.slug,
+               %{},
+               %{offset: %{page: 1, size: 20, config_revision: 0}},
+               :replies,
+               reply_author
+             )
+
+    assert Enum.map(hd(author_page.entries).replies, & &1.id) == [reply.id]
   end
 
   test "only the author can read a Comment under a platform review restriction" do

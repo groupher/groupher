@@ -1,0 +1,13 @@
+Compiling 174 files (.ex)
+Compiling lib/groupher_server_web/schema/cms/cms_types.ex (it's taking more than 10s)
+Verifying GroupherServerWeb.Schema.CMS.Types (it's taking more than 10s)
+
+21:24:06.780 [info] Migrations already up
+Running ExUnit with seed: 49935, max_cases: 1
+Excluding tags: [:later]
+
+...............................
+Finished in 4.7 seconds (0.00s async, 4.7s sync)
+
+Result: 31 passed
+]2;ExUnit - 31 tests, 0 failures in 4.7 seconds 

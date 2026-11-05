@@ -1,0 +1,11 @@
+{
+  "deletion": {
+    "status": "deleted"
+  },
+  "comment_survives": false,
+  "user_survives": false,
+  "count_before": 1,
+  "count_after": 1,
+  "participants_before": 1,
+  "participants_after": 1
+}

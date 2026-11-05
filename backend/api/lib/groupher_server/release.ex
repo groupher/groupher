@@ -18,9 +18,48 @@ defmodule GroupherServer.Release do
       {:ok, _, _} =
         Ecto.Migrator.with_repo(repo, fn connected_repo ->
           verify_migration_database!(connected_repo)
+          verify_shared_comments_before_ddl!(connected_repo)
+
           Ecto.Migrator.run(connected_repo, :up, all: true)
+
+          if Application.get_env(@app, :env) == :prod do
+            GroupherServer.CMS.comments_schema_generation_mark_ready!(
+              connected_repo,
+              GroupherServer.CMS.comments_schema_generation_environment()
+            )
+          end
         end)
     end
+  end
+
+  @doc "Attests an empty database; requires explicit deployment manifest coordinates."
+  def bootstrap_shared_comments do
+    load_app()
+
+    for repo <- repos() do
+      Ecto.Migrator.with_repo(repo, fn connected_repo ->
+        verify_migration_database!(connected_repo)
+
+        GroupherServer.CMS.comments_schema_generation_bootstrap!(
+          connected_repo,
+          System.fetch_env!("MIGRATION_EXPECTED_DATABASE"),
+          System.fetch_env!("SHARED_COMMENTS_GENERATION"),
+          System.fetch_env!("SHARED_COMMENTS_BOOTSTRAP_SOURCE"),
+          System.fetch_env!("SHARED_COMMENTS_BUILD")
+        )
+      end)
+    end
+  end
+
+  defp verify_shared_comments_before_ddl!(repo) do
+    if Application.get_env(@app, :env) == :prod do
+      GroupherServer.CMS.comments_schema_generation_verify_before_migration!(
+        repo,
+        GroupherServer.CMS.comments_schema_generation_environment()
+      )
+    end
+
+    {:ok, :verified}
   end
 
   @doc "Refuses production migration before any DDL unless the actual database matches the execution record."
@@ -32,7 +71,7 @@ defmodule GroupherServer.Release do
     end
 
     if expected not in [nil, ""] do
-      [[actual]] = repo.query!("SELECT current_database()", []).rows
+      actual = database_identity!(repo)
 
       if actual != expected do
         raise "migration database mismatch: expected #{expected}, connected to #{actual}"
@@ -40,6 +79,12 @@ defmodule GroupherServer.Release do
     end
 
     {:ok, :verified}
+  end
+
+  @doc "Returns the database name reported by the current Repo connection."
+  def database_identity!(repo) do
+    [[database]] = repo.query!("SELECT current_database()", []).rows
+    database
   end
 
   def rollback(repo, version) do

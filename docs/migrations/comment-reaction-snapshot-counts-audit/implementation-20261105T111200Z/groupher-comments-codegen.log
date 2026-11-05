@@ -1,0 +1,14 @@
+$ graphql-codegen --config codegen.ts && oxfmt -c frontend/core/config/oxfmt.json frontend/core/lib/graphql/generated
+❯ Parse Configuration
+✔ Parse Configuration
+❯ Generate outputs
+❯ Generate to frontend/core/lib/graphql/generated/
+❯ Load GraphQL schemas
+✔ Load GraphQL schemas
+❯ Load GraphQL documents
+✔ Load GraphQL documents
+❯ Generate
+✔ Generate
+✔ Generate to frontend/core/lib/graphql/generated/
+✔ Generate outputs
+Finished in 61ms on 4 files using 8 threads.

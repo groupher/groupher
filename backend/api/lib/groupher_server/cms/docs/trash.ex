@@ -258,7 +258,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
                    opts
                  ),
                {:ok, _} <- Repo.delete(item),
-               {:ok, _} <- purge_branch(canonical, branch) do
+               {:ok, _} <- purge_branch(canonical, branch, opts) do
             {:ok, :done}
           end
         end
@@ -293,7 +293,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
              opts
            ),
          {:ok, _} <- Repo.delete(item),
-         {:ok, _} <- purge_branch(canonical, branch) do
+         {:ok, _} <- purge_branch(canonical, branch, opts) do
       {:ok, :done}
     end
   end
@@ -309,7 +309,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
     end
   end
 
-  defp purge_branch(%Article{id: article_id} = article, %DocBranch{id: branch_id}) do
+  defp purge_branch(%Article{id: article_id} = article, %DocBranch{id: branch_id} = branch, opts) do
     Repo.delete_all(
       from(row in DocDraft, where: row.article_id == ^article_id and row.branch_id == ^branch_id)
     )
@@ -336,15 +336,38 @@ defmodule GroupherServer.CMS.Docs.Trash do
       )
     )
 
-    if Repo.exists?(from(row in DocLifecycle, where: row.article_id == ^article_id)) do
-      {:ok, :pass}
-    else
-      case Repo.delete(article) do
-        {:ok, _article} -> {:ok, :pass}
-        {:error, reason} -> {:error, reason}
+    with {:ok, _} <- hide_main_mentions(article_id, branch) do
+      if Keyword.get(opts, :purge_stable_article, false) do
+        purge_stable_after_branches(article)
+      else
+        {:ok, :pass}
       end
     end
   end
+
+  # Only explicitly scoped internal purge callers request this operation. The
+  # caller already passed Doc permanent-delete Gate and owns the transaction.
+  defp purge_stable_after_branches(%Article{id: id} = article) do
+    if Repo.exists?(from(row in DocLifecycle, where: row.article_id == ^id)) do
+      {:error,
+       CMS.ErrorCat.custom("stable Doc purge requires all body branches to be explicitly removed")}
+    else
+      with {:ok, _} <-
+             CMS.ArtimentMentions.mark_endpoint_deleted_in_transaction(%{
+               type: :doc,
+               article_id: id
+             }),
+           {:ok, _} <- Repo.delete(article) do
+        {:ok, :pass}
+      end
+    end
+  end
+
+  defp hide_main_mentions(article_id, %DocBranch{type: :main}) do
+    CMS.ArtimentMentions.hide_source(%{type: :doc, article_id: article_id})
+  end
+
+  defp hide_main_mentions(_article_id, _branch), do: {:ok, :pass}
 
   defp ensure_group_action(%TrashedDocArticle{trash_action_id: action_id}, opts) do
     grouped? =

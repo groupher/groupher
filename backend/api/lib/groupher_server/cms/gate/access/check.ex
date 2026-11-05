@@ -87,7 +87,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
          {:ok, article} <- parent_article(comment),
          {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment),
          {:ok, result} <-
-           with_parent_lock(community, article, comment.branch_id, fn ->
+           with_parent_lock(community, article, nil, fn ->
              with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
                   %Decision{allowed: true} <-
                     Decision.from_result(
@@ -220,13 +220,6 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
            ) do
       parent = canonical_resource(decision.context.article, decision.context.community)
 
-      parent =
-        if decision.context.article.thread == :doc do
-          Map.put(parent, :branch_id, decision.context.comment.branch_id)
-        else
-          parent
-        end
-
       callback.(decision.context.comment, parent)
       |> normalize_callback_result()
     else
@@ -330,9 +323,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   defp canonical_resource(resource, community), do: Map.put(resource, :community, community)
   defp context_resource(%ArticleContext{article: article}), do: article
 
-  defp context_resource(%DocContext{doc: doc, doc_branch_state: state}) do
-    %{doc | comments_locked: state.comments_locked}
-  end
+  defp context_resource(%DocContext{doc: doc}), do: doc
 
   defp article_thread(%{thread: thread}) when thread in @article_threads do
     {:ok, thread}
@@ -348,11 +339,6 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   end
 
   defp parent_article(_comment), do: {:error, ErrorCat.resource_not_found()}
-
-  defp with_parent_lock(community, %Article{thread: :doc, id: article_id}, branch_id, fun)
-       when is_integer(branch_id) do
-    Articles.MutationLock.with_article(community, :doc, branch_id, article_id, fun)
-  end
 
   defp with_parent_lock(community, article, _branch_id, fun) do
     Articles.MutationLock.with_article(community, article, fun)

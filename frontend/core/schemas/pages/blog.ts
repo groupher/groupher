@@ -40,7 +40,10 @@ export const blog = graphql(`
         }
       }
       commentsParticipants {
-        ...PageAuthorFields
+        ref
+        login
+        nickname
+        avatar
       }
       lifecycle {
         state

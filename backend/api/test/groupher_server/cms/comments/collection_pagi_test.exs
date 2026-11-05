@@ -122,19 +122,34 @@ defmodule GroupherServer.Test.CMS.Comments.CollectionPagi do
     end
 
     assert {:ok, %Page.Offset{entries: expected, total_count: 4}} =
-             CMS.Comments.paged_comments_participants(:post, post.id, %Params.Offset{
-               page: 1,
-               size: 100
-             })
+             CMS.Comments.paged_comments_participants(
+               :post,
+               post.id,
+               %Params.Offset{
+                 page: 1,
+                 size: 100
+               },
+               community.slug
+             )
 
     assert {:ok, %Page.Cursor{entries: first, end_cursor: cursor}} =
-             CMS.Comments.paged_comments_participants(:post, post.id, %Params.Cursor{first: 2})
+             CMS.Comments.paged_comments_participants(
+               :post,
+               post.id,
+               %Params.Cursor{first: 2},
+               community.slug
+             )
 
     assert {:ok, %Page.Cursor{entries: rest, has_next_page: false}} =
-             CMS.Comments.paged_comments_participants(:post, post.id, %Params.Cursor{
-               first: 100,
-               after: cursor
-             })
+             CMS.Comments.paged_comments_participants(
+               :post,
+               post.id,
+               %Params.Cursor{
+                 first: 100,
+                 after: cursor
+               },
+               community.slug
+             )
 
     assert Enum.map(first ++ rest, & &1.id) == Enum.map(expected, & &1.id)
 

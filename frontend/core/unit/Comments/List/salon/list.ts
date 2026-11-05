@@ -6,7 +6,7 @@ export default function useSalon() {
   return {
     wrapper: 'relative',
     indentLine: cn(
-      'absolute top-20 left-0 h-[calc(100%-85px)] w-5 ml-2.5 border-l',
+      'absolute top-14 bottom-4 left-0 w-5 ml-2.5 border-l border-b rounded-bl-xl',
       br('outline'),
       `hover:${br('digest')}`,
     ),

@@ -1,0 +1,257 @@
+defmodule GroupherServer.CMS.ArtimentMentions.InitializeSourceScan do
+  @moduledoc """
+  Reads bounded pages of canonical sources for the one-time Mentions initializer.
+
+      category + keyset cursor -> current public selection + canonical body
+  """
+
+  import Ecto.Query, warn: false
+
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBodySnapshot,
+    ArticlePublic,
+    ArticleRevision,
+    Comment,
+    CommentBody,
+    DocBranch,
+    DocBranchVersion,
+    DocPublic,
+    TicketState
+  }
+
+  @max_page_size 100
+
+  @type category :: :articles | :docs | :comments
+  @type cursor :: nil | binary() | {binary(), pos_integer()} | pos_integer()
+
+  @doc "Returns a deterministic, bounded page from one source category."
+  @spec page(category(), cursor(), pos_integer()) :: {:ok, [map()]} | {:error, term()}
+  def page(category, cursor \\ nil, limit \\ @max_page_size)
+
+  def page(category, cursor, limit)
+      when category in [:articles, :docs, :comments] and is_integer(limit) and
+             limit in 1..@max_page_size do
+    {:ok, query_page(category, cursor, limit)}
+  end
+
+  def page(_, _, _), do: {:error, :invalid_mention_source_page}
+
+  @doc "Locks the selected canonical source row and verifies the frozen content token."
+  @spec lock_and_verify(map()) :: {:ok, :pass} | {:error, :mention_initialization_source_changed}
+  def lock_and_verify(%{type: type, article_id: article_id, source_token: source_token})
+      when type in [:post, :blog, :changelog, :ticket] and is_binary(article_id) do
+    case Repo.one(
+           from(public in ArticlePublic,
+             where: public.article_id == ^article_id,
+             select: {public.revision_id, public.publication_version},
+             lock: "FOR UPDATE"
+           )
+         ) do
+      {revision_id, publication_version} ->
+        verify_token("#{revision_id}:#{publication_version}", source_token)
+
+      nil ->
+        {:error, :mention_initialization_source_changed}
+    end
+  end
+
+  def lock_and_verify(%{
+        type: :doc,
+        article_id: article_id,
+        branch_id: branch_id,
+        source_token: token
+      })
+      when is_binary(article_id) and is_integer(branch_id) do
+    case Repo.one(
+           from(public in DocPublic,
+             where: public.article_id == ^article_id and public.branch_id == ^branch_id,
+             select: {public.branch_version_id, public.publication_version},
+             lock: "FOR UPDATE"
+           )
+         ) do
+      {branch_version_id, publication_version} ->
+        verify_token("#{branch_id}:#{branch_version_id}:#{publication_version}", token)
+
+      nil ->
+        {:error, :mention_initialization_source_changed}
+    end
+  end
+
+  def lock_and_verify(%{type: :comment, comment_id: comment_id, source_token: token})
+      when is_integer(comment_id) do
+    case Repo.one(
+           from(body in CommentBody,
+             where: body.comment_id == ^comment_id,
+             select: {body.version, body.body_hash},
+             lock: "FOR UPDATE"
+           )
+         ) do
+      {version, body_hash} ->
+        verify_token("#{comment_id}:#{version}:#{body_hash}", token)
+
+      nil ->
+        {:error, :mention_initialization_source_changed}
+    end
+  end
+
+  def lock_and_verify(_), do: {:error, :mention_initialization_source_changed}
+
+  defp verify_token(token, token), do: {:ok, :pass}
+  defp verify_token(_, _), do: {:error, :mention_initialization_source_changed}
+
+  defp query_page(:articles, cursor, limit) do
+    Article
+    |> join(:inner, [article], public in ArticlePublic, on: public.article_id == article.id)
+    |> join(:left, [article, public], revision in ArticleRevision,
+      on: revision.id == public.revision_id
+    )
+    |> join(:left, [_article, _public, revision], body in ArticleBodySnapshot,
+      on: body.id == revision.body_snapshot_id
+    )
+    |> join(:left, [article], ticket in TicketState, on: ticket.article_id == article.id)
+    |> where([article], article.thread in [:post, :blog, :changelog, :ticket])
+    |> where(
+      [article, _public, _revision, _body, ticket],
+      article.thread != :ticket or ticket.type == :user
+    )
+    |> maybe_after_article(cursor)
+    |> order_by([article], asc: article.id)
+    |> limit(^limit)
+    |> select([article, public, revision, body, _ticket], %{
+      type: article.thread,
+      article_id: article.id,
+      branch_id: nil,
+      comment_id: nil,
+      parent: nil,
+      revision_id: public.revision_id,
+      publication_version: public.publication_version,
+      body_hash: body.body_hash,
+      body_json: body.json,
+      mentioned_at: public.updated_at,
+      revision_present?: not is_nil(revision.id)
+    })
+    |> Repo.all()
+    |> Enum.map(fn row ->
+      row
+      |> Map.put(:source_token, "#{row.revision_id}:#{row.publication_version}")
+      |> Map.delete(:revision_id)
+      |> Map.delete(:publication_version)
+    end)
+  end
+
+  defp query_page(:docs, cursor, limit) do
+    DocPublic
+    |> join(:inner, [public], branch in DocBranch,
+      on: branch.id == public.branch_id and branch.type == :main
+    )
+    |> join(:left, [public, _branch], version in DocBranchVersion,
+      on: version.id == public.branch_version_id
+    )
+    |> join(:left, [_public, _branch, version], revision in ArticleRevision,
+      on: revision.id == version.revision_id
+    )
+    |> join(:left, [_public, _branch, _version, revision], body in ArticleBodySnapshot,
+      on: body.id == revision.body_snapshot_id
+    )
+    |> maybe_after_doc(cursor)
+    |> order_by([public, branch], asc: public.article_id, asc: branch.id)
+    |> limit(^limit)
+    |> select([public, branch, version, revision, body], %{
+      type: :doc,
+      article_id: public.article_id,
+      branch_id: branch.id,
+      comment_id: nil,
+      parent: nil,
+      branch_version_id: public.branch_version_id,
+      publication_version: public.publication_version,
+      body_hash: body.body_hash,
+      body_json: body.json,
+      mentioned_at: public.updated_at,
+      revision_present?: not is_nil(version.id) and not is_nil(revision.id)
+    })
+    |> Repo.all()
+    |> Enum.map(fn row ->
+      row
+      |> Map.put(
+        :source_token,
+        "#{row.branch_id}:#{row.branch_version_id}:#{row.publication_version}"
+      )
+      |> Map.delete(:branch_version_id)
+      |> Map.delete(:publication_version)
+    end)
+  end
+
+  defp query_page(:comments, cursor, limit) do
+    Comment
+    |> join(:inner, [comment], article in Article,
+      on: article.id == comment.article_id,
+      as: :initialization_comment_article
+    )
+    |> join(:left, [_comment, article], public in ArticlePublic,
+      on: public.article_id == article.id
+    )
+    |> join(:left, [_comment, article], doc_public in DocPublic,
+      on: doc_public.article_id == article.id and article.thread == :doc
+    )
+    |> join(:left, [_comment, _article, _public, doc_public], doc_branch in DocBranch,
+      on: doc_branch.id == doc_public.branch_id and doc_branch.type == :main
+    )
+    |> join(:left, [comment], body in CommentBody, on: body.comment_id == comment.id)
+    |> where(
+      [_comment, article, public, _doc_public, branch],
+      (article.thread in [:post, :blog, :changelog] and not is_nil(public.article_id)) or
+        (article.thread == :doc and not is_nil(branch.id))
+    )
+    |> maybe_after_comment(cursor)
+    |> order_by([comment], asc: comment.id)
+    |> limit(^limit)
+    |> select([comment, article, _public, _doc_branch, _doc_public, body], %{
+      type: :comment,
+      article_id: article.id,
+      comment_id: comment.id,
+      parent: %{type: article.thread, article_id: article.id},
+      body_version: body.version,
+      body_hash: body.body_hash,
+      body_json: body.json,
+      mentioned_at: body.updated_at,
+      revision_present?: not is_nil(body.id)
+    })
+    |> Repo.all()
+    |> Enum.map(fn row ->
+      row
+      |> Map.put(:source_token, "#{row.comment_id}:#{row.body_version}:#{row.body_hash}")
+      |> Map.delete(:body_version)
+    end)
+  end
+
+  defp maybe_after_article(query, nil), do: query
+
+  defp maybe_after_article(query, cursor) when is_binary(cursor),
+    do: where(query, [article], article.id > ^cursor)
+
+  defp maybe_after_article(query, _), do: where(query, [_article], false)
+
+  defp maybe_after_doc(query, nil), do: query
+
+  defp maybe_after_doc(query, {article_id, branch_id})
+       when is_binary(article_id) and is_integer(branch_id) do
+    where(
+      query,
+      [public, branch],
+      public.article_id > ^article_id or
+        (public.article_id == ^article_id and branch.id > ^branch_id)
+    )
+  end
+
+  defp maybe_after_doc(query, _), do: where(query, [_public, _branch], false)
+
+  defp maybe_after_comment(query, nil), do: query
+
+  defp maybe_after_comment(query, cursor) when is_integer(cursor),
+    do: where(query, [comment], comment.id > ^cursor)
+
+  defp maybe_after_comment(query, _), do: where(query, [_comment], false)
+end

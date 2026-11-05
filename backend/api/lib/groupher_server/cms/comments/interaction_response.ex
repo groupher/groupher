@@ -11,8 +11,7 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Comments.AuthorRelationState
-  alias CMS.Model.{Comment, PostSolution}
-  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
+  alias CMS.Model.PostSolution
 
   @doc """
   Assembles one Comment with Interaction and Article-author binding fields.
@@ -41,8 +40,6 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
   @spec many([struct()], GroupherServer.Accounts.Model.User.t() | nil, keyword()) ::
           {:ok, [struct()]} | {:error, term()}
   def many(comments, viewer, opts \\ []) when is_list(comments) do
-    comments = filter_embedded_replies(comments, viewer)
-
     all_comments =
       comments
       |> Enum.flat_map(fn comment -> [comment | embedded_replies(comment)] end)
@@ -140,44 +137,4 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
 
   defp embedded_replies(%{replies: replies}) when is_list(replies), do: replies
   defp embedded_replies(_comment), do: []
-
-  defp filter_embedded_replies(comments, viewer) do
-    visible_ids_by_scope =
-      comments
-      |> Enum.flat_map(fn comment ->
-        Enum.map(embedded_replies(comment), &{comment.thread, comment.article_id, &1.id})
-      end)
-      |> Enum.group_by(fn {thread, article_id, _reply_id} -> {thread, article_id} end, fn {
-                                                                                            _thread,
-                                                                                            _article_id,
-                                                                                            reply_id
-                                                                                          } ->
-        reply_id
-      end)
-      |> Map.new(fn {{thread, article_id}, reply_ids} ->
-        visible_ids =
-          Comment
-          |> CMS.Gate.scope(viewer, :read, comment_context(thread))
-          |> where([reply], reply.article_id == ^article_id and reply.id in ^reply_ids)
-          |> select([reply], reply.id)
-          |> Repo.all()
-          |> MapSet.new()
-
-        {{thread, article_id}, visible_ids}
-      end)
-
-    Enum.map(comments, fn comment ->
-      visible_ids =
-        Map.get(visible_ids_by_scope, {comment.thread, comment.article_id}, MapSet.new())
-
-      Map.put(
-        comment,
-        :replies,
-        Enum.filter(embedded_replies(comment), &MapSet.member?(visible_ids, &1.id))
-      )
-    end)
-  end
-
-  defp comment_context(:doc), do: CommentContext.for_thread(:doc, branch_policy: :main)
-  defp comment_context(thread), do: CommentContext.for_thread(thread)
 end

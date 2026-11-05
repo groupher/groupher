@@ -106,9 +106,6 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
         join: binding in ArticleBinding,
         on: binding.article_id == comment.article_id,
         as: :gate_comment_binding,
-        left_join: branch in DocBranch,
-        on: branch.id == comment.branch_id,
-        as: :gate_comment_doc_branch,
         join: community in Community,
         on: community.id == binding.community_id,
         as: :gate_community,
@@ -116,10 +113,8 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
         as: :gate_community_lifecycle,
         on: lifecycle.community_id == community.id,
         where:
-          (comment.thread != :doc or
-             binding.community_id == as(:gate_comment_doc_branch).community_id) and
-            (lifecycle.state in ^[:active, :read_only] or
-               (is_nil(lifecycle.id) and community.pending == ^@community_normal))
+          lifecycle.state in ^[:active, :read_only] or
+            (is_nil(lifecycle.id) and community.pending == ^@community_normal)
       )
     end
   end

@@ -8,23 +8,26 @@ defmodule GroupherServer.CMS.Comments.PageProjection do
 
       Comment collection query
         -> bounded root/reply page
-        -> PageProjection batch counts and previews
+        -> PageProjection bounded previews and persisted summaries
         -> viewer-aware response
   """
   import Ecto.Query
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.Comment
-  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
   alias CMS.Comments.InteractionResponse
 
-  @preview_size 3
+  @preview_size Comment.reply_preview_limit()
 
   @doc "Scopes the flat descendant collection independently of its paging method."
   def descendants(article_id, root_ids, thread, viewer, community_slug \\ nil) do
     Comment
-    |> CMS.Gate.scope(viewer, :list, context(thread))
+    |> CMS.Gate.scope(
+      viewer,
+      :list,
+      CMS.Comments.RequestCommunity.scope_context(thread, community_slug)
+    )
     |> scope_community(community_slug)
-    |> where([c], c.article_id == ^article_id and not c.is_folded)
+    |> where([c], c.article_id == ^article_id)
     |> where(
       [c],
       fragment("COALESCE(?, ?)", c.root_comment_id, c.reply_to_comment_id) in ^root_ids
@@ -35,13 +38,12 @@ defmodule GroupherServer.CMS.Comments.PageProjection do
   def many(entries, article, viewer, previews?, community_slug \\ nil) do
     roots = Enum.filter(entries, &is_nil(&1.reply_to_comment_id))
     ids = Enum.map(roots, & &1.id)
-    {previews, counts} = preview_batch(article, ids, viewer, previews?, community_slug)
+    previews = preview_batch(article, ids, viewer, previews?, community_slug)
 
     entries =
       Enum.map(entries, fn entry ->
         entry
         |> Map.put(:replies, Map.get(previews, entry.id, []))
-        |> Map.put(:replies_count, Map.get(counts, entry.id, 0))
       end)
 
     all = Enum.flat_map(entries, &[&1 | &1.replies])
@@ -51,9 +53,13 @@ defmodule GroupherServer.CMS.Comments.PageProjection do
 
     parents =
       Comment
-      |> CMS.Gate.scope(viewer, :list, context(article.thread))
+      |> CMS.Gate.scope(
+        viewer,
+        :list,
+        CMS.Comments.RequestCommunity.scope_context(article.thread, community_slug)
+      )
       |> scope_community(community_slug)
-      |> where([c], c.article_id == ^article.id and c.id in ^parent_ids and not c.is_folded)
+      |> where([c], c.article_id == ^article.id and c.id in ^parent_ids)
       |> preload([:body, :author])
       |> Repo.all()
       |> Map.new(fn c -> {c.id, %{c | replies: [], reply_to_comment: nil}} end)
@@ -86,20 +92,10 @@ defmodule GroupherServer.CMS.Comments.PageProjection do
     InteractionResponse.many(entries, viewer)
   end
 
-  defp preview_batch(_article, [], _viewer, _enabled, _community_slug), do: {%{}, %{}}
+  defp preview_batch(_article, [], _viewer, _enabled, _community_slug), do: %{}
 
   defp preview_batch(article, ids, viewer, enabled, community_slug) do
     base = descendants(article.id, ids, article.thread, viewer, community_slug)
-
-    counts =
-      base
-      |> group_by([c], fragment("COALESCE(?, ?)", c.root_comment_id, c.reply_to_comment_id))
-      |> select(
-        [c],
-        {fragment("COALESCE(?, ?)", c.root_comment_id, c.reply_to_comment_id), count(c.id)}
-      )
-      |> Repo.all()
-      |> Map.new()
 
     if enabled do
       ranked =
@@ -128,14 +124,11 @@ defmodule GroupherServer.CMS.Comments.PageProjection do
         |> Repo.all()
         |> Enum.group_by(&elem(&1, 0), fn {_root, c} -> %{c | replies: []} end)
 
-      {previews, counts}
+      previews
     else
-      {%{}, counts}
+      %{}
     end
   end
-
-  defp context(:doc), do: CommentContext.for_thread(:doc, branch_policy: :main)
-  defp context(thread), do: CommentContext.for_thread(thread)
 
   defp scope_community(query, nil), do: query
 

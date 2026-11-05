@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Comments.ErrorCat
-  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
   alias CMS.Model.{Comment, CommentLifecycle}
   alias CMS.ReviewBlocks
 
@@ -108,21 +108,26 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
           | {:error, ErrorCat.error() | Ecto.Changeset.t()}
   def transition(comment_id, state) when is_integer(comment_id) and state in @states do
     Repo.transaction(fn ->
-      lifecycle =
-        CommentLifecycle
-        |> where([lifecycle], lifecycle.comment_id == ^comment_id)
-        |> lock("FOR UPDATE")
-        |> Repo.one()
+      case CMS.Comments.Summary.for_lifecycle(%CommentLifecycle{comment_id: comment_id}, fn ->
+             lifecycle =
+               CommentLifecycle
+               |> where([lifecycle], lifecycle.comment_id == ^comment_id)
+               |> lock("FOR UPDATE")
+               |> Repo.one()
 
-      case lifecycle do
-        nil ->
-          Repo.rollback(ErrorCat.lifecycle_not_found())
+             case lifecycle do
+               nil ->
+                 Repo.rollback(ErrorCat.lifecycle_not_found())
 
-        %CommentLifecycle{} = lifecycle ->
-          case transition(lifecycle, state) do
-            {:ok, updated} -> updated
-            {:error, reason} -> Repo.rollback(reason)
-          end
+               %CommentLifecycle{} = lifecycle ->
+                 case transition(lifecycle, state) do
+                   {:ok, updated} -> {:ok, updated}
+                   {:error, reason} -> Repo.rollback(reason)
+                 end
+             end
+           end) do
+        {:ok, updated} -> updated
+        {:error, reason} -> Repo.rollback(reason)
       end
     end)
     |> case do
@@ -134,6 +139,12 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   @spec transition(CommentLifecycle.t(), CommentLifecycle.state()) ::
           {:ok, CommentLifecycle.t()} | {:error, Ecto.Changeset.t() | :lifecycle_state_conflict}
   def transition(%CommentLifecycle{} = lifecycle, state) when state in @states do
+    CMS.Comments.Summary.for_lifecycle(lifecycle, fn -> transition_fact(lifecycle, state) end)
+  end
+
+  defp transition_fact(%CommentLifecycle{state: state} = lifecycle, state), do: {:ok, lifecycle}
+
+  defp transition_fact(lifecycle, state) do
     if state in Map.fetch!(@allowed_transitions, lifecycle.state) do
       now = DateTime.utc_now(:second)
 
@@ -158,7 +169,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
 
   defp bump_graph(comment_id) do
     case Repo.get(Comment, comment_id) do
-      %Comment{} = comment -> GraphRevision.bump_for_comment(comment)
+      %Comment{} -> Revision.bump()
       nil -> {:error, ErrorCat.lifecycle_not_found()}
     end
   end

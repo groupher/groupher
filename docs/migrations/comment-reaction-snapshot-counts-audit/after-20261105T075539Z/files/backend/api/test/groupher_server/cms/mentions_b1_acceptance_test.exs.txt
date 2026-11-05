@@ -1,0 +1,1092 @@
+defmodule GroupherServer.Test.CMS.MentionsB1AcceptanceTest do
+  @moduledoc "Command and persisted-fact acceptance for the Mentions B1 exit."
+  use GroupherServer.TestMate, async: false
+  import Ecto.Query
+
+  alias GroupherServer.{CMS, Repo, Messaging}
+  alias CMS.ArtimentMentions.{Store, Parser}
+
+  alias CMS.ArtimentMentions.Model.{
+    Endpoint,
+    MentionSet,
+    Occurrence,
+    ProjectionState,
+    CurrentEdge
+  }
+
+  alias CMS.Outbox.Event
+  alias Messaging.Model.Mention
+  alias GroupherServer.Jobs.CMSMentionSetProjector
+
+  @tag :b1_exit
+  test "published User mentions deliver once through the actual projection event" do
+    {community, _parent, _, author} = mock_article(:post)
+    {:ok, recipient} = db_insert(:user)
+    ast = mention_ast("user:#{recipient.login}") ++ mention_ast("user:#{recipient.login}")
+    {source, publication} = publish_source(community, author, :post, ast)
+    event = source_event(source.id)
+    assert {:ok, :pass} = project(event)
+    assert [%Mention{to_user_id: id} = mention] = Repo.all(Mention)
+    assert id == recipient.id
+    assert {:ok, _} = Messaging.mark_read(:mention, [mention.id], recipient)
+    assert {:ok, :pass} = project(event)
+    assert [%Mention{id: same_id, read: true}] = Repo.all(Mention)
+    assert same_id == mention.id
+    events_before = Repo.aggregate(Event, :count)
+    assert {:ok, _} = CMS.Articles.publish(source.id, author, publication.opts)
+    assert Repo.aggregate(Event, :count) == events_before
+    assert Repo.aggregate(Mention, :count) == 1
+  end
+
+  @tag :b1_exit
+  test "rebuild repairs a missing index from the immutable current set without reparsing" do
+    {community, target, _, author} = mock_article(:blog)
+
+    {source, _} =
+      publish_source(community, author, :post, mention_ast("blog:#{target.article_id}"))
+
+    assert {:ok, :pass} = project(source_event(source.id))
+    endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.id)
+    before = Repo.get!(ProjectionState, endpoint.id)
+    [edge] = Repo.all(from(e in CurrentEdge, where: e.source_endpoint_id == ^endpoint.id))
+    Repo.delete!(edge)
+    Repo.delete!(Repo.get!(CMS.Model.ArticlePublic, target.article_id))
+    assert {:ok, 1} = apply(Store, :rebuild_current_set, [endpoint.id])
+    [rebuilt] = Repo.all(from(e in CurrentEdge, where: e.source_endpoint_id == ^endpoint.id))
+    assert rebuilt.target_endpoint_id == edge.target_endpoint_id
+    assert rebuilt.mentioned_at == edge.mentioned_at
+    assert rebuilt.edge_key == edge.edge_key
+    assert Repo.get!(ProjectionState, endpoint.id) == before
+    assert {:ok, 0} = apply(Store, :rebuild_current_set, [endpoint.id])
+    assert Repo.aggregate(Mention, :count) == 0
+  end
+
+  for thread <- [:post, :blog, :changelog, :doc],
+      state <- [:public, :review_hidden, :soft_deleted, :no_public, :community_hidden] do
+    @tag :b1_exit
+    test "target matrix #{thread} / #{state}: normal admission and initialization differ explicitly" do
+      thread = unquote(thread)
+      state = unquote(state)
+      {community, target, _, _author} = mock_article(thread)
+      {source_community, _, _, _} = mock_article(:post)
+      ast = mention_ast("#{thread}:#{target.article_id}")
+      change_target_state(thread, state, target, community)
+      normal = Parser.parse(ast, community_id: source_community.id)
+      assert_normal_admission(state, normal, target.article_id)
+      assert {:ok, [%{mentioned_id: id}]} = Parser.parse_for_initialization(ast)
+      assert id == target.article_id
+    end
+  end
+
+  @tag :b1_exit
+  test "all supported input syntaxes resolve facts, preserve external URLs, and reject wrong types at capture" do
+    {community, target, _, user} = mock_article(:blog)
+    {:ok, recipient} = db_insert(:user)
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :blog,
+        article_inner_id(target, community),
+        mock_comment("Parser fragment target"),
+        user,
+        Ecto.UUID.generate()
+      )
+
+    url =
+      "#{CMS.ArtimentMentions.Config.site_host()}/#{community.slug}/blog/#{article_inner_id(target, community)}"
+
+    for ast <- [
+          mention_ast("blog:#{target.article_id}"),
+          [
+            %{
+              "type" => "p",
+              "children" => [
+                %{"type" => "a", "url" => url, "children" => [%{"text" => "Link label"}]}
+              ]
+            }
+          ],
+          [%{"type" => "p", "children" => [%{"text" => ~s(<a href="#{url}">Anchor label</a>)}]}],
+          [%{"type" => "p", "children" => [%{"text" => url}]}],
+          [
+            %{
+              "type" => "a",
+              "url" => "/#{community.slug}/blog/#{article_inner_id(target, community)}",
+              "children" => [%{"text" => "Relative link"}]
+            }
+          ]
+        ] do
+      assert [%{mentioned_type: :blog, mentioned_id: id}] =
+               Parser.parse(ast, community_id: community.id)
+
+      assert id == target.article_id
+      assert {:ok, [%{mentioned_id: ^id}]} = Parser.parse_for_initialization(ast)
+    end
+
+    for ast <- [
+          mention_ast("comment:#{comment.id}"),
+          [%{"type" => "p", "children" => [%{"text" => "#{url}#comment-#{comment.inner_id}"}]}],
+          [
+            %{
+              "type" => "p",
+              "children" => [
+                %{
+                  "text" =>
+                    "#{CMS.ArtimentMentions.Config.site_host()}/blog/#{target.article_id}?comment_id=#{comment.id}"
+                }
+              ]
+            }
+          ]
+        ] do
+      assert [%{mentioned_type: :comment, mentioned_id: id}] =
+               Parser.parse(ast, community_id: community.id)
+
+      assert id == comment.id
+      assert {:ok, [%{mentioned_id: ^id}]} = Parser.parse_for_initialization(ast)
+    end
+
+    assert [%{mentioned_type: :user, mentioned_id: recipient_id}] =
+             Parser.parse(mention_ast("user:#{recipient.login}"))
+
+    assert recipient_id == recipient.id
+
+    for url <- [
+          "https://external.example/guide",
+          "https://customer.example/#{community.slug}/blog/1"
+        ] do
+      ast = [%{"type" => "p", "children" => [%{"text" => url}]}]
+      assert [%{mentioned_type: :url, mentioned_url: ^url}] = Parser.parse(ast)
+
+      assert {:ok, [%{mentioned_type: :url, mentioned_url: ^url}]} =
+               Parser.parse_for_initialization(ast)
+    end
+
+    assert Parser.parse(mention_ast("user:user-does-not-exist")) == []
+    assert Parser.parse(mention_ast("blog:#{Ecto.UUID.generate()}")) == []
+    assert Parser.parse(mention_ast("unknown:resource")) == []
+
+    assert {:error, :mention_target_type_mismatch} =
+             Parser.parse_for_initialization(mention_ast("post:#{target.article_id}"))
+
+    assert {:error, :mention_target_type_mismatch} =
+             Repo.transaction(fn ->
+               case CMS.ArtimentMentions.Commands.CaptureCurrentVersion.execute_in_transaction(
+                      %{type: :post, article_id: Ecto.UUID.generate()},
+                      "wrong-type",
+                      mention_ast("post:#{target.article_id}"),
+                      community.id,
+                      DateTime.utc_now(:second),
+                      {:command, Ecto.UUID.generate()}
+                    ) do
+                 {:error, reason} -> Repo.rollback(reason)
+                 result -> result
+               end
+             end)
+  end
+
+  defp assert_normal_admission(:public, result, target_id) do
+    assert [%{mentioned_id: ^target_id}] = result
+  end
+
+  defp assert_normal_admission(_hidden_state, result, _target_id), do: assert(result == [])
+
+  defp change_comment_state(state, thread, parent, comment, community, author) do
+    case state do
+      :public ->
+        :ok
+
+      :comment_review ->
+        Repo.insert!(%CMS.Model.CommentReviewBlock{
+          comment_id: comment.id,
+          type: :human_review_hold,
+          source: :request,
+          source_ref: Ecto.UUID.generate(),
+          applied_at: DateTime.utc_now(:second)
+        })
+
+      :comment_deleted ->
+        assert {:ok, _} = CMS.Comments.delete_comment(comment, author, Ecto.UUID.generate())
+
+      :parent_review ->
+        change_target_state(thread, :review_hidden, parent, community)
+
+      :parent_deleted ->
+        change_target_state(thread, :soft_deleted, parent, community)
+
+      :community_hidden ->
+        change_target_state(thread, :community_hidden, parent, community)
+    end
+  end
+
+  defp change_target_state(_thread, :public, _target, _community), do: :ok
+
+  defp change_target_state(:doc, :review_hidden, target, _community) do
+    Repo.insert!(%CMS.Model.DocReviewBlock{
+      article_id: target.article_id,
+      branch_id: target.branch_id,
+      type: :human_review_hold,
+      source: :request,
+      source_ref: Ecto.UUID.generate(),
+      applied_at: DateTime.utc_now(:second)
+    })
+  end
+
+  defp change_target_state(_thread, :review_hidden, target, _community) do
+    Repo.insert!(%CMS.Model.ArticleReviewBlock{
+      article_id: target.article_id,
+      type: :human_review_hold,
+      source: :request,
+      source_ref: Ecto.UUID.generate(),
+      applied_at: DateTime.utc_now(:second)
+    })
+  end
+
+  defp change_target_state(:doc, :soft_deleted, target, _community) do
+    assert {:ok, _} = CMS.Docs.Lifecycle.transition(target.article_id, target.branch_id, :deleted)
+  end
+
+  defp change_target_state(_thread, :soft_deleted, target, _community) do
+    row = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: target.article_id)
+
+    assert {:ok, {:ok, _}} =
+             Repo.transaction(fn -> CMS.Articles.Lifecycle.transition(row, :deleted) end)
+  end
+
+  defp change_target_state(:doc, :no_public, target, _community) do
+    Repo.delete_all(from(p in CMS.Model.DocPublic, where: p.article_id == ^target.article_id))
+  end
+
+  defp change_target_state(_thread, :no_public, target, _community) do
+    Repo.delete!(Repo.get!(CMS.Model.ArticlePublic, target.article_id))
+  end
+
+  defp change_target_state(_thread, :community_hidden, _target, community) do
+    case Repo.get_by(CMS.Model.CommunityLifecycle, community_id: community.id) do
+      nil ->
+        Repo.insert!(%CMS.Model.CommunityLifecycle{
+          community_id: community.id,
+          state: :archived,
+          version: 1
+        })
+
+      row ->
+        row |> Ecto.Changeset.change(state: :archived) |> Repo.update!()
+    end
+  end
+
+  for thread <- [:post, :blog, :changelog, :doc, :ticket] do
+    @tag :b1_exit
+    test "source Command #{thread} saves all target kinds under the existing notification policy" do
+      {community, target, _, author} = mock_article(:blog)
+      {:ok, recipient} = db_insert(:user)
+
+      ast =
+        mention_ast("user:#{recipient.login}") ++
+          mention_ast("blog:#{target.article_id}") ++
+          [
+            %{
+              "type" => "p",
+              "id" => "external",
+              "children" => [%{"text" => "https://external.example/guide"}]
+            }
+          ]
+
+      {source, _} = publish_source(community, author, unquote(thread), ast)
+      event = source_event(source.id)
+      endpoint = Repo.get!(Endpoint, event.resource_id)
+      state = Repo.get!(ProjectionState, endpoint.id)
+      assert Repo.get!(MentionSet, state.desired_set_id).source_endpoint_id == endpoint.id
+
+      types =
+        from(o in Occurrence, where: o.set_id == ^state.desired_set_id, select: o.target_type)
+        |> Repo.all()
+        |> MapSet.new()
+
+      assert types == MapSet.new([:user, :blog, :url])
+      assert {:ok, :pass} = project(event)
+      expected_deliveries = unquote(if thread == :ticket, do: 0, else: 1)
+
+      assert Repo.aggregate(from(m in Mention, where: m.article_id == ^source.id), :count) ==
+               expected_deliveries
+
+      assert {:ok, 0} = Store.rebuild_current_set(endpoint.id)
+      assert {:ok, :pass} = project(event)
+
+      assert Repo.aggregate(from(m in Mention, where: m.article_id == ^source.id), :count) ==
+               expected_deliveries
+
+      assert_initializer_is_silent(endpoint, ast)
+    end
+  end
+
+  for parent_thread <- [:blog, :doc],
+      state <- [
+        :public,
+        :comment_review,
+        :comment_deleted,
+        :parent_review,
+        :parent_deleted,
+        :community_hidden
+      ] do
+    @tag :b1_exit
+    test "Comment target #{parent_thread} / #{state} preserves stable initialization identity" do
+      {community, parent, _, author} = mock_article(unquote(parent_thread))
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          unquote(parent_thread),
+          article_inner_id(parent, community),
+          mock_comment("B1 Comment matrix"),
+          author,
+          Ecto.UUID.generate()
+        )
+
+      state = unquote(state)
+      change_comment_state(state, unquote(parent_thread), parent, comment, community, author)
+      ast = mention_ast("comment:#{comment.id}")
+      assert_normal_admission(state, Parser.parse(ast, community_id: community.id), comment.id)
+
+      assert {:ok,
+              [%{mentioned_type: :comment, mentioned_id: id, parent_article: parent_identity}]} =
+               Parser.parse_for_initialization(ast)
+
+      assert id == comment.id
+      assert parent_identity.article_id == parent.article_id
+      refute Map.has_key?(parent_identity, :branch_id)
+    end
+  end
+
+  @tag :b1_exit
+  test "Comment edits notify new recipients, preserve reads, and reclaim only superseded synced sets" do
+    {community, parent, _, author} = mock_article(:blog)
+    {:ok, recipient} = db_insert(:user)
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :blog,
+        article_inner_id(parent, community),
+        comment_bag(mention_ast("user:#{recipient.login}")),
+        author,
+        Ecto.UUID.generate()
+      )
+
+    endpoint = Repo.get_by!(Endpoint, comment_id: comment.id)
+    original = Repo.get!(ProjectionState, endpoint.id)
+    original_event = event_for_endpoint(endpoint.id, original.desired_set_id)
+    assert {:ok, :pass} = project(original_event)
+    [delivery] = Repo.all(Mention)
+    assert {:ok, _} = Messaging.mark_read(:mention, [delivery.id], recipient)
+
+    same_user =
+      put_in(
+        mention_ast("user:#{recipient.login}"),
+        [Access.at(0), "children", Access.at(0), "value"],
+        "Same user with a changed label"
+      )
+
+    for ast <- [
+          same_user,
+          [%{"type" => "p", "children" => [%{"text" => "No references in this version"}]}],
+          mention_ast("user:#{recipient.login}")
+        ] do
+      body = Repo.get_by!(CMS.Model.CommentBody, comment_id: comment.id)
+      previous = Repo.get!(ProjectionState, endpoint.id)
+
+      assert {:ok, _} =
+               CMS.Comments.update_comment(
+                 comment,
+                 comment_bag(ast),
+                 body.version,
+                 author,
+                 Ecto.UUID.generate()
+               )
+
+      next = Repo.get!(ProjectionState, endpoint.id)
+      assert Repo.get(MentionSet, previous.desired_set_id)
+      event = event_for_endpoint(endpoint.id, next.desired_set_id)
+      assert {:ok, :pass} = project(event)
+      refute Repo.get(MentionSet, previous.desired_set_id)
+      assert Repo.get(MentionSet, next.desired_set_id)
+      assert {:ok, :pass} = project(original_event)
+    end
+
+    assert Repo.aggregate(Mention, :count) == 2
+    assert Repo.get!(Mention, delivery.id).read
+
+    assert Repo.aggregate(
+             from(set in MentionSet, where: set.source_endpoint_id == ^endpoint.id),
+             :count
+           ) == 1
+
+    assert_initializer_is_silent(endpoint, mention_ast("user:#{recipient.login}"))
+  end
+
+  @tag :b1_exit
+  test "hidden source, rolled back publication, and initialization never emit new deliveries" do
+    {community, _, _, author} = mock_article(:blog)
+    {:ok, recipient} = db_insert(:user)
+    ast = mention_ast("user:#{recipient.login}")
+
+    assert {:error, :rollback} =
+             Repo.transaction(fn ->
+               publish_source(community, author, :post, ast)
+               Repo.rollback(:rollback)
+             end)
+
+    assert Repo.aggregate(Mention, :count) == 0
+    {source, _} = publish_source(community, author, :post, ast)
+    event = source_event(source.id)
+
+    Repo.insert!(%CMS.Model.ArticleReviewBlock{
+      article_id: source.id,
+      type: :human_review_hold,
+      source: :request,
+      source_ref: "hidden-source",
+      applied_at: DateTime.utc_now(:second)
+    })
+
+    assert {:ok, :pass} = project(event)
+    assert Repo.aggregate(Mention, :count) == 0
+    Repo.delete_all(from(b in CMS.Model.ArticleReviewBlock, where: b.article_id == ^source.id))
+    assert {:ok, :pass} = project(event)
+    assert {:ok, 0} = Store.rebuild_current_set(event.resource_id)
+    assert Repo.aggregate(Mention, :count) == 0
+  end
+
+  @tag :b1_exit
+  test "source deletion cleans facts while preserving its incoming identity and rejects late notification jobs" do
+    {community, target, _, author} = mock_article(:blog)
+    {:ok, recipient} = db_insert(:user)
+
+    {source, _} =
+      publish_source(
+        community,
+        author,
+        :post,
+        mention_ast("user:#{recipient.login}") ++ mention_ast("blog:#{target.article_id}")
+      )
+
+    event = source_event(source.id)
+    endpoint = Repo.get!(Endpoint, event.resource_id)
+
+    {incoming, _} =
+      publish_source(community, author, :changelog, mention_ast("post:#{source.id}"))
+
+    assert {:ok, :pass} = project(source_event(incoming.id))
+    assert {:ok, item} = CMS.Articles.trash(source, author, community: community)
+    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, author)
+    assert Repo.get!(Endpoint, endpoint.id).deleted_at
+    refute Repo.get(ProjectionState, endpoint.id)
+    refute Repo.exists?(from(set in MentionSet, where: set.source_endpoint_id == ^endpoint.id))
+    assert Repo.exists?(from(edge in CurrentEdge, where: edge.target_endpoint_id == ^endpoint.id))
+    assert {:ok, :pass} = project(event)
+    assert Repo.aggregate(Mention, :count) == 0
+    assert {:error, :mention_projection_source_deleted} = Store.rebuild_current_set(endpoint.id)
+  end
+
+  @tag :b1_exit
+  test "missing and stale sets fail rebuild instead of reconstructing targets from a URL" do
+    {_community, source, _, _author} = mock_article(:post)
+    endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.article_id)
+    state = Repo.get!(ProjectionState, endpoint.id)
+    before_count = Repo.aggregate(MentionSet, :count)
+    public = Repo.get!(CMS.Model.ArticlePublic, source.article_id)
+
+    public
+    |> Ecto.Changeset.change(publication_version: public.publication_version + 1)
+    |> Repo.update!()
+
+    assert {:error, :mention_current_set_stale} = Store.rebuild_current_set(endpoint.id)
+    Repo.delete!(state)
+    assert {:error, :mention_current_set_missing} = Store.rebuild_current_set(endpoint.id)
+    assert Repo.aggregate(MentionSet, :count) == before_count
+    assert Repo.aggregate(Mention, :count) == 0
+  end
+
+  @tag :b1_time_identity
+  test "two URL spellings of one internal relationship inherit one mentioned_at" do
+    {community, target, _, _} = mock_article(:blog)
+    identity = %{type: :post, article_id: Ecto.UUID.generate()}
+    first_at = DateTime.add(DateTime.utc_now(:second), -3600, :second)
+    host = CMS.ArtimentMentions.Config.site_host()
+    legacy = "#{host}/blog/#{target.article_id}"
+    public = "#{host}/#{community.slug}/blog/#{article_inner_id(target, community)}"
+
+    capture = fn token, urls, at ->
+      ast = Enum.map(urls, fn url -> %{"type" => "p", "children" => [%{"text" => url}]} end)
+
+      Repo.transaction(fn ->
+        CMS.ArtimentMentions.Commands.CaptureCurrentVersion.execute_in_transaction(
+          identity,
+          token,
+          ast,
+          community.id,
+          at,
+          {:command, Ecto.UUID.generate()}
+        )
+      end)
+    end
+
+    assert {:ok, {:ok, first}} = capture.("urls:1", [legacy], first_at)
+
+    assert {:ok, {:ok, second}} =
+             capture.("urls:2", [legacy, public], DateTime.add(first_at, 60, :second))
+
+    times =
+      from(o in Occurrence, where: o.set_id == ^second.set.id, select: o.mentioned_at)
+      |> Repo.all()
+
+    assert length(times) == 2
+    assert Enum.uniq(times) == [first_at]
+    assert {:ok, 1} = Store.project_set(second.source_endpoint_id, second.set.id)
+
+    assert Repo.get_by!(CurrentEdge, source_endpoint_id: first.source_endpoint_id).mentioned_at ==
+             first_at
+  end
+
+  @tag :b1_time_identity
+  test "different URL spellings cannot hide conflicting times in one immutable relationship" do
+    source_id = Ecto.UUID.generate()
+    {:ok, source} = Store.ensure_endpoint_in_transaction(%{type: :post, article_id: source_id})
+
+    {:ok, target} =
+      Store.ensure_endpoint_in_transaction(%{type: :blog, article_id: Ecto.UUID.generate()})
+
+    time = DateTime.utc_now(:second)
+
+    fact = %{
+      occurrence_key: "first",
+      mention_case: :link,
+      target_type: :blog,
+      target_endpoint_id: target.id,
+      normalized_url: "https://groupher.com/blog/one",
+      mentioned_at: time
+    }
+
+    assert {:error, :inconsistent_mentioned_at} =
+             Store.save_version_facts(source.id, "bad-time", 1, [
+               fact,
+               %{
+                 fact
+                 | occurrence_key: "second",
+                   normalized_url: "https://groupher.com/blog/two",
+                   mentioned_at: DateTime.add(time, 60, :second)
+               }
+             ])
+
+    refute Repo.get_by(MentionSet, source_endpoint_id: source.id)
+  end
+
+  for state <- [:public, :draft, :review_hidden, :worker, :case] do
+    @tag :b1_exit
+    test "Ticket target matrix #{state} admits only public User Tickets and validates initialization type" do
+      {community, _, _, author} = mock_article(:blog)
+
+      {ticket, _} =
+        publish_source(community, author, :ticket, [
+          %{"type" => "p", "children" => [%{"text" => "Ticket canonical source body"}]}
+        ])
+
+      state = unquote(state)
+      ticket = change_ticket_state(state, ticket, community, author)
+      ast = mention_ast("ticket:#{ticket.id}")
+      assert_normal_admission(state, Parser.parse(ast, community_id: community.id), ticket.id)
+      assert_ticket_initialization(state, ast, ticket.id)
+    end
+  end
+
+  @tag :b1_exit
+  test "Doc Trash and restore preserve incoming node identity, timestamp and read notification" do
+    {community, doc, _, author} = mock_article(:doc)
+    {:ok, recipient} = db_insert(:user)
+
+    {source, _} =
+      publish_source(
+        community,
+        author,
+        :post,
+        mention_ast("doc:#{doc.article_id}") ++ mention_ast("user:#{recipient.login}")
+      )
+
+    assert {:ok, :pass} = project(source_event(source.id))
+    [delivery] = Repo.all(Mention)
+    assert {:ok, _} = Messaging.mark_read(:mention, [delivery.id], recipient)
+    doc_endpoint = Repo.get_by!(Endpoint, type: :doc, article_id: doc.article_id)
+    edge = Repo.get_by!(CurrentEdge, target_endpoint_id: doc_endpoint.id)
+    focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
+    {:ok, page} = CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+    node = Enum.find(page.nodes, &(&1.type == :doc))
+    assert node.status == :readable
+    branch = Repo.get!(CMS.Model.DocBranch, doc.branch_id)
+
+    assert {:ok, item} =
+             Repo.transaction(fn ->
+               {:ok, action} =
+                 CMS.Docs.Trash.create_action(community, author, %{
+                   root_type: :doc,
+                   root_ref: doc.article_id
+                 })
+
+               {:ok, item} =
+                 CMS.Docs.Trash.attach(action, community, branch, doc.article_id, author,
+                   audit: false
+                 )
+
+               item
+             end)
+
+    {:ok, hidden_page} = CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+    hidden = Enum.find(hidden_page.nodes, &(&1.type == :doc))
+    assert hidden.status == :unavailable
+    assert is_nil(hidden.title)
+    assert is_nil(hidden.url)
+    assert hidden.id == node.id
+    assert {:ok, _} = CMS.Docs.Trash.restore(item, community, branch, author, audit: false)
+    {:ok, restored_page} = CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+    restored = Enum.find(restored_page.nodes, &(&1.type == :doc))
+    assert restored.status == :readable
+    assert restored.id == node.id
+    assert Repo.get!(CurrentEdge, edge.id).mentioned_at == edge.mentioned_at
+    assert Repo.get!(Mention, delivery.id).read
+    assert Repo.aggregate(Mention, :count) == 1
+  end
+
+  @tag :b1_exit
+  test "ambiguous URL history fails atomically instead of choosing either stable endpoint" do
+    identity = %{type: :post, article_id: Ecto.UUID.generate()}
+    target_ids = [Ecto.UUID.generate(), Ecto.UUID.generate()]
+    url = "#{CMS.ArtimentMentions.Config.site_host()}/blog/#{hd(target_ids)}"
+
+    mentions =
+      Enum.with_index(target_ids, fn id, index ->
+        %{
+          mentioned_scope: :internal,
+          mentioned_type: :blog,
+          mentioned_id: id,
+          mention_case: :link,
+          artiment: %{article_id: id},
+          occurrence: %{block_id: "ambiguous", path: [index], raw_url: url}
+        }
+      end)
+
+    assert {:ok, previous} =
+             Store.save_parsed_version(
+               identity,
+               "ambiguous:1",
+               1,
+               mentions,
+               DateTime.utc_now(:second)
+             )
+
+    before_count = Repo.aggregate(MentionSet, :count)
+    before_events = Repo.aggregate(Event, :count)
+    ast = [%{"type" => "p", "children" => [%{"text" => url}]}]
+
+    assert {:ok, {:error, :ambiguous_mention_inheritance}} =
+             Repo.transaction(fn ->
+               CMS.ArtimentMentions.Commands.CaptureCurrentVersion.execute_in_transaction(
+                 identity,
+                 "ambiguous:2",
+                 ast,
+                 nil,
+                 DateTime.utc_now(:second),
+                 {:command, Ecto.UUID.generate()}
+               )
+             end)
+
+    assert Repo.aggregate(MentionSet, :count) == before_count
+    assert Repo.aggregate(Event, :count) == before_events
+    assert Repo.get(MentionSet, previous.id)
+  end
+
+  defp change_ticket_state(:public, ticket, _community, _author), do: ticket
+
+  defp change_ticket_state(:review_hidden, ticket, community, _author) do
+    change_target_state(:ticket, :review_hidden, %{article_id: ticket.id}, community)
+    ticket
+  end
+
+  defp change_ticket_state(:draft, ticket, _community, _author) do
+    lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: ticket.id)
+
+    assert {:ok, {:ok, _}} =
+             Repo.transaction(fn -> CMS.Articles.Lifecycle.transition(lifecycle, :draft) end)
+
+    ticket
+  end
+
+  defp change_ticket_state(type, ticket, community, user) when type in [:worker, :case] do
+    actor = %{
+      user
+      | cur_passport: %{
+          "global" => %{},
+          community.slug => %{
+            "cms" => %{
+              "ticket.create" => true,
+              "ticket.update" => true,
+              "ticket.manage_case" => true,
+              "ticket.read_internal" => true,
+              "ticket.manage_visibility" => true
+            }
+          }
+        }
+    }
+
+    {:ok, child} =
+      case type do
+        :worker ->
+          state = Repo.get!(CMS.Model.TicketState, ticket.id)
+
+          CMS.Tickets.create_worker(
+            community,
+            ticket.id,
+            %{title: "B1 internal Worker"},
+            state.workflow_version,
+            actor,
+            Ecto.UUID.generate()
+          )
+
+        :case ->
+          CMS.Tickets.create_case(
+            community,
+            %{
+              title: "B1 internal Case",
+              digest: "Internal Case source",
+              body_bag: mock_body_bag(mock_rich_text("Internal Case canonical body"))
+            },
+            actor,
+            Ecto.UUID.generate()
+          )
+      end
+
+    Repo.get!(CMS.Model.Article, child.id)
+  end
+
+  defp assert_ticket_initialization(type, ast, _id) when type in [:worker, :case] do
+    assert({:error, :invalid_mention_ticket_identity} = Parser.parse_for_initialization(ast))
+  end
+
+  defp assert_ticket_initialization(_state, ast, id) do
+    assert({:ok, [%{mentioned_id: ^id}]} = Parser.parse_for_initialization(ast))
+  end
+
+  @tag :b1_exit
+  test "Plate href and its URL label form one occurrence while another location remains separate" do
+    {community, target, _, _} = mock_article(:blog)
+
+    url =
+      "#{CMS.ArtimentMentions.Config.site_host()}/#{community.slug}/blog/#{article_inner_id(target, community)}"
+
+    for href_key <- ["url", "href"] do
+      link = %{"type" => "a", href_key => url, "children" => [%{"text" => url}]}
+      ast = [%{"type" => "p", "children" => [link, %{"text" => url}]}]
+      assert length(Parser.candidates(ast)) == 2
+      assert length(Parser.parse(ast, community_id: community.id)) == 2
+      assert {:ok, mentions} = Parser.parse_for_initialization(ast)
+      assert length(mentions) == 2
+    end
+  end
+
+  @tag :b1_exit
+  test "Community-local URL type mismatches fail capture and initialization" do
+    {community, target, _, _} = mock_article(:blog)
+
+    url =
+      "#{CMS.ArtimentMentions.Config.site_host()}/#{community.slug}/post/#{article_inner_id(target, community)}"
+
+    ast = [%{"type" => "a", "url" => url, "children" => [%{"text" => "Wrong type URL"}]}]
+    assert {:error, :mention_target_type_mismatch} = Parser.parse_for_initialization(ast)
+
+    assert {:ok, {:error, :mention_target_type_mismatch}} =
+             Repo.transaction(fn ->
+               CMS.ArtimentMentions.Commands.CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: Ecto.UUID.generate()},
+                 "wrong-url-type",
+                 ast,
+                 community.id,
+                 DateTime.utc_now(:second),
+                 {:command, Ecto.UUID.generate()}
+               )
+             end)
+  end
+
+  @tag :b1_doc_comment_source
+  test "Doc Comment source delivers once, reuses its stable parent and initializes silently" do
+    {community, parent, _, author} = mock_article(:doc)
+    {:ok, recipient} = db_insert(:user)
+    ast = mention_ast("user:#{recipient.login}")
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :doc,
+        article_inner_id(parent, community),
+        comment_bag(ast),
+        author,
+        Ecto.UUID.generate()
+      )
+
+    endpoint = Repo.get_by!(Endpoint, comment_id: comment.id)
+    parent_endpoint = Repo.get_by!(Endpoint, type: :doc, article_id: parent.article_id)
+    assert endpoint.parent_endpoint_id == parent_endpoint.id
+    state = Repo.get!(ProjectionState, endpoint.id)
+    event = event_for_endpoint(endpoint.id, state.desired_set_id)
+    assert {:ok, :pass} = project(event)
+    assert {:ok, :pass} = project(event)
+    assert [%Mention{comment_id: id, to_user_id: recipient_id}] = Repo.all(Mention)
+    assert id == comment.id
+    assert recipient_id == recipient.id
+    assert_initializer_is_silent(endpoint, ast)
+  end
+
+  @tag :b1_pending_comment
+  test "an undelivered Comment event cannot revive a collected set or notify after removal" do
+    {community, parent, _, author} = mock_article(:blog)
+    {:ok, recipient} = db_insert(:user)
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        :blog,
+        article_inner_id(parent, community),
+        comment_bag(mention_ast("user:#{recipient.login}")),
+        author,
+        Ecto.UUID.generate()
+      )
+
+    endpoint = Repo.get_by!(Endpoint, comment_id: comment.id)
+    old = Repo.get!(ProjectionState, endpoint.id)
+    late = event_for_endpoint(endpoint.id, old.desired_set_id)
+    body = Repo.get_by!(CMS.Model.CommentBody, comment_id: comment.id)
+
+    assert {:ok, _} =
+             CMS.Comments.update_comment(
+               comment,
+               mock_comment("References removed before projection"),
+               body.version,
+               author,
+               Ecto.UUID.generate()
+             )
+
+    current = Repo.get!(ProjectionState, endpoint.id)
+    assert {:ok, :pass} = project(event_for_endpoint(endpoint.id, current.desired_set_id))
+    refute Repo.get(MentionSet, old.desired_set_id)
+    assert {:ok, :pass} = project(late)
+    assert Repo.get!(Event, late.id).status == :done
+    assert Repo.aggregate(Mention, :count) == 0
+    refute Repo.exists?(from(edge in CurrentEdge, where: edge.source_endpoint_id == ^endpoint.id))
+  end
+
+  @tag :b1_exit
+  test "replacing a URL at the same position does not inherit the old target or timestamp" do
+    {community, first_target, _, author} = mock_article(:blog)
+    {_, second_target, _, _} = mock_article(:blog, community, author)
+    identity = %{type: :post, article_id: Ecto.UUID.generate()}
+    time = DateTime.add(DateTime.utc_now(:second), -3600, :second)
+
+    capture = fn token, target, at ->
+      url = "#{CMS.ArtimentMentions.Config.site_host()}/blog/#{target.article_id}"
+      ast = [%{"type" => "p", "id" => "same-block", "children" => [%{"text" => url}]}]
+
+      Repo.transaction(fn ->
+        CMS.ArtimentMentions.Commands.CaptureCurrentVersion.execute_in_transaction(
+          identity,
+          token,
+          ast,
+          community.id,
+          at,
+          {:command, Ecto.UUID.generate()}
+        )
+      end)
+    end
+
+    assert {:ok, {:ok, first}} = capture.("replace:1", first_target, time)
+    next_time = DateTime.add(time, 60, :second)
+    assert {:ok, {:ok, second}} = capture.("replace:2", second_target, next_time)
+    [old] = Repo.all(from(o in Occurrence, where: o.set_id == ^first.set.id))
+    [current] = Repo.all(from(o in Occurrence, where: o.set_id == ^second.set.id))
+    assert current.target_endpoint_id != old.target_endpoint_id
+    assert Repo.get!(Endpoint, current.target_endpoint_id).article_id == second_target.article_id
+    assert current.mentioned_at == next_time
+  end
+
+  defp assert_initializer_is_silent(endpoint, ast) do
+    category =
+      case endpoint.type do
+        :doc -> :docs
+        :comment -> :comments
+        _ -> :articles
+      end
+
+    {:ok, sources} = CMS.ArtimentMentions.InitializeSourceScan.page(category, nil, 100)
+
+    source =
+      Enum.find(sources, fn source ->
+        if endpoint.type == :comment do
+          source.comment_id == endpoint.comment_id
+        else
+          source.article_id == endpoint.article_id
+        end
+      end)
+
+    assert source
+    before_token = CMS.ArtimentMentions.CurrentSource.load(endpoint)
+    before_mentions = Repo.all(Mention)
+    before_events = Repo.aggregate(Event, :count)
+    Repo.delete_all(from(e in CurrentEdge, where: e.source_endpoint_id == ^endpoint.id))
+    Repo.delete_all(from(s in ProjectionState, where: s.source_endpoint_id == ^endpoint.id))
+    Repo.delete_all(from(s in MentionSet, where: s.source_endpoint_id == ^endpoint.id))
+    assert {:ok, first} = CMS.ArtimentMentions.InitializationWorkflow.apply_source(source, ast)
+    assert {:ok, second} = CMS.ArtimentMentions.InitializationWorkflow.apply_source(source, ast)
+    assert first.set.id == second.set.id
+    state = Repo.get!(ProjectionState, endpoint.id)
+    assert state.desired_set_id == state.synced_set_id
+    assert Repo.all(Mention) == before_mentions
+    assert Repo.aggregate(Event, :count) == before_events
+    assert CMS.ArtimentMentions.CurrentSource.load(endpoint) == before_token
+  end
+
+  defp comment_bag(ast) do
+    json = Jason.encode!(ast)
+
+    mock_comment("B1 comment source")
+    |> Map.put(:json, json)
+    |> Map.put(:body_hash, :crypto.hash(:sha256, json) |> Base.encode16(case: :lower))
+  end
+
+  defp event_for_endpoint(id, set_id) do
+    Repo.one!(
+      from(e in Event,
+        where:
+          e.event == "mention.set_project" and e.resource_id == ^id and
+            fragment("?->>'set_id'", e.data) == ^set_id
+      )
+    )
+  end
+
+  defp mention_ast(key) do
+    [
+      %{
+        "type" => "p",
+        "id" => "b1-source",
+        "children" => [
+          %{
+            "type" => "mention",
+            "key" => key,
+            "value" => "Display label for B1",
+            "children" => [%{"text" => ""}]
+          }
+        ]
+      }
+    ]
+  end
+
+  defp publish_source(community, user, :doc, ast) do
+    {_community, main_doc, _, _} = mock_article(:doc, community, user)
+    {:ok, author} = CMS.Articles.Persist.ensure_author_exists(user)
+
+    {:ok, %{article: article, draft: draft}} =
+      CMS.Articles.Draft.Store.create(
+        community,
+        :doc,
+        %{
+          title: "B1 source Doc",
+          slug: "b1-doc-#{System.unique_integer([:positive])}",
+          body_bag: mock_body_bag(Jason.encode!(ast))
+        },
+        author,
+        branch_id: main_doc.branch_id
+      )
+
+    {:ok, result} =
+      CMS.Articles.Publish.Doc.publish(article, main_doc.branch_id, author,
+        expected_draft_version: draft.version,
+        expected_lifecycle_version: 1,
+        command_id: Ecto.UUID.generate()
+      )
+
+    {article, result}
+  end
+
+  defp publish_source(community, user, :ticket, ast) do
+    actor = %{
+      user
+      | cur_passport: %{
+          "global" => %{},
+          community.slug => %{
+            "cms" => %{
+              "ticket.create" => true,
+              "ticket.read_internal" => true,
+              "ticket.manage_visibility" => true
+            }
+          }
+        }
+    }
+
+    {post, _} = publish_source(community, user, :post, ast)
+
+    {:ok, ticket} =
+      CMS.Tickets.create_from_post(
+        community,
+        post.id,
+        %{title: "B1 User Ticket"},
+        actor,
+        Ecto.UUID.generate()
+      )
+
+    {:ok, internal} = CMS.Tickets.get_internal(community, ticket.id, actor)
+
+    {:ok, result} =
+      CMS.Tickets.publish(
+        community,
+        ticket.id,
+        "B1 acceptance",
+        internal.draft_version,
+        internal.lifecycle_version,
+        internal.workflow_version,
+        actor,
+        Ecto.UUID.generate(),
+        CMS.Tickets.Publication.preview_anchor(community.id, ticket.id)
+      )
+
+    {Repo.get!(CMS.Model.Article, ticket.id), result}
+  end
+
+  defp publish_source(community, user, thread, ast) do
+    {:ok, %{article: article, draft: draft}} =
+      CMS.Articles.create_stable_draft(
+        community,
+        thread,
+        %{title: "B1 acceptance", digest: "Source", body_bag: mock_body_bag(Jason.encode!(ast))},
+        user
+      )
+
+    opts = [
+      community: community,
+      expected_draft_version: draft.version,
+      expected_lifecycle_version: 1,
+      command_id: Ecto.UUID.generate()
+    ]
+
+    {:ok, result} = CMS.Articles.publish(article.id, user, opts)
+    {article, %{result: result, opts: opts}}
+  end
+
+  defp source_event(article_id) do
+    endpoint = Repo.get_by!(Endpoint, article_id: article_id)
+
+    Repo.one!(
+      from(e in Event, where: e.event == "mention.set_project" and e.resource_id == ^endpoint.id)
+    )
+  end
+
+  defp project(event) do
+    CMSMentionSetProjector.perform(%Oban.Job{
+      args: %{"event_id" => event.id},
+      attempt: 1,
+      max_attempts: 8
+    })
+  end
+end

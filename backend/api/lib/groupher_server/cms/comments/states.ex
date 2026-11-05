@@ -29,14 +29,18 @@ defmodule GroupherServer.CMS.Comments.States do
   @doc false
   @spec apply_in_transaction(atom(), Comment.t(), map(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Comment.t())
-  def apply_in_transaction(:pin, %Comment{} = comment, article, %User{} = user, command_id) do
+  def apply_in_transaction(action, %Comment{} = comment, article, %User{} = user, command_id) do
+    CMS.Comments.Summary.with_change(comment, fn ->
+      apply_fact_in_transaction(action, comment, article, user, command_id)
+    end)
+  end
+
+  defp apply_fact_in_transaction(:pin, %Comment{} = comment, article, %User{} = user, command_id) do
     case maybe_existing_pinned_comment(comment) do
       {:ok, canonical} ->
         with {:ok, thread} <- FrontDesk.thread_of(canonical),
              {:ok, :pass} <-
-               check_pined_comments_count(
-                 pinned_comments_query(article, canonical.branch_id, thread)
-               ),
+               check_pined_comments_count(pinned_comments_query(article)),
              {:ok, updated} <- ORM.update(canonical, %{is_pinned: true}),
              {:ok, _pinned} <-
                PinnedComment |> ORM.create(pinned_comment_attrs(article, canonical, thread)),
@@ -55,7 +59,13 @@ defmodule GroupherServer.CMS.Comments.States do
     end
   end
 
-  def apply_in_transaction(:undo_pin, %Comment{} = comment, article, %User{} = user, command_id) do
+  defp apply_fact_in_transaction(
+         :undo_pin,
+         %Comment{} = comment,
+         article,
+         %User{} = user,
+         command_id
+       ) do
     with {:ok, updated} <- ORM.update(comment, %{is_pinned: false}),
          {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),
          {:ok, _activity} <-
@@ -86,23 +96,21 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   defp do_fold_comment(%Comment{} = comment, is_folded) when is_boolean(is_folded) do
-    ORM.update(comment, %{is_folded: is_folded})
+    if comment.is_folded == is_folded do
+      {:ok, comment}
+    else
+      CMS.Comments.Summary.with_change(comment, fn ->
+        ORM.update(comment, %{is_folded: is_folded})
+      end)
+    end
   end
 
-  defp pinned_comments_query(%{id: article_id}, nil, _thread) do
-    from(pin in PinnedComment,
-      where: pin.article_id == ^article_id and is_nil(pin.branch_id)
-    )
-  end
-
-  defp pinned_comments_query(%{id: article_id}, branch_id, _thread) do
-    from(pin in PinnedComment,
-      where: pin.article_id == ^article_id and pin.branch_id == ^branch_id
-    )
+  defp pinned_comments_query(%{id: article_id}) do
+    from(pin in PinnedComment, where: pin.article_id == ^article_id)
   end
 
   defp pinned_comment_attrs(%{id: article_id}, comment, _thread) do
-    %{comment_id: comment.id, article_id: article_id, branch_id: comment.branch_id}
+    %{comment_id: comment.id, article_id: article_id}
   end
 
   defp check_pined_comments_count(pined_comments_query) do

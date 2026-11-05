@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   Example:
 
-      iex> context = GroupherServer.CMS.Gate.Context.Scope.Comment.for_thread(:post)
+      iex> context = GroupherServer.CMS.Gate.Context.Scope.Comment.for_thread(:post, community_id: community.id)
       iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.Comment), nil, :read, context)
   """
 
@@ -43,7 +43,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
          %Ecto.Query{} = query <- CommunityChain.comment_parent(query) do
       query
       |> maybe_filter_thread(context)
+      |> filter_community(context)
       |> lifecycle_scope(context)
+      |> public_parent(actor, context)
       |> public_comment(actor)
     end
   end
@@ -52,26 +54,31 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   defp validate_thread(%{thread: :all}), do: {:ok, :pass}
 
-  defp validate_thread(%{thread: :doc, branch_policy: :main}), do: {:ok, :pass}
+  defp validate_thread(%{thread: :doc, community_id: id}) when is_integer(id), do: {:ok, :pass}
 
   defp validate_thread(%{thread: :doc}), do: {:error, ErrorCat.scope_context_missing()}
 
-  defp validate_thread(%{thread: thread}) do
+  defp validate_thread(%{thread: thread, community_id: community_id})
+       when is_integer(community_id) do
     case ArticleSchema.fetch(thread) do
       {:ok, _schema} -> {:ok, :pass}
       {:error, _reason} -> {:error, ErrorCat.scope_context_missing()}
     end
   end
 
-  defp validate_thread(_context), do: {:ok, :pass}
+  defp validate_thread(_context), do: {:error, ErrorCat.scope_context_missing()}
+
+  defp filter_community(query, %{community_id: id}) when is_integer(id) do
+    where(query, [gate_community: community], community.id == ^id)
+  end
+
+  defp filter_community(query, _context), do: query
 
   defp maybe_filter_thread(query, %{thread: :all}), do: query
 
   defp maybe_filter_thread(query, %{thread: thread}) do
     where(query, [comment], comment.thread == ^thread)
   end
-
-  defp maybe_filter_thread(query, _context), do: query
 
   defp lifecycle_scope(query, %{thread: :doc}), do: doc_lifecycle_scope(query)
 
@@ -84,14 +91,14 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
       on: lifecycle.comment_id == comment.id,
+      join: doc_branch in DocBranch,
+      as: :gate_doc_branch,
+      on: doc_branch.community_id == as(:gate_community).id and doc_branch.type == :main,
       join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
         doc_lifecycle.article_id == comment.article_id and
-          doc_lifecycle.branch_id == comment.branch_id,
-      join: doc_branch in DocBranch,
-      as: :gate_doc_branch,
-      on: doc_branch.id == comment.branch_id,
+          doc_lifecycle.branch_id == as(:gate_doc_branch).id,
       where: lifecycle.state != :destroy,
       where: doc_lifecycle.state in [:published, :archived],
       where: doc_branch.type == :main
@@ -109,14 +116,16 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       left_join: article_lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
       on: article_lifecycle.article_id == comment.article_id and comment.thread != ^:doc,
+      left_join: doc_branch in DocBranch,
+      as: :gate_doc_branch,
+      on:
+        doc_branch.community_id == as(:gate_community).id and doc_branch.type == :main and
+          comment.thread == ^:doc,
       left_join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
         doc_lifecycle.article_id == comment.article_id and
-          doc_lifecycle.branch_id == comment.branch_id and comment.thread == ^:doc,
-      left_join: doc_branch in DocBranch,
-      as: :gate_doc_branch,
-      on: doc_branch.id == comment.branch_id and comment.thread == ^:doc,
+          doc_lifecycle.branch_id == as(:gate_doc_branch).id and comment.thread == ^:doc,
       where: lifecycle.state != :destroy,
       where:
         (comment.thread != ^:doc and article_lifecycle.state in [:published, :archived]) or
@@ -136,6 +145,37 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       where: lifecycle.state != :destroy,
       where: article_lifecycle.state in [:published, :archived]
     )
+  end
+
+  defp public_parent(query, actor, context) do
+    threads =
+      if context.thread == :all, do: [:post, :blog, :changelog, :doc], else: [context.thread]
+
+    allowed =
+      Enum.reduce(threads, dynamic(false), fn thread, predicate ->
+        scope =
+          if thread == :doc do
+            GroupherServer.CMS.Gate.Context.Scope.Doc.public_main()
+          else
+            GroupherServer.CMS.Gate.Context.Scope.Article.public(thread)
+          end
+
+        binding_ids =
+          GroupherServer.CMS.Gate.Scope.Article.scope(
+            Ecto.Queryable.to_query(GroupherServer.CMS.Model.Article),
+            actor,
+            :read,
+            scope
+          )
+          |> select([gate_article_binding: binding], binding.id)
+
+        dynamic(
+          [gate_comment_binding: binding],
+          ^predicate or binding.id in subquery(binding_ids)
+        )
+      end)
+
+    where(query, ^allowed)
   end
 
   defp public_comment(query, %User{id: user_id} = actor) do

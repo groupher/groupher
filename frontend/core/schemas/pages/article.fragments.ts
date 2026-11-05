@@ -108,7 +108,10 @@ export const PagePostDetailFields = graphql(`
       }
     }
     commentsParticipants {
-      ...PageAuthorFields
+      ref
+      login
+      nickname
+      avatar
     }
     lifecycle {
       state
@@ -164,7 +167,10 @@ export const PageChangelogDetailFields = graphql(`
       }
     }
     commentsParticipants {
-      ...PageAuthorFields
+      ref
+      login
+      nickname
+      avatar
     }
     lifecycle {
       state
@@ -219,7 +225,10 @@ export const PageDocDetailFields = graphql(`
       }
     }
     commentsParticipants {
-      ...PageAuthorFields
+      ref
+      login
+      nickname
+      avatar
     }
     lifecycle {
       state

@@ -1,0 +1,75 @@
+{
+  "captured_at": "2026-11-05T11:38:47.940993+00:00",
+  "database": "groupher_pending_audit_20261105",
+  "build_path": "/private/tmp/groupher-comments-build-20261105",
+  "business_source_modified": false,
+  "published": false,
+  "source_files": [
+    {
+      "path": "backend/api/lib/groupher_server/cms/artiment_mentions/mentions_graph_revision.ex",
+      "sha256": "00b04a6592e80f8812c806a550a88faac846fdad8822a171fc656cadacf863b9",
+      "body": "files/backend/api/lib/groupher_server/cms/artiment_mentions/mentions_graph_revision.ex.txt"
+    },
+    {
+      "path": "backend/api/lib/support/conn_case.ex",
+      "sha256": "fa3087a50d929cae926756b61335cfb2e0ae8a1fd008115a1b41b5f0c936c795",
+      "body": "files/backend/api/lib/support/conn_case.ex.txt"
+    },
+    {
+      "path": "backend/api/lib/support/test_mate.ex",
+      "sha256": "febfd167f8899032f6c866d93e74c0c4b09483df5cc76edb08e030789736d975",
+      "body": "files/backend/api/lib/support/test_mate.ex.txt"
+    },
+    {
+      "path": "backend/api/lib/support/factory/factory.ex",
+      "sha256": "7f1855a6cf2fef1f3322df4fe18ec40ca2570a4d3611c48eeed8b4dbe597ac2a",
+      "body": "files/backend/api/lib/support/factory/factory.ex.txt"
+    },
+    {
+      "path": "backend/api/lib/groupher_server/cms/command/receipt/runner.ex",
+      "sha256": "ab2605299e0e940fac23a1b9ee0f2cd3e32a5c5c7c0e3222d75df1fdbf7d966d",
+      "body": "files/backend/api/lib/groupher_server/cms/command/receipt/runner.ex.txt"
+    },
+    {
+      "path": "backend/api/lib/groupher_server/cms/command_pipeline_adapter.ex",
+      "sha256": "a1f5f4c8df6bc60a3eb265c6676e44011ae58ce088fe930543689b2b47d5a16f",
+      "body": "files/backend/api/lib/groupher_server/cms/command_pipeline_adapter.ex.txt"
+    },
+    {
+      "path": "backend/api/lib/helper/orm/transaction_settings.ex",
+      "sha256": "00d55942ae3fddc8d857a9d6e9e52a56045dc9b605e8120187d1af90900d50d4",
+      "body": "files/backend/api/lib/helper/orm/transaction_settings.ex.txt"
+    },
+    {
+      "path": "backend/api/lib/groupher_server/cms/articles/commands/create.ex",
+      "sha256": "249bbd96f3af6d223750ff20627cfb8fc1295b91b8b3e0540c54042a15446cea",
+      "body": "files/backend/api/lib/groupher_server/cms/articles/commands/create.ex.txt"
+    },
+    {
+      "path": "backend/api/lib/groupher_server/cms/articles/publish/doc.ex",
+      "sha256": "1533dfc2e6f1ff4e597b3233f10012ee6ae2a7b26c9edc26cfd8c5a683f8a16d",
+      "body": "files/backend/api/lib/groupher_server/cms/articles/publish/doc.ex.txt"
+    },
+    {
+      "path": "backend/api/lib/groupher_server/cms/comments/summary.ex",
+      "sha256": "115e51ffcfbc9adea9d8a6f54e5e551d6e1e84a7d6db4d7facb491a1fb3d1d8c",
+      "body": "files/backend/api/lib/groupher_server/cms/comments/summary.ex.txt"
+    }
+  ],
+  "sandbox_runs": 6,
+  "pending_wait_ms": [
+    4089,
+    4229
+  ],
+  "committed_runs": 6,
+  "article_successes": 24,
+  "comment_successes": 24,
+  "create_burst_ms": [
+    130,
+    208
+  ],
+  "comment_burst_ms": [
+    113,
+    228
+  ]
+}

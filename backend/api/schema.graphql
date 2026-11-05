@@ -1964,6 +1964,7 @@ type ArticleStats {
   commentsCount: Int!
   collectsCount: Int!
   commentsParticipantsCount: Int!
+  commentsParticipants: [ParticipantSnapshotUser!]!
   interactionRevision: Int!
   commentsRevision: Int!
   emotionCounts: [ArticleEmotionCount!]!
@@ -2952,6 +2953,13 @@ type DsbThemePresetOption {
   tokens: Json!
 }
 
+type ParticipantSnapshotUser {
+  ref: ID!
+  login: String!
+  avatar: String
+  nickname: String
+}
+
 type CommonUser {
   login: String!
   avatar: String
@@ -3208,7 +3216,7 @@ type Post implements Article {
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
-  commentsParticipants: [User]
+  commentsParticipants: [ParticipantSnapshotUser!]!
   cat: ArticleCatEnum
   isSolved: Boolean!
   solutionCommentId: ID
@@ -3240,7 +3248,7 @@ type Changelog implements Article {
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
-  commentsParticipants: [User]
+  commentsParticipants: [ParticipantSnapshotUser!]!
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -3269,7 +3277,7 @@ type Doc implements Article {
   copyRight: String
   linkAddr: String
   subtitle: String
-  commentsParticipants: [User]
+  commentsParticipants: [ParticipantSnapshotUser!]!
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -3297,7 +3305,7 @@ type Blog implements Article {
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
-  commentsParticipants: [User]
+  commentsParticipants: [ParticipantSnapshotUser!]!
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -3926,7 +3934,12 @@ type CommentReply {
   isArticleAuthor: Boolean
   emotions: [EmotionStat]
   meta: CommentMeta
-  repliesCount: Int
+  repliesCount: Int!
+  replyParticipants: [ParticipantSnapshotUser!]!
+  lastReplyAt: DateTime
+  repliesRevision: Int!
+  isFolded: Boolean!
+  hasReplyEntries: Boolean!
   thread: Thread
   viewerHasUpvoted: Boolean
   replyToComment: Comment
@@ -3951,7 +3964,12 @@ type Comment {
   isArticleAuthor: Boolean
   emotions: [EmotionStat]
   meta: CommentMeta
-  repliesCount: Int
+  repliesCount: Int!
+  replyParticipants: [ParticipantSnapshotUser!]!
+  lastReplyAt: DateTime
+  repliesRevision: Int!
+  isFolded: Boolean!
+  hasReplyEntries: Boolean!
   thread: Thread
   viewerHasUpvoted: Boolean
   replyToComment: Comment
@@ -3967,8 +3985,7 @@ type Comment {
 type CommentsListState {
   totalCount: Int
   participantsCount: Int
-  participants: [CommonUser]
-  isViewerJoined: Boolean
+  participants: [ParticipantSnapshotUser]
 }
 
 type ArtimentMention {

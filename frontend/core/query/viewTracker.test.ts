@@ -20,6 +20,7 @@ describe('trackArticleView', () => {
       upvotesCount: 2,
       commentsCount: 4,
       collectsCount: 1,
+      commentsParticipants: [],
       commentsParticipantsCount: 3,
       interactionRevision: 5,
       commentsRevision: 6,

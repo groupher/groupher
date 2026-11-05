@@ -164,11 +164,13 @@ defmodule GroupherServer.Test.Accounts.ProfileViewTrackerTest do
     assert Repo.aggregate(ProfileViewDedupeState, :count) == 0
   end
 
-  test "a Profile deleted before tracking returns target not found without recreating state" do
-    {:ok, profile} = db_insert(:user)
+  test "a missing Profile returns target not found without creating state" do
+    [[missing_id]] =
+      Repo.query!("SELECT nextval(pg_get_serial_sequence('account.users','id'))", []).rows
+
+    profile = %User{id: missing_id}
     {:ok, viewer} = db_insert(:user)
     {:ok, classification} = RequestActor.classify(account_session: viewer)
-    {:ok, _deleted} = Repo.delete(profile)
 
     assert {:error, error} =
              ProfileViewTracker.track(profile, viewer, classification, read_purpose: :public_read)

@@ -32,6 +32,7 @@ defmodule GroupherServer.Application do
       [
         {Phoenix.PubSub, name: GroupherServer.PubSub},
         GroupherServer.Repo,
+        GroupherServer.CMS.Comments.SchemaGeneration.Startup,
         GroupherServer.PublicCache.Telemetry,
         GroupherServer.ServiceAuth.Cache
       ] ++

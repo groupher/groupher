@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       assert result["articleStats"]["innerId"] ==
                to_string(article_inner_id(changelog, community))
 
-      assert result["articleStats"]["commentsRevision"] == 1
+      assert result["articleStats"]["commentsRevision"] == 2
     end
 
     test "login user can reply to a comment", ~m(community changelog user user_conn)a do
@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       assert result["comment"]["body"]["html"] |> String.contains?(~s(<p))
       assert result["comment"]["body"]["html"] |> String.contains?(~s(reply comment))
-      assert result["articleStats"]["commentsRevision"] == 2
+      assert result["articleStats"]["commentsRevision"] == 3
     end
 
     test "only owner can update a exist comment",

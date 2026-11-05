@@ -17,7 +17,6 @@ defmodule GroupherServer.CMS.Comments.Persist do
   alias CMS.Model.{Article, Comment, CommentBody, CommentReply, Community, Embeds, PostState}
   alias Helper.{ORM, T}
 
-  @max_parent_replies_count Comment.max_parent_replies_count()
   @default_emotions Embeds.CommentEmotion.default_persisted_emotions()
   @default_comment_meta Embeds.CommentMeta.default_meta()
   @article_cat CMS.Artiment.Const.cat_values() |> Enum.into(%{}, &{&1, &1})
@@ -101,25 +100,6 @@ defmodule GroupherServer.CMS.Comments.Persist do
     |> Repo.update()
   end
 
-  @doc "Updates the bounded embedded replies projection on a parent Comment."
-  @spec update_replies_embed(Comment.t(), Comment.t()) :: T.domain_res(Comment.t())
-  def update_replies_embed(
-        %Comment{replies: replies} = parent_comment,
-        %Comment{} = replied_comment
-      )
-      when length(replies) < @max_parent_replies_count do
-    new_replies =
-      replies
-      |> List.insert_at(length(replies), replied_comment)
-      |> Enum.slice(0, @max_parent_replies_count)
-
-    ORM.update_embed(parent_comment, :replies, new_replies)
-  end
-
-  def update_replies_embed(%Comment{} = parent_comment, _replied_comment) do
-    {:ok, parent_comment}
-  end
-
   @doc "Updates the reply-to-others metadata derived from the parent authors."
   @spec update_reply_to_others_state(Comment.t(), Comment.t(), Comment.t()) ::
           T.domain_res(Comment.t())
@@ -140,12 +120,6 @@ defmodule GroupherServer.CMS.Comments.Persist do
       false ->
         {:ok, replied_comment}
     end
-  end
-
-  @doc "Increments the reply count on a parent Comment."
-  @spec increment_replies_count(Comment.t()) :: T.domain_res(Comment.t())
-  def increment_replies_count(%Comment{} = parent_comment) do
-    ORM.inc(parent_comment, :replies_count)
   end
 
   @doc "Updates the canonical Comment body using optimistic body versioning."
@@ -229,10 +203,9 @@ defmodule GroupherServer.CMS.Comments.Persist do
     {:ok, count}
   end
 
-  defp put_comment_identity(attrs, %{__struct__: Article, id: article_id} = article, :article_id) do
+  defp put_comment_identity(attrs, %{__struct__: Article, id: article_id}, :article_id) do
     attrs
     |> Map.put(:article_id, article_id)
-    |> Map.put(:branch_id, Map.get(article, :branch_id))
   end
 
   defp article_inner_id(%Article{} = article, %Community{} = community) do

@@ -16,6 +16,8 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
 
   require GroupherServer.CMS.Gate.ErrorCat
 
+  import Ecto.Query
+
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Gate.Access.Load.Queries
@@ -233,12 +235,13 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
          canonical when not is_nil(canonical) <- Queries.resource(Comment, comment.id),
          true <- same_comment_identity?(canonical, comment, article, community, thread),
          {:ok, parent_context} <-
-           parent_context(actor, community, thread, article, comment.branch_id),
+           parent_context(actor, community, thread, article),
          %CommentLifecycle{} = comment_lifecycle <- Queries.comment_lifecycle(canonical.id) do
       {:ok,
        %CommentContext{
          comment: canonical,
          comment_lifecycle: comment_lifecycle,
+         public_readable?: public_comment_reachable?(canonical, actor, community),
          comment_author_user_id: canonical.author_id,
          article: parent_resource(parent_context),
          article_lifecycle: parent_lifecycle(parent_context),
@@ -255,20 +258,32 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
     end
   end
 
-  defp parent_context(actor, community, :doc, %Article{thread: :doc} = article, branch_id)
-       when is_integer(branch_id) do
-    doc(actor, community, article, branch_id)
+  defp public_comment_reachable?(comment, actor, community) do
+    context =
+      CMS.Gate.Context.Scope.Comment.for_thread(comment.thread, community_id: community.id)
+
+    Comment
+    |> CMS.Gate.scope(actor, :read, context)
+    |> where([c], c.id == ^comment.id)
+    |> Repo.exists?()
   end
 
-  defp parent_context(actor, community, thread, article, _branch_id) do
+  defp parent_context(actor, community, :doc, %Article{thread: :doc} = article) do
+    with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article.id),
+         true <- owner.id == community.id,
+         %DocBranch{id: branch_id} <- Repo.get_by(DocBranch, community_id: owner.id, type: :main) do
+      doc(actor, community, article, branch_id)
+    else
+      _ -> {:error, ErrorCat.gate_resource_mismatch()}
+    end
+  end
+
+  defp parent_context(actor, community, thread, article) do
     article(actor, community, thread, article)
   end
 
   defp parent_resource(%ArticleContext{article: article}), do: article
-
-  defp parent_resource(%DocContext{doc: doc, doc_branch_state: state}) do
-    %{doc | comments_locked: state.comments_locked}
-  end
+  defp parent_resource(%DocContext{doc: doc}), do: doc
 
   defp parent_lifecycle(%ArticleContext{article_lifecycle: lifecycle}), do: lifecycle
   defp parent_lifecycle(%DocContext{doc_lifecycle: lifecycle}), do: lifecycle
@@ -296,24 +311,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
     end
   end
 
-  defp same_comment_identity?(canonical, input, article, community, thread) do
-    doc_branch =
-      if thread == :doc do
-        Queries.doc_branch(community.id, canonical.branch_id)
-      else
-        nil
-      end
-
-    branch_matches? =
-      thread != :doc or
-        match?(
-          %DocBranch{community_id: community_id} when community_id == community.id,
-          doc_branch
-        )
-
-    branch_matches? and
-      canonical.thread == thread and
-      canonical.article_id == article.id and canonical.branch_id == input.branch_id and
-      canonical.id == input.id
+  defp same_comment_identity?(canonical, input, article, _community, thread) do
+    canonical.thread == thread and canonical.article_id == article.id and canonical.id == input.id
   end
 end

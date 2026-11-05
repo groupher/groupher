@@ -56,6 +56,16 @@ export const CommentFields = graphql(`
     isArticleAuthor
     viewerHasUpvoted
     repliesCount
+    repliesRevision
+    hasReplyEntries
+    isFolded
+    lastReplyAt
+    replyParticipants {
+      ref
+      login
+      nickname
+      avatar
+    }
     insertedAt
     updatedAt
   }
@@ -100,6 +110,16 @@ export const CommentPublicFields = graphql(`
     commentInteractionRevision
     isArticleAuthor
     repliesCount
+    repliesRevision
+    hasReplyEntries
+    isFolded
+    lastReplyAt
+    replyParticipants {
+      ref
+      login
+      nickname
+      avatar
+    }
     insertedAt
     updatedAt
   }
@@ -130,6 +150,16 @@ export const CommentPublicReplyFields = graphql(`
     commentInteractionRevision
     isArticleAuthor
     repliesCount
+    repliesRevision
+    hasReplyEntries
+    isFolded
+    lastReplyAt
+    replyParticipants {
+      ref
+      login
+      nickname
+      avatar
+    }
     insertedAt
     updatedAt
     replyToComment {

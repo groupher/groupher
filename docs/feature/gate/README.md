@@ -23,6 +23,8 @@ write command
 - 新代码以本文、V4 typed context 和对应资源 Lifecycle 合同为准，不从历史版本恢复旧入口。
 - 审核限制、内容待审、AI 意见和 AlertWall 的职责见 [ReviewBot / AlertWall V2](../alert-wall/v2.md)。
 
+> 共享评论当前合同：`Comment.for_thread(thread, community_id: canonical_id)` 强制显式请求社区，`all_public()` 为跨 thread 公共聚合入口；Comment 不接受 branch selector。Doc 评论通过唯一 owner 的当前可读 main 准入，评论身份和统计仍归稳定 Article。Doc/Document 正文的 branch selector 保持。实现及验收见 [共享评论计划](../../migrations/comment-reaction-snapshot-counts.md) 与 [实施记录](../../migrations/comment-reaction-snapshot-counts-implementation.md)。
+
 ## 版本状态
 
 - [V2](./v2.md)：Gate/Lifecycle 基础合同的实施历史和通用 API 细节。

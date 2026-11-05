@@ -135,12 +135,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   end
 
   defp stable_comment_query(article, thread, inner_id, actor) do
-    scope_context =
-      if thread == :doc do
-        CommentScopeContext.for_thread(:doc, branch_policy: :main)
-      else
-        CommentScopeContext.for_thread(thread)
-      end
+    scope_context = CommentScopeContext.for_thread(thread, community_id: article.community.id)
 
     case CMS.Gate.scope(Comment, actor, :read, scope_context) do
       %Ecto.Query{} = query when thread == :doc ->
@@ -148,7 +143,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
           query,
           [comment, gate_community: community],
           comment.article_id == ^article.id and comment.inner_id == ^inner_id and
-            comment.thread == ^thread and comment.branch_id == ^article.branch_id and
+            comment.thread == ^thread and
             community.id == ^article.community.id
         )
 

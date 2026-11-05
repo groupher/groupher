@@ -48,6 +48,8 @@ export type TViewingInfo = {
   id: TID
 }
 
+export type TParticipantUser = TSimpleUser & { ref: string }
+
 export type TArticleStats = {
   community: string
   thread: TArticleThread
@@ -57,6 +59,7 @@ export type TArticleStats = {
   upvotesCount: number
   commentsCount: number
   collectsCount: number
+  commentsParticipants: readonly TParticipantUser[]
   commentsParticipantsCount: number
   interactionRevision: number
   commentsRevision: number
@@ -188,6 +191,11 @@ export type TComment = {
   insertedAt?: string
   updatedAt?: string
   author?: TUser
+  repliesRevision?: number
+  hasReplyEntries?: boolean
+  isFolded?: boolean
+  lastReplyAt?: string | null
+  replyParticipants?: readonly TParticipantUser[]
   repliesCount?: number
   replies?: TComment[]
   replyToComment?: TComment | null
@@ -244,10 +252,9 @@ export type TPagedCollectionFolder = {
 }
 
 export type TCommentsState = {
-  isViewerJoined: boolean
   participantsCount: number
   totalCount: number
-  participants: TSimpleUser[]
+  participants: TParticipantUser[]
 }
 
 export type TArticleStatusReject = TConstValues<typeof ARTICLE_STATUS_REJECT>

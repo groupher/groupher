@@ -1,0 +1,89 @@
+defmodule GroupherServer.CMS.ArtimentMentions.Notifications do
+  @moduledoc """
+  Delivers newly introduced explicit User mentions from immutable set facts.
+
+      normal capture intent -> current token + public eligibility -> idempotent mailbox rows
+
+  Initializers and rebuilds never call this boundary. Recipient IDs frozen by
+  capture are checked against the set again; source content is never reparsed.
+  """
+  import Ecto.Query
+  alias GroupherServer.{Accounts, CMS, Messaging, Repo}
+  alias CMS.ArtimentMentions.CurrentSource
+  alias CMS.ArtimentMentions.Model.{Endpoint, MentionSet, Occurrence}
+  alias CMS.Model.Author
+  alias Accounts.Model.User
+
+  def deliver(_source_id, _set_id, []), do: {:ok, :no_new_mentions}
+
+  def deliver(source_id, set_id, recipient_ids) when is_list(recipient_ids) do
+    case Repo.transaction(fn ->
+           case deliver_current(source_id, set_id, recipient_ids) do
+             {:ok, result} -> result
+             {:error, reason} -> Repo.rollback(reason)
+           end
+         end) do
+      {:ok, result} -> {:ok, result}
+      {:error, :content_not_public} -> {:ok, :content_not_public}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def deliver(_, _, _), do: {:error, :invalid_mention_notification}
+
+  defp deliver_current(source_id, set_id, recipient_ids) do
+    with %Endpoint{deleted_at: nil} = endpoint <-
+           Repo.get(Endpoint, source_id, lock: "FOR UPDATE"),
+         %MentionSet{source_endpoint_id: ^source_id} = set <- Repo.get(MentionSet, set_id),
+         {:ok, selected} <- CurrentSource.load(endpoint),
+         true <- selected.token == set.source_token,
+         %User{} = author <- author(selected) do
+      actual_ids =
+        from(o in Occurrence,
+          where: o.set_id == ^set_id and o.target_type == :user,
+          select: o.target_user_id,
+          distinct: true
+        )
+        |> Repo.all()
+
+      recipients =
+        from(user in User, where: user.id in ^recipient_ids and user.id in ^actual_ids)
+        |> Repo.all()
+        |> Enum.reject(&(&1.id == author.id))
+
+      now = DateTime.utc_now(:second)
+
+      rows =
+        Enum.map(recipients, fn user ->
+          %{
+            from_user_id: author.id,
+            to_user_id: user.id,
+            article_id: selected.article_id,
+            comment_id: endpoint.comment_id,
+            branch_id: selected.branch_id,
+            thread: selected.thread,
+            title: selected.title,
+            read: false,
+            block_linker: [],
+            inserted_at: now,
+            updated_at: now
+          }
+        end)
+
+      Messaging.send_mention(selected.content, rows, author)
+    else
+      {:error, :mention_current_source_missing} -> {:ok, :stale_or_removed_source}
+      {:error, reason} -> {:error, reason}
+      _ -> {:ok, :stale_or_removed_source}
+    end
+  end
+
+  defp author(%{author_user_id: id}), do: Repo.get(User, id)
+
+  defp author(%{author_id: id}) do
+    case Repo.get(Author, id) do
+      %Author{user_id: user_id} -> Repo.get(User, user_id)
+      _ -> nil
+    end
+  end
+end

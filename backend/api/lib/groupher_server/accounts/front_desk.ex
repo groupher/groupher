@@ -6,6 +6,17 @@ defmodule GroupherServer.Accounts.FrontDesk do
   """
 
   @doc """
+  Returns authoritative public user summaries in one batch, without another cache.
+
+  ## Examples
+
+      iex> GroupherServer.Accounts.FrontDesk.user_summaries([])
+      {:ok, %{}}
+  """
+  @spec user_summaries([pos_integer()]) :: {:ok, map()} | {:error, atom()}
+  defdelegate user_summaries(ids), to: GroupherServer.Accounts.FrontDesk.Query
+
+  @doc """
   Delegates fresh_user/1 to the owning implementation.
 
   ## Examples

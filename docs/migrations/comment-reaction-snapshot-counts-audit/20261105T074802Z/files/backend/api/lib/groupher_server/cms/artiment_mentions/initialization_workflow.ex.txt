@@ -1,0 +1,54 @@
+defmodule GroupherServer.CMS.ArtimentMentions.InitializationWorkflow do
+  @moduledoc """
+  Owns one authenticated initializer source transaction.
+
+      source manifest row -> source transaction -> capture -> synchronous projection
+  """
+
+  alias GroupherServer.Repo
+  alias GroupherServer.CMS.ArtimentMentions.Commands.CaptureCurrentVersion
+  alias GroupherServer.CMS.ArtimentMentions.InitializeSourceScan
+
+  @doc "Applies one already-verified source row in its own transaction."
+  def apply_source(source, ast) when is_map(source) and is_list(ast) do
+    Repo.transaction(fn ->
+      with {:ok, :pass} <- InitializeSourceScan.lock_and_verify(source),
+           {:ok, captured} <-
+             CaptureCurrentVersion.execute_in_transaction(
+               source_identity(source),
+               source.source_token,
+               ast,
+               nil,
+               source.mentioned_at,
+               {:initialize, source.source_token},
+               binding_mode: :initialize_current
+             ) do
+        captured
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> case do
+      {:ok, captured} -> {:ok, captured}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def apply_source(_, _), do: {:error, :invalid_mention_initialization_source}
+
+  defp source_identity(%{type: :comment} = source) do
+    %{
+      type: :comment,
+      comment_id: source.comment_id,
+      parent: source.parent
+    }
+  end
+
+  defp source_identity(%{type: :doc} = source) do
+    %{type: :doc, article_id: source.article_id}
+  end
+
+  defp source_identity(%{type: type} = source) do
+    %{type: type, article_id: source.article_id}
+  end
+end

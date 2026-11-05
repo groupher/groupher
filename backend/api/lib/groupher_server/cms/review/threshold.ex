@@ -8,7 +8,6 @@ defmodule GroupherServer.CMS.Review.Threshold do
   """
 
   alias GroupherServer.{AlertWall, CMS, Repo}
-  alias CMS.Model.DocBranch
 
   @doc "Applies a report threshold hold atomically with the report that crosses it."
   def apply_report_in_transaction(%{owner: :cms} = report)
@@ -34,9 +33,9 @@ defmodule GroupherServer.CMS.Review.Threshold do
     with {:ok, context} <-
            CMS.Review.load_for_update("comment:#{report.target_id}", "platform") do
       case context.target do
-        %{thread: :doc, branch_id: branch_id} when is_integer(branch_id) ->
-          case Repo.get(DocBranch, branch_id) do
-            %DocBranch{community_id: community_id} ->
+        %{thread: :doc, article_id: article_id} ->
+          case CMS.Articles.Bindings.doc_owner(article_id) do
+            {:ok, %{id: community_id}} ->
               {:ok, %{context | scope_key: "community:#{community_id}"}}
 
             _ ->

@@ -1,0 +1,46 @@
+defmodule GroupherServer.CMS.ArtimentMentions.MentionsGraphRevision do
+  @moduledoc """
+  Advances the global Mentions graph revision in the caller's transaction.
+
+      graph-visible change -> fixed revision row -> query consistency fence
+  """
+
+  import Ecto.Query
+
+  alias GroupherServer.Repo
+  alias GroupherServer.CMS.ArtimentMentions.Model.MentionsGraphState
+  alias GroupherServer.CMS.ArtimentMentions.MentionsGraph.Budget
+
+  @revision_id 1
+
+  @doc "Atomically advances the single global Mentions graph revision."
+  def bump do
+    if Repo.in_transaction?() do
+      case Repo.update_all(
+             from(revision in MentionsGraphState, where: revision.id == ^@revision_id),
+             inc: [revision: 1]
+           ) do
+        {1, nil} -> {:ok, :pass}
+        {0, nil} -> {:error, :mentions_graph_revision_row_missing}
+      end
+    else
+      {:error, :mentions_graph_revision_requires_transaction}
+    end
+  end
+
+  @doc "Returns the current global revision."
+  def current do
+    case Repo.get(MentionsGraphState, @revision_id) do
+      %MentionsGraphState{revision: revision} -> {:ok, revision}
+      nil -> {:error, :mentions_graph_revision_row_missing}
+    end
+  end
+
+  @doc "Returns the current revision while consuming one SQL from a request budget."
+  def current(%Budget{} = budget) do
+    case Budget.run!(budget, &Repo.get(MentionsGraphState, @revision_id, timeout: &1)) do
+      %MentionsGraphState{revision: revision} -> {:ok, revision}
+      nil -> {:error, :mentions_graph_revision_row_missing}
+    end
+  end
+end

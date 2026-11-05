@@ -1,0 +1,158 @@
+# Read-only B0 source/old-writer inventory. Run with MIX_ENV=test first.
+# Does not parse bodies, initialize sets, migrate rows or mutate queues.
+import Ecto.Query
+alias GroupherServer.{CMS, Release, Repo}
+
+alias CMS.Model.{
+  Article,
+  ArticlePublic,
+  ArticleRevision,
+  ArticleBodySnapshot,
+  DocPublic,
+  DocBranch,
+  DocBranchVersion,
+  Comment,
+  CommentBody
+}
+
+article_sources =
+  from(a in Article,
+    join: p in ArticlePublic,
+    on: p.article_id == a.id,
+    where: a.thread in [:post, :blog, :changelog, :ticket],
+    left_join: t in CMS.Model.TicketState,
+    on: t.article_id == a.id,
+    where: a.thread != :ticket or t.type == :user,
+    select: %{article_id: a.id, thread: a.thread, revision_id: p.revision_id}
+  )
+
+doc_sources =
+  from(p in DocPublic,
+    join: b in DocBranch,
+    on: b.id == p.branch_id,
+    where: b.type == :main,
+    select: %{article_id: p.article_id, branch_id: b.id, branch_version_id: p.branch_version_id}
+  )
+
+comment_sources =
+  from(c in Comment,
+    join: a in Article,
+    on: a.id == c.article_id,
+    left_join: p in ArticlePublic,
+    on: p.article_id == a.id,
+    left_join: d in DocPublic,
+    on: d.article_id == a.id and d.branch_id == c.branch_id,
+    left_join: b in DocBranch,
+    on: b.id == c.branch_id,
+    where:
+      (a.thread in [:post, :blog, :changelog] and not is_nil(p.article_id)) or
+        (a.thread == :doc and b.type == :main and not is_nil(d.article_id)),
+    select: %{id: c.id}
+  )
+
+{:ok, report} =
+  Repo.transaction(fn ->
+    Release.verify_migration_database!(Repo)
+
+    articles =
+      Repo.all(
+        from(s in subquery(article_sources),
+          group_by: s.thread,
+          select: {s.thread, count(s.article_id)}
+        )
+      )
+      |> Map.new()
+
+    missing_articles =
+      Repo.aggregate(
+        from(s in subquery(article_sources),
+          left_join: r in ArticleRevision,
+          on: r.id == s.revision_id,
+          left_join: body in ArticleBodySnapshot,
+          on: body.id == r.body_snapshot_id,
+          where: is_nil(body.id)
+        ),
+        :count
+      )
+
+    missing_docs =
+      Repo.aggregate(
+        from(s in subquery(doc_sources),
+          left_join: v in DocBranchVersion,
+          on: v.id == s.branch_version_id,
+          left_join: r in ArticleRevision,
+          on: r.id == v.revision_id,
+          left_join: body in ArticleBodySnapshot,
+          on: body.id == r.body_snapshot_id,
+          where: is_nil(body.id)
+        ),
+        :count
+      )
+
+    missing_comments =
+      Repo.aggregate(
+        from(s in subquery(comment_sources),
+          left_join: body in CommentBody,
+          on: body.comment_id == s.id,
+          where: is_nil(body.id)
+        ),
+        :count
+      )
+
+    jobs =
+      Repo.all(
+        from(j in Oban.Job,
+          where:
+            j.worker in [
+              "GroupherServer.Jobs.CMSMentionHealth",
+              "GroupherServer.Jobs.CMSOutboxArticle",
+              "GroupherServer.Jobs.CMSOutboxComment",
+              "GroupherServer.Jobs.Comments"
+            ],
+          group_by: [j.worker, j.state],
+          select: %{worker: j.worker, state: j.state, count: count(j.id)}
+        )
+      )
+
+    events =
+      Repo.all(
+        from(e in CMS.Outbox.Event,
+          where: e.event in ["article.mention_sync", "comment.mention_sync"],
+          group_by: [e.event, e.status],
+          select: %{event: e.event, status: e.status, count: count(e.id)}
+        )
+      )
+
+    legacy_table_count = fn table, query ->
+      case Repo.query("SELECT to_regclass($1)", ["cms." <> table]) do
+        {:ok, %{rows: [[nil]]}} -> 0
+        {:ok, _result} -> Repo.aggregate(query, :count)
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end
+
+    %{
+      database: Release.database_identity!(Repo),
+      mode: "report-only",
+      article_sources: articles,
+      doc_sources: Repo.aggregate(doc_sources, :count),
+      comment_sources: Repo.aggregate(comment_sources, :count),
+      missing_bodies: %{article: missing_articles, doc: missing_docs, comment: missing_comments},
+      old_mentions:
+        legacy_table_count.(
+          "artiment_mentions",
+          from(mention in "artiment_mentions", prefix: "cms")
+        ),
+      old_watermarks:
+        legacy_table_count.(
+          "artiment_mention_sync_states",
+          from(state in "artiment_mention_sync_states", prefix: "cms")
+        ),
+      candidate_workers: jobs,
+      mention_events: events,
+      note:
+        "Worker totals include unrelated events; never use this report to cancel entire shared workers/queues."
+    }
+  end)
+
+IO.puts(Jason.encode!(report, pretty: true))

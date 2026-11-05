@@ -120,14 +120,14 @@ describe('query keys', () => {
 
   it('scopes detail, comments and viewer state without secrets', () => {
     expect(articleQueryKeys.detail('home', THREAD.POST, 42)).toEqual([
-      'article',
+      'article-shared-comments-v1',
       'detail',
       'home',
       THREAD.POST,
       '42',
     ])
     expect(commentKeys.list('home', THREAD.POST, 42)).toEqual([
-      'comment',
+      'comment-shared-v1',
       'list',
       'home',
       THREAD.POST,

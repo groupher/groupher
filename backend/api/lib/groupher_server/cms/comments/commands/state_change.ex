@@ -37,7 +37,9 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
       CMS.Gate.check_comment_in_transaction(actor, :edit, candidate, community)
     end)
 
-    change(fn {canonical, _article} -> States.fold(canonical, actor) end)
+    change(fn {canonical, _article} ->
+      States.fold(Map.put(canonical, :request_community_slug, community.slug), actor)
+    end)
   end
 
   @pipeline operation: :comment_unfold, target: :comment
@@ -46,7 +48,9 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
       CMS.Gate.check_comment_in_transaction(actor, :edit, candidate, community)
     end)
 
-    change(fn {canonical, _article} -> States.unfold(canonical, actor) end)
+    change(fn {canonical, _article} ->
+      States.unfold(Map.put(canonical, :request_community_slug, community.slug), actor)
+    end)
   end
 
   @spec execute(atom(), Comment.t(), User.t(), Ecto.UUID.t()) ::

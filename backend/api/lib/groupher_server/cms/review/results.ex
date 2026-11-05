@@ -123,6 +123,12 @@ defmodule GroupherServer.CMS.Review.Results do
   end
 
   defp apply_restrictions(request, context, result) do
+    CMS.Comments.Summary.for_lifecycle(context.lifecycle, fn ->
+      apply_restriction_facts(request, context, result)
+    end)
+  end
+
+  defp apply_restriction_facts(request, context, result) do
     if shared_comment_community_request?(request) do
       {:ok, :pass}
     else

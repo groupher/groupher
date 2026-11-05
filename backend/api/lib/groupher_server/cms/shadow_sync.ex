@@ -1,114 +1,128 @@
 defmodule GroupherServer.CMS.ShadowSync do
   @moduledoc """
-  Refreshes display-only user snapshots without changing reaction membership.
+  Refreshes one page of user snapshots without changing participation membership.
 
-  This is the reaction-facing boundary for latest-user snapshots. It preserves
-  list membership, order and length; only profile fields are patched.
+      article/comment page + nested replies
+        -> flatten display paths -> one Snapshot batch -> restore original tree
 
-  Business position:
-
-      CMS read projection -> ShadowSync -> cached/account user summaries
+  Counts, member order, owner revisions and persisted JSON remain unchanged.
   """
 
   alias GroupherServer.CMS
-
   alias CMS.{Model.Embeds, Snapshot}
 
-  @doc "Refreshes requested nested user snapshots while preserving their paths and membership."
+  @member_fields [
+    :comments_participants,
+    :reply_participants,
+    [:article_stats, :comments_participants]
+  ]
+
+  @doc "Refreshes explicit user snapshot paths using the existing Snapshot boundary."
   @spec users_in([map()] | nil, [atom() | [atom()]], keyword()) :: [map()] | nil
   def users_in(items, fields, opts \\ []), do: Snapshot.users_in(items, fields, opts)
 
-  @doc "Refreshes all fixed-reaction and emotion latest-user snapshots on one article."
+  @doc "Refreshes the user display fields on one Article."
   @spec refresh_article(map(), keyword()) :: map()
   def refresh_article(article, opts \\ []) do
-    article
-    |> List.wrap()
-    |> refresh_articles(opts)
-    |> List.first()
+    [article] |> refresh_articles(opts) |> List.first()
   end
 
-  @doc "Refreshes all fixed-reaction and emotion latest-user snapshots in an article list."
+  @doc "Refreshes Article participants and reactions in a single page-wide user batch."
   @spec refresh_articles([map()] | nil, keyword()) :: [map()] | nil
-  def refresh_articles(articles, opts \\ [])
-  def refresh_articles(nil, _opts), do: nil
-
-  def refresh_articles(articles, opts) do
-    articles
-    |> Enum.map(&refresh_fixed_users(&1, [:latest_upvoted_users, :latest_collected_users], opts))
-    |> emotion_users_in(opts)
+  def refresh_articles(articles, opts \\ []) do
+    refresh_tree(articles, [:latest_upvoted_users, :latest_collected_users], opts)
   end
 
-  @doc "Refreshes fixed-reaction and emotion latest-user snapshots in comments and replies."
+  @doc "Refreshes Comment participants and reactions, including all reply previews."
   @spec refresh_comments([map()] | nil, keyword()) :: [map()] | nil
-  def refresh_comments(comments, opts \\ [])
-  def refresh_comments(nil, _opts), do: nil
-
-  def refresh_comments(comments, opts) do
-    comments
-    |> Enum.map(&refresh_fixed_users(&1, [:latest_upvoted_users], opts))
-    |> emotion_users_in(opts)
+  def refresh_comments(comments, opts \\ []) do
+    refresh_tree(comments, [:latest_upvoted_users], opts)
   end
 
-  @doc "Refreshes only dynamic emotion latest-user snapshots, including embedded replies."
+  @doc "Refreshes only emotion user fields throughout a page and its reply previews."
   @spec emotion_users_in([map()] | nil, keyword()) :: [map()] | nil
-  def emotion_users_in(items, opts \\ [])
-  def emotion_users_in(nil, _opts), do: nil
-  def emotion_users_in([], _opts), do: []
-
-  def emotion_users_in(items, opts) when is_list(items) do
-    Enum.map(items, &refresh_item(&1, opts))
+  def emotion_users_in(items, opts \\ []) do
+    refresh_tree(items, [], opts, false)
   end
 
-  defp refresh_item(%{replies: replies} = item, opts) when is_list(replies) do
-    item
-    |> refresh_emotions(opts)
-    |> Map.put(:replies, emotion_users_in(replies, opts))
-  end
+  defp refresh_tree(items, fixed_fields, opts, members? \\ true)
+  defp refresh_tree(nil, _fixed_fields, _opts, _members?), do: nil
+  defp refresh_tree([], _fixed_fields, _opts, _members?), do: []
 
-  defp refresh_item(item, opts), do: refresh_emotions(item, opts)
+  defp refresh_tree(items, fixed_fields, opts, members?) do
+    nodes = flatten(items)
+    members = if members?, do: @member_fields, else: []
 
-  defp refresh_fixed_users(%{meta: meta} = item, fields, opts) when is_map(meta) do
-    refreshed_meta =
-      Enum.reduce(fields, meta, fn field, acc ->
-        case Map.get(acc, field) do
-          users when is_list(users) -> Map.put(acc, field, refresh_user_snapshots(users, opts))
-          _ -> acc
-        end
-      end)
-
-    Map.put(item, :meta, refreshed_meta)
-  end
-
-  defp refresh_fixed_users(item, _fields, _opts), do: item
-
-  defp refresh_emotions(%{emotions: emotions} = item, opts) when is_map(emotions) do
-    emotion_fields = if is_struct(emotions), do: Map.from_struct(emotions), else: emotions
+    fields =
+      Enum.uniq(members ++ Enum.map(fixed_fields, &[:meta, &1]) ++ emotion_fields(nodes))
 
     refreshed =
-      Map.new(emotion_fields, fn {key, value} ->
-        if latest_users_key?(key) and is_list(value) do
-          {key, refresh_user_snapshots(value, opts)}
-        else
-          {key, value}
-        end
-      end)
+      nodes
+      |> Snapshot.users_in(fields, opts)
+      |> Enum.map(&normalize_fields(&1, fields))
 
-    refreshed = if is_struct(emotions), do: struct(emotions, refreshed), else: refreshed
-    Map.put(item, :emotions, refreshed)
+    {tree, []} = restore(items, refreshed)
+    tree
   end
 
-  defp refresh_emotions(item, _opts), do: item
-
-  defp latest_users_key?(key) when is_atom(key) do
-    key |> Atom.to_string() |> String.starts_with?("latest_")
+  defp flatten(items) do
+    Enum.flat_map(items, fn item ->
+      [item | flatten(reply_items(item))]
+    end)
   end
 
-  defp latest_users_key?(key) when is_binary(key), do: String.starts_with?(key, "latest_")
-  defp latest_users_key?(_key), do: false
+  defp restore([], remaining), do: {[], remaining}
 
-  defp refresh_user_snapshots(snapshots, opts) do
-    snapshots
-    |> Snapshot.users(opts)
-    |> Enum.map(&Embeds.User.normalize/1)
+  defp restore([original | rest], [refreshed | remaining]) do
+    {replies, remaining} = restore(reply_items(original), remaining)
+
+    refreshed =
+      if is_list(Map.get(original, :replies)) do
+        Map.put(refreshed, :replies, replies)
+      else
+        refreshed
+      end
+
+    {rest, remaining} = restore(rest, remaining)
+    {[refreshed | rest], remaining}
   end
+
+  defp reply_items(item) do
+    case Map.get(item, :replies) do
+      replies when is_list(replies) -> replies
+      _ -> []
+    end
+  end
+
+  defp emotion_fields(nodes) do
+    Enum.flat_map(nodes, fn node ->
+      case Map.get(node, :emotions) do
+        emotions when is_map(emotions) ->
+          emotions
+          |> Map.keys()
+          |> Enum.filter(&latest_users_key?/1)
+          |> Enum.map(&[:emotions, &1])
+
+        _ ->
+          []
+      end
+    end)
+  end
+
+  defp normalize_fields(item, fields) do
+    Enum.reduce(fields, item, fn field, item ->
+      path = Enum.map(List.wrap(field), &Access.key/1)
+
+      case get_in(item, path) do
+        users when is_list(users) -> put_in(item, path, Enum.map(users, &Embeds.User.normalize/1))
+        _ -> item
+      end
+    end)
+  end
+
+  defp latest_users_key?(key) when is_atom(key) or is_binary(key) do
+    key |> to_string() |> String.starts_with?("latest_")
+  end
+
+  defp latest_users_key?(_), do: false
 end

@@ -344,7 +344,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
              CMS.Comments.reply_page(first, community.slug, %{}, cursor(position, 1))
   end
 
-  test "folded descendants are excluded from preview, count, page and reply targets" do
+  test "FOLD-01 folded descendants remain reachable with their true reply targets" do
     {community, article, _, user} = mock_article(:post)
     root = create_root(community, article, user)
 
@@ -359,15 +359,18 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
     {:ok, %{entries: [entry]}} =
       CMS.Comments.page(:post, article.id, community.slug, %{}, offset(), :replies)
 
-    assert entry.replies_count == 1
-    assert [preview] = entry.replies
+    assert entry.replies_count == 2
+    assert [folded_preview, preview] = entry.replies
+    assert folded_preview.id == hidden.id
+    assert folded_preview.is_folded
     assert preview.id == visible.id
-    assert preview.reply_to_comment == nil
+    assert preview.reply_to_comment.id == hidden.id
 
-    {:ok, %{entries: [expanded], page_info: %{total_count: 1}}} =
+    {:ok, %{entries: [folded, expanded], page_info: %{total_count: 2}}} =
       CMS.Comments.reply_page(root, community.slug, %{}, offset())
 
-    assert expanded.reply_to_comment == nil
+    assert folded.is_folded
+    assert expanded.reply_to_comment.id == hidden.id
   end
 
   test "preview SQL budget stays constant when the root page grows" do

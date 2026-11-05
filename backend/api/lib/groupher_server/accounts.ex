@@ -11,6 +11,12 @@ defmodule GroupherServer.Accounts do
 
   alias __MODULE__.Query
 
+  @doc "Returns authoritative user summaries through the Accounts Context boundary."
+  @spec front_desk_user_summaries([pos_integer()]) :: {:ok, map()} | {:error, atom()}
+  defdelegate front_desk_user_summaries(ids),
+    to: GroupherServer.Accounts.FrontDesk,
+    as: :user_summaries
+
   @doc "Creates an official session bounded by a trusted operational deadline."
   defdelegate profiles_create_bounded_browser_session(user, metadata, deadline),
     to: GroupherServer.Accounts.Profiles.BrowserSessions,

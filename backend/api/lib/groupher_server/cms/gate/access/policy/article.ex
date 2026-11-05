@@ -118,6 +118,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   defp check_allowed(actor, action, article, context) do
     with {:ok, :pass} <- authorize_action(actor, action, article, context),
+         {:ok, :pass} <- discussion_parent_readable(actor, action, article, context),
          {:ok, lifecycle} <- article_lifecycle(context),
          {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
@@ -129,6 +130,12 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
       {:error, _reason} = error -> error
     end
   end
+
+  defp discussion_parent_readable(actor, :create_comment, article, context) do
+    check_allowed(actor, :read, article, context)
+  end
+
+  defp discussion_parent_readable(_actor, _action, _article, _context), do: {:ok, :pass}
 
   defp review_scopes_readable?(%User{}, context) do
     scopes = Map.get(context, :review_scope_keys, [])

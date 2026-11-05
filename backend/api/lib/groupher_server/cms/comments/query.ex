@@ -9,12 +9,12 @@ defmodule GroupherServer.CMS.Comments.Query do
         -> CMS.Comments
         -> Query
         -> Gate scope -> QueryBuilder / Pagi -> Repo -> PageProjection
-        -> participant count drift -> best-effort reconciliation Job
+        -> persisted summary (no read-side repair)
   """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
-  alias GroupherServer.{Accounts, CMS, Jobs, Pagi, Repo}
+  alias GroupherServer.{Accounts, CMS, Pagi, Repo}
 
   alias CMS.{
     Articles.Pagination,
@@ -44,59 +44,22 @@ defmodule GroupherServer.CMS.Comments.Query do
   alias Pagi.Params
 
   @pinned_comment_limit Comment.pinned_comment_limit()
-  @doc """
-  Returns the comment summary state for one article: total count, participant
-  count, latest participants, and whether the viewer joined the conversation.
 
-  ## Examples
-
-      CMS.Comments.Query.comments_state(:post, article_id)
-
-  """
-  @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
-  def comments_state(thread, article_id) do
+  @doc "Reads the bounded persisted public discussion summary without aggregating participation."
+  def comments_state(thread, article_id, viewer, community_slug) do
     with {:ok, article} <- stable_article(thread, article_id),
-         stats <- Repo.get_by(ArticleStats, thread: thread, article_id: article.id) do
-      %{
-        total_count: stats_value(stats, :comments_count),
-        participants_count: stats_value(stats, :comments_participants_count),
-        participants:
-          participants_query(thread, article.id)
-          |> order_by([user], desc: user.id)
-          |> limit(20)
-          |> Repo.all(),
-        is_viewer_joined: false
-      }
-      |> done
-    end
-  end
-
-  @doc """
-  Returns one Article's Comment state with viewer participation.
-
-  ## Examples
-
-      Comments.Query.comments_state(:post, post_id, viewer)
-  """
-  @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
-  def comments_state(thread, article_id, %User{} = user) do
-    with {:ok, article} <- stable_article(thread, article_id),
-         thread_query <- article_comments(article.id),
-         {:ok, state} <- comments_state(thread, article_id) do
-      user_joined =
-        case state.participants |> Enum.any?(&(&1.id == user.id)) do
-          true ->
-            true
-
-          false ->
-            from(c in Comment)
-            |> CMS.Gate.scope(user, :read, comment_scope(thread))
-            |> where(^thread_query)
-            |> where([c], c.author_id == ^user.id)
-            |> Repo.exists?()
-        end
-
-      state |> Map.merge(%{is_viewer_joined: user_joined}) |> done
+         {:ok, community_slug} <- discussion_community(article, community_slug),
+         %ArticleStats{} = stats <-
+           Repo.get_by(ArticleStats, thread: thread, article_id: article.id),
+         true <- public_parent?(article, community_slug, viewer) do
+      {:ok,
+       %{
+         total_count: stats.comments_count,
+         participants_count: stats.comments_participants_count,
+         participants: CMS.ShadowSync.refresh_article(stats).comments_participants
+       }}
+    else
+      _ -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end
 
@@ -205,19 +168,18 @@ defmodule GroupherServer.CMS.Comments.Query do
     where_query =
       case mode do
         :timeline ->
-          dynamic([comment], not comment.is_folded and not comment.is_pinned)
+          dynamic([comment], not comment.is_pinned)
 
         :replies ->
           dynamic(
             [comment],
-            is_nil(comment.reply_to_comment_id) and not comment.is_folded and
-              not comment.is_pinned
+            is_nil(comment.reply_to_comment_id) and not comment.is_pinned
           )
       end
 
     from(comment in Comment, as: :comment)
     |> preload([:body, :author])
-    |> CMS.Gate.scope(user, :list, comment_scope(thread))
+    |> CMS.Gate.scope(user, :list, comment_scope(thread, community_slug))
     |> where([gate_community: community], community.slug == ^community_slug)
     |> where([comment], comment.article_id == ^article.id)
     |> where(^where_query)
@@ -253,7 +215,7 @@ defmodule GroupherServer.CMS.Comments.Query do
       on: solution.comment_id == comment.id
     )
     |> where(^special_where)
-    |> CMS.Gate.scope(user, :list, comment_scope(thread))
+    |> CMS.Gate.scope(user, :list, comment_scope(thread, community_slug))
     |> where([gate_community: community], community.slug == ^community_slug)
     |> order_by([comment, pin, solution],
       desc: fragment("? IS NOT NULL", solution.id),
@@ -309,7 +271,7 @@ defmodule GroupherServer.CMS.Comments.Query do
           tuple()
   def paged_published_comments(%User{id: user_id}, thread, filter, pagi, actor) do
     with {:ok, :pass} <- Contract.validate_filter(filter),
-         scope <- if(is_nil(thread), do: CommentContext.all_public(), else: comment_scope(thread)),
+         scope <- CommentContext.all_public(),
          order <- comment_order(filter),
          query <-
            Comment
@@ -380,9 +342,11 @@ defmodule GroupherServer.CMS.Comments.Query do
       |> Enum.uniq()
       |> Enum.flat_map(fn thread ->
         scope =
-          if thread == :doc,
-            do: DocContext.public_main(),
-            else: ArticleContext.public(thread)
+          if thread == :doc do
+            DocContext.public_main()
+          else
+            ArticleContext.public(thread)
+          end
 
         Article
         |> CMS.Gate.scope(actor, :list, scope)
@@ -444,90 +408,32 @@ defmodule GroupherServer.CMS.Comments.Query do
     end
   end
 
-  @doc """
-  Pages folded comments without inserting pins or solutions into the sequence.
-
-  ## Examples
-
-      Query.paged_folded_comments(:post, article_id, %{sort: :desc_inserted}, nil, viewer)
-      #=> {:ok, %Page{entries: [%Comment{}]}}
-  """
-  def paged_folded_comments(thread, article_id, filter, pagi, viewer \\ nil) do
-    with {:ok, :pass} <- Contract.validate_filter(filter),
-         {:ok, article} <- stable_article(thread, article_id),
-         order <- comment_order(filter),
-         query <-
-           Comment
-           |> CMS.Gate.scope(viewer, :list, comment_scope(thread))
-           |> where(
-             [comment],
-             comment.article_id == ^article.id and comment.is_folded and not comment.is_pinned
-           )
-           |> preload([:body, :author]),
-         {:ok, page} <-
-           ORM.pagi(query, pagi,
-             for: Comment,
-             order: order,
-             surface: "comments.folded",
-             query_fingerprint:
-               comment_fingerprint(
-                 article.id,
-                 thread,
-                 filter,
-                 {:folded, viewer && viewer.id},
-                 order
-               )
-           ),
-         {:ok, entries} <- PageProjection.many(page.entries, article, viewer, false) do
-      {:ok, %{page | entries: entries}}
-    end
-  end
-
-  @doc """
-  Pages distinct visible Comment authors; cursor reads do not execute a count.
-
-  Offset reads may enqueue best-effort reconciliation when the stored participant
-  count differs from the query result. Cursor reads never request a total count.
-
-  ## Examples
-
-      Query.paged_comments_participants(:post, article_id, nil)
-      #=> {:ok, %Page{entries: [%User{}]}}
-  """
-  @spec paged_comments_participants(T.thread(), T.id(), Params.t() | nil) :: tuple()
-  def paged_comments_participants(thread, article_id, pagi) do
+  @doc "Pages complete effective author relationships, ordered by stable User id descending."
+  def paged_comments_participants(thread, article_id, pagi, community_slug) do
     with {:ok, article} <- stable_article(thread, article_id),
+         {:ok, community_slug} <- discussion_community(article, community_slug),
+         true <- public_parent?(article, community_slug, nil),
          {:ok, page} <-
-           ORM.pagi(participants_query(thread, article.id), pagi,
+           ORM.pagi(participants_query(thread, article.id, community_slug), pagi,
              for: User,
              order: %Order{fields: [:id], directions: [:desc], cursor_fields: [:id]},
              surface: "comments.participants",
-             query_fingerprint: :erlang.term_to_binary({article.id, thread}) |> Base.encode64()
+             query_fingerprint:
+               :erlang.term_to_binary({article.id, thread, community_slug}) |> Base.encode64()
            ) do
-      reconcile_participants_count(page, article)
       {:ok, page}
+    else
+      false -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
+      {:error, _} = error -> error
     end
   end
 
-  defp reconcile_participants_count(%Page.Offset{total_count: count}, article) do
-    stats = Repo.get_by(ArticleStats, thread: article.thread, article_id: article.id)
-
-    if stats_value(stats, :comments_participants_count) != count do
-      Jobs.enqueue_best_effort(:reconcile_comments_participants, article.id, fn ->
-        Jobs.reconcile_comments_participants(article.thread, article.id, count)
-      end)
-    end
-
-    {:ok, :pass}
-  end
-
-  defp reconcile_participants_count(%Page.Cursor{}, _article), do: {:ok, :pass}
-
-  defp participants_query(thread, article_id) do
+  defp participants_query(thread, article_id, community_slug) do
     authors =
       Comment
       |> where([comment], comment.article_id == ^article_id)
-      |> CMS.Gate.scope(nil, :list, comment_scope(thread))
+      |> CMS.Gate.scope(nil, :list, comment_scope(thread, community_slug))
+      |> where([gate_comment_lifecycle: lifecycle], lifecycle.state == :visible)
       |> select([comment], comment.author_id)
       |> distinct(true)
 
@@ -550,8 +456,30 @@ defmodule GroupherServer.CMS.Comments.Query do
     }
   end
 
-  defp comment_scope(:doc), do: CommentContext.for_thread(:doc, branch_policy: :main)
-  defp comment_scope(thread), do: CommentContext.for_thread(thread)
+  defp comment_scope(thread, community_slug) do
+    CMS.Comments.RequestCommunity.scope_context(thread, community_slug)
+  end
+
+  defp discussion_community(_article, slug) when is_binary(slug), do: {:ok, slug}
+
+  defp discussion_community(_article, _slug) do
+    {:error, CMS.Gate.ErrorCat.scope_context_missing()}
+  end
+
+  defp public_parent?(article, community_slug, viewer) do
+    context =
+      if article.thread == :doc do
+        DocContext.public_main()
+      else
+        ArticleContext.public(article.thread)
+      end
+
+    Article
+    |> CMS.Gate.scope(viewer, :read, context)
+    |> where([parent], parent.id == ^article.id)
+    |> where([gate_community: community], community.slug == ^community_slug)
+    |> Repo.exists?()
+  end
 
   defp stable_article(thread, article_id) do
     case FrontDesk.article(article_id, mode: :internal) do
@@ -559,11 +487,6 @@ defmodule GroupherServer.CMS.Comments.Query do
       _ -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
     end
   end
-
-  defp article_comments(article_id), do: dynamic([comment], comment.article_id == ^article_id)
-
-  defp stats_value(nil, _field), do: 0
-  defp stats_value(stats, field), do: Map.fetch!(stats, field)
 
   @doc """
   Preloads the author of the parent Comment referenced by a reply.

@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Comment do
   @enforce_keys [
     :comment,
     :comment_lifecycle,
+    :public_readable?,
     :article,
     :article_lifecycle,
     :community,
@@ -25,6 +26,7 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Comment do
   defstruct [
     :comment,
     :comment_lifecycle,
+    :public_readable?,
     :article,
     :article_lifecycle,
     :comment_author_user_id,
@@ -38,6 +40,7 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Comment do
   @type t :: %__MODULE__{
           comment: struct(),
           comment_lifecycle: struct(),
+          public_readable?: boolean(),
           article: struct(),
           article_lifecycle: struct(),
           comment_author_user_id: integer() | nil,

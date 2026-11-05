@@ -410,13 +410,6 @@ defmodule GroupherServer.CMS do
   @spec emotion_counts(map() | nil, :article | :comment | nil) :: [map()]
   defdelegate emotion_counts(emotions, kind), to: EmotionFormatter, as: :counts
 
-  @doc "Rebuilds the stored comment-participant count for one Article."
-  @spec reconcile_comments_participants(atom(), Ecto.UUID.t(), non_neg_integer()) ::
-          {:ok, term()} | {:error, term()}
-  defdelegate reconcile_comments_participants(thread, article_id, total_count),
-    to: Comments,
-    as: :reconcile_participants_count
-
   @doc "Returns the CMS Article type used by the Analysis projection."
   @spec article_insights_type(map()) :: {:ok, atom()} | {:error, term()}
   defdelegate article_insights_type(article), to: Insights, as: :article_type
@@ -1122,15 +1115,15 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments,
     as: :accept_solution
 
-  @doc "Delegates GroupherServer.CMS.Comments.comments_state/2 through the CMS Context boundary."
-  defdelegate comments_comments_state(arg1, arg2),
-    to: GroupherServer.CMS.Comments,
+  @doc "Reads a Comment summary in its requested Community."
+  defdelegate comments_comments_state(thread, article_id, viewer, community_slug),
+    to: Comments,
     as: :comments_state
 
-  @doc "Delegates GroupherServer.CMS.Comments.comments_state/3 through the CMS Context boundary."
-  defdelegate comments_comments_state(arg1, arg2, arg3),
-    to: GroupherServer.CMS.Comments,
-    as: :comments_state
+  @doc "Pages the full effective participant relation."
+  defdelegate comments_paged_comments_participants(thread, article_id, pagi, community_slug),
+    to: Comments,
+    as: :paged_comments_participants
 
   @doc "Delegates GroupherServer.CMS.Comments.create_comment_result/4 through the CMS Context boundary."
   defdelegate comments_create_comment_result(arg1, arg2, arg3, arg4),
@@ -1161,11 +1154,6 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates GroupherServer.CMS.Comments.one_comment/2 through the CMS Context boundary."
   defdelegate comments_one_comment(arg1, arg2), to: GroupherServer.CMS.Comments, as: :one_comment
-
-  @doc "Delegates GroupherServer.CMS.Comments.paged_comments_participants/3 through the CMS Context boundary."
-  defdelegate comments_paged_comments_participants(arg1, arg2, arg3),
-    to: GroupherServer.CMS.Comments,
-    as: :paged_comments_participants
 
   @doc "Delegates a root's independently paged reply collection through the CMS boundary."
   defdelegate comments_reply_page(comment, community, filter, pagi, user),
@@ -2359,26 +2347,37 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Gate.Context.Scope.Article,
     as: :public
 
-  @doc """
-  Builds the public Comment read context through the CMS boundary.
+  @doc "Delegates opaque user snapshot membership references through the CMS boundary."
+  defdelegate snapshot_member_ref_encode(member),
+    to: GroupherServer.CMS.Snapshot.MemberRef,
+    as: :encode
 
-  ## Examples
+  @doc "Attests an explicitly named empty shared-comments database."
+  defdelegate comments_schema_generation_bootstrap!(repo, database, generation, source, build),
+    to: GroupherServer.CMS.Comments.SchemaGeneration,
+    as: :bootstrap!
 
-      gate_context_scope_comment_for_thread(:post)
-      #=> %CMS.Gate.Context.Scope.Comment{thread: :post, policy_mode: :public}
-  """
-  defdelegate gate_context_scope_comment_for_thread(thread),
+  @doc "Reads the deployment manifest coordinates for shared-comments admission."
+  defdelegate comments_schema_generation_environment(),
+    to: GroupherServer.CMS.Comments.SchemaGeneration,
+    as: :environment
+
+  @doc "Verifies shared-comments provenance before migration DDL."
+  defdelegate comments_schema_generation_verify_before_migration!(repo, opts),
+    to: GroupherServer.CMS.Comments.SchemaGeneration,
+    as: :verify_before_migration!
+
+  @doc "Marks the verified fresh shared-comments schema ready."
+  defdelegate comments_schema_generation_mark_ready!(repo, opts),
+    to: GroupherServer.CMS.Comments.SchemaGeneration,
+    as: :mark_ready!
+
+  @doc "Builds the explicit all-thread public Comment eligibility context for background delivery."
+  defdelegate gate_context_scope_comment_all_public(),
     to: GroupherServer.CMS.Gate.Context.Scope.Comment,
-    as: :for_thread
+    as: :all_public
 
-  @doc """
-  Builds a branch-aware Comment read context through the CMS boundary.
-
-  ## Examples
-
-      gate_context_scope_comment_for_thread(:doc, branch_policy: :main)
-      #=> %CMS.Gate.Context.Scope.Comment{thread: :doc, branch_policy: :main}
-  """
+  @doc "Builds an explicitly Community-scoped Comment context through the CMS boundary."
   defdelegate gate_context_scope_comment_for_thread(thread, opts),
     to: GroupherServer.CMS.Gate.Context.Scope.Comment,
     as: :for_thread

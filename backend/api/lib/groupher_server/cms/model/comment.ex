@@ -29,7 +29,6 @@ defmodule GroupherServer.CMS.Model.Comment do
     CommentBody,
     CommentLifecycle,
     CommentUpvote,
-    DocBranch,
     Embeds
   }
 
@@ -40,21 +39,19 @@ defmodule GroupherServer.CMS.Model.Comment do
 
   # alias Helper.HTML
   @required_fields ~w(author_id)a
-  @optional_fields ~w(reply_to_comment_id root_comment_id replies_count is_folded inner_id floor is_article_author thread is_for_question)a
+  @optional_fields ~w(reply_to_comment_id root_comment_id is_folded inner_id floor is_article_author thread is_for_question)a
   @updatable_fields ~w(
     is_folded
     floor
     is_pinned
     is_for_question
-    replies_count
     inserted_at
     updated_at
     is_article_author
     root_comment_id
   )a
 
-  @max_participator_count 5
-  @max_parent_replies_count 3
+  @reply_preview_limit 3
 
   @max_latest_emotion_users_count 5
 
@@ -70,10 +67,8 @@ defmodule GroupherServer.CMS.Model.Comment do
   # 每篇文章最多含有置顶评论的条数
   @pinned_comment_limit 10
 
-  @doc "latest participants stores in article comment_participants field"
-  def max_participator_count, do: @max_participator_count
-  @doc "latest replies stores in comment replies field, used for frontend display"
-  def max_parent_replies_count, do: @max_parent_replies_count
+  @doc "Returns the bounded initial reply preview size; full replies are paginated."
+  def reply_preview_limit, do: @reply_preview_limit
 
   @doc "操作某 emotion 的最近用户"
   def max_latest_emotion_users_count, do: @max_latest_emotion_users_count
@@ -88,7 +83,6 @@ defmodule GroupherServer.CMS.Model.Comment do
     belongs_to(:author, User, foreign_key: :author_id)
     has_one(:lifecycle, CommentLifecycle)
     belongs_to(:article, Article, type: Ecto.UUID)
-    belongs_to(:branch, DocBranch)
 
     field(:thread, Ecto.Enum, values: Threads.article_enums())
     has_one(:body, CommentBody)
@@ -116,8 +110,12 @@ defmodule GroupherServer.CMS.Model.Comment do
     belongs_to(:reply_to_comment, Comment, foreign_key: :reply_to_comment_id)
     field(:root_comment_id, :integer, default: nil)
 
-    embeds_many(:replies, Comment, on_replace: :delete)
+    field(:replies, {:array, :map}, default: [], virtual: true)
     field(:replies_count, :integer, default: 0)
+    field(:reply_entries_count, :integer, default: 0)
+    embeds_many(:reply_participants, Embeds.User, on_replace: :delete)
+    field(:last_reply_at, :utc_datetime)
+    field(:replies_revision, :integer, default: 1)
 
     embeds_one(:emotions, Embeds.CommentEmotion, on_replace: :update)
     embeds_one(:meta, Embeds.CommentMeta, on_replace: :update)
@@ -133,7 +131,7 @@ defmodule GroupherServer.CMS.Model.Comment do
     comment
     |> cast(
       attrs,
-      [:article_id, :branch_id] ++ @required_fields ++ @optional_fields
+      [:article_id] ++ @required_fields ++ @optional_fields
     )
     |> cast_embed(:emotions, required: true, with: &Embeds.CommentEmotion.changeset/2)
     |> cast_embed(:meta, required: true, with: &Embeds.CommentMeta.changeset/2)
@@ -153,6 +151,5 @@ defmodule GroupherServer.CMS.Model.Comment do
     content
     |> foreign_key_constraint(:author_id)
     |> foreign_key_constraint(:article_id)
-    |> foreign_key_constraint(:branch_id)
   end
 end

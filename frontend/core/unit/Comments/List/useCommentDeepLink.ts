@@ -33,7 +33,13 @@ export default function useCommentDeepLink(entries: readonly TComment[]): TComme
   }, [])
 
   const targetQuery = useQuery({
-    queryKey: ['comment-deep-link', article.community, article.thread, article.innerId, target],
+    queryKey: [
+      'comment-deep-link-shared-v1',
+      article.community,
+      article.thread,
+      article.innerId,
+      target,
+    ],
     enabled: Boolean(target && article.innerId && !inPage),
     queryFn: async () => {
       const result = await browserGraphQLRequest(S.oneComment, {

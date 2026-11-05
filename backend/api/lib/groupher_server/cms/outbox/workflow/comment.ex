@@ -52,7 +52,8 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
     case event.event do
       "comment.changed" ->
         with {:ok, _} <- purge_comment_cache(event),
-             {:ok, _} <- purge_ticket_cache(event.data) do
+             {:ok, _} <- purge_ticket_cache(event.data),
+             {:ok, _} <- sync_summary_metrics(event) do
           {:ok, :purged}
         end
 
@@ -119,6 +120,15 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
       {:ok, result}
     end
   end
+
+  defp sync_summary_metrics(%{data: %{"count_changed" => true}, resource_id: id}) do
+    case Repo.get(Article, id) do
+      %Article{} = article -> normalize(Indexer.enqueue_metrics(article))
+      nil -> {:ok, :owner_deleted}
+    end
+  end
+
+  defp sync_summary_metrics(_event), do: {:ok, :pass}
 
   defp purge_ticket_cache(%{"thread" => "post", "article_id" => article_id}) do
     GroupherServer.CMS.Tickets.Cache.purge_post(article_id)

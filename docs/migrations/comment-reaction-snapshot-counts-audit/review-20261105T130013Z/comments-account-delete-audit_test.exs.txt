@@ -1,0 +1,31 @@
+defmodule CommentsAccountDeleteAuditTest do
+  use GroupherServer.TestMate, async: false
+  alias CMS.Model.{ArticleStats, Comment}
+
+  test "records the real physical-account deletion boundary without changing the deletion policy" do
+    {community, article, _, _author} = mock_article(:post)
+    {:ok, commenter} = db_insert(:user)
+    {:ok, comment} = CMS.Comments.create_comment(community, :post, article.inner_id,
+      mock_comment(), commenter, Ecto.UUID.generate())
+    before = Repo.get_by!(ArticleStats, article_id: article.article_id)
+    deletion = try do
+      Repo.transaction(fn -> Repo.delete!(commenter) end)
+      |> case do
+        {:ok, _} -> %{status: "deleted"}
+        {:error, reason} -> %{status: "rejected", reason: inspect(reason)}
+      end
+    rescue
+      error in [Postgrex.Error, Ecto.ConstraintError] ->
+        %{status: "blocked", reason: Exception.message(error)}
+    end
+    after_stats = Repo.get_by!(ArticleStats, article_id: article.article_id)
+    report = %{deletion: deletion,
+      comment_survives: not is_nil(Repo.get(Comment, comment.id)),
+      user_survives: not is_nil(Repo.get(GroupherServer.Accounts.Model.User, commenter.id)),
+      count_before: before.comments_count, count_after: after_stats.comments_count,
+      participants_before: before.comments_participants_count,
+      participants_after: after_stats.comments_participants_count}
+    File.write!("/tmp/comments-account-delete-audit.json", Jason.encode!(report, pretty: true))
+    assert report.deletion.status in ["deleted", "blocked", "rejected"]
+  end
+end

@@ -55,3 +55,46 @@ describe('revision guards', () => {
     })
   })
 })
+
+it('REV-02 preserves a newer root summary while refreshing profile leaves at the same revision', () => {
+  const current: TComment = {
+    innerId: '1',
+    body: {},
+    repliesRevision: 5,
+    repliesCount: 2,
+    hasReplyEntries: true,
+    lastReplyAt: '2026-11-05T10:00:00Z',
+    replyParticipants: [{ ref: 'stable-user', login: 'old-login', avatar: 'old' }],
+  }
+  const stale = { ...current, repliesRevision: 4, repliesCount: 1, replyParticipants: [] }
+  expect(preserveCommentProjection(current, stale)).toMatchObject({
+    repliesCount: 2,
+    repliesRevision: 5,
+    replyParticipants: current.replyParticipants,
+  })
+  const refreshed = {
+    ...current,
+    replyParticipants: [{ ref: 'stable-user', login: 'new-login', avatar: 'new' }],
+  }
+  expect(preserveCommentProjection(current, refreshed)).toMatchObject({
+    replyParticipants: refreshed.replyParticipants,
+    repliesRevision: 5,
+  })
+})
+
+it('REV-02 rejects equal-version summary membership changes', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const current: TComment = {
+    innerId: '1',
+    body: {},
+    repliesRevision: 5,
+    repliesCount: 1,
+    hasReplyEntries: true,
+    replyParticipants: [{ ref: 'one', login: 'alice' }],
+  }
+  const invalid = { ...current, replyParticipants: [{ ref: 'two', login: 'bob' }] }
+  expect(preserveCommentProjection(current, invalid)).toMatchObject({
+    replyParticipants: current.replyParticipants,
+  })
+  expect(warn).toHaveBeenCalled()
+})

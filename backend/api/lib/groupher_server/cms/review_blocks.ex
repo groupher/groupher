@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
 
   alias CMS.Model.{
     Article,
@@ -30,8 +30,12 @@ defmodule GroupherServer.CMS.ReviewBlocks do
 
   @public_states [:published, :archived]
 
-  @doc "Adds one direct resource restriction inside the locked CMS resource transaction."
-  def apply(lifecycle, attrs) when is_map(attrs) do
+  @doc "Adds a restriction and its effective Comment summary delta in one transaction."
+  def apply(lifecycle, attrs) do
+    CMS.Comments.Summary.for_lifecycle(lifecycle, fn -> apply_fact(lifecycle, attrs) end)
+  end
+
+  defp apply_fact(lifecycle, attrs) when is_map(attrs) do
     with {:ok, :pass} <- require_transaction(),
          {:ok, schema, target_attrs} <- restriction_target(lifecycle, attrs),
          {:ok, :pass} <- validate_scope(lifecycle, target_attrs),
@@ -50,12 +54,18 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     end
   end
 
-  def apply(_lifecycle, _attrs), do: {:error, CMS.ErrorCat.invalid_review_block()}
+  defp apply_fact(_lifecycle, _attrs), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
-  @doc "Resolves selected restrictions within the locked resource and scope."
-  def end_blocks(lifecycle, scope_key, ids, operation_ref, resolution)
-      when is_binary(scope_key) and is_list(ids) and is_binary(operation_ref) and
-             is_binary(resolution) and resolution != "" do
+  @doc "Resolves restrictions and their effective Comment summary delta in one transaction."
+  def end_blocks(lifecycle, scope_key, ids, operation_ref, resolution) do
+    CMS.Comments.Summary.for_lifecycle(lifecycle, fn ->
+      end_block_facts(lifecycle, scope_key, ids, operation_ref, resolution)
+    end)
+  end
+
+  defp end_block_facts(lifecycle, scope_key, ids, operation_ref, resolution)
+       when is_binary(scope_key) and is_list(ids) and is_binary(operation_ref) and
+              is_binary(resolution) and resolution != "" do
     with {:ok, :pass} <- require_transaction(),
          {:ok, schema, target_attrs} <- restriction_target(lifecycle, %{scope_key: scope_key}),
          {:ok, restrictions} <- load_active(schema, target_attrs, ids),
@@ -67,19 +77,21 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     end
   end
 
-  def end_blocks(_lifecycle, _scope_key, _ids, _operation_ref, _resolution) do
+  defp end_block_facts(_lifecycle, _scope_key, _ids, _operation_ref, _resolution) do
     {:error, CMS.ErrorCat.invalid_review_block()}
   end
 
-  defp bump_graph(%ArticleLifecycle{article_id: article_id}),
-    do: GraphRevision.bump_for_article(article_id)
+  defp bump_graph(%ArticleLifecycle{}) do
+    Revision.bump()
+  end
 
-  defp bump_graph(%DocLifecycle{article_id: article_id}),
-    do: GraphRevision.bump_for_article(article_id)
+  defp bump_graph(%DocLifecycle{}) do
+    Revision.bump()
+  end
 
   defp bump_graph(%CommentLifecycle{comment_id: comment_id}) do
     case Repo.get(Comment, comment_id) do
-      %Comment{} = comment -> GraphRevision.bump_for_comment(comment)
+      %Comment{} -> Revision.bump()
       nil -> {:ok, :pass}
     end
   end
@@ -167,8 +179,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   def recompute(%CommentLifecycle{comment_id: comment_id}) do
     with true <- Repo.in_transaction?(),
          %Comment{article_id: article_id} <- Repo.get(Comment, comment_id),
-         %Article{} = article <- Repo.get(Article, article_id),
-         {:ok, :pass} <- CMS.ArticleStats.record_comment_change(article) do
+         %Article{} <- Repo.get(Article, article_id) do
       {:ok, :pass}
     else
       false -> {:error, CMS.ErrorCat.review_transition_requires_transaction()}
@@ -265,13 +276,11 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   defp validate_scope(%CommentLifecycle{comment_id: comment_id}, %{community_id: community_id}) do
     if Repo.exists?(
          from(comment in Comment,
-           join: branch in DocBranch,
-           on: branch.id == comment.branch_id,
-           join: lifecycle in DocLifecycle,
-           on: lifecycle.article_id == comment.article_id and lifecycle.branch_id == branch.id,
+           join: binding in ArticleBinding,
+           on: binding.article_id == comment.article_id,
            where:
              comment.id == ^comment_id and comment.thread == :doc and
-               branch.community_id == ^community_id
+               binding.community_id == ^community_id
          )
        ) do
       {:ok, :pass}
@@ -466,9 +475,11 @@ defmodule GroupherServer.CMS.ReviewBlocks do
       query = from(binding in ArticleBinding, where: binding.article_id == ^article_id)
 
       query =
-        if is_nil(community_id),
-          do: query,
-          else: where(query, [binding], binding.community_id == ^community_id)
+        if is_nil(community_id) do
+          query
+        else
+          where(query, [binding], binding.community_id == ^community_id)
+        end
 
       query
       |> Repo.all()

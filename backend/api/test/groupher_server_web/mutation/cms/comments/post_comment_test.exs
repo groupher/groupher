@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert result["comment"]["body"]["html"] |> String.contains?(~s(<p))
       assert result["comment"]["body"]["html"] |> String.contains?(~s(comment))
       assert result["articleStats"]["innerId"] == to_string(article_inner_id(post, community))
-      assert result["articleStats"]["commentsRevision"] == 1
+      assert result["articleStats"]["commentsRevision"] == 2
     end
 
     test "login user can reply to a comment", ~m(community post user user_conn)a do
@@ -54,7 +54,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert result["comment"]["body"]["html"] |> String.contains?(~s(<p))
       assert result["comment"]["body"]["html"] |> String.contains?(~s(reply comment))
-      assert result["articleStats"]["commentsRevision"] == 2
+      assert result["articleStats"]["commentsRevision"] == 3
     end
 
     test "create retries with one command id return the same comment",
@@ -77,7 +77,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert replay["articleStats"]["commentsRevision"] ==
                first["articleStats"]["commentsRevision"]
 
-      assert replay["articleStats"]["commentsRevision"] == 1
+      assert replay["articleStats"]["commentsRevision"] == 2
     end
 
     test "reply retries with one command id return the same comment",
@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert replay["articleStats"]["commentsRevision"] ==
                first["articleStats"]["commentsRevision"]
 
-      assert replay["articleStats"]["commentsRevision"] == 2
+      assert replay["articleStats"]["commentsRevision"] == 3
     end
 
     test "only owner can update a exist comment",
@@ -242,8 +242,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert first["commandId"] == variables.commandId
       assert replay["commandId"] == variables.commandId
       assert replay["comment"]["innerId"] == first["comment"]["innerId"]
-      assert first["articleStats"]["commentsRevision"] == 2
-      assert replay["articleStats"]["commentsRevision"] == 2
+      assert first["articleStats"]["commentsRevision"] == 3
+      assert replay["articleStats"]["commentsRevision"] == 3
 
       assert replay["articleStats"]["commentsRevision"] ==
                first["articleStats"]["commentsRevision"]

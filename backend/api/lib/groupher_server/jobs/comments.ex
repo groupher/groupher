@@ -38,18 +38,4 @@ defmodule GroupherServer.Jobs.Comments do
       when type in @event_types do
     CMS.comments_deliver_effect(String.to_existing_atom(type), payload)
   end
-
-  def perform(%Oban.Job{
-        args: %{
-          "type" => "reconcile_comments_participants",
-          "version" => 1,
-          "payload" => payload
-        }
-      }) do
-    CMS.reconcile_comments_participants(
-      String.to_existing_atom(payload["thread"]),
-      payload["article_id"],
-      payload["total_count"]
-    )
-  end
 end

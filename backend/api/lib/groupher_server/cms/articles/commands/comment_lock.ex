@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
     case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{thread: :doc} = article} ->
         with {:ok, community} <- resolve_community(opts, article) do
-          branch_id = Keyword.get(opts, :branch_id) || main_branch_id(community.id)
+          branch_id = main_branch_id(community.id)
 
           with {:ok, canonical} <-
                  CMS.Gate.check_in_transaction(

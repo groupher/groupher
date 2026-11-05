@@ -1,0 +1,2 @@
+$ pnpm run generate:routes && pnpm exec tsc --noEmit --project ./tsconfig.json
+$ node ./scripts/generate-route-tree.mjs

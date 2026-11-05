@@ -65,16 +65,8 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
     execute_pipeline(content, mentions, from_user)
   end
 
-  defp ensure_public_content(%Comment{id: id, thread: :doc}) do
-    require_public_read(
-      Comment,
-      id,
-      CMS.gate_context_scope_comment_for_thread(:doc, branch_policy: :main)
-    )
-  end
-
-  defp ensure_public_content(%Comment{id: id, thread: thread}) do
-    require_public_read(Comment, id, CMS.gate_context_scope_comment_for_thread(thread))
+  defp ensure_public_content(%Comment{id: id}) do
+    require_public_read(Comment, id, CMS.gate_context_scope_comment_all_public())
   end
 
   defp ensure_public_content(%{comment_id: id, thread: :doc}) when is_integer(id) do

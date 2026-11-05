@@ -1,0 +1,843 @@
+defmodule GroupherServer.Test.CMS.MentionsMapQueryTest do
+  @moduledoc "Exercises the new public MentionsMap query boundary."
+
+  use GroupherServer.TestMate, async: false
+
+  import Ecto.Query
+
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.ArtimentMentions.{Commands.CaptureCurrentVersion, Model}
+  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
+  alias Model.{CurrentEdge, Endpoint, ProjectionState}
+  alias CMS.Model.{ArticleLifecycle, ArticlePublic}
+  alias GroupherServer.Pagi.Params
+
+  @tag :stable_doc_identity
+  test "Doc graph, one-hop list and Comment seeds share stable endpoints" do
+    {community, doc, _attrs, user} = mock_article(:doc)
+    {_, target, _, _} = mock_article(:blog, community, user)
+    endpoint = Repo.get_by!(Endpoint, type: :doc, article_id: doc.article_id)
+
+    public =
+      Repo.get_by!(CMS.Model.DocPublic, article_id: doc.article_id, branch_id: doc.branch_id)
+
+    token = "#{doc.branch_id}:#{public.branch_version_id}:#{public.publication_version + 1}"
+
+    public
+    |> Ecto.Changeset.change(publication_version: public.publication_version + 1)
+    |> Repo.update!()
+
+    ast = [
+      %{
+        "type" => "mention",
+        "key" => "blog:#{target.article_id}",
+        "children" => [%{"text" => "target"}]
+      }
+    ]
+
+    assert {:ok, {:ok, captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :doc, article_id: doc.article_id},
+                 token,
+                 ast,
+                 community.id,
+                 public.updated_at,
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    assert captured.source_endpoint_id == endpoint.id
+    focus = %{type: :doc, article_inner_id: article_inner_id(doc, community)}
+    assert {:ok, page} = CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+    assert length(page.edges) == 1
+    assert Enum.any?(page.nodes, &(&1.type == :doc and &1.sync_state == :ready))
+
+    assert {:ok, list} =
+             CMS.mentions_map_list(
+               community.slug,
+               :outgoing,
+               %{type: :doc, locator: focus},
+               %Params.Cursor{first: 20}
+             )
+
+    assert [%{source: %{type: :doc}, target: %{type: :blog}}] = list.entries
+
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               community,
+               :doc,
+               focus.article_inner_id,
+               mock_comment("Doc seed"),
+               user,
+               Ecto.UUID.generate()
+             )
+
+    comment_endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
+    assert comment_endpoint.parent_endpoint_id == endpoint.id
+    assert {:ok, seeds} = CMS.mentions_map_article_comments(community.slug, focus, nil, 20)
+    assert [%{comment_inner_id: inner_id}] = seeds.comments
+    assert inner_id == comment.inner_id
+
+    assert {:ok, again} = CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+
+    assert Enum.find(again.nodes, &(&1.type == :doc)).id ==
+             Enum.find(page.nodes, &(&1.type == :doc)).id
+  end
+
+  test "a readable source with no projected set is pending and cannot expand" do
+    {community, article, _attrs, _user} = mock_article(:post)
+
+    assert %Endpoint{} = Repo.get_by(Endpoint, type: :post, article_id: article.article_id)
+
+    focus = %{type: :post, article_inner_id: article_inner_id(article, community)}
+
+    assert {:ok, page} =
+             CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+
+    assert page.projection_pending
+
+    assert [%{status: :readable, sync_state: :pending, can_open: true, can_expand: false}] =
+             page.nodes
+
+    assert [%{state: :pending, has_next_page: false, edge_ids: []}] = page.neighborhoods
+  end
+
+  test "an unreadable requested frontier does not emit a null non-null node ID" do
+    {community, article, _attrs, _user} = mock_article(:post)
+    focus = %{type: :post, article_inner_id: article_inner_id(article, community)}
+    missing = %{type: :post, article_inner_id: to_string(System.unique_integer([:positive]))}
+
+    assert {:ok, page} =
+             CMS.mentions_map_page(community.slug, focus, [%{node: focus}, %{node: missing}], 20)
+
+    assert Enum.all?(page.nodes, &is_binary(&1.id))
+    assert Enum.any?(page.neighborhoods, &(&1.state == :unavailable and is_nil(&1.node_id)))
+  end
+
+  test "the Article Comment seed page includes pending public Comment sources" do
+    {community, article, _attrs, user} = mock_article(:post)
+
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               article_inner_id(article, community),
+               mock_comment("Comment awaiting projection"),
+               user,
+               Ecto.UUID.generate()
+             )
+
+    focus = %{type: :post, article_inner_id: article_inner_id(article, community)}
+
+    assert {:ok, page} =
+             CMS.mentions_map_article_comments(community.slug, focus, nil, 20)
+
+    assert page.projection_pending
+
+    assert [
+             %{
+               type: :comment,
+               article_inner_id: parent_inner_id,
+               comment_inner_id: comment_inner_id
+             }
+           ] = page.comments
+
+    assert parent_inner_id == focus.article_inner_id
+    assert comment_inner_id == comment.inner_id
+    refute page.has_next_page
+  end
+
+  test "an initialized internal edge is returned with its readable target" do
+    {community, source, _attrs, user} = mock_article(:post)
+    {_same_community, target, _target_attrs, _target_user} = mock_article(:blog, community, user)
+
+    ast = [
+      %{
+        "type" => "mention",
+        "key" => "blog:#{target.article_id}",
+        "value" => "Mentioned target",
+        "children" => [%{"text" => "linked target"}]
+      }
+    ]
+
+    assert {:ok, {:ok, _captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: source.article_id},
+                 next_canonical_token(source),
+                 ast,
+                 community.id,
+                 DateTime.utc_now() |> DateTime.truncate(:second),
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
+
+    assert {:ok, page} =
+             CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+
+    assert length(page.nodes) == 2
+    assert length(page.edges) == 1
+    assert [%{state: :available, has_next_page: false, edge_ids: [_]}] = page.neighborhoods
+  end
+
+  test "one-hop lists use MentionsMap entries for outgoing and incoming edges" do
+    {community, source, _attrs, user} = mock_article(:post)
+    {_same_community, target, _target_attrs, _target_user} = mock_article(:blog, community, user)
+
+    ast = [
+      %{
+        "type" => "mention",
+        "key" => "blog:#{target.article_id}",
+        "value" => "Mentioned target",
+        "children" => [%{"text" => "linked target"}]
+      }
+    ]
+
+    assert {:ok, {:ok, _captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: source.article_id},
+                 next_canonical_token(source),
+                 ast,
+                 community.id,
+                 DateTime.utc_now() |> DateTime.truncate(:second),
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    source_locator = %{type: :post, article_inner_id: article_inner_id(source, community)}
+    target_locator = %{type: :blog, article_inner_id: article_inner_id(target, community)}
+
+    assert {:ok, outgoing} =
+             CMS.mentions_map_list(
+               community.slug,
+               :outgoing,
+               %{type: :post, locator: source_locator},
+               %Params.Cursor{first: 1, after: nil}
+             )
+
+    assert [
+             %{
+               source: %{type: :post, status: :readable},
+               target: %{type: :blog, status: :readable}
+             }
+           ] =
+             outgoing.entries
+
+    assert outgoing.page_info.has_next_page == false
+    assert is_boolean(outgoing.projection_pending)
+
+    assert {:ok, incoming} =
+             CMS.mentions_map_list(
+               community.slug,
+               :incoming,
+               %{type: :blog, locator: target_locator},
+               %Params.Cursor{first: 1, after: nil}
+             )
+
+    assert [
+             %{
+               source: %{type: :post, status: :readable},
+               target: %{type: :blog, status: :readable}
+             }
+           ] =
+             incoming.entries
+  end
+
+  test "one-hop lists preserve User targets and resolve incoming User mentions" do
+    {community, source, _attrs, user} = mock_article(:post)
+    token = next_canonical_token(source)
+
+    ast = [
+      %{
+        "type" => "mention",
+        "key" => "user:#{user.login}",
+        "value" => user.login,
+        "children" => [%{"text" => user.login}]
+      }
+    ]
+
+    assert {:ok, {:ok, _captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: source.article_id},
+                 token,
+                 ast,
+                 community.id,
+                 DateTime.utc_now() |> DateTime.truncate(:second),
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    source_locator = %{type: :post, article_inner_id: article_inner_id(source, community)}
+
+    assert {:ok, outgoing} =
+             CMS.mentions_map_list(
+               community.slug,
+               :outgoing,
+               %{type: :post, locator: source_locator},
+               %Params.Cursor{first: 20, after: nil}
+             )
+
+    assert [
+             %{
+               target_type: :user,
+               target: %{__typename: :mention_user_target, status: :readable, login: login}
+             }
+           ] = outgoing.entries
+
+    assert login == user.login
+
+    assert {:ok, incoming} =
+             CMS.mentions_map_list(
+               community.slug,
+               :incoming,
+               %{type: :user, user_login: user.login},
+               %Params.Cursor{first: 20, after: nil}
+             )
+
+    assert [%{source: %{type: :post, status: :readable}, target_type: :user}] =
+             incoming.entries
+  end
+
+  test "one-hop cursor pages reject cursors after the global revision changes" do
+    {community, source, _attrs, user} = mock_article(:post)
+
+    targets =
+      for _ <- 1..2 do
+        {_community, target, _attrs, _user} = mock_article(:blog, community, user)
+        target
+      end
+
+    ast =
+      Enum.map(targets, fn target ->
+        %{
+          "type" => "mention",
+          "key" => "blog:#{target.article_id}",
+          "value" => "Mentioned target",
+          "children" => [%{"text" => "linked target"}]
+        }
+      end)
+
+    assert {:ok, {:ok, _captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: source.article_id},
+                 next_canonical_token(source),
+                 ast,
+                 community.id,
+                 DateTime.utc_now() |> DateTime.truncate(:second),
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    source_locator = %{type: :post, article_inner_id: article_inner_id(source, community)}
+
+    assert {:ok, first_page} =
+             CMS.mentions_map_list(
+               community.slug,
+               :outgoing,
+               %{type: :post, locator: source_locator},
+               %Params.Cursor{first: 1, after: nil}
+             )
+
+    assert first_page.page_info.has_next_page
+    cursor = first_page.page_info.end_cursor
+
+    assert {:ok, {:error, %GroupherServer.ErrorCat.Error{reason: :mentions_map_invalid_cursor}}} =
+             Repo.transaction(fn ->
+               assert {:ok, :pass} = Revision.bump()
+
+               CMS.mentions_map_list(
+                 community.slug,
+                 :outgoing,
+                 %{type: :post, locator: source_locator},
+                 %Params.Cursor{first: 1, after: cursor}
+               )
+             end)
+  end
+
+  test "a hidden target keeps its edge as an unavailable terminal node" do
+    {community, source, _attrs, user} = mock_article(:post)
+
+    {_same_community, target, _target_attrs, _target_user} =
+      mock_article(:blog, community, user)
+
+    ast = [
+      %{
+        "type" => "mention",
+        "key" => "blog:#{target.article_id}",
+        "value" => "Mentioned target",
+        "children" => [%{"text" => "linked target"}]
+      }
+    ]
+
+    assert {:ok, {:ok, _captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: source.article_id},
+                 next_canonical_token(source),
+                 ast,
+                 community.id,
+                 DateTime.utc_now() |> DateTime.truncate(:second),
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    Repo.update_all(
+      from(lifecycle in ArticleLifecycle, where: lifecycle.article_id == ^target.article_id),
+      set: [state: :draft]
+    )
+
+    focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
+
+    assert {:ok, page} =
+             CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+
+    assert length(page.edges) == 1
+    assert length(page.nodes) == 2
+    assert Enum.any?(page.nodes, &(&1.status == :unavailable and is_nil(&1.url)))
+  end
+
+  test "a Comment under a hidden parent keeps its edge without exposing its URL" do
+    {community, source, _attrs, user} = mock_article(:post)
+
+    {_same_community, parent, _parent_attrs, _parent_user} =
+      mock_article(:blog, community, user)
+
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               community,
+               :blog,
+               article_inner_id(parent, community),
+               mock_comment("Comment whose parent becomes hidden"),
+               user,
+               Ecto.UUID.generate()
+             )
+
+    ast = [
+      %{
+        "type" => "mention",
+        "key" => "comment:#{comment.id}",
+        "value" => "Mentioned target",
+        "children" => [%{"text" => "linked comment"}]
+      }
+    ]
+
+    assert {:ok, {:ok, _captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: source.article_id},
+                 next_canonical_token(source),
+                 ast,
+                 community.id,
+                 DateTime.utc_now() |> DateTime.truncate(:second),
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    Repo.update_all(
+      from(lifecycle in ArticleLifecycle, where: lifecycle.article_id == ^parent.article_id),
+      set: [state: :draft]
+    )
+
+    focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
+
+    assert {:ok, page} =
+             CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+
+    assert length(page.edges) == 1
+    assert Enum.any?(page.nodes, &(&1.type == :comment and &1.status == :unavailable))
+    assert Enum.all?(page.nodes, &(is_nil(&1.url) or &1.type != :comment))
+  end
+
+  test "a frontier takes one bounded page and counts SQL across the whole request" do
+    {community, source, _attrs, user} = mock_article(:post)
+
+    targets =
+      for _ <- 1..25 do
+        {_community, target, _target_attrs, _target_user} =
+          mock_article(:blog, community, user)
+
+        target
+      end
+
+    ast =
+      Enum.map(targets, fn target ->
+        %{
+          "type" => "mention",
+          "key" => "blog:#{target.article_id}",
+          "value" => "Mentioned target",
+          "children" => [%{"text" => "linked target"}]
+        }
+      end)
+
+    assert {:ok, {:ok, _captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: source.article_id},
+                 next_canonical_token(source),
+                 ast,
+                 community.id,
+                 DateTime.utc_now() |> DateTime.truncate(:second),
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
+    telemetry_ref = make_ref()
+    telemetry_handler = {__MODULE__, telemetry_ref}
+
+    :ok =
+      :telemetry.attach(
+        telemetry_handler,
+        [:groupher_server, :repo, :query],
+        fn _, _, metadata, {pid, ref} ->
+          if self() == pid, do: send(pid, {ref, metadata.query})
+        end,
+        {self(), telemetry_ref}
+      )
+
+    try do
+      assert {:ok, page} =
+               CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+
+      assert length(page.edges) == 20
+      assert [%{has_next_page: true, edge_ids: edge_ids}] = page.neighborhoods
+      assert length(edge_ids) == 20
+      queries = query_events(telemetry_ref, [])
+      assert length(queries) <= 32
+    after
+      :telemetry.detach(telemetry_handler)
+    end
+  end
+
+  test "ten readable frontiers with hidden targets stay within the shared SQL budget" do
+    {community, focus_article, _attrs, user} = mock_article(:post)
+
+    sources =
+      [
+        focus_article
+        | for _ <- 1..9 do
+            {_community, article, _attrs, _user} = mock_article(:blog, community, user)
+            article
+          end
+      ]
+
+    targets =
+      for _ <- sources do
+        {_community, target, _attrs, _user} = mock_article(:changelog, community, user)
+        target
+      end
+
+    Enum.zip(sources, targets)
+    |> Enum.each(fn {source, target} ->
+      ast = [
+        %{
+          "type" => "mention",
+          "key" => "changelog:#{target.article_id}",
+          "value" => "Mentioned target",
+          "children" => [%{"text" => "linked target"}]
+        }
+      ]
+
+      assert {:ok, {:ok, _captured}} =
+               Repo.transaction(fn ->
+                 CaptureCurrentVersion.execute_in_transaction(
+                   %{type: source.thread, article_id: source.article_id},
+                   next_canonical_token(source),
+                   ast,
+                   community.id,
+                   DateTime.utc_now() |> DateTime.truncate(:second),
+                   {:command, Ecto.UUID.generate()},
+                   binding_mode: :initialize_current
+                 )
+               end)
+    end)
+
+    targets
+    |> Enum.take(8)
+    |> Enum.each(fn target ->
+      Repo.update_all(
+        from(lifecycle in ArticleLifecycle, where: lifecycle.article_id == ^target.article_id),
+        set: [state: :draft]
+      )
+    end)
+
+    focus = %{type: :post, article_inner_id: article_inner_id(focus_article, community)}
+
+    frontiers =
+      Enum.map(sources, fn source ->
+        %{node: %{type: source.thread, article_inner_id: article_inner_id(source, community)}}
+      end)
+
+    telemetry_ref = make_ref()
+    telemetry_handler = {__MODULE__, telemetry_ref}
+
+    :ok =
+      :telemetry.attach(
+        telemetry_handler,
+        [:groupher_server, :repo, :query],
+        fn _, _, metadata, {pid, ref} ->
+          if self() == pid, do: send(pid, {ref, metadata.query})
+        end,
+        {self(), telemetry_ref}
+      )
+
+    try do
+      assert {:ok, page} =
+               CMS.mentions_map_page(community.slug, focus, frontiers, 20)
+
+      assert length(page.neighborhoods) == 10
+      assert length(page.edges) == 10
+      assert Enum.count(page.nodes, &(&1.status == :unavailable)) == 8
+      assert length(query_events(telemetry_ref, [])) <= 32
+    after
+      :telemetry.detach(telemetry_handler)
+    end
+  end
+
+  test "frontier cursors return every edge once in stable order" do
+    {community, source, _attrs, user} = mock_article(:post)
+
+    targets =
+      for _ <- 1..3 do
+        {_community, target, _attrs, _user} = mock_article(:blog, community, user)
+        target
+      end
+
+    ast =
+      Enum.map(targets, fn target ->
+        %{
+          "type" => "mention",
+          "key" => "blog:#{target.article_id}",
+          "value" => "Mentioned target",
+          "children" => [%{"text" => "linked target"}]
+        }
+      end)
+
+    assert {:ok, {:ok, _captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: source.article_id},
+                 next_canonical_token(source),
+                 ast,
+                 community.id,
+                 DateTime.utc_now() |> DateTime.truncate(:second),
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
+
+    assert {:ok, first_page} =
+             CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 2)
+
+    assert length(first_page.edges) == 2
+    assert [%{has_next_page: true, end_cursor: cursor}] = first_page.neighborhoods
+    first_ids = MapSet.new(first_page.edges, & &1.id)
+
+    assert {:ok, second_page} =
+             CMS.mentions_map_page(
+               community.slug,
+               focus,
+               [%{node: focus, after: cursor}],
+               2
+             )
+
+    assert length(second_page.edges) == 1
+    refute second_page.neighborhoods |> hd() |> Map.fetch!(:has_next_page)
+    refute Enum.any?(second_page.edges, &MapSet.member?(first_ids, &1.id))
+  end
+
+  test "a cursor from an older graph revision is rejected" do
+    {community, source, _attrs, user} = mock_article(:post)
+    {_community, first_target, _attrs, _user} = mock_article(:blog, community, user)
+    {_community, second_target, _attrs, _user} = mock_article(:blog, community, user)
+
+    ast =
+      [first_target, second_target]
+      |> Enum.map(fn target ->
+        %{
+          "type" => "mention",
+          "key" => "blog:#{target.article_id}",
+          "value" => "Mentioned target",
+          "children" => [%{"text" => "linked target"}]
+        }
+      end)
+
+    assert {:ok, {:ok, _captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: source.article_id},
+                 next_canonical_token(source),
+                 ast,
+                 community.id,
+                 DateTime.utc_now() |> DateTime.truncate(:second),
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
+
+    assert {:ok, first_page} =
+             CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 1)
+
+    assert [%{has_next_page: true, end_cursor: cursor}] = first_page.neighborhoods
+
+    assert {:ok, {:error, %GroupherServer.ErrorCat.Error{reason: :mentions_map_invalid_cursor}}} =
+             Repo.transaction(fn ->
+               assert {:ok, :pass} = Revision.bump()
+
+               CMS.mentions_map_page(
+                 community.slug,
+                 focus,
+                 [%{node: focus, after: cursor}],
+                 1
+               )
+             end)
+  end
+
+  test "a graph page is rejected when the global revision changes during the read" do
+    {community, source, _attrs, _user} = mock_article(:post)
+    focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
+    ref = make_ref()
+    handler = {__MODULE__, ref}
+    revision_reads = :atomics.new(1, signed: false)
+
+    :ok =
+      :telemetry.attach(
+        handler,
+        [:groupher_server, :repo, :query],
+        fn _, _, metadata, {pid, counter} ->
+          if self() == pid and String.contains?(metadata.query, "mentions_graph_state") and
+               not String.contains?(metadata.query, "set_config") and
+               :atomics.add_get(counter, 1, 1) == 1 do
+            assert {:ok, :pass} = Revision.bump()
+          end
+        end,
+        {self(), revision_reads}
+      )
+
+    try do
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :mentions_map_invalid_request}} =
+               CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+    after
+      :telemetry.detach(handler)
+    end
+  end
+
+  test "a 3,000-edge neighborhood returns a bounded page using the source window index" do
+    {community, source, _attrs, _user} = mock_article(:post)
+    source_endpoint = Repo.get_by!(Endpoint, type: :post, article_id: source.article_id)
+
+    assert {:ok, {:ok, _captured}} =
+             Repo.transaction(fn ->
+               CaptureCurrentVersion.execute_in_transaction(
+                 %{type: :post, article_id: source.article_id},
+                 next_canonical_token(source),
+                 [],
+                 community.id,
+                 DateTime.utc_now() |> DateTime.truncate(:second),
+                 {:command, Ecto.UUID.generate()},
+                 binding_mode: :initialize_current
+               )
+             end)
+
+    state = Repo.get!(ProjectionState, source_endpoint.id)
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    target_ids = Enum.map(1..3_000, fn _index -> Ecto.UUID.generate() end)
+
+    Repo.insert_all(
+      Endpoint,
+      Enum.map(target_ids, fn article_id ->
+        %{
+          id: Ecto.UUID.generate(),
+          type: :post,
+          article_id: article_id,
+          inserted_at: now,
+          updated_at: now
+        }
+      end)
+    )
+
+    target_endpoints =
+      Repo.all(from(endpoint in Endpoint, where: endpoint.article_id in ^target_ids))
+      |> Map.new(&{&1.article_id, &1.id})
+
+    edge_rows =
+      target_ids
+      |> Enum.with_index()
+      |> Enum.map(fn {article_id, index} ->
+        %{
+          id: Ecto.UUID.generate(),
+          source_endpoint_id: source_endpoint.id,
+          source_set_id: state.desired_set_id,
+          target_type: :post,
+          target_endpoint_id: Map.fetch!(target_endpoints, article_id),
+          mention_case: :inline_mention,
+          edge_key: "#{String.pad_leading(Integer.to_string(index), 5, "0")}:#{article_id}",
+          mentioned_at: now,
+          occurrences: %{},
+          inserted_at: now,
+          updated_at: now
+        }
+      end)
+
+    assert {3_000, nil} = Repo.insert_all(CurrentEdge, edge_rows)
+    assert {:ok, {:ok, :pass}} = Repo.transaction(fn -> Revision.bump() end)
+
+    focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
+    assert {:ok, page} = CMS.mentions_map_page(community.slug, focus, [%{node: focus}], 20)
+    assert length(page.edges) == 20
+    assert [%{has_next_page: true, edge_ids: edge_ids}] = page.neighborhoods
+    assert length(edge_ids) == 20
+
+    edge_query =
+      from(edge in CurrentEdge,
+        where: edge.source_endpoint_id == ^source_endpoint.id,
+        order_by: [asc: edge.edge_key],
+        limit: 21
+      )
+
+    plan = Repo.explain(:all, edge_query, analyze: true, buffers: true)
+    assert plan =~ "mention_current_edge_source_window_index"
+    assert plan =~ "Limit"
+  end
+
+  defp next_canonical_token(article) do
+    public = Repo.get!(ArticlePublic, article.article_id)
+    next_version = public.publication_version + 1
+
+    public
+    |> Ecto.Changeset.change(publication_version: next_version)
+    |> Repo.update!()
+
+    "#{public.revision_id}:#{next_version}"
+  end
+
+  defp query_events(ref, acc) do
+    receive do
+      {^ref, query} ->
+        if String.downcase(String.trim(query)) in ["begin", "commit", "rollback"],
+          do: query_events(ref, acc),
+          else: query_events(ref, [query | acc])
+    after
+      0 -> Enum.reverse(acc)
+    end
+  end
+end

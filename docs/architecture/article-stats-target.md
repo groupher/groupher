@@ -1,3 +1,5 @@
+> 2026-11-05：共享评论已在当前工作区实现并进入本地验收。普通 Article 与稳定 Doc 均由 ArticleStats 拥有 `comments_count`、`comments_participants_count`、`comments_revision` 和最多10位 Embeds.User；根 Comment 拥有回复摘要。详见 [实施记录](../migrations/comment-reaction-snapshot-counts-implementation.md)。本地实施不代表发布切换完成。
+
 # ArticleStats 目标架构
 
 > 状态：historical design record。ArticleStats 持久化公共投影、三类 owner revision、排序索引、typed

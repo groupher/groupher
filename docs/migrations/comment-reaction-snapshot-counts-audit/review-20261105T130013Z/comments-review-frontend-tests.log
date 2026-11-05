@@ -1,0 +1,13 @@
+
+ RUN  v5.0.4 /Users/xieyiming/code/groupher/groupher
+
+
+ Test Files  4 passed (4)
+      Tests  16 passed (16)
+   Start at  20:57:28
+   Duration  2.92s (environment 55%, tests 14%, import 13%, setup 12%, transform 6%)
+
+Environment  jsdom was created 4 times · 2.88s total, 55% of tracked time
+             create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+             learn more: https://vitest.dev/guide/improving-performance#test-environments
+

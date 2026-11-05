@@ -1,0 +1,599 @@
+defmodule GroupherServer.CMS.ArtimentMentions.MentionsMap.NodeStatus do
+  @moduledoc """
+  Resolves a bounded batch of endpoint identities through anonymous public scopes.
+
+      endpoint identities -> Community locators -> Gate-backed public nodes + projection state
+  """
+
+  import Ecto.Query
+
+  alias GroupherServer.CMS, as: CMS
+  alias GroupherServer.Repo
+  alias GroupherServer.CMS.ArtimentMentions.{Opaque, PublicUrl}
+  alias GroupherServer.CMS.ArtimentMentions.MentionsMap.Budget
+  alias GroupherServer.CMS.ArtimentMentions.Model.{Endpoint, ProjectionState}
+  alias GroupherServer.CMS.ArtimentMentions.Model.MentionSet
+  alias GroupherServer.CMS.Model.{Article, ArticleBinding, Comment, CommentBody, TicketState}
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Ticket, as: TicketScope
+
+  @doc "Resolves client locators and returns public node state in input order."
+  def resolve_locators(community, locators, %Budget{} = budget) when is_list(locators) do
+    rows = locator_rows(community, locators, budget)
+    rows_by_locator = Map.new(rows, &{locator_key(&1), &1})
+
+    endpoints = Enum.map(rows, & &1.endpoint_id) |> Enum.reject(&is_nil/1) |> Enum.uniq()
+    states = projection_states_by_ids(endpoints, budget)
+
+    nodes =
+      Enum.map(locators, fn locator ->
+        case Map.get(rows_by_locator, locator_key(locator)) do
+          nil ->
+            unavailable_node(locator)
+
+          row ->
+            build_locator_node(community, locator, row, Map.get(states, row.endpoint_id))
+        end
+      end)
+
+    {:ok, nodes}
+  end
+
+  def resolve_locators(_community, _locators, _budget) do
+    {:error, :invalid_mentions_map_locator}
+  end
+
+  @doc "Loads current public status for endpoint records in one bounded batch."
+  def load_endpoints(community, endpoints, %Budget{} = budget) when is_list(endpoints) do
+    live = Enum.reject(endpoints, &(not is_nil(&1.deleted_at)))
+    {locators, identities_by_locator} = endpoint_locators(community, live, budget)
+
+    readable_rows =
+      locator_rows(community, locators, budget)
+      |> Map.new(&{locator_key(&1), &1})
+
+    result_by_identity =
+      Enum.reduce(locators, %{}, fn locator, acc ->
+        identity = Map.fetch!(identities_by_locator, locator)
+
+        row = Map.get(readable_rows, locator_key(locator))
+
+        result =
+          case row do
+            nil ->
+              {:error, :unavailable}
+
+            row ->
+              {:ok,
+               %{
+                 type: row.type,
+                 title: row.title,
+                 url: locator_url(community, locator, row),
+                 article_inner_id: row.article_inner_id,
+                 comment_inner_id: row.comment_inner_id
+               }}
+          end
+
+        Map.put(acc, identity, {result, row && row.source_token})
+      end)
+
+    states = projection_states(endpoints, budget)
+
+    nodes =
+      Enum.map(endpoints, fn endpoint ->
+        identity = endpoint_identity(endpoint)
+
+        {result, source_token} =
+          Map.get(result_by_identity, identity, {{:error, :unavailable}, nil})
+
+        build_node(
+          community,
+          identity,
+          endpoint,
+          result,
+          Map.get(states, endpoint.id),
+          source_token
+        )
+      end)
+
+    {:ok, Map.new(nodes, &{&1.identity, &1})}
+  end
+
+  def load_endpoints(_community, _endpoints, _budget) do
+    {:error, :invalid_mentions_map_endpoints}
+  end
+
+  defp unavailable_node(locator) do
+    %{
+      identity: nil,
+      endpoint_id: nil,
+      id: nil,
+      type: locator.type,
+      status: :unavailable,
+      title: nil,
+      url: nil,
+      locator: nil,
+      can_open: false,
+      can_expand: false,
+      sync_state: :ready
+    }
+  end
+
+  defp locator_rows(_community, [], _budget), do: []
+
+  defp locator_rows(community, locators, budget) do
+    article_inner_ids =
+      locators
+      |> Enum.map(&Map.get(&1, :article_inner_id))
+      |> Enum.map(&positive_id/1)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
+    comment_inner_ids =
+      locators
+      |> Enum.map(&Map.get(&1, :comment_inner_id))
+      |> Enum.map(&positive_id/1)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
+    ordinary =
+      Enum.map(
+        [:post, :blog, :changelog],
+        &ordinary_locator_query(&1, community, article_inner_ids)
+      )
+
+    queries =
+      (ordinary ++
+         [
+           doc_locator_query(community, article_inner_ids),
+           ticket_locator_query(community, article_inner_ids)
+         ] ++
+         [comment_locator_query(community, article_inner_ids, comment_inner_ids)])
+      |> Enum.reject(&is_nil/1)
+
+    case queries do
+      [] ->
+        []
+
+      [query | rest] ->
+        Enum.reduce(rest, query, fn next, acc -> union_all(acc, ^next) end)
+        |> then(&Budget.run!(budget, fn timeout -> Repo.all(&1, timeout: timeout) end))
+        |> Enum.map(&normalize_locator_row/1)
+    end
+  end
+
+  defp ordinary_locator_query(type, community, article_inner_ids) do
+    CMS.Gate.scope(Article, nil, :read, ArticleScope.public(type))
+    |> scope_query()
+    |> where(
+      [article, ...],
+      as(:gate_community).id == ^community.id and
+        as(:gate_article_binding).inner_id in ^article_inner_ids
+    )
+    |> join(:left, [article, ...], endpoint in Endpoint,
+      on: endpoint.type == ^type and endpoint.article_id == article.id,
+      as: :mention_endpoint
+    )
+    |> select([article, ...], %{
+      type: type(^Atom.to_string(type), :string),
+      article_id: article.id,
+      comment_id: type(^nil, :integer),
+      endpoint_id: as(:mention_endpoint).id,
+      article_inner_id: as(:gate_article_binding).inner_id,
+      comment_inner_id: type(^nil, :integer),
+      title: as(:gate_article_public).title,
+      slug: as(:gate_article_public).slug,
+      thread: type(article.thread, :string),
+      source_token:
+        fragment(
+          "concat(?, ':', ?)",
+          as(:gate_article_public).revision_id,
+          as(:gate_article_public).publication_version
+        )
+    })
+  end
+
+  defp doc_locator_query(community, article_inner_ids) do
+    CMS.Gate.scope(Article, nil, :read, DocScope.public_main())
+    |> scope_query()
+    |> where(
+      [article, ...],
+      as(:gate_community).id == ^community.id and
+        as(:gate_article_binding).inner_id in ^article_inner_ids
+    )
+    |> join(:left, [article, ...], endpoint in Endpoint,
+      on: endpoint.type == :doc and endpoint.article_id == article.id,
+      as: :mention_endpoint
+    )
+    |> select([article, ...], %{
+      type: type(^"doc", :string),
+      article_id: article.id,
+      comment_id: type(^nil, :integer),
+      endpoint_id: as(:mention_endpoint).id,
+      article_inner_id: as(:gate_article_binding).inner_id,
+      comment_inner_id: type(^nil, :integer),
+      title: as(:gate_article_public).title,
+      slug: as(:gate_article_public).slug,
+      thread: type(^"doc", :string),
+      source_token:
+        fragment(
+          "concat(?, ':', ?, ':', ?)",
+          as(:gate_doc_branch).id,
+          as(:gate_article_public).branch_version_id,
+          as(:gate_article_public).publication_version
+        )
+    })
+  end
+
+  defp ticket_locator_query(community, article_inner_ids) do
+    CMS.Gate.scope(TicketState, nil, :read, TicketScope.public(community))
+    |> scope_query()
+    |> where([ticket_state: state], as(:ticket_binding).inner_id in ^article_inner_ids)
+    |> join(:left, [ticket_state: state], endpoint in Endpoint,
+      on: endpoint.type == :ticket and endpoint.article_id == state.article_id,
+      as: :mention_endpoint
+    )
+    |> select([ticket_state: state], %{
+      type: type(^"ticket", :string),
+      article_id: state.article_id,
+      comment_id: type(^nil, :integer),
+      endpoint_id: as(:mention_endpoint).id,
+      article_inner_id: as(:ticket_binding).inner_id,
+      comment_inner_id: type(^nil, :integer),
+      title: as(:ticket_public).title,
+      slug: type(^nil, :string),
+      thread: type(^"ticket", :string),
+      source_token:
+        fragment(
+          "concat(?, ':', ?)",
+          as(:ticket_public).revision_id,
+          as(:ticket_public).publication_version
+        )
+    })
+  end
+
+  defp comment_locator_query(_community, _article_inner_ids, []), do: nil
+
+  defp comment_locator_query(community, article_inner_ids, comment_inner_ids) do
+    CMS.Gate.scope(Comment, nil, :read, CommentScope.all_public())
+    |> scope_query()
+    |> where([comment, ...], as(:gate_comment_lifecycle).state == :visible)
+    |> join(:inner, [comment, ...], parent in subquery(public_comment_parent_rows(community)),
+      on: parent.article_id == comment.article_id
+    )
+    |> where(
+      [comment, ...],
+      as(:gate_community).id == ^community.id and
+        as(:gate_comment_binding).inner_id in ^article_inner_ids and
+        comment.inner_id in ^comment_inner_ids
+    )
+    |> join(:left, [comment, ...], parent_endpoint in Endpoint,
+      on:
+        parent_endpoint.article_id == comment.article_id and
+          parent_endpoint.type == comment.thread,
+      as: :mention_parent_endpoint
+    )
+    |> join(:left, [comment, ...], endpoint in Endpoint,
+      on:
+        endpoint.type == :comment and endpoint.comment_id == comment.id and
+          endpoint.parent_endpoint_id == as(:mention_parent_endpoint).id,
+      as: :mention_endpoint
+    )
+    |> join(:left, [comment, ...], body in CommentBody,
+      on: body.comment_id == comment.id,
+      as: :mention_comment_body
+    )
+    |> select([comment, ...], %{
+      type: type(^"comment", :string),
+      article_id: comment.article_id,
+      comment_id: comment.id,
+      endpoint_id: as(:mention_endpoint).id,
+      article_inner_id: as(:gate_comment_binding).inner_id,
+      comment_inner_id: comment.inner_id,
+      title: as(:mention_comment_body).digest,
+      slug: type(^nil, :string),
+      thread: type(comment.thread, :string),
+      source_token:
+        fragment(
+          "concat(?, ':', ?, ':', ?)",
+          comment.id,
+          as(:mention_comment_body).version,
+          as(:mention_comment_body).body_hash
+        )
+    })
+  end
+
+  defp public_comment_parent_rows(community) do
+    ordinary =
+      Enum.map([:post, :blog, :changelog], fn type ->
+        CMS.Gate.scope(Article, nil, :read, ArticleScope.public(type))
+        |> scope_query()
+        |> where([article, ...], as(:gate_community).id == ^community.id)
+        |> select([article, ...], %{
+          article_id: article.id
+        })
+      end)
+
+    doc =
+      CMS.Gate.scope(Article, nil, :read, DocScope.public_main())
+      |> scope_query()
+      |> where([article, ...], as(:gate_community).id == ^community.id)
+      |> select([article, ...], %{
+        article_id: article.id
+      })
+
+    Enum.reduce(ordinary ++ [doc], fn query, acc -> union_all(acc, ^query) end)
+  end
+
+  defp normalize_locator_row(row) do
+    type = String.to_existing_atom(row.type)
+    thread = String.to_existing_atom(row.thread)
+
+    identity =
+      if type == :comment,
+        do: {:comment, nil, row.comment_id, nil},
+        else: {type, row.article_id, nil, nil}
+
+    Map.merge(row, %{type: type, thread: thread, identity: identity})
+  end
+
+  defp scope_query({:ok, %Ecto.Query{} = query}), do: query
+  defp scope_query(%Ecto.Query{} = query), do: query
+
+  defp positive_id(value) when is_integer(value) and value > 0, do: value
+
+  defp positive_id(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {id, ""} when id > 0 -> id
+      _ -> nil
+    end
+  end
+
+  defp positive_id(_), do: nil
+
+  defp locator_key(%{type: type, article_inner_id: article_id} = locator) do
+    type = if is_binary(type), do: String.to_existing_atom(type), else: type
+    comment_id = Map.get(locator, :comment_inner_id)
+
+    {type, to_string(article_id), if(is_nil(comment_id), do: nil, else: to_string(comment_id))}
+  end
+
+  defp locator_key(_), do: nil
+
+  defp build_locator_node(community, locator, row, state) do
+    identity = row.identity
+    type = elem(identity, 0)
+    sync_state = if projection_ready?(state, row.source_token), do: :ready, else: :pending
+
+    %{
+      identity: identity,
+      endpoint_id: row.endpoint_id,
+      id: Opaque.id(:node, community.id, identity),
+      type: type,
+      status: :readable,
+      title: if(is_binary(row.title), do: String.slice(row.title, 0, 140), else: ""),
+      url: locator_url(community, locator, row),
+      locator: locator,
+      can_open: true,
+      can_expand: not is_nil(row.endpoint_id) and sync_state == :ready,
+      sync_state: sync_state
+    }
+  end
+
+  defp locator_url(community, %{type: :comment}, row) do
+    PublicUrl.comment(
+      %{
+        community_slug: community.slug,
+        thread: row_parent_thread(row),
+        inner_id: row.article_inner_id
+      },
+      row.comment_inner_id
+    )
+  end
+
+  defp locator_url(community, locator, row) do
+    PublicUrl.article(%{
+      community_slug: community.slug,
+      thread: locator.type,
+      inner_id: row.article_inner_id,
+      slug: row.slug
+    })
+  end
+
+  defp row_parent_thread(%{thread: thread}), do: thread
+
+  defp endpoint_locators(community, endpoints, budget) do
+    comment_ids =
+      endpoints
+      |> Enum.filter(&(&1.type == :comment))
+      |> Enum.map(& &1.comment_id)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
+    comments =
+      case comment_ids do
+        [] ->
+          %{}
+
+        _ ->
+          Budget.run!(budget, fn timeout ->
+            Repo.all(from(comment in Comment, where: comment.id in ^comment_ids),
+              timeout: timeout
+            )
+          end)
+          |> Map.new(&{&1.id, &1})
+      end
+
+    article_ids =
+      Enum.map(endpoints, & &1.article_id) ++ Enum.map(Map.values(comments), & &1.article_id)
+
+    article_ids = article_ids |> Enum.reject(&is_nil/1) |> Enum.uniq()
+
+    bindings =
+      case article_ids do
+        [] ->
+          %{}
+
+        _ ->
+          Budget.run!(budget, fn timeout ->
+            Repo.all(
+              from(binding in ArticleBinding,
+                where:
+                  binding.community_id == ^community.id and binding.article_id in ^article_ids,
+                select: {binding.article_id, binding.inner_id}
+              ),
+              timeout: timeout
+            )
+          end)
+          |> Map.new()
+      end
+
+    Enum.reduce(endpoints, {[], %{}}, fn endpoint, {locators, mapping} ->
+      identity = endpoint_identity(endpoint)
+      {type, article_id, comment_id, _branch_id} = identity
+
+      locator =
+        if type == :comment do
+          comment = Map.get(comments, comment_id)
+
+          case {comment, comment && bindings[comment.article_id]} do
+            {%Comment{inner_id: inner_id}, article_inner_id} when is_integer(article_inner_id) ->
+              %{type: :comment, article_inner_id: article_inner_id, comment_inner_id: inner_id}
+
+            _ ->
+              nil
+          end
+        else
+          case Map.get(bindings, article_id) do
+            inner_id when is_integer(inner_id) ->
+              %{type: type, article_inner_id: inner_id, comment_inner_id: nil}
+
+            _ ->
+              nil
+          end
+        end
+
+      if locator do
+        {locators ++ [locator], Map.put(mapping, locator, identity)}
+      else
+        {locators, mapping}
+      end
+    end)
+  end
+
+  defp projection_states([], _budget), do: %{}
+
+  defp projection_states(endpoints, budget) do
+    endpoint_ids = endpoints |> Enum.map(& &1.id) |> Enum.reject(&is_nil/1)
+
+    case endpoint_ids do
+      [] ->
+        %{}
+
+      _ ->
+        Budget.run!(budget, fn timeout ->
+          Repo.all(
+            from(state in ProjectionState,
+              left_join: set in MentionSet,
+              on:
+                set.id == state.desired_set_id and
+                  set.source_endpoint_id == state.source_endpoint_id,
+              where: state.source_endpoint_id in ^endpoint_ids,
+              select: {state, set.parser_version}
+            ),
+            timeout: timeout
+          )
+        end)
+        |> Map.new(fn {%ProjectionState{source_endpoint_id: id} = state, parser_version} ->
+          {id, {state, parser_version}}
+        end)
+    end
+  end
+
+  defp projection_states_by_ids([], _budget), do: %{}
+
+  defp projection_states_by_ids(endpoint_ids, budget) do
+    Budget.run!(budget, fn timeout ->
+      Repo.all(
+        from(state in ProjectionState,
+          left_join: set in MentionSet,
+          on:
+            set.id == state.desired_set_id and
+              set.source_endpoint_id == state.source_endpoint_id,
+          where: state.source_endpoint_id in ^endpoint_ids,
+          select: {state, set.parser_version}
+        ),
+        timeout: timeout
+      )
+    end)
+    |> Map.new(fn {%ProjectionState{source_endpoint_id: id} = state, parser_version} ->
+      {id, {state, parser_version}}
+    end)
+  end
+
+  defp build_node(community, identity, endpoint, result, state, source_token) do
+    status =
+      cond do
+        match?(%Endpoint{deleted_at: %DateTime{}}, endpoint) -> :deleted
+        match?({:ok, _}, result) -> :readable
+        true -> :unavailable
+      end
+
+    sync_state =
+      if status == :readable and projection_ready?(state, source_token),
+        do: :ready,
+        else: :pending
+
+    readable = if status == :readable, do: elem(result, 1), else: nil
+
+    %{
+      identity: identity,
+      endpoint_id: endpoint_id(endpoint),
+      id: Opaque.id(:node, community.id, identity),
+      type: elem(identity, 0),
+      status: status,
+      title: readable && readable.title,
+      url: readable && readable.url,
+      locator: if(readable, do: locator(readable)),
+      can_open: status == :readable,
+      can_expand: status == :readable and sync_state == :ready,
+      sync_state: if(status == :readable, do: sync_state, else: :ready)
+    }
+  end
+
+  defp projection_ready?(
+         {%ProjectionState{
+            desired_content_token: token,
+            desired_set_id: set_id,
+            synced_content_token: token,
+            synced_set_id: set_id
+          }, 1},
+         canonical_token
+       )
+       when is_binary(token) and is_binary(set_id) and token == canonical_token do
+    true
+  end
+
+  defp projection_ready?(_, _), do: false
+
+  defp locator(node) do
+    %{
+      type: node.type,
+      article_inner_id: node.article_inner_id,
+      comment_inner_id: node.comment_inner_id
+    }
+  end
+
+  defp endpoint_id(%Endpoint{id: id}), do: id
+  defp endpoint_id(_), do: nil
+
+  defp endpoint_identity(%Endpoint{type: :comment, comment_id: id}) do
+    {:comment, nil, id, nil}
+  end
+
+  defp endpoint_identity(%Endpoint{type: type, article_id: id}) do
+    {type, id, nil, nil}
+  end
+end

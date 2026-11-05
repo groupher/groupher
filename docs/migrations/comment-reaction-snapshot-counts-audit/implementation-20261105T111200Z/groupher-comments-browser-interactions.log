@@ -1,0 +1,12 @@
+### Result
+{"summary":"true","mutations":0}
+### Ran Playwright code
+```js
+await (async (page) => { const summary = page.getByRole("button", {name: "5 replies · Collapse replies", exact: true}); await summary.scrollIntoViewIfNeeded(); await page.screenshot({path: ".playwright/shared-comments-expanded.png"}); const folded = page.getByRole("button").filter({hasText: "Reply 1: shared discussion across the article."}); await folded.click(); const requests = []; page.on("request", request => { if (request.url().includes("/api/graphql")) requests.push(request.postData()); }); await page.getByRole("button", {name: "5 replies · Collapse replies", exact: true}).focus(); await page.keyboard.press("Enter"); await page.keyboard.press("Enter"); await page.screenshot({path: ".playwright/shared-comments-keyboard.png"}); return {summary: await summary.getAttribute("aria-expanded"), mutations: requests.filter(body => body && body.includes("mutation ")).length}; })(page);
+```
+### Page
+- Page URL: http://127.0.0.1:3009/home/post/1
+- Page Title: post-ag article planet article mention article editor
+- Console: 26 errors, 11 warnings
+### Events
+- New console entries: .playwright-cli/console-2026-11-05T11-04-23-277Z.log#L26-L37

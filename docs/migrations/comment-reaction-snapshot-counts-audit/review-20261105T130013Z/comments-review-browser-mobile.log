@@ -1,0 +1,12 @@
+### Result
+{"folded":{"x":12,"y":219,"width":294.84375,"height":48},"hint":{"x":150.015625,"y":235,"width":100.828125,"height":16},"nestedButtons":0}
+### Ran Playwright code
+```js
+await (async (page) => { await page.setViewportSize({width:320,height:800}); const root=page.locator("#comment-7"); await root.getByRole("button", {name:"Collapse replies",exact:true}).last().click(); const folded=root.getByRole("button",{name:/Deleted reply history remains accessible.*View reply history/}); await folded.scrollIntoViewIfNeeded(); await folded.screenshot({path:".playwright/comments-review-folded-history-mobile.png"}); const hint=folded.getByText("View reply history",{exact:true}); return {folded:await folded.boundingBox(),hint:await hint.boundingBox(),nestedButtons:await folded.locator("button").count()}; })(page);
+```
+### Page
+- Page URL: http://127.0.0.1:3009/home/post/1
+- Page Title: post-ag article planet article mention article editor
+- Console: 12 errors, 5 warnings
+### Events
+- New console entries: .playwright-cli/console-2026-11-05T12-59-00-387Z.log#L29-L30

@@ -1,0 +1,1169 @@
+defmodule GroupherServer.Test.Query.Comments.PostComment do
+  @moduledoc false
+
+  use GroupherServer.TestMate
+
+  defp emotion_entry(emotions, type) do
+    Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
+  end
+
+  setup do
+    {community, post, _, user} = mock_article(:post, preload: [author: :user])
+
+    {:ok, user2} = db_insert(:user)
+
+    guest_conn = simu_conn(:guest)
+    user_conn = simu_conn(:user, user)
+
+    {:ok, ~m(user_conn guest_conn community post user user2)a}
+  end
+
+  @query S.Comment.q(:comments_state)
+
+  test "can get basic comments state", ~m(guest_conn user_conn community post user)a do
+    {:ok, _} =
+      CMS.Comments.create_comment(
+        community,
+        :post,
+        article_inner_id(post, community),
+        mock_comment(),
+        user,
+        Ecto.UUID.generate()
+      )
+
+    variables = %{
+      article: %{
+        inner_id: article_inner_id(post, community),
+        community: community.slug,
+        thread: "POST"
+      }
+    }
+
+    results = guest_conn |> gq_query(@query, variables)
+
+    assert results["participantsCount"] == 1
+    assert results["totalCount"] == 1
+    refute Map.has_key?(results, "isViewerJoined")
+    assert user_exist_in?(user, results["participants"])
+    assert Enum.all?(results["participants"], &(byte_size(&1["ref"]) == 43))
+
+    results = user_conn |> gq_query(@query, variables)
+    assert results["participantsCount"] == 1
+    assert results["totalCount"] == 1
+    refute Map.has_key?(results, "isViewerJoined")
+  end
+
+  @query S.Comment.q(:one_comment_2)
+
+  test "can get one comment by ref", ~m(guest_conn community post user)a do
+    thread = :post
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        thread,
+        article_inner_id(post, community),
+        mock_comment(),
+        user,
+        Ecto.UUID.generate()
+      )
+
+    variables = %{comment: comment_path(community, post, :post, comment)}
+    results = guest_conn |> gq_query(@query, variables)
+
+    assert results["innerId"] == to_string(comment.inner_id)
+  end
+
+  test "can get one comment by inner_id when floor differs",
+       ~m(guest_conn community post user)a do
+    thread = :post
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        thread,
+        article_inner_id(post, community),
+        mock_comment(),
+        user,
+        Ecto.UUID.generate()
+      )
+
+    changed_floor = comment.floor + 100
+    {:ok, comment} = ORM.update(comment, %{floor: changed_floor})
+
+    variables = %{comment: comment_path(community, post, :post, comment)}
+    results = guest_conn |> gq_query(@query, variables)
+
+    assert results["innerId"] == to_string(comment.inner_id)
+    assert results["floor"] == changed_floor
+  end
+
+  test "can get one comment by ref with viewer states", ~m(user_conn community post user)a do
+    thread = :post
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        community,
+        thread,
+        article_inner_id(post, community),
+        mock_comment(),
+        user,
+        Ecto.UUID.generate()
+      )
+
+    {:ok, _} = CMS.Interactions.upvote(comment, user, Ecto.UUID.generate())
+    {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user, Ecto.UUID.generate())
+
+    variables = %{comment: comment_path(community, post, :post, comment)}
+    results = user_conn |> gq_query(@query, variables)
+
+    assert results["innerId"] == to_string(comment.inner_id)
+    assert results["viewerHasUpvoted"]
+    assert emotion_entry(results["emotions"], :downvote)["viewerHasReacted"]
+  end
+
+  describe "[basic article post comment]" do
+    test "guest user can get basic archive info", ~m(guest_conn community post user)a do
+      thread = :post
+
+      {:ok, _} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        }
+      }
+
+      _results = guest_conn |> gq_query(S.Article.q(:article, :post), variables)
+    end
+
+    test "guest user can get comment participants after comment created",
+         ~m(guest_conn community post user user2)a do
+      total_count = 5
+      thread = :post
+
+      Enum.reduce(1..total_count, [], fn _, acc ->
+        {:ok, comment} =
+          CMS.Comments.create_comment(
+            community,
+            thread,
+            article_inner_id(post, community),
+            mock_comment(),
+            user,
+            Ecto.UUID.generate()
+          )
+
+        acc ++ [comment]
+      end)
+
+      {:ok, _} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user2,
+          Ecto.UUID.generate()
+        )
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        }
+      }
+
+      results = guest_conn |> gq_query(S.Article.q(:article, :post), variables)
+
+      comments_participants = results["commentsParticipants"]
+
+      assert is_list(comments_participants)
+      assert length(comments_participants) == 2
+    end
+
+    @query S.Comment.q(:comment_page)
+    test "list comments with default replies-mode", ~m(guest_conn community post user user2)a do
+      total_count = 3
+      page_size = 20
+      thread = :post
+
+      all_comments =
+        Enum.reduce(1..total_count, [], fn i, acc ->
+          {:ok, comment} =
+            CMS.Comments.create_comment(
+              community,
+              thread,
+              article_inner_id(post, community),
+              mock_comment("comment #{i}"),
+              user,
+              Ecto.UUID.generate()
+            )
+
+          acc ++ [comment]
+        end)
+
+      random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
+
+      {:ok, replied_comment_1} =
+        CMS.Comments.reply_comment(random_comment, mock_comment(), user2, Ecto.UUID.generate())
+
+      {:ok, replied_comment_2} =
+        CMS.Comments.reply_comment(random_comment, mock_comment(), user2, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+      assert results["entries"] |> length == total_count
+
+      assert not exist_in?(replied_comment_1, results["entries"])
+      assert not exist_in?(replied_comment_2, results["entries"])
+
+      random_comment =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
+
+      assert random_comment["replies"] |> length == 2
+      assert random_comment["repliesCount"] == 2
+
+      assert random_comment["replies"] |> List.first() |> Map.get("innerId") ==
+               to_string(replied_comment_1.inner_id)
+
+      assert not is_nil(random_comment["replies"] |> List.first() |> Map.get("replyToComment"))
+
+      assert random_comment["replies"] |> List.last() |> Map.get("innerId") ==
+               to_string(replied_comment_2.inner_id)
+    end
+
+    test "timeline-mode paged comments", ~m(guest_conn community post user user2)a do
+      total_count = 3
+      page_size = 20
+      thread = :post
+
+      all_comments =
+        Enum.reduce(1..total_count, [], fn i, acc ->
+          {:ok, comment} =
+            CMS.Comments.create_comment(
+              community,
+              thread,
+              article_inner_id(post, community),
+              mock_comment("comment #{i}"),
+              user,
+              Ecto.UUID.generate()
+            )
+
+          acc ++ [comment]
+        end)
+
+      random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
+
+      {:ok, replied_comment_1} =
+        CMS.Comments.reply_comment(random_comment, mock_comment(), user2, Ecto.UUID.generate())
+
+      {:ok, replied_comment_2} =
+        CMS.Comments.reply_comment(random_comment, mock_comment(), user2, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        mode: "TIMELINE",
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+      assert results["entries"] |> length == total_count + 2
+
+      assert exist_in?(replied_comment_1, results["entries"])
+      assert exist_in?(replied_comment_2, results["entries"])
+
+      random_comment =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
+
+      assert random_comment["replies"] == []
+      assert random_comment["repliesCount"] == 2
+    end
+
+    test "comment should have reply_to content if need",
+         ~m(guest_conn community post user user2)a do
+      total_count = 2
+      thread = :post
+
+      Enum.reduce(0..total_count, [], fn i, acc ->
+        {:ok, comment} =
+          CMS.Comments.create_comment(
+            community,
+            thread,
+            article_inner_id(post, community),
+            mock_comment("comment #{i}"),
+            user,
+            Ecto.UUID.generate()
+          )
+
+        acc ++ [comment]
+      end)
+
+      {:ok, parent_comment} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment("parent_comment"),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, replied_comment_1} =
+        CMS.Comments.reply_comment(parent_comment, mock_comment(), user2, Ecto.UUID.generate())
+
+      {:ok, replied_comment_2} =
+        CMS.Comments.reply_comment(parent_comment, mock_comment(), user2, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: 10, config_revision: 0}},
+        filter: %{},
+        mode: "TIMELINE"
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      replied_comment_1 =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_1.inner_id)))
+
+      assert replied_comment_1 |> get_in(["replyToComment", "innerId"]) ==
+               to_string(parent_comment.inner_id)
+
+      assert replied_comment_1 |> get_in(["replyToComment", "author", "login"]) ==
+               user.login
+
+      replied_comment_2 =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_2.inner_id)))
+
+      assert replied_comment_2 |> get_in(["replyToComment", "innerId"]) ==
+               to_string(parent_comment.inner_id)
+
+      assert replied_comment_2 |> get_in(["replyToComment", "author", "login"]) ==
+               user.login
+    end
+
+    test "guest user can get paged comment for post", ~m(guest_conn community post user)a do
+      total_count = 30
+      thread = :post
+
+      Enum.reduce(1..total_count, [], fn _, acc ->
+        {:ok, value} =
+          CMS.Comments.create_comment(
+            community,
+            thread,
+            article_inner_id(post, community),
+            mock_comment(),
+            user,
+            Ecto.UUID.generate()
+          )
+
+        acc ++ [value]
+      end)
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: 10, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert results |> valid_comment_page?
+      assert results["pageInfo"]["totalCount"] == total_count
+    end
+
+    test "guest user can get paged comment with pinned comment in it",
+         ~m(guest_conn community post user)a do
+      total_count = 20
+      thread = :post
+
+      Enum.reduce(1..total_count, [], fn _, acc ->
+        {:ok, comment} =
+          CMS.Comments.create_comment(
+            community,
+            thread,
+            article_inner_id(post, community),
+            mock_comment(),
+            user,
+            Ecto.UUID.generate()
+          )
+
+        acc ++ [comment]
+      end)
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, pinned_comment} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
+
+      Process.sleep(1000)
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: 10, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert results["pinnedEntries"] |> List.first() |> Map.get("innerId") ==
+               to_string(pinned_comment2.inner_id)
+
+      assert results["pinnedEntries"] |> Enum.at(1) |> Map.get("innerId") ==
+               to_string(pinned_comment.inner_id)
+
+      assert results["pageInfo"]["totalCount"] == total_count
+    end
+
+    test "if solution in pinned comments, solution should always on top",
+         ~m(guest_conn community user)a do
+      post_attrs =
+        mock_attrs(:post, %{
+          community_id: community.id,
+          cat: GroupherServer.CMS.Artiment.Const.cat_map().qa
+        })
+
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      total_count = 20
+      thread = :post
+
+      Enum.reduce(1..total_count, [], fn _, acc ->
+        {:ok, comment} =
+          CMS.Comments.create_comment(
+            community,
+            thread,
+            article_inner_id(post, community),
+            mock_comment(),
+            user,
+            Ecto.UUID.generate()
+          )
+
+        acc ++ [comment]
+      end)
+
+      stable = Repo.get!(CMS.Model.Article, post.article_id) |> Repo.preload(author: :user)
+      post_author = stable.author.user
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _pinned_comment} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
+
+      Process.sleep(1000)
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment("solution"),
+          post_author,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, solution_comment} =
+        CMS.Comments.accept_solution(comment, post_author, Ecto.UUID.generate())
+
+      Process.sleep(1000)
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _pinned_comment2} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: 10, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert results["pinnedEntries"] |> List.first() |> Map.get("innerId") ==
+               to_string(solution_comment.inner_id)
+
+      assert results["pageInfo"]["totalCount"] == total_count
+    end
+
+    test "guest user can get paged comment with floor it", ~m(guest_conn community post user)a do
+      total_count = 5
+      thread = :post
+      page_size = 10
+
+      Enum.reduce(1..total_count, [], fn _, acc ->
+        {:ok, comment} =
+          CMS.Comments.create_comment(
+            community,
+            thread,
+            article_inner_id(post, community),
+            mock_comment(),
+            user,
+            Ecto.UUID.generate()
+          )
+
+        Process.sleep(1000)
+        acc ++ [comment]
+      end)
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert results["entries"] |> List.first() |> Map.get("floor") == 1
+      assert results["entries"] |> List.last() |> Map.get("floor") == 5
+    end
+
+    test "the comments is loaded in default asc order", ~m(guest_conn community post user)a do
+      page_size = 10
+      thread = :post
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      Process.sleep(1000)
+
+      {:ok, _comment2} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      Process.sleep(1000)
+
+      {:ok, comment3} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{},
+        mode: "TIMELINE"
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment.inner_id)
+      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment3.inner_id)
+    end
+
+    test "the comments can be loaded in desc order in timeline-mode",
+         ~m(guest_conn community post user)a do
+      page_size = 10
+      thread = :post
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      Process.sleep(1000)
+
+      {:ok, _comment2} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      Process.sleep(1000)
+
+      {:ok, comment3} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{sort: "DESC_INSERTED"},
+        mode: "TIMELINE"
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment3.inner_id)
+      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment.inner_id)
+    end
+
+    test "the comments can be loaded in desc order in replies-mode",
+         ~m(guest_conn community post user user2)a do
+      page_size = 10
+      thread = :post
+
+      {:ok, comment} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _reply_comment} =
+        CMS.Comments.reply_comment(comment, mock_comment(), user, Ecto.UUID.generate())
+
+      {:ok, _reply_comment} =
+        CMS.Comments.reply_comment(comment, mock_comment(), user2, Ecto.UUID.generate())
+
+      Process.sleep(1000)
+
+      {:ok, comment2} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _reply_comment} =
+        CMS.Comments.reply_comment(comment2, mock_comment(), user, Ecto.UUID.generate())
+
+      {:ok, _reply_comment} =
+        CMS.Comments.reply_comment(comment2, mock_comment(), user2, Ecto.UUID.generate())
+
+      Process.sleep(1000)
+
+      {:ok, comment3} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _reply_comment} =
+        CMS.Comments.reply_comment(comment3, mock_comment(), user, Ecto.UUID.generate())
+
+      {:ok, _reply_comment} =
+        CMS.Comments.reply_comment(comment3, mock_comment(), user2, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{sort: "DESC_INSERTED"}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment3.inner_id)
+      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment.inner_id)
+    end
+
+    test "guest user can get paged comment with upvotes_count",
+         ~m(guest_conn community post user user2)a do
+      total_count = 10
+      page_size = 10
+      thread = :post
+
+      all_comment =
+        Enum.reduce(1..total_count, [], fn i, acc ->
+          {:ok, comment} =
+            CMS.Comments.create_comment(
+              community,
+              thread,
+              article_inner_id(post, community),
+              mock_comment("comment #{i}"),
+              user,
+              Ecto.UUID.generate()
+            )
+
+          Process.sleep(1000)
+          acc ++ [comment]
+        end)
+
+      upvote_comment = all_comment |> Enum.at(3)
+      upvote_comment2 = all_comment |> Enum.at(4)
+      {:ok, _} = CMS.Interactions.upvote(upvote_comment, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(upvote_comment2, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.upvote(upvote_comment2, user2, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert results["entries"] |> Enum.at(3) |> Map.get("upvotesCount") == 1
+      assert results["entries"] |> Enum.at(4) |> Map.get("upvotesCount") == 2
+      assert results["entries"] |> List.first() |> Map.get("upvotesCount") == 0
+      assert results["entries"] |> List.last() |> Map.get("upvotesCount") == 0
+    end
+
+    test "article author upvote a comment can get is_article_author and/or is_article_author_upvoted flag",
+         ~m(guest_conn community post user2)a do
+      total_count = 5
+      page_size = 12
+      thread = :post
+
+      author_user = post.author
+
+      all_comments =
+        Enum.reduce(0..total_count, [], fn i, acc ->
+          {:ok, comment} =
+            CMS.Comments.create_comment(
+              community,
+              thread,
+              article_inner_id(post, community),
+              mock_comment("comment #{i}"),
+              user2,
+              Ecto.UUID.generate()
+            )
+
+          acc ++ [comment]
+        end)
+
+      random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
+      {:ok, _} = CMS.Interactions.upvote(random_comment, author_user, Ecto.UUID.generate())
+
+      {:ok, author_comment} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          author_user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _} = CMS.Interactions.upvote(author_comment, author_user, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      the_author_comment =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(author_comment.inner_id)))
+
+      assert the_author_comment["isArticleAuthor"]
+      assert the_author_comment |> get_in(["meta", "isArticleAuthorUpvoted"])
+
+      the_random_comment =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
+
+      #
+      assert not the_random_comment["isArticleAuthor"]
+      assert the_random_comment |> get_in(["meta", "isArticleAuthorUpvoted"])
+    end
+
+    test "guest user can get paged comment with emotions info",
+         ~m(guest_conn community post user user2)a do
+      total_count = 2
+      page_size = 10
+      thread = :post
+
+      all_comment =
+        Enum.reduce(1..total_count, [], fn i, acc ->
+          {:ok, comment} =
+            CMS.Comments.create_comment(
+              community,
+              thread,
+              article_inner_id(post, community),
+              mock_comment("comment #{i}"),
+              user,
+              Ecto.UUID.generate()
+            )
+
+          Process.sleep(1000)
+          acc ++ [comment]
+        end)
+
+      comment = all_comment |> Enum.at(0)
+      comment2 = all_comment |> Enum.at(1)
+
+      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user2, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(comment2, :beer, user2, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      comment_emotion =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(comment.inner_id)))
+        |> Map.get("emotions")
+
+      assert is_nil(emotion_entry(comment_emotion, :popcorn))
+
+      downvote_emotion = emotion_entry(comment_emotion, :downvote)
+      assert downvote_emotion["count"] == 2
+      assert downvote_emotion["latestUsers"] |> length == 2
+      assert not downvote_emotion["viewerHasReacted"]
+
+      latest_downvote_users_logins =
+        Enum.map(downvote_emotion["latestUsers"], & &1["login"])
+
+      assert user.login in latest_downvote_users_logins
+      assert user2.login in latest_downvote_users_logins
+
+      comment2_emotion =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(comment2.inner_id)))
+        |> Map.get("emotions")
+
+      beer_emotion = emotion_entry(comment2_emotion, :beer)
+      assert beer_emotion["count"] == 1
+      assert beer_emotion["latestUsers"] |> length == 1
+      assert not beer_emotion["viewerHasReacted"]
+
+      latest_beer_users_logins = Enum.map(beer_emotion["latestUsers"], & &1["login"])
+      assert user2.login in latest_beer_users_logins
+    end
+
+    test "user make emotion can get paged comment with emotions has_motioned field",
+         ~m(user_conn community post user user2)a do
+      total_count = 10
+      page_size = 12
+      thread = :post
+
+      all_comment =
+        Enum.reduce(1..total_count, [], fn i, acc ->
+          {:ok, comment} =
+            CMS.Comments.create_comment(
+              community,
+              thread,
+              article_inner_id(post, community),
+              mock_comment("comment #{i}"),
+              user,
+              Ecto.UUID.generate()
+            )
+
+          Process.sleep(1000)
+          acc ++ [comment]
+        end)
+
+      comment = all_comment |> Enum.at(0)
+      comment2 = all_comment |> Enum.at(1)
+
+      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Interactions.emotion(comment2, :downvote, user2, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = user_conn |> gq_query(@query, variables)
+
+      assert Enum.find(results["entries"], &(&1["innerId"] == to_string(comment.inner_id)))
+             |> Map.get("emotions")
+             |> emotion_entry(:downvote)
+             |> Map.get("viewerHasReacted")
+    end
+
+    test "comment should have viewer has upvoted flag", ~m(user_conn community post user)a do
+      total_count = 10
+      page_size = 12
+      thread = :post
+
+      all_comments =
+        Enum.reduce(0..total_count, [], fn i, acc ->
+          {:ok, comment} =
+            CMS.Comments.create_comment(
+              community,
+              thread,
+              article_inner_id(post, community),
+              mock_comment("comment #{i}"),
+              user,
+              Ecto.UUID.generate()
+            )
+
+          acc ++ [comment]
+        end)
+
+      random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
+
+      {:ok, _} = CMS.Interactions.upvote(random_comment, user, Ecto.UUID.generate())
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: "POST"
+        },
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = user_conn |> gq_query(@query, variables)
+
+      upvoted_comment =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
+
+      assert upvoted_comment["viewerHasUpvoted"]
+    end
+  end
+
+  describe "paged participants" do
+    @query S.Comment.q(:paged_comments_participants)
+    test "guest user can get paged participants", ~m(guest_conn community post user)a do
+      total_count = 30
+      page_size = 10
+      thread = "POST"
+
+      Enum.reduce(1..total_count, [], fn _, acc ->
+        {:ok, new_user} = db_insert(:user)
+
+        {:ok, comment} =
+          CMS.Comments.create_comment(
+            community,
+            :post,
+            article_inner_id(post, community),
+            mock_comment(),
+            new_user,
+            Ecto.UUID.generate()
+          )
+
+        acc ++ [comment]
+      end)
+
+      {:ok, _} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, _} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      variables = %{
+        article: %{
+          inner_id: article_inner_id(post, community),
+          community: community.slug,
+          thread: thread
+        },
+        pagi: %{offset: %{page: 1, size: page_size}}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert results["pageInfo"]["page"] == 1
+      assert results["pageInfo"]["totalCount"] == total_count + 1
+    end
+  end
+
+  describe "paged replies" do
+    @query S.Comment.q(:comment_reply_page)
+    test "guest user can get paged replies", ~m(guest_conn community post user user2)a do
+      total_count = 2
+      page_size = 10
+      thread = :post
+
+      author_user = post.author
+
+      {:ok, parent_comment} =
+        CMS.Comments.create_comment(
+          community,
+          thread,
+          article_inner_id(post, community),
+          mock_comment(),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      Enum.reduce(1..total_count, [], fn i, acc ->
+        {:ok, reply_comment} =
+          CMS.Comments.reply_comment(
+            parent_comment,
+            mock_comment("reply #{i}"),
+            user2,
+            Ecto.UUID.generate()
+          )
+
+        acc ++ [reply_comment]
+      end)
+
+      {:ok, author_reply_comment} =
+        CMS.Comments.reply_comment(
+          parent_comment,
+          mock_comment("author reply"),
+          author_user,
+          Ecto.UUID.generate()
+        )
+
+      variables = %{
+        comment: comment_path(community, post, :post, parent_comment),
+        pagi: %{offset: %{page: 1, size: page_size, config_revision: 0}},
+        filter: %{}
+      }
+
+      results = guest_conn |> gq_query(@query, variables)
+
+      author_reply_comment =
+        Enum.find(
+          results["entries"],
+          &(&1["innerId"] == to_string(author_reply_comment.inner_id))
+        )
+
+      assert author_reply_comment["isArticleAuthor"]
+      assert results["entries"] |> length == total_count + 1
+    end
+  end
+end

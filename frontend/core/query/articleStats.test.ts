@@ -31,6 +31,7 @@ const stats = (overrides: Partial<TArticleStats> = {}): TArticleStats => ({
   upvotesCount: 3,
   commentsCount: 4,
   collectsCount: 5,
+  commentsParticipants: [],
   commentsParticipantsCount: 6,
   interactionRevision: 7,
   commentsRevision: 8,
@@ -269,4 +270,26 @@ describe('ArticleStats freshness and ordering', () => {
       articleStats(queryClient, 'home', THREAD.POST, '42').queryFn({ signal: undefined }),
     ).rejects.toMatchObject({ message: expect.stringContaining('ArticleStats unavailable') })
   })
+})
+
+it('REV-02 refreshes profile leaves without treating membership as a new owner revision', () => {
+  const current = {
+    ...stats(),
+    commentsParticipants: [{ ref: 'user-1', login: 'before', avatar: 'old' }],
+  }
+  const incoming = {
+    ...current,
+    commentsParticipants: [{ ref: 'user-1', login: 'after', avatar: 'new' }],
+  }
+  const refreshed = mergeArticleStats(current, incoming)
+  expect(refreshed.conflict).toBe(false)
+  expect(refreshed.stats.commentsParticipants).toEqual(incoming.commentsParticipants)
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const invalid = mergeArticleStats(current, {
+    ...incoming,
+    commentsParticipants: [{ ref: 'user-2', login: 'different' }],
+  })
+  expect(invalid.conflict).toBe(true)
+  expect(invalid.stats.commentsParticipants).toEqual(current.commentsParticipants)
+  expect(warn).toHaveBeenCalled()
 })

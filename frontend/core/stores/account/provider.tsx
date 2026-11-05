@@ -125,7 +125,9 @@ export default function Provider({ children, initData }: TProps) {
       }
       void queryClient.removeQueries({
         predicate: (query) =>
-          query.queryKey[0] === viewerQueryKeys.all[0] && query.queryKey[1] !== 'session',
+          query.queryKey[0] === viewerQueryKeys.all[0] &&
+          query.queryKey[1] !== 'session' &&
+          query.queryKey[1] !== (accountScope || 'anonymous'),
       })
       clearArticleViewAcks()
     }

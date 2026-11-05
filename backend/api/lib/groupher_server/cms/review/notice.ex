@@ -16,8 +16,7 @@ defmodule GroupherServer.CMS.Review.Notice do
     Author,
     Comment,
     CommentReviewBlock,
-    DocReviewBlock,
-    DocBranch
+    DocReviewBlock
   }
 
   @doc "Returns only the state that the target's author may see."
@@ -59,9 +58,9 @@ defmodule GroupherServer.CMS.Review.Notice do
       %Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
         {:ok, CommentReviewBlock, :comment_id, id, :all, nil}
 
-      %Comment{thread: :doc, branch_id: branch_id} when is_integer(branch_id) ->
-        case Repo.get(DocBranch, branch_id) do
-          %DocBranch{community_id: community_id} ->
+      %Comment{thread: :doc, article_id: article_id} ->
+        case CMS.Articles.Bindings.doc_owner(article_id) do
+          {:ok, %{id: community_id}} ->
             {:ok, CommentReviewBlock, :comment_id, id, community_id, nil}
 
           _ ->

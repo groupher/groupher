@@ -1,0 +1,10 @@
+
+20:57:59.309 [info] Migrations already up
+Running ExUnit with seed: 600527, max_cases: 1
+Excluding tags: [:later]
+
+.
+Finished in 1.2 seconds (0.00s async, 1.2s sync)
+
+Result: 1 passed
+]2;ExUnit - 1 tests, 0 failures in 1.2 seconds 

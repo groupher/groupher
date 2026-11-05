@@ -1,0 +1,50 @@
+
+19:37:35.409 [info] Migrations already up
+Running ExUnit with seed: 0, max_cases: 1, remaining_runs: 5
+Excluding tags: [:later]
+
+..
+Finished in 5.2 seconds (0.00s async, 5.2s sync)
+
+Result: 2 passed
+]2;ExUnit - 2 tests, 0 failures in 5.2 seconds 
+Running ExUnit with seed: 0, max_cases: 1, remaining_runs: 4
+Excluding tags: [:later]
+
+..
+Finished in 4.8 seconds (0.00s async, 4.8s sync)
+
+Result: 2 passed
+]2;ExUnit - 2 tests, 0 failures in 4.8 seconds 
+Running ExUnit with seed: 0, max_cases: 1, remaining_runs: 3
+Excluding tags: [:later]
+
+..
+Finished in 4.7 seconds (0.00s async, 4.7s sync)
+
+Result: 2 passed
+]2;ExUnit - 2 tests, 0 failures in 4.7 seconds 
+Running ExUnit with seed: 0, max_cases: 1, remaining_runs: 2
+Excluding tags: [:later]
+
+..
+Finished in 4.8 seconds (0.00s async, 4.8s sync)
+
+Result: 2 passed
+]2;ExUnit - 2 tests, 0 failures in 4.8 seconds 
+Running ExUnit with seed: 0, max_cases: 1, remaining_runs: 1
+Excluding tags: [:later]
+
+..
+Finished in 4.6 seconds (0.00s async, 4.6s sync)
+
+Result: 2 passed
+]2;ExUnit - 2 tests, 0 failures in 4.6 seconds 
+Running ExUnit with seed: 0, max_cases: 1, remaining_runs: 0
+Excluding tags: [:later]
+
+..
+Finished in 4.6 seconds (0.00s async, 4.6s sync)
+
+Result: 2 passed
+]2;ExUnit - 2 tests, 0 failures in 4.6 seconds 

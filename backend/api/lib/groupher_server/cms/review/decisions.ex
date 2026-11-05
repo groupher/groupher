@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
   """
 
   alias GroupherServer.{AlertWall, CMS, Repo}
-  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
   alias CMS.Model.Author
   alias CMS.Review.Const
 
@@ -102,6 +102,12 @@ defmodule GroupherServer.CMS.Review.Decisions do
   defp request_scope(_context), do: %{}
 
   defp update_restrictions(context, action, requests, actor, operation_ref) do
+    CMS.Comments.Summary.for_lifecycle(context.lifecycle, fn ->
+      update_restriction_facts(context, action, requests, actor, operation_ref)
+    end)
+  end
+
+  defp update_restriction_facts(context, action, requests, actor, operation_ref) do
     with {:ok, active} <-
            CMS.ReviewBlocks.active_for(context.lifecycle, restriction_scope(context)),
          {:ok, :pass} <- end_blocks(context, active, action, operation_ref),
@@ -158,13 +164,14 @@ defmodule GroupherServer.CMS.Review.Decisions do
   end
 
   defp restriction_scope(%{type: :comment, target: %{thread: thread}})
-       when thread in [:post, :blog, :changelog],
-       do: "platform"
+       when thread in [:post, :blog, :changelog] do
+    "platform"
+  end
 
   defp restriction_scope(context), do: context.scope_key
 
-  defp bump_graph(%{type: :comment, target: comment}), do: GraphRevision.bump_for_comment(comment)
-  defp bump_graph(%{target: %{id: article_id}}), do: GraphRevision.bump_for_article(article_id)
+  defp bump_graph(%{type: :comment}), do: Revision.bump()
+  defp bump_graph(%{target: %{id: _article_id}}), do: Revision.bump()
   defp bump_graph(_), do: {:ok, :pass}
 
   defp wall_target(%{type: :article, article_id: id, community_id: community_id}) do

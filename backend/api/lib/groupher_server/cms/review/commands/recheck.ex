@@ -196,8 +196,10 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     end
   end
 
-  defp comment_parent_title(%{thread: :doc, id: article_id}, %{branch_id: branch_id}) do
-    with %DocPublic{branch_version_id: version_id, title: title} <-
+  defp comment_parent_title(%{thread: :doc, id: article_id}, _comment) do
+    with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article_id),
+         %{id: branch_id} <- Repo.get_by(CMS.Model.DocBranch, community_id: owner.id, type: :main),
+         %DocPublic{branch_version_id: version_id, title: title} <-
            Repo.get_by(DocPublic, article_id: article_id, branch_id: branch_id),
          %DocBranchVersion{revision_id: revision_id} <- Repo.get(DocBranchVersion, version_id),
          %ArticleRevision{title: revision_title} <- Repo.get(ArticleRevision, revision_id) do

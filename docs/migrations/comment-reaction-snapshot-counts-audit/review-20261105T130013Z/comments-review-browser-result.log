@@ -1,0 +1,12 @@
+### Result
+{"foldedHint":true,"keyboardExpanded":true,"deletedRecord":1,"mutationRequests":0}
+### Ran Playwright code
+```js
+await (async (page) => { const root = page.locator("#comment-7"); await root.getByRole("button", {name:"Collapse replies", exact:true}).click(); const folded = root.getByRole("button", {name:/Deleted reply history remains accessible.*View reply history/}); await folded.waitFor(); await folded.scrollIntoViewIfNeeded(); await folded.screenshot({path:".playwright/comments-review-folded-history.png"}); const requests = []; page.on("request", request => { if(request.url().includes("/api/graphql")) requests.push(request.postData()); }); await folded.focus(); await page.keyboard.press("Enter"); const history = root.getByRole("button", {name:"View reply history · Expand replies", exact:true}); await history.waitFor(); await history.click(); await page.getByText("this comment is deleted", {exact:true}).waitFor(); return {foldedHint:true, keyboardExpanded:true, deletedRecord:await page.getByText("this comment is deleted", {exact:true}).count(), mutationRequests:requests.filter(body=>body && body.includes("mutation ")).length}; })(page);
+```
+### Page
+- Page URL: http://127.0.0.1:3009/home/post/1
+- Page Title: post-ag article planet article mention article editor
+- Console: 10 errors, 5 warnings
+### Events
+- New console entries: .playwright-cli/console-2026-11-05T12-59-00-387Z.log#L4-L28

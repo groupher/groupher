@@ -51,6 +51,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
          {:ok, true} <- Communities.Lifecycle.can_write(community),
          {:ok, _} <- article_mutable(context),
          {:ok, _} <- comment_mutable(context),
+         {:ok, :pass} <- public_readable(context),
          {:ok, _} <- action_allowed(user, action, context) do
       {:ok, :pass}
     else
@@ -64,6 +65,9 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
   end
 
   def check_access(_user, _action, _comment, _context), do: {:error, ErrorCat.unknown_action()}
+
+  defp public_readable(%{public_readable?: true}), do: {:ok, :pass}
+  defp public_readable(_context), do: {:error, ErrorCat.permission_denied()}
 
   defp article_mutable(%{article_lifecycle: %{state: :published}}), do: {:ok, :pass}
 

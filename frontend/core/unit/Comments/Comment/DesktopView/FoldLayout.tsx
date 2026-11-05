@@ -25,6 +25,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
 
   const isSolution = data.isSolution
   const author = data.author ?? {}
+  const repliesCount = data.repliesCount ?? 0
 
   return (
     <button type='button' className={s.wrapper} onClick={() => expandComment(data.innerId)}>
@@ -44,10 +45,12 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
         }}
       />
 
-      {(data.repliesCount ?? 0) > 0 && (
-        <div className={s.repliesHint}>
-          [ {data.repliesCount} {t('comment.replies.count')} ]
-        </div>
+      {(repliesCount > 0 || data.hasReplyEntries) && (
+        <span className={s.repliesHint}>
+          {repliesCount > 0
+            ? `[ ${repliesCount} ${t(repliesCount === 1 ? 'comment.replies.one' : 'comment.replies.count')} ]`
+            : t('comment.replies.records')}
+        </span>
       )}
 
       {isSolution && (

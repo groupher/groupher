@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Model.ArticleStats do
 
   alias GroupherServer.CMS
   alias CMS.Artiment.Threads
+  alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -30,7 +31,8 @@ defmodule GroupherServer.CMS.Model.ArticleStats do
     field(:collects_count, :integer, default: 0)
     field(:comments_participants_count, :integer, default: 0)
     field(:interaction_revision, :integer, default: 0)
-    field(:comments_revision, :integer, default: 0)
+    field(:comments_revision, :integer, default: 1)
+    embeds_many(:comments_participants, Embeds.User, on_replace: :delete)
     field(:emotion_counts, {:array, :map}, virtual: true, default: [])
     field(:snapshot_at, :utc_datetime)
 

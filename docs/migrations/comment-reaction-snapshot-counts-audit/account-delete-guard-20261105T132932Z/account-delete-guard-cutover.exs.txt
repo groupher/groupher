@@ -1,0 +1,42 @@
+alias GroupherServer.CMS.Comments.SchemaGeneration, as: Generation
+Application.ensure_all_started(:ecto_sql)
+database = "groupher_user_delete_guard_cutover_20261105"
+generation = "76896cc8-0cdd-494a-a21c-10c904a81501"
+hash = File.read!("/tmp/account-delete-guard-approved-schema.sha256") |> String.trim()
+{:ok, report, _} = Ecto.Migrator.with_repo(GroupherServer.Repo, fn repo ->
+  opts = [database: database, generation: generation, schema_sha256: hash]
+  {:ok, :bootstrapped} = Generation.bootstrap!(repo, database, generation, "isolated-account-delete-guard-validation", "account-delete-guard-20261105")
+  {:ok, :verified} = Generation.verify_before_migration!(repo, opts)
+  Ecto.Migrator.run(repo, :up, all: true)
+  {:ok, ready} = Generation.mark_ready!(repo, opts)
+  {:ok, :verified} = Generation.verify_ready!(repo, opts)
+  tamper = fn sql ->
+    {:error, :rejected} = repo.transaction(fn ->
+      repo.query!(sql, [])
+      rejected = try do
+        Generation.verify_ready!(repo, opts)
+        false
+      rescue
+        _ in RuntimeError -> true
+      end
+      true = rejected
+      repo.rollback(:rejected)
+    end)
+    {:ok, :verified} = Generation.verify_ready!(repo, opts)
+    true
+  end
+  disabled = tamper.("ALTER TABLE account.users DISABLE TRIGGER block_users_physical_delete")
+  weakened = tamper.("CREATE OR REPLACE FUNCTION account.guard_users_physical_deletion() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RETURN OLD; END; $$;")
+  old_hash_rejected = try do
+    Generation.verify_ready!(repo, Keyword.put(opts, :schema_sha256, "dc181bea607252628bef669ef3fa89809f475e9489c9eb11ec93085a42d6bdad"))
+    false
+  rescue
+    _ in RuntimeError -> true
+  end
+  true = old_hash_rejected
+  %{database: database, generation: generation, schema_sha256: ready.schema_sha256,
+    phase: "ready", disabled_guard_rejected: disabled, weakened_guard_rejected: weakened,
+    previous_schema_hash_rejected: old_hash_rejected}
+end)
+File.write!("/tmp/account-delete-guard-cutover.json", Jason.encode!(report, pretty: true))
+IO.puts("Account deletion guard fresh-schema validation passed")
