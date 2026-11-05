@@ -1,5 +1,5 @@
 defmodule GroupherServer.CMS.WallpaperTest do
-  use GroupherServer.TestMate, async: true
+  use GroupherServer.TestMate, async: false
 
   alias GroupherServer.CMS
   alias CMS.Dashboard.Fields

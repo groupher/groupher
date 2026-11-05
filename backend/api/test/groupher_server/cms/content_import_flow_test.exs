@@ -1,5 +1,5 @@
 defmodule GroupherServer.CMS.ContentImportFlowTest do
-  use GroupherServer.TestMate, async: true
+  use GroupherServer.TestMate, async: false
 
   import Ecto.Query, warn: false
   import GroupherServer.Support.Factory

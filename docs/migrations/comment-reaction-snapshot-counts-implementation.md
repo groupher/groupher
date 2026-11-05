@@ -1,4 +1,4 @@
-> 2026-11-05 后续审计：并行 pending 已确认由 Sandbox 长事务争抢 MentionsGraph 全局版本行触发；真实提交的低负载并发对照通过，业务全局热点风险仍需独立评估。见 [原因与因果证据](comment-pending-concurrency-audit.md)。下文“尚未查清”的阶段记录保留，未修复/未发布状态不变。
+> 2026-11-05 当前状态：MentionsGraph 已完成 Doc Comment 本地联合验收；Sandbox 单例行冲突已通过 TestMate 默认串行和显式 async 写入用例调整处理，本轮联合393项、并发/摘要/账号 guard 与准入28项通过，见[测试隔离与联合验收](comment-test-isolation.md)。[原因与因果证据](comment-pending-concurrency-audit.md)及下文“尚未查清/尚未修复”的阶段记录保留为历史。业务全局热点风险仍需独立评估，真实 B5 发布仍未执行。
 
 # 共享评论：实施与本地验收记录
 
@@ -185,4 +185,8 @@ TEST_DB_NAME=groupher_comments_20261105_transport mix test test/groupher_server_
 
 本次本地提交收录共享评论 schema/writer/reader、reaction 成员摘要、replies 界面、账号物理删除 guard、测试及原始审计证据。共享文件按差异拆分；GraphQL schema 和生成文件只包含评论合同的变化。MentionsGraph 内部、Article Activity、请求取消、部署和认证的在途改动不整体纳入。
 
-Comments.Effects、评论命令和 Doc 清理中的稳定身份适配依赖当前共享工作区的 MentionsGraph 在途实现。既有后端运行结果来自该集成工作区，不能据此声称仅检出本提交即可独立构建或发布；需与该独立变更集成后重新验收。临时导出的暂存快照仅用于生成 GraphQL 产物及运行提交前静态检查，不改变另一会话的源码或工作目录。冻结证据按原始字节保存，保留日志和 patch 中已有的空白。
+Comments.Effects、评论命令和 Doc 清理中的稳定身份适配依赖当前共享工作区的 MentionsGraph 实现。该功能已完成[Doc Comment 本地联合验收](../feature/article/mentions-graph-doc-comment-joint-acceptance.md)，不再列为“等待实现”；是否已提交全部依赖及是否可发布需分别核验。既有后端运行结果来自集成工作区，不能据此声称仅检出本提交即可独立构建或发布。临时导出的暂存快照仅用于生成 GraphQL 产物及运行提交前静态检查，不改变另一会话的源码或工作目录。冻结证据按原始字节保存，保留日志和 patch 中已有的空白。
+
+## 测试隔离后续
+
+用户授权后调整测试调度并重跑联合组合，见[共享评论集成测试隔离与 MentionsGraph 联合验收](comment-test-isolation.md)。原串行通过数和 pending 诊断仍绑定原时点；本轮结果单列，不能反写历史证据，也不能替代 B5 的目标库、writer drain、缓存切换和 URL 验收。

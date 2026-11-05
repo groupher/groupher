@@ -1,0 +1,10 @@
+{
+  "observed_at": "2026-11-05T14:11:44.074230+00:00",
+  "files": {
+    "backend/api/lib/support/test_mate.ex": "ce4bf33b4725fba5c92f4ef4df37bb8d8b795f372312a902de61f28b6329da41",
+    "backend/api/test/groupher_server/cms/wallpaper_test.exs": "532ef86752013c9da542b6de6d1ef83069833bdadf838885a1dcaeb91831652f",
+    "backend/api/test/groupher_server/cms/content_import_flow_test.exs": "6a1052b52fb7b52d3b4e4390ac80d5d25bd4a5cc06bb5dc85257e49c5b87e6b9",
+    "backend/api/test/groupher_server/cms/articles/bindings_test.exs": "10caf29fdae12e37f9e2564cee84714599f07ef881f1f8eb537b157c63546071"
+  },
+  "note": "Observed during seed-0 run; not a frozen checkout for the entire suite."
+}

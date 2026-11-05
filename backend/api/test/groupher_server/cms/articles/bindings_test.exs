@@ -1,5 +1,5 @@
 defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
-  use GroupherServer.TestMate, async: true
+  use GroupherServer.TestMate, async: false
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.{CollectFolderEntry, Embeds}

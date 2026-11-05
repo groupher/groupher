@@ -1,5 +1,7 @@
 # 并行测试 command_resolution_pending 原因审计
 
+> 后续状态：本页保留原因确认阶段的历史结论和原始证据。用户随后授权修复测试隔离；`TestMate` 默认串行及显式 async 写入用例的调整见[测试隔离与联合验收](comment-test-isolation.md)。下文“未修复常规并行测试配置”描述原诊断时点，不作为后续实施状态。业务全局 revision 热点和真实发布仍分别受原有边界约束。
+
 > 2026-11-05。范围：只诊断上轮 GraphQL 并行回归的 pending，未修改业务代码、测试框架或生产配置，未发布；仅使用新建私有库 `groupher_pending_audit_20261105` 和临时诊断测试。原有脏工作区及其他 session 保持。
 
 ## 1. 结论

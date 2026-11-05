@@ -1,0 +1,202 @@
+$ node --test scripts/check-documentation.test.mjs && node scripts/check-documentation.mjs && pnpm check:cms-query-boundary && pnpm check:cms-context-boundary && pnpm check:policy-boundary && pnpm check:backend-context-v2 && pnpm check:cms-facade-boundary && pnpm check:article-binding-naming && pnpm check:resolver-boundary && pnpm check:business-return-shape && pnpm check:command-identity
+✔ requires an ASCII transition instead of prose alone (0.668042ms)
+✔ audits outer and nested Elixir module docs independently (1.049083ms)
+✔ does not treat defmodule examples, strings, or comments as nested source modules (0.13425ms)
+✔ counts multiline Elixir arguments without counting nested commas (0.2475ms)
+✔ requires adjacent JSDoc for exported callables and local re-exports (6.59825ms)
+✔ rejects recoverable parser errors instead of auditing a partial AST (0.889ms)
+✔ parses generic TypeScript arrows without treating plain TS as TSX (1.665958ms)
+✔ selects JSX parsing from the actual file extension (0.175792ms)
+✔ checks repository-local Markdown links while ignoring code and external URLs (0.674541ms)
+✔ checks links after an indented closing fence (0.158375ms)
+✔ requires the fixed documentation README status vocabulary (0.161875ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 85.6375
+Documentation coverage passed.
+$ node --test scripts/check-cms-query-boundary.test.mjs && node scripts/check-cms-query-boundary.mjs
+✔ rejects deleted top-level lookup definitions in domain Query modules (2.353166ms)
+✔ rejects each removed single-resource lookup declaration (1.494458ms)
+✔ rejects direct and aliased calls to a removed resource lookup (1.550083ms)
+✔ allows collection Query calls and non-owner functions with the same name (8.160208ms)
+✔ allows named Facts, Docs branch context, and canonical FrontDesk loads (0.316375ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 194.898334
+CMS Query boundary is clean: no CMS Reader modules or forbidden top-level resource lookup.
+$ node --test scripts/check-cms-context-module-boundary.test.mjs && node scripts/check-cms-context-module-boundary.mjs --strict
+✔ reports forbidden P0 boundaries by owner (1.595375ms)
+✔ reports Persist transaction ownership and Job command re-entry (0.34ms)
+✔ reports empty Persist, Workflow user actions, and direct reaction writes (0.374667ms)
+✔ reports writer naming and Persist delegates to Workflow (0.097417ms)
+✔ reports Comment row writes kept inside Commands (0.245292ms)
+✔ ignores comments and strings (0.116792ms)
+✔ masks sigils without hiding declarations that follow them (0.224333ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 73.3515
+CMS context module boundary report: 0 findings
+Strict CMS context module boundary check.
+$ node --test scripts/check-policy-boundary.test.mjs && node scripts/check-policy-boundary.mjs --check
+✔ current runtime and contract roots contain no legacy Policy owners (112.226667ms)
+✔ legacy references remain reportable without becoming active failures (1.497875ms)
+✔ generated pipeline graph references are classified separately (0.090625ms)
+✔ legacy owner matching covers the old policy test module name (0.065ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 521.6045
+Policy boundary active findings: 0
+Policy boundary historical/generated findings: 37
+historical docs/architecture/backend-module-reorganization.md:4 [CMS.Policy] > 将其放入通用 `CMS.Policy` 的结论已被 [Policy Boundary](./policy.md) 取代。
+historical docs/architecture/backend-module-reorganization.md:5 [CMS.Policy] > 当前目标 owner 是 `CMS.Gate.RateLimit.Publish`，本文后续 `CMS.Policy` 名称只按历史理解。
+historical docs/architecture/backend-module-reorganization.md:32 [CMS.Policy] GroupherServer.CMS.Policy
+historical docs/architecture/backend-module-reorganization.md:110 [CMS.Policy] 发布限流从 `Statistics` 迁移到 `GroupherServer.CMS.Policy`。
+historical docs/architecture/backend-module-reorganization.md:115 [CMS.Policy] GroupherServer.CMS.Policy.log_publish_action(user)
+historical docs/architecture/backend-module-reorganization.md:116 [CMS.Policy] GroupherServer.CMS.Policy.load_publish_throttle(user)
+historical docs/architecture/backend-module-reorganization.md:117 [CMS.Policy] GroupherServer.CMS.Policy.mock_publish_throttle_attr(scope, user, opts)
+historical docs/architecture/backend-module-reorganization.md:145 [CMS.Policy] - 当时的 CMS 写策略状态放在 `CMS.Policy` 下；该规则现已 superseded，publish throttle 的
+historical docs/architecture/cms-facade-directory.md:10 [CMS.Policy] > 其中“刻意保留 `CMS.Policy`”只代表 F1–F13 当时的审计结论，已被
+historical docs/architecture/cms-facade-directory.md:188 [CMS.Policy] `CMS.Events`、`CMS.Gate`、`CMS.Interactions`、`CMS.Passport`、`CMS.Policy`、`CMS.Search`、
+historical docs/migrations/policy-boundary-fix.md:17 [CMS.Policy] - 删除含义过宽的通用 `CMS.Policy` context；
+historical docs/migrations/policy-boundary-fix.md:27 [CMS.Policy] | P0     | `CMS.Gate.RateLimit.Publish` / `CMS.Policy` / `CMS.Policy.Config` / `CMS.Policy.Model.PublishThrottle` | 真实 owner 与 delegate namespace 并存；`load_publish_throttle/1` 会写库且重置条件可疑 | 保留 `Gate.RateLimit.Publish` 为唯一入口，收口 Config/Model 并明确 reset 语义                  |
+historical docs/migrations/policy-boundary-fix.md:28 [Comments.JobPolicy] | P0     | `CMS.Comments.JobPolicy`                                                                               | 名为 Policy，但函数直接 enqueue required job 并转换错误                               | 改为 `RequiredJobs` 或 `JobContract`                                                           |
+historical docs/migrations/policy-boundary-fix.md:29 [NamePolicy] | P1     | `CMS.Communities.NamePolicy`                                                                           | normalization、规则、claim/community 查询和 cooldown 查询混在一起                     | `NameRules` + `NameAvailability`                                                               |
+historical docs/migrations/policy-boundary-fix.md:30 [PublicCache.Policy] | P2     | `PublicCache.Policy`                                                                                   | 只返回 timeout/retry/tag-count 配置，不作 allow/deny                                  | 改为 `DeliveryConfig`                                                                          |
+historical docs/migrations/policy-boundary-fix.md:71 [CMS.Policy] ## 3. P0：Publish throttle 退出通用 CMS.Policy
+historical docs/migrations/policy-boundary-fix.md:78 [CMS.Policy] CMS.Policy
+historical docs/migrations/policy-boundary-fix.md:86 [CMS.Policy] +-> CMS.Policy.Config
+historical docs/migrations/policy-boundary-fix.md:87 [CMS.Policy] +-> CMS.Policy.Model.PublishThrottle
+historical docs/migrations/policy-boundary-fix.md:94 [CMS.Policy] `CMS.Policy` 本身只是 delegate，生产实现和真实 owner 是 `CMS.Gate.RateLimit.Publish`。另外，`load_publish_throttle/1` 会根据时间窗口更新计数器，不是纯 load。当 day/hour 计数同时过期时，当前分支可能返回未清零的旧 record，需要在迁移前用测试固定正确语义。
+historical docs/migrations/policy-boundary-fix.md:121 [CMS.Policy] 1. 全量 inventory `CMS.Policy.*` 与 `CMS.Gate.RateLimit.Publish` caller；
+historical docs/migrations/policy-boundary-fix.md:126 [CMS.Policy] 6. 删除 `CMS.Policy` 通用 delegate/context，不建立第二个长期 facade。
+historical docs/migrations/policy-boundary-fix.md:128 [Comments.JobPolicy] ## 4. P0：Comments.JobPolicy 改为 required-job contract
+historical docs/migrations/policy-boundary-fix.md:132 [Comments.JobPolicy] `CMS.Comments.JobPolicy.audition/1,2` 会直接调用 `Jobs.audition/1`，并把 enqueue 失败转换成 Comments ErrorCat：
+historical docs/migrations/policy-boundary-fix.md:138 [Comments.JobPolicy] Comments.JobPolicy
+historical docs/migrations/policy-boundary-fix.md:366 [NamePolicy] ## 6. P1：Communities.NamePolicy 拆 Rules 与 Availability
+historical docs/migrations/policy-boundary-fix.md:403 [NamePolicy] 5. 删除 `NamePolicy`，不建立双重 runtime authority。
+historical docs/migrations/policy-boundary-fix.md:405 [PublicCache.Policy] ## 7. P2：PublicCache.Policy 改为 DeliveryConfig
+historical docs/migrations/policy-boundary-fix.md:462 [Comments.JobPolicy] -> rename Comments.JobPolicy
+historical docs/migrations/policy-boundary-fix.md:463 [PublicCache.Policy] -> rename PublicCache.Policy
+historical docs/migrations/policy-boundary-fix.md:473 [CMS.Policy] -> replace generic CMS.Policy with Gate.RateLimit.Publish capability
+historical docs/migrations/policy-boundary-fix.md:509 [CMS.Policy] - `CMS.Policy`、`CMS.Policy.Config`、`CMS.Policy.Model.PublishThrottle`、`Comments.JobPolicy`、`Communities.NamePolicy` 和 `PublicCache.Policy` 旧 namespace/模块最终删除；
+historical docs/migrations/policy-boundary-fix.md:509 [PublicCache.Policy] - `CMS.Policy`、`CMS.Policy.Config`、`CMS.Policy.Model.PublishThrottle`、`Comments.JobPolicy`、`Communities.NamePolicy` 和 `PublicCache.Policy` 旧 namespace/模块最终删除；
+historical docs/migrations/policy-boundary-fix.md:509 [Comments.JobPolicy] - `CMS.Policy`、`CMS.Policy.Config`、`CMS.Policy.Model.PublishThrottle`、`Comments.JobPolicy`、`Communities.NamePolicy` 和 `PublicCache.Policy` 旧 namespace/模块最终删除；
+historical docs/migrations/policy-boundary-fix.md:509 [NamePolicy] - `CMS.Policy`、`CMS.Policy.Config`、`CMS.Policy.Model.PublishThrottle`、`Comments.JobPolicy`、`Communities.NamePolicy` 和 `PublicCache.Policy` 旧 namespace/模块最终删除；
+historical docs/migrations/policy-boundary-fix.md:530 [CMS.Policy] 该命令在迁移完成后必须零命中。`CMS\.Policy` 已覆盖 `CMS.Policy.Config` 和 `CMS.Policy.Model.PublishThrottle`，不再重复列出子 namespace；`\bNamePolicy(?:\b|Test\b)` 同时覆盖完整 `Communities.NamePolicy`、alias 后的裸 `NamePolicy` 和 `NamePolicyTest`。
+historical docs/migrations/policy-boundary-fix.md:530 [NamePolicy] 该命令在迁移完成后必须零命中。`CMS\.Policy` 已覆盖 `CMS.Policy.Config` 和 `CMS.Policy.Model.PublishThrottle`，不再重复列出子 namespace；`\bNamePolicy(?:\b|Test\b)` 同时覆盖完整 `Communities.NamePolicy`、alias 后的裸 `NamePolicy` 和 `NamePolicyTest`。
+$ node --test scripts/check-backend-context-v2.test.mjs && node scripts/check-backend-context-v2.mjs --fully-strict
+✔ accepts a Context facade, internal capability, Owners, and organizational namespaces (8.738958ms)
+✔ preserves AI acronym casing for the shared capability Context (1.149625ms)
+✔ rejects missing Context and singular Owner facades plus unknown directories (2.757084ms)
+✔ rejects generic and compound legacy architecture names without substring false positives (6.447083ms)
+✔ rejects forbidden module names after sigils containing quotes (1.72525ms)
+✔ restricts Outbox writes to Effects and delivery state to Outbox Workflow (6.651875ms)
+✔ keeps report-only findings non-blocking and rejects them in fully-strict mode (1.709458ms)
+✔ rejects dynamic callbacks and unstable persisted Worker payload fields (2.45875ms)
+✔ rejects apply/3 in Workers but ignores payload words in comments and strings (1.886334ms)
+✔ rejects a tagged error returned directly from Repo.transaction (1.536042ms)
+✔ does not treat nested callback error values as the transaction result (1.066334ms)
+✔ rejects nested registry keys and root drift globally (0.957084ms)
+✔ rejects Facade infrastructure, misplaced Workers, and cross-Context internals (4.574583ms)
+✔ rejects alternate syntax for internal behavior and Facade module escapes (4.4525ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 121.379333
+Backend context v2 report: 0 findings
+$ node --test scripts/check-cms-facade-boundary.test.mjs && node scripts/check-cms-facade-boundary.mjs
+✔ rejects persistence, effects, and shared command construction in facades (0.98475ms)
+✔ ignores historical boundary wording in moduledoc comments (0.437375ms)
+✔ requires the current Docs, Review and Ticket concrete command manifest (1.102667ms)
+✔ rejects a Ticket command replaced by a pipeline import without execute (13.7665ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 107.459458
+CMS facade boundary is clean across 11 facades and 23 commands.
+$ node --test scripts/check-article-binding-naming.test.mjs && node scripts/check-article-binding-naming.mjs
+✔ flags legacy ArticleCommunity storage and runtime names (1.398ms)
+✔ ignores migration history and accepts canonical binding names (0.151208ms)
+✔ keeps TicketSource and Ticket workflow relations outside ArticleBinding terminology (0.700166ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89.37975
+ArticleBinding naming is clean across active backend runtime, tests, and fixtures.
+$ node --test scripts/check-resolver-boundary.test.mjs && node scripts/check-resolver-boundary.mjs
+✔ rejects persistence and internal domain dependencies (1.179625ms)
+✔ rejects persistence-shape mapping and partial schemas (0.11175ms)
+✔ accepts canonical middleware structs and public facades (0.44475ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 127.743917
+Resolver boundary is clean across the complete resolver directory.
+$ node --test scripts/check-business-return-shape.test.mjs && node scripts/check-business-return-shape.mjs
+✔ reports business bare success and with matches (1.477625ms)
+✔ reports callback branches and keyword branches that return bare success (0.310167ms)
+✔ does not report tagged tuple branches or near-miss atoms (0.136542ms)
+✔ does not treat a bare atom nested in a map value as a function result (0.102334ms)
+✔ ignores comments and string examples (0.12175ms)
+✔ matches only the registered occurrence count (0.233083ms)
+✔ allows a registered callback branch while keeping business branches unmatched (0.153292ms)
+✔ validates exception metadata and detects stale registrations (0.228084ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 78.448958
+Business return-shape clean across 3 checked expressions.
+$ node --test scripts/check-command-identity.test.mjs && node scripts/check-command-identity.mjs
+✔ scans every CMS persist filename, including BindingPersist (0.494542ms)
+✔ detects bare and aliased Persist calls in executable source (0.137875ms)
+✔ ignores Persist wording in Elixir docs and comments (0.079208ms)
+✔ detects command identity fallbacks but ignores infrastructure ids (0.079792ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 812.916
+command identity and CMS boundary gates: clean (21 Persist files scanned)

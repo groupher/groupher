@@ -22,8 +22,10 @@
 
 ## 后续实施阶段的剩余项（2026-11-05）
 
+MentionsGraph 已完成[Doc Comment 本地联合验收](../feature/article/mentions-graph-doc-comment-joint-acceptance.md)，不能继续列为等待实现。后续测试调度调整与当前复跑结果见[测试隔离与联合验收](comment-test-isolation.md)；下文关于未修复 pending 的观察保留为先前验收时点记录。
+
 用户后续已授权业务实现，B1–B4/B6 的工作区交付及本轮测试见实施记录。原49项输入与07:55观测不作覆盖；实施期的新来源指纹/正文差异在 `implementation-20261105T111200Z` 目录按观察批次保存。
 
-当前外部前置仍是 B5 的真实目标新库 manifest/执行人、旧数据处置授权、旧 API/worker drain、旧 repair Job 清理、统一构建/缓存失效和目标 URL 验收。私有测试库和本地浏览器不替代这些条件。Transport 首轮并行夹具创建出现 pending 的观察也保留在实施记录，不将串行通过写成并行夹具问题已修复。
+当前外部前置仍是 B5 的真实目标新库 manifest/执行人、旧数据处置授权、旧 API/worker drain、旧 repair Job 清理、统一构建/缓存失效和目标 URL 验收。私有测试库和本地浏览器不替代这些条件。Transport 首轮并行夹具创建出现 pending 的历史观察保留在实施记录；后续测试隔离修复及393项联合、28项并发/摘要/guard 与准入回归另见上述新记录，不用早先串行通过数替代该修复证据。
 
 最终 transport 192项串行回归通过；其固定输入5717项的结束观察差异为0，22项实施期差异的正文/SHA及 ledger/case 映射已归档。原 B0 剩余差异仍是历史记录；当前发布阻塞与并行 transport 夹具 pending 观察见实施记录，不复写原快照。
