@@ -14,3 +14,4 @@ V2 的[来源关联合同](./v2.md#4-ticketsource-与首批-post-规则)明确�
 - [文件级起始改造清单](./inventory.md)
 - [T0 出口合同](./t0-contract.md)
 - [Ticket V2 当前合同与实施记录](./v2.md)
+- [Goal 与 Ticket 组织关系讨论稿](./goal-design.md)：后续产品方向，尚未实现。
