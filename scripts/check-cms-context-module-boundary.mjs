@@ -14,6 +14,11 @@ const sharedFacadeFiles = new Set([
   'gate.ex',
   'outbox.ex',
 ])
+// These maintenance Commands are the single transaction owner for their operation.
+const approvedTransactionOwners = new Set([
+  'backend/api/lib/groupher_server/cms/artiment_mentions/commands/hide_source.ex',
+  'backend/api/lib/groupher_server/cms/artiment_mentions/commands/rebuild_current_set.ex',
+])
 
 /** Collects CMS source files without including generated or ignored artifacts. */
 export const cmsSourceFiles = (root = cmsRoot) => {
@@ -225,6 +230,7 @@ export const boundaryFindings = (source, relativePath) => {
   const masked = maskElixir(source)
   const owner = ownerForPath(relativePath)
   const findings = []
+  const transactionCount = masked.match(/\bRepo\.transaction\s*\(/g)?.length ?? 0
 
   if (owner === 'persist' && !/\b(?:def|defp|defmacro|defmacrop|defdelegate)\s/.test(masked)) {
     findings.push(
@@ -255,7 +261,8 @@ export const boundaryFindings = (source, relativePath) => {
 
     if (
       /\bRepo\.transaction\s*\(/.test(line) &&
-      ['commands', 'writer', 'mutation', 'facade'].includes(owner)
+      ['commands', 'writer', 'mutation', 'facade'].includes(owner) &&
+      !(approvedTransactionOwners.has(relativePath) && transactionCount === 1)
     ) {
       findings.push(
         finding(

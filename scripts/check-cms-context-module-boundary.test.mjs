@@ -43,6 +43,18 @@ test('reports Persist transaction ownership and Job command re-entry', () => {
   assert.equal(jobFindings[0].category, 'job_user_command')
 })
 
+test('allows one reviewed maintenance Command transaction but reports a second', () => {
+  const path =
+    'backend/api/lib/groupher_server/cms/artiment_mentions/commands/hide_source.ex'
+  assert.deepEqual(boundaryFindings('Repo.transaction(fn -> :ok end)', path), [])
+  assert.deepEqual(
+    boundaryFindings('Repo.transaction(fn -> :ok end)\nRepo.transaction(fn -> :ok end)', path).map(
+      ({ category }) => category,
+    ),
+    ['transaction_owner', 'transaction_owner'],
+  )
+})
+
 test('reports empty Persist, Workflow user actions, and direct reaction writes', () => {
   const emptyPersist = boundaryFindings(
     'defmodule Example.Persist do\nend\n',

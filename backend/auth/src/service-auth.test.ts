@@ -50,6 +50,57 @@ const tokenRequest = (overrides: Record<string, string> = {}) => {
 }
 
 describe('service identity issuer', () => {
+  it('isolates maintenance capabilities and preserves existing service clients', async () => {
+    const maintenanceResource = 'https://api.groupher.com/cms-maintenance'
+    const maintenanceEnvironment = {
+      ...environment,
+      SERVICE_AUTH_RESOURCES_JSON: JSON.stringify({
+        [resource]: 'phoenix:press-api',
+        [maintenanceResource]: 'phoenix:cms-maintenance',
+      }),
+      SERVICE_AUTH_CLIENTS_JSON_MAINTENANCE: JSON.stringify(
+        ['initialize', 'rebuild'].map((operation) => ({
+          allowedAudiences: ['phoenix:cms-maintenance'],
+          allowedScopes: [`cms:mentions:${operation}`],
+          clientId: `cms-mentions-${operation}`,
+          clientRef: `cms-mentions-${operation}`,
+          credentialHashes: [`sha256:${createHash('sha256').update(operation).digest('hex')}`],
+          serviceName: `cms-mentions-${operation}`,
+          status: 'active',
+        })),
+      ),
+    }
+    for (const operation of ['initialize', 'rebuild']) {
+      const request = tokenRequest({
+        resource: maintenanceResource,
+        scope: 'cms:mentions:initialize cms:mentions:rebuild',
+      })
+      request.headers.set(
+        'authorization',
+        `Basic ${Buffer.from(`cms-mentions-${operation}:${operation}`).toString('base64')}`,
+      )
+      await expect(issueServiceToken(request, maintenanceEnvironment)).resolves.toMatchObject({
+        scope: `cms:mentions:${operation}`,
+        token_type: 'Bearer',
+      })
+      const denied = new Request(request, {
+        body: new URLSearchParams({
+          grant_type: 'client_credentials',
+          resource,
+          scope: 'press:article:read',
+        }),
+      })
+      await expect(issueServiceToken(denied, maintenanceEnvironment)).resolves.toMatchObject({
+        error: 'invalid_target',
+        status: 400,
+      })
+    }
+    await expect(issueServiceToken(tokenRequest(), maintenanceEnvironment)).resolves.toMatchObject({
+      scope: 'press:article:read',
+      token_type: 'Bearer',
+    })
+  })
+
   it('issues an audience-bound token with only granted requested scopes', async () => {
     const result = await issueServiceToken(tokenRequest(), environment)
     expect(result).toMatchObject({

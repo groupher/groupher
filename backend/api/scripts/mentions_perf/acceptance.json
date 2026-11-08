@@ -1,0 +1,52 @@
+{
+  "version": 2,
+  "status": "candidate-thresholds-frozen-for-next-trial; design-load-and-target-capacity-pending",
+  "pilot": {
+    "samples_per_case": 100,
+    "warmup_requests": 3,
+    "required_cases": [
+      "http_graph_first",
+      "http_graph_cursor",
+      "graph_hub_first",
+      "graph_hub_cursor",
+      "outgoing_cursor",
+      "outgoing_cursor_second",
+      "incoming_cursor",
+      "outgoing_offset_count",
+      "outgoing_deep_offset_count",
+      "comment_outgoing",
+      "doc_comment_seeds",
+      "revision"
+    ]
+  },
+  "qualification": {
+    "samples_per_case_per_run": 1000,
+    "independent_runs": 3,
+    "require_target_major_postgres_version": true,
+    "require_recorded_target_database_capacity": true,
+    "require_source_and_degree_distribution_provenance": true,
+    "require_agreed_read_write_arrival_rates": true,
+    "proposed_read_success_ratio_at_design_load": 0.95
+  },
+  "proposed_p95_ms": {
+    "graph_first": 500,
+    "one_hop": 500,
+    "comment_seeds": 500,
+    "revision": 200,
+    "writer_transaction": 250
+  },
+  "scan_review": {
+    "bounded_window_max_edge_scan_work_per_node": 4200,
+    "rationale": "One focus, two directions, and one lookahead row per page; inspect actual plans rather than treating the cutoff as a product limit",
+    "offset_and_count": "degree dependent; record full plans and latency, do not apply O(first) assertions"
+  },
+  "load_probe": {
+    "readers": 4,
+    "writers": 2,
+    "requests_per_worker": 20,
+    "held_revision_ms": 10,
+    "paced_writer_interval_ms": 500,
+    "observer_interval_ms": 20,
+    "status": "2026-11-06 user-selected candidate diagnostic load; not target traffic or production capacity acceptance"
+  }
+}
