@@ -17,7 +17,7 @@ export default function List() {
   return (
     <Fragment>
       {overlay && (
-        <section aria-label={t('reference_map.linked_comment')}>
+        <section aria-label={t('comment.state.title')}>
           <CommentsList
             mode={mode}
             apiMode={apiMode}

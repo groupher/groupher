@@ -1,6 +1,9 @@
+import RestrictedResource from '@community/components/RestrictedResource'
 import { communityQueries } from '@community/query/queries'
+import { loadResourceWithStatus } from '@community/query/restrictedResource'
 import { communityPublicPath } from '@community/server/public-path'
 import { createFileRoute, notFound } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
 
 import { THREAD } from '~/const/thread'
 import useTrans from '~/hooks/useTrans'
@@ -8,7 +11,7 @@ import { loadTicketSourceStats } from '~/query/ticketStats'
 import type { TTicket } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
-import ReferenceMap from '~/unit/ReferenceMap'
+import MentionsGraph from '~/unit/MentionsGraph'
 
 const STATUS_LABEL = {
   TODO: 'article.status.todo',
@@ -19,10 +22,25 @@ const STATUS_LABEL = {
 export const Route = createFileRoute('/$community/ticket/$id')({
   loader: async ({ context, params }) => {
     const innerId = Number(params.id)
-    if (!Number.isInteger(innerId) || innerId < 1) throw notFound()
-    const ticket = await context.queryClient.ensureQueryData(
-      communityQueries.ticket(params.community, innerId),
+    const numbered = Number.isInteger(innerId) && innerId > 0
+    if (
+      !numbered &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id)
+    ) {
+      throw notFound()
+    }
+    const { resource: ticket, restricted } = await loadResourceWithStatus(
+      () =>
+        numbered
+          ? context.queryClient.fetchQuery({
+              ...communityQueries.ticket(params.community, innerId),
+              staleTime: 0,
+            })
+          : Promise.resolve(null),
+      params.community,
+      { type: 'TICKET', articleInnerId: params.id },
     )
+    if (restricted) return { ticket: null, restricted, stats: null }
     if (!ticket) throw notFound()
     const publicTicket = ticket as unknown as TTicket
     const postInnerIds = Array.from(
@@ -39,6 +57,7 @@ export const Route = createFileRoute('/$community/ticket/$id')({
       : []
     return {
       ticket: publicTicket,
+      restricted: null,
       stats: {
         upvotesCount: postStats.reduce((sum, stats) => sum + stats.upvotesCount, 0),
         commentsCount: postStats.reduce((sum, stats) => sum + stats.commentsCount, 0),
@@ -47,7 +66,10 @@ export const Route = createFileRoute('/$community/ticket/$id')({
     }
   },
   head: ({ loaderData, params, matches }) => ({
-    meta: loaderData?.ticket.title ? [{ title: loaderData.ticket.title }] : [],
+    meta:
+      loaderData?.ticket?.title || loaderData?.restricted?.title
+        ? [{ title: loaderData.ticket?.title || loaderData.restricted?.title || '' }]
+        : [],
     links: [
       {
         rel: 'canonical',
@@ -59,9 +81,17 @@ export const Route = createFileRoute('/$community/ticket/$id')({
 })
 
 function TicketDetail() {
-  const { ticket, stats } = Route.useLoaderData()
+  const { ticket, restricted, stats } = Route.useLoaderData()
   const { slug } = useCommunity()
   const { t } = useTrans()
+  const [mentionsOpen, setMentionsOpen] = useState(false)
+
+  useEffect(() => {
+    setMentionsOpen(false)
+  }, [slug, ticket?.innerId])
+
+  if (restricted) return <RestrictedResource node={restricted} />
+  if (!ticket || !stats) throw notFound()
   const statusLabel = STATUS_LABEL[ticket.status as keyof typeof STATUS_LABEL]
 
   return (
@@ -132,10 +162,22 @@ function TicketDetail() {
           <p className='text-digest text-sm'>{t('ticket.public.no_updates')}</p>
         )}
       </section>
-      <ReferenceMap
-        community={slug}
-        focus={{ type: 'TICKET', articleInnerId: String(ticket.innerId) }}
-      />
+      <button
+        type='button'
+        className='text-accent mt-6 text-sm hover:underline'
+        aria-expanded={mentionsOpen}
+        onClick={() => setMentionsOpen((open) => !open)}
+      >
+        {t('mentions_graph.title')}
+      </button>
+      {mentionsOpen && (
+        <div className='mt-4'>
+          <MentionsGraph
+            community={slug}
+            focus={{ type: 'TICKET', articleInnerId: String(ticket.innerId) }}
+          />
+        </div>
+      )}
     </article>
   )
 }

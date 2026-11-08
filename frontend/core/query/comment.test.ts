@@ -9,6 +9,8 @@ import { commentQueries } from './comment'
 
 describe('commentQueries.reconcile', () => {
   it('reconciles a bounded set of Comment refs in one request', async () => {
+    browserGraphQLRequest.mockClear()
+    const controller = new AbortController()
     browserGraphQLRequest.mockResolvedValue({
       commentReconcileStates: {
         article: { innerId: 7, commentsRevision: 4 },
@@ -20,13 +22,14 @@ describe('commentQueries.reconcile', () => {
     })
 
     const options = commentQueries.reconcile('home', 'POST', '7', ['2', '1', '1'])
-    const result = await options.queryFn?.({} as never)
+    const result = await options.queryFn?.({ signal: controller.signal } as never)
 
     expect(browserGraphQLRequest).toHaveBeenCalledOnce()
     expect(browserGraphQLRequest.mock.calls[0][1]).toEqual({
       article: { community: 'home', thread: 'POST', innerId: '7' },
       commentInnerIds: ['1', '2'],
     })
+    expect(browserGraphQLRequest.mock.calls[0][2]).toEqual({ signal: controller.signal })
     expect(result).toEqual({
       article: { innerId: 7, commentsRevision: 4 },
       comments: { '1': { innerId: '1', body: 'confirmed' }, '2': null },
@@ -64,6 +67,8 @@ const offsetInfo = {
 
 describe('comment Pagi collections', () => {
   it('uses the new root page document and separates pinned entries from the counted page', async () => {
+    browserGraphQLRequest.mockClear()
+    const controller = new AbortController()
     browserGraphQLRequest.mockResolvedValue({
       commentPage: {
         entries: [{ innerId: '1' }],
@@ -71,13 +76,16 @@ describe('comment Pagi collections', () => {
         pageInfo: offsetInfo,
       },
     })
-    const result = await commentQueries.page(collection, offsetConfig).queryFn?.({} as never)
+    const result = await commentQueries
+      .page(collection, offsetConfig)
+      .queryFn?.({ signal: controller.signal } as never)
     expect(browserGraphQLRequest.mock.lastCall?.[1]).toEqual({
       article: collection.article,
       mode: 'REPLIES',
       filter: { sort: 'ASC_INSERTED' },
       pagi: { offset: { page: 1, size: offsetConfig.defaultSize, configRevision: 0 } },
     })
+    expect(browserGraphQLRequest.mock.lastCall?.[2]).toEqual({ signal: controller.signal })
     expect(result).toMatchObject({
       entries: [{ innerId: '1' }],
       pinnedEntries: [{ innerId: '2' }],
@@ -86,6 +94,8 @@ describe('comment Pagi collections', () => {
     expect(result).not.toHaveProperty('totalCount')
   })
   it('binds reply cursors to a root and passes the opaque continuation unchanged', async () => {
+    browserGraphQLRequest.mockClear()
+    const controller = new AbortController()
     const reply = { ...collection, rootInnerId: '11' }
     browserGraphQLRequest.mockResolvedValue({
       commentReplyPage: {
@@ -100,12 +110,16 @@ describe('comment Pagi collections', () => {
       },
     })
     const options = commentQueries.infinite(reply, cursorConfig)
-    const result = await options.queryFn?.({ pageParam: 'opaque' } as never)
+    const result = await options.queryFn?.({
+      pageParam: 'opaque',
+      signal: controller.signal,
+    } as never)
     expect(browserGraphQLRequest.mock.lastCall?.[1]).toEqual({
       comment: { article: collection.article, innerId: '11' },
       filter: { sort: 'ASC_INSERTED' },
       pagi: { cursor: { first: cursorConfig.defaultSize, after: 'opaque', configRevision: 0 } },
     })
+    expect(browserGraphQLRequest.mock.lastCall?.[2]).toEqual({ signal: controller.signal })
     expect(result).toMatchObject({
       pageInfo: { api: 'cursor', endCursor: 'next' },
       pinnedEntries: [],

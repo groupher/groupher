@@ -55,6 +55,9 @@ export async function prefetchComments(
   try {
     return await prefetch()
   } catch (error) {
+    const errors = (error as { errors?: { extensions?: { code?: unknown } }[] } | null)?.errors
+    if (errors?.length && errors.every(({ extensions }) => Number(extensions?.code) === 6008))
+      return
     if (!isPaginationRevisionMismatch(error)) throw error
     await refreshArticleBootstrap(client, community)
     return prefetch()

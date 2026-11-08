@@ -18,9 +18,8 @@ describe('Ticket detail loader', () => {
   it('hydrates source Post stats in batches no larger than the ArticleStats limit', async () => {
     const sources = Array.from({ length: 205 }, (_, index) => ({ innerId: index + 1 }))
     const queryClient = {
+      fetchQuery: vi.fn(async () => ({ sources, title: 'Ticket detail' })),
       ensureQueryData: vi.fn(async ({ queryKey }: { queryKey: readonly unknown[] }) => {
-        if (queryKey[0] === 'ticket') return { sources, title: 'Ticket detail' }
-
         const ids = queryKey[3] as number[]
         return ids.map((innerId) => ({
           innerId,

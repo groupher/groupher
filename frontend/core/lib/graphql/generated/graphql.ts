@@ -474,6 +474,17 @@ export type MarkerThemeAppearanceInput = {
 
 export type MarkerType = 'EMOJI' | 'ICON'
 
+export type MentionsGraphLocatorInput = {
+  articleId?: string | number | null | undefined
+  articleInnerId?: string | number | null | undefined
+  commentInnerId?: string | number | null | undefined
+  type: MentionsGraphNodeType
+}
+
+export type MentionsGraphNodeStatus = 'DELETED' | 'READABLE' | 'UNAVAILABLE'
+
+export type MentionsGraphNodeType = 'BLOG' | 'CHANGELOG' | 'COMMENT' | 'DOC' | 'POST' | 'TICKET'
+
 /** Offset page parameters for the new paged resource contract. */
 export type OffsetPagiInput = {
   configRevision?: number | null | undefined
@@ -518,23 +529,6 @@ export type RainbowColor =
   | 'YELLOW'
 
 export type ReactionOutcome = 'CHANGED' | 'UNCHANGED'
-
-export type ReferenceMapFrontierInput = {
-  after?: string | null | undefined
-  node: ReferenceMapLocatorInput
-}
-
-export type ReferenceMapFrontierState = 'AVAILABLE' | 'UNAVAILABLE'
-
-export type ReferenceMapLocatorInput = {
-  articleInnerId: string | number
-  commentInnerId?: string | number | null | undefined
-  type: ReferenceMapNodeType
-}
-
-export type ReferenceMapNodeType = 'BLOG' | 'CHANGELOG' | 'COMMENT' | 'DOC' | 'POST' | 'TICKET'
-
-export type ReferenceMapSyncState = 'PENDING' | 'READY'
 
 export type ReindexCommunityTagGroupInput = {
   id: string | number
@@ -1040,6 +1034,91 @@ export type ApplicationLogoIntentMutation = {
     canonicalUrl: string
   }
 }
+
+export type ArticleLogsPageQueryVariables = Exact<{
+  article: ArticlePathInput
+  pagi?: PagiInput | null | undefined
+}>
+
+export type ArticleLogsPageQuery = {
+  articleLogs: {
+    entries: Array<{
+      id: string
+      action: string
+      payload: unknown
+      occurredAt: string
+      actor: { type: string; login: string | null; nickname: string | null; avatar: string | null }
+      subject: { type: string; title: string | null; innerId: string | null }
+      target: {
+        type: string
+        ref: string | null
+        title: string | null
+        innerId: string | null
+        url: string | null
+      } | null
+    }>
+    pageInfo:
+      | { __typename: 'CursorPageInfo'; endCursor: string | null; hasNextPage: boolean }
+      | { __typename: 'OffsetPageInfo' }
+  }
+}
+
+export type MentionsGraphPageQueryVariables = Exact<{
+  community: string
+  focus: MentionsGraphLocatorInput
+  after?: string | null | undefined
+  first?: number | null | undefined
+}>
+
+export type MentionsGraphPageQuery = {
+  mentionsGraph: {
+    revision: string
+    hasNextPage: boolean
+    endCursor: string | null
+    nodes: Array<{
+      id: string
+      type: MentionsGraphNodeType
+      status: MentionsGraphNodeStatus
+      title: string | null
+      url: string | null
+      canOpen: boolean
+      locator: {
+        type: MentionsGraphNodeType
+        articleInnerId: string | null
+        articleId: string | null
+        commentInnerId: string | null
+      } | null
+    }>
+    edges: Array<{ id: string; from: string; to: string; occurrencesCount: number }>
+  }
+}
+
+export type MentionsGraphArticleCommentsQueryVariables = Exact<{
+  community: string
+  focus: MentionsGraphLocatorInput
+  after?: string | number | null | undefined
+  first?: number | null | undefined
+}>
+
+export type MentionsGraphArticleCommentsQuery = {
+  mentionsGraphArticleComments: {
+    revision: string
+    hasNextPage: boolean
+    endCursor: string | null
+    comments: Array<{
+      type: MentionsGraphNodeType
+      articleInnerId: string | null
+      commentInnerId: string | null
+    }>
+  }
+}
+
+export type MentionsGraphRevisionQueryVariables = Exact<{
+  community: string
+  focus: MentionsGraphLocatorInput
+}>
+
+export type MentionsGraphRevisionQuery = { mentionsGraphRevision: string }
 
 export type QueryUpvotePostMutationVariables = Exact<{
   article: ArticlePathInput
@@ -1847,64 +1926,6 @@ export type QueryRemoveFromCollectMutation = {
   } | null
 }
 
-export type ReferenceMapPageQueryVariables = Exact<{
-  community: string
-  focus: ReferenceMapLocatorInput
-  frontiers: Array<ReferenceMapFrontierInput> | ReferenceMapFrontierInput
-  first?: number | null | undefined
-}>
-
-export type ReferenceMapPageQuery = {
-  referenceMap: {
-    projectionPending: boolean
-    nodes: Array<{
-      id: string
-      type: ReferenceMapNodeType
-      articleInnerId: string
-      commentInnerId: string | null
-      branchId: string | null
-      title: string
-      url: string
-      syncState: ReferenceMapSyncState
-    }>
-    edges: Array<{ id: string; from: string; to: string; occurrencesCount: number }>
-    neighborhoods: Array<{
-      requestIndex: number
-      state: ReferenceMapFrontierState
-      nodeId: string | null
-      edgeIds: Array<string>
-      hasNextPage: boolean
-      endCursor: string | null
-    }>
-  }
-}
-
-export type ReferenceMapRevisionQueryVariables = Exact<{
-  community: string
-  focus: ReferenceMapLocatorInput
-}>
-
-export type ReferenceMapRevisionQuery = { referenceMapRevision: string }
-
-export type ReferenceMapArticleCommentsQueryVariables = Exact<{
-  community: string
-  focus: ReferenceMapLocatorInput
-  after?: string | number | null | undefined
-  first?: number | null | undefined
-}>
-
-export type ReferenceMapArticleCommentsQuery = {
-  referenceMapArticleComments: {
-    hasNextPage: boolean
-    endCursor: string | null
-    comments: Array<{
-      type: ReferenceMapNodeType
-      articleInnerId: string
-      commentInnerId: string | null
-    }>
-  }
-}
-
 export type TrackArticleViewMutationVariables = Exact<{
   article: ArticlePathInput
 }>
@@ -2098,7 +2119,7 @@ export type CommunityActivityEventQuery = {
     metadata: unknown
     occurredAt: string
     recordedAt: string
-    resource: { type: string; ref: string; title: string | null; innerId: string | null }
+    resource: { type: string; ref: string | null; title: string | null; innerId: string | null }
     actor: {
       type: string
       id: string | null
@@ -2113,8 +2134,13 @@ export type CommunityActivityEventQuery = {
       nickname: string | null
       avatar: string | null
     } | null
-    subject: { type: string; ref: string; title: string | null; innerId: string | null }
-    target: { type: string; ref: string; title: string | null; innerId: string | null } | null
+    subject: { type: string; ref: string | null; title: string | null; innerId: string | null }
+    target: {
+      type: string
+      ref: string | null
+      title: string | null
+      innerId: string | null
+    } | null
     parentEvent: {
       id: string
       eventRef: string | null
@@ -2134,7 +2160,7 @@ export type CommunityActivityEventQuery = {
       metadata: unknown
       occurredAt: string
       recordedAt: string
-      resource: { type: string; ref: string; title: string | null; innerId: string | null }
+      resource: { type: string; ref: string | null; title: string | null; innerId: string | null }
       actor: {
         type: string
         id: string | null
@@ -2142,8 +2168,13 @@ export type CommunityActivityEventQuery = {
         nickname: string | null
         avatar: string | null
       }
-      subject: { type: string; ref: string; title: string | null; innerId: string | null }
-      target: { type: string; ref: string; title: string | null; innerId: string | null } | null
+      subject: { type: string; ref: string | null; title: string | null; innerId: string | null }
+      target: {
+        type: string
+        ref: string | null
+        title: string | null
+        innerId: string | null
+      } | null
     } | null
     childEvents: Array<{
       id: string
@@ -2164,7 +2195,7 @@ export type CommunityActivityEventQuery = {
       metadata: unknown
       occurredAt: string
       recordedAt: string
-      resource: { type: string; ref: string; title: string | null; innerId: string | null }
+      resource: { type: string; ref: string | null; title: string | null; innerId: string | null }
       actor: {
         type: string
         id: string | null
@@ -2172,8 +2203,13 @@ export type CommunityActivityEventQuery = {
         nickname: string | null
         avatar: string | null
       }
-      subject: { type: string; ref: string; title: string | null; innerId: string | null }
-      target: { type: string; ref: string; title: string | null; innerId: string | null } | null
+      subject: { type: string; ref: string | null; title: string | null; innerId: string | null }
+      target: {
+        type: string
+        ref: string | null
+        title: string | null
+        innerId: string | null
+      } | null
     }>
   } | null
 }
@@ -2205,7 +2241,7 @@ export type CommunityActivityQuery = {
       metadata: unknown
       occurredAt: string
       recordedAt: string
-      resource: { type: string; ref: string; title: string | null; innerId: string | null }
+      resource: { type: string; ref: string | null; title: string | null; innerId: string | null }
       actor: {
         type: string
         id: string | null
@@ -2220,8 +2256,13 @@ export type CommunityActivityQuery = {
         nickname: string | null
         avatar: string | null
       } | null
-      subject: { type: string; ref: string; title: string | null; innerId: string | null }
-      target: { type: string; ref: string; title: string | null; innerId: string | null } | null
+      subject: { type: string; ref: string | null; title: string | null; innerId: string | null }
+      target: {
+        type: string
+        ref: string | null
+        title: string | null
+        innerId: string | null
+      } | null
     }>
     pageInfo:
       | {
@@ -19323,6 +19364,392 @@ export const ApplicationLogoIntentDocument = {
     },
   ],
 } as unknown as DocumentNode<ApplicationLogoIntentMutation, ApplicationLogoIntentMutationVariables>
+export const ArticleLogsPageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ArticleLogsPage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagiInput' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'articleLogs' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'article' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'pagi' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'pagi' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'actor' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'subject' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'target' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pageInfo' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: '__typename' } },
+                      {
+                        kind: 'InlineFragment',
+                        typeCondition: {
+                          kind: 'NamedType',
+                          name: { kind: 'Name', value: 'CursorPageInfo' },
+                        },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ArticleLogsPageQuery, ArticleLogsPageQueryVariables>
+export const MentionsGraphPageDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'MentionsGraphPage' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'MentionsGraphLocatorInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'after' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'first' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'mentionsGraph' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'focus' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'after' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'after' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'first' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'nodes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'locator' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'articleInnerId' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'articleId' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'commentInnerId' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'canOpen' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'edges' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'from' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'to' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurrencesCount' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MentionsGraphPageQuery, MentionsGraphPageQueryVariables>
+export const MentionsGraphArticleCommentsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'MentionsGraphArticleComments' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'MentionsGraphLocatorInput' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'after' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'first' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'mentionsGraphArticleComments' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'focus' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'after' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'after' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'first' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'first' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'revision' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'comments' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'articleInnerId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'commentInnerId' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  MentionsGraphArticleCommentsQuery,
+  MentionsGraphArticleCommentsQueryVariables
+>
+export const MentionsGraphRevisionDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'MentionsGraphRevision' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'MentionsGraphLocatorInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'mentionsGraphRevision' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'focus' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<MentionsGraphRevisionQuery, MentionsGraphRevisionQueryVariables>
 export const QueryUpvotePostDocument = {
   kind: 'Document',
   definitions: [
@@ -22202,278 +22629,6 @@ export const QueryRemoveFromCollectDocument = {
 } as unknown as DocumentNode<
   QueryRemoveFromCollectMutation,
   QueryRemoveFromCollectMutationVariables
->
-export const ReferenceMapPageDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ReferenceMapPage' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReferenceMapLocatorInput' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'frontiers' } },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: 'ListType',
-              type: {
-                kind: 'NonNullType',
-                type: {
-                  kind: 'NamedType',
-                  name: { kind: 'Name', value: 'ReferenceMapFrontierInput' },
-                },
-              },
-            },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'first' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'referenceMap' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'community' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'focus' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'frontiers' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'frontiers' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'first' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'first' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'nodes' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'articleInnerId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'commentInnerId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'branchId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'url' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'syncState' } },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'edges' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'from' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'to' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'occurrencesCount' } },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'neighborhoods' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'requestIndex' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'state' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'nodeId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'edgeIds' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
-                    ],
-                  },
-                },
-                { kind: 'Field', name: { kind: 'Name', value: 'projectionPending' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ReferenceMapPageQuery, ReferenceMapPageQueryVariables>
-export const ReferenceMapRevisionDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ReferenceMapRevision' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReferenceMapLocatorInput' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'referenceMapRevision' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'community' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'focus' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
-              },
-            ],
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<ReferenceMapRevisionQuery, ReferenceMapRevisionQueryVariables>
-export const ReferenceMapArticleCommentsDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'ReferenceMapArticleComments' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ReferenceMapLocatorInput' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'after' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'first' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'referenceMapArticleComments' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'community' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'focus' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'focus' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'after' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'after' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'first' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'first' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'comments' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'articleInnerId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'commentInnerId' } },
-                    ],
-                  },
-                },
-                { kind: 'Field', name: { kind: 'Name', value: 'hasNextPage' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'endCursor' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  ReferenceMapArticleCommentsQuery,
-  ReferenceMapArticleCommentsQueryVariables
 >
 export const TrackArticleViewDocument = {
   kind: 'Document',

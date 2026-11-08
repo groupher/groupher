@@ -200,9 +200,9 @@ export type TBrowserGraphQLRequestOptions = {
   signal?: AbortSignal
 }
 
-export const REFERENCE_MAP_CONTENT_CHANGE = 'groupher:reference-map-content-change'
+export const MENTIONS_GRAPH_CONTENT_CHANGE = 'groupher:mentions-graph-content-change'
 
-const referenceMapMutations = new Set([
+const mentionsGraphMutations = new Set([
   'CreatePost',
   'CreateBlogFromPublisher',
   'CreateChangelogFromPublisher',
@@ -243,12 +243,12 @@ const referenceMapMutations = new Set([
   'CreateTicketFromPost',
 ])
 
-const affectsReferenceMap = (document: string | DocumentNode): boolean => {
+const affectsMentionsGraph = (document: string | DocumentNode): boolean => {
   const operation =
     typeof document === 'string'
       ? /^\s*mutation\s+([A-Za-z_][A-Za-z0-9_]*)/m.exec(document)?.[1]
       : getOperationAST(document)?.name?.value
-  return operation !== undefined && referenceMapMutations.has(operation)
+  return operation !== undefined && mentionsGraphMutations.has(operation)
 }
 
 const browserGraphQLEndpoint = (): string =>
@@ -299,8 +299,8 @@ export const browserGraphQLRequest = async <
     throw new GraphQLResponseError('GraphQL response did not include data.', response, { payload })
   }
 
-  if (typeof window !== 'undefined' && affectsReferenceMap(document)) {
-    window.dispatchEvent(new Event(REFERENCE_MAP_CONTENT_CHANGE))
+  if (typeof window !== 'undefined' && affectsMentionsGraph(document)) {
+    window.dispatchEvent(new Event(MENTIONS_GRAPH_CONTENT_CHANGE))
   }
 
   return (payload as TGraphQLPayload<TResult>).data as TResult

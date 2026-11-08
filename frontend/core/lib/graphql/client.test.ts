@@ -40,7 +40,7 @@ import {
   createAuthFetch,
   GraphQLRequestError,
   GraphQLResponseError,
-  REFERENCE_MAP_CONTENT_CHANGE,
+  MENTIONS_GRAPH_CONTENT_CHANGE,
 } from './client'
 
 describe('createAuthFetch', () => {
@@ -184,7 +184,7 @@ describe('createAuthFetch', () => {
       .fn<typeof fetch>()
       .mockImplementation(async () => Response.json({ data: { ok: true } }))
     const changed = vi.fn()
-    window.addEventListener(REFERENCE_MAP_CONTENT_CHANGE, changed)
+    window.addEventListener(MENTIONS_GRAPH_CONTENT_CHANGE, changed)
 
     try {
       await browserGraphQLRequest(
@@ -202,7 +202,7 @@ describe('createAuthFetch', () => {
       )
       expect(changed).toHaveBeenCalledTimes(1)
     } finally {
-      window.removeEventListener(REFERENCE_MAP_CONTENT_CHANGE, changed)
+      window.removeEventListener(MENTIONS_GRAPH_CONTENT_CHANGE, changed)
     }
   })
 

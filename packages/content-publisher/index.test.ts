@@ -146,6 +146,27 @@ describe('publishArtiment', () => {
     expect(first.bodyHash).toBe(second.bodyHash)
   })
 
+  it('preserves a selected Article mention key in canonical Plate JSON', async () => {
+    const articleId = '11111111-1111-4111-8111-111111111111'
+    const source = [
+      {
+        id: 'selected-article',
+        type: 'p',
+        children: [
+          {
+            type: 'mention',
+            key: `post:${articleId}`,
+            value: 'Displayed title',
+            children: [{ text: '' }],
+          },
+        ],
+      },
+    ]
+
+    const bodyBag = await publishArtiment(source)
+    expect(JSON.parse(bodyBag.json)).toEqual(source)
+  })
+
   it('keeps every currently registered persisted node through final sanitization', async () => {
     const bodyBag = await publishArtiment(registeredNodesValue)
 

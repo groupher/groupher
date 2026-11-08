@@ -86,6 +86,7 @@ const ticket = {
 
 /** Deterministic Ticket queries used by the browser publication regression. */
 export const ticketQueries = {
+  ticket: (_parent, { innerId }) => ({ ...ticket, innerId }),
   ticketInternal: (_parent, { id }) =>
     id === workerId
       ? {

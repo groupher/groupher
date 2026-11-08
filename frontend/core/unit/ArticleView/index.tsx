@@ -8,7 +8,6 @@ import { ANCHOR } from '~/const/dom'
 import useTrackArticleView from '~/hooks/useTrackArticleView'
 import type { TArticleLoad } from '~/spec'
 import Comments from '~/unit/Comments'
-import ReferenceMap from '~/unit/ReferenceMap'
 
 import DrawerHeader from './DrawerHeader'
 import useSalon from './salon'
@@ -110,13 +109,6 @@ export default function ArticleViewer({
       <DrawerHeader />
       <div className='relative'>
         <Viewer article={article} isFullView={isFullView} />
-
-        {isFullView && (thread === 'POST' || thread === 'BLOG' || thread === 'CHANGELOG') && (
-          <ReferenceMap
-            community={community}
-            focus={{ type: thread, articleInnerId: String(innerId) }}
-          />
-        )}
 
         {isFullView && commentsVisible && (
           <div className={s.comments}>

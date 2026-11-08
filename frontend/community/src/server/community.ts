@@ -143,9 +143,14 @@ const loadPost = createServerFn({ method: 'GET', strict: false })
       CACHE_TAG.articleCache(data.community, THREAD.POST, data.innerId),
       CACHE_TAG.articlesCache(data.community, THREAD.POST),
     ])
-    const result = await fetchGraphQL<ResultOf<typeof postDocument>>(postDocument, {
-      article: { community: data.community, innerId: data.innerId, thread: 'POST' },
-    })
+    const result = await fetchGraphQL<ResultOf<typeof postDocument>>(
+      postDocument,
+      {
+        article: { community: data.community, innerId: data.innerId, thread: 'POST' },
+      },
+      null,
+      { allowErrorCodes: [6008] },
+    )
     return (result.data?.post ?? null) as unknown as TPost | null
   })
 
@@ -156,9 +161,14 @@ const loadBlog = createServerFn({ method: 'GET', strict: false })
       CACHE_TAG.articleCache(data.community, THREAD.BLOG, data.innerId),
       CACHE_TAG.articlesCache(data.community, THREAD.BLOG),
     ])
-    const result = await fetchGraphQL<ResultOf<typeof blogDocument>>(blogDocument, {
-      article: { community: data.community, innerId: data.innerId, thread: THREAD.BLOG },
-    })
+    const result = await fetchGraphQL<ResultOf<typeof blogDocument>>(
+      blogDocument,
+      {
+        article: { community: data.community, innerId: data.innerId, thread: THREAD.BLOG },
+      },
+      null,
+      { allowErrorCodes: [6008] },
+    )
     return (result.data?.blog ?? null) as unknown as TPost | null
   })
 
@@ -205,9 +215,14 @@ const loadChangelog = createServerFn({ method: 'GET', strict: false })
       CACHE_TAG.articleCache(data.community, THREAD.CHANGELOG, data.innerId),
       CACHE_TAG.articlesCache(data.community, THREAD.CHANGELOG),
     ])
-    const result = await fetchGraphQL<ResultOf<typeof changelog>>(changelog, {
-      article: { community: data.community, innerId: data.innerId, thread: THREAD.CHANGELOG },
-    })
+    const result = await fetchGraphQL<ResultOf<typeof changelog>>(
+      changelog,
+      {
+        article: { community: data.community, innerId: data.innerId, thread: THREAD.CHANGELOG },
+      },
+      null,
+      { allowErrorCodes: [6008] },
+    )
     return (result.data?.changelog ?? null) as unknown as TPost | null
   })
 
@@ -267,9 +282,14 @@ const loadDoc = createServerFn({ method: 'GET', strict: false })
     setCommunityPageCacheHeaders(data.community, [
       CACHE_TAG.articleCache(data.community, THREAD.DOC, data.innerId),
     ])
-    const result = await fetchGraphQL<ResultOf<typeof doc>>(doc, {
-      article: { community: data.community, innerId: data.innerId, thread: THREAD.DOC },
-    })
+    const result = await fetchGraphQL<ResultOf<typeof doc>>(
+      doc,
+      {
+        article: { community: data.community, innerId: data.innerId, thread: THREAD.DOC },
+      },
+      null,
+      { allowErrorCodes: [6008] },
+    )
     return (result.data?.doc ?? null) as unknown as TDoc | null
   })
 
