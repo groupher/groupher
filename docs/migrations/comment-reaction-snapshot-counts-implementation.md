@@ -29,12 +29,13 @@ B1–B4、B6 已在当前工作区集成并完成下列本地验收。B5 仅完�
 
 ## 2. 新 schema 与严格准入
 
-新增迁移从 `20261105190000` 到 `20261105233000`：
+新增迁移从 `20261105190000` 到 `20261105234500`：
 
 - 新摘要字段、非负/数组上限/entries 不小于有效 count、revision 约束及查询索引。
 - canonical ArticleBinding.thread/FK、Doc partial unique、不可变身份、membership owner/branch guards、Community 删除 guard、CommentReviewBlock owner guard。
 - deferred `require_doc_owner_at_commit` 保证不能提交零 binding 的稳定 Doc；合法 Article 删除级联仍可完成。
 - 删除评论 branch、完整回复 embed、branch 评论锁/编号字段；reaction 数组/count 约束及 Comment delivery 无 branch 约束。
+- `20261105234500` 新增账号物理删除 guard 函数与两个 ALWAYS trigger，在新 schema 中拒绝 `account.users` 的 DELETE/TRUNCATE。
 - 迁移遇到既有 Article/Comment 数据会拒绝，未加入回填或兼容读取。历史 Mention facts 迁移仅修正了 PostgreSQL timestamptz 的 precision 参数，其余稳定 endpoint 改造沿用另一个 session 的工作。
 
 `SchemaGeneration` 的凭证只能由空库 bootstrap 建立，普通 migration 不能伪造：
@@ -46,9 +47,18 @@ B1–B4、B6 已在当前工作区集成并完成下列本地验收。B5 仅完�
   -> API/worker startup 再核验同一 DB/generation/fingerprint
 ```
 
-指纹包括目标列、约束、索引、触发器、8个身份 guard 函数正文和 Messaging delivery guards。旧库补默认列、缺 provenance、未 ready、错误 DB/generation/指纹均不能准入。缺 stats 行会报错并回滚创建，不靠读取初始化零值。
+指纹包括目标列、约束、索引、触发器、8个身份 guard 函数正文和 Messaging delivery guards，另含账号物理删除 guard 函数正文及两个 ALWAYS trigger 的结构和启用模式。函数数量与触发器数量分别计数。旧库补默认列、缺 provenance、未 ready、错误 DB/generation/指纹均不能准入。缺 stats 行会报错并回滚创建，不靠读取初始化零值。
 
-[真实空库验证结果](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-cutover-validation.json)：
+[当前含账号 guard 的真实空库验证结果](comment-reaction-snapshot-counts-audit/account-delete-guard-20261105T132932Z/account-delete-guard-cutover.json)：
+
+| 坐标          | 当前本地验证值                                                     |
+| ------------- | ------------------------------------------------------------------ |
+| database      | `groupher_user_delete_guard_cutover_20261105`                      |
+| generation    | `76896cc8-0cdd-494a-a21c-10c904a81501`                             |
+| schema SHA256 | `fbc51ba8c1750dfd6205d144c79ac6aa2e90af46563fe44a0b9e463d9cacb5ae` |
+| 结果          | ready 校验成功，禁用/篡改账号 guard 和旧指纹均被拒绝               |
+
+以下为[账号 guard 加入前的历史空库验证结果](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-cutover-validation.json)，保留原坐标及指纹，仅供追溯，不能用于当前新构建的发布准入：
 
 | 坐标          | 本地验证值                                                         |
 | ------------- | ------------------------------------------------------------------ |
@@ -57,7 +67,9 @@ B1–B4、B6 已在当前工作区集成并完成下列本地验收。B5 仅完�
 | schema SHA256 | `dc181bea607252628bef669ef3fa89809f475e9489c9eb11ec93085a42d6bdad` |
 | 结果          | ready 校验成功，未 ready/错误 DB 拒绝                              |
 
-这是私有本地库证据，不能用于生产 manifest 的 DB 身份或新库声明。
+两张表都是私有本地库证据，不能直接作为生产 manifest 的 DB 身份或新库声明。B5 必须使用实际目标新库的批准坐标与对应构建的 schema 指纹；旧 `dc181...` 不适用于含账号 guard 的新 schema。
+
+保护边界：无 guard 的旧库仍有原风险；当前新 schema 的 DELETE/TRUNCATE 已在本地被拒绝，尚未部署。数据库所有者主动 DROP TABLE、禁用/移除 trigger 等特权 DDL，以及受控账号删除/匿名化策略均不在本批范围内。发布和启动时的指纹校验不等于运行期间持续监控，也不代表线上 blocker 已解除。
 
 ## 3. 可重复的验收命令与结果
 
@@ -165,7 +177,7 @@ TEST_DB_NAME=groupher_comments_20261105_transport mix test test/groupher_server_
 - **折叠根**：FoldLayout 在有效 repliesCount=0、hasReplyEntries=true 时直接显示“查看回复记录”。仍是原折叠行按钮，点击/键盘展开根后通过现有摘要进入历史；不是一步直接打开回复分页的新交互。无嵌套按钮，无 mutation，未增加公开 fold 写接口。
 - **资料缺失**：新增 ShadowSync SNAP-02 回归：已有快照用户的 User 行缺失时，用 unavailable 展示资料保留 article/root/reaction 的 ID/ref、顺序、数量及全部摘要字段。不改 Summary 新写入的合法账号要求，也不为已被删除的事实捏造参与者。
 - **时间戳**：根回复摘要以 repliesRevision 判断新鲜度，不保证修改 Comment.updated_at；lastReplyAt 是有效回复的原始创建时间。ArticleStats.snapshot_at 是 DB 时钟的摘要时间戳，正文仍按 CommentBody 版本/时间管理。主计划 §5.2 已明确，未新增 updatedAt 缓存判断或改写根时间戳。
-- **独立发现**：[直接物理删除账号会级联删评论但不维护 ArticleStats](comment-account-deletion-audit.md)，已在私有 Sandbox 证实并记录为未修复。账号删除策略不属于本批，未改 FK/删除流程；本次占位测试通过不等于删除一致性已通过。
+- **独立发现（历史诊断，当前状态见下节）**：[无 guard 时直接物理删除账号会级联删评论但不维护摘要](comment-account-deletion-audit.md)，已在私有 Sandbox 证实。后续授权已在当前新 schema 本地拒绝未受控 DELETE/TRUNCATE，尚未部署；无 guard 的旧环境仍未保护，受控账号删除/匿名化策略仍未实现。占位读取测试不能代替该删除边界的验收。
 
 本轮 focused：前端4文件16项通过（含实际中英文词典、无历史/有有效回复对照）；后端 Snapshot/ShadowSync 19项通过；Core 与 Community type-check 通过。另1项临时诊断只负责记录账号删除结果，不计入一致性通过数。
 
@@ -179,7 +191,7 @@ TEST_DB_NAME=groupher_comments_20261105_transport mix test test/groupher_server_
 
 用户后续授权实施数据库拒绝方案：[当前合同、完整 root/读取/搜索输入验收与新 schema SHA](comment-account-physical-deletion-block.md)。新增 `20261105234500`，拒绝任意现存账号的 DELETE 与 TRUNCATE，ALWAYS trigger 在 replica 模式也生效，缺失/禁用/篡改均不能通过批准指纹校验。31项定向、143项回归及全新私有库 ready 验证通过；不提供账号删除/匿名化命令。
 
-早先未修复的诊断仍是历史证据，新构建的删除路径已在本地封闭；旧环境未安装 guard 前仍有原风险。本轮未发布、未改旧库、未回填。原 `dc181...` 仅作旧验证证据，新本地验证 SHA 为 `fbc51ba8c1750dfd6205d144c79ac6aa2e90af46563fe44a0b9e463d9cacb5ae`，实际 B5 manifest 必须使用对应目标新库的批准坐标。
+早先无 guard 的诊断保留为历史证据，当前新 schema 已在本地拒绝未受控 DELETE/TRUNCATE；旧环境未安装 guard 前仍有原风险，受控账号删除/匿名化策略仍未实现。本轮未发布、未改旧库、未回填，不能宣称线上 blocker 已解除。原 `dc181...` 仅作旧验证证据，新本地验证 SHA 为 `fbc51ba8c1750dfd6205d144c79ac6aa2e90af46563fe44a0b9e463d9cacb5ae`，实际 B5 manifest 必须使用对应目标新库的批准坐标。
 
 ## 本地提交边界（2026-11-05）
 

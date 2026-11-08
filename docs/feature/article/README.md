@@ -2,6 +2,8 @@
 
 > 状态：current
 
+- [Doc 共享评论与计数收口计划](../../migrations/comment-reaction-snapshot-counts.md)：本地实现及验收已完成，真实发布仍未执行；同一稳定 Doc 的评论、回复、参与者和统计不随正文 branch 分裂，正文准入仍按 Gate 验证。证据见 [实施记录](../../migrations/comment-reaction-snapshot-counts-implementation.md)。
+
 - [`revision-draft-target.md`](./revision-draft-target.md)：Article Revision / Draft 目标架构与 `CMS.Articles` 全链路改造方案。
 - [ReviewBot / AlertWall V2](../alert-wall/v2.md)：Article/Comment 提交审核、scope 限制、人工处理和 AI 结果应用的当前合同。
 - [`article-community.md`](./article-community.md)：Article 与 Community 的平级关系、Community-local 数据和当前实现偏差。

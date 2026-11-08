@@ -17,6 +17,9 @@
 
 ## Planned
 
+- [Comments、Replies 与 Reaction 快照和计数](./migrations/comment-reaction-snapshot-counts.md)：
+  只读审计与无兼容执行计划已完成；Doc 单 owner 下跨正文分支共享评论与统计，正文准入/社区审核/删除边界、MentionsGraph 稳定身份与运行态、
+  原子维护、快照、folded 访问、切读前协议/版本及新库准入和 replies UI 待实施，不包含旧数据回填。
 - [AI](./ai/README.md)：首期应用仍处于规划阶段。
 - [OAuth 帐户链接与取消链接](./auth/link-unlink-oauth.md)：设计尚未实施。
 - [Post Merge](./feature/post/merge.md)：relation-based merge 仍为草案。

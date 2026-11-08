@@ -26,7 +26,7 @@ account.users
 
 两个 trigger 的结构、启用模式和函数正文进入批准的 schema SHA。缺失、普通 ENABLE、DISABLE 或函数被替换为放行实现，均不能通过对应准入校验。Release DDL 前/后及生产 API、worker 启动沿用同一 fresh-generation 合同。
 
-这是发布和启动时的校验，不是对运行中所有特权 DDL 的持续监控。数据库所有者主动修改/移除 guard 不属于受支持写路径；本轮没有修改任何实际环境的角色/权限，也没有新增常驻扫描 Job。发布执行人仍须按既有变更控制管理 DDL；拒绝事件可按上述 SQLSTATE/constraint 识别，不通过加长锁超时或吞掉错误伪装为删除成功。
+这是发布和启动时的校验，不是对运行中所有特权 DDL 的持续监控。数据库所有者主动 DROP TABLE、禁用/移除 trigger 或修改 guard 不属于受支持写路径，也不在本 guard 的保护范围内；本轮没有修改任何实际环境的角色/权限，也没有新增常驻扫描 Job。发布执行人仍须按既有变更控制管理 DDL；拒绝事件可按上述 SQLSTATE/constraint 识别，不通过加长锁超时或吞掉错误伪装为删除成功。
 
 ## 3. 验收
 

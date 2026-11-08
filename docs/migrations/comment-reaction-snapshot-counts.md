@@ -226,6 +226,8 @@ Doc 发布/重复发布初始化共享 stats 时不得重置这些运行字段�
 
 ### 4.9 MentionsGraph 身份与在途合同同步
 
+> 以下为 2026-11-05 共享评论迁移时的 MentionsGraph 在途依赖记录。2026-11-07 已移除 set／初始化／正文 token 运行时；当前发布边界见[当前关系合同](../feature/article/mentions-graph-sync-contract.md)。本节旧要求不能用于简化版验收。
+
 本计划与 [MentionsGraph 执行合同](../feature/article/mentions-graph-refactor.md)、[Article/Comment 解耦合同](../feature/article/article-lifecycle-comment-decoupling.md) 的 Doc Comment branch 例外冲突。本次同时修订目标合同，不等业务完成后才解释；初次审计的旧实现与当前在途改动须分层理解。固定快照 20261105T074802Z 的 49 项输入已静态复核并分类，见 [snapshot review](comment-reaction-snapshot-counts-snapshot-review.md)；六文件记录仅作历史证据；这不证明共享评论存储、通用 Gate 或本计划 B1–B3 已完成。
 
 统一目标：

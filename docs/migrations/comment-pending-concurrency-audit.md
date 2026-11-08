@@ -29,7 +29,7 @@
 
 对应源码：
 
-- [MentionsGraphRevision.bump](../../backend/api/lib/groupher_server/cms/artiment_mentions/mentions_graph_revision.ex)：固定 id=1，在调用方事务 `inc revision`；普通文章生命周期、binding、Store、评论 capture 等均可触发。
+- [MentionsGraphRevision.bump](../../backend/api/lib/groupher_server/cms/artiment_mentions/mentions_graph/revision.ex)：固定 id=1，在调用方事务 `inc revision`；普通文章生命周期、binding、Store、评论 capture 等均可触发。
 - [ConnCase](../../backend/api/lib/support/conn_case.ex)：每个 async test 各有 Sandbox owner，on_exit 才停止 owner；隔离了可见数据，不能隔离同一已存在行的写锁。
 - [Receipt.Runner](../../backend/api/lib/groupher_server/cms/command/receipt/runner.ex)：锁预算4秒、事务预算30秒；lock_not_available/query_canceled/连接错误统一映射为可重试 pending。
 - [TransactionSettings](../../backend/api/lib/helper/orm/transaction_settings.ex)：使用 transaction-local `set_config`，没有把超时永久写到连接/数据库配置。

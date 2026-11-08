@@ -9,6 +9,7 @@
 - [账号物理删除与评论摘要核查](./comment-account-deletion-audit.md)：保留无 guard 时的 CASCADE 摘要漂移诊断；后续 [物理删除封闭方案](./comment-account-physical-deletion-block.md) 已在工作区实施并验收，未部署。受控删除/匿名化仍待独立设计。
 - [并行测试 pending 原因审计](./comment-pending-concurrency-audit.md)：确认 Sandbox 外层事务与 MentionsGraph 全局版本行争用，保留原始 PostgreSQL 错误及真实提交并发对照；后续测试隔离另列，未发布。
 - [共享评论测试隔离与联合验收](./comment-test-isolation.md)：MentionsGraph 已完成本地联合验收；调整 TestMate 的默认调度和显式 async 写入用例，保留真实连接并发测试，运行结果单列；未发布。
+- [MentionsGraph 当前关系合同](../feature/article/mentions-graph-sync-contract.md)：2026-11-07 工作区简化实现；本目录较早的 Mentions set、初始化和正文 token 描述均是对应时点的历史审计，不属于新版本发布步骤。
 - [Comments / Replies / Reaction B0 基线](./comment-reaction-snapshot-counts-inventory.md)：保留实施前静态读写清单、时间口径、Doc owner 约束设计和42个具名 case；后续授权、实现与运行证据见实施记录，不覆盖原快照。
 - [Comments B0 固定输入复核](./comment-reaction-snapshot-counts-snapshot-review.md)：固定正文/SHA、全部相关变化与遗漏覆盖映射，以及捕获后差异；不宣称实时工作区已验收。
 - [FrontDesk 与 Query 读取边界收口](./frontdesk-query-convergence.md)：单资源、批量转发、list/pagi、统一查询能力合同与资源加载 lint；整改已实施，验收见本文档与执行记录。
