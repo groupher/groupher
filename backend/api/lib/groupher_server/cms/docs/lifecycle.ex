@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
   alias CMS.Articles.ErrorCat
   alias CMS.Model.{DocBranch, DocLifecycle, DocPublic}
   alias CMS.ReviewBlocks
-  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
 
   @states [:draft, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
@@ -94,7 +94,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
              })
              |> Repo.update(),
            {:ok, :pass} <- ReviewBlocks.recompute(updated),
-           {:ok, :pass} <- GraphRevision.bump_for_article(updated.article_id) do
+           {:ok, :pass} <- Revision.bump() do
         {:ok, updated}
       end
     else

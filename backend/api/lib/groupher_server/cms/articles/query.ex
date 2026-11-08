@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Articles.Query do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Articles.{Pagination, Query.Locator}
+  alias CMS.Articles.Pagination
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.Gate.Scope
@@ -48,10 +48,6 @@ defmodule GroupherServer.CMS.Articles.Query do
     filter = Map.put(filter, :author_id, target_user.id)
     Pagination.page(thread, filter, pagi, viewer, include_pinned: true)
   end
-
-  @doc "Resolves Article locators in a bounded batch through the canonical Gate scope."
-  @spec locators([map()]) :: T.domain_res([map()])
-  def locators(locators), do: Locator.resolve(locators)
 
   @doc """
   Counts the target user's publicly visible Articles in one thread.

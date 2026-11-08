@@ -16,9 +16,7 @@ release_command = '/app/bin/migrate'
   SEARCH_ARTIMENTS_ENABLED = 'false'
 PHX_HOST = 'api.groupher.com'
 PORT = '8080'
-MIGRATION_EXPECTED_DATABASE = 'groupher_prod_seed_20261104'
-REFERENCE_MAP_KEY_VERSION = '1'
-MENTION_REBUILD_FAILURE_MANIFEST = '/data/mention-rebuild-failures.json'
+MIGRATION_EXPECTED_DATABASE = 'groupher_mentions_graph_20261106'
 
 [[mounts]]
 source = 'groupher_data'

@@ -25,7 +25,13 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
       raise ArgumentError, "Comment scope requires community_id"
     end
 
-    unless policy_mode in [:public, :owner_management, :moderator_management, :operations] do
+    unless policy_mode in [
+             :public,
+             :mentioned_target,
+             :owner_management,
+             :moderator_management,
+             :operations
+           ] do
       raise ArgumentError, "invalid Comment scope policy mode"
     end
 
@@ -34,4 +40,10 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
 
   @doc "Builds the explicit cross-thread public discussion scope."
   def all_public, do: %__MODULE__{thread: :all, policy_mode: :public}
+
+  @doc "Scopes one graph-confirmed Comment by its own state, independently of parent body admission."
+  def mentioned_target(thread, community_id)
+      when thread in @threads and is_integer(community_id) do
+    %__MODULE__{thread: thread, policy_mode: :mentioned_target, community_id: community_id}
+  end
 end

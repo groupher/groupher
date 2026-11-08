@@ -24,6 +24,8 @@ defmodule GroupherServer.Activity.Post do
 
   @contracts %{
     created: Event.contract([], [], [:article_log, :community_log]),
+    ticket_created: Event.contract([], [], [:article_log], :ticket),
+    ticket_linked: Event.contract([], [], [:article_log], :ticket),
     title_changed: Event.contract([:title], [:revision_id], [:article_log, :community_log]),
     body_updated:
       Event.contract(

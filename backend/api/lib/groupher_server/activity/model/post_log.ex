@@ -10,6 +10,8 @@ defmodule GroupherServer.Activity.Model.PostLog do
     stream_field: :article_id,
     actions: [
       :created,
+      :ticket_created,
+      :ticket_linked,
       :title_changed,
       :body_updated,
       :trashed,
@@ -22,6 +24,8 @@ defmodule GroupherServer.Activity.Model.PostLog do
       :comment_unpinned,
       :solution_accepted,
       :solution_replaced,
-      :solution_revoked
+      :solution_revoked,
+      :moderation_review_started,
+      :moderation_review_resolved
     ]
 end

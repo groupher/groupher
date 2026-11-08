@@ -93,10 +93,6 @@ defmodule GroupherServer.CMS.Articles do
   @spec lite_paths([map()]) :: {:ok, [map()]} | {:error, term()}
   def lite_paths(paths), do: Pagination.lite_paths(paths)
 
-  @doc "Resolves a bounded batch of Article locators through the canonical Query and Gate scope."
-  @spec locators([map()]) :: T.domain_res([map()])
-  def locators(locators), do: Query.locators(locators)
-
   @doc "Returns the canonical public Article binding scope for joined collections."
   defdelegate public_binding_ids(), to: Pagination
 

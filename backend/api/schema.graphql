@@ -253,18 +253,18 @@ type RootQueryType {
   commentReplyPage(comment: CommentPathInput!, filter: CommentPageFilter, pagi: PagiInput): CommentReplyPage!
 
   "mentions created by an artiment"
-  mentions(community: String!, source: MentionSourceInput!, pagi: PagiInput): ArtimentMentionPage
+  mentions(community: String!, source: MentionsGraphLocatorInput!, pagi: PagiInput): ArtimentMentionPage
 
   "artiments mentioning an internal target"
   mentionedBy(community: String!, target: MentionTargetInput!, pagi: PagiInput): ArtimentMentionPage
 
-  referenceMap(
-    community: String!, focus: ReferenceMapLocatorInput!, frontiers: [ReferenceMapFrontierInput!]!, first: Int
-  ): ReferenceMapPage!
+  mentionsGraph(
+    community: String!, focus: MentionsGraphLocatorInput!, after: String, first: Int
+  ): MentionsGraphPage!
 
-  referenceMapRevision(community: String!, focus: ReferenceMapLocatorInput!): ID!
+  mentionsGraphRevision(community: String!, focus: MentionsGraphLocatorInput!): ID!
 
-  referenceMapArticleComments(community: String!, focus: ReferenceMapLocatorInput!, after: ID, first: Int): ReferenceMapArticleCommentsPage!
+  mentionsGraphArticleComments(community: String!, focus: MentionsGraphLocatorInput!, after: ID, first: Int): MentionsGraphArticleCommentsPage!
 
   "search communities by title"
   searchCommunities(title: String!, category: String): [Community!]!
@@ -1846,7 +1846,7 @@ type CmsContentReview {
   communityOpinion: CmsReviewOpinion
 }
 
-enum ReferenceMapNodeType {
+enum MentionsGraphNodeType {
   POST
   BLOG
   CHANGELOG
@@ -1855,71 +1855,56 @@ enum ReferenceMapNodeType {
   COMMENT
 }
 
-enum ReferenceMapSyncState {
-  READY
-  PENDING
-}
-
-enum ReferenceMapFrontierState {
-  AVAILABLE
+enum MentionsGraphNodeStatus {
+  READABLE
+  DELETED
   UNAVAILABLE
 }
 
-input ReferenceMapLocatorInput {
-  type: ReferenceMapNodeType!
-  articleInnerId: ID!
+input MentionsGraphLocatorInput {
+  type: MentionsGraphNodeType!
+  articleInnerId: ID
+  articleId: ID
   commentInnerId: ID
 }
 
-input ReferenceMapFrontierInput {
-  node: ReferenceMapLocatorInput!
-  after: String
+type MentionsGraphLocator {
+  type: MentionsGraphNodeType!
+  articleInnerId: ID
+  articleId: ID
+  commentInnerId: ID
 }
 
-type ReferenceMapNode {
+type MentionsGraphNode {
   id: ID!
-  type: ReferenceMapNodeType!
-  articleInnerId: ID!
-  commentInnerId: ID
-  branchId: ID
-  title: String!
-  url: String!
-  syncState: ReferenceMapSyncState!
+  type: MentionsGraphNodeType!
+  status: MentionsGraphNodeStatus!
+  title: String
+  url: String
+  locator: MentionsGraphLocator
+  canOpen: Boolean!
 }
 
-type ReferenceMapEdge {
+type MentionsGraphEdge {
   id: ID!
   from: ID!
   to: ID!
   occurrencesCount: Int!
 }
 
-type ReferenceMapNeighborhood {
-  requestIndex: Int!
-  state: ReferenceMapFrontierState!
-  nodeId: ID
-  edgeIds: [ID!]!
+type MentionsGraphPage {
+  revision: ID!
+  nodes: [MentionsGraphNode!]!
+  edges: [MentionsGraphEdge!]!
   hasNextPage: Boolean!
   endCursor: String
 }
 
-type ReferenceMapPage {
-  nodes: [ReferenceMapNode!]!
-  edges: [ReferenceMapEdge!]!
-  neighborhoods: [ReferenceMapNeighborhood!]!
-  projectionPending: Boolean!
-}
-
-type ReferenceMapArticleCommentsPage {
-  comments: [ReferenceMapLocator!]!
+type MentionsGraphArticleCommentsPage {
+  revision: ID!
+  comments: [MentionsGraphLocator!]!
   hasNextPage: Boolean!
   endCursor: ID
-}
-
-type ReferenceMapLocator {
-  type: ReferenceMapNodeType!
-  articleInnerId: ID!
-  commentInnerId: ID
 }
 
 type CommunityNameCheck {
@@ -2411,9 +2396,10 @@ type TrashPage {
 
 type ActivityResourceRef {
   type: String!
-  ref: ID!
+  ref: ID
   title: String
   innerId: ID
+  url: String
 }
 
 type ArticleLogActor {
@@ -3990,15 +3976,28 @@ type CommentsListState {
 
 type ArtimentMention {
   id: ID!
-  mentionerType: MentionType!
-  mentionerUrl: String!
-  mentionedScope: MentionScope!
-  mentionedType: MentionType!
-  mentionedUrl: String!
+  source: MentionsGraphNode!
+  targetType: MentionType!
+  target: MentionTarget!
   mentionCase: MentionCase!
   occurrencesCount: Int!
   mentionedAt: DateTime!
 }
+
+type MentionUserTarget {
+  type: MentionType!
+  status: MentionsGraphNodeStatus!
+  login: String
+  displayName: String
+  url: String
+}
+
+type MentionUrlTarget {
+  type: MentionType!
+  url: String!
+}
+
+union MentionTarget = MentionsGraphNode | MentionUserTarget | MentionUrlTarget
 
 type PostLite {
   id: ID!
@@ -4116,7 +4115,8 @@ type CommentPage {
 }
 
 type ArtimentMentionPage {
-  entries: [ArtimentMention]
+  revision: ID!
+  entries: [ArtimentMention!]!
   pageInfo: PageInfo!
 }
 
@@ -4370,11 +4370,6 @@ enum MentionType {
   URL
 }
 
-enum MentionScope {
-  INTERNAL
-  EXTERNAL
-}
-
 enum MentionCase {
   INLINE_MENTION
   LINK
@@ -4479,22 +4474,10 @@ input CommentPathInput {
   innerId: ID!
 }
 
-input MentionSourceInput {
-  article: ArticlePathInput
-  comment: CommentPathInput
-  ticket: TicketPathInput
-}
-
 input MentionTargetInput {
-  article: ArticlePathInput
-  comment: CommentPathInput
-  ticket: TicketPathInput
+  type: MentionType!
+  locator: MentionsGraphLocatorInput
   userLogin: String
-}
-
-input TicketPathInput {
-  community: String!
-  innerId: ID!
 }
 
 input TrashFilter {

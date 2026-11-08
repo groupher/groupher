@@ -19,9 +19,9 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
   alias GroupherServer.{Accounts, CMS, ReviewBot}
   alias Accounts.Model.User
   alias CMS.{FrontDesk, Comments}
-  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
-  alias CMS.Comments.Effects
+  alias CMS.Comments.{Effects, Mentions}
   alias Comments.Persist
   alias CMS.Model.{Comment, Community}
   alias Helper.{ORM, T}
@@ -144,6 +144,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
          {:ok, updated} <- Persist.update_content(canonical, body_bag, expected_version),
          {:ok, _review} <-
            register_comment_review(updated, lifecycle, community_id, command_id),
+         {:ok, _} <- Mentions.update(updated, command_id, community_id),
          {:ok, :pass} <- Revision.bump(),
          {:ok, _} <- enqueue_comment_effects(updated, actor, command_id, community_id) do
       {:ok, %{comment: updated, article: article, command_id: command_id}}

@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.CMS.Articles.Query.LocatorTest do
     invalid_path = %{community: source.slug, thread: :post, inner_id: 999_999}
 
     assert {:ok, [first, duplicate, mirrored]} =
-             CMS.Articles.locators([
+             CMS.FrontDesk.article([
                source_path,
                source_path,
                invalid_path,
@@ -48,17 +48,17 @@ defmodule GroupherServer.Test.CMS.Articles.Query.LocatorTest do
   end
 
   test "empty and 100-item batches work; 101 paths return the dedicated ErrorCat reason" do
-    assert {:ok, []} = CMS.Articles.locators([])
+    assert {:ok, []} = CMS.FrontDesk.article([])
 
     {community, article, _attrs, _author} = mock_article(:post)
     binding = Repo.get_by!(ArticleBinding, article_id: article.id, community_id: community.id)
     path = %{community: community.slug, thread: :post, inner_id: binding.inner_id}
 
-    assert {:ok, entries} = CMS.Articles.locators(List.duplicate(path, 100))
+    assert {:ok, entries} = CMS.FrontDesk.article(List.duplicate(path, 100))
     assert length(entries) == 100
 
     assert {:error, %ErrorCat.Error{reason: :batch_limit_exceeded, details: details}} =
-             CMS.Articles.locators(List.duplicate(path, 101))
+             CMS.FrontDesk.article(List.duplicate(path, 101))
 
     assert details == %{limit: 100, actual: 101}
   end
@@ -69,13 +69,13 @@ defmodule GroupherServer.Test.CMS.Articles.Query.LocatorTest do
     path = %{community: community.slug, thread: :post, inner_id: binding.inner_id}
 
     {one_result, one_queries} =
-      capture_repo_queries(fn -> CMS.Articles.locators([path]) end)
+      capture_repo_queries(fn -> CMS.FrontDesk.article([path]) end)
 
     {twenty_result, twenty_queries} =
-      capture_repo_queries(fn -> CMS.Articles.locators(List.duplicate(path, 20)) end)
+      capture_repo_queries(fn -> CMS.FrontDesk.article(List.duplicate(path, 20)) end)
 
     {hundred_result, hundred_queries} =
-      capture_repo_queries(fn -> CMS.Articles.locators(List.duplicate(path, 100)) end)
+      capture_repo_queries(fn -> CMS.FrontDesk.article(List.duplicate(path, 100)) end)
 
     assert {:ok, [_]} = one_result
     assert {:ok, entries} = twenty_result

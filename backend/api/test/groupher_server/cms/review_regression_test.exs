@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     {community, doc, _author, comment} = doc_comment()
     reviewer = reviewer(community)
     command_id = Ecto.UUID.generate()
-    public = Repo.get_by!(DocPublic, article_id: comment.article_id, branch_id: comment.branch_id)
+    public = Repo.get_by!(DocPublic, article_id: comment.article_id)
     body = Repo.get_by!(CMS.Model.CommentBody, comment_id: comment.id)
 
     assert {:ok, result} =
@@ -176,7 +176,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
                Ecto.UUID.generate()
              )
 
-    assert doc.branch_id == comment.branch_id
+    assert doc.article_id == comment.article_id
   end
 
   defp restriction_target(:article) do

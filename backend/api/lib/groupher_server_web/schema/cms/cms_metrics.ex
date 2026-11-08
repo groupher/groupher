@@ -186,9 +186,8 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   end
 
   input_object :mention_target_input do
-    field(:article, :article_path_input)
-    field(:comment, :comment_path_input)
-    field(:ticket, :ticket_path_input)
+    field(:type, non_null(:mention_type))
+    field(:locator, :mentions_graph_locator_input)
     field(:user_login, :string)
   end
 

@@ -84,7 +84,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
       set: [state: :queued]
     )
 
-    {:ok, before_revision} = CMS.ArtimentMentions.GraphRevision.current(community.id)
+    {:ok, before_revision} = CMS.ArtimentMentions.MentionsGraph.Revision.current()
 
     assert {:ok, _result} =
              CMS.decide_review_target(
@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                )
              )
 
-    assert {:ok, denied_revision} = CMS.ArtimentMentions.GraphRevision.current(community.id)
+    assert {:ok, denied_revision} = CMS.ArtimentMentions.MentionsGraph.Revision.current()
     assert denied_revision > before_revision
 
     assert {:ok, _result} =
@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
              :count
            ) == 0
 
-    assert {:ok, released_revision} = CMS.ArtimentMentions.GraphRevision.current(community.id)
+    assert {:ok, released_revision} = CMS.ArtimentMentions.MentionsGraph.Revision.current()
     assert released_revision > denied_revision
   end
 

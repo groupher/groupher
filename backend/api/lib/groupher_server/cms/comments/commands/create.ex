@@ -25,7 +25,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
   alias CMS.{Comments.ErrorCat, FrontDesk}
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias CMS.Articles.Query, as: ArticleQuery
-  alias CMS.Comments.{Effects, Persist, Query, Summary}
+  alias CMS.Comments.{Effects, Mentions, Persist, Query, Summary}
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.ErrorCat, as: CmsErrorCat
 
@@ -289,6 +290,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          {:ok, _active_article} <- update_active_timestamp(thread, article, comment),
          {:ok, _} <-
            record_article_metric(counted_article, community, command_id, :comment_created),
+         {:ok, _} <- Mentions.update(projected_comment, command_id, community.id),
+         {:ok, :pass} <- Revision.bump(),
          {:ok, _} <-
            enqueue_comment_effects(
              projected_comment,
@@ -520,6 +523,8 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          {:ok, _activity_time} <- update_active_timestamp(thread, article, associated_reply),
          {:ok, _} <-
            record_article_metric(counted_article, community, command_id, :comment_created),
+         {:ok, _} <- Mentions.update(associated_reply, command_id, community.id),
+         {:ok, :pass} <- Revision.bump(),
          {:ok, _} <-
            enqueue_comment_effects(
              associated_reply,

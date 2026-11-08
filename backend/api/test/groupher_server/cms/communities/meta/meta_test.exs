@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.CMS.Communities.Meta do
     test "update community should keep default meta", ~m(user)a do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
-      {:ok, before_revision} = CMS.ArtimentMentions.GraphRevision.current(community.id)
+      {:ok, before_revision} = CMS.ArtimentMentions.MentionsGraph.Revision.current()
 
       {:ok, community} =
         CMS.Communities.update(community, %{title: "new title"}, user, Ecto.UUID.generate())
@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.CMS.Communities.Meta do
       assert strip_struct(community.meta) ==
                Map.merge(@default_meta, %{moderators_ids: [community.user_id]})
 
-      assert {:ok, after_revision} = CMS.ArtimentMentions.GraphRevision.current(community.id)
+      assert {:ok, after_revision} = CMS.ArtimentMentions.MentionsGraph.Revision.current()
       assert after_revision > before_revision
     end
 

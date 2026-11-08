@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Review.Decisions do
   """
 
   alias GroupherServer.{AlertWall, CMS, Repo}
-  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Model.Author
   alias CMS.Review.Const
 

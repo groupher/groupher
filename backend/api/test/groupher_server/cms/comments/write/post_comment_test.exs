@@ -163,7 +163,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert exist_in?(post_comment_2, comments.entries)
     end
 
-    test "create command captures a Comment set and projection intent in its transaction",
+    test "create command creates a Comment endpoint without spurious edges or notifications",
          ~m(user community post)a do
       command_id = Ecto.UUID.generate()
 
@@ -179,33 +179,23 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       endpoint =
         GroupherServer.Repo.get_by!(
-          CMS.ArtimentMentions.Model.Endpoint,
+          CMS.Model.Mentions.Endpoint,
           type: :comment,
           comment_id: comment.id
         )
 
-      body = GroupherServer.Repo.get_by!(CMS.Model.CommentBody, comment_id: comment.id)
-      token = "#{comment.id}:#{body.version}:#{body.body_hash}"
+      refute Repo.exists?(
+               Ecto.Query.from(edge in CMS.Model.Mentions.Edge,
+                 where: edge.source_endpoint_id == ^endpoint.id
+               )
+             )
 
-      assert %CMS.ArtimentMentions.Model.ProjectionState{
-               desired_content_token: ^token,
-               synced_set_id: nil,
-               desired_set_id: set_id
-             } = GroupherServer.Repo.get!(CMS.ArtimentMentions.Model.ProjectionState, endpoint.id)
-
-      assert %CMS.ArtimentMentions.Model.MentionSet{
-               source_endpoint_id: endpoint_id,
-               source_token: ^token
-             } = GroupherServer.Repo.get!(CMS.ArtimentMentions.Model.MentionSet, set_id)
-
-      assert endpoint_id == endpoint.id
-
-      assert Repo.get_by!(
+      refute Repo.get_by(
                CMS.Outbox.Event,
-               event: "mention.set_project",
+               event: "mention.notify",
                command_id: command_id,
                resource_id: endpoint.id
-             ).data["set_id"] == set_id
+             )
     end
 
     test "comment should have default meta after create", ~m(user post community)a do
@@ -222,7 +212,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert comment.meta |> Map.from_struct() |> Map.delete(:id) == @default_comment_meta
     end
 
-    test "delete command captures the tombstone as an empty current set",
+    test "soft delete keeps the Comment endpoint without creating notifications",
          ~m(user community post)a do
       assert {:ok, comment} =
                CMS.Comments.create_comment(
@@ -241,32 +231,24 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       endpoint =
         Repo.get_by!(
-          CMS.ArtimentMentions.Model.Endpoint,
+          CMS.Model.Mentions.Endpoint,
           type: :comment,
           comment_id: comment.id
         )
 
       body = Repo.get_by!(CMS.Model.CommentBody, comment_id: comment.id)
-      token = "#{comment.id}:#{body.version}:#{body.body_hash}"
 
-      assert %CMS.ArtimentMentions.Model.ProjectionState{
-               desired_content_token: ^token,
-               desired_set_id: set_id,
-               synced_set_id: nil
-             } = Repo.get!(CMS.ArtimentMentions.Model.ProjectionState, endpoint.id)
+      refute Repo.exists?(
+               Ecto.Query.from(edge in CMS.Model.Mentions.Edge,
+                 where: edge.source_endpoint_id == ^endpoint.id
+               )
+             )
 
-      assert Repo.aggregate(
-               Ecto.Query.from(occurrence in CMS.ArtimentMentions.Model.Occurrence,
-                 where: occurrence.set_id == ^set_id
-               ),
-               :count
-             ) == 0
-
-      assert Repo.get_by!(CMS.Outbox.Event,
-               event: "mention.set_project",
+      refute Repo.get_by(CMS.Outbox.Event,
+               event: "mention.notify",
                command_id: delete_command_id,
                resource_id: endpoint.id
-             ).data["set_id"] == set_id
+             )
 
       assert deleted.body.body_hash == body.body_hash
     end

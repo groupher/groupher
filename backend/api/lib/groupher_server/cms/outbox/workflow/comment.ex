@@ -36,6 +36,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
       {:busy, seconds} ->
         {:snooze, seconds}
 
+      {:snooze, seconds} ->
+        {:snooze, seconds}
+
       {:error,
        %ErrorCat.Error{
          namespace: {:cms},
@@ -63,12 +66,6 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
           {:ok, :effects_enqueued}
         else
           nil -> {:error, CommentErrorCat.not_exist("Comment parent Article")}
-        end
-
-      "comment.mention_sync" ->
-        case Repo.get(Comment, event.resource_id) do
-          nil -> {:ok, :source_deleted}
-          comment -> CMS.ArtimentMentions.sync_comment_public(comment)
         end
 
       action when action in ["comment.updated", "comment.replied"] ->

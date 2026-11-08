@@ -26,6 +26,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     ArticleLifecycle,
     CommentLifecycle,
     CommentReviewBlock,
+    Community,
     DocBranch,
     DocLifecycle
   }
@@ -38,6 +39,22 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Comment.t()) ::
           Ecto.Query.t() | {:error, ErrorCat.error()}
   @impl Policy
+  def scope(%Ecto.Query{} = query, actor, :read, %{policy_mode: :mentioned_target} = context) do
+    with {:ok, _} <- validate_thread(context) do
+      from(comment in query,
+        join: lifecycle in CommentLifecycle,
+        as: :gate_comment_lifecycle,
+        on: lifecycle.comment_id == comment.id,
+        join: community in Community,
+        as: :gate_community,
+        on: community.id == ^context.community_id,
+        where: lifecycle.state == :visible
+      )
+      |> maybe_filter_thread(context)
+      |> public_comment(actor)
+    end
+  end
+
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with {:ok, _} <- validate_thread(context),
          %Ecto.Query{} = query <- CommunityChain.comment_parent(query) do

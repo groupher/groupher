@@ -74,6 +74,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     CMS.comments_one_comment(comment)
   end
 
+  @doc "Resolves the one Comment selected through a stored graph relation."
+  def mentioned_comment(_root, %{community: community, locator: locator}, resolution) do
+    viewer = Map.get(resolution.context, :cur_user)
+    CMS.comments_mentioned_comment(community, locator, viewer)
+  end
+
   @doc "Resolves the canonical CommentPage with an independent PagiInput."
   def comment_page(
         _root,

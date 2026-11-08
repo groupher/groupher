@@ -18,7 +18,7 @@ defmodule GroupherServer.Jobs.Comments do
 
   alias GroupherServer.CMS
 
-  @event_types ~w(sync_mentions subscribe_community)
+  @event_types ~w(subscribe_community)
 
   @doc """
   Performs one persisted Comments job.
@@ -27,9 +27,9 @@ defmodule GroupherServer.Jobs.Comments do
 
       perform(%Oban.Job{
         args: %{
-          "type" => "sync_mentions",
+          "type" => "subscribe_community",
           "version" => 1,
-          "payload" => %{"comment_id" => comment_id}
+          "payload" => %{"community_id" => community_id, "actor_id" => actor_id}
         }
       })
   """

@@ -117,17 +117,6 @@ defmodule GroupherServer.Jobs.Workflow do
   end
 
   @doc """
-  Enqueues mention reconciliation for one comment-like artiment.
-
-  ## Examples
-
-      Jobs.sync_mentions(comment)
-      #=> {:ok, %Oban.Job{}} | {:ok, :pass} | {:error, reason}
-  """
-  @spec sync_mentions(struct()) :: {:ok, Oban.Job.t() | :pass} | {:error, term()}
-  def sync_mentions(%{id: id}), do: comments_job(:sync_mentions, %{comment_id: id})
-
-  @doc """
   Enqueues community subscription after a successful comment mutation.
 
   ## Examples
@@ -207,24 +196,6 @@ defmodule GroupherServer.Jobs.Workflow do
   end
 
   @doc """
-  Delegates GroupherServer.Jobs.Comments.new/1 through the Jobs Context boundary.
-
-  ## Examples
-
-      Workflow.comments_new(%{"type" => "sync_mentions", "version" => 1, "payload" => %{}})
-  """
-  defdelegate comments_new(arg1), to: GroupherServer.Jobs.Comments, as: :new
-
-  @doc """
-  Delegates GroupherServer.Jobs.Comments.new/2 through the Jobs Context boundary.
-
-  ## Examples
-
-      Workflow.comments_new(%{"type" => "sync_mentions"}, [queue: :default])
-  """
-  defdelegate comments_new(arg1, arg2), to: GroupherServer.Jobs.Comments, as: :new
-
-  @doc """
   Delegates GroupherServer.Jobs.Config.skip_enqueue?/0 through the Jobs Context boundary.
 
   ## Examples
@@ -247,7 +218,9 @@ defmodule GroupherServer.Jobs.Workflow do
 
   ## Examples
 
-      Workflow.public_cache_purge_new(%{invalidation_id: Ecto.UUID.generate()}, [queue: :public_cache])
+      Workflow.public_cache_purge_new(%{invalidation_id: Ecto.UUID.generate()},
+        queue: :cloudflare_purge
+      )
   """
   defdelegate public_cache_purge_new(arg1, arg2),
     to: GroupherServer.Jobs.PublicCachePurge,

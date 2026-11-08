@@ -552,6 +552,14 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Comments.one_comment/3)
     end
 
+    @desc "Reads one Comment reached through a stored Mention, even when its parent body is restricted"
+    field :mentioned_comment, :comment do
+      arg(:community, non_null(:string))
+      arg(:locator, non_null(:mentions_graph_locator_input))
+
+      resolve(&R.CMS.Comments.mentioned_comment/3)
+    end
+
     @desc "Comment Lite page using the shared offset/cursor pagination contract"
     field :comment_page, non_null(:comment_page) do
       arg(:article, non_null(:article_path_input))
@@ -584,7 +592,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     @desc "mentions created by an artiment"
     field :mentions, :artiment_mention_page do
       arg(:community, non_null(:string))
-      arg(:source, non_null(:mention_source_input))
+      arg(:source, non_null(:mentions_graph_locator_input))
       arg(:pagi, :pagi_input)
 
       resolve(&R.CMS.ArtimentMentions.mentions/3)
@@ -599,26 +607,33 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.ArtimentMentions.mentioned_by/3)
     end
 
-    field :reference_map, non_null(:reference_map_page) do
+    field :mentions_graph, non_null(:mentions_graph_page) do
       arg(:community, non_null(:string))
-      arg(:focus, non_null(:reference_map_locator_input))
-      arg(:frontiers, non_null(list_of(non_null(:reference_map_frontier_input))))
+      arg(:focus, non_null(:mentions_graph_locator_input))
+      arg(:after, :string)
       arg(:first, :integer, default_value: 20)
-      resolve(&R.CMS.ArtimentMentions.reference_map/3)
+      resolve(&R.CMS.ArtimentMentions.mentions_graph/3)
     end
 
-    field :reference_map_revision, non_null(:id) do
+    @desc "Reads Artiment title, URL and body status by stable resource identity"
+    field :artiment_status, :artiment_status do
       arg(:community, non_null(:string))
-      arg(:focus, non_null(:reference_map_locator_input))
-      resolve(&R.CMS.ArtimentMentions.reference_map_revision/3)
+      arg(:locator, non_null(:artiment_status_input))
+      resolve(&R.CMS.ArtimentStatus.read/3)
     end
 
-    field :reference_map_article_comments, non_null(:reference_map_article_comments_page) do
+    field :mentions_graph_revision, non_null(:id) do
       arg(:community, non_null(:string))
-      arg(:focus, non_null(:reference_map_locator_input))
+      arg(:focus, non_null(:mentions_graph_locator_input))
+      resolve(&R.CMS.ArtimentMentions.mentions_graph_revision/3)
+    end
+
+    field :mentions_graph_article_comments, non_null(:mentions_graph_article_comments_page) do
+      arg(:community, non_null(:string))
+      arg(:focus, non_null(:mentions_graph_locator_input))
       arg(:after, :id)
       arg(:first, :integer, default_value: 20)
-      resolve(&R.CMS.ArtimentMentions.reference_map_article_comments/3)
+      resolve(&R.CMS.ArtimentMentions.mentions_graph_article_comments/3)
     end
 
     @desc "search communities by title"

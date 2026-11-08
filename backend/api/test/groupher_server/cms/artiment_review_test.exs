@@ -607,7 +607,9 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
     {community, article_view, _attrs, author} = mock_article(:post)
     {:ok, destination} = mock_community(author)
     article = Repo.get!(CMS.Model.Article, article_view.article_id)
-    assert {:ok, _binding} = CMS.Articles.BindingPersist.mirror(article, destination)
+
+    assert {:ok, {:ok, _binding}} =
+             Repo.transaction(fn -> CMS.Articles.BindingPersist.mirror(article, destination) end)
 
     {:ok, comment} =
       CMS.Comments.create_comment(

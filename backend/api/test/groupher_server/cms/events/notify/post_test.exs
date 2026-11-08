@@ -31,8 +31,16 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
          ~m(user2 community post comment)a do
       {:ok, destination} = mock_community(user2)
       article = Repo.get!(Article, post.article_id)
-      assert {:ok, _} = CMS.Articles.BindingPersist.mirror(article, destination)
-      assert {:ok, :done} = CMS.Articles.BindingPersist.unmirror(article, community)
+
+      assert {:ok, {:ok, _}} =
+               Repo.transaction(fn ->
+                 CMS.Articles.BindingPersist.mirror(article, destination)
+               end)
+
+      assert {:ok, {:ok, :done}} =
+               Repo.transaction(fn ->
+                 CMS.Articles.BindingPersist.unmirror(article, community)
+               end)
 
       retained = %{Repo.get!(Comment, comment.id) | request_community_slug: destination.slug}
       assert {:ok, _} = Events.emit(:notify_upvote, %{target: retained, from_user: user2})

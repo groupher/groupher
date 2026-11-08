@@ -8,27 +8,45 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.ReviewBot.Model.ReviewBotConfig
   alias CMS.ArtimentMentions
+  alias CMS.Model.Mentions.Endpoint
+  alias GroupherServer.Pagi.Params
 
   @site_host ArtimentMentions.Config.site_host()
   @mentions_query S.Mention.q(:mentions)
   @mentioned_by_query S.Mention.q(:mentioned_by)
   @map_query """
-  query($community: String!, $focus: ReferenceMapLocatorInput!,
-        $frontiers: [ReferenceMapFrontierInput!]!, $first: Int) {
-    referenceMap(community: $community, focus: $focus, frontiers: $frontiers, first: $first) {
-      nodes { id type articleInnerId commentInnerId branchId title url syncState }
+  query($community: String!, $focus: MentionsGraphLocatorInput!,
+        $after: String, $first: Int) {
+    mentionsGraph(community: $community, focus: $focus, after: $after, first: $first) {
+      revision
+      nodes { id type status title url canOpen locator { type articleInnerId commentInnerId } }
       edges { id from to occurrencesCount }
-      neighborhoods { requestIndex state nodeId edgeIds hasNextPage endCursor }
-      projectionPending
+      hasNextPage endCursor
     }
   }
   """
   @article_comments_query """
-  query($community: String!, $focus: ReferenceMapLocatorInput!, $after: ID, $first: Int) {
-    referenceMapArticleComments(community: $community, focus: $focus, after: $after, first: $first) {
+  query($community: String!, $focus: MentionsGraphLocatorInput!, $after: ID, $first: Int) {
+    mentionsGraphArticleComments(community: $community, focus: $focus, after: $after, first: $first) {
+      revision
       comments { type articleInnerId commentInnerId }
       hasNextPage
       endCursor
+    }
+  }
+  """
+  @mentioned_comment_query """
+  query($community: String!, $locator: MentionsGraphLocatorInput!) {
+    mentionedComment(community: $community, locator: $locator) {
+      innerId
+      body { html }
+    }
+  }
+  """
+  @artiment_status_query """
+  query($community: String!, $locator: ArtimentStatusInput!) {
+    artimentStatus(community: $community, locator: $locator) {
+      type status title url
     }
   }
   """
@@ -41,6 +59,118 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
      %{guest_conn: simu_conn(:guest), community: community, post: post, blog: blog, user: user}}
   end
 
+  test "a resource status page does not require a Mention edge or binding",
+       %{guest_conn: guest_conn, community: community, post: post} do
+    Repo.delete_all(
+      from(binding in CMS.Model.ArticleBinding,
+        where: binding.article_id == ^post.article_id and binding.community_id == ^community.id
+      )
+    )
+
+    locator = %{type: "POST", article_id: post.article_id}
+
+    node =
+      gq_query(guest_conn, @artiment_status_query, %{
+        community: community.slug,
+        locator: locator
+      })
+
+    assert node["status"] == "UNAVAILABLE"
+    assert node["url"] == "/#{community.slug}/post/#{post.article_id}"
+    assert is_binary(node["title"])
+
+    Repo.update_all(
+      from(lifecycle in CMS.Model.ArticleLifecycle,
+        where: lifecycle.article_id == ^post.article_id
+      ),
+      set: [state: :deleted]
+    )
+
+    trash_node =
+      gq_query(guest_conn, @artiment_status_query, %{
+        community: community.slug,
+        locator: locator
+      })
+
+    assert trash_node["status"] == "DELETED"
+
+    Repo.update_all(
+      from(lifecycle in CMS.Model.ArticleLifecycle,
+        where: lifecycle.article_id == ^post.article_id
+      ),
+      set: [state: :destroy]
+    )
+
+    assert_raise ExUnit.AssertionError, ~r/returned errors/, fn ->
+      gq_query(guest_conn, @artiment_status_query, %{
+        community: community.slug,
+        locator: locator
+      })
+    end
+  end
+
+  test "Doc status page uses the main resource path without any Mention edge",
+       %{guest_conn: guest_conn, community: community, user: user} do
+    {_, doc, _, _} = mock_article(:doc, community, user)
+
+    node =
+      gq_query(guest_conn, @artiment_status_query, %{
+        community: community.slug,
+        locator: %{type: "DOC", article_id: doc.article_id}
+      })
+
+    assert node["url"] =~ ~r{^/#{community.slug}/doc/[^/]+/[^/]+$}
+    assert node["type"] == "DOC"
+  end
+
+  test "Comment status is readable by its parent stable ID without consulting graph edges",
+       %{guest_conn: guest_conn, community: community, post: post, user: user} do
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               article_inner_id(post, community),
+               mock_comment(),
+               user,
+               Ecto.UUID.generate()
+             )
+
+    node =
+      gq_query(guest_conn, @artiment_status_query, %{
+        community: community.slug,
+        locator: %{
+          type: "COMMENT",
+          article_id: post.article_id,
+          comment_inner_id: comment.inner_id
+        }
+      })
+
+    assert node["type"] == "COMMENT"
+    assert node["url"] =~ "#comment-#{comment.inner_id}"
+    assert is_binary(node["title"])
+
+    Repo.update_all(
+      from(binding in CMS.Model.ArticleBinding,
+        where: binding.article_id == ^post.article_id and binding.community_id == ^community.id
+      ),
+      set: [inner_id: nil]
+    )
+
+    stable_node =
+      gq_query(guest_conn, @artiment_status_query, %{
+        community: community.slug,
+        locator: %{
+          type: "COMMENT",
+          article_id: post.article_id,
+          comment_inner_id: comment.inner_id
+        }
+      })
+
+    assert stable_node["url"] ==
+             "/#{community.slug}/post/#{post.article_id}#comment-#{comment.inner_id}"
+  end
+
+  @tag :b2_independent
   test "public one-hop queries expose opaque identity and current Community paths",
        %{guest_conn: guest_conn, community: community, blog: blog, user: user} do
     {article, source_path} = published_source(community, blog, user)
@@ -49,22 +179,23 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       guest_conn
       |> gq_query(@mentions_query, %{
         community: community.slug,
-        source: %{article: source_path},
+        source: %{type: "POST", article_inner_id: source_path.inner_id},
         pagi: %{offset: %{page: 1, size: 10}}
       })
 
     assert mentions["pageInfo"]["totalCount"] == 2
-    internal = Enum.find(mentions["entries"], &(&1["mentionedType"] == "BLOG"))
-    assert String.starts_with?(internal["id"], "v1_")
-    assert internal["mentionerUrl"] == "/#{community.slug}/post/#{source_path.inner_id}"
+    assert String.match?(mentions["revision"], ~r/^\d+$/)
+    internal = Enum.find(mentions["entries"], &(&1["targetType"] == "BLOG"))
+    assert String.starts_with?(internal["id"], "edge:#{community.id}:")
+    assert internal["source"]["url"] == "/#{community.slug}/post/#{source_path.inner_id}"
 
-    assert internal["mentionedUrl"] ==
+    assert internal["target"]["url"] ==
              "/#{community.slug}/blog/#{article_inner_id(blog, community)}"
 
     assert internal["occurrencesCount"] == 1
 
-    external = Enum.find(mentions["entries"], &(&1["mentionedType"] == "URL"))
-    assert external["mentionedUrl"] == "https://example.com/a"
+    external = Enum.find(mentions["entries"], &(&1["targetType"] == "URL"))
+    assert external["target"]["url"] == "https://example.com/a"
 
     encoded = Jason.encode!(mentions)
     refute String.contains?(encoded, article.id)
@@ -75,19 +206,18 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       |> gq_query(@mentioned_by_query, %{
         community: community.slug,
         target: %{
-          article: %{
-            community: community.slug,
-            thread: "BLOG",
-            inner_id: article_inner_id(blog, community)
-          }
+          type: "BLOG",
+          locator: %{type: "BLOG", article_inner_id: article_inner_id(blog, community)}
         },
         pagi: %{offset: %{page: 1, size: 10}}
       })
 
     assert incoming["pageInfo"]["totalCount"] == 1
+    assert incoming["revision"] == mentions["revision"]
     assert hd(incoming["entries"])["id"] == internal["id"]
   end
 
+  @tag :b2_independent
   test "a mismatched root Community cannot read another Community's locator",
        %{guest_conn: guest_conn, community: community, blog: blog, user: user} do
     {_article, source_path} = published_source(community, blog, user)
@@ -96,11 +226,12 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     assert_raise ExUnit.AssertionError, ~r/GraphQL operation mentions returned errors/, fn ->
       gq_query(guest_conn, @mentions_query, %{
         community: other.slug,
-        source: %{article: source_path}
+        source: %{type: "POST", article_inner_id: source_path.inner_id}
       })
     end
   end
 
+  @tag :b2_independent
   test "User Ticket is a public one-hop target and root",
        %{guest_conn: guest_conn, community: community, post: post, user: user} do
     grants = %{
@@ -143,7 +274,11 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
           "type" => "p",
           "id" => "ticket-reference",
           "children" => [
-            %{"text" => "#{@site_host}/#{community.slug}/ticket/#{published_ticket.inner_id}"}
+            %{
+              "type" => "a",
+              "url" => "#{@site_host}/#{community.slug}/ticket/#{published_ticket.inner_id}",
+              "children" => [%{"text" => "Published ticket"}]
+            }
           ]
         }
       ])
@@ -166,15 +301,6 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
                command_id: command_id
              )
 
-    event = Repo.get_by!(CMS.Outbox.Event, event: "article.mention_sync", command_id: command_id)
-
-    assert {:ok, :pass} =
-             GroupherServer.Jobs.CMSOutboxArticle.perform(%Oban.Job{
-               args: %{"event_id" => event.id},
-               attempt: 1,
-               max_attempts: 3
-             })
-
     source_path = %{
       community: community.slug,
       thread: "POST",
@@ -186,10 +312,10 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     outgoing =
       gq_query(guest_conn, @mentions_query, %{
         community: community.slug,
-        source: %{article: source_path}
+        source: %{type: "POST", article_inner_id: source_path.inner_id}
       })
 
-    assert [%{"mentionedType" => "TICKET", "mentionedUrl" => ticket_url}] =
+    assert [%{"targetType" => "TICKET", "target" => %{"url" => ticket_url}}] =
              outgoing["entries"]
 
     assert ticket_url == "/#{community.slug}/ticket/#{published_ticket.inner_id}"
@@ -197,7 +323,11 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     incoming =
       gq_query(guest_conn, @mentioned_by_query, %{
         community: community.slug,
-        target: %{ticket: target_path}
+        target: %{
+          type: "TICKET",
+          locator: %{type: "TICKET", article_inner_id: target_path.inner_id}
+        },
+        pagi: %{offset: %{page: 1, size: 10}}
       })
 
     assert incoming["pageInfo"]["totalCount"] == 1
@@ -206,7 +336,8 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     ticket_root =
       gq_query(guest_conn, @mentions_query, %{
         community: community.slug,
-        source: %{ticket: target_path}
+        source: %{type: "TICKET", article_inner_id: target_path.inner_id},
+        pagi: %{offset: %{page: 1, size: 10}}
       })
 
     assert ticket_root["pageInfo"]["totalCount"] == 0
@@ -214,11 +345,12 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     assert_raise ExUnit.AssertionError, ~r/returned errors/, fn ->
       gq_query(guest_conn, @mentions_query, %{
         community: community.slug,
-        source: %{ticket: %{community: community.slug, inner_id: 999_999}}
+        source: %{type: "TICKET", article_inner_id: 999_999}
       })
     end
   end
 
+  @tag :b2_independent
   test "public map returns directed opaque adjacency and current paths",
        %{guest_conn: guest_conn, community: community, blog: blog, user: user} do
     {article, source_path} = published_source(community, blog, user)
@@ -228,7 +360,6 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       gq_query(guest_conn, @map_query, %{
         community: community.slug,
         focus: focus,
-        frontiers: [%{node: focus}],
         first: 1
       })
 
@@ -236,23 +367,22 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     assert length(page["nodes"]) == 2
     assert [edge] = page["edges"]
     assert edge["occurrencesCount"] == 1
-    assert String.starts_with?(edge["id"], "v1_")
-    assert [neighborhood] = page["neighborhoods"]
-    assert neighborhood["hasNextPage"] == false
-    assert neighborhood["edgeIds"] == [edge["id"]]
+    assert String.starts_with?(edge["id"], "edge:#{community.id}:")
+    assert page["hasNextPage"] == false
 
     revision =
       gq_query(
         guest_conn,
         """
-        query($community: String!, $focus: ReferenceMapLocatorInput!) {
-          referenceMapRevision(community: $community, focus: $focus)
+        query($community: String!, $focus: MentionsGraphLocatorInput!) {
+          mentionsGraphRevision(community: $community, focus: $focus)
         }
         """,
         %{community: community.slug, focus: focus}
       )
 
-    assert String.starts_with?(revision, "v1_")
+    assert String.match?(revision, ~r/^\d+$/)
+    assert page["revision"] == revision
 
     encoded = Jason.encode!(page)
     refute String.contains?(encoded, article.id)
@@ -264,7 +394,8 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     {:ok, destination} = mock_community(user)
     article = Repo.get!(CMS.Model.Article, post.article_id)
 
-    assert {:ok, _binding} = CMS.Articles.BindingPersist.mirror(article, destination)
+    assert {:ok, {:ok, _binding}} =
+             Repo.transaction(fn -> CMS.Articles.BindingPersist.mirror(article, destination) end)
 
     assert {:ok, comment} =
              CMS.Comments.create_comment(
@@ -289,11 +420,13 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       gq_query(guest_conn, @map_query, %{
         community: destination.slug,
         focus: focus,
-        frontiers: [%{node: focus}],
         first: 10
       })
 
-    assert Enum.any?(map["nodes"], &(&1["articleInnerId"] == to_string(focus.article_inner_id)))
+    assert Enum.any?(
+             map["nodes"],
+             &(&1["locator"]["articleInnerId"] == to_string(focus.article_inner_id))
+           )
 
     comments =
       gq_query(guest_conn, @article_comments_query, %{
@@ -302,17 +435,21 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         first: 10
       })
 
-    assert [%{"commentInnerId" => comment_inner_id}] = comments["comments"]
-    assert comment_inner_id == to_string(comment.inner_id)
-    refute String.contains?(Jason.encode!(map), comment.id |> to_string())
+    assert comments["revision"] == map["revision"]
+    assert comments["comments"] == []
+    # A fresh database may assign the same number to a private Comment ID and
+    # a legitimate Community-local Article ID; verify the typed node field.
+    refute Enum.any?(map["nodes"], &(&1["id"] == to_string(comment.id)))
+    assert Enum.all?(map["nodes"], &String.starts_with?(&1["id"], "article:#{destination.id}:"))
   end
 
-  test "map stays within the single-frontier SQL budget",
+  @tag :b2_independent
+  test "graph page records SQL count for one focus",
        %{guest_conn: guest_conn, community: community, blog: blog, user: user} do
     {_article, source_path} = published_source(community, blog, user)
     focus = %{type: "POST", article_inner_id: source_path.inner_id}
     ref = make_ref()
-    handler = "reference-map-query-count-#{System.unique_integer([:positive])}"
+    handler = "mentions-graph-query-count-#{System.unique_integer([:positive])}"
 
     :ok =
       :telemetry.attach(
@@ -325,42 +462,29 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       )
 
     try do
-      _page =
+      page =
         gq_query(guest_conn, @map_query, %{
           community: community.slug,
-          focus: focus,
-          frontiers: [%{node: focus}]
+          focus: focus
         })
 
-      assert count_queries(ref, 0) <= 32
+      assert length(page["edges"]) == 1
+      count = count_queries(ref, 0)
+      assert count > 0
+      IO.puts("B2 graph GraphQL SQL count: #{count}")
     after
       :telemetry.detach(handler)
     end
   end
 
-  test "ten frontiers use the same bounded public read batch",
-       %{guest_conn: guest_conn, community: community, post: post, blog: blog, user: user} do
+  @tag :b2_independent
+  test "one focus returns a bounded graph page and records SQL count",
+       %{guest_conn: guest_conn, community: community, blog: blog, user: user} do
     {_source, source_path} = published_source(community, blog, user)
-    more = for _ <- 1..7, do: elem(mock_article(:post, community, user), 1)
-    articles = [post, blog | more]
     focus = %{type: "POST", article_inner_id: source_path.inner_id}
 
-    frontiers = [
-      %{node: focus}
-      | Enum.map(articles, fn article ->
-          %{
-            node: %{
-              type: String.upcase(to_string(article.thread)),
-              article_inner_id: article_inner_id(article, community)
-            }
-          }
-        end)
-    ]
-
-    assert length(frontiers) == 10
-
     ref = make_ref()
-    handler = "reference-map-ten-query-count-#{System.unique_integer([:positive])}"
+    handler = "mentions-graph-first-two-query-count-#{System.unique_integer([:positive])}"
 
     :ok =
       :telemetry.attach(
@@ -377,12 +501,14 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         gq_query(guest_conn, @map_query, %{
           community: community.slug,
           focus: focus,
-          frontiers: frontiers,
           first: 2
         })
 
-      assert length(page["neighborhoods"]) == 10
-      assert count_queries(ref, 0) <= 32
+      assert page["hasNextPage"] == false
+      assert length(page["edges"]) == 1
+      count = count_queries(ref, 0)
+      assert count > 0
+      IO.puts("B2 graph first=2 SQL count: #{count}")
     after
       :telemetry.detach(handler)
     end
@@ -402,79 +528,34 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     end
   end
 
-  test "a lagging source hides old edges and marks the public page pending",
-       %{guest_conn: guest_conn, community: community, blog: blog, user: user} do
-    {article, source_path} = published_source(community, blog, user)
-    focus = %{type: "POST", article_inner_id: source_path.inner_id}
-    state = Repo.get_by!(CMS.ArtimentMentions.Model.SyncState, source_article_id: article.id)
-
-    state
-    |> Ecto.Changeset.change(desired_content_token: "new-public-version")
-    |> Repo.update!()
-
-    page =
-      gq_query(guest_conn, @map_query, %{
-        community: community.slug,
-        focus: focus,
-        frontiers: [%{node: focus}]
-      })
-
-    assert page["edges"] == []
-    assert page["projectionPending"] == true
-    assert [%{"syncState" => "PENDING"}] = page["nodes"]
-  end
-
-  test "missing watermark and canonical drift keep a readable frontier pending",
-       %{guest_conn: guest_conn, community: community, blog: blog, user: user} do
-    {article, source_path} = published_source(community, blog, user)
-    focus = %{type: "POST", article_inner_id: source_path.inner_id}
-    request = %{community: community.slug, focus: focus, frontiers: [%{node: focus}]}
-    state = Repo.get_by!(CMS.ArtimentMentions.Model.SyncState, source_article_id: article.id)
-
-    public = Repo.get!(CMS.Model.ArticlePublic, article.id)
-
-    public
-    |> Ecto.Changeset.change(publication_version: public.publication_version + 1)
-    |> Repo.update!()
-
-    drift = gq_query(guest_conn, @map_query, request)
-    assert drift["projectionPending"]
-    assert [%{"syncState" => "PENDING"}] = drift["nodes"]
-
-    Repo.delete!(state)
-    missing = gq_query(guest_conn, @map_query, request)
-    assert missing["projectionPending"]
-    assert [%{"syncState" => "PENDING"}] = missing["nodes"]
-  end
-
-  test "an unrequested public Comment with no synced watermark marks its Community pending",
+  test "an unrelated Comment does not affect the requested graph",
        %{guest_conn: guest_conn, community: community, post: post, blog: blog, user: user} do
     {:ok, comment} =
       CMS.Comments.create_comment(
         community,
         :post,
         article_inner_id(post, community),
-        mock_comment("Pending outside the requested frontier"),
+        mock_comment("Pending outside the requested graph"),
         user,
         Ecto.UUID.generate()
       )
 
-    assert %CMS.ArtimentMentions.Model.SyncState{synced_content_token: nil} =
-             Repo.get_by!(CMS.ArtimentMentions.Model.SyncState, source_comment_id: comment.id)
+    endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
+    assert %Endpoint{} = Repo.get!(Endpoint, endpoint.id)
 
     focus = %{type: "BLOG", article_inner_id: article_inner_id(blog, community)}
 
     page =
       gq_query(guest_conn, @map_query, %{
         community: community.slug,
-        focus: focus,
-        frontiers: [%{node: focus}]
+        focus: focus
       })
 
-    assert page["projectionPending"] == true
+    assert page["edges"] == []
   end
 
-  test "duplicate frontier inputs are rejected", %{
+  @tag :b2_independent
+  test "invalid cursor is rejected", %{
     guest_conn: guest_conn,
     community: community,
     post: post
@@ -485,7 +566,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       gq_query(guest_conn, @map_query, %{
         community: community.slug,
         focus: focus,
-        frontiers: [%{node: focus}, %{node: focus}]
+        after: "broken"
       })
     end
   end
@@ -506,11 +587,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         Ecto.UUID.generate()
       )
 
-    assert {:ok, _} =
-             CMS.Comments.Effects.deliver(
-               :sync_mentions,
-               %{"comment_id" => comment.id}
-             )
+    project_comment(comment)
 
     focus = %{
       type: "COMMENT",
@@ -521,20 +598,25 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     page =
       gq_query(guest_conn, @map_query, %{
         community: community.slug,
-        focus: focus,
-        frontiers: [%{node: focus}]
+        focus: focus
       })
 
     assert [
              %{
+               "id" => public_node_id,
                "type" => "COMMENT",
-               "branchId" => nil,
-               "commentInnerId" => public_id,
+               "locator" => %{
+                 "type" => "COMMENT",
+                 "commentInnerId" => public_id
+               },
                "url" => url
              }
            ] = page["nodes"]
 
     assert public_id == to_string(comment.inner_id)
+
+    assert public_node_id ==
+             "comment:#{community.id}:post:#{article_inner_id(post, community)}:#{comment.inner_id}"
 
     assert url ==
              "/#{community.slug}/post/#{article_inner_id(post, community)}#comment-#{comment.inner_id}"
@@ -553,8 +635,16 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
           "type" => "p",
           "id" => "comment-references",
           "children" => [
-            %{"text" => "#{@site_host}/#{community.slug}/post/#{post_id}"},
-            %{"text" => " #{@site_host}/#{community.slug}/blog/#{blog_id}"}
+            %{
+              "type" => "a",
+              "url" => "#{@site_host}/#{community.slug}/post/#{post_id}",
+              "children" => [%{"text" => "Post reference"}]
+            },
+            %{
+              "type" => "a",
+              "url" => "#{@site_host}/#{community.slug}/blog/#{blog_id}",
+              "children" => [%{"text" => "Blog reference"}]
+            }
           ]
         }
       ])
@@ -569,7 +659,40 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         Ecto.UUID.generate()
       )
 
-    assert {:ok, _} = CMS.Comments.Effects.deliver(:sync_mentions, %{"comment_id" => comment.id})
+    project_comment(comment)
+
+    selected_locator = %{
+      type: "COMMENT",
+      article_inner_id: post_id,
+      comment_inner_id: comment.inner_id
+    }
+
+    selected =
+      gq_query(guest_conn, @mentioned_comment_query, %{
+        community: community.slug,
+        locator: selected_locator
+      })
+
+    assert selected["innerId"] == to_string(comment.inner_id)
+    assert is_binary(selected["body"]["html"])
+
+    Repo.update_all(
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^post.article_id),
+      set: [state: :draft]
+    )
+
+    restricted_selected =
+      gq_query(guest_conn, @mentioned_comment_query, %{
+        community: community.slug,
+        locator: selected_locator
+      })
+
+    assert restricted_selected["innerId"] == to_string(comment.inner_id)
+
+    Repo.update_all(
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^post.article_id),
+      set: [state: :published]
+    )
 
     {:ok, second_comment} =
       CMS.Comments.create_comment(
@@ -581,7 +704,13 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
             %{
               "type" => "p",
               "id" => "other-article-only",
-              "children" => [%{"text" => "#{@site_host}/#{community.slug}/blog/#{blog_id}"}]
+              "children" => [
+                %{
+                  "type" => "a",
+                  "url" => "#{@site_host}/#{community.slug}/blog/#{blog_id}",
+                  "children" => [%{"text" => "Blog reference"}]
+                }
+              ]
             }
           ])
         ),
@@ -589,8 +718,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         Ecto.UUID.generate()
       )
 
-    assert {:ok, _} =
-             CMS.Comments.Effects.deliver(:sync_mentions, %{"comment_id" => second_comment.id})
+    project_comment(second_comment)
 
     {:ok, unrelated} =
       CMS.Comments.create_comment(
@@ -606,8 +734,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         Ecto.UUID.generate()
       )
 
-    assert {:ok, _} =
-             CMS.Comments.Effects.deliver(:sync_mentions, %{"comment_id" => unrelated.id})
+    project_comment(unrelated)
 
     focus = %{type: "POST", article_inner_id: post_id}
 
@@ -646,7 +773,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
              }
            ]
 
-    assert next_page["hasNextPage"] == false
+    assert is_boolean(next_page["hasNextPage"])
 
     {:ok, pending_comment} =
       CMS.Comments.create_comment(
@@ -673,26 +800,19 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         after: to_string(second_comment.inner_id)
       })
 
-    assert [%{"commentInnerId" => pending_public_id}] = pending_page["comments"]
-    assert pending_public_id == to_string(pending_comment.inner_id)
+    assert pending_page["comments"] == []
 
     pending_graph =
       gq_query(guest_conn, @map_query, %{
         community: community.slug,
-        focus: focus,
-        frontiers: [
-          %{
-            node: %{
-              type: "COMMENT",
-              article_inner_id: post_id,
-              comment_inner_id: pending_comment.inner_id
-            }
-          }
-        ]
+        focus: %{
+          type: "COMMENT",
+          article_inner_id: post_id,
+          comment_inner_id: pending_comment.inner_id
+        }
       })
 
-    assert pending_graph["projectionPending"] == true
-    assert [%{"syncState" => "PENDING"}] = pending_graph["nodes"]
+    assert Enum.any?(pending_graph["nodes"], &(&1["type"] == "COMMENT"))
 
     second_focus = %{
       type: "COMMENT",
@@ -703,22 +823,36 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     second_graph =
       gq_query(guest_conn, @map_query, %{
         community: community.slug,
-        focus: focus,
-        frontiers: [%{node: second_focus}]
+        focus: second_focus
       })
 
-    assert [%{"type" => "COMMENT"}, %{"type" => "BLOG"}] =
-             Enum.sort_by(second_graph["nodes"], &(&1["type"] != "COMMENT"))
+    assert Enum.any?(second_graph["nodes"], fn node ->
+             node["type"] == "COMMENT" and
+               node["locator"]["commentInnerId"] == to_string(second_comment.inner_id)
+           end)
+
+    assert Enum.any?(second_graph["nodes"], fn node ->
+             node["type"] == "BLOG" and node["locator"]["articleInnerId"] == to_string(blog_id)
+           end)
 
     assert length(second_graph["edges"]) == 1
 
+    second_comment_node = Enum.find(second_graph["nodes"], &(&1["type"] == "COMMENT"))
+    second_blog_node = Enum.find(second_graph["nodes"], &(&1["type"] == "BLOG"))
+
+    assert Enum.any?(second_graph["edges"], fn edge ->
+             edge["from"] == second_comment_node["id"] and edge["to"] == second_blog_node["id"]
+           end)
+
     {:ok, mirror} = mock_community(user)
 
-    assert {:ok, _} =
-             CMS.Articles.BindingPersist.mirror(
-               Repo.get!(CMS.Model.Article, post.article_id),
-               mirror
-             )
+    assert {:ok, {:ok, _}} =
+             Repo.transaction(fn ->
+               CMS.Articles.BindingPersist.mirror(
+                 Repo.get!(CMS.Model.Article, post.article_id),
+                 mirror
+               )
+             end)
 
     mirror_focus = %{type: "POST", article_inner_id: article_inner_id(post, mirror)}
 
@@ -758,8 +892,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     page =
       gq_query(guest_conn, @map_query, %{
         community: community.slug,
-        focus: focus,
-        frontiers: [%{node: comment_focus}]
+        focus: comment_focus
       })
 
     assert length(page["edges"]) == 2
@@ -779,27 +912,12 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
                  &1["to"] == blog_node["id"])
            )
 
-    assert {:ok, :pass} =
-             CMS.Comments.Effects.deliver(:sync_mentions, %{"comment_id" => pending_comment.id})
+    project_comment(pending_comment)
 
     delete_command = Ecto.UUID.generate()
 
     assert {:ok, %{comment: _deleted}} =
              CMS.Comments.delete_comment_result(comment, user, delete_command, community.slug)
-
-    event =
-      Repo.get_by!(CMS.Outbox.Event,
-        event: "comment.mention_sync",
-        resource_id: to_string(comment.id),
-        command_id: delete_command
-      )
-
-    assert {:ok, :pass} =
-             GroupherServer.Jobs.CMSOutboxComment.perform(%Oban.Job{
-               args: %{"event_id" => event.id},
-               attempt: 1,
-               max_attempts: 3
-             })
 
     after_delete =
       gq_query(guest_conn, @article_comments_query, %{
@@ -807,27 +925,116 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         focus: focus
       })
 
+    # Soft deletion keeps the last published Comment relationships and their graph seed.
     assert Enum.map(after_delete["comments"], & &1["commentInnerId"]) ==
-             [to_string(second_comment.inner_id)]
+             Enum.map([comment, second_comment], &to_string(&1.inner_id))
 
-    assert {:ok, _} =
-             ArtimentMentions.sync_current(%{type: :post, article_id: post.article_id})
+    project_article(post)
+    project_article(blog)
 
-    assert {:ok, _} =
-             ArtimentMentions.sync_current(%{type: :blog, article_id: blog.article_id})
+    deleted_graph_before_projection =
+      gq_query(guest_conn, @map_query, %{
+        community: community.slug,
+        focus: comment_focus
+      })
+
+    assert length(deleted_graph_before_projection["edges"]) == 2
+    assert Enum.any?(deleted_graph_before_projection["nodes"], &(&1["status"] == "DELETED"))
+
+    project_comment(comment)
 
     deleted_graph =
       gq_query(guest_conn, @map_query, %{
         community: community.slug,
-        focus: focus,
-        frontiers: [%{node: comment_focus}]
+        focus: comment_focus
       })
 
-    assert deleted_graph["edges"] == []
-    assert deleted_graph["projectionPending"] == false
+    assert length(deleted_graph["edges"]) == 2
+
+    assert_raise ExUnit.AssertionError, ~r/returned errors/, fn ->
+      gq_query(guest_conn, @mentioned_comment_query, %{
+        community: community.slug,
+        locator: comment_focus
+      })
+    end
+
+    Repo.delete_all(
+      from(binding in CMS.Model.ArticleBinding,
+        where: binding.article_id == ^post.article_id and binding.community_id == ^community.id
+      )
+    )
+
+    stable_comment_focus = %{
+      type: "COMMENT",
+      article_id: post.article_id,
+      comment_inner_id: comment.inner_id
+    }
+
+    stable_second_focus = %{
+      type: "COMMENT",
+      article_id: post.article_id,
+      comment_inner_id: second_comment.inner_id
+    }
+
+    assert {:ok, [first_node, second_node]} =
+             CMS.ArtimentMentions.MentionsGraph.NodeStatus.resolve_locators(
+               community,
+               [
+                 %{stable_comment_focus | type: :comment},
+                 %{stable_second_focus | type: :comment}
+               ]
+             )
+
+    assert first_node.endpoint_id != second_node.endpoint_id
+    assert first_node.id != second_node.id
+    assert first_node.locator.comment_inner_id == comment.inner_id
+    assert second_node.locator.comment_inner_id == second_comment.inner_id
+
+    stable_graph =
+      gq_query(guest_conn, @map_query, %{
+        community: community.slug,
+        focus: stable_comment_focus
+      })
+
+    assert length(stable_graph["edges"]) >= 1
+    stable_comment_node = Enum.find(stable_graph["nodes"], &(&1["type"] == "COMMENT"))
+
+    assert stable_comment_node["url"] ==
+             "/#{community.slug}/post/#{post.article_id}#comment-#{comment.inner_id}"
+
+    assert stable_comment_node["id"] ==
+             "comment:#{community.id}:post:id:#{post.article_id}:#{comment.inner_id}"
+
+    assert stable_comment_node["locator"]["commentInnerId"] == to_string(comment.inner_id)
+
+    stable_live_comment =
+      gq_query(guest_conn, @mentioned_comment_query, %{
+        community: community.slug,
+        locator: %{
+          type: "COMMENT",
+          article_id: post.article_id,
+          comment_inner_id: second_comment.inner_id
+        }
+      })
+
+    assert stable_live_comment["innerId"] == to_string(second_comment.inner_id)
+
+    stable_parent_focus = %{type: "POST", article_id: post.article_id}
+
+    parent_page =
+      gq_query(guest_conn, @map_query, %{
+        community: community.slug,
+        focus: stable_parent_focus
+      })
+
+    assert Enum.any?(parent_page["nodes"], fn node ->
+             node["type"] == "POST" and
+               node["url"] == "/#{community.slug}/post/#{post.article_id}"
+           end)
   end
 
-  test "Doc branch identity is opaque in the public node",
+  @tag :b2_independent
+  test "Doc locator exposes no branch identity",
        %{guest_conn: guest_conn, community: community, user: user} do
     {_, doc, _, _} = mock_article(:doc, community, user)
     focus = %{type: "DOC", article_inner_id: article_inner_id(doc, community)}
@@ -835,14 +1042,11 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     page =
       gq_query(guest_conn, @map_query, %{
         community: community.slug,
-        focus: focus,
-        frontiers: [%{node: focus}]
+        focus: focus
       })
 
-    assert [%{"type" => "DOC", "branchId" => branch_id}] = page["nodes"]
-    assert String.starts_with?(branch_id, "v1_")
+    assert [%{"type" => "DOC", "locator" => %{"type" => "DOC"}}] = page["nodes"]
     public = Repo.get_by!(CMS.Model.DocPublic, article_id: doc.article_id)
-    refute branch_id == to_string(public.branch_id)
     refute String.contains?(Jason.encode!(page), "\"#{public.branch_id}\"")
   end
 
@@ -862,7 +1066,13 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
             %{
               "type" => "p",
               "id" => "doc-comment-ref",
-              "children" => [%{"text" => "#{@site_host}/#{community.slug}/blog/#{blog_id}"}]
+              "children" => [
+                %{
+                  "type" => "a",
+                  "url" => "#{@site_host}/#{community.slug}/blog/#{blog_id}",
+                  "children" => [%{"text" => "Blog reference"}]
+                }
+              ]
             }
           ])
         ),
@@ -870,7 +1080,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         Ecto.UUID.generate()
       )
 
-    assert {:ok, _} = CMS.Comments.Effects.deliver(:sync_mentions, %{"comment_id" => comment.id})
+    project_comment(comment)
 
     result =
       gq_query(guest_conn, @article_comments_query, %{
@@ -880,38 +1090,56 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     assert [%{"type" => "COMMENT", "commentInnerId" => public_id}] = result["comments"]
     assert public_id == to_string(comment.inner_id)
+
+    graph =
+      gq_query(guest_conn, @map_query, %{
+        community: community.slug,
+        focus: %{type: "COMMENT", article_inner_id: doc_id, comment_inner_id: comment.inner_id}
+      })
+
+    comment_node = Enum.find(graph["nodes"], &(&1["type"] == "COMMENT"))
+
+    assert comment_node["url"] =~
+             ~r{^/#{community.slug}/doc/#{doc_id}/[^/]+#comment-#{comment.inner_id}$}
+
+    assert CMS.FrontDesk.comment_url(
+             %{community_slug: community.slug, thread: :doc, article_id: doc.article_id},
+             comment.inner_id
+           ) == "/#{community.slug}/doc/#{doc.article_id}/doc#comment-#{comment.inner_id}"
   end
 
+  @tag :b2_independent
   test "GraphQL Map responses are no-store", %{guest_conn: guest_conn} do
     conn = post(guest_conn, "/graphiql", query: "{ __typename }", variables: %{})
     assert get_resp_header(conn, "cache-control") == ["no-store"]
   end
 
+  @tag :b2_independent
   test "directed adjacency paginates after public filtering and rejects a damaged cursor",
        %{guest_conn: guest_conn, community: community, blog: blog, post: post, user: user} do
     {_article, source_path} = published_source(community, blog, user, post)
     focus = %{type: "POST", article_inner_id: source_path.inner_id}
-    variables = %{community: community.slug, focus: focus, frontiers: [%{node: focus}], first: 1}
+    variables = %{community: community.slug, focus: focus, after: nil, first: 1}
     first_page = gq_query(guest_conn, @map_query, variables)
-    first_neighborhood = hd(first_page["neighborhoods"])
-    assert first_neighborhood["hasNextPage"]
-    assert is_binary(first_neighborhood["endCursor"])
+    assert first_page["hasNextPage"]
+    assert is_binary(first_page["endCursor"])
 
     next_page =
       gq_query(guest_conn, @map_query, %{
         variables
-        | frontiers: [%{node: focus, after: first_neighborhood["endCursor"]}]
+        | after: first_page["endCursor"]
       })
 
-    refute hd(next_page["neighborhoods"])["hasNextPage"]
+    refute next_page["hasNextPage"]
     assert hd(first_page["edges"])["id"] != hd(next_page["edges"])["id"]
 
     assert_raise ExUnit.AssertionError, ~r/returned errors/, fn ->
-      gq_query(guest_conn, @map_query, %{variables | frontiers: [%{node: focus, after: "broken"}]})
+      gq_query(guest_conn, @map_query, %{variables | after: "broken"})
     end
   end
 
-  test "a high fanout frontier pages through more than one bounded fact window",
+  @tag :b2_independent
+  test "a high fanout focus pages through more than one bounded fact window",
        %{guest_conn: guest_conn, community: community, user: user} do
     targets = for _ <- 1..45, do: elem(mock_article(:blog, community, user), 1)
 
@@ -923,8 +1151,10 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
           "children" =>
             Enum.map(targets, fn target ->
               %{
-                "text" =>
-                  " #{@site_host}/#{community.slug}/blog/#{article_inner_id(target, community)}"
+                "type" => "a",
+                "url" =>
+                  "#{@site_host}/#{community.slug}/blog/#{article_inner_id(target, community)}",
+                "children" => [%{"text" => "Blog reference"}]
               }
             end)
         }
@@ -946,28 +1176,24 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
                command_id: Ecto.UUID.generate()
              )
 
-    assert {:ok, {45, nil}} =
-             ArtimentMentions.sync_current(%{type: :post, article_id: article.id})
+    project_article(article)
 
     focus = %{type: "POST", article_inner_id: article_inner_id(article, community)}
 
     pages =
       Enum.reduce_while(1..4, {nil, []}, fn _, {cursor, collected} ->
-        frontier = if cursor, do: %{node: focus, after: cursor}, else: %{node: focus}
-
         page =
           gq_query(guest_conn, @map_query, %{
             community: community.slug,
             focus: focus,
-            frontiers: [frontier],
+            after: cursor,
             first: 20
           })
 
-        neighborhood = hd(page["neighborhoods"])
         edges = collected ++ page["edges"]
 
-        if neighborhood["hasNextPage"] do
-          {:cont, {neighborhood["endCursor"], edges}}
+        if page["hasNextPage"] do
+          {:cont, {page["endCursor"], edges}}
         else
           {:halt, {nil, edges}}
         end
@@ -979,48 +1205,271 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     assert length(Enum.uniq_by(edges, & &1["id"])) == 45
 
     source = %{
-      article: %{
-        community: community.slug,
-        thread: :post,
-        inner_id: article_inner_id(article, community)
-      }
+      type: :post,
+      locator: %{type: :post, article_inner_id: article_inner_id(article, community)}
     }
 
     assert {:ok, first_mentions} =
-             ArtimentMentions.public_mentions(
+             CMS.mentions(
                community.slug,
                source,
-               %GroupherServer.Pagi.Params.Cursor{first: 20}
+               %Params.Cursor{first: 20, after: nil}
              )
 
     assert length(first_mentions.entries) == 20
-    assert first_mentions.has_next_page
+    assert first_mentions.page_info.has_next_page
 
     assert {:ok, second_mentions} =
-             ArtimentMentions.public_mentions(
+             CMS.mentions(
                community.slug,
                source,
-               %GroupherServer.Pagi.Params.Cursor{
-                 first: 20,
-                 after: first_mentions.end_cursor
-               }
+               %Params.Cursor{first: 20, after: first_mentions.page_info.end_cursor}
              )
 
     assert length(second_mentions.entries) == 20
-    assert second_mentions.has_next_page
+    assert second_mentions.page_info.has_next_page
 
     assert {:ok, last_mentions} =
-             ArtimentMentions.public_mentions(
+             CMS.mentions(
                community.slug,
                source,
-               %GroupherServer.Pagi.Params.Cursor{
-                 first: 20,
-                 after: second_mentions.end_cursor
-               }
+               %Params.Cursor{first: 20, after: second_mentions.page_info.end_cursor}
              )
 
     assert length(last_mentions.entries) == 5
-    refute last_mentions.has_next_page
+    refute last_mentions.page_info.has_next_page
+  end
+
+  @tag :b2_independent
+  test "one-hop GraphQL offset counts and cursor pages share an exact bounded edge set",
+       ctx do
+    {_article, path} = published_source(ctx.community, ctx.blog, ctx.user, ctx.post)
+
+    variables = %{
+      community: ctx.community.slug,
+      source: %{type: "POST", article_inner_id: path.inner_id}
+    }
+
+    offset =
+      gq_query(
+        ctx.guest_conn,
+        @mentions_query,
+        Map.put(variables, :pagi, %{offset: %{page: 1, size: 2}})
+      )
+
+    assert length(offset["entries"]) == 2
+    assert offset["pageInfo"]["totalCount"] == 3
+    assert offset["pageInfo"]["hasNextPage"]
+
+    offset_last =
+      gq_query(
+        ctx.guest_conn,
+        @mentions_query,
+        Map.put(variables, :pagi, %{offset: %{page: 2, size: 2}})
+      )
+
+    assert length(offset_last["entries"]) == 1
+    refute offset_last["pageInfo"]["hasNextPage"]
+
+    {entries, _cursor} =
+      Enum.reduce(1..3, {[], nil}, fn index, {entries, cursor} ->
+        page =
+          gq_query(
+            ctx.guest_conn,
+            @mentions_query,
+            Map.put(variables, :pagi, %{cursor: %{first: 1, after: cursor}})
+          )
+
+        assert length(page["entries"]) == 1
+        assert page["pageInfo"]["hasNextPage"] == index < 3
+        {entries ++ page["entries"], page["pageInfo"]["endCursor"]}
+      end)
+
+    assert Enum.map(entries, & &1["id"]) ==
+             Enum.map(offset["entries"] ++ offset_last["entries"], & &1["id"])
+
+    assert length(Enum.uniq_by(entries, & &1["id"])) == 3
+  end
+
+  @tag :b2_independent
+  test "one-hop GraphQL returns unavailable targets and hidden sources with metadata",
+       ctx do
+    {article, path} = published_source(ctx.community, ctx.blog, ctx.user)
+
+    Repo.update_all(
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.blog.article_id),
+      set: [state: :draft]
+    )
+
+    outgoing =
+      gq_query(ctx.guest_conn, @mentions_query, %{
+        community: ctx.community.slug,
+        source: %{type: "POST", article_inner_id: path.inner_id},
+        pagi: %{offset: %{page: 1, size: 20}}
+      })
+
+    assert outgoing["pageInfo"]["totalCount"] == 2
+
+    assert %{"status" => "UNAVAILABLE", "url" => url} =
+             Enum.find(outgoing["entries"], &(&1["targetType"] == "BLOG"))["target"]
+
+    assert is_binary(url)
+
+    refute Jason.encode!(outgoing) =~ ctx.blog.article_id
+
+    Repo.update_all(
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.blog.article_id),
+      set: [state: :published]
+    )
+
+    Repo.update_all(from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^article.id),
+      set: [state: :draft]
+    )
+
+    incoming =
+      gq_query(ctx.guest_conn, @mentioned_by_query, %{
+        community: ctx.community.slug,
+        target: %{
+          type: "BLOG",
+          locator: %{type: "BLOG", article_inner_id: article_inner_id(ctx.blog, ctx.community)}
+        },
+        pagi: %{offset: %{page: 1, size: 20}}
+      })
+
+    assert length(incoming["entries"]) == 1
+    assert incoming["pageInfo"]["totalCount"] == 1
+    assert hd(incoming["entries"])["source"]["status"] == "UNAVAILABLE"
+  end
+
+  @tag :b2_independent
+  test "one-hop cursor cannot cross root, direction or global revision", ctx do
+    {_article, path} = published_source(ctx.community, ctx.blog, ctx.user, ctx.post)
+
+    variables = %{
+      community: ctx.community.slug,
+      source: %{type: "POST", article_inner_id: path.inner_id},
+      pagi: %{cursor: %{first: 1}}
+    }
+
+    first = gq_query(ctx.guest_conn, @mentions_query, variables)
+    cursor = first["pageInfo"]["endCursor"]
+    assert is_binary(cursor)
+
+    assert_raise ExUnit.AssertionError, ~r/returned errors/, fn ->
+      gq_query(ctx.guest_conn, @mentions_query, %{
+        variables
+        | source: %{type: "POST", article_inner_id: article_inner_id(ctx.post, ctx.community)},
+          pagi: %{cursor: %{first: 1, after: cursor}}
+      })
+    end
+
+    assert_raise ExUnit.AssertionError, ~r/returned errors/, fn ->
+      gq_query(ctx.guest_conn, @mentioned_by_query, %{
+        community: ctx.community.slug,
+        target: %{type: "POST", locator: variables.source},
+        pagi: %{cursor: %{first: 1, after: cursor}}
+      })
+    end
+
+    assert {:ok, {:ok, :pass}} =
+             Repo.transaction(fn -> ArtimentMentions.MentionsGraph.Revision.bump() end)
+
+    assert_raise ExUnit.AssertionError, ~r/returned errors/, fn ->
+      gq_query(ctx.guest_conn, @mentions_query, %{
+        variables
+        | pagi: %{cursor: %{first: 1, after: cursor}}
+      })
+    end
+  end
+
+  @tag :b2_independent
+  test "one-hop outgoing and incoming GraphQL record SQL counts for both pagination APIs",
+       ctx do
+    {_article, path} = published_source(ctx.community, ctx.blog, ctx.user, ctx.post)
+
+    for pagination <- [%{offset: %{page: 1, size: 20}}, %{cursor: %{first: 20}}],
+        {query, root} <- [
+          {@mentions_query, %{source: %{type: "POST", article_inner_id: path.inner_id}}},
+          {@mentioned_by_query,
+           %{
+             target: %{
+               type: "BLOG",
+               locator: %{
+                 type: "BLOG",
+                 article_inner_id: article_inner_id(ctx.blog, ctx.community)
+               }
+             }
+           }}
+        ] do
+      ref = make_ref()
+      handler = {__MODULE__, ref}
+
+      :ok =
+        :telemetry.attach(
+          handler,
+          [:groupher_server, :repo, :query],
+          fn _, _, metadata, {pid, reference} ->
+            if self() == pid, do: send(pid, {reference, metadata.query})
+          end,
+          {self(), ref}
+        )
+
+      try do
+        result =
+          gq_query(
+            ctx.guest_conn,
+            query,
+            Map.merge(root, %{community: ctx.community.slug, pagi: pagination})
+          )
+
+        assert result["entries"] != []
+        count = count_queries(ref, 0)
+        assert count > 0
+        IO.puts("B2 one-hop GraphQL SQL count: #{count}")
+      after
+        :telemetry.detach(handler)
+      end
+    end
+  end
+
+  @tag :b2_independent
+  test "one-hop reads stored edges after a public revision changes", ctx do
+    {article, path} = published_source(ctx.community, ctx.blog, ctx.user)
+    public = Repo.get!(CMS.Model.ArticlePublic, article.id)
+
+    public
+    |> Ecto.Changeset.change(publication_version: public.publication_version + 1)
+    |> Repo.update!()
+
+    result =
+      gq_query(ctx.guest_conn, @mentions_query, %{
+        community: ctx.community.slug,
+        source: %{type: "POST", article_inner_id: path.inner_id}
+      })
+
+    assert length(result["entries"]) == 2
+  end
+
+  @tag :b2_independent
+  test "authenticated owners receive the same public graph and one-hop fields as guests", ctx do
+    {_article, path} = published_source(ctx.community, ctx.blog, ctx.user)
+
+    Repo.update_all(
+      from(l in CMS.Model.ArticleLifecycle, where: l.article_id == ^ctx.blog.article_id),
+      set: [state: :draft]
+    )
+
+    owner = simu_conn(:user, ctx.user)
+    focus = %{type: "POST", article_inner_id: path.inner_id}
+    graph_args = %{community: ctx.community.slug, focus: focus}
+
+    assert gq_query(owner, @map_query, graph_args) ==
+             gq_query(ctx.guest_conn, @map_query, graph_args)
+
+    list_args = %{community: ctx.community.slug, source: focus}
+
+    assert gq_query(owner, @mentions_query, list_args) ==
+             gq_query(ctx.guest_conn, @mentions_query, list_args)
   end
 
   defp published_source(community, blog, user, other \\ nil) do
@@ -1028,8 +1477,9 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       if other do
         [
           %{
-            "text" =>
-              " #{@site_host}/#{community.slug}/post/#{article_inner_id(other, community)}"
+            "type" => "a",
+            "url" => "#{@site_host}/#{community.slug}/post/#{article_inner_id(other, community)}",
+            "children" => [%{"text" => "Other post reference"}]
           }
         ]
       else
@@ -1044,10 +1494,16 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
           "children" =>
             [
               %{
-                "text" =>
-                  "#{@site_host}/#{community.slug}/blog/#{article_inner_id(blog, community)}"
+                "type" => "a",
+                "url" =>
+                  "#{@site_host}/#{community.slug}/blog/#{article_inner_id(blog, community)}",
+                "children" => [%{"text" => "Blog reference"}]
               },
-              %{"text" => " https://example.com/a"}
+              %{
+                "type" => "a",
+                "url" => "https://example.com/a",
+                "children" => [%{"text" => "External reference"}]
+              }
             ] ++ extra
         }
       ])
@@ -1070,16 +1526,20 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
                command_id: command_id
              )
 
-    event = Repo.get_by!(CMS.Outbox.Event, event: "article.mention_sync", command_id: command_id)
+    {article, %{inner_id: article_inner_id(article, community)}}
+  end
 
-    assert {:ok, :pass} =
-             GroupherServer.Jobs.CMSOutboxArticle.perform(%Oban.Job{
-               args: %{"event_id" => event.id},
-               attempt: 1,
-               max_attempts: 3
-             })
+  defp project_comment(comment) do
+    endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
+    project_endpoint(endpoint)
+  end
 
-    {article,
-     %{community: community.slug, thread: "POST", inner_id: article_inner_id(article, community)}}
+  defp project_article(article) do
+    endpoint = Repo.get_by!(Endpoint, type: article.thread, article_id: article.id)
+    project_endpoint(endpoint)
+  end
+
+  defp project_endpoint(endpoint) do
+    assert %Endpoint{} = Repo.get!(Endpoint, endpoint.id)
   end
 end

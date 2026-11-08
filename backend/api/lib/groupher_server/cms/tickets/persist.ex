@@ -17,7 +17,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   alias CMS.Artiment.BodyBag
   alias Accounts.Model.User
   alias CMS.Articles.{Numbering, Persist}
-  alias CMS.ArtimentMentions.{GraphRevision, SyncProgress}
 
   alias CMS.Model.{
     Article,
@@ -25,7 +24,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     ArticleBodyDraft,
     ArticleBodySnapshot,
     ArticleLifecycle,
-    ArticlePublic,
     ArticleRevision,
     ArticleReviewBlock,
     Author,
@@ -427,7 +425,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   @doc false
   def create_user(community, post_id, attrs, context) do
-    with {:ok, post, _public, revision, _post_binding} <- lock_public_post(community, post_id),
+    with {:ok, post, _public, revision, post_binding} <- lock_public_post(community, post_id),
          %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, revision.body_snapshot_id),
          {:ok, body_bag} <- BodyBag.from_document(body),
          {:ok, author} <- Persist.ensure_author_exists(context.actor),
@@ -445,6 +443,16 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, ticket_binding} <- CMS.Articles.Bindings.fetch_binding(article.id, community.id),
          {:ok, _state} <- insert_state(article, ticket_binding, :user, :todo),
          {:ok, _link} <- insert_post_link(article, post),
+         {:ok, _post_activity} <-
+           insert_post_ticket_activity(
+             post,
+             post_binding,
+             :ticket_created,
+             article,
+             ticket_binding,
+             context.actor,
+             context.command_id
+           ),
          {:ok, _activity} <-
            insert_created_activity(article, context.actor, context.command_id) do
       {:ok, article.id}
@@ -858,6 +866,16 @@ defmodule GroupherServer.CMS.Tickets.Persist do
         nil ->
           with {:ok, link} <- insert_post_link(%Article{id: ticket_id}, post),
                {:ok, state} <- Lifecycle.increment_version(state),
+               {:ok, _post_activity} <-
+                 insert_post_ticket_activity(
+                   post,
+                   post_binding,
+                   :ticket_linked,
+                   Repo.get!(Article, ticket_id),
+                   binding,
+                   context.actor,
+                   context.command_id
+                 ),
                {:ok, _activity} <-
                  log_ticket_activity(
                    Repo.get!(Article, ticket_id),
@@ -946,9 +964,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, updated_binding} <- ensure_ticket_number(binding, target_lifecycle_state),
          {:ok, _public} <-
            maybe_select_ticket_public(article, revision, target_lifecycle_state, context.actor),
-         {:ok, _mention_intent} <-
-           record_mention_visibility(article, target_lifecycle_state, context.command_id),
-         {:ok, :pass} <- GraphRevision.bump_for_article(article.id),
          {:ok, activity} <-
            log_ticket_activity(
              article,
@@ -1053,30 +1068,6 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, _public} <- CMS.Tickets.Content.select_public(article, revision, author),
          {:ok, :pass} <- CMS.Tickets.Content.delete_workspace(article, draft) do
       {:ok, :pass}
-    end
-  end
-
-  defp record_mention_visibility(_article, :draft, _command_id), do: {:ok, :pass}
-
-  defp record_mention_visibility(%Article{} = article, :published, command_id) do
-    case Repo.get(ArticlePublic, article.id) do
-      %ArticlePublic{} = public ->
-        token = "#{public.revision_id}:#{public.publication_version}"
-
-        with {:ok, _state} <- SyncProgress.mark_pending_in_transaction(article, token) do
-          CMS.Articles.Effects.enqueue(
-            "article.mention_sync",
-            "article",
-            article.id,
-            {:command, command_id},
-            %{source_type: "ticket", content_token: token},
-            effect_key: "article.mention_sync:ticket:#{article.id}:#{token}",
-            retry_failed: true
-          )
-        end
-
-      nil ->
-        {:error, :ticket_publication_missing}
     end
   end
 
@@ -1499,6 +1490,31 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     %TicketSource{}
     |> TicketSource.changeset(%{ticket_id: ticket.id, type: :post, post_id: post.id})
     |> Repo.insert()
+  end
+
+  defp insert_post_ticket_activity(
+         post,
+         post_binding,
+         action,
+         ticket,
+         ticket_binding,
+         actor,
+         command_id
+       ) do
+    resource = post |> Map.from_struct() |> Map.put(:community_id, post_binding.community_id)
+
+    target = %{
+      activity_type: :ticket,
+      ref: ticket.id,
+      inner_id: ticket_binding.inner_id
+    }
+
+    GroupherServer.Activity.log(resource, action,
+      actor: actor,
+      source: :api,
+      operation_ref: command_id,
+      target: target
+    )
   end
 
   defp insert_worker(parent_id, worker_id) do

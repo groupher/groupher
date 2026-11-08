@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.Workflow
-  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Articles.{Bindings, Effects, ErrorCat}
   alias CMS.Model.{Article, ArticleLifecycle}
   alias CMS.ReviewBlocks
@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
              })
              |> Repo.update(),
            {:ok, :pass} <- ReviewBlocks.recompute(updated),
-           {:ok, :pass} <- GraphRevision.bump_for_article(updated.article_id) do
+           {:ok, :pass} <- Revision.bump() do
         {:ok, updated}
       end
     else

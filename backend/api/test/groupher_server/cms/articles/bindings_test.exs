@@ -5,6 +5,7 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
   alias Accounts.Model.{CollectFolderEntry, Embeds}
   alias CMS.Articles.{BindingPersist, Bindings}
   alias CMS.Articles.Commands.BindingSupport
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Articles.Bindings.Tags
   alias CMS.Model.{Article, ArticleBinding, ArticleBindingTag}
 
@@ -56,6 +57,37 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
 
     assert Enum.map(bindings, & &1.community_id) |> Enum.sort() ==
              Enum.sort([community.id, destination.id])
+  end
+
+  test "repeating a mirror does not advance the global Mentions revision",
+       ~m(community destination post user)a do
+    {:ok, before_revision} = Revision.current()
+
+    assert {:ok, _article} =
+             CMS.Articles.mirror(
+               destination,
+               post.article_id,
+               [],
+               user,
+               community,
+               Ecto.UUID.generate()
+             )
+
+    {:ok, after_first_mirror} = Revision.current()
+    assert after_first_mirror == before_revision + 1
+
+    assert {:ok, _article} =
+             CMS.Articles.mirror(
+               destination,
+               post.article_id,
+               [],
+               user,
+               community,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, after_retry} = Revision.current()
+    assert after_retry == after_first_mirror
   end
 
   test "fetch_binding/2 and fetch_pin/2 return tagged catalog errors for missing rows",

@@ -9,7 +9,17 @@ defmodule GroupherServer.CMS.Outbox.Workflow do
         -> complete, retry, snooze, or terminal failure
   """
 
-  alias __MODULE__.{Article, Asset, Comment, Community, Interaction, Press, Ticket, ArtimentReview}
+  alias __MODULE__.{
+    Article,
+    Asset,
+    Comment,
+    Community,
+    Interaction,
+    MentionNotification,
+    Press,
+    Ticket,
+    ArtimentReview
+  }
 
   @doc "Dispatches one claimed CMS outbox job to its domain delivery workflow."
   @spec perform(atom(), Oban.Job.t()) :: Oban.Worker.result()
@@ -21,4 +31,5 @@ defmodule GroupherServer.CMS.Outbox.Workflow do
   def perform(:press, job), do: Press.perform(job)
   def perform(:ticket, job), do: Ticket.perform(job)
   def perform(:artiment_review, job), do: ArtimentReview.perform(job)
+  def perform(:mention_notification, job), do: MentionNotification.perform(job)
 end

@@ -31,7 +31,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   import_types(Schema.CMS.Metrics)
 
-  enum :reference_map_node_type do
+  enum :artiment_type do
     value(:post)
     value(:blog)
     value(:changelog)
@@ -40,71 +40,70 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:comment)
   end
 
-  enum :reference_map_sync_state do
-    value(:ready)
-    value(:pending)
-  end
-
-  enum :reference_map_frontier_state do
-    value(:available)
+  enum :artiment_read_status do
+    value(:readable)
+    value(:deleted)
     value(:unavailable)
   end
 
-  input_object :reference_map_locator_input do
-    field(:type, non_null(:reference_map_node_type))
-    field(:article_inner_id, non_null(:id))
+  input_object :artiment_status_input do
+    field(:type, non_null(:artiment_type))
+    field(:article_inner_id, :id)
+    field(:article_id, :id)
     field(:comment_inner_id, :id)
   end
 
-  input_object :reference_map_frontier_input do
-    field(:node, non_null(:reference_map_locator_input))
-    field(:after, :string)
+  input_object :mentions_graph_locator_input do
+    field(:type, non_null(:artiment_type))
+    field(:article_inner_id, :id)
+    field(:article_id, :id)
+    field(:comment_inner_id, :id)
   end
 
-  object :reference_map_node do
+  object :mentions_graph_locator do
+    field(:type, non_null(:artiment_type))
+    field(:article_inner_id, :id)
+    field(:article_id, :id)
+    field(:comment_inner_id, :id)
+  end
+
+  object :mentions_graph_node do
     field(:id, non_null(:id))
-    field(:type, non_null(:reference_map_node_type))
-    field(:article_inner_id, non_null(:id))
-    field(:comment_inner_id, :id)
-    field(:branch_id, :id)
-    field(:title, non_null(:string))
-    field(:url, non_null(:string))
-    field(:sync_state, non_null(:reference_map_sync_state))
+    field(:type, non_null(:artiment_type))
+    field(:status, non_null(:artiment_read_status))
+    field(:title, :string)
+    field(:url, :string)
+    field(:locator, :mentions_graph_locator)
+    field(:can_open, non_null(:boolean))
   end
 
-  object :reference_map_edge do
+  object :artiment_status do
+    field(:type, non_null(:artiment_type))
+    field(:status, non_null(:artiment_read_status))
+    field(:title, :string)
+    field(:url, :string)
+  end
+
+  object :mentions_graph_edge do
     field(:id, non_null(:id))
     field(:from, non_null(:id))
     field(:to, non_null(:id))
     field(:occurrences_count, non_null(:integer))
   end
 
-  object :reference_map_neighborhood do
-    field(:request_index, non_null(:integer))
-    field(:state, non_null(:reference_map_frontier_state))
-    field(:node_id, :id)
-    field(:edge_ids, non_null(list_of(non_null(:id))))
+  object :mentions_graph_page do
+    field(:revision, non_null(:id))
+    field(:nodes, non_null(list_of(non_null(:mentions_graph_node))))
+    field(:edges, non_null(list_of(non_null(:mentions_graph_edge))))
     field(:has_next_page, non_null(:boolean))
     field(:end_cursor, :string)
   end
 
-  object :reference_map_page do
-    field(:nodes, non_null(list_of(non_null(:reference_map_node))))
-    field(:edges, non_null(list_of(non_null(:reference_map_edge))))
-    field(:neighborhoods, non_null(list_of(non_null(:reference_map_neighborhood))))
-    field(:projection_pending, non_null(:boolean))
-  end
-
-  object :reference_map_article_comments_page do
-    field(:comments, non_null(list_of(non_null(:reference_map_locator))))
+  object :mentions_graph_article_comments_page do
+    field(:revision, non_null(:id))
+    field(:comments, non_null(list_of(non_null(:mentions_graph_locator))))
     field(:has_next_page, non_null(:boolean))
     field(:end_cursor, :id)
-  end
-
-  object :reference_map_locator do
-    field(:type, non_null(:reference_map_node_type))
-    field(:article_inner_id, non_null(:id))
-    field(:comment_inner_id, :id)
   end
 
   object :community_name_check do
@@ -650,9 +649,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :activity_resource_ref do
     field(:type, non_null(:string), resolve: fn ref, _, _ -> {:ok, to_string(ref.type)} end)
-    field(:ref, non_null(:id))
+    field(:ref, :id)
     field(:title, :string)
     field(:inner_id, :id)
+    field(:url, :string)
   end
 
   object :article_log_actor do
@@ -2174,14 +2174,43 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :artiment_mention do
     field(:id, non_null(:id))
-    field(:mentioner_type, non_null(:mention_type))
-    field(:mentioner_url, non_null(:string))
-    field(:mentioned_scope, non_null(:mention_scope))
-    field(:mentioned_type, non_null(:mention_type))
-    field(:mentioned_url, non_null(:string))
+    field(:source, non_null(:mentions_graph_node))
+    field(:target_type, non_null(:mention_type))
+    field(:target, non_null(:mention_target))
     field(:mention_case, non_null(:mention_case))
     field(:occurrences_count, non_null(:integer))
     field(:mentioned_at, non_null(:datetime))
+  end
+
+  object :mention_user_target do
+    field(:type, non_null(:mention_type))
+    field(:status, non_null(:artiment_read_status))
+    field(:login, :string)
+    field(:display_name, :string)
+    field(:url, :string)
+  end
+
+  object :mention_url_target do
+    field(:type, non_null(:mention_type))
+    field(:url, non_null(:string))
+  end
+
+  union :mention_target do
+    types([:mentions_graph_node, :mention_user_target, :mention_url_target])
+
+    resolve_type(fn
+      %{__typename: :mention_user_target}, _ ->
+        :mention_user_target
+
+      %{__typename: :mention_url_target}, _ ->
+        :mention_url_target
+
+      %{type: type}, _ when type in [:post, :blog, :changelog, :doc, :ticket, :comment] ->
+        :mentions_graph_node
+
+      _, _ ->
+        nil
+    end)
   end
 
   object :blog_feed do
@@ -2241,8 +2270,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :artiment_mention_page do
-    field(:entries, list_of(:artiment_mention))
-    pagi_fields()
+    field(:revision, non_null(:id))
+    field(:entries, non_null(list_of(non_null(:artiment_mention))))
+
+    field :page_info, non_null(:page_info) do
+      resolve(fn %{page_info: page}, _, _ ->
+        {:ok, Helper.ORM.Pagi.Page.info(page)}
+      end)
+    end
   end
 
   object :community_asset_page do

@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Communities.Commands.Update do
 
   alias GroupherServer.CMS
   alias CMS.Communities.{Commands.UpdateConfirmation, Persist}
-  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.FrontDesk
   alias CMS.Dashboard.Effects
   alias CMS.Model.Community
@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.Communities.Commands.Update do
 
     change(fn canonical ->
       with {:ok, canonical} <- Persist.update_fields(canonical, args),
-           {:ok, :pass} <- GraphRevision.bump_many([canonical.id]),
+           {:ok, :pass} <- Revision.bump(),
            {:ok, _event} <- Effects.enqueue_presentation_changed(canonical, command_id) do
         {:ok, canonical}
       end
@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.Communities.Commands.Update do
 
     change(fn canonical ->
       with {:ok, canonical} <- Persist.update_fields(canonical, args),
-           {:ok, :pass} <- GraphRevision.bump_many([canonical.id]),
+           {:ok, :pass} <- Revision.bump(),
            {:ok, _event} <-
              Effects.enqueue_presentation_changed(canonical, identity) do
         {:ok, canonical}

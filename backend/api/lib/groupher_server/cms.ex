@@ -599,6 +599,11 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Tickets,
     as: :post_progress
 
+  @doc "Projects readable public Ticket targets for Article Activity in one Community."
+  defdelegate tickets_public_activity_targets(community, ticket_ids),
+    to: GroupherServer.CMS.Tickets,
+    as: :public_activity_targets
+
   @doc "Returns all internally readable User Tickets linked to one Post."
   defdelegate tickets_linked_to_post_internal(community, post_id, actor),
     to: GroupherServer.CMS.Tickets,
@@ -978,70 +983,32 @@ defmodule GroupherServer.CMS do
   @doc "Delegates GroupherServer.CMS.Artiment.Config.threads/0 through the CMS Context boundary."
   defdelegate artiment_config_threads(), to: GroupherServer.CMS.Artiment.Config, as: :threads
 
-  @doc "Delegates GroupherServer.CMS.ArtimentMentions.mentioned_by/2 through the CMS Context boundary."
-  defdelegate artiment_mentions_mentioned_by(arg1, arg2),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :mentioned_by
-
-  @doc "Delegates GroupherServer.CMS.ArtimentMentions.mentioned_by/3 through the CMS Context boundary."
-  defdelegate artiment_mentions_mentioned_by(arg1, arg2, arg3),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :mentioned_by
-
-  @doc "Delegates GroupherServer.CMS.ArtimentMentions.mentions/2 through the CMS Context boundary."
-  defdelegate artiment_mentions_mentions(arg1, arg2),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :mentions
-
-  @doc "Delegates GroupherServer.CMS.ArtimentMentions.mentions/3 through the CMS Context boundary."
-  defdelegate artiment_mentions_mentions(arg1, arg2, arg3),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :mentions
-
-  @doc "Returns user recipients directly mentioned by one internal CMS source."
-  defdelegate artiment_mentions_mentioned_user_ids(arg1, arg2),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :mentioned_user_ids
-
-  @doc "Returns public outgoing Mention rows in one Community."
-  defdelegate artiment_mentions_public_mentions(community, source, pagi),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :public_mentions
-
-  @doc "Returns public incoming Mention rows in one Community."
-  defdelegate artiment_mentions_public_mentioned_by(community, target, pagi),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :public_mentioned_by
-
-  @doc "Projects a bounded, anonymous public Reference Map page."
-  defdelegate reference_map_page(community, focus, frontiers, first),
-    to: GroupherServer.CMS.ArtimentMentions.ReferenceMap,
+  @doc "Projects a bounded, anonymous public MentionsGraph page."
+  defdelegate mentions_graph_page(community, focus, after_cursor, first),
+    to: GroupherServer.CMS.ArtimentMentions.MentionsGraph,
     as: :page
 
-  @doc "Discovers public Comment frontiers belonging to an Article focus."
-  defdelegate reference_map_article_comments(community, focus, after_cursor, first),
-    to: GroupherServer.CMS.ArtimentMentions.ReferenceMap,
-    as: :article_comments
+  @doc "Reads Artiment status independently of graph relationships."
+  defdelegate artiment_status(community, locator),
+    to: GroupherServer.CMS.FrontDesk
 
-  @doc "Reads the opaque public graph revision after validating its focus."
-  defdelegate reference_map_revision(community, focus),
-    to: GroupherServer.CMS.ArtimentMentions.ReferenceMap,
+  @doc "Reads the opaque MentionsGraph revision after validating its focus."
+  defdelegate mentions_graph_revision(community, focus),
+    to: GroupherServer.CMS.ArtimentMentions.MentionsGraph,
     as: :revision
 
-  @doc "Reports current Mention watermarks for the scheduled health job."
-  defdelegate artiment_mentions_rebuild_report(after_key, batch_size),
-    to: GroupherServer.CMS.ArtimentMentions.Rebuild,
-    as: :report
+  @doc "Lists public Comment seeds for one readable Article focus."
+  defdelegate mentions_graph_article_comments(community, focus, after_cursor, first),
+    to: GroupherServer.CMS.ArtimentMentions.MentionsGraph,
+    as: :article_comments
 
-  @doc "Reads the durable failed-source manifest for the scheduled health job."
-  defdelegate artiment_mentions_failed_manifest(path),
-    to: GroupherServer.CMS.ArtimentMentions.Rebuild,
-    as: :read_manifest
+  @doc "Lists current Mentions written by one public source."
+  defdelegate mentions(community, source, pagi),
+    to: GroupherServer.CMS.ArtimentMentions.Query
 
-  @doc "Returns the configured Mention rebuild failure manifest path."
-  defdelegate artiment_mentions_failure_manifest_path(),
-    to: GroupherServer.CMS.ArtimentMentions.Rebuild,
-    as: :default_manifest
+  @doc "Lists public sources that currently mention a target."
+  defdelegate mentioned_by(community, target, pagi),
+    to: GroupherServer.CMS.ArtimentMentions.Query
 
   @doc "Delegates GroupherServer.CMS.Artiment.Threads.article_enums/0 through the CMS Context boundary."
   defdelegate artiment_threads_article_enums(),
@@ -1154,6 +1121,11 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates GroupherServer.CMS.Comments.one_comment/2 through the CMS Context boundary."
   defdelegate comments_one_comment(arg1, arg2), to: GroupherServer.CMS.Comments, as: :one_comment
+
+  @doc "Reads one graph-confirmed Comment independently of its parent body."
+  defdelegate comments_mentioned_comment(community, locator, viewer),
+    to: GroupherServer.CMS.Comments,
+    as: :mentioned_comment
 
   @doc "Delegates a root's independently paged reply collection through the CMS boundary."
   defdelegate comments_reply_page(comment, community, filter, pagi, user),

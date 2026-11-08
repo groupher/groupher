@@ -19,7 +19,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
 
   alias Accounts.Model.User
   alias CMS.FrontDesk
-  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
   alias CMS.Comments.{Lifecycle, ErrorCat, Persist, Solution}
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias CMS.Comments.Effects
@@ -66,7 +65,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
     end)
 
     change(fn {canonical, article} ->
-      delete_new(canonical, article, actor, command_id, community.id)
+      delete_new(canonical, article, actor, command_id)
     end)
 
     confirm(fn result -> {:ok, confirmation(result)} end)
@@ -96,21 +95,21 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
     end
   end
 
-  defp delete_new(%Comment{} = comment, article, actor, command_id, community_id) do
+  defp delete_new(%Comment{} = comment, article, actor, command_id) do
     occurred_at = DateTime.utc_now(:second)
 
     with {:ok, _} <- ensure_not_archived(comment) do
-      delete_new(comment, actor, article, command_id, community_id, occurred_at)
+      delete_new(comment, actor, article, command_id, occurred_at)
     end
   end
 
-  defp delete_new(comment, actor, article, command_id, community_id, occurred_at) do
+  defp delete_new(comment, actor, article, command_id, occurred_at) do
     CMS.Comments.Summary.with_change(comment, fn ->
-      delete_facts(comment, actor, article, command_id, community_id, occurred_at)
+      delete_facts(comment, actor, article, command_id, occurred_at)
     end)
   end
 
-  defp delete_facts(comment, actor, article, command_id, community_id, occurred_at) do
+  defp delete_facts(comment, actor, article, command_id, occurred_at) do
     operation_ref = command_id
 
     with {:ok, _} <- revoke_if_current(article, comment, actor, operation_ref, occurred_at),
@@ -128,9 +127,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Delete do
            ),
          {:ok, _} <- Lifecycle.transition(comment.id, :deleted),
          {:ok, deleted} <- Persist.tombstone(comment, @delete_hint),
-         {:ok, :pass} <- Effects.capture_deleted_version(deleted, command_id, community_id),
          {:ok, _} <- record_article_metric(article, command_id, :comment_deleted),
-         {:ok, :pass} <- Revision.bump(),
          {:ok, _} <- enqueue_delete_effects(comment, article, actor, command_id) do
       {:ok, %{comment: deleted, article: article, command_id: command_id}}
     end

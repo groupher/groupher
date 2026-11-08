@@ -3,8 +3,10 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   Resolves public Comment paths and trusted internal Comment views for the
   CMS FrontDesk facade.
 
-  Public lookup follows the parent Article path and Comment Gate scope.
-  Stable Comment IDs are accepted only in internal mode. `:article_context`
+  Ordinary public lookup follows the parent Article path and Comment Gate scope.
+  `read_mentioned/3` first confirms a stored Community Mention edge, then
+  applies Comment's own Gate without opening the parent body or comment list.
+  Stable Comment database IDs are accepted only in internal mode. `:article_context`
   is a trusted internal view used by command code that needs the Comment and
   its resolved Article context; it does not bypass write authorization.
 
@@ -27,8 +29,76 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   alias CMS.Comments.ErrorCat, as: CommentErrorCat
   alias CMS.FrontDesk.Relation
   alias CMS.Gate.Context.Scope.Comment, as: CommentScopeContext
-  alias CMS.Model.{Article, ArticlePublic, Comment}
+  alias CMS.ArtimentMentions.MentionsGraph
+  alias CMS.Model.Mentions.{Edge, Endpoint}
+  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Comment, Community}
   alias Helper.{ORM, T}
+
+  @doc "Builds a Comment URL from its parent's canonical resource path."
+  def url(parent, comment_inner_id)
+      when is_integer(comment_inner_id) and comment_inner_id > 0 do
+    case CMS.FrontDesk.article_url(parent) do
+      nil -> nil
+      path -> path <> "#comment-#{comment_inner_id}"
+    end
+  end
+
+  def url(_, _), do: nil
+
+  @doc "Reads only a graph-confirmed Comment under a parent whose body may be unavailable."
+  def read_mentioned(community_slug, %{type: :comment} = locator, actor)
+      when is_binary(community_slug) do
+    with {:ok, inner_id} <- parse_comment_inner_id(Map.get(locator, :comment_inner_id)),
+         %Community{} = community <- Repo.get_by(Community, slug: community_slug),
+         {:ok, [focus]} <-
+           MentionsGraph.NodeStatus.resolve_locators(community, [locator]),
+         {:comment, _, comment_id, _} <- focus.identity,
+         true <- confirmed_community_edge?(focus.endpoint_id, community.id),
+         %Comment{} = candidate <- Repo.get(Comment, comment_id),
+         true <- candidate.inner_id == inner_id,
+         scope <- CommentScopeContext.mentioned_target(candidate.thread, community.id),
+         %Ecto.Query{} = query <- CMS.Gate.scope(Comment, actor, :read, scope),
+         {:ok, comment} <-
+           load_public_comment(where(query, [comment], comment.id == ^comment_id), :default) do
+      ORM.fill_meta(%{comment | request_community_slug: community_slug})
+    else
+      _ -> {:error, CommentErrorCat.not_exist("comment not found")}
+    end
+  end
+
+  def read_mentioned(_, _, _), do: {:error, CommentErrorCat.not_exist("comment not found")}
+
+  defp confirmed_community_edge?(endpoint_id, community_id) when is_binary(endpoint_id) do
+    incoming =
+      from(edge in Edge,
+        join: other in Endpoint,
+        on: other.id == edge.source_endpoint_id,
+        left_join: parent in Endpoint,
+        on: parent.id == other.parent_endpoint_id,
+        join: binding in ArticleBinding,
+        on:
+          binding.article_id == fragment("COALESCE(?, ?)", other.article_id, parent.article_id) and
+            binding.community_id == ^community_id,
+        where: edge.target_endpoint_id == ^endpoint_id
+      )
+
+    outgoing =
+      from(edge in Edge,
+        join: other in Endpoint,
+        on: other.id == edge.target_endpoint_id,
+        left_join: parent in Endpoint,
+        on: parent.id == other.parent_endpoint_id,
+        join: binding in ArticleBinding,
+        on:
+          binding.article_id == fragment("COALESCE(?, ?)", other.article_id, parent.article_id) and
+            binding.community_id == ^community_id,
+        where: edge.source_endpoint_id == ^endpoint_id
+      )
+
+    Repo.exists?(incoming) or Repo.exists?(outgoing)
+  end
+
+  defp confirmed_community_edge?(_, _), do: false
 
   @doc "Reads one Comment from a structured public path."
   @spec read(map()) :: T.domain_res(Comment.t())

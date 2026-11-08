@@ -25,6 +25,7 @@ config :groupher_server, GroupherServerWeb.ServiceAuth.Verifier,
     "phoenix:auth-api",
     "phoenix:content-import-api",
     "phoenix:content-publisher-api",
+    "phoenix:cms-maintenance",
     "phoenix:press-api",
     "phoenix:view-api"
   ]
@@ -203,30 +204,15 @@ if config_env() in [:prod, :seed_prod] do
 
   config :groupher_server, GroupherServerWeb.Endpoint, secret_key_base: secret_key_base
 
-  reference_map_key =
-    System.get_env("REFERENCE_MAP_KEY") ||
-      raise "REFERENCE_MAP_KEY is required for public Reference Map identities"
+  mentions_graph_key =
+    System.get_env("MENTIONS_GRAPH_KEY") ||
+      raise "MENTIONS_GRAPH_KEY is required for MentionsGraph pagination cursors"
 
-  if byte_size(reference_map_key) < 32 do
-    raise "REFERENCE_MAP_KEY must contain at least 32 bytes"
+  if byte_size(mentions_graph_key) < 32 do
+    raise "MENTIONS_GRAPH_KEY must contain at least 32 bytes"
   end
 
-  reference_map_key_version =
-    case Integer.parse(System.get_env("REFERENCE_MAP_KEY_VERSION") || "1") do
-      {version, ""} when version > 0 -> version
-      _ -> raise "REFERENCE_MAP_KEY_VERSION must be a positive integer"
-    end
-
-  config :groupher_server, :reference_map_key, reference_map_key
-  config :groupher_server, :reference_map_key_version, reference_map_key_version
-
-  mention_failure_manifest =
-    System.get_env("MENTION_REBUILD_FAILURE_MANIFEST") ||
-      raise "MENTION_REBUILD_FAILURE_MANIFEST must point to persistent storage"
-
-  if Path.type(mention_failure_manifest) != :absolute do
-    raise "MENTION_REBUILD_FAILURE_MANIFEST must be an absolute path"
-  end
+  config :groupher_server, :mentions_graph_key, mentions_graph_key
 
   config :groupher_server, :view_tracker_pepper, view_tracker_pepper
   config :groupher_server, :view_tracker_cookie_secret, view_tracker_cookie_secret

@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
   alias CMS.Model.{CommentLifecycle, CommentReviewBlock}
   alias CMS.Outbox.Event, as: OutboxEvent
 
-  test "Comment creation persists a dedicated Mention sync intent with the body watermark" do
+  test "Comment creation persists a current version set without a notification recipient" do
     {community, article, _attrs, author} = mock_article(:post)
 
     assert {:ok, comment} =
@@ -22,20 +22,31 @@ defmodule GroupherServer.Test.CMS.Comments.ReviewBlocksTest do
                Ecto.UUID.generate()
              )
 
-    assert %OutboxEvent{data: %{"content_token" => token}} =
-             Repo.get_by!(OutboxEvent,
-               event: "comment.mention_sync",
-               resource_id: to_string(comment.id)
-             )
+    endpoint =
+      Repo.get_by!(CMS.Model.Mentions.Endpoint,
+        type: :comment,
+        comment_id: comment.id
+      )
 
-    assert String.starts_with?(token, "#{comment.id}:")
+    refute Repo.get_by(OutboxEvent, event: "mention.notify", resource_id: endpoint.id)
+
+    refute Repo.exists?(
+             Ecto.Query.from(edge in CMS.Model.Mentions.Edge,
+               where: edge.source_endpoint_id == ^endpoint.id
+             )
+           )
   end
 
   test "creating a shared Comment invalidates every current Article binding" do
     {community, article_view, _attrs, author} = mock_article(:post)
     {:ok, destination} = mock_community(author)
     article = Repo.get!(CMS.Model.Article, article_view.article_id)
-    assert {:ok, _binding} = CMS.Articles.BindingPersist.mirror(article, destination)
+
+    assert {:ok, _binding} =
+             Repo.transact_result(fn ->
+               CMS.Articles.BindingPersist.mirror(article, destination)
+             end)
+
     command_id = Ecto.UUID.generate()
 
     assert {:ok, _comment} =

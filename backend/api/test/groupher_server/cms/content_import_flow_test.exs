@@ -19,6 +19,76 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   alias CMS.DocTree.{Revision, State}
   alias CMS.Model.{DocLifecycle, DocTreeNode}
 
+  test "an imported canonical Doc enters Mention capture only through its publish Command" do
+    %{actor: actor, community: community, job: job} =
+      create_job([document("docs/mention.md", "/mention")])
+
+    {target_community, target, _, _} = mock_article(:blog)
+
+    url =
+      "#{CMS.ArtimentMentions.Config.site_host()}/#{target_community.slug}/blog/#{article_inner_id(target, target_community)}"
+
+    assert {:ok, _} =
+             Staging.stage(community, job.job_ref, [
+               %{
+                 external_ref: "docs/mention.md",
+                 body_bag:
+                   body_bag("Imported reference #{url}", "a")
+                   |> Map.put(
+                     :json,
+                     Jason.encode!([
+                       %{
+                         "type" => "p",
+                         "children" => [
+                           %{"text" => "Imported reference "},
+                           %{"type" => "a", "url" => url, "children" => [%{"text" => "Blog"}]}
+                         ]
+                       }
+                     ])
+                   )
+               }
+             ])
+
+    assert {:ok, imported} = ContentImport.apply(community, job.job_ref)
+
+    refute Repo.get_by(CMS.Model.Mentions.Endpoint,
+             type: :doc,
+             article_id: imported.first_imported_doc_id
+           )
+
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, %{done: true}} =
+             DocTree.publish_changes(community, %{}, actor, command_id: command_id)
+
+    endpoint =
+      Repo.get_by!(CMS.Model.Mentions.Endpoint,
+        type: :doc,
+        article_id: imported.first_imported_doc_id
+      )
+
+    assert [edge] =
+             Repo.all(
+               from(edge in CMS.Model.Mentions.Edge,
+                 where: edge.source_endpoint_id == ^endpoint.id
+               )
+             )
+
+    assert Repo.get!(CMS.Model.Mentions.Endpoint, edge.target_endpoint_id).article_id ==
+             target.article_id
+
+    event_count = Repo.aggregate(CMS.Outbox.Event, :count)
+
+    assert {:ok, %{done: true}} =
+             DocTree.publish_changes(community, %{}, actor, command_id: command_id)
+
+    assert Repo.aggregate(CMS.Outbox.Event, :count) == event_count
+
+    assert Repo.get!(CMS.Model.Mentions.Edge, edge.id).edge_key == edge.edge_key
+
+    assert Repo.aggregate(GroupherServer.Messaging.Model.Mention, :count) == 0
+  end
+
   @job_query """
   query ContentImportJob($community: String!, $jobRef: ID!) {
     contentImportJob(community: $community, jobRef: $jobRef) {

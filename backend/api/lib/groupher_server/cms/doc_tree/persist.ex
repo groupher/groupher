@@ -472,9 +472,8 @@ defmodule GroupherServer.CMS.DocTree.Persist do
                  author,
                  branch_id: branch.id
                ),
-             {:ok, duplicate} <-
-               CMS.Docs.read_editor_head(community, article.id, branch_id: branch.id),
-             {:ok, _mentions} <- CMS.ArtimentMentions.sync(duplicate) do
+             {:ok, _duplicate} <-
+               CMS.Docs.read_editor_head(community, article.id, branch_id: branch.id) do
           duplicate_tree_node(community, branch, node, args, article.id,
             title: title,
             slug: slug

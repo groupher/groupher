@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   alias Activity.Model.CommunityLog
   alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Communities.{Const, Effects, Transaction}
-  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
 
@@ -722,7 +722,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   end
 
   defp reconcile_lifecycle_effect(before_lifecycle, after_lifecycle, operation_ref) do
-    with {:ok, :pass} <- GraphRevision.bump_many([after_lifecycle.community_id]),
+    with {:ok, :pass} <- Revision.bump(),
          {:ok, :pass} <-
            Effects.lifecycle_changed(before_lifecycle, after_lifecycle, operation_ref) do
       after_lifecycle
@@ -762,7 +762,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
              audit_action,
              Map.merge(metadata, %{from_state: from_state, to_state: state})
            ),
-         {:ok, :pass} <- GraphRevision.bump_many([updated.community_id]),
+         {:ok, :pass} <- Revision.bump(),
          {:ok, :pass} <-
            Effects.lifecycle_changed(lifecycle, updated, Keyword.get(opts, :operation_ref)) do
       {:ok, updated}

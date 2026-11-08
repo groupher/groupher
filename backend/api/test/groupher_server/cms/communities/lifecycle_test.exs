@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
   alias GroupherServer.{Activity, CMS}
   alias Activity.Model.CommunityLog
   alias CMS.Communities.Lifecycle
-  alias CMS.ArtimentMentions.GraphRevision
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
   alias CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
 
@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
   test "public Community Lifecycle changes advance its graph revision" do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
-    {:ok, before_revision} = GraphRevision.current(community.id)
+    {:ok, before_revision} = Revision.current()
 
     assert {:ok, _blocker} =
              Lifecycle.apply_blocker(
@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
                operation_ref: Ecto.UUID.generate()
              )
 
-    assert {:ok, suspended_revision} = GraphRevision.current(community.id)
+    assert {:ok, suspended_revision} = Revision.current()
     assert suspended_revision > before_revision
 
     assert {:ok, _blocker} =
@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
                operation_ref: Ecto.UUID.generate()
              )
 
-    assert {:ok, restored_revision} = GraphRevision.current(community.id)
+    assert {:ok, restored_revision} = Revision.current()
     assert restored_revision > suspended_revision
   end
 

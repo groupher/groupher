@@ -12,6 +12,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
 
   alias GroupherServer.CMS.Tickets.Model.Source, as: TicketSource
   alias GroupherServer.Activity.Model.TicketLog
+  alias GroupherServer.Activity.Model.PostLog
   alias GroupherServer.Messaging.Model.Notification
   alias GroupherServer.Messaging.Notifications.Delivery
   alias GroupherServer.CMS.Outbox.Event
@@ -34,6 +35,177 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
 
     ticket = create_and_publish_ticket(community, post, actor)
     {:ok, %{community: community, post: post, actor: actor, ticket: ticket}}
+  end
+
+  @tag :b3_independent
+  test "creating a User Ticket records a Post Activity target", %{
+    community: community,
+    post: post,
+    ticket: ticket
+  } do
+    activity = Repo.get_by!(PostLog, article_id: post.id, action: :ticket_created)
+
+    assert activity.target_type == "ticket"
+    assert activity.target_ref == ticket.id
+
+    scoped_post = Map.put(post, :community, community)
+
+    assert {:ok, %{entries: entries}} =
+             GroupherServer.Activity.list_article_logs(scoped_post, nil)
+
+    projected = Enum.find(entries, &(&1.action == :ticket_created))
+
+    assert projected.target.type == :ticket
+    assert projected.target.ref == ticket.id
+    assert projected.target.inner_id == ticket.inner_id
+    assert projected.target.url == "/#{community.slug}/ticket/#{ticket.inner_id}"
+    assert projected.target.title == ticket.published_content.title
+  end
+
+  @tag :b3_independent
+  test "ArticleLog hides a Ticket target when the Ticket is no longer public", %{
+    community: community,
+    post: post,
+    ticket: ticket
+  } do
+    Repo.update_all(
+      from(lifecycle in ArticleLifecycle, where: lifecycle.article_id == ^ticket.id),
+      set: [state: :draft]
+    )
+
+    scoped_post = Map.put(post, :community, community)
+
+    assert {:ok, %{entries: entries}} =
+             GroupherServer.Activity.list_article_logs(scoped_post, nil)
+
+    ticket_event = Enum.find(entries, &(&1.action == :ticket_created))
+
+    assert is_nil(ticket_event.target)
+  end
+
+  @tag :b3_independent
+  test "Post Ticket link Activity records only new relations and survives receipt replay", %{
+    community: community,
+    actor: actor,
+    ticket: ticket
+  } do
+    {^community, linked_post, _attrs, ^actor} = mock_article(:post, community, actor)
+    command_id = Ecto.UUID.generate()
+    state = Repo.get!(TicketState, ticket.id)
+
+    assert {:ok, _ticket_id} =
+             CMS.Tickets.link_source(
+               community,
+               ticket.id,
+               :post,
+               linked_post.id,
+               state.workflow_version,
+               actor,
+               command_id
+             )
+
+    assert Repo.aggregate(
+             from(log in PostLog,
+               where:
+                 log.article_id == ^linked_post.id and log.action == :ticket_linked and
+                   log.target_ref == ^ticket.id
+             ),
+             :count
+           ) == 1
+
+    assert {:ok, _ticket_id} =
+             CMS.Tickets.link_source(
+               community,
+               ticket.id,
+               :post,
+               linked_post.id,
+               state.workflow_version,
+               actor,
+               command_id
+             )
+
+    current = Repo.get!(TicketState, ticket.id)
+
+    assert {:ok, _ticket_id} =
+             CMS.Tickets.link_source(
+               community,
+               ticket.id,
+               :post,
+               linked_post.id,
+               current.workflow_version,
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    assert Repo.aggregate(
+             from(log in PostLog,
+               where:
+                 log.article_id == ^linked_post.id and log.action == :ticket_linked and
+                   log.target_ref == ^ticket.id
+             ),
+             :count
+           ) == 1
+
+    source = Repo.get_by!(TicketSource, ticket_id: ticket.id, post_id: linked_post.id)
+
+    assert {:ok, _ticket_id} =
+             CMS.Tickets.unlink_source(
+               community,
+               ticket.id,
+               source.id,
+               current.workflow_version,
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    after_unlink = Repo.get!(TicketState, ticket.id)
+
+    assert {:ok, _ticket_id} =
+             CMS.Tickets.link_source(
+               community,
+               ticket.id,
+               :post,
+               linked_post.id,
+               after_unlink.workflow_version,
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    assert Repo.aggregate(
+             from(log in PostLog,
+               where:
+                 log.article_id == ^linked_post.id and log.action == :ticket_linked and
+                   log.target_ref == ^ticket.id
+             ),
+             :count
+           ) == 2
+  end
+
+  @tag :b3_independent
+  test "Ticket creation replay does not append another Post Activity event", %{
+    community: community,
+    actor: actor
+  } do
+    {^community, post, _attrs, ^actor} = mock_article(:post, community, actor)
+    command_id = Ecto.UUID.generate()
+    attrs = %{title: "Replay-safe Ticket", digest: "One creation event"}
+
+    assert {:ok, first} =
+             CMS.Tickets.create_from_post(community, post.id, attrs, actor, command_id)
+
+    assert {:ok, replayed} =
+             CMS.Tickets.create_from_post(community, post.id, attrs, actor, command_id)
+
+    assert replayed.id == first.id
+
+    assert Repo.aggregate(
+             from(log in PostLog,
+               where:
+                 log.article_id == ^post.id and log.action == :ticket_created and
+                   log.target_ref == ^first.id
+             ),
+             :count
+           ) == 1
   end
 
   test "User Ticket starts Draft and Publish selects its current shared Revision", context do
@@ -74,25 +246,16 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     assert published.published_content.title == "Drafted ticket"
     assert Repo.get_by!(ArticleLifecycle, article_id: draft.id).first_published_at
 
-    mention_event =
-      Repo.get_by!(Event,
-        command_id: publish_command_id,
-        event: "article.mention_sync",
-        resource_id: draft.id
-      )
+    refute Repo.get_by(Event, command_id: publish_command_id, event: "mention.notify")
 
-    assert {:ok, :pass} =
-             GroupherServer.Jobs.CMSOutboxArticle.perform(%Oban.Job{
-               args: %{"event_id" => mention_event.id},
-               attempt: 1,
-               max_attempts: 3
-             })
+    source_endpoint_id =
+      Repo.get_by!(CMS.Model.Mentions.Endpoint, type: :ticket, article_id: draft.id).id
 
-    assert %{desired_content_token: token, synced_content_token: token} =
-             Repo.get_by!(CMS.ArtimentMentions.Model.SyncState,
-               source_article_id: draft.id,
-               source_type: :ticket
-             )
+    assert Repo.get!(
+             CMS.Model.Mentions.Endpoint,
+             source_endpoint_id
+           ).article_id ==
+             draft.id
   end
 
   test "public Ticket URLs resolve to a stable User Ticket target", %{
@@ -100,10 +263,19 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     ticket: ticket
   } do
     url = "https://groupher.com/#{community.slug}/ticket/#{ticket.inner_id}"
-    ast = [%{"type" => "p", "id" => "ticket-link", "children" => [%{"text" => url}]}]
 
-    assert [%{mentioned_scope: :internal, mentioned_type: :ticket, mentioned_id: id}] =
-             CMS.ArtimentMentions.Parser.parse(ast, community_id: community.id)
+    ast = [
+      %{
+        "type" => "p",
+        "id" => "ticket-link",
+        "children" => [%{"type" => "a", "url" => url, "children" => [%{"text" => "Ticket"}]}]
+      }
+    ]
+
+    assert {:ok, written} = CMS.ArtimentMentions.Parser.mentions(ast)
+
+    assert {:ok, [%{mentioned_scope: :internal, mentioned_type: :ticket, mentioned_id: id}]} =
+             CMS.ArtimentMentions.Commands.Update.target_mentions(written, community.id)
 
     assert id == ticket.id
   end

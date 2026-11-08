@@ -80,6 +80,13 @@ defmodule GroupherServer.CMS.Comments do
     end
   end
 
+  @doc "Reads one Comment reached through a stored Mention, without reading its parent body."
+  def mentioned_comment(community, locator, viewer \\ nil) do
+    with {:ok, comment} <- FrontDesk.mentioned_comment(community, locator, viewer) do
+      InteractionResponse.one(comment, viewer)
+    end
+  end
+
   @doc """
   Returns one Comment hydrated for the supplied viewer.
 

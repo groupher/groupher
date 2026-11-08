@@ -69,16 +69,20 @@ defmodule GroupherServer.CMS.Tickets.Commands.Publish do
     end)
 
     change(fn canonical ->
-      CMS.Tickets.Persist.publish(
-        canonical,
-        ticket_id,
-        reason,
-        expected_draft_version,
-        expected_lifecycle_version,
-        expected_workflow_version,
-        expected_preview,
-        %{actor: actor, command_id: command_id}
-      )
+      with {:ok, published_id} <-
+             CMS.Tickets.Persist.publish(
+               canonical,
+               ticket_id,
+               reason,
+               expected_draft_version,
+               expected_lifecycle_version,
+               expected_workflow_version,
+               expected_preview,
+               %{actor: actor, command_id: command_id}
+             ),
+           {:ok, _graph} <- CMS.Tickets.Mentions.update(published_id, canonical, command_id) do
+        {:ok, published_id}
+      end
     end)
 
     confirm(fn ticket_id ->

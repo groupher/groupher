@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
              CMS.Articles.Pagination.page(:post, %{community: community.slug}, pagi, author)
 
     assert entry.id == article.id
-    assert {:ok, [%{article: %{id: article_id}}]} = CMS.Articles.locators([path])
+    assert {:ok, [%{article: %{id: article_id}}]} = CMS.FrontDesk.article([path])
     assert article_id == article.id
 
     restriction =
@@ -70,7 +70,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
              CMS.Articles.Pagination.page(:post, %{community: community.slug}, pagi, author)
 
     assert entry.id == article.id
-    assert {:ok, []} = CMS.Articles.locators([path])
+    assert {:ok, []} = CMS.FrontDesk.article([path])
     assert {:error, %ErrorCat.Error{reason: :article_not_found}} = CMS.FrontDesk.article(path)
 
     assert {:ok, %{entries: [], page_info: %{total_count: 0}}} =
@@ -84,7 +84,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
              CMS.Articles.Pagination.page(:post, %{community: community.slug}, pagi, author)
 
     assert entry.id == article.id
-    assert {:ok, [%{article: %{id: article_id}}]} = CMS.Articles.locators([path])
+    assert {:ok, [%{article: %{id: article_id}}]} = CMS.FrontDesk.article([path])
     assert article_id == article.id
 
     Repo.delete!(Repo.get_by!(ArticlePublic, article_id: article.id))
@@ -120,7 +120,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
 
     assert entry.id == article.id
 
-    assert {:ok, [%{article: %{id: article_id}}]} = CMS.Articles.locators([path])
+    assert {:ok, [%{article: %{id: article_id}}]} = CMS.FrontDesk.article([path])
     assert article_id == article.id
 
     Repo.insert!(%CMS.Model.DocReviewBlock{
@@ -138,7 +138,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
              CMS.Articles.Pagination.page(:doc, %{community: community.slug}, pagi, author)
 
     assert entry.id == article.id
-    assert {:ok, []} = CMS.Articles.locators([path])
+    assert {:ok, []} = CMS.FrontDesk.article([path])
     assert {:error, %ErrorCat.Error{reason: :article_not_found}} = CMS.FrontDesk.article(path)
 
     assert {:ok, %{entries: [], page_info: %{total_count: 0}}} =

@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Articles.Query.Locator do
 
   Business position:
 
-      CMS.Articles.locators/1
+      CMS.FrontDesk.articles/1
         -> Articles.Query.Locator
         -> Gate Article scope + grouped SQL
         -> ordered path results

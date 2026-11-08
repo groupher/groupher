@@ -21,6 +21,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Persist.Mutation do
     DocTreeNode
   }
 
+  alias CMS.Model.Mentions.Endpoint
+
   @plate_body Jason.encode!([
                 %{"type" => "h1", "children" => [%{"text" => "Updated Draft"}]},
                 %{"type" => "p", "children" => [%{"text" => "draft body"}]}
@@ -148,6 +150,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Persist.Mutation do
       assert doc_draft.title == "page-3-copy"
       assert doc_draft.slug == "page-3-copy"
       assert doc_draft.json == ~s([{"children":[{"text":""}],"type":"p"}])
+      refute Repo.get_by(Endpoint, article_id: duplicate_payload.node.doc_id)
     end
 
     test "trashed root group reserves its navigation title" do

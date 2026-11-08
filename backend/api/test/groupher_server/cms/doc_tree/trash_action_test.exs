@@ -16,6 +16,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
   alias Activity.Model.DocTreeLog
   alias CMS.ArtimentMentions.Config
+  alias CMS.Model.Mentions.{Edge, Endpoint}
 
   test "deleting and restoring a published Page moves both Tree stages as one action" do
     {:ok, user} = db_insert(:user)
@@ -362,7 +363,9 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
           "id" => "copied-mention",
           "children" => [
             %{
-              "text" => ~s(<a href="#{Config.site_host()}/blog/#{target.id}">target</a>)
+              "type" => "a",
+              "url" => "#{Config.site_host()}/blog/#{target.id}",
+              "children" => [%{"text" => "target link text"}]
             }
           ]
         }
@@ -370,15 +373,13 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
     {:ok, current} = CMS.Docs.read_editor_head(community, page.node.doc_id)
 
-    assert {:ok, original_draft} =
+    assert {:ok, _original_draft} =
              CMS.DocTree.update_draft(
                community,
                page.node.doc_id,
                %{body_bag: mock_body_bag(body), expected_version: current.version},
                user
              )
-
-    assert {:ok, :pass} = CMS.ArtimentMentions.sync(original_draft)
 
     {:ok, duplicate} =
       CMS.DocTree.duplicate_node_internal(community, page.node.id, %{
@@ -394,21 +395,22 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
     assert original_doc.body.json == copied_doc.body.json
 
-    refute Repo.get_by(CMS.Model.ArtimentMention,
-             mentioner_type: :doc,
-             mentioner_article_id: original_doc.article_id,
-             mentioner_branch_id: original_doc.branch_id,
-             mentioned_type: :blog,
-             mentioned_article_id: target.article_id
-           )
+    for doc <- [original_doc, copied_doc] do
+      case Repo.get_by(Endpoint,
+             type: :doc,
+             article_id: doc.article_id
+           ) do
+        %Endpoint{id: endpoint_id} ->
+          refute Repo.exists?(
+                   from(edge in Edge,
+                     where: edge.source_endpoint_id == ^endpoint_id
+                   )
+                 )
 
-    refute Repo.get_by(CMS.Model.ArtimentMention,
-             mentioner_type: :doc,
-             mentioner_article_id: copied_doc.article_id,
-             mentioner_branch_id: copied_doc.branch_id,
-             mentioned_type: :blog,
-             mentioned_article_id: target.article_id
-           )
+        nil ->
+          :ok
+      end
+    end
   end
 
   test "restore requires and accepts a replacement parent when the original parent is gone" do

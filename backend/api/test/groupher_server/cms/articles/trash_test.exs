@@ -13,13 +13,15 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     Article,
     ArticleLifecycle,
     ArticleStats,
-    ArtimentMention,
     Comment,
     TrashAction,
     TrashedArticle,
     TicketState
   }
 
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
+  alias CMS.Model.Mentions.Endpoint, as: MentionEndpoint
+  alias CMS.Model.Mentions.Edge
   alias Activity.Model.PostLog
   alias CMS.Tickets.Model.Source, as: TicketSource
 
@@ -58,6 +60,39 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, _} = read_article(community, :post, article_inner_id(post, community))
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
     refute Repo.get(TrashAction, item.trash_action_id)
+  end
+
+  test "trashing and restoring a Comment parent advances the global Mentions revision" do
+    {community, post, _attrs, user} = mock_article(:post)
+
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               article_inner_id(post, community),
+               mock_comment(),
+               user,
+               Ecto.UUID.generate()
+             )
+
+    comment_endpoint = Repo.get_by!(MentionEndpoint, type: :comment, comment_id: comment.id)
+    parent_endpoint = Repo.get!(MentionEndpoint, comment_endpoint.parent_endpoint_id)
+    assert parent_endpoint.article_id == post.article_id
+
+    {:ok, before_trash} = Revision.current()
+    assert {:ok, trash_item} = CMS.Articles.trash(post, user)
+    {:ok, after_trash} = Revision.current()
+    assert after_trash > before_trash
+
+    assert Repo.get!(MentionEndpoint, comment_endpoint.id).parent_endpoint_id ==
+             parent_endpoint.id
+
+    assert {:ok, _restored} = CMS.Articles.restore_trashed(trash_item.hash_id, user)
+    {:ok, after_restore} = Revision.current()
+    assert after_restore > after_trash
+
+    assert Repo.get!(MentionEndpoint, comment_endpoint.id).parent_endpoint_id ==
+             parent_endpoint.id
   end
 
   test "restore receipt replays after the Trash membership is gone" do
@@ -356,7 +391,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.article_id)
   end
 
-  test "permanent delete removes comment-owned Mention facts before comments cascade" do
+  test "permanent parent delete preserves Comment identity without claiming it was deleted" do
     {community, post, _attrs, user} = mock_article(:post)
     {_, target, _, _} = mock_article(:blog, community, user)
 
@@ -366,7 +401,12 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
           "type" => "p",
           "id" => "comment-mention",
           "children" => [
-            %{"text" => ~s(<a href="#{@site_host}/blog/#{target.id}">target</a>)}
+            %{
+              "type" => "a",
+              "url" =>
+                "#{@site_host}/#{community.slug}/blog/#{article_inner_id(target, community)}",
+              "children" => [%{"text" => "target link text"}]
+            }
           ]
         }
       ])
@@ -381,25 +421,20 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                Ecto.UUID.generate()
              )
 
-    assert {:ok, {1, nil}} = CMS.ArtimentMentions.sync(comment)
-
-    assert Repo.get_by(ArtimentMention,
-             mentioner_type: :comment,
-             mentioner_comment_id: comment.id
-           )
+    comment_endpoint = Repo.get_by!(MentionEndpoint, type: :comment, comment_id: comment.id)
+    edge = Repo.get_by!(Edge, source_endpoint_id: comment_endpoint.id)
+    assert edge.target_endpoint_id
 
     assert {:ok, item} = CMS.Articles.trash(post, user)
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
     refute Repo.get(Comment, comment.id)
-
-    refute Repo.get_by(ArtimentMention,
-             mentioner_type: :comment,
-             mentioner_comment_id: comment.id
-           )
+    assert is_nil(Repo.get!(MentionEndpoint, comment_endpoint.id).deleted_at)
+    refute Repo.get(Edge, edge.id)
+    assert Repo.aggregate(Edge, :count) == 0
   end
 
-  test "incoming Mention facts survive Trash and restore, then cascade on permanent deletion" do
+  test "incoming Mention edge survives Trash and restore but clears on permanent deletion" do
     {community, target, _attrs, user} = mock_article(:post)
     {_, mentioner, _, _} = mock_article(:blog, community, user)
 
@@ -409,7 +444,12 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
           "type" => "p",
           "id" => "mention-target",
           "children" => [
-            %{"text" => ~s(<a href="#{@site_host}/post/#{target.id}">target</a>)}
+            %{
+              "type" => "mention",
+              "key" => "post:#{target.article_id}",
+              "value" => "target mention",
+              "children" => [%{"text" => ""}]
+            }
           ]
         }
       ])
@@ -425,39 +465,57 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                Ecto.UUID.generate()
              )
 
-    assert {:ok, {1, nil}} = CMS.ArtimentMentions.sync(mentioner)
+    source_endpoint =
+      Repo.get_by!(MentionEndpoint, type: :blog, article_id: mentioner.article_id)
 
-    assert {:ok, item} = CMS.Articles.trash(target, user)
+    target_endpoint = Repo.get_by!(MentionEndpoint, type: :post, article_id: target.article_id)
 
-    mention =
-      Repo.get_by!(ArtimentMention,
-        mentioned_type: :post,
-        mentioned_article_id: target.article_id
+    edge =
+      Repo.get_by!(Edge,
+        source_endpoint_id: source_endpoint.id,
+        target_endpoint_id: target_endpoint.id
       )
 
-    assert mention.mentioned_article_id == target.article_id
+    assert {:ok, item} = CMS.Articles.trash(target, user)
+    assert Repo.get!(Edge, edge.id).target_endpoint_id == target_endpoint.id
 
-    assert {:ok, %{entries: [listed]}} =
+    edited_body = String.replace(body, "target mention", "target again")
+
+    assert {:ok, _edited_mentioner} =
+             CMS.Articles.update(
+               mentioner,
+               %{
+                 body_bag: mock_body_bag(edited_body),
+                 expected_version: mentioner.version
+               },
+               user,
+               Ecto.UUID.generate()
+             )
+
+    projected_edge =
+      Repo.get_by!(Edge,
+        source_endpoint_id: source_endpoint.id,
+        target_endpoint_id: target_endpoint.id
+      )
+
+    assert projected_edge.id == edge.id
+    assert projected_edge.mentioned_at == edge.mentioned_at
+
+    assert {:ok, %{entries: [_listed]}} =
              CMS.Articles.list_trashed(
                community,
                %{thread: :post},
                %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
              )
 
-    assert {:ok, %{total_count: 1}} =
-             CMS.ArtimentMentions.mentioned_by(
-               :post,
-               listed.article.id,
-               %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
-             )
-
     assert {:ok, _} = CMS.Articles.restore_trashed(item.hash_id, user)
-    assert Repo.get!(ArtimentMention, mention.id).mentioned_article_id == target.article_id
+    assert Repo.get!(Edge, projected_edge.id).target_endpoint_id == target_endpoint.id
 
     assert {:ok, item} = CMS.Articles.trash(target, user)
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
-    refute Repo.get(ArtimentMention, mention.id)
+    assert Repo.get!(MentionEndpoint, target_endpoint.id).deleted_at
+    refute Repo.get(Edge, projected_edge.id)
   end
 
   test "scheduler permanently deletes due actions and records a system audit" do

@@ -61,6 +61,11 @@ defmodule GroupherServer.CMS.Tickets do
     Query.post_progress(community, post_ids)
   end
 
+  @doc "Returns current public target projections for a batch of Activity Ticket IDs."
+  def public_activity_targets(%Community{} = community, ticket_ids) when is_list(ticket_ids) do
+    Query.public_activity_targets(community, ticket_ids)
+  end
+
   @doc "Returns all internally readable User Tickets linked to one Post."
   def linked_to_post_internal(%Community{} = community, post_id, %User{} = actor) do
     Query.linked_to_post_internal(community, post_id, actor)

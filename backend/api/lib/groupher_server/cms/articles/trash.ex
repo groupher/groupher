@@ -182,7 +182,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
              {:ok, _} <- update_tag_stats(canonical, 1),
              {:ok, _} <- update_community_count(canonical, community),
              {:ok, _} <- delete_empty_action(item.trash_action_id),
-             {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :active),
              {:ok, %{inner_id: inner_id}} <-
                Bindings.get(%{article_id: canonical.id}, community) do
           _ = CMS.SearchArtiments.Indexer.enqueue_upsert(canonical)
@@ -214,7 +213,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
          {:ok, _} <- update_tag_stats(canonical, 1),
          {:ok, _} <- update_community_count(canonical, community),
          {:ok, _} <- delete_empty_action(item.trash_action_id),
-         {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :active),
          {:ok, %{inner_id: inner_id}} <- Bindings.get(%{article_id: canonical.id}, community) do
       _ = CMS.SearchArtiments.Indexer.enqueue_upsert(canonical)
       {:ok, Map.put(canonical, :inner_id, inner_id)}
@@ -267,9 +265,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
                  activity(canonical, :permanently_deleted, actor, item.trash_action,
                    source: activity_source(opts)
                  ),
-               {:ok, _comment_mentions} <-
-                 CMS.ArtimentMentions.purge_article_comments(canonical),
-               {:ok, _article_mentions} <- CMS.ArtimentMentions.purge(canonical),
+               {:ok, _mention_endpoints} <-
+                 CMS.ArtimentMentions.mark_deleted(%{
+                   type: canonical.thread,
+                   article_id: canonical.id
+                 }),
                {:ok, _asset_refs} <- CMS.Assets.cleanup_refs(canonical.thread, canonical.id),
                {:ok, _deleted} <- Repo.delete(canonical),
                {:ok, _} <- delete_empty_action(action_id) do
@@ -321,8 +321,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
            activity(canonical, :permanently_deleted, actor, item.trash_action,
              source: activity_source(opts)
            ),
-         {:ok, _comment_mentions} <- CMS.ArtimentMentions.purge_article_comments(canonical),
-         {:ok, _article_mentions} <- CMS.ArtimentMentions.purge(canonical),
+         {:ok, _mention_endpoints} <-
+           CMS.ArtimentMentions.mark_deleted(%{
+             type: canonical.thread,
+             article_id: canonical.id
+           }),
          {:ok, _asset_refs} <- CMS.Assets.cleanup_refs(canonical.thread, canonical.id),
          {:ok, _deleted} <- Repo.delete(canonical),
          {:ok, _} <- delete_empty_action(action_id) do
@@ -506,7 +509,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
              :post_trash
            ),
          {:ok, _} <- update_community_count(article, community),
-         {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :trashed),
          {:ok, _event} <- activity(canonical, :trashed, actor, action) do
       _ = CMS.SearchArtiments.Indexer.enqueue_delete(article)
       {:ok, item}

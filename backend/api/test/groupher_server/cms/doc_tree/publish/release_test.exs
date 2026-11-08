@@ -356,6 +356,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       assert is_nil(article_inner_id(article, community))
 
+      refute Repo.get_by(CMS.Model.Mentions.Endpoint,
+               type: :doc,
+               article_id: article.id
+             )
+
       assert Repo.exists?(
                from(public in CMS.Model.DocPublic,
                  where: public.article_id == ^article.id and public.branch_id == ^branch.id

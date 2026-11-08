@@ -338,8 +338,6 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert result.public.revision_id == result.revision.id
     assert {:error, :not_found} = Store.get(article)
 
-    assert Repo.aggregate(CMS.Outbox.Event, :count) == 2
-
     assert Repo.aggregate(
              from(request in ArtimentReview,
                where: request.target_type == :article and request.article_id == ^article.id
@@ -457,27 +455,13 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert Repo.all(from(event in CMS.Outbox.Event, where: event.command_id == ^command_id))
            |> Enum.map(& &1.event)
-           |> Enum.sort() == ["article.mention_sync", "article.projections", "article.published"]
+           |> Enum.sort() == ["article.projections", "article.published"]
 
-    mention_event =
-      Repo.one!(
-        from(event in CMS.Outbox.Event,
-          where: event.command_id == ^command_id and event.event == "article.mention_sync"
-        )
-      )
+    source_endpoint_id =
+      Repo.get_by!(CMS.Model.Mentions.Endpoint, type: :doc, article_id: article.id).id
 
-    assert {:ok, :pass} =
-             GroupherServer.Jobs.CMSOutboxArticle.perform(%Oban.Job{
-               args: %{"event_id" => mention_event.id},
-               attempt: 1,
-               max_attempts: 3
-             })
-
-    assert %{desired_content_token: token, synced_content_token: token} =
-             Repo.get_by!(CMS.ArtimentMentions.Model.SyncState,
-               source_article_id: article.id,
-               source_branch_id: branch.id
-             )
+    assert Repo.get!(CMS.Model.Mentions.Endpoint, source_endpoint_id).article_id ==
+             article.id
 
     assert Repo.get_by!(ArticleBinding, article_id: article.id, community_id: community.id).inner_id ==
              1
@@ -485,7 +469,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     doc_binding = Repo.get_by!(ArticleBinding, article_id: article.id, community_id: community.id)
 
     assert {:ok, [%{article: batch_article, binding: batch_binding, branch_id: branch_id}]} =
-             CMS.Articles.locators([
+             CMS.FrontDesk.article([
                %{community: community.slug, thread: :doc, inner_id: doc_binding.inner_id}
              ])
 
@@ -1122,7 +1106,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert public.body.plain_text =~ "stable public body"
 
     assert {:ok, [%{article: batch_article, binding: batch_binding}]} =
-             CMS.Articles.locators([
+             CMS.FrontDesk.article([
                %{community: community.slug, thread: :post, inner_id: binding.inner_id}
              ])
 

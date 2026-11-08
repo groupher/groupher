@@ -332,6 +332,49 @@ defmodule GroupherServer.CMS.Tickets.Query do
 
   def post_progress(_community, _post_inner_ids), do: {:error, ErrorCat.invalid_ticket_content()}
 
+  @doc "Returns current public Ticket targets for Article Activity within one Community."
+  def public_activity_targets(community, ticket_ids)
+      when is_list(ticket_ids) and length(ticket_ids) <= 20 do
+    case Enum.uniq(ticket_ids) do
+      [] ->
+        {:ok, %{}}
+
+      ids ->
+        with {:ok, %Ecto.Query{} = scope} <-
+               CMS.Gate.scope(TicketState, nil, :read, TicketContext.public(community)) do
+          targets =
+            scope
+            |> where([ticket_state: state], state.article_id in ^ids)
+            |> select([ticket_state: state], %{
+              article_id: state.article_id,
+              inner_id: as(:ticket_binding).inner_id,
+              title: as(:ticket_public).title
+            })
+            |> Repo.all()
+            |> Map.new(fn ticket ->
+              {ticket.article_id,
+               %{
+                 type: :ticket,
+                 ref: ticket.article_id,
+                 title: ticket.title,
+                 inner_id: ticket.inner_id,
+                 url:
+                   CMS.FrontDesk.article_url(%{
+                     community_slug: community.slug,
+                     thread: :ticket,
+                     inner_id: ticket.inner_id
+                   })
+               }}
+            end)
+
+          {:ok, targets}
+        end
+    end
+  end
+
+  def public_activity_targets(_community, _ticket_ids),
+    do: {:error, ErrorCat.invalid_ticket_content()}
+
   @doc "Returns internal User Tickets linked to one Post after Ticket Gate admission."
   def linked_to_post_internal(community, post_id, actor) when is_binary(post_id) do
     with {:ok, %Ecto.Query{} = query} <-

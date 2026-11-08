@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
 
   alias CMS.Model.{
     Article,

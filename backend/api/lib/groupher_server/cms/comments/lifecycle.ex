@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Comments.ErrorCat
-  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Model.{Comment, CommentLifecycle}
   alias CMS.ReviewBlocks
 

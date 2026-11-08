@@ -353,7 +353,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
        CMS.ErrorCat.custom("stable Doc purge requires all body branches to be explicitly removed")}
     else
       with {:ok, _} <-
-             CMS.ArtimentMentions.mark_endpoint_deleted_in_transaction(%{
+             CMS.ArtimentMentions.mark_deleted(%{
                type: :doc,
                article_id: id
              }),
