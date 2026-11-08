@@ -5,7 +5,9 @@ defmodule GroupherServer.Repo.Migrations.CreateUpvotesForArticleComments do
     create table(:articles_comments_upvotes) do
       add(:user_id, references(:users, on_delete: :delete_all), null: false)
 
-      add(:article_comment_id, references(:articles_comments, on_delete: :delete_all), null: false)
+      add(:article_comment_id, references(:articles_comments, on_delete: :delete_all),
+        null: false
+      )
 
       timestamps()
     end

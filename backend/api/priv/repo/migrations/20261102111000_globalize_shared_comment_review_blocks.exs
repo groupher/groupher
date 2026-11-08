@@ -36,7 +36,10 @@ defmodule GroupherServer.Repo.Migrations.GlobalizeSharedCommentReviewBlocks do
   end
 
   def down do
-    execute("DROP TRIGGER IF EXISTS enforce_comment_review_block_scope ON cms.comment_review_blocks")
+    execute(
+      "DROP TRIGGER IF EXISTS enforce_comment_review_block_scope ON cms.comment_review_blocks"
+    )
+
     execute("DROP FUNCTION IF EXISTS cms.enforce_comment_review_block_scope()")
   end
 end

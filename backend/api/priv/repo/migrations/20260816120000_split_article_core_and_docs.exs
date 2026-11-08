@@ -210,6 +210,7 @@ defmodule GroupherServer.Repo.Migrations.SplitArticleCoreAndDocs do
 
   defp move_branch_fk(table) do
     execute("ALTER TABLE #{@prefix}.#{table} DROP CONSTRAINT IF EXISTS #{table}_branch_id_fkey;")
+
     execute("""
     ALTER TABLE #{@prefix}.#{table}
       ADD CONSTRAINT #{table}_branch_id_fkey
@@ -219,7 +220,11 @@ defmodule GroupherServer.Repo.Migrations.SplitArticleCoreAndDocs do
 
   defp drop_doc_article_trash_rows do
     execute("DELETE FROM #{@prefix}.trashed_articles WHERE thread = 'doc';")
-    execute("ALTER TABLE #{@prefix}.trashed_articles DROP CONSTRAINT IF EXISTS trashed_articles_thread_check;")
+
+    execute(
+      "ALTER TABLE #{@prefix}.trashed_articles DROP CONSTRAINT IF EXISTS trashed_articles_thread_check;"
+    )
+
     execute("""
     ALTER TABLE #{@prefix}.trashed_articles
       ADD CONSTRAINT trashed_articles_thread_check

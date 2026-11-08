@@ -35,8 +35,13 @@ defmodule GroupherServer.Repo.Migrations.RenameArticleSnapshotsThread do
     $$;
     """)
 
-    execute(~s|DROP INDEX IF EXISTS "#{@prefix}"."article_snapshots_article_thread_article_id_index";|)
-    execute(~s|DROP INDEX IF EXISTS "#{@prefix}"."article_snapshots_article_thread_workspace_id_index";|)
+    execute(
+      ~s|DROP INDEX IF EXISTS "#{@prefix}"."article_snapshots_article_thread_article_id_index";|
+    )
+
+    execute(
+      ~s|DROP INDEX IF EXISTS "#{@prefix}"."article_snapshots_article_thread_workspace_id_index";|
+    )
 
     create_if_not_exists(index(:article_snapshots, [:thread, :doc_id], prefix: @prefix))
 

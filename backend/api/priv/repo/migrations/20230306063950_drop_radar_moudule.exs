@@ -46,8 +46,8 @@ defmodule GroupherServer.Repo.Migrations.DropRadarMoudule do
       remove(:radar_id)
     end
 
-    drop_if_exists table("radars_tags")
-    drop_if_exists table("radar_documents")
-    drop_if_exists table("cms_radars")
+    drop_if_exists(table("radars_tags"))
+    drop_if_exists(table("radar_documents"))
+    drop_if_exists(table("cms_radars"))
   end
 end

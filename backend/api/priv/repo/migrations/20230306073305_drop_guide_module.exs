@@ -46,8 +46,8 @@ defmodule GroupherServer.Repo.Migrations.DropGuideModule do
       remove(:guide_id)
     end
 
-    drop_if_exists table("guides_tags")
-    drop_if_exists table("guide_documents")
-    drop_if_exists table("cms_guides")
+    drop_if_exists(table("guides_tags"))
+    drop_if_exists(table("guide_documents"))
+    drop_if_exists(table("cms_guides"))
   end
 end

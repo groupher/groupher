@@ -3,7 +3,9 @@ defmodule GroupherServer.Repo.Migrations.CreateCommentsUsersEmotions do
 
   def change do
     create table(:articles_comments_users_emotions) do
-      add(:article_comment_id, references(:articles_comments, on_delete: :delete_all), null: false)
+      add(:article_comment_id, references(:articles_comments, on_delete: :delete_all),
+        null: false
+      )
 
       add(:user_id, references(:users, on_delete: :delete_all), null: false)
       add(:recived_user_id, references(:users, on_delete: :delete_all), null: false)

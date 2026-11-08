@@ -48,7 +48,9 @@ defmodule GroupherServer.Repo.Migrations.AddRevisionNumberToArticleSnapshots do
     drop(
       index(
         :article_snapshots,
-        [:community_id, :thread, :type, :article_draft_id, :snapshot_number], prefix: @prefix)
+        [:community_id, :thread, :type, :article_draft_id, :snapshot_number],
+        prefix: @prefix
+      )
     )
 
     drop(

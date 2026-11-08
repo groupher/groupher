@@ -3,10 +3,10 @@ defmodule GroupherServer.Repo.Migrations.AlterCatStateToInt do
 
   def change do
     alter table(:cms_posts) do
-      remove :cat
-      remove :state
-      add :cat, :integer
-      add :state, :integer
+      remove(:cat)
+      remove(:state)
+      add(:cat, :integer)
+      add(:state, :integer)
     end
   end
 end

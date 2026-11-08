@@ -13,7 +13,9 @@ defmodule GroupherServer.Repo.Migrations.ExpandCommunityLifecycleV1 do
       add(:destroyed_at, :timestamptz)
     end
 
-    drop(constraint(:community_lifecycles, :community_lifecycles_state_check, prefix: @cms_prefix))
+    drop(
+      constraint(:community_lifecycles, :community_lifecycles_state_check, prefix: @cms_prefix)
+    )
 
     create(
       constraint(:community_lifecycles, :community_lifecycles_state_check,
@@ -38,8 +40,16 @@ defmodule GroupherServer.Repo.Migrations.ExpandCommunityLifecycleV1 do
     """)
 
     create table(:community_lifecycle_blockers, prefix: @cms_prefix) do
-      add(:community_id, references(:communities, prefix: @cms_prefix, on_delete: :restrict), null: false)
-      add(:lifecycle_id, references(:community_lifecycles, prefix: @cms_prefix, on_delete: :delete_all), null: false)
+      add(:community_id, references(:communities, prefix: @cms_prefix, on_delete: :restrict),
+        null: false
+      )
+
+      add(
+        :lifecycle_id,
+        references(:community_lifecycles, prefix: @cms_prefix, on_delete: :delete_all),
+        null: false
+      )
+
       add(:blocker_type, :string, null: false)
       add(:cause_code, :string, null: false)
       add(:cause_ref, :string)
@@ -91,7 +101,9 @@ defmodule GroupherServer.Repo.Migrations.ExpandCommunityLifecycleV1 do
   def down do
     drop(table(:community_lifecycle_blockers, prefix: @cms_prefix))
 
-    drop(constraint(:community_lifecycles, :community_lifecycles_state_check, prefix: @cms_prefix))
+    drop(
+      constraint(:community_lifecycles, :community_lifecycles_state_check, prefix: @cms_prefix)
+    )
 
     create(
       constraint(:community_lifecycles, :community_lifecycles_state_check,

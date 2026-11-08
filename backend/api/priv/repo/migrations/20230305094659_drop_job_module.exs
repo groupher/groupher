@@ -50,11 +50,11 @@ defmodule GroupherServer.Repo.Migrations.DropJobModule do
     # drop table("jobs_viewers")
     # drop table("jobs_communities_flags")
     # drop table("jobs_comments")
-    drop_if_exists table("jobs_tags")
+    drop_if_exists(table("jobs_tags"))
     # drop table("jobs_favorites")
     # drop table("jobs_stars")
     # drop table("communities_jobs")
-    drop_if_exists table("job_documents")
-    drop_if_exists table("cms_jobs")
+    drop_if_exists(table("job_documents"))
+    drop_if_exists(table("cms_jobs"))
   end
 end

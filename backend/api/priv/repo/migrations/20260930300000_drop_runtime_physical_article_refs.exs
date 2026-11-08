@@ -38,12 +38,22 @@ defmodule GroupherServer.Repo.Migrations.DropRuntimePhysicalArticleRefs do
   def down, do: execute("SELECT 1")
 
   defp create_projection_uniques do
-    Enum.each(~w(post_reaction_infos blog_reaction_infos changelog_reaction_infos doc_reaction_infos), fn table ->
-      execute("CREATE UNIQUE INDEX #{table}_stable_doc_index ON cms.#{table} (article_id, branch_id) WHERE branch_id IS NOT NULL")
-    end)
+    Enum.each(
+      ~w(post_reaction_infos blog_reaction_infos changelog_reaction_infos doc_reaction_infos),
+      fn table ->
+        execute(
+          "CREATE UNIQUE INDEX #{table}_stable_doc_index ON cms.#{table} (article_id, branch_id) WHERE branch_id IS NOT NULL"
+        )
+      end
+    )
 
-    Enum.each(~w(post_emotion_infos blog_emotion_infos changelog_emotion_infos doc_emotion_infos), fn table ->
-      execute("CREATE UNIQUE INDEX #{table}_stable_doc_emotion_index ON cms.#{table} (article_id, branch_id, emotion) WHERE branch_id IS NOT NULL")
-    end)
+    Enum.each(
+      ~w(post_emotion_infos blog_emotion_infos changelog_emotion_infos doc_emotion_infos),
+      fn table ->
+        execute(
+          "CREATE UNIQUE INDEX #{table}_stable_doc_emotion_index ON cms.#{table} (article_id, branch_id, emotion) WHERE branch_id IS NOT NULL"
+        )
+      end
+    )
   end
 end

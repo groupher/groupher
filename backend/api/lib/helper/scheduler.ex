@@ -41,5 +41,4 @@ defmodule Helper.Scheduler do
   def purge_expired_trash do
     CMS.trash_purge_due()
   end
-
 end

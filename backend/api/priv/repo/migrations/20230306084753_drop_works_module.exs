@@ -46,15 +46,15 @@ defmodule GroupherServer.Repo.Migrations.DropWorksModule do
       remove(:works_id)
     end
 
-    drop_if_exists table("works_join_cities")
-    drop_if_exists table("works_join_techstacks")
-    drop_if_exists table("works_join_teammates")
+    drop_if_exists(table("works_join_cities"))
+    drop_if_exists(table("works_join_techstacks"))
+    drop_if_exists(table("works_join_teammates"))
 
-    drop_if_exists table("cms_techstacks")
-    drop_if_exists table("cms_cities")
+    drop_if_exists(table("cms_techstacks"))
+    drop_if_exists(table("cms_cities"))
 
-    drop_if_exists table("works_tags")
-    drop_if_exists table("works_documents")
-    drop_if_exists table("cms_works")
+    drop_if_exists(table("works_tags"))
+    drop_if_exists(table("works_documents"))
+    drop_if_exists(table("cms_works"))
   end
 end

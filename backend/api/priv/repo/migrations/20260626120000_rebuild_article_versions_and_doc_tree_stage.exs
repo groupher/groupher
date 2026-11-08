@@ -303,7 +303,9 @@ defmodule GroupherServer.Repo.Migrations.RebuildArticleWorkspacesAndDocTreeStage
 
         add(
           :cover_group_id,
-          references(:doc_cover_groups, prefix: @prefix, on_delete: :delete_all), null: false)
+          references(:doc_cover_groups, prefix: @prefix, on_delete: :delete_all),
+          null: false
+        )
 
         add(:node_id, references(:doc_tree_nodes, prefix: @prefix, on_delete: :delete_all),
           null: false

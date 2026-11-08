@@ -46,8 +46,8 @@ defmodule GroupherServer.Repo.Migrations.DropDrinkModule do
       remove(:drink_id)
     end
 
-    drop_if_exists table("drinks_tags")
-    drop_if_exists table("drink_documents")
-    drop_if_exists table("cms_drinks")
+    drop_if_exists(table("drinks_tags"))
+    drop_if_exists(table("drink_documents"))
+    drop_if_exists(table("cms_drinks"))
   end
 end

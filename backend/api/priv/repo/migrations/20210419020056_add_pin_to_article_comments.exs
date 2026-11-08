@@ -10,7 +10,9 @@ defmodule GroupherServer.Repo.Migrations.AddPinToArticleComments do
       add(:post_id, references(:cms_posts, on_delete: :delete_all))
       add(:job_id, references(:cms_jobs, on_delete: :delete_all))
 
-      add(:article_comment_id, references(:articles_comments, on_delete: :delete_all), null: false)
+      add(:article_comment_id, references(:articles_comments, on_delete: :delete_all),
+        null: false
+      )
 
       timestamps()
     end

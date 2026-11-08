@@ -46,10 +46,10 @@ defmodule GroupherServer.Repo.Migrations.RemoveOldBlogThread do
       remove(:blog_id)
     end
 
-    drop_if_exists (unique_index(:communities_join_blogs, [:community_id, :blog_id] ))
-    drop_if_exists (unique_index(:article_upvotes, [:user_id, :blog_id]))
+    drop_if_exists(unique_index(:communities_join_blogs, [:community_id, :blog_id]))
+    drop_if_exists(unique_index(:article_upvotes, [:user_id, :blog_id]))
 
-    drop_if_exists table(:blog_documents)
-    drop_if_exists table(:cms_blogs)
+    drop_if_exists(table(:blog_documents))
+    drop_if_exists(table(:cms_blogs))
   end
 end

@@ -20,7 +20,16 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
   alias CMS.Articles.Trash
   alias CMS.Communities.Tags.Maintenance
-  alias CMS.Model.{Article, ArticleBinding, ArticleLifecycle, ArticlePublic, Community, TicketState}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBinding,
+    ArticleLifecycle,
+    ArticlePublic,
+    Community,
+    TicketState
+  }
+
   alias CMS.Seeds.{Communities, FullCommunity, Tags, Wallpaper}
   alias CMS.Seeds.Helper, as: SeedHelper
   alias Helper.{ORM, T}
