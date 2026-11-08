@@ -22,9 +22,10 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
     ArticleAssetRef,
     Community,
     Comment,
-    Passport,
-    ArtimentMention
+    Passport
   }
+
+  alias CMS.Model.Mentions.{Edge, Endpoint}
 
   alias CMS.Outbox.Event
 
@@ -64,11 +65,16 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
 
       external_mentions =
         Repo.aggregate(
-          from(m in ArtimentMention,
+          from(edge in Edge,
+            join: source in Endpoint,
+            on: source.id == edge.source_endpoint_id,
+            join: target in Endpoint,
+            on: target.id == edge.target_endpoint_id,
             where:
-              m.mentioned_article_id in ^articles and
-                ((not is_nil(m.mentioner_article_id) and m.mentioner_article_id not in ^articles) or
-                   (not is_nil(m.mentioner_comment_id) and m.mentioner_comment_id not in ^comments))
+              ((edge.target_type == :comment and target.comment_id in ^comments) or
+                 (edge.target_type != :comment and target.article_id in ^articles)) and
+                ((source.type == :comment and source.comment_id not in ^comments) or
+                   (source.type != :comment and source.article_id not in ^articles))
           ),
           :count
         )
@@ -342,7 +348,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
               }
 
               url =
-                CMS.ArtimentMentions.PublicUrl.article(%{
+                CMS.FrontDesk.article_url(%{
                   community_slug: target.slug,
                   thread: article.thread,
                   inner_id: binding.inner_id
@@ -438,9 +444,11 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
       )
     end
 
-    # Ticket identities/history are immutable by database contract. Keep the
-    # withdrawn aggregate and report it explicitly; never disable its trigger.
-    command!(CMS.ArtimentMentions.purge(article))
+    # Keep the withdrawn Ticket endpoint and facts for incoming references.
+    command!(
+      CMS.ArtimentMentions.hide_source(%{type: :ticket, article_id: article.id}),
+      "ticket-mentions-withdraw"
+    )
   end
 
   defp purge_article!(%Article{thread: :doc} = article, community, actor, _commands) do

@@ -39,4 +39,47 @@ defmodule GroupherServer.ReleaseTest do
     System.put_env("MIGRATION_EXPECTED_DATABASE", database)
     assert {:ok, :verified} = Release.verify_migration_database!(Repo)
   end
+
+  test "database identity comes from the active Repo connection", %{database: database} do
+    assert Release.database_identity!(Repo) == database
+  end
+
+  test "legacy Mention drop requires exact production cutover confirmation" do
+    previous = System.get_env("MENTIONS_GRAPH_CUTOVER_CONFIRMATION")
+    System.delete_env("MENTIONS_GRAPH_CUTOVER_CONFIRMATION")
+
+    on_exit(fn ->
+      if previous do
+        System.put_env("MENTIONS_GRAPH_CUTOVER_CONFIRMATION", previous)
+      else
+        System.delete_env("MENTIONS_GRAPH_CUTOVER_CONFIRMATION")
+      end
+    end)
+
+    pending = [{:down, 20_261_105_110_000, "drop_legacy_artiment_mentions"}]
+
+    assert_raise RuntimeError, ~r/MENTIONS_GRAPH_CUTOVER_CONFIRMATION/, fn ->
+      Release.verify_mentions_cutover!("groupher_prod", pending, :prod)
+    end
+
+    System.put_env("MENTIONS_GRAPH_CUTOVER_CONFIRMATION", "drop-legacy-mentions:groupher_prod")
+
+    assert_raise RuntimeError, ~r/MENTIONS_GRAPH_CUTOVER_CONFIRMATION/, fn ->
+      Release.verify_mentions_cutover!("groupher_prod", pending, :prod)
+    end
+
+    System.put_env(
+      "MENTIONS_GRAPH_CUTOVER_CONFIRMATION",
+      "drop-legacy-mentions:groupher_prod:writers-drained"
+    )
+
+    assert {:ok, :verified} =
+             Release.verify_mentions_cutover!("groupher_prod", pending, :prod)
+
+    System.delete_env("MENTIONS_GRAPH_CUTOVER_CONFIRMATION")
+
+    assert {:ok, :verified} =
+             Release.verify_mentions_cutover!("groupher_prod", [], :prod)
+  end
+
 end

@@ -26,10 +26,9 @@ with tempfile.TemporaryDirectory(prefix='groupher-seed-smoke-') as directory:
         'SECRET_KEY_BASE': secrets.token_urlsafe(64), 'PHX_JWT_SECRET': secrets.token_urlsafe(64),
         'VIEW_TRACKER_PEPPER': secrets.token_urlsafe(32),
         'PAGINATION_CURSOR_CURRENT_KEY': secrets.token_urlsafe(32),
-        'REFERENCE_MAP_KEY': secrets.token_urlsafe(32),
-        'MENTION_REBUILD_FAILURE_MANIFEST': str(Path(directory) / 'mention-failures.json'),
+        'MENTIONS_GRAPH_KEY': secrets.token_urlsafe(32),
         'DATABASE_URL': 'postgres://postgres:postgres@127.0.0.1:5432/groupher_server_test',
-        'FLY_APP_NAME': 'seed-local', 'FLY_IMAGE_REF': 'seed-local', 'FLY_PRIVATE_IP': '::1',
+        'FLY_APP_NAME': 'seed-local', 'FLY_IMAGE_REF': 'seed-local', 'FLY_MACHINE_ID': 'seed-local', 'FLY_PRIVATE_IP': '::1',
         'RELEASE_COOKIE': secrets.token_urlsafe(32),
     })
     encoded = base64.b64encode(str(api / 'scripts/production_seed_release_smoke.exs').encode()).decode()

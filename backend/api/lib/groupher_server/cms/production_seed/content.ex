@@ -257,7 +257,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
       "revisionId" => Map.get(public, :revision_id),
       "disposable" => community.slug == "tmp",
       "url" =>
-        CMS.ArtimentMentions.PublicUrl.article(%{
+        CMS.FrontDesk.article_url(%{
           community_slug: community.slug,
           thread: article.thread,
           inner_id: binding.inner_id,

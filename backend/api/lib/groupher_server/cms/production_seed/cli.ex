@@ -44,9 +44,6 @@ defmodule GroupherServer.CMS.ProductionSeed.CLI do
       "delete-tmp" ->
         ProductionSeed.Cleanup.delete_tmp(run_id, database)
 
-      "map-failure" ->
-        ProductionSeed.MapFailure.inject(run_id, database)
-
       "cleanup-report" ->
         ProductionSeed.Cleanup.report(run_id, database, input["mode"])
 

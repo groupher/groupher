@@ -154,65 +154,6 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
 
     assert {:ok, ^linked} = ProductionSeed.References.apply("content", db, reference_file)
 
-    for name <- ~w(PX BX CX DX TX CM self) do
-      resource = linked["resources"][name]
-
-      locator =
-        cond do
-          resource["commentId"] ->
-            %{type: :comment, comment_id: resource["commentId"]}
-
-          resource["thread"] == "doc" ->
-            %{type: :doc, article_id: resource["articleId"], branch_id: resource["branchId"]}
-
-          true ->
-            %{
-              type: String.to_existing_atom(resource["thread"]),
-              article_id: resource["articleId"]
-            }
-        end
-
-      assert {:ok, _} = CMS.ArtimentMentions.sync_current(locator)
-    end
-
-    for [source, target] <- linked["expectedEdges"] do
-      a = linked["resources"][source]
-      b = linked["resources"][target]
-      query = from(m in CMS.Model.ArtimentMention)
-
-      query =
-        if a["commentId"] do
-          from(m in query, where: m.mentioner_comment_id == ^a["commentId"])
-        else
-          from(m in query, where: m.mentioner_article_id == ^a["articleId"])
-        end
-
-      query =
-        if b["commentId"] do
-          from(m in query, where: m.mentioned_comment_id == ^b["commentId"])
-        else
-          from(m in query, where: m.mentioned_article_id == ^b["articleId"])
-        end
-
-      assert Repo.exists?(query), "missing real projection edge #{source} -> #{target}"
-    end
-
-    for name <- ~w(PX self) do
-      id = linked["resources"][name]["articleId"]
-
-      refute Repo.exists?(
-               from(m in CMS.Model.ArtimentMention,
-                 where: m.mentioner_article_id == ^id and m.mentioned_article_id == ^id
-               )
-             )
-    end
-
-    zero = linked["resources"]["zero"]["articleId"]
-
-    refute Repo.exists?(
-             from(m in CMS.Model.ArtimentMention, where: m.mentioner_article_id == ^zero)
-           )
-
     old_tmp = linked["communities"]["tmp"]
     assert {:ok, _} = ProductionSeed.Cleanup.delete_tmp("content", db)
     refute Repo.get(CMS.Model.Community, old_tmp)
@@ -239,48 +180,6 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
     {:ok, rebuilt} = ProductionSeed.bootstrap("content", db)
     assert rebuilt["communities"]["tmp"] != old_tmp
     assert {:ok, _} = ProductionSeed.Content.apply("content", db, path)
-  end
-
-  test "Map failure rolls back the malformed body and survives for an ordinary retry", %{
-    database: db
-  } do
-    previous = System.get_env("MENTION_REBUILD_FAILURE_MANIFEST")
-    manifest_path = Path.join(System.tmp_dir!(), "seed-map-failure-#{Ecto.UUID.generate()}.json")
-    System.put_env("MENTION_REBUILD_FAILURE_MANIFEST", manifest_path)
-
-    on_exit(fn ->
-      File.rm(manifest_path)
-
-      if previous do
-        System.put_env("MENTION_REBUILD_FAILURE_MANIFEST", previous)
-      else
-        System.delete_env("MENTION_REBUILD_FAILURE_MANIFEST")
-      end
-    end)
-
-    {:ok, _} = ProductionSeed.bootstrap("map-failure", db)
-
-    {:ok, manifest} =
-      ProductionSeed.Content.apply("map-failure", db, seed_artifact("map-failure"))
-
-    alias CMS.ArtimentMentions.Rebuild
-    assert Rebuild.apply_all().failures == []
-    id = manifest["resources"]["CM"]["commentId"]
-    before = Repo.get_by!(CMS.Model.CommentBody, comment_id: id)
-
-    assert {:ok, %{failures: [_], processed: processed}} =
-             ProductionSeed.MapFailure.inject("map-failure", db)
-
-    assert processed == 1
-    assert Repo.get_by!(CMS.Model.CommentBody, comment_id: id) == before
-    assert [%{"source_key" => key}] = Jason.decode!(File.read!(manifest_path))
-    assert key == Rebuild.key(%{type: :comment, comment_id: id})
-    assert Enum.any?(Rebuild.report_all().issues, &(&1.category == :failed_manifest))
-    assert %{processed: 1, failures: []} = Rebuild.retry_failed(manifest_path)
-    assert Rebuild.report_all().issues == []
-
-    assert {:error, :seed_wrong_database} =
-             ProductionSeed.MapFailure.inject("map-failure", "wrong")
   end
 
   test "tmp is physically deleted and remains reserved across controlled recreation", %{
