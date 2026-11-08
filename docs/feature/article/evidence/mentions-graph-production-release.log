@@ -1,0 +1,33 @@
+Compiling 1230 files (.ex)
+Compiling lib/groupher_server/accounts/collect_folders.ex (it's taking more than 10s)
+Compiling lib/groupher_server/accounts/achievements.ex (it's taking more than 10s)
+Compiling lib/groupher_server/accounts/fans.ex (it's taking more than 10s)
+Compiling lib/groupher_server/accounts/events/notify.ex (it's taking more than 10s)
+Compiling lib/groupher_server/accounts/fans/viewer_state.ex (it's taking more than 10s)
+Compiling lib/groupher_server/accounts/collect_folders/command_result.ex (it's taking more than 10s)
+Compiling lib/groupher_server/cms.ex (it's taking more than 10s)
+Compiling lib/groupher_server/cms/articles/content_fingerprint.ex (it's taking more than 10s)
+Compiling lib/groupher_server_web/schema/cms/cms_types.ex (it's taking more than 10s)
+Generated groupher_server app
+* assembling groupher_server-2.1.10 on MIX_ENV=prod
+* using config/runtime.exs to configure the release at runtime
+* creating _build/prod/rel/groupher_server/releases/2.1.10/env.sh
+* skipping elixir.bat for windows (bin/elixir.bat not found in the Elixir installation)
+* skipping iex.bat for windows (bin/iex.bat not found in the Elixir installation)
+
+Release created at _build/prod/rel/groupher_server
+
+    # To start your system
+    _build/prod/rel/groupher_server/bin/groupher_server start
+
+Once the release is running:
+
+    # To connect to it remotely
+    _build/prod/rel/groupher_server/bin/groupher_server remote
+
+    # To stop it gracefully (you may also send SIGINT/SIGTERM)
+    _build/prod/rel/groupher_server/bin/groupher_server stop
+
+To list all commands:
+
+    _build/prod/rel/groupher_server/bin/groupher_server

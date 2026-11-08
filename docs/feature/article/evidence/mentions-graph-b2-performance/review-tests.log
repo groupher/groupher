@@ -1,0 +1,12 @@
+✔ successful latency and a true legacy flag cannot hide fence rejection or incomplete target evidence (0.891125ms)
+✔ recomputes hard SQL and actual edge scan limits even when the raw passed flag is true (0.550542ms)
+✔ a local pilot with all limits met still cannot certify target B2 (0.7595ms)
+✔ omitting a required workload cannot turn a partial pilot into a pass (0.126166ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81.819667

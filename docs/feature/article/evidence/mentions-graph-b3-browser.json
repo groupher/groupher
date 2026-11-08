@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "checks": [
+    "post: inactive Mentions made zero page requests",
+    "post: route passed its canonical focus and one frontier",
+    "post: switching tabs removed the graph",
+    "blog: inactive Mentions made zero page requests",
+    "blog: route passed its canonical focus and one frontier",
+    "blog: switching tabs removed the graph",
+    "changelog: inactive Mentions made zero page requests",
+    "changelog: route passed its canonical focus and one frontier",
+    "changelog: switching tabs removed the graph",
+    "doc: inactive Mentions made zero page requests",
+    "doc: route passed its canonical focus and one frontier",
+    "doc: switching tabs removed the graph",
+    "route change: graph cache did not reuse Article 1 as Article 2",
+    "tab switch: browser aborted the in-flight GraphQL graph request",
+    "tab switch: browser aborted the in-flight Activity request",
+    "Post preview: the real masked route mounted a drawer",
+    "Post preview: inactive Mentions made zero page requests",
+    "Post preview: Mentions uses the drawer Article locator",
+    "Post preview: browser back removed the drawer Footer",
+    "Ticket: Mentions starts closed and does not request Article Activity",
+    "Ticket: opening Mentions sends the canonical Ticket locator",
+    "Ticket: opening Mentions never requests Article Activity",
+    "Ticket: closing Mentions unmounts the graph"
+  ],
+  "graphRequests": 8,
+  "activityRequests": 7,
+  "graphFetchAborted": true,
+  "activityFetchAborted": true
+}

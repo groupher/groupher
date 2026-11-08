@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-06",
+  "project": {
+    "id": "summer-union-85679467",
+    "name": "groupher-demo",
+    "postgres_major": 17
+  },
+  "source_branch": {
+    "id": "br-falling-silence-a1eslt2n",
+    "name": "main",
+    "default": true,
+    "state_after_drill": "ready"
+  },
+  "snapshot": {
+    "id": "snap-twilight-violet-a1uqcgq6",
+    "name": "mentions-graph-b4-rehearsal-20261106",
+    "created_at": "2026-11-06T00:19:20Z"
+  },
+  "restored_branch": {
+    "id": "br-calm-math-a1tfc4v2",
+    "name": "mentions-graph-b4-restore-drill-20261106",
+    "state_after_drill": "ready",
+    "parent_lsn": "0/57523BF8",
+    "parent_timestamp": "2026-11-06T00:19:07Z",
+    "separate_compute": true
+  },
+  "read_only_comparison": {
+    "database": "groupher_prod_seed_20261104",
+    "main_articles": 33,
+    "restored_articles": 33,
+    "main_comments": 5,
+    "restored_comments": 5,
+    "main_old_mentions": 27,
+    "restored_old_mentions": 27,
+    "main_max_migration": "20261104120000",
+    "restored_max_migration": "20261104120000",
+    "main_new_graph_present": false,
+    "restored_new_graph_present": false
+  },
+  "scope": "Snapshot creation and restore into a separate branch; no production branch restore or migration",
+  "cutover_window_snapshot_required": true
+}

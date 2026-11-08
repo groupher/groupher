@@ -1,0 +1,49 @@
+{
+  "captured_at": "2026-11-05T10:44:26.208014+00:00",
+  "environment": "local PostgreSQL, isolated ExUnit sandbox; not target latency acceptance",
+  "input": "one readable canonical Post with 3000 projected edges to unavailable placeholder endpoints",
+  "metrics": {
+    "graph": {
+      "elapsed_ms": 186.829,
+      "sql_count": 12,
+      "adjacency_execution_ms": 1.864,
+      "root_rows": 21,
+      "max_scan_rows": 21,
+      "mention_indexes": [
+        "mention_current_edge_source_window_index",
+        "mention_current_edge_target_window_index",
+        "mention_endpoint_article_identity_index",
+        "mention_endpoint_comment_identity_index",
+        "mention_set_version_index"
+      ]
+    },
+    "one_hop": {
+      "elapsed_ms": 112.98,
+      "sql_count": 12,
+      "adjacency_execution_ms": 0.473,
+      "root_rows": 21,
+      "max_scan_rows": 21,
+      "mention_indexes": [
+        "mention_current_edge_source_window_index",
+        "mention_endpoint_article_identity_index",
+        "mention_endpoint_comment_identity_index",
+        "mention_set_version_index"
+      ]
+    }
+  },
+  "target_read_only_inventory": {
+    "app": "groupher-api",
+    "tables": ["artiment_mentions", "artiment_mention_sync_states"],
+    "missing_new_graph_tables": true,
+    "old_edge_rows_by_types": [
+      ["blog", "changelog", 1],
+      ["changelog", "doc", 1],
+      ["comment", "post", 1],
+      ["doc", "ticket", 1],
+      ["post", "blog", 1],
+      ["post", "post", 21],
+      ["ticket", "comment", 1]
+    ],
+    "new_graph_performance_acceptance": "blocked: no designated representative isolated dataset with new current sets"
+  }
+}

@@ -1,0 +1,651 @@
+{
+  "load": {
+    "read_only": {
+      "readers": {
+        "requests": 80,
+        "max_sql_count": 13,
+        "outcomes": {
+          "ok": 80
+        },
+        "latency_ms": {
+          "max": 60.951,
+          "p95": 47.973,
+          "p50": 26.175,
+          "p99": 60.951
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 49.131,
+          "p95": 31.871,
+          "p50": 14.743,
+          "p99": 49.131
+        }
+      },
+      "writers": {
+        "requests": 0,
+        "max_sql_count": 0,
+        "outcomes": {},
+        "latency_ms": {
+          "max": 0,
+          "p95": 0,
+          "p50": 0,
+          "p99": 0
+        },
+        "pool_queue_ms": {
+          "max": 0,
+          "p95": 0,
+          "p50": 0,
+          "p99": 0
+        },
+        "sql_query_ms": {
+          "max": 0,
+          "p95": 0,
+          "p50": 0,
+          "p99": 0
+        }
+      },
+      "elapsed_ms": 752,
+      "observer_interval_ms": 20,
+      "observed_lock_wait_samples": 0,
+      "max_blocked_connections": 0,
+      "hold_after_revision_bump_ms": 0
+    },
+    "revision_writers": {
+      "readers": {
+        "requests": 80,
+        "max_sql_count": 13,
+        "outcomes": {
+          "mentions_graph_invalid_request": 4,
+          "ok": 76
+        },
+        "latency_ms": {
+          "max": 60.397,
+          "p95": 56.137,
+          "p50": 27.163,
+          "p99": 60.397
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 48.675,
+          "p95": 45.013,
+          "p50": 16.13,
+          "p99": 48.675
+        }
+      },
+      "writers": {
+        "requests": 40,
+        "max_sql_count": 1,
+        "outcomes": {
+          "ok": 40
+        },
+        "latency_ms": {
+          "max": 2.506,
+          "p95": 2.038,
+          "p50": 1.149,
+          "p99": 2.506
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 0.959,
+          "p95": 0.833,
+          "p50": 0.383,
+          "p99": 0.959
+        }
+      },
+      "elapsed_ms": 784,
+      "observer_interval_ms": 20,
+      "observed_lock_wait_samples": 1,
+      "max_blocked_connections": 1,
+      "hold_after_revision_bump_ms": 0
+    },
+    "revision_writers_held": {
+      "readers": {
+        "requests": 80,
+        "max_sql_count": 13,
+        "outcomes": {
+          "mentions_graph_invalid_request": 56,
+          "ok": 24
+        },
+        "latency_ms": {
+          "max": 62.722,
+          "p95": 56.15,
+          "p50": 23.919,
+          "p99": 62.722
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 50.695,
+          "p95": 44.261,
+          "p50": 13.932,
+          "p99": 50.695
+        }
+      },
+      "writers": {
+        "requests": 40,
+        "max_sql_count": 1,
+        "outcomes": {
+          "ok": 40
+        },
+        "latency_ms": {
+          "max": 40.712,
+          "p95": 30.765,
+          "p50": 22.078,
+          "p99": 40.712
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 18.94,
+          "p95": 11.787,
+          "p50": 10.718,
+          "p99": 18.94
+        }
+      },
+      "elapsed_ms": 713,
+      "observer_interval_ms": 20,
+      "observed_lock_wait_samples": 13,
+      "max_blocked_connections": 1,
+      "hold_after_revision_bump_ms": 10
+    }
+  },
+  "dataset": {
+    "kind": "target-source-counts-relational-envelope",
+    "per_type": 4,
+    "resource_types": {
+      "doc": 1,
+      "comment": 5,
+      "post": 29,
+      "changelog": 1,
+      "blog": 1,
+      "ticket": 1
+    },
+    "communities": 3,
+    "canonical_sources": 38,
+    "hidden_article_sources": 1,
+    "pending_comment_sources": 0,
+    "current_edges": 561,
+    "body_capture_representative": false
+  },
+  "captured_at": "2026-11-05T13:05:45.423833Z",
+  "environment": {
+    "otp": "29",
+    "schedulers": 8,
+    "elixir": "1.20.3",
+    "database": "groupher_mentions_perf_1793883696663_80202",
+    "pool_size": 20,
+    "postgres": "PostgreSQL 14.23 (Homebrew) on aarch64-apple-darwin24.6.0, compiled by Apple clang version 17.0.0 (clang-1700.6.4.2), 64-bit"
+  },
+  "methodology": {
+    "domain_requests": true,
+    "http_network_included": false,
+    "warm_samples_per_case": 100,
+    "warmup_requests": 3,
+    "first_measured_request_is_not_cold_storage": true,
+    "max_scan_work": "max((actual rows + removed by filter + recheck) * loops), not total unique rows",
+    "summed_scan_work": "sum of scan-node work, not unique physical rows",
+    "proposed_thresholds": true
+  },
+  "reads": {
+    "comment_outgoing": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 140.769,
+        "p95": 115.36,
+        "p50": 51.068,
+        "p99": 132.925
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 145.664,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 136.174
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 117.491,
+        "p95": 94.54,
+        "p50": 32.21,
+        "p99": 114.889
+      }
+    },
+    "doc_comment_seeds": {
+      "requests": 100,
+      "max_sql_count": 8,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 130.295,
+        "p95": 71.684,
+        "p50": 37.241,
+        "p99": 108.373
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 115.653,
+        "sql_count": 8,
+        "queue_ms": 0.0,
+        "query_ms": 45.023
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 102.734,
+        "p95": 60.282,
+        "p50": 30.931,
+        "p99": 84.22
+      }
+    },
+    "graph_hub_cursor": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 324.756,
+        "p95": 315.777,
+        "p50": 179.237,
+        "p99": 317.754
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 296.588,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 268.17
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 309.551,
+        "p95": 290.559,
+        "p50": 160.932,
+        "p99": 299.252
+      }
+    },
+    "graph_hub_first": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 483.077,
+        "p95": 347.859,
+        "p50": 292.616,
+        "p99": 395.747
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 303.7,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 279.969
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 466.373,
+        "p95": 331.751,
+        "p50": 277.989,
+        "p99": 381.809
+      }
+    },
+    "graph_six_types_ten_frontiers": {
+      "requests": 100,
+      "max_sql_count": 22,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 727.373,
+        "p95": 452.833,
+        "p50": 182.62,
+        "p99": 518.506
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 176.159,
+        "sql_count": 22,
+        "queue_ms": 0.0,
+        "query_ms": 113.887
+      },
+      "proposed_p95_limit_ms": 1200,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 651.454,
+        "p95": 381.94,
+        "p50": 119.056,
+        "p99": 450.813
+      }
+    },
+    "incoming_cursor": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 143.081,
+        "p95": 128.644,
+        "p50": 99.209,
+        "p99": 140.943
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 159.876,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 124.943
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 123.154,
+        "p95": 108.84,
+        "p50": 80.72,
+        "p99": 118.598
+      }
+    },
+    "outgoing_cursor": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 185.585,
+        "p95": 149.646,
+        "p50": 94.182,
+        "p99": 180.541
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 104.791,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 96.324
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 156.065,
+        "p95": 128.126,
+        "p50": 78.199,
+        "p99": 155.511
+      }
+    },
+    "outgoing_cursor_second": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 153.499,
+        "p95": 123.994,
+        "p50": 90.574,
+        "p99": 131.248
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 114.244,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 97.833
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 143.215,
+        "p95": 109.693,
+        "p50": 75.683,
+        "p99": 120.93
+      }
+    },
+    "outgoing_deep_offset_count": {
+      "requests": 100,
+      "max_sql_count": 9,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 218.745,
+        "p95": 189.56,
+        "p50": 25.662,
+        "p99": 206.723
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 22.539,
+        "sql_count": 9,
+        "queue_ms": 0.0,
+        "query_ms": 16.211
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 195.822,
+        "p95": 176.049,
+        "p50": 16.862,
+        "p99": 191.666
+      }
+    },
+    "outgoing_offset_count": {
+      "requests": 100,
+      "max_sql_count": 14,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 584.77,
+        "p95": 214.293,
+        "p50": 172.031,
+        "p99": 494.209
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 213.763,
+        "sql_count": 14,
+        "queue_ms": 0.0,
+        "query_ms": 175.407
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 570.507,
+        "p95": 202.082,
+        "p50": 158.928,
+        "p99": 480.983
+      }
+    },
+    "revision": {
+      "requests": 100,
+      "max_sql_count": 5,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 30.976,
+        "p95": 11.123,
+        "p50": 3.742,
+        "p99": 18.938
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 4.26,
+        "sql_count": 5,
+        "queue_ms": 0.0,
+        "query_ms": 2.382
+      },
+      "proposed_p95_limit_ms": 200,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 17.608,
+        "p95": 6.063,
+        "p50": 2.421,
+        "p99": 10.969
+      }
+    }
+  },
+  "controlled_lock": {
+    "blocking_observed": true,
+    "writer_wait_ms": 76.185,
+    "reader_while_locked": {
+      "outcome": "ok",
+      "elapsed_ms": 55.251,
+      "sql_count": 13,
+      "queue_ms": 0.0,
+      "query_ms": 45.549
+    },
+    "blocked_samples": [[85431, "Lock", "transactionid", [85424]]]
+  },
+  "lock_checks_passed": true,
+  "local_checks_passed": true,
+  "target_profile": {
+    "article_types": [
+      ["blog", 1],
+      ["changelog", 1],
+      ["doc", 1],
+      ["post", 29],
+      ["ticket", 1]
+    ],
+    "captured_at": "2026-11-05T12:55:21.331859Z",
+    "comment_types": [
+      ["doc", 1],
+      ["post", 4]
+    ],
+    "degree_distribution": null,
+    "provenance": "aggregate-only serving database; no body parsing or new graph initialization",
+    "representative_new_graph_available": false,
+    "settings": [
+      ["default_statistics_target", "100", null],
+      ["effective_cache_size", "3774848", "8kB"],
+      ["max_connections", "3604", null],
+      ["random_page_cost", "4", null],
+      ["server_version", "17.11 (9045acd)", null],
+      ["shared_buffers", "116352", "8kB"],
+      ["work_mem", "4096", "kB"]
+    ],
+    "tables": {
+      "cms.articles": 33,
+      "cms.artiment_mentions": 27,
+      "cms.comments": 5,
+      "cms.mention_current_edges": null,
+      "cms.mention_endpoints": null,
+      "cms.mention_sets": null,
+      "cms.mention_sync_states": null,
+      "cms.mentions_graph_state": null
+    },
+    "transaction_read_only": true
+  },
+  "b2_performance_exit": "NOT_ACCEPTED: controlled envelope; target-calibrated graph and matching hardware/load evidence still required"
+}

@@ -10,6 +10,8 @@
 - [`cloudflare.md`](./cloudflare.md)：当前 Cloudflare 生产架构。
 - [`cloudflare-migration-proposal.md`](./cloudflare-migration-proposal.md)：已被当前架构取代的历史迁移提案。
 - [`runbooks/oauth-v1-cutover.md`](./runbooks/oauth-v1-cutover.md)：OAuth V1 切换运行手册。
+- [`runbooks/mentions-graph-maintenance-auth.md`](./runbooks/mentions-graph-maintenance-auth.md)：maintenance client 目标登记、真实签发及隔离 Phoenix 验证记录。
+- [`runbooks/mentions-graph-cutover.md`](./runbooks/mentions-graph-cutover.md)：MentionsGraph 空库切换已执行；第 6 节的同步关系版本发布尚未执行。
 - [`runbooks/production-seed-acceptance.md`](./runbooks/production-seed-acceptance.md)：生产空库完整 migration、固定 seed 与 Map / Review / Article / Ticket 真实链路验收。
 
 ## 公共入口

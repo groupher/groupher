@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-06",
+  "project_id": "summer-union-85679467",
+  "old_branch_id": "br-falling-silence-a1eslt2n",
+  "old_database": "groupher_prod_seed_20261104",
+  "new_branch_id": "br-ancient-darkness-a1gy9enb",
+  "new_branch_name": "mentions-graph-b4-fresh-20261106",
+  "new_branch_parent_lsn": "0/57548F48",
+  "new_database": "groupher_mentions_graph_20261106",
+  "database_was_empty_before_bootstrap": true,
+  "shared_comments": {
+    "generation": "7f39fe0a-d3e9-4d4b-982a-edbdbe8a6c3f",
+    "phase": "ready",
+    "schema_sha256": "fbc51ba8c1750dfd6205d144c79ac6aa2e90af46563fe44a0b9e463d9cacb5ae"
+  },
+  "migration": {
+    "release_image_digest": "sha256:a1b969eaff6edcead0fecf40f000c9ac0b5b37311ec37e606eb7c467e93bd676",
+    "max_version": "20261105234500",
+    "exit_code": 0,
+    "old_mentions_table_present": false,
+    "old_revisions_table_present": false,
+    "new_graph_state_rows": 1
+  },
+  "initialization": {
+    "operations": ["report", "preflight", "apply", "preflight"],
+    "auth": "real_cms_mentions_initialize_capability",
+    "source_count": 0,
+    "page_count": 0,
+    "complete": true,
+    "manifest_sha256": "46886dc30b00fb25e58485d9fd88f2043d5a78bd4196f181be90ee3676edb041"
+  },
+  "business_rows_after_migration": {
+    "articles": 0,
+    "comments": 0
+  },
+  "old_database_modified": false,
+  "serving_machine_switched": false
+}

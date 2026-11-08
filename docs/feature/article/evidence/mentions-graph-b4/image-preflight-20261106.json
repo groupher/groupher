@@ -1,0 +1,24 @@
+{
+  "date": "2026-11-06",
+  "app": "groupher-api",
+  "pushed_image": "registry.fly.io/groupher-api:deployment-01M6Q486M39HMBV6HQCZD1PKQP@sha256:a1b969eaff6edcead0fecf40f000c9ac0b5b37311ec37e606eb7c467e93bd676",
+  "temporary_machine": "d8d0157a17e228",
+  "machine_config": {
+    "region": "sin",
+    "entrypoint": "/bin/sleep 3600",
+    "services": 0,
+    "mounts": 0,
+    "dns_registration": false,
+    "restart_policy": "no"
+  },
+  "ssh_checks": [
+    "/app/bin/mentions_initialize executable",
+    "/app/bin/migrate executable",
+    "DATABASE_URL present without disclosure",
+    "MIGRATION_EXPECTED_DATABASE matches groupher_prod_seed_20261104"
+  ],
+  "temporary_machine_destroyed": true,
+  "serving_machine": "0807979ad30968",
+  "serving_machine_changed": false,
+  "production_migration_or_initialization": false
+}

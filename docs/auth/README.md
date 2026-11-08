@@ -314,6 +314,10 @@ Docs Import 使用两段互不复用的身份合同：
 仓库。Phoenix 不再注册或接受 `phoenix:dashboard-api`。当前没有 scheduler service 或 Cron
 trigger，Auth 不为 Docs Import 注册 scheduler audience。
 
+### Mentions maintenance Auth（历史记录）
+
+2026-11-05 曾为旧 Mentions 初始化与 set 重建登记 maintenance client，并完成独立签发验证；证据见[当时的 Auth 验证](../deploy/runbooks/mentions-graph-maintenance-auth.md)。2026-11-07 的[当前关系合同](../feature/article/mentions-graph-sync-contract.md)已删除初始化、重建、专用 CLI 与运行时授权入口；这些 client/scope 不属于新版本发布要求。目标环境仍可能留有旧 Auth 登记，清理由 Auth 部署流程另行处理，不能据此恢复旧维护入口。
+
 Cloudflare Worker 部署还声明 `AUTH_REFRESH_RATE_LIMITER` 原生 Rate Limiting binding，
 同时按客户端和 `browserSessionRef` 计数。修改 `cloudflare.config.ts` 中的 namespace 时必须
 保证它在当前 Cloudflare account 内唯一；触发限制返回 `429 RATE_LIMITED` 与

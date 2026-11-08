@@ -1,0 +1,245 @@
+{
+  "tables": {
+    "cms.articles": 33,
+    "cms.artiment_mentions": 27,
+    "cms.comments": 5,
+    "cms.mention_current_edges": null,
+    "cms.mention_endpoints": null,
+    "cms.mention_sets": null,
+    "cms.mention_sync_states": null,
+    "cms.mentions_graph_state": null
+  },
+  "settings": [
+    ["default_statistics_target", "100", null],
+    ["effective_cache_size", "3774848", "8kB"],
+    ["max_connections", "3604", null],
+    ["plan_cache_mode", "auto", null],
+    ["random_page_cost", "4", null],
+    ["server_version", "17.11 (9045acd)", null],
+    ["shared_buffers", "116352", "8kB"],
+    ["work_mem", "4096", "kB"]
+  ],
+  "captured_at": "2026-11-05T13:48:00.126376Z",
+  "provenance": "aggregate-only serving database; optional in-process current-body census; no body export or graph initialization",
+  "transaction_read_only": true,
+  "article_types": [
+    ["blog", 1],
+    ["changelog", 1],
+    ["doc", 1],
+    ["post", 29],
+    ["ticket", 1]
+  ],
+  "comment_types": [
+    ["doc", 1],
+    ["post", 4]
+  ],
+  "degree_distribution": null,
+  "new_graph_data_available": false,
+  "selected_body_syntax_profile": {
+    "scope": "selected Article/Doc main bodies and current Comments; no draft/historical export",
+    "limit_reached": false,
+    "maximum_body_bytes": 8388608,
+    "selected_bodies": 38,
+    "anonymous_scope_verified": false,
+    "candidate_counts_are_resolved_edges": false,
+    "by_type": {
+      "blog": {
+        "bytes": {
+          "max": 220,
+          "p50": 220,
+          "p95": 220,
+          "p99": 220
+        },
+        "invalid_json": 0,
+        "bodies": 1,
+        "distinct_internal_mention_keys": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "mention_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "link_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      },
+      "changelog": {
+        "bytes": {
+          "max": 235,
+          "p50": 235,
+          "p95": 235,
+          "p99": 235
+        },
+        "invalid_json": 0,
+        "bodies": 1,
+        "distinct_internal_mention_keys": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "mention_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "link_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      },
+      "comment-doc": {
+        "bytes": {
+          "max": 190,
+          "p50": 190,
+          "p95": 190,
+          "p99": 190
+        },
+        "invalid_json": 0,
+        "bodies": 1,
+        "distinct_internal_mention_keys": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "mention_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "link_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      },
+      "comment-post": {
+        "bytes": {
+          "max": 281,
+          "p50": 105,
+          "p95": 281,
+          "p99": 281
+        },
+        "invalid_json": 0,
+        "bodies": 4,
+        "distinct_internal_mention_keys": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "mention_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "link_nodes": {
+          "max": 1,
+          "p50": 0,
+          "p95": 1,
+          "p99": 1
+        }
+      },
+      "doc-main": {
+        "bytes": {
+          "max": 218,
+          "p50": 218,
+          "p95": 218,
+          "p99": 218
+        },
+        "invalid_json": 0,
+        "bodies": 1,
+        "distinct_internal_mention_keys": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "mention_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "link_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      },
+      "post": {
+        "bytes": {
+          "max": 1754,
+          "p50": 190,
+          "p95": 217,
+          "p99": 1754
+        },
+        "invalid_json": 0,
+        "bodies": 29,
+        "distinct_internal_mention_keys": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "mention_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "link_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      },
+      "ticket": {
+        "bytes": {
+          "max": 225,
+          "p50": 225,
+          "p95": 225,
+          "p99": 225
+        },
+        "invalid_json": 0,
+        "bodies": 1,
+        "distinct_internal_mention_keys": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "mention_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        },
+        "link_nodes": {
+          "max": 0,
+          "p50": 0,
+          "p95": 0,
+          "p99": 0
+        }
+      }
+    },
+    "recognized_inline_formats_only": true
+  }
+}

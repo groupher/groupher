@@ -1,0 +1,115 @@
+{
+  "pilot_read_limits_passed": true,
+  "lock_probe_passed": true,
+  "candidate_paced_first_attempt_success_ratio": 0.85,
+  "candidate_paced_availability_passed": false,
+  "design_load_agreed": false,
+  "pilot_verdict": "PARTIAL",
+  "missing_cases": [],
+  "b2_performance_accepted": false,
+  "blockers": [
+    "target_capacity_and_arrival_rates_not_qualified",
+    "three_independent_qualification_runs_missing",
+    "postgres_major_version_mismatch",
+    "controlled_fixture_not_target_body_graph",
+    "authoritative_graph_or_qualified_envelope_distribution_missing",
+    "qualification_sample_count",
+    "candidate_paced_first_attempt_availability"
+  ],
+  "reads": [
+    {
+      "name": "comment_outgoing",
+      "failures": [],
+      "max_edge_scan_work": 14,
+      "p95_ms": 152.011,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "doc_comment_seeds",
+      "failures": [],
+      "max_edge_scan_work": 32,
+      "p95_ms": 78.821,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "graph_hub_cursor",
+      "failures": [],
+      "max_edge_scan_work": 1109,
+      "p95_ms": 289.874,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "graph_hub_first",
+      "failures": [],
+      "max_edge_scan_work": 1109,
+      "p95_ms": 105.477,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "graph_six_types_ten_frontiers",
+      "failures": [],
+      "max_edge_scan_work": 1109,
+      "p95_ms": 398.515,
+      "p95_limit_ms": 1200
+    },
+    {
+      "name": "http_graph_first",
+      "failures": [],
+      "max_edge_scan_work": 1109,
+      "p95_ms": 439.128,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "http_graph_six_types",
+      "failures": [],
+      "max_edge_scan_work": 1109,
+      "p95_ms": 815.879,
+      "p95_limit_ms": 1200
+    },
+    {
+      "name": "incoming_cursor",
+      "failures": [],
+      "max_edge_scan_work": 1109,
+      "p95_ms": 191.256,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_cursor",
+      "failures": [],
+      "max_edge_scan_work": 21,
+      "p95_ms": 159.874,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_cursor_second",
+      "failures": [],
+      "max_edge_scan_work": 21,
+      "p95_ms": 163.188,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_deep_offset_count",
+      "failures": [],
+      "max_edge_scan_work": 1943,
+      "p95_ms": 251.051,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_offset_count",
+      "failures": [],
+      "max_edge_scan_work": 1943,
+      "p95_ms": 254.733,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "revision",
+      "failures": [],
+      "max_edge_scan_work": 0,
+      "p95_ms": 9.232,
+      "p95_limit_ms": 200
+    }
+  ],
+  "measurement_acceptance_sha256": "dbee877f6b6e2a265a52e35d374fe667a550e254f12e628b95b52c19ef3de83c",
+  "summary_sha256": "f814b21334c5b3c57490f219bd58f824b7cf56f809e0b62d517a8dd7188d794f",
+  "acceptance_sha256": "998bf50a96f68e2673054d9f4e2738d54e65710daa759041aecf151bb5a31fe4"
+}

@@ -1,5 +1,9 @@
 # Reference Map M0 inventory 与切换记录
 
+> **历史证据（2026-11-04 至 2026-11-06）：**本文的 set／occurrence／初始化／重建、请求级 SQL 预算及按资源状态裁剪图标题、URL 或边的条款均不适用于 2026-11-07 当前关系实现。现行代码合同见[当前关系合同](./mentions-graph-sync-contract.md)，新目标只用全新空库，不迁 B4 内容。下文原始测量与当时的执行事实保留供追溯，不能作为本轮发布指引。
+
+> 历史记录：2026-11-06 已按 [MentionsGraph 切换手册](../../deploy/runbooks/mentions-graph-cutover.md)切到独立空库和新 API/Community Worker。本文以下旧 ReferenceMap 路径及验收只描述切换前状态；新功能的数据驱动验收仍待完成。
+
 2026-11-03 后续扩展：Article MiniMap 经 `referenceMapArticleComments` 按公开 Comment innerId 分页发现本篇可读且有内部引用事实或待同步水位的 Comment，再使用原 `referenceMap` 邻接查询展示实际方向。`Store.mentioning_itself?/2` 保留 Comment→父 Article，Article→自身仍过滤；无父子虚构边。GraphQL 与前端定向回归覆盖 C→父 Article、C→其他 Article、已同步无引用 Comment、待同步 Comment、分页与公开 ID。该扩展仅在本地实现，未纳入此前 M5 生产切换。
 
 本文件登记 `article-community.md` 与 `reference-map.md` 的实现入口和验收证据。事实来源是稳定 Article/Comment 身份；Community 只参与公开投影与 Gate。目标环境切换须按第 10.2 节单独执行，不能因本地测试通过而跳过 report。
@@ -28,18 +32,18 @@
 ## 公开读取与 Comment 共享
 
 - `cms/artiment_mentions/parser.ex` 与 `public_locator.ex` 接受平台 `/<community>/<thread>/<innerId>`、Comment fragment；custom-domain 绝对链接作为 external URL。输出 URL 由 `public_url.ex` 按当前 binding 组装，Doc 空 slug 使用 `/<community>/doc/<innerId>/doc`。不返回旧 UUID URL。
-- 普通 Comment 公开 Gate 由父 Article 的当前 binding 决定；`cms/front_desk/relation.ex` 的 `article_of/1` 继续保留 origin 侧 public 投影语义。Create/Update/Delete、reply、reconcile、互动与通知的公开上下文从本次请求 binding 传递。Doc Comment 仍按 main branch Scope。
-- 普通 Comment 的 ReviewBlock 是全局决策；Doc Comment 仍按 branch/Community。`alert_wall/commands/submit_report.ex` 与 `alert_wall/persist.ex` 分离举报发生地和决定 Scope；mirror Community 的管理员不能借本地举报执行全局隐藏。Community 删除对仍有关联的 Doc Comment 保持事务约束。
+- 普通 Comment 公开 Gate 由父 Article 的当前 binding 决定；`cms/front_desk/relation.ex` 的 `article_of/1` 保留签名，按显式请求 Community 的当前 binding 读取；普通 Comment 缺失请求上下文时 fail closed，Doc Comment 按所属 branch/binding 解析。Create/Update/Delete、reply、reconcile、互动与通知的公开上下文从本次请求 binding 传递。Doc Comment 仍按 main branch Scope。
+- 普通 Comment 的 ReviewBlock 是全局决策；Doc Comment 仍按 branch/Community。`alert_wall/commands/submit_report.ex` 与 `alert_wall/persist.ex` 分离举报发生地和决定 Scope；mirror Community 的管理员不能借本地举报执行全局隐藏。Comment 已无 origin Community 列/FK；Doc Comment 的 Community 删除行为由 branch/binding 约束决定，不再以旧 origin FK 阻止删除。
 - `cms/artiment_mentions/reference_map/read_model.ex` 批量应用匿名 public Gate；`page_facts.ex` 在 SQL 中按 frontier、方向和 cursor 分区读取最多 40 条事实，再由 `batch.ex` 筛 READY 来源与公开端点并按需继续扫描窗口，隐藏目标不占页。revision 和 Comment 发现页仅验证 focus，不装载邻接端点。一跳列表在 SQL 中先按匿名 public Scope 筛端点，使用数据库流式 cursor；offset 精确总数仍需扫描全部可见事实。
 
 ### 旧调用合同与 `article_of/1` 调用清单
 
-| 调用方                                                                                           | 保留/迁移结果                                                                                                                                   |
-| ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FrontDesk.article_of/1` → `CMS.front_desk_article_of/1` → `CMS.FrontDesk.Relation.article_of/1` | 保留原签名与 origin 侧 public 投影职责；不可用于推断跨 mirror 请求 Community。                                                                  |
-| `CMS.Gate.Access.{Check,Query}.parent_article/1`                                                 | 规范 Comment 带 `article_id` 时直接载入稳定父 Article 并使用请求 Community 的 Gate context；仅非规范 fallback 仍调用 origin 侧 `article_of/1`。 |
-| `CMS.ArtimentMentions.Store`                                                                     | Comment 事实同步不再调用 origin 侧 `article_of/1`；按稳定 Comment ID 读取当前正文，公开路径在读取时使用请求 binding。                           |
-| `CMS.Events.SyncMentions` 与 `CMS.DocTree.Persist`                                               | 保留已加载对象调用 `sync/1`；适配器只提取稳定身份，重读当前公开选版。未发布 Doc 草稿返回 `{:ok, :pass}`，不写公开事实。                         |
+| 调用方                                                                                           | 保留/迁移结果                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FrontDesk.article_of/1` → `CMS.front_desk_article_of/1` → `CMS.FrontDesk.Relation.article_of/1` | 保留原签名；普通 Comment 只使用显式请求 Community，缺失时 fail closed；Doc Comment 使用所属 branch/binding。                                             |
+| `CMS.Gate.Access.{Check,Query}.parent_article/1`                                                 | Comment 带 `article_id` 时直接载入稳定父 Article，并使用请求 Community 的 Gate context；无有效稳定身份时返回 resource_not_found，不回退 `article_of/1`。 |
+| `CMS.ArtimentMentions.Store`                                                                     | Comment 事实同步不调用 `article_of/1`；按稳定 Comment ID 读取当前正文，公开路径在读取时使用请求 binding。                                                |
+| `CMS.Events.SyncMentions` 与 `CMS.DocTree.Persist`                                               | 保留已加载对象调用 `sync/1`；适配器只提取稳定身份，重读当前公开选版。未发布 Doc 草稿返回 `{:ok, :pass}`，不写公开事实。                                  |
 
 ## DDL、GraphQL 与路由
 
@@ -64,7 +68,7 @@
 ### 2026-11-03 正确性与成本复核
 
 - Comment 软删除在原事务记录 tombstone token 与 `comment.mention_sync`，真实 DB 用例验证 worker 清边、水位追平、report 无漂移；创建 Comment 对 X/Y 当前 binding 分别发 `comment.changed`。普通共享 Comment 的 AI 初始和结果块均为全局；两社区请求分别 clear 时，先完成的一条不会解除另一条的块。审核块迁移已在隔离 test 库执行。
-- Community pending 包含 `synced_content_token=NULL`；origin 为 NULL 的作者公开评论列表从现存公开 binding 投影。旧 direct Comment 命令通过当前 binding 稳定解析，不使用已删除的 origin；GraphQL 请求仍使用显式路径。45 条事实的真实 DB 用例跨窗口验证 Map 与一跳 cursor 三页均无漏边；10 frontier 常规 SQL 预算仍通过。
+- Community pending 包含 `synced_content_token=NULL`；作者公开评论列表从现存公开 binding 投影，Comment 已无 origin Community 列。普通 Comment 写命令必须携带显式请求 Community；缺失时返回 scope_context_missing，不从任意 binding 推断请求上下文。Doc Comment 使用所属 branch/binding；GraphQL 请求使用显式路径。45 条事实的真实 DB 用例跨窗口验证 Map 与一跳 cursor 三页均无漏边；10 frontier 常规 SQL 预算仍通过。
 - 前端 `client.test.ts` 与 `ReferenceMap/index.test.tsx` 共 26 用例通过，Core type-check 通过；view/upvote 不再发 Map 内容变更事件，pending READY 后清除查询前缀。后端 Comments、Review、Mention 与 GraphQL 聚焦回归 357 用例通过。全套 2500 用例首次运行 2498/2499 通过、1 排除，唯一失败是 Assets 101 draft refs 的 60 秒超时；单独首次也超时，延长上限后 14.3 秒通过。待低并发全套复核前，不把该次全量执行记为全绿。
 - 随后后端全套以 `mix test --timeout 120000` 复核：2499 通过、1 原有排除、0 失败（223.3 秒）。组合索引迁移后 17 个 GraphQL 引用用例再次通过。`pnpm docs:check`、`git diff --check` 通过。最新 R17 使用新的隔离库 `groupher_reference_map_r17_20261103` 和 Phoenix 4011、Community 3011 验收：`/home/post/8` 的 Map 实际显示 Comment→父 Post 和 Comment→其他 Blog；从 Comment 的 Map 入口可展开相同方向的两条引用。软删除该 Comment 并刷新后，页面保留 tombstone，但 Map 变为只有 Post 焦点和“无可见引用”，没有旧边或持续 pending；重建 report 扫描 10 个来源，`issues=[]`。控制台错误仅为隔离环境未提供的图片资源。浏览器和服务已停止，隔离库已删除。该隔离环境验收不代表生产切换。
 - 最终改动后的全量再跑（与前端、文档检查及隔离库验收并发）耗时 367.2 秒，2499/2500 通过、1 原有排除，唯一失败是原有 Press 跨页站点清单用例在数据库查询中达到 120 秒超时；停止并发负载后单独复跑该用例 7.1 秒通过。无并发验收任务时又一次 `--timeout 120000` 全套运行仍在同一用例超时；`mix test --timeout 300000` 最终全套 2500 通过、1 原有排除、0 失败（212.8 秒）。前端 26 用例、Core type-check、`pnpm docs:check` 均通过。

@@ -8,7 +8,7 @@
 - [`alert-wall/`](./alert-wall)：ReviewBot / AlertWall 审核与举报；V1 基线、V2 本地实现已完成，生产切换尚未完成。
 - [`activity/`](./activity)：业务事件、产品活动日志与审计面。
 - [`analysis/`](./analysis)：Article 业务指标事件、小时趋势与产品查询。
-- [`article/`](./article)：Article 版本、Trash 与 Audit，以及待实施的 Article / User Ticket / Comment 引用 Map 合同（Post 首个 UI 验证入口）。
+- [`article/`](./article)：Article 版本、Trash 与 Audit；MentionsGraph 的[当前关系合同](./article/mentions-graph-sync-contract.md)、[简化实施清单](./article/mentions-graph-simplification-plan.md)、[全链路评审](./article/mentions-graph-design-review.md)及历史 B0–B4 记录。B4 切换已发生，本轮简化版须使用另一全新空库且不带入 B4 内容；目标容量与生产发布尚未验收。
 - [`artiment/`](./artiment)：Artiment 公共命令边界。
 - [`community/`](./community)：Community 成员、计费和产品能力。
 - [`docs/`](./docs)：Docs Tree、Snapshot、Cover 和 ID 模型。

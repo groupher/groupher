@@ -1,0 +1,115 @@
+{
+  "pilot_read_limits_passed": true,
+  "lock_probe_passed": true,
+  "candidate_paced_first_attempt_success_ratio": 0.9,
+  "candidate_paced_availability_passed": false,
+  "design_load_agreed": false,
+  "pilot_verdict": "PARTIAL",
+  "missing_cases": [],
+  "b2_performance_accepted": false,
+  "blockers": [
+    "target_capacity_and_arrival_rates_not_qualified",
+    "three_independent_qualification_runs_missing",
+    "postgres_major_version_mismatch",
+    "controlled_fixture_not_target_body_graph",
+    "authoritative_graph_or_qualified_envelope_distribution_missing",
+    "qualification_sample_count",
+    "candidate_paced_first_attempt_availability"
+  ],
+  "reads": [
+    {
+      "name": "comment_outgoing",
+      "failures": [],
+      "max_edge_scan_work": 8,
+      "p95_ms": 164.064,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "doc_comment_seeds",
+      "failures": [],
+      "max_edge_scan_work": 72,
+      "p95_ms": 70.418,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "graph_hub_cursor",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 266.417,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "graph_hub_first",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 208.518,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "graph_six_types_ten_frontiers",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 320.738,
+      "p95_limit_ms": 1200
+    },
+    {
+      "name": "http_graph_first",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 442.614,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "http_graph_six_types",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 802.476,
+      "p95_limit_ms": 1200
+    },
+    {
+      "name": "incoming_cursor",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 158.282,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_cursor",
+      "failures": [],
+      "max_edge_scan_work": 21,
+      "p95_ms": 197.227,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_cursor_second",
+      "failures": [],
+      "max_edge_scan_work": 21,
+      "p95_ms": 142.613,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_deep_offset_count",
+      "failures": [],
+      "max_edge_scan_work": 485,
+      "p95_ms": 229.553,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_offset_count",
+      "failures": [],
+      "max_edge_scan_work": 485,
+      "p95_ms": 410.034,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "revision",
+      "failures": [],
+      "max_edge_scan_work": 0,
+      "p95_ms": 15.917,
+      "p95_limit_ms": 200
+    }
+  ],
+  "measurement_acceptance_sha256": "dbee877f6b6e2a265a52e35d374fe667a550e254f12e628b95b52c19ef3de83c",
+  "summary_sha256": "b76a68c9f786de2298f4631bbb9f9412b464f16bb60cd8e6040d9388c1bc0c8f",
+  "acceptance_sha256": "998bf50a96f68e2673054d9f4e2738d54e65710daa759041aecf151bb5a31fe4"
+}

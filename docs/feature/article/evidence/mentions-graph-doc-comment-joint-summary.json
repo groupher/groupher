@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-05",
+  "scope": "local isolated acceptance; no target cutover",
+  "b1": "passed in isolated environment",
+  "b2": "functional and SQL budget passed; representative target load remains unverified",
+  "b3": "passed in isolated environment",
+  "b4": "paused; not started",
+  "external_candidate_search": "paused",
+  "comment_graphql_transport": {
+    "passed": 168,
+    "max_cases": 1,
+    "seed": 0
+  },
+  "frontend_focused": {
+    "passed": 31
+  },
+  "browser": {
+    "passed": 12,
+    "mock_responses": false
+  },
+  "sql": {
+    "doc_with_nine_comments": 21,
+    "six_types_ten_frontiers": 22,
+    "doc_comment_one_hop_offset_out": 14,
+    "doc_comment_one_hop_offset_in": 14,
+    "doc_comment_one_hop_cursor_out": 13,
+    "doc_comment_one_hop_cursor_in": 13,
+    "ceiling": 32
+  },
+  "builds": {
+    "community_production": "passed",
+    "phoenix_production_release": "passed"
+  },
+  "auth_probe": {
+    "live_short_lived_tokens": "passed",
+    "wrong_scope_resource_credential": "rejected",
+    "isolated_receiver_checks": 5
+  },
+  "changes": [
+    "Move Comment Mentions button outside reply collapse hit area",
+    "Replace private-ID substring assertion with opaque node-ID assertion",
+    "Add stable Doc Comment joint acceptance and local real API/browser harness"
+  ],
+  "backend_joint": {
+    "passed": 171,
+    "max_cases": 1,
+    "seed": 0,
+    "database": "dedicated local acceptance database migrated from empty schema"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "checkpoint": {
+    "completed_pages": 0,
+    "completed_sources": 0
+  },
+  "complete": true,
+  "database_identity": "groupher_mentions_graph_20261106",
+  "pages": [],
+  "parser_version": 1,
+  "schema_version": 2,
+  "source_count": 0
+}

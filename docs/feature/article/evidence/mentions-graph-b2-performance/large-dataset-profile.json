@@ -1,0 +1,55 @@
+{
+  "captured_at": "2026-11-05T13:34:09.745828Z",
+  "tables": {
+    "cms.articles": 408,
+    "cms.artiment_mentions": null,
+    "cms.comments": 1536,
+    "cms.mention_current_edges": 89870,
+    "cms.mention_endpoints": 1944,
+    "cms.mention_sets": 1944,
+    "cms.mention_sync_states": 1944,
+    "cms.mentions_graph_state": 1
+  },
+  "settings": [
+    ["default_statistics_target", "100", null],
+    ["effective_cache_size", "524288", "8kB"],
+    ["max_connections", "100", null],
+    ["random_page_cost", "4", null],
+    ["server_version", "14.23 (Homebrew)", null],
+    ["shared_buffers", "16384", "8kB"],
+    ["work_mem", "4096", "kB"]
+  ],
+  "provenance": "aggregate-only serving database; optional in-process current-body census; no body export or graph initialization",
+  "transaction_read_only": true,
+  "article_types": [
+    ["blog", 96],
+    ["changelog", 96],
+    ["doc", 96],
+    ["post", 96],
+    ["ticket", 24]
+  ],
+  "comment_types": [
+    ["blog", 384],
+    ["changelog", 384],
+    ["doc", 384],
+    ["post", 384]
+  ],
+  "degree_distribution": {
+    "incoming": {
+      "max": 1943,
+      "nonzero_sources": 1944,
+      "p50": 44,
+      "p95": 47,
+      "p99": 48
+    },
+    "outgoing": {
+      "max": 1943,
+      "nonzero_sources": 1944,
+      "p50": 16,
+      "p95": 25,
+      "p99": 1943
+    }
+  },
+  "selected_body_syntax_profile": null,
+  "new_graph_data_available": true
+}

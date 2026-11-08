@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-06",
+  "environment": "isolated-local-postgresql-14-ssl",
+  "database": "groupher_mentions_b4_smoke_88944",
+  "cutover_guard_without_confirmation": "refused_before_ddl",
+  "cutover_guard_with_exact_confirmation": "passed",
+  "legacy_tables_after_migration": {
+    "cms.artiment_mentions": false,
+    "cms.reference_map_revisions": false
+  },
+  "new_graph_state_after_migration": true,
+  "shared_comments_schema_generation": "ready_with_approved_fingerprint",
+  "initializer": {
+    "auth": "real_auth_initialize_token",
+    "operations": ["report", "preflight", "apply", "preflight"],
+    "source_count": 0,
+    "manifest_complete": true
+  },
+  "log_path": "/tmp/groupher_mentions_b4_smoke_88944.log",
+  "log_sha256": "7f50f3886471c56ec286a9a09b7163e7cf910ad74dc4136a14aafe8f9a91af9a",
+  "scope": "Command path and migration guard rehearsal only; no target database changes"
+}

@@ -1,0 +1,121 @@
+{
+  "pilot_read_limits_passed": true,
+  "lock_probe_passed": true,
+  "candidate_paced_first_attempt_success_ratio": 0.9125,
+  "candidate_paced_availability_passed": false,
+  "candidate_http_single_request_success_ratio": 0.95,
+  "candidate_http_recovered_interaction_success_ratio": 1,
+  "candidate_http_recovered_interaction_requests": 80,
+  "candidate_http_recovery_second_requests": 6,
+  "candidate_http_recovery_max_server_request_sql_count": 13,
+  "candidate_http_recovery_max_server_request_elapsed_ms": 110.096,
+  "design_load_agreed": false,
+  "pilot_verdict": "PARTIAL",
+  "missing_cases": [],
+  "b2_performance_accepted": false,
+  "blockers": [
+    "target_capacity_and_arrival_rates_not_qualified",
+    "three_independent_qualification_runs_missing",
+    "controlled_fixture_not_target_body_graph",
+    "authoritative_graph_or_qualified_envelope_distribution_missing",
+    "qualification_sample_count",
+    "candidate_paced_first_attempt_availability"
+  ],
+  "reads": [
+    {
+      "name": "comment_outgoing",
+      "failures": [],
+      "max_edge_scan_work": 8,
+      "p95_ms": 129.294,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "doc_comment_seeds",
+      "failures": [],
+      "max_edge_scan_work": 72,
+      "p95_ms": 64.561,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "graph_hub_cursor",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 236.268,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "graph_hub_first",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 107.101,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "graph_six_types_ten_frontiers",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 215.926,
+      "p95_limit_ms": 1200
+    },
+    {
+      "name": "http_graph_first",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 396.3,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "http_graph_six_types",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 899.271,
+      "p95_limit_ms": 1200
+    },
+    {
+      "name": "incoming_cursor",
+      "failures": [],
+      "max_edge_scan_work": 366,
+      "p95_ms": 157.744,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_cursor",
+      "failures": [],
+      "max_edge_scan_work": 21,
+      "p95_ms": 138.279,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_cursor_second",
+      "failures": [],
+      "max_edge_scan_work": 21,
+      "p95_ms": 135.527,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_deep_offset_count",
+      "failures": [],
+      "max_edge_scan_work": 485,
+      "p95_ms": 205.523,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "outgoing_offset_count",
+      "failures": [],
+      "max_edge_scan_work": 485,
+      "p95_ms": 229.131,
+      "p95_limit_ms": 500
+    },
+    {
+      "name": "revision",
+      "failures": [],
+      "max_edge_scan_work": 0,
+      "p95_ms": 11.709,
+      "p95_limit_ms": 200
+    }
+  ],
+  "measurement_acceptance_sha256": "998bf50a96f68e2673054d9f4e2738d54e65710daa759041aecf151bb5a31fe4",
+  "summary_sha256": "961258d278fa93ab5b9c621e19e58e4bffe8983338e6f826db002a11a63aeeda",
+  "acceptance_sha256": "998bf50a96f68e2673054d9f4e2738d54e65710daa759041aecf151bb5a31fe4",
+  "target_profile_sha256": "9681655164d06b1b3f40ea6381d6769040ac73601d0c7095254c2dc68e6059c9"
+}

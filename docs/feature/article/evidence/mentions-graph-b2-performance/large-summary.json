@@ -1,0 +1,3324 @@
+{
+  "load": {
+    "read_only": {
+      "readers": {
+        "requests": 80,
+        "max_sql_count": 13,
+        "outcomes": {
+          "ok": 80
+        },
+        "latency_ms": {
+          "max": 107.597,
+          "p95": 101.091,
+          "p50": 69.594,
+          "p99": 107.597
+        },
+        "successful_requests": 80,
+        "success_ratio": 1.0,
+        "successful_latency_ms": {
+          "max": 107.597,
+          "p95": 101.091,
+          "p50": 69.594,
+          "p99": 107.597
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 94.449,
+          "p95": 87.6,
+          "p50": 57.79,
+          "p99": 94.449
+        },
+        "active_window_ms": 1628.712,
+        "successful_requests_per_active_second": 49.118567309628716,
+        "completed_writes_in_read_window": 0,
+        "completed_writes_per_read_window_second": 0.0
+      },
+      "writers": {
+        "requests": 0,
+        "max_sql_count": 0,
+        "outcomes": {},
+        "latency_ms": {
+          "max": 0,
+          "p95": 0,
+          "p50": 0,
+          "p99": 0
+        },
+        "successful_requests": 0,
+        "success_ratio": null,
+        "successful_latency_ms": {
+          "max": 0,
+          "p95": 0,
+          "p50": 0,
+          "p99": 0
+        },
+        "pool_queue_ms": {
+          "max": 0,
+          "p95": 0,
+          "p50": 0,
+          "p99": 0
+        },
+        "sql_query_ms": {
+          "max": 0,
+          "p95": 0,
+          "p50": 0,
+          "p99": 0
+        }
+      },
+      "elapsed_ms": 1647,
+      "writer_interval_ms": 0,
+      "observer_interval_ms": 20,
+      "observed_lock_wait_samples": 0,
+      "max_blocked_connections": 0,
+      "hold_after_revision_bump_ms": 0
+    },
+    "revision_writers": {
+      "readers": {
+        "requests": 80,
+        "max_sql_count": 13,
+        "outcomes": {
+          "mentions_graph_invalid_request": 4,
+          "ok": 76
+        },
+        "latency_ms": {
+          "max": 105.268,
+          "p95": 98.952,
+          "p50": 65.384,
+          "p99": 105.268
+        },
+        "successful_requests": 76,
+        "success_ratio": 0.95,
+        "successful_latency_ms": {
+          "max": 105.268,
+          "p95": 100.18,
+          "p50": 64.741,
+          "p99": 105.268
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 92.81,
+          "p95": 86.576,
+          "p50": 53.767,
+          "p99": 92.81
+        },
+        "active_window_ms": 1585.665,
+        "successful_requests_per_active_second": 47.92941762604333,
+        "completed_writes_in_read_window": 40,
+        "completed_writes_per_read_window_second": 25.22600927686491
+      },
+      "writers": {
+        "requests": 40,
+        "max_sql_count": 1,
+        "outcomes": {
+          "ok": 40
+        },
+        "latency_ms": {
+          "max": 10.819,
+          "p95": 4.007,
+          "p50": 2.12,
+          "p99": 10.819
+        },
+        "successful_requests": 40,
+        "success_ratio": 1.0,
+        "successful_latency_ms": {
+          "max": 10.819,
+          "p95": 4.007,
+          "p50": 2.12,
+          "p99": 10.819
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 8.682,
+          "p95": 2.949,
+          "p50": 0.58,
+          "p99": 8.682
+        }
+      },
+      "elapsed_ms": 1606,
+      "writer_interval_ms": 0,
+      "observer_interval_ms": 20,
+      "observed_lock_wait_samples": 0,
+      "max_blocked_connections": 0,
+      "hold_after_revision_bump_ms": 0
+    },
+    "revision_writers_held": {
+      "readers": {
+        "requests": 80,
+        "max_sql_count": 13,
+        "outcomes": {
+          "mentions_graph_invalid_request": 28,
+          "ok": 52
+        },
+        "latency_ms": {
+          "max": 100.973,
+          "p95": 95.971,
+          "p50": 63.87,
+          "p99": 100.973
+        },
+        "successful_requests": 52,
+        "success_ratio": 0.65,
+        "successful_latency_ms": {
+          "max": 100.973,
+          "p95": 95.971,
+          "p50": 63.46,
+          "p99": 100.973
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 87.7,
+          "p95": 83.956,
+          "p50": 52.425,
+          "p99": 87.7
+        },
+        "active_window_ms": 1547.913,
+        "successful_requests_per_active_second": 33.59361927963651,
+        "completed_writes_in_read_window": 40,
+        "completed_writes_per_read_window_second": 25.8412455997204
+      },
+      "writers": {
+        "requests": 40,
+        "max_sql_count": 1,
+        "outcomes": {
+          "ok": 40
+        },
+        "latency_ms": {
+          "max": 38.384,
+          "p95": 28.695,
+          "p50": 22.505,
+          "p99": 38.384
+        },
+        "successful_requests": 40,
+        "success_ratio": 1.0,
+        "successful_latency_ms": {
+          "max": 38.384,
+          "p95": 28.695,
+          "p50": 22.505,
+          "p99": 38.384
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 18.589,
+          "p95": 12.756,
+          "p50": 10.86,
+          "p99": 18.589
+        }
+      },
+      "elapsed_ms": 1566,
+      "writer_interval_ms": 0,
+      "observer_interval_ms": 20,
+      "observed_lock_wait_samples": 21,
+      "max_blocked_connections": 1,
+      "hold_after_revision_bump_ms": 10
+    },
+    "revision_writers_paced": {
+      "readers": {
+        "requests": 80,
+        "max_sql_count": 13,
+        "outcomes": {
+          "mentions_graph_invalid_request": 12,
+          "ok": 68
+        },
+        "latency_ms": {
+          "max": 103.097,
+          "p95": 95.731,
+          "p50": 63.059,
+          "p99": 103.097
+        },
+        "successful_requests": 68,
+        "success_ratio": 0.85,
+        "successful_latency_ms": {
+          "max": 103.097,
+          "p95": 97.761,
+          "p50": 62.313,
+          "p99": 103.097
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 89.77,
+          "p95": 84.817,
+          "p50": 52.113,
+          "p99": 89.77
+        },
+        "active_window_ms": 1541.789,
+        "successful_requests_per_active_second": 44.10460834783488,
+        "completed_writes_in_read_window": 8,
+        "completed_writes_per_read_window_second": 5.188777452686457
+      },
+      "writers": {
+        "requests": 40,
+        "max_sql_count": 1,
+        "outcomes": {
+          "ok": 40
+        },
+        "latency_ms": {
+          "max": 28.823,
+          "p95": 15.808,
+          "p50": 1.542,
+          "p99": 28.823
+        },
+        "successful_requests": 40,
+        "success_ratio": 1.0,
+        "successful_latency_ms": {
+          "max": 28.823,
+          "p95": 15.808,
+          "p50": 1.542,
+          "p99": 28.823
+        },
+        "pool_queue_ms": {
+          "max": 0.0,
+          "p95": 0.0,
+          "p50": 0.0,
+          "p99": 0.0
+        },
+        "sql_query_ms": {
+          "max": 14.003,
+          "p95": 4.3,
+          "p50": 0.542,
+          "p99": 14.003
+        }
+      },
+      "elapsed_ms": 10129,
+      "writer_interval_ms": 500,
+      "observer_interval_ms": 20,
+      "observed_lock_wait_samples": 1,
+      "max_blocked_connections": 1,
+      "hold_after_revision_bump_ms": 0
+    }
+  },
+  "dataset": {
+    "kind": "controlled-relational-envelope",
+    "per_type": 96,
+    "current_edges": 89870,
+    "resource_types": {
+      "doc": 96,
+      "comment": 1536,
+      "post": 96,
+      "changelog": 96,
+      "blog": 96,
+      "ticket": 24
+    },
+    "communities": 3,
+    "dense_hidden": true,
+    "canonical_sources": 1944,
+    "hidden_article_sources": 380,
+    "pending_comment_sources": 3,
+    "body_capture_representative": false
+  },
+  "captured_at": "2026-11-05T13:39:15.075950Z",
+  "acceptance_sha256": "dbee877f6b6e2a265a52e35d374fe667a550e254f12e628b95b52c19ef3de83c",
+  "environment": {
+    "otp": "29",
+    "schedulers": 8,
+    "elixir": "1.20.3",
+    "database": "groupher_mentions_perf_1793885475467_81491",
+    "pool_size": 20,
+    "postgres": "PostgreSQL 14.23 (Homebrew) on aarch64-apple-darwin24.6.0, compiled by Apple clang version 17.0.0 (clang-1700.6.4.2), 64-bit",
+    "query_beam_sha256": "6152871e4b8959d93b4c7fb9db95ee44c6189f164a6077c3606bac24342c4e66"
+  },
+  "methodology": {
+    "domain_requests": true,
+    "http_handler_included_cases": ["http_graph_first", "http_graph_six_types"],
+    "http_network_included": false,
+    "warm_samples_per_case": 100,
+    "warmup_requests": 3,
+    "first_measured_request_is_not_cold_storage": true,
+    "max_scan_work": "max((actual rows + removed by filter + recheck) * loops), not total unique rows",
+    "summed_scan_work": "sum of scan-node work, not unique physical rows",
+    "proposed_thresholds": true
+  },
+  "reads": {
+    "comment_outgoing": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 163.835,
+        "p95": 152.011,
+        "p50": 42.979,
+        "p99": 161.749
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 73.261,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 59.628
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 163.835,
+        "p95": 152.011,
+        "p50": 42.979,
+        "p99": 161.749
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 156.42,
+        "p95": 135.939,
+        "p50": 27.54,
+        "p99": 148.831
+      }
+    },
+    "doc_comment_seeds": {
+      "requests": 100,
+      "max_sql_count": 8,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 92.999,
+        "p95": 78.821,
+        "p50": 53.664,
+        "p99": 82.456
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 147.795,
+        "sql_count": 8,
+        "queue_ms": 0.0,
+        "query_ms": 93.845
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 92.999,
+        "p95": 78.821,
+        "p50": 53.664,
+        "p99": 82.456
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 84.314,
+        "p95": 72.063,
+        "p50": 45.598,
+        "p99": 75.696
+      }
+    },
+    "graph_hub_cursor": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 376.534,
+        "p95": 289.874,
+        "p50": 243.062,
+        "p99": 306.5
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 278.639,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 243.315
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 376.534,
+        "p95": 289.874,
+        "p50": 243.062,
+        "p99": 306.5
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 360.261,
+        "p95": 273.316,
+        "p50": 221.959,
+        "p99": 296.112
+      }
+    },
+    "graph_hub_first": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 154.282,
+        "p95": 105.477,
+        "p50": 61.341,
+        "p99": 128.174
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 87.481,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 77.501
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 154.282,
+        "p95": 105.477,
+        "p50": 61.341,
+        "p99": 128.174
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 145.684,
+        "p95": 88.858,
+        "p50": 44.598,
+        "p99": 108.629
+      }
+    },
+    "graph_six_types_ten_frontiers": {
+      "requests": 100,
+      "max_sql_count": 22,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 412.757,
+        "p95": 398.515,
+        "p50": 365.31,
+        "p99": 406.368
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 383.259,
+        "sql_count": 22,
+        "queue_ms": 0.0,
+        "query_ms": 313.963
+      },
+      "proposed_p95_limit_ms": 1200,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 412.757,
+        "p95": 398.515,
+        "p50": 365.31,
+        "p99": 406.368
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 333.529,
+        "p95": 313.386,
+        "p50": 279.172,
+        "p99": 325.058
+      }
+    },
+    "http_graph_first": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 462.696,
+        "p95": 439.128,
+        "p50": 378.41,
+        "p99": 455.895
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 677.502,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 411.235
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 462.696,
+        "p95": 439.128,
+        "p50": 378.41,
+        "p99": 455.895
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 436.86,
+        "p95": 406.55,
+        "p50": 349.038,
+        "p99": 432.998
+      }
+    },
+    "http_graph_six_types": {
+      "requests": 100,
+      "max_sql_count": 22,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 1282.008,
+        "p95": 815.879,
+        "p50": 386.624,
+        "p99": 1130.765
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 382.596,
+        "sql_count": 22,
+        "queue_ms": 0.0,
+        "query_ms": 288.385
+      },
+      "proposed_p95_limit_ms": 1200,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 1282.008,
+        "p95": 815.879,
+        "p50": 386.624,
+        "p99": 1130.765
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 1142.509,
+        "p95": 676.1,
+        "p50": 276.565,
+        "p99": 982.094
+      }
+    },
+    "incoming_cursor": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 210.689,
+        "p95": 191.256,
+        "p50": 154.673,
+        "p99": 202.035
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 199.296,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 169.332
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 210.689,
+        "p95": 191.256,
+        "p50": 154.673,
+        "p99": 202.035
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 176.68,
+        "p95": 165.895,
+        "p50": 137.517,
+        "p99": 176.59
+      }
+    },
+    "outgoing_cursor": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 206.006,
+        "p95": 159.874,
+        "p50": 126.304,
+        "p99": 183.252
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 137.896,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 129.383
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 206.006,
+        "p95": 159.874,
+        "p50": 126.304,
+        "p99": 183.252
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 151.835,
+        "p95": 139.052,
+        "p50": 106.506,
+        "p99": 150.985
+      }
+    },
+    "outgoing_cursor_second": {
+      "requests": 100,
+      "max_sql_count": 13,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 190.233,
+        "p95": 163.188,
+        "p50": 126.564,
+        "p99": 178.723
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 137.423,
+        "sql_count": 13,
+        "queue_ms": 0.0,
+        "query_ms": 118.757
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 190.233,
+        "p95": 163.188,
+        "p50": 126.564,
+        "p99": 178.723
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 167.479,
+        "p95": 139.779,
+        "p50": 109.979,
+        "p99": 164.314
+      }
+    },
+    "outgoing_deep_offset_count": {
+      "requests": 100,
+      "max_sql_count": 14,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 269.076,
+        "p95": 251.051,
+        "p50": 36.994,
+        "p99": 262.763
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 264.923,
+        "sql_count": 14,
+        "queue_ms": 0.0,
+        "query_ms": 254.096
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 269.076,
+        "p95": 251.051,
+        "p50": 36.994,
+        "p99": 262.763
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 257.142,
+        "p95": 225.282,
+        "p50": 24.075,
+        "p99": 250.839
+      }
+    },
+    "outgoing_offset_count": {
+      "requests": 100,
+      "max_sql_count": 14,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 276.087,
+        "p95": 254.733,
+        "p50": 210.331,
+        "p99": 264.353
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 239.643,
+        "sql_count": 14,
+        "queue_ms": 0.0,
+        "query_ms": 213.072
+      },
+      "proposed_p95_limit_ms": 500,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 276.087,
+        "p95": 254.733,
+        "p50": 210.331,
+        "p99": 264.353
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 241.419,
+        "p95": 226.647,
+        "p50": 188.509,
+        "p99": 239.077
+      }
+    },
+    "revision": {
+      "requests": 100,
+      "max_sql_count": 5,
+      "outcomes": {
+        "ok": 100
+      },
+      "latency_ms": {
+        "max": 32.599,
+        "p95": 9.232,
+        "p50": 4.407,
+        "p99": 23.02
+      },
+      "first_observed_request": {
+        "outcome": "ok",
+        "elapsed_ms": 5.656,
+        "sql_count": 5,
+        "queue_ms": 0.0,
+        "query_ms": 3.761
+      },
+      "proposed_p95_limit_ms": 200,
+      "bounded_window_scan_gate": true,
+      "passed": true,
+      "successful_requests": 100,
+      "success_ratio": 1.0,
+      "successful_latency_ms": {
+        "max": 32.599,
+        "p95": 9.232,
+        "p50": 4.407,
+        "p99": 23.02
+      },
+      "pool_queue_ms": {
+        "max": 0.0,
+        "p95": 0.0,
+        "p50": 0.0,
+        "p99": 0.0
+      },
+      "sql_query_ms": {
+        "max": 29.683,
+        "p95": 6.229,
+        "p50": 2.98,
+        "p99": 21.542
+      }
+    }
+  },
+  "plan_summaries": {
+    "comment_outgoing": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.027,
+          "planning_ms": 0.137,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.013,
+          "planning_ms": 0.062,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 2637,
+          "execution_ms": 5.165,
+          "planning_ms": 62.496,
+          "max_join_work": 408,
+          "shared_hit_blocks": 2353,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 2,
+          "summed_scan_work": 6,
+          "execution_ms": 0.062,
+          "planning_ms": 0.437,
+          "max_join_work": 2,
+          "shared_hit_blocks": 12,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 4955,
+          "execution_ms": 4.96,
+          "planning_ms": 111.136,
+          "max_join_work": 1536,
+          "shared_hit_blocks": 3054,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "0b5f57a23de1c9f7b1861a6082d7c2e1e6b1a11459dbb58b34a900f31cad5e99"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 15,
+          "summed_scan_work": 30,
+          "execution_ms": 0.073,
+          "planning_ms": 0.069,
+          "max_join_work": 15,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 13,
+          "summed_scan_work": 13,
+          "execution_ms": 0.049,
+          "planning_ms": 0.075,
+          "max_join_work": 13,
+          "shared_hit_blocks": 39,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.072,
+          "planning_ms": 0.068,
+          "max_join_work": 8,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 7728,
+          "execution_ms": 8.371,
+          "planning_ms": 52.405,
+          "max_join_work": 6944,
+          "shared_hit_blocks": 5176,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1974,
+          "execution_ms": 0.503,
+          "planning_ms": 0.31,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 108,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 17.041,
+          "planning_ms": 70.3,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.021,
+          "planning_ms": 0.106,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "doc_comment_seeds": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.009,
+          "planning_ms": 0.065,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.013,
+          "planning_ms": 0.064,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 24,
+          "summed_scan_work": 38,
+          "execution_ms": 0.549,
+          "planning_ms": 20.417,
+          "max_join_work": 24,
+          "shared_hit_blocks": 36,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "ff1109499db1660fa980fb3f728fea5977317c520bd204b3d76497fb05869399"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 2,
+          "execution_ms": 0.03,
+          "planning_ms": 0.194,
+          "max_join_work": 1,
+          "shared_hit_blocks": 6,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 2547,
+          "execution_ms": 4.362,
+          "planning_ms": 26.229,
+          "max_join_work": 408,
+          "shared_hit_blocks": 2995,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9de8820bfd0f90fafd0b12748348512cd29b390d342991cb3482a81bb5ea8a9d"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 16.173,
+          "planning_ms": 65.389,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.015,
+          "planning_ms": 0.064,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "graph_hub_cursor": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.012,
+          "planning_ms": 0.042,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.014,
+          "planning_ms": 0.046,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 24,
+          "summed_scan_work": 42,
+          "execution_ms": 0.5,
+          "planning_ms": 19.409,
+          "max_join_work": 24,
+          "shared_hit_blocks": 36,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "ff1109499db1660fa980fb3f728fea5977317c520bd204b3d76497fb05869399"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 2,
+          "execution_ms": 0.02,
+          "planning_ms": 0.152,
+          "max_join_work": 1,
+          "shared_hit_blocks": 6,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 16351,
+          "execution_ms": 50.321,
+          "planning_ms": 148.718,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 26402,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "29cbeb6a7c58f0b8849a37ee322c39ff133860ab17c491b76bafac201a126158"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1944,
+          "execution_ms": 0.193,
+          "planning_ms": 0.055,
+          "max_join_work": 22,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 19,
+          "summed_scan_work": 19,
+          "execution_ms": 0.05,
+          "planning_ms": 0.112,
+          "max_join_work": 19,
+          "shared_hit_blocks": 57,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.058,
+          "planning_ms": 0.061,
+          "max_join_work": 17,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 8832,
+          "execution_ms": 8.392,
+          "planning_ms": 48.29,
+          "max_join_work": 1536,
+          "shared_hit_blocks": 5747,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.544,
+          "planning_ms": 0.135,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 15.284,
+          "planning_ms": 62.206,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.012,
+          "planning_ms": 0.052,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "graph_hub_first": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.012,
+          "planning_ms": 0.106,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.028,
+          "planning_ms": 0.211,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 24,
+          "summed_scan_work": 42,
+          "execution_ms": 0.335,
+          "planning_ms": 19.983,
+          "max_join_work": 24,
+          "shared_hit_blocks": 36,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "ff1109499db1660fa980fb3f728fea5977317c520bd204b3d76497fb05869399"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 2,
+          "execution_ms": 0.041,
+          "planning_ms": 0.334,
+          "max_join_work": 1,
+          "shared_hit_blocks": 6,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 16351,
+          "execution_ms": 26.978,
+          "planning_ms": 180.921,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 26400,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1944,
+          "execution_ms": 0.196,
+          "planning_ms": 0.232,
+          "max_join_work": 22,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 18,
+          "summed_scan_work": 18,
+          "execution_ms": 0.046,
+          "planning_ms": 0.123,
+          "max_join_work": 18,
+          "shared_hit_blocks": 53,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.077,
+          "planning_ms": 0.146,
+          "max_join_work": 19,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 8901,
+          "execution_ms": 8.661,
+          "planning_ms": 48.472,
+          "max_join_work": 1536,
+          "shared_hit_blocks": 5909,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.546,
+          "planning_ms": 0.181,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 15.622,
+          "planning_ms": 62.436,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.013,
+          "planning_ms": 0.047,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "graph_six_types_ten_frontiers": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.012,
+          "planning_ms": 0.051,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.013,
+          "planning_ms": 0.063,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 5705,
+          "execution_ms": 7.168,
+          "planning_ms": 49.853,
+          "max_join_work": 3472,
+          "shared_hit_blocks": 4777,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.651,
+          "planning_ms": 0.34,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 16351,
+          "execution_ms": 27.736,
+          "planning_ms": 179.468,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 26400,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 15242,
+          "execution_ms": 23.861,
+          "planning_ms": 181.54,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 25324,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 15242,
+          "execution_ms": 23.421,
+          "planning_ms": 176.81,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 25326,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 15236,
+          "execution_ms": 38.155,
+          "planning_ms": 166.9,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 25328,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 15247,
+          "execution_ms": 23.751,
+          "planning_ms": 150.354,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 25339,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 20166,
+          "execution_ms": 29.125,
+          "planning_ms": 162.91,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 28347,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 20168,
+          "execution_ms": 27.869,
+          "planning_ms": 157.443,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 28345,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 20170,
+          "execution_ms": 27.904,
+          "planning_ms": 177.611,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 28345,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 20172,
+          "execution_ms": 31.014,
+          "planning_ms": 188.5,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 28344,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 21428,
+          "execution_ms": 27.113,
+          "planning_ms": 195.31,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 28844,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1944,
+          "execution_ms": 0.227,
+          "planning_ms": 0.077,
+          "max_join_work": 163,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 140,
+          "summed_scan_work": 140,
+          "execution_ms": 0.292,
+          "planning_ms": 0.175,
+          "max_join_work": 140,
+          "shared_hit_blocks": 415,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.078,
+          "planning_ms": 0.087,
+          "max_join_work": 111,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 12141,
+          "execution_ms": 26.456,
+          "planning_ms": 60.909,
+          "max_join_work": 1536,
+          "shared_hit_blocks": 9393,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.673,
+          "planning_ms": 0.17,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 15.934,
+          "planning_ms": 85.333,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.032,
+          "planning_ms": 0.138,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "http_graph_first": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.011,
+          "planning_ms": 0.093,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.01,
+          "planning_ms": 0.071,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 24,
+          "summed_scan_work": 42,
+          "execution_ms": 0.432,
+          "planning_ms": 20.504,
+          "max_join_work": 24,
+          "shared_hit_blocks": 36,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "ff1109499db1660fa980fb3f728fea5977317c520bd204b3d76497fb05869399"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 2,
+          "execution_ms": 0.028,
+          "planning_ms": 0.133,
+          "max_join_work": 1,
+          "shared_hit_blocks": 6,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 16351,
+          "execution_ms": 40.351,
+          "planning_ms": 162.815,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 26831,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1944,
+          "execution_ms": 0.196,
+          "planning_ms": 0.06,
+          "max_join_work": 22,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 18,
+          "summed_scan_work": 18,
+          "execution_ms": 0.06,
+          "planning_ms": 0.15,
+          "max_join_work": 18,
+          "shared_hit_blocks": 56,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.078,
+          "planning_ms": 0.094,
+          "max_join_work": 19,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 8901,
+          "execution_ms": 8.967,
+          "planning_ms": 52.796,
+          "max_join_work": 1536,
+          "shared_hit_blocks": 5909,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.581,
+          "planning_ms": 0.342,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 29.995,
+          "planning_ms": 78.681,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16740,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.011,
+          "planning_ms": 0.091,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "http_graph_six_types": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.012,
+          "planning_ms": 0.044,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.021,
+          "planning_ms": 0.16,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 5705,
+          "execution_ms": 7.288,
+          "planning_ms": 48.958,
+          "max_join_work": 3472,
+          "shared_hit_blocks": 4777,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.564,
+          "planning_ms": 0.242,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 16351,
+          "execution_ms": 51.826,
+          "planning_ms": 149.967,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 26400,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 15242,
+          "execution_ms": 39.43,
+          "planning_ms": 154.966,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 25324,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 15242,
+          "execution_ms": 23.816,
+          "planning_ms": 151.469,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 25326,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 15236,
+          "execution_ms": 23.737,
+          "planning_ms": 150.424,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 25328,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 15247,
+          "execution_ms": 26.258,
+          "planning_ms": 168.024,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 25339,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 20166,
+          "execution_ms": 26.996,
+          "planning_ms": 165.242,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 28347,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 20168,
+          "execution_ms": 28.281,
+          "planning_ms": 180.25,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 28345,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 20170,
+          "execution_ms": 27.105,
+          "planning_ms": 184.61,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 28345,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 20172,
+          "execution_ms": 28.217,
+          "planning_ms": 197.255,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 28344,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 21428,
+          "execution_ms": 27.925,
+          "planning_ms": 171.978,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 28844,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "9cf3802b773698cfae3c45b46046c228be27e9687892deb74522066553113282"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1944,
+          "execution_ms": 0.209,
+          "planning_ms": 0.077,
+          "max_join_work": 163,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 140,
+          "summed_scan_work": 140,
+          "execution_ms": 0.217,
+          "planning_ms": 0.125,
+          "max_join_work": 140,
+          "shared_hit_blocks": 415,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.08,
+          "planning_ms": 0.076,
+          "max_join_work": 111,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 12141,
+          "execution_ms": 12.533,
+          "planning_ms": 82.443,
+          "max_join_work": 1536,
+          "shared_hit_blocks": 9393,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.682,
+          "planning_ms": 0.165,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 14.85,
+          "planning_ms": 61.93,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.011,
+          "planning_ms": 0.04,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "incoming_cursor": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.015,
+          "planning_ms": 0.101,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.01,
+          "planning_ms": 0.033,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 24,
+          "summed_scan_work": 42,
+          "execution_ms": 1.49,
+          "planning_ms": 23.488,
+          "max_join_work": 24,
+          "shared_hit_blocks": 36,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "ff1109499db1660fa980fb3f728fea5977317c520bd204b3d76497fb05869399"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 2,
+          "execution_ms": 0.025,
+          "planning_ms": 0.135,
+          "max_join_work": 1,
+          "shared_hit_blocks": 6,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 16320,
+          "execution_ms": 25.521,
+          "planning_ms": 114.347,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 26373,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "0d9fd599de38748f21e5778497c359c8d209972460163ff14d9787e9e7fc1664"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1944,
+          "execution_ms": 0.232,
+          "planning_ms": 0.102,
+          "max_join_work": 21,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 17,
+          "summed_scan_work": 17,
+          "execution_ms": 0.055,
+          "planning_ms": 0.245,
+          "max_join_work": 17,
+          "shared_hit_blocks": 50,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.06,
+          "planning_ms": 0.046,
+          "max_join_work": 20,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 8956,
+          "execution_ms": 9.667,
+          "planning_ms": 53.512,
+          "max_join_work": 1536,
+          "shared_hit_blocks": 6125,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.676,
+          "planning_ms": 0.167,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 15.484,
+          "planning_ms": 67.28,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.016,
+          "planning_ms": 0.137,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "outgoing_cursor": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.008,
+          "planning_ms": 0.039,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.027,
+          "planning_ms": 0.227,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 24,
+          "summed_scan_work": 42,
+          "execution_ms": 0.312,
+          "planning_ms": 19.951,
+          "max_join_work": 24,
+          "shared_hit_blocks": 36,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "ff1109499db1660fa980fb3f728fea5977317c520bd204b3d76497fb05869399"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 2,
+          "execution_ms": 0.029,
+          "planning_ms": 0.176,
+          "max_join_work": 1,
+          "shared_hit_blocks": 6,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 21,
+          "summed_scan_work": 31,
+          "execution_ms": 1.31,
+          "planning_ms": 76.408,
+          "max_join_work": 21,
+          "shared_hit_blocks": 27,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "0b5f57a23de1c9f7b1861a6082d7c2e1e6b1a11459dbb58b34a900f31cad5e99"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1944,
+          "execution_ms": 0.248,
+          "planning_ms": 0.166,
+          "max_join_work": 21,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 17,
+          "summed_scan_work": 17,
+          "execution_ms": 0.057,
+          "planning_ms": 0.14,
+          "max_join_work": 17,
+          "shared_hit_blocks": 50,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.06,
+          "planning_ms": 0.068,
+          "max_join_work": 17,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 8711,
+          "execution_ms": 8.733,
+          "planning_ms": 61.382,
+          "max_join_work": 1152,
+          "shared_hit_blocks": 5393,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.606,
+          "planning_ms": 0.215,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 15.54,
+          "planning_ms": 66.058,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.018,
+          "planning_ms": 0.646,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "outgoing_cursor_second": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.011,
+          "planning_ms": 0.118,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.013,
+          "planning_ms": 0.069,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 24,
+          "summed_scan_work": 42,
+          "execution_ms": 0.55,
+          "planning_ms": 20.9,
+          "max_join_work": 24,
+          "shared_hit_blocks": 36,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "ff1109499db1660fa980fb3f728fea5977317c520bd204b3d76497fb05869399"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 2,
+          "execution_ms": 0.054,
+          "planning_ms": 0.448,
+          "max_join_work": 1,
+          "shared_hit_blocks": 6,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 21,
+          "summed_scan_work": 31,
+          "execution_ms": 1.124,
+          "planning_ms": 77.453,
+          "max_join_work": 21,
+          "shared_hit_blocks": 29,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "46de9673146b82b80b406eadbff0e2842e3e78796dc2bfcb22181983e83e6acc"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1944,
+          "execution_ms": 0.204,
+          "planning_ms": 0.063,
+          "max_join_work": 21,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 18,
+          "summed_scan_work": 18,
+          "execution_ms": 0.083,
+          "planning_ms": 0.13,
+          "max_join_work": 18,
+          "shared_hit_blocks": 53,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.076,
+          "planning_ms": 0.074,
+          "max_join_work": 17,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 8818,
+          "execution_ms": 8.981,
+          "planning_ms": 81.474,
+          "max_join_work": 1536,
+          "shared_hit_blocks": 5670,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.653,
+          "planning_ms": 0.157,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 18.406,
+          "planning_ms": 67.249,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.013,
+          "planning_ms": 0.049,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "outgoing_deep_offset_count": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.013,
+          "planning_ms": 0.08,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.074,
+          "planning_ms": 0.158,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 24,
+          "summed_scan_work": 42,
+          "execution_ms": 0.584,
+          "planning_ms": 20.66,
+          "max_join_work": 24,
+          "shared_hit_blocks": 36,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "ff1109499db1660fa980fb3f728fea5977317c520bd204b3d76497fb05869399"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 2,
+          "execution_ms": 0.017,
+          "planning_ms": 0.138,
+          "max_join_work": 1,
+          "shared_hit_blocks": 6,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1943,
+          "summed_scan_work": 3896,
+          "execution_ms": 1.833,
+          "planning_ms": 79.197,
+          "max_join_work": 1943,
+          "shared_hit_blocks": 111,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "63177d4aecd3f874334535ae9cd8ddba6a476964f91416344593ea82e092e522"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 200,
+          "summed_scan_work": 210,
+          "execution_ms": 1.105,
+          "planning_ms": 106.664,
+          "max_join_work": 200,
+          "shared_hit_blocks": 38,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "4a486e88d0dd92410f65a753afde6c6e3c30a0bafed8de99e5105976c2f344b5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1944,
+          "execution_ms": 0.589,
+          "planning_ms": 1.024,
+          "max_join_work": 21,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 17,
+          "summed_scan_work": 17,
+          "execution_ms": 0.086,
+          "planning_ms": 0.296,
+          "max_join_work": 17,
+          "shared_hit_blocks": 51,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.072,
+          "planning_ms": 0.086,
+          "max_join_work": 14,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 7749,
+          "execution_ms": 8.04,
+          "planning_ms": 54.271,
+          "max_join_work": 1536,
+          "shared_hit_blocks": 5281,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.606,
+          "planning_ms": 0.259,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 16.109,
+          "planning_ms": 75.979,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.011,
+          "planning_ms": 0.056,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "outgoing_offset_count": [
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.008,
+          "planning_ms": 0.043,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.013,
+          "planning_ms": 0.034,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 24,
+          "summed_scan_work": 42,
+          "execution_ms": 0.714,
+          "planning_ms": 19.091,
+          "max_join_work": 24,
+          "shared_hit_blocks": 36,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "ff1109499db1660fa980fb3f728fea5977317c520bd204b3d76497fb05869399"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 2,
+          "execution_ms": 0.028,
+          "planning_ms": 0.127,
+          "max_join_work": 1,
+          "shared_hit_blocks": 6,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1943,
+          "summed_scan_work": 3896,
+          "execution_ms": 1.429,
+          "planning_ms": 72.17,
+          "max_join_work": 1943,
+          "shared_hit_blocks": 111,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "63177d4aecd3f874334535ae9cd8ddba6a476964f91416344593ea82e092e522"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 20,
+          "summed_scan_work": 30,
+          "execution_ms": 2.262,
+          "planning_ms": 100.845,
+          "max_join_work": 20,
+          "shared_hit_blocks": 27,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "4a486e88d0dd92410f65a753afde6c6e3c30a0bafed8de99e5105976c2f344b5"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 1944,
+          "execution_ms": 0.216,
+          "planning_ms": 0.224,
+          "max_join_work": 21,
+          "shared_hit_blocks": 43,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c983f269e8bf6e300bcde50a0305aeedca96cba92b9b4989cb3a4f5379eff483"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 17,
+          "summed_scan_work": 17,
+          "execution_ms": 0.154,
+          "planning_ms": 0.204,
+          "max_join_work": 17,
+          "shared_hit_blocks": 50,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "39572da659ea28ec642fe4c9d853be35e8a05c0d67b9e0c529e4cbae9c76ab4b"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 408,
+          "summed_scan_work": 408,
+          "execution_ms": 0.087,
+          "planning_ms": 0.107,
+          "max_join_work": 17,
+          "shared_hit_blocks": 23,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "78aa46475daeb2472099bab6b26db0bc2d2f997904c520be8ea3664a5e5cd1ca"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 8711,
+          "execution_ms": 8.187,
+          "planning_ms": 52.113,
+          "max_join_work": 1152,
+          "shared_hit_blocks": 5393,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "c96037710a7ac49ccdec8e46b79427d3f2c5fdc88e7c124a778037ebd3f4e53c"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1944,
+          "summed_scan_work": 3888,
+          "execution_ms": 0.538,
+          "planning_ms": 0.2,
+          "max_join_work": 1944,
+          "shared_hit_blocks": 127,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1536,
+          "summed_scan_work": 13487,
+          "execution_ms": 17.667,
+          "planning_ms": 78.951,
+          "max_join_work": 1732,
+          "shared_hit_blocks": 16309,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "d3e1a35be9e05d284d88fe9d102ffb0622d3d212521c1a23229cacd39bf969ac"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.03,
+          "planning_ms": 0.054,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ],
+    "revision": [
+      {
+        "metrics": {
+          "max_scan_work": 3,
+          "summed_scan_work": 3,
+          "execution_ms": 0.022,
+          "planning_ms": 0.101,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f73a3afee14397799b5af914369e9de8c2e554d61a0ff0cc2160ce482092ae68"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 24,
+          "summed_scan_work": 42,
+          "execution_ms": 0.473,
+          "planning_ms": 35.542,
+          "max_join_work": 24,
+          "shared_hit_blocks": 36,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "ff1109499db1660fa980fb3f728fea5977317c520bd204b3d76497fb05869399"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 2,
+          "execution_ms": 0.026,
+          "planning_ms": 0.201,
+          "max_join_work": 1,
+          "shared_hit_blocks": 6,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "fc85411edd80060cfbfbc0fdee48e9bef31000adda9269bd43169ef5a9f9c8b2"
+      },
+      {
+        "metrics": {
+          "max_scan_work": 1,
+          "summed_scan_work": 1,
+          "execution_ms": 0.011,
+          "planning_ms": 0.034,
+          "max_join_work": 1,
+          "shared_hit_blocks": 1,
+          "shared_read_blocks": 0,
+          "temp_written_blocks": 0
+        },
+        "fingerprint": "f32f6e0705168d4395b80bbcf73b0baf17672e1d1b8a9d414fa6c141882ea1f5"
+      }
+    ]
+  },
+  "controlled_lock": {
+    "blocking_observed": true,
+    "waiting_update_elapsed_ms": 94.047,
+    "reader_while_locked": {
+      "outcome": "ok",
+      "elapsed_ms": 81.234,
+      "sql_count": 13,
+      "queue_ms": 0.0,
+      "query_ms": 72.381
+    },
+    "blocked_samples": [[82919, "Lock", "transactionid", [82916]]]
+  },
+  "lock_checks_passed": true,
+  "local_checks_passed": true,
+  "target_profile": {
+    "article_types": [
+      ["blog", 1],
+      ["changelog", 1],
+      ["doc", 1],
+      ["post", 29],
+      ["ticket", 1]
+    ],
+    "captured_at": "2026-11-05T13:29:39.470579Z",
+    "comment_types": [
+      ["doc", 1],
+      ["post", 4]
+    ],
+    "degree_distribution": null,
+    "new_graph_data_available": false,
+    "provenance": "aggregate-only serving database; no body parsing or new graph initialization",
+    "selected_body_candidate_profile": {
+      "anonymous_scope_verified": false,
+      "by_type": {
+        "blog": {
+          "bodies": 1,
+          "bytes": {
+            "max": 220,
+            "p50": 220,
+            "p95": 220,
+            "p99": 220
+          },
+          "distinct_internal_mention_keys": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "invalid_json": 0,
+          "link_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "mention_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "changelog": {
+          "bodies": 1,
+          "bytes": {
+            "max": 235,
+            "p50": 235,
+            "p95": 235,
+            "p99": 235
+          },
+          "distinct_internal_mention_keys": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "invalid_json": 0,
+          "link_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "mention_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "comment-doc": {
+          "bodies": 1,
+          "bytes": {
+            "max": 190,
+            "p50": 190,
+            "p95": 190,
+            "p99": 190
+          },
+          "distinct_internal_mention_keys": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "invalid_json": 0,
+          "link_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "mention_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "comment-post": {
+          "bodies": 4,
+          "bytes": {
+            "max": 281,
+            "p50": 105,
+            "p95": 281,
+            "p99": 281
+          },
+          "distinct_internal_mention_keys": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "invalid_json": 0,
+          "link_nodes": {
+            "max": 1,
+            "p50": 0,
+            "p95": 1,
+            "p99": 1
+          },
+          "mention_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "doc-main": {
+          "bodies": 1,
+          "bytes": {
+            "max": 218,
+            "p50": 218,
+            "p95": 218,
+            "p99": 218
+          },
+          "distinct_internal_mention_keys": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "invalid_json": 0,
+          "link_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "mention_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "post": {
+          "bodies": 29,
+          "bytes": {
+            "max": 1754,
+            "p50": 190,
+            "p95": 217,
+            "p99": 1754
+          },
+          "distinct_internal_mention_keys": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "invalid_json": 0,
+          "link_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "mention_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        },
+        "ticket": {
+          "bodies": 1,
+          "bytes": {
+            "max": 225,
+            "p50": 225,
+            "p95": 225,
+            "p99": 225
+          },
+          "distinct_internal_mention_keys": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "invalid_json": 0,
+          "link_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          },
+          "mention_nodes": {
+            "max": 0,
+            "p50": 0,
+            "p95": 0,
+            "p99": 0
+          }
+        }
+      },
+      "candidate_counts_are_resolved_edges": false,
+      "limit_reached": false,
+      "maximum_body_bytes": 8388608,
+      "scope": "selected Article/Doc main bodies and current Comments; no draft/historical export",
+      "selected_bodies": 38
+    },
+    "settings": [
+      ["default_statistics_target", "100", null],
+      ["effective_cache_size", "3774848", "8kB"],
+      ["max_connections", "3604", null],
+      ["random_page_cost", "4", null],
+      ["server_version", "17.11 (9045acd)", null],
+      ["shared_buffers", "116352", "8kB"],
+      ["work_mem", "4096", "kB"]
+    ],
+    "tables": {
+      "cms.articles": 33,
+      "cms.artiment_mentions": 27,
+      "cms.comments": 5,
+      "cms.mention_current_edges": null,
+      "cms.mention_endpoints": null,
+      "cms.mention_sets": null,
+      "cms.mention_sync_states": null,
+      "cms.mentions_graph_state": null
+    },
+    "transaction_read_only": true
+  },
+  "b2_performance_exit": "NOT_ACCEPTED: controlled envelope; target-calibrated graph and matching hardware/load evidence still required"
+}

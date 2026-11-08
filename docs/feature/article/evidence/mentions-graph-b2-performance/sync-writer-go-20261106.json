@@ -1,0 +1,28 @@
+{
+  "status": "LOCAL_DIAGNOSTIC_ONLY",
+  "date": "2026-11-06",
+  "command": "node scripts/mentions_perf/writer_load.mjs /tmp/mentions-writer-load-20261106-go",
+  "environment": {
+    "database": "groupher_mentions_perf_writer_1793973681228_72211",
+    "postgres_major": 14,
+    "dataset": "new isolated local database"
+  },
+  "writers": {
+    "successful": 40,
+    "total": 40,
+    "p95_ms": 160.333
+  },
+  "readers": {
+    "first_attempt_successful": 2915,
+    "total": 3056,
+    "first_attempt_success_ratio": 0.9538612565,
+    "p95_ms": 24.374
+  },
+  "qualification": "PARTIAL",
+  "missing": [
+    "target PostgreSQL 17 capacity",
+    "representative target body graph",
+    "agreed design arrival rates and pure lock-wait threshold",
+    "three independent runs of 1000 samples per case"
+  ]
+}
