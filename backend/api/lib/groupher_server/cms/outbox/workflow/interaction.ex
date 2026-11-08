@@ -34,6 +34,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
       {:busy, seconds} ->
         {:snooze, seconds}
 
+      {:snooze, seconds} ->
+        {:snooze, seconds}
+
       {:error,
        %ErrorCat.Error{
          namespace: {:cms},

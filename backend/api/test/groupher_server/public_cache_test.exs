@@ -236,6 +236,10 @@ defmodule GroupherServer.PublicCacheTest do
 
     oban_config = Application.fetch_env!(:groupher_server, Oban)
     plugins = Keyword.fetch!(oban_config, :plugins)
+    queues = Keyword.fetch!(oban_config, :queues)
+
+    assert Keyword.fetch!(queues, :cloudflare_purge) == 2
+    assert Keyword.fetch!(queues, :public_cache) == 1
 
     assert {Oban.Plugins.Lifeline, lifeline_opts} =
              List.keyfind(plugins, Oban.Plugins.Lifeline, 0)

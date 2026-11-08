@@ -6,7 +6,7 @@ defmodule GroupherServer.Jobs.CMSOutboxCDN do
   """
 
   use Oban.Worker,
-    queue: :public_cache,
+    queue: :cloudflare_purge,
     max_attempts: 8,
     unique: [period: 86_400, keys: [:event_id], states: :incomplete]
 

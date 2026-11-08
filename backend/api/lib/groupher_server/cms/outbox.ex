@@ -86,8 +86,9 @@ defmodule GroupherServer.CMS.Outbox do
   end
 
   @doc "Claims, executes and completes one event under a lease, leaving action failures retryable."
-  @spec execute(Ecto.UUID.t(), (Event.t() -> {:ok, term()} | {:error, term()})) ::
-          {:ok, term()} | {:busy, pos_integer()} | {:error, term()}
+  @spec execute(Ecto.UUID.t(), (Event.t() ->
+                                  {:ok, term()} | {:defer, pos_integer()} | {:error, term()})) ::
+          {:ok, term()} | {:busy, pos_integer()} | {:snooze, pos_integer()} | {:error, term()}
   def execute(event_id, action) when is_binary(event_id) and is_function(action, 1) do
     execute(event_id, action, on_error: :retry)
   end
@@ -106,8 +107,12 @@ defmodule GroupherServer.CMS.Outbox do
       CMS.Outbox.execute(event_id, fn event -> {:ok, event.id} end, on_error: :classify)
       #=> {:ok, value} | {:busy, seconds} | {:error, reason}
   """
-  @spec execute(Ecto.UUID.t(), (Event.t() -> {:ok, term()} | {:error, term()}), keyword()) ::
-          {:ok, term()} | {:busy, pos_integer()} | {:error, term()}
+  @spec execute(
+          Ecto.UUID.t(),
+          (Event.t() -> {:ok, term()} | {:defer, pos_integer()} | {:error, term()}),
+          keyword()
+        ) ::
+          {:ok, term()} | {:busy, pos_integer()} | {:snooze, pos_integer()} | {:error, term()}
   def execute(event_id, action, opts)
       when is_binary(event_id) and is_function(action, 1) and is_list(opts) do
     case Keyword.get(opts, :on_error, :retry) do
@@ -168,6 +173,12 @@ defmodule GroupherServer.CMS.Outbox do
           {:error, reason} -> {:error, reason}
         end
 
+      {:defer, seconds} when is_integer(seconds) and seconds in 1..86_400 ->
+        case defer(event.id, lock_ref, :temporarily_unavailable, seconds) do
+          {:ok, :pass} -> {:snooze, seconds}
+          {:error, reason} -> {:error, reason}
+        end
+
       {:error, reason} = error ->
         action_failure(event.id, lock_ref, reason, on_error, error)
 
@@ -184,6 +195,20 @@ defmodule GroupherServer.CMS.Outbox do
         on_error,
         {:error, exception}
       )
+  end
+
+  defp action_failure(
+         event_id,
+         lock_ref,
+         {:cloudflare_rate_limited, seconds} = reason,
+         mode,
+         _original_error
+       )
+       when mode in [:retry, :classify] and is_integer(seconds) and seconds in 1..86_400 do
+    case defer(event_id, lock_ref, reason, seconds) do
+      {:ok, :pass} -> {:snooze, seconds}
+      {:error, persist_reason} -> {:error, persist_reason}
+    end
   end
 
   defp action_failure(event_id, lock_ref, reason, :retry, original_error) do
@@ -247,6 +272,29 @@ defmodule GroupherServer.CMS.Outbox do
           locked_at: nil,
           locked_by: nil,
           available_at: now,
+          updated_at: now
+        ]
+      )
+
+    if updated == 1, do: {:ok, :pass}, else: {:error, :stale_lock}
+  end
+
+  defp defer(event_id, lock_ref, reason, seconds) do
+    now = DateTime.utc_now(:second)
+
+    {updated, _} =
+      Repo.update_all(
+        from(event in Event,
+          where:
+            event.id == ^event_id and event.status == :running and event.locked_by == ^lock_ref
+        ),
+        set: [
+          status: :retrying,
+          last_error_code: error_code(reason),
+          last_error_at: now,
+          locked_at: nil,
+          locked_by: nil,
+          available_at: DateTime.add(now, seconds, :second),
           updated_at: now
         ]
       )

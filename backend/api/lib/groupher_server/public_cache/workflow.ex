@@ -64,7 +64,14 @@ defmodule GroupherServer.PublicCache.Workflow do
 
   @doc false
   def mark_failed(id, lock_ref, type, reason, dead?) do
-    Repo.transaction(fn -> Persist.mark_failed(id, lock_ref, type, reason, dead?) end)
+    mark_failed(id, lock_ref, type, reason, dead?, 0)
+  end
+
+  @doc false
+  def mark_failed(id, lock_ref, type, reason, dead?, retry_after_seconds) do
+    Repo.transaction(fn ->
+      Persist.mark_failed(id, lock_ref, type, reason, dead?, retry_after_seconds)
+    end)
     |> unwrap_transaction()
   end
 
@@ -121,7 +128,21 @@ defmodule GroupherServer.PublicCache.Workflow do
         finalize_delivery(invalidation, lock_ref)
 
       {:error, reason} = error ->
-        finalize_delivery_error(invalidation, lock_ref, error, reason, attempt, max_attempts)
+        case reason do
+          {:cloudflare_rate_limited, seconds} when seconds in 1..86_400 ->
+            finalize_rate_limited_error(
+              invalidation,
+              lock_ref,
+              error,
+              reason,
+              seconds,
+              attempt,
+              max_attempts
+            )
+
+          _ ->
+            finalize_delivery_error(invalidation, lock_ref, error, reason, attempt, max_attempts)
+        end
     end
   end
 
@@ -138,6 +159,32 @@ defmodule GroupherServer.PublicCache.Workflow do
 
     case mark_failed(invalidation.id, lock_ref, invalidation.type, reason, dead?) do
       {:ok, _} -> retry_or_complete(error, dead?)
+      {:error, :stale_lock} -> {:ok, :pass}
+      {:error, finalize_reason} -> {:error, finalize_reason}
+    end
+  end
+
+  defp finalize_rate_limited_error(
+         invalidation,
+         lock_ref,
+         error,
+         reason,
+         retry_after_seconds,
+         attempt,
+         max_attempts
+       ) do
+    dead? = attempt >= max_attempts
+
+    case mark_failed(
+           invalidation.id,
+           lock_ref,
+           invalidation.type,
+           reason,
+           dead?,
+           retry_after_seconds
+         ) do
+      {:ok, _} when dead? -> retry_or_complete(error, true)
+      {:ok, _} -> {:ok, {:snooze, retry_after_seconds}}
       {:error, :stale_lock} -> {:ok, :pass}
       {:error, finalize_reason} -> {:error, finalize_reason}
     end

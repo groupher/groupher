@@ -62,6 +62,9 @@ defmodule GroupherServer.PublicCache do
   @doc false
   defdelegate mark_failed(id, lock_ref, type, reason, dead?), to: Workflow
 
+  @doc false
+  defdelegate mark_failed(id, lock_ref, type, reason, dead?, retry_after_seconds), to: Workflow
+
   @doc """
   Delivers one committed invalidation and returns the runtime-neutral outcome.
 
