@@ -19,7 +19,6 @@ defmodule GroupherServer.Activity.Ticket do
     source_linked: Event.contract([], [:ticket_source_id, :source_type, :source_id], []),
     source_unlinked: Event.contract([], [:ticket_source_id, :source_type, :source_id], []),
     work_status_changed: Event.contract([:from_status, :to_status], [], []),
-    draft_saved: Event.contract([:changed_fields], [:draft_version], []),
     moved_to_draft:
       Event.contract(
         [],

@@ -619,7 +619,9 @@ defmodule GroupherServer.AlertWall.Persist do
       nil ->
         case {attrs.community_id, open_items} do
           {nil, [%Item{} = item | _]} ->
-            case Repo.update(Item.changeset(item, %{community_id: nil})) do
+            case Repo.update(
+                   Item.changeset(item, %{community_id: nil, version: item.version + 1})
+                 ) do
               {:ok, _item} -> {:ok, nil}
               {:error, _reason} = error -> error
             end

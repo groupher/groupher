@@ -14,6 +14,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
   }
 
   alias CMS.Tickets.Model.Source
+  alias CMS.Model.TicketCaseWorker
   alias Activity.Model.TicketLog
   alias Activity.Model.PostLog
   alias Messaging.Model.Notification
@@ -94,6 +95,95 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
              ctx.ticket.workflow_version + 1
 
     assert Repo.get_by!(TicketTag, ticket_id: ctx.ticket.id).community_tag_id == tag.id
+  end
+
+  test "add_case_worker links only a member-owned Worker and replays once", ctx do
+    %{community: community, actor: actor, ticket: ticket} = ctx
+
+    case_body =
+      mock_body_bag(
+        Jason.encode!([%{"type" => "p", "children" => [%{"text" => "Case details"}]}])
+      )
+
+    assert {:ok, case_ticket} =
+             CMS.Tickets.create_case(
+               community,
+               %{title: "Shared fix", member_ticket_id: ticket.id, body_bag: case_body},
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, worker} =
+             CMS.Tickets.create_worker(
+               community,
+               ticket.id,
+               %{title: "Shared Worker"},
+               ticket.workflow_version,
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, _} =
+             CMS.Tickets.add_case_worker(
+               community,
+               case_ticket.id,
+               worker.id,
+               case_ticket.workflow_version,
+               actor,
+               command_id
+             )
+
+    assert {:ok, _} =
+             CMS.Tickets.add_case_worker(
+               community,
+               case_ticket.id,
+               worker.id,
+               case_ticket.workflow_version,
+               actor,
+               command_id
+             )
+
+    assert Repo.aggregate(
+             from(relation in TicketCaseWorker,
+               where:
+                 relation.case_ticket_id == ^case_ticket.id and
+                   relation.worker_ticket_id == ^worker.id
+             ),
+             :count
+           ) == 1
+
+    assert Repo.get!(TicketState, case_ticket.id).workflow_version ==
+             case_ticket.workflow_version + 1
+
+    assert {:error, _} =
+             CMS.Tickets.add_case_worker(
+               community,
+               ticket.id,
+               worker.id,
+               ticket.workflow_version + 1,
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, unrelated_case} =
+             CMS.Tickets.create_case(
+               community,
+               %{title: "Unrelated case", body_bag: case_body},
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:error, _} =
+             CMS.Tickets.add_case_worker(
+               community,
+               unrelated_case.id,
+               worker.id,
+               unrelated_case.workflow_version,
+               actor,
+               Ecto.UUID.generate()
+             )
   end
 
   test "a completed parent prevents a Worker from reopening", ctx do

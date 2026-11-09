@@ -241,7 +241,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
        %CommentContext{
          comment: canonical,
          comment_lifecycle: comment_lifecycle,
-         public_readable?: public_comment_reachable?(canonical, actor, community),
+         public_readable?: public_comment_reachable?(canonical, community),
          comment_author_user_id: canonical.author_id,
          article: parent_resource(parent_context),
          article_lifecycle: parent_lifecycle(parent_context),
@@ -258,12 +258,12 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
     end
   end
 
-  defp public_comment_reachable?(comment, actor, community) do
+  defp public_comment_reachable?(comment, community) do
     context =
       CMS.Gate.Context.Scope.Comment.for_thread(comment.thread, community_id: community.id)
 
     Comment
-    |> CMS.Gate.scope(actor, :read, context)
+    |> CMS.Gate.scope(nil, :read, context)
     |> where([c], c.id == ^comment.id)
     |> Repo.exists?()
   end

@@ -80,14 +80,8 @@ defmodule GroupherServer.CMS.Artiment.Status do
 
     comment_parents =
       binding_rows
-      |> Enum.group_by(fn {binding, _owner} -> binding.article_id end)
-      |> Map.new(fn {article_id, rows} ->
-        selected =
-          Enum.find(rows, fn {binding, _owner} -> binding.community_id == community.id end) ||
-            Enum.min_by(rows, fn {binding, _owner} -> binding.community_id end)
-
-        {article_id, selected}
-      end)
+      |> Enum.filter(fn {binding, _owner} -> binding.community_id == community.id end)
+      |> Map.new(fn {binding, owner} -> {binding.article_id, {binding, owner}} end)
 
     ordinary_ids =
       refs |> Enum.reject(&(&1.type in [:comment, :doc])) |> Enum.map(& &1.article_id)

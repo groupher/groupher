@@ -13,7 +13,6 @@ defmodule GroupherServer.Activity.Model.TicketLog do
       :source_linked,
       :source_unlinked,
       :work_status_changed,
-      :draft_saved,
       :published,
       :moved_to_draft,
       :public_update_published,

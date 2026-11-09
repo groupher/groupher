@@ -78,21 +78,8 @@ defmodule GroupherServer.CMS.Tickets.Lifecycle do
 
   @doc false
   def update_status(state, status) do
-    now = DateTime.utc_now(:second)
-
-    started_at =
-      if status in [:wip, :open] and is_nil(state.started_at), do: now, else: state.started_at
-
-    completed_at =
-      if status in [:done, :resolved], do: state.completed_at || now, else: nil
-
     state
-    |> TicketState.changeset(%{
-      status: status,
-      started_at: started_at,
-      completed_at: completed_at,
-      workflow_version: state.workflow_version + 1
-    })
+    |> TicketState.changeset(status_attrs(state, status))
     |> Repo.update()
   end
 
@@ -103,22 +90,21 @@ defmodule GroupherServer.CMS.Tickets.Lifecycle do
 
   @doc false
   def update_position(state, status, rank) do
+    state
+    |> TicketState.changeset(Map.put(status_attrs(state, status), :rank, rank))
+    |> Repo.update()
+  end
+
+  defp status_attrs(state, status) do
     now = DateTime.utc_now(:second)
 
-    started_at =
-      if status in [:wip, :open] and is_nil(state.started_at), do: now, else: state.started_at
-
-    completed_at = if status in [:done, :resolved], do: state.completed_at || now, else: nil
-
-    state
-    |> TicketState.changeset(%{
+    %{
       status: status,
-      rank: rank,
-      started_at: started_at,
-      completed_at: completed_at,
+      started_at:
+        if(status in [:wip, :open] and is_nil(state.started_at), do: now, else: state.started_at),
+      completed_at: if(status in [:done, :resolved], do: state.completed_at || now, else: nil),
       workflow_version: state.workflow_version + 1
-    })
-    |> Repo.update()
+    }
   end
 
   @doc false

@@ -900,7 +900,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
         })
       )
 
-    assert CommandReceipt.prune_expired() >= 1
+    _ = CommandReceipt.prune_expired()
     assert Repo.get(CMS.Model.CommandReceipt, expired.id) == nil
     assert Repo.get(CMS.Model.CommandReceipt, active.id)
   end

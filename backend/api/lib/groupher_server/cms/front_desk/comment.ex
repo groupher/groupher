@@ -4,8 +4,9 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   CMS FrontDesk facade.
 
   Ordinary public lookup follows the parent Article path and Comment Gate scope.
-  `read_mentioned/3` first confirms a stored Community Mention edge, then
-  applies Comment's own Gate without opening the parent body or comment list.
+  `read_mentioned/3` resolves a Comment through a bound parent path, or
+  confirms an adjacent Community Mention edge when the parent has no binding.
+  It then applies Comment's own Gate without opening the parent body or list.
   Stable Comment database IDs are accepted only in internal mode. `:article_context`
   is a trusted internal view used by command code that needs the Comment and
   its resolved Article context; it does not bypass write authorization.
@@ -45,7 +46,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
 
   def url(_, _), do: nil
 
-  @doc "Reads only a graph-confirmed Comment under a parent whose body may be unavailable."
+  @doc "Reads a selected Comment under a parent whose body may be unavailable."
   def read_mentioned(community_slug, %{type: :comment} = locator, actor)
       when is_binary(community_slug) do
     with {:ok, inner_id} <- parse_comment_inner_id(Map.get(locator, :comment_inner_id)),
@@ -55,7 +56,8 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
          {:comment, _, comment_id, _} <- focus.identity,
          %Comment{} = candidate <- Repo.get(Comment, comment_id),
          true <- candidate.inner_id == inner_id,
-         true <- confirmed_community_edge?(focus.endpoint_id, community.id, candidate.article_id),
+         true <-
+           reachable_community_comment?(focus.endpoint_id, community.id, candidate.article_id),
          scope <- CommentScopeContext.mentioned_target(candidate.thread, community.id),
          %Ecto.Query{} = query <- CMS.Gate.scope(Comment, actor, :read, scope),
          {:ok, comment} <-
@@ -68,7 +70,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
 
   def read_mentioned(_, _, _), do: {:error, CommentErrorCat.not_exist("comment not found")}
 
-  defp confirmed_community_edge?(endpoint_id, community_id, article_id)
+  defp reachable_community_comment?(endpoint_id, community_id, article_id)
        when is_binary(endpoint_id) do
     parent_bound_here? =
       Repo.exists?(
@@ -77,18 +79,10 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
         )
       )
 
-    if parent_bound_here? do
-      Repo.exists?(
-        from(edge in Edge,
-          where: edge.target_endpoint_id == ^endpoint_id
-        )
-      )
-    else
-      adjacent_edge_in_community?(endpoint_id, community_id)
-    end
+    parent_bound_here? or adjacent_edge_in_community?(endpoint_id, community_id)
   end
 
-  defp confirmed_community_edge?(_, _, _), do: false
+  defp reachable_community_comment?(_, _, _), do: false
 
   defp adjacent_edge_in_community?(endpoint_id, community_id) do
     incoming =

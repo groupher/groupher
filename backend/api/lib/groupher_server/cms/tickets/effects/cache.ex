@@ -23,7 +23,10 @@ defmodule GroupherServer.CMS.Tickets.Effects.Cache do
         effect_key
       )
       when is_binary(ticket_id) and is_integer(inner_id) and is_list(post_inner_ids) and
-             (is_binary(identity_ref) or is_tuple(identity_ref)) and is_binary(effect_key) do
+             (is_binary(identity_ref) or
+                (is_tuple(identity_ref) and tuple_size(identity_ref) == 2 and
+                   elem(identity_ref, 0) in [:command, :workflow] and
+                   is_binary(elem(identity_ref, 1)))) and is_binary(effect_key) do
     identity =
       case identity_ref do
         {:command, _command_id} = value -> value
@@ -56,6 +59,8 @@ defmodule GroupherServer.CMS.Tickets.Effects.Cache do
       end
     end)
   end
+
+  def enqueue(_, _, _, _, _, _), do: {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
 
   @doc "Purges public Ticket pages affected by a committed Post stats change."
   def purge_post(post_id) when is_binary(post_id) do

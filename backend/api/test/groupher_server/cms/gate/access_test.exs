@@ -473,6 +473,14 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     assert {:ok, :pass} = CommentPolicy.check_access(author, :edit, comment, context)
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+             CommentPolicy.check_access(
+               author,
+               :edit,
+               comment,
+               %{context | public_readable?: false}
+             )
+
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CommentPolicy.check_access(unrelated, :edit, comment, context)
 
     assert {:ok, :pass} = CommentPolicy.check_access(unrelated, :upvote, comment, context)

@@ -1,7 +1,7 @@
 defmodule GroupherServer.Repo.Migrations.AlignTicketActivityActions do
   use Ecto.Migration
 
-  @common ~w(created source_linked source_unlinked work_status_changed draft_saved published moved_to_draft)
+  @common ~w(created source_linked source_unlinked work_status_changed published moved_to_draft)
   @legacy ~w(update_added update_superseded)
   @current ~w(public_update_published public_update_superseded)
 
