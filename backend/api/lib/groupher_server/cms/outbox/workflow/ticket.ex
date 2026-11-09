@@ -32,9 +32,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Ticket do
   end
 
   defp deliver(%{event: "ticket.cache_invalidation", data: %{"cache_tags" => tags}}) do
-    with {:ok, tags} <- GroupherServer.PublicCache.validate_tags(tags),
-         {:ok, result} <- GroupherServer.PublicCache.purge_tags(tags) do
-      {:ok, result}
+    case GroupherServer.PublicCache.validate_tags(tags) do
+      {:ok, valid_tags} -> GroupherServer.PublicCache.purge_tags(valid_tags)
+      {:error, _reason} -> {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
     end
   end
 

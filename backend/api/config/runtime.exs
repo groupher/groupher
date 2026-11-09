@@ -25,7 +25,6 @@ config :groupher_server, GroupherServerWeb.ServiceAuth.Verifier,
     "phoenix:auth-api",
     "phoenix:content-import-api",
     "phoenix:content-publisher-api",
-    "phoenix:cms-maintenance",
     "phoenix:press-api",
     "phoenix:view-api"
   ]

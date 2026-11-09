@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
         }
 
   @doc "Resolves exactly one owner Community for a stable Doc, without guessing a binding."
-  @spec doc_owner(Ecto.UUID.t()) :: {:ok, Community.t()} | {:error, atom()}
+  @spec doc_owner(Ecto.UUID.t()) :: {:ok, Community.t()} | {:error, term()}
   def doc_owner(article_id) when is_binary(article_id) do
     owners =
       from(binding in ArticleBinding,
@@ -50,12 +50,12 @@ defmodule GroupherServer.CMS.Articles.Bindings.Persist do
 
     case owners do
       [owner] -> {:ok, owner}
-      [] -> {:error, :doc_owner_missing}
-      _ -> {:error, :doc_owner_ambiguous}
+      [] -> {:error, ErrorCat.doc_owner_missing()}
+      _ -> {:error, ErrorCat.doc_owner_ambiguous()}
     end
   end
 
-  def doc_owner(_), do: {:error, :doc_owner_missing}
+  def doc_owner(_), do: {:error, ErrorCat.doc_owner_missing()}
 
   @doc "Resolves an ArticleBinding from an explicit Community context."
   @spec get(map(), Community.t()) :: {:ok, t()} | {:error, term()}

@@ -2,7 +2,8 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
   @moduledoc """
   Explicit public discussion scope. Doc discussion belongs to the stable Article
   in its single owner Community, independently of the requested body branch.
-  `all_public/0` is reserved for set-based cross-Community public queries.
+  `all_public/0` supports both batch queries and one Comment lookup by ID when
+  the caller must check public visibility across Communities.
 
       request Community + thread -> typed Comment scope -> Gate parent admission
   """
@@ -28,7 +29,6 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
 
     unless policy_mode in [
              :public,
-             :mentioned_target,
              :owner_management,
              :moderator_management,
              :operations

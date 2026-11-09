@@ -1,6 +1,7 @@
 defmodule GroupherServer.CMS.Model.TicketFacet do
   @moduledoc """
-  Stores normalized version, operating-system and module values for internal Ticket filtering.
+  Stores version, operating-system and module values for internal Ticket filtering.
+  Tickets.Persist normalizes trusted input before calling this schema changeset.
 
       facet input
         -> normalized Ticket facet rows
