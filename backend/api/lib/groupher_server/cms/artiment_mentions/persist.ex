@@ -20,9 +20,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Persist do
       |> Repo.one()
       |> case do
         %Endpoint{} = endpoint ->
-          if endpoint_identity(endpoint) == {:ok, identity},
-            do: {:ok, endpoint},
-            else: {:error, :mention_endpoint_identity_conflict}
+          if endpoint_identity(endpoint) == {:ok, identity} do
+            {:ok, endpoint}
+          else
+            {:error, :mention_endpoint_identity_conflict}
+          end
 
         nil ->
           insert_or_get_endpoint(identity)
@@ -74,9 +76,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Persist do
           with {:ok, :pass} <- mark_endpoint_deleted(endpoint, now),
                {:ok, removed} <- remove_adjacent_edges([endpoint.id]),
                {:ok, children} <- remove_comment_child_edges(endpoint) do
-            if is_nil(endpoint.deleted_at) or removed + children > 0,
-              do: Revision.bump(),
-              else: {:ok, :pass}
+            if is_nil(endpoint.deleted_at) or removed + children > 0 do
+              Revision.bump()
+            else
+              {:ok, :pass}
+            end
           end
 
         nil ->

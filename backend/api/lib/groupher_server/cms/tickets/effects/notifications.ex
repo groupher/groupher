@@ -15,9 +15,9 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Messaging, Repo}
-  alias GroupherServer.Accounts.Model.User
-  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias GroupherServer.{Accounts, Activity, CMS, Messaging, Repo}
+  alias Accounts.Model.User
+  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
   alias CMS.Model.Comment
 
   alias CMS.Model.{
@@ -32,10 +32,9 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
     TicketUpdate
   }
 
-  alias GroupherServer.Activity.Model.TicketLog
+  alias Activity.Model.TicketLog
 
-  alias CMS.Tickets.PublicPosts
-  alias CMS.Tickets.Model.Source, as: TicketSource
+  alias CMS.Tickets.{PublicPosts, Model.Source}
 
   @doc "Enqueues an eligible public Ticket Activity in the caller transaction."
   def enqueue_activity(_community, state, %TicketLog{} = activity, command_id) do
@@ -186,7 +185,7 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
     with {:ok, public_post_ids} <- PublicPosts.ids_query(community_id) do
       Repo.one(
         from(public_post in subquery(public_post_ids),
-          join: link in TicketSource,
+          join: link in Source,
           on: link.post_id == public_post.id,
           join: post in Article,
           on: post.id == public_post.id,
@@ -208,11 +207,11 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
              Comment,
              nil,
              :list,
-             CommentScope.for_thread(:post, community_id: community_id)
+             CommentContext.for_thread(:post, community_id: community_id)
            ) do
       linked_post_ids =
         from(public_post in subquery(public_post_ids),
-          join: link in TicketSource,
+          join: link in Source,
           on: link.post_id == public_post.id,
           where: link.ticket_id == ^ticket_id,
           select: public_post.id

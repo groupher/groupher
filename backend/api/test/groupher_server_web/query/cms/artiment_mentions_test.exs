@@ -5,11 +5,11 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.ReviewBot.Model.ReviewBotConfig
+  alias GroupherServer.{CMS, Pagi, Repo, ReviewBot}
+  alias ReviewBot.Model.ReviewBotConfig
   alias CMS.ArtimentMentions
   alias CMS.Model.Mentions.Endpoint
-  alias GroupherServer.Pagi.Params
+  alias Pagi.Params
 
   @site_host ArtimentMentions.Config.site_host()
   @mentions_query S.Mention.q(:mentions)

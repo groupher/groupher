@@ -12,8 +12,7 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
 
   alias GroupherServer.ReviewBot
   alias GroupherServer.{AlertWall, CMS, Repo}
-  alias CMS.Model.ArtimentReview
-  alias CMS.Model.Comment
+  alias CMS.Model.{ArtimentReview, Comment}
   alias ReviewBot.Model.ReviewBotConfig
 
   @doc "Creates scoped requests with immutable content and complete configuration snapshots."

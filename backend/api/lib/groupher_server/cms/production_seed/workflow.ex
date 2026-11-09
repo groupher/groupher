@@ -9,8 +9,8 @@ defmodule GroupherServer.CMS.ProductionSeed.Workflow do
   identities at a time. Closing a run is required before opening another.
   """
   import Ecto.Query
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.ProductionSeed.{Run, Bootstrap}
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.ProductionSeed.{Run, Bootstrap}
 
   @doc "Checks explicit opt-in and the actual connection identity, never DB_NAME alone."
   def admit(database) do

@@ -9,10 +9,11 @@ defmodule GroupherServer.CMS.ProductionSeed.Logins do
   Closing a run revokes its sessions and makes every unused credential unusable.
   """
   import Ecto.Query
-  alias GroupherServer.CMS.ProductionSeed
+  alias GroupherServer.CMS
+  alias CMS.ProductionSeed
   alias GroupherServer.{Repo, Accounts}
   alias ProductionSeed.{Run, LoginGrant}
-  alias GroupherServer.Accounts.Model.{User, OauthProvider}
+  alias Accounts.Model.{User, OauthProvider}
 
   @doc "Issues a five-minute credential for a fixed alias; only this result contains plaintext."
   def issue(run_id, name, database) do

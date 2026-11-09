@@ -13,12 +13,12 @@ defmodule GroupherServer.CMS.Tickets.PublicPosts do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Model.Article
 
   @doc "Returns Post ids public in the supplied Community using Article Gate scope."
   def ids_query(community_id) when is_integer(community_id) do
-    case CMS.Gate.scope(Article, nil, :read, ArticleScope.public(:post)) do
+    case CMS.Gate.scope(Article, nil, :read, ArticleContext.public(:post)) do
       %Ecto.Query{} = scope ->
         {:ok,
          from(article in scope,
@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Tickets.PublicPosts do
   @doc "Answers whether a Post is in the canonical Article Gate public scope."
   def public?(community_id, post_id)
       when is_integer(community_id) and is_binary(post_id) do
-    case CMS.Gate.scope(Article, nil, :read, ArticleScope.public(:post)) do
+    case CMS.Gate.scope(Article, nil, :read, ArticleContext.public(:post)) do
       %Ecto.Query{} = scope ->
         {:ok,
          Repo.exists?(

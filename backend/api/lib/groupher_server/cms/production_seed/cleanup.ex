@@ -11,10 +11,10 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
   never calls a pending purge/Outbox state complete.
   """
   import Ecto.Query
-  alias GroupherServer.CMS.ProductionSeed
-  alias GroupherServer.{Repo, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ProductionSeed
   alias ProductionSeed.Run
-  alias GroupherServer.Accounts.Model.{User, BrowserSession, OauthProvider}
+  alias Accounts.Model.{User, BrowserSession, OauthProvider}
 
   alias CMS.Model.{
     Article,

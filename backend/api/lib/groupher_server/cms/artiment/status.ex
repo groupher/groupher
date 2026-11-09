@@ -26,10 +26,10 @@ defmodule GroupherServer.CMS.Artiment.Status do
     TicketState
   }
 
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Gate.Context.Scope.Ticket, as: TicketScope
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.Context.Scope.Ticket, as: TicketContext
 
   @doc "Reads a single Artiment status by Community and stable or public locator."
   def read(community_slug, %{type: type} = locator) when is_binary(community_slug) do
@@ -272,7 +272,12 @@ defmodule GroupherServer.CMS.Artiment.Status do
         |> Enum.flat_map(fn {thread, items} ->
           ids = Enum.map(items, & &1.comment_id)
 
-          CMS.Gate.scope(Comment, nil, :read, CommentScope.mentioned_target(thread, community.id))
+          CMS.Gate.scope(
+            Comment,
+            nil,
+            :read,
+            CommentContext.mentioned_target(thread, community.id)
+          )
           |> scope_query()
           |> where([comment], comment.id in ^ids)
           |> select([comment], comment.id)
@@ -284,9 +289,9 @@ defmodule GroupherServer.CMS.Artiment.Status do
 
         scope =
           case type do
-            :doc -> DocScope.public_main()
-            :ticket -> TicketScope.public(community)
-            _ -> ArticleScope.public(type)
+            :doc -> DocContext.public_main()
+            :ticket -> TicketContext.public(community)
+            _ -> ArticleContext.public(type)
           end
 
         query =

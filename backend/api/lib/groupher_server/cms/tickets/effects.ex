@@ -8,7 +8,8 @@ defmodule GroupherServer.CMS.Tickets.Effects do
       Ticket Command -> Tickets.Effects -> Outbox / Messaging adapter
   """
 
-  alias GroupherServer.CMS.Tickets.Effects.{Cache, Notifications}
+  alias GroupherServer.CMS
+  alias CMS.Tickets.Effects.{Cache, Notifications}
 
   @doc """
   Records Ticket and linked Post cache tags in the caller transaction.

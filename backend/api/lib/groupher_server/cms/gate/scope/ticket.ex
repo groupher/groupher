@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Ticket do
 
   import Ecto.Query
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
   alias CMS.Gate.Context.Scope.Ticket, as: TicketContext
   alias CMS.Gate.ErrorCat
 
@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Ticket do
     ArticlePublic
   }
 
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
 
   @actions [:read, :list]
 

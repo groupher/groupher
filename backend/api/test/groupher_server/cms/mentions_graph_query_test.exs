@@ -5,11 +5,11 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, Pagi, Repo}
   alias CMS.Model.Mentions.{Edge, Endpoint}
   alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Model.{ArticleLifecycle, ArticlePublic}
-  alias GroupherServer.Pagi.Params
+  alias Pagi.Params
 
   @tag :stable_doc_identity
   test "Doc graph, one-hop list and Comment seeds share stable endpoints" do
@@ -145,7 +145,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     focus = %{type: :post, article_inner_id: article_inner_id(article, community)}
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :mentions_graph_integrity_error}} =
+    assert {:error, %ErrorCat.Error{reason: :mentions_graph_integrity_error}} =
              CMS.mentions_graph_page(community.slug, focus, nil, 20)
   end
 
@@ -411,7 +411,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert first_page.page_info.has_next_page
     cursor = first_page.page_info.end_cursor
 
-    assert {:ok, {:error, %GroupherServer.ErrorCat.Error{reason: :mentions_graph_invalid_cursor}}} =
+    assert {:ok, {:error, %ErrorCat.Error{reason: :mentions_graph_invalid_cursor}}} =
              Repo.transaction(fn ->
                assert {:ok, :pass} = Revision.bump()
 
@@ -753,7 +753,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     assert first_page.has_next_page
     cursor = first_page.end_cursor
 
-    assert {:ok, {:error, %GroupherServer.ErrorCat.Error{reason: :mentions_graph_invalid_cursor}}} =
+    assert {:ok, {:error, %ErrorCat.Error{reason: :mentions_graph_invalid_cursor}}} =
              Repo.transaction(fn ->
                assert {:ok, :pass} = Revision.bump()
 
@@ -789,7 +789,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       )
 
     try do
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :mentions_graph_invalid_request}} =
+      assert {:error, %ErrorCat.Error{reason: :mentions_graph_invalid_request}} =
                CMS.mentions_graph_page(community.slug, focus, nil, 20)
     after
       :telemetry.detach(handler)

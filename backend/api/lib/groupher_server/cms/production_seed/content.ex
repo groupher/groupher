@@ -9,9 +9,9 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
   All writes and manifest ownership commit together. Replays reject modified data.
   Review decisions, model failures and browser acceptance remain real test actions.
   """
-  alias GroupherServer.CMS.ProductionSeed
-  alias GroupherServer.{Repo, CMS}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ProductionSeed
+  alias Accounts.Model.User
   alias CMS.Model.{Article, ArticleBinding, ArticlePublic, DocPublic, DocBranchVersion, Community}
 
   @fixtures [

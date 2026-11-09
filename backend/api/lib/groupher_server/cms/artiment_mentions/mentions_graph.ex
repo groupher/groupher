@@ -7,15 +7,17 @@ defmodule GroupherServer.CMS.ArtimentMentions.MentionsGraph do
         -> bounded Query / global revision
   """
 
-  alias GroupherServer.CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
-  alias GroupherServer.CMS.ArtimentMentions.MentionsGraph.Query
+  alias GroupherServer.CMS
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
+  alias CMS.ArtimentMentions.MentionsGraph.Query
 
   @doc "Returns the current global revision used to validate a graph page."
   def revision, do: Revision.current()
 
   @doc "Reads a bounded graph page through the MentionsGraph query boundary."
-  def page(community, focus, after_cursor, first),
-    do: Query.page(community, focus, after_cursor, first)
+  def page(community, focus, after_cursor, first) do
+    Query.page(community, focus, after_cursor, first)
+  end
 
   @doc "Lists Comment locators with stored outgoing edges for one Article focus."
   def article_comments(community, focus, after_cursor, first) do

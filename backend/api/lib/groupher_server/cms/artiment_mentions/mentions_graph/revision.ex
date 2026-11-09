@@ -7,8 +7,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.MentionsGraph.Revision do
 
   import Ecto.Query
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.Mentions.GraphState
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Model.Mentions.GraphState
 
   @revision_id 1
 

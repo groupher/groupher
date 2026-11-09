@@ -9,11 +9,14 @@ defmodule GroupherServer.CMS.SearchArtiments.Disabled do
                             -> search: explicit error
                             -> index writes: disabled acknowledgement, no provider I/O
   """
-  @behaviour GroupherServer.CMS.SearchArtiments.PlatformAdapter
+  alias GroupherServer.CMS
+  alias CMS.ErrorCat
+
+  @behaviour CMS.SearchArtiments.PlatformAdapter
 
   @impl true
   def search(_query) do
-    {:error, GroupherServer.CMS.ErrorCat.custom("Article search is disabled")}
+    {:error, ErrorCat.custom("Article search is disabled")}
   end
 
   @impl true

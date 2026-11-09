@@ -34,14 +34,17 @@ defmodule GroupherServer.CMS.FrontDesk do
   @max_batch 100
 
   @doc "Reads one resource status by locator, or a bounded batch by resolved identities."
-  def artiment_status(community, refs) when is_list(refs) and length(refs) <= @max_batch,
-    do: CMS.Artiment.Status.read_many(community, refs)
+  def artiment_status(community, refs) when is_list(refs) and length(refs) <= @max_batch do
+    CMS.Artiment.Status.read_many(community, refs)
+  end
 
-  def artiment_status(_community, refs) when is_list(refs),
-    do: {:error, CMS.ErrorCat.invalid_body("invalid Artiment status batch")}
+  def artiment_status(_community, refs) when is_list(refs) do
+    {:error, CMS.ErrorCat.invalid_body("invalid Artiment status batch")}
+  end
 
-  def artiment_status(community, locator) when is_map(locator),
-    do: CMS.Artiment.Status.read(community, locator)
+  def artiment_status(community, locator) when is_map(locator) do
+    CMS.Artiment.Status.read(community, locator)
+  end
 
   @doc "Builds an Article, Doc or Ticket path from Community coordinates."
   defdelegate article_url(target), to: Article, as: :url
@@ -91,19 +94,23 @@ defmodule GroupherServer.CMS.FrontDesk do
     end
   end
 
-  def comment(refs, _opts) when is_list(refs),
-    do: {:error, CMS.ErrorCat.invalid_body("invalid Comment batch")}
+  def comment(refs, _opts) when is_list(refs) do
+    {:error, CMS.ErrorCat.invalid_body("invalid Comment batch")}
+  end
 
-  def comment(comment_path_or_id, opts) when is_list(opts),
-    do: CommentFrontDesk.read(comment_path_or_id, opts)
+  def comment(comment_path_or_id, opts) when is_list(opts) do
+    CommentFrontDesk.read(comment_path_or_id, opts)
+  end
 
-  def comment(comment_path, actor) when is_map(comment_path) and is_map(actor),
-    do: CommentFrontDesk.read(comment_path, actor, [])
+  def comment(comment_path, actor) when is_map(comment_path) and is_map(actor) do
+    CommentFrontDesk.read(comment_path, actor, [])
+  end
 
   @doc "Reads one Comment path with an actor and explicit public/management options."
   @spec comment(map(), term(), keyword()) :: T.domain_res(CMS.Model.Comment.t())
-  def comment(comment_path, actor, opts) when is_map(comment_path) and is_map(actor),
-    do: CommentFrontDesk.read(comment_path, actor, opts)
+  def comment(comment_path, actor, opts) when is_map(comment_path) and is_map(actor) do
+    CommentFrontDesk.read(comment_path, actor, opts)
+  end
 
   @doc "Reads one Community Tag by database id."
   @spec community_tag(T.id()) :: T.domain_res(CommunityTag.t())
@@ -149,8 +156,9 @@ defmodule GroupherServer.CMS.FrontDesk do
     end
   end
 
-  def article(refs, _opts) when is_list(refs),
-    do: {:error, CMS.ErrorCat.invalid_body("invalid Article batch")}
+  def article(refs, _opts) when is_list(refs) do
+    {:error, CMS.ErrorCat.invalid_body("invalid Article batch")}
+  end
 
   @spec article(ArticlePath.t() | String.t(), keyword()) ::
           {:ok, struct()} | {:error, map()}

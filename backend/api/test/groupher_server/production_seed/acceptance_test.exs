@@ -1,9 +1,9 @@
 defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
   use GroupherServer.TestMate, async: false
-  alias GroupherServer.CMS.ProductionSeed
-  alias GroupherServer.{Repo, CMS}
+  alias CMS.ProductionSeed
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias ProductionSeed.{Run, LoginGrant, Logins}
-  alias GroupherServer.Accounts.Model.{User, OauthProvider, BrowserSession}
+  alias Accounts.Model.{User, OauthProvider, BrowserSession}
 
   test "closed-out release no longer exposes CLI credential issuance", %{database: database} do
     output = "/tmp/production-seed-p7-#{Ecto.UUID.generate()}.json"

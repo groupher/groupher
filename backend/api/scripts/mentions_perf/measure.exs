@@ -207,7 +207,7 @@ defmodule MentionsPerf.Locks do
       lock holder + waiting writer -> pg_blocking_pids -> reader fence + wait evidence
   """
   alias GroupherServer.Repo
-  alias GroupherServer.CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
+  alias CMS.ArtimentMentions.MentionsGraphRevision, as: Revision
   alias MentionsPerf.Measure
 
   def controlled(read) do

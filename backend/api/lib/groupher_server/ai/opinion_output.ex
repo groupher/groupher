@@ -12,7 +12,8 @@ defmodule GroupherServer.AI.OpinionOutput do
   @enforce_keys [:status, :sus_notes, :coverage, :summary]
   defstruct [:status, :sus_notes, :coverage, :summary, :provider_request_id]
 
-  alias GroupherServer.AI.Const
+  alias GroupherServer.AI
+  alias AI.Const
 
   @statuses Const.statuses()
   @note_types Const.note_types()

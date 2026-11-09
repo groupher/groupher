@@ -5,7 +5,8 @@ defmodule GroupherServer.CMS.Tickets.Notifications do
       Ticket command -> Notifications facade -> durable Outbox delivery
   """
 
-  alias GroupherServer.CMS.Tickets.Effects
+  alias GroupherServer.CMS
+  alias CMS.Tickets.Effects
 
   defdelegate enqueue_activity(community, state, activity, command_id),
     to: Effects

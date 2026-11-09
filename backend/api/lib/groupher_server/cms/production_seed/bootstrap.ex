@@ -9,8 +9,9 @@ defmodule GroupherServer.CMS.ProductionSeed.Bootstrap do
   """
   import Ecto.Query
   alias GroupherServer.{Repo, CMS, ReviewBot}
-  alias GroupherServer.Accounts.Model.{User, OauthProvider}
-  alias GroupherServer.CMS.ProductionSeed.Run
+  alias GroupherServer.Accounts
+  alias Accounts.Model.{User, OauthProvider}
+  alias CMS.ProductionSeed.Run
   alias CMS.Model.{Community, CommunitySlugClaim}
   @report_threshold Application.compile_env(:groupher_server, :cms_review_report_threshold, 3)
   @aliases ~w(author adminDev adminMock platform outsider) ++

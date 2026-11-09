@@ -1,7 +1,9 @@
 defmodule GroupherServer.Test.CMS.Snapshot.MembersTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Snapshot.Members
+  alias GroupherServer.CMS
+
+  alias CMS.Snapshot.Members
 
   test "renaming an account never creates another participant identity" do
     old = %{id: 7, login: "old-login", nickname: "Old"}

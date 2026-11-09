@@ -21,8 +21,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Commands.Update do
   alias CMS.Comments.Query.Mentions, as: CommentMentions
   alias CMS.Tickets.Query.Mentions, as: TicketMentions
   alias CMS.Model.Article
-  alias GroupherServer.Accounts.Model.User
-
+  alias GroupherServer.Accounts
+  alias Accounts.Model.User
 
   @mention_threads Config.threads()
 

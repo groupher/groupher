@@ -10,9 +10,10 @@ defmodule GroupherServer.CMS.Tickets do
         -> Gate-scoped Query or receipt-backed Commands
   """
 
-  alias GroupherServer.CMS.Model.Community
-  alias GroupherServer.CMS.Tickets.{Commands, Query}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
+  alias CMS.Model.Community
+  alias CMS.Tickets.{Commands, Query}
+  alias Accounts.Model.User
 
   @doc "Pages public User Tickets for one Community."
   def page_public(%Community{} = community, filter \\ %{}, pagi \\ nil) do

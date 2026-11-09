@@ -1,10 +1,10 @@
 defmodule GroupherServer.Test.CMS.Articles.DocActivityTest do
   use GroupherServer.TestMate, async: false
   import Ecto.Query
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, Pagi, Repo}
   alias CMS.Model.{Article, ArticleBinding, DocBranch, DocBranchState, DocPublic}
   alias CMS.Articles.Pagination
-  alias GroupherServer.Pagi.Params
+  alias Pagi.Params
   alias Helper.ORM.Pagi.Config
 
   test "ACT-01 display, ASC/DESC cursor and binding tie use the effective main activity" do

@@ -11,8 +11,7 @@ defmodule GroupherServer.CMS.Model.TicketTag do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias CMS.Model.CommunityTag
-  alias GroupherServer.CMS.Model.Article
+  alias CMS.Model.{Article, CommunityTag}
   alias Helper.Constant.DBPrefix
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}

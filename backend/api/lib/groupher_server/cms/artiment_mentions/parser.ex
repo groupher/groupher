@@ -5,7 +5,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
       Plate AST -> structured link/mention nodes -> mention candidates
   """
 
-  alias GroupherServer.CMS.{ArtimentMentions.Config, ErrorCat}
+  alias GroupherServer.CMS
+  alias CMS.{ArtimentMentions.Config, ErrorCat}
 
   @threads Config.threads()
   @max_url_bytes 1200

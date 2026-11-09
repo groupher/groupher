@@ -17,8 +17,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects.Notifications do
   alias CMS.Outbox.Event
   alias Accounts.Model.User
 
-  def deliver(_source_id, _revision_identity, _community_id, [], _event_id),
-    do: {:ok, :no_new_mentions}
+  def deliver(_source_id, _revision_identity, _community_id, [], _event_id) do
+    {:ok, :no_new_mentions}
+  end
 
   def deliver(source_id, revision_identity, community_id, recipient_ids, event_id)
       when is_binary(revision_identity) and is_integer(community_id) and is_list(recipient_ids) do
@@ -110,8 +111,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects.Notifications do
     end
   end
 
-  defp revision_match(%{published_revision_identity: revision_identity}, revision_identity),
-    do: :current
+  defp revision_match(%{published_revision_identity: revision_identity}, revision_identity) do
+    :current
+  end
 
   defp revision_match(_, _), do: :stale
 

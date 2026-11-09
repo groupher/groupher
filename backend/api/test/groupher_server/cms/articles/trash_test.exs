@@ -3,10 +3,10 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.{Activity, AlertWall, CMS}
+  alias GroupherServer.{Activity, AlertWall, CMS, PublicCache}
   alias AlertWall.Model.{Item, UserReport}
-  alias GroupherServer.CMS.Outbox.Event
-  alias GroupherServer.PublicCache.Tags
+  alias CMS.Outbox.Event
+  alias PublicCache.Tags
 
   alias CMS.Model.{
     ArticleEmotionCount,
@@ -20,10 +20,10 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   }
 
   alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
-  alias CMS.Model.Mentions.Endpoint, as: MentionEndpoint
+  alias CMS.Model.Mentions.Endpoint
   alias CMS.Model.Mentions.Edge
   alias Activity.Model.PostLog
-  alias CMS.Tickets.Model.Source, as: TicketSource
+  alias CMS.Tickets.Model.Source
 
   @site_host CMS.ArtimentMentions.Config.site_host()
 
@@ -75,8 +75,8 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                Ecto.UUID.generate()
              )
 
-    comment_endpoint = Repo.get_by!(MentionEndpoint, type: :comment, comment_id: comment.id)
-    parent_endpoint = Repo.get!(MentionEndpoint, comment_endpoint.parent_endpoint_id)
+    comment_endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
+    parent_endpoint = Repo.get!(Endpoint, comment_endpoint.parent_endpoint_id)
     assert parent_endpoint.article_id == post.article_id
 
     {:ok, before_trash} = Revision.current()
@@ -84,14 +84,14 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     {:ok, after_trash} = Revision.current()
     assert after_trash > before_trash
 
-    assert Repo.get!(MentionEndpoint, comment_endpoint.id).parent_endpoint_id ==
+    assert Repo.get!(Endpoint, comment_endpoint.id).parent_endpoint_id ==
              parent_endpoint.id
 
     assert {:ok, _restored} = CMS.Articles.restore_trashed(trash_item.hash_id, user)
     {:ok, after_restore} = Revision.current()
     assert after_restore > after_trash
 
-    assert Repo.get!(MentionEndpoint, comment_endpoint.id).parent_endpoint_id ==
+    assert Repo.get!(Endpoint, comment_endpoint.id).parent_endpoint_id ==
              parent_endpoint.id
   end
 
@@ -219,7 +219,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                Ecto.UUID.generate()
              )
 
-    assert Repo.get_by!(TicketSource, ticket_id: ticket.id, post_id: post.id)
+    assert Repo.get_by!(Source, ticket_id: ticket.id, post_id: post.id)
 
     assert {:ok, %TrashedArticle{} = trash_item} =
              CMS.Articles.trash(post, user, community: community)
@@ -230,7 +230,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
 
     refute Repo.get(Article, post.id)
-    refute Repo.get_by(TicketSource, ticket_id: ticket.id, post_id: post.id)
+    refute Repo.get_by(Source, ticket_id: ticket.id, post_id: post.id)
     assert Repo.get_by!(TicketState, article_id: ticket.id).type == :user
     assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state == :draft
   end
@@ -421,7 +421,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                Ecto.UUID.generate()
              )
 
-    comment_endpoint = Repo.get_by!(MentionEndpoint, type: :comment, comment_id: comment.id)
+    comment_endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
     edge = Repo.get_by!(Edge, source_endpoint_id: comment_endpoint.id)
     assert edge.target_endpoint_id
 
@@ -429,7 +429,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
     refute Repo.get(Comment, comment.id)
-    assert is_nil(Repo.get!(MentionEndpoint, comment_endpoint.id).deleted_at)
+    assert is_nil(Repo.get!(Endpoint, comment_endpoint.id).deleted_at)
     refute Repo.get(Edge, edge.id)
     assert Repo.aggregate(Edge, :count) == 0
   end
@@ -466,9 +466,9 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              )
 
     source_endpoint =
-      Repo.get_by!(MentionEndpoint, type: :blog, article_id: mentioner.article_id)
+      Repo.get_by!(Endpoint, type: :blog, article_id: mentioner.article_id)
 
-    target_endpoint = Repo.get_by!(MentionEndpoint, type: :post, article_id: target.article_id)
+    target_endpoint = Repo.get_by!(Endpoint, type: :post, article_id: target.article_id)
 
     edge =
       Repo.get_by!(Edge,
@@ -514,7 +514,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, item} = CMS.Articles.trash(target, user)
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
-    assert Repo.get!(MentionEndpoint, target_endpoint.id).deleted_at
+    assert Repo.get!(Endpoint, target_endpoint.id).deleted_at
     refute Repo.get(Edge, projected_edge.id)
   end
 

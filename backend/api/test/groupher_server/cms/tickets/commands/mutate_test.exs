@@ -2,7 +2,9 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.{Activity, CMS, Messaging, PublicCache}
+
+  alias CMS.Model.{
     Article,
     ArticleLifecycle,
     ArticlePublic,
@@ -10,13 +12,13 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     TicketUpdate
   }
 
-  alias GroupherServer.CMS.Tickets.Model.Source, as: TicketSource
-  alias GroupherServer.Activity.Model.TicketLog
-  alias GroupherServer.Activity.Model.PostLog
-  alias GroupherServer.Messaging.Model.Notification
-  alias GroupherServer.Messaging.Notifications.Delivery
-  alias GroupherServer.CMS.Outbox.Event
-  alias GroupherServer.PublicCache.Tags
+  alias CMS.Tickets.Model.Source
+  alias Activity.Model.TicketLog
+  alias Activity.Model.PostLog
+  alias Messaging.Model.Notification
+  alias Messaging.Notifications.Delivery
+  alias CMS.Outbox.Event
+  alias PublicCache.Tags
 
   setup do
     {community, post, _attrs, actor} = mock_article(:post)
@@ -146,7 +148,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
              :count
            ) == 1
 
-    source = Repo.get_by!(TicketSource, ticket_id: ticket.id, post_id: linked_post.id)
+    source = Repo.get_by!(Source, ticket_id: ticket.id, post_id: linked_post.id)
 
     assert {:ok, _ticket_id} =
              CMS.Tickets.unlink_source(
@@ -667,7 +669,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
 
   test "TicketSource deletion requires the controlled database role", context do
     %{ticket: ticket} = context
-    source = Repo.get_by!(TicketSource, ticket_id: ticket.id)
+    source = Repo.get_by!(Source, ticket_id: ticket.id)
 
     assert_raise Postgrex.Error, fn ->
       Repo.query!("DELETE FROM cms.ticket_sources WHERE id = $1", [Ecto.UUID.dump!(source.id)])
@@ -676,7 +678,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
 
   test "TicketSource database guards reject unsupported type and identity changes", context do
     %{community: community, actor: actor, ticket: ticket, post: post} = context
-    source = Repo.get_by!(TicketSource, ticket_id: ticket.id, post_id: post.id)
+    source = Repo.get_by!(Source, ticket_id: ticket.id, post_id: post.id)
     {^community, second_post, _attrs, ^actor} = mock_article(:post, community, actor)
 
     assert_raise Postgrex.Error, fn ->
@@ -693,7 +695,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
       )
     end
 
-    assert Repo.get!(TicketSource, source.id).post_id == post.id
+    assert Repo.get!(Source, source.id).post_id == post.id
   end
 
   test "TicketSource database scope guard rejects hidden and cross Community Posts", context do
@@ -738,7 +740,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
   test "unlink uses the controlled role, captures old Post cache refs and downgrades zero-source Ticket",
        context do
     %{community: community, actor: actor, ticket: ticket, post: post} = context
-    source = Repo.get_by!(TicketSource, ticket_id: ticket.id, post_id: post.id)
+    source = Repo.get_by!(Source, ticket_id: ticket.id, post_id: post.id)
 
     assert {:ok, _ticket_id} =
              CMS.Tickets.unlink_source(
@@ -750,7 +752,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                Ecto.UUID.generate()
              )
 
-    refute Repo.get(TicketSource, source.id)
+    refute Repo.get(Source, source.id)
     assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state == :draft
 
     assert Enum.any?(Repo.all(Event), fn event ->
@@ -1129,7 +1131,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     assert {:ok, item} = CMS.Articles.trash(post, actor, community: community)
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, actor)
     refute Repo.get(Article, post.id)
-    refute Repo.exists?(from(source in TicketSource, where: source.post_id == ^post.id))
+    refute Repo.exists?(from(source in Source, where: source.post_id == ^post.id))
   end
 
   test "Publish rejects a preview anchor different from the reviewed source set", context do

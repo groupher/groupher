@@ -8,7 +8,8 @@ defmodule GroupherServer.CMS.Snapshot.Members do
   Callers supply effective users in newest-fact order when rebuilding a summary.
   """
 
-  alias GroupherServer.CMS.Model.Embeds.User
+  alias GroupherServer.CMS
+  alias CMS.Model.Embeds.User
 
   @doc "Normalizes, deduplicates and bounds an already ordered participant list."
   @spec bounded([map()], pos_integer()) :: {:ok, [User.t()]} | {:error, atom()}

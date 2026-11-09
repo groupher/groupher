@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     PinnedArticle
   }
 
-  alias CMS.Tickets.Model.Source, as: TicketSource
+  alias CMS.Tickets.Model.Source
 
   @ordinary_threads [:post, :blog, :changelog]
 
@@ -68,11 +68,13 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     end
   end
 
-  defp move_in_transaction(%Article{thread: :doc}, %Community{}, %Community{}),
-    do: {:error, :unsupported_for_doc}
+  defp move_in_transaction(%Article{thread: :doc}, %Community{}, %Community{}) do
+    {:error, :unsupported_for_doc}
+  end
 
-  defp move_in_transaction(%Article{thread: :ticket}, %Community{}, %Community{}),
-    do: {:error, ArticleErrorCat.ticket_binding_unsupported()}
+  defp move_in_transaction(%Article{thread: :ticket}, %Community{}, %Community{}) do
+    {:error, ArticleErrorCat.ticket_binding_unsupported()}
+  end
 
   @doc """
   Ensures the ordinary Article has its Community binding before publication.
@@ -125,8 +127,9 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     end
   end
 
-  defp mirror_in_transaction(%Article{thread: :doc}, %Community{}),
-    do: {:error, :unsupported_for_doc}
+  defp mirror_in_transaction(%Article{thread: :doc}, %Community{}) do
+    {:error, :unsupported_for_doc}
+  end
 
   defp mirror_in_transaction(_, _), do: {:error, :invalid_article_binding}
 
@@ -134,8 +137,9 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
          %ArticleBinding{inner_id: inner_id},
          %ArticleBinding{inner_id: inner_id}
        )
-       when not is_nil(inner_id),
-       do: {:ok, :pass}
+       when not is_nil(inner_id) do
+    {:ok, :pass}
+  end
 
   defp maybe_bump_mirror(_existing, _binding), do: Revision.bump()
 
@@ -166,23 +170,27 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     end
   end
 
-  defp unmirror_in_transaction(%Article{thread: :doc}, %Community{}),
-    do: {:error, :unsupported_for_doc}
+  defp unmirror_in_transaction(%Article{thread: :doc}, %Community{}) do
+    {:error, :unsupported_for_doc}
+  end
 
-  defp unmirror_in_transaction(%Article{thread: :ticket}, %Community{}),
-    do: {:error, ArticleErrorCat.ticket_binding_unsupported()}
+  defp unmirror_in_transaction(%Article{thread: :ticket}, %Community{}) do
+    {:error, ArticleErrorCat.ticket_binding_unsupported()}
+  end
 
   defp unmirror_in_transaction(_, _), do: {:error, :invalid_article_binding}
 
   defp ensure_no_ticket_link(:post, post_id, _community_id) do
     linked_ticket =
-      from(link in TicketSource,
+      from(link in Source,
         where: link.post_id == ^post_id
       )
 
-    if Repo.exists?(linked_ticket),
-      do: {:error, ArticleErrorCat.post_linked_to_ticket()},
-      else: {:ok, :pass}
+    if Repo.exists?(linked_ticket) do
+      {:error, ArticleErrorCat.post_linked_to_ticket()}
+    else
+      {:ok, :pass}
+    end
   end
 
   defp ensure_no_ticket_link(_thread, _post_id, _community_id), do: {:ok, :pass}

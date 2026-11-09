@@ -11,7 +11,8 @@ defmodule GroupherServer.Activity.Ticket do
     schema: GroupherServer.Activity.Model.TicketLog,
     stream_field: :article_id
 
-  alias GroupherServer.Activity.Event
+  alias GroupherServer.Activity
+  alias Activity.Event
 
   @contracts %{
     created: Event.contract([], [], []),

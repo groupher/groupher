@@ -8,9 +8,9 @@ defmodule GroupherServer.CMS.ProductionSeed.References do
   Projection rows are never inserted here. The normal Mention Outbox must run.
   """
   import Ecto.Query
-  alias GroupherServer.CMS.ProductionSeed
-  alias GroupherServer.{Repo, CMS}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ProductionSeed
+  alias Accounts.Model.User
 
   alias CMS.Model.{
     Article,

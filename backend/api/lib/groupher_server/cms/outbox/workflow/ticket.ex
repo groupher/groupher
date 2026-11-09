@@ -38,8 +38,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Ticket do
     end
   end
 
-  defp deliver(%{event: "ticket.notification"} = event),
-    do: CMS.Tickets.Effects.Notifications.deliver(event)
+  defp deliver(%{event: "ticket.notification"} = event) do
+    CMS.Tickets.Effects.Notifications.deliver(event)
+  end
 
   defp deliver(_event), do: {:error, CMS.Tickets.ErrorCat.invalid_ticket_content()}
 end

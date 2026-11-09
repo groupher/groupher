@@ -7,9 +7,9 @@ defmodule GroupherServerWeb.Resolvers.CMS.Tickets do
         -> CMS.Tickets query or command result
   """
 
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Model.Community
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
+  alias CMS.Model.Community
+  alias Accounts.Model.User
 
   @doc "Resolves the public three-column Ticket Kanban."
   def grouped_public(_root, %{community: %Community{} = community} = args, _info) do

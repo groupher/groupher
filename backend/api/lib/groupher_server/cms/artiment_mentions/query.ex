@@ -5,17 +5,17 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
       endpoint -> current published revision identity; public source -> outgoing/incoming lists
   """
   import Ecto.Query
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Pagi, Repo}
   alias CMS.ArtimentMentions.MentionsGraph.NodeStatus
   alias CMS.Model.Mentions.{Edge, Endpoint}
   alias CMS.Outbox.Event
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Gate.Context.Scope.Ticket, as: TicketScope
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.Context.Scope.Ticket, as: TicketContext
   alias CMS.Model.{Community, TicketState}
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Pagi.Params
+  alias Accounts.Model.User
+  alias Pagi.Params
   alias Helper.ORM.Pagi.Page
   alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
 
@@ -464,7 +464,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
       [:post, :blog, :changelog]
       |> Enum.map(fn type ->
         scope =
-          CMS.Gate.scope(Article, nil, :read, ArticleScope.public(type)) |> scope_query()
+          CMS.Gate.scope(Article, nil, :read, ArticleContext.public(type)) |> scope_query()
 
         scope
         |> join(:inner, [article, ...], endpoint in Endpoint,
@@ -476,7 +476,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
       end)
 
     doc =
-      CMS.Gate.scope(Article, nil, :read, DocScope.public_main())
+      CMS.Gate.scope(Article, nil, :read, DocContext.public_main())
       |> scope_query()
       |> join(:inner, [article, ...], endpoint in Endpoint,
         on: endpoint.type == :doc and endpoint.article_id == article.id,
@@ -486,7 +486,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
       |> current_endpoint_selection(:doc)
 
     ticket =
-      CMS.Gate.scope(TicketState, nil, :read, TicketScope.public(community))
+      CMS.Gate.scope(TicketState, nil, :read, TicketContext.public(community))
       |> scope_query()
       |> join(:inner, [ticket_state: state], endpoint in Endpoint,
         on: endpoint.type == :ticket and endpoint.article_id == state.article_id,
@@ -495,7 +495,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
       |> current_endpoint_selection(:ticket)
 
     comments =
-      CMS.Gate.scope(Comment, nil, :read, CommentScope.all_public())
+      CMS.Gate.scope(Comment, nil, :read, CommentContext.all_public())
       |> scope_query()
       |> where([comment, ...], as(:gate_community).id == ^community.id)
       |> join(:inner, [comment, ...], parent_endpoint in Endpoint,

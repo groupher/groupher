@@ -3,11 +3,11 @@ defmodule GroupherServer.PublicCache.CloudflareRateLimitTest do
 
   use GroupherServer.DataCase, async: false
 
-  alias GroupherServer.{CMS, PublicCache, Repo}
-  alias GroupherServer.CMS.Outbox.Event
-  alias GroupherServer.Jobs.CMSOutboxComment
-  alias GroupherServer.Jobs.PublicCachePurge
-  alias GroupherServer.PublicCache.{Cloudflare, Model.Invalidation}
+  alias GroupherServer.{CMS, Jobs, PublicCache, Repo}
+  alias CMS.Outbox.Event
+  alias Jobs.CMSOutboxComment
+  alias Jobs.PublicCachePurge
+  alias PublicCache.{Cloudflare, Model.Invalidation}
 
   setup do
     previous = Application.get_env(:groupher_server, Cloudflare)

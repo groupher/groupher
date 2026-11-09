@@ -6,7 +6,8 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
 
       request Community + thread -> typed Comment scope -> Gate parent admission
   """
-  alias GroupherServer.CMS.Gate.Config
+  alias GroupherServer.CMS
+  alias CMS.Gate.Config
   @threads Config.article_threads()
   @enforce_keys [:thread, :policy_mode]
   defstruct [:thread, :policy_mode, :community_id]

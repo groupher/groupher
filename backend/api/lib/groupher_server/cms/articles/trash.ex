@@ -348,11 +348,13 @@ defmodule GroupherServer.CMS.Articles.Trash do
     )
   end
 
-  defp unlink_ticket_sources_before_post_delete(%Article{thread: :post}, _community, _actor, _id),
-    do: {:error, ArticleErrorCat.article_not_found()}
+  defp unlink_ticket_sources_before_post_delete(%Article{thread: :post}, _community, _actor, _id) do
+    {:error, ArticleErrorCat.article_not_found()}
+  end
 
-  defp unlink_ticket_sources_before_post_delete(%Article{}, _community, _actor, _command_id),
-    do: {:ok, :pass}
+  defp unlink_ticket_sources_before_post_delete(%Article{}, _community, _actor, _command_id) do
+    {:ok, :pass}
+  end
 
   defp mark_comment_items_deleted(comment_ids) do
     Enum.reduce_while(comment_ids, {:ok, :pass}, fn comment_id, {:ok, :pass} ->
@@ -540,8 +542,9 @@ defmodule GroupherServer.CMS.Articles.Trash do
          _actor,
          _command_id,
          _source_type
-       ),
-       do: {:ok, :pass}
+       ) do
+    {:ok, :pass}
+  end
 
   defp trash_operation_ref(%TrashedArticle{trash_action_id: action_id}) do
     case Repo.get(TrashAction, action_id) do

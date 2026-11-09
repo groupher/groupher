@@ -7,8 +7,8 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
   import Ecto.Query, warn: false
   alias GroupherServer.{CMS, Repo}
   alias CMS.ArtimentMentions.Config
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.Model.{Article, ArticleBinding, Community}
   @threads Config.threads()
 
@@ -224,11 +224,11 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
   end
 
   defp article_scope(:doc) do
-    CMS.Gate.scope(Article, nil, :list, DocScope.public_main())
+    CMS.Gate.scope(Article, nil, :list, DocContext.public_main())
   end
 
   defp article_scope(thread) do
-    CMS.Gate.scope(Article, nil, :list, ArticleScope.public(thread))
+    CMS.Gate.scope(Article, nil, :list, ArticleContext.public(thread))
   end
 
   defp article_projection(query, :doc) do

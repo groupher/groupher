@@ -8,7 +8,8 @@ defmodule GroupherServer.CMS.Tickets.Cache do
       Ticket/Post mutation -> Tickets.Cache -> Outbox -> PublicCache purge
   """
 
-  alias GroupherServer.CMS.Tickets.Effects
+  alias GroupherServer.CMS
+  alias CMS.Tickets.Effects
 
   defdelegate enqueue(community, ticket_id, inner_id, post_inner_ids, command_id, effect_key),
     to: Effects,

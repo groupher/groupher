@@ -1,6 +1,8 @@
 defmodule GroupherServer.Test.CMS.Interactions.CommentOutboxContext do
   use GroupherServer.TestMate
 
+  alias GroupherServer.CMS
+
   alias CMS.Model.{ArticleBinding, CommunitySubscriber}
   alias CMS.Outbox.Event
   alias CMS.Outbox.Workflow.Interaction
@@ -104,6 +106,7 @@ defmodule GroupherServer.Test.CMS.Interactions.CommentOutboxContext do
 
   defp react(:upvote, comment, actor, id), do: CMS.Interactions.upvote(comment, actor, id)
 
-  defp react(:emotion, comment, actor, id),
-    do: CMS.Interactions.emotion(comment, :heart, actor, id)
+  defp react(:emotion, comment, actor, id) do
+    CMS.Interactions.emotion(comment, :heart, actor, id)
+  end
 end

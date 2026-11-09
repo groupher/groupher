@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Tickets.Query.Mentions do
   """
   import Ecto.Query, warn: false
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Gate.Context.Scope.Ticket, as: TicketScope
+  alias CMS.Gate.Context.Scope.Ticket, as: TicketContext
   alias CMS.Model.{ArticleBinding, Community, TicketState}
 
   def load(locators, ids) do
@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.Tickets.Query.Mentions do
       inner_ids = Enum.map(rows, &elem(&1, 2))
 
       with {:ok, %Ecto.Query{} = query} <-
-             CMS.Gate.scope(TicketState, nil, :list, TicketScope.public(community)) do
+             CMS.Gate.scope(TicketState, nil, :list, TicketContext.public(community)) do
         tickets =
           from(
             [
@@ -107,7 +107,7 @@ defmodule GroupherServer.CMS.Tickets.Query.Mentions do
         |> Enum.uniq()
 
       with {:ok, %Ecto.Query{} = query} <-
-             CMS.Gate.scope(TicketState, nil, :list, TicketScope.public(community)) do
+             CMS.Gate.scope(TicketState, nil, :list, TicketContext.public(community)) do
         rows =
           from(
             [

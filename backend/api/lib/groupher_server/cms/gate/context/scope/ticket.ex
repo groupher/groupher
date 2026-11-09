@@ -7,7 +7,8 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Ticket do
         -> Gate.Scope.Ticket admission
   """
 
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS
+  alias CMS.Model.Community
 
   @enforce_keys [:community_id, :community_slug, :visibility]
   defstruct [:community_id, :community_slug, :visibility]

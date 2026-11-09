@@ -9,8 +9,10 @@ defmodule GroupherServer.Test.CMS.Tickets.ActivityMigrationTest do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.Activity.Model.TicketLog
-  alias GroupherServer.Repo.Migrations.AlignTicketActivityActions
+  alias GroupherServer.{Activity, Repo}
+
+  alias Activity.Model.TicketLog
+  alias Repo.Migrations.AlignTicketActivityActions
 
   setup do
     {community, post, _attrs, actor} = mock_article(:post)

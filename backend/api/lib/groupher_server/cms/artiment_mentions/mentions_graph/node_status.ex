@@ -7,11 +7,10 @@ defmodule GroupherServer.CMS.ArtimentMentions.MentionsGraph.NodeStatus do
 
   import Ecto.Query
 
-  alias GroupherServer.CMS, as: CMS
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.Mentions.{Edge, Endpoint}
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Model.Mentions.{Edge, Endpoint}
 
-  alias GroupherServer.CMS.Model.{ArticleBinding, Comment}
+  alias CMS.Model.{ArticleBinding, Comment}
 
   @doc "Resolves client locators and returns graph node state in input order."
   def resolve_locators(community, locators) when is_list(locators) do
@@ -66,8 +65,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.MentionsGraph.NodeStatus do
     end
   end
 
-  def load_endpoints(_community, _endpoints),
-    do: {:error, :invalid_mentions_graph_endpoints}
+  def load_endpoints(_community, _endpoints) do
+    {:error, :invalid_mentions_graph_endpoints}
+  end
 
   defp valid_node_metadata?(%Endpoint{type: :comment}, %{
          article_id: article_id,
@@ -294,8 +294,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.MentionsGraph.NodeStatus do
 
                 if endpoint &&
                      (MapSet.member?(stable_bindings, stable_id) or
-                        MapSet.member?(stable_mentions, endpoint.id)),
-                   do: candidate
+                        MapSet.member?(stable_mentions, endpoint.id)) do
+                  candidate
+                end
             end
           else
             Enum.find_value(bindings, fn binding ->
@@ -319,8 +320,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.MentionsGraph.NodeStatus do
 
               if endpoint &&
                    (MapSet.member?(stable_bindings, stable_id) or
-                      MapSet.member?(stable_mentions, endpoint.id)),
-                 do: identity
+                      MapSet.member?(stable_mentions, endpoint.id)) do
+                identity
+              end
 
             true ->
               case binding_by_locator[{type, inner_id}] do
@@ -376,9 +378,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.MentionsGraph.NodeStatus do
     else
       base = %{type: node.type, article_id: Map.get(node, :article_id)}
 
-      if node.type == :comment,
-        do: Map.put(base, :comment_inner_id, node.comment_inner_id),
-        else: base
+      if node.type == :comment do
+        Map.put(base, :comment_inner_id, node.comment_inner_id)
+      else
+        base
+      end
     end
   end
 
@@ -387,23 +391,27 @@ defmodule GroupherServer.CMS.ArtimentMentions.MentionsGraph.NodeStatus do
          article_inner_id: article_inner_id,
          comment_inner_id: comment_inner_id
        })
-       when is_integer(article_inner_id) and is_integer(comment_inner_id),
-       do: "comment:#{community_id}:#{thread}:#{article_inner_id}:#{comment_inner_id}"
+       when is_integer(article_inner_id) and is_integer(comment_inner_id) do
+    "comment:#{community_id}:#{thread}:#{article_inner_id}:#{comment_inner_id}"
+  end
 
   defp node_id(community_id, {:comment, _, _, _}, %{
          thread: thread,
          article_id: article_id,
          comment_inner_id: comment_inner_id
        })
-       when is_binary(article_id) and is_integer(comment_inner_id),
-       do: "comment:#{community_id}:#{thread}:id:#{article_id}:#{comment_inner_id}"
+       when is_binary(article_id) and is_integer(comment_inner_id) do
+    "comment:#{community_id}:#{thread}:id:#{article_id}:#{comment_inner_id}"
+  end
 
   defp node_id(community_id, {type, _article_id, _, _}, %{article_inner_id: inner_id})
-       when is_integer(inner_id),
-       do: "article:#{community_id}:#{type}:#{inner_id}"
+       when is_integer(inner_id) do
+    "article:#{community_id}:#{type}:#{inner_id}"
+  end
 
-  defp node_id(community_id, {type, article_id, _, _}, _metadata),
-    do: "article:#{community_id}:#{type}:id:#{article_id}"
+  defp node_id(community_id, {type, article_id, _, _}, _metadata) do
+    "article:#{community_id}:#{type}:id:#{article_id}"
+  end
 
   defp endpoint_id(%Endpoint{id: id}), do: id
   defp endpoint_id(_), do: nil

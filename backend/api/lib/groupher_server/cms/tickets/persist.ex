@@ -40,10 +40,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     TicketWorker
   }
 
-  alias CMS.Tickets.{ErrorCat, PublicPosts, Lifecycle}
-  alias CMS.Tickets.Model.Source, as: TicketSource
-  alias CMS.Tickets.Notifications
-  alias GroupherServer.Activity.Model.TicketLog
+  alias CMS.Tickets.{ErrorCat, PublicPosts, Lifecycle, Model.Source, Notifications}
+  alias Activity.Model.TicketLog
 
   @doc "Reconciles every Ticket linked to a Post that became hidden."
   def hold_linked_to_post(community, post_id, actor, command_id, visibility_cause)
@@ -51,7 +49,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     states =
       from(state in TicketState,
         as: :ticket_state,
-        join: link in TicketSource,
+        join: link in Source,
         on: link.ticket_id == state.article_id,
         join: binding in ArticleBinding,
         on: binding.id == state.article_binding_id and binding.community_id == ^community.id,
@@ -69,7 +67,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     Enum.reduce_while(states, {:ok, :pass}, fn {state, binding, article, lifecycle}, {:ok, _} ->
       link_count =
         Repo.aggregate(
-          from(link in TicketSource, where: link.ticket_id == ^state.article_id),
+          from(link in Source, where: link.ticket_id == ^state.article_id),
           :count
         )
 
@@ -108,7 +106,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              is_binary(effect_key) do
     states =
       from(state in TicketState,
-        join: link in TicketSource,
+        join: link in Source,
         on: link.ticket_id == state.article_id,
         join: binding in ArticleBinding,
         on: binding.id == state.article_binding_id and binding.community_id == ^community.id,
@@ -140,7 +138,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
       when is_binary(post_id) and is_binary(command_id) do
     with {:ok, _post, _post_binding} <- lock_post_source(community, post_id) do
       links =
-        from(link in TicketSource,
+        from(link in Source,
           join: state in TicketState,
           on: state.article_id == link.ticket_id and state.type == :user,
           join: binding in ArticleBinding,
@@ -250,7 +248,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
        ) do
     remaining_count =
       Repo.aggregate(
-        from(link in TicketSource, where: link.ticket_id == ^article.id),
+        from(link in Source, where: link.ticket_id == ^article.id),
         :count
       )
 
@@ -855,12 +853,12 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, state, _article, binding} <- lock_state(community, ticket_id),
          {:ok, :pass} <- ensure_linkable(state),
          {:ok, :pass} <- Lifecycle.ensure_version(state, expected_version) do
-      case Repo.get_by(TicketSource,
+      case Repo.get_by(Source,
              ticket_id: ticket_id,
              type: :post,
              post_id: post.id
            ) do
-        %TicketSource{} ->
+        %Source{} ->
           {:ok, ticket_id}
 
         nil ->
@@ -907,7 +905,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   @doc false
   def unlink_source(community, ticket_id, source_id, expected_version, context) do
-    case Repo.get_by(TicketSource, id: source_id, ticket_id: ticket_id, type: :post) do
+    case Repo.get_by(Source, id: source_id, ticket_id: ticket_id, type: :post) do
       nil ->
         with {:ok, state, _article, _binding} <- lock_state(community, ticket_id),
              true <- state.type == :user,
@@ -918,12 +916,12 @@ defmodule GroupherServer.CMS.Tickets.Persist do
           error -> error
         end
 
-      %TicketSource{post_id: post_id} = source ->
+      %Source{post_id: post_id} = source ->
         with {:ok, _post, post_binding} <- lock_post_source(community, post_id),
              {:ok, state, article, binding} <- lock_state(community, ticket_id),
              true <- state.type == :user,
              {:ok, :pass} <- Lifecycle.ensure_version(state, expected_version),
-             %TicketSource{} = link <- lock_source(source.id, ticket_id) do
+             %Source{} = link <- lock_source(source.id, ticket_id) do
           with {:ok, :pass} <-
                  unlink_source_in_transaction(
                    community,
@@ -1102,7 +1100,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   defp lock_ticket_source_posts(ticket_id) do
     post_ids =
-      from(link in TicketSource,
+      from(link in Source,
         where: link.ticket_id == ^ticket_id and link.type == :post,
         order_by: [asc: link.post_id],
         select: link.post_id
@@ -1181,7 +1179,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   defp lock_source(source_id, ticket_id) do
     Repo.one(
-      from(link in TicketSource,
+      from(link in Source,
         where: link.id == ^source_id and link.ticket_id == ^ticket_id and link.type == :post,
         lock: "FOR UPDATE"
       )
@@ -1487,8 +1485,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   defp insert_post_link(ticket, post) do
-    %TicketSource{}
-    |> TicketSource.changeset(%{ticket_id: ticket.id, type: :post, post_id: post.id})
+    %Source{}
+    |> Source.changeset(%{ticket_id: ticket.id, type: :post, post_id: post.id})
     |> Repo.insert()
   end
 
@@ -1757,7 +1755,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     case binding.inner_id do
       inner_id when is_integer(inner_id) ->
         post_inner_ids =
-          from(link in TicketSource,
+          from(link in Source,
             join: post_binding in ArticleBinding,
             on:
               post_binding.article_id == link.post_id and
@@ -1790,7 +1788,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     case PublicPosts.ids_query(community_id) do
       {:ok, public_post_ids} ->
         visible_post =
-          from(link in TicketSource,
+          from(link in Source,
             where: link.ticket_id == ^ticket_id and link.post_id in subquery(public_post_ids),
             select: 1
           )

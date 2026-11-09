@@ -231,8 +231,9 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp ticket_passport_action(:ticket_assign), do: CMS.GateAction.ticket_assign()
   defp ticket_passport_action(:ticket_manage_case), do: CMS.GateAction.ticket_manage_case()
 
-  defp ticket_passport_action(:ticket_manage_visibility),
-    do: CMS.GateAction.ticket_manage_visibility()
+  defp ticket_passport_action(:ticket_manage_visibility) do
+    CMS.GateAction.ticket_manage_visibility()
+  end
 
   defp management_binding_allowed?(:operations, _community, _context), do: true
   defp management_binding_allowed?(%{type: :operations}, _community, _context), do: true

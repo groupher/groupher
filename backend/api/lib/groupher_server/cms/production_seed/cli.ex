@@ -8,7 +8,8 @@ defmodule GroupherServer.CMS.ProductionSeed.CLI do
   No arbitrary function, SQL, user ID or evaluator is accepted. Credential
   issuance was removed after the production acceptance window.
   """
-  alias GroupherServer.CMS.ProductionSeed
+  alias GroupherServer.CMS
+  alias CMS.ProductionSeed
 
   @doc "Decodes a non-secret request and fails the release command on business error."
   def run_base64(encoded) do

@@ -3,12 +3,12 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
-  alias GroupherServer.{CMS, Repo, Messaging}
+  alias GroupherServer.{CMS, Jobs, Messaging, Repo}
   alias CMS.Model.Mentions.{Edge, Endpoint}
   alias CMS.Model.{CommentBody, DocBranch, DocLifecycle}
   alias CMS.Outbox.Event
   alias Messaging.Model.Mention
-  alias GroupherServer.Jobs.CMSMentionNotifier
+  alias Jobs.CMSMentionNotifier
 
   setup do
     {community, doc, _, author} = mock_article(:doc)

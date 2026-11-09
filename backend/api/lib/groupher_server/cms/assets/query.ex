@@ -17,9 +17,8 @@ defmodule GroupherServer.CMS.Assets.Query do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Assets.ThreadIdentity
+  alias CMS.Assets.{ErrorCat, ThreadIdentity}
   alias CMS.Gate.Context.Scope.Ticket, as: TicketContext
-  alias CMS.Assets.ErrorCat
 
   alias CMS.Model.{
     Article,
@@ -425,8 +424,9 @@ defmodule GroupherServer.CMS.Assets.Query do
          %TrashedArticle{},
          _article_lifecycle,
          _doc_lifecycle
-       ),
-       do: :trashed
+       ) do
+    :trashed
+  end
 
   defp lifecycle(
          %ArticleAssetRef{body_draft_id: body_draft_id},

@@ -2,7 +2,9 @@ defmodule GroupherServer.Test.CMS.Tickets.MigrationPreflightTest do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.Article
+  alias GroupherServer.CMS
+
+  alias CMS.Model.Article
   alias GroupherServer.Repo
 
   test "TicketSource cutover preflight rejects residual Article data before DDL" do

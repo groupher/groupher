@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Comments.Query.Mentions do
   alias CMS.Articles.Query.Mentions, as: Articles
   alias CMS.FrontDesk
   alias CMS.Tickets.Query.Mentions, as: TicketMentions
-  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
   alias CMS.Model.Comment
 
   @doc "Loads existing Comments and their stable parent Articles in one trusted batch."
@@ -133,7 +133,7 @@ defmodule GroupherServer.CMS.Comments.Query.Mentions do
 
   defp load_comment_pairs(ids) do
     Comment
-    |> CMS.Gate.scope(nil, :list, CommentScope.all_public())
+    |> CMS.Gate.scope(nil, :list, CommentContext.all_public())
     |> case do
       %Ecto.Query{} = query ->
         query
@@ -173,7 +173,7 @@ defmodule GroupherServer.CMS.Comments.Query.Mentions do
 
         matches_query =
           Comment
-          |> CMS.Gate.scope(nil, :list, CommentScope.all_public())
+          |> CMS.Gate.scope(nil, :list, CommentContext.all_public())
           |> case do
             %Ecto.Query{} = query ->
               from(

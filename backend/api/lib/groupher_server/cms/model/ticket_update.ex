@@ -10,8 +10,9 @@ defmodule GroupherServer.CMS.Model.TicketUpdate do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Article
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.Article
   alias Helper.Constant.DBPrefix
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}

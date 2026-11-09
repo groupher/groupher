@@ -157,8 +157,9 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
     end
   end
 
-  defp enqueue_public_mention(_article, _branch, _public, _community, _revision, _opts),
-    do: {:ok, :pass}
+  defp enqueue_public_mention(_article, _branch, _public, _community, _revision, _opts) do
+    {:ok, :pass}
+  end
 
   defp register_review(
          article,

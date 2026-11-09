@@ -23,8 +23,9 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
 
   def ensure_ordinary(%Article{thread: :doc}), do: {:error, :unsupported_for_doc}
 
-  def ensure_ordinary(%Article{thread: :ticket}),
-    do: {:error, ArticleErrorCat.ticket_binding_unsupported()}
+  def ensure_ordinary(%Article{thread: :ticket}) do
+    {:error, ArticleErrorCat.ticket_binding_unsupported()}
+  end
 
   def ensure_ordinary(%Article{}), do: {:ok, :supported}
 

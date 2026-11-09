@@ -341,8 +341,9 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
 
   defp normalized_field_name(field_name) when is_atom(field_name), do: Atom.to_string(field_name)
 
-  defp normalized_field_name(field_name) when is_binary(field_name),
-    do: Macro.underscore(field_name)
+  defp normalized_field_name(field_name) when is_binary(field_name) do
+    Macro.underscore(field_name)
+  end
 
   defp authorize(actor, permission, params) do
     case CMS.passport_authorization_check(actor, permission, params) do

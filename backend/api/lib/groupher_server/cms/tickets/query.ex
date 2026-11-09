@@ -15,7 +15,8 @@ defmodule GroupherServer.CMS.Tickets.Query do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Pagi, Repo}
-  alias GroupherServer.Activity.Model.TicketLog
+  alias GroupherServer.Activity
+  alias Activity.Model.TicketLog
   alias CMS.Gate.Context.Scope.Ticket, as: TicketContext
 
   alias CMS.Model.{
@@ -39,8 +40,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
     TicketWorker
   }
 
-  alias CMS.Tickets.ErrorCat
-  alias CMS.Tickets.Model.Source, as: TicketSource
+  alias CMS.Tickets.{ErrorCat, Model.Source}
 
   @default_size 20
   @max_size 100
@@ -268,7 +268,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
              {:ok, public_post_ids} <- CMS.Tickets.PublicPosts.ids_query(community.id),
              rows <-
                scope
-               |> join(:inner, [ticket_state: state], link in TicketSource,
+               |> join(:inner, [ticket_state: state], link in Source,
                  on: link.ticket_id == state.article_id,
                  as: :ticket_post_link
                )
@@ -372,8 +372,9 @@ defmodule GroupherServer.CMS.Tickets.Query do
     end
   end
 
-  def public_activity_targets(_community, _ticket_ids),
-    do: {:error, ErrorCat.invalid_ticket_content()}
+  def public_activity_targets(_community, _ticket_ids) do
+    {:error, ErrorCat.invalid_ticket_content()}
+  end
 
   @doc "Returns internal User Tickets linked to one Post after Ticket Gate admission."
   def linked_to_post_internal(community, post_id, actor) when is_binary(post_id) do
@@ -382,7 +383,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
          true <- post_exists_in_community?(post_id, community.id),
          states <-
            query
-           |> join(:inner, [ticket_state: state], link in TicketSource,
+           |> join(:inner, [ticket_state: state], link in Source,
              on: link.ticket_id == state.article_id,
              as: :ticket_post_link
            )
@@ -836,7 +837,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
       case CMS.Tickets.PublicPosts.ids_query(community_id) do
         {:ok, query} ->
           linked_ids =
-            from(link in TicketSource, where: link.ticket_id in ^ticket_ids, select: link.post_id)
+            from(link in Source, where: link.ticket_id in ^ticket_ids, select: link.post_id)
 
           query |> where([post], post.id in subquery(linked_ids)) |> Repo.all() |> MapSet.new()
 
@@ -848,7 +849,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
       if public_mode? do
         %{}
       else
-        from(link in TicketSource,
+        from(link in Source,
           join: restriction in ArticleReviewBlock,
           on: restriction.article_id == link.post_id,
           where:
@@ -867,7 +868,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
       end
 
     refs =
-      from(link in TicketSource,
+      from(link in Source,
         join: post in Article,
         on: post.id == link.post_id,
         left_join: public in ArticlePublic,

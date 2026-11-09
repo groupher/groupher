@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Tickets.Effects.Cache do
 
   alias GroupherServer.{CMS, PublicCache, Repo}
   alias CMS.Model.{ArticleBinding, ArticleLifecycle, Community, TicketState}
-  alias CMS.Tickets.Model.Source, as: TicketSource
+  alias CMS.Tickets.Model.Source
 
   @doc "Enqueues public Ticket and affected Post tags in the caller transaction."
   def enqueue(
@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.Tickets.Effects.Cache do
   @doc "Purges public Ticket pages affected by a committed Post stats change."
   def purge_post(post_id) when is_binary(post_id) do
     rows =
-      from(link in TicketSource,
+      from(link in Source,
         join: state in TicketState,
         on: state.article_id == link.ticket_id and state.type == :user,
         join: lifecycle in ArticleLifecycle,

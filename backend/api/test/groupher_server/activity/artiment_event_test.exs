@@ -1,8 +1,8 @@
 defmodule GroupherServer.Test.Activity.ArtimentEventTest do
   use GroupherServer.TestMate, async: false
-  alias GroupherServer.Activity
+  alias GroupherServer.{Activity, CMS, Messaging}
   alias CMS.Events.Notify
-  alias GroupherServer.Messaging.Model.Notification
+  alias Messaging.Model.Notification
 
   test "MSG-02 Doc body events retain their branch while shared Comment events do not" do
     {community, doc, _, author} = mock_article(:doc)
