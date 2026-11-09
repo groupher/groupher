@@ -77,15 +77,12 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
         )
       )
 
-    if parent_bound_here? and
-         Repo.exists?(
-           from(edge in Edge,
-             where:
-               edge.source_endpoint_id == ^endpoint_id or
-                 edge.target_endpoint_id == ^endpoint_id
-           )
-         ) do
-      true
+    if parent_bound_here? do
+      Repo.exists?(
+        from(edge in Edge,
+          where: edge.target_endpoint_id == ^endpoint_id
+        )
+      )
     else
       adjacent_edge_in_community?(endpoint_id, community_id)
     end

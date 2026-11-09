@@ -493,7 +493,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         thread: row.article.thread,
         inner_id: row.inner_id,
         title: row.title,
-        status: row.status,
         cat: Map.get(row, :cat),
         is_pinned: Map.get(row, :is_pinned, false),
         digest: row.digest,

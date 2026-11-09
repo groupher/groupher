@@ -29,6 +29,11 @@ defmodule GroupherServer.Test.Messaging.Mention do
   end
 
   describe "mentions" do
+    test "transactional record entry rejects calls without a transaction", ~m(post user)a do
+      assert {:error, :mention_delivery_requires_transaction} =
+               Messaging.record_mention_in_transaction(post, [], user)
+    end
+
     test "does not deliver inbox mentions while Gate hides review-restricted content",
          ~m(post user user2 mention_attr)a do
       _lifecycle = Repo.get_by!(ArticleLifecycle, article_id: post.id)

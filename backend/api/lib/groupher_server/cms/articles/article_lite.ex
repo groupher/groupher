@@ -214,7 +214,6 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         article_community: community,
         article_author_user: user,
         article_tag_rows: tag_rows,
-        doc_lifecycle: lifecycle,
         stable_doc_state: state,
         stable_public: public
       ],
@@ -226,7 +225,6 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         inner_id: binding.inner_id,
         binding_id: binding.id,
         title: public.title,
-        status: lifecycle.state,
         digest: public.digest,
         active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, state, public),
         published_at: public.published_at,
@@ -245,7 +243,6 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         article_community: community,
         article_author_user: user,
         article_tag_rows: tag_rows,
-        article_lifecycle: lifecycle,
         stable_public: public
       ],
       %{
@@ -256,7 +253,6 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         inner_id: binding.inner_id,
         binding_id: binding.id,
         title: public.title,
-        status: lifecycle.state,
         digest: public.digest,
         active_at: article.active_at,
         published_at: public.published_at,

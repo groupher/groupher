@@ -139,13 +139,16 @@
 
 ```sql
 COALESCE(
-  GREATEST(article.active_at, state.active_at),
+  CASE WHEN state.is_sunk
+    THEN state.active_at
+    ELSE GREATEST(article.active_at, state.active_at)
+  END,
   public.published_at,
   article.inserted_at
 ) AS effective_active_at
 ```
 
-`article` 是稳定 Article，`state/public` 只能来自 owner 当前 main。PostgreSQL GREATEST 忽略 NULL；仅两项均 NULL 才进入后续兜底。这是新模型正常空时间语义，不是读旧数据兼容。UTC、秒精度，与当前活动写入精度一致；预览分支活动绝不进入表达式。
+`article` 是稳定 Article，`state/public` 只能来自 owner 当前 main。main 已 sunk 时只取该 main 自身的活动时间，避免稳定 Article 上的旧讨论活动盖过它；其余情形的 PostgreSQL GREATEST 忽略 NULL。CASE 结果为 NULL 时才进入后续兜底。UTC、秒精度，与当前活动写入精度一致；预览分支活动绝不进入表达式。
 
 - ArticleLite 的 `active_at` 和 `doc_active_at`、列表 GraphQL `activeAt`、任何保留的 Article Flop 路径都引用此投影；不能在输出阶段再读 branch 原值。
 - 默认/desc_active 排序及 cursor 为 `(effective_active_at DESC, binding_id DESC)`；asc_active 两项均 ASC。cursor 保存已 select 的值，fingerprint 保留 Community、筛选和方向；无 Comment branch 维度。相同时间靠唯一 binding_id 稳定遍历。

@@ -3,7 +3,8 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
   Starts post-commit projections after a stable Article Publish succeeds.
 
       committed Publish result
-        -> first-publication metadata and Activity
+        -> first-publication metadata (when applicable)
+        -> Activity for each committed publish
 
   Press, Search and CDN delivery use independent durable outbox tasks; the
   effects here consume only stable Article identity and the committed public

@@ -13,7 +13,7 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
 
   import Ecto.Query, only: [where: 3]
 
-  alias GroupherServer.{Accounts, Messaging}
+  alias GroupherServer.{Accounts, Messaging, Repo}
   alias Accounts.Model.User
   alias Messaging.Mentions.Persist
   alias GroupherServer.CMS
@@ -69,13 +69,17 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
       SendMention.record_in_transaction(comment, mentions, author)
   """
   def record_in_transaction(content, mentions, %User{} = from_user) when is_list(mentions) do
-    with {:ok, :pass} <- ensure_public_content(content),
+    with true <- Repo.in_transaction?(),
+         {:ok, :pass} <- ensure_public_content(content),
          {:ok, persisted} <- Persist.replace(content, mentions, from_user),
          {:ok, users} <-
            persisted
            |> Enum.map(& &1.to_user_id)
            |> Accounts.mailbox_update_status_many_in_transaction() do
       {:ok, users}
+    else
+      false -> {:error, :mention_delivery_requires_transaction}
+      {:error, _reason} = error -> error
     end
   end
 

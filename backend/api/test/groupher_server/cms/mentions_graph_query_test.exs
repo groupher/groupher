@@ -246,6 +246,47 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     refute String.contains?(restricted[comment.id].title, "private text")
   end
 
+  test "an outgoing edge alone does not unlock mentioned Comment reading" do
+    {community, parent, _attrs, author} = mock_article(:post)
+    {_, target, _attrs, _} = mock_article(:blog, community, author)
+
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               article_inner_id(parent, community),
+               mock_comment("outgoing only"),
+               author,
+               Ecto.UUID.generate()
+             )
+
+    comment_endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
+    target_endpoint = Repo.get_by!(Endpoint, type: :blog, article_id: target.article_id)
+
+    %Edge{}
+    |> Edge.changeset(%{
+      source_endpoint_id: comment_endpoint.id,
+      target_type: :blog,
+      target_endpoint_id: target_endpoint.id,
+      mention_case: :inline_mention,
+      edge_key: "outgoing-only:#{comment_endpoint.id}",
+      mentioned_at: DateTime.utc_now(:second),
+      occurrences_count: 1
+    })
+    |> Repo.insert!()
+
+    assert {:error, _reason} =
+             CMS.FrontDesk.Comment.read_mentioned(
+               community.slug,
+               %{
+                 type: :comment,
+                 article_id: parent.article_id,
+                 comment_inner_id: comment.inner_id
+               },
+               nil
+             )
+  end
+
   test "the Article Comment seed page excludes Comments without current edges" do
     {community, article, _attrs, user} = mock_article(:post)
 

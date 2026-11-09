@@ -52,7 +52,6 @@ defmodule GroupherServer.Test.CMS.Articles.DocActivityTest do
       assert [head] = one.entries
       assert head.id == hd(expected)
       assert head.active_at == t3
-      assert head.status == :published
 
       {:ok, two} =
         Pagination.page(
