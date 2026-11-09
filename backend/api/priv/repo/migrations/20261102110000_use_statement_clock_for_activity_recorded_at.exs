@@ -1,7 +1,7 @@
 defmodule GroupherServer.Repo.Migrations.UseStatementClockForActivityRecordedAt do
   use Ecto.Migration
 
-  @tables ~w(post_logs blog_logs changelog_logs doc_logs community_logs doc_tree_logs press_logs)
+  @tables ~w(post_logs blog_logs changelog_logs doc_logs community_logs doc_tree_logs press_logs ticket_logs)
 
   def up do
     Enum.each(@tables, fn table ->
