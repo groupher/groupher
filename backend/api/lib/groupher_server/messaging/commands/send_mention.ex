@@ -61,7 +61,13 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
     execute_pipeline(content, mentions, from_user)
   end
 
-  @doc "Records mailbox rows inside the caller's transaction; caller invalidates after commit."
+  @doc """
+  Records mailbox rows inside the caller's transaction; caller invalidates after commit.
+
+  ## Examples
+
+      SendMention.record_in_transaction(comment, mentions, author)
+  """
   def record_in_transaction(content, mentions, %User{} = from_user) when is_list(mentions) do
     with {:ok, :pass} <- ensure_public_content(content),
          {:ok, persisted} <- Persist.replace(content, mentions, from_user),
