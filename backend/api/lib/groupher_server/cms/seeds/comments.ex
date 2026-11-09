@@ -159,7 +159,17 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
     with {:ok, %{inner_id: inner_id}} <-
            CMS.Articles.Bindings.get(%{article_id: article.id}, community) do
-      CMS.Comments.create_comment(community, thread, inner_id, body, user, Ecto.UUID.generate())
+      case CMS.Comments.create_comment(
+             community,
+             thread,
+             inner_id,
+             body,
+             user,
+             Ecto.UUID.generate()
+           ) do
+        {:ok, comment} -> {:ok, %{comment | request_community_slug: community.slug}}
+        {:error, reason} -> {:error, reason}
+      end
     end
   end
 

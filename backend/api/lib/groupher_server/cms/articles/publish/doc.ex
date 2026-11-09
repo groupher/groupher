@@ -148,7 +148,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
              },
              identity
            ),
-         {:ok, :pass} <- MentionsGraphRevision.bump() do
+         {:ok, :pass} <- maybe_bump_graph_revision(captured.selection_changed) do
       {:ok, captured}
     else
       nil -> {:error, :source_body_missing}
@@ -160,6 +160,9 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
   defp enqueue_public_mention(_article, _branch, _public, _community, _revision, _opts) do
     {:ok, :pass}
   end
+
+  defp maybe_bump_graph_revision(true), do: {:ok, :pass}
+  defp maybe_bump_graph_revision(false), do: MentionsGraphRevision.bump()
 
   defp register_review(
          article,

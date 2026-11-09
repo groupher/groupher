@@ -68,12 +68,15 @@ defmodule GroupherServer.CMS.ProductionSeed.Logins do
           Repo.rollback(:seed_unexpected_oauth)
         end
 
-        {:ok, result} =
-          Accounts.profiles_create_bounded_browser_session(
-            Repo.get!(User, grant.user_id),
-            metadata,
-            run.expires_at
-          )
+        result =
+          case Accounts.profiles_create_bounded_browser_session(
+                 Repo.get!(User, grant.user_id),
+                 metadata,
+                 run.expires_at
+               ) do
+            {:ok, session} -> session
+            {:error, reason} -> Repo.rollback(reason)
+          end
 
         grant
         |> Ecto.Changeset.change(

@@ -34,6 +34,8 @@ defmodule GroupherServer.CMS.Tickets.Model.Source do
     |> foreign_key_constraint(:ticket_id)
     |> foreign_key_constraint(:post_id)
     |> check_constraint(:type, name: :ticket_sources_type_check)
+    |> check_constraint(:ticket_id, name: :ticket_source_requires_user_ticket)
+    |> check_constraint(:post_id, name: :ticket_source_scope_guard)
     |> unique_constraint([:ticket_id, :post_id], name: :ticket_sources_ticket_post_index)
   end
 

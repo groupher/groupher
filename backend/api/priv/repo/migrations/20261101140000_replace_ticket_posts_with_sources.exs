@@ -84,7 +84,8 @@ defmodule GroupherServer.Repo.Migrations.ReplaceTicketPostsWithSources do
       FOR UPDATE OF s;
 
       IF ticket_community_id IS NULL THEN
-        RAISE EXCEPTION 'ticket_source_requires_user_ticket' USING ERRCODE = '23514';
+        RAISE EXCEPTION 'ticket_source_requires_user_ticket'
+          USING ERRCODE = '23514', CONSTRAINT = 'ticket_source_requires_user_ticket';
       END IF;
 
       PERFORM b.id

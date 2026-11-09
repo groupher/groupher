@@ -55,8 +55,8 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
     with {:ok, target} <- load_target(event.resource_type, event.resource_id),
          {:ok, actor} <- load_actor(data["actor_id"]),
          {:ok, _} <- emit_event(event.event, target, actor, data),
-         {:ok, _} <- purge_ticket_cache(target),
-         {:ok, _} <- maybe_sync_search(target) do
+         {:ok, _} <- maybe_sync_search(target),
+         {:ok, _} <- purge_ticket_cache(target) do
       {:ok, :delivered}
     end
   end
@@ -134,7 +134,11 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
   defp maybe_sync_search(%Comment{}), do: {:ok, :pass}
 
   defp maybe_sync_search(%Article{} = article) do
-    normalize_search(Indexer.enqueue_metrics(article))
+    if CMS.SearchArtiments.platform() == CMS.SearchArtiments.Disabled do
+      {:ok, :search_disabled}
+    else
+      normalize_search(Indexer.enqueue_metrics(article))
+    end
   end
 
   defp purge_ticket_cache(%Article{thread: :post, id: article_id}) do

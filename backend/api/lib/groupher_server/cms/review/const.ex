@@ -41,9 +41,4 @@ defmodule GroupherServer.CMS.Review.Const do
   def result_actions, do: @result_actions
   def automated_restriction_types, do: @automated_restriction_types
   def ai_clearable_restriction_types, do: @ai_clearable_restriction_types
-
-  defmacro result_action_values_ast, do: Macro.escape(@result_actions)
-
-  def active?(%{resolved_at: nil, resolved_by_ref: nil, resolution: nil}), do: true
-  def active?(_restriction), do: false
 end

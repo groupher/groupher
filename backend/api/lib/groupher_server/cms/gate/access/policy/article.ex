@@ -118,12 +118,12 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   defp check_allowed(actor, action, article, context) do
     with {:ok, :pass} <- authorize_action(actor, action, article, context),
-         {:ok, :pass} <- discussion_parent_readable(actor, action, article, context),
          {:ok, lifecycle} <- article_lifecycle(context),
          {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
          {:ok, _} <- doc_branch_allowed(action, context),
-         {:ok, _} <- action_allowed(action, lifecycle, article) do
+         {:ok, _} <- action_allowed(action, lifecycle, article),
+         {:ok, :pass} <- discussion_parent_readable(actor, action, article, context) do
       {:ok, :pass}
     else
       {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}

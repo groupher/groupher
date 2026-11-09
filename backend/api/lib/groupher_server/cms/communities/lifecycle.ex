@@ -762,12 +762,15 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
              audit_action,
              Map.merge(metadata, %{from_state: from_state, to_state: state})
            ),
-         {:ok, :pass} <- Revision.bump(),
+         {:ok, :pass} <- maybe_bump_graph_revision(from_state, state),
          {:ok, :pass} <-
            Effects.lifecycle_changed(lifecycle, updated, Keyword.get(opts, :operation_ref)) do
       {:ok, updated}
     end
   end
+
+  defp maybe_bump_graph_revision(state, state), do: {:ok, :pass}
+  defp maybe_bump_graph_revision(_before, _after), do: Revision.bump()
 
   defp insert_blocker(attrs, opts) do
     attrs =

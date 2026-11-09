@@ -66,6 +66,36 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
              })
   end
 
+  test "set_tags replaces tags once and replays the same command", ctx do
+    {:ok, tag} = db_insert(:community_tag, %{community: ctx.community})
+    command_id = Ecto.UUID.generate()
+
+    assert {:ok, _ticket} =
+             CMS.Tickets.set_tags(
+               ctx.community,
+               ctx.ticket.id,
+               [tag.id],
+               ctx.ticket.workflow_version,
+               ctx.actor,
+               command_id
+             )
+
+    assert {:ok, _ticket} =
+             CMS.Tickets.set_tags(
+               ctx.community,
+               ctx.ticket.id,
+               [tag.id],
+               ctx.ticket.workflow_version,
+               ctx.actor,
+               command_id
+             )
+
+    assert Repo.get!(TicketState, ctx.ticket.id).workflow_version ==
+             ctx.ticket.workflow_version + 1
+
+    assert Repo.get_by!(TicketTag, ticket_id: ctx.ticket.id).community_tag_id == tag.id
+  end
+
   test "a completed parent prevents a Worker from reopening", ctx do
     assert {:ok, worker} =
              CMS.Tickets.create_worker(
