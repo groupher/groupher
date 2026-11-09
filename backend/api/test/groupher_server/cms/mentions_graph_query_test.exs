@@ -246,7 +246,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     refute String.contains?(restricted[comment.id].title, "private text")
   end
 
-  test "an outgoing edge alone does not unlock mentioned Comment reading" do
+  test "a bound parent allows selected Comment reading with only an outgoing edge" do
     {community, parent, _attrs, author} = mock_article(:post)
     {_, target, _attrs, _} = mock_article(:blog, community, author)
 
@@ -275,7 +275,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     })
     |> Repo.insert!()
 
-    assert {:error, _reason} =
+    assert {:ok, selected} =
              CMS.FrontDesk.Comment.read_mentioned(
                community.slug,
                %{
@@ -285,6 +285,8 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                },
                nil
              )
+
+    assert selected.id == comment.id
   end
 
   test "the Article Comment seed page excludes Comments without current edges" do

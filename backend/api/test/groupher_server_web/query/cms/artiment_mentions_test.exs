@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
        %{guest_conn: guest_conn, community: community, post: post} do
     Repo.delete_all(
       from(binding in CMS.Model.ArticleBinding,
-        where: binding.article_id == ^post.article_id and binding.community_id == ^community.id
+        where: binding.article_id == ^post.article_id
       )
     )
 
@@ -960,7 +960,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     Repo.delete_all(
       from(binding in CMS.Model.ArticleBinding,
-        where: binding.article_id == ^post.article_id and binding.community_id == ^community.id
+        where: binding.article_id == ^post.article_id
       )
     )
 
@@ -997,7 +997,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       })
 
     assert length(stable_graph["edges"]) >= 1
-    stable_comment_node = Enum.find(stable_graph["nodes"], &(&1["type"] == "COMMENT"))
+    stable_comment_node = Enum.find(stable_graph["nodes"], &(&1["id"] == first_node.id))
 
     assert stable_comment_node["url"] ==
              "/#{community.slug}/post/#{post.article_id}#comment-#{comment.inner_id}"
