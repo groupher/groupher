@@ -159,6 +159,16 @@ defmodule GroupherServer.Accounts.Profiles do
   def revoke_browser_session(ref), do: BrowserSessions.revoke_current(ref)
 
   @doc """
+  Revokes a browser session when its production seed run closes.
+
+  ## Examples
+
+      Accounts.Profiles.revoke_seed_browser_session(session_ref)
+      #=> {:ok, :revoked} | {:ok, :already_revoked}
+  """
+  def revoke_seed_browser_session(ref), do: BrowserSessions.revoke_seed_run(ref)
+
+  @doc """
   Lists browser sessions for a user and marks the current session.
 
   ## Examples

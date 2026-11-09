@@ -129,7 +129,7 @@ defmodule GroupherServer.CMS.Review.Results do
   end
 
   defp apply_restriction_facts(request, context, result) do
-    if shared_comment_community_request?(request) do
+    if CMS.Review.Requests.shared_comment_community_request?(request) do
       {:ok, :pass}
     else
       with {:ok, active} <- CMS.ReviewBlocks.active_for(context.lifecycle, context.scope_key),
@@ -139,20 +139,6 @@ defmodule GroupherServer.CMS.Review.Results do
       end
     end
   end
-
-  defp shared_comment_community_request?(%ArtimentReview{
-         target_type: :comment,
-         community_id: community_id,
-         comment_id: comment_id
-       })
-       when is_integer(community_id) do
-    case Repo.get(CMS.Model.Comment, comment_id) do
-      %CMS.Model.Comment{thread: thread} when thread in [:post, :blog, :changelog] -> true
-      _ -> false
-    end
-  end
-
-  defp shared_comment_community_request?(_request), do: false
 
   defp end_automatic_restrictions(request, context, active) do
     ids =
@@ -179,8 +165,7 @@ defmodule GroupherServer.CMS.Review.Results do
 
   defp outdated_request?(%{artiment_review_id: id}) when is_binary(id) do
     case Repo.get(ArtimentReview, id) do
-      %ArtimentReview{outdated_at: outdated_at, replaced_at: replaced_at}
-      when not is_nil(outdated_at) or not is_nil(replaced_at) ->
+      %ArtimentReview{outdated_at: outdated_at} when not is_nil(outdated_at) ->
         true
 
       _ ->

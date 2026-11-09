@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
 
   alias GroupherServer.ReviewBot
   alias GroupherServer.{AlertWall, CMS, Repo}
-  alias CMS.Model.{ArtimentReview, Comment}
+  alias CMS.Model.ArtimentReview
   alias ReviewBot.Model.ReviewBotConfig
 
   @doc "Creates scoped requests with immutable content and complete configuration snapshots."
@@ -228,7 +228,7 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
   end
 
   defp apply_initial_hold(%ArtimentReview{} = request, %{lifecycle: lifecycle}) do
-    if shared_comment_community_request?(request) do
+    if CMS.Review.Requests.shared_comment_community_request?(request) do
       {:ok, :pass}
     else
       with {:ok, scope_key} <- restriction_scope(request),
@@ -254,20 +254,6 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
   end
 
   defp restriction_scope(request), do: {:ok, request_scope(request)}
-
-  defp shared_comment_community_request?(%ArtimentReview{
-         target_type: :comment,
-         community_id: community_id,
-         comment_id: comment_id
-       })
-       when is_integer(community_id) do
-    case Repo.get(Comment, comment_id) do
-      %Comment{thread: thread} when thread in [:post, :blog, :changelog] -> true
-      _ -> false
-    end
-  end
-
-  defp shared_comment_community_request?(_request), do: false
 
   defp request_scope(%ArtimentReview{community_id: nil}), do: "platform"
   defp request_scope(%ArtimentReview{community_id: id}), do: "community:#{id}"

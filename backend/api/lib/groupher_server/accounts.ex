@@ -245,6 +245,11 @@ defmodule GroupherServer.Accounts do
     to: GroupherServer.Accounts.Profiles,
     as: :revoke_browser_session
 
+  @doc "Delegates seed-run browser session revocation through the Accounts Context."
+  defdelegate profiles_revoke_seed_browser_session(arg1),
+    to: GroupherServer.Accounts.Profiles,
+    as: :revoke_seed_browser_session
+
   @doc "Delegates GroupherServer.Accounts.Profiles.revoke_other_browser_sessions_for_ref/1 through the Accounts Context boundary."
   defdelegate profiles_revoke_other_browser_sessions_for_ref(arg1),
     to: GroupherServer.Accounts.Profiles,

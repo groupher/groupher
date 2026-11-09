@@ -108,7 +108,10 @@ defmodule GroupherServer.CMS.ProductionSeed.Logins do
             )
           )
 
-        Enum.each(refs, fn ref -> {:ok, _} = Accounts.profiles_revoke_browser_session(ref) end)
+        Enum.each(refs, fn ref ->
+          {:ok, _} = Accounts.profiles_revoke_seed_browser_session(ref)
+        end)
+
         run |> Ecto.Changeset.change(status: "closed") |> Repo.update!()
         %{status: "closed", session_count: length(refs)}
       end)

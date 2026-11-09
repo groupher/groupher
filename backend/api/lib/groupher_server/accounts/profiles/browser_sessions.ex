@@ -124,6 +124,17 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
   def revoke_current(ref) when is_binary(ref), do: revoke_ref(ref, "logout")
 
   @doc """
+  Revokes a browser session when its production seed run closes.
+
+  ## Examples
+
+      BrowserSessions.revoke_seed_run(session_ref)
+      #=> {:ok, :revoked} | {:ok, :already_revoked}
+  """
+  @spec revoke_seed_run(String.t()) :: {:ok, atom()} | {:error, term()}
+  def revoke_seed_run(ref) when is_binary(ref), do: revoke_ref(ref, "seed_run_closed")
+
+  @doc """
   Revokes every active browser session except the current one.
 
   ## Examples

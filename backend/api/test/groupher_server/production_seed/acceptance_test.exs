@@ -82,6 +82,7 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
     assert {:ok, _} = GroupherServer.Accounts.Profiles.BrowserSessions.refresh(session.ref)
     assert {:ok, _} = Logins.close("first", db)
     assert {:error, _} = GroupherServer.Accounts.Profiles.BrowserSessions.refresh(session.ref)
+    assert Repo.get_by!(BrowserSession, ref: session.ref).revoked_reason == "seed_run_closed"
     assert {:ok, _} = Logins.close("first", db)
   end
 

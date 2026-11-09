@@ -10,7 +10,22 @@ defmodule GroupherServer.CMS.Review.Requests do
 
   alias GroupherServer.{CMS, Repo, ReviewBot}
   alias CMS.Review.Effects
-  alias CMS.Model.ArtimentReview
+  alias CMS.Model.{ArtimentReview, Comment}
+
+  @doc "Identifies a Community review request for a Comment shared across Communities."
+  def shared_comment_community_request?(%ArtimentReview{
+        target_type: :comment,
+        community_id: community_id,
+        comment_id: comment_id
+      })
+      when is_integer(community_id) do
+    case Repo.get(Comment, comment_id) do
+      %Comment{thread: thread} when thread in [:post, :blog, :changelog] -> true
+      _ -> false
+    end
+  end
+
+  def shared_comment_community_request?(_request), do: false
 
   @doc "Creates the current request inside the resource command's transaction."
   @spec create_in_transaction(map()) :: {:ok, ArtimentReview.t()} | {:error, term()}
