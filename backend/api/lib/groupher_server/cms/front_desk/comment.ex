@@ -53,9 +53,9 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
          {:ok, [focus]} <-
            MentionsGraph.NodeStatus.resolve_locators(community, [locator]),
          {:comment, _, comment_id, _} <- focus.identity,
-         true <- confirmed_community_edge?(focus.endpoint_id, community.id),
          %Comment{} = candidate <- Repo.get(Comment, comment_id),
          true <- candidate.inner_id == inner_id,
+         true <- confirmed_community_edge?(focus.endpoint_id, community.id, candidate.article_id),
          scope <- CommentScopeContext.mentioned_target(candidate.thread, community.id),
          %Ecto.Query{} = query <- CMS.Gate.scope(Comment, actor, :read, scope),
          {:ok, comment} <-
@@ -68,7 +68,32 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
 
   def read_mentioned(_, _, _), do: {:error, CommentErrorCat.not_exist("comment not found")}
 
-  defp confirmed_community_edge?(endpoint_id, community_id) when is_binary(endpoint_id) do
+  defp confirmed_community_edge?(endpoint_id, community_id, article_id)
+       when is_binary(endpoint_id) do
+    parent_bound_here? =
+      Repo.exists?(
+        from(binding in ArticleBinding,
+          where: binding.article_id == ^article_id and binding.community_id == ^community_id
+        )
+      )
+
+    if parent_bound_here? and
+         Repo.exists?(
+           from(edge in Edge,
+             where:
+               edge.source_endpoint_id == ^endpoint_id or
+                 edge.target_endpoint_id == ^endpoint_id
+           )
+         ) do
+      true
+    else
+      adjacent_edge_in_community?(endpoint_id, community_id)
+    end
+  end
+
+  defp confirmed_community_edge?(_, _, _), do: false
+
+  defp adjacent_edge_in_community?(endpoint_id, community_id) do
     incoming =
       from(edge in Edge,
         join: other in Endpoint,
@@ -97,8 +122,6 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
 
     Repo.exists?(incoming) or Repo.exists?(outgoing)
   end
-
-  defp confirmed_community_edge?(_, _), do: false
 
   @doc "Reads one Comment from a structured public path."
   @spec read(map()) :: T.domain_res(Comment.t())

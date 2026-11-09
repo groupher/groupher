@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Model.TicketState do
     |> check_constraint(:status, name: :ticket_states_type_status_check)
     |> check_constraint(:planned_end_at, name: :ticket_states_planned_window_check)
     |> foreign_key_constraint(:article_id)
-    |> foreign_key_constraint(:article_binding_id)
+    |> foreign_key_constraint(:article_binding_id, name: :ticket_states_article_binding_fkey)
   end
 
   @doc "Returns the allowed business types."

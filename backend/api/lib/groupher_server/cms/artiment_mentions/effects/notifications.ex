@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects.Notifications do
   alias CMS.Model.Author
   alias CMS.Outbox.Event
   alias Accounts.Model.User
+  @restricted_retention_seconds 7 * 24 * 60 * 60
 
   def deliver(_source_id, _revision_identity, _community_id, [], _event_id) do
     {:ok, :no_new_mentions}
@@ -35,13 +36,39 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects.Notifications do
              {:error, reason} -> Repo.rollback(reason)
            end
          end) do
-      {:ok, result} -> {:ok, result}
-      {:error, :content_not_public} -> {:defer, 3_600}
-      {:error, reason} -> {:error, reason}
+      {:ok, {:delivered, users}} ->
+        _ = Accounts.mailbox_invalidate_users(users)
+        {:ok, :pass}
+
+      {:ok, {:skipped, reason}} ->
+        {:ok, reason}
+
+      {:error, :content_not_public} ->
+        defer_or_expire(event_id)
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
   def deliver(_, _, _, _, _), do: {:error, :invalid_mention_notification}
+
+  defp defer_or_expire(event_id) do
+    case Repo.get(Event, event_id) do
+      %Event{inserted_at: inserted_at} when not is_nil(inserted_at) ->
+        remaining =
+          @restricted_retention_seconds - DateTime.diff(DateTime.utc_now(), inserted_at)
+
+        if remaining > 0 do
+          {:defer, min(3_600, remaining)}
+        else
+          {:ok, :expired_restricted_source}
+        end
+
+      _ ->
+        {:error, :invalid_mention_notification}
+    end
+  end
 
   defp deliver_current(source_id, revision_identity, community_id, recipient_ids, event_id) do
     with %Endpoint{deleted_at: nil} = endpoint <-
@@ -82,23 +109,23 @@ defmodule GroupherServer.CMS.ArtimentMentions.Effects.Notifications do
           }
         end)
 
-      with {:ok, result} <- Messaging.send_mention(selected.content, rows, author),
+      with {:ok, users} <- Messaging.record_mention_in_transaction(selected.content, rows, author),
            %Event{resource_id: ^source_id} = event <- Repo.get(Event, event_id),
            {:ok, _} <-
              event
              |> Event.changeset(%{data: Map.put(event.data, "consumed_user_ids", recipient_ids)})
              |> Repo.update() do
-        {:ok, result}
+        {:ok, {:delivered, users}}
       else
         {:error, reason} -> {:error, reason}
         _ -> {:error, :invalid_mention_notification}
       end
     else
-      {:error, :mention_current_source_missing} -> {:ok, :stale_or_removed_source}
+      {:error, :mention_current_source_missing} -> {:ok, {:skipped, :stale_or_removed_source}}
       {:error, reason} -> {:error, reason}
-      :stale -> {:ok, :stale_or_removed_source}
+      :stale -> {:ok, {:skipped, :stale_or_removed_source}}
       :unavailable -> {:error, :content_not_public}
-      _ -> {:ok, :stale_or_removed_source}
+      _ -> {:ok, {:skipped, :stale_or_removed_source}}
     end
   end
 

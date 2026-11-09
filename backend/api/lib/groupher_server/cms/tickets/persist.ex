@@ -1197,6 +1197,27 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   defp lock_state(community, ticket_id) do
+    # A Worker and its parent must serialize on the same row before either
+    # transition checks the other side's status. Lock the parent first for all
+    # Worker mutations to keep one lock order across commands.
+    parent_id =
+      Repo.one(
+        from(worker in TicketWorker,
+          where: worker.worker_ticket_id == ^ticket_id,
+          select: worker.parent_ticket_id
+        )
+      )
+
+    if parent_id do
+      Repo.one(
+        from(parent in TicketState,
+          where: parent.article_id == ^parent_id,
+          select: parent.article_id,
+          lock: "FOR UPDATE"
+        )
+      )
+    end
+
     query =
       from(state in TicketState,
         as: :ticket_state,

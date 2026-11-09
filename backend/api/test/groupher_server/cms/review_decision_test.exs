@@ -233,6 +233,29 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                type: :report_threshold_hold
              )
 
+    {:ok, revision_before_extra_report} =
+      CMS.ArtimentMentions.MentionsGraph.Revision.current()
+
+    {:ok, extra_reporter} = db_insert(:user)
+
+    assert {:ok, _} =
+             GroupherServer.AlertWall.Commands.SubmitReport.execute(
+               %{
+                 owner: :cms,
+                 target_type: :article,
+                 target_id: article.id,
+                 community_id: community.id,
+                 observed_version: 1
+               },
+               :spam,
+               "Further report",
+               extra_reporter,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, ^revision_before_extra_report} =
+             CMS.ArtimentMentions.MentionsGraph.Revision.current()
+
     wall_item = Repo.get!(Item, item_id)
     {:ok, moderator} = db_insert(:user)
 

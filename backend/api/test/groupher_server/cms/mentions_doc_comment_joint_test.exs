@@ -196,6 +196,38 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
     assert Repo.aggregate(Mention, :count) == 1
   end
 
+  test "restricted Comment notification expires after seven days", ctx do
+    {:ok, comment} =
+      CMS.Comments.create_comment(
+        ctx.community,
+        :doc,
+        ctx.doc.inner_id,
+        bag(ctx),
+        ctx.author,
+        Ecto.UUID.generate()
+      )
+
+    endpoint = Repo.get_by!(Endpoint, type: :comment, comment_id: comment.id)
+    event = Repo.get_by!(Event, event: "mention.notify", resource_id: endpoint.id)
+
+    Repo.update_all(
+      from(state in DocLifecycle,
+        where: state.article_id == ^ctx.doc.article_id and state.branch_id == ^ctx.doc.branch_id
+      ),
+      set: [state: :deleted]
+    )
+
+    expired_at = DateTime.add(DateTime.utc_now(:second), -8 * 86_400, :second)
+
+    Repo.update_all(from(row in Event, where: row.id == ^event.id),
+      set: [inserted_at: expired_at]
+    )
+
+    assert {:ok, :pass} = project(endpoint.id)
+    assert Repo.get!(Event, event.id).status == :done
+    assert Repo.aggregate(Mention, :count) == 0
+  end
+
   test "a newer Comment revision carries an undelivered User mention once", ctx do
     {:ok, comment} =
       CMS.Comments.create_comment(

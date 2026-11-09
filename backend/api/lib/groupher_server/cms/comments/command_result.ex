@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Comments.CommandResult do
   @doc "Builds one Comment mutation result from its canonical command result."
   @spec build({:ok, map()} | {:error, term()}) :: {:ok, map()} | {:error, term()}
   def build({:ok, %{comment: %Comment{} = comment, article: article} = result}) do
-    with %Community{} = community <- Map.get(article, :community),
+    with %Community{} = community <- Map.get(result, :community) || Map.get(article, :community),
          {:ok, article_stats} <- CMS.ArticleStats.for_article(article, community) do
       {:ok,
        %{
@@ -27,8 +27,8 @@ defmodule GroupherServer.CMS.Comments.CommandResult do
          article_stats: article_stats
        }}
     else
-      nil -> {:error, ArticleErrorCat.binding_context_required()}
       {:error, _reason} = error -> error
+      _ -> {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 

@@ -9,6 +9,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     ArticleLifecycle,
     ArticlePublic,
     TicketState,
+    TicketTag,
     TicketUpdate
   }
 
@@ -39,6 +40,64 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     {:ok, %{community: community, post: post, actor: actor, ticket: ticket}}
   end
 
+  test "internal Ticket page applies integer tag IDs and creation dates", ctx do
+    {:ok, tag} = db_insert(:community_tag, %{community: ctx.community})
+
+    %TicketTag{}
+    |> TicketTag.changeset(%{ticket_id: ctx.ticket.id, community_tag_id: tag.id})
+    |> Repo.insert!()
+
+    assert {:ok, %{entries: [_]}} =
+             CMS.Tickets.Query.page_internal(ctx.community, ctx.actor, %{tag_ids: [tag.id]})
+
+    assert {:ok, %{entries: []}} =
+             CMS.Tickets.Query.page_internal(ctx.community, ctx.actor, %{tag_ids: [tag.id + 1]})
+
+    before_creation = DateTime.add(DateTime.utc_now(:second), -86_400, :second)
+
+    assert {:ok, %{entries: [_]}} =
+             CMS.Tickets.Query.page_internal(ctx.community, ctx.actor, %{
+               created_after: before_creation
+             })
+
+    assert {:ok, %{entries: []}} =
+             CMS.Tickets.Query.page_internal(ctx.community, ctx.actor, %{
+               created_before: before_creation
+             })
+  end
+
+  test "a completed parent prevents a Worker from reopening", ctx do
+    assert {:ok, worker} =
+             CMS.Tickets.create_worker(
+               ctx.community,
+               ctx.ticket.id,
+               %{title: "Parent lock Worker"},
+               ctx.ticket.workflow_version,
+               ctx.actor,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, _} = transition(ctx, ctx.ticket.id, :wip)
+    assert {:ok, _} = transition(ctx, worker.id, :wip)
+    assert {:ok, _} = transition(ctx, worker.id, :done)
+    assert {:ok, _} = transition(ctx, ctx.ticket.id, :done)
+    assert {:error, _} = transition(ctx, worker.id, :wip)
+    assert Repo.get!(TicketState, worker.id).status == :done
+  end
+
+  defp transition(ctx, ticket_id, status) do
+    version = Repo.get!(TicketState, ticket_id).workflow_version
+
+    CMS.Tickets.transition(
+      ctx.community,
+      ticket_id,
+      status,
+      version,
+      ctx.actor,
+      Ecto.UUID.generate()
+    )
+  end
+
   @tag :b3_independent
   test "creating a User Ticket records a Post Activity target", %{
     community: community,
@@ -62,6 +121,11 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     assert projected.target.inner_id == ticket.inner_id
     assert projected.target.url == "/#{community.slug}/ticket/#{ticket.inner_id}"
     assert projected.target.title == ticket.published_content.title
+
+    assert {:ok, %{entries: unscoped_entries}} =
+             GroupherServer.Activity.list_article_logs(post, nil)
+
+    assert Enum.any?(unscoped_entries, &(&1.action == :ticket_created))
   end
 
   @tag :b3_independent

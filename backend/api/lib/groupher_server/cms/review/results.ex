@@ -179,8 +179,12 @@ defmodule GroupherServer.CMS.Review.Results do
 
   defp outdated_request?(%{artiment_review_id: id}) when is_binary(id) do
     case Repo.get(ArtimentReview, id) do
-      %ArtimentReview{outdated_at: outdated_at} when not is_nil(outdated_at) -> true
-      _ -> false
+      %ArtimentReview{outdated_at: outdated_at, replaced_at: replaced_at}
+      when not is_nil(outdated_at) or not is_nil(replaced_at) ->
+        true
+
+      _ ->
+        false
     end
   end
 

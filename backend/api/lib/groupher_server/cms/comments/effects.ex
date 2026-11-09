@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Comments.Effects do
       from(binding in CMS.Model.ArticleBinding,
         join: community in CMS.Model.Community,
         on: community.id == binding.community_id,
-        where: binding.article_id == ^article.id,
+        where: binding.article_id == ^article.id and not is_nil(binding.inner_id),
         select: {binding, community}
       )
       |> Repo.all()

@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Press.Query do
   Feed and manifest output needs immutable body snapshots, so it is not an
   ArticleLite consumer. The query reuses the Articles pagination selector for
   public visibility, ordering, and the Docs public tree, then resolves complete
-  public projections through bounded `FrontDesk.articles/1` batches. Press is a
+  public projections through bounded `FrontDesk.article/1` list batches. Press is a
   service-scoped request path and is not a pagination N+1 exception.
   """
 

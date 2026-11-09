@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Tickets.Effects do
               as: :enqueue
 
   @doc """
-  Records cache tags for Ticket projections affected by a Post stats change.
+  Purges cache tags for Ticket projections affected by a Post stats change.
 
   ## Examples
 

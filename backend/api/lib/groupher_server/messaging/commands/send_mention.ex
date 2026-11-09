@@ -31,13 +31,9 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
           {:ok, %{users: []}}
 
         _ ->
-          with {:ok, :pass} <- ensure_public_content(content),
-               {:ok, mentions} <- Persist.replace(content, mentions, from_user),
-               {:ok, users} <-
-                 mentions
-                 |> Enum.map(& &1.to_user_id)
-                 |> Accounts.mailbox_update_status_many_in_transaction() do
-            {:ok, %{users: users}}
+          case record_in_transaction(content, mentions, from_user) do
+            {:ok, users} -> {:ok, %{users: users}}
+            {:error, _reason} = error -> error
           end
       end
     end)
@@ -63,6 +59,18 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
   @spec run(struct(), list(), User.t()) :: {:ok, :pass} | {:error, term()}
   def run(content, mentions, %User{} = from_user) do
     execute_pipeline(content, mentions, from_user)
+  end
+
+  @doc "Records mailbox rows inside the caller's transaction; caller invalidates after commit."
+  def record_in_transaction(content, mentions, %User{} = from_user) when is_list(mentions) do
+    with {:ok, :pass} <- ensure_public_content(content),
+         {:ok, persisted} <- Persist.replace(content, mentions, from_user),
+         {:ok, users} <-
+           persisted
+           |> Enum.map(& &1.to_user_id)
+           |> Accounts.mailbox_update_status_many_in_transaction() do
+      {:ok, users}
+    end
   end
 
   defp ensure_public_content(%Comment{id: id}) do

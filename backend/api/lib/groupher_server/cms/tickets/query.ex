@@ -985,7 +985,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
     |> maybe_filter_status(Map.get(filter, :status))
     |> maybe_filter_priority(Map.get(filter, :priority))
     |> maybe_filter_assignee(Map.get(filter, :assignee_id))
-    |> maybe_filter_tags(filter_values(filter, :tag_ids), community_id)
+    |> maybe_filter_tags(filter_tag_ids(filter), community_id)
     |> maybe_filter_facet("version", filter_values(filter, :versions))
     |> maybe_filter_facet("os", filter_values(filter, :operating_systems))
     |> maybe_filter_facet("module", filter_values(filter, :modules))
@@ -1054,10 +1054,6 @@ defmodule GroupherServer.CMS.Tickets.Query do
     query =
       if Map.has_key?(filter, :created_after) or Map.has_key?(filter, :created_before) do
         query
-        |> join(:inner, [ticket_state: state], article in Article,
-          on: article.id == state.article_id,
-          as: :ticket_article
-        )
         |> maybe_created_after(Map.get(filter, :created_after))
         |> maybe_created_before(Map.get(filter, :created_before))
       else
@@ -1113,6 +1109,14 @@ defmodule GroupherServer.CMS.Tickets.Query do
     |> List.wrap()
     |> Enum.filter(&(is_binary(&1) and String.trim(&1) != ""))
     |> Enum.map(&(String.trim(&1) |> String.downcase()))
+    |> Enum.uniq()
+  end
+
+  defp filter_tag_ids(filter) do
+    filter
+    |> Map.get(:tag_ids, [])
+    |> List.wrap()
+    |> Enum.filter(&is_integer/1)
     |> Enum.uniq()
   end
 

@@ -2,14 +2,14 @@ defmodule GroupherServer.CMS.Comments.RequestCommunity do
   @moduledoc """
   Resolves Comment operations through a current Article binding.
 
-  Public paths supply the Community. Pathless ordinary Comment operations fail
-  closed; internal Doc operations resolve the unique stable Article owner.
+  Public paths supply the Community. Pathless operations use a unique current
+  binding; an Article shared by multiple Communities still requires a path.
 
       Comment request path -> current ArticleBinding -> Community -> Gate
   """
 
   alias GroupherServer.CMS
-  alias CMS.Model.Comment
+  alias CMS.Model.{ArticleBinding, Comment, Community}
 
   def resolve(%Comment{request_community_slug: slug} = comment) when is_binary(slug) do
     with {:ok, community} <- CMS.FrontDesk.community(slug, mode: :internal),
@@ -22,7 +22,12 @@ defmodule GroupherServer.CMS.Comments.RequestCommunity do
     CMS.Articles.Bindings.doc_owner(article_id)
   end
 
-  def resolve(%Comment{}), do: {:error, CMS.Gate.ErrorCat.scope_context_missing()}
+  def resolve(%Comment{} = comment) do
+    case CMS.Articles.Bindings.all(comment) do
+      {:ok, [%ArticleBinding{community: %Community{} = community}]} -> {:ok, community}
+      _ -> {:error, CMS.Gate.ErrorCat.scope_context_missing()}
+    end
+  end
 
   @doc "Constructs a public discussion context; unknown Community paths fail closed."
   def scope_context(thread, community_slug) do

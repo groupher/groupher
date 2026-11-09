@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
   }
 
   @doc """
-  Reloads one resource row by primary key under `FOR UPDATE`.
+  Locks binding Communities for an Article, then reloads its row under `FOR UPDATE`.
 
   This lock protects the canonical resource consumed by the surrounding Gate
   transaction; callers must not use it as a general resource reader.

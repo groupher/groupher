@@ -11,12 +11,15 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
+  import Ecto.Query
+
   alias GroupherServer.{CMS, Repo, ReviewBot}
   alias CMS.Passport.Authorization
   alias CMS.Review.{RequestSubmission, Target}
   alias CMS.Command.ConfirmationDefinition
 
   alias CMS.Model.{
+    ArticleBinding,
     ArticleBodySnapshot,
     ArticlePublic,
     ArticleRevision,
@@ -165,7 +168,11 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
        %{
          title: title,
          body: body.plain_text || "",
-         images: CMS.Review.Media.comment_images(body.json, scope_community_id(scope_key))
+         images:
+           CMS.Review.Media.comment_images(
+             body.json,
+             comment_image_communities(scope_key, article.id)
+           )
        }}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
@@ -224,6 +231,21 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   end
 
   defp scope_community_id(_scope_key), do: nil
+
+  defp comment_image_communities(scope_key, article_id) do
+    case scope_community_id(scope_key) do
+      nil ->
+        Repo.all(
+          from(binding in ArticleBinding,
+            where: binding.article_id == ^article_id,
+            select: binding.community_id
+          )
+        )
+
+      id ->
+        [id]
+    end
+  end
 
   defp current_configs(%{type: :article}, scope_key) do
     with {:ok, community_id} <- parse_scope(scope_key) do

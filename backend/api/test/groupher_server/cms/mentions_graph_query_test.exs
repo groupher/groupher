@@ -149,6 +149,103 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
              CMS.mentions_graph_page(community.slug, focus, nil, 20)
   end
 
+  test "restricted Comment status keeps a locator without exposing its body digest" do
+    {community, article, _attrs, author} = mock_article(:post)
+
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               article_inner_id(article, community),
+               mock_comment("private digest text"),
+               author,
+               Ecto.UUID.generate()
+             )
+
+    Repo.update_all(
+      from(state in CMS.Model.CommentLifecycle, where: state.comment_id == ^comment.id),
+      set: [state: :deleted]
+    )
+
+    assert {:ok, status} =
+             CMS.Artiment.Status.read(community.slug, %{
+               type: :comment,
+               article_id: article.article_id,
+               comment_inner_id: comment.inner_id
+             })
+
+    assert status.status == :deleted
+    assert status.title == "评论 ##{comment.inner_id}"
+    assert status.url =~ "#comment-#{comment.inner_id}"
+  end
+
+  test "a cross-Community Doc Comment uses its parent's Community for URL and review scope" do
+    {source_community, source, _attrs, _author} = mock_article(:post)
+    {target_community, doc, _attrs, author} = mock_article(:doc)
+
+    assert {:ok, comment} =
+             CMS.Comments.create_comment(
+               target_community,
+               :doc,
+               doc.inner_id,
+               mock_comment("cross community private text"),
+               author,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, {:ok, _}} =
+             Repo.transaction(fn ->
+               CMS.ArtimentMentions.Capture.execute(
+                 %{type: :post, article_id: source.article_id},
+                 %{
+                   published_revision_identity: next_published_revision_identity(source),
+                   ast: [
+                     %{
+                       "type" => "mention",
+                       "key" => "comment:#{comment.id}",
+                       "children" => [%{"text" => "target"}]
+                     }
+                   ],
+                   community_id: source_community.id,
+                   mentioned_at: DateTime.utc_now(:second)
+                 },
+                 {:command, Ecto.UUID.generate()}
+               )
+             end)
+
+    assert {:ok, _selected} =
+             CMS.FrontDesk.Comment.read_mentioned(
+               target_community.slug,
+               %{
+                 type: :comment,
+                 article_id: doc.article_id,
+                 comment_inner_id: comment.inner_id
+               },
+               nil
+             )
+
+    ref = %{key: comment.id, type: :comment, comment_id: comment.id}
+
+    assert {:ok, statuses} = CMS.Artiment.Status.read_many(source_community, [ref])
+    assert statuses[comment.id].status == :readable
+    assert statuses[comment.id].url =~ "/#{target_community.slug}/doc/"
+
+    %CMS.Model.CommentReviewBlock{}
+    |> CMS.Model.CommentReviewBlock.changeset(%{
+      comment_id: comment.id,
+      community_id: target_community.id,
+      type: :manual_hold,
+      source_ref: "cross-community-review",
+      source: :human,
+      applied_at: DateTime.utc_now(:second)
+    })
+    |> Repo.insert!()
+
+    assert {:ok, restricted} = CMS.Artiment.Status.read_many(source_community, [ref])
+    assert restricted[comment.id].status == :unavailable
+    refute String.contains?(restricted[comment.id].title, "private text")
+  end
+
   test "the Article Comment seed page excludes Comments without current edges" do
     {community, article, _attrs, user} = mock_article(:post)
 

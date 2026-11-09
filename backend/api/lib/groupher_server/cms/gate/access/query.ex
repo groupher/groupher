@@ -276,6 +276,30 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   @doc "Joins the caller transaction for a branch-scoped Doc check."
   def check_in_transaction(actor, action, resource, community, branch_id)
 
+  # Doc discussion is attached to the stable Article. Creation therefore uses
+  # the same aggregate lock as reply/edit/delete, while Gate still checks main.
+  def check_in_transaction(
+        actor,
+        :create_comment,
+        %Article{thread: :doc} = article,
+        %Community{} = community,
+        branch_id
+      )
+      when is_integer(branch_id) do
+    with {:ok, :pass} <- require_transaction(),
+         {:ok, :pass} <- acquire_comment_parent_lock(community, article, nil) do
+      Check.with_authorized_doc(
+        actor,
+        :create_comment,
+        {community, article, branch_id},
+        fn value ->
+          {:ok, value}
+        end
+      )
+      |> normalize_join_decision()
+    end
+  end
+
   def check_in_transaction(
         actor,
         action,

@@ -26,6 +26,11 @@ defmodule GroupherServer.Messaging do
     Commands.SendMention.run(artiment, mentions, from_user)
   end
 
+  @doc "Records mention mailbox rows within the caller's transaction; invalidate after commit."
+  def record_mention_in_transaction(artiment, mentions, from_user) do
+    Commands.SendMention.record_in_transaction(artiment, mentions, from_user)
+  end
+
   @doc """
   Stores a grouped activity notification for its recipient.
 

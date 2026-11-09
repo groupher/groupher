@@ -46,15 +46,23 @@ defmodule GroupherServer.CMS.ReviewBlocks do
            |> Map.delete(:actor)
            |> Map.delete(:operation_ref)
            |> Map.merge(target_attrs),
-         {:ok, restriction} <- insert_or_get(schema, attrs),
-         {:ok, :pass} <- recompute(lifecycle),
-         {:ok, _event} <- enqueue_visibility_change(lifecycle, target_attrs, attrs.source_ref),
-         {:ok, :pass} <- bump_graph(lifecycle) do
+         {:ok, restriction, inserted?} <- insert_or_get(schema, attrs),
+         {:ok, :pass} <- apply_visibility_change(inserted?, lifecycle, target_attrs, attrs) do
       {:ok, restriction}
     end
   end
 
   defp apply_fact(_lifecycle, _attrs), do: {:error, CMS.ErrorCat.invalid_review_block()}
+
+  defp apply_visibility_change(false, _lifecycle, _target_attrs, _attrs), do: {:ok, :pass}
+
+  defp apply_visibility_change(true, lifecycle, target_attrs, attrs) do
+    with {:ok, :pass} <- recompute(lifecycle),
+         {:ok, _event} <- enqueue_visibility_change(lifecycle, target_attrs, attrs.source_ref),
+         {:ok, :pass} <- bump_graph(lifecycle) do
+      {:ok, :pass}
+    end
+  end
 
   @doc "Resolves restrictions and their effective Comment summary delta in one transaction."
   def end_blocks(lifecycle, scope_key, ids, operation_ref, resolution) do
@@ -319,7 +327,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   defp insert_or_get_row(changeset, schema, attrs) do
     case Repo.insert(changeset, mode: :savepoint) do
       {:ok, row} ->
-        {:ok, row}
+        {:ok, row, true}
 
       {:error, changeset} ->
         case Repo.one(
@@ -334,7 +342,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
              ) do
           %{type: type} = row ->
             if type == attrs.type do
-              {:ok, row}
+              {:ok, row, false}
             else
               {:error, CMS.ErrorCat.lifecycle_state_conflict()}
             end

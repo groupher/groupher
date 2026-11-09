@@ -32,8 +32,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Workflow do
   @doc "Creates or recovers a fixed bootstrap for a two-hour window."
   def bootstrap(run_id, database) do
     with {:ok, _} <- admit(database),
-         true <-
-           is_binary(run_id) and Regex.match?(~r/\A[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}\z/, run_id) do
+         true <- valid_run_id?(run_id) do
       Repo.transaction(fn ->
         advisory_lock!()
 
@@ -65,13 +64,21 @@ defmodule GroupherServer.CMS.ProductionSeed.Workflow do
 
   @doc "Returns internal operational IDs and public locators, without credentials/session refs."
   def report(run_id, database) do
-    with {:ok, _} <- admit(database) do
+    with {:ok, _} <- admit(database),
+         true <- valid_run_id?(run_id) do
       case Repo.get_by(Run, run_id: run_id) do
         nil -> {:error, :seed_run_not_found}
         %{database_name: ^database} = run -> {:ok, describe(run)}
         _ -> {:error, :seed_wrong_ledger_database}
       end
+    else
+      false -> {:error, :seed_invalid_run_id}
+      {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp valid_run_id?(run_id) do
+    is_binary(run_id) and Regex.match?(~r/\A[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}\z/, run_id)
   end
 
   @doc "Locks a run in an existing transaction, rejecting expired/closed writes."
@@ -94,6 +101,10 @@ defmodule GroupherServer.CMS.ProductionSeed.Workflow do
 
   @doc "Serializes changes involving the shared fixed accounts and community namespace."
   def advisory_lock! do
+    unless Repo.in_transaction?() do
+      raise "production seed advisory lock requires a transaction"
+    end
+
     Repo.query!("SELECT pg_advisory_xact_lock(778031104)", [])
     {:ok, :locked}
   end

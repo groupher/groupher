@@ -74,5 +74,4 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:artiment_status_not_found, code: 4560)
   error(:invalid_mention_notification_event, code: 4555)
   error(:mention_url_too_long, code: 4556)
-  error(:invalid_mention_target_locator, code: 4557)
 end

@@ -11,7 +11,9 @@ defmodule GroupherServer.CMS.Articles.ActivityTime do
     quote do
       type(
         fragment(
-          "COALESCE(GREATEST(?, ?), ?, ?)",
+          "COALESCE(CASE WHEN ? THEN ? ELSE GREATEST(?, ?) END, ?, ?)",
+          unquote(state).is_sunk,
+          unquote(state).active_at,
           unquote(article).active_at,
           unquote(state).active_at,
           unquote(public).published_at,

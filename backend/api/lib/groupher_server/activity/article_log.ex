@@ -31,7 +31,7 @@ defmodule GroupherServer.Activity.ArticleLog do
          {:ok, handler} <- Artiment.handler(canonical) do
       actions = handler.surface_actions(:article_log)
       article_id = canonical.id
-      community = request_community(article)
+      community = request_community(article) || unique_binding_community(canonical)
 
       query =
         handler.schema()
@@ -109,6 +109,13 @@ defmodule GroupherServer.Activity.ArticleLog do
   defp request_community(%{community_slug: slug}) when is_binary(slug), do: load_community(slug)
   defp request_community(_article), do: nil
 
+  defp unique_binding_community(article) do
+    case CMS.articles_bindings_all(article) do
+      {:ok, [%{community: %Community{} = community}]} -> community
+      _ -> nil
+    end
+  end
+
   defp load_community(slug) do
     case CMS.front_desk_community(slug) do
       {:ok, %Community{} = community} -> community
@@ -129,10 +136,14 @@ defmodule GroupherServer.Activity.ArticleLog do
   defp public_ticket_targets(nil, _ticket_refs), do: {:error, ActivityErrorCat.invalid_source()}
 
   defp public_ticket_targets(%Community{} = community, ticket_refs) do
-    case CMS.tickets_public_activity_targets(community, ticket_refs) do
-      {:ok, targets} -> {:ok, targets}
-      {:error, _reason} = error -> error
-    end
+    ticket_refs
+    |> Enum.chunk_every(20)
+    |> Enum.reduce_while({:ok, %{}}, fn refs, {:ok, targets} ->
+      case CMS.tickets_public_activity_targets(community, refs) do
+        {:ok, batch} -> {:cont, {:ok, Map.merge(targets, batch)}}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
   end
 
   defp authorize_read(%ArticleDraft{article_id: article_id}, actor) do

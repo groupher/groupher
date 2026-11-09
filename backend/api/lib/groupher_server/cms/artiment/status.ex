@@ -63,13 +63,31 @@ defmodule GroupherServer.CMS.Artiment.Status do
       |> Enum.reject(&is_nil/1)
       |> Enum.uniq()
 
-    bindings =
+    binding_rows =
       Repo.all(
         from(binding in ArticleBinding,
-          where: binding.article_id in ^article_ids and binding.community_id == ^community.id
+          join: owner in Community,
+          on: owner.id == binding.community_id,
+          where: binding.article_id in ^article_ids,
+          select: {binding, owner}
         )
       )
-      |> Map.new(&{&1.article_id, &1})
+
+    bindings =
+      binding_rows
+      |> Enum.filter(fn {binding, _owner} -> binding.community_id == community.id end)
+      |> Map.new(fn {binding, _owner} -> {binding.article_id, binding} end)
+
+    comment_parents =
+      binding_rows
+      |> Enum.group_by(fn {binding, _owner} -> binding.article_id end)
+      |> Map.new(fn {article_id, rows} ->
+        selected =
+          Enum.find(rows, fn {binding, _owner} -> binding.community_id == community.id end) ||
+            Enum.min_by(rows, fn {binding, _owner} -> binding.community_id end)
+
+        {article_id, selected}
+      end)
 
     ordinary_ids =
       refs |> Enum.reject(&(&1.type in [:comment, :doc])) |> Enum.map(& &1.article_id)
@@ -149,7 +167,7 @@ defmodule GroupherServer.CMS.Artiment.Status do
       query_ids(comment_ids, CommentBody, :comment_id)
       |> Map.new(&{&1.comment_id, &1})
 
-    readable = readable_ids(community, refs, comments)
+    readable = readable_ids(community, refs, comments, comment_parents)
 
     statuses =
       Map.new(refs, fn ref ->
@@ -157,24 +175,24 @@ defmodule GroupherServer.CMS.Artiment.Status do
           if ref.type == :comment do
             comment = comments[ref.comment_id]
             parent_id = comment && comment.article_id
-            binding = bindings[parent_id]
+            {binding, owner} = Map.get(comment_parents, parent_id, {nil, community})
 
             url_parent =
               if binding,
                 do: %{
-                  community_slug: community.slug,
+                  community_slug: owner.slug,
                   thread: comment.thread,
                   inner_id: binding.inner_id,
                   slug: doc_publics[parent_id] && doc_publics[parent_id].slug
                 },
                 else: %{
-                  community_slug: community.slug,
+                  community_slug: owner.slug,
                   thread: comment && comment.thread,
                   article_id: parent_id
                 }
 
             fallback_parent = %{
-              community_slug: community.slug,
+              community_slug: owner.slug,
               thread: comment && comment.thread,
               article_id: parent_id
             }
@@ -185,10 +203,17 @@ defmodule GroupherServer.CMS.Artiment.Status do
                   CMS.FrontDesk.comment_url(fallback_parent, comment.inner_id)
               end
 
+            title =
+              if MapSet.member?(readable, ref.key) do
+                bodies[ref.comment_id] && bodies[ref.comment_id].digest
+              else
+                comment && "评论 ##{comment.inner_id}"
+              end
+
             metadata = %{
               type: :comment,
               thread: comment && comment.thread,
-              title: bodies[ref.comment_id] && bodies[ref.comment_id].digest,
+              title: title,
               url: url,
               article_id: parent_id,
               article_inner_id: binding && binding.inner_id,
@@ -261,22 +286,26 @@ defmodule GroupherServer.CMS.Artiment.Status do
   defp classify(_, true), do: :readable
   defp classify(_, false), do: :unavailable
 
-  defp readable_ids(community, refs, comments) do
+  defp readable_ids(community, refs, comments, comment_parents) do
     refs
     |> Enum.group_by(& &1.type)
     |> Enum.flat_map(fn {type, group} ->
       if type == :comment do
         group
         |> Enum.filter(&Map.has_key?(comments, &1.comment_id))
-        |> Enum.group_by(&comments[&1.comment_id].thread)
-        |> Enum.flat_map(fn {thread, items} ->
+        |> Enum.group_by(fn ref ->
+          comment = comments[ref.comment_id]
+          {_binding, owner} = Map.get(comment_parents, comment.article_id, {nil, community})
+          {comment.thread, owner.id}
+        end)
+        |> Enum.flat_map(fn {{thread, owner_id}, items} ->
           ids = Enum.map(items, & &1.comment_id)
 
           CMS.Gate.scope(
             Comment,
             nil,
             :read,
-            CommentContext.mentioned_target(thread, community.id)
+            CommentContext.mentioned_target(thread, owner_id)
           )
           |> scope_query()
           |> where([comment], comment.id in ^ids)

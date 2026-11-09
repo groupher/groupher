@@ -51,6 +51,16 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     {:ok, ~m(community post actor outsider first second)a}
   end
 
+  test "integer Comment entrypoints resolve a unique parent Community", context do
+    ~m(actor first second)a = context
+
+    assert {:ok, %{is_pinned: true}} =
+             CMS.Comments.pin_comment(first.id, actor, Ecto.UUID.generate())
+
+    assert {:ok, %{is_solution: true}} =
+             CMS.Comments.accept_solution(second.id, actor, Ecto.UUID.generate())
+  end
+
   test "accept is idempotent and does not alter Ticket workflow or pin", context do
     ~m(post actor first)a = context
 

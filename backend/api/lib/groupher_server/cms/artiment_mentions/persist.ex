@@ -449,7 +449,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Persist do
            CMS.Model.Mentions.Endpoint.changeset(
              %CMS.Model.Mentions.Endpoint{},
              identity
-           )
+           ),
+           mode: :savepoint
          ) do
       {:ok, endpoint} ->
         {:ok, endpoint}

@@ -20,11 +20,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Disabled do
   end
 
   @impl true
-  def upsert(_artiments, _opts), do: {:ok, :search_disabled}
+  def upsert(_artiments, _opts), do: {:ok, :pass}
 
   @impl true
-  def delete(_refs), do: {:ok, :search_disabled}
+  def delete(_refs), do: {:ok, :pass}
 
   @impl true
-  def update_metrics(_updates), do: {:ok, :search_disabled}
+  def update_metrics(_updates), do: {:ok, :pass}
 end

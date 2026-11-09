@@ -52,6 +52,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocActivityTest do
       assert [head] = one.entries
       assert head.id == hd(expected)
       assert head.active_at == t3
+      assert head.status == :published
 
       {:ok, two} =
         Pagination.page(
@@ -82,6 +83,20 @@ defmodule GroupherServer.Test.CMS.Articles.DocActivityTest do
 
     assert updated.id == first.article_id
     assert updated.active_at == t5
+
+    Repo.update_all(
+      from(s in DocBranchState,
+        where: s.article_id == ^first.article_id and s.branch_id == ^first.branch_id
+      ),
+      set: [is_sunk: true, active_at: t1]
+    )
+
+    {:ok, %{entries: sunk_entries}} =
+      Pagination.page(:doc, %{community: community.slug, sort: :asc_active}, nil, nil,
+        config: %{config | default_size: 10}
+      )
+
+    assert Enum.find(sunk_entries, &(&1.id == first.article_id)).active_at == t1
   end
 
   test "ACT-04 the retained Article Flop adapter orders by the same effective expression" do
