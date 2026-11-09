@@ -960,7 +960,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
     Repo.delete_all(
       from(binding in CMS.Model.ArticleBinding,
-        where: binding.article_id == ^post.article_id
+        where: binding.article_id == ^post.article_id and binding.community_id == ^community.id
       )
     )
 

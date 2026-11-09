@@ -78,16 +78,31 @@ defmodule GroupherServer.CMS.Artiment.Status do
       |> Enum.filter(fn {binding, _owner} -> binding.community_id == community.id end)
       |> Map.new(fn {binding, _owner} -> {binding.article_id, binding} end)
 
+    doc_comment_parent_ids =
+      comments
+      |> Map.values()
+      |> Enum.filter(&(&1.thread == :doc))
+      |> MapSet.new(& &1.article_id)
+
     comment_parents =
       binding_rows
       |> Enum.group_by(fn {binding, _owner} -> binding.article_id end)
-      |> Map.new(fn {article_id, rows} ->
-        selected =
-          Enum.find(rows, fn {binding, _owner} -> binding.community_id == community.id end) ||
-            Enum.min_by(rows, fn {binding, _owner} -> binding.community_id end)
+      |> Enum.flat_map(fn {article_id, rows} ->
+        current =
+          Enum.find(rows, fn {binding, _owner} -> binding.community_id == community.id end)
 
-        {article_id, selected}
+        cond do
+          current ->
+            [{article_id, current}]
+
+          MapSet.member?(doc_comment_parent_ids, article_id) and length(rows) == 1 ->
+            [{article_id, hd(rows)}]
+
+          true ->
+            []
+        end
       end)
+      |> Map.new()
 
     ordinary_ids =
       refs |> Enum.reject(&(&1.type in [:comment, :doc])) |> Enum.map(& &1.article_id)
