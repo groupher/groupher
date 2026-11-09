@@ -37,6 +37,7 @@
 - [CMS Assets：现状审计与独立重构完成记录](./cms-assets-refactor.md)：单独梳理 Assets 的用户 Command、Query、Persist、Article refs、Upload、Provider 和 Replacement workflow，以及已完成的 workflow recovery、partial-success 与 lease 收口结果。
 - [CMS Facade 边界修复](./cms-facade-fix.md)：Context 根 Facade、internal capability、Outbox 与结构门禁的阶段性修复记录。
 - [CMS DocTree / ContentImport：现状审计与独立重构计划](./cms-doctree-refactor.md)：单独梳理 Docs tree、publish/trash workflow、ContentImport Job、Gate、事务 owner、identity/recovery 和目标目录边界。
+- [Docs 独立发布队列与去 Branch 重构](./docs-publish-queue-refactor.md)：待实施的每站点唯一发布队列、审核增量 diff、队列预览和原子 Release；新合同从空 Docs 数据启动，不迁移旧内容与讨论。
 - [CMS Command 客户端 Identity 边界修复](./cms-command-client-identity-fix.md)：保留 GraphQL
   `commandId`，将创建、retry 复用和 unknown outcome 恢复统一收回 mutation executor。
 - [Backend Business Return Shape 收敛](./backend-business-return-shape.md)：统一业务层
