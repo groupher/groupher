@@ -10,11 +10,11 @@ defmodule GroupherServer.CMS.ArtimentMentions do
         -> Repo / external boundary
   """
 
-  alias __MODULE__.{Commands.Update, Persist}
+  alias __MODULE__.{Capture, Persist}
 
   @doc "Updates one selected body's graph inside its owning Command transaction."
   defdelegate update(source, body, identity),
-    to: Update,
+    to: Capture,
     as: :execute
 
   @doc "Keeps a restricted source's edges and invalidates graph cursors in its owner's transaction."

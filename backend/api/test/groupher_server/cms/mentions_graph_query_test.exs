@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :doc, article_id: doc.article_id},
                  %{
                    published_revision_identity: token,
@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: next_published_revision_identity(source),
@@ -225,7 +225,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
       assert {:ok, {:ok, _}} =
                Repo.transaction(fn ->
-                 CMS.ArtimentMentions.Commands.Update.execute(
+                 CMS.ArtimentMentions.Capture.execute(
                    %{type: source.thread, article_id: source.article_id},
                    %{
                      published_revision_identity: next_published_revision_identity(source),
@@ -260,7 +260,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: next_published_revision_identity(source),
@@ -324,7 +324,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: token,
@@ -387,7 +387,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: next_published_revision_identity(source),
@@ -441,7 +441,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: next_published_revision_identity(source),
@@ -499,7 +499,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: next_published_revision_identity(source),
@@ -555,7 +555,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: next_published_revision_identity(source),
@@ -627,7 +627,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
       assert {:ok, {:ok, _captured}} =
                Repo.transaction(fn ->
-                 CMS.ArtimentMentions.Commands.Update.execute(
+                 CMS.ArtimentMentions.Capture.execute(
                    %{type: source.thread, article_id: source.article_id},
                    %{
                      published_revision_identity: next_published_revision_identity(source),
@@ -679,7 +679,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: next_published_revision_identity(source),
@@ -733,7 +733,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: next_published_revision_identity(source),
@@ -803,7 +803,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: next_published_revision_identity(source),
@@ -928,7 +928,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, _}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
                    published_revision_identity: next_published_revision_identity(source),
@@ -1005,7 +1005,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
 
     assert {:ok, {:ok, captured}} =
              Repo.transaction(fn ->
-               CMS.ArtimentMentions.Commands.Update.execute(
+               CMS.ArtimentMentions.Capture.execute(
                  %{type: :doc, article_id: doc.article_id},
                  %{
                    published_revision_identity: token,

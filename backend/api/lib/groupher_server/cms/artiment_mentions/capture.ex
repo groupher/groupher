@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.ArtimentMentions.Commands.Update do
+defmodule GroupherServer.CMS.ArtimentMentions.Capture do
   @moduledoc """
   Saves the selected published body's current Mentions in its owning Command transaction.
 

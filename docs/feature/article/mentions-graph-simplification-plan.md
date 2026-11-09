@@ -27,9 +27,9 @@
 
 文件按现有 Context／Owner 规则收口，不新增逐文件白名单或空 Facade：
 
-- [x] 将 `Mention.from_target/2` 的薄转换并入 `Commands.Update`，删除 `mention.ex`；`Persist` 继续负责来源锁、关系 diff、`mentioned_at` 延续与落库。
-- [x] 本轮复用 `CMS.FrontDesk` 的 Article／Comment 等**资源 URL 与 Artiment 状态读取**入口；FrontDesk 原有资源读取能力继续保留；替换 `Commands.Update`、`MentionsGraph.NodeStatus`、Ticket 查询和 seed 的资源路径调用后删除 `LinkPath`。普通外链规范化属于 Mentions 的关系键处理，当前只有 `Persist` 一个调用点，可收回该流程的纯函数并删除 `LinkURL`；不把 FrontDesk 扩成通用 URL 工具，也不把外链规范化当成 Article 目标确认。
-- [x] 上一版 User 关系／未消费通知状态由 Query 读取，纯收件人差异计算归 `Commands.Update`。调用链明确为：正文 Command 在事务内调用 `Effects` 记录 Outbox 意图 → 事务提交 → Outbox Workflow 消费事件 → 调用 `Effects` 的投递入口 → `effects/notifications.ex` 执行投递与当前关系／来源核对。保留 `effects.ex` 作为边界，Workflow 不直接穿透 `Effects.Notifications`；删除平级 `notifications.ex`。投递不能在正文事务内执行，通知去重与准入规则不变。
+- [x] 将 `Mention.from_target/2` 的薄转换并入 `ArtimentMentions.Capture`，删除 `mention.ex`；`Persist` 继续负责来源锁、关系 diff、`mentioned_at` 延续与落库。
+- [x] 本轮复用 `CMS.FrontDesk` 的 Article／Comment 等**资源 URL 与 Artiment 状态读取**入口；FrontDesk 原有资源读取能力继续保留；替换 `ArtimentMentions.Capture`、`MentionsGraph.NodeStatus`、Ticket 查询和 seed 的资源路径调用后删除 `LinkPath`。普通外链规范化属于 Mentions 的关系键处理，当前只有 `Persist` 一个调用点，可收回该流程的纯函数并删除 `LinkURL`；不把 FrontDesk 扩成通用 URL 工具，也不把外链规范化当成 Article 目标确认。
+- [x] 上一版 User 关系／未消费通知状态由 Query 读取，纯收件人差异计算归 `ArtimentMentions.Capture`。调用链明确为：正文 Command 在事务内调用 `Effects` 记录 Outbox 意图 → 事务提交 → Outbox Workflow 消费事件 → 调用 `Effects` 的投递入口 → `effects/notifications.ex` 执行投递与当前关系／来源核对。保留 `effects.ex` 作为边界，Workflow 不直接穿透 `Effects.Notifications`；删除平级 `notifications.ex`。投递不能在正文事务内执行，通知去重与准入规则不变。
 - [x] 将 `MentionsGraph.Graph.build/4` 的结果合并逻辑收进 `MentionsGraph.Query` 的私有函数，删除 `mentions_graph/graph.ex`；不引入有歧义的 `PageBuilder`。
 - [x] 将 `mentions_graph_revision.ex` 移到已有 `mentions_graph.ex + mentions_graph/` 下的 `mentions_graph/revision.ex`。更新 Article、Doc、Comment、Review、Community、binding 和 Mentions 的调用方；继续使用同一个 `CMS.Model.Mentions.GraphState` 和全局单行 revision，不改变 bump 时机。
 - [x] 在以上调用替换后删除 `opaque.ex`，统一图页、一跳列表、GraphQL、前端和测试的 ID／revision 格式；保留当前边的数据库去重键。跨 Community 的相同 `inner_id`、同一 Article 的不同 Community binding、无编号 draft 目标取得编号、Comment 节点、延续边 ID、旧 cursor 及前端缓存均须有断言。

@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
 
   import Ecto.Query
   alias GroupherServer.{CMS, Repo}
-  alias CMS.ArtimentMentions.Commands.Update
+  alias CMS.ArtimentMentions.Capture
   alias CMS.Model.Mentions.{Edge, Endpoint}
   alias CMS.Model.{ArticleBinding, ArticleLifecycle}
 
@@ -275,7 +275,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
     assert {:error, :deliberate_rollback} =
              Repo.transaction(fn ->
                assert {:ok, _} =
-                        Update.execute(
+                        Capture.execute(
                           %{type: :post, article_id: source.article_id},
                           selected(
                             community,
@@ -295,7 +295,7 @@ defmodule GroupherServer.Test.CMS.MentionsCurrentContractTest do
     identity = %{type: source.thread, article_id: source.article_id}
 
     case Repo.transaction(fn ->
-           Update.execute(
+           Capture.execute(
              identity,
              selected(community, ast, now),
              {:command, Ecto.UUID.generate()}

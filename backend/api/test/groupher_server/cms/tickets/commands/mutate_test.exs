@@ -277,7 +277,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     assert {:ok, written} = CMS.ArtimentMentions.Parser.mentions(ast)
 
     assert {:ok, [%{mentioned_scope: :internal, mentioned_type: :ticket, mentioned_id: id}]} =
-             CMS.ArtimentMentions.Commands.Update.target_mentions(written, community.id)
+             CMS.ArtimentMentions.Capture.target_mentions(written, community.id)
 
     assert id == ticket.id
   end

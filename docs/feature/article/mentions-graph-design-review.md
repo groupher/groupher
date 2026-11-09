@@ -242,7 +242,7 @@ Parser 的 Plate 遍历保留简单递归；无需引入遍历库。目标确认
 
 本节取代第 9–10 节中 `RecordMentions`、`Query.confirm`、`Persist.update_mentions`、`Commands.HideSource` 和“普通链接沿用旧目标”的中间方案；这些名称及规则不是当前 API。
 
-- 业务入口是 `ArtimentMentions.update/3`；Command 内部 `Commands.Update.execute/3` 从 Plate 抽取结构化节点，调用资源 Query/FrontDesk 批量确认，再调用 `Persist.update_graph/2` 同事务保存事实和当前边。Parser 不再查 Repo/Gate；Persist 不做目标资格和通知名单决定。
+- 业务入口是 `ArtimentMentions.update/3`；Command 内部 `Capture.execute/3` 从 Plate 抽取结构化节点，调用资源 Query/FrontDesk 批量确认，再调用 `Persist.update_graph/2` 同事务保存事实和当前边。Parser 不再查 Repo/Gate；Persist 不做目标资格和通知名单决定。
 - 普通结构化链接在目标审核隐藏后不会因旧 set 而继续绑定隐藏目标，保留 URL target；携带稳定 ID 的 `@ Article` 可以记录隐藏目标，读取时由 Gate 脱敏。这一选择不依赖旧引用位置匹配。当前 parser version 为 4，v1–v3 的当前来源须重新初始化。
 - Comment 顶层创建和回复创建均从 `Comments.Commands.Create` 更新关系；更新/删除也从所属 Command 执行。Ticket 发布从 `Tickets.Commands.Publish` 执行。`Comments.Effects` 与 `Tickets.Persist` 不再负责关系解析。回复路径曾漏接，十个 frontier 的联合验收暴露了不可展开节点，补齐后该用例通过（21 条 SQL）。
 - `mention.notify` 仍是 Outbox，worker 核对当前 set/token 和来源 Gate 后才投递。GraphQL 沿用共享的 Gate 来源查询、opaque revision 和有界 SQL。Mentions 不自建 Lifecycle；审核、父级和资源生命周期仍以原资源机制为权威。
