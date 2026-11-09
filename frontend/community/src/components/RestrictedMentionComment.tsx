@@ -1,10 +1,10 @@
 import useTrans from '~/hooks/useTrans'
-import type { MentionsGraphNodeStatus } from '~/lib/graphql/generated/graphql'
+import type { ArtimentReadStatus } from '~/lib/graphql/generated/graphql'
 
 type Props = {
   comment: {
     innerId: string
-    status: MentionsGraphNodeStatus
+    status: ArtimentReadStatus
     title: string | null
     html: string | null
   }

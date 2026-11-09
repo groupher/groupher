@@ -81,13 +81,7 @@ jobs:
       - name: Type-check Apply operations against the backend SDL
         run: pnpm --filter @groupher/frontend-apply run type-check
 
-      - name: Rebuild and verify generated GraphQL artifacts
+      - name: Generate and verify frontend GraphQL types
         run: |
-          git ls-files --error-unmatch \
-            frontend/core/lib/graphql/generated/fragment-masking.ts \
-            frontend/core/lib/graphql/generated/gql.ts \
-            frontend/core/lib/graphql/generated/graphql.ts \
-            frontend/core/lib/graphql/generated/index.ts
           pnpm run graphql:codegen
           pnpm run contract:graphql:generated
-          git diff --exit-code -- frontend/core/lib/graphql/generated

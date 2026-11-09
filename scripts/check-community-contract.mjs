@@ -193,17 +193,17 @@ if (!healthRoute.includes('buildCommunityHealth()')) {
   throw new Error('Community health route must use the typed health.v1 builder')
 }
 
-const simpleKanbanCard = readFileSync(
-  path.join(repoRoot, 'frontend/core/unit/KanbanThread/KanbanItem/ClassicLayout/Simple.tsx'),
+const ticketCard = readFileSync(
+  path.join(repoRoot, 'frontend/core/unit/KanbanThread/KanbanItem/TicketCard.tsx'),
   'utf8',
 )
 if (
-  simpleKanbanCard.includes('useRouter') ||
-  !simpleKanbanCard.includes('<CommunityPreviewLink') ||
-  !simpleKanbanCard.includes('previewId')
+  ticketCard.includes('useRouter') ||
+  !ticketCard.includes('<CommunityPreviewLink') ||
+  !ticketCard.includes('previewId')
 ) {
   throw new Error(
-    'Simple Kanban cards must use CommunityPreviewLink so Community can mask previews',
+    'Public Ticket cards must use CommunityPreviewLink so Community can mask previews',
   )
 }
 

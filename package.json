@@ -5,7 +5,8 @@
   "license": "Apache License 2.0",
   "scripts": {
     "generate:icons": "node scripts/generate-fa-regular-icons.mjs",
-    "graphql:codegen": "graphql-codegen --config codegen.ts && oxfmt -c frontend/core/config/oxfmt.json frontend/core/lib/graphql/generated",
+    "graphql:codegen": "graphql-codegen --config codegen.ts && oxfmt -c frontend/core/config/oxfmt.json --ignore-path=/dev/null frontend/core/lib/graphql/generated/*.ts",
+    "postinstall": "pnpm run graphql:codegen",
     "check:command-identity": "node --test scripts/check-command-identity.test.mjs && node scripts/check-command-identity.mjs",
     "generate:fa-icons": "pnpm run generate:icons",
     "check:router-runtime": "node --test scripts/check-router-runtime.test.mjs && node scripts/check-router-runtime.mjs",

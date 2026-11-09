@@ -113,6 +113,7 @@ frontend/landing/public/wallpaper/
 frontend/core/assets/wallpaper/pattern-bak/
 
 # TanStack Router generated output
+frontend/core/lib/graphql/generated/
 frontend/dash/src/routeTree.gen.ts
 frontend/dash/.tanstack/
 frontend/community/src/routeTree.gen.ts
@@ -152,6 +153,9 @@ backend/api/_tuts/
 backend/api/docs/draft.ex
 backend/api/cover/excoveralls.html
 backend/api/priv/pipeline_graph.json
+/docs/migrations/comment-reaction-snapshot-counts-audit/
+/docs/migrations/comment-reaction-snapshot-counts-baseline.json
+/docs/feature/article/evidence/
 .agignore
 
 # AI agent / skills (local only)

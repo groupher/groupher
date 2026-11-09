@@ -1,13 +1,13 @@
 import { createServerFn } from '@tanstack/react-start'
 
-import type { MentionsGraphNodeStatus } from '~/lib/graphql/generated/graphql'
+import type { ArtimentReadStatus } from '~/lib/graphql/generated/graphql'
 import { mentionsGraphPage } from '~/query/mentionsGraph'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
 
 type MentionedComment = {
   innerId: string
-  status: MentionsGraphNodeStatus
+  status: ArtimentReadStatus
   title: string | null
   html: string | null
 }

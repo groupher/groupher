@@ -243,6 +243,9 @@ type RootQueryType {
   "got spec comment by ref"
   oneComment(comment: CommentPathInput!): Comment
 
+  "Reads one Comment reached through a stored Mention, even when its parent body is restricted"
+  mentionedComment(community: String!, locator: MentionsGraphLocatorInput!): Comment
+
   "Comment Lite page using the shared offset\/cursor pagination contract"
   commentPage(article: ArticlePathInput!, mode: CommentsMode, filter: CommentPageFilter, pagi: PagiInput): CommentPage!
 
@@ -258,9 +261,10 @@ type RootQueryType {
   "artiments mentioning an internal target"
   mentionedBy(community: String!, target: MentionTargetInput!, pagi: PagiInput): ArtimentMentionPage
 
-  mentionsGraph(
-    community: String!, focus: MentionsGraphLocatorInput!, after: String, first: Int
-  ): MentionsGraphPage!
+  mentionsGraph(community: String!, focus: MentionsGraphLocatorInput!, after: String, first: Int): MentionsGraphPage!
+
+  "Reads Artiment title, URL and body status by stable resource identity"
+  artimentStatus(community: String!, locator: ArtimentStatusInput!): ArtimentStatus
 
   mentionsGraphRevision(community: String!, focus: MentionsGraphLocatorInput!): ID!
 
@@ -1846,7 +1850,7 @@ type CmsContentReview {
   communityOpinion: CmsReviewOpinion
 }
 
-enum MentionsGraphNodeType {
+enum ArtimentType {
   POST
   BLOG
   CHANGELOG
@@ -1855,21 +1859,28 @@ enum MentionsGraphNodeType {
   COMMENT
 }
 
-enum MentionsGraphNodeStatus {
+enum ArtimentReadStatus {
   READABLE
   DELETED
   UNAVAILABLE
 }
 
+input ArtimentStatusInput {
+  type: ArtimentType!
+  articleInnerId: ID
+  articleId: ID
+  commentInnerId: ID
+}
+
 input MentionsGraphLocatorInput {
-  type: MentionsGraphNodeType!
+  type: ArtimentType!
   articleInnerId: ID
   articleId: ID
   commentInnerId: ID
 }
 
 type MentionsGraphLocator {
-  type: MentionsGraphNodeType!
+  type: ArtimentType!
   articleInnerId: ID
   articleId: ID
   commentInnerId: ID
@@ -1877,12 +1888,19 @@ type MentionsGraphLocator {
 
 type MentionsGraphNode {
   id: ID!
-  type: MentionsGraphNodeType!
-  status: MentionsGraphNodeStatus!
+  type: ArtimentType!
+  status: ArtimentReadStatus!
   title: String
   url: String
   locator: MentionsGraphLocator
   canOpen: Boolean!
+}
+
+type ArtimentStatus {
+  type: ArtimentType!
+  status: ArtimentReadStatus!
+  title: String
+  url: String
 }
 
 type MentionsGraphEdge {
@@ -3986,7 +4004,7 @@ type ArtimentMention {
 
 type MentionUserTarget {
   type: MentionType!
-  status: MentionsGraphNodeStatus!
+  status: ArtimentReadStatus!
   login: String
   displayName: String
   url: String

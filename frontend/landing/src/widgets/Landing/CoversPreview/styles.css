@@ -63,7 +63,9 @@ html[data-landing-cover-booting='true'] .cover-scene-rail-image[data-pan-axis='y
   transform: translateY(var(--landing-cover-boot-pan)) !important;
 }
 
-:root:not([data-theme='dark']) .cover-scene-rail[data-wallpaper-type-light='gradient'] .cover-scene-rail-image,
+:root:not([data-theme='dark'])
+  .cover-scene-rail[data-wallpaper-type-light='gradient']
+  .cover-scene-rail-image,
 [data-theme='dark'] .cover-scene-rail[data-wallpaper-type-dark='gradient'] .cover-scene-rail-image {
   background-image: var(--landing-scene-coverGradientOverlay), var(--rail-wallpaper);
 }
