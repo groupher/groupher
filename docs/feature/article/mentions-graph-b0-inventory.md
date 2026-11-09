@@ -1,5 +1,7 @@
 # MentionsGraph B0：实施清单与失败基线
 
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
 > **历史证据（2026-11-04 至 2026-11-06）：**本文的 set／occurrence／初始化／重建、请求级 SQL 预算及按资源状态裁剪图标题、URL 或边的条款均不适用于 2026-11-07 当前关系实现。现行代码合同见[当前关系合同](./mentions-graph-sync-contract.md)，新目标只用全新空库，不迁 B4 内容。下文原始测量与当时的执行事实保留供追溯，不能作为本轮发布指引。
 
 > 2026-11-06 后续决策：目标输入合同改为只识别结构化 Plate `a/link` 和 `mention` 节点；text 节点 raw HTML anchor、裸 URL 不再作为目标能力。工作区已按此修改；下文 B0/B1 的 text 输入记录仍是历史实现与验收快照，不能作为新合同的通过证据。当前实现见[同步实现合同](mentions-graph-sync-contract.md)和[设计评审 §11](mentions-graph-design-review.md#11-本轮落地后的边界复核2026-11-06)。
@@ -857,7 +859,7 @@ B1 与 B3 的隔离环境出口可签收，B2 功能/预算切片可签收。B2 
 目标只读盘点为 33 Article / 5 Comment，旧关系 27，新图表不存在；可选正文 census 只在目标进程内输出 38 份当前 JSON 的长度/语法数量，不导出正文，不做外部候选搜索。
 
 目录数量校准集 38 来源 / 561 边已执行；标准压力集为 486 来源 / 11,241 边。每读取场景 100 次采样，含实际 Phoenix GraphQL handler。
-大压力集另有 1,944 来源 / 89,870 边、380 隐藏父 Article，HTTP 首批/十 frontier p95 为 439.128/815.879ms，最多 22 SQL；paced 首次成功为 68/80 = 85%。标准集读取门槛通过：HTTP 首批 p95 442.614ms、十 frontier p95 802.476ms，最大 22 SQL；完整计划/索引/扫描量、pool queue 与 revision 等待已有原始证据。
+大压力集另有 1,944 来源 / 89,870 边、380 隐藏父 Article，HTTP 首批/十 frontier p95 为 439.128/815.879ms，最多 22 SQL；paced 首次成功为 68/80 = 85%。标准集读取门槛通过：HTTP 首批 p95 442.614ms、十 frontier p95 802.476ms，最大 22 SQL；计划/索引/扫描量、pool queue 与 revision 等待曾有原始测量文件，现已移除。
 独立进程实际观察到同一 revision 行的 transactionid 锁等待，持锁时图读通过；但 paced 诊断约 4.29 次 revision 更新/秒的读取窗口内，首次读取成功率为 72/80 = 90%，低于建议 95%，review 为 PARTIAL，不能据低 writer 延迟放行容量。
 
 曾尝试共享 Scope 的 materialized CTE，3,000 边回归拦住全邻域扫描退化，原型已撤回，保留原有窗口/索引断言；恢复后的同组 171 项通过。未保留未证实的性能“修复”。
@@ -868,20 +870,20 @@ B1/B3 隔离出口不变；B2 总性能继续未签收，B4 与外部候选搜�
 
 MentionsGraph 首批 GraphQL 仅在全局 revision 错误 4553 时限一次重试；cursor 4551/4553 会舍弃过期展开页，在当前版本/内容周期内按作用域最多自动重启一次。永久错误不重试、不展示先前缓存的图；手动重试从首批开始。前端定向 18 passed，Core 类型检查通过。
 
-标准受控集 10 秒顺序对照：单次 HTTP 成功 563/632（89.1%）；允许一次重试的完整交互成功 573/573（100%），52 次使用第二次请求，交互 p95 113.04ms；两组实际 revision 完成速率均约 3.97/s，单次请求 SQL 最多 13、最长 121.551ms（重试组）。[完整原始摘要](evidence/mentions-graph-b2-performance/http-restart-10s-summary.json)及[验收边界](mentions-graph-b2-performance-acceptance.md)保留首次失败、请求数和端到端延迟，不把两次请求的 26 SQL 误当作单次指标。
+标准受控集 10 秒顺序对照：单次 HTTP 成功 563/632（89.1%）；允许一次重试的完整交互成功 573/573（100%），52 次使用第二次请求，交互 p95 113.04ms；两组实际 revision 完成速率均约 3.97/s，单次请求 SQL 最多 13、最长 121.551ms（重试组）。完整原始摘要及[验收边界](mentions-graph-b2-performance-acceptance.md)保留首次失败、请求数和端到端延迟，不把两次请求的 26 SQL 误当作单次指标。
 
 此为本地 PG14、受控图和 10 秒 `load_only` 诊断。PG17、目标容量/代表性来源、约定到达率和正式三轮样本仍未签收，B2 总出口与 B4 状态不变。
 
-后续 [60 秒同负载诊断](evidence/mentions-graph-b2-performance/http-restart-60s-summary.json)将样本扩到单次阶段 3,241、限次恢复阶段 3,506 个完整交互：单次阶段成功 88.58%，恢复阶段成功 99.66%，仍有 12 次两次请求都被 revision 拒绝；重试组交互 p95 126.306ms，单次服务端最多 13 SQL / 最慢 288.913ms，两阶段实际更新均约 4/s。`load_only` 明确不签收 B2；正式验收需先约定成功率是首试还是完整交互，并保留两个分母。
+后续 60 秒同负载诊断将样本扩到单次阶段 3,241、限次恢复阶段 3,506 个完整交互：单次阶段成功 88.58%，恢复阶段成功 99.66%，仍有 12 次两次请求都被 revision 拒绝；重试组交互 p95 126.306ms，单次服务端最多 13 SQL / 最慢 288.913ms，两阶段实际更新均约 4/s。`load_only` 明确不签收 B2；正式验收需先约定成功率是首试还是完整交互，并保留两个分母。
 
-[真实 Community Post 宿主恢复检查](evidence/mentions-graph-b2-performance/browser-recovery.json)通过：一条注入的 4553 触发恰好一次首批重试；注入的 4551 只请求一次过期 cursor，随后重取首批。其余请求走本地真实 Phoenix fixture。`/home/xx` 在该 fixture 是 404，使用同一 `home` 社区、作者 `xx` 的 `/home/post/3` 验收实际 Article 宿主。B3 此新增恢复路径有浏览器证据，原 B3 隔离出口不变。
+真实 Community Post 宿主恢复检查通过：一条注入的 4553 触发恰好一次首批重试；注入的 4551 只请求一次过期 cursor，随后重取首批。其余请求走本地真实 Phoenix fixture。`/home/xx` 在该 fixture 是 404，使用同一 `home` 社区、作者 `xx` 的 `/home/post/3` 验收实际 Article 宿主。B3 此新增恢复路径有浏览器证据，原 B3 隔离出口不变。
 
 ### 9.42 B2 隔离 PG17.11 标准 pilot（2026-11-05）
 
-使用校验 SHA 的 PG17.11 Homebrew bottle 和本地编译的 roaringbitmap 1.2，在独立 127.0.0.1:5548 与新建测试库完成完整迁移及标准集。13 个各 100 次读取场景的本地延迟、SQL 和全计划扫描门槛通过；HTTP 首批 p95 396.3ms，六类型十 frontier p95 899.271ms，单次最多 22 SQL。revision 锁等待实测 41.159ms，持锁读取通过。[环境](evidence/mentions-graph-b2-performance/pg17-local-environment.json)、[摘要](evidence/mentions-graph-b2-performance/pg17-standard-summary.json)、[完整计划](evidence/mentions-graph-b2-performance/pg17-standard-plans.json.gz)与[复核](evidence/mentions-graph-b2-performance/pg17-standard-review.json)已存证。
+使用校验 SHA 的 PG17.11 Homebrew bottle 和本地编译的 roaringbitmap 1.2，在独立 127.0.0.1:5548 与新建测试库完成完整迁移及标准集。13 个各 100 次读取场景的本地延迟、SQL 和全计划扫描门槛通过；HTTP 首批 p95 396.3ms，六类型十 frontier p95 899.271ms，单次最多 22 SQL。revision 锁等待实测 41.159ms，持锁读取通过。历史环境、摘要、计划与复核结论保留于本文，原始文件已移除。
 
 显式关联目标只读 profile 后，review 不再报 PG 主版本不符；但 paced 领域首试只有 73/80 = 91.25%，HTTP 单次 76/80 = 95%，限次恢复交互 80/80。各组实际 revision 到达率分别约 4.71/5.44/4.98 次每秒，不作配对比较。review 仍为 `PARTIAL`：本机容量不是目标 SKU、受控图并非目标当前正文图，正式负载和三轮充分样本未签收。B2 总出口不变，B4 与外部候选搜索继续暂缓。
 
-同版本[大集摘要](evidence/mentions-graph-b2-performance/pg17-large-summary.json)、[计划](evidence/mentions-graph-b2-performance/pg17-large-plans.json.gz)和[复核](evidence/mentions-graph-b2-performance/pg17-large-review.json)也已保存：1,944 来源 / 89,870 边、380 隐藏父 Article；13 场景本地门槛通过，非 offset 最大边表 scan work 1,109，HTTP 首批/六类型十 frontier p95 420.527/899.854ms。paced 领域首试 68/80 = 85%，HTTP 单次 73/80 = 91.25%，限次恢复交互 80/80；review 继续 `PARTIAL`。这只补充同版本压力边界，不改变目标数据/容量缺口。
+同版本大集摘要、计划和复核也已保存：1,944 来源 / 89,870 边、380 隐藏父 Article；13 场景本地门槛通过，非 offset 最大边表 scan work 1,109，HTTP 首批/六类型十 frontier p95 420.527/899.854ms。paced 领域首试 68/80 = 85%，HTTP 单次 73/80 = 91.25%，限次恢复交互 80/80；review 继续 `PARTIAL`。这只补充同版本压力边界，不改变目标数据/容量缺口。
 
-[PG17 标准集 60 秒对照](evidence/mentions-graph-b2-performance/pg17-http-restart-60s-summary.json)：单次 HTTP 成功 3,165/3,513 = 90.09%，限一次重试的完整交互成功 3,928/3,928，276 次发出第二请求；两阶段实际 revision 更新均约 4/s，重试交互 p95 102.612ms，单次服务端最多 13 SQL / 最慢 186.123ms。[独立复核](evidence/mentions-graph-b2-performance/pg17-http-restart-60s-review.json)仍为 `PARTIAL`，因为 `load_only` 无完整读取场景且正式容量/分布/负载未签。PG14 同方法仍有 12 次双重拒绝，因此不宣称绝对零失败。
+PG17 标准集 60 秒对照：单次 HTTP 成功 3,165/3,513 = 90.09%，限一次重试的完整交互成功 3,928/3,928，276 次发出第二请求；两阶段实际 revision 更新均约 4/s，重试交互 p95 102.612ms，单次服务端最多 13 SQL / 最慢 186.123ms。独立复核仍为 `PARTIAL`，因为 `load_only` 无完整读取场景且正式容量/分布/负载未签。PG14 同方法仍有 12 次双重拒绝，因此不宣称绝对零失败。

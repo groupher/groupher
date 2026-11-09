@@ -2,11 +2,13 @@
 
 # 账号物理删除与评论摘要：独立核查
 
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
 > 2026-11-05。只核查直接物理删除行为，未修改账号删除策略、FK 或业务 writer，未发布。诊断在私有 `groupher_pending_audit_20261105` 的 Sandbox 中执行，结束后整体回滚；未删除既有环境账号。
 
 ## 1. 已确认的边界
 
-[外键只读结果](comment-reaction-snapshot-counts-audit/review-20261105T130013Z/comment-review-fk.log) 确认：
+外键只读结果 确认：
 
 ```text
 Comment.author_id -> account.users(id) ON DELETE CASCADE
@@ -20,7 +22,7 @@ Comment.author_id -> account.users(id) ON DELETE CASCADE
 
 诊断步骤：正常发布文章 → 独立用户正常发表评论 → 在内层事务直接 `Repo.delete!(commenter)`，绕过业务删除命令 → 读取事实和 ArticleStats。外层 Sandbox 最终回滚。
 
-[结果 JSON](comment-reaction-snapshot-counts-audit/review-20261105T130013Z/comments-account-delete-audit.json)：
+结果 JSON：
 
 | 项目                                     | 删除前 | 删除后         |
 | ---------------------------------------- | ------ | -------------- |
@@ -37,7 +39,7 @@ Comment.author_id -> account.users(id) ON DELETE CASCADE
 
 - 本轮只补既有快照资料缺失的读取回归，不修改 Summary 或完整参与者分页去保留已无有效事实的用户。
 - 账号物理删除是共享评论计划明确排除的策略重写范围，本轮不擅自更改 CASCADE、匿名化或历史保留口径。
-- 当时登记为未修复；后续授权已选择并在当前新 schema 本地实施“拒绝未受控 DELETE/TRUNCATE”。旧库/旧 schema 未因此自动受保护，原始诊断证据保持不变。
+- 当时登记为未修复；后续授权已选择并在当前新 schema 本地实施“拒绝未受控 DELETE/TRUNCATE”。旧库/旧 schema 未因此自动受保护，原始诊断文件已从仓库移除。
 - “保留匿名评论”或“删除事实并同步所有受影响 aggregate”的受控账号删除策略仍待独立设计，须另列事务、授权、摘要、通知/提及和并发验收。直接删除 `account.users` 仍不是受支持业务流程，新库发布验收也不得借该操作建立不一致 fixtures。
 
-[临时诊断源码](comment-reaction-snapshot-counts-audit/review-20261105T130013Z/comments-account-delete-audit_test.exs.txt)、[运行日志](comment-reaction-snapshot-counts-audit/review-20261105T130013Z/comments-account-delete-audit.log)、[固定输入与 SHA](comment-reaction-snapshot-counts-audit/review-20261105T130013Z/manifest.json)。
+临时诊断源码、运行日志、固定输入与 SHA。

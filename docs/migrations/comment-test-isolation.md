@@ -1,5 +1,7 @@
 # 共享评论集成测试隔离与 MentionsGraph 联合验收
 
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
 > 2026-11-05。本轮只修改测试调度与文档，不调整业务事务、graph revision 语义或超时，不发布。原始 pending 诊断及其源码/SHA 保留，见[历史原因审计](comment-pending-concurrency-audit.md)。
 
 ## MentionsGraph 依赖状态
@@ -68,7 +70,7 @@ TEST_DB_NAME=groupher_comments_isolation_concurrency_20261105 mix test \
   --max-cases 4 --seed 0
 ```
 
-[本轮源码正文/SHA、两组日志和结果](comment-reaction-snapshot-counts-audit/test-isolation-20261105T141611Z/manifest.json)。4个调整文件与联合测试运行中记录的哈希相同；该观测不等于整个共享工作区的不可变 checkout，不覆盖另一会话的原始联合验收证据。
+本轮源码正文/SHA、两组日志和结果。4个调整文件与联合测试运行中记录的哈希相同；该观测不等于整个共享工作区的不可变 checkout，不覆盖另一会话的原始联合验收证据。
 
 本轮已关闭的是测试调度导致的 pending 缺口；没有移动业务 revision bump、改全局版本合同、延长超时或宣称生产吞吐达标。B5 的目标新库/manifest、旧数据处置授权、旧 writer/Job drain、完整构建与缓存切换、目标 URL 验收仍未执行。提交与推送按用户单独授权执行，本轮未推送、未发布。
 

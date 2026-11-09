@@ -2,19 +2,21 @@
 
 # Comments / Replies / Reaction：B0 静态基线
 
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
 > 状态：B0 已开始，静态读写清单与设计基线已建立，整体尚未通过；没有执行 B1、迁移、数据库写入、运行测试或 EXPLAIN。本文不是实现完成记录。目标合同见 [执行计划](comment-reaction-snapshot-counts.md)。
 
 ## 1. 证据与范围
 
 - 核查日期：2026-11-05；工作区：`fix/todo`；HEAD：`656796cf60c0061fd511ae93fbef4482b8863299`。
-- 工作区含大量在途 MentionsMap 与其他修改，HEAD 不能单独代表实际源码。随附 [文件指纹](comment-reaction-snapshot-counts-baseline.json) 记录相关源码内容 SHA256、捕获时完整 Git 状态及未跟踪路径；不复制业务数据、配置秘密或数据库内容。只代表捕获时文件，实施前须比较差异。指纹覆盖范围大于逐项核查范围，不能把捕获文件数量当成逐文件审计完成数量。
+- 工作区含大量在途 MentionsMap 与其他修改，HEAD 不能单独代表实际源码。随附 文件指纹 记录相关源码内容 SHA256、捕获时完整 Git 状态及未跟踪路径；不复制业务数据、配置秘密或数据库内容。只代表捕获时文件，实施前须比较差异。指纹覆盖范围大于逐项核查范围，不能把捕获文件数量当成逐文件审计完成数量。
 - 本轮只修改文档。静态核查以当前文件为准；CodeGraph 当前未覆盖相关 Elixir 符号，后端使用定向源码/字面量核查。动态 dispatch、宏、delegate 的入口单列，不把文本无匹配当作无调用证明。
 - 承接执行计划 C01–C15；本表的 W/R/D/M 编号用于逐入口实施，下面的具名测试用于最终验收。所有目标行为均为待实现。
 - 覆盖 comments、全部层级 replies、Article/Comment upvote 和 emotion。既有 collect 共用的 projection、stats、刷新能力列入防回归；不新增 collect 产品功能，不扩展 Ticket 评论，不删除 Doc 正文 reaction 的 branch 元数据。
 
 ### 1.1 固定审计输入快照（2026-11-05）
 
-本轮权威输入为 [20261105T074802Z manifest](comment-reaction-snapshot-counts-audit/20261105T074802Z/manifest.json)：17 个相对原基线变化，32 个原 manifest 未覆盖的相关/上下文文件，49 项正文和 SHA 已冻结。逐文件静态结论与 ledger/case 见 [固定快照复核](comment-reaction-snapshot-counts-snapshot-review.md)，捕获后的新增变化见 [剩余差异](comment-reaction-snapshot-counts-remaining-differences.md)。原基线、预捕获快照与下方六文件历史记录原样保留，不把旧哈希覆盖成新基线；此处不再宣称实时工作区只有六个差异。
+本轮权威输入为 20261105T074802Z manifest：17 个相对原基线变化，32 个原 manifest 未覆盖的相关/上下文文件，49 项正文和 SHA 已冻结。逐文件静态结论与 ledger/case 见 [固定快照复核](comment-reaction-snapshot-counts-snapshot-review.md)，捕获后的新增变化见 [剩余差异](comment-reaction-snapshot-counts-remaining-differences.md)。原基线和预捕获快照文件已移除；下方仅保留历史盘点结论；此处不再宣称实时工作区只有六个差异。
 
 32 个“未覆盖”不等于基线之后新增；其中 Wallpaper retention 和 Community default-meta 测试明确归其他在途上下文，其余均有本计划映射。旧 baseline 原有文件集全部参与捕获前后比对，冻结正文仅保存实际变化或未覆盖输入；未变文件保留 SHA 清单，不声称逐文件新审计。
 

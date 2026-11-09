@@ -1,5 +1,7 @@
 # MentionsGraph 一次性切换运行手册
 
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
 > **当前边界（2026-11-07）：下文第 0–6 节只记录 2026-11-06 的 B4 切换及随后被放弃的同步 set 发布方案，不能用于本轮简化版上线。** 当前工作区合同见[当前关系合同](../../feature/article/mentions-graph-sync-contract.md)与[简化清单](../../feature/article/mentions-graph-simplification-plan.md)。本轮代码尚未部署。
 
 ## 本轮简化版发布前提（尚未执行）
@@ -13,7 +15,7 @@
 
 > 状态：2026-11-06，用户已批准全新空库切换，旧 Article/Comment 不迁入。新库共享评论 bootstrap、全量迁移、MentionsGraph 空来源初始化均通过；Fly API 机器和 Community Worker 已切换并开放。数据驱动的内容页、tab 与正常写入验收仍待新内容建立。
 
-2026-11-06 决定先记录 B2 首次读取成功率的未达标证据，推进 B4 流程验证；B2 独立性能复核仍为 `PARTIAL`，详见 [B2 性能记录](../../feature/article/mentions-graph-b2-performance-acceptance.md)。当前 API 服务镜像为 `registry.fly.io/groupher-api:deployment-01M6Q64D5HMFN8VW1ZDTNS40ZG@sha256:74520f7e1ef8c5adf7ee2b08e48c821781c24103f3094bc59db10e6d7bfe470c`。先前的[临时机器验证](../../feature/article/evidence/mentions-graph-b4/image-preflight-20261106.json)对应上一镜像；本镜像额外修复 release 节点命名，并在实际服务机器上通过健康检查。
+2026-11-06 决定先记录 B2 首次读取成功率的未达标证据，推进 B4 流程验证；B2 独立性能复核仍为 `PARTIAL`，详见 [B2 性能记录](../../feature/article/mentions-graph-b2-performance-acceptance.md)。当前 API 服务镜像为 `registry.fly.io/groupher-api:deployment-01M6Q64D5HMFN8VW1ZDTNS40ZG@sha256:74520f7e1ef8c5adf7ee2b08e48c821781c24103f3094bc59db10e6d7bfe470c`。先前的临时机器验证对应上一镜像；本镜像额外修复 release 节点命名，并在实际服务机器上通过健康检查。
 
 本手册用于按 [MentionsGraph 重构合同](../../feature/article/mentions-graph-refactor.md) 执行一次性切换。2026-11-06 用户批准舍弃旧库的 Article、Doc、Comment、Ticket、账户及其它业务数据，采用独立 Neon 分支中的全新空数据库 `groupher_mentions_graph_20261106`。新库从空表迁移，MentionsGraph 初始化的来源分母为 0；旧数据库 `groupher_prod_seed_20261104` 保留在原分支作为回退点。新旧应用不得在同一数据库上并行写入。
 
@@ -44,7 +46,7 @@ node scripts/mentions_graph_target_report.mjs /tmp/mentions-graph-before.json
 
 在输出文件中核对 `database` 与旧库 `groupher_prod_seed_20261104` 完全一致。记录来源计数、缺失正文数、旧 Mention/水位数、旧 worker 的 worker/state 计数以及旧 Outbox event/status 计数。共享 worker 的计数不可当作可整队清除授权。此报告用于旧库回退盘点；新库不迁入这些来源。
 
-2026-11-06 [已保存的目标只读报告](../../feature/article/evidence/mentions-graph-b4/target-before-20261106.json)记录 32 个普通 Article/Ticket、1 个 Doc、5 个 Comment 当前来源，缺正文 0；旧 Mention 27 行、水位 38 行。所列候选 worker 全为 `completed`，Mention Outbox 全为 `done`。这只是当时快照；正式窗口停机前后都须重跑，不能据此提前宣称 writer 已排空。
+2026-11-06 已保存的目标只读报告记录 32 个普通 Article/Ticket、1 个 Doc、5 个 Comment 当前来源，缺正文 0；旧 Mention 27 行、水位 38 行。所列候选 worker 全为 `completed`，Mention Outbox 全为 `done`。这只是当时快照；正式窗口停机前后都须重跑，不能据此提前宣称 writer 已排空。
 
 ## 2. 冻结旧服务并保留回退点
 
@@ -83,7 +85,7 @@ fly machine run registry.fly.io/groupher-api:deployment-01M6Q486M39HMBV6HQCZD1PK
 fly machine list --app groupher-api --json > mentions-graph-maintenance-machine.json
 ```
 
-本次临时 Machine ID 为 `48ee242fe32908`，已销毁。若临时机器超时停止，核对连接和迁移状态后新建无服务机器，不能把旧应用机器作为运维进程启动。清理临时机器前下载全部 manifest 和运行证据。[新库验收记录](../../feature/article/evidence/mentions-graph-b4/fresh-neon-database-20261106.json)和[完整初始化 manifest](../../feature/article/evidence/mentions-graph-b4/fresh-manifest-20261106.json)已保存。
+本次临时 Machine ID 为 `48ee242fe32908`，已销毁。若临时机器超时停止，核对连接和迁移状态后新建无服务机器，不能把旧应用机器作为运维进程启动。清理临时机器前下载全部 manifest 和运行证据。新库验收记录和完整初始化 manifest已保存。
 
 ## 4. 初始化当前正文
 
@@ -99,16 +101,16 @@ fly machine list --app groupher-api --json > mentions-graph-maintenance-machine.
 
 受控运维机使用 `node backend/api/scripts/mentions_graph_remote_initialize.mjs <temporary-machine-id> report|preflight|apply <private-local-dir> groupher_mentions_graph_20261106` 逐步传递文件并签发短期 token。设置 `CMS_MENTIONS_DATABASE_URL_FILE` 和 `CMS_MENTIONS_GRAPH_KEY_FILE` 指向受控本地 0600 文件，脚本只通过 SSH 标准输入传递其内容。`report` 使用全新本地目录；每步核对 manifest、page hash 和退出码，`apply` 前保留人工审核记录。
 
-**隔离演练证据（2026-11-06）。** 本机独立 SSL PostgreSQL 14 临时库先迁到 `20261105100000`，保留旧 Mention 表；新 production release 在缺少 `MENTIONS_GRAPH_CUTOVER_CONFIRMATION` 时拒绝 DDL，传入精确值后完成迁移并建立 `cms.mentions_graph_state`，旧 `artiment_mentions`/`reference_map_revisions` 均消失。真实 Auth initialize token 通过独立 release 执行 `report → preflight → apply → preflight`，空来源 manifest 完成。可重复的本地脚本为 `local rehearsal`（历史文件，已删除），[结果摘要](../../feature/article/evidence/mentions-graph-b4/local-release-rehearsal-20261106.json)记录日志路径和 SHA。此演练验证命令通路与删表保护；新 Neon PG17 空库的实际迁移与初始化证据另见第 3、4 节。
+**隔离演练证据（2026-11-06）。** 本机独立 SSL PostgreSQL 14 临时库先迁到 `20261105100000`，保留旧 Mention 表；新 production release 在缺少 `MENTIONS_GRAPH_CUTOVER_CONFIRMATION` 时拒绝 DDL，传入精确值后完成迁移并建立 `cms.mentions_graph_state`，旧 `artiment_mentions`/`reference_map_revisions` 均消失。真实 Auth initialize token 通过独立 release 执行 `report → preflight → apply → preflight`，空来源 manifest 完成。可重复的本地脚本为 `local rehearsal`（历史文件，已删除），结果摘要记录日志路径和 SHA。此演练验证命令通路与删表保护；新 Neon PG17 空库的实际迁移与初始化证据另见第 3、4 节。
 
-**目标数据库回退。** 新旧 `DATABASE_URL` 指向独立 Neon 分支中的不同数据库；Fly `groupher_data` 卷快照不是数据库快照。2026-11-06 已从旧 `groupher-demo` main 创建[演练快照并恢复到独立分支](../../feature/article/evidence/mentions-graph-b4/neon-restore-drill-20261106.json)；只读对照确认库名、33 个 Article、5 个 Comment、27 条旧 Mention 和迁移版本一致。旧服务停止后创建的窗口快照为 `snap-sweet-snow-a1j91nfa`，时间 `2026-11-06T00:59:17Z`。旧库及旧队列至今未修改；若旧库状态有疑义再从窗口快照恢复。[Neon 分支恢复文档](https://neon.com/docs/postgres/backup-restore/branch-restore)是操作依据。
+**目标数据库回退。** 新旧 `DATABASE_URL` 指向独立 Neon 分支中的不同数据库；Fly `groupher_data` 卷快照不是数据库快照。2026-11-06 已从旧 `groupher-demo` main 创建演练快照并恢复到独立分支；只读对照确认库名、33 个 Article、5 个 Comment、27 条旧 Mention 和迁移版本一致。旧服务停止后创建的窗口快照为 `snap-sweet-snow-a1j91nfa`，时间 `2026-11-06T00:59:17Z`。旧库及旧队列至今未修改；若旧库状态有疑义再从窗口快照恢复。[Neon 分支恢复文档](https://neon.com/docs/postgres/backup-restore/branch-restore)是操作依据。
 
 ## 5. 验收、开放和回退
 
 - 新库业务内容、账户、旧队列和旧通知均为空，这是用户批准的全新空库结果；旧库和窗口快照保留供回退，不对新库复制历史行。
 - 初始化 manifest 的来源分母为 0，`complete: true`；后续建立新内容后仍须运行 Query/公开状态、隐藏/删除占位、分页、revision fence、tab 和正常写入验收，不能用零来源通过代替这些用例。
 - 保存镜像 digest、数据库名、migration 版本、manifest/page hashes、各类来源数、错误数、查询 SQL/延迟证据、停机/任务清单与所有命令退出码。
-- 已将原服务机器 `0807979ad30968` 更新到修正版镜像，保留同一卷与 service，启动后健康检查 passing；release RPC 核对连接库为 `groupher_mentions_graph_20261106`。公网 `/health` 和 GraphQL `__typename`、MentionsGraph 字段内省成功。Community Worker 已部署版本 `318a9ab6-5a3b-4de4-9e8f-3a276437b71b`，新 MentionsGraph 资源可访问。完整状态见[目标切换记录](../../feature/article/evidence/mentions-graph-b4/target-cutover-20261106.json)。
+- 已将原服务机器 `0807979ad30968` 更新到修正版镜像，保留同一卷与 service，启动后健康检查 passing；release RPC 核对连接库为 `groupher_mentions_graph_20261106`。公网 `/health` 和 GraphQL `__typename`、MentionsGraph 字段内省成功。Community Worker 已部署版本 `318a9ab6-5a3b-4de4-9e8f-3a276437b71b`，新 MentionsGraph 资源可访问。完整状态见目标切换记录。
 - Fly `secrets list` 仍将六项新值显示为 `Staged`；新建的临时机器曾用这些值通过 release 迁移门禁，当前服务机器也经 RPC 证实连接新库。下次发布前仍须核对实际 machine 的 secret 版本与 `fly.toml`，不能仅凭 `secrets list` 状态推断运行时旧值。旧/新连接和 graph key 的受控副本存放在仓库外的私有目录，文件权限为 0600，值不写入证据。
 - 若需回退，先 cordon 并停止新服务机器，再将 `DATABASE_URL`、`MIGRATION_EXPECTED_DATABASE`、旧镜像恢复为受控保存的原值；启动并核验旧库身份后解除 cordon。旧数据库和旧队列未被修改。若旧库状态有疑义，按窗口快照 `snap-sweet-snow-a1j91nfa` 恢复，不让旧代码连接新库。新库开放后产生的新写入不会自动转回旧库，回退前须记录并决定处理方式。
 
@@ -120,7 +122,7 @@ fly machine list --app groupher-api --json > mentions-graph-maintenance-machine.
 
 **发布前只读观测（2026-11-06 08:42 UTC）：**目标分支 `br-ancient-darkness-a1gy9enb` 的 `groupher_mentions_graph_20261106` 已有 33 Article（Post 29，Blog/Changelog/Doc/Ticket 各 1）、4 Comment、37 条旧水位、43 个 set、27 条当前边；最高 migration 仍为 `20261105234500`。`mention.set_project` 44 条均为 `completed`，未完成事件和 desired/synced 差异均为 0。另外两条 `dead` Outbox 分别为 `article.cdn_purge` 和 `comment.changed`，不属于投影迁移门禁，仍需在相应作业恢复流程中单独处理。这是发布前的一次快照，不代表之后仍排空；正式停写后必须重跑第 2 步。原第 0–5 节的空来源记录是切换当时的事实，不再是当前目标数据分母。
 
-**隔离迁移演练（2026-11-06 09:05 UTC）：**在目标分支的子分支 `br-young-truth-a1cgre8h` 上执行本轮迁移；新版本 `20261106100000` 已登记，旧水位表消失，37 个 current set 和 27 条边保持不变，当前 set 无孤儿记录，主键及两个外键名称已核对。来源分支仍停留在旧 migration，未出现新表。具体计数见[演练证据](../../feature/article/evidence/mentions-graph-sync-migration-rehearsal-20261106.json)。这证明当前目标数据快照可通过结构迁移，不代替正式停写、快照及发布后的行为验收。演练子分支已删除，并从后续分支列表确认消失。
+**隔离迁移演练（2026-11-06 09:05 UTC）：**在目标分支的子分支 `br-young-truth-a1cgre8h` 上执行本轮迁移；新版本 `20261106100000` 已登记，旧水位表消失，37 个 current set 和 27 条边保持不变，当前 set 无孤儿记录，主键及两个外键名称已核对。来源分支仍停留在旧 migration，未出现新表。具体计数见演练证据。这证明当前目标数据快照可通过结构迁移，不代替正式停写、快照及发布后的行为验收。演练子分支已删除，并从后续分支列表确认消失。
 
 **本轮只读复核（2026-11-06 13:51 UTC）：**Neon 项目 `groupher-demo` 的目标分支 `br-ancient-darkness-a1gy9enb`、数据库 `groupher_mentions_graph_20261106` 仍为 PG 17.11，最高迁移 `20261105234500`；33 Article、43 set、27 当前边，旧 desired/synced 差异为 0，未完成投影事件为 0。27 条边只来自 6 个来源，最大出度 22，来源出度 p95 约 16.75；这不是 B2 大图的代表分布。`mention.set_project` 共 44 条，全部 `completed`；另有 `article.cdn_purge` 和 `comment.changed` 各一条 `dead`，未重放。只读复核没有冻结 writer、没有创建快照，也没有改变目标库；正式发布前必须在停写后重新运行下列预检。
 
@@ -154,7 +156,7 @@ fly machine list --app groupher-api --json > mentions-graph-maintenance-machine.
 
 - 工作区代码和文档尚未提交，也没有为同步关系版本构建、登记新镜像 digest；目标库和服务仍运行旧版本。
 - 严格编译、文档边界门禁、Publisher 的结构化 mention JSON 用例、前端图缓存用例及 FrontDesk 批量用例通过。全量后端套件 2750/2751 通过、1 excluded；唯一失败是 Press 多页站点清单测试，它在 `mix test --failed` 和整个 Press 测试文件中复跑通过。保留全量并发失败记录，不写成全绿。
-- 本地隔离 PostgreSQL 14 的 40 次完整 Article 发布全部成功，writer p95 160.333ms；同时读图首次成功 2915/3056（95.39%）。[测量摘要](../../feature/article/evidence/mentions-graph-b2-performance/sync-writer-go-20261106.json)是诊断，不代表目标 PG17 资格。
+- 本地隔离 PostgreSQL 14 的 40 次完整 Article 发布全部成功，writer p95 160.333ms；同时读图首次成功 2915/3056（95.39%）。测量摘要是诊断，不代表目标 PG17 资格。
 - 产品编辑器还没有接 Article 搜索选项；后端接受结构化 `@ Article` key 的能力已验收，但真实界面选择流程尚未验收。用户已选择 4 reader、2 writer、每 writer 间隔 500ms 作为下一轮候选诊断负载；它不是目标流量。B2 目标到达率、代表性图、纯锁等待阈值和生产资格也未签收。这些缺口在正式发布审查时须逐项决定，不得由旧 B4 空库切换记录替代。
 
 **本次 Command/Parser/Persist 收尾复核（2026-11-06 23:43 本地）：**当前工作区 parser version 已为 4；回复 Comment 创建现与顶层创建同样在所属 Command 事务更新关系。定向关系/图页/评论/Ticket 199/199、GraphQL/恢复等补充 88/88、来源隐藏后的 User 通知 1/1 通过，`mix compile --warnings-as-errors` 通过。本地隔离 PostgreSQL 14 的完整发布诊断为 writer 40/40、p95 173.119ms，reader 首次成功 3732/3868（96.48%）。这些结果不替代停写后迁移预检、当前正文 v4 全量初始化、目标 PG17 三轮 B2 资格或生产发布验收。正式发布前应重新核对本节的证据、镜像和目标状态。

@@ -1,6 +1,0 @@
-### Result
-{"participants":4}
-### Ran Playwright code
-```js
-await (async (page) => { await page.setViewportSize({width:1280,height:800}); const summary = page.getByRole("button", {name:"5 replies · Expand replies", exact:true}); await summary.locator("..").screenshot({path:".playwright/shared-comments-summary.png"}); return {participants:await summary.locator("..").locator("li").count()}; })(page);
-```

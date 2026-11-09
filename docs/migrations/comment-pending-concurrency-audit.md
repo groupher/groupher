@@ -1,6 +1,8 @@
 # 并行测试 command_resolution_pending 原因审计
 
-> 后续状态：本页保留原因确认阶段的历史结论和原始证据。用户随后授权修复测试隔离；`TestMate` 默认串行及显式 async 写入用例的调整见[测试隔离与联合验收](comment-test-isolation.md)。下文“未修复常规并行测试配置”描述原诊断时点，不作为后续实施状态。业务全局 revision 热点和真实发布仍分别受原有边界约束。
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
+> 后续状态：本页保留原因确认阶段的历史结论。用户随后授权修复测试隔离；`TestMate` 默认串行及显式 async 写入用例的调整见[测试隔离与联合验收](comment-test-isolation.md)。下文“未修复常规并行测试配置”描述原诊断时点，不作为后续实施状态。业务全局 revision 热点和真实发布仍分别受原有边界约束。
 
 > 2026-11-05。范围：只诊断上轮 GraphQL 并行回归的 pending，未修改业务代码、测试框架或生产配置，未发布；仅使用新建私有库 `groupher_pending_audit_20261105` 和临时诊断测试。原有脏工作区及其他 session 保持。
 
@@ -12,7 +14,7 @@
 
 ## 2. 原始错误与链路
 
-[固定证据 manifest](comment-reaction-snapshot-counts-audit/pending-20261105T113700Z/manifest.json) 保存源码正文/SHA、诊断脚本和原始日志。
+以下错误链路是当时的诊断摘要；源码副本、manifest 和原始日志已从仓库移除。
 
 ```text
 并行 GraphQL test A
@@ -52,9 +54,9 @@ mix test /tmp/pending_probe_test.exs \
   --max-cases 4 --max-failures 1 --seed 545394
 ```
 
-临时文件的可恢复正文见证据目录中的 `.exs.txt`；复跑前复制回 `/tmp`。probe 只记录 SQL 错误，并用额外连接只读轮询同一私有库的 `pg_stat_activity` / `pg_blocking_pids`，不改变超时、事务、锁或业务结果，不记录 SQL params/连接密码。
+临时诊断文件已移除；复跑需重新建立诊断用例。probe 只记录 SQL 错误，并用额外连接只读轮询同一私有库的 `pg_stat_activity` / `pg_blocking_pids`，不改变超时、事务、锁或业务结果，不记录 SQL params/连接密码。
 
-[复现日志](comment-reaction-snapshot-counts-audit/pending-20261105T113700Z/pending-parallel-test.log)：19.8秒触发首个失败，达到 max-failures 后停止；2个用例通过、1个夹具失败。其他在途连接也产生错误，合计抓到3个 PostgreSQL 错误，全部是：
+复现日志：19.8秒触发首个失败，达到 max-failures 后停止；2个用例通过、1个夹具失败。其他在途连接也产生错误，合计抓到3个 PostgreSQL 错误，全部是：
 
 ```sql
 UPDATE "cms"."mentions_graph_state" AS m0
@@ -63,11 +65,11 @@ SET "revision" = m0."revision" + $1 WHERE (m0."id" = $2)
 
 错误为 `lock_not_available`，消息 `canceling statement due to lock timeout`；其中包含 `while updating tuple (0,1) in relation "mentions_graph_state"`。
 
-[75次阻塞采样](comment-reaction-snapshot-counts-audit/pending-20261105T113700Z/pending-parallel-probe.jsonl) 中有 `tuple` / `transactionid` 等待链，根阻塞者包含 `idle in transaction`；观察到阻塞者事务年龄最高11.65秒。没有捕获到 count SQL、receipt 唯一键或 bitmap SQL 作为这3个 pending 的失败语句，也没有捕获 deadlock_detected。
+75次阻塞采样 中有 `tuple` / `transactionid` 等待链，根阻塞者包含 `idle in transaction`；观察到阻塞者事务年龄最高11.65秒。没有捕获到 count SQL、receipt 唯一键或 bitmap SQL 作为这3个 pending 的失败语句，也没有捕获 deadlock_detected。
 
 ## 4. 因果对照与真实提交
 
-[诊断测试正文](comment-reaction-snapshot-counts-audit/pending-20261105T113700Z/pending_causal_test.exs.txt) 不放入常规业务/测试运行目录，不更改产品逻辑。
+诊断测试正文 不放入常规业务/测试运行目录，不更改产品逻辑。
 
 | 对照               | 过程与结果                                                                                                                                                                                                                             |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -75,7 +77,7 @@ SET "revision" = m0."revision" + $1 WHERE (m0."id" = $2)
 | 实际提交的并发创建 | 4个独立连接、不同 Community/actor，经 barrier 同时调用真实 CMS.Articles.create，使用 unboxed_run，没有覆盖整个测试的 Sandbox 外层事务。4个命令全部提交                                                                                 |
 | 同文章并发评论     | 4个独立连接、4位作者，同时向刚创建的同一文章写评论。4条事实提交；comments_count=4、参与人数=4、快照4位、comments_revision=5                                                                                                            |
 
-用 `--repeat-until-failure 5` 重复（Mix 是首次运行加5次重复，实际6轮）：[运行日志](comment-reaction-snapshot-counts-audit/pending-20261105T113700Z/pending-repeated-test.log)、[逐轮结果](comment-reaction-snapshot-counts-audit/pending-20261105T113700Z/pending-causal-repeats.jsonl)。12次因果测试全部通过：
+用 `--repeat-until-failure 5` 重复（Mix 是首次运行加5次重复，实际6轮）：运行日志、逐轮结果。12次因果测试全部通过：
 
 - 6/6 Sandbox 受阻返回 pending，等待4089–4229ms；释放持锁者后同 commandId 重试6/6成功。
 - 24/24真实并发 Article 创建成功，各轮4请求整体耗时130–208ms。

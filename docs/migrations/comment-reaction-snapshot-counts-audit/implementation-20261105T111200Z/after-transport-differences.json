@@ -1,6 +1,0 @@
-{
-  "observed_at": "2026-11-05T11:30:35.742890+00:00",
-  "source": "source-hashes-transport.json",
-  "files": [],
-  "meaning": "Read-only observation after validation, not permission to overwrite parallel changes."
-}

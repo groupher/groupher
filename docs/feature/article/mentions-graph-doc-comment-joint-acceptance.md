@@ -1,5 +1,7 @@
 # MentionsGraph Doc Comment 联合验收
 
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
 > **历史证据（2026-11-04 至 2026-11-06）：**本文的 set／occurrence／初始化／重建、请求级 SQL 预算及按资源状态裁剪图标题、URL 或边的条款均不适用于 2026-11-07 当前关系实现。现行代码合同见[当前关系合同](./mentions-graph-sync-contract.md)，新目标只用全新空库，不迁 B4 内容。下文原始测量与当时的执行事实保留供追溯，不能作为本轮发布指引。
 
 > 状态：2026-11-05，Replies 会话完成后独立执行。本轮关闭 B1 与 B3 的隔离环境出口；B2 功能/SQL 预算通过，代表性目标数据的性能出口仍未通过。B4 与外部候选搜索继续暂缓。
@@ -22,9 +24,9 @@ Replies 会话 `01a1a980-efd7-71a1-97a0-dfd427b454fc` 已完成且空闲；其 [
 新增 [联合用例](../../../backend/api/test/groupher_server/cms/mentions_doc_comment_joint_test.exs) 共 **5 项**。
 最终在专用本地库从空 schema 完整迁移后，原 B1、版本事实、图 Query/预算、GraphQL 加共享 Doc Comments 的 7 文件组合 **171 passed**，包含新增文件全部 5 项。
 原默认库组合曾为 170 passed（仅包含新增文件最初 4 项）；新增一跳 HTTP 后以本次 171 项结果为准。
-评论 GraphQL 读写另行串行复跑 **168 passed**；两组共 339 项。证据：[171 项后端日志](evidence/mentions-graph-doc-comment-joint-backend.log)、[168 项 transport 日志](evidence/mentions-graph-doc-comment-transport.log)。不以浏览器 fixture 替代权限测试。
+评论 GraphQL 读写另行串行复跑 **168 passed**；两组共 339 项。证据：171 项后端日志、168 项 transport 日志。不以浏览器 fixture 替代权限测试。
 
-[验收摘要](evidence/mentions-graph-doc-comment-joint-summary.json) 汇总本轮状态与预算；[Phoenix release 构建日志](evidence/mentions-graph-production-release.log) 保存本地构建结果。
+验收摘要 汇总本轮状态与预算；Phoenix release 构建日志 保存本地构建结果。
 
 前端 MentionsGraph、ArticleQueryProvider、Activity 和 AccountProvider/key/invalidation 定向 **31 passed**。
 既有六类宿主、共享缓存、Activity/Ticket 的证据见 [独立验收](mentions-graph-b23-independent-acceptance.md)，原次数保持原范围。
@@ -43,7 +45,7 @@ Post 评论的 Mentions 按钮位于左侧收起回复点击区下方，浏览�
 ## 浏览器环境与复跑
 
 [浏览器脚本](../../../frontend/e2e/scripts/mentions-doc-comment-joint-check.js) 经实际 Community router、BFF、Phoenix、真实 Command 写入的持久化数据执行。
-[证据 JSON](evidence/mentions-graph-doc-comment-joint-browser.json) 保存 12 项检查及公开请求身份，不含 token 或正文。
+证据 JSON 保存 12 项检查及公开请求身份，不含 token 或正文。
 没有 `page.route`、mock GraphQL 响应或组件替身。CDP 只增加延迟以观察真实 AbortSignal/AbortError。
 测试地址为 `home` 社区，评论创建者为测试用户 `xx`。
 

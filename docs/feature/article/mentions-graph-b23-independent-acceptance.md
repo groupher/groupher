@@ -1,5 +1,7 @@
 # MentionsGraph B2 / B3 独立验收记录
 
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
 > **历史证据（2026-11-04 至 2026-11-06）：**本文的 set／occurrence／初始化／重建、请求级 SQL 预算及按资源状态裁剪图标题、URL 或边的条款均不适用于 2026-11-07 当前关系实现。现行代码合同见[当前关系合同](./mentions-graph-sync-contract.md)，新目标只用全新空库，不迁 B4 内容。下文原始测量与当时的执行事实保留供追溯，不能作为本轮发布指引。
 
 > 状态：2026-11-05 独立切片通过；随后 [Doc Comment 联合验收](mentions-graph-doc-comment-joint-acceptance.md) 已补齐，B1/B3 隔离环境出口通过。B2 仍缺代表性目标负载。本文以下通过数与未完成描述保留当时范围；2026-11-06 B4 改走全新空库并执行目标切换，当前状态见[切换手册](../../deploy/runbooks/mentions-graph-cutover.md)。外部候选搜索继续暂缓。
@@ -35,8 +37,8 @@ SQL telemetry 从 HTTP 入口计数，含 Community/Scope、状态、pending、r
 “最大 scan 节点”是本次计划中 `(Actual Rows + Rows Removed by Filter) × Actual Loops` 的最大值，
 不是整条请求所有表的累计扫描量；不声称数据库总共只访问 21 行。
 以上是一次本机合成运行，包含大量不可用占位 target，不能推导目标环境 p95 或生产容量。
-指标来源见 [摘要](evidence/mentions-graph-b2-summary.json)，
-完整计划见 [gzip JSON](evidence/mentions-graph-b2-synthetic-3000-plans.json.gz)。
+指标来源见 摘要，
+完整计划见 gzip JSON。
 
 ### 目标环境阻塞
 
@@ -52,7 +54,7 @@ ArticleQueryProvider、Footer、TanStack Query 和浏览器 fetch 执行，HTTP 
 它没有 mock Footer/路由组件；后端权限与持久化由 Phoenix 用例验证，不将 fixture 响应当成权限证据。
 测试路径统一使用 `home` 社区。
 
-[浏览器证据](evidence/mentions-graph-b3-browser.json) 包含 **23 项检查**：
+浏览器证据 包含 **23 项检查**：
 
 - Post / Blog / Changelog / Doc 正文页未选中 Mentions 时零图请求，点击后只发该 route 的 canonical focus 和一个 frontier；切走移除图。
 - Article 1 → Article 2 不串 focus/cache；图、Activity 的在途浏览器 fetch 在移除最后一个 tab observer 时原生拒绝为 AbortError。

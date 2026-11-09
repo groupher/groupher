@@ -2,9 +2,11 @@
 
 # 共享评论：实施与本地验收记录
 
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
 > 2026-11-05，`fix/todo` 工作区。本轮已获用户明确授权进入共享评论业务实现。未 commit、push 或部署，未改造/删除既有数据库，也未联系、停止或接管另一个 session。
 >
-> [执行计划](comment-reaction-snapshot-counts.md) 是产品合同；[inventory](comment-reaction-snapshot-counts-inventory.md) 是 B0 的读写/case 设计；[原审计输入](comment-reaction-snapshot-counts-audit/20261105T074802Z/manifest.json) 的正文和 SHA 保持不变。本记录描述随后实施，不覆盖历史静态结论，不继承另一个 session 的测试通过记录。
+> [执行计划](comment-reaction-snapshot-counts.md) 是产品合同；[inventory](comment-reaction-snapshot-counts-inventory.md) 是 B0 的读写/case 设计；原审计源码副本和 SHA 清单已从仓库移除。本记录描述随后实施，不覆盖历史静态结论，不继承另一个 session 的测试通过记录。
 
 ## 1. 交付与边界
 
@@ -49,7 +51,7 @@ B1–B4、B6 已在当前工作区集成并完成下列本地验收。B5 仅完�
 
 指纹包括目标列、约束、索引、触发器、8个身份 guard 函数正文和 Messaging delivery guards，另含账号物理删除 guard 函数正文及两个 ALWAYS trigger 的结构和启用模式。函数数量与触发器数量分别计数。旧库补默认列、缺 provenance、未 ready、错误 DB/generation/指纹均不能准入。缺 stats 行会报错并回滚创建，不靠读取初始化零值。
 
-[当前含账号 guard 的真实空库验证结果](comment-reaction-snapshot-counts-audit/account-delete-guard-20261105T132932Z/account-delete-guard-cutover.json)：
+当前含账号 guard 的真实空库验证结果：
 
 | 坐标          | 当前本地验证值                                                     |
 | ------------- | ------------------------------------------------------------------ |
@@ -58,7 +60,7 @@ B1–B4、B6 已在当前工作区集成并完成下列本地验收。B5 仅完�
 | schema SHA256 | `fbc51ba8c1750dfd6205d144c79ac6aa2e90af46563fe44a0b9e463d9cacb5ae` |
 | 结果          | ready 校验成功，禁用/篡改账号 guard 和旧指纹均被拒绝               |
 
-以下为[账号 guard 加入前的历史空库验证结果](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-cutover-validation.json)，保留原坐标及指纹，仅供追溯，不能用于当前新构建的发布准入：
+以下为账号 guard 加入前的历史空库验证结果，保留原坐标及指纹，仅供追溯，不能用于当前新构建的发布准入：
 
 | 坐标          | 本地验证值                                                         |
 | ------------- | ------------------------------------------------------------------ |
@@ -82,15 +84,15 @@ export TEST_DB_NAME=groupher_comments_20261105_implementation
 mix test test/groupher_server/cms/comments test/groupher_server/cms/articles/doc_owner_constraints_test.exs test/groupher_server/cms/articles/doc_owner_concurrency_test.exs test/groupher_server/cms/articles/comment_summary_initialization_test.exs test/groupher_server/cms/articles/doc_activity_test.exs test/groupher_server/cms/articles/pagination_test.exs test/groupher_server/cms/interactions test/groupher_server/cms/gate test/groupher_server/cms/production_seed/acceptance_test.exs test/groupher_server/cms/articles/trash_test.exs test/groupher_server/cms/communities/lifecycle_test.exs test/groupher_server/jobs/comments_test.exs test/groupher_server/cms/snapshot_test.exs test/groupher_server/cms/shadow_sync_test.exs test/groupher_server/cms/snapshot/members_test.exs --max-cases 4
 ```
 
-| 验证组                                                                                                                                          | 结果与证据                                                                                                                                                                   |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 上述整合回归                                                                                                                                    | [535 passed](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-integrated-tests.log)                                                  |
-| 新私有 identity 库：Activity、mention_version_facts、mentions_b1_acceptance、mentions_map_query、Doc Tree trash、Messaging mention/notification | [151 passed](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-identity-fresh-tests.log)；本轮自己运行，未复用他处通过数              |
-| Bindings、content_import_flow、全部 Doc Tree、Tickets                                                                                           | [139 passed](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-parent-tests.log)                                                      |
-| Summary、SchemaGeneration、Release 最终 focused                                                                                                 | [19 passed](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-final-contract-tests.log)；包括 SQL 预算、实际 GraphQL ref 和缺行不补写 |
-| GraphQL 评论读写与 Mentions 查询（四 thread，串行）                                                                                             | [192 passed](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-transport-verified-tests.log)；完整 transport 重跑成功                 |
-| 前端展示、真实中英文词典、revision/namespace/cache/mutation guards                                                                              | [81 passed / 15 files](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-frontend-final-tests.log)                                    |
-| 类型、协议与编译                                                                                                                                | Core/Community type-check、SDL/codegen、`mix compile --warnings-as-errors` 成功；日志在同一证据目录                                                                          |
+| 验证组                                                                                                                                          | 结果与证据                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 上述整合回归                                                                                                                                    | 535 passed                                                                                          |
+| 新私有 identity 库：Activity、mention_version_facts、mentions_b1_acceptance、mentions_map_query、Doc Tree trash、Messaging mention/notification | 151 passed；本轮自己运行，未复用他处通过数                                                          |
+| Bindings、content_import_flow、全部 Doc Tree、Tickets                                                                                           | 139 passed                                                                                          |
+| Summary、SchemaGeneration、Release 最终 focused                                                                                                 | 19 passed；包括 SQL 预算、实际 GraphQL ref 和缺行不补写                                             |
+| GraphQL 评论读写与 Mentions 查询（四 thread，串行）                                                                                             | 192 passed；完整 transport 重跑成功                                                                 |
+| 前端展示、真实中英文词典、revision/namespace/cache/mutation guards                                                                              | 81 passed / 15 files                                                                                |
+| 类型、协议与编译                                                                                                                                | Core/Community type-check、SDL/codegen、`mix compile --warnings-as-errors` 成功；日志在同一证据目录 |
 
 这些数字是各命令执行数，存在重复用例，不能相加宣称独立用例总数。42个 case ID 是验收设计索引，也不等于“恰好42个 ExUnit test”或全部发布场景已通过。
 
@@ -109,7 +111,7 @@ mix test test/groupher_server/cms/comments test/groupher_server/cms/articles/doc
 
 ## 4. SQL 与真实页面
 
-[REPEATABLE READ READ ONLY 核对](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-readonly-validation.json) 在本次新库 fixtures 上比较 Article count/去重人数、root count/entries/lastReplyAt，以及10/4位快照的有效成员和顺序、Article revision 与持久失效意图最高版本，差异为零。root 版本直接记录观察值，不按评论行数推算。另保存首末参与 EXISTS、DISTINCT ON 有界补位和最后有效回复时间的写侧查询计划。附实际 `EXPLAIN (ANALYZE, BUFFERS)`：摘要查询只读 ArticleStats；小样本计划不能据此声称生产规模性能已测完。
+REPEATABLE READ READ ONLY 核对 在本次新库 fixtures 上比较 Article count/去重人数、root count/entries/lastReplyAt，以及10/4位快照的有效成员和顺序、Article revision 与持久失效意图最高版本，差异为零。root 版本直接记录观察值，不按评论行数推算。另保存首末参与 EXISTS、DISTINCT ON 有界补位和最后有效回复时间的写侧查询计划。附实际 `EXPLAIN (ANALYZE, BUFFERS)`：摘要查询只读 ArticleStats；小样本计划不能据此声称生产规模性能已测完。
 
 READ-01 telemetry 对空历史与8条评论的 commentsState 查询验证相同 SQL 次数、没有 Comment 关系读取或 COUNT；合法完整关系分页/补位写入/离线只读核对仍可以查询真实关系。
 
@@ -124,7 +126,7 @@ READ-01 telemetry 对空历史与8条评论的 commentsState 查询验证相同 
 
 ## 5. 固定证据与并行工作区
 
-[实施后源码哈希](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/source-hashes.json) 记录此时5716个相关源码/测试/协议文件。其后 Effects owner/facade 和重复资料刷新收口的指纹及正文差异另见同目录 `source-hashes-final.json` / `post-validation-differences.json`；最终 transport 输入追加到 `source-hashes-transport.json` / `transport-input-differences.json`，5717项指纹中22项相对初次实施观察发生变化，均保存稳定双读正文和 ledger/case 映射。它们是工作区指纹，不声称每条先前命令都运行在同一个不可变 checkout；另一个 session 仍可继续修改文件。审计输入的正文/哈希由原49项固定快照负责，测试日志明确绑定本轮命令及私有库，不用“current”覆盖历史。
+实施后源码哈希 记录此时5716个相关源码/测试/协议文件。其后 Effects owner/facade 和重复资料刷新收口的指纹及正文差异另见同目录 `source-hashes-final.json` / `post-validation-differences.json`；最终 transport 输入追加到 `source-hashes-transport.json` / `transport-input-differences.json`，5717项指纹中22项相对初次实施观察发生变化，均保存稳定双读正文和 ledger/case 映射。它们是工作区指纹，不声称每条先前命令都运行在同一个不可变 checkout；另一个 session 仍可继续修改文件。审计输入的正文/哈希由原49项固定快照负责，测试日志明确绑定本轮命令及私有库，不用“current”覆盖历史。
 
 F01–F10 的后续归属：唯一 owner/准入→OWNER/GATE；publish→PUB-01；最后 branch 保留→DEL-01；init/rebuild→MENT-03/04；Comment delivery branch→MSG；盘点脚本稳定父→M04；旧 endpoint 证据不复用→151测试联合组；新 schema/fresh generation→REL-01。未删除 Mentions 合法的 rebuild/init 或正文 branch 逻辑。
 
@@ -151,7 +153,7 @@ F01–F10 的后续归属：唯一 owner/准入→OWNER/GATE；publish→PUB-01�
 
 ### 最后静态 review
 
-Effects/facade 和窄成员读取收口后，另行运行 [50个 focused 回归](comment-reaction-snapshot-counts-audit/implementation-20261105T111200Z/groupher-comments-effects-boundary-tests.log) 全部通过；最终 `mix compile --warnings-as-errors`、owned 文件格式检查和 `git diff --check` 均通过。
+Effects/facade 和窄成员读取收口后，另行运行 50个 focused 回归 全部通过；最终 `mix compile --warnings-as-errors`、owned 文件格式检查和 `git diff --check` 均通过。
 
 - 将摘要失效意图从 Summary 移到 `Comments.Effects.summary_changed`；调用仍在同一事务，未增加异步计数。Release 和 GraphQL 经 CMS facade 进入领域能力。
 - RevisionProjection 仅读取 ArticleStats 的存储成员，把资料刷新留给最终整页 Response；不提前刷新一遍再刷新整页。详情仍是恒定的窄摘要读取，不扫描 Comment 事实。
@@ -183,7 +185,7 @@ TEST_DB_NAME=groupher_comments_20261105_transport mix test test/groupher_server_
 
 真实页面 `/home/post/1` 使用私有 API/新 schema 夹具验证：根折叠后提示可见，键盘 Enter 展开，现有历史按钮可打开删除占位，捕获到的 mutation 请求为0。截图 `.playwright/comments-review-folded-history.png`；仍有既有静态资源/fixture avatar 失败及本地 theme 警告，未声称零 console error。
 
-[本轮源码、SHA、测试与浏览器记录](comment-reaction-snapshot-counts-audit/review-20261105T130013Z/manifest.json)。此前审计与运行证据不覆盖，未提交、未发布。
+本轮源码、SHA、测试与浏览器记录。此前审计与运行证据不覆盖，未提交、未发布。
 
 本轮补充：320px 下折叠历史提示完整可见，折叠行内嵌套按钮数为0。完整 `pnpm docs:check`、前后端 scoped 格式检查与 `git diff --check` 通过；本轮私有 API、Vite 和浏览器已关闭，未发布。
 

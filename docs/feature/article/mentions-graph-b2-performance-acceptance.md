@@ -1,5 +1,7 @@
 # MentionsGraph B2 性能验收方案与执行记录
 
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
 > **历史证据（2026-11-04 至 2026-11-06）：**本文的 set／occurrence／初始化／重建、请求级 SQL 预算及按资源状态裁剪图标题、URL 或边的条款均不适用于 2026-11-07 当前关系实现。现行代码合同见[当前关系合同](./mentions-graph-sync-contract.md)，新目标只用全新空库，不迁 B4 内容。下文原始测量与当时的执行事实保留供追溯，不能作为本轮发布指引。
 
 > 状态：2026-11-06，B2 总性能出口仍未签收；首次成功率缺口保留。用户随后批准全新空库，B4 的目标环境切换已执行，详见[切换手册](../../deploy/runbooks/mentions-graph-cutover.md)。新库无代表性正文，不能将切换成功写成 B2 性能通过；外部候选搜索继续暂缓。
@@ -110,7 +112,7 @@ CMS_MENTIONS_PERF_OUTPUT=/tmp/mentions-perf-standard-repeat \
 mix run --no-start scripts/mentions_perf/run.exs
 ```
 
-完成采集后独立复核，返回 2 表示候选门槛未通过，原始证据仍完整保留：
+完成采集后独立复核，返回 2 表示候选门槛未通过，原始测量文件现已移除，以下仅保留历史结论：
 
 ```sh
 node scripts/mentions_perf/review.mjs /tmp/mentions-perf-standard
@@ -130,7 +132,7 @@ TEST_DB_PORT=5547 node scripts/mentions_perf/run.mjs standard /tmp/mentions-perf
 
 ## 本轮证据与保留出口
 
-证据存放于 [目录](evidence/mentions-graph-b2-performance/standard-review.json) 和 inventory §9.40；各 pilot 独立运行，没有并行 benchmark 或构建争抢资源。
+证据存放于 目录 和 inventory §9.40；各 pilot 独立运行，没有并行 benchmark 或构建争抢资源。
 
 | 本机 pilot（每读取场景 100 次）                  | 标准集       | 大隐藏来源集   |
 | ------------------------------------------------ | ------------ | -------------- |
@@ -149,13 +151,13 @@ TEST_DB_PORT=5547 node scripts/mentions_perf/run.mjs standard /tmp/mentions-perf
 
 两套读取/扫描/锁诊断技术门槛通过，**首次成功率候选门槛未过**。读写速率是短窗口实测值，不能把配置的 500ms 间隔当作准确稳态吞吐；95% 仍为建议 design-load 口径。
 目录数量校准集的 11 个领域场景也各采样 100 次，图首批 p95 347.859ms、十 frontier p95 452.833ms；该早期记录不含两项 HTTP handler 场景，不冒充完整 13 场景签收。
-第一次标准集 HTTP 首批 p95 为 502.026ms，略超建议 500ms；[原失败基线](evidence/mentions-graph-b2-performance/standard-baseline-summary.json) 保留，不删除失败样本或放宽阈值。后一次是补齐并发统计后的重复测量，不宣称吞吐提升来自业务优化。
+第一次标准集 HTTP 首批 p95 为 502.026ms，略超建议 500ms；原失败基线 保留，不删除失败样本或放宽阈值。后一次是补齐并发统计后的重复测量，不宣称吞吐提升来自业务优化。
 
-- 标准集：[摘要](evidence/mentions-graph-b2-performance/standard-summary.json)、[完整计划](evidence/mentions-graph-b2-performance/standard-plans.json.gz)、[复核](evidence/mentions-graph-b2-performance/standard-review.json)。
-- 大压力集：[摘要](evidence/mentions-graph-b2-performance/large-summary.json)、[完整计划](evidence/mentions-graph-b2-performance/large-plans.json.gz)、[复核](evidence/mentions-graph-b2-performance/large-review.json)。
-- 目标：[只读计数](evidence/mentions-graph-b2-performance/target-profile.json)、[仅聚合正文语法 census](evidence/mentions-graph-b2-performance/target-body-syntax-profile.json)。
-- [持续时长控制验证](evidence/mentions-graph-b2-performance/duration-mode-check.json)：新进程 4 阶段各请求 2 秒并运行到截止点，所有 worker 持续发起请求，标记 `load_only`、不签收完整 pilot。该新进程没有完整预热，不拿它与热态成功率横比；60 秒正式时长尚未执行。
-- 功能恢复后 [171 项通过](evidence/mentions-graph-b2-performance/functional-171.log)；复核器 4 项测试覆盖隐瞒 fence 拒绝、原始假通过标志、漏测场景与本地误签收风险。
+- 标准集：摘要、完整计划、复核。
+- 大压力集：摘要、完整计划、复核。
+- 目标：只读计数、仅聚合正文语法 census。
+- 持续时长控制验证：新进程 4 阶段各请求 2 秒并运行到截止点，所有 worker 持续发起请求，标记 `load_only`、不签收完整 pilot。该新进程没有完整预热，不拿它与热态成功率横比；60 秒正式时长尚未执行。
+- 功能恢复后 171 项通过；复核器 4 项测试覆盖隐瞒 fence 拒绝、原始假通过标志、漏测场景与本地误签收风险。
 
 曾尝试把双向窗口的可见来源共用为 materialized CTE；3,000 边回归发现该形状会退化为全邻域扫描，原索引断言阻止了它。原型已撤回，原断言和原窗口查询保留；不把后续测量波动宣称为该优化收益。恢复后的同组 171 项全部通过。
 所有本地 runner 无论诊断门槛是否通过，都明确输出 B2 总性能未签收；没有根据一个布尔标志冒充代表性已确认。
@@ -166,11 +168,11 @@ TEST_DB_PORT=5547 node scripts/mentions_perf/run.mjs standard /tmp/mentions-perf
 
 针对 paced 写入时首次读取被全局 revision fence 拒绝，当时前端 MentionsGraph 的无 cursor 首批请求仅在错误码 4553 时再发一次；cursor 错误码 4551/4553 会丢弃已展开页并从首批重新读取，在当前版本/内容周期内每个视图作用域最多自动重启一次。权限、预算和传输错误当时不自动重试；卸载后的 AbortSignal 仍生效。当时每次服务端请求独立遵守 32 SQL / 5 秒硬预算；完整交互记录请求总数、成功率及端到端时间。这是历史测量规则，不适用于当前 runner。
 
-同一标准集、本地 PostgreSQL 14.23、4 reader + 2 paced revision writer、每阶段持续 10 秒的独立诊断见[原始摘要](evidence/mentions-graph-b2-performance/http-restart-10s-summary.json)。此轮使用已有受控 486 来源 / 11,241 边 fixture；读窗口中两阶段均实际完成约 3.97 次 revision 更新/秒。单次 HTTP 请求 563/632 成功（89.1%），最多 13 SQL，p95 86.762ms；限一次重试的完整交互 573/573 成功，其中 52 次发出第二请求，交互 p95 113.04ms，每次请求最多 13 SQL、最慢 121.551ms。两阶段顺序执行，成功率和延迟是各自观测值，不能把差额当成严格配对的因果效应。重试组最多 26 SQL 是**两次请求之和**，不是单次超预算；最大交互耗时 185.099ms。
+同一标准集、本地 PostgreSQL 14.23、4 reader + 2 paced revision writer、每阶段持续 10 秒的独立诊断见原始摘要。此轮使用已有受控 486 来源 / 11,241 边 fixture；读窗口中两阶段均实际完成约 3.97 次 revision 更新/秒。单次 HTTP 请求 563/632 成功（89.1%），最多 13 SQL，p95 86.762ms；限一次重试的完整交互 573/573 成功，其中 52 次发出第二请求，交互 p95 113.04ms，每次请求最多 13 SQL、最慢 121.551ms。两阶段顺序执行，成功率和延迟是各自观测值，不能把差额当成严格配对的因果效应。重试组最多 26 SQL 是**两次请求之和**，不是单次超预算；最大交互耗时 185.099ms。
 
 前端定向 18 项覆盖首次冲突限次重试、cursor 作废后回到首批、永久失败隐藏缓存图、手动恢复与取消。此 10 秒 `load_only` 诊断不含 13 个完整读取/计划场景，也不是正式 3 次独立、每场景 1,000 样本的同环境验收。原始首次成功率和原先的 PARTIAL review 保留；95% 建议值、目标负载到达率、目标图分布及数据库容量仍待确认。PG17 的隔离获取只准备本地瓶颈验证，不会触发 B4。
 
-随后以相同受控集各持续 60 秒，只选两个 HTTP 阶段，运行原始命令中的 `CMS_MENTIONS_PERF_LOAD_ONLY=1 CMS_MENTIONS_PERF_LOAD_PHASES=http_paced_single,http_paced_restart_once CMS_MENTIONS_PERF_LOAD_DURATION_MS=60000`。[60 秒原始摘要](evidence/mentions-graph-b2-performance/http-restart-60s-summary.json)保留了所有结果：
+随后以相同受控集各持续 60 秒，只选两个 HTTP 阶段，运行原始命令中的 `CMS_MENTIONS_PERF_LOAD_ONLY=1 CMS_MENTIONS_PERF_LOAD_PHASES=http_paced_single,http_paced_restart_once CMS_MENTIONS_PERF_LOAD_DURATION_MS=60000`。60 秒原始摘要保留了所有结果：
 
 | 指标                   |              单次 HTTP |    限一次重试的完整交互 |
 | ---------------------- | ---------------------: | ----------------------: |
@@ -182,30 +184,30 @@ TEST_DB_PORT=5547 node scripts/mentions_perf/run.mjs standard /tmp/mentions-perf
 | 每次服务端请求最慢     |              686.415ms |               288.913ms |
 | 完整交互请求数         |                  3,241 | 3,886（380 次第二请求） |
 
-这仍是顺序运行的两组本地 PG14 测量，不能宣称个体请求配对或目标负载匹配。第二组完整交互最多 26 SQL、最长 361.959ms，分别是两次请求合计；当时单次请求的 32 SQL / 5 秒硬预算保持原值；现行 runner 不沿用该门槛。[独立复核](evidence/mentions-graph-b2-performance/http-restart-60s-review.json)分别列出单次与完整交互成功率，维持 `PARTIAL`，不会用恢复成功掩盖首次失败。`load_only` 和仅选两个阶段会强制 `local_checks_passed=false`，不能借这组较长测量掩盖缺失的 13 场景完整计划。下一步应把正式成功率口径明确约定为“首次请求”还是“限次恢复后的完整交互”，并同时报告两者；99.66% 只满足本机此负载下的候选交互口径。
+这仍是顺序运行的两组本地 PG14 测量，不能宣称个体请求配对或目标负载匹配。第二组完整交互最多 26 SQL、最长 361.959ms，分别是两次请求合计；当时单次请求的 32 SQL / 5 秒硬预算保持原值；现行 runner 不沿用该门槛。独立复核分别列出单次与完整交互成功率，维持 `PARTIAL`，不会用恢复成功掩盖首次失败。`load_only` 和仅选两个阶段会强制 `local_checks_passed=false`，不能借这组较长测量掩盖缺失的 13 场景完整计划。下一步应把正式成功率口径明确约定为“首次请求”还是“限次恢复后的完整交互”，并同时报告两者；99.66% 只满足本机此负载下的候选交互口径。
 
-真实 Community Post 路由的[浏览器恢复检查](../../../frontend/e2e/scripts/mentions-graph-recovery-check.js)也在新的本地独立 Phoenix fixture 上通过：[请求序列与边界](evidence/mentions-graph-b2-performance/browser-recovery.json)。第一次注入 4553 后只重发一次无 cursor 首批；第二次用真实 API 首批响应附加一条测试边和过期 cursor，注入 4551 后只请求一次旧 cursor，随后回到真实 API 首批并收敛。其余 GraphQL 查询走真实本地 API。`/home/xx` 在该 fixture 下返回 404，因此使用同一 `home` 社区、作者 `xx` 的实际 Post `/home/post/3`；未把 mock API 的页面级 500 算成 MentionsGraph 失败。
+真实 Community Post 路由的[浏览器恢复检查](../../../frontend/e2e/scripts/mentions-graph-recovery-check.js)也在新的本地独立 Phoenix fixture 上通过：请求序列与边界。第一次注入 4553 后只重发一次无 cursor 首批；第二次用真实 API 首批响应附加一条测试边和过期 cursor，注入 4551 后只请求一次旧 cursor，随后回到真实 API 首批并收敛。其余 GraphQL 查询走真实本地 API。`/home/xx` 在该 fixture 下返回 404，因此使用同一 `home` 社区、作者 `xx` 的实际 Post `/home/post/3`；未把 mock API 的页面级 500 算成 MentionsGraph 失败。
 
 ### 隔离 PostgreSQL 17.11 同主版本 pilot（2026-11-05）
 
-本机以校验过 SHA-256 的 Homebrew PG17.11 bottle 解压到任务专用 `/tmp`，将 [pg_roaringbitmap 上游源码](https://github.com/ChenHuajun/pg_roaringbitmap) `v1.2.0` 针对该 PG17 编译到同一临时目录。由于 bottle 的共享数据、扩展与头文件路径在编译时固定，仅为本次本地运行在原先不存在的 `/opt/homebrew/{share,lib,include}/postgresql@17` 建立三个指向该临时目录的符号链接；没有安装 Homebrew formula、注册服务或连接目标库。服务仅监听本机 127.0.0.1:5548。二进制 SHA、扩展 commit、本机 CPU/内存与数据库参数见[环境证明](evidence/mentions-graph-b2-performance/pg17-local-environment.json)；**本机 8 核/16GiB 与目标数据库容量没有建立等价关系**。
+本机以校验过 SHA-256 的 Homebrew PG17.11 bottle 解压到任务专用 `/tmp`，将 [pg_roaringbitmap 上游源码](https://github.com/ChenHuajun/pg_roaringbitmap) `v1.2.0` 针对该 PG17 编译到同一临时目录。由于 bottle 的共享数据、扩展与头文件路径在编译时固定，仅为本次本地运行在原先不存在的 `/opt/homebrew/{share,lib,include}/postgresql@17` 建立三个指向该临时目录的符号链接；没有安装 Homebrew formula、注册服务或连接目标库。服务仅监听本机 127.0.0.1:5548。二进制 SHA、扩展 commit、本机 CPU/内存与数据库参数见环境证明；**本机 8 核/16GiB 与目标数据库容量没有建立等价关系**。
 
 测量完成后已停止该本地 PG17 进程，按原链接目标核对并删除上述三个临时符号链接；5548 无监听。任务专用 `/tmp` 数据目录保留供复核，未清理其他数据库或服务。
 
-在该 PG17.11 上新建专用空库、完整迁移、重建标准受控集后，13 个读取场景各取 100 次并保存完整 `EXPLAIN (ANALYZE, BUFFERS)`：[原始摘要](evidence/mentions-graph-b2-performance/pg17-standard-summary.json)、[完整计划](evidence/mentions-graph-b2-performance/pg17-standard-plans.json.gz)、[独立复核](evidence/mentions-graph-b2-performance/pg17-standard-review.json)。HTTP 首批 p95 396.3ms、六类型十 frontier p95 899.271ms，最大单次 22 SQL；13 场景的本地延迟/SQL/扫描门槛全过。控制性锁测试观察到 revision 更新等待 41.159ms，持锁期间读取成功。review 显式关联之前的[目标只读 profile](evidence/mentions-graph-b2-performance/target-profile.json)并保存其 SHA；PG 主版本不符已不再是 blocker。
+在该 PG17.11 上新建专用空库、完整迁移、重建标准受控集后，13 个读取场景各取 100 次并保存完整 `EXPLAIN (ANALYZE, BUFFERS)`：原始摘要、完整计划、独立复核。HTTP 首批 p95 396.3ms、六类型十 frontier p95 899.271ms，最大单次 22 SQL；13 场景的本地延迟/SQL/扫描门槛全过。控制性锁测试观察到 revision 更新等待 41.159ms，持锁期间读取成功。review 显式关联之前的目标只读 profile并保存其 SHA；PG 主版本不符已不再是 blocker。
 
 从 `backend/api` 运行标准集与独立复核的命令如下；第二个路径只读，review 同时保留原始 summary 与目标 profile 各自的 SHA，不改写测量摘要：
 
 ```sh
 TEST_DB_PORT=5548 node scripts/mentions_perf/run.mjs standard /tmp/mentions-perf-pg17-standard-verified
-node scripts/mentions_perf/review.mjs /tmp/mentions-perf-pg17-standard-verified ../../docs/feature/article/evidence/mentions-graph-b2-performance/target-profile.json
+node scripts/mentions_perf/review.mjs /tmp/mentions-perf-pg17-standard-verified /tmp/mentions-perf-target-profile.json
 ```
 
 该 PG17 标准 pilot 的 paced 领域读取首试 73/80（91.25%，窗口实际更新约 4.71/s）；独立 HTTP 单次 76/80（95%，约 5.44/s）；限次恢复的 HTTP 完整交互 80/80，6 次发出第二请求（约 4.98/s）。各组是顺序运行的短窗口、写入速率有差异，不能合并分母或宣称 100% 稳态可用。独立 review 维持 `PARTIAL`：目标容量和正式到达率未约定，受控图不是目标当前正文解析出的图，也缺三轮每场景 1,000 样本。该 PG17 证据只消除了数据库主版本差异，不签收 B2 总出口。
 
-同版本大隐藏来源集也以新空库完成：[原始摘要](evidence/mentions-graph-b2-performance/pg17-large-summary.json)、[完整计划](evidence/mentions-graph-b2-performance/pg17-large-plans.json.gz)、[独立复核](evidence/mentions-graph-b2-performance/pg17-large-review.json)。1,944 来源 / 89,870 边、380 隐藏父 Article；13 个各 100 次读取场景的本地门槛全过，HTTP 首批/六类型十 frontier p95 为 420.527/899.854ms、最多 22 SQL，非 offset 场景最大边表 scan work 1,109。控制性锁等待 82.3ms，持锁读取通过。paced 领域首试 68/80 = 85%，HTTP 单次 73/80 = 91.25%，限次恢复交互 80/80、8 次第二请求；短窗口实际 revision 完成速率分别约 4.13/4.98/4.01/s。大集 review 同样为 `PARTIAL`，不把短窗口恢复 100% 当正式可用性承诺。
+同版本大隐藏来源集也以新空库完成：原始摘要、完整计划、独立复核。1,944 来源 / 89,870 边、380 隐藏父 Article；13 个各 100 次读取场景的本地门槛全过，HTTP 首批/六类型十 frontier p95 为 420.527/899.854ms、最多 22 SQL，非 offset 场景最大边表 scan work 1,109。控制性锁等待 82.3ms，持锁读取通过。paced 领域首试 68/80 = 85%，HTTP 单次 73/80 = 91.25%，限次恢复交互 80/80、8 次第二请求；短窗口实际 revision 完成速率分别约 4.13/4.98/4.01/s。大集 review 同样为 `PARTIAL`，不把短窗口恢复 100% 当正式可用性承诺。
 
-PG17 标准集又执行了只含两个 HTTP 阶段、各持续 60 秒的测量：[原始摘要](evidence/mentions-graph-b2-performance/pg17-http-restart-60s-summary.json)、[独立复核](evidence/mentions-graph-b2-performance/pg17-http-restart-60s-review.json)。单次阶段 3,165/3,513 成功（90.09%），限一次重试的完整交互 3,928/3,928 成功，276 次发出第二请求；两阶段实际 revision 完成速率均约 4.00/s。单次阶段 p95 79.553ms；重试交互 p95 102.612ms、最长 208.298ms，单次服务端最多 13 SQL、最慢 186.123ms。两组顺序采集，仍非请求级配对；0/3,928 失败不能外推为零失败保证，PG14 同方法的 60 秒对照仍有 12/3,506 次双重拒绝。`load_only` 明确排除完整 pilot 13 场景，不补齐目标容量、代表图、正式到达率和三轮充分样本。
+PG17 标准集又执行了只含两个 HTTP 阶段、各持续 60 秒的测量：原始摘要、独立复核。单次阶段 3,165/3,513 成功（90.09%），限一次重试的完整交互 3,928/3,928 成功，276 次发出第二请求；两阶段实际 revision 完成速率均约 4.00/s。单次阶段 p95 79.553ms；重试交互 p95 102.612ms、最长 208.298ms，单次服务端最多 13 SQL、最慢 186.123ms。两组顺序采集，仍非请求级配对；0/3,928 失败不能外推为零失败保证，PG14 同方法的 60 秒对照仍有 12/3,506 次双重拒绝。`load_only` 明确排除完整 pilot 13 场景，不补齐目标容量、代表图、正式到达率和三轮充分样本。
 
 三轮正式采样的本地执行器为 [qualification.mjs](../../../backend/api/scripts/mentions_perf/qualification.mjs)。在 `backend/api`、本机 PostgreSQL 满足主版本要求时运行：
 
@@ -221,7 +223,7 @@ node scripts/mentions_perf/qualification.mjs /tmp/mentions-graph-qualification [
 
 这次复测仅说明所用本机数据库和负载未越过候选的 writer p95 250 ms、首次成功率 95% 门槛。它不是 PG17 目标容量、正式到达率/分布、锁等待阈值、三轮每场景 1,000 次或生产数据驱动验收。原异步/同步原型对照记录不能再用当前 `mentions_projection_mode` 参数复跑，因为生产写入已固定为同步；当前脚本只测新实现，不再输出虚假的模式对照。B2 总出口继续为 `PARTIAL`。
 
-**本轮代码的本地复测（2026-11-06）：**以同一 `writer_load.mjs` 在新的隔离 PostgreSQL 14 本地库执行 40 次完整 Article 发布，40/40 成功，writer p95 160.333ms；同时的图读取首次成功 2915/3056（95.39%），reader p95 24.374ms。[机器可读摘要](evidence/mentions-graph-b2-performance/sync-writer-go-20261106.json)保留命令、分母及缺口。它是候选阈值下的短窗口诊断，不证明 PG17 容量。当前机器没有 Docker 或本地 PG17；三轮本地资格脚本虽然可运行，但在这台机器上无法满足与目标同主版本的前提。目标库只有 6 个有边来源、最大出度 22，也不足以作为大图分布；目标到达率与纯锁等待阈值尚待确定。因此 B2 仍为 `PARTIAL`。
+**本轮代码的本地复测（2026-11-06）：**以同一 `writer_load.mjs` 在新的隔离 PostgreSQL 14 本地库执行 40 次完整 Article 发布，40/40 成功，writer p95 160.333ms；同时的图读取首次成功 2915/3056（95.39%），reader p95 24.374ms。机器可读摘要保留命令、分母及缺口。它是候选阈值下的短窗口诊断，不证明 PG17 容量。当前机器没有 Docker 或本地 PG17；三轮本地资格脚本虽然可运行，但在这台机器上无法满足与目标同主版本的前提。目标库只有 6 个有边来源、最大出度 22，也不足以作为大图分布；目标到达率与纯锁等待阈值尚待确定。因此 B2 仍为 `PARTIAL`。
 
 曾启动 `qualification.mjs /tmp/mentions-graph-qualification-20261106-go` 检查执行器；第 1 轮在隔离 PG14 库建立 486 来源、11,241 边，并完成首个 1,000 样本场景（HTTP 图首批 p95 291.014ms、最多 12 SQL、通过候选阈值）。由于该环境不能满足 PG17 与代表图前提，后续长采样无法签收 B2，已主动终止；`qualification.json` 未生成，**不计作三轮中的任何一轮**。本地第 1 轮数据库与 `/tmp/mentions-graph-qualification-20261106-go/run-1` 日志保留供检查。
 

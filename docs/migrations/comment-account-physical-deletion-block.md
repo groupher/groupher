@@ -1,5 +1,7 @@
 # 账号物理删除封闭方案
 
+> 本文仅保留设计和历史结论。原始源码快照、测试日志与测量输出已从仓库移除；历史数字不作为当前发布验收证据。
+
 > 2026-11-05，当前工作区已实现并在两个新建私有数据库验收，未发布。此记录取代“仅记录账号删除风险即可”的处理状态；不覆盖早先无 guard 的审计证据，也不代表既有环境已经受保护。
 
 ## 1. 当前合同
@@ -30,13 +32,13 @@ account.users
 
 ## 3. 验收
 
-[固定源码、SHA 和运行证据](comment-reaction-snapshot-counts-audit/account-delete-guard-20261105T132932Z/manifest.json)。
+固定源码、SHA 和运行证据。
 
-| 验收                                                                | 结果                                                                                                                                                                                     |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| guard、SchemaGeneration、Snapshot/ShadowSync                        | [31 passed](comment-reaction-snapshot-counts-audit/account-delete-guard-20261105T132932Z/account-delete-guard-tests.log)                                                                 |
-| 全部 Accounts、Comments Summary/SharedDoc、production seed、Release | [143 passed](comment-reaction-snapshot-counts-audit/account-delete-guard-20261105T132932Z/account-delete-guard-regression.log)                                                           |
-| 新库 bootstrap→迁移→ready                                           | [通过](comment-reaction-snapshot-counts-audit/account-delete-guard-20261105T132932Z/account-delete-guard-cutover.json)；禁用/篡改 guard 和旧指纹拒绝；测试 DDL 回滚后重新验证 ready 成功 |
+| 验收                                                                | 结果                                                                   |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| guard、SchemaGeneration、Snapshot/ShadowSync                        | 31 passed                                                              |
+| 全部 Accounts、Comments Summary/SharedDoc、production seed、Release | 143 passed                                                             |
+| 新库 bootstrap→迁移→ready                                           | 通过；禁用/篡改 guard 和旧指纹拒绝；测试 DDL 回滚后重新验证 ready 成功 |
 
 数字是两组命令的执行数，有重复用例，不代表独立用例合计数。
 
