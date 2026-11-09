@@ -25,62 +25,46 @@ Logger.configure(level: :warning)
 System.put_env("PRODUCTION_SEED_ENABLED", "true")
 alias GroupherServer.Repo
 alias GroupherServer.CMS.ProductionSeed
-alias ProductionSeed.{CLI, Logins, Cleanup}
+alias ProductionSeed.{CLI, Cleanup}
 [["groupher_server_test"]] = Repo.query!("SELECT current_database()").rows
 before = Repo.aggregate(ProductionSeed.Run, :count)
-file = "/tmp/production-seed-release-smoke-#{System.unique_integer([:positive])}.json"
 artifact = System.fetch_env!("PRODUCTION_SEED_SMOKE_ARTIFACT")
 
-try do
-  {:error, :local_smoke_rollback} =
-    Repo.transaction(
-      fn ->
-        request = %{
-          "command" => "bootstrap",
-          "runId" => "local-release-smoke",
-          "database" => "groupher_server_test"
-        }
+{:error, :local_smoke_rollback} =
+  Repo.transaction(
+    fn ->
+      request = %{
+        "command" => "bootstrap",
+        "runId" => "local-release-smoke",
+        "database" => "groupher_server_test"
+      }
 
-        {:ok, _} = request |> Jason.encode!() |> Base.encode64() |> CLI.run_base64()
+      {:ok, _} = request |> Jason.encode!() |> Base.encode64() |> CLI.run_base64()
 
-        {:ok, _} =
-          CLI.execute(Map.merge(request, %{"command" => "seed", "artifactPath" => artifact}))
+      {:ok, _} =
+        CLI.execute(Map.merge(request, %{"command" => "seed", "artifactPath" => artifact}))
 
-        {:ok, _} =
-          CLI.execute(
-            Map.merge(request, %{"command" => "issue", "alias" => "author", "outputFile" => file})
-          )
+      {:ok, _} = CLI.execute(Map.put(request, "command", "close"))
+      {:ok, plan} = Cleanup.report("local-release-smoke", "groupher_server_test", "purge")
 
-        {:ok, stat} = File.stat(file)
-        true = Bitwise.band(stat.mode, 0o777) == 0o600
-        credential = File.read!(file) |> Jason.decode!() |> Map.fetch!("credential")
-        {:ok, session} = Logins.redeem(credential)
-        {:ok, plan} = Cleanup.report("local-release-smoke", "groupher_server_test", "purge")
+      {:ok, _} =
+        Cleanup.apply(
+          "local-release-smoke",
+          "groupher_server_test",
+          "purge",
+          plan.report_digest
+        )
 
-        {:ok, _} =
-          Cleanup.apply(
-            "local-release-smoke",
-            "groupher_server_test",
-            "purge",
-            plan.report_digest
-          )
+      {:error, %{reason: :seed_cleanup_incomplete}} =
+        Cleanup.verify("local-release-smoke", "groupher_server_test", "purge")
 
-        {:error, _} =
-          GroupherServer.Accounts.profiles_refresh_browser_session(session.browser_session_ref)
-
-        {:error, %{reason: :seed_cleanup_incomplete}} =
-          Cleanup.verify("local-release-smoke", "groupher_server_test", "purge")
-
-        Repo.rollback(:local_smoke_rollback)
-      end,
-      timeout: 120_000
-    )
-
-  ^before = Repo.aggregate(ProductionSeed.Run, :count)
-
-  IO.puts(
-    "production seed prod-release smoke: PASS (all writes rolled back; pending effects correctly reject verify)"
+      Repo.rollback(:local_smoke_rollback)
+    end,
+    timeout: 120_000
   )
-after
-  File.rm(file)
-end
+
+^before = Repo.aggregate(ProductionSeed.Run, :count)
+
+IO.puts(
+  "production seed prod-release smoke: PASS (all writes rolled back; cleanup verify rejects pending effects)"
+)

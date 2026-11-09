@@ -2,12 +2,26 @@ name: Backend unit tests
 on:
   push:
     paths:
-      - 'backend/api/**' # only trigger when this dir changes
+      - 'backend/api/**'
+      - 'backend/auth/**'
       - 'ops/postgres/**'
+      - 'packages/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/backend-tests.yml'
   pull_request:
     paths:
       - 'backend/api/**'
+      - 'backend/auth/**'
       - 'ops/postgres/**'
+      - 'packages/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/backend-tests.yml'
 
 jobs:
   setup:

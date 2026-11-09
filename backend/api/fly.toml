@@ -16,11 +16,6 @@ release_command = '/app/bin/migrate'
   SEARCH_ARTIMENTS_ENABLED = 'false'
 PHX_HOST = 'api.groupher.com'
 PORT = '8080'
-MIGRATION_EXPECTED_DATABASE = 'groupher_mentions_graph_20261106'
-
-[[mounts]]
-source = 'groupher_data'
-destination = '/data'
 
 [http_service]
 internal_port = 8080

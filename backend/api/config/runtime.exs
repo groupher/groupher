@@ -250,12 +250,20 @@ if config_env() in [:prod, :seed_prod] do
     client_secret: System.get_env("OAUTH_GITHUB_CLIENT_SECRET"),
     redirect_uri: System.get_env("OAUTH_GITHUB_REDIRECT_URI")
 
+  search_platform =
+    if String.downcase(String.trim(System.get_env("SEARCH_ARTIMENTS_ENABLED", "true"))) in [
+         "false",
+         "0",
+         "no",
+         "off"
+       ] do
+      GroupherServer.CMS.SearchArtiments.Disabled
+    else
+      GroupherServer.CMS.SearchArtiments.Algolia
+    end
+
   config :groupher_server, :search_artiments,
-    platform:
-      if(System.get_env("SEARCH_ARTIMENTS_ENABLED", "true") == "false",
-        do: GroupherServer.CMS.SearchArtiments.Disabled,
-        else: GroupherServer.CMS.SearchArtiments.Algolia
-      ),
+    platform: search_platform,
     queue: GroupherServer.CMS.SearchArtiments.ObanQueue,
     algolia: [
       application_id: System.get_env("ALGOLIA_APPLICATION_ID"),

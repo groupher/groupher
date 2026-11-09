@@ -80,42 +80,11 @@ manifest 的 `expectedEdges` 是期望，不是通过证据。正常 Mention Out
 
 PS-M07 使用 `map-failure`：先等待正常 Outbox 同步并确认 report issues 为空，再调用。该入口在同一事务中使 CM 的 BodyBag 临时不可解析，走真实 Rebuild/Store 错误路径，将 CM 写入正式持久失败清单，然后回滚数据库；不提交损坏正文、不关闭约束、不手造 Mention 边。失败后的 report 应包含 `failed_manifest`；先核对持久盘文件，再重启同一持盘实例确认文件仍在，最后按主手册调用 `retry_failed(default_manifest())`，要求 processed=1、failures=[]，report issues 清零。其余来源使用普通重建命令验证可继续处理；不能以故障入口的单来源 processed=1 代替此项。已有非本 run 来源时入口拒绝执行，不在混合用户库中使用。
 
-## 4. Auth 兑换与关闭
+## 4. 已移除的 Auth 兑换入口
 
-API：`PRODUCTION_SEED_ENABLED=true`。Auth：`PRODUCTION_SEED_LOGIN_ENABLED=true`、`PRODUCTION_SEED_LOGIN_UNTIL=<明确 UTC ISO 时间>`，以及既有正式 Auth 配置（NEXTAUTH_SECRET、Auth service client、Phoenix endpoint、Cookie secure/domain）。这些开关都不会默认开启。没有新的通用测试登录接口或 GitHub identity。
-
-issue 示例额外参数：
-
-```json
-{
-  "command": "issue",
-  "runId": "prod-seed-YYYYMMDDTHHMMSSZ",
-  "database": "ACTUAL_EMPTY_DATABASE",
-  "alias": "author",
-  "outputFile": "/tmp/production-seed-author.json"
-}
-```
-
-outputFile 必须满足 `/tmp/production-seed-[a-zA-Z0-9_-]+.json`，文件已存在时拒绝覆盖。通过受控秘密渠道取得 JSON，五分钟内在 **groupher.com 或 dash.groupher.com 的独立浏览器上下文**发起：
-
-```js
-// credentialJson 从受控本地文件读取；不要把实际值复制进命令历史或证据。
-const response = await fetch('https://auth.groupher.com/api/auth/production-seed/redeem', {
-  method: 'POST',
-  credentials: 'include',
-  headers: { 'Content-Type': 'application/json', 'X-Groupher-CSRF': '1' },
-  body: JSON.stringify({ credential: credentialJson.credential }),
-})
-if (response.status !== 204) throw new Error(`Redemption failed: ${response.status}`)
-```
-
-需保留既有 Origin/CSRF 校验。禁止 credential 出现在 URL、Referer、公开日志。该路由没有签发能力；签发仅是 release RPC 运维动作。JSON body 最大 2 KiB。
-
-Auth 签发正式 host-only Auth.js Session Cookie（生产 `__Host-groupher-auth.session-token`）及 Phoenix `groupher-auth.token`、非秘密 signed-in hint；属性沿用当前协议。Auth.js 签发失败会撤销已创建的 Phoenix session，无成功 Cookie；补偿失败返回 503，此时立即 close 本 run，核对 session ledger 后再继续，不复用旧凭据。
-
-P7 顺序：close/cleanup；在各浏览器正式 logout 清理 Cookie，并证明旧业务 token/refresh 已被 Phoenix 拒绝；关闭 API/ Auth flags；发布移除 Auth `/api/auth/production-seed/redeem` 路由、`production-seed.ts`、Auth flag/binding 和运维 issue 签发入口的收口版本；销毁未使用的凭据文件/副本，核对所有旧部署不可服务。opaque 凭据使用独立数据库摘要存储，没有专用签名密钥，不轮换正式 NEXTAUTH_SECRET/PHX_JWT_SECRET 来代替关闭入口。
-
-Auth 现有 `/api/auth/*` 会接管未知路径，收口版需同时落实未知 action 的 404 策略或无业务处理的拒绝响应；只删除兑换 handler 不保证 404。最终真实公共路由须 404，旧凭据不能兑换，正常 Auth 刷新/登出仍可用。服务端撤销无法远程擦除已经写入浏览器的 Auth.js Cookie，因此必须单独完成 logout；Cookie 仍存在不代表 Phoenix session 有效。上述生产复核未执行时，不能关闭 P7。
+生产验收窗口结束后，CLI 的 `issue` 命令与 Auth 兑换路由已移除。
+本地 release smoke 只验证现存的 bootstrap、seed、close 与 cleanup 命令；
+不得再按历史流程签发凭据。`close` 仍用于结束对应 run。
 
 ## 5. 清理 report / apply / verify
 
