@@ -15,6 +15,7 @@ type TUserSocial = {
 }
 
 export type TSimpleUser = {
+  ref?: string
   id?: string | null
   login?: string
   nickname?: string | null

@@ -36,6 +36,7 @@ const stats = {
   upvotesCount: 3,
   commentsCount: 2,
   collectsCount: 0,
+  commentsParticipants: [],
   commentsParticipantsCount: 0,
   interactionRevision: 0,
   commentsRevision: 0,

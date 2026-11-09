@@ -29,6 +29,7 @@ const stats = (views: number, overrides: Partial<TArticleStats> = {}): TArticleS
   upvotesCount: 0,
   commentsCount: 0,
   collectsCount: 0,
+  commentsParticipants: [],
   commentsParticipantsCount: 0,
   interactionRevision: 0,
   commentsRevision: 0,

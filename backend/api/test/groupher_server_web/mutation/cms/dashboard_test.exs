@@ -249,8 +249,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         kanbanCardLayout: "FULL",
         footerLayout: "ONELINE",
         topbarEnabled: true,
-        kanbanBgColors: ["BLACK", "YELLOW"],
-        kanbanBoards: ["BACKLOG", "TODO", "DONE", "REJECTED"],
+        kanbanBgColors: ["BLACK", "YELLOW", "GREEN"],
+        kanbanBoards: ["TODO", "DONE"],
         tagLayout: "DOT",
         inlineTagLayout: "SOFT",
         brandLayout: "LOGO",
@@ -271,8 +271,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.layout.kanban_layout == :waterfall
       assert found.dashboard.layout.kanban_card_layout == :full
       assert found.dashboard.layout.broadcast_enable == true
-      assert found.dashboard.layout.kanban_bg_colors == [:black, :yellow]
-      assert found.dashboard.layout.kanban_boards == [:backlog, :todo, :done, :rejected]
+      assert found.dashboard.layout.kanban_bg_colors == [:black, :yellow, :green]
+      assert found.dashboard.layout.kanban_boards == [:todo, :done]
       assert found.dashboard.layout.footer_layout == :oneline
       assert found.dashboard.layout.topbar_enabled == true
 

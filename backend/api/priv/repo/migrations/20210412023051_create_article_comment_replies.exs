@@ -3,7 +3,9 @@ defmodule GroupherServer.Repo.Migrations.CreateArticleCommentReplies do
 
   def change do
     create table(:articles_comments_replies) do
-      add(:article_comment_id, references(:articles_comments, on_delete: :delete_all), null: false)
+      add(:article_comment_id, references(:articles_comments, on_delete: :delete_all),
+        null: false
+      )
 
       add(:reply_to_id, references(:articles_comments, on_delete: :delete_all), null: false)
 

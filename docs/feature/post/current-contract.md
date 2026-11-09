@@ -1,6 +1,6 @@
 # Post Solution：最佳回复关系
 
-> 状态：当前实现合同。本文只描述现行事实源、命令、读取与测试边界，不包含历史数据迁移或旧 API 兼容。
+> 状态：当前实现合同。本文只描述现行事实源、命令、读取与测试边界，不包含历史数据迁移或旧 API 兼容。Post 处理状态已由独立 Ticket 进度投影取代，详见 [Tickets](../tickets/README.md)。
 
 相关文档：
 
@@ -30,17 +30,17 @@ PostSolution
 
 职责划分：
 
-| 问题                     | 权威来源                             |
-| ------------------------ | ------------------------------------ |
-| 当前最佳回复             | `PostSolution.comment_id`            |
-| 谁在何时采纳             | `accepted_by_id` / `accepted_at`     |
-| 回复正文                 | `Comment`                            |
-| 人工置顶                 | `PinnedComment`                      |
-| Post 工作流              | `Post.status`                        |
-| Comment 是否来自 QA Post | `Comment.is_for_question` projection |
-| 历史事件                 | Activity V1 `PostLog`                |
+| 问题                     | 权威来源                                 |
+| ------------------------ | ---------------------------------------- |
+| 当前最佳回复             | `PostSolution.comment_id`                |
+| 谁在何时采纳             | `accepted_by_id` / `accepted_at`         |
+| 回复正文                 | `Comment`                                |
+| 人工置顶                 | `PinnedComment`                          |
+| Post 处理进度            | 关联 User Tickets 的 progress projection |
+| Comment 是否来自 QA Post | `Comment.is_for_question` projection     |
+| 历史事件                 | Activity V1 `PostLog`                    |
 
-不得通过 pin、Post status、摘要、Activity 或旧 Comment flag 倒推当前最佳回复。
+不得通过 pin、Ticket status、摘要、Activity 或旧 Comment flag 倒推当前最佳回复。
 
 ## 2. 数据库约束
 
@@ -174,12 +174,12 @@ Community moderator 的 solution capability 尚未接入。当前 moderator 与�
 Solution command 不得：
 
 - 创建、删除或修改普通 `PinnedComment`；
-- 覆盖 `Post.status`；
+- 修改关联 User Ticket 的状态；
 - 写 `Comment.is_for_question`；
 - 持久化 `Comment.is_solution`；
 - 持久化 `Post.solution_digest`。
 
-因此 accept、replace 和 revoke 不会破坏人工 pin 或 Post 的 `wip`、`done` 等工作流状态。
+因此 accept、replace 和 revoke 不会破坏人工 pin、Ticket 工作状态或 Post 的独立审核/分类事实。
 
 ## 8. Reader projection
 

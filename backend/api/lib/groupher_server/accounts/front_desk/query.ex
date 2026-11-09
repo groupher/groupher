@@ -13,7 +13,9 @@ defmodule GroupherServer.Accounts.FrontDesk.Query do
 
   require GroupherServer.Accounts.Profiles.ErrorCat
 
-  alias GroupherServer.Accounts
+  import Ecto.Query
+
+  alias GroupherServer.{Accounts, Repo}
   alias Accounts.FrontDesk.Cache
 
   alias Accounts.Model.User
@@ -22,6 +24,38 @@ defmodule GroupherServer.Accounts.FrontDesk.Query do
   alias Helper.ORM
 
   @cache_pool :user_login
+
+  @doc "Loads public display fields for a deduplicated batch without adding a cache."
+  @spec user_summaries([pos_integer()]) :: {:ok, map()} | {:error, atom()}
+  def user_summaries(ids) when is_list(ids) do
+    if Enum.all?(ids, &(is_integer(&1) and &1 > 0)) do
+      ids = Enum.uniq(ids)
+
+      summaries =
+        User
+        |> where([user], user.id in ^ids)
+        |> select([user], %{
+          id: user.id,
+          user_id: user.id,
+          login: user.login,
+          nickname: user.nickname,
+          avatar: user.avatar,
+          bio: user.bio,
+          shortbio: user.shortbio,
+          updated_at: user.updated_at
+        })
+        |> Repo.all()
+        |> Map.new(fn user ->
+          {user.id, Map.update!(user, :nickname, &(&1 || user.login))}
+        end)
+
+      {:ok, summaries}
+    else
+      {:error, :invalid_user_summary_ids}
+    end
+  end
+
+  def user_summaries(_), do: {:error, :invalid_user_summary_ids}
 
   @doc """
   Resolves a login to the canonical user ID, using the login cache when possible.

@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Model.Article do
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   @foreign_key_type Ecto.UUID
   @schema_prefix DBPrefix.cms()
-  @threads CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Threads.identity_values_list()
   @required_fields ~w(thread author_id)a
   @optional_fields ~w(active_at is_sunk last_active_at
                       is_edited comments_locked next_floor next_comment_inner_id)a
@@ -45,7 +45,6 @@ defmodule GroupherServer.CMS.Model.Article do
     adapter_opts: [
       join_fields: [
         published_at: [binding: :stable_public, field: :published_at, ecto_type: :utc_datetime],
-        doc_active_at: [binding: :stable_doc_state, field: :active_at, ecto_type: :utc_datetime],
         inner_id: [binding: :article_binding, field: :inner_id, ecto_type: :integer],
         binding_id: [binding: :article_binding, field: :id, ecto_type: :integer],
         views: [binding: :article_stats, field: :views, ecto_type: :integer],
@@ -58,6 +57,13 @@ defmodule GroupherServer.CMS.Model.Article do
           binding: :article_stats,
           field: :comments_count,
           ecto_type: :integer
+        ]
+      ],
+      custom_fields: [
+        doc_active_at: [
+          field_dynamic: {GroupherServer.CMS.Articles.ActivityTime, :effective_doc, []},
+          ecto_type: :utc_datetime,
+          bindings: [:stable_doc_state, :stable_public]
         ]
       ]
     ]

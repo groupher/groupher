@@ -24,14 +24,22 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     CMS.articles_undo_lock_comments_result(article, user, command_id)
   end
 
-  def comments_state(_root, %{article: article, article_path: %{thread: thread}}, %{
-        context: %{cur_user: user}
-      }) do
-    CMS.comments_comments_state(thread, article.id, user)
+  def comments_state(
+        _root,
+        %{article: article, article_path: %{thread: thread, community: community}},
+        %{
+          context: %{cur_user: user}
+        }
+      ) do
+    CMS.comments_comments_state(thread, article.id, user, community)
   end
 
-  def comments_state(_root, %{article: article, article_path: %{thread: thread}}, _) do
-    CMS.comments_comments_state(thread, article.id)
+  def comments_state(
+        _root,
+        %{article: article, article_path: %{thread: thread, community: community}},
+        _
+      ) do
+    CMS.comments_comments_state(thread, article.id, nil, community)
   end
 
   def comment_viewer_states(
@@ -66,6 +74,12 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
     CMS.comments_one_comment(comment)
   end
 
+  @doc "Resolves the one Comment selected through a stored graph relation."
+  def mentioned_comment(_root, %{community: community, locator: locator}, resolution) do
+    viewer = Map.get(resolution.context, :cur_user)
+    CMS.comments_mentioned_comment(community, locator, viewer)
+  end
+
   @doc "Resolves the canonical CommentPage with an independent PagiInput."
   def comment_page(
         _root,
@@ -92,11 +106,11 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
 
   def paged_comments_participants(
         _root,
-        %{article: article, article_path: %{thread: thread}} = args,
+        %{article: article, article_path: %{thread: thread, community: community}} = args,
         _info
       ) do
     with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.comments_paged_comments_participants(thread, article.id, pagi)
+      CMS.comments_paged_comments_participants(thread, article.id, pagi, community)
     end
   end
 
@@ -131,18 +145,32 @@ defmodule GroupherServerWeb.Resolvers.CMS.Comments do
       body_bag,
       expected_version,
       user,
-      Map.get(args, :command_id)
+      Map.get(args, :command_id),
+      get_in(args, [:comment_path, :article, :community])
     )
   end
 
   def delete_comment(_root, ~m(comment)a = args, %{context: %{cur_user: user}}) do
-    CMS.comments_delete_comment_result(comment, user, Map.get(args, :command_id))
+    CMS.comments_delete_comment_result(
+      comment,
+      user,
+      Map.get(args, :command_id),
+      get_in(args, [:comment_path, :article, :community])
+    )
   end
 
   def reply_comment(_root, %{comment: comment, body_bag: body_bag} = args, %{
         context: %{cur_user: user}
       }) do
-    CMS.comments_reply_comment_result(comment, body_bag, user, Map.get(args, :command_id))
+    community_slug = get_in(args, [:comment_path, :article, :community])
+
+    CMS.comments_reply_comment_result(
+      comment,
+      body_bag,
+      user,
+      Map.get(args, :command_id),
+      community_slug
+    )
   end
 
   def upvote_comment(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do

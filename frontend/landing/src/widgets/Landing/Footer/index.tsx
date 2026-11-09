@@ -10,7 +10,7 @@ export default function Footer() {
   const { t } = useTrans()
 
   return (
-    <div className={s.wrapper}>
+    <div className={s.wrapper} data-landing-section='footer'>
       <Img src='groupher.png' className={s.logo} />
 
       <h3 className={s.title}>{t('landing.footer.title')}</h3>

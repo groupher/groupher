@@ -22,7 +22,6 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
   alias CMS.Comments.InteractionResponse
   alias CMS.Articles.Bindings
   alias CMS.FrontDesk
-  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
   alias CMS.{ArticlePath, EmotionFormatter}
   alias CMS.Model.Comment
   alias Helper.{ORM, T}
@@ -71,7 +70,7 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
          {:ok, inner_ids} <- parse_inner_ids(inner_ids) do
       comments =
         Comment
-        |> CMS.Gate.scope(viewer, :read, comment_scope(thread))
+        |> CMS.Gate.scope(viewer, :read, comment_scope(thread, article))
         |> where(
           [comment],
           comment.article_id == ^article.id and comment.thread == ^thread and
@@ -175,8 +174,9 @@ defmodule GroupherServer.CMS.Comments.Query.Reconcile do
 
   defp normalize_error(result), do: result
 
-  defp comment_scope(:doc), do: CommentContext.for_thread(:doc, branch_policy: :main)
-  defp comment_scope(thread), do: CommentContext.for_thread(thread)
+  defp comment_scope(thread, article) do
+    CMS.Comments.RequestCommunity.scope_context(thread, article.community.slug)
+  end
 
   defp resolve_article(article_path) do
     with {:ok, %{thread: thread} = article_path} <- ArticlePath.parse(article_path),

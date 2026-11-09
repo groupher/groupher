@@ -15,7 +15,6 @@ import SubMenu from '../SubMenu'
 import CatItem from './CatItem'
 import PinItem from './PinItem'
 import useSalon, { cn } from './salon'
-import StatusItem from './StatusItem'
 import TagsItem from './TagsItem'
 
 type TProps = {
@@ -73,7 +72,6 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
           </button>
           <div className={s.divider} />
           <CatItem onClick={() => openSubMenu(SUB_MENU.CATEGORY)} />
-          <StatusItem onClick={() => openSubMenu(SUB_MENU.STATUS)} />
           <TagsItem onClick={() => openSubMenu(SUB_MENU.TAGS)} />
           <div className={s.divider} />
           <PinItem />

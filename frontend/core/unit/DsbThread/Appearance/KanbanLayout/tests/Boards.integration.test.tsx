@@ -15,7 +15,6 @@ vi.mock('~/hooks/useTrans', () => ({
           'article.status.backlog': 'Backlog',
           'article.status.todo': 'Todo',
           'article.status.wip': 'In progress',
-          REJECTED: 'Rejected',
           'article.status.done': 'Done',
         }) as Record<string, string>
       )[key] || key,

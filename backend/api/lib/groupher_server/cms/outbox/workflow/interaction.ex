@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
 
   alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
   alias Accounts.Model.User
-  alias CMS.Model.{Article, Comment}
+  alias CMS.Model.{Article, Comment, Community}
   alias CMS.Interactions.ErrorCat, as: InteractionErrorCat
   alias CMS.SearchArtiments.Indexer
   alias CMS.Events
@@ -34,6 +34,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
       {:busy, seconds} ->
         {:snooze, seconds}
 
+      {:snooze, seconds} ->
+        {:snooze, seconds}
+
       {:error,
        %ErrorCat.Error{
          namespace: {:cms},
@@ -52,7 +55,8 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
     with {:ok, target} <- load_target(event.resource_type, event.resource_id),
          {:ok, actor} <- load_actor(data["actor_id"]),
          {:ok, _} <- emit_event(event.event, target, actor, data),
-         {:ok, _} <- maybe_sync_search(target) do
+         {:ok, _} <- maybe_sync_search(target),
+         {:ok, _} <- purge_ticket_cache(target) do
       {:ok, :delivered}
     end
   end
@@ -89,13 +93,13 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
              from_user: actor,
              delivery_key: data["delivery_key"]
            }),
-         {:ok, _} <- Events.emit(:subscribe_community, %{target: target, user: actor}) do
+         {:ok, _} <- subscribe_community(target, actor, data) do
       {:ok, :pass}
     end
   end
 
-  defp emit_event("interaction.emotion_changed", %Comment{} = target, actor, _data) do
-    Events.emit(:subscribe_community, %{target: target, user: actor})
+  defp emit_event("interaction.emotion_changed", %Comment{} = target, actor, data) do
+    subscribe_community(target, actor, data)
   end
 
   defp emit_event("interaction.collect_changed", target, actor, data) do
@@ -111,11 +115,37 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Interaction do
 
   defp emit_event(_event, _target, _actor, _data), do: {:ok, :pass}
 
+  # A Comment has no owning Community. Old incomplete events cannot reconstruct
+  # the request location; deliver their stable notification without guessing a binding.
+  defp subscribe_community(%Comment{}, actor, %{"community_id" => community_id})
+       when is_integer(community_id) do
+    case Repo.get(Community, community_id) do
+      nil -> {:ok, :community_gone}
+      community -> Events.emit(:subscribe_community, %{target: community, user: actor})
+    end
+  end
+
+  defp subscribe_community(%Comment{}, _actor, _data), do: {:ok, :request_context_not_recorded}
+
+  defp subscribe_community(target, actor, _data) do
+    Events.emit(:subscribe_community, %{target: target, user: actor})
+  end
+
   defp maybe_sync_search(%Comment{}), do: {:ok, :pass}
 
   defp maybe_sync_search(%Article{} = article) do
-    normalize_search(Indexer.enqueue_metrics(article))
+    if CMS.SearchArtiments.platform() == CMS.SearchArtiments.Disabled do
+      {:ok, :search_disabled}
+    else
+      normalize_search(Indexer.enqueue_metrics(article))
+    end
   end
+
+  defp purge_ticket_cache(%Article{thread: :post, id: article_id}) do
+    CMS.Tickets.Cache.purge_post(article_id)
+  end
+
+  defp purge_ticket_cache(_target), do: {:ok, :pass}
 
   defp normalize_search(:ok), do: {:ok, :pass}
   defp normalize_search({:ok, _}), do: {:ok, :pass}

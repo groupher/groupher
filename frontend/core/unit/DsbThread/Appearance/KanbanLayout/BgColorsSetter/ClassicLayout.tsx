@@ -14,19 +14,15 @@ type TProps = {
 }
 
 const BOARD_STYLE_KEY = {
-  [KANBAN_BOARD.BACKLOG]: 'boardBacklog',
   [KANBAN_BOARD.TODO]: 'boardTodo',
   [KANBAN_BOARD.WIP]: 'boardWip',
   [KANBAN_BOARD.DONE]: 'boardDone',
-  [KANBAN_BOARD.REJECTED]: 'boardRejected',
 } as const
 
 const BOARD_ACTIVE_KEY = {
-  [KANBAN_BOARD.BACKLOG]: 'backlogActive',
   [KANBAN_BOARD.TODO]: 'todoActive',
   [KANBAN_BOARD.WIP]: 'wipActive',
   [KANBAN_BOARD.DONE]: 'doneActive',
-  [KANBAN_BOARD.REJECTED]: 'rejectedActive',
 } as const
 
 const ClassicLayout: FC<TProps> = ({ activeBoards, hoveredBoard }) => {

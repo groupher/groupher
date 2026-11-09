@@ -131,20 +131,30 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   end
 
   defp enqueue_effect(canonical, actor, operation, emotion, command_id, :changed) do
-    Effects.enqueue_reaction_changed(
-      "interaction.emotion_changed",
-      interaction_resource_type(canonical),
-      canonical.id,
-      command_id,
-      %{actor_id: actor.id, operation: operation, emotion: emotion}
-    )
+    with {:ok, data} <-
+           Effects.reaction_data(canonical, %{
+             actor_id: actor.id,
+             operation: operation,
+             emotion: emotion
+           }) do
+      Effects.enqueue_reaction_changed(
+        "interaction.emotion_changed",
+        interaction_resource_type(canonical),
+        canonical.id,
+        command_id,
+        data
+      )
+    end
   end
 
   defp interaction_resource_type(%Comment{}), do: "comment"
   defp interaction_resource_type(_article), do: "article"
 
   defp allow_emotion(%Comment{} = comment, _info, emotion) do
-    Enable.emotion?(comment.community.slug, :comment, comment.thread, emotion)
+    case comment.request_community_slug do
+      slug when is_binary(slug) -> Enable.emotion?(slug, :comment, comment.thread, emotion)
+      _ -> {:error, CMS.Gate.ErrorCat.scope_context_missing()}
+    end
   end
 
   defp allow_emotion(_article, _info, emotion) when emotion in @reserved_article_emotions do

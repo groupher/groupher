@@ -19,11 +19,11 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
   alias GroupherServer.{Accounts, CMS, ReviewBot}
   alias Accounts.Model.User
   alias CMS.{FrontDesk, Comments}
-  alias CMS.Articles.Bindings
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
-  alias CMS.Comments.Effects
+  alias CMS.Comments.{Effects, Mentions}
   alias Comments.Persist
-  alias CMS.Model.Comment
+  alias CMS.Model.{Comment, Community}
   alias Helper.{ORM, T}
 
   @type result :: %{comment: Comment.t(), article: struct(), command_id: String.t() | nil}
@@ -44,7 +44,21 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
   @spec execute(Comment.t(), map(), non_neg_integer(), User.t(), String.t()) ::
           T.domain_res(result())
   def execute(%Comment{} = comment, body_bag, expected_version, %User{} = actor, command_id) do
-    execute_pipeline(comment, body_bag, expected_version, actor, command_id)
+    with {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      execute(comment, body_bag, expected_version, actor, command_id, community)
+    end
+  end
+
+  @doc "Updates a Comment through the Community named by the public request path."
+  def execute(
+        %Comment{} = comment,
+        body_bag,
+        expected_version,
+        %User{} = actor,
+        command_id,
+        %Community{} = community
+      ) do
+    execute_pipeline(comment, body_bag, expected_version, actor, command_id, community)
   end
 
   @pipeline operation: :comment_update,
@@ -52,8 +66,17 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
             target: :comment,
             params: [:body_bag, :expected_version]
 
-  receipt_pipeline execute_pipeline(comment, body_bag, expected_version, actor, command_id) do
-    gate(fn candidate -> CMS.Gate.check_comment_in_transaction(actor, :edit, candidate) end)
+  receipt_pipeline execute_pipeline(
+                     comment,
+                     body_bag,
+                     expected_version,
+                     actor,
+                     command_id,
+                     community
+                   ) do
+    gate(fn candidate ->
+      CMS.Gate.check_comment_in_transaction(actor, :edit, candidate, community)
+    end)
 
     change(fn {canonical, article} ->
       update_new(
@@ -63,21 +86,28 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
         expected_version,
         actor,
         command_id,
-        comment.community_id
+        community.id
       )
     end)
 
     confirm(fn result -> {:ok, confirmation(result)} end)
-    present(fn confirmation -> update_result(confirmation, comment.id) end)
+    present(fn confirmation -> update_result(confirmation, comment.id, community) end)
   end
 
-  defp update_result(%Confirmation{data: data}, comment_id) do
-    update_result(%{command_id: data["command_id"]}, comment_id)
+  defp update_result(%Confirmation{data: data}, comment_id, community) do
+    update_result(%{command_id: data["command_id"]}, comment_id, community)
   end
 
-  defp update_result(receipt, comment_id) do
+  defp update_result(receipt, comment_id, community) do
     with {:ok, current} <- ORM.find(Comment, comment_id),
-         {:ok, article} <- FrontDesk.article_of(current) do
+         {:ok, binding} <- FrontDesk.resolve_binding(current.article_id, community.id),
+         {:ok, thread} <- FrontDesk.thread_of(current),
+         {:ok, article} <-
+           FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: binding.inner_id
+           }) do
       {:ok,
        %{
          comment: GroupherServer.Repo.preload(current, :body),
@@ -88,16 +118,36 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
   end
 
   defp update_new(canonical, article, body_bag, expected_version, actor, command_id, community_id) do
+    CMS.Comments.Summary.with_change(canonical, fn ->
+      update_content_new(
+        canonical,
+        article,
+        body_bag,
+        expected_version,
+        actor,
+        command_id,
+        community_id
+      )
+    end)
+  end
+
+  defp update_content_new(
+         canonical,
+         article,
+         body_bag,
+         expected_version,
+         actor,
+         command_id,
+         community_id
+       ) do
     with {:ok, lifecycle} <- Comments.Lifecycle.lock(canonical.id),
          {:ok, updated} <- Persist.update_content(canonical, body_bag, expected_version),
          {:ok, _review} <-
            register_comment_review(updated, lifecycle, community_id, command_id),
-         {:ok, _} <- CMS.ArticleStats.record_comment_change(article),
-         {:ok, synced} <- CMS.Comments.Replies.sync_embed_replies(updated),
-         {:ok, _invalidation} <-
-           invalidate_public_comments(article, community_id, canonical.thread, command_id),
-         {:ok, _} <- enqueue_comment_effects(canonical, actor, command_id) do
-      {:ok, %{comment: synced, article: article, command_id: command_id}}
+         {:ok, _} <- Mentions.update(updated, command_id, community_id),
+         {:ok, :pass} <- Revision.bump(),
+         {:ok, _} <- enqueue_comment_effects(updated, actor, command_id, community_id) do
+      {:ok, %{comment: updated, article: article, command_id: command_id}}
     end
   end
 
@@ -106,7 +156,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
       content = %{
         title: "",
         body: comment.body.plain_text,
-        images: CMS.Review.Media.comment_images(comment.body.json, comment.community_id)
+        images: CMS.Review.Media.comment_images(comment.body.json, community_id)
       }
 
       target = %{
@@ -129,32 +179,13 @@ defmodule GroupherServer.CMS.Comments.Commands.Update do
     }
   end
 
-  defp invalidate_public_comments(article, community_id, thread, command_id) do
-    with {:ok, community} <- FrontDesk.community(community_id, mode: :internal),
-         {:ok, %{community: community, inner_id: inner_id}} <- Bindings.get(article, community) do
-      Effects.enqueue(
-        "comment.changed",
-        "article",
-        article.id,
-        command_id,
-        %{
-          community: community.slug,
-          community_id: community.id,
-          thread: thread,
-          inner_id: inner_id,
-          article_id: article.id
-        }
-      )
-    end
-  end
-
-  defp enqueue_comment_effects(%Comment{} = comment, %User{} = actor, command_id) do
+  defp enqueue_comment_effects(%Comment{} = comment, %User{} = actor, command_id, community_id) do
     case Effects.enqueue(
            "comment.updated",
            "comment",
            comment.id,
            command_id,
-           %{actor_id: actor.id, article_id: comment.article_id}
+           %{actor_id: actor.id, article_id: comment.article_id, community_id: community_id}
          ) do
       {:ok, _event} -> {:ok, :pass}
       {:error, reason} -> {:error, reason}

@@ -10,7 +10,7 @@ export default function JoinOurCommunity() {
   const { t } = useTrans()
 
   return (
-    <section className={s.wrapper}>
+    <section className={s.wrapper} data-landing-section='join'>
       <div className={s.divider} />
       <div className={s.paper}>
         <div className={s.slogan}>

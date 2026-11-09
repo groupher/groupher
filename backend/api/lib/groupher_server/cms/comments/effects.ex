@@ -4,7 +4,8 @@ defmodule GroupherServer.CMS.Comments.Effects do
 
   The caller owns the current Command transaction. This module only builds the
   bounded Outbox intent; the Comment cleanup worker performs post-commit
-  cache, search, mention reconciliation, and subscription delivery.
+  cache, search, and subscription delivery. Mentions are updated by the
+  owning Comment Command before commit.
 
       Comment Command
         -> Comments.Effects
@@ -12,9 +13,47 @@ defmodule GroupherServer.CMS.Comments.Effects do
         -> Comment cleanup worker
   """
 
+  import Ecto.Query
+
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.Model.{Comment, Community}
+  alias CMS.Model.{Article, Community}
+
+  @doc "Persists summary invalidation for every public binding in the owner transaction."
+  @spec summary_changed(Article.t(), pos_integer(), boolean()) :: {:ok, :pass} | {:error, term()}
+  def summary_changed(article, revision, count_changed?) do
+    bindings =
+      from(binding in CMS.Model.ArticleBinding,
+        join: community in CMS.Model.Community,
+        on: community.id == binding.community_id,
+        where: binding.article_id == ^article.id and not is_nil(binding.inner_id),
+        select: {binding, community}
+      )
+      |> Repo.all()
+
+    Enum.reduce_while(bindings, {:ok, :pass}, fn {binding, community}, _ ->
+      case CMS.Outbox.send(%{
+             event: "comment.changed",
+             worker: GroupherServer.Jobs.CMSOutboxComment,
+             resource_type: "article",
+             resource_id: article.id,
+             identity: {:workflow, "comment-summary:#{article.id}:#{revision}"},
+             effect_key: "comment.changed:#{community.id}",
+             data: %{
+               article_id: article.id,
+               community_id: community.id,
+               community: community.slug,
+               inner_id: binding.inner_id,
+               thread: article.thread,
+               comments_revision: revision,
+               count_changed: count_changed?
+             }
+           }) do
+        {:ok, _} -> {:cont, {:ok, :pass}}
+        {:error, _} = error -> {:halt, error}
+      end
+    end)
+  end
 
   @doc "Records one Comment effect in the caller-owned transaction."
   @spec enqueue(String.t(), String.t(), term(), Ecto.UUID.t(), map(), keyword()) ::
@@ -24,7 +63,7 @@ defmodule GroupherServer.CMS.Comments.Effects do
   def enqueue(event, resource_type, resource_id, command_id, data, opts)
       when is_binary(event) and is_binary(resource_type) and is_binary(command_id) and
              is_map(data) and is_list(opts) do
-    %{
+    CMS.Outbox.send(%{
       event: event,
       worker: GroupherServer.Jobs.CMSOutboxComment,
       resource_type: resource_type,
@@ -32,8 +71,7 @@ defmodule GroupherServer.CMS.Comments.Effects do
       identity: {:command, command_id},
       effect_key: Keyword.get(opts, :effect_key, "default"),
       data: data
-    }
-    |> CMS.Outbox.send()
+    })
   end
 
   def enqueue(_event, _resource_type, _resource_id, _command_id, _data, _opts) do
@@ -44,13 +82,6 @@ defmodule GroupherServer.CMS.Comments.Effects do
   def activity(resource, event, opts), do: Activity.log(resource, event, opts)
 
   @doc "Reloads canonical resources and delivers one typed Comment effect."
-  def deliver(:sync_mentions, %{"comment_id" => id}) do
-    case comment(id) do
-      {:ok, %Comment{} = comment} -> CMS.Events.emit(:sync_mentions, %{artiment: comment})
-      {:ok, :deleted} -> {:ok, :pass}
-    end
-  end
-
   def deliver(:subscribe_community, %{"community_id" => id, "actor_id" => actor_id}) do
     with %Community{} = community <- Repo.get(Community, id),
          {:ok, actor} <- user(actor_id) do
@@ -62,13 +93,6 @@ defmodule GroupherServer.CMS.Comments.Effects do
   end
 
   def deliver(_type, _payload), do: {:error, :invalid_comment_effect}
-
-  defp comment(id) do
-    case Repo.get(Comment, id) do
-      %Comment{} = comment -> {:ok, comment}
-      nil -> {:ok, :deleted}
-    end
-  end
 
   defp user(id) do
     case Repo.get(User, id) do

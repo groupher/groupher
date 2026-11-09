@@ -24,6 +24,7 @@ const stats: TArticleStats = {
   upvotesCount: 2,
   commentsCount: 1,
   collectsCount: 0,
+  commentsParticipants: [],
   commentsParticipantsCount: 1,
   interactionRevision: 2,
   commentsRevision: 1,

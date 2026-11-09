@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.CMS.DocMeta do
       branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
       state = Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id)
       refute state.is_edited
-      refute state.comments_locked
+      refute Repo.get!(CMS.Model.Article, doc.id).comments_locked
     end
 
     test "is_edited flag should set to true after doc updated",
@@ -43,12 +43,12 @@ defmodule GroupherServer.Test.CMS.DocMeta do
       {:ok, _} =
         CMS.Articles.lock_comments(doc.id, user, branch_id: branch.id, community: community)
 
-      assert Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id).comments_locked
+      assert Repo.get!(CMS.Model.Article, doc.id).comments_locked
 
       {:ok, _} =
         CMS.Articles.undo_lock_comments(doc.id, user, branch_id: branch.id, community: community)
 
-      refute Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id).comments_locked
+      refute Repo.get!(CMS.Model.Article, doc.id).comments_locked
     end
   end
 end

@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Comments.ErrorCat
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Model.CommentLifecycle
   alias CMS.ReviewBlocks
 
@@ -107,21 +108,26 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
           | {:error, ErrorCat.error() | Ecto.Changeset.t()}
   def transition(comment_id, state) when is_integer(comment_id) and state in @states do
     Repo.transaction(fn ->
-      lifecycle =
-        CommentLifecycle
-        |> where([lifecycle], lifecycle.comment_id == ^comment_id)
-        |> lock("FOR UPDATE")
-        |> Repo.one()
+      case CMS.Comments.Summary.for_lifecycle(%CommentLifecycle{comment_id: comment_id}, fn ->
+             lifecycle =
+               CommentLifecycle
+               |> where([lifecycle], lifecycle.comment_id == ^comment_id)
+               |> lock("FOR UPDATE")
+               |> Repo.one()
 
-      case lifecycle do
-        nil ->
-          Repo.rollback(ErrorCat.lifecycle_not_found())
+             case lifecycle do
+               nil ->
+                 Repo.rollback(ErrorCat.lifecycle_not_found())
 
-        %CommentLifecycle{} = lifecycle ->
-          case transition(lifecycle, state) do
-            {:ok, updated} -> updated
-            {:error, reason} -> Repo.rollback(reason)
-          end
+               %CommentLifecycle{} = lifecycle ->
+                 case transition(lifecycle, state) do
+                   {:ok, updated} -> {:ok, updated}
+                   {:error, reason} -> Repo.rollback(reason)
+                 end
+             end
+           end) do
+        {:ok, updated} -> updated
+        {:error, reason} -> Repo.rollback(reason)
       end
     end)
     |> case do
@@ -133,6 +139,12 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   @spec transition(CommentLifecycle.t(), CommentLifecycle.state()) ::
           {:ok, CommentLifecycle.t()} | {:error, Ecto.Changeset.t() | :lifecycle_state_conflict}
   def transition(%CommentLifecycle{} = lifecycle, state) when state in @states do
+    CMS.Comments.Summary.for_lifecycle(lifecycle, fn -> transition_fact(lifecycle, state) end)
+  end
+
+  defp transition_fact(%CommentLifecycle{state: state} = lifecycle, state), do: {:ok, lifecycle}
+
+  defp transition_fact(lifecycle, state) do
     if state in Map.fetch!(@allowed_transitions, lifecycle.state) do
       now = DateTime.utc_now(:second)
 
@@ -146,7 +158,8 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
                destroyed_at: state_time(state, :destroy, now, lifecycle.destroyed_at)
              })
              |> Repo.update(),
-           {:ok, :pass} <- ReviewBlocks.recompute(updated) do
+           {:ok, :pass} <- ReviewBlocks.recompute(updated),
+           {:ok, :pass} <- Revision.bump() do
         {:ok, updated}
       end
     else
@@ -164,7 +177,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   @spec apply_review_block(CommentLifecycle.t(), map()) ::
           {:ok, struct()} | {:error, term()}
   def apply_review_block(%CommentLifecycle{} = lifecycle, attrs) do
-    ReviewBlocks.apply(lifecycle, attrs)
+    CMS.Review.Restrictions.apply(lifecycle, attrs)
   end
 
   @doc """
@@ -189,7 +202,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
         operation_ref,
         reason
       ) do
-    ReviewBlocks.end_blocks(lifecycle, scope_key, ids, operation_ref, reason)
+    CMS.Review.Restrictions.end_blocks(lifecycle, scope_key, ids, operation_ref, reason)
   end
 
   defp state_time(state, state, now, _current), do: now

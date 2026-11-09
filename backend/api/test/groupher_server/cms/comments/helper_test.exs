@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
       # 创建回复
       {:ok, reply_comment} =
-        CMS.Comments.reply_comment(root_comment.id, mock_comment(), user2, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(root_comment, mock_comment(), user2, Ecto.UUID.generate())
 
       # 验证回复的 root_comment_id 已设置
       assert reply_comment.root_comment_id == root_comment.id

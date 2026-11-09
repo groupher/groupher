@@ -5,10 +5,10 @@
 本目录按主要业务能力和完整逻辑链路组织文档。一个 Feature 可以同时覆盖前端交互、
 后端 Context、GraphQL、数据模型、权限、生命周期和测试，不再按技术层拆分。
 
-- [`alert-board/`](./alert-board)：ReviewBot / AlertWall 审核与举报；V1 基线、V2 本地实现已完成，生产切换尚未完成。
+- [`alert-wall/`](./alert-wall)：ReviewBot / AlertWall 审核与举报；V1 基线、V2 本地实现已完成，生产切换尚未完成。
 - [`activity/`](./activity)：业务事件、产品活动日志与审计面。
 - [`analysis/`](./analysis)：Article 业务指标事件、小时趋势与产品查询。
-- [`article/`](./article)：Article 版本、Trash 与 Audit。
+- [`article/`](./article)：Article 版本、Trash 与 Audit；MentionsGraph 的[当前关系合同](./article/mentions-graph-sync-contract.md)、[简化实施清单](./article/mentions-graph-simplification-plan.md)、[全链路评审](./article/mentions-graph-design-review.md)及历史 B0–B4 记录。B4 切换已发生，本轮简化版须使用另一全新空库且不带入 B4 内容；目标容量与生产发布尚未验收。
 - [`artiment/`](./artiment)：Artiment 公共命令边界。
 - [`community/`](./community)：Community 成员、计费和产品能力。
 - [`docs/`](./docs)：Docs Tree、Snapshot、Cover 和 ID 模型。
@@ -18,6 +18,7 @@
 - [`view-tracker/`](./view-tracker)：Article 有效阅读的身份识别、分类、去重与计数。
 - [`lifecycle/`](./lifecycle)：资源状态、转换和 blocker。
 - [`post/`](./post)：Post 合同、Solution 与 Merge。
+- [`tickets/`](./tickets)：Ticket V2 当前合同与实现追踪，覆盖 Article Draft/Lifecycle、TicketSource、Review/Community 可见性、Post 进度、工作台、Timeline 与通知；实现与定向验收完成，完整后端门禁仍有批量用例超时，目标环境数据切换和 CDN smoke 未执行。
 - [`reporting/`](./reporting)：举报事实与审核聚合。
 - [`search/`](./search)：搜索链路与重构。
 - [`wallpaper/`](./wallpaper)：编辑、保存、SSR、渲染和导出。

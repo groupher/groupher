@@ -1,13 +1,18 @@
 defmodule GroupherServer.CMS.Review do
   @moduledoc """
-  Public boundary for canonical CMS review-target loading.
+  Public boundary for CMS review-target reads and internal result application.
 
       CMS review target key
         -> CMS.Review facade
-        -> locked Lifecycle target
+        -> locked Lifecycle target / internal ApplyResult command
   """
   alias GroupherServer.CMS
   alias CMS.Review.{Notice, Target}
+
+  @doc "Applies a trusted worker opinion through the internal transaction-owning Command."
+  defdelegate apply_result_internal(request_id, opinion),
+    to: CMS.Review.Commands.ApplyResult,
+    as: :execute
 
   @doc "Loads and locks one canonical review target inside the caller transaction."
   @spec load_for_update(String.t(), String.t()) :: {:ok, map()} | {:error, term()}

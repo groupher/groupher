@@ -320,10 +320,10 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     query($article: ArticlePathInput!) {
         commentsState(article: $article) {
           totalCount
-          isViewerJoined
           participantsCount
 
           participants {
+            ref
             login
             nickname
             avatar

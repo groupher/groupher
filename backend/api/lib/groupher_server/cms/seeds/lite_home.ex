@@ -20,13 +20,21 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
   alias CMS.Articles.Trash
   alias CMS.Communities.Tags.Maintenance
-  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Community, KanbanState}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBinding,
+    ArticleLifecycle,
+    ArticlePublic,
+    Community,
+    TicketState
+  }
+
   alias CMS.Seeds.{Communities, FullCommunity, Tags, Wallpaper}
   alias CMS.Seeds.Helper, as: SeedHelper
   alias Helper.{ORM, T}
 
   @slug "home"
-  @post_statuses [:todo, :wip, :done, :backlog]
   @post_titles [
     "一次线上故障复盘记录",
     "这个方案在生产可行吗",
@@ -135,9 +143,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   end
 
   defp seed_posts(%Community{} = community, tag_ids) when is_list(tag_ids) do
-    with {:ok, posts} <- seed_articles(community, :post, @post_titles, tag_ids) do
-      set_kanban_statuses(community, posts)
-    end
+    seed_articles(community, :post, @post_titles, tag_ids)
   end
 
   defp seed_changelogs(%Community{} = community, tag_ids) when is_list(tag_ids) do
@@ -234,45 +240,29 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     |> Map.new(&{&1.title, &1})
   end
 
-  defp set_kanban_statuses(%Community{} = community, posts) do
-    posts
-    |> Enum.zip(Stream.cycle(@post_statuses))
-    |> Enum.reduce_while({:ok, []}, fn {post, status}, {:ok, acc} ->
-      post = Repo.get!(Article, post.id)
-
-      case CMS.Articles.States.set_status(post, status, community.id) do
-        {:ok, post} -> {:cont, {:ok, [post | acc]}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
-    |> case do
-      {:ok, posts} -> {:ok, Enum.reverse(posts)}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
   defp summary(%Community{id: community_id}) do
     %{
       slug: @slug,
       posts: count(:post, community_id),
-      kanban_posts: count_kanban_posts(community_id),
+      user_tickets: count_user_tickets(community_id),
       changelogs: count(:changelog, community_id),
       docs: count(:doc, community_id)
     }
   end
 
-  defp count_kanban_posts(community_id) do
-    active_posts = Trash.not_trashed_scope(Article, :post)
-
+  defp count_user_tickets(community_id) do
     Repo.aggregate(
-      from(post in active_posts,
+      from(ticket in TicketState,
         join: binding in ArticleBinding,
-        on: binding.article_id == post.id,
-        join: state in KanbanState,
-        on: state.article_binding_id == binding.id,
-        where: binding.community_id == ^community_id and post.thread == :post
+        on: binding.id == ticket.article_binding_id,
+        join: lifecycle in ArticleLifecycle,
+        on: lifecycle.article_id == ticket.article_id and lifecycle.thread == :ticket,
+        where:
+          binding.community_id == ^community_id and ticket.type == :user and
+            lifecycle.state == :published
       ),
-      :count
+      :count,
+      :article_id
     )
   end
 

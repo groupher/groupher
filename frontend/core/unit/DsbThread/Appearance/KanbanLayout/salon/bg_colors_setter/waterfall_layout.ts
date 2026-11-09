@@ -9,7 +9,7 @@ export default function useSalon() {
   const base = useBase()
 
   const { kanbanBgColors } = useKanban()
-  const [BG1, BG2, BG3, BG4, BG5] =
+  const [BG1, BG2, BG3] =
     kanbanBgColors.length === INIT_KANBAN_COLORS.length ? kanbanBgColors : INIT_KANBAN_COLORS
 
   return {
@@ -24,10 +24,6 @@ export default function useSalon() {
     bgWipActive: rainbow(BG2, 'border'),
     bgDone: rainbowLite(BG3),
     bgDoneActive: rainbow(BG3, 'border'),
-    bgReview: rainbowLite(BG4),
-    bgReviewActive: rainbow(BG4, 'border'),
-    bgRejected: rainbowLite(BG5),
-    bgRejectedActive: rainbow(BG5, 'border'),
 
     content: 'relative min-h-24',
     barBase: cn(base.barBase, 'static'),

@@ -32,9 +32,7 @@ defmodule GroupherServer.Repo.Migrations.AddNullsLastReactionIndexes do
 
         execute("DROP INDEX IF EXISTS cms.#{new_name}")
 
-        execute(
-          "CREATE INDEX #{old_name} ON cms.#{table} (#{count_field}, #{target_id})"
-        )
+        execute("CREATE INDEX #{old_name} ON cms.#{table} (#{count_field}, #{target_id})")
       end)
     end)
   end

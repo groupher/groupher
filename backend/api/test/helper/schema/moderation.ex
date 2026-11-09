@@ -74,5 +74,4 @@ defmodule GroupherServer.Test.Helper.Schema.Moderation do
         }
     """
   end
-
 end

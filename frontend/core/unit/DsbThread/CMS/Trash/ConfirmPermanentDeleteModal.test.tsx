@@ -47,7 +47,7 @@ vi.mock('./salon', () => ({
     ),
 }))
 
-const makeItem = (mentionedByCount: number): TTrashedPost => ({
+const makeItem = (): TTrashedPost => ({
   id: 'trash-1',
   thread: 'POST',
   articleId: 'article-1',
@@ -56,7 +56,6 @@ const makeItem = (mentionedByCount: number): TTrashedPost => ({
   deletedBy: null,
   deletedAt: '2026-07-14T00:00:00Z',
   scheduledPermanentDeletionAt: '2026-08-13T00:00:00Z',
-  mentionedByCount,
 })
 
 const renderModal = (
@@ -74,12 +73,10 @@ const renderModal = (
   )
 
 describe('ConfirmPermanentDeleteModal', () => {
-  it('shows the mention impact and closes after a successful permanent delete', async () => {
+  it('closes after a successful permanent delete', async () => {
     const onConfirm = vi.fn().mockResolvedValue(true)
     const onClose = vi.fn()
-    renderModal(makeItem(3), onConfirm, onClose)
-
-    expect(screen.getByText('Mentioned by 3 articles')).toBeInTheDocument()
+    renderModal(makeItem(), onConfirm, onClose)
 
     fireEvent.click(screen.getByRole('button', { name: 'dsb.cms.trash.confirm' }))
 
@@ -87,12 +84,10 @@ describe('ConfirmPermanentDeleteModal', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
-  it('keeps the modal open after a failed delete and omits an empty mention warning', async () => {
+  it('keeps the modal open after a failed delete', async () => {
     const onConfirm = vi.fn().mockResolvedValue(false)
     const onClose = vi.fn()
-    renderModal(makeItem(0), onConfirm, onClose)
-
-    expect(screen.queryByText(/Mentioned by/)).not.toBeInTheDocument()
+    renderModal(makeItem(), onConfirm, onClose)
 
     fireEvent.click(screen.getByRole('button', { name: 'dsb.cms.trash.confirm' }))
 

@@ -18,10 +18,33 @@ defmodule GroupherServer.Repo.Migrations.BackfillReactionProjectionCounts do
     emotion_table = "#{thread}_emotion_infos"
     upvote_filter = "thread = '#{thread}' AND #{target} IS NOT NULL"
 
-    backfill_fixed(reaction_table, target, "article_upvotes", target, upvote_filter, "upvoted_user_ids", "upvotes_count")
-    backfill_fixed(reaction_table, target, "article_collects", target, upvote_filter, "collected_user_ids", "collects_count")
+    backfill_fixed(
+      reaction_table,
+      target,
+      "article_upvotes",
+      target,
+      upvote_filter,
+      "upvoted_user_ids",
+      "upvotes_count"
+    )
 
-    backfill_emotion(emotion_table, target, "articles_users_emotions", target, "#{target} IS NOT NULL")
+    backfill_fixed(
+      reaction_table,
+      target,
+      "article_collects",
+      target,
+      upvote_filter,
+      "collected_user_ids",
+      "collects_count"
+    )
+
+    backfill_emotion(
+      emotion_table,
+      target,
+      "articles_users_emotions",
+      target,
+      "#{target} IS NOT NULL"
+    )
   end
 
   defp backfill_comment do

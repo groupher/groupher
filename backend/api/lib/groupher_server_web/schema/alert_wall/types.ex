@@ -73,9 +73,9 @@ defmodule GroupherServerWeb.Schema.AlertWall.Types do
   end
 
   object :sus_note do
-    field(:type, non_null(:string))
-    field(:evidence, non_null(:string))
-    field(:explanation, non_null(:string))
+    field(:type, non_null(:string), resolve: &R.AlertWall.sus_note_field/3)
+    field(:evidence, non_null(:string), resolve: &R.AlertWall.sus_note_field/3)
+    field(:explanation, non_null(:string), resolve: &R.AlertWall.sus_note_field/3)
   end
 
   object :alert_item do

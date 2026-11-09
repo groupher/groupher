@@ -22,10 +22,8 @@ export default function Boards() {
   const activeBoardSet = new Set(activeBoards)
 
   const boards = [
-    { value: KANBAN_BOARD.BACKLOG, title: t('article.status.backlog') },
     { value: KANBAN_BOARD.TODO, title: t('article.status.todo') },
     { value: KANBAN_BOARD.WIP, title: t('article.status.wip') },
-    { value: KANBAN_BOARD.REJECTED, title: t('REJECTED') },
     { value: KANBAN_BOARD.DONE, title: t('article.status.done') },
   ] as const
   const boardOrder = boards.map(({ value }) => value)

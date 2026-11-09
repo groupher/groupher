@@ -460,6 +460,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     comment = %Comment{author_id: author.id}
 
     context = %CommentContext{
+      public_readable?: true,
       comment: comment,
       comment_author_user_id: author.id,
       article: %{thread: :post, meta: %{is_comment_locked: false}},
@@ -470,6 +471,14 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     }
 
     assert {:ok, :pass} = CommentPolicy.check_access(author, :edit, comment, context)
+
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+             CommentPolicy.check_access(
+               author,
+               :edit,
+               comment,
+               %{context | public_readable?: false}
+             )
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CommentPolicy.check_access(unrelated, :edit, comment, context)
@@ -511,6 +520,33 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              ArticlePolicy.check_access(user, :create_comment, article, context)
   end
 
+  test "comment creation preserves deleted parent reasons before public-read admission" do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = mock_community(user)
+
+    article = %{
+      community_id: community.id,
+      id: Ecto.UUID.generate(),
+      thread: :post,
+      meta: %{is_comment_locked: false}
+    }
+
+    for {state, reason} <- [
+          deleted: :ancestor_article_deleted,
+          destroy: :ancestor_article_destroyed
+        ] do
+      context = %ArticleContext{
+        article: article,
+        community: community,
+        community_lifecycle: Repo.get_by!(CommunityLifecycle, community_id: community.id),
+        article_lifecycle: %ArticleLifecycle{state: state}
+      }
+
+      assert {:error, %ErrorCat.Error{reason: ^reason}} =
+               ArticlePolicy.check_access(user, :create_comment, article, context)
+    end
+  end
+
   test "comment reply preserves the ancestor lifecycle rejection" do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
@@ -528,6 +564,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     }
 
     context = %CommentContext{
+      public_readable?: true,
       comment: %Comment{},
       article: article,
       community: community,

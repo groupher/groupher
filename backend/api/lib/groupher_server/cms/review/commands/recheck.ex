@@ -11,12 +11,15 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
+  import Ecto.Query
+
   alias GroupherServer.{CMS, Repo, ReviewBot}
   alias CMS.Passport.Authorization
   alias CMS.Review.{RequestSubmission, Target}
   alias CMS.Command.ConfirmationDefinition
 
   alias CMS.Model.{
+    ArticleBinding,
     ArticleBodySnapshot,
     ArticlePublic,
     ArticleRevision,
@@ -156,15 +159,20 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
          type: :comment,
          target: comment,
          parent: article,
-         lifecycle: %CommentLifecycle{state: :visible}
+         lifecycle: %CommentLifecycle{state: :visible},
+         scope_key: scope_key
        }) do
     with %CommentBody{} = body <- Repo.get_by(CommentBody, comment_id: comment.id),
-         %ArticlePublic{} = public <- Repo.get_by(ArticlePublic, article_id: article.id) do
+         {:ok, title} <- comment_parent_title(article, comment) do
       {:ok,
        %{
-         title: public.title || "",
+         title: title,
          body: body.plain_text || "",
-         images: CMS.Review.Media.comment_images(body.json, comment.community_id)
+         images:
+           CMS.Review.Media.comment_images(
+             body.json,
+             comment_image_communities(scope_key, article.id)
+           )
        }}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
@@ -192,6 +200,50 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
        }}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+    end
+  end
+
+  defp comment_parent_title(%{thread: :doc, id: article_id}, _comment) do
+    with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article_id),
+         %{id: branch_id} <- Repo.get_by(CMS.Model.DocBranch, community_id: owner.id, type: :main),
+         %DocPublic{branch_version_id: version_id, title: title} <-
+           Repo.get_by(DocPublic, article_id: article_id, branch_id: branch_id),
+         %DocBranchVersion{revision_id: revision_id} <- Repo.get(DocBranchVersion, version_id),
+         %ArticleRevision{title: revision_title} <- Repo.get(ArticleRevision, revision_id) do
+      {:ok, title || revision_title || ""}
+    else
+      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+    end
+  end
+
+  defp comment_parent_title(%{id: article_id}, _comment) do
+    case Repo.get_by(ArticlePublic, article_id: article_id) do
+      %ArticlePublic{title: title} -> {:ok, title || ""}
+      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+    end
+  end
+
+  defp scope_community_id("community:" <> value) do
+    case Integer.parse(value) do
+      {id, ""} when id > 0 -> id
+      _ -> nil
+    end
+  end
+
+  defp scope_community_id(_scope_key), do: nil
+
+  defp comment_image_communities(scope_key, article_id) do
+    case scope_community_id(scope_key) do
+      nil ->
+        Repo.all(
+          from(binding in ArticleBinding,
+            where: binding.article_id == ^article_id,
+            select: binding.community_id
+          )
+        )
+
+      id ->
+        [id]
     end
   end
 
@@ -273,7 +325,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
        command_id: command_id,
        target_type: target_type(data["target_type"]),
        target_id: data["target_id"],
-       action: "recheck",
+       action: :recheck,
        request_count: data["request_count"]
      }}
   end

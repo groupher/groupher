@@ -23,7 +23,14 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
 
         CMS/Accounts resolver -> typed Target -> SubmitReport CommandPipeline
     """
-    defstruct [:owner, :target_type, :target_id, :community_id, :observed_version]
+    defstruct [
+      :owner,
+      :target_type,
+      :target_id,
+      :community_id,
+      :reported_in_community_id,
+      :observed_version
+    ]
   end
 
   @report_types [:spam, :harassment, :illegal_content, :impersonation, :other]
@@ -81,6 +88,7 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
          report_type: report_type,
          details: details,
          community_id: attrs.community_id,
+         reported_in_community_id: attrs.reported_in_community_id,
          observed_version: attrs.observed_version
        }}
     else
@@ -96,7 +104,9 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
 
     with {:ok, :pass} <- validate_current_target(attrs),
          {:ok, %UserReport{id: report_id}} <-
-           AlertWall.Persist.submit_report_in_transaction(attrs, command_id) do
+           AlertWall.Persist.submit_report_in_transaction(attrs, command_id),
+         %UserReport{} = report <- Repo.get(UserReport, report_id),
+         {:ok, :pass} <- CMS.apply_report_threshold_in_transaction(report) do
       {:ok, %Confirmation{data: %{"report_id" => report_id}}}
     end
   end

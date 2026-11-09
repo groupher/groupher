@@ -9,6 +9,7 @@ import {
   revokeOtherAuthSessions,
 } from './auth-state.js'
 import { mockPage } from './pagination.js'
+import { ticketQueries, ticketMutations } from './tickets.js'
 
 const nowISO = () => new Date().toISOString()
 const todayISO = () => new Date().toISOString().slice(0, 10)
@@ -443,7 +444,7 @@ const makePost = (idx, community = 'home') => {
   return {
     id: `post_${community}_${idx}`,
     thread: 'POST',
-    innerId: `p_${idx}`,
+    innerId: String(idx),
     communityTags: [],
     isPinned: false,
     title: `Mock Post #${idx}`,
@@ -461,6 +462,30 @@ const makePost = (idx, community = 'home') => {
 
 export const resolvers = {
   RootQueryType: {
+    ...ticketQueries,
+    doc: (_parent, { article }) => ({
+      ...makePost(Number(article.innerId), article.community),
+      innerId: String(article.innerId),
+      thread: 'DOC',
+      meta: { thread: 'DOC' },
+    }),
+    post: (_parent, { article }) => ({
+      ...makePost(Number(article.innerId), article.community),
+      innerId: String(article.innerId),
+      meta: { thread: 'POST' },
+    }),
+    blog: (_parent, { article }) => ({
+      ...makePost(Number(article.innerId), article.community),
+      innerId: String(article.innerId),
+      thread: 'BLOG',
+      meta: { thread: 'BLOG' },
+    }),
+    changelog: (_parent, { article }) => ({
+      ...makePost(Number(article.innerId), article.community),
+      innerId: String(article.innerId),
+      thread: 'CHANGELOG',
+      meta: { thread: 'CHANGELOG' },
+    }),
     browserSessions: (_parent, args) =>
       mockPage(
         listAuthSessions(args.browserSessionRef),
@@ -543,6 +568,7 @@ export const resolvers = {
     commentReplyPage: (_parent, args) => mockPage([], args.pagi, `replies:${args.commentId}`),
   },
   RootMutationType: {
+    ...ticketMutations,
     updateDocDraft: (_parent, args) => {
       docDraftState.calls += 1
       const receipt = docDraftState.receipts.get(args.commandId)

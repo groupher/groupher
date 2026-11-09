@@ -105,7 +105,7 @@ defmodule Mix.Tasks.ReviewBot.V2.Preflight do
 
   defp restriction_counts(migration) do
     if migration_at_least?(migration, @v2_storage_migration) do
-      %{active: Map.new(@tables, &{&1, 0}), targets: Map.new(@tables, &{&1, 0})}
+      v2_block_counts()
     else
       restriction_counts_before_v2()
     end
@@ -138,10 +138,59 @@ defmodule Mix.Tasks.ReviewBot.V2.Preflight do
 
   defp pending_count(migration) do
     if migration_at_least?(migration, @v2_storage_migration) do
-      %{count: 0, targets: []}
+      pending_count_v2()
     else
       pending_count_before_v2()
     end
+  end
+
+  defp v2_block_counts do
+    tables = ~w(article_review_blocks comment_review_blocks doc_review_blocks)
+
+    Enum.reduce(tables, %{active: %{}, targets: %{}}, fn table, acc ->
+      {target_column, scope_column} =
+        case table do
+          "article_review_blocks" -> {"article_id", "community_id"}
+          "comment_review_blocks" -> {"comment_id", "community_id"}
+          "doc_review_blocks" -> {"article_id", "branch_id"}
+        end
+
+      active = scalar!("SELECT count(*) FROM cms.#{table} WHERE resolved_at IS NULL")
+
+      targets =
+        scalar!("""
+        SELECT count(*) FROM (
+          SELECT DISTINCT #{target_column}, #{scope_column}
+          FROM cms.#{table}
+          WHERE resolved_at IS NULL
+        ) active_targets
+        """)
+
+      %{active: Map.put(acc.active, table, active), targets: Map.put(acc.targets, table, targets)}
+    end)
+  end
+
+  defp pending_count_v2 do
+    targets =
+      query_rows!("""
+      SELECT DISTINCT identity, target
+      FROM (
+        SELECT target_type || ':' || coalesce(article_id::text, comment_id::text) || ':' ||
+                 coalesce(branch_id::text, 'main') || ':' || coalesce(community_id::text, 'platform') AS identity,
+               target_type || ':' || coalesce(article_id::text, comment_id::text) AS target
+        FROM cms.artiment_reviews
+        WHERE state IN ('queued', 'running') AND replaced_at IS NULL AND outdated_at IS NULL
+        UNION ALL
+        SELECT target_type || ':' || target_id || ':' || coalesce(community_id::text, 'platform'),
+               target_type || ':' || target_id
+        FROM alert_wall.items
+        WHERE status = 'open' AND target_type IN ('article', 'comment', 'doc')
+      ) current_pending
+      ORDER BY identity
+      """)
+      |> Enum.map(fn [identity, target] -> %{identity: identity, target: target} end)
+
+    %{count: length(targets), targets: targets}
   end
 
   defp pending_count_before_v2 do

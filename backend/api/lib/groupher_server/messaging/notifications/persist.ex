@@ -209,6 +209,11 @@ defmodule GroupherServer.Messaging.Notifications.Persist do
     all_exist?(attrs, [:article_id, :thread, :title, :comment_id, :user_id])
   end
 
+  defp valid_attrs?(%{action: action} = attrs)
+       when action in [:ticket_status, :ticket_update, :ticket_visibility] do
+    all_exist?(attrs, [:article_id, :thread, :title, :user_id])
+  end
+
   defp valid_attrs?(_attrs), do: false
 
   defp all_exist?(attrs, keys) when is_map(attrs) and is_list(keys) do

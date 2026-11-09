@@ -124,14 +124,34 @@ export const mergeArticleStats = (
   const views = mergeOwner(current, incoming, 'viewsRevision', VIEW_FIELDS)
   const interaction = mergeOwner(views.value, incoming, 'interactionRevision', INTERACTION_FIELDS)
   const comments = mergeOwner(interaction.value, incoming, 'commentsRevision', COMMENT_FIELDS)
+  const memberConflict =
+    incoming.commentsRevision === current.commentsRevision &&
+    !sameValue(
+      current.commentsParticipants.map((user) => user.ref),
+      incoming.commentsParticipants.map((user) => user.ref),
+    )
+  const commentsValue =
+    incoming.commentsRevision >= current.commentsRevision && !memberConflict
+      ? { ...comments.value, commentsParticipants: incoming.commentsParticipants }
+      : comments.value
+  if (memberConflict)
+    reportArticleStatsTelemetry('owner_conflict', {
+      article: articlePathKey(current),
+      revision: 'commentsRevision',
+    })
   const advanced = views.advanced || interaction.advanced || comments.advanced
   const invalidSnapshot = advanced && !Number.isFinite(Date.parse(incoming.snapshotAt))
 
   return {
     stats: advanced
-      ? { ...comments.value, snapshotAt: laterSnapshot(current.snapshotAt, incoming.snapshotAt) }
-      : comments.value,
-    conflict: views.conflict || interaction.conflict || comments.conflict || invalidSnapshot,
+      ? { ...commentsValue, snapshotAt: laterSnapshot(current.snapshotAt, incoming.snapshotAt) }
+      : commentsValue,
+    conflict:
+      views.conflict ||
+      interaction.conflict ||
+      comments.conflict ||
+      memberConflict ||
+      invalidSnapshot,
   }
 }
 

@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Review.Commands.Decide do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Command.ConfirmationDefinition
   alias CMS.Model.Community
+  alias CMS.Review.Const
 
   @pipeline operation: :cms_review_decision,
             access: :user,
@@ -40,9 +41,12 @@ defmodule GroupherServer.CMS.Review.Commands.Decide do
 
   @doc "Decides one scoped target using the caller's stable command id."
   def execute(target_key, scope_key, action, actor, command_id)
-      when is_binary(target_key) and is_binary(scope_key) and
-             action in [:approve, :deny, :release] do
-    execute_pipeline(target_key, scope_key, action, actor, command_id)
+      when is_binary(target_key) and is_binary(scope_key) do
+    if action in Const.decision_actions() do
+      execute_pipeline(target_key, scope_key, action, actor, command_id)
+    else
+      {:error, CMS.ErrorCat.invalid_review_block()}
+    end
   end
 
   def execute(_target_key, _scope_key, _action, _actor, _command_id) do

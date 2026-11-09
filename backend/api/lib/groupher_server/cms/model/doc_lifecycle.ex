@@ -15,20 +15,21 @@ defmodule GroupherServer.CMS.Model.DocLifecycle do
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @states [:draft_only, :published, :archived, :deleted, :destroy]
+  @states [:draft, :published, :archived, :deleted, :destroy]
   @required_fields ~w(article_id community_id branch_id state version changed_at)a
   @optional_fields ~w(archived_at deleted_at destroyed_at)a
 
-  @type state :: :draft_only | :published | :archived | :deleted | :destroy
+  @type state :: :draft | :published | :archived | :deleted | :destroy
   @type t :: %__MODULE__{}
 
   schema "doc_lifecycles" do
     belongs_to(:community, Community)
     belongs_to(:article, Article, type: Ecto.UUID)
     belongs_to(:branch, DocBranch)
-    field(:state, Ecto.Enum, values: @states, default: :draft_only)
+    field(:state, Ecto.Enum, values: @states, default: :draft)
     field(:version, :integer, default: 1)
     field(:changed_at, :utc_datetime)
+    field(:first_published_at, :utc_datetime, read_after_writes: true)
     field(:archived_at, :utc_datetime)
     field(:deleted_at, :utc_datetime)
     field(:destroyed_at, :utc_datetime)

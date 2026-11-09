@@ -19,7 +19,7 @@ export default function useSalon(columnsCount = 5) {
 
   const { kanbanBgColors } = useKanban()
 
-  const [BG1, BG2, BG3, BG4, BG5] =
+  const [BG1, BG2, BG3] =
     kanbanBgColors.length === INIT_KANBAN_COLORS.length ? kanbanBgColors : INIT_KANBAN_COLORS
 
   return {
@@ -36,15 +36,11 @@ export default function useSalon(columnsCount = 5) {
       boardWidth,
     ),
 
-    boardBacklog: rainbowLite(BG1),
-    backlogActive: cn('-mt-2', rainbow(BG1, 'border'), shadow('lg')),
-    boardTodo: rainbowLite(BG2),
-    todoActive: cn('-mt-2', rainbow(BG2, 'border'), shadow('lg')),
-    boardWip: rainbowLite(BG3),
-    wipActive: cn('-mt-2', rainbow(BG3, 'border'), shadow('lg')),
-    boardDone: rainbowLite(BG4),
-    doneActive: cn('-mt-2', rainbow(BG4, 'border'), shadow('lg')),
-    boardRejected: rainbowLite(BG5),
-    rejectedActive: cn('-mt-2', rainbow(BG5, 'border'), shadow('lg')),
+    boardTodo: rainbowLite(BG1),
+    todoActive: cn('-mt-2', rainbow(BG1, 'border'), shadow('lg')),
+    boardWip: rainbowLite(BG2),
+    wipActive: cn('-mt-2', rainbow(BG2, 'border'), shadow('lg')),
+    boardDone: rainbowLite(BG3),
+    doneActive: cn('-mt-2', rainbow(BG3, 'border'), shadow('lg')),
   }
 }

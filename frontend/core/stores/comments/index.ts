@@ -25,6 +25,7 @@ export default function createCommentsStore(init: TInit = {}): TStore {
     publishDone: false,
 
     foldedCommentIds: [],
+    expandedCommentIds: [],
   })
 
   const store = proxy<TStore>({

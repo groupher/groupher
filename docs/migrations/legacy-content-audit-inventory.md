@@ -161,7 +161,7 @@ Public/Binding 可见性初始化与写入、Moderate command、i18n、salon、�
 | `backend/api/test/groupher_server/cms/articles/moderation/post_pending_flag_test.exs` (removed)                                                                                | 45, 50, 70, 71, 72, 79, 109, 110, 111, 152, 153, 154 …  | 删除旧状态断言、fixture 和专用用例；保留非审核用例，新合同测试独立建立                                       |
 | [backend/api/test/groupher_server/cms/articles/revision_target_test.exs](../../backend/api/test/groupher_server/cms/articles/revision_target_test.exs)                         | 277, 981                                                | 删除旧状态断言、fixture 和专用用例；保留非审核用例，新合同测试独立建立                                       |
 | [backend/api/test/groupher_server/cms/articles/trash_test.exs](../../backend/api/test/groupher_server/cms/articles/trash_test.exs)                                             | 177, 180, 190                                           | 删除旧状态断言、fixture 和专用用例；保留非审核用例，新合同测试独立建立                                       |
-| [backend/api/test/groupher_server/cms/artiment_mentions_test.exs](../../backend/api/test/groupher_server/cms/artiment_mentions_test.exs)                                       | 680                                                     | 删除旧状态断言、fixture 和专用用例；保留非审核用例，新合同测试独立建立                                       |
+| `backend/api/test/groupher_server/cms/artiment_mentions_test.exs` (removed; superseded by `mention_version_facts_test.exs` and `mentions_map_query_test.exs`)                  | 680                                                     | 删除旧状态断言、fixture 和专用用例；新合同测试独立建立                                                       |
 | `backend/api/test/groupher_server/cms/comments/moderation/blog_pending_test.exs` (removed)                                                                                     | 7, 8, 32, 33, 34, 42, 43, 44, 64, 65, 66, 67 …          | 删除旧状态断言、fixture 和专用用例；保留非审核用例，新合同测试独立建立                                       |
 | `backend/api/test/groupher_server/cms/comments/moderation/changelog_pending_test.exs` (removed)                                                                                | 7, 8, 32, 33, 34, 42, 43, 44, 64, 65, 66, 67 …          | 删除旧状态断言、fixture 和专用用例；保留非审核用例，新合同测试独立建立                                       |
 | `backend/api/test/groupher_server/cms/comments/moderation/doc_pending_test.exs` (removed)                                                                                      | 7, 8, 32, 33, 34, 42, 43, 44, 64, 65, 66, 67 …          | 删除旧状态断言、fixture 和专用用例；保留非审核用例，新合同测试独立建立                                       |
@@ -240,5 +240,5 @@ Public/Binding 可见性初始化与写入、Moderate command、i18n、salon、�
 - 生产 Oban/cron 执行状态、百度账户与部署 secret store：本轮未访问。
 - 数据库实际旧列、CHECK/index 和 JSON 残留规模：本轮未连接数据库。
 - `frontend/mock-server/schema.graphql` 的共享 schema 链接随来源检查，不能单独保留旧协议。
-- 举报迁入 AlertBoard 的命令/权限矩阵见 [实施合同](../feature/alert-board/implementation.md) §5/§8/§11；代码迁移尚未实施。
+- 举报迁入 AlertBoard 的命令/权限矩阵见 [实施合同](../feature/alert-wall/implementation.md) §5/§8/§11；代码迁移尚未实施。
 - Tesla 的共享消费者包含 Umami、Algolia、Assets provider deletion，保留对应业务；html_sanitize_ex 是旧 Audit 专用依赖，删除。

@@ -37,7 +37,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     DocTreeNode,
     DocLifecycle,
     DocPublic,
-    KanbanState,
     PinnedArticle,
     PostState
   }
@@ -364,14 +363,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         authors = from(author in Author, where: author.user_id == ^user_id, select: author.id)
         where(query, [article: article], article.author_id in subquery(authors))
 
-      {:statuses, statuses}, query when is_list(statuses) ->
-        query
-        |> join(:inner, [article_binding: binding], state in KanbanState,
-          as: :kanban_state,
-          on: state.article_binding_id == binding.id
-        )
-        |> where([kanban_state: state], state.status in ^statuses)
-
       {:community, community_ref}, query when is_binary(community_ref) and community_ref != "" ->
         where(query, [article_community: community], community.slug == ^community_ref)
 
@@ -391,14 +382,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
           on: state.article_id == article.id
         )
         |> where([post_state: state], state.cat == ^cat)
-
-      {:status, status_value}, query when is_atom(status_value) and not is_nil(status_value) ->
-        query
-        |> join(:inner, [article_binding: binding], state in KanbanState,
-          as: :kanban_state,
-          on: state.article_binding_id == binding.id
-        )
-        |> where([kanban_state: state], state.status == ^status_value)
 
       {_key, _value}, query ->
         query
@@ -511,7 +494,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         inner_id: row.inner_id,
         title: row.title,
         cat: Map.get(row, :cat),
-        status: Map.get(row, :status),
         is_pinned: Map.get(row, :is_pinned, false),
         digest: row.digest,
         author: row.author,

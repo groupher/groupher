@@ -1,0 +1,3 @@
+# Public assets are imported by pages served from groupher.com.
+/*
+  Access-Control-Allow-Origin: *

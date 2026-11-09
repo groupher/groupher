@@ -27,24 +27,6 @@ defmodule GroupherServer.Jobs do
   defdelegate contribution_cache(community_id), to: GroupherServer.Jobs.Workflow
 
   @doc """
-  Delegates comments_new/1 to the Jobs workflow owner.
-
-  ## Examples
-
-      Jobs.comments_new(%{"type" => "sync_mentions", "version" => 1, "payload" => %{}})
-  """
-  defdelegate comments_new(arg1), to: GroupherServer.Jobs.Workflow
-
-  @doc """
-  Delegates comments_new/2 to the Jobs workflow owner.
-
-  ## Examples
-
-      Jobs.comments_new(%{"type" => "sync_mentions"}, [queue: :default])
-  """
-  defdelegate comments_new(arg1, arg2), to: GroupherServer.Jobs.Workflow
-
-  @doc """
   Delegates config_skip_enqueue?/0 to the Jobs workflow owner.
 
   ## Examples
@@ -85,18 +67,11 @@ defmodule GroupherServer.Jobs do
 
   ## Examples
 
-      Jobs.public_cache_purge_new(%{invalidation_id: Ecto.UUID.generate()}, [queue: :public_cache])
+      Jobs.public_cache_purge_new(%{invalidation_id: Ecto.UUID.generate()},
+        queue: :cloudflare_purge
+      )
   """
   defdelegate public_cache_purge_new(arg1, arg2), to: GroupherServer.Jobs.Workflow
-
-  @doc """
-  Delegates reconcile_comments_participants/3 to the Jobs workflow owner.
-
-  ## Examples
-
-      Jobs.reconcile_comments_participants(:post, Ecto.UUID.generate(), 12)
-  """
-  defdelegate reconcile_comments_participants(arg1, arg2, arg3), to: GroupherServer.Jobs.Workflow
 
   @doc """
   Delegates search_index/3 to the Jobs workflow owner.
@@ -160,15 +135,6 @@ defmodule GroupherServer.Jobs do
       Jobs.subscribe_community(%{id: 10}, %{id: 20})
   """
   defdelegate subscribe_community(arg1, arg2), to: GroupherServer.Jobs.Workflow
-
-  @doc """
-  Delegates sync_mentions/1 to the Jobs workflow owner.
-
-  ## Examples
-
-      Jobs.sync_mentions(%{id: comment_id})
-  """
-  defdelegate sync_mentions(arg1), to: GroupherServer.Jobs.Workflow
 
   @doc """
   Delegates Jobs.CommunitySetup.new/1 through the Jobs Context boundary.

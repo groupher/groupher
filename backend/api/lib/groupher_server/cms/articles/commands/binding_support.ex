@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
 
   alias GroupherServer.CMS
   alias CMS.Articles.{Bindings, Commands.BindingConfirmation, Effects}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Article, ArticleBinding, Community, PinnedArticle}
@@ -21,6 +22,11 @@ defmodule GroupherServer.CMS.Articles.Commands.BindingSupport do
   end
 
   def ensure_ordinary(%Article{thread: :doc}), do: {:error, :unsupported_for_doc}
+
+  def ensure_ordinary(%Article{thread: :ticket}) do
+    {:error, ArticleErrorCat.ticket_binding_unsupported()}
+  end
+
   def ensure_ordinary(%Article{}), do: {:ok, :supported}
 
   def confirmation(article, community, command_id) do

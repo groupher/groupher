@@ -14,6 +14,11 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
   alias AlertWall.Model.UserReport
   alias CMS.Model.{Article, Comment, Community}
 
+  @doc "Reads a validated opinion's JSON keys without depending on atom-keyed fixtures."
+  def sus_note_field(note, _args, %{definition: %{schema_node: %{identifier: field}}}) do
+    {:ok, Map.get(note, field, Map.get(note, Atom.to_string(field)))}
+  end
+
   def alert_items(_parent, %{scope: %{type: :platform}} = args, %{context: %{cur_user: actor}}) do
     AlertWall.list_items(%{type: :platform}, Map.get(args, :filter), actor, Map.get(args, :pagi))
   end
@@ -183,14 +188,17 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
 
   defp resolve_report_target(%{type: :comment, comment: path} = input, actor)
        when is_map(path) do
-    with {:ok, %Comment{} = comment} <- FrontDesk.comment(path, actor) do
+    with {:ok, %Comment{} = comment} <- FrontDesk.comment(path, actor),
+         {:ok, %Community{} = reported_in} <-
+           FrontDesk.community(path.article.community, actor, []) do
       {:ok,
        %{
          owner: :cms,
          target_type: :comment,
          target_id: to_string(comment.id),
          observed_version: Map.get(input, :observed_version),
-         community_id: comment.community_id
+         community_id: if(comment.thread == :doc, do: reported_in.id, else: nil),
+         reported_in_community_id: reported_in.id
        }}
     else
       _ -> {:error, AlertWall.invalid_report_error()}

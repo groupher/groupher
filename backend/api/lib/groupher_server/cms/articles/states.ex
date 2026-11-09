@@ -22,10 +22,8 @@ defmodule GroupherServer.CMS.Articles.States do
 
   alias CMS.Model.{
     Article,
-    ArticleBinding,
     DocBranch,
     DocBranchState,
-    KanbanState,
     PostState
   }
 
@@ -55,62 +53,7 @@ defmodule GroupherServer.CMS.Articles.States do
     end
   end
 
-  @spec set_status(Article.t(), Const.status_enum() | nil, pos_integer()) ::
-          T.domain_res(Article.t())
-  def set_status(%Article{thread: :post} = article, status, community_id)
-      when is_integer(community_id) do
-    with %ArticleBinding{} = binding <-
-           Repo.get_by(ArticleBinding, article_id: article.id, community_id: community_id),
-         {:ok, _state} <- put_kanban_state(binding, status) do
-      {:ok, article}
-    else
-      nil -> {:error, ErrorCat.article_not_found("article binding not found")}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  def set_status(%Article{}, _status, _community_id) do
-    {:error, ErrorCat.article_not_found("post not found")}
-  end
-
-  defp put_kanban_state(%ArticleBinding{id: article_binding_id}, nil) do
-    Repo.delete_all(
-      from(state in KanbanState, where: state.article_binding_id == ^article_binding_id)
-    )
-
-    {:ok, :removed}
-  end
-
-  defp put_kanban_state(%ArticleBinding{id: article_binding_id}, status) do
-    %KanbanState{}
-    |> KanbanState.changeset(%{article_binding_id: article_binding_id, status: status})
-    |> Repo.insert(
-      on_conflict: [set: [status: status, updated_at: DateTime.utc_now(:second)]],
-      conflict_target: [:article_binding_id],
-      returning: true
-    )
-  end
-
   @spec update_active_timestamp(atom(), term()) :: T.domain_res(term())
-  def update_active_timestamp(:doc, %{id: article_id, branch_id: branch_id} = article)
-      when is_binary(article_id) and is_integer(branch_id) do
-    if in_active_period?(:doc, article) do
-      with %DocBranchState{} = state <-
-             Repo.get_by(DocBranchState, article_id: article_id, branch_id: branch_id),
-           {:ok, _state} <-
-             state
-             |> DocBranchState.changeset(%{active_at: DateTime.utc_now(:second)})
-             |> Repo.update() do
-        {:ok, article}
-      else
-        nil -> {:error, ErrorCat.article_not_found("doc branch state not found")}
-        {:error, reason} -> {:error, reason}
-      end
-    else
-      {:ok, :pass}
-    end
-  end
-
   def update_active_timestamp(thread, %{id: article_id} = article) when is_binary(article_id) do
     if in_active_period?(thread, article) do
       update_stable_article(article, %{active_at: DateTime.utc_now(:second)})
@@ -199,20 +142,12 @@ defmodule GroupherServer.CMS.Articles.States do
 
   @doc "Locks comments in the Article aggregate or one Doc branch state."
   @spec lock_comments(Article.t(), keyword()) :: T.domain_res(term())
-  def lock_comments(%Article{thread: :doc} = article, opts) do
-    update_doc_branch_state(article, opts, %{comments_locked: true})
-  end
-
   def lock_comments(%Article{} = article, _opts) do
     update_stable_article(article, %{comments_locked: true})
   end
 
   @doc "Unlocks comments in the Article aggregate or one Doc branch state."
   @spec undo_lock_comments(Article.t(), keyword()) :: T.domain_res(term())
-  def undo_lock_comments(%Article{thread: :doc} = article, opts) do
-    update_doc_branch_state(article, opts, %{comments_locked: false})
-  end
-
   def undo_lock_comments(%Article{} = article, _opts) do
     update_stable_article(article, %{comments_locked: false})
   end

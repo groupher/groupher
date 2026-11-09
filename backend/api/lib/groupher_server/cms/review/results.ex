@@ -58,7 +58,16 @@ defmodule GroupherServer.CMS.Review.Results do
   end
 
   defp lock_target(%ArtimentReview{target_type: :comment} = request) do
-    CMS.Review.load_for_update("comment:#{request.comment_id}", scope_key(request))
+    scope =
+      case Repo.get(CMS.Model.Comment, request.comment_id) do
+        %CMS.Model.Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
+          "platform"
+
+        _ ->
+          scope_key(request)
+      end
+
+    CMS.Review.load_for_update("comment:#{request.comment_id}", scope)
   end
 
   defp lock_target(%ArtimentReview{target_type: :doc} = request) do
@@ -114,23 +123,37 @@ defmodule GroupherServer.CMS.Review.Results do
   end
 
   defp apply_restrictions(request, context, result) do
-    with {:ok, active} <- CMS.ReviewBlocks.active_for(context.lifecycle, context.scope_key),
-         {:ok, :pass} <- end_automatic_restrictions(request, context, active),
-         {:ok, :pass} <- maybe_apply_restriction(request, context, result) do
+    CMS.Comments.Summary.for_lifecycle(context.lifecycle, fn ->
+      apply_restriction_facts(request, context, result)
+    end)
+  end
+
+  defp apply_restriction_facts(request, context, result) do
+    if CMS.Review.Requests.shared_comment_community_request?(request) do
       {:ok, :pass}
+    else
+      with {:ok, active} <- CMS.ReviewBlocks.active_for(context.lifecycle, context.scope_key),
+           {:ok, :pass} <- end_automatic_restrictions(request, context, active),
+           {:ok, :pass} <- maybe_apply_restriction(request, context, result) do
+        {:ok, :pass}
+      end
     end
   end
 
   defp end_automatic_restrictions(request, context, active) do
     ids =
       active
-      |> Enum.reject(&(&1.source == :human))
+      |> Enum.filter(fn block ->
+        block.type in CMS.Review.Const.ai_clearable_restriction_types() and
+          block.source == :request and
+          (block.artiment_review_id == request.id or outdated_request?(block))
+      end)
       |> Enum.map(& &1.id)
 
     if ids == [] do
       {:ok, :pass}
     else
-      CMS.ReviewBlocks.end_blocks(
+      CMS.Review.Restrictions.end_blocks(
         context.lifecycle,
         context.scope_key,
         ids,
@@ -140,18 +163,30 @@ defmodule GroupherServer.CMS.Review.Results do
     end
   end
 
+  defp outdated_request?(%{artiment_review_id: id}) when is_binary(id) do
+    case Repo.get(ArtimentReview, id) do
+      %ArtimentReview{outdated_at: outdated_at} when not is_nil(outdated_at) ->
+        true
+
+      _ ->
+        false
+    end
+  end
+
+  defp outdated_request?(_block), do: false
+
   defp maybe_apply_restriction(request, context, %{"status" => "suspect"}) do
-    restriction(request, context, :ai_suspect)
+    restriction(request, context, :ai_suspect_hold)
   end
 
   defp maybe_apply_restriction(request, context, %{"status" => "uncertain"}) do
-    restriction(request, context, :awaiting_human)
+    restriction(request, context, :human_review_hold)
   end
 
   defp maybe_apply_restriction(request, context, %{"status" => "clear"}) do
     if request.policy_snapshot["review_mode"] == "human_first" and
          request.policy_snapshot["trigger"] in ["publish", "binding"] do
-      restriction(request, context, :awaiting_human)
+      restriction(request, context, :human_review_hold)
     else
       {:ok, :pass}
     end
@@ -162,10 +197,11 @@ defmodule GroupherServer.CMS.Review.Results do
   end
 
   defp restriction(request, context, type) do
-    CMS.ReviewBlocks.apply(context.lifecycle, %{
+    CMS.Review.Restrictions.apply(context.lifecycle, %{
       scope_key: context.scope_key,
       type: type,
       artiment_review_id: request.id,
+      operation_ref: request.id,
       source_ref: "request:#{request.id}:#{type}",
       source: :request,
       applied_at: DateTime.utc_now(:second)

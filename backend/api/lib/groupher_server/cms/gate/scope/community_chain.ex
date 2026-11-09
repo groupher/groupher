@@ -31,7 +31,8 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     Community,
     CommunityLifecycle,
     CommunityModerator,
-    Author
+    Author,
+    DocBranch
   }
 
   @community_normal CMS.Communities.Const.pending_state(:normal)
@@ -42,7 +43,8 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     :gate_comment_lifecycle,
     :gate_community,
     :gate_community_lifecycle,
-    :gate_doc_branch
+    :gate_doc_branch,
+    :gate_comment_doc_branch
   ]
 
   @doc false
@@ -79,6 +81,33 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
            ]) do
       from(resource in query,
         join: community in assoc(resource, :community),
+        as: :gate_community,
+        left_join: lifecycle in CommunityLifecycle,
+        as: :gate_community_lifecycle,
+        on: lifecycle.community_id == community.id,
+        where:
+          lifecycle.state in ^[:active, :read_only] or
+            (is_nil(lifecycle.id) and community.pending == ^@community_normal)
+      )
+    end
+  end
+
+  @doc "Scopes a Comment by a current parent binding; Doc stays in its owner Community."
+  def comment_parent(%Ecto.Query{} = query) do
+    with {:ok, _} <-
+           reject_conflicting_scope_joins(query, [
+             CommentLifecycle,
+             ArticleLifecycle,
+             Community,
+             CommunityLifecycle,
+             DocBranch
+           ]) do
+      from(comment in query,
+        join: binding in ArticleBinding,
+        on: binding.article_id == comment.article_id,
+        as: :gate_comment_binding,
+        join: community in Community,
+        on: community.id == binding.community_id,
         as: :gate_community,
         left_join: lifecycle in CommunityLifecycle,
         as: :gate_community_lifecycle,

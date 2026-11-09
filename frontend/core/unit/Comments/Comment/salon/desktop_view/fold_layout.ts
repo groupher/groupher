@@ -13,7 +13,7 @@ export default function useSalon() {
     avatar: cn('size-4 mr-2.5', avatar()),
     createDate: cn('row-center justify-end text-xs ml-0.5 min-w-10 mr-1 break-keep', fg('hint')),
     commentBody: cn('text-sm grow line-clamp-1', fg('digest')),
-    repliesHint: cn('pretty-num mr-1.5 text-xs', fg('link')),
+    repliesHint: cn('pretty-num ml-2 mr-1.5 text-xs shrink-0 whitespace-nowrap', fg('link')),
     solutionIcon: cn('size-3.5 ml-px mt-0.5', rainbow(COLOR.GREEN, 'fill')),
   }
 }

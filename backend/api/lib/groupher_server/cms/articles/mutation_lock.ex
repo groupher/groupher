@@ -60,6 +60,27 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     end
   end
 
+  @doc "Locks all binding Communities before a global Article mutation acquires its Article lock."
+  def lock_community_admission(article_id) do
+    import Ecto.Query
+
+    ids =
+      from(binding in CMS.Model.ArticleBinding,
+        where: binding.article_id == ^article_id,
+        select: binding.community_id
+      )
+
+    Repo.all(
+      from(lifecycle in CMS.Model.CommunityLifecycle,
+        where: lifecycle.community_id in subquery(ids),
+        order_by: lifecycle.community_id,
+        lock: "FOR SHARE"
+      )
+    )
+
+    {:ok, :pass}
+  end
+
   @doc "Uses an already-loaded Article struct to select its aggregate lock identity."
   @spec with_article(Community.t(), struct(), (-> term())) ::
           {:ok, term()} | {:error, term()}
@@ -68,8 +89,9 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     lock(key(community, thread, article_id), fun)
   end
 
-  def with_article(%Community{}, %Article{thread: :doc}, _fun) do
-    {:error, ErrorCat.doc_branch_required()}
+  def with_article(%Community{} = community, %Article{thread: :doc, id: article_id}, fun)
+      when is_function(fun, 0) do
+    lock(key(community, :doc, article_id), fun)
   end
 
   @doc """
@@ -91,8 +113,9 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     transact_lock(key(community, thread, article_id), fun)
   end
 
-  def transact_article(%Community{}, %Article{thread: :doc}, _fun) do
-    {:error, ErrorCat.doc_branch_required()}
+  def transact_article(%Community{} = community, %Article{thread: :doc, id: article_id}, fun)
+      when is_function(fun, 0) do
+    transact_lock(key(community, :doc, article_id), fun)
   end
 
   @doc "Starts a strict branch-scoped transaction for one stable Doc Article."

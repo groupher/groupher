@@ -3,7 +3,8 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
   Starts post-commit projections after a stable Article Publish succeeds.
 
       committed Publish result
-        -> mention sync
+        -> first-publication metadata (when applicable)
+        -> Activity for each committed publish
 
   Press, Search and CDN delivery use independent durable outbox tasks; the
   effects here consume only stable Article identity and the committed public
@@ -43,8 +44,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
          true <- is_integer(inner_id),
          {:ok, public} <- public_projection(article, community, inner_id),
          {:ok, _user} <- update_published_projection(result, public) do
-      with {:ok, _} <- CMS.Events.emit(:sync_mentions, %{artiment: public}),
-           {:ok, _} <- notify_admin_on_first_publish(result, article),
+      with {:ok, _} <- notify_admin_on_first_publish(result, article),
            {:ok, _} <- append_activity(result, Map.put(public, :community_id, community.id)) do
         {:ok, result}
       end

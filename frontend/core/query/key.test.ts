@@ -18,7 +18,6 @@ describe('query keys', () => {
       size: 20,
       communityTag: '',
       cat: null,
-      status: undefined,
       order: '',
     })
 
@@ -42,7 +41,6 @@ describe('query keys', () => {
       communityTag: null,
       communityTags: [],
       cat: ARTICLE_CAT.BUG,
-      status: null,
       order: ARTICLE_ORDER.UPVOTES,
       when: null,
       sort: null,
@@ -71,7 +69,6 @@ describe('query keys', () => {
       communityTag: null,
       communityTags: [],
       cat: null,
-      status: null,
       order: null,
       when: null,
       sort: null,
@@ -123,14 +120,14 @@ describe('query keys', () => {
 
   it('scopes detail, comments and viewer state without secrets', () => {
     expect(articleQueryKeys.detail('home', THREAD.POST, 42)).toEqual([
-      'article',
+      'article-shared-comments-v1',
       'detail',
       'home',
       THREAD.POST,
       '42',
     ])
     expect(commentKeys.list('home', THREAD.POST, 42)).toEqual([
-      'comment',
+      'comment-shared-v1',
       'list',
       'home',
       THREAD.POST,

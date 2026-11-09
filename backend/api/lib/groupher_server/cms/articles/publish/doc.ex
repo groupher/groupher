@@ -15,6 +15,9 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
   alias GroupherServer.{CMS, Repo, ReviewBot}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Articles.Workflow
+  alias CMS.Artiment.{PlateJSON}
+  alias CMS.ArtimentMentions
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: MentionsGraphRevision
   alias CMS.Articles.{Bindings, Draft.Store, Effects, Numbering, Revision}
 
   alias CMS.Model.{
@@ -99,6 +102,8 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
                  first_publish?,
                  opts
                ),
+             {:ok, _mention_event} <-
+               enqueue_public_mention(article, branch, public, community, revision, opts),
              {:ok, _} <- Store.delete_workspace(article, draft) do
           %{
             article: article,
@@ -117,6 +122,47 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
       end)
     end
   end
+
+  defp enqueue_public_mention(
+         %Article{} = article,
+         %DocBranch{type: :main} = branch,
+         %DocPublic{} = public,
+         community,
+         revision,
+         opts
+       ) do
+    revision_identity = "#{branch.id}:#{public.branch_version_id}:#{public.publication_version}"
+
+    with {:ok, identity} <- outbox_identity(opts),
+         %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, revision.body_snapshot_id),
+         {:ok, ast} <- PlateJSON.decode(body.json),
+         true <- match?(%DateTime{}, public.updated_at),
+         {:ok, captured} <-
+           ArtimentMentions.update(
+             %{type: :doc, article_id: article.id},
+             %{
+               published_revision_identity: revision_identity,
+               ast: ast,
+               community_id: community.id,
+               mentioned_at: public.updated_at
+             },
+             identity
+           ),
+         {:ok, :pass} <- maybe_bump_graph_revision(captured.selection_changed) do
+      {:ok, captured}
+    else
+      nil -> {:error, :source_body_missing}
+      false -> {:error, :source_publication_time_missing}
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp enqueue_public_mention(_article, _branch, _public, _community, _revision, _opts) do
+    {:ok, :pass}
+  end
+
+  defp maybe_bump_graph_revision(true), do: {:ok, :pass}
+  defp maybe_bump_graph_revision(false), do: MentionsGraphRevision.bump()
 
   defp register_review(
          article,

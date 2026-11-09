@@ -63,30 +63,6 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
            } = Enum.find(contracts, &(&1.name == :run_internal))
   end
 
-  test "expands nested aliases when tracing Kanban commands" do
-    files =
-      [
-        "lib/groupher_server/cms/kanban.ex",
-        "lib/groupher_server/cms/kanban/commands/add.ex",
-        "lib/groupher_server/cms/kanban/commands/remove.ex",
-        "lib/groupher_server/cms/kanban/commands/set_status.ex"
-      ]
-      |> Enum.map(&Path.expand/1)
-
-    contracts =
-      [
-        GroupherServer.CMS.Kanban.Commands.Add,
-        GroupherServer.CMS.Kanban.Commands.Remove,
-        GroupherServer.CMS.Kanban.Commands.SetStatus
-      ]
-      |> Map.new(fn module -> {module, module.__pipeline_contracts__()} end)
-
-    report = Graph.build_report(files, contracts)
-
-    assert report["summary"]["pipelines_reached"] == 3
-    assert report["unresolved_edges"] == []
-  end
-
   test "traces default-argument internal entries through their generated super trampoline" do
     modules = [
       GroupherServer.CMS.DocTree.Commands.DeleteNode,

@@ -39,19 +39,25 @@ defmodule GroupherServer.Activity.ArtimentEvent do
       def project(log, surface), do: Event.project(__MODULE__, log, surface)
       def surface_actions(surface), do: Event.surface_actions(__MODULE__, surface)
 
-      def describe(%Comment{thread: @thread} = comment, _action, _opts) do
-        {:ok,
-         %{
-           @stream_field => comment.article_id,
-           community_id: comment.community_id,
-           stream_snapshot: %{},
-           subject_type: "comment",
-           subject_ref: Event.stringify(comment.inner_id || comment.id),
-           subject_snapshot: Event.snapshot(comment, [:inner_id]),
-           target_type: nil,
-           target_ref: nil,
-           target_snapshot: %{}
-         }}
+      def describe(%Comment{thread: @thread} = comment, _action, opts) do
+        community_id = Keyword.get(opts, :community_id) || get_in(comment, [:community, :id])
+
+        if is_integer(community_id) do
+          {:ok,
+           %{
+             @stream_field => comment.article_id,
+             community_id: community_id,
+             stream_snapshot: %{},
+             subject_type: "comment",
+             subject_ref: Event.stringify(comment.inner_id || comment.id),
+             subject_snapshot: Event.snapshot(comment, [:inner_id]),
+             target_type: nil,
+             target_ref: nil,
+             target_snapshot: %{}
+           }}
+        else
+          {:error, Event.error("Comment Activity requires its request Community")}
+        end
       end
 
       def describe(resource, action, opts) when is_map(resource) do

@@ -108,6 +108,9 @@ export const readServiceAuthConfig = (
   return {
     clients: [
       ...jsonEnv<TServiceClient[]>(environment, 'SERVICE_AUTH_CLIENTS_JSON'),
+      ...(environment.SERVICE_AUTH_CLIENTS_JSON_MAINTENANCE?.trim()
+        ? (JSON.parse(environment.SERVICE_AUTH_CLIENTS_JSON_MAINTENANCE) as TServiceClient[])
+        : []),
       ...(environment.SERVICE_AUTH_CLIENTS_JSON_ADDITIONS?.trim()
         ? (JSON.parse(environment.SERVICE_AUTH_CLIENTS_JSON_ADDITIONS) as TServiceClient[])
         : []),

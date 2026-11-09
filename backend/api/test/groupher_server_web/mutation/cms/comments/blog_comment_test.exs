@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
       assert result["comment"]["body"]["html"] |> String.contains?(~s(<p))
       assert result["comment"]["body"]["html"] |> String.contains?(~s(comment))
       assert result["articleStats"]["innerId"] == to_string(article_inner_id(blog, community))
-      assert result["articleStats"]["commentsRevision"] == 1
+      assert result["articleStats"]["commentsRevision"] == 2
     end
 
     test "login user can reply to a comment", ~m(community blog user user_conn)a do
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
       assert result["comment"]["body"]["html"] |> String.contains?(~s(<p))
       assert result["comment"]["body"]["html"] |> String.contains?(~s(reply comment))
-      assert result["articleStats"]["commentsRevision"] == 2
+      assert result["articleStats"]["commentsRevision"] == 3
     end
 
     test "only owner can update a exist comment",
@@ -458,7 +458,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
 
       variables = %{comment: comment_path(community, blog, :blog, comment)}
       result = owner_conn |> gq_mutation(S.Comment.m(:undo_pin_comment), variables)
@@ -478,7 +478,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Comments.pin_comment(comment, user, Ecto.UUID.generate())
       variables = %{comment: comment_path(community, blog, :blog, comment)}
 
       assert guest_conn

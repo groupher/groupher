@@ -9,6 +9,19 @@ defmodule GroupherServer.TestWeb.ErrorResponse do
   alias Pagi.ErrorCat, as: PagiErrorCat
   alias GroupherServerWeb.ErrorResponse
 
+  test "AlertWall and AI errors survive the GraphQL boundary with declared codes" do
+    for catalog <- [GroupherServer.AlertWall.ErrorCat, GroupherServer.AI.ErrorCat],
+        entry <- catalog.entries() do
+      error = apply(catalog, entry.reason, [])
+      assert ErrorCat.valid?(error)
+
+      assert {:error, [message: _, extensions: %{code: code}]} =
+               ErrorResponse.format_error(error)
+
+      assert code == entry.code
+    end
+  end
+
   test "formats a denied Gate decision into the public GraphQL payload" do
     decision =
       Decision.deny(

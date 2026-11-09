@@ -42,6 +42,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Layout do
     |> validate_required([:kanban_boards])
     |> validate_custom_theme_preset()
     |> validate_kanban_boards()
+    |> validate_kanban_bg_colors()
   end
 
   defp validate_custom_theme_preset(changeset) do
@@ -73,6 +74,17 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Layout do
 
         true ->
           []
+      end
+    end)
+  end
+
+  defp validate_kanban_bg_colors(changeset) do
+    validate_change(changeset, :kanban_bg_colors, fn :kanban_bg_colors, values ->
+      if is_list(values) and length(values) == 3 and
+           Enum.all?(values, &(&1 in Dashboard.rainbow_colors())) do
+        []
+      else
+        [kanban_bg_colors: "must contain exactly three supported colors"]
       end
     end)
   end

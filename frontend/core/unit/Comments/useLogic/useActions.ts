@@ -86,12 +86,20 @@ export default function useActions(): TActions {
 
   const foldComment = (id: TID): void => {
     const foldedCommentIds = [id, ...commentsStore.foldedCommentIds]
-    commentsStore.commit({ foldedCommentIds })
+    commentsStore.commit({
+      foldedCommentIds,
+      expandedCommentIds: commentsStore.expandedCommentIds.filter(
+        (value) => !foldedCommentIds.includes(value),
+      ),
+    })
   }
 
   const expandComment = (id: TID): void => {
     const foldedCommentIds = reject(equals(id), commentsStore.foldedCommentIds) as string[]
-    commentsStore.commit({ foldedCommentIds })
+    commentsStore.commit({
+      foldedCommentIds,
+      expandedCommentIds: [...new Set([...commentsStore.expandedCommentIds, id])],
+    })
   }
 
   const foldAllComments = (): void => {
@@ -99,7 +107,19 @@ export default function useActions(): TActions {
     commentsStore.commit({ foldedCommentIds })
   }
 
-  const expandAllComments = (): void => commentsStore.commit({ foldedCommentIds: [] })
+  const expandAllComments = (): void =>
+    commentsStore.commit({
+      foldedCommentIds: [],
+      expandedCommentIds: [
+        ...new Set([
+          ...(data?.entries || []).flatMap((comment) => [
+            comment.innerId,
+            ...(comment.replies || []).map((reply) => reply.innerId),
+          ]),
+          ...commentsStore.expandedCommentIds,
+        ]),
+      ],
+    })
 
   const closeReplyEditor = (): void => {
     commentsStore.commit({ replyToComment: null })

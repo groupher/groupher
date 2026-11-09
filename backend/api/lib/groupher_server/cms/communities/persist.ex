@@ -33,7 +33,13 @@ defmodule GroupherServer.CMS.Communities.Persist do
         {:ok, community}
 
       _ ->
-        ORM.update(community, args)
+        with {:ok, _} <-
+               CMS.Communities.NameRules.check_seed_slug_change(
+                 community.slug,
+                 Map.get(args, :slug, Map.get(args, "slug", community.slug))
+               ) do
+          ORM.update(community, args)
+        end
     end
   end
 
@@ -46,7 +52,15 @@ defmodule GroupherServer.CMS.Communities.Persist do
       #=> {:ok, value}
   """
   @spec update_fields(Community.t(), map()) :: T.domain_res(Community.t())
-  def update_fields(%Community{} = community, args), do: ORM.update(community, args)
+  def update_fields(%Community{} = community, args) do
+    with {:ok, _} <-
+           CMS.Communities.NameRules.check_seed_slug_change(
+             community.slug,
+             Map.get(args, :slug, Map.get(args, "slug", community.slug))
+           ) do
+      ORM.update(community, args)
+    end
+  end
 
   @doc "Increments the persisted Community view counter."
   @spec increment_views(Community.t()) :: {:ok, Community.t()} | {:error, term()}

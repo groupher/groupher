@@ -103,9 +103,9 @@ const commentsState = graphql(`
   query CommentsState($article: ArticlePathInput!, $freshkey: String) {
     commentsState(article: $article, freshkey: $freshkey) {
       totalCount
-      isViewerJoined
       participantsCount
       participants {
+        ref
         login
         nickname
         avatar
@@ -290,6 +290,9 @@ const pagedPublishedComments = graphql(`
           innerId
           title
           thread
+          community {
+            slug
+          }
           author {
             nickname
             login

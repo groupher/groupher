@@ -26,7 +26,6 @@ describe('toArticlePageFilter', () => {
       communityTag: 'product',
       communityTags: ['alpha', 'beta'],
       cat: 'IDEA',
-      status: 'WIP',
       order: 'PUBLISH',
       when: 'THIS_WEEK',
       sort: 'DESC',

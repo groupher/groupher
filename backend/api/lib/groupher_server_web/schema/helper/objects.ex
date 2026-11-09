@@ -16,6 +16,16 @@ defmodule GroupherServerWeb.Schema.Helper.Objects do
   @doc "Declares the resource-owned ArticleLite and Page contracts for every Article thread."
   defmacro article_page_objects do
     Enum.map(@threads, fn thread ->
+      status_field =
+        if thread == :post do
+          quote do
+          end
+        else
+          quote do
+            field(:status, :article_status_enum)
+          end
+        end
+
       quote do
         object unquote(:"#{thread}_lite") do
           field(:id, non_null(:id))
@@ -29,7 +39,7 @@ defmodule GroupherServerWeb.Schema.Helper.Objects do
           field(:active_at, :datetime)
           field(:inserted_at, non_null(:datetime))
           field(:cat, :article_cat_enum)
-          field(:status, :article_status_enum)
+          unquote(status_field)
           field(:is_pinned, non_null(:boolean))
         end
 

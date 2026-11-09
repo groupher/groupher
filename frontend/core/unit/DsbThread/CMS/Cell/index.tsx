@@ -6,7 +6,7 @@ import { DSB_ROUTE } from '~/const/route'
 import PulseSVG from '~/icons/Pulse'
 import Img from '~/Img'
 import { Link as PlatformLink } from '~/platform'
-import type { TArticle, TTag } from '~/spec'
+import type { TArticle, TChangelog, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import TimeAgo from '~/ui/TimeAgo'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
@@ -17,9 +17,14 @@ import useSalon, { cn } from './salon'
 
 const EMPTY_ARR: TTag[] = []
 
-export const StatusCell = React.memo(function StatusCell({ rowData }: { rowData: TArticle }) {
+export const StatusCell = React.memo(function StatusCell({
+  rowData,
+}: {
+  rowData: TArticle | TChangelog
+}) {
   const s = useSalon()
-  const { cat, status } = rowData ?? {}
+  const { cat } = rowData ?? {}
+  const status = rowData?.thread === 'CHANGELOG' ? (rowData as TChangelog).status : undefined
 
   if (!status) return <div />
 

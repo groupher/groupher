@@ -2,36 +2,30 @@ import { renderHook } from '@testing-library/react'
 
 import { KANBAN_BOARD } from '~/const/thread'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
-import type { TPagedPosts } from '~/spec'
+import type { TKanbanPage } from '~/hooks/useKanbanTickets'
 
 import { useColumnsData } from '../Columns'
 
-const emptyPosts: TPagedPosts = {
+const emptyTickets: TKanbanPage = {
   entries: [],
-  pinnedEntries: [],
-  pageInfo: {
-    __typename: 'OffsetPageInfo',
-    page: 1,
-    size: 20,
-    totalCount: 0,
-    totalPages: 0,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  },
+  mode: 'load_more',
+  setPage: vi.fn(),
+  next: vi.fn(),
+  retry: vi.fn(),
+  pending: false,
+  error: null,
 }
 
-vi.mock('~/hooks/useKanbanPosts', () => ({
+vi.mock('~/hooks/useKanbanTickets', () => ({
   default: () => ({
-    backlog: emptyPosts,
-    todo: emptyPosts,
-    wip: emptyPosts,
-    done: emptyPosts,
-    rejected: emptyPosts,
+    todo: emptyTickets,
+    wip: emptyTickets,
+    done: emptyTickets,
   }),
 }))
 
 vi.mock('~/hooks/useKanbanBgColors', () => ({
-  default: () => ['neutral', 'neutral', 'neutral', 'neutral', 'neutral'],
+  default: () => ['neutral', 'neutral', 'neutral'],
 }))
 
 vi.mock('~/hooks/useLayout', () => ({

@@ -15,7 +15,6 @@ defmodule GroupherServer.CMS.Seeds.Config do
 
   @tag_threads [:post, :changelog, :kanban, :doc, :about]
   @content_threads [:post, :changelog, :doc]
-  @kanban_states [:backlog, :todo, :wip, :done, :reject]
 
   @tag_count_range {10, 20}
   @group_count_range {2, 3}
@@ -32,9 +31,6 @@ defmodule GroupherServer.CMS.Seeds.Config do
 
   @doc "Returns the threads that receive seeded article content."
   def content_threads, do: @content_threads
-
-  @doc "Returns the kanban workflow states used by seeded posts."
-  def kanban_states, do: @kanban_states
 
   @doc "Returns the random count range for seeded tags per thread."
   def tag_count_range, do: @tag_count_range

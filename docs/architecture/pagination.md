@@ -66,7 +66,8 @@ Algolia 索引的排名窗口为 1000。两种 API 都受这个 provider 深度�
 
 | 集合                                               | 处理                   | 验收重点                                                                  |
 | -------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------- |
-| Article 各 thread、用户发表、Kanban 各状态         | Pagi                   | 状态是 filter；多状态组合中的每个列表独立分页                             |
+| Article 各普通 thread、用户发表                    | Pagi                   | 资源身份和状态 filter 绑定分页查询                                        |
+| Ticket Kanban 各状态列                             | Ticket Query Page      | 每列按 Ticket 状态独立分页，filter 与查询 key 一起变化                    |
 | 评论主列表、回复、用户发表、折叠、审核失败、参与者 | Pagi                   | 真正 entry identity；预览不充当第一页                                     |
 | 登录设备会话                                       | Pagi                   | 当前有效会话确定 owner，分页先排除已撤销/过期记录；Auth 网关透传标准 Page |
 | 用户、关注者、关注中、订阅社区、可管理社区         | Pagi                   | 以返回的 User/Community 为分页实体，不对关联表排序后读取另一实体的 cursor |
@@ -88,9 +89,9 @@ User/Community 关系页以返回实体为排序和 cursor owner，关联表只�
 
 ## 4. Article Lite 与批量边界
 
-Posts、Blogs、Changelogs、Docs、用户发表、Kanban 状态列统一读取 ArticleLite Page，返回真实路径身份、title/digest、author、community/tags、时间和所需 cat/status。正文、assets、完整 operational state、aggregate stats 和 viewer state不混入普通列表。
+Posts、Blogs、Changelogs、Docs 与用户发表读取 ArticleLite Page，返回真实路径身份、title/digest、author、community/tags、时间和所需 cat/status。Ticket Kanban 使用独立 Ticket Page 与 Ticket 专属 projection，不把 Ticket 伪装成 ArticleLite。正文、assets、完整 operational state、aggregate stats 和 viewer state 不混入普通 Article 列表。
 
-普通社区 feed 的 pinnedEntries 在第一页独立返回，与普通 entries/count/cursor 分开；owner list/Kanban 需要全部身份时以明确 include_pinned 策略参与该集合。不能在前端把 Lite 伪装成富 Article 或补造 meta.thread。
+普通社区 feed 的 pinnedEntries 在第一页独立返回，与普通 entries/count/cursor 分开；owner Post list 需要全部身份时以明确 include_pinned 策略参与该集合。Ticket Kanban 按 TicketState 读取，不把 Post pin 策略移植为 Ticket 状态。不能在前端把 Lite 伪装成富 Article 或补造 meta.thread。
 
 Press 读取不可变 published revision/body 的专用 publication batch；完整发布内容不通过普通列表旧响应 adapter 获取。ArticleStats、viewer batches 和正文读取分别拥有自己的权限与缓存。
 

@@ -1,6 +1,9 @@
-import type { FC } from 'react'
+import { useContext, type FC } from 'react'
+import { useSnapshot } from 'valtio'
 
 import type { TComment } from '~/spec'
+import { StoreContext } from '~/stores/comments/context'
+import type { TStore } from '~/stores/comments/spec'
 import ReviewNotice from '~/unit/AlertWall/ReviewNotice'
 import { useCommentFeed } from '~/unit/Comments/pagination/context'
 
@@ -19,7 +22,11 @@ type TProps = {
 }
 
 const Comment: FC<TProps> = (props) => {
-  const { data, isFolded } = props
+  const { data } = props
+  const store = useContext(StoreContext) as TStore
+  const local = useSnapshot(store)
+  const isFolded =
+    props.isFolded || (data.isFolded === true && !local.expandedCommentIds.includes(data.innerId))
   const { collection } = useCommentFeed()
   const article = collection.article
   const reviewTarget =

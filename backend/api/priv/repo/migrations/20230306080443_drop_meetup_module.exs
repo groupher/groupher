@@ -46,8 +46,8 @@ defmodule GroupherServer.Repo.Migrations.DropMeetupModule do
       remove(:meetup_id)
     end
 
-    drop_if_exists table("meetups_tags")
-    drop_if_exists table("meetup_documents")
-    drop_if_exists table("cms_meetups")
+    drop_if_exists(table("meetups_tags"))
+    drop_if_exists(table("meetup_documents"))
+    drop_if_exists(table("cms_meetups"))
   end
 end

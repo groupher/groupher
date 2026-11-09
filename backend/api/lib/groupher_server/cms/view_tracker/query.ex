@@ -114,7 +114,7 @@ defmodule GroupherServer.CMS.ViewTracker.Query do
   @spec viewer_states_for_paths([map()], User.t(), keyword()) ::
           {:ok, [map()]} | {:error, term()}
   def viewer_states_for_paths(paths, %User{} = viewer, opts \\ []) when is_list(paths) do
-    with {:ok, resolved} <- CMS.Articles.locators(paths),
+    with {:ok, resolved} <- CMS.FrontDesk.article(paths),
          states when is_map(states) <-
            viewer_states(Enum.map(resolved, & &1.article), viewer, opts) do
       {:ok,

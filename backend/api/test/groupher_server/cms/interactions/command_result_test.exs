@@ -25,6 +25,9 @@ defmodule GroupherServer.Test.CMS.Interactions.CommandResultTest do
         Ecto.UUID.generate()
       )
 
+    assert {:ok, %{article_stats: %{article_id: _}}} =
+             CMS.Comments.CommandResult.build(raw_result)
+
     Repo.delete_all(ArticleStats)
 
     assert {:error, _reason} = CMS.Comments.CommandResult.build(raw_result)

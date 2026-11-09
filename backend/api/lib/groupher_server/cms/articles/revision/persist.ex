@@ -48,15 +48,22 @@ defmodule GroupherServer.CMS.Articles.Revision.Persist do
   @doc "Creates one immutable Revision and all thread-owned immutable bindings."
   @spec create(Article.t(), ArticleDraft.t() | DocDraft.t()) ::
           {:ok, ArticleRevision.t()} | {:error, Ecto.Changeset.t() | term()}
-  def create(%Article{} = article, draft) do
+  def create(article, draft) do
+    with {:ok, revision} <- create_content(article, draft),
+         {:ok, _} <- copy_cover_state(draft.body_draft_id, revision.id),
+         {:ok, _} <- insert_typed_extension(article.thread, draft, revision),
+         {:ok, _} <- copy_tags(article.thread, draft, revision) do
+      {:ok, revision}
+    end
+  end
+
+  @doc "Freezes shared body/head and asset refs without ordinary typed/tag effects."
+  def create_content(%Article{} = article, draft) do
     with {:ok, _} <- validate_draft_owner(article, draft),
          {:ok, body_draft} <- fetch_body_draft(draft),
          {:ok, body_snapshot} <- materialize_body_snapshot(body_draft),
          {:ok, revision} <- insert_revision(article, draft, body_snapshot),
-         {:ok, _} <- copy_asset_refs(body_draft.id, revision.id),
-         {:ok, _} <- copy_cover_state(body_draft.id, revision.id),
-         {:ok, _extension} <- insert_typed_extension(article.thread, draft, revision),
-         {:ok, _} <- copy_tags(article.thread, draft, revision) do
+         {:ok, _} <- copy_asset_refs(body_draft.id, revision.id) do
       {:ok, revision}
     end
   end
@@ -71,7 +78,10 @@ defmodule GroupherServer.CMS.Articles.Revision.Persist do
   end
 
   @doc "Returns the typed immutable extension for one Article Revision."
-  @spec get_extension(Article.t(), ArticleRevision.t()) :: {:ok, struct()} | {:error, :not_found}
+  @spec get_extension(Article.t(), ArticleRevision.t()) ::
+          {:ok, struct() | map()} | {:error, :not_found}
+  def get_extension(%Article{thread: :ticket}, %ArticleRevision{}), do: {:ok, %{}}
+
   def get_extension(%Article{thread: thread}, %ArticleRevision{id: revision_id}) do
     {_draft_model, revision_model} = Map.fetch!(@typed_models, thread)
 
@@ -87,6 +97,10 @@ defmodule GroupherServer.CMS.Articles.Revision.Persist do
   end
 
   defp validate_draft_owner(%Article{id: id, thread: :doc}, %DocDraft{article_id: id}) do
+    {:ok, :pass}
+  end
+
+  defp validate_draft_owner(%Article{id: id, thread: :ticket}, %ArticleDraft{article_id: id}) do
     {:ok, :pass}
   end
 
@@ -213,6 +227,8 @@ defmodule GroupherServer.CMS.Articles.Revision.Persist do
     end)
   end
 
+  defp insert_typed_extension(:ticket, %ArticleDraft{}, _revision), do: {:ok, :pass}
+
   defp insert_typed_extension(thread, draft, revision) do
     {draft_model, revision_model} = Map.fetch!(@typed_models, thread)
     typed_draft = Repo.get_by(draft_model, typed_draft_filter(thread, draft))
@@ -242,6 +258,10 @@ defmodule GroupherServer.CMS.Articles.Revision.Persist do
   end
 
   defp copy_tags(thread, draft, revision) do
-    DraftTags.copy_to_revision(thread, draft, revision)
+    if thread == :ticket do
+      {:ok, :pass}
+    else
+      DraftTags.copy_to_revision(thread, draft, revision)
+    end
   end
 end

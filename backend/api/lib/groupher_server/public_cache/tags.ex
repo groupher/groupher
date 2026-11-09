@@ -90,6 +90,28 @@ defmodule GroupherServer.PublicCache.Tags do
   def doc_tree(community), do: "#{community(community)}-doc-tree"
 
   @doc """
+  Builds the public Ticket list tag for a Community.
+
+  ## Examples
+
+      PublicCache.Tags.ticket_list("acme")
+      #=> "community[acme]-tickets"
+  """
+  def ticket_list(community), do: "#{community(community)}-tickets"
+
+  @doc """
+  Builds the public Ticket detail tag for one Community number.
+
+  ## Examples
+
+      PublicCache.Tags.ticket_detail("acme", 42)
+      #=> "community[acme]-ticket[42]"
+  """
+  def ticket_detail(community, inner_id) do
+    "#{community(community)}-ticket[#{inner_id}]"
+  end
+
+  @doc """
   Maps one typed invalidation to its semantic public cache tags.
 
   ## Examples

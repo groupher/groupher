@@ -9,12 +9,13 @@ defmodule GroupherServer.Repo.Migrations.DropPaymentAndCustomization do
   """
 
   def up do
-    drop_if_exists table(:bills, prefix: "payment")
-    execute "DROP SCHEMA IF EXISTS payment"
+    drop_if_exists(table(:bills, prefix: "payment"))
+    execute("DROP SCHEMA IF EXISTS payment")
 
-    drop_if_exists table(:customizations, prefix: "account")
-    drop_if_exists table(:purchases)
+    drop_if_exists(table(:customizations, prefix: "account"))
+    drop_if_exists(table(:purchases))
   end
 
-  def down, do: raise(Ecto.MigrationError, "irreversible migration: payment/customization data removed")
+  def down,
+    do: raise(Ecto.MigrationError, "irreversible migration: payment/customization data removed")
 end

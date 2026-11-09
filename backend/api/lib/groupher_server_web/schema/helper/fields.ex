@@ -290,7 +290,18 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       )
 
       field(:meta, :comment_meta)
-      field(:replies_count, :integer)
+      field(:replies_count, non_null(:integer))
+      field(:reply_participants, non_null(list_of(non_null(:participant_snapshot_user))))
+      field(:last_reply_at, :datetime)
+      field(:replies_revision, non_null(:integer))
+      field(:is_folded, non_null(:boolean))
+
+      field(:has_reply_entries, non_null(:boolean),
+        resolve: fn comment, _, _ ->
+          {:ok, comment.reply_entries_count > 0}
+        end
+      )
+
       field(:thread, :thread)
       field(:viewer_has_upvoted, :boolean)
 
@@ -353,8 +364,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:when, :when_enum)
       field(:community_tag, :string)
       field(:cat, :article_cat_enum)
-      field(:status, :article_status_enum)
-      field(:statuses, list_of(non_null(:article_status_enum)))
       field(:order, :article_order_enum)
       field(:community_tags, list_of(:string))
       field(:community, :string)
@@ -392,7 +401,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   defmacro comments_fields do
     quote do
-      field(:comments_participants, list_of(:user))
+      field(:comments_participants, non_null(list_of(non_null(:participant_snapshot_user))))
     end
   end
 

@@ -7,6 +7,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
   alias GroupherServer.{Activity, CMS}
   alias Activity.Model.CommunityLog
   alias CMS.Communities.Lifecycle
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
   alias CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
 
@@ -31,6 +32,33 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
 
     assert %CommunityLifecycle{state: :active, version: 1} =
              Repo.get_by!(CommunityLifecycle, community_id: community.id)
+  end
+
+  test "public Community Lifecycle changes advance its graph revision" do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = mock_community(user)
+    {:ok, before_revision} = Revision.current()
+
+    assert {:ok, _blocker} =
+             Lifecycle.apply_blocker(
+               community.slug,
+               %{blocker_type: :moderation_suspend, cause_code: "graph_visibility"},
+               operation_ref: Ecto.UUID.generate()
+             )
+
+    assert {:ok, suspended_revision} = Revision.current()
+    assert suspended_revision > before_revision
+
+    assert {:ok, _blocker} =
+             Lifecycle.release_blocker(
+               community.slug,
+               :moderation_suspend,
+               nil,
+               operation_ref: Ecto.UUID.generate()
+             )
+
+    assert {:ok, restored_revision} = Revision.current()
+    assert restored_revision > suspended_revision
   end
 
   test "read modes expose one shared Community state matrix" do

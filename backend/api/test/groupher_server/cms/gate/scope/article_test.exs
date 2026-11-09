@@ -95,7 +95,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
     assert %Ecto.Query{} = query
     {sql, params} = to_sql(query)
     assert sql =~ "article_drafts"
-    assert ["draft_only", "published", "archived"] in params
+    assert ["draft", "published", "archived"] in params
 
     assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
              CMS.Gate.scope(Article, nil, :read_draft, ArticleContext.draft(:post, :operations))

@@ -1,8 +1,8 @@
 # 旧内容 Audit 全链路退役
 
-> 状态：2026-10-22 当前工作树已完成 D1–D5 运行时删除与本地 schema 清理；旧链扫描、全套测试和旧数据库 key 断言通过。目标环境停旧 worker/cron、维护窗口迁移仍待 N8 执行。以 [AlertBoard 批次记录](../feature/alert-board/delivery.md) 为当前实现快照。
+> 状态：2026-10-22 当前工作树已完成 D1–D5 运行时删除与本地 schema 清理；旧链扫描、全套测试和旧数据库 key 断言通过。目标环境停旧 worker/cron、维护窗口迁移仍待 N8 执行。以 [AlertBoard 批次记录](../feature/alert-wall/delivery.md) 为当前实现快照。
 > 证据基于当前共享工作树，不代表远端分支或生产状态；工作树包含未提交的并行修改。
-> 新合同：[AlertBoard / ReviewBot](../feature/alert-board/design.md)；逐文件证据：[扫描清单](./legacy-content-audit-inventory.md)。
+> 新合同：[AlertBoard / ReviewBot](../feature/alert-wall/design.md)；逐文件证据：[扫描清单](./legacy-content-audit-inventory.md)。
 
 ## 0. 全链路删除合同（已确认）
 
@@ -205,7 +205,7 @@ Publish effect 当前在 audition 前 enqueue search、invalidate Press、sync m
 `CMS.AbuseReports`、ReportFact 方向、viewer_has_reported、举报投影和管理员身份不是旧检测垃圾代码。
 举报业务迁入 AlertBoard，但提交/撤销事实保留，不凭 AI 结果生成假举报。
 补充源码核对：`interactions/reactions/report.ex` 的 maybe_fold_comment 确实按举报阈值调用 fold_for_report。
-该路径随旧 Report 运行时在 D5 批次删除；旧举报事实不迁移，N4 从零建立新事实。具体入口、数据与投影切换见 [实施合同 §11](../feature/alert-board/implementation.md#11-举报归属切换与历史边界)。
+该路径随旧 Report 运行时在 D5 批次删除；旧举报事实不迁移，N4 从零建立新事实。具体入口、数据与投影切换见 [实施合同 §11](../feature/alert-wall/implementation.md#11-举报归属切换与历史边界)。
 
 保留：Community Moderator/Passport、通用 Activity 与 Lifecycle 操作审计、Interactions.Audit 投影校验、
 Assets/Trash/Command 的其他审计记录、非内容审核的 pending 状态、共用 Scheduler/Jobs/HTTP client。
@@ -217,11 +217,11 @@ Assets/Trash/Command 的其他审计记录、非内容审核的 pending 状态�
 百度网站统计 `frontend/core/lib/analytics/baidu.ts`、`spec/index.ts` 的 _hmt 以及 Landing 的百度 SEO logo 均保留，
 `NEXT_PUBLIC_BAIDU_TRACING_ID` 与旧审核 AUDIT_TOKEN 无关。外部参考资料中的 moderation/illegal、crash dump、历史说明不作为运行时消费者处理。
 
-详细施工文件、测试和命令见 [实施批次](../feature/alert-board/delivery.md)。
+详细施工文件、测试和命令见 [实施批次](../feature/alert-wall/delivery.md)。
 
 ## 7. Audit 删除批次与新实现分界
 
-旧 Report 运行时按 [AlertBoard D5](../feature/alert-board/delivery.md#d5-清除旧-report-运行时全链路) 全链路删除；旧举报事实不迁入新表，N4 从零建立 AlertBoard reports，不构成 Audit verdict 或兼容机制。
+旧 Report 运行时按 [AlertBoard D5](../feature/alert-wall/delivery.md#d5-清除旧-report-运行时全链路) 全链路删除；旧举报事实不迁入新表，N4 从零建立 AlertBoard reports，不构成 Audit verdict 或兼容机制。
 
 | 批次                    | 删除工作                                                                                                     | 退出条件                                                                                                             |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
@@ -269,7 +269,7 @@ available/scheduled/retryable/executing 任务，不清空共享队列；同时�
 - 旧百度 endpoint 无调用，旧 cron 不注册，远端专用 token 完成撤销核实。
 
 实施时从 `backend/api` 执行 `mix compile --warnings-as-errors`，并运行 gate、comments、articles、
-events、jobs、web query 受影响测试（逐文件附录列出当前测试）。新测试文件与 T01–T25 断言（含独立记录的 T01a 子用例）已在 [批次验收](../feature/alert-board/delivery.md)指定，
+events、jobs、web query 受影响测试（逐文件附录列出当前测试）。新测试文件与 T01–T25 断言（含独立记录的 T01a 子用例）已在 [批次验收](../feature/alert-wall/delivery.md)指定，
 不能仅删除旧断言来通过测试。
 
 仓库根执行：

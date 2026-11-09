@@ -5,6 +5,13 @@ defmodule GroupherServer.TestMate do
   It layers project factories, connection simulators, common aliases, and stable
   date fixtures on top of `GroupherServerWeb.ConnCase`.
 
+  Integration cases run synchronously by default: Article and Comment factories
+  update the global Mentions graph revision, whose row lock remains held until
+  the outer SQL Sandbox transaction ends. Separate Sandbox owners do not isolate
+  that lock. Opt into `async: true` only when neither the test nor its fixtures
+  write shared singleton state. Real concurrency tests use independent committed
+  transactions rather than concurrent Sandbox cases.
+
   Business position:
 
       Test case
@@ -14,7 +21,7 @@ defmodule GroupherServer.TestMate do
   use ExUnit.CaseTemplate
 
   using opts do
-    conn_case_opts = [async: Keyword.get(opts, :async, true)]
+    conn_case_opts = [async: Keyword.get(opts, :async, false)]
 
     # CaseTemplate imports, aliases, attributes, and helpers must expand in each test module.
     # credo:disable-for-next-line Credo.Check.Refactor.LongQuoteBlocks

@@ -2,8 +2,53 @@ defmodule GroupherServer.Test.AI.OpinionContractTest do
   use ExUnit.Case, async: true
 
   alias GroupherServer.AI
-  alias AI.{OpinionInput, OpinionOutput}
-  alias AI.Adapters.OpenAI
+  alias AI.{Const, OpinionInput, OpinionOutput}
+  alias AI.Adapters.JudgeHTTP
+
+  test "Phoenix validator vocabularies match the shared Review AI contract" do
+    contract_path =
+      Path.expand("../../../../../packages/contracts/review-ai.contract.json", __DIR__)
+
+    contract = contract_path |> File.read!() |> Jason.decode!()
+    request = contract["definitions"]["request"]
+    request_properties = request["properties"]
+    response = contract["definitions"]["response"]
+    response_properties = response["properties"]
+
+    assert Enum.sort(Map.keys(request_properties)) ==
+             Enum.sort(~w(model systemPrompt prompt banWords text images requiredModalities))
+
+    assert request["required"] |> Enum.sort() == Enum.sort(Map.keys(request_properties))
+    assert request_properties["text"]["required"] == ["title", "body"]
+    assert request_properties["images"]["maxItems"] == 10
+    assert request_properties["banWords"]["maxItems"] == 10_000
+
+    assert Enum.sort(response_properties["status"]["enum"]) ==
+             Const.statuses() |> Enum.map(&Atom.to_string/1) |> Enum.sort()
+
+    assert Enum.sort(response_properties["coverage"]["properties"]["text"]["enum"]) ==
+             Const.coverages() |> Enum.map(&Atom.to_string/1) |> Enum.sort()
+
+    assert Enum.sort(response_properties["susNotes"]["items"]["properties"]["type"]["enum"]) ==
+             Enum.sort(Const.note_types())
+
+    assert response_properties["susNotes"]["maxItems"] == 20
+
+    assert response_properties["susNotes"]["items"]["properties"]["evidence"]["maxLength"] ==
+             500
+
+    assert response_properties["susNotes"]["items"]["properties"]["explanation"]["maxLength"] ==
+             1_000
+
+    assert response_properties["summary"]["maxLength"] == 2_000
+
+    assert {:ok, input} = opinion_input()
+    body = JudgeHTTP.opinion_request_body(input, "test-model")
+    assert Enum.sort(Map.keys(body)) == Enum.sort(Map.keys(request_properties))
+
+    assert Enum.sort(Map.keys(body["text"])) ==
+             Enum.sort(Map.keys(request_properties["text"]["properties"]))
+  end
 
   test "the AI input contains policy and content without CMS identity" do
     assert {:ok, input} =
@@ -16,7 +61,7 @@ defmodule GroupherServer.Test.AI.OpinionContractTest do
                required_modalities: [:text]
              })
 
-    request = OpenAI.opinion_request_body(input, "test-model") |> Jason.encode!()
+    request = JudgeHTTP.opinion_request_body(input, "test-model") |> Jason.encode!()
     refute request =~ "request_id"
     refute request =~ "content_token"
     refute request =~ "revision_id"

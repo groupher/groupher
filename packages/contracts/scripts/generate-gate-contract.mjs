@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const root = new URL('../', import.meta.url)
@@ -49,6 +50,17 @@ export const GATE_REQUIREMENT = {
 ${tsRequirements}
 } as const satisfies Record<TGateAction, TGateRequirement>
 `
+const formattedTs = execFileSync(
+  'pnpm',
+  [
+    'exec',
+    'oxfmt',
+    '-c',
+    fileURLToPath(new URL('../../frontend/core/config/oxfmt.json', root)),
+    `--stdin-filepath=${fileURLToPath(tsTarget)}`,
+  ],
+  { input: ts, encoding: 'utf8' },
+)
 
 const exFunctions = source.actions
   .map(
@@ -102,7 +114,7 @@ end
 `
 
 const outputs = [
-  [tsTarget, ts],
+  [tsTarget, formattedTs],
   [exTarget, ex],
 ]
 

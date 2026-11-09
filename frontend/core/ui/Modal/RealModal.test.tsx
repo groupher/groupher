@@ -1,5 +1,4 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import RealModal from './RealModal'
@@ -15,7 +14,6 @@ vi.mock('~/hooks/useShortcut', () => ({ default: vi.fn() }))
 vi.mock('~/hooks/useTheme', () => ({ default: () => ({ theme: 'light' }) }))
 vi.mock('~/hooks/useTopGlow', () => ({ default: () => ({ glowType: 'none' }) }))
 vi.mock('~/icons/CloseLight', () => ({ default: () => null }))
-vi.mock('~/ui/Portal', () => ({ default: ({ children }: { children: ReactNode }) => children }))
 vi.mock('~/ui/ViewportTracker', () => ({
   default: ({ onEnter }: { onEnter: () => void }) => (
     <button

@@ -19,15 +19,12 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
     Comment,
     Community,
     DocPublic,
-    KanbanState,
     PostState
   }
 
   describe "[full community seeds]" do
     test "seeds full community data including about dashboard" do
       allowed_cats = [nil | Const.cat_values()]
-      allowed_states = [nil, :backlog, :todo, :wip, :done, :resolved, :reject]
-
       slug = "seed-full-#{System.unique_integer([:positive, :monotonic])}"
 
       {:ok, community} = CMS.Seeds.full_community(slug)
@@ -60,23 +57,16 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
             on: state.article_id == article.id,
             join: binding in ArticleBinding,
             on: binding.article_id == article.id and binding.community_id == ^community.id,
-            left_join: kanban in KanbanState,
-            on: kanban.article_binding_id == binding.id,
             join: public in ArticlePublic,
             on: public.article_id == article.id,
             where: binding.community_id == ^community.id and article.thread == :post,
-            select: %{id: article.id, cat: state.cat, status: kanban.status, title: public.title}
+            select: %{id: article.id, cat: state.cat, title: public.title}
           )
         )
 
       post = List.first(posts)
 
       assert Enum.all?(posts, &(&1.cat in allowed_cats))
-      assert Enum.all?(posts, &(&1.status in allowed_states))
-
-      assert Enum.any?(posts, &(is_nil(&1.cat) and is_nil(&1.status)))
-      assert Enum.any?(posts, &(not is_nil(&1.cat) and is_nil(&1.status)))
-      assert Enum.any?(posts, &(not is_nil(&1.cat) and not is_nil(&1.status)))
 
       comments_count =
         from(c in Comment, where: c.article_id == ^post.id) |> count()

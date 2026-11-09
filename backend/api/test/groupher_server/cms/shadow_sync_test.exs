@@ -55,4 +55,109 @@ defmodule GroupherServer.Test.CMS.ShadowSyncTest do
 
     assert refreshed.emotions.latest_beer_users |> length() == length(snapshots)
   end
+
+  test "refreshes article and root participants, reactions and nested replies with one user query" do
+    {:ok, user} = db_insert(:user, nickname: "Current nickname")
+    snapshot = %{id: user.id, user_id: user.id, login: user.login, nickname: "Old"}
+
+    items = [
+      %{
+        comments_participants: [snapshot],
+        reply_participants: [snapshot],
+        replies_count: 8,
+        replies_revision: 5,
+        meta: %{latest_upvoted_users: [snapshot]},
+        emotions: %{latest_beer_users: [snapshot]},
+        replies: [%{reply_participants: [snapshot], meta: %{latest_upvoted_users: [snapshot]}}]
+      }
+    ]
+
+    ref = make_ref()
+    handler = {__MODULE__, ref}
+
+    :ok =
+      :telemetry.attach(
+        handler,
+        [:groupher_server, :repo, :query],
+        fn _, _, metadata, {pid, ref} ->
+          if self() == pid and String.contains?(metadata.query, ~s("users")) do
+            send(pid, {ref, :user_query})
+          end
+        end,
+        {self(), ref}
+      )
+
+    try do
+      [fresh] = ShadowSync.refresh_comments(items, mode: :blocking)
+      assert [%Embeds.User{nickname: "Current nickname"}] = fresh.comments_participants
+      assert [%Embeds.User{nickname: "Current nickname"}] = fresh.reply_participants
+
+      assert [%Embeds.User{nickname: "Current nickname"}] =
+               hd(fresh.replies).meta.latest_upvoted_users
+
+      assert fresh.replies_count == 8
+      assert fresh.replies_revision == 5
+      assert_receive {^ref, :user_query}
+      refute_receive {^ref, :user_query}
+    after
+      :telemetry.detach(handler)
+    end
+  end
+
+  test "SNAP-02 missing account profiles keep article and reply member identity and order" do
+    {:ok, current} = db_insert(:user, nickname: "Current profile")
+
+    [[missing_id]] =
+      Repo.query!("SELECT nextval(pg_get_serial_sequence('account.users','id'))", []).rows
+
+    missing = %GroupherServer.Accounts.Model.User{
+      id: missing_id,
+      login: "missing-profile",
+      nickname: "Old profile"
+    }
+
+    current_snapshot = Embeds.User.from_account_user(current)
+    missing_snapshot = Embeds.User.from_account_user(missing)
+    {:ok, missing_ref} = CMS.Snapshot.MemberRef.encode(missing_snapshot)
+    refute Repo.get(GroupherServer.Accounts.Model.User, missing_id)
+
+    root = %{
+      reply_participants: [missing_snapshot, current_snapshot],
+      replies_count: 4,
+      reply_entries_count: 5,
+      replies_revision: 9,
+      last_reply_at: ~U[2026-11-05 10:00:00Z],
+      meta: %{latest_upvoted_users: [missing_snapshot]}
+    }
+
+    article = %{
+      comments_participants: [current_snapshot, missing_snapshot],
+      comments_count: 6,
+      comments_participants_count: 2,
+      comments_revision: 11,
+      replies: [root]
+    }
+
+    [fresh] = ShadowSync.refresh_articles([article], mode: :blocking)
+    assert Enum.map(fresh.comments_participants, & &1.id) == [current.id, missing.id]
+    [fresh_root] = fresh.replies
+    assert Enum.map(fresh_root.reply_participants, & &1.id) == [missing.id, current.id]
+
+    placeholder = hd(fresh_root.reply_participants)
+    assert placeholder.user_id == missing.id
+    assert placeholder.login == "deleted"
+    assert placeholder.nickname == "Deleted user"
+    assert placeholder.avatar == nil
+    assert {:ok, ^missing_ref} = CMS.Snapshot.MemberRef.encode(placeholder)
+    assert List.last(fresh.comments_participants) == placeholder
+    assert fresh_root.meta.latest_upvoted_users == [placeholder]
+
+    for field <- [:comments_count, :comments_participants_count, :comments_revision] do
+      assert Map.fetch!(fresh, field) == Map.fetch!(article, field)
+    end
+
+    for field <- [:replies_count, :reply_entries_count, :replies_revision, :last_reply_at] do
+      assert Map.fetch!(fresh_root, field) == Map.fetch!(root, field)
+    end
+  end
 end

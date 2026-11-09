@@ -72,7 +72,7 @@ const Main: FC<TProps> = ({ children }) => {
 
   return (
     <div className='relative w-full overflow-x-clip'>
-      <main key={locale} className={LANDING_WRAPPER_CLASS}>
+      <main key={locale} className={cn(LANDING_WRAPPER_CLASS, 'landing-scene-page')}>
         <HomeHeader />
         <div className={s.body}>{children}</div>
         <StaticFooter />

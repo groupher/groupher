@@ -19,6 +19,7 @@
     "./fixtures/wallpaper-profile-matrix-v1.json": "./fixtures/wallpaper-profile-matrix-v1.json",
     "./fixtures/pagination-default-v1.json": "./fixtures/pagination-default-v1.json",
     "./pagination": "./src/pagination.ts",
+    "./review-ai": "./src/review-ai.generated.ts",
     "./wallpaper": "./src/wallpaper.ts",
     "./widget": "./src/widget.ts"
   },
@@ -32,8 +33,10 @@
     "generate:gate:check": "node scripts/generate-gate-contract.mjs --check",
     "generate:view-counting": "node scripts/generate-view-counting-contract.mjs",
     "generate:view-counting:check": "node scripts/generate-view-counting-contract.mjs --check",
+    "generate:review-ai": "node scripts/generate-review-ai-contract.mjs",
+    "generate:review-ai:check": "node scripts/generate-review-ai-contract.mjs --check",
     "lint": "pnpm exec oxlint src --threads=1",
-    "test": "node scripts/generate-auth-contract.mjs --check && node scripts/generate-content-publish-contract.mjs --check && node scripts/generate-gate-contract.mjs --check && node scripts/generate-view-counting-contract.mjs --check && pnpm exec vitest --config vitest.config.mts run",
+    "test": "node scripts/generate-auth-contract.mjs --check && node scripts/generate-content-publish-contract.mjs --check && node scripts/generate-gate-contract.mjs --check && node scripts/generate-view-counting-contract.mjs --check && node scripts/generate-review-ai-contract.mjs --check && pnpm exec vitest --config vitest.config.mts run",
     "format": "pnpm exec oxfmt -c ../../frontend/core/config/oxfmt.json src *.json *.md *.mts",
     "format:check": "pnpm exec oxfmt -c ../../frontend/core/config/oxfmt.json --check src *.json *.md *.mts",
     "build": "echo 'skip build'"

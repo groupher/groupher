@@ -14,7 +14,6 @@ defmodule GroupherServer.CMS.Snapshot.Query do
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias Accounts.Model.User
   alias CMS.Artiment.Matcher
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
@@ -25,11 +24,10 @@ defmodule GroupherServer.CMS.Snapshot.Query do
   def load_summaries(_kind, _thread, []), do: %{}
 
   def load_summaries(:user, _thread, ids) do
-    User
-    |> where([user], user.id in ^ids)
-    |> Repo.all()
-    |> Map.new(&{&1.id, user_summary(&1)})
-    |> with_unavailable(ids, &unavailable_user/1)
+    case Accounts.front_desk_user_summaries(ids) do
+      {:ok, summaries} -> with_unavailable(summaries, ids, &unavailable_user/1)
+      {:error, _reason} -> %{}
+    end
   end
 
   def load_summaries(:article, thread, ids) do
@@ -72,19 +70,6 @@ defmodule GroupherServer.CMS.Snapshot.Query do
 
   defp with_unavailable(summary_by_id, ids, fallback_fun) do
     Enum.reduce(ids, summary_by_id, fn id, acc -> Map.put_new(acc, id, fallback_fun.(id)) end)
-  end
-
-  defp user_summary(%User{} = user) do
-    %{
-      id: user.id,
-      user_id: user.id,
-      login: user.login,
-      nickname: user.nickname || user.login,
-      avatar: user.avatar,
-      bio: user.bio,
-      shortbio: user.shortbio,
-      updated_at: user.updated_at
-    }
   end
 
   defp article_summary(thread, article) do

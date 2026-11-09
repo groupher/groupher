@@ -9,7 +9,6 @@ export type TTrashedPost = {
   deletedBy: TUser | null
   deletedAt: string
   scheduledPermanentDeletionAt: string
-  mentionedByCount: number
 }
 
 export type TPagedTrashedPosts = {

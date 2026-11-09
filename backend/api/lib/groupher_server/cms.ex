@@ -15,6 +15,11 @@ defmodule GroupherServer.CMS do
 
   alias __MODULE__.{ArticlePath, Comments, EmotionFormatter, ErrorCat, Insights, Query}
 
+  @doc "Redeems one bounded acceptance credential for the trusted Auth service."
+  defdelegate production_seed_redeem_login(credential, metadata),
+    to: GroupherServer.CMS.ProductionSeed.Logins,
+    as: :redeem
+
   @doc "Returns community-scoped moderator picker candidates."
   defdelegate communities_moderator_candidates(community, name),
     to: GroupherServer.CMS.Communities,
@@ -119,6 +124,19 @@ defmodule GroupherServer.CMS do
   @doc "Checks the public content version a reporter observed inside the report transaction."
   defdelegate validate_report_target_in_transaction(target),
     to: GroupherServer.CMS.Review
+
+  @doc "Applies the report threshold restriction from the current locked CMS target."
+  defdelegate apply_report_threshold_in_transaction(report),
+    to: GroupherServer.CMS.Review.Threshold,
+    as: :apply_report_in_transaction
+
+  @doc "Returns the closed CMS moderator decision action set."
+  def review_decision_actions, do: GroupherServer.CMS.Review.Const.decision_actions()
+
+  @doc "Expands the closed CMS review result action values for GraphQL enum declarations."
+  defmacro review_result_action_values_ast do
+    Macro.escape(GroupherServer.CMS.Review.Const.result_actions())
+  end
 
   @doc "Returns a safe review status for the author of a CMS target."
   defdelegate review_notice_for_author(target, actor),
@@ -392,13 +410,6 @@ defmodule GroupherServer.CMS do
   @spec emotion_counts(map() | nil, :article | :comment | nil) :: [map()]
   defdelegate emotion_counts(emotions, kind), to: EmotionFormatter, as: :counts
 
-  @doc "Rebuilds the stored comment-participant count for one Article."
-  @spec reconcile_comments_participants(atom(), Ecto.UUID.t(), non_neg_integer()) ::
-          {:ok, term()} | {:error, term()}
-  defdelegate reconcile_comments_participants(thread, article_id, total_count),
-    to: Comments,
-    as: :reconcile_participants_count
-
   @doc "Returns the CMS Article type used by the Analysis projection."
   @spec article_insights_type(map()) :: {:ok, atom()} | {:error, term()}
   defdelegate article_insights_type(article), to: Insights, as: :article_type
@@ -498,9 +509,6 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles,
     as: :get_trashed
 
-  @doc "Delegates GroupherServer.CMS.Articles.grouped_kanban/1 through the CMS Context boundary."
-  defdelegate articles_grouped_kanban(arg1), to: GroupherServer.CMS.Articles, as: :grouped_kanban
-
   @doc "Pages current Trash memberships through the CMS Context boundary."
   defdelegate articles_list_trashed(community, filter, pagi),
     to: GroupherServer.CMS.Articles,
@@ -537,6 +545,306 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles,
     as: :page
 
+  @doc "Pages public User Tickets through the dedicated Ticket query boundary."
+  defdelegate tickets_page_public(community, filter, pagi),
+    to: GroupherServer.CMS.Tickets,
+    as: :page_public
+
+  @doc "Pages internal User Tickets after Ticket Gate admission."
+  defdelegate tickets_page_internal(community, actor, filter, pagi),
+    to: GroupherServer.CMS.Tickets,
+    as: :page_internal
+
+  @doc "Loads a public User Ticket by its Community-shared number."
+  defdelegate tickets_get_public(community, inner_id),
+    to: GroupherServer.CMS.Tickets,
+    as: :get_public
+
+  @doc "Loads an internal Ticket after Ticket Gate admission."
+  defdelegate tickets_get_internal(community, ticket_id, actor),
+    to: GroupherServer.CMS.Tickets,
+    as: :get_internal
+
+  @doc "Pages internal Ticket Activity through the Ticket Gate."
+  defdelegate tickets_activity_internal(community, ticket_id, actor, pagi \\ nil),
+    to: GroupherServer.CMS.Tickets,
+    as: :activity_internal
+
+  @doc "Builds public Ticket columns for the Community Kanban."
+  defdelegate tickets_grouped_public(community, pagi),
+    to: GroupherServer.CMS.Tickets,
+    as: :grouped_public
+
+  @doc "Builds internal Ticket columns after Ticket Gate admission."
+  defdelegate tickets_grouped_internal(community, actor, pagi),
+    to: GroupherServer.CMS.Tickets,
+    as: :grouped_internal
+
+  defdelegate tickets_grouped_internal(community, actor, pagi, filter),
+    to: GroupherServer.CMS.Tickets,
+    as: :grouped_internal
+
+  @doc "Searches internal Ticket titles through the Ticket-only PostgreSQL query."
+  defdelegate tickets_search_internal(community, query, actor, pagi),
+    to: GroupherServer.CMS.Tickets,
+    as: :search_internal
+
+  @doc "Searches internal Tickets by title and optional type."
+  defdelegate tickets_search_internal(community, query, actor, pagi, type),
+    to: GroupherServer.CMS.Tickets,
+    as: :search_internal
+
+  @doc "Computes current public User Ticket progress for a batch of Post ids."
+  defdelegate tickets_post_progress(community, post_ids),
+    to: GroupherServer.CMS.Tickets,
+    as: :post_progress
+
+  @doc "Projects readable public Ticket targets for Article Activity in one Community."
+  defdelegate tickets_public_activity_targets(community, ticket_ids),
+    to: GroupherServer.CMS.Tickets,
+    as: :public_activity_targets
+
+  @doc "Returns all internally readable User Tickets linked to one Post."
+  defdelegate tickets_linked_to_post_internal(community, post_id, actor),
+    to: GroupherServer.CMS.Tickets,
+    as: :linked_to_post_internal
+
+  @doc "Creates a public User Ticket from one public Post."
+  defdelegate tickets_create_from_post(community, post_id, attrs, actor, command_id),
+    to: GroupherServer.CMS.Tickets,
+    as: :create_from_post
+
+  @doc "Creates a private Worker Ticket under a User Ticket."
+  defdelegate tickets_create_worker(
+                community,
+                parent_id,
+                attrs,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :create_worker
+
+  @doc "Creates an internal Case Ticket."
+  defdelegate tickets_create_case(community, attrs, actor, command_id),
+    to: GroupherServer.CMS.Tickets,
+    as: :create_case
+
+  @doc "Adds a User Ticket to a Case."
+  defdelegate tickets_add_case_member(
+                community,
+                case_id,
+                ticket_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :add_case_member
+
+  @doc "Removes a User Ticket from a Case."
+  defdelegate tickets_remove_case_member(
+                community,
+                case_id,
+                ticket_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :remove_case_member
+
+  @doc "Links a Worker as a Case's shared fix."
+  defdelegate tickets_add_case_worker(
+                community,
+                case_id,
+                worker_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :add_case_worker
+
+  @doc "Replaces the users assigned to a Ticket."
+  defdelegate tickets_set_assignees(
+                community,
+                ticket_id,
+                user_ids,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :set_assignees
+
+  @doc "Replaces internal Post tags assigned to a Ticket."
+  defdelegate tickets_set_tags(
+                community,
+                ticket_id,
+                tag_ids,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :set_tags
+
+  @doc "Replaces normalized internal Ticket facets."
+  defdelegate tickets_set_facets(
+                community,
+                ticket_id,
+                facets,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :set_facets
+
+  @doc "Applies a versioned Ticket work-state transition."
+  defdelegate tickets_transition(
+                community,
+                ticket_id,
+                status,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :transition
+
+  @doc "Moves a Ticket within or between work columns."
+  defdelegate tickets_move(
+                community,
+                ticket_id,
+                status,
+                rank,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :move_ticket
+
+  @doc "Updates Ticket content, priority and planned dates."
+  defdelegate tickets_update(community, ticket_id, attrs, expected_version, actor, command_id),
+    to: GroupherServer.CMS.Tickets,
+    as: :update_ticket
+
+  @doc "Ensures a Ticket Article Draft workspace."
+  defdelegate tickets_ensure_draft(community, ticket_id, lifecycle_version, actor, command_id),
+    to: GroupherServer.CMS.Tickets,
+    as: :ensure_draft
+
+  @doc "Saves a Ticket Article Draft with Draft and Lifecycle versions."
+  defdelegate tickets_save_draft(
+                community,
+                ticket_id,
+                attrs,
+                draft_version,
+                lifecycle_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :save_draft
+
+  @doc "Publishes a Ticket Draft with all three concurrency versions."
+  defdelegate tickets_publish(
+                community,
+                ticket_id,
+                reason,
+                draft_version,
+                lifecycle_version,
+                workflow_version,
+                actor,
+                command_id,
+                expected_preview
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :publish
+
+  @doc "Moves a Ticket to Article Draft state."
+  defdelegate tickets_move_to_draft(
+                community,
+                ticket_id,
+                reason,
+                lifecycle_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :move_to_draft
+
+  @doc "Appends an internal or public Ticket progress update."
+  defdelegate tickets_add_update(
+                community,
+                ticket_id,
+                body,
+                visibility,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :add_update
+
+  @doc "Appends a Ticket update that may correct a prior public update."
+  defdelegate tickets_add_update(
+                community,
+                ticket_id,
+                body,
+                visibility,
+                supersedes_id,
+                lifecycle_version,
+                workflow_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :add_update
+
+  @doc "Appends a Ticket update that may correct a prior public update."
+  defdelegate tickets_add_update(
+                community,
+                ticket_id,
+                body,
+                visibility,
+                supersedes_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :add_update
+
+  @doc "Links a typed source to a User Ticket."
+  defdelegate tickets_link_source(
+                community,
+                ticket_id,
+                type,
+                source_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :link_source
+
+  @doc "Unlinks a source relation by its TicketSource identity."
+  defdelegate tickets_unlink_source(
+                community,
+                ticket_id,
+                source_id,
+                expected_version,
+                actor,
+                command_id
+              ),
+              to: GroupherServer.CMS.Tickets,
+              as: :unlink_source
+
   @doc "Delegates the bounded ArticleLite path batch through the CMS Context boundary."
   defdelegate articles_lite_paths(arg1),
     to: GroupherServer.CMS.Articles,
@@ -546,11 +854,6 @@ defmodule GroupherServer.CMS do
   defdelegate articles_public_binding_ids(),
     to: GroupherServer.CMS.Articles,
     as: :public_binding_ids
-
-  @doc "Pages a canonical Kanban column."
-  defdelegate articles_kanban_page(community, filter, pagi),
-    to: GroupherServer.CMS.Articles,
-    as: :kanban_page
 
   @doc "Delegates GroupherServer.CMS.Articles.paged_published/4 through the CMS Context boundary."
   defdelegate articles_paged_published(arg1, arg2, arg3, arg4),
@@ -605,16 +908,6 @@ defmodule GroupherServer.CMS do
   defdelegate articles_set_cat_result(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Articles,
     as: :set_cat_result
-
-  @doc "Delegates GroupherServer.CMS.Articles.set_status_result/3 through the CMS Context boundary."
-  defdelegate articles_set_status_result(arg1, arg2, arg3),
-    to: GroupherServer.CMS.Articles,
-    as: :set_status_result
-
-  @doc "Delegates GroupherServer.CMS.Articles.set_status_result/4 through the CMS Context boundary."
-  defdelegate articles_set_status_result(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Articles,
-    as: :set_status_result
 
   @doc "Delegates GroupherServer.CMS.Articles.sink_result/2 through the CMS Context boundary."
   defdelegate articles_sink_result(arg1, arg2), to: GroupherServer.CMS.Articles, as: :sink_result
@@ -690,30 +983,32 @@ defmodule GroupherServer.CMS do
   @doc "Delegates GroupherServer.CMS.Artiment.Config.threads/0 through the CMS Context boundary."
   defdelegate artiment_config_threads(), to: GroupherServer.CMS.Artiment.Config, as: :threads
 
-  @doc "Delegates GroupherServer.CMS.ArtimentMentions.mentioned_by/2 through the CMS Context boundary."
-  defdelegate artiment_mentions_mentioned_by(arg1, arg2),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :mentioned_by
+  @doc "Projects a bounded, anonymous public MentionsGraph page."
+  defdelegate mentions_graph_page(community, focus, after_cursor, first),
+    to: GroupherServer.CMS.ArtimentMentions.MentionsGraph,
+    as: :page
 
-  @doc "Delegates GroupherServer.CMS.ArtimentMentions.mentioned_by/3 through the CMS Context boundary."
-  defdelegate artiment_mentions_mentioned_by(arg1, arg2, arg3),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :mentioned_by
+  @doc "Reads Artiment status independently of graph relationships."
+  defdelegate artiment_status(community, locator),
+    to: GroupherServer.CMS.FrontDesk
 
-  @doc "Delegates GroupherServer.CMS.ArtimentMentions.mentions/2 through the CMS Context boundary."
-  defdelegate artiment_mentions_mentions(arg1, arg2),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :mentions
+  @doc "Reads the opaque MentionsGraph revision after validating its focus."
+  defdelegate mentions_graph_revision(community, focus),
+    to: GroupherServer.CMS.ArtimentMentions.MentionsGraph,
+    as: :revision
 
-  @doc "Delegates GroupherServer.CMS.ArtimentMentions.mentions/3 through the CMS Context boundary."
-  defdelegate artiment_mentions_mentions(arg1, arg2, arg3),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :mentions
+  @doc "Lists public Comment seeds for one readable Article focus."
+  defdelegate mentions_graph_article_comments(community, focus, after_cursor, first),
+    to: GroupherServer.CMS.ArtimentMentions.MentionsGraph,
+    as: :article_comments
 
-  @doc "Returns user recipients directly mentioned by one internal CMS source."
-  defdelegate artiment_mentions_mentioned_user_ids(arg1, arg2),
-    to: GroupherServer.CMS.ArtimentMentions,
-    as: :mentioned_user_ids
+  @doc "Lists current Mentions written by one public source."
+  defdelegate mentions(community, source, pagi),
+    to: GroupherServer.CMS.ArtimentMentions.Query
+
+  @doc "Lists public sources that currently mention a target."
+  defdelegate mentioned_by(community, target, pagi),
+    to: GroupherServer.CMS.ArtimentMentions.Query
 
   @doc "Delegates GroupherServer.CMS.Artiment.Threads.article_enums/0 through the CMS Context boundary."
   defdelegate artiment_threads_article_enums(),
@@ -787,15 +1082,15 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments,
     as: :accept_solution
 
-  @doc "Delegates GroupherServer.CMS.Comments.comments_state/2 through the CMS Context boundary."
-  defdelegate comments_comments_state(arg1, arg2),
-    to: GroupherServer.CMS.Comments,
+  @doc "Reads a Comment summary in its requested Community."
+  defdelegate comments_comments_state(thread, article_id, viewer, community_slug),
+    to: Comments,
     as: :comments_state
 
-  @doc "Delegates GroupherServer.CMS.Comments.comments_state/3 through the CMS Context boundary."
-  defdelegate comments_comments_state(arg1, arg2, arg3),
-    to: GroupherServer.CMS.Comments,
-    as: :comments_state
+  @doc "Pages the full effective participant relation."
+  defdelegate comments_paged_comments_participants(thread, article_id, pagi, community_slug),
+    to: Comments,
+    as: :paged_comments_participants
 
   @doc "Delegates GroupherServer.CMS.Comments.create_comment_result/4 through the CMS Context boundary."
   defdelegate comments_create_comment_result(arg1, arg2, arg3, arg4),
@@ -817,16 +1112,20 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments,
     as: :delete_comment_result
 
+  defdelegate comments_delete_comment_result(arg1, arg2, arg3, arg4),
+    to: GroupherServer.CMS.Comments,
+    as: :delete_comment_result
+
   @doc "Delegates GroupherServer.CMS.Comments.one_comment/1 through the CMS Context boundary."
   defdelegate comments_one_comment(arg1), to: GroupherServer.CMS.Comments, as: :one_comment
 
   @doc "Delegates GroupherServer.CMS.Comments.one_comment/2 through the CMS Context boundary."
   defdelegate comments_one_comment(arg1, arg2), to: GroupherServer.CMS.Comments, as: :one_comment
 
-  @doc "Delegates GroupherServer.CMS.Comments.paged_comments_participants/3 through the CMS Context boundary."
-  defdelegate comments_paged_comments_participants(arg1, arg2, arg3),
+  @doc "Reads one graph-confirmed Comment independently of its parent body."
+  defdelegate comments_mentioned_comment(community, locator, viewer),
     to: GroupherServer.CMS.Comments,
-    as: :paged_comments_participants
+    as: :mentioned_comment
 
   @doc "Delegates a root's independently paged reply collection through the CMS boundary."
   defdelegate comments_reply_page(comment, community, filter, pagi, user),
@@ -869,6 +1168,10 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Comments,
     as: :reply_comment_result
 
+  defdelegate comments_reply_comment_result(arg1, arg2, arg3, arg4, arg5),
+    to: GroupherServer.CMS.Comments,
+    as: :reply_comment_result
+
   @doc "Delegates GroupherServer.CMS.Comments.revoke_solution/2 through the CMS Context boundary."
   defdelegate comments_revoke_solution(arg1, arg2),
     to: GroupherServer.CMS.Comments,
@@ -896,6 +1199,10 @@ defmodule GroupherServer.CMS do
 
   @doc "Delegates GroupherServer.CMS.Comments.update_comment_result/5 through the CMS Context boundary."
   defdelegate comments_update_comment_result(arg1, arg2, arg3, arg4, arg5),
+    to: GroupherServer.CMS.Comments,
+    as: :update_comment_result
+
+  defdelegate comments_update_comment_result(arg1, arg2, arg3, arg4, arg5, arg6),
     to: GroupherServer.CMS.Comments,
     as: :update_comment_result
 
@@ -2012,26 +2319,37 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Gate.Context.Scope.Article,
     as: :public
 
-  @doc """
-  Builds the public Comment read context through the CMS boundary.
+  @doc "Delegates opaque user snapshot membership references through the CMS boundary."
+  defdelegate snapshot_member_ref_encode(member),
+    to: GroupherServer.CMS.Snapshot.MemberRef,
+    as: :encode
 
-  ## Examples
+  @doc "Attests an explicitly named empty shared-comments database."
+  defdelegate comments_schema_generation_bootstrap!(repo, database, generation, source, build),
+    to: GroupherServer.CMS.Comments.SchemaGeneration,
+    as: :bootstrap!
 
-      gate_context_scope_comment_for_thread(:post)
-      #=> %CMS.Gate.Context.Scope.Comment{thread: :post, policy_mode: :public}
-  """
-  defdelegate gate_context_scope_comment_for_thread(thread),
+  @doc "Reads the deployment manifest coordinates for shared-comments admission."
+  defdelegate comments_schema_generation_environment(),
+    to: GroupherServer.CMS.Comments.SchemaGeneration,
+    as: :environment
+
+  @doc "Verifies shared-comments provenance before migration DDL."
+  defdelegate comments_schema_generation_verify_before_migration!(repo, opts),
+    to: GroupherServer.CMS.Comments.SchemaGeneration,
+    as: :verify_before_migration!
+
+  @doc "Marks the verified fresh shared-comments schema ready."
+  defdelegate comments_schema_generation_mark_ready!(repo, opts),
+    to: GroupherServer.CMS.Comments.SchemaGeneration,
+    as: :mark_ready!
+
+  @doc "Builds the explicit all-thread public Comment eligibility context for background delivery."
+  defdelegate gate_context_scope_comment_all_public(),
     to: GroupherServer.CMS.Gate.Context.Scope.Comment,
-    as: :for_thread
+    as: :all_public
 
-  @doc """
-  Builds a branch-aware Comment read context through the CMS boundary.
-
-  ## Examples
-
-      gate_context_scope_comment_for_thread(:doc, branch_policy: :main)
-      #=> %CMS.Gate.Context.Scope.Comment{thread: :doc, branch_policy: :main}
-  """
+  @doc "Builds an explicitly Community-scoped Comment context through the CMS boundary."
   defdelegate gate_context_scope_comment_for_thread(thread, opts),
     to: GroupherServer.CMS.Gate.Context.Scope.Comment,
     as: :for_thread

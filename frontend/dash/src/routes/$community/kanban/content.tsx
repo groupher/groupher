@@ -24,7 +24,7 @@ export const Route = createFileRoute('/$community/kanban/content')({
 function KanbanContentPage() {
   return (
     <Layout>
-      <Kanban />
+      <Kanban internal />
     </Layout>
   )
 }

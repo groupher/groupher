@@ -14,6 +14,9 @@ export const publicCacheTags = {
   tags: (community: string, thread: string): string =>
     `community[${community}]-thread[${thread}]-tags`,
   docTree: (community: string): string => `community[${community}]-doc-tree`,
+  ticketList: (community: string): string => `community[${community}]-tickets`,
+  ticketDetail: (community: string, innerId: string | number): string =>
+    `community[${community}]-ticket[${text(innerId)}]`,
 } as const
 
 /** Validates a tag against the shared public-cache wire protocol. */

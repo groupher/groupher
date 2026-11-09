@@ -101,6 +101,14 @@ it('stops after a second revision error and never retries an unrelated failure',
   expect(loadComments).toHaveBeenCalledOnce()
 })
 
+it('does not fail the route when comment prefetch targets a hidden article', async () => {
+  loadComments.mockRejectedValue({ errors: [{ extensions: { code: 6008 } }] })
+  await expect(
+    prefetchComments(new QueryClient(), 'home', 'CHANGELOG', '3'),
+  ).resolves.toBeUndefined()
+  expect(loadComments).toHaveBeenCalledOnce()
+})
+
 const testViewportWidth = window.innerWidth
 beforeEach(() => Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 }))
 afterEach(() =>

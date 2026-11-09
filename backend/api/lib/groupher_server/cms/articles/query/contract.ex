@@ -14,8 +14,6 @@ defmodule GroupherServer.CMS.Articles.Query.Contract do
     :community_tags,
     :when,
     :cat,
-    :status,
-    :statuses,
     :order,
     :sort
   ]
@@ -30,7 +28,6 @@ defmodule GroupherServer.CMS.Articles.Query.Contract do
   ]
   @when_values [:today, :this_week, :this_month, :this_year]
   @cat_values CMS.Artiment.Const.cat_values()
-  @status_values CMS.Artiment.Const.status_values()
 
   @doc """
   Returns the Article page `order` values accepted by the query.
@@ -87,9 +84,6 @@ defmodule GroupherServer.CMS.Articles.Query.Contract do
       not is_nil(order) and not is_nil(sort) ->
         {:error, CMS.ErrorCat.invalid_body("Select order or sort")}
 
-      Map.has_key?(filter, :status) and Map.has_key?(filter, :statuses) ->
-        {:error, CMS.ErrorCat.invalid_body("Select status or statuses")}
-
       Map.has_key?(filter, :community_tag) and Map.has_key?(filter, :community_tags) ->
         {:error, CMS.ErrorCat.invalid_body("Select community_tag or community_tags")}
 
@@ -111,11 +105,7 @@ defmodule GroupherServer.CMS.Articles.Query.Contract do
         is_list(tags) and Enum.all?(tags, &is_binary/1)
       end) and
       valid_optional?(filter, :when, &(&1 in @when_values)) and
-      valid_optional?(filter, :cat, &(&1 in @cat_values)) and
-      valid_optional?(filter, :status, &(&1 in @status_values)) and
-      valid_optional?(filter, :statuses, fn statuses ->
-        is_list(statuses) and Enum.all?(statuses, &(&1 in @status_values))
-      end)
+      valid_optional?(filter, :cat, &(&1 in @cat_values))
   end
 
   defp valid_optional?(filter, key, predicate) do

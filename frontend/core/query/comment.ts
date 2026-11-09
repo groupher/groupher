@@ -19,22 +19,34 @@ export type TCommentReconcileResult = {
 }
 
 /** The same public request contract is used by SSR, finite and infinite consumers. */
-export const fetchCommentPage = async (collection: TCommentCollection, pagi: TPagiRequest) => {
+export const fetchCommentPage = async (
+  collection: TCommentCollection,
+  pagi: TPagiRequest,
+  signal?: AbortSignal,
+) => {
   const filter = { sort: collection.sort || 'ASC_INSERTED' } as const
   if (collection.rootInnerId) {
-    const result = await browserGraphQLRequest(commentsSchema.commentReplyPage, {
-      comment: { article: collection.article, innerId: collection.rootInnerId },
-      filter,
-      pagi: toPagiGraphQLInput(pagi),
-    })
+    const result = await browserGraphQLRequest(
+      commentsSchema.commentReplyPage,
+      {
+        comment: { article: collection.article, innerId: collection.rootInnerId },
+        filter,
+        pagi: toPagiGraphQLInput(pagi),
+      },
+      { signal },
+    )
     return normalizeCommentPage(result.commentReplyPage)
   }
-  const result = await browserGraphQLRequest(commentsSchema.commentPage, {
-    article: collection.article,
-    mode: collection.mode,
-    filter,
-    pagi: toPagiGraphQLInput(pagi),
-  })
+  const result = await browserGraphQLRequest(
+    commentsSchema.commentPage,
+    {
+      article: collection.article,
+      mode: collection.mode,
+      filter,
+      pagi: toPagiGraphQLInput(pagi),
+    },
+    { signal },
+  )
   return normalizeCommentPage(result.commentPage)
 }
 
@@ -63,7 +75,7 @@ const page = (collection: TCommentCollection, config: TEffectivePagiConfig, page
   queryOptions({
     queryKey: commentPageKey(collection, config, page),
     structuralSharing: preserveCommentProjection,
-    queryFn: () => fetchCommentPage(collection, commentPagiRequest(config, page)),
+    queryFn: ({ signal }) => fetchCommentPage(collection, commentPagiRequest(config, page), signal),
   })
 
 const infinite = (collection: TCommentCollection, config: TEffectivePagiConfig) =>
@@ -71,8 +83,8 @@ const infinite = (collection: TCommentCollection, config: TEffectivePagiConfig) 
     queryKey: commentPageKey(collection, config),
     initialPageParam: collection.initialAfter,
     structuralSharing: preserveCommentProjection,
-    queryFn: ({ pageParam }) =>
-      fetchCommentPage(collection, commentPagiRequest(config, 1, pageParam)),
+    queryFn: ({ pageParam, signal }) =>
+      fetchCommentPage(collection, commentPagiRequest(config, 1, pageParam), signal),
     getNextPageParam: (last) =>
       last.pageInfo.api === 'cursor' && last.pageInfo.hasNextPage
         ? (last.pageInfo.endCursor ?? undefined)
@@ -91,11 +103,15 @@ const reconcile = (
   return queryOptions({
     queryKey: commentKeys.reconcile(community, thread, innerId, normalizedRefs),
     structuralSharing: preserveCommentProjection,
-    queryFn: async () => {
-      const response = await browserGraphQLRequest(commentsSchema.reconcileComments, {
-        article: { community, thread, innerId: String(innerId) },
-        commentInnerIds: normalizedRefs,
-      })
+    queryFn: async ({ signal }) => {
+      const response = await browserGraphQLRequest(
+        commentsSchema.reconcileComments,
+        {
+          article: { community, thread, innerId: String(innerId) },
+          commentInnerIds: normalizedRefs,
+        },
+        { signal },
+      )
       const payload = response.commentReconcileStates
       return {
         article: payload.article,

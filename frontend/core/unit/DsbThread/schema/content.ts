@@ -11,7 +11,6 @@ export const trashedPosts = graphql(`
         articleId
         deletedAt
         scheduledPermanentDeletionAt
-        mentionedByCount
         deletedBy {
           ...DashboardAuthorFields
         }
@@ -30,7 +29,6 @@ export const trashedPosts = graphql(`
           }
           ... on Post {
             cat
-            status
             insertedAt
             activeAt
             author {

@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Review.Target do
   Locks the CMS target and its Lifecycle before a review result or report is applied.
 
       CMS target key
-        -> parent Article lock
+        -> Community admission -> parent Article lock
         -> resource Lifecycle lock
         -> CMS review request or report write
   """
@@ -205,6 +205,8 @@ defmodule GroupherServer.CMS.Review.Target do
   end
 
   defp lock_article(article_id) do
+    {:ok, :pass} = CMS.Articles.MutationLock.lock_community_admission(article_id)
+
     case Repo.one(from(article in Article, where: article.id == ^article_id, lock: "FOR UPDATE")) do
       %Article{} = article -> {:ok, article}
       nil -> {:error, CMS.ErrorCat.lifecycle_not_found()}
@@ -265,11 +267,22 @@ defmodule GroupherServer.CMS.Review.Target do
 
   defp lock_comment_scope(_comment, "platform"), do: {:ok, :pass}
 
-  defp lock_comment_scope(%Comment{community_id: community_id}, scope_key) do
-    if scope_key == "community:#{community_id}" do
+  defp lock_comment_scope(
+         %Comment{article_id: article_id, thread: :doc},
+         "community:" <> value
+       ) do
+    with {community_id, ""} when community_id > 0 <- Integer.parse(value),
+         true <-
+           Repo.exists?(
+             from(binding in ArticleBinding,
+               where: binding.article_id == ^article_id and binding.community_id == ^community_id
+             )
+           ) do
       {:ok, :pass}
     else
-      {:error, CMS.ErrorCat.invalid_review_block()}
+      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
     end
   end
+
+  defp lock_comment_scope(_comment, _scope_key), do: {:error, CMS.ErrorCat.invalid_review_block()}
 end

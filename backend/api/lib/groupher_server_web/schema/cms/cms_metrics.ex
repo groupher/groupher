@@ -88,6 +88,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   enum :mention_type do
     article_values()
+    value(:ticket)
     value(:comment)
     value(:user)
     @desc "External URL mentions only; internal URLs are normalized to concrete content types."
@@ -181,12 +182,18 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   input_object :mention_source_input do
     field(:article, :article_path_input)
     field(:comment, :comment_path_input)
+    field(:ticket, :ticket_path_input)
   end
 
   input_object :mention_target_input do
-    field(:article, :article_path_input)
-    field(:comment, :comment_path_input)
+    field(:type, non_null(:mention_type))
+    field(:locator, :mentions_graph_locator_input)
     field(:user_login, :string)
+  end
+
+  input_object :ticket_path_input do
+    field(:community, non_null(:string))
+    field(:inner_id, non_null(:id))
   end
 
   input_object :trash_filter do

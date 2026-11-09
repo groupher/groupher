@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   alias CMS.Gate.Context.Access.Article, as: ArticleContext
   alias CMS.Gate.Context.Access.Doc, as: DocContext
   alias CMS.Gate.{Decision, Config, ErrorCat}
-  alias CMS.Model.{Article, Comment, Community}
+  alias CMS.Model.{Article, Comment, Community, DocBranch}
 
   @article_threads Config.article_threads()
 
@@ -85,16 +85,19 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   def comment(actor, action, %Comment{} = comment) do
     with {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, comment.community_id),
+         {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment),
          {:ok, result} <-
-           with_parent_lock(community, article, comment.branch_id, fn ->
+           with_parent_lock(community, article, nil, fn ->
              with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
                   %Decision{allowed: true} <-
                     Decision.from_result(
                       Policy.comment(actor, action, comment, context),
                       context
                     ) do
-               {:ok, Map.put(context.comment, :community, context.community)}
+               {:ok,
+                context.comment
+                |> Map.put(:community, context.community)
+                |> Map.put(:request_community_slug, context.community.slug)}
              else
                %Decision{} = decision ->
                  {:error, decision}
@@ -191,6 +194,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
            ) do
       decision.context.comment
       |> Map.put(:community, decision.context.community)
+      |> Map.put(:request_community_slug, decision.context.community.slug)
       |> callback.()
       |> normalize_callback_result()
     else
@@ -215,13 +219,6 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
              context
            ) do
       parent = canonical_resource(decision.context.article, decision.context.community)
-
-      parent =
-        if decision.context.article.thread == :doc do
-          Map.put(parent, :branch_id, decision.context.comment.branch_id)
-        else
-          parent
-        end
 
       callback.(decision.context.comment, parent)
       |> normalize_callback_result()
@@ -326,9 +323,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   defp canonical_resource(resource, community), do: Map.put(resource, :community, community)
   defp context_resource(%ArticleContext{article: article}), do: article
 
-  defp context_resource(%DocContext{doc: doc, doc_branch_state: state}) do
-    %{doc | comments_locked: state.comments_locked}
-  end
+  defp context_resource(%DocContext{doc: doc}), do: doc
 
   defp article_thread(%{thread: thread}) when thread in @article_threads do
     {:ok, thread}
@@ -343,11 +338,16 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     end
   end
 
-  defp parent_article(comment), do: FrontDesk.article_of(comment)
+  defp parent_article(_comment), do: {:error, ErrorCat.resource_not_found()}
 
-  defp with_parent_lock(community, %Article{thread: :doc, id: article_id}, branch_id, fun)
-       when is_integer(branch_id) do
-    Articles.MutationLock.with_article(community, :doc, branch_id, article_id, fun)
+  defp with_parent_lock(%Community{} = community, %Article{thread: :doc} = article, _, fun) do
+    case Repo.get_by(DocBranch, community_id: community.id, type: :main) do
+      %DocBranch{id: branch_id} ->
+        Articles.MutationLock.with_article(community, :doc, branch_id, article.id, fun)
+
+      nil ->
+        {:error, ErrorCat.doc_branch_required()}
+    end
   end
 
   defp with_parent_lock(community, article, _branch_id, fun) do

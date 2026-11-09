@@ -13,7 +13,7 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
 
   import Ecto.Query, only: [where: 3]
 
-  alias GroupherServer.{Accounts, Messaging}
+  alias GroupherServer.{Accounts, Messaging, Repo}
   alias Accounts.Model.User
   alias Messaging.Mentions.Persist
   alias GroupherServer.CMS
@@ -31,13 +31,9 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
           {:ok, %{users: []}}
 
         _ ->
-          with {:ok, :pass} <- ensure_public_content(content),
-               {:ok, mentions} <- Persist.replace(content, mentions, from_user),
-               {:ok, users} <-
-                 mentions
-                 |> Enum.map(& &1.to_user_id)
-                 |> Accounts.mailbox_update_status_many_in_transaction() do
-            {:ok, %{users: users}}
+          case record_in_transaction(content, mentions, from_user) do
+            {:ok, users} -> {:ok, %{users: users}}
+            {:error, _reason} = error -> error
           end
       end
     end)
@@ -65,16 +61,30 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
     execute_pipeline(content, mentions, from_user)
   end
 
-  defp ensure_public_content(%Comment{id: id, thread: :doc}) do
-    require_public_read(
-      Comment,
-      id,
-      CMS.gate_context_scope_comment_for_thread(:doc, branch_policy: :main)
-    )
+  @doc """
+  Records mailbox rows inside the caller's transaction; caller invalidates after commit.
+
+  ## Examples
+
+      SendMention.record_in_transaction(comment, mentions, author)
+  """
+  def record_in_transaction(content, mentions, %User{} = from_user) when is_list(mentions) do
+    with true <- Repo.in_transaction?(),
+         {:ok, :pass} <- ensure_public_content(content),
+         {:ok, persisted} <- Persist.replace(content, mentions, from_user),
+         {:ok, users} <-
+           persisted
+           |> Enum.map(& &1.to_user_id)
+           |> Accounts.mailbox_update_status_many_in_transaction() do
+      {:ok, users}
+    else
+      false -> {:error, :mention_delivery_requires_transaction}
+      {:error, _reason} = error -> error
+    end
   end
 
-  defp ensure_public_content(%Comment{id: id, thread: thread}) do
-    require_public_read(Comment, id, CMS.gate_context_scope_comment_for_thread(thread))
+  defp ensure_public_content(%Comment{id: id}) do
+    require_public_read(Comment, id, CMS.gate_context_scope_comment_all_public())
   end
 
   defp ensure_public_content(%{comment_id: id, thread: :doc}) when is_integer(id) do

@@ -14,7 +14,7 @@ import { print } from 'graphql'
 
 import { THREAD } from '~/const/thread'
 import { DEFAULT_EFFECTIVE_PAGI_CONFIG, toPagiGraphQLInput } from '~/lib/pagination/params'
-import { articleQueryKeys, graphqlKeys } from '~/query'
+import { articleQueryKeys, graphqlKeys, ticketQueryKeys, ticketQueries } from '~/query'
 import { articlePagiRequest } from '~/query/article'
 import { articlePathKey } from '~/query/articlePath'
 import {
@@ -29,6 +29,7 @@ import type { TEffectivePagiConfig, TPagedArticlesParams, TPagiRequest } from '~
 import type { TDocPublicTreeQuery, TThread, TArticleThread } from '~/spec'
 
 import {
+  loadBlog,
   loadChangelog,
   loadChangelogs,
   loadArticleStats,
@@ -37,6 +38,8 @@ import {
   loadDocTree,
   loadKanban,
   loadPost,
+  loadTicket,
+  loadPostTicketProgress,
   loadPosts,
 } from '../server/community'
 
@@ -48,6 +51,13 @@ const toCursorArticlePageRequest = (
 
 /** Community host query options that preserve Core keys, normalization, and merge policies. */
 export const communityQueries = {
+  blog: (community: string, innerId: string) =>
+    queryOptions({
+      queryKey: articleQueryKeys.detail(community, THREAD.BLOG, innerId),
+      queryFn: () => loadBlog({ data: { community, innerId } }),
+      gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
+    }),
   posts: (
     community: string,
     config: TEffectivePagiConfig = DEFAULT_EFFECTIVE_PAGI_CONFIG,
@@ -102,6 +112,22 @@ export const communityQueries = {
     queryOptions({
       queryKey: articleQueryKeys.detail(community, THREAD.POST, innerId),
       queryFn: () => loadPost({ data: { community, innerId } }),
+      gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
+    }),
+  ticket: (community: string, innerId: number) =>
+    queryOptions({
+      ...ticketQueries.detail(community, innerId),
+      queryFn: () => loadTicket({ data: { community, innerId } }),
+      meta: { hydration: 'public' },
+    }),
+  postTicketProgress: (community: string, postInnerIds: number[]) =>
+    queryOptions({
+      queryKey: ticketQueryKeys.postProgress(
+        community,
+        [...new Set(postInnerIds)].sort((a, b) => a - b),
+      ),
+      queryFn: () => loadPostTicketProgress({ data: { community, postInnerIds } }),
       gcTime: 10 * 60_000,
       meta: { hydration: 'public' },
     }),
@@ -204,8 +230,19 @@ export const communityQueries = {
   },
   kanban: (community: string, config = DEFAULT_EFFECTIVE_PAGI_CONFIG) =>
     queryOptions({
-      queryKey: articleQueryKeys.kanban(community, config),
-      queryFn: () => loadKanban({ data: { community } }),
+      queryKey: ticketQueryKeys.kanban(community, 'public', config.defaultSize),
+      queryFn: () =>
+        loadKanban({
+          data: {
+            community,
+            pagi: toPagiGraphQLInput({
+              api: 'offset',
+              page: 1,
+              size: config.defaultSize,
+              configRevision: config.revision,
+            }),
+          },
+        }),
       gcTime: 10 * 60_000,
       meta: { hydration: 'public' },
     }),

@@ -7,12 +7,17 @@ import useArticlesFilter from '~/hooks/useArticlesFilter'
 
 describe('useArticlesFilter', () => {
   it('derives filter fields from search params and pushes updated query', () => {
-    window.history.replaceState(null, '', `/demo/post?${URL_PARAM.CAT}=${ARTICLE_CAT.BUG}`)
+    window.history.replaceState(
+      null,
+      '',
+      `/demo/post?${URL_PARAM.CAT}=${ARTICLE_CAT.BUG}&status=TODO`,
+    )
 
     const wrapper = makeStoreWrapper({ articleList: true })
     const { result } = renderHook(() => useArticlesFilter(), { wrapper })
 
     expect(result.current.cat).toBe(ARTICLE_CAT.BUG)
+    expect(result.current).not.toHaveProperty('status')
 
     act(() => result.current.updateActiveFilter({ cat: ARTICLE_CAT.IDEA }))
 

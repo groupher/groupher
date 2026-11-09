@@ -243,6 +243,9 @@ type RootQueryType {
   "got spec comment by ref"
   oneComment(comment: CommentPathInput!): Comment
 
+  "Reads one Comment reached through a stored Mention, even when its parent body is restricted"
+  mentionedComment(community: String!, locator: MentionsGraphLocatorInput!): Comment
+
   "Comment Lite page using the shared offset\/cursor pagination contract"
   commentPage(article: ArticlePathInput!, mode: CommentsMode, filter: CommentPageFilter, pagi: PagiInput): CommentPage!
 
@@ -253,22 +256,52 @@ type RootQueryType {
   commentReplyPage(comment: CommentPathInput!, filter: CommentPageFilter, pagi: PagiInput): CommentReplyPage!
 
   "mentions created by an artiment"
-  mentions(source: MentionSourceInput!, pagi: PagiInput): ArtimentMentionPage
+  mentions(community: String!, source: MentionsGraphLocatorInput!, pagi: PagiInput): ArtimentMentionPage
 
   "artiments mentioning an internal target"
-  mentionedBy(target: MentionTargetInput!, pagi: PagiInput): ArtimentMentionPage
+  mentionedBy(community: String!, target: MentionTargetInput!, pagi: PagiInput): ArtimentMentionPage
+
+  mentionsGraph(community: String!, focus: MentionsGraphLocatorInput!, after: String, first: Int): MentionsGraphPage!
+
+  "Reads Artiment title, URL and body status by stable resource identity"
+  artimentStatus(community: String!, locator: ArtimentStatusInput!): ArtimentStatus
+
+  mentionsGraphRevision(community: String!, focus: MentionsGraphLocatorInput!): ID!
+
+  mentionsGraphArticleComments(community: String!, focus: MentionsGraphLocatorInput!, after: ID, first: Int): MentionsGraphArticleCommentsPage!
 
   "search communities by title"
   searchCommunities(title: String!, category: String): [Community!]!
 
-  "kanban posts grouped by backlog\/todo\/wip\/done\/rejected"
-  groupedKanbanPosts(community: String!): KanbanPages
+  "Public User Ticket Kanban columns"
+  ticketKanban(community: String!, pagi: PagiInput): TicketKanbanColumns!
+
+  "Internal User Ticket Kanban columns"
+  ticketKanbanInternal(community: String!, filter: TicketFilter, pagi: PagiInput): TicketKanbanColumns!
+
+  "One public User Ticket page"
+  ticketPage(community: String!, filter: TicketFilter, pagi: PagiInput): TicketPage!
+
+  "One internal User Ticket page"
+  ticketPageInternal(community: String!, filter: TicketFilter, pagi: PagiInput): TicketPage!
+
+  "One public User Ticket by Community-shared number"
+  ticket(community: String!, innerId: Int!): Ticket
+
+  "One internal User, Worker or Case Ticket"
+  ticketInternal(community: String!, id: ID!): Ticket
+
+  "Internally visible User Tickets linked to one Post"
+  postTicketLinksInternal(community: String!, postId: ID!): [Ticket!]!
+
+  "Internal Ticket title prefix search"
+  ticketSearch(community: String!, query: String!, type: TicketTypeEnum, pagi: PagiInput): TicketPage!
+
+  "Batched public Ticket progress for a Post page"
+  postTicketProgress(community: String!, postInnerIds: [Int!]!): [PostTicketProgress!]!
 
   "get open graph info by url"
   openGraphInfo(url: String!): OpenGraph
-
-  "One Kanban column using the canonical Article Page contract"
-  kanbanPage(community: String!, filter: PostFilter, pagi: PagiInput): PostPage!
 
   "Article Lite page using the shared offset\/cursor pagination contract"
   postPage(pagi: PagiInput, filter: PostFilter, thread: PostThread): PostPage!
@@ -342,6 +375,9 @@ type RootQueryType {
 }
 
 type RootMutationType {
+  "Redeem a bounded acceptance credential for canonical Auth only."
+  redeemProductionSeedLogin(credential: String!, browserSession: BrowserSessionMetadataInput): BrowserSigninResult
+
   "Records one visible public Profile read through ProfileViewTracker"
   trackProfileView(login: String!): ProfileViewTrackResult!
 
@@ -564,9 +600,6 @@ type RootMutationType {
   "set cat for a post"
   setPostCat(article: ArticlePathInput!, cat: ArticleCatEnum!, commandId: ID!): Post
 
-  "set status for a post"
-  setPostStatus(article: ArticlePathInput!, status: ArticleStatusEnum!, commandId: ID!): Post
-
   "upvote to post"
   upvotePost(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
@@ -764,6 +797,83 @@ type RootMutationType {
 
   "undo pin a comment"
   undoPinComment(comment: CommentPathInput!, commandId: ID!): Comment
+
+  "Create a User Ticket Draft from a public Post"
+  createTicketFromPost(commandId: ID!, community: String!, postId: ID!, title: String, digest: String): Ticket
+
+  "Create a private Worker Ticket under a User Ticket"
+  createWorkerTicket(
+    commandId: ID!, community: String!, parentId: ID!, expectedWorkflowVersion: Int!, title: String, digest: String
+  ): Ticket
+
+  "Create an internal Case Ticket"
+  createTicketCase(commandId: ID!, community: String!, title: String!, digest: String, body: String, memberTicketId: ID): Ticket
+
+  "Transition Ticket work status with an expected version"
+  transitionTicket(
+    commandId: ID!, community: String!, id: ID!, status: TicketStatusEnum!, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Move a Ticket within or between work columns"
+  moveTicket(
+    commandId: ID!, community: String!, id: ID!, status: TicketStatusEnum, rank: Int!, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Update Ticket priority or planned dates"
+  updateTicket(
+    commandId: ID!, community: String!, id: ID!, priority: Int, plannedStartAt: DateTime, plannedEndAt: DateTime, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Create a content Draft workspace for an already published Ticket"
+  ensureTicketDraft(commandId: ID!, community: String!, id: ID!, expectedLifecycleVersion: Int!): Ticket
+
+  "Save the Ticket content Draft with Draft and Lifecycle versions"
+  saveTicketDraft(
+    commandId: ID!, community: String!, id: ID!, content: TicketContentInput!, expectedDraftVersion: Int!, expectedLifecycleVersion: Int!
+  ): Ticket
+
+  "Publish the reviewed Ticket Draft with all three expected versions"
+  publishTicket(
+    commandId: ID!, community: String!, id: ID!, expectedPreview: String!, reason: String!, expectedDraftVersion: Int!, expectedLifecycleVersion: Int!, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Move a published Ticket to Draft with its lifecycle version"
+  moveTicketToDraft(commandId: ID!, community: String!, id: ID!, reason: String!, expectedLifecycleVersion: Int!): Ticket
+
+  "Append an internal or public Ticket progress update"
+  addTicketUpdate(
+    commandId: ID!, community: String!, id: ID!, body: String!, visibility: TicketUpdateVisibilityEnum!, supersedesId: ID, expectedLifecycleVersion: Int, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Link a typed source to a User Ticket; currently only POST is supported"
+  linkTicketSource(
+    commandId: ID!, community: String!, ticketId: ID!, type: TicketSourceTypeEnum!, sourceId: ID!, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Unlink a TicketSource relation by its relation ID"
+  unlinkTicketSource(commandId: ID!, community: String!, ticketId: ID!, sourceId: ID!, expectedWorkflowVersion: Int!): Ticket
+
+  "Add a User Ticket to a Case"
+  addTicketCaseMember(commandId: ID!, community: String!, caseId: ID!, ticketId: ID!, expectedWorkflowVersion: Int!): Ticket
+
+  "Remove a User Ticket from a Case"
+  removeTicketCaseMember(commandId: ID!, community: String!, caseId: ID!, ticketId: ID!, expectedWorkflowVersion: Int!): Ticket
+
+  "Reference a member-owned Worker as a shared Case fix"
+  addTicketCaseWorker(commandId: ID!, community: String!, caseId: ID!, workerId: ID!, expectedWorkflowVersion: Int!): Ticket
+
+  "Replace assigned Community moderators on a Ticket"
+  setTicketAssignees(
+    commandId: ID!, community: String!, ticketId: ID!, assigneeIds: [Int!]!, expectedWorkflowVersion: Int!
+  ): Ticket
+
+  "Replace internal Post tags on a Ticket"
+  setTicketTags(commandId: ID!, community: String!, ticketId: ID!, tagIds: [Int!]!, expectedWorkflowVersion: Int!): Ticket
+
+  "Replace normalized internal Ticket facets"
+  setTicketFacets(
+    commandId: ID!, community: String!, ticketId: ID!, facets: [TicketFacetInput!]!, expectedWorkflowVersion: Int!
+  ): Ticket
 
   "Exports Activity evidence and records the export before returning the artifact"
   exportCommunityActivity(
@@ -972,27 +1082,23 @@ type RootMutationType {
   "cancel an unfinished import Job and discard its staged BodyBags"
   cancelDocContentImport(community: String!, jobRef: ID!): ContentImportJob!
 
-  recheckArticle(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): CmsReviewCommandResult!
+  recheckArticleV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
-  recheckComment(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): CmsReviewCommandResult!
+  recheckCommentV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
-  approveArticle(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  recheckDocV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
-  denyArticle(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  approveArticleV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  releaseArticle(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  rejectArticleV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  approveComment(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  approveCommentV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  denyComment(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  rejectCommentV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  releaseComment(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  approveDocV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
-  approveDoc(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
-
-  denyDoc(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
-
-  releaseDoc(target: CmsReviewTargetInput!, commandId: ID!): CmsReviewCommandResult!
+  rejectDocV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
   updateReviewBotConfig(input: UpdateReviewBotConfigInput!, commandId: ID!): ReviewBotConfig!
 
@@ -1693,11 +1799,17 @@ type PressSiteManifest {
   items: [PressRSSFeedItem!]!
 }
 
-type CmsReviewCommandResult {
+enum ReviewAction {
+  APPROVE
+  REJECT
+  RECHECK
+}
+
+type ReviewCommandResult {
   commandId: ID!
   targetType: ReviewBotSubjectType!
   targetId: String!
-  action: String!
+  action: ReviewAction!
 }
 
 input CmsReviewTargetInput {
@@ -1736,6 +1848,81 @@ type CmsContentReview {
   reviewMode: String
   systemOpinion: CmsReviewOpinion
   communityOpinion: CmsReviewOpinion
+}
+
+enum ArtimentType {
+  POST
+  BLOG
+  CHANGELOG
+  DOC
+  TICKET
+  COMMENT
+}
+
+enum ArtimentReadStatus {
+  READABLE
+  DELETED
+  UNAVAILABLE
+}
+
+input ArtimentStatusInput {
+  type: ArtimentType!
+  articleInnerId: ID
+  articleId: ID
+  commentInnerId: ID
+}
+
+input MentionsGraphLocatorInput {
+  type: ArtimentType!
+  articleInnerId: ID
+  articleId: ID
+  commentInnerId: ID
+}
+
+type MentionsGraphLocator {
+  type: ArtimentType!
+  articleInnerId: ID
+  articleId: ID
+  commentInnerId: ID
+}
+
+type MentionsGraphNode {
+  id: ID!
+  type: ArtimentType!
+  status: ArtimentReadStatus!
+  title: String
+  url: String
+  locator: MentionsGraphLocator
+  canOpen: Boolean!
+}
+
+type ArtimentStatus {
+  type: ArtimentType!
+  status: ArtimentReadStatus!
+  title: String
+  url: String
+}
+
+type MentionsGraphEdge {
+  id: ID!
+  from: ID!
+  to: ID!
+  occurrencesCount: Int!
+}
+
+type MentionsGraphPage {
+  revision: ID!
+  nodes: [MentionsGraphNode!]!
+  edges: [MentionsGraphEdge!]!
+  hasNextPage: Boolean!
+  endCursor: String
+}
+
+type MentionsGraphArticleCommentsPage {
+  revision: ID!
+  comments: [MentionsGraphLocator!]!
+  hasNextPage: Boolean!
+  endCursor: ID
 }
 
 type CommunityNameCheck {
@@ -1780,10 +1967,201 @@ type ArticleStats {
   commentsCount: Int!
   collectsCount: Int!
   commentsParticipantsCount: Int!
+  commentsParticipants: [ParticipantSnapshotUser!]!
   interactionRevision: Int!
   commentsRevision: Int!
   emotionCounts: [ArticleEmotionCount!]!
   snapshotAt: DateTime!
+}
+
+enum TicketTypeEnum {
+  USER
+  WORKER
+  CASE
+}
+
+enum TicketStatusEnum {
+  TODO
+  WIP
+  DONE
+  OPEN
+  RESOLVED
+}
+
+enum TicketPublicationState {
+  DRAFT
+  PUBLISHED
+}
+
+enum TicketSourceTypeEnum {
+  POST
+}
+
+enum TicketUpdateVisibilityEnum {
+  PUBLIC
+  INTERNAL
+}
+
+input TicketFilter {
+  type: TicketTypeEnum
+  status: TicketStatusEnum
+  assigneeId: Int
+  priority: Int
+  tagIds: [Int]
+  versions: [String]
+  operatingSystems: [String]
+  modules: [String]
+  createdAfter: DateTime
+  createdBefore: DateTime
+  updatedAfter: DateTime
+  updatedBefore: DateTime
+  plannedAfter: DateTime
+  plannedBefore: DateTime
+}
+
+input TicketFacetInput {
+  key: String!
+  value: String!
+}
+
+type TicketAssignee {
+  id: ID!
+  login: String!
+  nickname: String
+}
+
+type TicketTagRef {
+  id: Int!
+  title: String!
+  slug: String!
+  color: String
+}
+
+type TicketFacet {
+  key: String!
+  value: String!
+}
+
+type TicketSourceRef {
+  id: ID!
+  type: TicketSourceTypeEnum!
+  innerId: Int
+  title: String
+  isPublic: Boolean!
+  reviewBlockTypes: [String!]!
+}
+
+type TicketProgressRef {
+  id: ID!
+  innerId: Int!
+  title: String!
+  status: TicketStatusEnum!
+}
+
+type TicketRelationRef {
+  id: ID!
+  type: TicketTypeEnum!
+  status: TicketStatusEnum!
+  priority: Int!
+  workflowVersion: Int!
+  rank: Int!
+  innerId: Int
+  title: String!
+  digest: String
+  plannedStartAt: DateTime
+  plannedEndAt: DateTime
+}
+
+type Ticket {
+  id: ID!
+  innerId: Int
+  type: TicketTypeEnum!
+  status: TicketStatusEnum!
+  publicationState: TicketPublicationState!
+  canPublishPublicUpdates: Boolean!
+  priority: Int!
+  lifecycleVersion: Int
+  workflowVersion: Int
+  draftVersion: Int
+  rank: Int!
+  title: String!
+  digest: String!
+  body: String!
+  plainText: String!
+  publicationPreview: String
+  draftContent: TicketContent
+  publishedContent: TicketContent
+  hasUnpublishedChanges: Boolean
+  plannedStartAt: DateTime
+  plannedEndAt: DateTime
+  startedAt: DateTime
+  completedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  assignees: [TicketAssignee!]!
+  tags: [TicketTagRef!]!
+  facets: [TicketFacet!]!
+  sources: [TicketSourceRef!]!
+  workers: [TicketRelationRef!]!
+  members: [TicketRelationRef!]!
+  cases: [TicketRelationRef!]!
+  sharedWorkers: [TicketRelationRef!]!
+  parent: TicketRelationRef
+  activity(pagi: PagiInput): TicketActivityConnection
+  updates: [TicketUpdate!]!
+}
+
+type TicketContent {
+  title: String!
+  digest: String!
+  body: String!
+}
+
+type TicketActivityConnection {
+  entries: [TicketActivity!]!
+  pageInfo: PageInfo!
+}
+
+input TicketContentInput {
+  title: String
+  digest: String
+  body: Json
+}
+
+type TicketActivity {
+  id: ID!
+  action: String!
+  payload: Json
+  occurredAt: DateTime!
+  actorRef: ID
+}
+
+type TicketPage {
+  entries: [Ticket!]!
+  pageInfo: PageInfo!
+}
+
+type TicketKanbanColumns {
+  todo: TicketPage!
+  wip: TicketPage!
+  done: TicketPage!
+}
+
+type PostTicketProgress {
+  postInnerId: Int!
+  status: TicketStatusEnum!
+  completed: Int!
+  total: Int!
+  tickets: [TicketProgressRef!]!
+}
+
+type TicketUpdate {
+  id: ID!
+  body: String!
+  visibility: TicketUpdateVisibilityEnum!
+  authorId: ID!
+  publishedAt: DateTime
+  supersedesId: ID
 }
 
 type ArticleReactionResult {
@@ -1845,7 +2223,7 @@ enum CommunityLifecycleState {
 }
 
 enum ArticleLifecycleState {
-  DRAFT_ONLY
+  DRAFT
   PUBLISHED
   ARCHIVED
   DELETED
@@ -2025,11 +2403,8 @@ type TrashedArticle {
   article: Article
   deletedBy: User
   deletedAt: DateTime!
-  mentionedByCount: Int!
   commandId: ID
   scheduledPermanentDeletionAt: DateTime!
-  mentionedBy(pagi: PagiInput): ArtimentMentionPage
-  mentions(pagi: PagiInput): ArtimentMentionPage
 }
 
 type TrashPage {
@@ -2039,9 +2414,10 @@ type TrashPage {
 
 type ActivityResourceRef {
   type: String!
-  ref: ID!
+  ref: ID
   title: String
   innerId: ID
+  url: String
 }
 
 type ArticleLogActor {
@@ -2208,6 +2584,14 @@ enum CommunityAssetType {
   VIDEO
   AUDIO
   FILE
+}
+
+enum AssetThread {
+  POST
+  BLOG
+  CHANGELOG
+  DOC
+  TICKET
 }
 
 enum CommunityAssetStatus {
@@ -2573,6 +2957,13 @@ type DsbThemePresetOption {
   tokens: Json!
 }
 
+type ParticipantSnapshotUser {
+  ref: ID!
+  login: String!
+  avatar: String
+  nickname: String
+}
+
 type CommonUser {
   login: String!
   avatar: String
@@ -2584,6 +2975,7 @@ type CommonUser {
 type CommonArticle {
   thread: Thread
   innerId: ID
+  community: Community
   title: String
   commentsRevision: Int
   articleStats: ArticleStats
@@ -2593,7 +2985,7 @@ type CommonArticle {
 type CommunityAsset {
   id: ID
   publicRef: String
-  thread: Thread
+  thread: AssetThread
   assetType: CommunityAssetType
   status: CommunityAssetStatus
   title: String
@@ -2616,7 +3008,7 @@ type CommunityAsset {
 
 type ArticleAssetRef {
   id: ID
-  thread: Thread
+  thread: AssetThread
   articleId: ID
   usage: ArticleDocumentAssetUsage
   blockId: String
@@ -2637,7 +3029,7 @@ type CommunityAssetUsage {
 }
 
 type CommunityAssetThreadStat {
-  thread: Thread!
+  thread: AssetThread!
   count: Int!
 }
 
@@ -2676,7 +3068,7 @@ type CommunityAssetOriginInfo {
 }
 
 input CommunityAssetInput {
-  thread: Thread
+  thread: AssetThread
   assetType: CommunityAssetType
   title: String
   filename: String
@@ -2706,13 +3098,13 @@ input CommunityAssetUploadFileInput {
   mimeType: String!
   sizeBytes: BigInt!
   checksumSha256: String
-  thread: Thread
+  thread: AssetThread
   assetType: CommunityAssetType
 }
 
 input CommunityAssetFilter {
   query: String
-  thread: Thread
+  thread: AssetThread
   assetType: CommunityAssetType
   subtypes: [String!]
 }
@@ -2730,7 +3122,7 @@ input CommunityAssetUploadCompletionInput {
   sizeBytes: BigInt!
   filename: String
   mimeType: String
-  thread: Thread
+  thread: AssetThread
   assetType: CommunityAssetType
   width: Int
   height: Int
@@ -2828,9 +3220,8 @@ type Post implements Article {
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
-  commentsParticipants: [User]
+  commentsParticipants: [ParticipantSnapshotUser!]!
   cat: ArticleCatEnum
-  status: ArticleStatusEnum
   isSolved: Boolean!
   solutionCommentId: ID
   solutionDigest: String
@@ -2861,7 +3252,7 @@ type Changelog implements Article {
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
-  commentsParticipants: [User]
+  commentsParticipants: [ParticipantSnapshotUser!]!
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -2890,7 +3281,7 @@ type Doc implements Article {
   copyRight: String
   linkAddr: String
   subtitle: String
-  commentsParticipants: [User]
+  commentsParticipants: [ParticipantSnapshotUser!]!
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -2918,7 +3309,7 @@ type Blog implements Article {
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
-  commentsParticipants: [User]
+  commentsParticipants: [ParticipantSnapshotUser!]!
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -3362,6 +3753,7 @@ type Dsb {
 
 type CommunityModerator {
   id: ID!
+  userId: ID!
   isRoot: Boolean!
   passportItemCount: Int!
   user: CommonUser!
@@ -3546,7 +3938,12 @@ type CommentReply {
   isArticleAuthor: Boolean
   emotions: [EmotionStat]
   meta: CommentMeta
-  repliesCount: Int
+  repliesCount: Int!
+  replyParticipants: [ParticipantSnapshotUser!]!
+  lastReplyAt: DateTime
+  repliesRevision: Int!
+  isFolded: Boolean!
+  hasReplyEntries: Boolean!
   thread: Thread
   viewerHasUpvoted: Boolean
   replyToComment: Comment
@@ -3571,7 +3968,12 @@ type Comment {
   isArticleAuthor: Boolean
   emotions: [EmotionStat]
   meta: CommentMeta
-  repliesCount: Int
+  repliesCount: Int!
+  replyParticipants: [ParticipantSnapshotUser!]!
+  lastReplyAt: DateTime
+  repliesRevision: Int!
+  isFolded: Boolean!
+  hasReplyEntries: Boolean!
   thread: Thread
   viewerHasUpvoted: Boolean
   replyToComment: Comment
@@ -3587,31 +3989,33 @@ type Comment {
 type CommentsListState {
   totalCount: Int
   participantsCount: Int
-  participants: [CommonUser]
-  isViewerJoined: Boolean
+  participants: [ParticipantSnapshotUser]
 }
 
 type ArtimentMention {
-  id: ID
-  mentionerType: MentionType
-  mentionerId: ID
-  mentionerCommunityId: ID
-  mentionerUrl: String
-  mentionedScope: MentionScope
-  mentionedType: MentionType
-  mentionedId: ID
-  mentionedCommunityId: ID
-  mentionedUrl: String
-  mentionedUrlHash: String
-  mentionCase: MentionCase
-  occurrences: [Json]
-  mentionerSnapshot: Json
-  mentionedSnapshot: Json
-  meta: Json
-  mentionedAt: DateTime
-  insertedAt: DateTime
-  updatedAt: DateTime
+  id: ID!
+  source: MentionsGraphNode!
+  targetType: MentionType!
+  target: MentionTarget!
+  mentionCase: MentionCase!
+  occurrencesCount: Int!
+  mentionedAt: DateTime!
 }
+
+type MentionUserTarget {
+  type: MentionType!
+  status: ArtimentReadStatus!
+  login: String
+  displayName: String
+  url: String
+}
+
+type MentionUrlTarget {
+  type: MentionType!
+  url: String!
+}
+
+union MentionTarget = MentionsGraphNode | MentionUserTarget | MentionUrlTarget
 
 type PostLite {
   id: ID!
@@ -3625,7 +4029,6 @@ type PostLite {
   activeAt: DateTime
   insertedAt: DateTime!
   cat: ArticleCatEnum
-  status: ArticleStatusEnum
   isPinned: Boolean!
 }
 
@@ -3729,16 +4132,9 @@ type CommentPage {
   pageInfo: PageInfo!
 }
 
-type KanbanPages {
-  backlog: PostPage
-  todo: PostPage
-  wip: PostPage
-  done: PostPage
-  rejected: PostPage
-}
-
 type ArtimentMentionPage {
-  entries: [ArtimentMention]
+  revision: ID!
+  entries: [ArtimentMention!]!
   pageInfo: PageInfo!
 }
 
@@ -3982,17 +4378,14 @@ enum MentionType {
 
   DOC
 
+  TICKET
+
   COMMENT
 
   USER
 
   "External URL mentions only; internal URLs are normalized to concrete content types."
   URL
-}
-
-enum MentionScope {
-  INTERNAL
-  EXTERNAL
 }
 
 enum MentionCase {
@@ -4099,14 +4492,9 @@ input CommentPathInput {
   innerId: ID!
 }
 
-input MentionSourceInput {
-  article: ArticlePathInput
-  comment: CommentPathInput
-}
-
 input MentionTargetInput {
-  article: ArticlePathInput
-  comment: CommentPathInput
+  type: MentionType!
+  locator: MentionsGraphLocatorInput
   userLogin: String
 }
 
@@ -4166,8 +4554,6 @@ input ArticlePageFilter {
   when: WhenEnum
   communityTag: String
   cat: ArticleCatEnum
-  status: ArticleStatusEnum
-  statuses: [ArticleStatusEnum!]
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
@@ -4178,8 +4564,6 @@ input PostFilter {
   when: WhenEnum
   communityTag: String
   cat: ArticleCatEnum
-  status: ArticleStatusEnum
-  statuses: [ArticleStatusEnum!]
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
@@ -4190,8 +4574,6 @@ input ChangelogFilter {
   when: WhenEnum
   communityTag: String
   cat: ArticleCatEnum
-  status: ArticleStatusEnum
-  statuses: [ArticleStatusEnum!]
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
@@ -4333,11 +4715,9 @@ enum RainbowColor {
 }
 
 enum KanbanBoard {
-  BACKLOG
   TODO
   WIP
   DONE
-  REJECTED
 }
 
 enum DsbPostLayout {

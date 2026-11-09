@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.CMS.Model.ReviewBlockTest do
   test "restriction end metadata is all present or all absent" do
     base = %{
       article_id: Ecto.UUID.generate(),
-      type: :awaiting_ai,
+      type: :ai_review_hold,
       source_ref: "submit:1",
       source: :request,
       applied_at: DateTime.utc_now()

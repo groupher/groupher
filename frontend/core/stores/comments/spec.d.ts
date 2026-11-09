@@ -23,6 +23,7 @@ export type TInit = Partial<
     | 'publishing'
     | 'publishDone'
     | 'foldedCommentIds'
+    | 'expandedCommentIds'
   >
 >
 
@@ -45,6 +46,7 @@ export type TStore = {
   publishing: boolean
   publishDone: boolean
 
+  expandedCommentIds: string[]
   foldedCommentIds: string[]
 
   commit: (patch: Partial<TStore>) => void

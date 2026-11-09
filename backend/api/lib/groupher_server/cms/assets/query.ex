@@ -17,8 +17,8 @@ defmodule GroupherServer.CMS.Assets.Query do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Artiment.Threads
-  alias CMS.Assets.ErrorCat
+  alias CMS.Assets.{ErrorCat, ThreadIdentity}
+  alias CMS.Gate.Context.Scope.Ticket, as: TicketContext
 
   alias CMS.Model.{
     Article,
@@ -35,6 +35,7 @@ defmodule GroupherServer.CMS.Assets.Query do
     DocBranchState,
     DocDraft,
     DocLifecycle,
+    TicketState,
     TrashedArticle
   }
 
@@ -60,14 +61,12 @@ defmodule GroupherServer.CMS.Assets.Query do
   """
   @spec page(Community.t(), map() | nil, Params.t() | nil) :: T.domain_res(T.paged_data())
   def page(%Community{id: community_id}, filter, pagi) do
-    normalized = normalize_filter(filter)
-
-    query =
-      community_id
-      |> CommunityAsset.active_query()
-      |> apply_filter(normalized)
-
-    with {:ok, paged} <-
+    with {:ok, normalized} <- normalize_filter(filter),
+         query <-
+           community_id
+           |> CommunityAsset.active_query()
+           |> apply_filter(normalized),
+         {:ok, paged} <-
            ORM.pagi(
              query,
              pagi,
@@ -100,18 +99,19 @@ defmodule GroupherServer.CMS.Assets.Query do
   """
   @spec stats(Community.t(), map() | nil) :: T.domain_res(map())
   def stats(%Community{id: community_id}, filter) do
-    normalized = normalize_filter(filter)
-    base_query = community_id |> CommunityAsset.active_query() |> apply_filter(normalized)
-    storage = community_storage(community_id)
+    with {:ok, normalized} <- normalize_filter(filter) do
+      base_query = community_id |> CommunityAsset.active_query() |> apply_filter(normalized)
+      storage = community_storage(community_id)
 
-    {:ok,
-     %{
-       total_count: total_count(base_query),
-       storage_bytes: storage.storage_bytes,
-       storage_limit_bytes: @storage_limit_bytes,
-       by_thread: thread_stats(base_query),
-       by_asset_type: asset_type_stats(base_query)
-     }}
+      {:ok,
+       %{
+         total_count: total_count(base_query),
+         storage_bytes: storage.storage_bytes,
+         storage_limit_bytes: @storage_limit_bytes,
+         by_thread: thread_stats(base_query),
+         by_asset_type: asset_type_stats(base_query)
+       }}
+    end
   end
 
   @doc """
@@ -209,7 +209,14 @@ defmodule GroupherServer.CMS.Assets.Query do
   def usages(%Community{} = community, asset_id, actor) do
     with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community.id, asset_id),
          {:ok, _community} <- CMS.Gate.access_check(actor, :read, community) do
-      collect_usage_batches(usage_query(community.id, asset_id), 1, [], &format_usage_row/1)
+      ticket_ids = ticket_scope_ids(community, actor)
+
+      collect_usage_batches(
+        usage_query(community.id, asset_id, ticket_ids),
+        1,
+        [],
+        &format_usage_row/1
+      )
     end
   end
 
@@ -226,7 +233,7 @@ defmodule GroupherServer.CMS.Assets.Query do
     with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community.id, asset_id),
          {:ok, _community} <- CMS.Gate.access_check(actor, :read, community) do
       collect_usage_batches(
-        usage_query(community.id, asset_id),
+        usage_query(community.id, asset_id, ticket_scope_ids(community, actor)),
         1,
         [],
         &format_replacement_usage_row/1
@@ -251,7 +258,7 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
-  defp usage_query(community_id, asset_id) do
+  defp usage_query(community_id, asset_id, ticket_ids) do
     from(ref in ArticleAssetRef,
       where: ref.community_id == ^community_id and ref.asset_id == ^asset_id,
       left_join: draft in ArticleDraft,
@@ -283,13 +290,14 @@ defmodule GroupherServer.CMS.Assets.Query do
       left_join: trash in TrashedArticle,
       on: trash.article_id == article.id,
       where:
-        is_nil(ref.body_draft_id) or
-          not is_nil(trash.id) or
-          (not is_nil(binding.id) and community_lifecycle.state == :active and
-             ((article.thread != :doc and article_lifecycle.state in [:draft_only, :published]) or
-                (article.thread == :doc and not is_nil(doc_draft.id) and
-                   not is_nil(branch.id) and doc_lifecycle.state in [:draft_only, :published] and
-                   not is_nil(doc_branch_state.id)))),
+        (is_nil(ref.body_draft_id) or
+           not is_nil(trash.id) or
+           (not is_nil(binding.id) and community_lifecycle.state == :active and
+              ((article.thread != :doc and article_lifecycle.state in [:draft, :published]) or
+                 (article.thread == :doc and not is_nil(doc_draft.id) and
+                    not is_nil(branch.id) and doc_lifecycle.state in [:draft, :published] and
+                    not is_nil(doc_branch_state.id))))) and
+          (article.thread != :ticket or article.id in subquery(ticket_ids)),
       select: {
         ref,
         article,
@@ -303,6 +311,21 @@ defmodule GroupherServer.CMS.Assets.Query do
         branch
       }
     )
+  end
+
+  defp ticket_scope_ids(community, actor) do
+    gate_community = %{community | slug: community.slug || ""}
+
+    case CMS.Gate.scope(TicketState, actor, :read, TicketContext.internal(gate_community)) do
+      {:ok, query} ->
+        select(query, [ticket_state: state], state.article_id)
+
+      {:error, _reason} ->
+        case CMS.Gate.scope(TicketState, nil, :read, TicketContext.public(gate_community)) do
+          {:ok, query} -> select(query, [ticket_state: state], state.article_id)
+          {:error, _reason} -> from(state in TicketState, where: false, select: state.article_id)
+        end
+    end
   end
 
   defp collect_usage_batches(query, page, batches, formatter) do
@@ -324,11 +347,13 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
-  defp format_usage_row({ref, article, _draft, _doc_draft, public, trash, _, _, _, _}) do
+  defp format_usage_row(
+         {ref, article, _draft, _doc_draft, public, trash, article_lifecycle, doc_lifecycle, _, _}
+       ) do
     Map.merge(Map.from_struct(ref), %{
       article_id: article.id,
       thread: article.thread,
-      lifecycle: lifecycle(ref, public, trash)
+      lifecycle: lifecycle(ref, article, public, trash, article_lifecycle, doc_lifecycle)
     })
   end
 
@@ -392,41 +417,93 @@ defmodule GroupherServer.CMS.Assets.Query do
 
   def origin_info(_), do: {:error, ErrorCat.not_exist("asset not found")}
 
-  defp lifecycle(%ArticleAssetRef{}, _public, %TrashedArticle{}), do: :trashed
+  defp lifecycle(
+         %ArticleAssetRef{},
+         _article,
+         _public,
+         %TrashedArticle{},
+         _article_lifecycle,
+         _doc_lifecycle
+       ) do
+    :trashed
+  end
 
-  defp lifecycle(%ArticleAssetRef{body_draft_id: body_draft_id}, _public, _trash)
+  defp lifecycle(
+         %ArticleAssetRef{body_draft_id: body_draft_id},
+         _article,
+         _public,
+         _trash,
+         _article_lifecycle,
+         _doc_lifecycle
+       )
        when not is_nil(body_draft_id) do
     :draft
   end
 
   defp lifecycle(
          %ArticleAssetRef{revision_id: revision_id},
+         %Article{thread: :ticket},
          %ArticlePublic{revision_id: revision_id},
-         _trash
+         _trash,
+         %ArticleLifecycle{state: :published},
+         _doc_lifecycle
        ) do
     :live
   end
 
-  defp lifecycle(%ArticleAssetRef{revision_id: _revision_id}, _public, _trash) do
+  defp lifecycle(
+         %ArticleAssetRef{revision_id: revision_id},
+         %Article{thread: :ticket},
+         %ArticlePublic{revision_id: revision_id},
+         _trash,
+         _article_lifecycle,
+         _doc_lifecycle
+       ) do
+    :historical
+  end
+
+  defp lifecycle(
+         %ArticleAssetRef{revision_id: revision_id},
+         _article,
+         %ArticlePublic{revision_id: revision_id},
+         _trash,
+         _article_lifecycle,
+         _doc_lifecycle
+       ) do
+    :live
+  end
+
+  defp lifecycle(
+         %ArticleAssetRef{revision_id: _revision_id},
+         _article,
+         _public,
+         _trash,
+         _article_lifecycle,
+         _doc_lifecycle
+       ) do
     :historical
   end
 
   defp normalize_filter(nil) do
-    %{
-      asset_type: nil,
-      query: nil,
-      subtypes: [],
-      thread: nil
-    }
+    {:ok,
+     %{
+       asset_type: nil,
+       query: nil,
+       subtypes: [],
+       thread: nil
+     }}
   end
 
   defp normalize_filter(filter) do
-    %{
-      asset_type: normalize_asset_type(get_filter(filter, :asset_type)),
-      query: normalize_query(get_filter(filter, :query)),
-      subtypes: normalize_subtypes(get_filter(filter, :subtypes)),
-      thread: normalize_thread(get_filter(filter, :thread))
-    }
+    with {:ok, thread} <- normalize_thread(get_filter(filter, :thread)) do
+      {:ok,
+       %{
+         asset_type: normalize_asset_type(get_filter(filter, :asset_type)),
+         query: normalize_query(get_filter(filter, :query)),
+         subtypes: normalize_subtypes(get_filter(filter, :subtypes)),
+         thread: thread
+       }}
+    end
   end
 
   defp apply_filter(query, %{
@@ -496,7 +573,7 @@ defmodule GroupherServer.CMS.Assets.Query do
       |> Repo.all()
       |> Map.new(&{&1.thread, &1.count})
 
-    Threads.article_enums()
+    ThreadIdentity.values()
     |> Enum.map(&%{thread: &1, count: Map.get(counts, &1, 0)})
   end
 
@@ -576,22 +653,8 @@ defmodule GroupherServer.CMS.Assets.Query do
 
   defp normalize_asset_type(_), do: nil
 
-  defp normalize_thread(nil), do: nil
-
-  defp normalize_thread(thread) when is_atom(thread) do
-    if thread in Threads.article_enums(), do: thread, else: nil
-  end
-
-  defp normalize_thread(thread) when is_binary(thread) do
-    thread
-    |> String.downcase()
-    |> String.to_existing_atom()
-    |> normalize_thread()
-  rescue
-    ArgumentError -> nil
-  end
-
-  defp normalize_thread(_), do: nil
+  defp normalize_thread(nil), do: {:ok, nil}
+  defp normalize_thread(thread), do: ThreadIdentity.to_atom(thread)
 
   defp normalize_query(nil), do: nil
 

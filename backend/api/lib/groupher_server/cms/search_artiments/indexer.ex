@@ -157,19 +157,19 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   def sync_article_metrics(thread, article_id) do
     case public_article(thread, article_id) do
       {:ok, articles} ->
-        metrics =
-          Enum.map(articles, fn article ->
-            counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
+        with {:ok, counts} <- CMS.ArticleStats.search_counts(thread, article_id) do
+          metrics =
+            Enum.map(articles, fn article ->
+              {Artiment.article_key(thread, article.id, article.community.slug),
+               %{
+                 upvotes_count: counts.upvotes_count,
+                 comments_count: counts.comments_count,
+                 updated_at: article.updated_at
+               }}
+            end)
 
-            {Artiment.article_key(thread, article.id, article.community.slug),
-             %{
-               upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
-               comments_count: article.comments_count || 0,
-               updated_at: article.updated_at
-             }}
-          end)
-
-        SearchArtiments.update_metrics(metrics)
+          SearchArtiments.update_metrics(metrics)
+        end
 
       {:error, :not_found} ->
         delete_article(thread, article_id)

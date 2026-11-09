@@ -112,7 +112,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
 
       {:ok, reply_comment} =
         CMS.Comments.reply_comment(
-          parent_comment.id,
+          parent_comment,
           mock_comment("reply_content"),
           user,
           Ecto.UUID.generate()
@@ -169,6 +169,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
         )
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
+
+      parent_comment = %{parent_comment | request_community_slug: community.slug}
 
       emotions = parent_comment.emotions |> Map.from_struct() |> Map.delete(:id)
       assert @default_emotions == emotions
@@ -266,6 +268,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, _} = CMS.Interactions.emotion(parent_comment, :heart, user, Ecto.UUID.generate())
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
+
+      parent_comment = %{parent_comment | request_community_slug: community.slug}
 
       {:ok, records} = ORM.find_all(CommentUserEmotion, %{})
       assert length(records) == 2

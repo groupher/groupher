@@ -552,6 +552,14 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Comments.one_comment/3)
     end
 
+    @desc "Reads one Comment reached through a stored Mention, even when its parent body is restricted"
+    field :mentioned_comment, :comment do
+      arg(:community, non_null(:string))
+      arg(:locator, non_null(:mentions_graph_locator_input))
+
+      resolve(&R.CMS.Comments.mentioned_comment/3)
+    end
+
     @desc "Comment Lite page using the shared offset/cursor pagination contract"
     field :comment_page, non_null(:comment_page) do
       arg(:article, non_null(:article_path_input))
@@ -583,7 +591,8 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "mentions created by an artiment"
     field :mentions, :artiment_mention_page do
-      arg(:source, non_null(:mention_source_input))
+      arg(:community, non_null(:string))
+      arg(:source, non_null(:mentions_graph_locator_input))
       arg(:pagi, :pagi_input)
 
       resolve(&R.CMS.ArtimentMentions.mentions/3)
@@ -591,10 +600,40 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "artiments mentioning an internal target"
     field :mentioned_by, :artiment_mention_page do
+      arg(:community, non_null(:string))
       arg(:target, non_null(:mention_target_input))
       arg(:pagi, :pagi_input)
 
       resolve(&R.CMS.ArtimentMentions.mentioned_by/3)
+    end
+
+    field :mentions_graph, non_null(:mentions_graph_page) do
+      arg(:community, non_null(:string))
+      arg(:focus, non_null(:mentions_graph_locator_input))
+      arg(:after, :string)
+      arg(:first, :integer, default_value: 20)
+      resolve(&R.CMS.ArtimentMentions.mentions_graph/3)
+    end
+
+    @desc "Reads Artiment title, URL and body status by stable resource identity"
+    field :artiment_status, :artiment_status do
+      arg(:community, non_null(:string))
+      arg(:locator, non_null(:artiment_status_input))
+      resolve(&R.CMS.ArtimentStatus.read/3)
+    end
+
+    field :mentions_graph_revision, non_null(:id) do
+      arg(:community, non_null(:string))
+      arg(:focus, non_null(:mentions_graph_locator_input))
+      resolve(&R.CMS.ArtimentMentions.mentions_graph_revision/3)
+    end
+
+    field :mentions_graph_article_comments, non_null(:mentions_graph_article_comments_page) do
+      arg(:community, non_null(:string))
+      arg(:focus, non_null(:mentions_graph_locator_input))
+      arg(:after, :id)
+      arg(:first, :integer, default_value: 20)
+      resolve(&R.CMS.ArtimentMentions.mentions_graph_article_comments/3)
     end
 
     @desc "search communities by title"
@@ -605,12 +644,86 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Search.search_communities/3)
     end
 
-    @desc "kanban posts grouped by backlog/todo/wip/done/rejected"
-    field :grouped_kanban_posts, :kanban_pages do
+    @desc "Public User Ticket Kanban columns"
+    field :ticket_kanban, non_null(:ticket_kanban_columns) do
       arg(:community, non_null(:string))
-
+      arg(:pagi, :pagi_input)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.Articles.grouped_kanban_posts/3)
+      resolve(&R.CMS.Tickets.grouped_public/3)
+    end
+
+    @desc "Internal User Ticket Kanban columns"
+    field :ticket_kanban_internal, non_null(:ticket_kanban_columns) do
+      arg(:community, non_null(:string))
+      arg(:filter, :ticket_filter)
+      arg(:pagi, :pagi_input)
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Tickets.grouped_internal/3)
+    end
+
+    @desc "One public User Ticket page"
+    field :ticket_page, non_null(:ticket_page) do
+      arg(:community, non_null(:string))
+      arg(:filter, :ticket_filter)
+      arg(:pagi, :pagi_input)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Tickets.page_public/3)
+    end
+
+    @desc "One internal User Ticket page"
+    field :ticket_page_internal, non_null(:ticket_page) do
+      arg(:community, non_null(:string))
+      arg(:filter, :ticket_filter)
+      arg(:pagi, :pagi_input)
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Tickets.page_internal/3)
+    end
+
+    @desc "One public User Ticket by Community-shared number"
+    field :ticket, :ticket do
+      arg(:community, non_null(:string))
+      arg(:inner_id, non_null(:integer))
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Tickets.get_public/3)
+    end
+
+    @desc "One internal User, Worker or Case Ticket"
+    field :ticket_internal, :ticket do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Tickets.get_internal/3)
+    end
+
+    @desc "Internally visible User Tickets linked to one Post"
+    field :post_ticket_links_internal, non_null(list_of(non_null(:ticket))) do
+      arg(:community, non_null(:string))
+      arg(:post_id, non_null(:id))
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Tickets.linked_to_post_internal/3)
+    end
+
+    @desc "Internal Ticket title prefix search"
+    field :ticket_search, non_null(:ticket_page) do
+      arg(:community, non_null(:string))
+      arg(:query, non_null(:string))
+      arg(:type, :ticket_type_enum)
+      arg(:pagi, :pagi_input)
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Tickets.search_internal/3)
+    end
+
+    @desc "Batched public Ticket progress for a Post page"
+    field :post_ticket_progress, non_null(list_of(non_null(:post_ticket_progress))) do
+      arg(:community, non_null(:string))
+      arg(:post_inner_ids, non_null(list_of(non_null(:integer))))
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Tickets.post_progress/3)
     end
 
     @desc "get open graph info by url"
@@ -619,15 +732,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       resolve(&R.CMS.OpenGraph.open_graph_info/3)
-    end
-
-    @desc "One Kanban column using the canonical Article Page contract"
-    field :kanban_page, non_null(:post_page) do
-      arg(:community, non_null(:string))
-      arg(:filter, :post_filter)
-      arg(:pagi, :pagi_input)
-      middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.Articles.kanban_page/3)
     end
 
     @desc "Article Lite page using the shared offset/cursor pagination contract"

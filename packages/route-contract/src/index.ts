@@ -194,6 +194,9 @@ const resolvePlatformRoute = (pathname: string, method: string): PublicRoute => 
   if (pathname === API_ROUTE.SLUGIFY) {
     return route('community', pathname, 'pass-through', undefined, 'community-tool')
   }
+  if (pathname === API_ROUTE.CONTENT_PUBLISH) {
+    return route('community', pathname, 'pass-through', undefined, 'community-publisher')
+  }
   if (isDeletedProductRoute(pathname) || isRetiredApiRoute(pathname)) {
     return route('not-found', pathname, 'pass-through', undefined, 'removed-product')
   }
@@ -208,6 +211,9 @@ const resolvePlatformRoute = (pathname: string, method: string): PublicRoute => 
 }
 
 const resolveCustomDomainRoute = (pathname: string, communitySlug: string): PublicRoute => {
+  if (pathname === API_ROUTE.CONTENT_PUBLISH) {
+    return route('community', pathname, 'pass-through', communitySlug, 'custom-community-publisher')
+  }
   if (pathname === API_ROUTE.SLUGIFY) {
     return route('community', pathname, 'pass-through', communitySlug, 'custom-community-tool')
   }

@@ -19,6 +19,6 @@ defmodule GroupherServer.Repo.Migrations.CreateOauthProviders do
       add(:user_id, references(:users, prefix: "account"))
     end
 
-    create unique_index(:oauth_providers, [:user_id, :provider, :provider_id], prefix: "account")
+    create(unique_index(:oauth_providers, [:user_id, :provider, :provider_id], prefix: "account"))
   end
 end

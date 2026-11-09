@@ -130,7 +130,7 @@ defmodule GroupherServer.FrontDesk do
   @doc "Returns the author of an Article or Comment."
   def article_author(resource), do: GroupherServer.CMS.front_desk_article_author(resource)
 
-  @doc "Returns the parent Article of a Comment."
+  @doc "Returns the parent Article through the Comment's explicit request Community context."
   def article_of(comment), do: GroupherServer.CMS.front_desk_article_of(comment)
 
   @doc "Returns the canonical thread of an Article or Comment."

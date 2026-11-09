@@ -18,8 +18,8 @@ vi.mock('~/hooks/useTrans', () => ({
 vi.mock('../../../../logic/useKanban', () => ({
   default: () => ({
     kanbanLayout: KANBAN_LAYOUT.CLASSIC,
-    kanbanBoards: [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE],
-    kanbanBgColors: [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED],
+    kanbanBoards: [KANBAN_BOARD.TODO, KANBAN_BOARD.DONE],
+    kanbanBgColors: [COLOR.BLACK, COLOR.YELLOW, COLOR.GREEN],
     isKanbanColorsTouched: false,
     saving: false,
     edit,
@@ -81,8 +81,8 @@ describe('<BgColorsSetter />', () => {
   it('shows only enabled board color selectors and preview boards', () => {
     render(<BgColorsSetter />)
 
-    expect(screen.getAllByTestId('color-selector')).toHaveLength(3)
-    expect(screen.getByTestId('classic-preview')).toHaveTextContent('TODO,WIP,DONE')
+    expect(screen.getAllByTestId('color-selector')).toHaveLength(2)
+    expect(screen.getByTestId('classic-preview')).toHaveTextContent('TODO,DONE')
   })
 
   it('resets only enabled board colors and preserves hidden board colors', () => {
@@ -91,7 +91,7 @@ describe('<BgColorsSetter />', () => {
     fireEvent.click(screen.getByRole('button', { name: 'dsb.appearance.kanban.bg.reset' }))
 
     expect(edit).toHaveBeenCalledWith(
-      [COLOR.BLACK, INIT_KANBAN_COLORS[1], INIT_KANBAN_COLORS[2], INIT_KANBAN_COLORS[3], COLOR.RED],
+      [INIT_KANBAN_COLORS[0], COLOR.YELLOW, INIT_KANBAN_COLORS[2]],
       FIELD.KANBAN_BG_COLORS,
     )
   })

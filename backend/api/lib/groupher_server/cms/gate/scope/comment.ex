@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   Example:
 
-      iex> context = GroupherServer.CMS.Gate.Context.Scope.Comment.for_thread(:post)
+      iex> context = GroupherServer.CMS.Gate.Context.Scope.Comment.for_thread(:post, community_id: community.id)
       iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.Comment), nil, :read, context)
   """
 
@@ -26,6 +26,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     ArticleLifecycle,
     CommentLifecycle,
     CommentReviewBlock,
+    Community,
     DocBranch,
     DocLifecycle
   }
@@ -38,12 +39,30 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Comment.t()) ::
           Ecto.Query.t() | {:error, ErrorCat.error()}
   @impl Policy
+  def scope(%Ecto.Query{} = query, actor, :read, %{policy_mode: :mentioned_target} = context) do
+    with {:ok, _} <- validate_thread(context) do
+      from(comment in query,
+        join: lifecycle in CommentLifecycle,
+        as: :gate_comment_lifecycle,
+        on: lifecycle.comment_id == comment.id,
+        join: community in Community,
+        as: :gate_community,
+        on: community.id == ^context.community_id,
+        where: lifecycle.state == :visible
+      )
+      |> maybe_filter_thread(context)
+      |> public_comment(actor)
+    end
+  end
+
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with {:ok, _} <- validate_thread(context),
-         %Ecto.Query{} = query <- CommunityChain.direct(query) do
+         %Ecto.Query{} = query <- CommunityChain.comment_parent(query) do
       query
       |> maybe_filter_thread(context)
+      |> filter_community(context)
       |> lifecycle_scope(context)
+      |> public_parent(actor, context)
       |> public_comment(actor)
     end
   end
@@ -52,26 +71,31 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   defp validate_thread(%{thread: :all}), do: {:ok, :pass}
 
-  defp validate_thread(%{thread: :doc, branch_policy: :main}), do: {:ok, :pass}
+  defp validate_thread(%{thread: :doc, community_id: id}) when is_integer(id), do: {:ok, :pass}
 
   defp validate_thread(%{thread: :doc}), do: {:error, ErrorCat.scope_context_missing()}
 
-  defp validate_thread(%{thread: thread}) do
+  defp validate_thread(%{thread: thread, community_id: community_id})
+       when is_integer(community_id) do
     case ArticleSchema.fetch(thread) do
       {:ok, _schema} -> {:ok, :pass}
       {:error, _reason} -> {:error, ErrorCat.scope_context_missing()}
     end
   end
 
-  defp validate_thread(_context), do: {:ok, :pass}
+  defp validate_thread(_context), do: {:error, ErrorCat.scope_context_missing()}
+
+  defp filter_community(query, %{community_id: id}) when is_integer(id) do
+    where(query, [gate_community: community], community.id == ^id)
+  end
+
+  defp filter_community(query, _context), do: query
 
   defp maybe_filter_thread(query, %{thread: :all}), do: query
 
   defp maybe_filter_thread(query, %{thread: thread}) do
     where(query, [comment], comment.thread == ^thread)
   end
-
-  defp maybe_filter_thread(query, _context), do: query
 
   defp lifecycle_scope(query, %{thread: :doc}), do: doc_lifecycle_scope(query)
 
@@ -84,14 +108,14 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
       on: lifecycle.comment_id == comment.id,
+      join: doc_branch in DocBranch,
+      as: :gate_doc_branch,
+      on: doc_branch.community_id == as(:gate_community).id and doc_branch.type == :main,
       join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
         doc_lifecycle.article_id == comment.article_id and
-          doc_lifecycle.branch_id == comment.branch_id,
-      join: doc_branch in DocBranch,
-      as: :gate_doc_branch,
-      on: doc_branch.id == comment.branch_id,
+          doc_lifecycle.branch_id == as(:gate_doc_branch).id,
       where: lifecycle.state != :destroy,
       where: doc_lifecycle.state in [:published, :archived],
       where: doc_branch.type == :main
@@ -109,14 +133,16 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       left_join: article_lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
       on: article_lifecycle.article_id == comment.article_id and comment.thread != ^:doc,
+      left_join: doc_branch in DocBranch,
+      as: :gate_doc_branch,
+      on:
+        doc_branch.community_id == as(:gate_community).id and doc_branch.type == :main and
+          comment.thread == ^:doc,
       left_join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
         doc_lifecycle.article_id == comment.article_id and
-          doc_lifecycle.branch_id == comment.branch_id and comment.thread == ^:doc,
-      left_join: doc_branch in DocBranch,
-      as: :gate_doc_branch,
-      on: doc_branch.id == comment.branch_id and comment.thread == ^:doc,
+          doc_lifecycle.branch_id == as(:gate_doc_branch).id and comment.thread == ^:doc,
       where: lifecycle.state != :destroy,
       where:
         (comment.thread != ^:doc and article_lifecycle.state in [:published, :archived]) or
@@ -138,6 +164,37 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     )
   end
 
+  defp public_parent(query, actor, context) do
+    threads =
+      if context.thread == :all, do: [:post, :blog, :changelog, :doc], else: [context.thread]
+
+    allowed =
+      Enum.reduce(threads, dynamic(false), fn thread, predicate ->
+        scope =
+          if thread == :doc do
+            GroupherServer.CMS.Gate.Context.Scope.Doc.public_main()
+          else
+            GroupherServer.CMS.Gate.Context.Scope.Article.public(thread)
+          end
+
+        binding_ids =
+          GroupherServer.CMS.Gate.Scope.Article.scope(
+            Ecto.Queryable.to_query(GroupherServer.CMS.Model.Article),
+            actor,
+            :read,
+            scope
+          )
+          |> select([gate_article_binding: binding], binding.id)
+
+        dynamic(
+          [gate_comment_binding: binding],
+          ^predicate or binding.id in subquery(binding_ids)
+        )
+      end)
+
+    where(query, ^allowed)
+  end
+
   defp public_comment(query, %User{id: user_id} = actor) do
     %{platform?: platform_read?, community_slugs: community_slugs} = ReviewRead.grants(actor)
 
@@ -152,15 +209,16 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
                 select: 1
               )
             ) or ^platform_read?) and
-             (not exists(
-                from(restriction in CommentReviewBlock,
-                  where:
-                    restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
-                      restriction.community_id == parent_as(:gate_community).id and
-                      is_nil(restriction.resolved_at),
-                  select: 1
-                )
-              ) or as(:gate_community).slug in ^community_slugs))
+             (comment.thread != :doc or
+                not exists(
+                  from(restriction in CommentReviewBlock,
+                    where:
+                      restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
+                        restriction.community_id == parent_as(:gate_community).id and
+                        is_nil(restriction.resolved_at),
+                    select: 1
+                  )
+                ) or as(:gate_community).slug in ^community_slugs))
     )
   end
 
@@ -171,12 +229,20 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
           from(restriction in CommentReviewBlock,
             where:
               restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
-                is_nil(restriction.resolved_at) and
-                (is_nil(restriction.community_id) or
-                   restriction.community_id == parent_as(:gate_community).id),
+                is_nil(restriction.resolved_at) and is_nil(restriction.community_id),
             select: 1
           )
-        )
+        ) and
+          (comment.thread != :doc or
+             not exists(
+               from(restriction in CommentReviewBlock,
+                 where:
+                   restriction.comment_id == parent_as(:gate_comment_lifecycle).comment_id and
+                     restriction.community_id == parent_as(:gate_community).id and
+                     is_nil(restriction.resolved_at),
+                 select: 1
+               )
+             ))
     )
   end
 end

@@ -33,6 +33,26 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
   alias CMS.Gate.Context.Scope.Doc, as: DocScopeContext
   alias CMS.ArticlePath
 
+  @doc "Builds the current resource path, including the required Doc slug."
+  def url(%{community_slug: community, thread: thread} = target)
+      when is_binary(community) and is_atom(thread) do
+    identifier = Map.get(target, :inner_id) || Map.get(target, :article_id)
+
+    if (is_integer(identifier) and identifier > 0) or
+         (is_binary(identifier) and identifier != "") do
+      base = "/#{community}/#{thread}/#{identifier}"
+
+      if thread == :doc do
+        slug = Map.get(target, :slug)
+        base <> "/" <> if(is_binary(slug) and slug != "", do: URI.encode(slug), else: "doc")
+      else
+        base
+      end
+    end
+  end
+
+  def url(_), do: nil
+
   alias CMS.Model.{
     Article,
     ArticlePublic,

@@ -15,15 +15,23 @@ describe('public cache tag contract', () => {
         ? publicCacheTags.community(input.community)
         : vector.kind === 'commentsList'
           ? publicCacheTags.commentsList(input.community)
-        : vector.kind === 'docTree'
-          ? publicCacheTags.docTree(input.community)
-          : vector.kind === 'articleList'
-            ? publicCacheTags.articleList(input.community, input.thread!)
-            : vector.kind === 'tags'
-              ? publicCacheTags.tags(input.community, input.thread!)
-              : vector.kind === 'comments'
-                ? publicCacheTags.comments(input.community, input.thread!, input.innerId!)
-                : publicCacheTags.articleDetail(input.community, input.thread!, input.innerId!)
+          : vector.kind === 'docTree'
+            ? publicCacheTags.docTree(input.community)
+            : vector.kind === 'ticketList'
+              ? publicCacheTags.ticketList(input.community)
+              : vector.kind === 'ticketDetail'
+                ? publicCacheTags.ticketDetail(input.community, input.innerId!)
+                : vector.kind === 'articleList'
+                  ? publicCacheTags.articleList(input.community, input.thread!)
+                  : vector.kind === 'tags'
+                    ? publicCacheTags.tags(input.community, input.thread!)
+                    : vector.kind === 'comments'
+                      ? publicCacheTags.comments(input.community, input.thread!, input.innerId!)
+                      : publicCacheTags.articleDetail(
+                          input.community,
+                          input.thread!,
+                          input.innerId!,
+                        )
 
     expect(tag).toBe(vector.expected)
     expect(isPublicCacheTag(tag)).toBe(true)

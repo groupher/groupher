@@ -36,6 +36,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
       {:busy, seconds} ->
         {:snooze, seconds}
 
+      {:snooze, seconds} ->
+        {:snooze, seconds}
+
       {:error,
        %ErrorCat.Error{
          namespace: {:cms},
@@ -51,7 +54,9 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
   defp cleanup(event) do
     case event.event do
       "comment.changed" ->
-        with {:ok, _} <- purge_comment_cache(event) do
+        with {:ok, _} <- purge_comment_cache(event),
+             {:ok, _} <- purge_ticket_cache(event.data),
+             {:ok, _} <- sync_summary_metrics(event) do
           {:ok, :purged}
         end
 
@@ -63,41 +68,44 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
           nil -> {:error, CommentErrorCat.not_exist("Comment parent Article")}
         end
 
+      action when action in ["comment.updated", "comment.replied"] ->
+        # Required cache, mention and review effects have their own intents.
+        # This acknowledged intent must not depend on a Community still existing.
+        {:ok, :effects_not_required}
+
       action ->
         comment_effects(action, event)
     end
   end
 
   defp comment_effects(action, event)
-       when action in ["comment.created", "comment.replied", "comment.updated"] do
+       when action == "comment.created" do
     with %Comment{} = comment <- Repo.get(Comment, event.resource_id),
          %User{} = actor <- Repo.get(User, event.data["actor_id"]),
-         %Community{} = community <- Repo.get(Community, event.data["community_id"]),
-         {:ok, _} <- enqueue_comment_job(action, comment, actor, community) do
-      {:ok, :effects_enqueued}
+         community_id when is_integer(community_id) <- event.data["community_id"] do
+      case Repo.get(Community, community_id) do
+        nil ->
+          {:ok, :community_gone}
+
+        community ->
+          with {:ok, _} <- enqueue_comment_job(action, comment, actor, community) do
+            {:ok, :effects_enqueued}
+          end
+      end
     else
-      nil -> {:error, CommentErrorCat.effect_target_not_found()}
+      _ -> {:error, CommentErrorCat.effect_target_not_found()}
     end
   end
 
   defp comment_effects(_action, _event), do: {:error, CommentErrorCat.unknown_outbox_event()}
 
-  defp enqueue_comment_job("comment.created", comment, actor, community) do
-    with {:ok, _} <- enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end),
-         {:ok, _} <-
+  defp enqueue_comment_job("comment.created", _comment, actor, community) do
+    with {:ok, _} <-
            enqueue(:subscribe_community, community.id, fn ->
              Jobs.subscribe_community(community, actor)
            end) do
       {:ok, :pass}
     end
-  end
-
-  defp enqueue_comment_job("comment.replied", comment, _actor, _community) do
-    enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end)
-  end
-
-  defp enqueue_comment_job("comment.updated", comment, _actor, _community) do
-    enqueue(:sync_mentions, comment.id, fn -> Jobs.sync_mentions(comment) end)
   end
 
   defp enqueue(type, key, fun), do: Jobs.enqueue_best_effort(type, key, fun)
@@ -109,6 +117,21 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Comment do
       {:ok, result}
     end
   end
+
+  defp sync_summary_metrics(%{data: %{"count_changed" => true}, resource_id: id}) do
+    case Repo.get(Article, id) do
+      %Article{} = article -> normalize(Indexer.enqueue_metrics(article))
+      nil -> {:ok, :owner_deleted}
+    end
+  end
+
+  defp sync_summary_metrics(_event), do: {:ok, :pass}
+
+  defp purge_ticket_cache(%{"thread" => "post", "article_id" => article_id}) do
+    GroupherServer.CMS.Tickets.Cache.purge_post(article_id)
+  end
+
+  defp purge_ticket_cache(_data), do: {:ok, :pass}
 
   defp normalize(:ok), do: {:ok, :pass}
   defp normalize({:ok, _}), do: {:ok, :pass}

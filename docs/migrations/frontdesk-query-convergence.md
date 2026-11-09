@@ -125,9 +125,11 @@ mix test test/groupher_server/cms/front_desk_test.exs test/groupher_server/cms/c
 
 ### F2：批量实现归 Query，保持现有协议
 
-1. 将 Article locator 批量解析实现放在 `cms/articles/query/locator.ex`（`Articles.Query.Locator`），由 `CMS.Articles.locators/1` 暴露；统一称为 `locators`，不再使用 `PublicPaths` 或 `resolve_locators`；Query 子模块拥有 Gate scope 和分组 SQL。
-2. 删除 `CMS.FrontDesk.Article.read_many/1`、`CMS.FrontDesk.articles/1`、`CMS.front_desk_articles/1` 和 Root `FrontDesk.articles/1`。它们只形成转发链，仓库内没有生产 caller；CMS FrontDesk 仅保留单资源读取和关系查询。
-3. `cms/interactions/projection/query.ex`、`cms/view_tracker/query.ex`、`cms/press/query.ex` 直接调用 `CMS.Articles.locators/1`；批量筛选和分页始终经所属 Context 的 Query，不经 Root FrontDesk。
+> 2026-11-06 后续决定：结构化 `@ Article` 需要按稳定 ID 批量核实隐藏目标，且其他 Context 也要复用 Article 路径批量读取。因此下列最初的“删除 FrontDesk 复数入口”决定已被取代；当前入口是 `CMS.FrontDesk.articles/2` 与 `CMS.FrontDesk.comments/2`，所属资源 Query 仍拥有 SQL 与 Gate。产品编辑器的 Article 搜索选项尚未接入，不能把后端输入能力表述成已上线的界面功能。
+
+1. Article 的公开路径批量解析仍由 `Articles.Query.Locator` 实现，由 CMS facade `CMS.FrontDesk.articles(paths)` 暴露；SQL 与 Gate 归资源 Query。
+2. `CMS.FrontDesk.articles(ids, mode: :internal)` 批量读取稳定 Article 身份；`CMS.FrontDesk.comments(paths)` 与 `comments(ids, mode: :internal)` 分别委托 Comments Query。复数入口不循环调用单项入口。
+3. `cms/interactions/projection/query.ex`、`cms/view_tracker/query.ex`、`cms/press/query.ex` 使用 `CMS.FrontDesk.articles(paths)`；各 Context 仍负责自己的筛选和分页。
 4. Gate 批量 scope 的迁移与 G1 同批；不能仅搬迁旧 `public_articles` 的重复权限条件。
 
 当前批量合同已核实：最多 100 个输入路径；无效/不可见/禁用路径省略；输出保持有效输入顺序，重复有效输入会重复返回；

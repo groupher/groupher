@@ -117,6 +117,27 @@ const prefetchSurface = async (
       ),
     ),
   )
+  if (surface === 'posts') {
+    const postInnerIds = [
+      ...new Set(
+        chunks.flatMap((entries) =>
+          entries.flatMap((article) => {
+            const innerId = Number(article.innerId)
+            return Number.isSafeInteger(innerId) && innerId > 0 ? [innerId] : []
+          }),
+        ),
+      ),
+    ].sort((a, b) => a - b)
+    const progressBatches: number[][] = []
+    for (let index = 0; index < postInnerIds.length; index += 100) {
+      progressBatches.push(postInnerIds.slice(index, index + 100))
+    }
+    await Promise.all(
+      progressBatches.map((postInnerIds) =>
+        client.ensureQueryData(communityQueries.postTicketProgress(community, postInnerIds)),
+      ),
+    )
+  }
 }
 
 /** Prefetches a finite/infinite surface, with one revision-only restart and a recoverable shell. */

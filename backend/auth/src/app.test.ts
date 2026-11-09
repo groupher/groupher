@@ -6,6 +6,35 @@ import { PhoenixBrowserSessionError } from './auth'
 import { decodeLinkState, MemoryLinkIntentStore } from './link-intent'
 
 describe('Auth Hono application', () => {
+  it.each(['/api/auth/production-seed/redeem', '/api/auth/unknown'])(
+    'rejects removed or unknown action %s even with stale flags',
+    async (path) => {
+      vi.stubEnv('PRODUCTION_SEED_LOGIN_ENABLED', 'true')
+      vi.stubEnv('PRODUCTION_SEED_LOGIN_UNTIL', '2099-01-01T00:00:00Z')
+      const authHandler = vi.fn(async () => new Response(null, { status: 204 }))
+      const response = await createApp({ authHandler }).request(path, { method: 'POST' })
+      expect(response.status).toBe(404)
+      expect(response.headers.has('set-cookie')).toBe(false)
+      expect(authHandler).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each([
+    'providers',
+    'csrf',
+    'signin/github',
+    'callback/github',
+    'signout',
+    'error',
+    'verify-request',
+    'webauthn-options',
+  ])('keeps the official Auth action %s delegated', async (action) => {
+    const authHandler = vi.fn(async () => new Response(null, { status: 204 }))
+    const response = await createApp({ authHandler }).request(`/api/auth/${action}`)
+    expect(response.status).toBe(204)
+    expect(authHandler).toHaveBeenCalledOnce()
+  })
+
   afterEach(() => {
     vi.unstubAllEnvs()
   })

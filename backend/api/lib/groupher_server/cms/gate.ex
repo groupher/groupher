@@ -153,6 +153,11 @@ defmodule GroupherServer.CMS.Gate do
     Access.check_comment_in_transaction(actor, action, comment)
   end
 
+  @doc "Authorizes a Comment against the explicit request Community inside the caller's transaction."
+  def check_comment_in_transaction(actor, action, comment, community) do
+    Access.check_comment_in_transaction(actor, action, comment, community)
+  end
+
   @doc """
   Checks a Community Application while joining the pipeline transaction.
 

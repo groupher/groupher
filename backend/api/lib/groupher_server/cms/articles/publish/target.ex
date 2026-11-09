@@ -49,7 +49,8 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
 
     with {:ok, %{community: community}} <- binding_context(article, opts) do
       Workflow.transaction(fn ->
-        with {:ok, locked_article} <- lock_article(article.id),
+        with {:ok, :pass} <- CMS.Articles.MutationLock.lock_community_admission(article.id),
+             {:ok, locked_article} <- lock_article(article.id),
              {:ok, draft} <- Store.get_for_update(locked_article),
              {:ok, _} <- validate_version(draft.version, expected_version),
              {:ok, lifecycle} <- Lifecycle.lock(locked_article),

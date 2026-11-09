@@ -11,10 +11,11 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { createContext, type ReactNode, useContext, useMemo } from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 
 import useArticleState from '~/hooks/useArticleState'
 import { articlePathKey } from '~/query/articlePath'
+import type { MentionsGraphFocus } from '~/query/mentionsGraph'
 import type { TArticle, TArticleStats, TArticleViewerState, TThread } from '~/spec'
 
 import { Q } from './client'
@@ -26,6 +27,10 @@ type TValue = {
   community: string
   innerId: string
   thread: TThread
+  mentionsFocus: MentionsGraphFocus
+  footerTab: 'activities' | 'members' | 'mentions'
+  showMentions: (focus: MentionsGraphFocus) => void
+  setFooterTab: (tab: 'activities' | 'members' | 'mentions') => void
 }
 
 const ArticleQueryContext = createContext<TValue | null>(null)
@@ -47,6 +52,50 @@ export default function ArticleQueryProvider({
   thread: TThread
   initialArticle?: TArticle | null
 }) {
+  const articleKey = articlePathKey({ community, thread, innerId })
+  const articleFocus: MentionsGraphFocus = {
+    type: thread as MentionsGraphFocus['type'],
+    articleInnerId: String(innerId),
+  }
+  const [footerState, setFooterState] = useState<{
+    articleKey: string
+    tab: TValue['footerTab']
+    focus: MentionsGraphFocus
+  }>(() => ({ articleKey, tab: 'activities', focus: articleFocus }))
+  const currentFooterState =
+    footerState.articleKey === articleKey
+      ? footerState
+      : { articleKey, tab: 'activities' as const, focus: articleFocus }
+  const setFooterTab = useCallback(
+    (tab: TValue['footerTab']) => {
+      setFooterState((current) => {
+        const base =
+          current.articleKey === articleKey
+            ? current
+            : { articleKey, tab: 'activities' as const, focus: articleFocus }
+        return { ...base, tab }
+      })
+    },
+    [articleKey, articleFocus.articleInnerId, articleFocus.type],
+  )
+  const showMentions = useCallback(
+    (focus: MentionsGraphFocus) => {
+      setFooterState((current) => {
+        const base =
+          current.articleKey === articleKey
+            ? current
+            : { articleKey, tab: 'activities' as const, focus: articleFocus }
+        return { ...base, tab: 'mentions', focus }
+      })
+      window.requestAnimationFrame(() => {
+        document
+          .getElementById('article-footer')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    },
+    [articleKey, articleFocus.articleInnerId, articleFocus.type],
+  )
+
   const articleQuery = useQuery({
     ...Q.article.detail(community, thread, innerId),
     initialData: initialArticle || undefined,
@@ -62,8 +111,12 @@ export default function ArticleQueryProvider({
       community,
       innerId: String(innerId),
       thread,
+      mentionsFocus: currentFooterState.focus,
+      footerTab: currentFooterState.tab,
+      showMentions,
+      setFooterTab,
     }),
-    [community, innerId, state, thread],
+    [community, innerId, state, thread, currentFooterState, showMentions, setFooterTab],
   )
 
   return <ArticleQueryContext.Provider value={value}>{children}</ArticleQueryContext.Provider>

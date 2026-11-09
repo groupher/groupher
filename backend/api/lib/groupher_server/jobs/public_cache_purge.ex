@@ -9,7 +9,7 @@ defmodule GroupherServer.Jobs.PublicCachePurge do
   """
 
   use Oban.Worker,
-    queue: :public_cache,
+    queue: :cloudflare_purge,
     max_attempts: GroupherServer.PublicCache.max_delivery_attempts(),
     unique: [period: 86_400, keys: [:invalidation_id], states: :incomplete]
 

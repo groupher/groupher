@@ -120,6 +120,22 @@ defmodule GroupherServer.AlertWall.Persist do
 
   def active_report_count(_item_id), do: 0
 
+  @doc "Counts distinct active reporters for one Wall item and observed public version."
+  def active_reporter_count(item_id, observed_version)
+      when is_integer(item_id) and is_integer(observed_version) and observed_version > 0 do
+    Repo.one(
+      from(report in UserReport,
+        where:
+          report.item_id == ^item_id and report.observed_version == ^observed_version and
+            is_nil(report.withdrawn_at) and is_nil(report.outdated_at) and
+            is_nil(report.resolved_at),
+        select: count(report.reporter_id, :distinct)
+      )
+    ) || 0
+  end
+
+  def active_reporter_count(_item_id, _observed_version), do: 0
+
   @doc "Replaces one open item's complete AI opinion without creating an absent item."
   @spec replace_ai_opinion_in_transaction(map()) :: {:ok, Item.t() | :absent} | {:error, term()}
   def replace_ai_opinion_in_transaction(attrs) when is_map(attrs) do
@@ -550,13 +566,14 @@ defmodule GroupherServer.AlertWall.Persist do
   defp submit_new_report(%UserReport{} = report, _attrs, _operation_ref), do: {:ok, report}
 
   defp submit_new_report(nil, attrs, operation_ref) do
-    with {:ok, item} <-
+    with {:ok, decision_community_id} <- comment_decision_scope(attrs),
+         {:ok, item} <-
            add_in_transaction(
              %{
                owner: attrs.owner,
                target_type: attrs.target_type,
                target_id: attrs.target_id,
-               community_id: attrs.community_id,
+               community_id: decision_community_id,
                ai_source_ref: nil,
                sus_notes: [],
                summary: ""
@@ -572,7 +589,7 @@ defmodule GroupherServer.AlertWall.Persist do
                target_type: attrs.target_type,
                target_id: attrs.target_id,
                observed_version: Map.get(attrs, :observed_version),
-               community_id: attrs.community_id,
+               community_id: report_community_id(attrs),
                report_type: attrs.report_type,
                details: attrs.details,
                operation_ref: operation_ref
@@ -583,12 +600,53 @@ defmodule GroupherServer.AlertWall.Persist do
     end
   end
 
+  defp comment_decision_scope(%{target_type: :comment} = attrs) do
+    open_items =
+      Item
+      |> where(
+        [item],
+        item.owner == ^attrs.owner and item.target_type == :comment and
+          item.target_id == ^attrs.target_id and item.status == :open
+      )
+      |> order_by([item], asc: item.id)
+      |> lock("FOR UPDATE")
+      |> Repo.all()
+
+    case Enum.find(open_items, &is_nil(&1.community_id)) do
+      %Item{} ->
+        {:ok, nil}
+
+      nil ->
+        case {attrs.community_id, open_items} do
+          {nil, [%Item{} = item | _]} ->
+            case Repo.update(
+                   Item.changeset(item, %{community_id: nil, version: item.version + 1})
+                 ) do
+              {:ok, _item} -> {:ok, nil}
+              {:error, _reason} = error -> error
+            end
+
+          {community_id, _} ->
+            {:ok, community_id}
+        end
+    end
+  end
+
+  defp comment_decision_scope(attrs), do: {:ok, attrs.community_id}
+
   defp report_matches?(report, attrs) do
     report.reporter_id == attrs.reporter_id and report.owner == attrs.owner and
       report.target_type == attrs.target_type and report.target_id == attrs.target_id and
-      report.community_id == attrs.community_id and
+      report.community_id == report_community_id(attrs) and
       report.observed_version == Map.get(attrs, :observed_version) and
       report.report_type == attrs.report_type and report.details == attrs.details
+  end
+
+  defp report_community_id(attrs) do
+    case Map.get(attrs, :reported_in_community_id) do
+      id when is_integer(id) -> id
+      _ -> attrs.community_id
+    end
   end
 
   defp lock_report(report_id) do

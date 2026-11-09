@@ -13,17 +13,19 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
   use Flop.Schema
 
   require Ecto.Query
+  require GroupherServer.CMS.Articles.ActivityTime
+
   import Ecto.Query, except: [select: 3], warn: false
 
   alias GroupherServer.{CMS}
+
   alias CMS.Model.{
     ArticleBindingTag,
     ArticleStats,
     Author,
     CommunityTag,
     CommunityTagGroup,
-    PostState,
-    KanbanState
+    PostState
   }
 
   alias Helper.ORM.Pagi.Order
@@ -47,11 +49,15 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
     adapter_opts: [
       join_fields: [
         published_at: [binding: :stable_public, field: :published_at, ecto_type: :utc_datetime],
-        doc_active_at: [binding: :stable_doc_state, field: :active_at, ecto_type: :utc_datetime],
         inner_id: [binding: :article_binding, field: :inner_id, ecto_type: :integer],
         binding_id: [binding: :article_binding, field: :id, ecto_type: :integer]
       ],
       custom_fields: [
+        doc_active_at: [
+          field_dynamic: {GroupherServer.CMS.Articles.ActivityTime, :effective_doc, []},
+          ecto_type: :utc_datetime,
+          bindings: [:stable_doc_state, :stable_public]
+        ],
         views: [
           field_dynamic: {__MODULE__, :stats_field, [field: :views]},
           ecto_type: :integer,
@@ -84,7 +90,7 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
     |> join_tags()
     |> maybe_join_stats(order)
     |> select_content(thread)
-    |> select_post_state(thread)
+    |> select_post_category(thread)
     |> select_sort_projection(order)
   end
 
@@ -125,32 +131,21 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
     end)
   end
 
-  defp select_post_state(query, :post) do
+  defp select_post_category(query, :post) do
     query =
-      if has_named_binding?(query, :post_state),
-        do: query,
-        else:
-          join(query, :left, [article: article], state in PostState,
-            as: :post_state,
-            on: state.article_id == article.id
-          )
+      if has_named_binding?(query, :post_state) do
+        query
+      else
+        join(query, :left, [article: article], state in PostState,
+          as: :post_state,
+          on: state.article_id == article.id
+        )
+      end
 
-    query =
-      if has_named_binding?(query, :kanban_state),
-        do: query,
-        else:
-          join(query, :left, [article_binding: binding], state in KanbanState,
-            as: :kanban_state,
-            on: state.article_binding_id == binding.id
-          )
-
-    Ecto.Query.select_merge(query, [post_state: post, kanban_state: kanban], %{
-      cat: post.cat,
-      status: kanban.status
-    })
+    Ecto.Query.select_merge(query, [post_state: post], %{cat: post.cat})
   end
 
-  defp select_post_state(query, _thread), do: query
+  defp select_post_category(query, _thread), do: query
 
   defp join_author(query) do
     query
@@ -231,9 +226,9 @@ defmodule GroupherServer.CMS.Articles.ArticleLite do
         binding_id: binding.id,
         title: public.title,
         digest: public.digest,
-        active_at: state.active_at,
+        active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, state, public),
         published_at: public.published_at,
-        doc_active_at: state.active_at,
+        doc_active_at: GroupherServer.CMS.Articles.ActivityTime.sql(article, state, public),
         inserted_at: article.inserted_at
       }
     )

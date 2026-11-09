@@ -2,8 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, renderHook, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
-import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS } from '~/const/gtd'
-import URL_PARAM from '~/const/url_param'
+import { ARTICLE_CAT, ARTICLE_ORDER } from '~/const/gtd'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import usePagedPosts from '~/hooks/usePagedPosts'
 import PagedPostsProvider from '~/hooks/usePagedPosts/provider'
@@ -16,7 +15,7 @@ describe('usePagedPosts', () => {
     window.history.replaceState(
       null,
       '',
-      `/acme/post?${URL_PARAM.PAGE}=2&${URL_PARAM.CAT}=${ARTICLE_CAT.BUG}&${URL_PARAM.STATUS}=${ARTICLE_STATUS.TODO}&${URL_PARAM.ORDER}=${ARTICLE_ORDER.UPVOTES}&${URL_PARAM.TAG}=t1`,
+      `/acme/post?page=2&cat=${ARTICLE_CAT.BUG}&status=TODO&order=${ARTICLE_ORDER.UPVOTES}&tag=t1`,
     )
 
     const queryClient = new QueryClient({
@@ -29,7 +28,6 @@ describe('usePagedPosts', () => {
         size: 20,
         communityTag: 't1',
         cat: ARTICLE_CAT.BUG,
-        status: ARTICLE_STATUS.TODO,
         order: ARTICLE_ORDER.UPVOTES,
       }),
       {
@@ -64,7 +62,7 @@ describe('usePagedPosts', () => {
     const { result } = renderHook(() => usePagedPosts(), { wrapper })
     expect(result.current.pagedParams.community).toBe('acme')
     expect(result.current.pagedParams.cat).toBe(ARTICLE_CAT.BUG)
-    expect(result.current.pagedParams.status).toBe(ARTICLE_STATUS.TODO)
+    expect(result.current.pagedParams).not.toHaveProperty('status')
     expect(result.current.pagedParams.order).toBe(ARTICLE_ORDER.UPVOTES)
     expect(result.current.pagedPosts.entries).toHaveLength(0)
 

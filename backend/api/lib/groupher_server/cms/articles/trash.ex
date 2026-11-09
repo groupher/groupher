@@ -23,7 +23,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
     ArticleBindingTag,
     ArticlePublic,
     ArticleStats,
-    ArtimentMention,
     Comment,
     Community,
     CommunityTag,
@@ -164,7 +163,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
     end
   end
 
-  def restore(item_or_id, actor, _opts) do
+  def restore(item_or_id, actor, opts) do
     with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
          %Article{} = article <- Repo.get(Article, item.article_id),
          %Community{} = community <- Repo.get(Community, item.community_id) do
@@ -172,10 +171,17 @@ defmodule GroupherServer.CMS.Articles.Trash do
         with {:ok, lifecycle} <- Lifecycle.lock(canonical),
              {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, item.restore_state),
              {:ok, _deleted} <- Repo.delete(item),
+             {:ok, _ticket_effect} <-
+               reconcile_linked_tickets(
+                 canonical,
+                 community,
+                 actor,
+                 Keyword.get(opts, :command_id) || trash_operation_ref(item),
+                 :post_restore
+               ),
              {:ok, _} <- update_tag_stats(canonical, 1),
              {:ok, _} <- update_community_count(canonical, community),
              {:ok, _} <- delete_empty_action(item.trash_action_id),
-             {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :active),
              {:ok, %{inner_id: inner_id}} <-
                Bindings.get(%{article_id: canonical.id}, community) do
           _ = CMS.SearchArtiments.Indexer.enqueue_upsert(canonical)
@@ -189,17 +195,24 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   @doc "Restores an ordinary Trash membership from a Gate-canonical Article in the caller's transaction."
-  @spec restore_loaded(TrashedArticle.t(), map(), term()) ::
+  @spec restore_loaded(TrashedArticle.t(), map(), term(), keyword()) ::
           {:ok, Article.t()} | {:error, term()}
-  def restore_loaded(%TrashedArticle{} = item, canonical, _actor) do
+  def restore_loaded(%TrashedArticle{} = item, canonical, actor, opts \\ []) do
     with %Community{} = community <- Repo.get(Community, item.community_id),
          {:ok, lifecycle} <- Lifecycle.lock(canonical),
          {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, item.restore_state),
          {:ok, _deleted} <- Repo.delete(item),
+         {:ok, _ticket_effect} <-
+           reconcile_linked_tickets(
+             canonical,
+             community,
+             actor,
+             Keyword.get(opts, :command_id) || trash_operation_ref(item),
+             :post_restore
+           ),
          {:ok, _} <- update_tag_stats(canonical, 1),
          {:ok, _} <- update_community_count(canonical, community),
          {:ok, _} <- delete_empty_action(item.trash_action_id),
-         {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :active),
          {:ok, %{inner_id: inner_id}} <- Bindings.get(%{article_id: canonical.id}, community) do
       _ = CMS.SearchArtiments.Indexer.enqueue_upsert(canonical)
       {:ok, Map.put(canonical, :inner_id, inner_id)}
@@ -239,15 +252,24 @@ defmodule GroupherServer.CMS.Articles.Trash do
         fn canonical ->
           action_id = item.trash_action_id
 
-          with {:ok, lifecycle} <- Lifecycle.lock(canonical),
+          with {:ok, :pass} <-
+                 unlink_ticket_sources_before_post_delete(
+                   canonical,
+                   community,
+                   actor,
+                   trash_operation_ref(item)
+                 ),
+               {:ok, lifecycle} <- Lifecycle.lock(canonical),
                {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :destroy),
                {:ok, _event} <-
                  activity(canonical, :permanently_deleted, actor, item.trash_action,
                    source: activity_source(opts)
                  ),
-               {:ok, _comment_mentions} <-
-                 CMS.ArtimentMentions.purge_article_comments(canonical),
-               {:ok, _article_mentions} <- CMS.ArtimentMentions.purge(canonical),
+               {:ok, _mention_endpoints} <-
+                 CMS.ArtimentMentions.mark_deleted(%{
+                   type: canonical.thread,
+                   article_id: canonical.id
+                 }),
                {:ok, _asset_refs} <- CMS.Assets.cleanup_refs(canonical.thread, canonical.id),
                {:ok, _deleted} <- Repo.delete(canonical),
                {:ok, _} <- delete_empty_action(action_id) do
@@ -273,7 +295,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
         from(comment in Comment, where: comment.article_id == ^canonical.id, select: comment.id)
       )
 
-    with {:ok, lifecycle} <- Lifecycle.lock(canonical),
+    with {:ok, :pass} <-
+           unlink_ticket_sources_before_post_delete(
+             canonical,
+             Repo.get(Community, item.community_id),
+             actor,
+             Keyword.get(opts, :command_id) || trash_operation_ref(item)
+           ),
+         {:ok, lifecycle} <- Lifecycle.lock(canonical),
          {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :destroy),
          {:ok, :pass} <-
            AlertWall.mark_target_deleted_in_transaction(
@@ -292,14 +321,39 @@ defmodule GroupherServer.CMS.Articles.Trash do
            activity(canonical, :permanently_deleted, actor, item.trash_action,
              source: activity_source(opts)
            ),
-         {:ok, _comment_mentions} <- CMS.ArtimentMentions.purge_article_comments(canonical),
-         {:ok, _article_mentions} <- CMS.ArtimentMentions.purge(canonical),
+         {:ok, _mention_endpoints} <-
+           CMS.ArtimentMentions.mark_deleted(%{
+             type: canonical.thread,
+             article_id: canonical.id
+           }),
          {:ok, _asset_refs} <- CMS.Assets.cleanup_refs(canonical.thread, canonical.id),
          {:ok, _deleted} <- Repo.delete(canonical),
          {:ok, _} <- delete_empty_action(action_id) do
       _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)
       {:ok, %{done: true, article_id: canonical.id}}
     end
+  end
+
+  defp unlink_ticket_sources_before_post_delete(
+         %Article{thread: :post} = article,
+         %Community{} = community,
+         actor,
+         command_id
+       ) do
+    CMS.Tickets.Persist.unlink_sources_for_post_in_transaction(
+      community,
+      article.id,
+      actor,
+      command_id
+    )
+  end
+
+  defp unlink_ticket_sources_before_post_delete(%Article{thread: :post}, _community, _actor, _id) do
+    {:error, ArticleErrorCat.article_not_found()}
+  end
+
+  defp unlink_ticket_sources_before_post_delete(%Article{}, _community, _actor, _command_id) do
+    {:ok, :pass}
   end
 
   defp mark_comment_items_deleted(comment_ids) do
@@ -396,22 +450,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   defp hydrate_page_items(entries) do
-    article_ids =
-      Enum.map(entries, fn {_item, article, _community, _public, _stats, _inner_id, _action} ->
-        article.id
-      end)
-
-    mention_counts =
-      from(mention in ArtimentMention,
-        where:
-          mention.mentioned_scope == :internal and
-            mention.mentioned_article_id in ^article_ids,
-        group_by: mention.mentioned_article_id,
-        select: {mention.mentioned_article_id, count(mention.id)}
-      )
-      |> Repo.all()
-      |> Map.new()
-
     Enum.map(entries, fn {item, article, community, public, stats, inner_id, action} ->
       projection =
         article
@@ -424,7 +462,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> Map.put(:article, projection)
       |> Map.put(:community, community)
       |> Map.put(:trash_action, action)
-      |> Map.put(:mentioned_by_count, Map.get(mention_counts, article.id, 0))
     end)
   end
 
@@ -443,17 +480,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> Map.put(:inner_id, inner_id)
       |> Map.put(:article_stats, stats)
 
-    mentioned_by_count =
-      Repo.aggregate(
-        from(mention in ArtimentMention,
-          where:
-            mention.mentioned_scope == :internal and
-              mention.mentioned_article_id == ^article.id
-        ),
-        :count
-      )
-
-    %{item | article: projection, mentioned_by_count: mentioned_by_count}
+    %{item | article: projection}
   end
 
   defp create_trash_membership(
@@ -475,14 +502,54 @@ defmodule GroupherServer.CMS.Articles.Trash do
          {:ok, item} <-
            create_membership(action, article, community, lifecycle.state, actor),
          {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :deleted),
+         {:ok, _held_tickets} <-
+           reconcile_linked_tickets(
+             article,
+             community,
+             actor,
+             Keyword.get(opts, :command_id) || action.hash_id,
+             :post_trash
+           ),
          {:ok, _} <- update_community_count(article, community),
-         {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :trashed),
          {:ok, _event} <- activity(canonical, :trashed, actor, action) do
       _ = CMS.SearchArtiments.Indexer.enqueue_delete(article)
       {:ok, item}
     else
       nil -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
       {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp reconcile_linked_tickets(
+         %Article{thread: :post, id: post_id},
+         _community,
+         actor,
+         command_id,
+         visibility_cause
+       )
+       when is_binary(command_id) do
+    CMS.Tickets.SourceVisibility.update_all_in_transaction(
+      post_id,
+      actor,
+      visibility_cause,
+      command_id
+    )
+  end
+
+  defp reconcile_linked_tickets(
+         _article,
+         _community,
+         _actor,
+         _command_id,
+         _source_type
+       ) do
+    {:ok, :pass}
+  end
+
+  defp trash_operation_ref(%TrashedArticle{trash_action_id: action_id}) do
+    case Repo.get(TrashAction, action_id) do
+      %TrashAction{hash_id: hash_id} when is_binary(hash_id) -> hash_id
+      _ -> Ecto.UUID.generate()
     end
   end
 

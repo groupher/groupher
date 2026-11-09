@@ -229,7 +229,7 @@ defmodule GroupherServer.Test.CMS.Press.InvalidationTest do
     for {worker, leaf, queue} <- [
           {GroupherServer.Jobs.CMSOutboxPress, press, "press"},
           {GroupherServer.Jobs.CMSOutboxSearch, search, "search"},
-          {GroupherServer.Jobs.CMSOutboxCDN, cdn, "public_cache"}
+          {GroupherServer.Jobs.CMSOutboxCDN, cdn, "cloudflare_purge"}
         ] do
       assert Repo.exists?(
                from(j in Oban.Job,

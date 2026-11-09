@@ -77,6 +77,18 @@ type TOptions = {
   testLogin?: (request: Request) => Promise<Response>
 }
 
+const AUTH_CORE_ACTIONS = new Set([
+  'callback',
+  'csrf',
+  'error',
+  'providers',
+  'session',
+  'signin',
+  'signout',
+  'verify-request',
+  'webauthn-options',
+])
+
 const FIRST_PARTY_AUTH_HOSTS = new Set([
   'groupher.com',
   'community.groupher.com',
@@ -734,7 +746,11 @@ export const createApp = ({
   })
 
   app.on(['GET', 'POST'], AUTH_ROUTE.ROOT, (context) => authHandler(context.req.raw))
-  app.on(['GET', 'POST'], AUTH_ROUTE.WILDCARD, (context) => authHandler(context.req.raw))
+  app.on(['GET', 'POST'], AUTH_ROUTE.WILDCARD, (context) => {
+    const action = new URL(context.req.url).pathname.slice(AUTH_ROUTE.ROOT.length + 1).split('/')[0]
+    if (!AUTH_CORE_ACTIONS.has(action)) return context.notFound()
+    return authHandler(context.req.raw)
+  })
 
   return app
 }

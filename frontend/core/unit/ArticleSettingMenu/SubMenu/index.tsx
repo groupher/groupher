@@ -6,7 +6,6 @@ import CatSetting from './CatSetting'
 import Header from './Header'
 import useSalon from './salon'
 import SlugSetting from './SlugSetting'
-import StatusSetting from './StatusSetting'
 import TagsSetting from './TagsSetting'
 import TitleSetting from './TitleSetting'
 
@@ -32,11 +31,6 @@ const SubMenu: FC<TProps> = ({ closeSubMenu, subMenuType }) => {
 
     case SUB_MENU.CATEGORY: {
       Content = CatSetting
-      break
-    }
-
-    case SUB_MENU.STATUS: {
-      Content = StatusSetting
       break
     }
 

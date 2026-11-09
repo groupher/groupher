@@ -31,7 +31,12 @@ const PostItem: FC<TProps> = ({ viewModel }) => {
       >
         {article.digest}
       </CommunityPreviewLink>
-      <Footer article={article} stats={stats} viewerState={viewerState} />
+      <Footer
+        article={article}
+        stats={stats}
+        viewerState={viewerState}
+        ticketProgress={viewModel.ticketProgress}
+      />
     </article>
   )
 }

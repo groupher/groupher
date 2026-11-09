@@ -143,6 +143,13 @@ Workflow 负责：
 不得把认证失败、网络失败或非 2xx 响应返回为成功。只有本地明确未配置可选服务时，才能按文档定义
 返回 no-op；生产部署检查必须保证所需 endpoint、resource 和 scope 均已配置。
 
+Cloudflare 返回 HTTP 429 且提供 `Retry-After` 时，adapter 保留秒数或 HTTP-date 指定的等待时间，加入
+1–5 秒抖动；Outbox 在同一 lease fence 下记录错误并设置 `available_at`，释放锁，再让 Oban snooze。
+没有可解析的 `Retry-After` 时继续走普通重试退避。Cloudflare 相关 Worker 新任务共用
+`cloudflare_purge` 队列（每个 Oban 节点并发 2）；`public_cache` 队列保留为每节点并发 1，用于排空旧版本
+已入队任务。`cms_outbox` 继续处理旧版 Comment 任务；排空期间这些旧任务仍可能调用 Cloudflare。
+该并发限制是每节点配置，不是跨节点的 zone 全局限流器。
+
 ## 6. Public Cache 与 Press
 
 Public Cache 和 Press 都是 Outbox 的下游能力，不拥有可靠投递状态机：

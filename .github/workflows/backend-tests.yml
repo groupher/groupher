@@ -2,12 +2,26 @@ name: Backend unit tests
 on:
   push:
     paths:
-      - 'backend/api/**' # only trigger when this dir changes
+      - 'backend/api/**'
+      - 'backend/auth/**'
       - 'ops/postgres/**'
+      - 'packages/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/backend-tests.yml'
   pull_request:
     paths:
       - 'backend/api/**'
+      - 'backend/auth/**'
       - 'ops/postgres/**'
+      - 'packages/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/backend-tests.yml'
 
 jobs:
   setup:
@@ -121,6 +135,22 @@ jobs:
             --env POSTGRES_DB=groupher_server_test \
             groupher-postgres:15-roaringbitmap
           until docker exec groupher-postgres pg_isready -U postgres -d groupher_server_test; do sleep 1; done
+
+      - name: Verify migrations from a fresh database
+        run: bash scripts/fresh_db_migrations.sh
+
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install JavaScript dependencies for Production Seed tests
+        working-directory: ${{ github.workspace }}
+        run: pnpm install --frozen-lockfile --filter @groupher/backend-auth... --filter @groupher/content-publisher...
 
       - name: Run tests
         run: mix test --exclude skip_ci --max-cases 8 --max-failures 1

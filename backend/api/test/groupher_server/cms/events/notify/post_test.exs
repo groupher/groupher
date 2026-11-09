@@ -4,7 +4,9 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
   use GroupherServer.TestMate
 
   alias GroupherServer.{CMS, Messaging}
+  alias GroupherServer.Repo
   alias CMS.Events
+  alias CMS.Model.{Article, Comment}
 
   setup do
     {community, post, _, user} = mock_article(:post)
@@ -25,6 +27,35 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
   end
 
   describe "[upvote notify]" do
+    test "shared Comment notification uses the event's explicit request binding",
+         ~m(user2 community post comment)a do
+      {:ok, destination} = mock_community(user2)
+      article = Repo.get!(Article, post.article_id)
+
+      assert {:ok, {:ok, _}} =
+               Repo.transaction(fn ->
+                 CMS.Articles.BindingPersist.mirror(article, destination)
+               end)
+
+      assert {:ok, {:ok, :done}} =
+               Repo.transaction(fn ->
+                 CMS.Articles.BindingPersist.unmirror(article, community)
+               end)
+
+      retained = %{Repo.get!(Comment, comment.id) | request_community_slug: destination.slug}
+      assert {:ok, _} = Events.emit(:notify_upvote, %{target: retained, from_user: user2})
+
+      {:ok, notifications} =
+        Messaging.paged_messages(
+          :notification,
+          Repo.get!(GroupherServer.Accounts.Model.User, comment.author_id),
+          %{},
+          %GroupherServer.Pagi.Params.Offset{page: 1, size: 20}
+        )
+
+      assert Enum.any?(notifications.entries, &(&1.comment_id == comment.id))
+    end
+
     test "upvote hook should work on post", ~m(user2 community post)a do
       {:ok, post} = CMS.Articles.Store.load_article_for_notification(post.id, community)
 
@@ -228,8 +259,14 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, replied_comment} =
-        CMS.Comments.reply_comment(comment.id, mock_comment(), user3, Ecto.UUID.generate())
+      {:ok, %{comment: replied_comment}} =
+        CMS.Comments.reply_comment_result(
+          comment,
+          mock_comment(),
+          user3,
+          Ecto.UUID.generate(),
+          community.slug
+        )
 
       Events.emit(:notify_reply, %{reply_comment: replied_comment, from_user: user3})
 

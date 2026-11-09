@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
       compatibilityFlags: ['nodejs_compat'],
       entrypoint: 'src/worker.ts',
       workersDev: preview,
+      previewUrls: preview,
       observability: {
         enabled: true,
         logs: { headSamplingRate: 1 },
@@ -47,9 +48,10 @@ export default defineConfig(({ mode }) => {
             ? JSON.stringify({
                 [`${apiOrigin}/auth`]: 'phoenix:auth-api',
                 [`${apiOrigin}/press`]: 'phoenix:press-api',
+                [`${apiOrigin}/cms-maintenance`]: 'phoenix:cms-maintenance',
                 [`${pressOrigin}/internal`]: 'press:internal-api',
               })
-            : '{"https://api.groupher.com/assets":"phoenix:assets-api","https://api.groupher.com/auth":"phoenix:auth-api","https://api.groupher.com/content-import":"phoenix:content-import-api","https://api.groupher.com/content-publisher":"phoenix:content-publisher-api","https://api.groupher.com/press":"phoenix:press-api","https://assets.groupher.com/internal":"assets-hub:internal-api","https://import.groupher.com/internal":"content-import:internal-api","https://press.groupher.com/internal":"press:internal-api"}',
+            : '{"https://api.groupher.com/assets":"phoenix:assets-api","https://api.groupher.com/auth":"phoenix:auth-api","https://api.groupher.com/content-import":"phoenix:content-import-api","https://api.groupher.com/content-publisher":"phoenix:content-publisher-api","https://api.groupher.com/cms-maintenance":"phoenix:cms-maintenance","https://api.groupher.com/press":"phoenix:press-api","https://assets.groupher.com/internal":"assets-hub:internal-api","https://import.groupher.com/internal":"content-import:internal-api","https://press.groupher.com/internal":"press:internal-api"}',
         ),
         SERVICE_AUTH_TOKEN_TTL_SECONDS: bindings.text('600'),
         SERVICE_AUTH_TOKEN_ENDPOINT: bindings.text(`${authOrigin}/oauth2/token`),
@@ -59,6 +61,7 @@ export default defineConfig(({ mode }) => {
         AUTH_GITHUB_SECRET: bindings.secret(),
         NEXTAUTH_SECRET: bindings.secret(),
         SERVICE_AUTH_CLIENTS_JSON: bindings.secret(),
+        SERVICE_AUTH_CLIENTS_JSON_MAINTENANCE: bindings.secret(),
         SERVICE_AUTH_CLIENTS_JSON_ADDITIONS: bindings.secret(),
         SERVICE_AUTH_CLIENTS_JSON_EXTRA: bindings.secret(),
         SERVICE_AUTH_CLIENT_ID: bindings.secret(),

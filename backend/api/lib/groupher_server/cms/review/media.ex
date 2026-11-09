@@ -25,9 +25,13 @@ defmodule GroupherServer.CMS.Review.Media do
       comment_images(body.json, community.id)
       #=> [%{asset_id: 41, immutable_version: "sha256:..."}]
   """
-  @spec comment_images(String.t() | nil, pos_integer()) :: [map()]
-  def comment_images(body_json, community_id)
-      when is_binary(body_json) and is_integer(community_id) do
+  @spec comment_images(String.t() | nil, pos_integer() | [pos_integer()]) :: [map()]
+  def comment_images(body_json, community_id) when is_integer(community_id) do
+    comment_images(body_json, [community_id])
+  end
+
+  def comment_images(body_json, community_ids)
+      when is_binary(body_json) and is_list(community_ids) do
     refs =
       Regex.scan(~r{/a/(asset_[A-Za-z0-9_-]+)/original}, body_json, capture: :all_but_first)
       |> List.flatten()
@@ -39,7 +43,7 @@ defmodule GroupherServer.CMS.Review.Media do
       assets =
         from(asset in CommunityAsset,
           where:
-            asset.community_id == ^community_id and asset.public_ref in ^refs and
+            asset.community_id in ^community_ids and asset.public_ref in ^refs and
               asset.status == :active and asset.asset_type == :image
         )
         |> Repo.all()

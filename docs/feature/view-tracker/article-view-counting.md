@@ -63,7 +63,7 @@ applyViewResult
         |
         v
 useArticleState / useArticleStates
-  -> Detail / Posts / Changelogs / Kanban
+  -> Detail / Posts / Changelogs / Ticket Kanban（通过关联 Post stats 聚合）
 ```
 
 一次 counted 分支的 dedupe、stats、ViewerState 和 MetricEvent 在同一数据库事务内提交。Analysis 后续聚合失败不改变
@@ -206,7 +206,9 @@ useArticleStates(articles)
 ```
 
 公共 hook 内部统一 Article ref/key、真实 detail/batch stats、viewer batches、ViewAck 和 interaction receipt
-overlay。详情与列表仍各自拥有内容查询；分页、URL filter、刷新和 Kanban 分组不进入公共状态 hook。
+overlay。详情与列表仍各自拥有内容查询；分页、URL filter、刷新和 Ticket Kanban 分组不进入公共状态 hook。
+
+Ticket 卡片不拥有独立浏览量。Ticket 查询提供关联 Post refs，SSR 与浏览器按每批最多 100 个 Post path 预取真实 `articleStats` batch，再在卡片层求和；ViewTracker 仍只写对应 Post 的 ArticleStats。投票/评论的即时 Ticket 数字由同一 Post stats 更新，公共 Ticket HTML 由关联 Ticket cache tag purge 收敛。
 
 ## 8. 安全边界
 
@@ -241,7 +243,7 @@ Article id 清理自己的状态。
 - service scope 的允许、拒绝和 verifier-failure 路径；
 - Cleanup 多批 drain、预算退出/续跑及并发推进后的 delete recheck；
 - permanent delete 后不留 View projection，旧请求不能复活；
-- Detail、Posts、Changelogs、Kanban 统一组装，真实 Detail/Batch stats 按 owner revision 收敛，ViewAck 收敛；
+- Detail、Posts、Changelogs、Ticket Kanban 统一组装，真实 Detail/Batch stats 按 owner revision 收敛，ViewAck 收敛；
 - generated GraphQL 不再包含 View 客户端幂等字段或公开 decision 明细。
 
 生产发布仍需观察 ViewTracker outcome、Cleanup backlog、数据库写延迟，并单独完成 Cloudflare 待办和真实流量压测。

@@ -56,6 +56,37 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
   end
 
   @doc """
+  Creates an official BrowserSession bounded by an earlier operational deadline.
+
+      trusted caller -> bounded create -> persisted expiry -> normal access token
+
+  ## Examples
+
+      BrowserSessions.create_until(user, %{}, DateTime.add(DateTime.utc_now(:second), 300))
+      #=> {:ok, signin_result} | {:error, reason}
+  """
+  def create_until(%User{} = user, metadata, %DateTime{} = deadline) do
+    now = DateTime.utc_now(:second)
+
+    if DateTime.compare(deadline, now) == :gt and
+         DateTime.diff(deadline, now) <= @absolute_ttl_seconds do
+      Repo.transact_result(fn ->
+        with {:ok, result} <- create(user, metadata),
+             session <- Repo.get_by!(BrowserSession, ref: result.browser_session_ref),
+             {:ok, _} <-
+               session
+               |> Ecto.Changeset.change(absolute_expires_at: DateTime.truncate(deadline, :second))
+               |> Repo.update(),
+             {:ok, bounded} <- refresh(result.browser_session_ref) do
+          {:ok, bounded}
+        end
+      end)
+    else
+      {:error, :invalid_browser_session_deadline}
+    end
+  end
+
+  @doc """
   Refreshes an active browser session token.
 
   ## Examples
@@ -91,6 +122,17 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
   """
   @spec revoke_current(String.t()) :: {:ok, atom()} | {:error, term()}
   def revoke_current(ref) when is_binary(ref), do: revoke_ref(ref, "logout")
+
+  @doc """
+  Revokes a browser session when its production seed run closes.
+
+  ## Examples
+
+      BrowserSessions.revoke_seed_run(session_ref)
+      #=> {:ok, :revoked} | {:ok, :already_revoked}
+  """
+  @spec revoke_seed_run(String.t()) :: {:ok, atom()} | {:error, term()}
+  def revoke_seed_run(ref) when is_binary(ref), do: revoke_ref(ref, "seed_run_closed")
 
   @doc """
   Revokes every active browser session except the current one.

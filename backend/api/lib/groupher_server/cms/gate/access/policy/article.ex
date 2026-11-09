@@ -51,7 +51,6 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     :sink,
     :undo_sink,
     :set_category,
-    :set_status,
     :community_tag_set,
     :community_tag_unset,
     :lock_comments,
@@ -123,13 +122,20 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
          {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
          {:ok, _} <- doc_branch_allowed(action, context),
-         {:ok, _} <- action_allowed(action, lifecycle, article) do
+         {:ok, _} <- action_allowed(action, lifecycle, article),
+         {:ok, :pass} <- discussion_parent_readable(actor, action, article, context) do
       {:ok, :pass}
     else
       {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
       {:error, _reason} = error -> error
     end
   end
+
+  defp discussion_parent_readable(actor, :create_comment, article, context) do
+    check_allowed(actor, :read, article, context)
+  end
+
+  defp discussion_parent_readable(_actor, _action, _article, _context), do: {:ok, :pass}
 
   defp review_scopes_readable?(%User{}, context) do
     scopes = Map.get(context, :review_scope_keys, [])
@@ -300,7 +306,6 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
         :sink -> "sink"
         :undo_sink -> "undo_sink"
         :set_category -> "set_category"
-        :set_status -> "set_status"
         :lock_comments -> "lock_comment"
         :unlock_comments -> "undo_lock_comment"
         _ -> nil
@@ -335,7 +340,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   defp community(_context), do: {:error, ErrorCat.lifecycle_not_loaded()}
 
   defp action_allowed(:publish, %{state: state}, _article)
-       when state in [:draft_only, :published] do
+       when state in [:draft, :published] do
     {:ok, :pass}
   end
 
@@ -411,7 +416,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   end
 
   defp action_allowed(:delete, %{state: state}, _article)
-       when state in [:draft_only, :published] do
+       when state in [:draft, :published] do
     {:ok, :pass}
   end
 
@@ -442,7 +447,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   end
 
   defp action_allowed(:restore_revision_to_draft, %{state: state}, _article)
-       when state in [:draft_only, :published] do
+       when state in [:draft, :published] do
     {:ok, :pass}
   end
 
@@ -460,7 +465,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   defp action_allowed(action, %{state: state}, %{thread: thread})
        when action in [:move, :mirror, :unmirror, :pin, :unpin] and
-              state in [:draft_only, :published] and thread in [:post, :blog, :changelog] do
+              state in [:draft, :published] and thread in [:post, :blog, :changelog] do
     {:ok, :pass}
   end
 
@@ -474,13 +479,12 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
               :sink,
               :undo_sink,
               :set_category,
-              :set_status,
               :community_tag_set,
               :community_tag_unset,
               :lock_comments,
               :unlock_comments,
               :moderate
-            ] and state in [:draft_only, :published] do
+            ] and state in [:draft, :published] do
     {:ok, :pass}
   end
 

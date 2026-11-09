@@ -3,7 +3,14 @@ import { createServerFn } from '@tanstack/react-start'
 
 import { THREAD } from '~/const/thread'
 import { themePresets } from '~/schemas/pages/misc'
-import type { TPagiGraphQLInput, TPagedArticles, TTagGroup, TThemePresetOption } from '~/spec'
+import { ticketInternal } from '~/schemas/pages/ticket'
+import type {
+  TPagiGraphQLInput,
+  TPagedArticles,
+  TPagedTickets,
+  TTagGroup,
+  TThemePresetOption,
+} from '~/spec'
 import type { TPagedAssets } from '~/unit/DsbThread/AssetsHub/spec'
 import type { TRawPagedTrashedPosts } from '~/unit/DsbThread/CMS/Trash/spec'
 import DashboardAssetsSchema from '~/unit/DsbThread/schema/assets'
@@ -14,11 +21,9 @@ import KanbanSchema from '~/unit/KanbanThread/schema'
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
 
 type TGroupedKanban = {
-  backlog: TPagedArticles
-  todo: TPagedArticles
-  wip: TPagedArticles
-  done: TPagedArticles
-  rejected: TPagedArticles
+  todo: TPagedTickets
+  wip: TPagedTickets
+  done: TPagedTickets
 }
 
 export type TPagedPostsInput = {
@@ -65,6 +70,7 @@ export const loadPagedChangelogs = createServerFn({ method: 'GET', strict: false
 
 export type TKanbanInput = {
   community: string
+  pagi: TPagiGraphQLInput
 }
 
 export const loadKanban = createServerFn({ method: 'GET', strict: false })
@@ -74,12 +80,25 @@ export const loadKanban = createServerFn({ method: 'GET', strict: false })
     setPrivateCacheHeader()
 
     const result = await fetchGraphQL(
-      KanbanSchema.groupedKanbanPosts,
-      { community: data.community },
+      KanbanSchema.ticketKanbanInternal,
+      { community: data.community, pagi: data.pagi },
       token,
     )
 
-    return (result.data?.groupedKanbanPosts as unknown as TGroupedKanban | null) ?? null
+    return (result.data?.ticketKanbanInternal as unknown as TGroupedKanban | null) ?? null
+  })
+
+/** Loads a private Ticket through the authenticated Dash server transport. */
+export const loadTicketInternal = createServerFn({ method: 'GET', strict: false })
+  .validator((data: { community: string; id: string }) => data)
+  .handler(async ({ data }) => {
+    setPrivateCacheHeader()
+    const result = await fetchGraphQL<ResultOf<typeof ticketInternal>>(
+      ticketInternal,
+      data,
+      getAuthToken(),
+    )
+    return result.data?.ticketInternal ?? null
   })
 
 export type TTagGroupsInput = {

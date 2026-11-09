@@ -19,8 +19,8 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.Dashboard.LayoutTest do
     changeset =
       Layout.changeset(%Layout{}, %{
         post_layout: :cover,
-        kanban_bg_colors: [:black, :yellow],
-        kanban_boards: [:backlog, :done]
+        kanban_bg_colors: [:black, :yellow, :green],
+        kanban_boards: [:todo, :done]
       })
 
     assert changeset.valid?
@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.Dashboard.LayoutTest do
     layout = Ecto.Changeset.apply_changes(changeset)
 
     assert layout.post_layout == :cover
-    assert layout.kanban_bg_colors == [:black, :yellow]
-    assert layout.kanban_boards == [:backlog, :done]
+    assert layout.kanban_bg_colors == [:black, :yellow, :green]
+    assert layout.kanban_boards == [:todo, :done]
   end
 end

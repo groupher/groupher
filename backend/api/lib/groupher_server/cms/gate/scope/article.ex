@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   @behaviour Policy
 
   @public_lifecycle_states [:published, :archived]
-  @draft_lifecycle_states [:draft_only, :published, :archived]
+  @draft_lifecycle_states [:draft, :published, :archived]
   @actions [:read, :read_draft, :list, :read_insights]
   @management_policy_modes [
     :owner_management,
@@ -71,6 +71,17 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   end
 
   def scope(_query, _actor, _action, _context), do: {:error, ErrorCat.scope_context_missing()}
+
+  @doc false
+  def public_identity(%Ecto.Query{} = query, thread)
+      when thread in [:post, :blog, :changelog, :ticket] do
+    context = %ArticleContext{thread: thread, stage: :public, policy_mode: :public}
+
+    with %Ecto.Query{} = scoped <- base_scope(query, thread, :public, nil),
+         {:ok, scoped} <- apply_stage(scoped, :public, nil, :public, context) do
+      scoped
+    end
+  end
 
   defp base_scope(query, thread, policy_mode, branch_id)
 

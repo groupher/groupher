@@ -18,7 +18,7 @@ defmodule GroupherServer.Jobs.Comments do
 
   alias GroupherServer.CMS
 
-  @event_types ~w(sync_mentions subscribe_community)
+  @event_types ~w(subscribe_community)
 
   @doc """
   Performs one persisted Comments job.
@@ -27,9 +27,9 @@ defmodule GroupherServer.Jobs.Comments do
 
       perform(%Oban.Job{
         args: %{
-          "type" => "sync_mentions",
+          "type" => "subscribe_community",
           "version" => 1,
-          "payload" => %{"comment_id" => comment_id}
+          "payload" => %{"community_id" => community_id, "actor_id" => actor_id}
         }
       })
   """
@@ -37,19 +37,5 @@ defmodule GroupherServer.Jobs.Comments do
   def perform(%Oban.Job{args: %{"type" => type, "version" => 1, "payload" => payload}})
       when type in @event_types do
     CMS.comments_deliver_effect(String.to_existing_atom(type), payload)
-  end
-
-  def perform(%Oban.Job{
-        args: %{
-          "type" => "reconcile_comments_participants",
-          "version" => 1,
-          "payload" => payload
-        }
-      }) do
-    CMS.reconcile_comments_participants(
-      String.to_existing_atom(payload["thread"]),
-      payload["article_id"],
-      payload["total_count"]
-    )
   end
 end

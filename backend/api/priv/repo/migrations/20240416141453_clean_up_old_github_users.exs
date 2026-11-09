@@ -3,9 +3,9 @@ defmodule GroupherServer.Repo.Migrations.CleanUpOldGithubUsers do
 
   def change do
     alter table(:users, prefix: "account") do
-      remove :from_github
+      remove(:from_github)
     end
 
-    drop table(:github_users, prefix: "account")
+    drop(table(:github_users, prefix: "account"))
   end
 end

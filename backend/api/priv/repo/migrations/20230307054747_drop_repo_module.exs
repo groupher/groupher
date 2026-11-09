@@ -46,13 +46,13 @@ defmodule GroupherServer.Repo.Migrations.DropRepoModule do
       remove(:repo_id)
     end
 
-    drop_if_exists table("repos_builders")
+    drop_if_exists(table("repos_builders"))
 
-    drop_if_exists table("repos_tags")
-    drop_if_exists table("repo_documents")
-    drop_if_exists table("cms_repos")
+    drop_if_exists(table("repos_tags"))
+    drop_if_exists(table("repo_documents"))
+    drop_if_exists(table("cms_repos"))
 
-    drop_if_exists table("community_wikis")
-    drop_if_exists table("community_cheatsheets")
+    drop_if_exists(table("community_wikis"))
+    drop_if_exists(table("community_cheatsheets"))
   end
 end

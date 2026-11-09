@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   alias CMS.Gate.Access.Policy.Application, as: ApplicationPolicy
   alias CMS.Gate.{Decision, ErrorCat}
   alias CMS.{Articles, FrontDesk}
-  alias CMS.Model.{Article, Comment, Community}
+  alias CMS.Model.{Article, Comment, Community, DocBranch}
   alias CMS.Model.CommunityApplication
   alias CMS.Articles.MutationLock
   alias Helper.ORM.AdvisoryLock
@@ -145,7 +145,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     with {:ok, :pass} <- require_transaction(),
          {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, comment.community_id),
+         {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment),
          {:ok, :pass} <- acquire_comment_parent_lock(community, article, comment) do
       Check.with_authorized(actor, action, {community, thread, article, comment}, fn value ->
         {:ok, value}
@@ -213,10 +213,20 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   @doc "Returns the canonical Comment together with its canonical parent Article."
   def check_comment_in_transaction(actor, action, %Comment{} = comment) do
+    case CMS.Comments.RequestCommunity.resolve(comment) do
+      {:ok, %Community{} = community} ->
+        check_comment_in_transaction(actor, action, comment, community)
+
+      {:error, _reason} = error ->
+        error
+    end
+  end
+
+  @doc "Locks the requested parent binding before checking Comment write permission."
+  def check_comment_in_transaction(actor, action, %Comment{} = comment, %Community{} = community) do
     with {:ok, :pass} <- require_transaction(),
          {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, comment.community_id),
          {:ok, :pass} <- acquire_comment_parent_lock(community, article, comment) do
       Check.with_authorized(
         actor,
@@ -265,6 +275,30 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   @doc "Joins the caller transaction for a branch-scoped Doc check."
   def check_in_transaction(actor, action, resource, community, branch_id)
+
+  # Doc discussion is attached to the stable Article. Creation therefore uses
+  # the same aggregate lock as reply/edit/delete, while Gate still checks main.
+  def check_in_transaction(
+        actor,
+        :create_comment,
+        %Article{thread: :doc} = article,
+        %Community{} = community,
+        branch_id
+      )
+      when is_integer(branch_id) do
+    with {:ok, :pass} <- require_transaction(),
+         {:ok, :pass} <- acquire_comment_parent_lock(community, article, nil) do
+      Check.with_authorized_doc(
+        actor,
+        :create_comment,
+        {community, article, branch_id},
+        fn value ->
+          {:ok, value}
+        end
+      )
+      |> normalize_join_decision()
+    end
+  end
 
   def check_in_transaction(
         actor,
@@ -329,15 +363,26 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   defp acquire_comment_parent_lock(
          %Community{} = community,
-         %Article{thread: :doc} = article,
-         %Comment{branch_id: branch_id}
-       )
-       when is_integer(branch_id) do
-    acquire_doc_lock(community, article, branch_id)
+         %Article{thread: :doc, id: id},
+         _comment
+       ) do
+    case Repo.get_by(DocBranch, community_id: community.id, type: :main) do
+      %DocBranch{id: branch_id} ->
+        AdvisoryLock.acquire!(MutationLock.doc_key(community, branch_id, id))
+        {:ok, :pass}
+
+      nil ->
+        {:error, ErrorCat.doc_branch_required()}
+    end
   end
 
-  defp acquire_comment_parent_lock(%Community{} = community, %Article{} = article, _comment) do
-    acquire_article_lock(community, article)
+  defp acquire_comment_parent_lock(
+         %Community{} = community,
+         %Article{thread: thread, id: id},
+         _comment
+       ) do
+    AdvisoryLock.acquire!(MutationLock.key(community, thread, id))
+    {:ok, :pass}
   end
 
   defp acquire_doc_lock(%Community{} = community, %Article{id: article_id}, branch_id) do
@@ -373,8 +418,8 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
       when is_function(callback, 1) or is_function(callback, 2) do
     with {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- parent_article(comment),
-         %Community{} = community <- Repo.get(Community, comment.community_id) do
-      transact_parent(community, article, comment.branch_id, fn ->
+         {:ok, %Community{} = community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      transact_parent(community, article, nil, fn ->
         Check.with_authorized(actor, action, {community, thread, article, comment}, callback)
       end)
       |> normalize_decision()
@@ -560,12 +605,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
     end
   end
 
-  defp parent_article(comment), do: FrontDesk.article_of(comment)
-
-  defp transact_parent(community, %Article{thread: :doc} = article, branch_id, fun)
-       when is_integer(branch_id) do
-    Articles.MutationLock.transact_doc(community, article, branch_id, fun)
-  end
+  defp parent_article(_comment), do: {:error, ErrorCat.resource_not_found()}
 
   defp transact_parent(community, article, _branch_id, fun) do
     Articles.MutationLock.transact_article(community, article, fun)

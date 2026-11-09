@@ -12,11 +12,9 @@ export default function createArticleListStore(init: TInit = {}): TStore {
     thread: null,
     activeOrder: null,
     activeCat: null,
-    activeStatus: null,
 
     updateActiveFilter(filter: TArticleFilter): void {
       if (has(URL_PARAM.CAT, filter)) store.activeCat = filter.cat
-      if (has(URL_PARAM.STATUS, filter)) store.activeStatus = filter.status
       if (has(URL_PARAM.ORDER, filter)) store.activeOrder = filter.order
     },
     ...init,

@@ -19,8 +19,19 @@ defmodule GroupherServer.CMS.Articles.Workflow do
   alias GroupherServer.FrontDesk, as: RootFrontDesk
 
   alias Accounts.Model.User
-  alias CMS.Model.{Article, ArticleBinding, Author, Community}
+
+  alias CMS.Model.{
+    Article,
+    ArticleBinding,
+    ArticleBodySnapshot,
+    ArticleRevision,
+    Author,
+    Community
+  }
+
   alias CMS.Articles.Effects
+  alias CMS.Artiment.PlateJSON
+  alias CMS.ArtimentMentions
   alias Helper.ORM
 
   @doc "Runs an Article workflow in the current transaction or opens one."
@@ -35,7 +46,9 @@ defmodule GroupherServer.CMS.Articles.Workflow do
   @doc "Publishes one Gate-authorized Article and commits all first-publish side effects atomically."
   def publish(%Article{} = article, %Author{} = author, actor, opts) do
     transaction(fn ->
-      with {:ok, published} <- CMS.Articles.Publish.Target.publish(article, author, opts),
+      with {:ok, identity} <- outbox_identity(opts),
+           {:ok, published} <- CMS.Articles.Publish.Target.publish(article, author, opts),
+           {:ok, _ticket_cache} <- invalidate_linked_ticket_cache(published, identity),
            {:ok, _finalized} <- finalize_first_publish(published, actor),
            {:ok, _events} <- enqueue_publish_events(published, opts) do
         published
@@ -44,6 +57,19 @@ defmodule GroupherServer.CMS.Articles.Workflow do
       end
     end)
   end
+
+  defp invalidate_linked_ticket_cache(
+         %{article: %Article{thread: :post, id: post_id}},
+         identity
+       ) do
+    CMS.Tickets.SourceVisibility.revalidate_cache_in_transaction(
+      post_id,
+      identity,
+      "post_public_revision_changed:#{post_id}"
+    )
+  end
+
+  defp invalidate_linked_ticket_cache(_published, _identity), do: {:ok, :pass}
 
   @doc "Returns or creates the CMS Author row associated with a User."
   @spec ensure_author_exists(User.t()) :: {:ok, Author.t()}
@@ -106,14 +132,40 @@ defmodule GroupherServer.CMS.Articles.Workflow do
                  },
                  effect_key: "article-projections:#{community.id}:#{inner_id}",
                  retry_failed: true
-               ) do
-          {:ok, %{cache: cache_event, projections: projection_event}}
+               ),
+             {:ok, mention_event} <-
+               capture_article_mentions(article, public, community, identity) do
+          {:ok, %{cache: cache_event, projections: projection_event, mentions: mention_event}}
         else
           {:error, reason} -> {:error, reason}
         end
 
       _ ->
         {:error, CMS.ErrorCat.command_id_required()}
+    end
+  end
+
+  defp capture_article_mentions(%Article{} = article, public, community, identity) do
+    with %ArticleRevision{} = revision <- Repo.get(ArticleRevision, public.revision_id),
+         %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, revision.body_snapshot_id),
+         {:ok, ast} <- PlateJSON.decode(body.json),
+         true <- match?(%DateTime{}, public.updated_at),
+         {:ok, captured} <-
+           ArtimentMentions.update(
+             %{type: article.thread, article_id: article.id},
+             %{
+               published_revision_identity: "#{public.revision_id}:#{public.publication_version}",
+               ast: ast,
+               community_id: community.id,
+               mentioned_at: public.updated_at
+             },
+             identity
+           ) do
+      {:ok, captured}
+    else
+      nil -> {:error, :source_body_missing}
+      false -> {:error, :source_publication_time_missing}
+      {:error, _reason} = error -> error
     end
   end
 

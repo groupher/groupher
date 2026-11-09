@@ -1,6 +1,7 @@
 import Config
 
 config :groupher_server, :allow_test_service_auth, true
+config :groupher_server, :mentions_graph_key, "test-mentions-graph-key-with-32-bytes"
 
 config :groupher_server, :pagination_cursor_keyring,
   current_version: 1,
@@ -10,6 +11,7 @@ config :groupher_server, :pagination_cursor_keyring,
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :groupher_server, GroupherServerWeb.Endpoint,
+  secret_key_base: "shared-comments-test-endpoint-signing-key-0000000000000000000000000000",
   http: [port: 4001],
   server: false
 
@@ -33,7 +35,7 @@ config :groupher_server, GroupherServer.Repo,
   adapter: Ecto.Adapters.Postgres,
   username: "postgres",
   password: "postgres",
-  database: "groupher_server_test",
+  database: System.get_env("TEST_DB_NAME") || "groupher_server_test",
   hostname: "localhost",
   port: String.to_integer(System.get_env("TEST_DB_PORT") || "5432"),
   pool_size: 20,

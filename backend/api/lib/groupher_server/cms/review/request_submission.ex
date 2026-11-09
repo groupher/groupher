@@ -44,17 +44,19 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
                 (trigger in [:recheck, :binding] and is_tuple(requested_scope) and
                    tuple_size(requested_scope) == 2 and elem(requested_scope, 0) == :community and
                    is_integer(elem(requested_scope, 1)))) do
-    with true <- Repo.in_transaction?(),
-         {:ok, scopes} <- policy_scopes(configs, requested_scope),
-         {:ok, attrs} <- target_attrs(target, content, trigger, scopes),
-         {:ok, :pass} <- end_previous_wall_items(target, trigger),
-         {:ok, requests} <- insert_scoped_requests(attrs, target) do
-      {:ok, requests}
-    else
-      false -> {:error, CMS.ErrorCat.review_transition_requires_transaction()}
-      {:error, _reason} = error -> error
-      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
-    end
+    CMS.Comments.Summary.for_lifecycle(Map.get(target, :lifecycle), fn ->
+      with true <- Repo.in_transaction?(),
+           {:ok, scopes} <- policy_scopes(configs, requested_scope),
+           {:ok, attrs} <- target_attrs(target, content, trigger, scopes),
+           {:ok, :pass} <- end_previous_wall_items(target, trigger),
+           {:ok, requests} <- insert_scoped_requests(attrs, target) do
+        {:ok, requests}
+      else
+        false -> {:error, CMS.ErrorCat.review_transition_requires_transaction()}
+        {:error, _reason} = error -> error
+        _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+      end
+    end)
   end
 
   def register_in_transaction(_target, _content, _configs, _trigger, _scope) do
@@ -226,25 +228,35 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
   end
 
   defp apply_initial_hold(%ArtimentReview{} = request, %{lifecycle: lifecycle}) do
-    scope_key =
-      if is_nil(request.community_id), do: "platform", else: "community:#{request.community_id}"
-
-    case CMS.ReviewBlocks.apply(lifecycle, %{
-           scope_key: scope_key,
-           type: :awaiting_ai,
-           artiment_review_id: request.id,
-           source_ref: "request:#{request.id}:awaiting_ai",
-           source: :request,
-           applied_at: DateTime.utc_now(:second)
-         }) do
-      {:ok, _restriction} -> {:ok, :pass}
-      {:error, _reason} = error -> error
+    if CMS.Review.Requests.shared_comment_community_request?(request) do
+      {:ok, :pass}
+    else
+      with {:ok, scope_key} <- restriction_scope(request),
+           {:ok, _restriction} <-
+             CMS.Review.Restrictions.apply(lifecycle, %{
+               scope_key: scope_key,
+               type: :ai_review_hold,
+               artiment_review_id: request.id,
+               operation_ref: request.id,
+               source_ref: "request:#{request.id}:ai_review_hold",
+               source: :request,
+               applied_at: DateTime.utc_now(:second)
+             }) do
+        {:ok, :pass}
+      else
+        {:error, _reason} = error -> error
+      end
     end
   end
 
   defp apply_initial_hold(_request, _target) do
     {:error, CMS.ErrorCat.invalid_review_block()}
   end
+
+  defp restriction_scope(request), do: {:ok, request_scope(request)}
+
+  defp request_scope(%ArtimentReview{community_id: nil}), do: "platform"
+  defp request_scope(%ArtimentReview{community_id: id}), do: "community:#{id}"
 
   defp end_previous_wall_items(_target, trigger) when trigger in [:recheck, :binding] do
     {:ok, :pass}

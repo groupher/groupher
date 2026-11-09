@@ -4,7 +4,7 @@ import { commentPage } from './comment'
 import { community, pagedCommunities, subscribedCommunities } from './community'
 import { doc, docPublicTree, docPage } from './doc'
 import { communityTagGroups, communityTagStats, categories, themePresets } from './misc'
-import { groupedKanbanPosts, postPage, pagedPublishedPosts, post } from './post'
+import { postPage, pagedPublishedPosts, post } from './post'
 import { me, sessionState, user } from './user'
 
 /**
@@ -18,7 +18,6 @@ export const pageDocuments = {
   community,
   subscribedCommunities,
   pagedCommunities,
-  groupedKanbanPosts,
   commentPage,
   categories,
   themePresets,

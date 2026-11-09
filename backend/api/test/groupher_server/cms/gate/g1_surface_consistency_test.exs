@@ -28,14 +28,14 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
              CMS.Articles.Pagination.page(:post, %{community: community.slug}, pagi, author)
 
     assert entry.id == article.id
-    assert {:ok, [%{article: %{id: article_id}}]} = CMS.Articles.locators([path])
+    assert {:ok, [%{article: %{id: article_id}}]} = CMS.FrontDesk.article([path])
     assert article_id == article.id
 
     restriction =
       Repo.insert!(%ArticleReviewBlock{
         article_id: article.id,
         community_id: community.id,
-        type: :ai_suspect,
+        type: :ai_suspect_hold,
         source_ref: "test-rule",
         source: :request,
         applied_at: DateTime.utc_now(:second)
@@ -70,7 +70,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
              CMS.Articles.Pagination.page(:post, %{community: community.slug}, pagi, author)
 
     assert entry.id == article.id
-    assert {:ok, []} = CMS.Articles.locators([path])
+    assert {:ok, []} = CMS.FrontDesk.article([path])
     assert {:error, %ErrorCat.Error{reason: :article_not_found}} = CMS.FrontDesk.article(path)
 
     assert {:ok, %{entries: [], page_info: %{total_count: 0}}} =
@@ -84,7 +84,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
              CMS.Articles.Pagination.page(:post, %{community: community.slug}, pagi, author)
 
     assert entry.id == article.id
-    assert {:ok, [%{article: %{id: article_id}}]} = CMS.Articles.locators([path])
+    assert {:ok, [%{article: %{id: article_id}}]} = CMS.FrontDesk.article([path])
     assert article_id == article.id
 
     Repo.delete!(Repo.get_by!(ArticlePublic, article_id: article.id))
@@ -120,13 +120,13 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
 
     assert entry.id == article.id
 
-    assert {:ok, [%{article: %{id: article_id}}]} = CMS.Articles.locators([path])
+    assert {:ok, [%{article: %{id: article_id}}]} = CMS.FrontDesk.article([path])
     assert article_id == article.id
 
     Repo.insert!(%CMS.Model.DocReviewBlock{
       article_id: article.id,
       branch_id: branch.id,
-      type: :ai_suspect,
+      type: :ai_suspect_hold,
       source_ref: "test-rule",
       source: :request,
       applied_at: DateTime.utc_now(:second)
@@ -138,7 +138,7 @@ defmodule GroupherServer.Test.CMS.Gate.G1SurfaceConsistencyTest do
              CMS.Articles.Pagination.page(:doc, %{community: community.slug}, pagi, author)
 
     assert entry.id == article.id
-    assert {:ok, []} = CMS.Articles.locators([path])
+    assert {:ok, []} = CMS.FrontDesk.article([path])
     assert {:error, %ErrorCat.Error{reason: :article_not_found}} = CMS.FrontDesk.article(path)
 
     assert {:ok, %{entries: [], page_info: %{total_count: 0}}} =

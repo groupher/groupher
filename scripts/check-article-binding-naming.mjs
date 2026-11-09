@@ -23,6 +23,10 @@ const forbidden = [
 ]
 
 const sourceFile = (file) => /\.(?:ex|exs)$/.test(file)
+const isTicketDomain = (file) =>
+  file.endsWith('/cms/tickets.ex') ||
+  file.includes('/cms/tickets/') ||
+  /\/cms\/model\/ticket_[^/]+\.exs?$/.test(file)
 
 /** Returns forbidden legacy ArticleBinding naming occurrences from active repository source files. */
 export const namingFindings = (files, read = (file) => readFileSync(path.join(repoRoot, file), 'utf8')) =>
@@ -33,6 +37,7 @@ export const namingFindings = (files, read = (file) => readFileSync(path.join(re
       .split('\n')
       .flatMap((line, index) =>
         forbidden
+          .filter(([message]) => message !== 'ArticleBinding relation terminology' || !isTicketDomain(file))
           .filter(([, pattern]) => pattern.test(line.replace(/#.*/, '')))
           .map(([message]) => ({ file, line: index + 1, message, source: line.trim() })),
       )

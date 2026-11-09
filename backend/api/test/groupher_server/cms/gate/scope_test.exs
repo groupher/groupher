@@ -25,24 +25,24 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     assert %CommentContext{thread: :all, policy_mode: :public} = CommentContext.all_public()
   end
 
-  test "Comment thread scope validates Doc branch and policy coordinates" do
-    assert %CommentContext{thread: :doc, branch_policy: :main} =
-             CommentContext.for_thread(:doc, branch_policy: :main)
+  test "Comment thread scope validates stable owner Community and policy coordinates" do
+    assert %CommentContext{thread: :doc, community_id: 123} =
+             CommentContext.for_thread(:doc, community_id: 123)
 
-    assert_raise ArgumentError, ~r/requires branch_policy/, fn ->
+    assert_raise ArgumentError, ~r/requires community_id/, fn ->
       CommentContext.for_thread(:doc)
     end
 
-    assert_raise ArgumentError, ~r/only accepts branch_policy/, fn ->
+    assert_raise ArgumentError, ~r/does not accept body branch/, fn ->
       CommentContext.for_thread(:doc, branch_policy: :preview)
     end
 
-    assert_raise ArgumentError, ~r/only Doc Comment scope/, fn ->
+    assert_raise ArgumentError, ~r/does not accept body branch/, fn ->
       CommentContext.for_thread(:post, branch_policy: :main)
     end
 
     assert_raise ArgumentError, ~r/invalid Comment scope policy mode/, fn ->
-      CommentContext.for_thread(:post, policy_mode: :unknown)
+      CommentContext.for_thread(:post, policy_mode: :unknown, community_id: 123)
     end
   end
 
@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     threaded =
       Comment
       |> select([comment], %{id: comment.id})
-      |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:post))
+      |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:post, community_id: 123))
 
     for query <- [contextless, threaded] do
       assert %Ecto.Query{} = query
@@ -78,7 +78,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     doc =
       Comment
-      |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:doc, branch_policy: :main))
+      |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:doc, community_id: 123))
 
     {doc_sql, _doc_params} = to_sql(doc)
     assert doc_sql =~ ~s(JOIN "cms"."doc_branches")
@@ -145,7 +145,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
       |> distinct([_comment, author], author.id)
       |> group_by([comment, author], [comment.id, author.id])
       |> select([_comment, author], author)
-      |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:post))
+      |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:post, community_id: 123))
 
     assert %Ecto.Query{} = query
     {sql, _params} = to_sql(query)
@@ -186,7 +186,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
       |> limit(20),
       Comment
       |> CMS.Gate.scope(nil, :list, CommentContext.all_public())
-      |> where([comment], comment.community_id == ^0)
+      |> where([gate_community: community], community.id == ^0)
       |> order_by([comment], desc: comment.inserted_at)
       |> limit(20)
     ]
@@ -230,7 +230,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
         Ecto.UUID.generate()
       )
 
-    assert comment.community_id == community.id
+    assert comment.article_id == post.id
 
     assert {:ok, %{entries: articles}} =
              CMS.Articles.paged_published(

@@ -53,7 +53,6 @@ defmodule GroupherServer.CMS.Wallpaper.Retention do
   end
 
   defp reconcile_lifecycle_in_transaction(now) do
-
     receipt_count =
       from(receipt in WallpaperPublishReceipt, where: receipt.expires_at <= ^now)
       |> Repo.delete_all()

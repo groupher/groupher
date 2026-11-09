@@ -2,6 +2,9 @@
 
 > Historical implementation record: references to the legacy Next Dashboard describe the migration
 > comparison target. The current management application is `frontend/dash`.
+> The former decision to commit generated GraphQL files is also historical.
+> Current builds generate `frontend/core/lib/graphql/generated/` during install;
+> the directory is ignored by git.
 
 > Status: v1 contract guardrails and typed-document slices are implemented; all
 > Pages and Dashboard operation sources are now bounded static documents. The
@@ -875,12 +878,11 @@ discovery while output remains behind the `~/graphql/authoring` boundary.
 
 ### Generated artifact lifecycle is a Phase 1 gate
 
-The generated directory is a compile-time dependency of authoring modules. This
-pilot resolves that lifecycle by committing generated artifacts. Normal build
-and type-check commands therefore work from a clean checkout; CI reruns
-`pnpm run graphql:codegen` and fails on a generated diff. Codegen must run before a
-change to a source document is accepted, but it is not a hidden runtime import
-dependency for the existing `~/graphql` transport exports.
+The generated directory is a compile-time dependency of authoring modules. The
+original pilot committed generated artifacts. That decision has been superseded:
+install runs Codegen from tracked schema and operation sources. A clean checkout
+therefore requires install before build or type-check. The existing `~/graphql`
+transport exports do not import the generated directory at runtime.
 
 Regardless of the generated artifact, unrelated imports such as
 `~/graphql/server`, `~/graphql/document`, and `~/graphql/proxy` remain loadable
@@ -953,15 +955,15 @@ operation remains in a runtime-generated or interpolated GraphQL form.
 
 Before changing those operations, use TypeScript operation modules with the
 generated `graphql()` helper for this migration. The artifact lifecycle is
-already resolved: generated files are committed and checked by CI. Dash
+now handled by install-time generation from tracked sources. Dash
 document ownership is not an account-pilot gate; Phase 1 keeps Dash as a
 consumer of core-owned documents.
 
 1. Give both operations stable names.
 2. Remove fields absent from the backend schema.
-3. Commit the generated artifacts under
-   `frontend/core/lib/graphql/generated/`; `pnpm run graphql:codegen` followed by a
-   clean git diff is the reproducibility check.
+3. Generate the private artifacts under
+   `frontend/core/lib/graphql/generated/` during install; CI checks generation
+   from tracked schema and operations.
 4. Add the Codegen client preset with a pilot-only documents allowlist and expose
    its helper through `~/graphql/authoring`. The pilot must configure that
    authoring import explicitly. Add and test `urql` or `@urql/core` module
@@ -1284,10 +1286,9 @@ TanStack Query in a separate follow-up document and implementation.
    using the generated `graphql()` helper. Dedicated `.graphql` files are not
    part of the pilot, so the documents allowlist and pluck tests target
    TypeScript operation modules.
-2. **Resolved for the account pilot:** generated artifacts are checked into git
-   under `frontend/core/lib/graphql/generated/`; CI regenerates them and rejects
-   any diff. The runtime `~/graphql` facade remains independent of that private
-   generated directory.
+2. **Superseded pilot decision:** generated artifacts were once checked into git.
+   They are now ignored and generated during install from tracked inputs. The
+   runtime `~/graphql` facade remains independent of that private directory.
 3. **Resolved:** production callers use direct feature imports; the former `P`
    registry is deleted. Pages contract tests use an explicit inventory only.
 4. **Resolved for the SSR compatibility boundary:** use the shared
@@ -1333,8 +1334,8 @@ For the initial implementation:
 - Generate privately into `frontend/core/lib/graphql/generated/`, matching the
   existing `~/graphql` alias. Keep the runtime index independent and expose only
   the authoring helper through `frontend/core/lib/graphql/authoring.ts`.
-- Commit generated artifacts and verify them with `pnpm run graphql:codegen` in CI;
-  do not make the runtime transport facade depend on a prebuild side effect.
+- Generate artifacts during install and verify the tracked inputs in CI;
+  keep the runtime transport facade independent of generated imports.
 - Build `contracts/graphql/` incrementally in Phase 0B as repository-level
   checks acquire a real home, while keeping operation validation beside each
   owner. Complete dynamic-factory coverage and the mandatory mock-schema link

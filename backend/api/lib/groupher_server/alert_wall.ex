@@ -62,6 +62,9 @@ defmodule GroupherServer.AlertWall do
   @doc "Counts unresolved reports that still apply to an item."
   defdelegate active_report_count(item_id), to: Persist
 
+  @doc "Counts distinct active reporters for one item and observed content version."
+  defdelegate active_reporter_count(item_id, observed_version), to: Persist
+
   @doc "Counts all reports retained for a Wall item."
   defdelegate total_report_count(item_id), to: Query
 

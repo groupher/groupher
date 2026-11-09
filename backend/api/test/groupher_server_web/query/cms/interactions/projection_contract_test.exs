@@ -128,7 +128,7 @@ defmodule GroupherServer.Test.Query.CMS.Interactions.ProjectionContractTest do
              "commentReconcileStates" => %{
                "article" => %{
                  "innerId" => article_inner_id(post, community),
-                 "commentsRevision" => 1
+                 "commentsRevision" => 2
                },
                "entries" => [
                  %{

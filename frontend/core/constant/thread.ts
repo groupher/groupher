@@ -7,11 +7,9 @@ export const ARTICLE_THREAD = {
 } as const
 
 export const KANBAN_BOARD = {
-  BACKLOG: 'BACKLOG',
   TODO: 'TODO',
   WIP: 'WIP',
   DONE: 'DONE',
-  REJECTED: 'REJECTED',
 } as const
 
 export const THREAD = {
@@ -37,6 +35,8 @@ export const THREAD_PATH = {
   ABOUT: 'about',
   DASHBOARD: 'dashboard',
 } as const
+
+export const TICKET_PATH = 'ticket' as const
 
 export const TAG_THREADS = [THREAD.POST, THREAD.BLOG, THREAD.CHANGELOG, THREAD.DOC] as const
 

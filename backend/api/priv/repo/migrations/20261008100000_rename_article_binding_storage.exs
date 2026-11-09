@@ -22,13 +22,20 @@ defmodule GroupherServer.Repo.Migrations.RenameArticleBindingStorage do
         "RENAME COLUMN article_community_id TO article_binding_id"
     )
 
-    rename_index(:article_communities_article_id_community_id_index,
-      :article_bindings_article_id_community_id_index)
+    rename_index(
+      :article_communities_article_id_community_id_index,
+      :article_bindings_article_id_community_id_index
+    )
 
-    rename_index(:article_communities_community_inner_id_index,
-      :article_bindings_community_inner_id_index)
+    rename_index(
+      :article_communities_community_inner_id_index,
+      :article_bindings_community_inner_id_index
+    )
 
-    rename_index(:pinned_articles_article_community_id_index, :pinned_articles_article_binding_id_index)
+    rename_index(
+      :pinned_articles_article_community_id_index,
+      :pinned_articles_article_binding_id_index
+    )
 
     rename_constraint(:article_communities_pkey, :article_bindings_pkey)
     rename_constraint(:article_communities_article_id_fkey, :article_bindings_article_id_fkey)
@@ -47,11 +54,17 @@ defmodule GroupherServer.Repo.Migrations.RenameArticleBindingStorage do
       :pinned_articles_article_binding_id_fkey
     )
 
-    rename_constraint(:kanban_states_article_community_id_fkey, :kanban_states_article_binding_id_fkey)
+    rename_constraint(
+      :kanban_states_article_community_id_fkey,
+      :kanban_states_article_binding_id_fkey
+    )
   end
 
   def down do
-    rename_constraint(:kanban_states_article_binding_id_fkey, :kanban_states_article_community_id_fkey)
+    rename_constraint(
+      :kanban_states_article_binding_id_fkey,
+      :kanban_states_article_community_id_fkey
+    )
 
     rename_constraint(
       :pinned_articles_article_binding_id_fkey,
@@ -70,13 +83,20 @@ defmodule GroupherServer.Repo.Migrations.RenameArticleBindingStorage do
     rename_constraint(:article_bindings_article_id_fkey, :article_communities_article_id_fkey)
     rename_constraint(:article_bindings_pkey, :article_communities_pkey)
 
-    rename_index(:pinned_articles_article_binding_id_index, :pinned_articles_article_community_id_index)
+    rename_index(
+      :pinned_articles_article_binding_id_index,
+      :pinned_articles_article_community_id_index
+    )
 
-    rename_index(:article_bindings_community_inner_id_index,
-      :article_communities_community_inner_id_index)
+    rename_index(
+      :article_bindings_community_inner_id_index,
+      :article_communities_community_inner_id_index
+    )
 
-    rename_index(:article_bindings_article_id_community_id_index,
-      :article_communities_article_id_community_id_index)
+    rename_index(
+      :article_bindings_article_id_community_id_index,
+      :article_communities_article_id_community_id_index
+    )
 
     execute(
       "ALTER TABLE #{@prefix}.kanban_states " <>
@@ -110,12 +130,23 @@ defmodule GroupherServer.Repo.Migrations.RenameArticleBindingStorage do
 
   defp constraint_table(name) do
     cond do
-      String.starts_with?(Atom.to_string(name), "article_communities_") -> "article_bindings"
-      String.starts_with?(Atom.to_string(name), "article_bindings_") -> "article_bindings"
-      String.starts_with?(Atom.to_string(name), "article_community_tags_") -> "article_binding_tags"
-      String.starts_with?(Atom.to_string(name), "article_binding_tags_") -> "article_binding_tags"
-      String.starts_with?(Atom.to_string(name), "pinned_articles_") -> "pinned_articles"
-      String.starts_with?(Atom.to_string(name), "kanban_states_") -> "kanban_states"
+      String.starts_with?(Atom.to_string(name), "article_communities_") ->
+        "article_bindings"
+
+      String.starts_with?(Atom.to_string(name), "article_bindings_") ->
+        "article_bindings"
+
+      String.starts_with?(Atom.to_string(name), "article_community_tags_") ->
+        "article_binding_tags"
+
+      String.starts_with?(Atom.to_string(name), "article_binding_tags_") ->
+        "article_binding_tags"
+
+      String.starts_with?(Atom.to_string(name), "pinned_articles_") ->
+        "pinned_articles"
+
+      String.starts_with?(Atom.to_string(name), "kanban_states_") ->
+        "kanban_states"
     end
   end
 end

@@ -10,6 +10,12 @@ export const articleStatsFields = graphql(`
     upvotesCount
     commentsCount
     collectsCount
+    commentsParticipants {
+      ref
+      login
+      nickname
+      avatar
+    }
     commentsParticipantsCount
     interactionRevision
     commentsRevision

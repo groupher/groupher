@@ -31,11 +31,9 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
     ArticleRevision,
     Community,
     CommunityTag,
-    Comment,
     DocBranchState,
     DocLifecycle,
     DocRevision,
-    KanbanState,
     PinnedArticle,
     PostState
   }
@@ -145,7 +143,8 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
     tags = stable_community_tags(article.id, community.id)
     lifecycle = stable_lifecycle(article, Map.get(anchor, :branch_id))
 
-    with {:ok, asset_refs} <- CMS.Assets.content_refs(:revision, revision.id) do
+    with {:ok, asset_refs} <- CMS.Assets.content_refs(:revision, revision.id),
+         {:ok, participants} <- CMS.ArticleStats.comment_participants(article.thread, article.id) do
       {:ok,
        %{
          id: article.id,
@@ -165,7 +164,7 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
          community: community,
          communities: [community],
          community_tags: tags,
-         comments_participants: stable_comment_participants(article.id),
+         comments_participants: participants,
          active_at: Map.get(anchor, :active_at),
          inserted_at: Map.fetch!(anchor, :inserted_at),
          updated_at: Map.fetch!(anchor, :updated_at),
@@ -192,35 +191,14 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
     end
   end
 
-  defp stable_comment_participants(article_id) do
-    Comment
-    |> where([comment], comment.article_id == ^article_id)
-    |> order_by([comment], desc: comment.inserted_at, desc: comment.id)
-    |> preload([comment], :author)
-    |> Repo.all()
-    |> Enum.map(& &1.author)
-    |> Enum.uniq_by(& &1.id)
-    |> Enum.take(10)
-  end
-
-  defp stable_operational_extension(%Article{thread: :post, id: article_id}, community_id) do
+  defp stable_operational_extension(%Article{thread: :post, id: article_id}, _community_id) do
     cat =
       case Repo.get(PostState, article_id) do
         %PostState{cat: cat} -> cat
         nil -> nil
       end
 
-    status =
-      Repo.one(
-        from(binding in ArticleBinding,
-          left_join: state in KanbanState,
-          on: state.article_binding_id == binding.id,
-          where: binding.article_id == ^article_id and binding.community_id == ^community_id,
-          select: state.status
-        )
-      )
-
-    %{cat: cat, status: status}
+    %{cat: cat}
   end
 
   defp stable_operational_extension(%Article{}, _community_id), do: %{}
@@ -231,11 +209,11 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
         %{
           thread: article.thread,
           is_edited: state.is_edited,
-          is_comment_locked: state.comments_locked,
+          is_comment_locked: article.comments_locked,
           is_sunk: state.is_sunk,
           last_active_at: state.last_active_at,
-          next_floor: state.next_floor,
-          next_comment_inner_id: state.next_comment_inner_id
+          next_floor: article.next_floor,
+          next_comment_inner_id: article.next_comment_inner_id
         }
 
       nil ->
@@ -270,11 +248,11 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
          %{
            thread: article.thread,
            is_edited: state.is_edited,
-           is_comment_locked: state.comments_locked,
+           is_comment_locked: article.comments_locked,
            is_sunk: state.is_sunk,
            last_active_at: state.last_active_at,
-           next_floor: state.next_floor,
-           next_comment_inner_id: state.next_comment_inner_id
+           next_floor: article.next_floor,
+           next_comment_inner_id: article.next_comment_inner_id
          }}
 
       nil ->

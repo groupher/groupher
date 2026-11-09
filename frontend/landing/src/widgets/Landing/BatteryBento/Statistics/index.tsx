@@ -10,7 +10,7 @@ export default function Statistics() {
   const [cardRef, isCardHovered] = useHover<HTMLDivElement>()
 
   return (
-    <div ref={cardRef} className={s.wrapper}>
+    <div ref={cardRef} className={s.wrapper} data-landing-card='statistics'>
       <Panel hovering={isCardHovered} />
       <div className={s.footer}>
         <h3 className={s.title}>{t('landing.battery.statistics.title')}</h3>

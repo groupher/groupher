@@ -2,7 +2,7 @@ import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon(columnsCount = 5) {
-  const [backlogBg, todoBg, wipBg, doneBg, rejectedBg] = useKanbanBgColors()
+  const [todoBg, wipBg, doneBg] = useKanbanBgColors()
   const { cn, fg, rainbow } = useTwBelt()
   const isCompactBoard = columnsCount <= 3
 
@@ -21,16 +21,12 @@ export default function useSalon(columnsCount = 5) {
     label: cn('text-base bold ml-2.5', fg('digest')),
     subTitle: cn('pretty-num ml-1.5 text-sm', fg('hint')),
     //
-    backlogIcon: cn('size-3', rainbow(backlogBg, 'fill')),
     todoIcon: cn('size-3', rainbow(todoBg, 'fill')),
     wipIcon: cn('size-3.5', rainbow(wipBg, 'fill')),
     doneIcon: cn('size-3', rainbow(doneBg, 'fill')),
-    rejectedIcon: cn('size-3', rainbow(rejectedBg, 'fill')),
     //
-    backlogBody: cn(body, rainbow(backlogBg, 'bgLite')),
     todoBody: cn(body, rainbow(todoBg, 'bgLite')),
     wipBody: cn(body, rainbow(wipBg, 'bgLite')),
     doneBody: cn(body, rainbow(doneBg, 'bgLite')),
-    rejectedBody: cn(body, rainbow(rejectedBg, 'bgLite')),
   }
 }

@@ -22,7 +22,7 @@ export default function SideIntros({ tab }: TProps) {
     <div key={tab} className={s.wrapper}>
       <div className={s.head}>
         <div className={s.iconBox}>
-          <Icon className={cn(s.icon, intro.iconClass || '')} />
+          <Icon className={cn(s.icon, 'iconClass' in intro ? intro.iconClass : '')} />
         </div>
         <div className={s.title}>{intro.title}</div>
         <div className={s.desc}>{intro.desc}</div>

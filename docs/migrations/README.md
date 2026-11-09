@@ -5,6 +5,13 @@
 本目录保留跨应用或跨框架的阶段性迁移记录；稳定的当前合同应回到所属应用、Feature
 或 Architecture。
 
+- [Comments、Replies 与 Reaction 快照和计数收口](./comment-reaction-snapshot-counts.md)：共享 Doc 评论、原子 count/快照、正文准入/审核/删除、folded 与 replies UI 已在工作区实现；[本地验收与 B5 发布剩余项](./comment-reaction-snapshot-counts-implementation.md) 单独记录，不提供旧数据回填或旧逻辑 fallback。
+- [账号物理删除与评论摘要核查](./comment-account-deletion-audit.md)：保留无 guard 时的 CASCADE 摘要漂移诊断；后续 [物理删除封闭方案](./comment-account-physical-deletion-block.md) 已在工作区实施并验收，未部署。受控删除/匿名化仍待独立设计。
+- [并行测试 pending 原因审计](./comment-pending-concurrency-audit.md)：确认 Sandbox 外层事务与 MentionsGraph 全局版本行争用，保留原始 PostgreSQL 错误及真实提交并发对照；后续测试隔离另列，未发布。
+- [共享评论测试隔离与联合验收](./comment-test-isolation.md)：MentionsGraph 已完成本地联合验收；调整 TestMate 的默认调度和显式 async 写入用例，保留真实连接并发测试，运行结果单列；未发布。
+- [MentionsGraph 当前关系合同](../feature/article/mentions-graph-sync-contract.md)：2026-11-07 工作区简化实现；本目录较早的 Mentions set、初始化和正文 token 描述均是对应时点的历史审计，不属于新版本发布步骤。
+- [Comments / Replies / Reaction B0 基线](./comment-reaction-snapshot-counts-inventory.md)：保留实施前静态读写清单、时间口径、Doc owner 约束设计和42个具名 case；后续授权、实现与运行证据见实施记录，不覆盖原快照。
+- [Comments B0 固定输入复核](./comment-reaction-snapshot-counts-snapshot-review.md)：固定正文/SHA、全部相关变化与遗漏覆盖映射，以及捕获后差异；不宣称实时工作区已验收。
 - [FrontDesk 与 Query 读取边界收口](./frontdesk-query-convergence.md)：单资源、批量转发、list/pagi、统一查询能力合同与资源加载 lint；整改已实施，验收见本文档与执行记录。
 - [Gate 读取与操作准入收口](./gate-admission-convergence.md)：复用当前 Gate 合同，补齐调用覆盖、唯一可见集合和跨入口验收；整改已实施，验收见执行记录。
 - [旧内容 Audit 链路退役](./legacy-content-audit-removal.md)：已执行静态扫描，列出旧外部接口、配置、前后端消费者与替代/切换清单；实现待执行。
@@ -30,6 +37,7 @@
 - [CMS Assets：现状审计与独立重构完成记录](./cms-assets-refactor.md)：单独梳理 Assets 的用户 Command、Query、Persist、Article refs、Upload、Provider 和 Replacement workflow，以及已完成的 workflow recovery、partial-success 与 lease 收口结果。
 - [CMS Facade 边界修复](./cms-facade-fix.md)：Context 根 Facade、internal capability、Outbox 与结构门禁的阶段性修复记录。
 - [CMS DocTree / ContentImport：现状审计与独立重构计划](./cms-doctree-refactor.md)：单独梳理 Docs tree、publish/trash workflow、ContentImport Job、Gate、事务 owner、identity/recovery 和目标目录边界。
+- [Docs 独立发布队列与去 Branch 重构](./docs-publish-queue-refactor.md)：待实施的每站点唯一发布队列、审核增量 diff、队列预览和原子 Release；新合同从空 Docs 数据启动，不迁移旧内容与讨论。
 - [CMS Command 客户端 Identity 边界修复](./cms-command-client-identity-fix.md)：保留 GraphQL
   `commandId`，将创建、retry 复用和 unknown outcome 恢复统一收回 mutation executor。
 - [Backend Business Return Shape 收敛](./backend-business-return-shape.md)：统一业务层

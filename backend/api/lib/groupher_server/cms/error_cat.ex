@@ -66,4 +66,12 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:review_transition_requires_transaction, code: 4546)
   error(:review_block_not_found, code: 4547)
   error(:review_content_changed, code: 4548)
+  error(:mentions_graph_not_found, code: 4549)
+  error(:mentions_graph_invalid_locator, code: 4550)
+  error(:mentions_graph_invalid_cursor, code: 4551)
+  error(:mentions_graph_invalid_request, code: 4553)
+  error(:mentions_graph_integrity_error, code: 4554)
+  error(:artiment_status_not_found, code: 4560)
+  error(:invalid_mention_notification_event, code: 4555)
+  error(:mention_url_too_long, code: 4556)
 end

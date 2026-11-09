@@ -37,7 +37,14 @@ export const useCommentsListState = () => {
     apiMode: comments.apiMode,
     loading: feed.pending,
     entries: [...(data?.pinnedEntries || []), ...(data?.entries || [])],
-    foldedCommentIds: comments.foldedCommentIds as TCommentsStore['foldedCommentIds'],
+    foldedCommentIds: [
+      ...comments.foldedCommentIds,
+      ...[...(data?.pinnedEntries || []), ...(data?.entries || [])]
+        .filter(
+          (comment) => comment.isFolded && !comments.expandedCommentIds.includes(comment.innerId),
+        )
+        .map((comment) => comment.innerId),
+    ],
   }
 }
 
@@ -72,7 +79,6 @@ export const useCommentsHeadState = () => {
   const totalCount = summaryQuery.data?.totalCount ?? stats?.commentsCount ?? 0
 
   const basicState: TCommentsState = {
-    isViewerJoined: summaryQuery.data?.isViewerJoined ?? false,
     participantsCount: summaryQuery.data?.participantsCount ?? 0,
     totalCount,
     participants: summaryQuery.data?.participants || [],

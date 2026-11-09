@@ -41,7 +41,7 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
     end)
 
     change(fn %{item: item, article: article} ->
-      TrashAgg.restore_loaded(item, article, actor)
+      TrashAgg.restore_loaded(item, article, actor, opts)
     end)
 
     confirm(fn article ->
@@ -148,8 +148,8 @@ defmodule GroupherServer.CMS.Articles.Commands.RestoreTrashed do
     DocTrash.restore_loaded(item, article, branch, actor, opts)
   end
 
-  defp restore_loaded(%{item: item, article: article}, actor, _opts) do
-    TrashAgg.restore_loaded(item, article, actor)
+  defp restore_loaded(%{item: item, article: article}, actor, opts) do
+    TrashAgg.restore_loaded(item, article, actor, opts)
   end
 
   defp resolve_item(%TrashedArticle{} = item, opts) do

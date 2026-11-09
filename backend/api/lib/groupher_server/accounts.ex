@@ -11,6 +11,17 @@ defmodule GroupherServer.Accounts do
 
   alias __MODULE__.Query
 
+  @doc "Returns authoritative user summaries through the Accounts Context boundary."
+  @spec front_desk_user_summaries([pos_integer()]) :: {:ok, map()} | {:error, atom()}
+  defdelegate front_desk_user_summaries(ids),
+    to: GroupherServer.Accounts.FrontDesk,
+    as: :user_summaries
+
+  @doc "Creates an official session bounded by a trusted operational deadline."
+  defdelegate profiles_create_bounded_browser_session(user, metadata, deadline),
+    to: GroupherServer.Accounts.Profiles.BrowserSessions,
+    as: :create_until
+
   @doc "Enriches a User collection with the viewer's follow state."
   defdelegate fans_mark_viewer_follow_status(result, viewer),
     to: GroupherServer.Accounts.Fans,
@@ -233,6 +244,11 @@ defmodule GroupherServer.Accounts do
   defdelegate profiles_revoke_browser_session(arg1),
     to: GroupherServer.Accounts.Profiles,
     as: :revoke_browser_session
+
+  @doc "Delegates seed-run browser session revocation through the Accounts Context."
+  defdelegate profiles_revoke_seed_browser_session(arg1),
+    to: GroupherServer.Accounts.Profiles,
+    as: :revoke_seed_browser_session
 
   @doc "Delegates GroupherServer.Accounts.Profiles.revoke_other_browser_sessions_for_ref/1 through the Accounts Context boundary."
   defdelegate profiles_revoke_other_browser_sessions_for_ref(arg1),

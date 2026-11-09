@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
   alias __MODULE__
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Artiment.Threads
+  alias CMS.Assets.ThreadIdentity
   alias CMS.Hash
   alias CMS.Model.{ArticleAssetRef, Community}
   alias Helper.Constant.DBPrefix
@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
     belongs_to(:community, Community)
     belongs_to(:uploader, User, foreign_key: :uploader_id)
 
-    field(:thread, Ecto.Enum, values: Threads.article_enums())
+    field(:thread, Ecto.Enum, values: ThreadIdentity.values())
     field(:asset_type, Ecto.Enum, values: @asset_types, default: :file)
     field(:status, Ecto.Enum, values: @statuses, default: :active)
 

@@ -115,8 +115,16 @@ defmodule GroupherServer.PublicCache.Persist do
   @doc false
   def mark_failed(id, lock_ref, type, reason, dead?)
       when is_binary(lock_ref) and lock_ref != "" and is_atom(type) do
+    mark_failed(id, lock_ref, type, reason, dead?, 0)
+  end
+
+  @doc false
+  def mark_failed(id, lock_ref, type, reason, dead?, retry_after_seconds)
+      when is_binary(lock_ref) and lock_ref != "" and is_atom(type) and
+             is_integer(retry_after_seconds) and retry_after_seconds >= 0 do
     now = DateTime.utc_now(:second)
     status = if dead?, do: :dead, else: :pending
+    available_at = if dead?, do: now, else: DateTime.add(now, retry_after_seconds, :second)
 
     {updated, _} =
       Repo.update_all(
@@ -125,7 +133,7 @@ defmodule GroupherServer.PublicCache.Persist do
         ),
         set: [
           status: status,
-          available_at: now,
+          available_at: available_at,
           last_error_code: error_code(reason),
           last_error_at: now,
           locked_at: nil,

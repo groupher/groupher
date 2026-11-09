@@ -12,14 +12,15 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
   alias CMS.Articles.ErrorCat
   alias CMS.Model.{DocBranch, DocLifecycle, DocPublic}
   alias CMS.ReviewBlocks
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
 
-  @states [:draft_only, :published, :archived, :deleted, :destroy]
+  @states [:draft, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
   @allowed_transitions %{
-    draft_only: [:draft_only, :published, :deleted, :destroy],
+    draft: [:draft, :published, :deleted, :destroy],
     published: [:published, :archived, :deleted, :destroy],
     archived: [:archived, :deleted, :destroy],
-    deleted: [:draft_only, :published, :deleted, :destroy],
+    deleted: [:draft, :published, :deleted, :destroy],
     destroy: [:destroy]
   }
 
@@ -92,7 +93,8 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
                destroyed_at: state_time(state, :destroy, now, lifecycle.destroyed_at)
              })
              |> Repo.update(),
-           {:ok, :pass} <- ReviewBlocks.recompute(updated) do
+           {:ok, :pass} <- ReviewBlocks.recompute(updated),
+           {:ok, :pass} <- Revision.bump() do
         {:ok, updated}
       end
     else
@@ -109,7 +111,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
   """
   @spec apply_review_block(DocLifecycle.t(), map()) :: {:ok, struct()} | {:error, term()}
   def apply_review_block(%DocLifecycle{} = lifecycle, attrs) do
-    ReviewBlocks.apply(lifecycle, attrs)
+    CMS.Review.Restrictions.apply(lifecycle, attrs)
   end
 
   @doc """
@@ -122,7 +124,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
   @spec end_review_blocks(DocLifecycle.t(), String.t(), [term()], Ecto.UUID.t(), String.t()) ::
           {:ok, :pass} | {:error, term()}
   def end_review_blocks(%DocLifecycle{} = lifecycle, scope_key, ids, operation_ref, reason) do
-    ReviewBlocks.end_blocks(lifecycle, scope_key, ids, operation_ref, reason)
+    CMS.Review.Restrictions.end_blocks(lifecycle, scope_key, ids, operation_ref, reason)
   end
 
   @doc "Archives stable public Docs older than the threshold in one active branch."

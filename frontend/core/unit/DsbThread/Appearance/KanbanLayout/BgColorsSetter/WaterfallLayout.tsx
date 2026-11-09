@@ -12,19 +12,15 @@ type TProps = {
 }
 
 const HEAD_KEY = {
-  [KANBAN_BOARD.BACKLOG]: 'bgTodo',
-  [KANBAN_BOARD.TODO]: 'bgWip',
-  [KANBAN_BOARD.WIP]: 'bgDone',
-  [KANBAN_BOARD.DONE]: 'bgReview',
-  [KANBAN_BOARD.REJECTED]: 'bgRejected',
+  [KANBAN_BOARD.TODO]: 'bgTodo',
+  [KANBAN_BOARD.WIP]: 'bgWip',
+  [KANBAN_BOARD.DONE]: 'bgDone',
 } as const
 
 const ACTIVE_HEAD_KEY = {
-  [KANBAN_BOARD.BACKLOG]: 'bgTodoActive',
-  [KANBAN_BOARD.TODO]: 'bgWipActive',
-  [KANBAN_BOARD.WIP]: 'bgDoneActive',
-  [KANBAN_BOARD.DONE]: 'bgReviewActive',
-  [KANBAN_BOARD.REJECTED]: 'bgRejectedActive',
+  [KANBAN_BOARD.TODO]: 'bgTodoActive',
+  [KANBAN_BOARD.WIP]: 'bgWipActive',
+  [KANBAN_BOARD.DONE]: 'bgDoneActive',
 } as const
 
 const WIDTH_PATTERNS = ['w-4/12', 'w-6/12', 'w-3/12', 'w-5/12', 'w-7/12'] as const

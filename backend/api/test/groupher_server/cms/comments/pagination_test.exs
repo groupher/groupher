@@ -175,7 +175,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
       Enum.map(1..3, fn _ ->
         {:ok, reply} =
           CMS.Comments.reply_comment(
-            root.id,
+            root,
             mock_comment("paged reply"),
             user,
             Ecto.UUID.generate()
@@ -236,7 +236,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
 
         {:ok, reply} =
           CMS.Comments.reply_comment(
-            parent.id,
+            parent,
             mock_comment("reply #{n}"),
             user,
             Ecto.UUID.generate()
@@ -267,7 +267,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
     second = create_root(community, article, user)
 
     {:ok, reply} =
-      CMS.Comments.reply_comment(first.id, mock_comment("nested"), user, Ecto.UUID.generate())
+      CMS.Comments.reply_comment(first, mock_comment("nested"), user, Ecto.UUID.generate())
 
     Repo.update_all(from(c in Comment, where: c.id in ^[first.id, second.id, reply.id]),
       set: [inserted_at: first.inserted_at]
@@ -308,7 +308,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
 
     for _ <- 1..2 do
       {:ok, _} =
-        CMS.Comments.reply_comment(first.id, mock_comment("reply"), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(first, mock_comment("reply"), user, Ecto.UUID.generate())
     end
 
     {:ok, %{page_info: %{end_cursor: position}}} =
@@ -344,30 +344,33 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
              CMS.Comments.reply_page(first, community.slug, %{}, cursor(position, 1))
   end
 
-  test "folded descendants are excluded from preview, count, page and reply targets" do
+  test "FOLD-01 folded descendants remain reachable with their true reply targets" do
     {community, article, _, user} = mock_article(:post)
     root = create_root(community, article, user)
 
     {:ok, hidden} =
-      CMS.Comments.reply_comment(root.id, mock_comment("hidden"), user, Ecto.UUID.generate())
+      CMS.Comments.reply_comment(root, mock_comment("hidden"), user, Ecto.UUID.generate())
 
     {:ok, visible} =
-      CMS.Comments.reply_comment(hidden.id, mock_comment("visible"), user, Ecto.UUID.generate())
+      CMS.Comments.reply_comment(hidden, mock_comment("visible"), user, Ecto.UUID.generate())
 
     Repo.update_all(from(c in Comment, where: c.id == ^hidden.id), set: [is_folded: true])
 
     {:ok, %{entries: [entry]}} =
       CMS.Comments.page(:post, article.id, community.slug, %{}, offset(), :replies)
 
-    assert entry.replies_count == 1
-    assert [preview] = entry.replies
+    assert entry.replies_count == 2
+    assert [folded_preview, preview] = entry.replies
+    assert folded_preview.id == hidden.id
+    assert folded_preview.is_folded
     assert preview.id == visible.id
-    assert preview.reply_to_comment == nil
+    assert preview.reply_to_comment.id == hidden.id
 
-    {:ok, %{entries: [expanded], page_info: %{total_count: 1}}} =
+    {:ok, %{entries: [folded, expanded], page_info: %{total_count: 2}}} =
       CMS.Comments.reply_page(root, community.slug, %{}, offset())
 
-    assert expanded.reply_to_comment == nil
+    assert folded.is_folded
+    assert expanded.reply_to_comment.id == hidden.id
   end
 
   test "preview SQL budget stays constant when the root page grows" do
@@ -377,7 +380,7 @@ defmodule GroupherServer.CMS.Comments.PaginationTest do
       root = create_root(community, article, user)
 
       {:ok, _} =
-        CMS.Comments.reply_comment(root.id, mock_comment("preview"), user, Ecto.UUID.generate())
+        CMS.Comments.reply_comment(root, mock_comment("preview"), user, Ecto.UUID.generate())
     end
 
     # Warm configuration/snapshot caches so this measures collection growth rather than cache misses.

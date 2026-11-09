@@ -8,27 +8,32 @@ defmodule GroupherServerWeb.Resolvers.CMS.ArtimentMentions do
   alias GroupherServer.Pagi
   alias GroupherServer.CMS
 
-  def trashed_article_mentioned_by(item, args, _info) do
-    with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.artiment_mentions_mentioned_by(item.thread, item.article.id, pagi)
+  def mentions(_root, %{community: community, source: source} = args, _info) do
+    with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi), 20) do
+      CMS.mentions(community, %{type: source.type, locator: source}, pagi)
     end
   end
 
-  def trashed_article_mentions(item, args, _info) do
-    with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.artiment_mentions_mentions(item.thread, item.article.id, pagi)
+  def mentioned_by(_root, %{community: community, target: target} = args, _info) do
+    with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi), 20) do
+      CMS.mentioned_by(community, target, pagi)
     end
   end
 
-  def mentions(_root, %{source: source} = args, _info) do
-    with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.artiment_mentions_mentions(source, pagi)
-    end
+  def mentions_graph(_root, %{community: community, focus: focus} = args, _info) do
+    CMS.mentions_graph_page(community, focus, Map.get(args, :after), Map.get(args, :first, 20))
   end
 
-  def mentioned_by(_root, %{target: target} = args, _info) do
-    with {:ok, pagi} <- Pagi.from_input(Map.get(args, :pagi)) do
-      CMS.artiment_mentions_mentioned_by(target, pagi)
-    end
+  def mentions_graph_revision(_root, %{community: community, focus: focus}, _info) do
+    CMS.mentions_graph_revision(community, focus)
+  end
+
+  def mentions_graph_article_comments(_root, %{community: community, focus: focus} = args, _info) do
+    CMS.mentions_graph_article_comments(
+      community,
+      focus,
+      Map.get(args, :after),
+      Map.get(args, :first, 20)
+    )
   end
 end

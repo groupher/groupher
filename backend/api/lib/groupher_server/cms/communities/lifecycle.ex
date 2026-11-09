@@ -21,6 +21,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   alias Activity.Model.CommunityLog
   alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Communities.{Const, Effects, Transaction}
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
 
@@ -260,8 +261,17 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
 
   defp apply_transition(lifecycle, state, opts, operation_ref) do
     case update_lifecycle(lifecycle, state, Keyword.get(opts, :attrs, %{})) do
-      {:ok, updated} -> audit_transition(lifecycle, updated, state, opts, operation_ref)
-      {:error, reason} -> Repo.rollback(reason)
+      {:ok, updated} ->
+        updated = audit_transition(lifecycle, updated, state, opts, operation_ref)
+
+        if state == :__reconcile__ do
+          updated
+        else
+          reconcile_lifecycle_effect(lifecycle, updated, operation_ref)
+        end
+
+      {:error, reason} ->
+        Repo.rollback(reason)
     end
   end
 
@@ -482,7 +492,8 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   defp transition_and_audit(lifecycle, state, operation_ref, action) do
     case Repo.update(transition_changeset(lifecycle, state)) do
       {:ok, updated} ->
-        audit_transition_change(updated, lifecycle, operation_ref, action)
+        updated = audit_transition_change(updated, lifecycle, operation_ref, action)
+        reconcile_lifecycle_effect(lifecycle, updated, operation_ref)
 
       {:error, reason} ->
         Repo.rollback(reason)
@@ -559,7 +570,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
                %{from_state: lifecycle.state, to_state: destroyed.state},
                parent_event_ref
              ) do
-          {:ok, _audit} -> destroyed
+          {:ok, _audit} -> reconcile_lifecycle_effect(lifecycle, destroyed, operation_ref)
           {:error, reason} -> Repo.rollback(reason)
         end
 
@@ -710,6 +721,16 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     Repo.update(transition_changeset(lifecycle, state, attrs))
   end
 
+  defp reconcile_lifecycle_effect(before_lifecycle, after_lifecycle, operation_ref) do
+    with {:ok, :pass} <- Revision.bump(),
+         {:ok, :pass} <-
+           Effects.lifecycle_changed(before_lifecycle, after_lifecycle, operation_ref) do
+      after_lifecycle
+    else
+      {:error, reason} -> Repo.rollback(reason)
+    end
+  end
+
   defp recompute_locked(
          lifecycle,
          opts,
@@ -733,17 +754,23 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     from_state = lifecycle.state
     attrs = %{changed_at: DateTime.utc_now(:second)}
 
-    with {:ok, lifecycle} <- Repo.update(transition_changeset(lifecycle, state, attrs)),
+    with {:ok, updated} <- Repo.update(transition_changeset(lifecycle, state, attrs)),
          {:ok, _audit} <-
            write_audit(
-             lifecycle,
+             updated,
              Keyword.get(opts, :operation_ref),
              audit_action,
              Map.merge(metadata, %{from_state: from_state, to_state: state})
-           ) do
-      {:ok, lifecycle}
+           ),
+         {:ok, :pass} <- maybe_bump_graph_revision(from_state, state),
+         {:ok, :pass} <-
+           Effects.lifecycle_changed(lifecycle, updated, Keyword.get(opts, :operation_ref)) do
+      {:ok, updated}
     end
   end
+
+  defp maybe_bump_graph_revision(state, state), do: {:ok, :pass}
+  defp maybe_bump_graph_revision(_before, _after), do: Revision.bump()
 
   defp insert_blocker(attrs, opts) do
     attrs =

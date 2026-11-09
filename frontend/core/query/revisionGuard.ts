@@ -2,6 +2,7 @@ import type { TComment } from '~/spec'
 
 type TRevisioned = {
   commentInteractionRevision?: number | null
+  repliesRevision?: number | null
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -38,10 +39,35 @@ const sameComment = (left: TComment, right: TComment): boolean =>
 
 const mergeComment = (previous: TComment & TRevisioned, next: TComment & TRevisioned) => {
   if (!sameComment(previous, next)) return next
-  const merged = copyIfOlder(previous, next, 'commentInteractionRevision', [
+  const interaction = copyIfOlder(previous, next, 'commentInteractionRevision', [
     'upvotesCount',
     'emotions',
   ])
+  const replyFields = [
+    'repliesCount',
+    'hasReplyEntries',
+    'replyParticipants',
+    'lastReplyAt',
+  ] as const
+  const memberRefs = (comment: TComment) => comment.replyParticipants?.map((user) => user.ref)
+  const conflict =
+    typeof previous.repliesRevision === 'number' &&
+    previous.repliesRevision === interaction.repliesRevision &&
+    (previous.repliesCount !== interaction.repliesCount ||
+      previous.hasReplyEntries !== interaction.hasReplyEntries ||
+      previous.lastReplyAt !== interaction.lastReplyAt ||
+      JSON.stringify(memberRefs(previous)) !== JSON.stringify(memberRefs(interaction)))
+  let merged = copyIfOlder(previous, interaction, 'repliesRevision', replyFields)
+  if (conflict) {
+    console.warn('[Comment] equal repliesRevision has conflicting summary', next.innerId)
+    merged = {
+      ...merged,
+      repliesCount: previous.repliesCount,
+      hasReplyEntries: previous.hasReplyEntries,
+      replyParticipants: previous.replyParticipants,
+      lastReplyAt: previous.lastReplyAt,
+    }
+  }
   return {
     ...merged,
     replies: mergeCommentEntries(previous.replies, merged.replies),

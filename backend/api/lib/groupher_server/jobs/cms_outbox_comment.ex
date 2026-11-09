@@ -5,7 +5,7 @@ defmodule GroupherServer.Jobs.CMSOutboxComment do
       caller -> GroupherServer.Jobs.CMSOutboxComment -> result
   """
   use Oban.Worker,
-    queue: :cms_outbox,
+    queue: :cloudflare_purge,
     max_attempts: 8,
     unique: [period: 86_400, keys: [:event_id], states: :incomplete]
 

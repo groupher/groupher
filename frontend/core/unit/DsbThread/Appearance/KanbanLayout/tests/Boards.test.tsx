@@ -15,7 +15,6 @@ vi.mock('~/hooks/useTrans', () => ({
           'article.status.backlog': 'Backlog',
           'article.status.todo': 'Todo',
           'article.status.wip': 'In progress',
-          REJECTED: 'Rejected',
           'article.status.done': 'Done',
         }) as Record<string, string>
       )[key] || key,
@@ -80,28 +79,15 @@ describe('<Boards />', () => {
     edit.mockClear()
   })
 
-  it('renders five board toggles and binds save bar to kanban boards field', () => {
+  it('renders three board toggles and binds save bar to kanban boards field', () => {
     render(<Boards />)
 
     const buttons = screen.getAllByRole('button')
-    expect(buttons).toHaveLength(5)
-    expect(buttons[0]).toHaveAttribute('aria-pressed', 'false')
+    expect(buttons).toHaveLength(3)
+    expect(buttons[0]).toHaveAttribute('aria-pressed', 'true')
     expect(buttons[1]).toHaveAttribute('aria-pressed', 'true')
     expect(buttons[2]).toHaveAttribute('aria-pressed', 'true')
-    expect(buttons[3]).toHaveAttribute('aria-pressed', 'false')
-    expect(buttons[4]).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId('saving-bar')).toHaveTextContent(FIELD.KANBAN_BOARDS)
-  })
-
-  it('adds unchecked board into kanban boards list', () => {
-    render(<Boards />)
-
-    fireEvent.click(screen.getByRole('button', { name: /Backlog/i }))
-
-    expect(edit).toHaveBeenCalledWith(
-      [KANBAN_BOARD.BACKLOG, KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE],
-      FIELD.KANBAN_BOARDS,
-    )
   })
 
   it('removes checked board from kanban boards list', () => {

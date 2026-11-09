@@ -35,6 +35,12 @@ defmodule GroupherServer.PublicCacheTest do
           "commentsList" ->
             Tags.comments_list(input["community"])
 
+          "ticketList" ->
+            Tags.ticket_list(input["community"])
+
+          "ticketDetail" ->
+            Tags.ticket_detail(input["community"], input["innerId"])
+
           "tags" ->
             Tags.tags(input["community"], input["thread"])
 
@@ -57,6 +63,8 @@ defmodule GroupherServer.PublicCacheTest do
              "community[home]-thread[POST]-article[42]-comments"
 
     assert Tags.comments_list("home") == "community[home]-comments"
+    assert Tags.ticket_list("home") == "community[home]-tickets"
+    assert Tags.ticket_detail("home", 42) == "community[home]-ticket[42]"
 
     assert Tags.tags("home", :post) == "community[home]-thread[POST]-tags"
     assert Tags.doc_tree("home") == "community[home]-doc-tree"
@@ -228,6 +236,10 @@ defmodule GroupherServer.PublicCacheTest do
 
     oban_config = Application.fetch_env!(:groupher_server, Oban)
     plugins = Keyword.fetch!(oban_config, :plugins)
+    queues = Keyword.fetch!(oban_config, :queues)
+
+    assert Keyword.fetch!(queues, :cloudflare_purge) == 2
+    assert Keyword.fetch!(queues, :public_cache) == 1
 
     assert {Oban.Plugins.Lifeline, lifeline_opts} =
              List.keyfind(plugins, Oban.Plugins.Lifeline, 0)

@@ -26,6 +26,8 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
 
       {:ok, comment} = ORM.find(Comment, comment.id)
 
+      comment = %{comment | request_community_slug: community.slug}
+
       assert comment.thread == :post
       assert comment.article_id == post.id
       refute Map.has_key?(comment, :post_id)
@@ -59,6 +61,5 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
       refute Map.has_key?(collect, :changelog_id)
       refute Map.has_key?(collect, :doc_id)
     end
-
   end
 end

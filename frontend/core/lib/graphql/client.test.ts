@@ -40,6 +40,7 @@ import {
   createAuthFetch,
   GraphQLRequestError,
   GraphQLResponseError,
+  MENTIONS_GRAPH_CONTENT_CHANGE,
 } from './client'
 
 describe('createAuthFetch', () => {
@@ -176,6 +177,33 @@ describe('createAuthFetch', () => {
     await browserGraphQLRequest(parse('query Value { value }'), {}, { fetcher, signal })
 
     expect(fetcher.mock.calls[0]?.[1]?.signal).toBe(signal)
+  })
+
+  it('invalidates the Reference Map for content changes but not view or reaction mutations', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockImplementation(async () => Response.json({ data: { ok: true } }))
+    const changed = vi.fn()
+    window.addEventListener(MENTIONS_GRAPH_CONTENT_CHANGE, changed)
+
+    try {
+      await browserGraphQLRequest(
+        parse('mutation TrackArticleView { trackArticleView }'),
+        {},
+        { fetcher },
+      )
+      await browserGraphQLRequest(parse('mutation QueryUpvotePost { upvotePost }'), {}, { fetcher })
+      expect(changed).not.toHaveBeenCalled()
+
+      await browserGraphQLRequest(
+        parse('mutation UpdateComment { updateComment }'),
+        {},
+        { fetcher },
+      )
+      expect(changed).toHaveBeenCalledTimes(1)
+    } finally {
+      window.removeEventListener(MENTIONS_GRAPH_CONTENT_CHANGE, changed)
+    }
   })
 
   it('preserves a fetch TypeError for QueryClient retry classification', async () => {

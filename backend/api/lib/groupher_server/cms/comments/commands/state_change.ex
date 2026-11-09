@@ -23,31 +23,45 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
 
   def execute(action, %Comment{} = comment, %User{} = user)
       when action in [:fold, :unfold] do
-    case action do
-      :fold -> fold_pipeline(comment, user)
-      :unfold -> unfold_pipeline(comment, user)
+    with {:ok, community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      case action do
+        :fold -> fold_pipeline(comment, user, community)
+        :unfold -> unfold_pipeline(comment, user, community)
+      end
     end
   end
 
   @pipeline operation: :comment_fold, target: :comment
-  direct_pipeline fold_pipeline(comment, actor) do
-    gate(fn candidate -> CMS.Gate.check_comment_in_transaction(actor, :edit, candidate) end)
-    change(fn {canonical, _article} -> States.fold(canonical, actor) end)
+  direct_pipeline fold_pipeline(comment, actor, community) do
+    gate(fn candidate ->
+      CMS.Gate.check_comment_in_transaction(actor, :edit, candidate, community)
+    end)
+
+    change(fn {canonical, _article} ->
+      States.fold(Map.put(canonical, :request_community_slug, community.slug), actor)
+    end)
   end
 
   @pipeline operation: :comment_unfold, target: :comment
-  direct_pipeline unfold_pipeline(comment, actor) do
-    gate(fn candidate -> CMS.Gate.check_comment_in_transaction(actor, :edit, candidate) end)
-    change(fn {canonical, _article} -> States.unfold(canonical, actor) end)
+  direct_pipeline unfold_pipeline(comment, actor, community) do
+    gate(fn candidate ->
+      CMS.Gate.check_comment_in_transaction(actor, :edit, candidate, community)
+    end)
+
+    change(fn {canonical, _article} ->
+      States.unfold(Map.put(canonical, :request_community_slug, community.slug), actor)
+    end)
   end
 
   @spec execute(atom(), Comment.t(), User.t(), Ecto.UUID.t()) ::
           {:ok, Comment.t()} | {:error, term()}
   def execute(action, %Comment{} = comment, %User{} = actor, command_id)
       when action in [:pin, :undo_pin] do
-    case action do
-      :pin -> pin_pipeline(comment, actor, command_id)
-      :undo_pin -> unpin_pipeline(comment, actor, command_id)
+    with {:ok, community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      case action do
+        :pin -> pin_pipeline(comment, actor, command_id, community)
+        :undo_pin -> unpin_pipeline(comment, actor, command_id, community)
+      end
     end
   end
 
@@ -60,11 +74,18 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
     end
   end
 
-  @pipeline operation: :comment_pin, confirmation: Confirmation, target: :comment, params: []
-  receipt_pipeline pin_pipeline(comment, actor, command_id) do
-    gate(fn candidate -> CMS.Gate.check_comment_in_transaction(actor, :pin, candidate) end)
+  @pipeline operation: :comment_pin,
+            confirmation: Confirmation,
+            target: :comment,
+            params: []
+  receipt_pipeline pin_pipeline(comment, actor, command_id, community) do
+    gate(fn candidate ->
+      CMS.Gate.check_comment_in_transaction(actor, :pin, candidate, community)
+    end)
 
     change(fn {canonical, article} ->
+      canonical = Map.put(canonical, :request_community_slug, community.slug)
+
       with {:ok, changed} <-
              States.apply_in_transaction(:pin, canonical, article, actor, command_id) do
         {:ok, {changed, article}}
@@ -78,11 +99,18 @@ defmodule GroupherServer.CMS.Comments.Commands.StateChange do
     present(fn confirmation -> present_result(confirmation) end)
   end
 
-  @pipeline operation: :comment_unpin, confirmation: Confirmation, target: :comment, params: []
-  receipt_pipeline unpin_pipeline(comment, actor, command_id) do
-    gate(fn candidate -> CMS.Gate.check_comment_in_transaction(actor, :undo_pin, candidate) end)
+  @pipeline operation: :comment_unpin,
+            confirmation: Confirmation,
+            target: :comment,
+            params: []
+  receipt_pipeline unpin_pipeline(comment, actor, command_id, community) do
+    gate(fn candidate ->
+      CMS.Gate.check_comment_in_transaction(actor, :undo_pin, candidate, community)
+    end)
 
     change(fn {canonical, article} ->
+      canonical = Map.put(canonical, :request_community_slug, community.slug)
+
       with {:ok, changed} <-
              States.apply_in_transaction(:undo_pin, canonical, article, actor, command_id) do
         {:ok, {changed, article}}

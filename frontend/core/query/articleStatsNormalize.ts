@@ -27,6 +27,7 @@ export const normalizeArticleStats = (stats: TArticleStatsResponse): TArticleSta
   commentsCount: stats.commentsCount,
   collectsCount: stats.collectsCount,
   commentsParticipantsCount: stats.commentsParticipantsCount,
+  commentsParticipants: stats.commentsParticipants,
   interactionRevision: stats.interactionRevision,
   commentsRevision: stats.commentsRevision,
   emotionCounts: stats.emotionCounts.map((emotion) => ({

@@ -5,7 +5,6 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
   alias GroupherServer.CMS
 
   @article_cat CMS.Artiment.Const.cat_map()
-  @article_status CMS.Artiment.Const.status_map()
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post)
@@ -16,12 +15,11 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
     {:ok, ~m(user_conn guest_conn post user community post_attrs)a}
   end
 
-  test "basic graphql query on kanban post with login user",
+  test "Post detail exposes its category without a legacy processing status",
        ~m(user_conn community user post_attrs)a do
-    kanban_attrs =
-      post_attrs |> Map.merge(%{cat: @article_cat.idea, status: @article_status.todo})
+    post_attrs = Map.put(post_attrs, :cat, @article_cat.idea)
 
-    {:ok, post} = CMS.Articles.create(community, :post, kanban_attrs, user)
+    {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
     variables = %{
       article: %{
@@ -31,10 +29,10 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
       }
     }
 
-    result = user_conn |> gq_query(S.Article.q(:article, :post, "cat status"), variables)
+    result = user_conn |> gq_query(S.Article.q(:article, :post, "cat"), variables)
 
     assert result["innerId"] == to_string(article_inner_id(post, community))
     assert result["cat"] == "IDEA"
-    assert result["status"] == "TODO"
+    refute Map.has_key?(result, "status")
   end
 end

@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
           Ecto.UUID.generate()
         )
 
-      {:ok, comment} = CMS.Comments.accept_solution(comment.id, post_author, Ecto.UUID.generate())
+      {:ok, comment} = CMS.Comments.accept_solution(comment, post_author, Ecto.UUID.generate())
 
       questioner_conn = simu_conn(:user, post_author)
 

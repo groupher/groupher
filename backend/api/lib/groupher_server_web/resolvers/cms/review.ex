@@ -86,7 +86,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
          command_id: command_id,
          target_type: target_type,
          target_id: target_id,
-         action: Atom.to_string(action(field_name))
+         action: action(field_name)
        }}
     end
   end
@@ -101,6 +101,10 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
 
   def recheck_comment(parent, args, resolution) do
     recheck_target(parent, args, resolution, :comment)
+  end
+
+  def recheck_doc(parent, args, resolution) do
+    recheck_target(parent, args, resolution, :doc)
   end
 
   defp recheck_target(
@@ -119,7 +123,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
          command_id: command_id,
          target_type: target_type,
          target_id: target_id,
-         action: "recheck"
+         action: :recheck
        }}
     end
   end
@@ -193,30 +197,30 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   end
 
   defp resolve_target(%{type: :comment, comment: path}, actor) when is_map(path) do
-    case FrontDesk.comment(path, actor) do
-      {:ok, comment} ->
-        {:ok, %{type: :comment, comment_id: comment.id, community_id: comment.community_id}}
-
-      {:error, _reason} = error ->
-        error
+    with {:ok, comment} <- FrontDesk.comment(path, actor),
+         {:ok, %CMS.Model.Community{} = community} <-
+           FrontDesk.community(path.article.community, actor, []) do
+      {:ok, %{type: :comment, comment_id: comment.id, community_id: community.id}}
     end
   end
 
   defp resolve_target(%{type: :comment, comment_id: id} = input, _actor) when is_binary(id) do
     case FrontDesk.comment(id, mode: :internal, view: :with_author) do
       {:ok, comment} ->
-        requested_community_id = Map.get(input, :community_id, comment.community_id)
+        requested_community_id = Map.get(input, :community_id)
 
         case requested_community_id do
           nil ->
             {:ok, %{type: :comment, comment_id: comment.id, community_id: nil}}
 
-          community_id ->
-            if to_string(community_id) == to_string(comment.community_id) do
-              {:ok, %{type: :comment, comment_id: comment.id, community_id: comment.community_id}}
-            else
-              {:error, CMS.invalid_review_block_error()}
+          community_id when is_integer(community_id) and community_id > 0 ->
+            with {:ok, _binding} <-
+                   CMS.articles_resolve_binding(comment.article_id, community_id) do
+              {:ok, %{type: :comment, comment_id: comment.id, community_id: community_id}}
             end
+
+          _ ->
+            {:error, CMS.invalid_review_block_error()}
         end
 
       {:error, _reason} = error ->
@@ -273,8 +277,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   defp target_scope(_attrs), do: {:ok, %{type: :platform}, "review.platform.read", %{}}
 
   defp decision_target(field_name, %{type: :article, article_id: id, community_id: community_id}) do
-    expected_type =
-      field_name |> Atom.to_string() |> String.split("_") |> List.last() |> String.to_atom()
+    expected_type = field_target_type(field_name)
 
     if expected_type == :article and is_binary(id) do
       scope_key = if is_nil(community_id), do: "platform", else: "community:#{community_id}"
@@ -289,8 +292,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
          %{type: :comment, comment_id: id, community_id: community_id}
        )
        when is_binary(id) do
-    expected_type =
-      field_name |> Atom.to_string() |> String.split("_") |> List.last() |> String.to_atom()
+    expected_type = field_target_type(field_name)
 
     if expected_type == :comment do
       scope_key = if is_nil(community_id), do: "platform", else: "community:#{community_id}"
@@ -305,8 +307,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
          %{type: :doc, article_id: id, branch_id: branch_id}
        )
        when is_binary(id) and is_integer(branch_id) do
-    expected_type =
-      field_name |> Atom.to_string() |> String.split("_") |> List.last() |> String.to_atom()
+    expected_type = field_target_type(field_name)
 
     if expected_type == :doc do
       {:ok, "doc:#{id}:#{branch_id}", "platform", :doc, "#{id}:#{branch_id}"}
@@ -319,8 +320,29 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:error, CMS.invalid_review_block_error()}
   end
 
+  defp field_target_type(field_name) do
+    field_name
+    |> normalized_field_name()
+    |> String.split("_")
+    |> Enum.at(1)
+    |> String.to_existing_atom()
+  end
+
   defp action(field_name) do
-    field_name |> Atom.to_string() |> String.split("_") |> hd() |> String.to_atom()
+    action =
+      field_name
+      |> normalized_field_name()
+      |> String.split("_")
+      |> hd()
+      |> String.to_existing_atom()
+
+    if action in CMS.review_decision_actions(), do: action
+  end
+
+  defp normalized_field_name(field_name) when is_atom(field_name), do: Atom.to_string(field_name)
+
+  defp normalized_field_name(field_name) when is_binary(field_name) do
+    Macro.underscore(field_name)
   end
 
   defp authorize(actor, permission, params) do

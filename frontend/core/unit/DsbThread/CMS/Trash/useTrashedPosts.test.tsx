@@ -47,7 +47,6 @@ const page = {
       deletedBy: null,
       deletedAt: '2026-07-14T00:00:00Z',
       scheduledPermanentDeletionAt: '2026-08-13T00:00:00Z',
-      mentionedByCount: 2,
     },
   ],
   pageInfo: {

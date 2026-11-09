@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
     {:ok, ~m(user_conn guest_conn owner_conn community post)a}
   end
 
-  describe "[post cat & status]" do
+  describe "[post category]" do
     @set_cat_query S.Article.m(:set_post_cat)
     test "can set cat for a existing post", ~m(user_conn community post)a do
       variables = %{
@@ -43,37 +43,6 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
       }
 
       assert user_conn |> mutation_error?(@set_cat_query, variables)
-    end
-
-    @set_status_query S.Article.m(:set_post_status)
-    test "can set status for a existing post", ~m(user_conn community post)a do
-      variables = %{
-        command_id: Ecto.UUID.generate(),
-        article: %{
-          inner_id: article_inner_id(post, community),
-          community: community.slug,
-          thread: "POST"
-        },
-        status: "DONE"
-      }
-
-      created = user_conn |> gq_mutation(@set_status_query, variables)
-
-      assert "DONE" == created["status"]
-    end
-
-    test "set status rejects non-enum value", ~m(user_conn community post)a do
-      variables = %{
-        command_id: Ecto.UUID.generate(),
-        article: %{
-          inner_id: article_inner_id(post, community),
-          community: community.slug,
-          thread: "POST"
-        },
-        status: "NOT_EXIST"
-      }
-
-      assert user_conn |> mutation_error?(@set_status_query, variables)
     end
   end
 end

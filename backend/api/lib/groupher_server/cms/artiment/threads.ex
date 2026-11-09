@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.Artiment.Threads do
   alias CMS.Artiment.Config
 
   @article_values Config.threads()
+  @identity_values (@article_values ++ [:ticket]) |> Enum.uniq()
 
   @values (@article_values ++ [:kanban, :account, :about, :dashboard, :user])
           |> Enum.uniq()
@@ -41,6 +42,12 @@ defmodule GroupherServer.CMS.Artiment.Threads do
 
   @doc "Returns the article-only thread atoms as a list for Ecto enum fields."
   def article_values_list, do: @article_values
+
+  @doc "Returns stable Article identity threads, including resources with dedicated capabilities."
+  def identity_enums, do: @identity_values
+
+  @doc "Returns stable Article identity thread atoms as a list for Ecto enum fields."
+  def identity_values_list, do: @identity_values
 
   @doc """
   Normalizes a thread value into the canonical thread atom.

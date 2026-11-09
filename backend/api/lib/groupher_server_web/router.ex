@@ -45,6 +45,12 @@ defmodule GroupherServerWeb.Router do
     plug(GroupherServerWeb.Context)
   end
 
+  pipeline :graph_no_store do
+    plug(:no_store)
+  end
+
+  defp no_store(conn, _opts), do: Plug.Conn.put_resp_header(conn, "cache-control", "no-store")
+
   scope "/api" do
     pipe_through(:api)
 
@@ -54,7 +60,7 @@ defmodule GroupherServerWeb.Router do
   end
 
   scope "/graphiql" do
-    pipe_through(:api)
+    pipe_through([:api, :graph_no_store])
 
     forward(
       "/",

@@ -33,11 +33,16 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
   }
 
   @doc """
-  Reloads one resource row by primary key under `FOR UPDATE`.
+  Locks binding Communities for an Article, then reloads its row under `FOR UPDATE`.
 
   This lock protects the canonical resource consumed by the surrounding Gate
   transaction; callers must not use it as a general resource reader.
   """
+  def resource(CMS.Model.Article = schema, id) when not is_nil(id) do
+    {:ok, :pass} = CMS.Articles.MutationLock.lock_community_admission(id)
+    schema |> where([resource], resource.id == ^id) |> lock("FOR UPDATE") |> Repo.one()
+  end
+
   def resource(schema, id) when is_atom(schema) and not is_nil(id) do
     schema
     |> where([resource], resource.id == ^id)

@@ -1,6 +1,6 @@
 # V1 举报事实与 AlertBoard（历史）
 
-> 状态：historical；当前举报与审核合同见 [ReviewBot / AlertWall V2](../alert-board/v2.md)。
+> 状态：historical；当前举报与审核合同见 [ReviewBot / AlertWall V2](../alert-wall/v2.md)。
 
 本文记录 V1 目标，不再定义当前实现。V2 将举报事实归 AlertWall，资源处置仍由 CMS/Accounts 正式领域入口执行。
 管理员 Moderator、Passport 和资源 Gate 不因此删除。
@@ -27,6 +27,6 @@ ReviewBot 检测结果  -> 独立检查事实 -> 同一相关事项
 - 账号举报由 AlertBoard 管理；账号处罚仍由 Accounts，社区内禁言仍由社区成员领域执行。
 - 普通用户响应不暴露举报人列表、内部证据、审核员备注。
 
-举报表、权限、submit/withdraw、一次性数据转换和旧 facade 删除见 [实施合同 §11](../alert-board/implementation.md#11-举报归属切换与历史边界)，
-旧举报全链路在 [D5](../alert-board/delivery.md#d5-清除旧-report-运行时全链路) 先移除；事实一次性迁移按 [N4](../alert-board/delivery.md#n4-举报历史一次性迁入-alertboard) 执行。用户举报 V1 只受理、驳回和记录人工处理，不提供账号处罚 API。
+举报表、权限、submit/withdraw、一次性数据转换和旧 facade 删除见 [实施合同 §11](../alert-wall/implementation.md#11-举报归属切换与历史边界)，
+旧举报全链路在 [D5](../alert-wall/delivery.md#d5-清除旧-report-运行时全链路) 先移除；事实一次性迁移按 [N4](../alert-wall/delivery.md#n4-举报历史一次性迁入-alertboard) 执行。用户举报 V1 只受理、驳回和记录人工处理，不提供账号处罚 API。
 [旧 Audit 退役](../../migrations/legacy-content-audit-removal.md)不等于举报迁移已完成。

@@ -202,6 +202,17 @@ if config_env() in [:prod, :seed_prod] do
   # import_config "prod.secret.exs"
 
   config :groupher_server, GroupherServerWeb.Endpoint, secret_key_base: secret_key_base
+
+  mentions_graph_key =
+    System.get_env("MENTIONS_GRAPH_KEY") ||
+      raise "MENTIONS_GRAPH_KEY is required for MentionsGraph pagination cursors"
+
+  if byte_size(mentions_graph_key) < 32 do
+    raise "MENTIONS_GRAPH_KEY must contain at least 32 bytes"
+  end
+
+  config :groupher_server, :mentions_graph_key, mentions_graph_key
+
   config :groupher_server, :view_tracker_pepper, view_tracker_pepper
   config :groupher_server, :view_tracker_cookie_secret, view_tracker_cookie_secret
 
@@ -238,8 +249,20 @@ if config_env() in [:prod, :seed_prod] do
     client_secret: System.get_env("OAUTH_GITHUB_CLIENT_SECRET"),
     redirect_uri: System.get_env("OAUTH_GITHUB_REDIRECT_URI")
 
+  search_platform =
+    if String.downcase(String.trim(System.get_env("SEARCH_ARTIMENTS_ENABLED", "true"))) in [
+         "false",
+         "0",
+         "no",
+         "off"
+       ] do
+      GroupherServer.CMS.SearchArtiments.Disabled
+    else
+      GroupherServer.CMS.SearchArtiments.Algolia
+    end
+
   config :groupher_server, :search_artiments,
-    platform: GroupherServer.CMS.SearchArtiments.Algolia,
+    platform: search_platform,
     queue: GroupherServer.CMS.SearchArtiments.ObanQueue,
     algolia: [
       application_id: System.get_env("ALGOLIA_APPLICATION_ID"),

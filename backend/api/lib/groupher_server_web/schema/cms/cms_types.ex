@@ -31,6 +31,81 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   import_types(Schema.CMS.Metrics)
 
+  enum :artiment_type do
+    value(:post)
+    value(:blog)
+    value(:changelog)
+    value(:doc)
+    value(:ticket)
+    value(:comment)
+  end
+
+  enum :artiment_read_status do
+    value(:readable)
+    value(:deleted)
+    value(:unavailable)
+  end
+
+  input_object :artiment_status_input do
+    field(:type, non_null(:artiment_type))
+    field(:article_inner_id, :id)
+    field(:article_id, :id)
+    field(:comment_inner_id, :id)
+  end
+
+  input_object :mentions_graph_locator_input do
+    field(:type, non_null(:artiment_type))
+    field(:article_inner_id, :id)
+    field(:article_id, :id)
+    field(:comment_inner_id, :id)
+  end
+
+  object :mentions_graph_locator do
+    field(:type, non_null(:artiment_type))
+    field(:article_inner_id, :id)
+    field(:article_id, :id)
+    field(:comment_inner_id, :id)
+  end
+
+  object :mentions_graph_node do
+    field(:id, non_null(:id))
+    field(:type, non_null(:artiment_type))
+    field(:status, non_null(:artiment_read_status))
+    field(:title, :string)
+    field(:url, :string)
+    field(:locator, :mentions_graph_locator)
+    field(:can_open, non_null(:boolean))
+  end
+
+  object :artiment_status do
+    field(:type, non_null(:artiment_type))
+    field(:status, non_null(:artiment_read_status))
+    field(:title, :string)
+    field(:url, :string)
+  end
+
+  object :mentions_graph_edge do
+    field(:id, non_null(:id))
+    field(:from, non_null(:id))
+    field(:to, non_null(:id))
+    field(:occurrences_count, non_null(:integer))
+  end
+
+  object :mentions_graph_page do
+    field(:revision, non_null(:id))
+    field(:nodes, non_null(list_of(non_null(:mentions_graph_node))))
+    field(:edges, non_null(list_of(non_null(:mentions_graph_edge))))
+    field(:has_next_page, non_null(:boolean))
+    field(:end_cursor, :string)
+  end
+
+  object :mentions_graph_article_comments_page do
+    field(:revision, non_null(:id))
+    field(:comments, non_null(list_of(non_null(:mentions_graph_locator))))
+    field(:has_next_page, non_null(:boolean))
+    field(:end_cursor, :id)
+  end
+
   object :community_name_check do
     @desc "Result of checking a community name against the shared namespace."
     field(:normalized_slug, :string)
@@ -70,10 +145,210 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:comments_count, non_null(:integer))
     field(:collects_count, non_null(:integer))
     field(:comments_participants_count, non_null(:integer))
+    field(:comments_participants, non_null(list_of(non_null(:participant_snapshot_user))))
     field(:interaction_revision, non_null(:integer))
     field(:comments_revision, non_null(:integer))
     field(:emotion_counts, non_null(list_of(non_null(:article_emotion_count))))
     field(:snapshot_at, non_null(:datetime))
+  end
+
+  enum :ticket_type_enum do
+    value(:user)
+    value(:worker)
+    value(:case)
+  end
+
+  enum :ticket_status_enum do
+    value(:todo)
+    value(:wip)
+    value(:done)
+    value(:open)
+    value(:resolved)
+  end
+
+  enum :ticket_publication_state do
+    value(:draft)
+    value(:published)
+  end
+
+  enum :ticket_source_type_enum do
+    value(:post)
+  end
+
+  enum :ticket_update_visibility_enum do
+    value(:public)
+    value(:internal)
+  end
+
+  input_object :ticket_filter do
+    field(:type, :ticket_type_enum)
+    field(:status, :ticket_status_enum)
+    field(:assignee_id, :integer)
+    field(:priority, :integer)
+    field(:tag_ids, list_of(:integer))
+    field(:versions, list_of(:string))
+    field(:operating_systems, list_of(:string))
+    field(:modules, list_of(:string))
+    field(:created_after, :datetime)
+    field(:created_before, :datetime)
+    field(:updated_after, :datetime)
+    field(:updated_before, :datetime)
+    field(:planned_after, :datetime)
+    field(:planned_before, :datetime)
+  end
+
+  input_object :ticket_facet_input do
+    field(:key, non_null(:string))
+    field(:value, non_null(:string))
+  end
+
+  object :ticket_assignee do
+    field(:id, non_null(:id))
+    field(:login, non_null(:string))
+    field(:nickname, :string)
+  end
+
+  object :ticket_tag_ref do
+    field(:id, non_null(:integer))
+    field(:title, non_null(:string))
+    field(:slug, non_null(:string))
+    field(:color, :string)
+  end
+
+  object :ticket_facet do
+    field(:key, non_null(:string))
+    field(:value, non_null(:string))
+  end
+
+  object :ticket_source_ref do
+    field(:id, non_null(:id))
+    field(:type, non_null(:ticket_source_type_enum))
+    field(:inner_id, :integer)
+    field(:title, :string)
+    field(:is_public, non_null(:boolean))
+    field(:review_block_types, non_null(list_of(non_null(:string))))
+  end
+
+  object :ticket_progress_ref do
+    field(:id, non_null(:id))
+    field(:inner_id, non_null(:integer))
+    field(:title, non_null(:string))
+    field(:status, non_null(:ticket_status_enum))
+  end
+
+  object :ticket_relation_ref do
+    field(:id, non_null(:id))
+    field(:type, non_null(:ticket_type_enum))
+    field(:status, non_null(:ticket_status_enum))
+    field(:priority, non_null(:integer))
+    field(:workflow_version, non_null(:integer))
+    field(:rank, non_null(:integer))
+    field(:inner_id, :integer)
+    field(:title, non_null(:string))
+    field(:digest, :string)
+    field(:planned_start_at, :datetime)
+    field(:planned_end_at, :datetime)
+  end
+
+  object :ticket do
+    field(:id, non_null(:id))
+    field(:inner_id, :integer)
+    field(:type, non_null(:ticket_type_enum))
+    field(:status, non_null(:ticket_status_enum))
+    field(:publication_state, non_null(:ticket_publication_state))
+    field(:can_publish_public_updates, non_null(:boolean))
+    field(:priority, non_null(:integer))
+    field(:lifecycle_version, :integer)
+    field(:workflow_version, :integer)
+    field(:draft_version, :integer)
+    field(:rank, non_null(:integer))
+    field(:title, non_null(:string))
+    field(:digest, non_null(:string))
+    field(:body, non_null(:string), resolve: fn ticket, _, _ -> {:ok, ticket.body.json} end)
+
+    field(:plain_text, non_null(:string),
+      resolve: fn ticket, _, _ -> {:ok, ticket.body.plain_text} end
+    )
+
+    field(:publication_preview, :string)
+    field(:draft_content, :ticket_content)
+    field(:published_content, :ticket_content)
+    field(:has_unpublished_changes, :boolean)
+    field(:planned_start_at, :datetime)
+    field(:planned_end_at, :datetime)
+    field(:started_at, :datetime)
+    field(:completed_at, :datetime)
+    field(:created_at, non_null(:datetime))
+    field(:updated_at, non_null(:datetime))
+    field(:assignees, non_null(list_of(non_null(:ticket_assignee))))
+    field(:tags, non_null(list_of(non_null(:ticket_tag_ref))))
+    field(:facets, non_null(list_of(non_null(:ticket_facet))))
+    field(:sources, non_null(list_of(non_null(:ticket_source_ref))))
+    field(:workers, non_null(list_of(non_null(:ticket_relation_ref))))
+    field(:members, non_null(list_of(non_null(:ticket_relation_ref))))
+    field(:cases, non_null(list_of(non_null(:ticket_relation_ref))))
+    field(:shared_workers, non_null(list_of(non_null(:ticket_relation_ref))))
+    field(:parent, :ticket_relation_ref)
+
+    field :activity, :ticket_activity_connection do
+      arg(:pagi, :pagi_input)
+      resolve(&R.CMS.Tickets.activity/3)
+    end
+
+    field(:updates, non_null(list_of(non_null(:ticket_update))))
+  end
+
+  object :ticket_content do
+    field(:title, non_null(:string))
+    field(:digest, non_null(:string))
+    field(:body, non_null(:string), resolve: fn content, _, _ -> {:ok, content.body.json} end)
+  end
+
+  object :ticket_activity_connection do
+    field(:entries, non_null(list_of(non_null(:ticket_activity))))
+    field(:page_info, non_null(:page_info))
+  end
+
+  input_object :ticket_content_input do
+    field(:title, :string)
+    field(:digest, :string)
+    field(:body, :json)
+  end
+
+  object :ticket_activity do
+    field(:id, non_null(:id))
+    field(:action, non_null(:string))
+    field(:payload, :json)
+    field(:occurred_at, non_null(:datetime))
+    field(:actor_ref, :id)
+  end
+
+  object :ticket_page do
+    field(:entries, non_null(list_of(non_null(:ticket))))
+    field(:page_info, non_null(:page_info))
+  end
+
+  object :ticket_kanban_columns do
+    field(:todo, non_null(:ticket_page))
+    field(:wip, non_null(:ticket_page))
+    field(:done, non_null(:ticket_page))
+  end
+
+  object :post_ticket_progress do
+    field(:post_inner_id, non_null(:integer))
+    field(:status, non_null(:ticket_status_enum))
+    field(:completed, non_null(:integer))
+    field(:total, non_null(:integer))
+    field(:tickets, non_null(list_of(non_null(:ticket_progress_ref))))
+  end
+
+  object :ticket_update do
+    field(:id, non_null(:id))
+    field(:body, non_null(:string))
+    field(:visibility, non_null(:ticket_update_visibility_enum))
+    field(:author_id, non_null(:id))
+    field(:published_at, :datetime)
+    field(:supersedes_id, :id)
   end
 
   object :article_reaction_result do
@@ -135,7 +410,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   enum :article_lifecycle_state do
-    value(:draft_only)
+    value(:draft)
     value(:published)
     value(:archived)
     value(:deleted)
@@ -360,22 +635,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:article, :article)
     field(:deleted_by, :user, resolve: dataloader(CMS, :deleted_by))
     field(:deleted_at, non_null(:datetime))
-    field(:mentioned_by_count, non_null(:integer))
     field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
 
     field(:scheduled_permanent_deletion_at, non_null(:datetime),
       resolve: fn item, _, _ -> {:ok, item.trash_action.scheduled_permanent_deletion_at} end
     )
-
-    field :mentioned_by, :artiment_mention_page do
-      arg(:pagi, :pagi_input)
-      resolve(&GroupherServerWeb.Resolvers.CMS.ArtimentMentions.trashed_article_mentioned_by/3)
-    end
-
-    field :mentions, :artiment_mention_page do
-      arg(:pagi, :pagi_input)
-      resolve(&GroupherServerWeb.Resolvers.CMS.ArtimentMentions.trashed_article_mentions/3)
-    end
   end
 
   object :trash_page do
@@ -385,9 +649,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :activity_resource_ref do
     field(:type, non_null(:string), resolve: fn ref, _, _ -> {:ok, to_string(ref.type)} end)
-    field(:ref, non_null(:id))
+    field(:ref, :id)
     field(:title, :string)
     field(:inner_id, :id)
+    field(:url, :string)
   end
 
   object :article_log_actor do
@@ -625,6 +890,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:video)
     value(:audio)
     value(:file)
+  end
+
+  enum :asset_thread do
+    value(:post)
+    value(:blog)
+    value(:changelog)
+    value(:doc)
+    value(:ticket)
   end
 
   enum :community_asset_status do
@@ -1037,6 +1310,18 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   ######
   # common stands for minimal info of the type
   # used for small identity projections such as feeds
+  object :participant_snapshot_user do
+    field(:ref, non_null(:id),
+      resolve: fn member, _, _ ->
+        GroupherServer.CMS.snapshot_member_ref_encode(member)
+      end
+    )
+
+    field(:login, non_null(:string))
+    field(:avatar, :string)
+    field(:nickname, :string)
+  end
+
   object :common_user do
     field(:login, non_null(:string))
     field(:avatar, :string)
@@ -1048,6 +1333,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :common_article do
     field(:thread, :thread)
     field(:inner_id, :id)
+    field(:community, :community)
     field(:title, :string)
     field(:comments_revision, :integer)
     field(:article_stats, :article_stats)
@@ -1075,7 +1361,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :community_asset do
     field(:id, :id)
     field(:public_ref, :string)
-    field(:thread, :thread)
+    field(:thread, :asset_thread)
     field(:asset_type, :community_asset_type)
     field(:status, :community_asset_status)
     field(:title, :string)
@@ -1098,7 +1384,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :article_asset_ref do
     field(:id, :id)
-    field(:thread, :thread)
+    field(:thread, :asset_thread)
     field(:article_id, :id)
     field(:usage, :article_document_asset_usage)
     field(:block_id, :string)
@@ -1119,7 +1405,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :community_asset_thread_stat do
-    field(:thread, non_null(:thread))
+    field(:thread, non_null(:asset_thread))
     field(:count, non_null(:integer))
   end
 
@@ -1158,7 +1444,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   input_object :community_asset_input do
-    field(:thread, :thread)
+    field(:thread, :asset_thread)
     field(:asset_type, :community_asset_type)
     field(:title, :string)
     field(:filename, :string)
@@ -1188,13 +1474,13 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:mime_type, non_null(:string))
     field(:size_bytes, non_null(:big_int))
     field(:checksum_sha256, :string)
-    field(:thread, :thread)
+    field(:thread, :asset_thread)
     field(:asset_type, :community_asset_type)
   end
 
   input_object :community_asset_filter do
     field(:query, :string)
-    field(:thread, :thread)
+    field(:thread, :asset_thread)
     field(:asset_type, :community_asset_type)
     field(:subtypes, list_of(non_null(:string)))
   end
@@ -1212,7 +1498,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:size_bytes, non_null(:big_int))
     field(:filename, :string)
     field(:mime_type, :string)
-    field(:thread, :thread)
+    field(:thread, :asset_thread)
     field(:asset_type, :community_asset_type)
     field(:width, :integer)
     field(:height, :integer)
@@ -1319,7 +1605,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     comments_fields()
 
     field(:cat, :article_cat_enum)
-    field(:status, :article_status_enum)
     field(:is_solved, non_null(:boolean))
     field(:solution_comment_id, :id)
     field(:solution_digest, :string)
@@ -1701,6 +1986,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :community_moderator do
     field(:id, non_null(:id))
+    field(:user_id, non_null(:id))
     field(:is_root, non_null(:boolean))
     field(:passport_item_count, non_null(:integer))
     field(:user, non_null(:common_user))
@@ -1883,44 +2169,48 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :comments_list_state do
     field(:total_count, :integer)
     field(:participants_count, :integer)
-    field(:participants, list_of(:common_user))
-    field(:is_viewer_joined, :boolean)
+    field(:participants, list_of(:participant_snapshot_user))
   end
 
   object :artiment_mention do
-    field(:id, :id)
-    field(:mentioner_type, :mention_type)
+    field(:id, non_null(:id))
+    field(:source, non_null(:mentions_graph_node))
+    field(:target_type, non_null(:mention_type))
+    field(:target, non_null(:mention_target))
+    field(:mention_case, non_null(:mention_case))
+    field(:occurrences_count, non_null(:integer))
+    field(:mentioned_at, non_null(:datetime))
+  end
 
-    field(:mentioner_id, :id,
-      resolve: fn mention, _, _ ->
-        {:ok, mention.mentioner_article_id || mention.mentioner_id}
-      end
-    )
+  object :mention_user_target do
+    field(:type, non_null(:mention_type))
+    field(:status, non_null(:artiment_read_status))
+    field(:login, :string)
+    field(:display_name, :string)
+    field(:url, :string)
+  end
 
-    field(:mentioner_community_id, :id)
-    field(:mentioner_url, :string)
+  object :mention_url_target do
+    field(:type, non_null(:mention_type))
+    field(:url, non_null(:string))
+  end
 
-    field(:mentioned_scope, :mention_scope)
-    field(:mentioned_type, :mention_type)
+  union :mention_target do
+    types([:mentions_graph_node, :mention_user_target, :mention_url_target])
 
-    field(:mentioned_id, :id,
-      resolve: fn mention, _, _ ->
-        {:ok, mention.mentioned_article_id || mention.mentioned_id}
-      end
-    )
+    resolve_type(fn
+      %{__typename: :mention_user_target}, _ ->
+        :mention_user_target
 
-    field(:mentioned_community_id, :id)
-    field(:mentioned_url, :string)
-    field(:mentioned_url_hash, :string)
+      %{__typename: :mention_url_target}, _ ->
+        :mention_url_target
 
-    field(:mention_case, :mention_case)
-    field(:occurrences, list_of(:json))
-    field(:mentioner_snapshot, :json)
-    field(:mentioned_snapshot, :json)
-    field(:meta, :json)
-    field(:mentioned_at, :datetime)
+      %{type: type}, _ when type in [:post, :blog, :changelog, :doc, :ticket, :comment] ->
+        :mentions_graph_node
 
-    timestamp_fields()
+      _, _ ->
+        nil
+    end)
   end
 
   object :blog_feed do
@@ -1979,17 +2269,15 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:page_info, non_null(:page_info))
   end
 
-  object :kanban_pages do
-    field(:backlog, :post_page)
-    field(:todo, :post_page)
-    field(:wip, :post_page)
-    field(:done, :post_page)
-    field(:rejected, :post_page)
-  end
-
   object :artiment_mention_page do
-    field(:entries, list_of(:artiment_mention))
-    pagi_fields()
+    field(:revision, non_null(:id))
+    field(:entries, non_null(list_of(non_null(:artiment_mention))))
+
+    field :page_info, non_null(:page_info) do
+      resolve(fn %{page_info: page}, _, _ ->
+        {:ok, Helper.ORM.Pagi.Page.info(page)}
+      end)
+    end
   end
 
   object :community_asset_page do

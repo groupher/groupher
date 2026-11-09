@@ -18,7 +18,6 @@ export type TNormalizedArticleFilter = {
   communityTag: string | null
   communityTags: string[]
   cat: string | null
-  status: string | null
   order: string | null
   when: string | null
   sort: string | null
@@ -42,7 +41,6 @@ export const normalizeArticleFilter = (filter: TPagedArticlesParams): TNormalize
   communityTag: normalizeText(filter.communityTag),
   communityTags: normalizeTextList(filter.communityTags),
   cat: normalizeText(filter.cat),
-  status: normalizeText(filter.status),
   order: normalizeText(filter.order),
   when: normalizeText(filter.when),
   sort: normalizeText(filter.sort),
@@ -88,7 +86,6 @@ export const isCanonicalDefaultArticleFilter = (filter: TPagedArticlesParams): b
     normalized.communityTag === null &&
     normalized.communityTags.length === 0 &&
     normalized.cat === null &&
-    normalized.status === null &&
     normalized.order === null &&
     normalized.when === null &&
     normalized.sort === null
@@ -97,7 +94,7 @@ export const isCanonicalDefaultArticleFilter = (filter: TPagedArticlesParams): b
 
 /** Constructors for public Article content, stats, tag, and list query identities. */
 export const articleQueryKeys = {
-  all: ['article'] as const,
+  all: ['article-shared-comments-v1'] as const,
   pagiPosts: (
     filter: TPagedArticlesParams,
     config: TEffectivePagiConfig = DEFAULT_EFFECTIVE_PAGI_CONFIG,
@@ -124,8 +121,6 @@ export const articleQueryKeys = {
       normalizeArticlePageFilter(filter),
       pagiRequestKey(request, config, filter),
     ] as const,
-  kanban: (community: string, config = DEFAULT_EFFECTIVE_PAGI_CONFIG) =>
-    [...articleQueryKeys.all, 'kanban', community, pagiConfigKey(config)] as const,
   detail: (community: string, thread: TThread, innerId: string | number) =>
     [...articleQueryKeys.all, 'detail', community, thread, String(innerId)] as const,
   statsPrefix: (community: string, thread: TThread) =>
@@ -142,7 +137,7 @@ export const articleQueryKeys = {
 
 /** Constructors for Comment list and reconcile query identities. */
 export const commentKeys = {
-  all: ['comment'] as const,
+  all: ['comment-shared-v1'] as const,
   articlePrefix: (community: string, thread: TThread, innerId: string | number) =>
     [...commentKeys.all, 'list', community, thread, String(innerId)] as const,
   list: (
@@ -212,7 +207,12 @@ export const viewerQueryKeys = {
       [...commentInnerIds].sort(),
     ] as const,
   commentSummary: (accountScope: string, articleKey: string) =>
-    [...viewerQueryKeys.all, accountScope || 'anonymous', 'comment-summary', articleKey] as const,
+    [
+      ...viewerQueryKeys.all,
+      accountScope || 'anonymous',
+      'comment-summary-shared-v1',
+      articleKey,
+    ] as const,
   myReportsPrefix: (accountScope: string) =>
     [...viewerQueryKeys.all, accountScope || 'anonymous', 'my-reports'] as const,
   myReports: (accountScope: string, page: number) =>

@@ -19,12 +19,11 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
 
   @spec execute(atom(), Ecto.UUID.t(), User.t(), keyword()) :: {:ok, term()} | {:error, term()}
   def execute(action, article_id, %User{} = actor, opts \\ [])
-      when action in [:sink, :undo_sink, :set_category, :set_status] do
+      when action in [:sink, :undo_sink, :set_category] do
     case action do
       :sink -> sink_pipeline(article_id, actor, opts)
       :undo_sink -> undo_sink_pipeline(article_id, actor, opts)
       :set_category -> set_category(article_id, nil, actor, Keyword.fetch!(opts, :community))
-      :set_status -> {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
@@ -51,30 +50,6 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
   direct_pipeline undo_sink_pipeline(article_id, actor, opts) do
     gate(fn _candidate -> authorize_state_change(:undo_sink, article_id, actor, opts) end)
     change(fn {canonical, change_opts} -> States.undo_sink(canonical, change_opts) end)
-  end
-
-  @spec set_status_in_community(map(), atom() | nil, User.t(), Community.t()) ::
-          {:ok, Article.t()} | {:error, term()}
-  def set_status_in_community(
-        %Article{} = article,
-        status,
-        %User{} = actor,
-        %Community{} = community
-      ) do
-    CMS.Kanban.set_status(community, article, status, actor)
-  end
-
-  def set_status_in_community(
-        %{id: article_id},
-        status,
-        %User{} = actor,
-        %Community{} = community
-      )
-      when is_binary(article_id) do
-    case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{} = article} -> set_status_in_community(article, status, actor, community)
-      {:error, _reason} -> {:error, GateErrorCat.resource_not_found()}
-    end
   end
 
   @spec update_active_timestamp(atom(), Article.t()) :: {:ok, Article.t()} | {:error, term()}

@@ -118,7 +118,15 @@ defmodule Helper.PermissionConfig do
         "article.insights.read",
         "review.read",
         "review.decide",
-        "review.configure"
+        "review.configure",
+        "ticket.create",
+        "ticket.link_source",
+        "ticket.update",
+        "ticket.transition",
+        "ticket.assign",
+        "ticket.manage_case",
+        "ticket.manage_visibility",
+        "ticket.read_internal"
       ]
   end
 
@@ -220,6 +228,18 @@ defmodule Helper.PermissionConfig do
       "review.read" => %{scope: :context, context: :cms, grant: "review.read"},
       "review.decide" => %{scope: :context, context: :cms, grant: "review.decide"},
       "review.configure" => %{scope: :context, context: :cms, grant: "review.configure"},
+      "ticket.create" => %{scope: :context, context: :cms, grant: "ticket.create"},
+      "ticket.link_source" => %{scope: :context, context: :cms, grant: "ticket.link_source"},
+      "ticket.update" => %{scope: :context, context: :cms, grant: "ticket.update"},
+      "ticket.transition" => %{scope: :context, context: :cms, grant: "ticket.transition"},
+      "ticket.assign" => %{scope: :context, context: :cms, grant: "ticket.assign"},
+      "ticket.manage_case" => %{scope: :context, context: :cms, grant: "ticket.manage_case"},
+      "ticket.manage_visibility" => %{
+        scope: :context,
+        context: :cms,
+        grant: "ticket.manage_visibility"
+      },
+      "ticket.read_internal" => %{scope: :context, context: :cms, grant: "ticket.read_internal"},
       "dashboard.theme.update" => %{scope: :context, context: :cms, grant: "community.update"},
       "dashboard.rss.update" => %{scope: :context, context: :cms, grant: "community.update"},
       "community_tag.create" => %{
@@ -256,12 +276,6 @@ defmodule Helper.PermissionConfig do
       "post.draft.update" => %{owner_fallback: true},
       "post.draft.publish" => %{owner_fallback: true},
       "post.set_category" => %{
-        scope: :context,
-        context: :cms,
-        grant: "post.edit",
-        owner_fallback: true
-      },
-      "post.set_status" => %{
         scope: :context,
         context: :cms,
         grant: "post.edit",
@@ -344,7 +358,8 @@ defmodule Helper.PermissionConfig do
   end
 
   defp thread_scoped?(grant) do
-    Enum.any?(threads(), &String.starts_with?(grant, "#{&1}."))
+    String.starts_with?(grant, "ticket.") or
+      Enum.any?(threads(), &String.starts_with?(grant, "#{&1}."))
   end
 
   defp generated_thread_action_requirements do

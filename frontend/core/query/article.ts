@@ -3,14 +3,14 @@ import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query'
 import { THREAD } from '~/const/thread'
 import { browserGraphQLRequest } from '~/graphql/client'
 import { DEFAULT_EFFECTIVE_PAGI_CONFIG, toPagiGraphQLInput } from '~/lib/pagination/params'
+import { blog } from '~/schemas/pages/blog'
 import { changelog, changelogPage } from '~/schemas/pages/changelog'
 import { doc } from '~/schemas/pages/doc'
 import { communityTagGroups, communityTagStats } from '~/schemas/pages/misc'
-import { groupedKanbanPosts, kanbanPage, post, postPage } from '~/schemas/pages/post'
+import { post, postPage } from '~/schemas/pages/post'
 import type {
   TEffectivePagiConfig,
   TPagedArticlesParams,
-  TPagiGraphQLInput,
   TPagiRequest,
   TPost,
   TTagStats,
@@ -117,17 +117,6 @@ const changelogsInfinite = (filter: TPagedArticlesParams, config: TEffectivePagi
     },
   })
 
-const kanban = (community: string, config = DEFAULT_EFFECTIVE_PAGI_CONFIG) =>
-  queryOptions({
-    queryKey: articleQueryKeys.kanban(community, config),
-    meta: { hydration: 'public' },
-    queryFn: async () => {
-      const data = await browserGraphQLRequest(groupedKanbanPosts, { community })
-      return data.groupedKanbanPosts
-    },
-    enabled: !!community,
-  })
-
 const detail = (community: string, thread: TThread, innerId: string | number) =>
   queryOptions({
     queryKey: articleQueryKeys.detail(community, thread, innerId),
@@ -139,6 +128,10 @@ const detail = (community: string, thread: TThread, innerId: string | number) =>
           article,
         })
         return data.changelog as unknown as TPost
+      }
+      if (thread === THREAD.BLOG) {
+        const data = await browserGraphQLRequest(blog, { article })
+        return data.blog as unknown as TPost
       }
       if (thread === THREAD.DOC) {
         const data = await browserGraphQLRequest(doc, {
@@ -176,27 +169,10 @@ const tagGroups = (community: string, thread: TThread) =>
   })
 
 export const articleQueries = {
-  kanbanPage: (
-    community: string,
-    filter: Parameters<typeof toArticlePageFilter>[0],
-    pagi: TPagiGraphQLInput,
-  ) =>
-    queryOptions({
-      queryKey: ['article', 'kanban-page', community, filter, pagi],
-      queryFn: async () =>
-        (
-          await browserGraphQLRequest(kanbanPage, {
-            community,
-            filter: toArticlePageFilter(filter),
-            pagi,
-          })
-        ).kanbanPage,
-    }),
   posts,
   changelogs,
   postsInfinite,
   changelogsInfinite,
-  kanban,
   detail,
   tagGroups,
   tagStats,

@@ -1,6 +1,8 @@
-import type { CSSProperties, FC } from 'react'
+import { type CSSProperties, type FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+import useViewingArticle from '~/hooks/useViewingArticle'
+import { useArticleQueryContext } from '~/query/ArticleQueryProvider'
 import type { TComment, TID } from '~/spec'
 
 import Comment from '../Comment'
@@ -28,6 +30,8 @@ const List: FC<TProps> = ({ mode, apiMode, entries, foldedIdSet }) => {
   const s = useSalon()
   const { t } = useTrans()
   const { foldComment } = useActions()
+  const { articlePath } = useViewingArticle()
+  const articleContext = useArticleQueryContext()
 
   return (
     <>
@@ -35,25 +39,46 @@ const List: FC<TProps> = ({ mode, apiMode, entries, foldedIdSet }) => {
         const isFolded = foldedIdSet.has(comment.innerId)
 
         return (
-          <div key={comment.innerId} className={s.wrapper} style={COMMENT_VISIBILITY_STYLE}>
+          <div
+            key={comment.innerId}
+            id={`comment-${comment.innerId}`}
+            className={s.wrapper}
+            style={COMMENT_VISIBILITY_STYLE}
+          >
             <Comment
               data={comment}
               apiMode={apiMode}
-              hasReplies={(comment.repliesCount ?? 0) > 0}
+              hasReplies={comment.hasReplyEntries === true}
               isFolded={isFolded}
             />
+
+            <button
+              type='button'
+              className={s.mentions}
+              onClick={() =>
+                articleContext?.showMentions({
+                  type: 'COMMENT',
+                  articleInnerId: String(articlePath.innerId),
+                  commentInnerId: String(comment.innerId),
+                })
+              }
+            >
+              {t('mentions_graph.title')}
+            </button>
 
             {mode === MODE.TIMELINE && (
               <DateDivider text={passedDate(entries[index], entries[index + 1])} />
             )}
 
-            {mode === MODE.REPLIES && (comment.repliesCount ?? 0) > 0 && !isFolded && (
+            {mode === MODE.REPLIES && comment.hasReplyEntries && !isFolded && (
               <RepliesList
                 key={`${comment.innerId}`}
                 parentId={comment.innerId}
                 apiMode={apiMode}
                 entries={comment.replies ?? []}
                 repliesCount={comment.repliesCount ?? 0}
+                participants={comment.replyParticipants ?? []}
+                lastReplyAt={comment.lastReplyAt}
                 foldedIdSet={foldedIdSet}
               />
             )}

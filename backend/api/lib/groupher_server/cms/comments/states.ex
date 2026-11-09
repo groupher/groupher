@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.Comments.States do
       Client
         -> GraphQL
         -> CMS.Comments
+        -> Commands.StateChange (transaction and request Community)
         -> States
         -> Repo / domain event
   """
@@ -15,84 +16,31 @@ defmodule GroupherServer.CMS.Comments.States do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
 
   alias CMS.{Comments.ErrorCat, FrontDesk}
   alias CMS.Comments.Effects
   alias CMS.Model.{Comment, PinnedComment}
-  alias Helper.{Multi, ORM, T}
+  alias Helper.{ORM, T}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
-
-  @doc """
-  Pins a comment to the top of the article's comment list.
-
-  The actor-less variant always fails; use `pin/2` with the acting user.
-
-  ## Examples
-
-      CMS.Comments.States.pin(comment_id)
-      #=> {:error, ErrorCat.error_pattern(reason: :account_login)}
-
-  """
-  @spec pin(T.id()) :: T.domain_res(Comment.t())
-  def pin(_comment_id), do: {:error, GroupherServer.Accounts.profiles_error_cat_account_login()}
-
-  @spec pin(Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def pin(%Comment{}, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
-
-  @spec pin(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def pin(_comment_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
-
-  @doc false
-  def pin(%Comment{} = comment, %User{} = user, opts) do
-    CMS.Gate.with_check(user, :pin, comment, fn canonical, article ->
-      pin_unlocked(canonical, article, user, opts)
-    end)
-  end
-
-  def pin(comment_id, %User{} = user, opts) do
-    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
-      pin(comment, user, opts)
-    end
-  end
-
-  @spec undo_pin(T.id()) :: T.domain_res(Comment.t())
-  def undo_pin(_comment_id) do
-    {:error, GroupherServer.Accounts.profiles_error_cat_account_login()}
-  end
-
-  @spec undo_pin(Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def undo_pin(%Comment{}, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
-
-  @spec undo_pin(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def undo_pin(_comment_id, %User{}), do: {:error, CMS.ErrorCat.command_id_required()}
-
-  @doc false
-  def undo_pin(%Comment{} = comment, %User{} = user, opts) do
-    CMS.Gate.with_check(user, :pin, comment, fn canonical, article ->
-      undo_pin_unlocked(canonical, article, user, opts)
-    end)
-  end
-
-  def undo_pin(comment_id, %User{} = user, opts) do
-    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
-      undo_pin(comment, user, opts)
-    end
-  end
 
   @doc false
   @spec apply_in_transaction(atom(), Comment.t(), map(), User.t(), Ecto.UUID.t()) ::
           T.domain_res(Comment.t())
-  def apply_in_transaction(:pin, %Comment{} = comment, article, %User{} = user, command_id) do
+  def apply_in_transaction(action, %Comment{} = comment, article, %User{} = user, command_id) do
+    CMS.Comments.Summary.with_change(comment, fn ->
+      apply_fact_in_transaction(action, comment, article, user, command_id)
+    end)
+  end
+
+  defp apply_fact_in_transaction(:pin, %Comment{} = comment, article, %User{} = user, command_id) do
     case maybe_existing_pinned_comment(comment) do
       {:ok, canonical} ->
         with {:ok, thread} <- FrontDesk.thread_of(canonical),
              {:ok, :pass} <-
-               check_pined_comments_count(
-                 pinned_comments_query(article, canonical.branch_id, thread)
-               ),
+               check_pined_comments_count(pinned_comments_query(article)),
              {:ok, updated} <- ORM.update(canonical, %{is_pinned: true}),
              {:ok, _pinned} <-
                PinnedComment |> ORM.create(pinned_comment_attrs(article, canonical, thread)),
@@ -111,7 +59,13 @@ defmodule GroupherServer.CMS.Comments.States do
     end
   end
 
-  def apply_in_transaction(:undo_pin, %Comment{} = comment, article, %User{} = user, command_id) do
+  defp apply_fact_in_transaction(
+         :undo_pin,
+         %Comment{} = comment,
+         article,
+         %User{} = user,
+         command_id
+       ) do
     with {:ok, updated} <- ORM.update(comment, %{is_pinned: false}),
          {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),
          {:ok, _activity} <-
@@ -142,63 +96,21 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   defp do_fold_comment(%Comment{} = comment, is_folded) when is_boolean(is_folded) do
-    ORM.update(comment, %{is_folded: is_folded})
-  end
-
-  defp pin_unlocked(%Comment{} = comment, article, user, opts) do
-    with {:ok, comment} <- maybe_existing_pinned_comment(comment),
-         {:ok, thread} <- FrontDesk.thread_of(comment) do
-      Multi.new()
-      |> Multi.run(:checked_pined_comments_count, fn _, _ ->
-        pined_comments_query = pinned_comments_query(article, comment.branch_id, thread)
-
-        check_pined_comments_count(pined_comments_query)
+    if comment.is_folded == is_folded do
+      {:ok, comment}
+    else
+      CMS.Comments.Summary.with_change(comment, fn ->
+        ORM.update(comment, %{is_folded: is_folded})
       end)
-      |> Multi.run(:update_comment_flag, fn _, _ ->
-        ORM.update(comment, %{is_pinned: true})
-      end)
-      |> Multi.run(:add_pined_comment, fn _, _ ->
-        attrs = pinned_comment_attrs(article, comment, thread)
-
-        PinnedComment |> ORM.create(attrs)
-      end)
-      |> Multi.run(:activity, fn _, _ ->
-        record_pin_activity(comment, article, :comment_pinned, user, opts)
-      end)
-      |> Repo.transaction()
-      |> result()
     end
   end
 
-  defp pinned_comments_query(%{id: article_id}, nil, _thread) do
-    from(pin in PinnedComment,
-      where: pin.article_id == ^article_id and is_nil(pin.branch_id)
-    )
-  end
-
-  defp pinned_comments_query(%{id: article_id}, branch_id, _thread) do
-    from(pin in PinnedComment,
-      where: pin.article_id == ^article_id and pin.branch_id == ^branch_id
-    )
+  defp pinned_comments_query(%{id: article_id}) do
+    from(pin in PinnedComment, where: pin.article_id == ^article_id)
   end
 
   defp pinned_comment_attrs(%{id: article_id}, comment, _thread) do
-    %{comment_id: comment.id, article_id: article_id, branch_id: comment.branch_id}
-  end
-
-  defp undo_pin_unlocked(%Comment{} = comment, article, user, opts) do
-    Multi.new()
-    |> Multi.run(:update_comment_flag, fn _, _ ->
-      ORM.update(comment, %{is_pinned: false})
-    end)
-    |> Multi.run(:remove_pined_comment, fn _, _ ->
-      ORM.findby_delete(PinnedComment, %{comment_id: comment.id})
-    end)
-    |> Multi.run(:activity, fn _, _ ->
-      record_pin_activity(comment, article, :comment_unpinned, user, opts)
-    end)
-    |> Repo.transaction()
-    |> result()
+    %{comment_id: comment.id, article_id: article_id}
   end
 
   defp check_pined_comments_count(pined_comments_query) do
@@ -231,33 +143,15 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   defp record_pin_activity(%Comment{thread: :post} = comment, _article, action, user, opts) do
-    Effects.activity(comment, action,
-      actor: user,
-      operation_ref: Keyword.fetch!(opts, :operation_ref),
-      occurred_at: Keyword.get(opts, :occurred_at, DateTime.utc_now(:second))
-    )
+    with {:ok, community} <- CMS.Comments.RequestCommunity.resolve(comment) do
+      Effects.activity(comment, action,
+        actor: user,
+        community_id: community.id,
+        operation_ref: Keyword.fetch!(opts, :operation_ref),
+        occurred_at: Keyword.get(opts, :occurred_at, DateTime.utc_now(:second))
+      )
+    end
   end
 
   defp record_pin_activity(_comment, _article, _action, _user, _opts), do: {:ok, :skipped}
-
-  defp result({:ok, %{update_comment_flag: result}}), do: {:ok, result}
-  defp result({:ok, %{fold_comment: result}}), do: {:ok, result}
-
-  defp result({:error, ErrorCat.error_pattern(reason: :already_pinned, details: result)}) do
-    {:ok, result}
-  end
-
-  defp result({:error, :update_comment_flag, _result, _steps}) do
-    {:error, ErrorCat.update_fails()}
-  end
-
-  defp result({:error, :add_pined_comment, _result, _steps}) do
-    {:error, ErrorCat.create_fails()}
-  end
-
-  defp result({:error, :remove_pined_comment, _result, _steps}) do
-    {:error, ErrorCat.delete_fails()}
-  end
-
-  defp result({:error, _, result, _steps}), do: {:error, result}
 end

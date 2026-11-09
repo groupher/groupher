@@ -41,9 +41,9 @@ AlertWall             系统级风险/举报 item 与处理历史
 | `CMS.ViewTracker`          | synchronous implemented      | `CMS.ViewTracker`             | tracking identity、有效阅读策略、watermark、receipt 与当前 views | [View 同步计数](../feature/view-tracker/article-view-counting.md) |
 | `Analysis.ArticleInsights` | mixed                        | `Analysis.ArticleInsights`    | Article 业务指标的时间桶与产品查询                               | [Article Insights V1](../feature/analysis/article-insights-v1.md) |
 | `Analysis.Web`             | existing，后续阶段未全部完成 | `Analysis.Web`                | Umami provider adapter、权限与 Groupher DTO                      | [Web Analysis V2](../umami/web-analysis-v2.md)                    |
-| `AI`                       | implemented                  | `GroupherServer.AI`           | 共享 AI provider/profile 调用与结构化意见                        | [ReviewBot / AlertWall V2](../feature/alert-board/v2.md)          |
-| `ReviewBot`                | implemented                  | `GroupherServer.ReviewBot`    | 系统/社区配置、ban_words/prompt、审核意见                        | [ReviewBot / AlertWall V2](../feature/alert-board/v2.md)          |
-| `AlertWall`                | implemented                  | `GroupherServer.AlertWall`    | 风险 item、举报事实/关联和处理历史                               | [ReviewBot / AlertWall V2](../feature/alert-board/v2.md)          |
+| `AI`                       | implemented                  | `GroupherServer.AI`           | 共享 AI provider/profile 调用与结构化意见                        | [ReviewBot / AlertWall V2](../feature/alert-wall/v2.md)           |
+| `ReviewBot`                | implemented                  | `GroupherServer.ReviewBot`    | 系统/社区配置、ban_words/prompt、审核意见                        | [ReviewBot / AlertWall V2](../feature/alert-wall/v2.md)           |
+| `AlertWall`                | implemented                  | `GroupherServer.AlertWall`    | 风险 item、举报事实/关联和处理历史                               | [ReviewBot / AlertWall V2](../feature/alert-wall/v2.md)           |
 | `Activity`                 | existing                     | `Activity`                    | 发布、审核、状态变化等业务活动历史                               | [Activity V1](../feature/activity/v1.md)                          |
 
 第三方分析集成是已经实现的 Dashboard 能力：Community 可以接入 Google Analytics、GTM、

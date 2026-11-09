@@ -40,7 +40,8 @@ vi.mock('~/stores/dsbConfig/hooks', () => ({
 vi.mock('~/query/useCommentReceiptReconcile', () => ({ default: () => undefined }))
 vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key }) }))
 vi.mock('./salon/replies_list', () => ({ default: () => ({}) }))
-vi.mock('./salon/toggler_button', () => ({ default: () => ({}) }))
+vi.mock('./salon/reply_summary', () => ({ default: () => ({}) }))
+vi.mock('~/ui/Facepile', () => ({ default: () => null }))
 vi.mock('../Comment', () => ({
   default: ({ data }: { data: { innerId: string } }) => <p>{data.innerId}</p>,
 }))
@@ -119,6 +120,7 @@ function setup(
             apiMode='article'
             entries={[{ innerId: 'preview' }]}
             repliesCount={6}
+            participants={[]}
             foldedIdSet={new Set()}
           />
         </section>
@@ -128,6 +130,7 @@ function setup(
             apiMode='article'
             entries={[]}
             repliesCount={6}
+            participants={[]}
             foldedIdSet={new Set()}
           />
         </section>
@@ -147,8 +150,8 @@ describe('independent reply paging', () => {
     setup()
     const first = within(screen.getByRole('region', { name: 'first' }))
     const second = within(screen.getByRole('region', { name: 'second' }))
-    fireEvent.click(first.getByText('查看全部 6 条回复'))
-    fireEvent.click(second.getByText('查看全部 6 条回复'))
+    fireEvent.click(first.getByRole('button', { name: /comment.replies.expand/ }))
+    fireEvent.click(second.getByRole('button', { name: /comment.replies.expand/ }))
     expect(first.queryByText('preview')).not.toBeInTheDocument()
     await act(async () => b.resolve(response(['b'])))
     expect(await second.findByText('b')).toBeInTheDocument()
@@ -162,7 +165,7 @@ describe('independent reply paging', () => {
       .mockResolvedValueOnce(response(['a', 'b']))
     setup()
     const first = within(screen.getByRole('region', { name: 'first' }))
-    fireEvent.click(first.getByText('查看全部 6 条回复'))
+    fireEvent.click(first.getByRole('button', { name: /comment.replies.expand/ }))
     await first.findByText('a')
     fireEvent.click(first.getByText('next cursor'))
     await first.findByText('retry next')
@@ -185,7 +188,7 @@ describe('independent reply paging', () => {
       )
       setup(api)
       const first = within(screen.getByRole('region', { name: 'first' }))
-      fireEvent.click(first.getByText('查看全部 6 条回复'))
+      fireEvent.click(first.getByRole('button', { name: /comment.replies.expand/ }))
       await first.findByText('first-page')
       expect(first.queryByText('next offset')).not.toBeInTheDocument()
       fireEvent.click(first.getByText('next cursor'))
@@ -217,6 +220,7 @@ describe('independent reply paging', () => {
               apiMode='article'
               entries={[{ innerId: `preview-${viewing.articlePath.innerId}` }]}
               repliesCount={6}
+              participants={[]}
               foldedIdSet={new Set()}
             />
           </RootFeed>
@@ -224,13 +228,16 @@ describe('independent reply paging', () => {
       </QueryClientProvider>
     )
     const { rerender } = render(tree())
-    fireEvent.click(screen.getByText('查看全部 6 条回复'))
+    fireEvent.click(screen.getByRole('button', { name: /comment.replies.expand/ }))
     viewing.articlePath.innerId = '2'
     rerender(tree())
-    expect(await screen.findByText('preview-2')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /comment.replies.expand/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
     await act(async () => old.resolve(response(['old-reply'])))
     expect(screen.queryByText('old-reply')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByText('查看全部 6 条回复'))
+    fireEvent.click(screen.getByRole('button', { name: /comment.replies.expand/ }))
     expect(await screen.findByText('new-reply')).toBeInTheDocument()
     expect(screen.queryByText('old-reply')).not.toBeInTheDocument()
   })
@@ -242,7 +249,9 @@ it.each(['page', 'load_more', 'infinite_scroll'])(
     request.mockResolvedValue(response(['reply'], true))
     setup(mode === 'page' ? 'offset' : 'cursor', mode)
     fireEvent.click(
-      within(screen.getByRole('region', { name: 'first' })).getByText('查看全部 6 条回复'),
+      within(screen.getByRole('region', { name: 'first' })).getByRole('button', {
+        name: /comment.replies.expand/,
+      }),
     )
     expect(await screen.findByText('next cursor')).toHaveAttribute('data-mode', 'load_more')
     expect(request.mock.calls[0][1].pagi).toHaveProperty('cursor')

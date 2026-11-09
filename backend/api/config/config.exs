@@ -5,10 +5,13 @@
 # is restricted to this project.
 import Config
 
+config :phoenix, :filter_parameters, ["password", "credential"]
+
 # General application configuration
 config :groupher_server, ecto_repos: [GroupherServer.Repo]
 config :groupher_server, env: config_env()
 config :groupher_server, :allow_test_service_auth, false
+config :groupher_server, :cms_review_report_threshold, 3
 
 config :groupher_server,
        :view_tracker_pepper,
@@ -124,7 +127,16 @@ config :groupher_server, :general,
   # others
   # 在这个时间段内，多条提醒消息将被合并为一条
   notify_group_interval_hour: 1,
-  nofity_actions: [:upvote, :comment, :reply, :collect, :follow]
+  nofity_actions: [
+    :upvote,
+    :comment,
+    :reply,
+    :collect,
+    :follow,
+    :ticket_status,
+    :ticket_update,
+    :ticket_visibility
+  ]
 
 config :groupher_server, :article,
   min_length: 10,
@@ -290,8 +302,9 @@ config :groupher_server, Oban,
     search: 5,
     snapshot: 5,
     cms_outbox: 5,
+    cloudflare_purge: 2,
+    public_cache: 1,
     press: 5,
-    public_cache: 5,
     community_application: 5,
     community_setup: 5,
     cms_review: 5

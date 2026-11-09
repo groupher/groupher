@@ -16,7 +16,7 @@ export default function BatteryBento() {
   const { t } = useTrans()
 
   return (
-    <section className={s.wrapper}>
+    <section className={s.wrapper} data-landing-section='battery'>
       <section className={s.slogan}>
         <h3 className={s.title}>{t('landing.battery.title')}</h3>
         <div className={s.desc}>{t('landing.battery.desc')}</div>

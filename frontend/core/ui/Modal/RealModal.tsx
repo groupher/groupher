@@ -35,7 +35,6 @@ const RealModal: FC<TProps> = ({
   const { theme } = useTheme()
   const { lockPageOnce, unlockPageOnce } = usePageLock()
 
-  const dialogRef = useRef<HTMLDialogElement | null>(null)
   const visibleOnPageRef = useRef(false)
 
   const handleClose = useCallback(() => {
@@ -53,19 +52,19 @@ const RealModal: FC<TProps> = ({
     lockPageOnce()
   }, [show, lockPageOnce])
 
-  useEffect(() => {
-    const dialog = dialogRef.current
-    if (!dialog || !show || dialog.open) return
-
-    if (typeof dialog.showModal === 'function') dialog.showModal()
-    else dialog.setAttribute('open', '')
-
+  // Portal mounts after its own effect; open the dialog when its DOM node actually attaches.
+  const attachDialog = useCallback((dialog: HTMLDialogElement | null) => {
+    if (!dialog) return
+    if (!dialog.open) {
+      if (typeof dialog.showModal === 'function') dialog.showModal()
+      else dialog.setAttribute('open', '')
+    }
     return () => {
       if (!dialog.open) return
       if (typeof dialog.close === 'function') dialog.close()
       else dialog.removeAttribute('open')
     }
-  }, [show])
+  }, [])
 
   useEffect(() => {
     if (show || !visibleOnPageRef.current) return
@@ -88,7 +87,7 @@ const RealModal: FC<TProps> = ({
   return (
     <Portal>
       <dialog
-        ref={dialogRef}
+        ref={attachDialog}
         aria-label='Modal'
         className={cn(s.mask, !show && 'opacity-0')}
         onCancel={(event) => {

@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
 
   alias GroupherServer.{Accounts, Analysis, CMS, Repo}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias Accounts.Model.CollectFolderEntry
   alias CMS.Articles.Numbering
 
@@ -26,9 +27,10 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     ArticleBindingTag,
     ArticleLifecycle,
     Community,
-    KanbanState,
     PinnedArticle
   }
+
+  alias CMS.Tickets.Model.Source
 
   @ordinary_threads [:post, :blog, :changelog]
 
@@ -43,18 +45,22 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
       #=> {:ok, canonical_article} | {:error, reason}
   """
   @spec move(Article.t(), Community.t(), Community.t()) :: {:ok, Article.t()} | {:error, term()}
-  def move(
-        %Article{thread: thread} = article,
-        %Community{id: source_community_id} = source,
-        %Community{} = destination
-      )
-      when thread in @ordinary_threads do
+  def move(article, source, destination), do: move_in_transaction(article, source, destination)
+
+  defp move_in_transaction(
+         %Article{thread: thread} = article,
+         %Community{id: source_community_id} = source,
+         %Community{} = destination
+       )
+       when thread in @ordinary_threads do
     with %Article{} = article <- lock_article(article.id),
          {:ok, binding} <- source_binding(article.id, source_community_id),
+         {:ok, :pass} <- ensure_no_ticket_link(thread, article.id, source_community_id),
          {:ok, :different_community} <- ensure_different_community(source, destination),
          {:ok, destination_binding} <- prepare_destination(article, destination),
          {:ok, binding} <- move_binding(binding, destination_binding, destination),
-         {:ok, _binding} <- Numbering.assign_binding_inner_id(binding) do
+         {:ok, _binding} <- Numbering.assign_binding_inner_id(binding),
+         {:ok, :pass} <- Revision.bump() do
       {:ok, article}
     else
       nil -> {:error, :article_not_found}
@@ -62,7 +68,13 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     end
   end
 
-  def move(%Article{thread: :doc}, %Community{}, %Community{}), do: {:error, :unsupported_for_doc}
+  defp move_in_transaction(%Article{thread: :doc}, %Community{}, %Community{}) do
+    {:error, :unsupported_for_doc}
+  end
+
+  defp move_in_transaction(%Article{thread: :ticket}, %Community{}, %Community{}) do
+    {:error, ArticleErrorCat.ticket_binding_unsupported()}
+  end
 
   @doc """
   Ensures the ordinary Article has its Community binding before publication.
@@ -98,11 +110,16 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
       #=> {:ok, %ArticleBinding{}} | {:error, reason}
   """
   @spec mirror(Article.t(), Community.t()) :: {:ok, ArticleBinding.t()} | {:error, term()}
-  def mirror(%Article{thread: thread} = article, %Community{} = community)
-      when thread in @ordinary_threads do
+  def mirror(article, community), do: mirror_in_transaction(article, community)
+
+  defp mirror_in_transaction(%Article{thread: thread} = article, %Community{} = community)
+       when thread in @ordinary_threads do
     with %Article{} = article <- lock_article(article.id),
+         existing <-
+           Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id),
          {:ok, binding} <- upsert_binding(article, community),
-         {:ok, binding} <- Numbering.assign_binding_inner_id(binding) do
+         {:ok, binding} <- Numbering.assign_binding_inner_id(binding),
+         {:ok, :pass} <- maybe_bump_mirror(existing, binding) do
       {:ok, binding}
     else
       nil -> {:error, :article_not_found}
@@ -110,7 +127,21 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     end
   end
 
-  def mirror(%Article{thread: :doc}, %Community{}), do: {:error, :unsupported_for_doc}
+  defp mirror_in_transaction(%Article{thread: :doc}, %Community{}) do
+    {:error, :unsupported_for_doc}
+  end
+
+  defp mirror_in_transaction(_, _), do: {:error, :invalid_article_binding}
+
+  defp maybe_bump_mirror(
+         %ArticleBinding{inner_id: inner_id},
+         %ArticleBinding{inner_id: inner_id}
+       )
+       when not is_nil(inner_id) do
+    {:ok, :pass}
+  end
+
+  defp maybe_bump_mirror(_existing, _binding), do: Revision.bump()
 
   @doc """
   Removes one ArticleBinding while preserving the published Article identity.
@@ -121,13 +152,17 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
       #=> {:ok, :done} | {:error, reason}
   """
   @spec unmirror(Article.t(), Community.t()) :: {:ok, :done} | {:error, term()}
-  def unmirror(%Article{thread: thread} = article, %Community{} = community)
-      when thread in @ordinary_threads do
+  def unmirror(article, community), do: unmirror_in_transaction(article, community)
+
+  defp unmirror_in_transaction(%Article{thread: thread} = article, %Community{} = community)
+       when thread in @ordinary_threads do
     with %Article{} = locked_article <- lock_article(article.id),
          %ArticleBinding{} = binding <- lock_binding(locked_article.id, community.id),
+         {:ok, :pass} <- ensure_no_ticket_link(thread, locked_article.id, community.id),
          {:ok, :pass} <- ensure_can_remove_published_article(locked_article.id, binding),
          {:ok, :pass} <- ensure_binding_not_collected(binding),
-         {:ok, _deleted} <- Repo.delete(binding) do
+         {:ok, _deleted} <- Repo.delete(binding),
+         {:ok, :pass} <- Revision.bump() do
       {:ok, :done}
     else
       nil -> {:error, ArticleErrorCat.binding_not_found()}
@@ -135,7 +170,30 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     end
   end
 
-  def unmirror(%Article{thread: :doc}, %Community{}), do: {:error, :unsupported_for_doc}
+  defp unmirror_in_transaction(%Article{thread: :doc}, %Community{}) do
+    {:error, :unsupported_for_doc}
+  end
+
+  defp unmirror_in_transaction(%Article{thread: :ticket}, %Community{}) do
+    {:error, ArticleErrorCat.ticket_binding_unsupported()}
+  end
+
+  defp unmirror_in_transaction(_, _), do: {:error, :invalid_article_binding}
+
+  defp ensure_no_ticket_link(:post, post_id, _community_id) do
+    linked_ticket =
+      from(link in Source,
+        where: link.post_id == ^post_id
+      )
+
+    if Repo.exists?(linked_ticket) do
+      {:error, ArticleErrorCat.post_linked_to_ticket()}
+    else
+      {:ok, :pass}
+    end
+  end
+
+  defp ensure_no_ticket_link(_thread, _post_id, _community_id), do: {:ok, :pass}
 
   defp lock_binding(article_id, community_id) do
     ArticleBinding
@@ -259,8 +317,6 @@ defmodule GroupherServer.CMS.Articles.BindingPersist do
     Repo.delete_all(from(tag in ArticleBindingTag, where: tag.article_binding_id in ^binding_ids))
 
     Repo.delete_all(from(pin in PinnedArticle, where: pin.article_binding_id in ^binding_ids))
-
-    Repo.delete_all(from(state in KanbanState, where: state.article_binding_id in ^binding_ids))
 
     {:ok, :pass}
   end

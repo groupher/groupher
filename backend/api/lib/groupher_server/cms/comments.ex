@@ -80,6 +80,13 @@ defmodule GroupherServer.CMS.Comments do
     end
   end
 
+  @doc "Reads one Comment reached through a stored Mention, without reading its parent body."
+  def mentioned_comment(community, locator, viewer \\ nil) do
+    with {:ok, comment} <- FrontDesk.mentioned_comment(community, locator, viewer) do
+      InteractionResponse.one(comment, viewer)
+    end
+  end
+
   @doc """
   Returns one Comment hydrated for the supplied viewer.
 
@@ -123,33 +130,14 @@ defmodule GroupherServer.CMS.Comments do
     Reconcile.reconcile_states(article_path, inner_ids, viewer)
   end
 
-  @doc """
-  Returns aggregate comment state for an Article without a viewer.
-
-  ## Examples
-
-      CMS.Comments.comments_state(:post, post_id)
-  """
-  @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
-  def comments_state(thread, article_id), do: Query.comments_state(thread, article_id)
-
-  @doc "Repairs the persisted Comment participant count by stable Article identity."
-  @spec reconcile_participants_count(T.thread(), Ecto.UUID.t(), non_neg_integer()) ::
-          {:ok, :pass} | {:error, term()}
-  def reconcile_participants_count(thread, article_id, total_count) do
-    CMS.ArticleStats.reconcile_comment_participants_count(thread, article_id, total_count)
+  @doc "Reads the public discussion summary in the requested Community."
+  def comments_state(thread, article_id, viewer, community_slug) do
+    Query.comments_state(thread, article_id, viewer, community_slug)
   end
 
-  @doc """
-  Returns aggregate comment state including whether the viewer participated.
-
-  ## Examples
-
-      CMS.Comments.comments_state(:post, post_id, viewer)
-  """
-  @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
-  def comments_state(thread, article_id, %User{} = user) do
-    Query.comments_state(thread, article_id, user)
+  @doc "Pages all effective participants in the requested Community."
+  def paged_comments_participants(thread, article_id, pagi, community_slug) do
+    Query.paged_comments_participants(thread, article_id, pagi, community_slug)
   end
 
   @doc "Returns an independently paged flat reply collection for one root."
@@ -164,23 +152,6 @@ defmodule GroupherServer.CMS.Comments do
 
   @doc "Pages published Comments with separate thread/filter and Pagi position."
   defdelegate paged_published_comments(user, thread, filter, pagi, viewer), to: Query
-
-  @doc "Pages folded Comments through the common engine."
-  defdelegate paged_folded_comments(thread, article_id, filter, pagi), to: Query
-  defdelegate paged_folded_comments(thread, article_id, filter, pagi, viewer), to: Query
-
-  @doc """
-  Returns the distinct participants in an Article's Comments.
-
-  ## Examples
-
-      CMS.Comments.paged_comments_participants(:post, post_id, filters)
-  """
-  @spec paged_comments_participants(T.thread(), T.id(), map()) ::
-          T.domain_res(T.paged_users())
-  def paged_comments_participants(thread, article_id, filters) do
-    Query.paged_comments_participants(thread, article_id, filters)
-  end
 
   @doc """
   Creates a Comment from an already resolved Article and returns the Comment.
@@ -298,6 +269,22 @@ defmodule GroupherServer.CMS.Comments do
     |> CommandResult.build()
   end
 
+  def update_comment_result(
+        %Comment{} = comment,
+        body_bag,
+        expected_version,
+        %User{} = user,
+        command_id,
+        community_slug
+      )
+      when is_binary(community_slug) do
+    with {:ok, %Community{} = community} <- FrontDesk.community(community_slug) do
+      comment
+      |> Update.execute(body_bag, expected_version, user, command_id, community)
+      |> CommandResult.build()
+    end
+  end
+
   @doc """
   Rejects an unauthenticated Comment deletion.
 
@@ -337,6 +324,15 @@ defmodule GroupherServer.CMS.Comments do
     comment
     |> Delete.execute(user, command_id)
     |> CommandResult.build()
+  end
+
+  def delete_comment_result(%Comment{} = comment, %User{} = user, command_id, community_slug)
+      when is_binary(community_slug) do
+    with {:ok, %Community{} = community} <- FrontDesk.community(community_slug) do
+      comment
+      |> Delete.execute(user, command_id, community)
+      |> CommandResult.build()
+    end
   end
 
   @doc """
@@ -450,6 +446,16 @@ defmodule GroupherServer.CMS.Comments do
     end
   end
 
+  @doc "Replies through the Community binding selected by the public Comment path."
+  def reply_comment_result(%Comment{} = comment, body, %User{} = user, command_id, community_slug)
+      when is_binary(community_slug) do
+    with {:ok, %Community{} = community} <- FrontDesk.community(community_slug) do
+      comment
+      |> Create.reply(body, user, command_id, community)
+      |> CommandResult.build()
+    end
+  end
+
   @doc """
   Rejects an unauthenticated pin operation.
 
@@ -553,5 +559,4 @@ defmodule GroupherServer.CMS.Comments do
       unfold_comment(comment, user)
     end
   end
-
 end

@@ -1,3 +1,4 @@
+import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
 import TYPE from '~/const/type'
@@ -5,12 +6,14 @@ import { useArticleStatesByChunks } from '~/hooks/useArticleStates'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import { normalizePaginationError } from '~/lib/pagination/errors'
+import { Q } from '~/query'
 import type {
   TEffectivePagiConfig,
   TPagedArticleViewModels,
   TPagedArticlesParams,
   TGraphQLPagiPageInfo,
   TPost,
+  TPostTicketProgress,
   TResState,
 } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -59,6 +62,35 @@ export const usePagedPostsResult = ({
   fetchNextPage,
 }: TComposeOptions): TPagedPostsResult => {
   const states = useArticleStatesByChunks<TPost>(articleChunks)
+  const postInnerIds = useMemo(
+    () =>
+      [
+        ...new Set(
+          states.flatMap(({ content }) => {
+            const innerId = Number(content.innerId)
+            return Number.isSafeInteger(innerId) && innerId > 0 ? [innerId] : []
+          }),
+        ),
+      ].sort((a, b) => a - b),
+    [states],
+  )
+  const progressBatches = useMemo(() => {
+    const batches: number[][] = []
+    for (let index = 0; index < postInnerIds.length; index += 100) {
+      batches.push(postInnerIds.slice(index, index + 100))
+    }
+    return batches
+  }, [postInnerIds])
+  const progressQueries = useQueries({
+    queries: progressBatches.map((ids) => Q.ticket.postProgress(pagedParams.community || '', ids)),
+  })
+  const progressByPostInnerId = useMemo(() => {
+    const progress = new Map<number, TPostTicketProgress>()
+    for (const query of progressQueries) {
+      for (const item of query.data || []) progress.set(item.postInnerId, item)
+    }
+    return progress
+  }, [progressQueries])
   const viewModels = useMemo<TPagedArticleViewModels>(
     () => ({
       pageInfo,
@@ -66,9 +98,13 @@ export const usePagedPostsResult = ({
         content,
         stats,
         viewerState,
+        ticketProgress:
+          content.innerId == null
+            ? null
+            : (progressByPostInnerId.get(Number(content.innerId)) ?? null),
       })),
     }),
-    [pageInfo, states],
+    [pageInfo, states, progressByPostInnerId],
   )
 
   return {

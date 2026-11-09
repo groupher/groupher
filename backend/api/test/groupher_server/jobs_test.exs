@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.Jobs do
       log =
         capture_log(fn ->
           assert {:ok, :pass} =
-                   Jobs.enqueue_best_effort(:sync_mentions, 42, fn -> {:error, secret} end)
+                   Jobs.enqueue_best_effort(:optional_effect, 42, fn -> {:error, secret} end)
 
           assert {:ok, :pass} = Jobs.enqueue_best_effort(:notify_reply, 42, fn -> secret end)
 
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Jobs do
                    end)
         end)
 
-      assert log =~ "job=sync_mentions resource_ref=42 failure=error_result"
+      assert log =~ "job=optional_effect resource_ref=42 failure=error_result"
       assert log =~ "job=notify_reply resource_ref=42 failure=unexpected_result"
       assert log =~ "job=notify_comment resource_ref=42 failure=exception"
       assert log =~ "job=subscribe_community resource_ref=42 failure=throw"
