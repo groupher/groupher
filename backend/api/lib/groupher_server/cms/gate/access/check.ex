@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   alias CMS.Gate.Context.Access.Article, as: ArticleContext
   alias CMS.Gate.Context.Access.Doc, as: DocContext
   alias CMS.Gate.{Decision, Config, ErrorCat}
-  alias CMS.Model.{Article, Comment, Community}
+  alias CMS.Model.{Article, Comment, Community, DocBranch}
 
   @article_threads Config.article_threads()
 
@@ -339,6 +339,16 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   end
 
   defp parent_article(_comment), do: {:error, ErrorCat.resource_not_found()}
+
+  defp with_parent_lock(%Community{} = community, %Article{thread: :doc} = article, _, fun) do
+    case Repo.get_by(DocBranch, community_id: community.id, type: :main) do
+      %DocBranch{id: branch_id} ->
+        Articles.MutationLock.with_article(community, :doc, branch_id, article.id, fun)
+
+      nil ->
+        {:error, ErrorCat.doc_branch_required()}
+    end
+  end
 
   defp with_parent_lock(community, article, _branch_id, fun) do
     Articles.MutationLock.with_article(community, article, fun)

@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   alias CMS.Gate.Access.Policy.Application, as: ApplicationPolicy
   alias CMS.Gate.{Decision, ErrorCat}
   alias CMS.{Articles, FrontDesk}
-  alias CMS.Model.{Article, Comment, Community}
+  alias CMS.Model.{Article, Comment, Community, DocBranch}
   alias CMS.Model.CommunityApplication
   alias CMS.Articles.MutationLock
   alias Helper.ORM.AdvisoryLock
@@ -360,6 +360,21 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
   end
 
   defp acquire_article_lock(_community, _article), do: {:error, ErrorCat.doc_branch_required()}
+
+  defp acquire_comment_parent_lock(
+         %Community{} = community,
+         %Article{thread: :doc, id: id},
+         _comment
+       ) do
+    case Repo.get_by(DocBranch, community_id: community.id, type: :main) do
+      %DocBranch{id: branch_id} ->
+        AdvisoryLock.acquire!(MutationLock.doc_key(community, branch_id, id))
+        {:ok, :pass}
+
+      nil ->
+        {:error, ErrorCat.doc_branch_required()}
+    end
+  end
 
   defp acquire_comment_parent_lock(
          %Community{} = community,
