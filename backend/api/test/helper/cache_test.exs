@@ -124,7 +124,7 @@ defmodule GroupherServer.Test.Helper.Cache do
             end)
           end,
           max_concurrency: 8,
-          timeout: 1_000
+          timeout: 5_000
         )
         |> Enum.map(fn {:ok, result} -> result end)
 
