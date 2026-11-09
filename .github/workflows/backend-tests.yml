@@ -125,5 +125,18 @@ jobs:
       - name: Verify migrations from a fresh database
         run: bash scripts/fresh_db_migrations.sh
 
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install JavaScript dependencies for Production Seed tests
+        working-directory: ${{ github.workspace }}
+        run: pnpm install --frozen-lockfile
+
       - name: Run tests
         run: mix test --exclude skip_ci --max-cases 8 --max-failures 1
