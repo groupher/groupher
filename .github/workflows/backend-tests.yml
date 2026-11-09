@@ -150,7 +150,7 @@ jobs:
 
       - name: Install JavaScript dependencies for Production Seed tests
         working-directory: ${{ github.workspace }}
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --filter @groupher/backend-auth...
 
       - name: Run tests
         run: mix test --exclude skip_ci --max-cases 8 --max-failures 1
