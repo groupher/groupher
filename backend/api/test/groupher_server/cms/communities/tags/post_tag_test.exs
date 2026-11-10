@@ -534,12 +534,18 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      post_with_tags =
-        Map.merge(post_attrs, %{
-          community_tags: [article_tag.id, article_tag2.id, article_tag3.id]
-        })
+      {:ok, created} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
-      {:ok, created} = CMS.Articles.create(community, :post, post_with_tags, user)
+      {:ok, _} = CMS.Communities.set_tag(created, article_tag.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Communities.set_tag(created, article_tag2.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Communities.set_tag(created, article_tag3.id, user, Ecto.UUID.generate())
+
       {:ok, post} = read_article(community, :post, created.inner_id)
 
       assert exist_in?(article_tag, post.community_tags)
@@ -571,10 +577,16 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      post_with_tags =
-        Map.put(post_attrs, :community_tags, [article_tag.id, article_tag.id, article_tag.id])
+      {:ok, created} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
-      {:ok, created} = CMS.Articles.create(community, :post, post_with_tags, user)
+      {:ok, _} = CMS.Communities.set_tag(created, article_tag.id, user, Ecto.UUID.generate())
+
       {:ok, post} = read_article(community, :post, created.inner_id)
 
       assert Enum.map(post.community_tags, & &1.id) == [article_tag.id]
@@ -615,21 +627,22 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      post_with_tags = Map.merge(post_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
-      {:ok, created} = CMS.Articles.create(community, :post, post_with_tags, user)
-
-      update_attrs = %{
-        title: "updated post title",
-        community_tags: [article_tag2.id, article_tag3.id]
-      }
-
-      {:ok, _updated} =
-        CMS.Articles.update(
-          created,
-          Map.put(update_attrs, :expected_version, created.version),
-          user,
-          Ecto.UUID.generate()
+      {:ok, created} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
         )
+
+      {:ok, _} = CMS.Communities.set_tag(created, article_tag.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Communities.set_tag(created, article_tag2.id, user, Ecto.UUID.generate())
+
+      {:ok, _untagged} =
+        CMS.Communities.unset_tag(created, article_tag.id, user, Ecto.UUID.generate())
+
+      {:ok, _tagged} =
+        CMS.Communities.set_tag(created, article_tag3.id, user, Ecto.UUID.generate())
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       {:ok, stat2} = CMS.Communities.tag_stats(article_tag2)
@@ -672,7 +685,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
       post_with_tags = Map.merge(post_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
-      {:error, reason} = CMS.Articles.create(community, :post, post_with_tags, user)
+      {:error, reason} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_with_tags,
+          user
+        )
+
       is_error?(reason, {{:cms, :community}, :invalid_domain_tag})
     end
   end
@@ -763,7 +783,13 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, old_post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+      {:ok, old_post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          mock_attrs(:post),
+          user
+        )
 
       from(article in Article, where: article.id == ^old_post.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
@@ -870,7 +896,13 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, old_post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
+      {:ok, old_post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          mock_attrs(:post),
+          user
+        )
 
       {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id, user, Ecto.UUID.generate())
 

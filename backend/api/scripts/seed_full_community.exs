@@ -21,7 +21,9 @@ slug =
 
 IO.puts("Creating full community with slug: #{slug}")
 
-case GroupherServer.CMS.Seeds.full_community(slug) do
+case GroupherServer.CMS.Seeds.full_community(slug,
+       command_id_factory: &Ecto.UUID.generate/0
+     ) do
   {:ok, community} ->
     IO.puts("✓ Full community created successfully!")
     IO.puts("  slug: #{community.slug}")

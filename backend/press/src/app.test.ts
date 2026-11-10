@@ -8,7 +8,7 @@ import type { Origin } from './origin'
 const article = {
   communityRef: 'home',
   articleRef: 'article-1',
-  articleRevision: 'revision-1',
+  contentVersion: 'snapshot-1',
   thread: 'post' as const,
   canonicalPath: '/home/post/1',
   canonicalOrigin: 'https://groupher.com',
@@ -68,7 +68,7 @@ const feed = {
   items: [
     {
       articleRef: article.articleRef,
-      articleRevision: article.articleRevision,
+      contentVersion: article.contentVersion,
       thread: article.thread,
       title: article.title,
       canonicalUrl: article.canonicalUrl,

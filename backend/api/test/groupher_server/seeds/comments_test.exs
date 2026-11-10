@@ -13,7 +13,9 @@ defmodule GroupherServer.Test.Seeds.CommentsTest do
 
       {:ok, author} = db_insert(:user)
       attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, article} = CMS.Articles.create(community, :post, attrs, author)
+
+      {:ok, article} =
+        GroupherServer.Support.Factory.create_published_article(community, :post, attrs, author)
 
       {:ok, comments} = Comments.mock(community, :post, article, count_range: {3, 3})
 

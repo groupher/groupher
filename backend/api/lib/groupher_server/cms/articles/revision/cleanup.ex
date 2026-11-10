@@ -16,7 +16,6 @@ defmodule GroupherServer.CMS.Articles.Revision.Cleanup do
   alias CMS.Model.{
     ArticleBodySnapshot,
     ArticleDraft,
-    ArticlePublic,
     ArticleRevision,
     CoverBackground,
     DraftCoverEdit,
@@ -34,12 +33,6 @@ defmodule GroupherServer.CMS.Articles.Revision.Cleanup do
     batch_size = Keyword.get(opts, :batch_size, @default_batch_size)
 
     Workflow.transaction(fn ->
-      public_reference =
-        from(public in ArticlePublic,
-          where: public.revision_id == parent_as(:revision).id,
-          select: 1
-        )
-
       draft_reference =
         from(draft in ArticleDraft,
           where: draft.base_revision_id == parent_as(:revision).id,
@@ -64,7 +57,6 @@ defmodule GroupherServer.CMS.Articles.Revision.Cleanup do
         ArticleRevision
         |> from(as: :revision)
         |> where([revision], revision.cleanup_after <= ^now)
-        |> where(not exists(public_reference))
         |> where(not exists(draft_reference))
         |> where(not exists(doc_draft_reference))
         |> where(not exists(branch_version_reference))

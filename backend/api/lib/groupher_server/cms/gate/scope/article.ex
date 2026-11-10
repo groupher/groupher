@@ -28,9 +28,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   alias CMS.Gate.Scope.{ArticleSchema, CommunityChain, Policy, ReviewRead}
 
   alias CMS.Model.{
-    ArticleDraft,
     ArticleLifecycle,
     ArticlePublic,
+    ArticleWorkingCopy,
     Author,
     ArticleReviewBlock,
     DocBranch,
@@ -536,9 +536,11 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
 
   defp draft_head_scope(query, %ArticleContext{}) do
     from(article in query,
-      join: draft in ArticleDraft,
-      as: :gate_article_draft,
-      on: draft.article_id == article.id
+      join: work in ArticleWorkingCopy,
+      as: :gate_article_working_copy,
+      on:
+        work.article_id == article.id and work.scope_kind == :default and
+          work.scope_id == article.id
     )
   end
 

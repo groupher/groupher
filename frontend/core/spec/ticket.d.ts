@@ -99,7 +99,7 @@ export type TTicket = {
   priority: number
   lifecycleVersion: number | null
   workflowVersion: number | null
-  draftVersion: number | null
+  workingCopyRevision: number | null
   publicationPreview: string | null
   draftContent: TTicketContent | null
   publishedContent: TTicketContent | null

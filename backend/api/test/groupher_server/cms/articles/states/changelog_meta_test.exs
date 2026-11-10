@@ -13,7 +13,14 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
 
   describe "[cms changelog meta info]" do
     test "can get default meta info", ~m(user community changelog_attrs)a do
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
+
       changelog = Repo.get!(CMS.Model.Article, changelog.id)
       refute changelog.is_edited
       refute changelog.comments_locked
@@ -21,23 +28,61 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
 
     test "is_edited flag should set to true after changelog updated",
          ~m(user community changelog_attrs)a do
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-      assert not Repo.get!(CMS.Model.Article, changelog.id).is_edited
-
-      {:ok, draft} =
-        CMS.Articles.update(
-          changelog,
-          %{"title" => "new title", expected_version: changelog.version},
-          user,
-          Ecto.UUID.generate()
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
         )
 
-      assert draft.title == "new title"
+      assert not Repo.get!(CMS.Model.Article, changelog.id).is_edited
+
+      article = Repo.get!(CMS.Model.Article, changelog.id)
+      working_copy = Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id)
+      public = Repo.get!(CMS.Model.ArticlePublic, article.id)
+
+      assert {:ok, saved} =
+               CMS.Articles.save_working_copy(
+                 article,
+                 community,
+                 working_copy.id,
+                 %{title: "new title"},
+                 working_copy.revision,
+                 user,
+                 Ecto.UUID.generate()
+               )
+
+      assert saved.title == "new title"
+
+      CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
+        :last_publish_time,
+        user,
+        minutes: -CMS.Gate.RateLimit.Publish.Config.publish_throttle().interval_minutes
+      )
+
+      assert {:ok, _published} =
+               CMS.Articles.publish_article(
+                 article,
+                 community,
+                 %{working_copy_id: saved.id, revision: saved.revision},
+                 public.snapshot_id,
+                 user,
+                 Ecto.UUID.generate()
+               )
+
       assert Repo.get!(CMS.Model.Article, changelog.id).is_edited
     end
 
     test "changelog's lock/undo_lock article should work", ~m(user community changelog_attrs)a do
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
+
       assert not changelog.meta.is_comment_locked
 
       {:ok, _} = CMS.Articles.lock_comments(changelog.id, user, community: community)

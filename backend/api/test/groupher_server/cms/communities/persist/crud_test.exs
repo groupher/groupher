@@ -93,14 +93,42 @@ defmodule GroupherServer.Test.CMS.Communities.Persist do
       {:ok, community} = CMS.Communities.create(community_attrs, user, Ecto.UUID.generate())
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, post2} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
+
+      {:ok, post2} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
 
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+
+      {:ok, blog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          blog_attrs,
+          user
+        )
 
       assert Repo.get!(CMS.Model.Article, post.id)
       assert Repo.get!(CMS.Model.Article, post2.id)
@@ -126,7 +154,14 @@ defmodule GroupherServer.Test.CMS.Communities.Persist do
       user = grant_binding_actions(user, [community, community2])
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, _} =
         CMS.Articles.mirror(community2, post.id, [], user, community, Ecto.UUID.generate())
@@ -148,7 +183,14 @@ defmodule GroupherServer.Test.CMS.Communities.Persist do
       user = grant_binding_actions(user, [community, community2])
 
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, _} =
         CMS.Articles.mirror(community2, post.id, [], user, community, Ecto.UUID.generate())

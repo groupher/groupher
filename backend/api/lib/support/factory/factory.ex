@@ -56,7 +56,8 @@ defmodule GroupherServer.Support.Factory do
       plain_text: plain_text,
       digest: String.slice(text, 0, 500),
       body_hash: :crypto.hash(:sha256, json) |> Base.encode16(case: :lower),
-      schema_version: CMS.Artiment.BodyBag.schema_version()
+      schema_version: CMS.Artiment.BodyBag.schema_version(),
+      thumbnail: %{version: 1, blocks: [%{type: "paragraph", text: text}]}
     }
   end
 
@@ -199,7 +200,7 @@ defmodule GroupherServer.Support.Factory do
   # not use changeset because in test we may insert some attrs which not in schema
   # like: views, insert/update ... to test filter-sort,when ...
   # """
-  @doc "Inserts a fixture; Article threads use the production stable Draft/Publish boundary."
+  @doc "Inserts a fixture; Article threads use the production WorkingCopy/Snapshot boundary."
   def db_insert(factory_name, attributes \\ [])
 
   def db_insert(factory_name, attributes) when factory_name in [:post, :blog, :changelog, :doc] do
@@ -210,14 +211,48 @@ defmodule GroupherServer.Support.Factory do
     public_attrs =
       mock_attrs(factory_name, attrs) |> Map.drop([:author, :community, :communities])
 
-    CMS.Articles.create(community, factory_name, public_attrs, user,
-      command_id: Ecto.UUID.generate()
-    )
+    if factory_name == :doc do
+      CMS.Articles.create(community, :doc, public_attrs, user, command_id: Ecto.UUID.generate())
+    else
+      create_published_article(community, factory_name, public_attrs, user)
+    end
   end
 
   def db_insert(factory_name, attributes) do
     db_insert_with_retry(factory_name, attributes, 3)
   end
+
+  @doc "Creates a public Article fixture through the single-command Snapshot publisher."
+  def create_published_article(community, thread, attrs, user, opts \\ [])
+
+  def create_published_article(
+        %Community{} = community,
+        thread,
+        attrs,
+        %User{} = user,
+        opts
+      )
+      when thread in [:post, :blog, :changelog] and is_map(attrs) and is_list(opts) do
+    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+    attrs = with_body_bag(attrs)
+    opts = Keyword.put_new(opts, :command_id, Ecto.UUID.generate())
+
+    with {:ok, %{article: article}} <-
+           CMS.Articles.create_and_publish_article(community, thread, attrs, actor, opts),
+         {:ok, %{inner_id: inner_id}} <-
+           CMS.Articles.Bindings.fetch_binding(article.id, community.id),
+         {:ok, public} <-
+           CMS.FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: inner_id
+           }) do
+      {:ok, public}
+    end
+  end
+
+  def create_published_article(_community, _thread, _attrs, _user, _opts),
+    do: {:error, :unsupported_article_thread}
 
   defp db_insert_with_retry(factory_name, attributes, attempts_left) do
     factory_name
@@ -414,9 +449,13 @@ defmodule GroupherServer.Support.Factory do
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
 
     {:ok, article} =
-      CMS.Articles.create(community, thread, with_body_bag(attrs), user,
-        command_id: Ecto.UUID.generate()
-      )
+      if thread == :doc do
+        CMS.Articles.create(community, thread, with_body_bag(attrs), user,
+          command_id: Ecto.UUID.generate()
+        )
+      else
+        create_published_article(community, thread, attrs, user)
+      end
 
     {community, article, attrs, user}
   end
@@ -439,9 +478,13 @@ defmodule GroupherServer.Support.Factory do
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
 
     {:ok, article} =
-      CMS.Articles.create(community, thread, with_body_bag(attrs), user,
-        command_id: Ecto.UUID.generate()
-      )
+      if thread == :doc do
+        CMS.Articles.create(community, thread, with_body_bag(attrs), user,
+          command_id: Ecto.UUID.generate()
+        )
+      else
+        create_published_article(community, thread, attrs, user)
+      end
 
     {community, article, attrs, user}
   end

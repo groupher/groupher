@@ -72,6 +72,17 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
         end
       )
 
+      field(:article_tags, list_of(:community_tag),
+        resolve: fn source, args, resolution ->
+          GroupherServerWeb.Schema.Helper.Fields.article_relation(
+            source,
+            args,
+            resolution,
+            :article_tags
+          )
+        end
+      )
+
       field(:author, :user,
         resolve: fn source, args, resolution ->
           GroupherServerWeb.Schema.Helper.Fields.article_relation(

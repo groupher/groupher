@@ -12,9 +12,9 @@ defmodule GroupherServer.CMS.Artiment.Status do
 
   alias CMS.Model.{
     ArticleBinding,
-    ArticleDraft,
     ArticleLifecycle,
     ArticlePublic,
+    ArticleWorkingCopy,
     Comment,
     CommentBody,
     CommentLifecycle,
@@ -121,9 +121,19 @@ defmodule GroupherServer.CMS.Artiment.Status do
       query_ids(ordinary_ids, ArticlePublic, :article_id)
       |> Map.new(&{&1.article_id, &1})
 
-    drafts =
-      query_ids(ordinary_ids, ArticleDraft, :article_id)
-      |> Map.new(&{&1.article_id, &1})
+    working_copies =
+      if ordinary_ids == [],
+        do: [],
+        else:
+          Repo.all(
+            from(work in ArticleWorkingCopy,
+              where:
+                work.article_id in ^ordinary_ids and work.scope_kind == :default and
+                  work.scope_id == work.article_id
+            )
+          )
+
+    working_copies = Map.new(working_copies, &{&1.article_id, &1})
 
     doc_publics =
       if doc_ids == [],
@@ -250,7 +260,7 @@ defmodule GroupherServer.CMS.Artiment.Status do
                 do: (public && public.title) || doc_titles[ref.article_id] || "",
                 else:
                   (public && public.title) ||
-                    (drafts[ref.article_id] && drafts[ref.article_id].title) || ""
+                    (working_copies[ref.article_id] && working_copies[ref.article_id].title) || ""
 
             path =
               if binding,

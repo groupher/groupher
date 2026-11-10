@@ -51,4 +51,32 @@ describe('content publish command parser', () => {
       CONTENT_PUBLISH_SCOPE.DOC_WRITE,
     )
   })
+
+  it('requires the WorkingCopy revision and rejects the old expectedVersion field', () => {
+    const saveCommand = {
+      action: CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY,
+      target: { community: 'home', articleId: 'article-1', workingCopyId: 'work-1' },
+      payload: {
+        content: { format: CONTENT_SOURCE_FORMAT.PLATE, value: [] },
+        linkAddr: 'https://example.test/source',
+        subtitle: 'Article subtitle',
+        templateKey: 'guide',
+      },
+      commandId: 'save-1',
+      revision: 7,
+    }
+
+    expect(parseContentPublishCommand(saveCommand)).toEqual({ ok: true, value: saveCommand })
+    expect(parseContentPublishCommand({ ...saveCommand, revision: undefined })).toMatchObject({
+      ok: false,
+      issues: [{ path: 'revision', code: 'invalid_revision' }],
+    })
+    expect(parseContentPublishCommand({ ...saveCommand, expectedVersion: 7 })).toMatchObject({
+      ok: false,
+      issues: [{ path: 'expectedVersion', code: 'unsupported_field' }],
+    })
+    expect(
+      parseContentPublishCommand({ ...saveCommand, action: 'article.work.save' }),
+    ).toMatchObject({ ok: false, issues: [{ path: 'action', code: 'unknown_action' }] })
+  })
 })

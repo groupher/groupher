@@ -14,7 +14,109 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
   """
   use Helper.GqlSchemaSuite
 
+  import GroupherServerWeb.Schema.Helper.Mutations
+
   object :cms_operation_mutations do
+    @desc "Create a stable Article and its default mutable WorkingCopy"
+    field :create_article, :article_working_copy do
+      arg(:command_id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:thread, non_null(:thread))
+      arg(:title, :string)
+      arg(:digest, :string)
+      arg(:slug, :string)
+      arg(:body_bag, :artiment_body_bag_input)
+      arg(:tag_ids, list_of(:id))
+      article_cover_args()
+      article_thread_content_args()
+      article_asset_args()
+
+      middleware(M.Authorize, :login)
+      middleware(M.BodyBagTrust, scope: "content:article:write")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Articles.create_article/3)
+    end
+
+    @desc "Create and publish an Article atomically through one command and Receipt"
+    field :create_and_publish_article, :article_public_snapshot do
+      arg(:command_id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:thread, non_null(:thread))
+      arg(:title, :string)
+      arg(:digest, :string)
+      arg(:slug, :string)
+      arg(:body_bag, non_null(:artiment_body_bag_input))
+      arg(:tag_ids, list_of(:id))
+      article_cover_args()
+      article_thread_content_args()
+      article_asset_args()
+
+      middleware(M.Authorize, :login)
+      middleware(M.BodyBagTrust, scope: "content:article:write")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Articles.create_and_publish_article/3)
+    end
+
+    @desc "Save one Article WorkingCopy patch at its current revision"
+    field :save_working_copy, :article_working_copy do
+      arg(:command_id, non_null(:id))
+      arg(:article_id, non_null(:id))
+      arg(:working_copy_id, non_null(:id))
+      arg(:revision, non_null(:integer))
+      arg(:community, non_null(:string))
+      arg(:title, :string)
+      arg(:digest, :string)
+      arg(:slug, :string)
+      arg(:body_bag, :artiment_body_bag_input)
+      arg(:tag_ids, list_of(:id))
+      article_cover_args()
+      article_thread_content_args()
+      article_asset_args()
+
+      middleware(M.Authorize, :login)
+      middleware(M.BodyBagTrust, scope: "content:article:write")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Articles.save_working_copy/3)
+    end
+
+    @desc "Create an independent WorkingCopy from an immutable Article Snapshot"
+    field :fork_snapshot, :article_working_copy_result do
+      arg(:command_id, non_null(:id))
+      arg(:snapshot_id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:scope_kind, non_null(:string))
+      arg(:scope_id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Articles.fork_snapshot/3)
+    end
+
+    @desc "Discard one editable WorkingCopy"
+    field :delete_working_copy, :done_state do
+      arg(:command_id, non_null(:id))
+      arg(:article_id, non_null(:id))
+      arg(:working_copy_id, non_null(:id))
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Articles.delete_working_copy/3)
+    end
+
+    @desc "Select a saved Article Snapshot as the current public version"
+    field :publish_article, :article_public_snapshot do
+      arg(:command_id, non_null(:id))
+      arg(:article_id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:source, non_null(:article_working_copy_source_input))
+      arg(:expected_public_snapshot_id, :id)
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Articles.publish_article/3)
+    end
+
     @desc "Records one visible public Article read through ViewTracker"
     field :track_article_view, non_null(:article_view_track_result) do
       arg(:article, non_null(:article_path_input))

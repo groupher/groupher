@@ -176,7 +176,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       changelog_with_tags =
         Map.merge(changelog_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
-      {:ok, created} = CMS.Articles.create(community, :changelog, changelog_with_tags, user)
+      {:ok, created} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_with_tags,
+          user
+        )
+
       {:ok, changelog} = read_article(community, :changelog, created.inner_id)
 
       assert exist_in?(article_tag, changelog.community_tags)
@@ -211,7 +218,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       changelog_with_tags =
         Map.merge(changelog_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
-      {:error, reason} = CMS.Articles.create(community, :changelog, changelog_with_tags, user)
+      {:error, reason} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_with_tags,
+          user
+        )
+
       is_error?(reason, {{:cms, :community}, :invalid_domain_tag})
     end
   end
@@ -310,7 +324,12 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
         )
 
       {:ok, old_changelog} =
-        CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          mock_attrs(:changelog),
+          user
+        )
 
       from(article in Article, where: article.id == ^old_changelog.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])

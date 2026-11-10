@@ -184,7 +184,15 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
     test "changelog author create comment will not update active timestamp",
          ~m(community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
+
       article_before = Repo.get!(CMS.Model.Article, changelog.article_id)
 
       Process.sleep(1000)
@@ -213,7 +221,14 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       #   Datetime.shift(Datetime.now(), days: -(active_period_days - 1)) |> Datetime.to_datetime()
 
       changelog_attrs = mock_attrs(:changelog)
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
 
       Process.sleep(1000)
 
@@ -238,7 +253,14 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         |> Datetime.to_datetime()
 
       changelog_attrs = mock_attrs(:changelog)
-      {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+
+      {:ok, changelog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
 
       article = Repo.get!(CMS.Model.Article, changelog.article_id)
 

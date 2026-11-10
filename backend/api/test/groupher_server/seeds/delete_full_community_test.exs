@@ -35,7 +35,8 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
           comment_count_per_article: 4,
           article_upvotes_range: {1, 2},
           comment_upvotes_range: {1, 2},
-          comment_replies_range: {1, 1}
+          comment_replies_range: {1, 1},
+          command_id_factory: &Ecto.UUID.generate/0
         )
 
       post_ids = article_ids(community.id, :post)

@@ -21,10 +21,9 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   alias CMS.Model.{
     Article,
     ArticleBinding,
-    ArticleBodyDraft,
-    ArticleBodySnapshot,
+    ArticleSnapshot,
+    ArticleWorkingCopy,
     ArticleLifecycle,
-    ArticleRevision,
     ArticleReviewBlock,
     Author,
     Community,
@@ -423,21 +422,21 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   @doc false
   def create_user(community, post_id, attrs, context) do
-    with {:ok, post, _public, revision, post_binding} <- lock_public_post(community, post_id),
-         %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, revision.body_snapshot_id),
-         {:ok, body_bag} <- BodyBag.from_document(body),
+    with {:ok, post, _public, snapshot, post_binding} <- lock_public_post(community, post_id),
+         {:ok, body_bag} <- snapshot_body_bag(snapshot),
          {:ok, author} <- Persist.ensure_author_exists(context.actor),
-         {:ok, %{article: article, draft: draft}} <-
+         {:ok, %{article: article, working_copy: working_copy}} <-
            CMS.Tickets.Content.create_workspace(
              community,
              %{
-               title: attr_or_source(attrs, :title, revision.title),
-               digest: attr_or_source(attrs, :digest, revision.digest),
+               title: attr_or_source(attrs, :title, snapshot.title),
+               digest: attr_or_source(attrs, :digest, snapshot.digest),
                body_bag: body_bag
              },
              author
            ),
-         {:ok, :pass} <- CMS.Tickets.Content.clone_revision_refs(post, revision, article, draft),
+         {:ok, :pass} <-
+           CMS.Tickets.Content.clone_snapshot_refs(post, snapshot, article, working_copy),
          {:ok, ticket_binding} <- CMS.Articles.Bindings.fetch_binding(article.id, community.id),
          {:ok, _state} <- insert_state(article, ticket_binding, :user, :todo),
          {:ok, _link} <- insert_post_link(article, post),
@@ -468,7 +467,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          false <- parent_state.status == :done,
          {:ok, parent_content} <- ticket_content_for_clone(parent),
          {:ok, author} <- Persist.ensure_author_exists(context.actor),
-         {:ok, %{article: article, draft: draft}} <-
+         {:ok, %{article: article, working_copy: working_copy}} <-
            CMS.Tickets.Content.create_workspace(
              community,
              parent_content
@@ -476,7 +475,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              |> Map.merge(Map.take(attrs, [:title, :digest])),
              author
            ),
-         {:ok, :pass} <- clone_parent_ticket_refs(parent, parent_content, article, draft),
+         {:ok, :pass} <-
+           clone_parent_ticket_refs(parent, parent_content, article, working_copy),
          {:ok, binding} <- CMS.Articles.Bindings.fetch_binding(article.id, community.id),
          {:ok, _state} <- insert_state(article, binding, :worker, :todo),
          {:ok, _relation} <- insert_worker(parent.id, article.id),
@@ -509,7 +509,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
              community,
              %{
                title: title,
-               digest: Map.get(attrs, :digest) || Map.get(attrs, "digest"),
+               digest: Map.get(attrs, :digest) || Map.get(attrs, "digest") || "",
                body_bag: body_bag
              },
              author
@@ -720,7 +720,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
         community,
         ticket_id,
         attrs,
-        expected_draft_version,
+        expected_revision,
         expected_lifecycle_version,
         context
       ) do
@@ -728,7 +728,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, lifecycle} <- lock_ticket_lifecycle(article),
          true <- lifecycle.version == expected_lifecycle_version,
          {:ok, draft} <- CMS.Tickets.Content.get_workspace(article),
-         true <- draft.version == expected_draft_version,
+         true <- draft.revision == expected_revision,
          {:ok, author} <- Persist.ensure_author_exists(context.actor),
          {:ok, changed_attrs} <- changed_content_attrs(article, draft, attrs),
          {:ok, _saved_draft} <-
@@ -745,7 +745,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
         community,
         ticket_id,
         reason,
-        expected_draft_version,
+        expected_revision,
         expected_lifecycle_version,
         expected_workflow_version,
         expected_preview,
@@ -758,7 +758,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          {:ok, lifecycle} <- lock_ticket_lifecycle(article),
          true <- lifecycle.version == expected_lifecycle_version,
          {:ok, draft} <- CMS.Tickets.Content.get_workspace(article),
-         true <- draft.version == expected_draft_version,
+         true <- draft.revision == expected_revision,
          true <- public_ticket_publish_allowed?(community.id, ticket_id),
          true <-
            expected_preview == CMS.Tickets.Publication.preview_anchor(community.id, ticket_id),
@@ -954,14 +954,20 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          context
        ) do
     with {:ok, lifecycle} <- lock_ticket_lifecycle(article),
-         {:ok, lifecycle, revision} <-
-           prepare_visibility_content(article, lifecycle, target_lifecycle_state, context.actor),
+         {:ok, lifecycle, snapshot} <-
+           prepare_visibility_content(
+             article,
+             lifecycle,
+             target_lifecycle_state,
+             context.actor,
+             context.command_id
+           ),
          {:ok, updated_lifecycle} <-
            CMS.Articles.Lifecycle.transition(lifecycle, target_lifecycle_state),
          {:ok, updated_state} <- Lifecycle.increment_version(state),
          {:ok, updated_binding} <- ensure_ticket_number(binding, target_lifecycle_state),
          {:ok, _public} <-
-           maybe_select_ticket_public(article, revision, target_lifecycle_state, context.actor),
+           maybe_select_ticket_public(article, snapshot, target_lifecycle_state, context.actor),
          {:ok, activity} <-
            log_ticket_activity(
              article,
@@ -974,7 +980,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
                from_publication_state: Atom.to_string(lifecycle.state),
                to_publication_state: Atom.to_string(target_lifecycle_state)
              },
-             payload: visibility_payload(revision)
+             payload: visibility_payload(snapshot)
            ),
          {:ok, _notification} <-
            (if target_lifecycle_state == :published do
@@ -1006,7 +1012,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          article,
          %ArticleLifecycle{state: :published} = lifecycle,
          :draft,
-         actor
+         actor,
+         _command_id
        ) do
     with {:ok, author} <- Persist.ensure_author_exists(actor),
          {:ok, _draft} <-
@@ -1021,7 +1028,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          _article,
          %ArticleLifecycle{state: :draft} = lifecycle,
          :draft,
-         _actor
+         _actor,
+         _command_id
        ) do
     {:ok, lifecycle, nil}
   end
@@ -1030,11 +1038,18 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          article,
          %ArticleLifecycle{state: :draft} = lifecycle,
          :published,
-         _actor
+         actor,
+         command_id
        ) do
-    with {:ok, draft} <- CMS.Tickets.Content.get_workspace(article),
-         {:ok, revision} <- CMS.Tickets.Content.create_revision(article, draft) do
-      {:ok, lifecycle, {revision, draft}}
+    with {:ok, working_copy} <- CMS.Tickets.Content.get_workspace(article),
+         {:ok, snapshot} <-
+           CMS.Tickets.Content.freeze_working_copy(
+             article,
+             working_copy,
+             actor,
+             command_id
+           ) do
+      {:ok, lifecycle, {snapshot, working_copy}}
     end
   end
 
@@ -1042,15 +1057,22 @@ defmodule GroupherServer.CMS.Tickets.Persist do
          article,
          %ArticleLifecycle{state: :published} = lifecycle,
          :published,
-         _actor
+         actor,
+         command_id
        ) do
-    with {:ok, draft} <- CMS.Tickets.Content.get_workspace(article),
-         {:ok, revision} <- CMS.Tickets.Content.create_revision(article, draft) do
-      {:ok, lifecycle, {revision, draft}}
+    with {:ok, working_copy} <- CMS.Tickets.Content.get_workspace(article),
+         {:ok, snapshot} <-
+           CMS.Tickets.Content.freeze_working_copy(
+             article,
+             working_copy,
+             actor,
+             command_id
+           ) do
+      {:ok, lifecycle, {snapshot, working_copy}}
     end
   end
 
-  defp prepare_visibility_content(_article, _lifecycle, _target, _actor) do
+  defp prepare_visibility_content(_article, _lifecycle, _target, _actor, _command_id) do
     {:error, ErrorCat.invalid_visibility_transition()}
   end
 
@@ -1058,13 +1080,13 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   defp maybe_select_ticket_public(
          article,
-         {%ArticleRevision{} = revision, %CMS.Model.ArticleDraft{} = draft},
+         {%ArticleSnapshot{} = snapshot, %ArticleWorkingCopy{} = working_copy},
          :published,
          actor
        ) do
-    with {:ok, author} <- Persist.ensure_author_exists(actor),
-         {:ok, _public} <- CMS.Tickets.Content.select_public(article, revision, author),
-         {:ok, :pass} <- CMS.Tickets.Content.delete_workspace(article, draft) do
+    with {:ok, _public} <-
+           CMS.Tickets.Content.select_public(article, snapshot, actor),
+         {:ok, :pass} <- CMS.Tickets.Content.delete_workspace(article, working_copy) do
       {:ok, :pass}
     end
   end
@@ -1080,11 +1102,11 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   defp ensure_ticket_number(%ArticleBinding{} = binding, :draft), do: {:ok, binding}
 
-  defp visibility_payload({%ArticleRevision{id: revision_id}, _draft}) do
-    %{revision_id: revision_id}
+  defp visibility_payload({%ArticleSnapshot{id: snapshot_id}, _working_copy}) do
+    %{snapshot_id: snapshot_id}
   end
 
-  defp visibility_payload(_revision), do: %{}
+  defp visibility_payload(_snapshot), do: %{}
 
   defp lock_ticket_lifecycle(%Article{id: article_id}) do
     case Repo.one(
@@ -1241,41 +1263,75 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   defp ticket_content_for_clone(%Article{} = article) do
     case CMS.Tickets.Content.get_workspace(article) do
-      {:ok, draft} ->
-        with %ArticleBodyDraft{} = body <- Repo.get(ArticleBodyDraft, draft.body_draft_id),
-             {:ok, body_bag} <- BodyBag.from_document(body) do
+      {:ok, working_copy} ->
+        with {:ok, body_bag} <- working_copy_body_bag(working_copy) do
           {:ok,
-           %{title: draft.title, digest: draft.digest, body_bag: body_bag, source_draft: draft}}
-        else
-          nil -> {:error, ErrorCat.invalid_ticket_content()}
-          {:error, reason} -> {:error, reason}
+           %{
+             title: working_copy.title,
+             digest: working_copy.digest,
+             body_bag: body_bag,
+             source_working_copy: working_copy
+           }}
         end
 
       {:error, :not_found} ->
-        with {:ok, revision} <- CMS.Tickets.Content.get_public_revision(article),
-             %ArticleBodySnapshot{} = body <-
-               Repo.get(ArticleBodySnapshot, revision.body_snapshot_id),
-             {:ok, body_bag} <- BodyBag.from_document(body) do
+        with {:ok, snapshot} <- CMS.Tickets.Content.get_public_snapshot(article),
+             {:ok, body_bag} <- snapshot_body_bag(snapshot) do
           {:ok,
            %{
-             title: revision.title,
-             digest: revision.digest,
+             title: snapshot.title,
+             digest: snapshot.digest,
              body_bag: body_bag,
-             source_revision: revision
+             source_snapshot: snapshot
            }}
-        else
-          nil -> {:error, ErrorCat.invalid_ticket_content()}
-          {:error, reason} -> {:error, reason}
         end
     end
   end
 
-  defp clone_parent_ticket_refs(parent, %{source_draft: source_draft}, target, target_draft) do
-    CMS.Tickets.Content.clone_ticket_draft_refs(parent, source_draft, target, target_draft)
+  defp clone_parent_ticket_refs(
+         parent,
+         %{source_working_copy: source_working_copy},
+         target,
+         target_working_copy
+       ) do
+    CMS.Tickets.Content.clone_working_copy_refs(
+      parent,
+      source_working_copy,
+      target,
+      target_working_copy
+    )
   end
 
-  defp clone_parent_ticket_refs(parent, %{source_revision: revision}, target, target_draft) do
-    CMS.Tickets.Content.clone_revision_refs(parent, revision, target, target_draft)
+  defp clone_parent_ticket_refs(parent, %{source_snapshot: snapshot}, target, target_working_copy) do
+    CMS.Tickets.Content.clone_snapshot_refs(parent, snapshot, target, target_working_copy)
+  end
+
+  defp snapshot_body_bag(%ArticleSnapshot{} = snapshot) do
+    body_bag_from_fields(snapshot, :ticket)
+  end
+
+  defp working_copy_body_bag(%ArticleWorkingCopy{} = working_copy) do
+    body_bag_from_fields(working_copy, :ticket)
+  end
+
+  defp body_bag_from_fields(document, thread) do
+    body_hash = :crypto.hash(:sha256, document.body_json) |> Base.encode16(case: :lower)
+
+    BodyBag.cast(
+      %{
+        json: document.body_json,
+        markdown: document.body_markdown,
+        html: document.body_html,
+        toc: get_in(document.body_markdown_toc || %{}, [:items]) || [],
+        thumbnail: document.body_thumbnail,
+        plain_text: document.body_plain_text,
+        digest: document.digest,
+        body_hash: body_hash,
+        schema_version: document.body_schema_version
+      },
+      thread: thread,
+      allow_empty: true
+    )
   end
 
   defp ticket_body_bag(attrs) do
@@ -1309,7 +1365,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
     end
   end
 
-  defp changed_content_attrs(%CMS.Model.ArticleDraft{} = draft, attrs) do
+  defp changed_content_attrs(%ArticleWorkingCopy{} = draft, attrs) do
     Enum.reduce_while([:title, :digest], {:ok, %{}}, fn field, {:ok, changed} ->
       if has_attr?(attrs, field) do
         normalized = normalize_content_field(field, value(attrs, field))
@@ -1355,7 +1411,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   defp maybe_save_ticket_draft(article, attrs, author, lifecycle, draft) do
     CMS.Tickets.Content.save_workspace(article, attrs, author,
       expected_lifecycle_version: lifecycle.version,
-      expected_version: draft.version
+      revision: draft.revision
     )
   end
 
@@ -1372,11 +1428,10 @@ defmodule GroupherServer.CMS.Tickets.Persist do
         {:ok, fields}
 
       input ->
-        with {:ok, body_bag} <- BodyBag.cast(input, thread: article.thread),
-             %ArticleBodyDraft{} = current <- Repo.get(ArticleBodyDraft, draft.body_draft_id) do
+        with {:ok, body_bag} <- BodyBag.cast(input, thread: article.thread) do
           next = BodyBag.to_document_attrs(body_bag)
 
-          if next.body_hash == current.body_hash do
+          if next.json == draft.body_json do
             {:ok, fields}
           else
             {:ok, Map.put(fields, :body_bag, input)}

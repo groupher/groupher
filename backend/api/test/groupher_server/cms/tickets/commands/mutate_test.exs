@@ -8,6 +8,8 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     Article,
     ArticleLifecycle,
     ArticlePublic,
+    ArticleSnapshot,
+    ArticleWorkingCopy,
     TicketState,
     TicketTag,
     TicketUpdate
@@ -394,7 +396,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
            ) == 1
   end
 
-  test "User Ticket starts Draft and Publish selects its current shared Revision", context do
+  test "User Ticket starts Draft and Publish selects its current Article Snapshot", context do
     %{community: community, post: post, actor: actor} = context
 
     {:ok, draft} =
@@ -418,7 +420,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                community,
                draft.id,
                "Reviewed first publication",
-               internal.draft_version,
+               internal.working_copy_revision,
                internal.lifecycle_version,
                internal.workflow_version,
                actor,
@@ -431,6 +433,11 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     assert is_integer(published.inner_id)
     assert published.published_content.title == "Drafted ticket"
     assert Repo.get_by!(ArticleLifecycle, article_id: draft.id).first_published_at
+
+    public = Repo.get!(ArticlePublic, draft.id)
+    publish_log = Repo.get_by!(TicketLog, article_id: draft.id, operation_ref: publish_command_id)
+    assert public.snapshot_id == publish_log.payload["snapshot_id"]
+    refute Map.has_key?(publish_log.payload, "revision_id")
 
     refute Repo.get_by(Event, command_id: publish_command_id, event: "mention.notify")
 
@@ -523,7 +530,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                community,
                ticket.id,
                "Explicitly reviewed after source recovery",
-               internal.draft_version,
+               internal.working_copy_revision,
                internal.lifecycle_version,
                internal.workflow_version,
                actor,
@@ -756,7 +763,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                community,
                ticket.id,
                "Reviewed after Community recovery",
-               internal.draft_version,
+               internal.working_copy_revision,
                internal.lifecycle_version,
                internal.workflow_version,
                actor,
@@ -823,7 +830,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                    target_type: :article,
                    target_id: post.id,
                    community_id: community.id,
-                   observed_version: 1
+                   observed_version: article_snapshot_review_version(post.id)
                  },
                  :spam,
                  "Please review this Post",
@@ -963,26 +970,35 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     before_version = Repo.get!(TicketState, ticket.id).workflow_version
     before_preview = CMS.Tickets.Publication.preview_anchor(community.id, ticket.id)
     article = Repo.get!(Article, post.id)
-    {:ok, author} = CMS.Articles.Persist.ensure_author_exists(actor)
-    {:ok, draft} = CMS.Articles.Draft.Store.ensure_from_public(article, author)
 
-    assert {:ok, updated_draft} =
-             CMS.Articles.Draft.Store.update(
+    work =
+      Repo.get_by!(ArticleWorkingCopy,
+        article_id: article.id,
+        scope_kind: :default,
+        scope_id: article.id
+      )
+
+    assert {:ok, saved} =
+             CMS.Articles.save_working_copy(
                article,
+               community,
+               work.id,
                %{title: "Updated source Post title"},
-               author,
-               expected_version: draft.version
+               work.revision,
+               actor,
+               Ecto.UUID.generate()
              )
 
-    lifecycle = Repo.get_by!(ArticleLifecycle, article_id: article.id, thread: :post)
-    command_id = Ecto.UUID.generate()
+    public = Repo.get!(ArticlePublic, article.id)
 
     assert {:ok, _published} =
-             CMS.Articles.Workflow.publish(article, author, actor,
-               community: community,
-               expected_draft_version: updated_draft.version,
-               expected_lifecycle_version: lifecycle.version,
-               outbox_command_id: command_id
+             CMS.Articles.publish_article(
+               article,
+               community,
+               %{working_copy_id: saved.id, revision: saved.revision},
+               public.snapshot_id,
+               actor,
+               Ecto.UUID.generate()
              )
 
     assert Repo.get!(TicketState, ticket.id).workflow_version > before_version
@@ -1085,7 +1101,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                community,
                second_ticket.id,
                "Publish second ticket",
-               internal.draft_version,
+               internal.working_copy_revision,
                internal.lifecycle_version,
                internal.workflow_version,
                actor,
@@ -1337,7 +1353,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                community,
                ticket.id,
                "Review",
-               current.draft_version,
+               current.working_copy_revision,
                current.lifecycle_version,
                current.workflow_version,
                actor,
@@ -1345,18 +1361,23 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                "stale-preview"
              )
 
-    revision_count =
+    snapshot_count =
       Repo.aggregate(
-        from(revision in CMS.Model.ArticleRevision, where: revision.article_id == ^ticket.id),
+        from(snapshot in ArticleSnapshot, where: snapshot.article_id == ^ticket.id),
         :count
       )
+
+    assert Repo.aggregate(
+             from(snapshot in ArticleSnapshot, where: snapshot.article_id == ^ticket.id),
+             :count
+           ) == snapshot_count
 
     assert {:ok, _} =
              CMS.Tickets.publish(
                community,
                ticket.id,
                "Review",
-               current.draft_version,
+               current.working_copy_revision,
                current.lifecycle_version,
                current.workflow_version,
                actor,
@@ -1365,11 +1386,20 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
              )
 
     assert Repo.aggregate(
-             from(revision in CMS.Model.ArticleRevision,
-               where: revision.article_id == ^ticket.id
+             from(snapshot in ArticleSnapshot,
+               where: snapshot.article_id == ^ticket.id
              ),
              :count
-           ) == revision_count
+           ) == snapshot_count + 1
+  end
+
+  defp article_snapshot_review_version(article_id) do
+    snapshot_id = Repo.get!(ArticlePublic, article_id).snapshot_id
+
+    <<value::unsigned-big-64, _rest::binary>> =
+      :crypto.hash(:sha256, Ecto.UUID.dump!(snapshot_id))
+
+    rem(value, 2_147_483_646) + 1
   end
 
   test "publication notification uses a Messaging-supported action", context do
@@ -1710,7 +1740,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
         community,
         ticket.id,
         "Reviewed initial publication",
-        internal.draft_version,
+        internal.working_copy_revision,
         internal.lifecycle_version,
         internal.workflow_version,
         actor,

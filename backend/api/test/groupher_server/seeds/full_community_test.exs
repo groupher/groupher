@@ -27,7 +27,8 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       allowed_cats = [nil | Const.cat_values()]
       slug = "seed-full-#{System.unique_integer([:positive, :monotonic])}"
 
-      {:ok, community} = CMS.Seeds.full_community(slug)
+      {:ok, community} =
+        CMS.Seeds.full_community(slug, command_id_factory: &Ecto.UUID.generate/0)
 
       {:ok, community} = ORM.find(Community, community.id, preload: :dashboard)
 

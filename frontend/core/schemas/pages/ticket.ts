@@ -11,7 +11,7 @@ export const ticketFields = graphql(`
     priority
     lifecycleVersion
     workflowVersion
-    draftVersion
+    workingCopyRevision
     publicationPreview
     draftContent {
       title
@@ -512,7 +512,7 @@ export const saveTicketDraft = graphql(`
     $community: String!
     $id: ID!
     $content: TicketContentInput!
-    $expectedDraftVersion: Int!
+    $revision: Int!
     $expectedLifecycleVersion: Int!
   ) {
     saveTicketDraft(
@@ -520,7 +520,7 @@ export const saveTicketDraft = graphql(`
       community: $community
       id: $id
       content: $content
-      expectedDraftVersion: $expectedDraftVersion
+      revision: $revision
       expectedLifecycleVersion: $expectedLifecycleVersion
     ) {
       ...TicketFields
@@ -535,7 +535,7 @@ export const publishTicket = graphql(`
     $id: ID!
     $reason: String!
     $expectedPreview: String!
-    $expectedDraftVersion: Int!
+    $revision: Int!
     $expectedLifecycleVersion: Int!
     $expectedWorkflowVersion: Int!
   ) {
@@ -545,7 +545,7 @@ export const publishTicket = graphql(`
       id: $id
       reason: $reason
       expectedPreview: $expectedPreview
-      expectedDraftVersion: $expectedDraftVersion
+      revision: $revision
       expectedLifecycleVersion: $expectedLifecycleVersion
       expectedWorkflowVersion: $expectedWorkflowVersion
     ) {

@@ -1,0 +1,256 @@
+# Article WorkingCopy / Snapshot 通用基座
+
+> 状态：目标合同；Article WorkingCopy / Snapshot B0–B4 已完成实现与聚焦验证。Docs 发布队列尚未按新合同梳理，继续作为后续独立工作。当前旧运行时盘点见 [Revision / Draft](./revision-draft-target.md)，仅用于识别切换范围，不作为目标合同。
+> 本文只设计新的 Article 内容基座；目标环境从空的 Article 聚合启动，不迁移旧文章及其依赖数据，不提供兼容读取、双写或回填。Docs 的发布队列、目录和审核由 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md)另行编排。
+
+## 1. 内容模型
+
+```text
+Article A（稳定 article_id）
+├─ ArticleWorkingCopy W（默认编辑空间；自动保存，内容可变）
+├─ ArticleWorkingCopy X（另一独立编辑空间；按需创建，内容可变）
+│
+├─ ArticleSnapshot S1、S2…（从指定 WorkingCopy 固定；内容不可变）
+└─ ArticlePublic ──选择一份 Snapshot──→ 当前线上内容
+
+ArticleWorkingCopy ──引用 ID──→ CoverEditWorkingCopy（可编辑封面画布）
+ArticleSnapshot    ──引用 ID──→ CoverEditSnapshot（固定的封面画布）
+
+ArticleWorkingCopy ──保存完整 Body Document──→ ArticleSnapshot
+Body Document = Plate JSON + Markdown + HTML + 目录 + 纯文本 + 缩略图
+```
+
+`Article` 只提供稳定身份，供评论、互动、统计等关联。一篇 Article 可以有多份互不影响的 WorkingCopy。自动保存更新当前 WorkingCopy；只有明确执行固定操作时，才创建不可变的 ArticleSnapshot。`ArticlePublic(article_id, snapshot_id)` 记录目前公开选中了哪份 Snapshot；后续重新发布只把该 `snapshot_id` 指向另一份 Snapshot，不在 Snapshot 上设置 `is_public`，也不覆盖旧 Snapshot 或顺手改动其他 WorkingCopy。
+
+WorkingCopy 和 Snapshot 保存同一种**完整文章状态**：标题、`digest`、完整 Article Body Document、文章自己设置的 tag ID 集合、各 thread 的专属内容字段、封面成品选择、资产引用及可选的 CoverEdit 引用。Body Document 包含保留节点 ID 的 Plate JSON，以及从这份 JSON 生成的 Markdown、HTML、目录、纯文本和缩略图；现有读取者需要的 XML / RSS 正文也随同一份文档保存。JSON 是编辑与正文 Diff 的依据，其余格式是这份正文在保存时生成并一起固定的输出，不是独立的内容版本。作者、创建人、最近编辑者、快照创建者和发布人是不同的操作事实，分别记录。文章目录位置、评论、统计、审核状态不属于文章内容。Community 的 Binding 及其标签仍由现有 Binding 工作流负责，不纳入本次内容快照。
+
+CoverEdit **独立采用** WorkingCopy / Snapshot 模式，不是 Article 基座的一组通用列。ArticleWorkingCopy 仅引用 `CoverEditWorkingCopy.id`；ArticleSnapshot 仅引用 `CoverEditSnapshot.id`。封面画布、浅色/深色背景、图层 JSON 保存在 CoverEdit 自己的记录中。封面导出的最终图片与编辑画布是两件事：已选择的成品图片随 Article 内容固定，画布数据用于再次编辑。
+
+缩略图是完整 Body Document 中的一项派生展示数据，不是用户单独编辑的内容。保存 WorkingCopy 时从同一份 Plate JSON 生成缩略图并写入该 Body Document；固定 Snapshot 时连同正文和其他输出原样复制。**不建独立的缩略图 WorkingCopy、Snapshot 或缩略图版本字段。**公开页面直接读取所选 ArticleSnapshot 已固定的缩略图；生成规则升级只影响此后保存的新 Body Document，不回写旧 Snapshot。
+
+## 2. 保存、固定、发布
+
+```text
+创建文章 A
+  -> 建立默认 WorkingCopy W；A 尚无 Public
+
+编辑并自动保存 W
+  -> 从新 Plate JSON 生成 Markdown、HTML、目录、纯文本、缩略图等输出
+  -> 将完整 Body Document 与文章其他内容一起保存；W.revision + 1
+  -> 不创建 Snapshot，不影响线上版或其他 WorkingCopy
+
+固定 W
+  -> 读取 W 的确定 revision
+  -> 原样复制完整 Body Document 与文章其他内容为不可变 Snapshot S
+  -> 如有 CoverEdit，同时固定 CoverEditSnapshot 并让 S 引用它
+
+发布 S
+  -> Public 选择 S；记录发布人和时间
+  -> 公开读取 S 的标题、完整 Body Document、封面和已固定的缩略图
+```
+
+`ArticleWorkingCopy.revision` 是防止两个窗口互相覆盖的并发序号：客户端提交当前值，每次校验通过并成功保存后服务端推进它。它不是旧 `ArticleRevision` 实体或其 ID，也不代表保存了多少份历史。`saveWorkingCopy` 必须校验客户端提交的 `revision`；正文变化时，由可信 Content Publisher 从同一份 Plate JSON 生成完整 Body Document，并在同一事务保存正文全部格式、元数据、tag ID、CoverEdit、资产引用和新 revision。生成失败则整次保存失败，不留下新 JSON 配旧 HTML / 缩略图。没有实际内容变化的有效保存也推进 revision，但不创建 Snapshot。客户端只有收到服务端确认，才能显示“已保存”；本地逐次编辑历史可供单设备恢复，但服务端不会因每次自动保存创建 Snapshot。
+
+编辑中的 WorkingCopy 可以保存空标题或空正文；保存成功不代表内容已经可以公开。`publishArticle` 在选择 Public 前，按文章 thread 校验待发布的完整内容。来源是 WorkingCopy 时先校验已保存内容，再固定 Snapshot；来源是已有 Snapshot 时直接校验该 Snapshot。两条路径使用同一套可发布条件，校验失败不留下新 Snapshot、Public 或首次发布的运行时数据。B0 必须逐 thread 写明标题、正文及专属字段的可发布条件；`FreezeWork` 本身不承担发布校验。
+
+创建另一份 WorkingCopy 时，从一份已固定的 ArticleSnapshot 复制完整内容，包括一份新的可变 CoverEditWorkingCopy；新 WorkingCopy 与 Snapshot 属于同一个 `article_id`，不能和其他 WorkingCopy 共用可变正文、画布或标签集合。已固定的 Snapshot 可被多处引用，不因任何 WorkingCopy 的后续保存改变。Article 基座不定义两份正在编辑的 WorkingCopy 直接合并；Docs 如何把已保存内容固定为 Snapshot、再合入另一份 WorkingCopy，属于 Docs 工作流。
+
+`FreezeWork` 在事务内校验来源 revision，原样复制已保存的完整 Body Document、文章字段、tag ID、CoverEdit 内容与资产引用；不在固定或读取 Snapshot 时重新生成 HTML、Markdown、目录、纯文本或缩略图。相同 `source_working_copy_id + source_revision` 重试返回同一个 Snapshot。Snapshot 的内容行与 CoverEditSnapshot 内容行不可更新；当前 Public 或产品工作流正式引用它们时，清理程序不得删除。
+
+首次发布由 `publishArticle` 产品命令负责：在同一事务完成公开编号、Article 运行时关系、必要统计/计数初始化以及 Public 选择，再发出提交后的缓存、搜索等效果。`SelectPublic` 是该命令调用的内部选择步骤，不是另一条对用户开放的发布入口。再次发布只选择新 Snapshot 并更新公开读取结果。通用基座不另建发布记录实体；Doc 的 Release 历史由 Docs 工作流负责。不同文章类型发布后是否删除默认 WorkingCopy，由产品策略决定，存储模型不分叉。
+
+产品需要“新建并立即发布”时，使用一次 `createAndPublishArticle` 对外命令：在一个 Receipt 和一个事务内创建 Article / WorkingCopy、保存提交的完整内容、校验可发布条件、固定 Snapshot 并完成首次发布。它复用内部创建、保存、固定和公开选择步骤，不串联两次对外命令；任何一步失败，整笔创建与发布回滚。先建草稿、稍后发布仍走 `createArticle` 与 `publishArticle` 两次明确的用户操作。
+
+## 3. 内容 Diff
+
+Diff 比较两份完整文章状态，输入可以是两份 Snapshot，也可以是当前 WorkingCopy 与一份 Snapshot。结果分别报告正文块、标题及其他字段、tag ID 增减、封面画布与成品图片的变化。正文 Diff 比较 Plate JSON；Markdown、HTML、目录、纯文本和缩略图是同份正文的固定输出，不单列为用户编辑的改动。Doc 目录变化属于目录 Diff。
+
+正文比较使用实际保存的 Plate JSON；已有节点 ID 原样保留，用于定位可识别的块。JSON 对象键顺序不算内容差异，数组顺序要保留；缺少节点 ID 的内容仍可保存，Diff 可以退化为按位置比较。**不需要 `bodyHash`、`content_hash` 或 `ContentFingerprint` 作为基座字段或独立概念。** 不按语义 hash 共用原始正文 JSON。可信正文入口负责校验正文并生成完整 Body Document；空正文也由该入口生成标准空输出。需要逐次查看每次自动保存由谁改了什么时，应另定服务端编辑历史，不能从最新 WorkingCopy 倒推。
+
+## 4. 目标数据结构
+
+上面的模型表是 `cms` schema 结构概览，不作为迁移 DDL。紧接的“新增及替换表 DDL”按每张表列出完整列/类型/default、主外键、`ON DELETE`、`NOT NULL`、`UNIQUE`、`CHECK`、索引、同 Article 校验，以及公开读路径对应的索引；它是迁移实现和评审的逐表合同。目标环境为空 Article 聚合，不设计旧数据映射。日期时间字段使用 `timestamptz`，Ecto 使用 `:utc_datetime`。主键与引用均为数据库 UUID，作者和资产 ID 沿用各自实体的主键类型。
+
+`article_working_copies` 与 `article_snapshots` 的 Body Document 使用相同字段：`body_json text NOT NULL`、`body_schema_version integer NOT NULL`、`body_markdown text NOT NULL`、`body_html text NOT NULL`、`body_markdown_toc jsonb NOT NULL`、`body_plain_text text NOT NULL`、`body_thumbnail jsonb NOT NULL`，以及按公开读取需要保存的 `body_xml/body_rss text NULL`。同一行的所有字段必须来自同一次可信正文生成；Snapshot 复制整组字段，不按正文 hash 去重或重算输出。空正文也保存一份规范的空 Plate JSON 及对应的空输出。
+
+| 表 | 关键字段与约束 | 职责 |
+| --- | --- | --- |
+| `articles` | `id`、`thread`、稳定作者及现有运行时身份 | 一篇文章的稳定身份；不放可编辑正文。 |
+| `article_working_copies` | `id uuid PK`、`article_id uuid NOT NULL`、`scope_kind text NOT NULL`、`scope_id uuid NOT NULL`、`revision bigint NOT NULL DEFAULT 1 CHECK (revision > 0)`、`title/digest text NOT NULL DEFAULT ''`、`slug text NULL`、上文所列完整 Body Document 字段、`cover_edit_working_copy_id uuid NULL UNIQUE`、`created_by_id/updated_by_id`、`inserted_at/updated_at`；`UNIQUE (article_id, scope_kind, scope_id)` | 一份当前可编辑的完整文章状态。`scope_kind` 为 `default` 或中性的 `workspace`；默认空间 `scope_id = article_id`，由数据库 CHECK 保证。 |
+| `article_working_copy_tags` | `(working_copy_id, tag_id) PK`，分别引用 WorkingCopy 与标签 | 这篇文章自己设置的 tag ID 集合。 |
+| `cover_edit_working_copies` | `id uuid PK`、`format_version integer NOT NULL`、`canvas_width/canvas_height integer`、`light/dark jsonb`、`inserted_at/updated_at` | 独立可编辑的封面画布。`light/dark` 存背景设置与有序图层；不得让两份 ArticleWorkingCopy 共用此可变行。 |
+| `article_snapshots` | `id uuid PK`、`article_id uuid NOT NULL`、`source_working_copy_id uuid NOT NULL`（仅历史身份，不设指向可删除 WorkingCopy 的 FK）、`source_revision bigint NOT NULL`、`title/digest`、`slug`、上文所列完整 Body Document 字段、`cover_edit_snapshot_id uuid NULL`、`captured_by_id`、`captured_at`、`causation_command_id`；`UNIQUE (source_working_copy_id, source_revision)` | 不可变的完整文章内容与全部正文输出；原样保留 Plate 节点 ID。来源 WorkingCopy 日后删除，不影响 Snapshot。 |
+| `article_snapshot_tags` | `(snapshot_id, tag_id) PK`，分别引用 Snapshot 与标签 | 固定时复制的文章 tag ID 集合。 |
+| `cover_edit_snapshots` | `id uuid PK`、`format_version`、`canvas_width/canvas_height`、`light/dark jsonb`、`captured_at` | 不可变的完整封面画布。背景的实际配置复制进 JSON，不能只存可修改背景行的 ID。 |
+| `article_publics` | `article_id uuid PK`、`snapshot_id uuid NOT NULL`、`published_by_id NOT NULL`、`published_at timestamptz NOT NULL`；公开列表投影 `title/digest text NOT NULL`、`slug text NULL`、`plain_text text NOT NULL`、`thumbnail jsonb NOT NULL` | 当前公开选择及可重建的内容投影；`snapshot_id` 是唯一线上内容指向，不在 Snapshot 上设置 `is_public`。首次发布前无行。 |
+| `article_asset_refs` | `id`、`community_id NOT NULL`、`asset_id NOT NULL`、`working_copy_id NULL`、`snapshot_id NULL`、`usage`、必要定位字段；CHECK 恰有一个 owner | 记录 Article 内容 owner 对既有 Asset 的引用；外部 URL 仍是普通内容值。按 owner 和 `asset_id` 建索引。 |
+
+各 thread 的专属内容字段继续用以 `working_copy_id` 或 `snapshot_id` 为主键的强类型扩展表；B0 逐 thread 固定字段，不能只凭“例如 Doc 的 subtitle”拆迁移。封面成品图片的选择也随对应的 Article 内容固定；CoverEdit 的画布 JSON 不替代成品图片。公开详情沿 `ArticlePublic.snapshot_id → ArticleSnapshot` 读取完整 Body Document 和专属内容；公开列表直接读 Public 中从该 Snapshot 复制的 `title/digest/slug/plain_text/thumbnail`，并从 `Article.active_at` 读取运行时排序时间。`active_at` 不属于 WorkingCopy、Snapshot 或 Public。公开读取画布时沿 `ArticlePublic.snapshot_id → ArticleSnapshot.cover_edit_snapshot_id` 获取；读取封面成品时沿对应的强类型 Snapshot / 资产引用获取。不另建一套公开封面内容实体。
+
+Public 内容投影只在选定 Snapshot 的事务内从该 Snapshot 重建。公开列表对 Article 的 `active_at` 排序，B0 按真实查询确定 `articles(active_at, id)` 等索引；Public 的 `snapshot_id` 建引用索引。修改 Article 运行时活跃时间的命令（目前包括评论创建路径）只更新 Article，不回写 Public。发布或运行时排序更新提交后，经现有 Outbox 边界失效相关公开列表、详情、Press/Search 缓存；事务失败不得提前失效或暴露半份投影。GraphQL 可以保持读取形状，但不把 Public 投影当成另一份可编辑内容。
+
+文章内容只保存设置的 tag ID；保存时调用现有标签域校验其身份和可用性，不引入新的 Community 分组字段或 Binding 标签写入口。已有 Binding 标签继续由 Binding 工作流读写，不因 ArticleSnapshot 的创建而改写。tag 名称等定义仍从标签实体读取，Snapshot 只固定 ID 集合。
+
+Article 基座只维护内容 owner 到既有 Asset ID 的引用关系：保存时按正文、成品封面和 CoverEdit 中的引用更新 WorkingCopy 引用行；patch 未传 `assetRefs` 时保留已有附件引用，显式传 `[]` 时清空附件，`coverEdit: null` 只清除该画布引用。`forkSnapshot` 与 `FreezeWork` 为各自 owner 建立独立引用行。引用行可以指向同一个 Asset；不同 owner 不共用引用行。上传、对象存储和 Asset 文件清理由资产域负责，不属于本基座命令。
+
+数据库至少约束：`scope_kind` 只允许 `default/workspace`，默认 scope 的 `scope_id = article_id`；同一文章和 scope 只能有一份 WorkingCopy；CoverEditWorkingCopy 只被一份 ArticleWorkingCopy 引用；Snapshot 和 Public 的 Article 身份相符；正文 `body_schema_version` 与封面 `format_version` 大于零。B0 的逐表 DDL 清单必须给 `article_working_copies.article_id/cover_edit_working_copy_id`、`article_snapshots.article_id/cover_edit_snapshot_id`、`article_publics.article_id/snapshot_id`、tag 和资产 owner 补齐精确 FK 与删除规则；`article_asset_refs` 还需固定 `community_id`、受支持的 `usage` 值及“恰有一个 owner”的 CHECK。为 Public 的 `snapshot_id`、Snapshot 的 `cover_edit_snapshot_id`、资产的 `asset_id` 和 owner、tag 的 `tag_id` 建索引；清理扫描使用 `article_snapshots(captured_at, id)`。Snapshot 内容表禁止 UPDATE；清理不为候选时间增设表或修改 Snapshot 内容。B0 逐表确认：`article_working_copies` 父行的内部从属引用在删除父行前已由 Ecto 删除，或由 FK `ON DELETE CASCADE` 清理；父行删除步骤不应再因内部引用失败。新增内部从属表时必须同步更新此删除顺序与验收。
+
+## 5. 命令边界
+
+所有对外写命令使用现有 Command Receipt 幂等边界；重复 `command_id` 先返回已确认结果，再校验新请求的 WorkingCopy `revision`。通用 Article 基座的命令不认识 Docs 队列 ID、队列成员或 `queue_revision`。Article → 涉及的 WorkingCopy（按 ID 排序）→ Public → Snapshot（按 ID 排序）→ tag、CoverEdit、资产等从属行，是**取得 Gate / Lifecycle 等准入所需锁之后的内容锁局部顺序**；每条命令只取得自己实际需要的锁，但不得倒序。仅持有 WorkingCopy 或 Snapshot ID 时，可先无锁查出 `article_id`，锁住 Article 后复核归属，再锁目标行。清理也先锁 Article，再锁候选 Snapshot 并检查引用。B0 必须为每条对外命令（包括新建并立即发布）列出含 advisory lock、Community、Binding、ArticleLifecycle、Gate 准入及内容行的完整加锁顺序，不能把这里的局部顺序当成全事务锁序。
+
+下表只列业务参数。每个对外命令另接收服务端认证得到的 `actor`（当前 User）及请求的 `commandId`；不得从正文 patch 或客户端传入的 `created_by_id` 等字段决定操作人。Receipt 新命令在同一事务内完成 Gate 检查、Lifecycle 校验及内容写入；重试先恢复 Receipt，再执行新的 Gate/revision 校验。`created_by_id`、`updated_by_id`、`captured_by_id`、`published_by_id` 均记录该 User 的 ID；`Article.author_id` 仍是独立的作者身份，不能用最近编辑者覆盖。内部步骤沿用外层命令的 actor、授权和 `commandId`，不另开用户命令或 Receipt。
+
+| 对外动作 | Gate 目标与动作 | Lifecycle 与身份写入 |
+| --- | --- | --- |
+| 创建 Article 和默认 WorkingCopy | 所属 Community，`:create_article` | 建立 Article 的 draft Lifecycle；作者由创建流程确定，WorkingCopy 的 `created_by_id/updated_by_id` 为 actor。 |
+| 新建并立即发布 Article | 所属 Community，`:create_article` | 在同一命令内完成创建准入、可发布条件与发布限流校验、首次发布初始化和 Public 选择；`captured_by_id/published_by_id` 为 actor，失败全部回滚。 |
+| 保存 WorkingCopy | 所属 Article 及明确的 Community，`:edit` | Article 必须可编辑；只在内容实际变化时更新 `updated_by_id`。 |
+| 从 Snapshot 创建 WorkingCopy | Snapshot 所属 Article 及明确的 Community，`:edit` | 允许该 Article 的编辑者使用其未公开 Snapshot，不把公开阅读的 `:read` 当作编辑许可；新副本的 `created_by_id/updated_by_id` 为 actor。 |
+| 发布 Article | 所属 Article 及明确的 Community，`:publish` | Article 必须可发布；本事务中新建的 Snapshot 以 actor 填 `captured_by_id`，Public 以 actor 填 `published_by_id`。 |
+| 放弃 WorkingCopy | 所属 Article 及明确的 Community，`:edit` | 仅删除可编辑副本，不转换 Article Lifecycle，也不借用代表整篇入回收站的 Gate `:delete`。 |
+
+`FreezeWork` 与 `SelectPublic` 一样是内部步骤，不提供用户直接调用的入口，不自行执行 Gate 或建立 Receipt。`publishArticle` 调用它时沿用本事务已完成的 `:publish` 授权；将来若产品提供“保存一个版本”，须由对应对外命令先完成 `:edit` 授权，再在同一事务调用 `FreezeWork`。固定操作填 `captured_by_id`，不改变来源 WorkingCopy 的 `updated_by_id`。新合同切换后，旧 `:discard_draft` 不作为第二套“放弃副本”入口；整篇文章删除继续使用 Article Trash、Gate `:delete` 和 Lifecycle。
+
+| 对外命令 / 内部步骤（业务参数） | 结果 |
+| --- | --- |
+| `createArticle(community, thread, content)` | 经 Community Gate 授权后创建 Article 身份和默认 WorkingCopy；初始 `revision = 1`，正文由可信正文入口生成标准空 Plate JSON 及其空输出，记录 actor 为副本创建人及最近编辑者；返回 WorkingCopy。 |
+| `createAndPublishArticle(community, thread, content)` | 单个对外命令、单个 `commandId` / Receipt 和单个事务；经 `:create_article` 准入后，复用内部创建与保存步骤写入提交的完整内容（包括可信正文输出及缩略图），校验该 thread 的可发布条件和发布限流，固定 Snapshot，再执行首次发布初始化与内部 `SelectPublic`。失败不留下 Article、WorkingCopy、Snapshot、Public 或提交后的效果；不把 `createArticle` 和 `publishArticle` 当作两次对外请求串联。 |
+| `saveWorkingCopy(workingCopyId, revision, patch)` | 锁 Article → WorkingCopy，校验 `revision`；缺省字段保持原值，允许为空的标量或 `coverEdit: null` 表示清空，`tagIds: []` 表示清空文章 tag。`body` 变为空时仍由可信正文入口生成标准空 Body Document；正文变化时由同一入口生成并原子写入全部格式。保存后的完整内容决定该 WorkingCopy 的 Asset 引用，按上文更新。CoverEdit 修改与 Article `revision` 在同一事务提交。 |
+| `FreezeWork(id, revision)`（内部） | 由已授权的外层命令在当前事务内调用，复用其 Article / WorkingCopy 锁，不重复执行 Gate 或建立 Receipt；校验 revision，原样固定已保存的完整 Body Document 与其他文章内容；有 CoverEdit 时同时固定独立 CoverEditSnapshot，资产引用一起登记；`captured_by_id` 取外层命令 actor，相同来源/revision 重试返回原 Snapshot。 |
+| `forkSnapshot(snapshotId, targetScope)` | 锁 Article → Snapshot；从经 `:edit` 授权的 Snapshot 所属 Article 原样复制完整 Body Document、tag、专属内容及封面，创建新的可编辑 WorkingCopy、独立 CoverEditWorkingCopy 和 Asset 引用；新副本 `article_id` 取来源 Snapshot，`revision = 1`，`created_by_id/updated_by_id` 均取 actor。`targetScope` 必须是该 Article 的合法 `(scope_kind, scope_id)`；外层若指定 Article ID，必须与来源相同，否则返回 `snapshot_owner_mismatch`。不修改原 Snapshot 或 Public。目标 `(article_id, scope_kind, scope_id)` 已有 WorkingCopy 时返回 `scope_occupied`，同一命令重试由 Receipt 返回原结果。 |
+| `publishArticle(articleId, source, expectedPublicSnapshotId)` | 在完成准入所需锁与校验后，按内容锁局部顺序取得 Article → 来源 WorkingCopy（若有）→ Public → 来源 Snapshot（若有）。`source` 可为 `{workingCopyId, revision}` 或 `{snapshotId}`：前者校验 revision 和已保存内容的可发布条件，再在本事务调用内部 `FreezeWork` 固定当前版本；后者校验 Snapshot 属于该 Article 及其内容符合相同条件。随后校验当前 Public 的 `snapshot_id` 等于预期值（首次为 `null`），调用内部 `SelectPublic` 改写公开指向和 §4 投影。首次发布的编号、运行时初始化与 Public 选择同事务完成；任何校验或写入失败均回滚，发布人和时间记录在 Public，不创建通用发布历史表。 |
+| `deleteWorkingCopy(workingCopyId)` | 锁 Article → WorkingCopy；先以当前 `ArticlePublic` 行是否不存在判断 Article 无公开版，再检查它是否为无公开版 Article 的最后一份 WorkingCopy；通过后删除该可编辑副本的 tag、Asset 引用和 WorkingCopy 行，再删除其 CoverEditWorkingCopy；不额外生成恢复 Snapshot，也不删除 Article、Public 或已固定 Snapshot。删除与并发保存按锁串行，删除成功后同一 scope 可重新创建。 |
+
+事务约束：保存正文、文章字段、tag ID、CoverEdit 和资产引用同成同败；固定 Article 与 CoverEdit 两份 Snapshot 同成同败；Public 选择与首次发布初始化同成同败。ArticleSnapshot、CoverEditSnapshot、强类型 Snapshot 行及其 tag / 资产引用在固定后都不能被编辑；实现时由数据库写权限或触发器约束，而不只靠“没有 `updated_at`”。共同错误至少区分 `forbidden`、`not_found`、`revision_conflict`、`scope_occupied`、`invalid_body`、`invalid_tag`、`invalid_asset`、`snapshot_owner_mismatch`、`public_conflict`、`work_in_use`、`last_unpublished_work`；Command Receipt 的原结果优先于新的冲突检查。`deleteWorkingCopy` 不要求用户提供 `revision`，也不暗含回收站或多人编辑流程。基座不提前查询其他产品的活动引用。“无公开版”只以该 Article 的 `ArticlePublic` 行不存在为准；Lifecycle 负责 Gate 的状态准入，不替代 Public 存在性判断。无公开版 Article 的最后一份 WorkingCopy 返回 `last_unpublished_work`。在 §4 的内部引用清理前提下，只有删除 `article_working_copies` 父行这一步遇到 FK 拒绝时，才将整笔删除事务回滚并返回 `work_in_use`，无论外部约束名是什么；tag、资产、CoverEdit 等其他步骤的 FK 失败按各自的删除错误处理，不得误报为 `work_in_use`。两种条件同时成立时，基座先返回 `last_unpublished_work`；需要 `work_in_use` 优先的外层命令自行预检。业务读写与删除步骤使用 Ecto，失败归类以明确的父行删除步骤为界，不在业务代码中查询系统表或执行裸 SQL，也不把原始数据库异常暴露给客户端。
+
+“放弃这份编辑”使用 `deleteWorkingCopy`；“删除整篇文章”使用 Article Trash。无公开版 Article 只剩最后一份 WorkingCopy 时，界面的“删除文章”走 Trash，不调用 `deleteWorkingCopy` 留下空壳。后续产品若持有 WorkingCopy，必须建立阻止误删的 `RESTRICT` 外键；外层流程先解除引用，再调用 `deleteWorkingCopy`。若该产品需要 `work_in_use` 优先于 `last_unpublished_work`，其对外命令须在自己的事务中先检查活动引用，再调用基座删除；基座只处理父行删除步骤的外键拒绝，不识别队列 ID、审核状态或其他产品流程。
+
+清理不需要候选表：按 Snapshot 创建时间及产品保留策略选择候选。在上述锁序内，删除前核对当前 `ArticlePublic.snapshot_id`，以及接入后由其他产品正式持有的 Snapshot 引用（例如 Docs 审批/Release）；外部引用必须有可检查的引用记录，不能靠缓存判断。`source_working_copy_id` 仅保留来源身份，来源 WorkingCopy 已被删除不影响 Snapshot。Snapshot 的资产引用是它持有的子记录，不是独立的清理根；删除 Snapshot 时解除该 owner 的引用，受管理文件仅在所有 owner 引用消失后才进入资产清理。先删除 ArticleWorkingCopy 及其从属引用，再清理失去引用的可变 CoverEditWorkingCopy；CoverEditSnapshot 仅在没有 ArticleSnapshot 引用后清理。新增引用与清理并发时由 Snapshot 行锁与 FK 阻止删除仍被引用的 Snapshot。
+
+## 6. 实施边界与验收
+
+### 6.0 B0：可执行盘点与逐表 DDL
+
+本节冻结基座自己的新结构和事务规则。它不描述旧 Article 数据迁移；Article 聚合以空数据启动。下列时间列均为 PostgreSQL `timestamptz`，Ecto 为 `:utc_datetime`；`timestamps()` 使用 Repo 默认的 `timestamptz`。UUID 主键由应用生成；Accounts 用户主键沿用 `account.users.id` 的整数类型，Community 与 CommunityAsset 主键沿用现有整数类型。
+
+#### 逐 thread 内容及发布条件
+
+编辑保存允许空标题、空正文；只要求 Content Publisher 能校验并生成完整 Body Document。发布检查对 WorkingCopy 和 Snapshot 调用同一个 thread validator：标题 trim 后非空，Plate JSON 通过当前 schema 校验，并至少含一个有用户可见内容的节点（非空文本、图片、附件、嵌入或表格均算；空 paragraph 不算）。`digest`、`slug` 和下表 thread 字段均可为空；不要求封面、链接、版权或模板字段。Snapshot 保存时不重跑正文转换，但发布时仍检查它已固定的 JSON 和标题。失败返回 `invalid_body`，不得创建 Snapshot、Public 或运行时首次发布事实。
+
+| Thread | WorkingCopy / Snapshot 强类型字段 | 发布额外条件 |
+| --- | --- | --- |
+| `post` | `copy_right text NULL`、`link_addr text NULL`、`cover_url text NULL`、`cover_url_dark text NULL` | 通用标题与正文条件。 |
+| `blog` | `copy_right text NULL`、`link_addr text NULL`、`cover_url text NULL`、`cover_url_dark text NULL` | 通用标题与正文条件。 |
+| `changelog` | `copy_right text NULL`、`link_addr text NULL`、`cover_url text NULL`、`cover_url_dark text NULL` | 通用标题与正文条件。 |
+| `doc` | `subtitle text NULL`、`link_addr text NULL`、`template_key text NULL`、`cover_url text NULL`、`cover_url_dark text NULL` | Article 基座只检查通用内容条件；branch、队列、审核、目录与 Release 条件由 Docs 合同检查。 |
+| `ticket` | 无 Article typed extension；Ticket type/status/priority/dates/rank/source 属 Ticket 运行时域 | 仅 `type = user` 可作为公开 Ticket 发布；Ticket 命令还必须通过 Ticket Lifecycle、source/parent 约束及预览锚点检查。`worker` / `case` 不走 Article 内容发布命令。 |
+
+Doc 的两个成品封面字段与当前 `DocRevision` 一样，属于文章内容；不能因为 Docs 队列待后续梳理而漏出 Article Snapshot。Ticket 运行时字段不进入 WorkingCopy、Snapshot 或 ArticlePublic 内容投影。
+
+#### 新增及替换表 DDL
+
+下表是迁移必须逐列实现和评审的 DDL，不允许把这些列改成通用 JSON 扩展。所有 `FK` 的目标列、`ON DELETE`、默认值、唯一性、检查与索引均在表内列出；内部 owner 子表在 owner 删除时级联，外部正式引用必须使用 `RESTRICT`。
+
+| 表 | 列、类型、默认与空值 | 主外键、删除规则、约束与索引 |
+| --- | --- | --- |
+| `cms.cover_edit_working_copies` | `id uuid PK`；`format_version integer NOT NULL DEFAULT 1`；`canvas_width integer NULL`；`canvas_height integer NULL`；`light jsonb NOT NULL DEFAULT '{}'`；`dark jsonb NOT NULL DEFAULT '{}'`；`inserted_at/updated_at timestamptz NOT NULL DEFAULT now()` | `CHECK format_version > 0`；画布尺寸只能同时为空，或同时为正整数；不加独立资产 owner 表，画布资产引用归属 ArticleWorkingCopy。 |
+| `cms.article_working_copies` | `id uuid PK`；`article_id uuid NOT NULL`；`scope_kind text NOT NULL`；`scope_id uuid NOT NULL`；`revision bigint NOT NULL DEFAULT 1`；`title text NOT NULL DEFAULT ''`；`digest text NOT NULL DEFAULT ''`；`slug text NULL`；`body_json text NOT NULL`；`body_schema_version integer NOT NULL DEFAULT 1`；`body_markdown text NOT NULL DEFAULT ''`；`body_html text NOT NULL DEFAULT ''`；`body_markdown_toc jsonb NOT NULL DEFAULT '{"items":[]}'`；`body_plain_text text NOT NULL DEFAULT ''`；`body_thumbnail jsonb NOT NULL DEFAULT '{"version":1,"blocks":[]}'`；`body_xml/body_rss text NULL`；`cover_edit_working_copy_id uuid NULL`；`created_by_id/updated_by_id account.users.id NOT NULL`；`inserted_at/updated_at timestamptz NOT NULL DEFAULT now()` | `article_id → articles(id) ON DELETE CASCADE`；`cover_edit_working_copy_id → cover_edit_working_copies(id) ON DELETE RESTRICT`；actor FKs → `account.users(id) ON DELETE RESTRICT`；`UNIQUE(article_id,scope_kind,scope_id)`；`UNIQUE(article_id,id)` 作复合 owner FK 目标；`UNIQUE(cover_edit_working_copy_id)` 部分索引；`CHECK scope_kind IN ('default','workspace')`；`CHECK scope_kind <> 'default' OR scope_id = article_id`；`CHECK revision > 0 AND body_schema_version > 0`；按 `article_id` 索引。 |
+| `cms.article_working_copy_tags` | `working_copy_id uuid NOT NULL`；`tag_id bigint NOT NULL` | 复合主键 `(working_copy_id,tag_id)`；`working_copy_id → article_working_copies(id) ON DELETE CASCADE`；`tag_id → community_tags(id) ON DELETE RESTRICT`；反向索引 `(tag_id,working_copy_id)`。写入前由 Article 所属 Community 与 thread 的 tag domain 校验 ID。 |
+| `cms.article_working_copy_posts`、`_blogs`、`_changelogs` | `working_copy_id uuid PK`；`copy_right/link_addr/cover_url/cover_url_dark text NULL`；`inserted_at/updated_at timestamptz NOT NULL DEFAULT now()` | `working_copy_id → article_working_copies(id) ON DELETE CASCADE`；触发器保证扩展表名对应的 thread。 |
+| `cms.article_working_copy_docs` | `working_copy_id uuid PK`；`subtitle/link_addr text NULL`；`template_key text NULL`；`cover_url/cover_url_dark text NULL`；`inserted_at/updated_at timestamptz NOT NULL DEFAULT now()` | `working_copy_id → article_working_copies(id) ON DELETE CASCADE`；触发器保证 owner `thread = 'doc'`。 |
+| `cms.cover_edit_snapshots` | `id uuid PK`；`format_version integer NOT NULL`；`canvas_width/canvas_height integer NULL`；`light/dark jsonb NOT NULL`；`captured_at timestamptz NOT NULL`；`inserted_at timestamptz NOT NULL DEFAULT now()` | `CHECK format_version > 0`；画布尺寸同 CoverEditWorkingCopy；无 `updated_at`；数据库触发器拒绝 UPDATE。 |
+| `cms.article_snapshots` | `id uuid PK`；`article_id uuid NOT NULL`；`source_working_copy_id uuid NOT NULL`（历史身份，无 FK）；`source_revision bigint NOT NULL`；`title/digest text NOT NULL`；`slug text NULL`；全部 Body Document 列与 WorkingCopy 同类型且同组非空规则；`cover_edit_snapshot_id uuid NULL`；`captured_by_id account.users.id NOT NULL`；`captured_at timestamptz NOT NULL`；`causation_command_id uuid NOT NULL`；`inserted_at timestamptz NOT NULL DEFAULT now()` | `article_id → articles(id) ON DELETE CASCADE`；`cover_edit_snapshot_id → cover_edit_snapshots(id) ON DELETE RESTRICT` 且唯一；actor FK `ON DELETE RESTRICT`；`UNIQUE(source_working_copy_id,source_revision)`；`UNIQUE(article_id,id)`；`CHECK source_revision > 0 AND body_schema_version > 0`；索引 `(article_id,captured_at,id)`；数据库触发器拒绝 UPDATE。 |
+| `cms.article_snapshot_tags` | `snapshot_id uuid NOT NULL`；`tag_id bigint NOT NULL` | 复合主键 `(snapshot_id,tag_id)`；Snapshot FK `ON DELETE CASCADE`；Tag FK `ON DELETE RESTRICT`；反向索引 `(tag_id,snapshot_id)`；触发器拒绝 UPDATE。 |
+| `cms.article_snapshot_posts`、`_blogs`、`_changelogs` | `snapshot_id uuid PK`；`copy_right/link_addr/cover_url/cover_url_dark text NULL`；`inserted_at timestamptz NOT NULL DEFAULT now()` | Snapshot FK `ON DELETE CASCADE`；owner thread 触发器；触发器拒绝 UPDATE。 |
+| `cms.article_snapshot_docs` | `snapshot_id uuid PK`；`subtitle/link_addr text NULL`；`template_key text NULL`；`cover_url/cover_url_dark text NULL`；`inserted_at timestamptz NOT NULL DEFAULT now()` | Snapshot FK `ON DELETE CASCADE`；owner thread 触发器；触发器拒绝 UPDATE。 |
+| `cms.article_publics` | `article_id uuid PK`；`snapshot_id uuid NOT NULL`；`published_by_id account.users.id NOT NULL`；`published_at timestamptz NOT NULL`；`title/digest/plain_text text NOT NULL`；`slug text NULL`；`thumbnail jsonb NOT NULL`；`inserted_at/updated_at timestamptz NOT NULL DEFAULT now()` | `article_id → articles(id) ON DELETE CASCADE`；复合 FK `(article_id,snapshot_id) → article_snapshots(article_id,id) ON DELETE RESTRICT`；actor FK `ON DELETE RESTRICT`；索引 `snapshot_id`。不得保留 `revision_id/body_hash/active_at/publication_version/visible` 等旧投影字段。 |
+| `cms.article_asset_refs` | `id bigint PK`；`community_id bigint NOT NULL`；`asset_id bigint NOT NULL`；`working_copy_id uuid NULL`；`snapshot_id uuid NULL`；`usage text NOT NULL DEFAULT 'inline'`；`block_id/block_type/title/alt/source text NULL`；`position integer NULL`；`meta jsonb NOT NULL DEFAULT '{}'`；`inserted_at/updated_at timestamptz NOT NULL DEFAULT now()` | Community FK `ON DELETE CASCADE`；Asset FK `ON DELETE RESTRICT`；WC/Snapshot owner FK `ON DELETE RESTRICT`；`CHECK num_nonnulls(working_copy_id,snapshot_id)=1`；`CHECK usage IN ('inline','cover','cover_dark','attachment','embed')`；`CHECK position IS NULL OR position >= 0`；owner 与 `asset_id` 索引；owner + `position` 索引；每个 owner 的 `cover/cover_dark` 部分唯一索引。最终结构不得保留 `body_draft_id/revision_id`。 |
+
+**跨行同属约束：**`article_publics(article_id,snapshot_id)` 复合 FK 保证 Public 只能选择同一 Article 的 Snapshot；WorkingCopy / Snapshot 均有 `(article_id,id)` 唯一目标，调用方锁 Article 后核对 owner；typed 扩展使用数据库触发器核对 `articles.thread`。资产引用保存时由服务端校验 `CommunityAsset.community_id = ArticleBinding.community_id`，并在引用写入事务中锁定 asset 与 owner；snapshot/working-copy 内容复制沿用已校验的同一 community。标签的 Community/thread 身份由现有 Tag domain 校验，不从 Binding tag 集合复制到文章自己的 tag 集合。删除 WorkingCopy/Snapshot 时先由 Ecto 删除其 asset refs，再删除 owner；资产本身的生命周期仍由 Assets 域负责。
+
+#### 公开读取、写入口与缓存
+
+| 读取面 | 连接与字段来源 | 必要索引 / 失效 |
+| --- | --- | --- |
+| GraphQL 与 Article path 列表（Post/Blog/Changelog） | `ArticleBinding.community_id` 限定 Community；`Article.thread` 限定 thread；`ArticlePublic.article_id` 必须存在；Lifecycle/Gate 决定读权限；公开标题、digest、plain text、thumbnail 从 `ArticlePublic`（由 `snapshot_id` 原子投影），详情内容和 thread 字段从所选 `ArticleSnapshot` 及强类型扩展取；排序只用 `Article.active_at`。 | Binding `(community_id,thread,inner_id)` 唯一；Public `snapshot_id` 索引；`articles(active_at DESC,id)`；发版和 active_at 变化后发出现有 Article cache / projection Outbox 失效。 |
+| Community、thread、tag 筛选 | Community/thread 来自 Binding + Article；Community tag 筛选仍连接 `article_binding_tags`，不得用 ArticleSnapshot tag 替代；文章自设 tag 详情从 `article_snapshot_tags` 取。 | `article_bindings(community_id,thread,inner_id)`；Binding-tag 的 `(tag_id,article_binding_id)`；Snapshot-tag 的 `(tag_id,snapshot_id)`。 |
+| GraphQL 详情 / Press | Public pointer → Snapshot Body Document/typed extension/cover asset refs；评论、互动、统计、作者和运行时状态仍用稳定 Article；公开读不能回落到 WorkingCopy，不能重算 body 输出。 | `article_publics(article_id PK)`、`article_publics(snapshot_id)`、`article_snapshots(article_id,captured_at,id)`；发布及 active_at 变化后走已有 durable cache/projection Outbox，事务提交前不发失效。 |
+| Editor / importer / background maintenance | Editor 读写指定 WorkingCopy；importer 必须走相同 Content Publisher + saveWorkingCopy；public rebuild/Press/Search/mention jobs 只从 Public-selected Snapshot 取已固定输出。 | WorkingCopy `(article_id,scope_kind,scope_id)` 唯一；资产 `(working_copy_id,position)`、`(snapshot_id,position)`；Snapshot `(captured_at,id)`。 |
+
+写入口盘点结果：普通 Post/Blog/Changelog 当前经 `CMS.Articles.Commands`、thread 专属 GraphQL create/update/Draft mutation、Content Publisher/importer 和 `Articles.Workflow`；Ticket 当前经 `CMS.Tickets` 的 Ensure/Save/Publish 与 Ticket Lifecycle，不能从普通 Article Gate 推断它已切换；Doc 当前经 `CMS.Docs` / `CMS.DocTree` branch 工作区与 Release，其队列合同留待 Article 基座验收后单独重写。B4 必须切换普通 Article 的 GraphQL、编辑器、导入、公开读取和相关任务，清除这些 Article 路径的旧 Draft/Revision/BodySnapshot 读写、回退和任务路径，不只新增 WorkingCopy facade。此合同不改写 Docs 队列操作。`FreezeWork` 和 `SelectPublic` 没有 GraphQL resolver，不作为客户端命令。
+
+#### 首次发布完整事务与锁顺序
+
+发布事务统一由 `createAndPublishArticle` 或 `publishArticle` 的单一外层 Receipt 持有；以下是新基座的目标顺序。创建命令在 Article 尚不存在时不取得 Article advisory lock；对既有 Article 的 Publish 使用 `MutationLock` 的相同 `{community,thread,article_id}` advisory key。所有适用的 Community Lifecycle 行按 `community_id` 升序 `FOR SHARE`，然后 Gate admission；之后才取得 Article 内容行锁。任何失败都让 Repo transaction rollback，命令结果只在 Receipt 确认完整提交后可见。
+
+1. Receipt 用 `command_id` 判重；已完成重试直接返回原确认结果。
+2. 对创建：锁目标 Community 行并经 Gate 执行 `:create_article`；对既有文章：先锁 Article 全部 Binding 对应的 CommunityLifecycle 行（ID 升序），再进入 Article Gate。Article Gate 在检查 `:publish` 时取得 Article advisory transaction lock，随后加载并校验 canonical Article、Community Binding、ArticleLifecycle 和 Review facts。锁顺序不得先持 Article/Binding 再倒锁 CommunityLifecycle。
+3. 创建路径在已授权的 Community 下建立 Article、Binding、draft Lifecycle 与默认 scope；发布路径锁/复核目标 Community Binding。随后锁 Article 行；ArticleLifecycle 复用 Gate 装载事实并在内容事务内锁定后校验状态与预期版本。
+4. 按 ID 升序锁目标 WorkingCopy（若来源是 WC）、ArticlePublic 及来源 Snapshot（若来源是 Snapshot）；复核所有 owner 的 `article_id`；锁 tag、CoverEdit 和资产行。
+5. 校验已保存快照内容和 thread 发布条件；检查预期 `ArticlePublic.snapshot_id`，首次必须为 `NULL`；执行发布限流的事务内预检。
+6. 若来源是 WorkingCopy，创建 ArticleSnapshot、CoverEditSnapshot、typed Snapshot、tag 与独立资产引用；若来源是现有 Snapshot，则只复用该不可变行，不重写其内容。
+7. 首次发布分配 `ArticleBinding.inner_id`（锁 Community counter）；初始化 `ArticleStats`；更新 `Article.active_at`（仅原值为空时）；完成 ArticleLifecycle `draft → published`。Ticket 的 user 类型路径还需先通过 Ticket 自己的 state/source/preview-anchor 约束并更新 Ticket Lifecycle；Docs 的 branch Release 与队列批准步骤不属于本基座。
+8. 在同一事务写入/更新 `ArticlePublic(article_id,snapshot_id,published_by_id,published_at,projection...)`；若用户输入携带 ArticleBinding 社区标签，仅交由 Binding 工作流单独校验/写入，不把它混入 ArticleSnapshot tag。
+9. 首次发布在同一事务更新 Community/author 计数、`CMS.Gate.RateLimit.Publish` 记录和 durable Outbox（cache、projection、mentions）；已有发布只记录对应变更效果。Outbox 消费、通知和 Press/Search/CDN 刷新发生在提交之后。
+10. 任一步骤失败时回滚 Article、Binding、编号 counter、Lifecycle、Stats、Snapshot、Public、计数、限流和 Outbox；不得产生“半首发”，也不得提交后效果。
+
+当前普通 Article 实现的实际调用路径由 `Commands.Publish → Gate → Articles.Workflow → MutationLock.lock_community_admission → Article → Draft → Lifecycle → Public check → Binding/Numbering → active_at → Revision/Public/Stats/Lifecycle/Review/Binding tags → delete Draft → Outbox` 组成；首次发布的计数和限流在 Workflow finalize 中，cache/projection/mentions 通过事务内 Outbox。B4 重写后保留其运行时职责，但将 Draft/Revision 替换为 WorkingCopy/Snapshot；不能把普通 `Publish` 路径套到 Ticket 或 Docs 队列而绕过其专属 Gate/Lifecycle。
+
+#### Content Publisher 与命令输入输出
+
+| 命令 | 输入 | 成功结果 / 一致性 |
+| --- | --- | --- |
+| `createArticle` | `{community, thread, title?, digest?, slug?, bodyBag?, tagIds?, copyRight?, linkAddr?, subtitle?, templateKey?, coverUrl?, coverUrlDark?, coverEditInfo?, assetRefs?}` + 服务端 actor、`commandId`；`copyRight` 用于 Post/Blog/Changelog，`subtitle/templateKey` 用于 Doc | GraphQL 返回 `ArticleWorkingCopy`，关键字段为 `{id, articleId, scopeKind, scopeId, revision}`；创建 Article 身份和默认 WorkingCopy（`revision: 1`），身份、Binding、Lifecycle、强类型 thread 字段和副本原子提交，Article 作者与副本操作者分开记录。 |
+| `saveWorkingCopy` | `{articleId, workingCopyId, community, revision, patch}`；包含 `bodyBag?`、上述 thread 字段与 CoverEdit/资产引用；patch 字段省略即不改，`tagIds: []` 清空 tag，`coverEditInfo: null` 清空画布 | GraphQL 返回保存后的 `ArticleWorkingCopy`（含推进后的 `revision`）；Content Publisher 由 Plate JSON 生成 JSON/Markdown/HTML/TOC/plain text/thumbnail 与读取需要的 XML/RSS；所有正文输出、文章字段、tag、CoverEdit、资产引用和 revision 同事务更新。 |
+| `forkSnapshot` | `{snapshotId, targetScope}` + 服务端 actor、`commandId` | GraphQL 返回 `ArticleWorkingCopyResult`，结果字段为 `{workingCopy: ArticleWorkingCopy}`；副本 `revision = 1`，其 Article、内容、tag、CoverEdit 和资产引用与来源 Snapshot 隔离。 |
+| `publishArticle` | `{articleId, source: {workingCopyId, revision} \| {snapshotId}, expectedPublicSnapshotId}` + 服务端 actor、`commandId` | GraphQL 返回 `ArticlePublicSnapshot`，关键结果字段为 `{articleId, snapshotId, publishedAt}`；Public 指向本事务确认的 Snapshot。 |
+| `createAndPublishArticle` | `createArticle` 所有内容字段 + actor/单一 `commandId` | GraphQL 返回 `ArticlePublicSnapshot`，关键结果字段为 `{articleId, snapshotId, publishedAt}`；只一个 Receipt / 一个事务；正文生成、可发布检查或发布步骤失败则全回滚。 |
+| `deleteWorkingCopy` | `{articleId, workingCopyId, community}` + 服务端 actor、`commandId` | 不接收 `revision`；删除可放弃的 WorkingCopy 和内部从属引用，GraphQL 返回 `DoneState {done, commandId}`；Article、Public、Snapshot 均保留。 |
+
+通用 Article 写命令接受 `copyRight/linkAddr/coverUrl/coverUrlDark`；Doc 另接受 `subtitle/templateKey`，不适用 thread 的字段会被该 thread 的强类型 Store 忽略。WorkingCopy 与 Snapshot 通过 `threadFields` 读取对应强类型扩展的字段集合；数据库不使用通用 JSON 扩展存储它们。
+
+Content Publisher 输入以完整 Plate JSON 为正文唯一来源；服务端不得接受客户端独立提供的 Markdown/HTML/TOC/plain text/thumbnail 作为并列事实。缩略图由同一可信 publisher 生成。编辑器与 importer 只提交目标 WorkingCopy、`revision` 和内容 patch；Asset 只作为内容 owner 引用既有资产。外部 URL 仍是普通内容值。WorkingCopy 的 revision 冲突映射为 `article_working_copy_revision_conflict` 并由 Content Publisher 返回 409；不得泄漏数据库异常。
+
+GraphQL 对外字段固定为 `createArticle`、`saveWorkingCopy`、`forkSnapshot`、`publishArticle`、`createAndPublishArticle`、`deleteWorkingCopy`；其 `commandId` 进入同一后端 Receipt。`createArticle` 创建 Article 和默认 WorkingCopy；`saveWorkingCopy` 输入目标 `workingCopyId`、当前 `revision` 与内容 patch，返回保存后的 WorkingCopy；`forkSnapshot` 的响应包含 `workingCopy` 字段；`deleteWorkingCopy` 不接收 revision。`publishArticle.source` 为 `{workingCopyId, revision}` 或 `{snapshotId}` 二选一，并接收 `expectedPublicSnapshotId`（首次为 null）。B4 删除普通 Post/Blog/Changelog 的 thread 专属 create/update/Draft mutation 和旧 Revision 发布 payload，不保留 Article 兼容 resolver；Docs 队列 mutation 按其后续重写合同处理。`FreezeWork`、`SelectPublic`、资产引用行 ID 都不暴露成 GraphQL 操作输入。
+
+六个 GraphQL 字段对应的 CMS facade、Command Receipt operation 和确认载荷固定如下；Receipt 不保存正文快照，只保存重建确认结果所需的身份与并发事实：
+
+| GraphQL / facade 动作 | Receipt operation | 确认结果字段 |
+| --- | --- | --- |
+| `createArticle` / `articles_create_article` | `article_create_article` | `article_id`, `working_copy_id`, `command_id` |
+| `saveWorkingCopy` / `articles_save_working_copy` | `article_save_working_copy` | `working_copy_id`, 推进后的 `revision`, `command_id` |
+| `forkSnapshot` / `articles_fork_snapshot` | `article_fork_snapshot` | `article_id`, `working_copy_id`, `command_id`；重放为 `{workingCopy}` |
+| `publishArticle` / `articles_publish_article` | `article_publish_article` | `article_id`, `snapshot_id`, `published_by_id`, `published_at`, `command_id` |
+| `createAndPublishArticle` / `articles_create_and_publish_article` | `article_create_and_publish_article` | `article_id`, `working_copy_id`, `snapshot_id`, `command_id` |
+| `deleteWorkingCopy` / `articles_delete_working_copy` | `article_delete_working_copy` | `article_id`, `working_copy_id`, `command_id` |
+
+1. **B0：冻结可执行合同。**盘点各 thread 的内容字段、CoverEdit、资产、GraphQL/Press/列表/详情读取者与所有写入口；公开列表逐项列出封面、tag、Community 筛选等实际字段的来源（Public 投影、Snapshot 或 Binding）、连接条件、索引与缓存失效。逐 thread 固定可发布条件，明确空标题、空正文及专属字段在编辑保存和公开发布时的不同规则，且 WorkingCopy 与已有 Snapshot 两种发布来源使用同一规则。产出逐表 migration 清单，逐列写明类型、默认值、FK、`ON DELETE`、`NOT NULL`、`UNIQUE`、`CHECK`、索引和同 Article 校验，列出每个 thread 强类型扩展的确切字段。首次发布清单同时覆盖 `publishArticle` 和单命令 `createAndPublishArticle`，逐步列明公开编号、Binding/运行时关系、Lifecycle、统计与计数、限流、Public 选择、Outbox 效果的负责命令、表、完整加锁顺序及失败回滚；完整顺序须包括 advisory lock、Community、Binding、ArticleLifecycle 与内容行，不能只采用 §5 的局部内容锁序。清单完成前不得拆分首次发布命令。同时固定本节对外命令的 actor/Gate/错误及 GraphQL、Content Publisher 输入输出，明确由可信正文入口从同一 Plate JSON 生成缩略图及其他 Body Document 输出，在 `saveWorkingCopy` 和新建并立即发布的保存步骤中同事务写入；`FreezeWork` / `SelectPublic` 仅可由已授权的外层命令调用，并固定“无公开版”以 `ArticlePublic` 行不存在判定、内部从属引用的删除顺序、父行删除步骤的 FK 错误归类及整笔事务回滚。外部产品以 Ecto migration 的 `on_delete: :restrict` 保护其活动引用；接入时做行为测试：先创建引用，再调用 `deleteWorkingCopy`，断言返回 `work_in_use` 且 WorkingCopy、从属内容与引用均保持原样；解除引用后删除成功。另验证无外部引用、但内部 tag / 资产 / CoverEdit 从属数据完整的 WorkingCopy 可以删除。`Ecto.Multi` 或显式事务只负责组织步骤，不能假定它会自动把任意 FK 异常归类为父行删除失败；B0 须固定在该步骤捕获并映射错误的方法。无需约束名登记表、产品表预定义或基座的外部引用预查接口。B0 清单完成并评审前不开始 B1 的迁移或命令拆分。只记录新系统需要的行为，不设计旧数据转换。
+2. **B1：ArticleWorkingCopy。**实现默认与中性独立工作区、自动保存、CoverEditWorkingCopy、tag ID 和资产的一致事务。
+3. **B2：ArticleSnapshot / Public。**实现完整 Body Document 固定、CoverEditSnapshot、公开选择、首次发布初始化及快照引用保护；公开读取直接使用所选 Snapshot 已固定的正文输出。
+4. **B3：从 Snapshot 创建 WorkingCopy 与内容 Diff。**用同一 Article 的两份独立 WorkingCopy 验证保存互不影响、快照原样复制及内容比较；不实现 WorkingCopy 间直接合并，也不接入 Docs 队列。
+5. **B4：全链切换。**GraphQL、编辑器、导入、公开读取和后台任务一次性使用新合同；从空 Article 聚合启动，不保留旧读写路径或兼容逻辑。B0–B4 全部验收后，Docs 发布队列才开始接入这套通用能力。
+
+具名验收至少覆盖：
+
+- 同一 WorkingCopy 自动保存一百次，服务端仍只有一份当前可编辑内容；成功保存使 `revision` 单调推进，过期 `revision` 保存冲突且不能覆盖新内容。
+- 空正文保存完整的规范 Body Document；`coverEdit: null` 清空画布及该 WorkingCopy 对应的 Asset 引用，未传 `coverEdit` 不改封面；其他 owner 的引用行不受影响。
+- 空标题或空正文可以保存为 WorkingCopy；按 B0 的 thread 规则不满足可发布条件时，从该 WorkingCopy 或它已有的 Snapshot 发布均被拒绝，且不留下新的 Snapshot、Public 或首次发布数据。
+- 新建并立即发布只产生一个对外命令和一个 Receipt；完整内容与缩略图同事务保存、固定并公开。发布校验、限流或首次发布任一步失败时，Article、WorkingCopy、Snapshot、Public 和提交后效果均不留下；先建草稿再发布仍是两次明确操作。
+- 从同一 Snapshot 创建两份 WorkingCopy 后，标题、正文、tag、封面画布分别编辑互不影响；两份 CoverEditWorkingCopy ID 不同。
+- 已验证正文图片 X 与封面成品 Y 的引用在 `saveWorkingCopy` 中随最终内容全量更新；`forkSnapshot` / `FreezeWork` 各为新 owner 建立独立引用行，移除一份 WorkingCopy 的 X 不影响仍引用 X 的另一份内容。
+- 固定后再编辑来源，ArticleSnapshot 的 Plate JSON、Markdown、HTML、目录、纯文本、缩略图、CoverEditSnapshot 和资产仍保持原样。
+- 同一正文、不同 Plate 节点 ID 的两份 Snapshot 各自保留原始 JSON；不因文本相同而共用正文行。
+- 导入或转换的正文可以保存；已有的 Plate 节点 ID 在 Snapshot 和新建 WorkingCopy 中保持原样，缺少 ID 的正文仍可做内容 Diff。
+- 仅更改封面画布会产生封面 Diff；改变正文时 WorkingCopy 的全部正文输出一起更新，旧 Snapshot 的正文和输出不受影响；生成输出失败则整次保存回滚。
+- 公开列表的标题、摘要、纯文本、缩略图来自 `ArticlePublic.snapshot_id` 所选 Snapshot，排序时间只从 `Article.active_at` 读取；详情的正文各格式来自所选 Snapshot，读取旧 Snapshot 不重新生成正文输出；首次发布的公开编号与运行时初始化同事务完成，发布或活跃时间变更后缓存失效。
+- `publishArticle` 从当前 WorkingCopy 发布时先固定该 revision 的新 Snapshot，再把 Public 的 `snapshot_id` 指向它；直接发布已有 Snapshot 时只改变 Public 指向；两个路径都不覆盖 Snapshot，公开头不匹配时拒绝。
+- `forkSnapshot` 返回包含 `workingCopy` 的结果；目标 scope 已存在时返回冲突，同一 `command_id` 重试返回原 WorkingCopy；`deleteWorkingCopy` 不接收 `revision`，直接删除可编辑行后同一 scope 可重新创建，不额外固定恢复快照，已有 Public 和 Snapshot 不受影响。
+- 普通 Article 内容写入和发布的 GraphQL 命令固定为本基座六个名称；`saveWorkingCopy` 使用 `revision`，不接收 `expectedVersion`；旧 `createPost/createBlog/createChangelog`、对应 Draft/create/update/publish 字段以及旧 Revision 发布 payload 不存在。其他 Article 行为 mutation 继续按各自合同验收，Docs 队列 mutation 依其单独合同验收。
+- 未授权用户请求创建、保存、从 Snapshot 创建副本、发布或放弃副本时，外层命令的 Gate 拒绝且不留下任何内容或公开状态写入；`FreezeWork` 没有直接用户入口，不能绕过外层授权固定或公开内容。各步骤分别写入正确的 `created_by_id/updated_by_id/captured_by_id/published_by_id`，不改变 Article 作者。
+- `forkSnapshot` 创建的副本属于来源 Article，`revision = 1`，创建人和最近编辑者是当前 actor；来源与目标 Article 不同、目标 scope 已占用分别被拒绝。未公开 Snapshot 的复制按编辑权限检查，不依赖公开阅读权限。
+- 有外部 `RESTRICT` 引用、且不是无公开版 Article 最后一份的 WorkingCopy，删除时返回 `work_in_use`，本次删除的从属行变更全部回滚，原内容与引用均保留；解除引用后可以删除。若它同时也是无公开版 Article 的最后一份 WorkingCopy，基座先返回 `last_unpublished_work`；需要 `work_in_use` 优先的外层产品命令先检查自身活动引用。无公开版 Article 的最后一份 WorkingCopy 不能单独删除，删除整篇走 Article Trash；删除副本不推进 Article Lifecycle。
+- 无 `ArticlePublic` 行时删除最后一份 WorkingCopy 返回 `last_unpublished_work`；有 Public 行时，即使 Lifecycle 状态另有变化，也不以 Lifecycle 推断“无公开版”，操作准入仍由 Gate 决定。删除 WorkingCopy 父行命中外部 `RESTRICT` 约束时返回 `work_in_use` 并完整回滚；模拟 tag、资产或 CoverEdit 等其他步骤的 FK 失败时，不误报 `work_in_use`。
+- 接入外部产品时，用真实 `RESTRICT` 引用执行删除行为测试：不论约束名如何，父行删除失败均返回 `work_in_use`，WorkingCopy、从属内容和引用完整回滚；解除引用后删除成功。无外部引用但带有 tag、资产和 CoverEdit 从属数据的 WorkingCopy 可正常删除；其他步骤的 FK 失败按各自错误合同处理，不误报 `work_in_use`，也不向客户端暴露原始数据库异常。业务路径不执行裸 SQL。
+- 首次发布的编号、Binding/运行时关系、Lifecycle、统计与计数、Public 选择同事务完成；任一步失败则全部回滚且不发出已提交的公开效果。公开列表的封面、tag、Community 筛选按 B0 固定的读路径与索引取得正确结果。
+- 删除 WorkingCopy 不删除仍被公开版或后续产品正式引用的 Snapshot；清理与新引用并发时不能删除被引用的 Snapshot。

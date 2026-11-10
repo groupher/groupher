@@ -8,20 +8,19 @@ defmodule GroupherServer.CMS.Tickets.Mentions do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.PlateJSON
   alias CMS.ArtimentMentions
-  alias CMS.Model.{Article, ArticleBodySnapshot, ArticlePublic, ArticleRevision, Community}
+  alias CMS.Model.{Article, ArticlePublic, ArticleSnapshot, Community}
 
   def update(article_id, %Community{} = community, command_id) when is_binary(command_id) do
     with {:ok, %Article{thread: :ticket} = article} <-
            CMS.FrontDesk.article(article_id, mode: :internal),
          %ArticlePublic{} = public <- Repo.get(ArticlePublic, article.id),
-         %ArticleRevision{} = revision <- Repo.get(ArticleRevision, public.revision_id),
-         %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, revision.body_snapshot_id),
-         {:ok, ast} <- PlateJSON.decode(body.json),
+         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, public.snapshot_id),
+         {:ok, ast} <- PlateJSON.decode(snapshot.body_json),
          true <- match?(%DateTime{}, public.updated_at) do
       ArtimentMentions.update(
         %{type: :ticket, article_id: article.id},
         %{
-          published_revision_identity: "#{public.revision_id}:#{public.publication_version}",
+          published_revision_identity: "article-snapshot:#{snapshot.id}:#{public.published_at}",
           ast: ast,
           community_id: community.id,
           mentioned_at: public.updated_at

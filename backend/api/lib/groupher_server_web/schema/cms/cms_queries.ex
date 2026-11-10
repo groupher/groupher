@@ -20,6 +20,37 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
   alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
   object :cms_queries do
+    @desc "Editable WorkingCopies for one Article"
+    field :article_working_copies, non_null(list_of(non_null(:article_working_copy))) do
+      arg(:article_id, non_null(:id))
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Articles.article_working_copies/3)
+    end
+
+    @desc "Immutable Snapshots for one Article"
+    field :article_snapshots, non_null(list_of(non_null(:article_snapshot))) do
+      arg(:article_id, non_null(:id))
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Articles.article_snapshots/3)
+    end
+
+    @desc "One immutable Snapshot for an Article editor"
+    field :article_snapshot, :article_snapshot do
+      arg(:article_id, non_null(:id))
+      arg(:snapshot_id, non_null(:id))
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Articles.article_snapshot/3)
+    end
+
     @desc "Safe product ArticleLog for one readable Article"
     field :article_logs, non_null(:article_log_page) do
       arg(:article, non_null(:article_path_input))

@@ -68,9 +68,12 @@ seed_result =
       {:cont, {:ok, count}}
     else
       attrs = Factory.mock_attrs(:post, %{community_id: community.id, title: title})
+      attrs = Map.put(attrs, :body_bag, Factory.mock_body_bag(attrs.body))
 
-      case CMS.Articles.create(community, :post, attrs, author) do
-        {:ok, _article} -> {:cont, {:ok, count + 1}}
+      case CMS.Articles.create_and_publish_article(community, :post, attrs, author,
+             command_id: Ecto.UUID.generate()
+           ) do
+        {:ok, _published} -> {:cont, {:ok, count + 1}}
         {:error, reason} -> {:halt, {:error, {index, reason}}}
       end
     end

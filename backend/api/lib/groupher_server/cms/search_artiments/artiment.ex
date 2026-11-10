@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
           community_ref: String.t(),
           thread: thread(),
           article_id: Ecto.UUID.t(),
-          indexed_revision_id: Ecto.UUID.t() | nil,
+          indexed_snapshot_id: Ecto.UUID.t() | nil,
           title: String.t() | nil,
           plain_text: String.t(),
           plain_text_truncated: boolean(),
@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
           published_at: DateTime.t() | nil,
           inserted_at: DateTime.t(),
           updated_at: DateTime.t(),
-          content_hash: String.t(),
+          content_hash: String.t() | nil,
           schema_version: pos_integer()
         }
 
@@ -67,7 +67,6 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
     :upvotes_count,
     :inserted_at,
     :updated_at,
-    :content_hash,
     :schema_version
   ]
 
@@ -80,7 +79,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
                 :comments_count,
                 :replies_count,
                 :published_at,
-                :indexed_revision_id,
+                :indexed_snapshot_id,
+                :content_hash,
                 plain_text_truncated: false
               ]
 
@@ -119,7 +119,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
       "communityRef" => artiment.community_ref,
       "thread" => encode_thread(artiment.thread),
       "articleId" => artiment.article_id,
-      "indexedRevisionId" => artiment.indexed_revision_id,
+      "indexedSnapshotId" => artiment.indexed_snapshot_id,
       "title" => artiment.title,
       "plainText" => artiment.plain_text,
       "plainTextTruncated" => artiment.plain_text_truncated,
@@ -156,7 +156,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
          community_ref: attrs["communityRef"],
          thread: thread,
          article_id: attrs["articleId"],
-         indexed_revision_id: attrs["indexedRevisionId"],
+         indexed_snapshot_id: attrs["indexedSnapshotId"],
          title: attrs["title"],
          plain_text: attrs["plainText"] || "",
          plain_text_truncated: attrs["plainTextTruncated"] || false,

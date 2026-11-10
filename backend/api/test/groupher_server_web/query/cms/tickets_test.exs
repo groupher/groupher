@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Query.CMS.Tickets do
                community,
                ticket.id,
                "Reviewed for public release",
-               draft.draft_version,
+               draft.working_copy_revision,
                draft.lifecycle_version,
                draft.workflow_version,
                actor,
@@ -109,7 +109,7 @@ defmodule GroupherServer.Test.Query.CMS.Tickets do
 
     assert result["id"] == ticket.id
     assert result["publicationState"] == "PUBLISHED"
-    assert is_nil(result["draftVersion"])
+    assert is_nil(result["workingCopyRevision"])
     assert is_integer(result["lifecycleVersion"])
     assert is_integer(result["workflowVersion"])
     assert byte_size(result["publicationPreview"]) == 64

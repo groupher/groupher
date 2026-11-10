@@ -122,11 +122,11 @@
 // const DataSolver = [
 //   ...matchArticles(handleArticleRes),
 //   {
-//     match: asyncRes('createPost'),
+//     match: asyncRes('createArticle'),
 //     action: handleMutateRes,
 //   },
 //   {
-//     match: asyncRes('updatePost'),
+//     match: asyncRes('saveWorkingCopy'),
 //     action: handleMutateRes,
 //   },
 //   {
@@ -151,7 +151,7 @@
 //     match: asyncErr(ERR.GRAPHQL),
 //     action: ({ details }) => {
 //       store.mark({ publishing: false })
-//       errRescue({ type: ERR.GRAPHQL, details, path: 'publishPost' })
+//       errRescue({ type: ERR.GRAPHQL, details, path: 'publishArticle' })
 //       //
 //     },
 //   },

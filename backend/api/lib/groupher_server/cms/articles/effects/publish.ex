@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
   """
 
   alias GroupherServer.{Activity, CMS, Messaging, Repo}
+  alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.FrontDesk
   alias CMS.Model.{Article, Author}
@@ -130,6 +131,8 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
 
   defp append_activity(%{first_publish?: true}, _public), do: {:ok, :pass}
 
+  defp append_activity(%{snapshot: %CMS.Model.ArticleSnapshot{}}, _public), do: {:ok, :pass}
+
   defp append_activity(result, public) do
     with {:ok, actor} <- published_by(result),
          {:ok, _} <- maybe_log_title_change(result, public, actor),
@@ -144,7 +147,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
         Activity.log(public, :title_changed,
           actor: actor,
           changed_fields: [:title],
-          metadata: %{revision_id: result.revision.id}
+          metadata: content_identity(result)
         )
       )
     else
@@ -158,13 +161,20 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
         Activity.log(public, :body_updated,
           actor: actor,
           changed_fields: [:body_hash],
-          metadata: %{revision_id: result.revision.id}
+          metadata: content_identity(result)
         )
       )
     else
       {:ok, :pass}
     end
   end
+
+  defp content_identity(%{snapshot: %CMS.Model.ArticleSnapshot{id: snapshot_id}}),
+    do: %{snapshot_id: snapshot_id}
+
+  defp content_identity(%{revision: %{id: revision_id}}), do: %{revision_id: revision_id}
+
+  defp published_by(%{actor: %User{} = user}), do: {:ok, user}
 
   defp published_by(%{published_by_id: author_id}) do
     case Repo.get(Author, author_id) do

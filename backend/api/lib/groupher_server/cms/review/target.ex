@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Review.Target do
     ArticleBinding,
     ArticleLifecycle,
     ArticlePublic,
+    ArticleSnapshot,
     Comment,
     CommentBody,
     CommentLifecycle,
@@ -82,8 +83,14 @@ defmodule GroupherServer.CMS.Review.Target do
        })
        when state in [:published, :archived] do
     case Repo.get(ArticlePublic, article.id) do
-      %ArticlePublic{publication_version: version} -> version
-      nil -> nil
+      %ArticlePublic{snapshot_id: snapshot_id} ->
+        case Repo.get(ArticleSnapshot, snapshot_id) do
+          %ArticleSnapshot{} -> snapshot_review_version(snapshot_id)
+          nil -> nil
+        end
+
+      nil ->
+        nil
     end
   end
 
@@ -111,6 +118,13 @@ defmodule GroupherServer.CMS.Review.Target do
   end
 
   defp current_public_version(_context), do: nil
+
+  defp snapshot_review_version(snapshot_id) do
+    <<value::unsigned-big-64, _rest::binary>> =
+      :crypto.hash(:sha256, Ecto.UUID.dump!(snapshot_id))
+
+    rem(value, 2_147_483_646) + 1
+  end
 
   defp parse_target("article:" <> id) do
     case Ecto.UUID.cast(id) do

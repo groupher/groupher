@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.ContentPublishContract do
     quote do
       error(:draft_version_conflict, code: 4539, actions: [:reconcile])
       error(:comment_body_version_conflict, code: 4540, actions: [:reconcile])
+      error(:article_working_copy_revision_conflict, code: 4561, actions: [:reconcile])
     end
   end
 end

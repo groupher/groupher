@@ -13,7 +13,9 @@ defmodule GroupherServer.Test.CMS.DocMeta do
 
   describe "[cms doc meta info]" do
     test "can get default meta info", ~m(user community doc_attrs)a do
-      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+      {:ok, doc} =
+        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+
       branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
       state = Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id)
       refute state.is_edited
@@ -22,7 +24,9 @@ defmodule GroupherServer.Test.CMS.DocMeta do
 
     test "is_edited flag should set to true after doc updated",
          ~m(user community doc_attrs)a do
-      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+      {:ok, doc} =
+        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+
       branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
 
       {:ok, _} =
@@ -37,7 +41,9 @@ defmodule GroupherServer.Test.CMS.DocMeta do
     end
 
     test "doc's lock/undo_lock article should work", ~m(user community doc_attrs)a do
-      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+      {:ok, doc} =
+        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+
       branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
 
       {:ok, _} =

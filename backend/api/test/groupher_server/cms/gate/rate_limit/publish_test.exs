@@ -18,7 +18,9 @@ defmodule GroupherServer.Test.CMS.Gate.RateLimit.Publish do
 
   test "user first create content should add fresh throttle record.", ~m(community user)a do
     post_attrs = mock_attrs(:post, %{community_id: community.id})
-    {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
+
+    {:ok, _} =
+      GroupherServer.Support.Factory.create_published_article(community, :post, post_attrs, user)
 
     {:ok, pt_record} = PublishThrottle |> ORM.find_by(user_id: user.id)
 
@@ -30,8 +32,12 @@ defmodule GroupherServer.Test.CMS.Gate.RateLimit.Publish do
     {:ok, user} = db_insert(:user)
     post_attrs = mock_attrs(:post, %{community_id: community.id})
     post_attrs2 = mock_attrs(:post, %{community_id: community.id})
-    {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
-    {:ok, _} = CMS.Articles.create(community, :post, post_attrs2, user)
+
+    {:ok, _} =
+      GroupherServer.Support.Factory.create_published_article(community, :post, post_attrs, user)
+
+    {:ok, _} =
+      GroupherServer.Support.Factory.create_published_article(community, :post, post_attrs2, user)
 
     {:ok, pt_record} = PublishThrottle |> ORM.find_by(user_id: user.id)
 
@@ -41,7 +47,9 @@ defmodule GroupherServer.Test.CMS.Gate.RateLimit.Publish do
 
   test "load_and_reset clears both expired windows before checking limits", ~m(community user)a do
     post_attrs = mock_attrs(:post, %{community_id: community.id})
-    {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
+
+    {:ok, _} =
+      GroupherServer.Support.Factory.create_published_article(community, :post, post_attrs, user)
 
     CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
       :publish_hour,

@@ -85,7 +85,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
   test "a grant from another community cannot move this Article to Trash", ~m(owner)a do
     {:ok, community_a} = mock_community(owner)
     {:ok, community_b} = mock_community(owner)
-    {:ok, post_b} = CMS.Articles.create(community_b, :post, mock_attrs(:post), owner)
+
+    {:ok, post_b} =
+      GroupherServer.Support.Factory.create_published_article(
+        community_b,
+        :post,
+        mock_attrs(:post),
+        owner
+      )
 
     conn = simu_conn(:user, cms: %{community_a.slug => %{"post.trash" => true}})
     variables = %{article: article_path(community_b, post_b, :post)}

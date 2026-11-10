@@ -162,7 +162,11 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
       doc_with_tags =
         Map.merge(doc_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
-      {:ok, created} = CMS.Articles.create(community, :doc, doc_with_tags, user)
+      {:ok, created} =
+        CMS.Articles.create(community, :doc, doc_with_tags, user,
+          command_id: Ecto.UUID.generate()
+        )
+
       {:ok, tags} = binding_tags(created, community)
 
       assert exist_in?(article_tag, tags)
@@ -197,7 +201,11 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
       doc_with_tags =
         Map.merge(doc_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
-      {:error, reason} = CMS.Articles.create(community, :doc, doc_with_tags, user)
+      {:error, reason} =
+        CMS.Articles.create(community, :doc, doc_with_tags, user,
+          command_id: Ecto.UUID.generate()
+        )
+
       is_error?(reason, {{:cms, :community}, :invalid_domain_tag})
     end
   end

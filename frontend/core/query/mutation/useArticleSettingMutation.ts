@@ -34,7 +34,7 @@ export default function useArticleSettingMutation<
   TData,
   TVariables extends Record<string, unknown>,
 >(document: TypedDocumentNode<TData, TVariables>) {
-  type TInput = Omit<TVariables, 'commandId'>
+  type TInput = Omit<TVariables, 'commandId'> & { _articlePath?: TArticlePath }
 
   const queryClient = useQueryClient()
   const operationDefinition = document.definitions.find(
@@ -51,18 +51,18 @@ export default function useArticleSettingMutation<
   const mutation = useMutation({
     mutationKey: mutationKeys.article('current', `setting:${operationDefinition || 'unknown'}`),
     retry: false,
-    mutationFn: (variables: TInput) => {
+    mutationFn: ({ _articlePath: _ignoredPath, ...variables }: TInput) => {
       if (!requiresCommandId) {
         return browserGraphQLRequest(document, variables as TVariables)
       }
 
       return executeCommand({
         request: (transportVariables) => browserGraphQLRequest(document, transportVariables),
-        variables: variables as Omit<TVariables & { commandId: string }, 'commandId'>,
+        variables: variables as unknown as Omit<TVariables & { commandId: string }, 'commandId'>,
       })
     },
     onSuccess: (_data, variables) => {
-      const path = articlePath(variables as Record<string, unknown>)
+      const path = variables._articlePath || articlePath(variables as Record<string, unknown>)
       if (!path) return
       return invalidate(queryClient, [
         QueryInvalidation.article.content(path),

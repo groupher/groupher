@@ -57,6 +57,7 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     Article,
     ArticlePublic,
     ArticleRevision,
+    ArticleSnapshot,
     Community,
     DocPublic
   }
@@ -189,9 +190,10 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
   end
 
   defp stable_public_projection(%Article{} = article, community) do
-    with %ArticlePublic{} = public <- Repo.get(ArticlePublic, article.id),
-         %ArticleRevision{} = revision <- Repo.get(ArticleRevision, public.revision_id) do
-      CMS.Articles.RevisionProjection.build_stable(article, community, public, revision, nil)
+    with %ArticlePublic{snapshot_id: snapshot_id} = public when is_binary(snapshot_id) <-
+           Repo.get(ArticlePublic, article.id),
+         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id) do
+      CMS.Articles.SnapshotProjection.build_stable(article, community, public, snapshot)
     else
       _ -> {:error, ArticleErrorCat.article_not_found("article not found")}
     end

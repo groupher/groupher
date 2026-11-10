@@ -19,8 +19,8 @@ defmodule GroupherServer.CMS.Command do
   Operation atoms are encoded once at this boundary before reaching Receipt.
   The current release splits the first underscore into the namespace, except
   for the `doc_tree_` prefix, which becomes `doc.tree.` while preserving the
-  remainder. For example, `:article_update_draft` becomes
-  `"article.update_draft"` and `:doc_tree_create_tab` becomes
+  remainder. For example, `:doc_update_draft` becomes
+  `"doc.update_draft"` and `:doc_tree_create_tab` becomes
   `"doc.tree.create_tab"`.
   """
 

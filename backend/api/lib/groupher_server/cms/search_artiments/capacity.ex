@@ -18,8 +18,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
 
   alias CMS.Model.{
     Article,
-    ArticleBodySnapshot,
-    ArticleRevision,
+    ArticlePublic,
+    ArticleSnapshot,
     Comment,
     CommentLifecycle,
     CommentReviewBlock
@@ -56,17 +56,17 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   end
 
   defp article_body_bytes do
-    ArticleRevision
-    |> join(:inner, [revision], article in Article, on: article.id == revision.article_id)
-    |> join(:inner, [revision, _article], body in ArticleBodySnapshot,
-      on: body.id == revision.body_snapshot_id
+    ArticlePublic
+    |> join(:inner, [public], article in Article, on: article.id == public.article_id)
+    |> join(:inner, [public, _article], snapshot in ArticleSnapshot,
+      on: snapshot.id == public.snapshot_id
     )
-    |> group_by([_revision, article, _body], article.thread)
-    |> select([_revision, article, body], {
+    |> group_by([_public, article, _snapshot], article.thread)
+    |> select([_public, article, snapshot], {
       article.thread,
-      count(body.id),
-      avg(fragment("octet_length(?)", body.plain_text)),
-      max(fragment("octet_length(?)", body.plain_text))
+      count(snapshot.id),
+      avg(fragment("octet_length(?)", snapshot.body_plain_text)),
+      max(fragment("octet_length(?)", snapshot.body_plain_text))
     })
     |> Repo.all()
     |> Map.new(fn {thread, count, average, maximum} ->

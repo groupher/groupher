@@ -12,7 +12,21 @@ export type TArtimentBodyBag = {
   digest: string
   bodyHash: string
   schemaVersion: number
+  thumbnail: TArticleThumbnail
 }
+
+export type TArticleThumbnail = {
+  version: 1
+  blocks: readonly TThumbnailBlock[]
+}
+
+export type TThumbnailBlock =
+  | { type: 'heading'; level: 1 | 2 | 3; text: string }
+  | { type: 'paragraph' | 'callout'; text: string }
+  | { type: 'list'; items: readonly string[] }
+  | { type: 'image'; url: string; aspectRatio?: number }
+  | { type: 'table'; rows: number; columns: number }
+  | { type: 'code'; lines: readonly string[] }
 
 export type TArtimentPublisherErrorCode =
   | 'backend_request_failed'

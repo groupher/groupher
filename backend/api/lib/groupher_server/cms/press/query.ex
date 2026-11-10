@@ -28,6 +28,7 @@ defmodule GroupherServer.CMS.Press.Query do
     ArticleBodySnapshot,
     ArticlePublic,
     ArticleRevision,
+    ArticleSnapshot,
     Community,
     DocBranch,
     DocBranchVersion,
@@ -296,15 +297,15 @@ defmodule GroupherServer.CMS.Press.Query do
 
     ordinary =
       from(public in ArticlePublic,
-        join: revision in ArticleRevision,
-        on: revision.id == public.revision_id,
-        join: body in ArticleBodySnapshot,
-        on: body.id == revision.body_snapshot_id,
+        join: snapshot in ArticleSnapshot,
+        on: snapshot.id == public.snapshot_id and snapshot.article_id == public.article_id,
         where: public.article_id in ^ordinary_ids,
-        select: {public.article_id, public, body}
+        select: {public.article_id, public, snapshot}
       )
       |> Repo.all()
-      |> Map.new(fn {id, public, body} -> {id, {public, body}} end)
+      |> Map.new(fn {id, public, snapshot} ->
+        {id, {public, snapshot_body(snapshot)}}
+      end)
 
     docs =
       from(public in DocPublic,
@@ -340,12 +341,15 @@ defmodule GroupherServer.CMS.Press.Query do
               :digest,
               :subtitle,
               :slug,
-              :body_hash,
+              :snapshot_id,
+              :branch_version_id,
               :published_at,
               :updated_at
             ])
             |> Map.merge(%{
               article_id: entry.id,
+              content_version:
+                Map.get(public, :snapshot_id) || Map.get(public, :branch_version_id),
               inner_id: entry.inner_id,
               thread: entry.thread,
               body: body,
@@ -364,6 +368,18 @@ defmodule GroupherServer.CMS.Press.Query do
       {:ok, items} -> {:ok, Enum.reverse(items)}
       error -> error
     end
+  end
+
+  defp snapshot_body(snapshot) do
+    %{
+      markdown: snapshot.body_markdown,
+      html: snapshot.body_html,
+      plain_text: snapshot.body_plain_text,
+      digest: snapshot.digest,
+      thumbnail: snapshot.body_thumbnail,
+      markdown_toc: snapshot.body_markdown_toc,
+      schema_version: snapshot.body_schema_version
+    }
   end
 
   defp path_key(%{community: community, thread: thread, inner_id: inner_id}) do

@@ -344,7 +344,14 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
   test "database rejects a Post and Comment ownership mismatch", context do
     ~m(community actor first)a = context
     other_attrs = mock_attrs(:post, %{community_id: community.id, cat: @article_cat.qa})
-    {:ok, other_post} = CMS.Articles.create(community, :post, other_attrs, actor)
+
+    {:ok, other_post} =
+      GroupherServer.Support.Factory.create_published_article(
+        community,
+        :post,
+        other_attrs,
+        actor
+      )
 
     changeset =
       PostSolution.changeset(%PostSolution{}, %{

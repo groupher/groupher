@@ -12,7 +12,7 @@ defmodule GroupherServer.Activity.ArticleLog do
   alias Activity.Artiment
   alias Activity.ErrorCat, as: ActivityErrorCat
 
-  alias CMS.Model.{Article, ArticleDraft, Community, DocDraft}
+  alias CMS.Model.{Article, ArticleWorkingCopy, Community, DocDraft}
   alias Helper.ORM
   alias Helper.ORM.Pagi.{Order}
   alias GroupherServer.{Pagi}
@@ -146,18 +146,17 @@ defmodule GroupherServer.Activity.ArticleLog do
     end)
   end
 
-  defp authorize_read(%ArticleDraft{article_id: article_id}, actor) do
-    case Repo.get(Article, article_id) do
-      %Article{thread: thread} ->
-        authorize_scoped(
-          article_id,
-          actor,
-          :read_draft,
-          GroupherServer.CMS.gate_context_scope_article_draft(thread, :owner_management)
-        )
-
-      nil ->
-        {:error, GroupherServer.CMS.articles_error_cat_not_exist("Article")}
+  defp authorize_read(%ArticleWorkingCopy{article_id: article_id}, actor) do
+    with %Article{} = article <- Repo.get(Article, article_id),
+         {:ok, [%{community: %Community{} = community}]} <-
+           CMS.articles_bindings_all(article),
+         {:ok, _admitted} <-
+           CMS.articles_working_copy_access_check(actor, :edit, article, community) do
+      {:ok, article}
+    else
+      nil -> {:error, GroupherServer.CMS.articles_error_cat_not_exist("Article")}
+      {:error, _reason} = error -> error
+      _ -> {:error, ActivityErrorCat.custom("invalid Activity Article scope")}
     end
   end
 
@@ -211,11 +210,6 @@ defmodule GroupherServer.Activity.ArticleLog do
   defp scope_context(%{stage: :public, branch_id: branch_id}, :doc)
        when is_integer(branch_id) do
     {:ok, :read, GroupherServer.CMS.gate_context_scope_doc_public_branch(branch_id)}
-  end
-
-  defp scope_context(%{stage: :draft}, thread) do
-    {:ok, :read_draft,
-     GroupherServer.CMS.gate_context_scope_article_draft(thread, :owner_management)}
   end
 
   defp scope_context(%{stage: :public}, thread) do

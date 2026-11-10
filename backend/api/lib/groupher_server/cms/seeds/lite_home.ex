@@ -57,9 +57,9 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
   ## Examples
 
-      CMS.Seeds.LiteHome.seed()
+      CMS.Seeds.LiteHome.seed(command_id_factory: &Ecto.UUID.generate/0)
 
-      CMS.Seeds.LiteHome.seed(reset: true)
+      CMS.Seeds.LiteHome.seed(reset: true, command_id_factory: &Ecto.UUID.generate/0)
 
   """
   @spec seed(keyword()) :: T.domain_res(Community.t())
@@ -72,8 +72,8 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
          {:ok, _} <- maybe_seed_wallpaper(community, opts),
          {:ok, post_tag_ids} <- seed_tags(community, :post),
          {:ok, changelog_tag_ids} <- seed_tags(community, :changelog),
-         {:ok, _posts} <- seed_posts(community, post_tag_ids),
-         {:ok, _} <- seed_changelogs(community, changelog_tag_ids),
+         {:ok, _posts} <- seed_posts(community, post_tag_ids, opts),
+         {:ok, _} <- seed_changelogs(community, changelog_tag_ids, opts),
          {:ok, community} <- CMS.Communities.fetch(@slug, inc_views: false) do
       {:ok, Map.put(community, :seed_summary, summary(community))}
     end
@@ -142,15 +142,15 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     Tags.mock(community, thread, count: @tag_count, group_count: @tag_group_count)
   end
 
-  defp seed_posts(%Community{} = community, tag_ids) when is_list(tag_ids) do
-    seed_articles(community, :post, @post_titles, tag_ids)
+  defp seed_posts(%Community{} = community, tag_ids, opts) when is_list(tag_ids) do
+    seed_articles(community, :post, @post_titles, tag_ids, opts)
   end
 
-  defp seed_changelogs(%Community{} = community, tag_ids) when is_list(tag_ids) do
-    seed_articles(community, :changelog, @changelog_titles, tag_ids)
+  defp seed_changelogs(%Community{} = community, tag_ids, opts) when is_list(tag_ids) do
+    seed_articles(community, :changelog, @changelog_titles, tag_ids, opts)
   end
 
-  defp seed_articles(%Community{} = community, thread, titles, tag_ids)
+  defp seed_articles(%Community{} = community, thread, titles, tag_ids, opts)
        when thread in [:post, :changelog] do
     existing_articles = existing_articles_by_title(thread, community.id, titles)
 
@@ -163,7 +163,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
               {:cont, {:ok, [article | acc]}}
 
             :error ->
-              seed_new_article(community, thread, title, author, acc)
+              seed_new_article(community, thread, title, author, acc, opts)
           end
         end)
         |> case do
@@ -178,12 +178,41 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     end
   end
 
-  defp seed_new_article(community, thread, title, author, acc) do
+  defp seed_new_article(community, thread, title, author, acc, opts) do
     attrs = mock_attrs(thread, %{community_id: community.id, title: title})
 
-    case CMS.Articles.create(community, thread, attrs, author) do
-      {:ok, article} -> {:cont, {:ok, [article | acc]}}
-      {:error, reason} -> {:halt, {:error, reason}}
+    case Keyword.get(opts, :command_id_factory) do
+      factory when is_function(factory, 0) ->
+        case create_public_article(community, thread, attrs, author, factory.()) do
+          {:ok, article} -> {:cont, {:ok, [article | acc]}}
+          {:error, reason} -> {:halt, {:error, reason}}
+        end
+
+      _ ->
+        {:halt, {:error, :command_id_factory_required}}
+    end
+  end
+
+  defp create_public_article(community, thread, attrs, actor, command_id)
+       when thread in [:post, :blog, :changelog] do
+    attrs =
+      if is_map(Map.get(attrs, :body_bag)),
+        do: attrs,
+        else: Map.put(attrs, :body_bag, mock_body_bag(Map.get(attrs, :body, "")))
+
+    with {:ok, %{article: article}} <-
+           CMS.Articles.create_and_publish_article(community, thread, attrs, actor,
+             command_id: command_id
+           ),
+         {:ok, %{inner_id: inner_id}} <-
+           CMS.Articles.Bindings.fetch_binding(article.id, community.id),
+         {:ok, public} <-
+           CMS.FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: inner_id
+           }) do
+      {:ok, public}
     end
   end
 

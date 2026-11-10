@@ -576,7 +576,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         inner_id: binding.inner_id,
         title: fragment("COALESCE(?, ?)", public.title, doc_public.title),
         digest: fragment("COALESCE(?, ?)", public.digest, doc_public.digest),
-        active_at: fragment("COALESCE(?, ?)", public.active_at, doc_public.active_at),
+        active_at: fragment("COALESCE(?, ?)", article.active_at, doc_public.active_at),
         published_at: fragment("COALESCE(?, ?)", public.published_at, doc_public.published_at),
         inserted_at: article.inserted_at,
         updated_at: article.updated_at,

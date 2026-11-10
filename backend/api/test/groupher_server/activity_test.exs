@@ -375,26 +375,26 @@ defmodule GroupherServer.Test.ActivityTest do
     assert {:error, _} = Activity.list_article_logs(post, nil)
   end
 
-  test "ArticleLog keeps ordinary Drafts owner-scoped" do
+  test "ArticleLog keeps ordinary WorkingCopies owner-scoped" do
     {community, _published, _attrs, user} = mock_article(:post)
     {:ok, stranger} = db_insert(:user)
 
-    assert {:ok, %{article: article}} =
-             CMS.Articles.create_stable_draft(
+    assert {:ok, %{working_copy: working_copy}} =
+             CMS.Articles.create_article(
                community,
                :post,
                %{
-                 title: "Draft log",
+                 title: "WorkingCopy log",
                  digest: "digest",
-                 body_bag: mock_body_bag(mock_rich_text("draft"))
+                 body_bag: mock_body_bag(mock_rich_text("working copy"))
                },
-               user
+               user,
+               command_id: Ecto.UUID.generate()
              )
 
-    assert {:ok, draft} = CMS.Articles.read_draft(article.id, user, community: community)
-    assert {:ok, %{entries: []}} = Activity.list_article_logs(draft, user)
-    assert {:error, _} = Activity.list_article_logs(draft, stranger)
-    assert {:error, _} = Activity.list_article_logs(draft, nil)
+    assert {:ok, %{entries: []}} = Activity.list_article_logs(working_copy, user)
+    assert {:error, _} = Activity.list_article_logs(working_copy, stranger)
+    assert {:error, _} = Activity.list_article_logs(working_copy, nil)
   end
 
   test "business state rolls back when its Activity append fails" do

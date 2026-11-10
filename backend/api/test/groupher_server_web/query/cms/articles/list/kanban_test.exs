@@ -19,7 +19,8 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
        ~m(user_conn community user post_attrs)a do
     post_attrs = Map.put(post_attrs, :cat, @article_cat.idea)
 
-    {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+    {:ok, post} =
+      GroupherServer.Support.Factory.create_published_article(community, :post, post_attrs, user)
 
     variables = %{
       article: %{

@@ -203,13 +203,8 @@ export type TBrowserGraphQLRequestOptions = {
 export const MENTIONS_GRAPH_CONTENT_CHANGE = 'groupher:mentions-graph-content-change'
 
 const mentionsGraphMutations = new Set([
-  'CreatePost',
-  'CreateBlogFromPublisher',
-  'CreateChangelogFromPublisher',
-  'UpdatePostFromEditor',
-  'UpdatePostFromMenu',
-  'UpdateBlogFromPublisher',
-  'UpdateChangelogFromPublisher',
+  'CreateAndPublishArticle',
+  'PublishArticle',
   'CreateComment',
   'ReplyComment',
   'UpdateComment',

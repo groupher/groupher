@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
     ArticleLifecycle,
     ArticlePublic,
     ArticleReviewBlock,
-    ArticleRevision,
+    ArticleSnapshot,
     Author,
     TicketState,
     TicketUpdate
@@ -144,14 +144,14 @@ defmodule GroupherServer.CMS.Tickets.Effects.Notifications do
          %ArticleLifecycle{state: :published} <-
            Repo.get_by(ArticleLifecycle, article_id: ticket_id, thread: :ticket),
          %ArticlePublic{} = public_ticket <- Repo.get(ArticlePublic, ticket_id),
-         %ArticleRevision{} = revision <- Repo.get(ArticleRevision, public_ticket.revision_id),
+         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, public_ticket.snapshot_id),
          false <- active_ticket_review?(ticket_id),
          %{} = post <- first_public_post(ticket_id, ticket_binding.community_id) do
       {:ok,
        %{
          ticket_id: ticket_id,
          ticket_number: ticket_binding.inner_id,
-         ticket_title: revision.title,
+         ticket_title: snapshot.title,
          post_id: post.article_id,
          community_id: ticket_binding.community_id,
          action: notification_action(event_type),

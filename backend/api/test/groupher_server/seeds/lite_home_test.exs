@@ -16,7 +16,8 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
   describe "[lite home seeds]" do
     test "resets home with minimal main and dashboard data" do
-      {:ok, seeded_community} = LiteHome.reset_and_seed(wallpaper: false)
+      seed_opts = [wallpaper: false, command_id_factory: &Ecto.UUID.generate/0]
+      {:ok, seeded_community} = LiteHome.reset_and_seed(seed_opts)
       {:ok, community} = ORM.find(Community, seeded_community.id, preload: :dashboard)
 
       assert community.slug == "home"
@@ -40,7 +41,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
       assert ticket_count(community.id) == 0
 
-      {:ok, community} = LiteHome.seed(wallpaper: false)
+      {:ok, community} = LiteHome.seed(seed_opts)
 
       assert count(:post, community.id) == 4
       assert count(:changelog, community.id) == 3
@@ -56,7 +57,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
       assert count(:post, community.id) == 3
 
-      {:ok, community} = LiteHome.seed(wallpaper: false)
+      {:ok, community} = LiteHome.seed(seed_opts)
 
       assert count(:post, community.id) == 4
       assert community.seed_summary.posts == 4

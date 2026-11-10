@@ -55,8 +55,8 @@ Groupher 已有大部分基础能力：
 ## 2. 架构决策
 
 1. Content Publisher 是共享 Node package，由现有可信 Node host 的 API route 调用。
-2. 浏览器或 Agent 一次提交原始 content source、业务 payload、target、`commandId` 和必要的
-   `expectedVersion`。
+2. 浏览器或 Agent 一次提交原始 content source、业务 payload、target、`commandId` 和领域并发字段：
+   Article 使用 WorkingCopy `revision`，Docs 与 Comment 保留各自的 `expectedVersion`。
 3. Publisher 在 Node 内生成 BodyBag，并直接调用一个明确的 Phoenix mutation；BodyBag 和
    service credential 不返回调用端。
 4. Plate 是默认 source format；Markdown 是显式 source format，并复用现有 rich-editor
@@ -80,7 +80,7 @@ Groupher 已有大部分基础能力：
 ```text
 Browser / Agent
       |
-      | typed command: action + target + payload + commandId + expectedVersion
+      | typed command: action + target + payload + commandId + domain concurrency field
       v
 Trusted Node host route
       |
@@ -109,7 +109,7 @@ Phoenix CMS command boundary
       +-- bind delegated user actor
       +-- Gate authorization on canonical resource
       +-- BodyBag.cast for the mutation-owned thread
-      +-- CMS.Command receipt / expected version
+      +-- CMS.Command receipt / revision or expectedVersion
       `-- atomically persist body and business payload
 ```
 
@@ -168,7 +168,8 @@ export const CONTENT_SOURCE_FORMAT = {
 export const CONTENT_PUBLISH_ACTION = {
   UPDATE_DOC_DRAFT: 'docDraft.update',
   CREATE_ARTICLE: 'article.create',
-  UPDATE_ARTICLE: 'article.update',
+  SAVE_WORKING_COPY: 'article.working_copy.save',
+  CREATE_AND_PUBLISH_ARTICLE: 'article.create_and_publish',
   CREATE_COMMENT: 'comment.create',
   UPDATE_COMMENT: 'comment.update',
 } as const
@@ -205,7 +206,8 @@ diagnostics。两种格式使用 exhaustive switch；当前不需要 adapter reg
 const CONTENT_TYPE_BY_ACTION = {
   [CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT]: CONTENT_TYPE.DOC,
   [CONTENT_PUBLISH_ACTION.CREATE_ARTICLE]: CONTENT_TYPE.ARTICLE,
-  [CONTENT_PUBLISH_ACTION.UPDATE_ARTICLE]: CONTENT_TYPE.ARTICLE,
+  [CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY]: CONTENT_TYPE.ARTICLE,
+  [CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE]: CONTENT_TYPE.ARTICLE,
   [CONTENT_PUBLISH_ACTION.CREATE_COMMENT]: CONTENT_TYPE.COMMENT,
   [CONTENT_PUBLISH_ACTION.UPDATE_COMMENT]: CONTENT_TYPE.COMMENT,
 } as const satisfies Record<TContentPublishAction, TContentType>
@@ -218,7 +220,8 @@ const CONTENT_TYPE_BY_ACTION = {
 type TContentPublishCommand =
   | TUpdateDocDraftCommand
   | TCreateArticleCommand
-  | TUpdateArticleCommand
+  | TSaveWorkingCopyCommand
+  | TCreateAndPublishArticleCommand
   | TCreateCommentCommand
   | TUpdateCommentCommand
 ```
@@ -239,6 +242,42 @@ type TUpdateDocDraftCommand = {
   commandId: string
   expectedVersion: number
 }
+
+type TArticleContentFields = {
+  copyRight?: string
+  linkAddr?: string
+  subtitle?: string
+  templateKey?: string
+  coverUrl?: string
+  coverUrlDark?: string
+}
+
+type TSaveWorkingCopyCommand = {
+  action: typeof CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY
+  target: { community: string; articleId: string; workingCopyId: string }
+  payload: {
+    content: TContentSource
+    title?: string
+    digest?: string
+    slug?: string
+    tagIds?: string[]
+  } & TArticleContentFields
+  commandId: string
+  revision: number
+}
+
+type TCreateAndPublishArticleCommand = {
+  action: typeof CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE
+  target: { community: string; thread: string }
+  payload: {
+    content: TContentSource
+    title: string
+    digest?: string
+    slug?: string
+    tagIds: string[]
+  } & TArticleContentFields
+  commandId: string
+}
 ```
 
 内部使用 exhaustive switch 调用明确函数，不建立动态 command bus：
@@ -249,8 +288,10 @@ switch (command.action) {
     return updateDocDraft(command)
   case CONTENT_PUBLISH_ACTION.CREATE_ARTICLE:
     return createArticle(command)
-  case CONTENT_PUBLISH_ACTION.UPDATE_ARTICLE:
-    return updateArticle(command)
+  case CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY:
+    return saveWorkingCopy(command)
+  case CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE:
+    return createAndPublishArticle(command)
   case CONTENT_PUBLISH_ACTION.CREATE_COMMENT:
     return createComment(command)
   case CONTENT_PUBLISH_ACTION.UPDATE_COMMENT:
@@ -280,7 +321,7 @@ unknown JSON
   -> action
   -> action-specific target/payload
   -> source format
-  -> commandId / expectedVersion
+  -> commandId / action-specific revision or expectedVersion
   -> typed command
 ```
 
@@ -316,6 +357,7 @@ input ArtimentBodyBagInput {
   digest: String!
   bodyHash: String!
   schemaVersion: Int!
+  thumbnail: Json!
 }
 
 type ArtimentBody {
@@ -325,10 +367,12 @@ type ArtimentBody {
   toc: [ArtimentTocItem!]!
   plainText: String!
   digest: String!
-  bodyHash: String!
+  bodyHash: String
   schemaVersion: Int!
 }
 ```
+
+`Json` 输入标量在线路上使用 JSON 字符串；Content Publisher 将可信生成的 thumbnail JSON 编码后交给 GraphQL，服务端解析为对象再校验和持久化。
 
 资源使用 `body`：
 
@@ -353,10 +397,14 @@ type Comment {
 ```
 
 `ArtimentBody` 只包含 canonical 正文 projection。旧 `article_document.thumbnail` 是由正文生成的展示
-派生数据，当前已上移为 Article、DocDraft 等资源的 sibling `thumbnail` field；底层仍可从对应 body
-draft/snapshot 记录解析。旧 `article_document.asset_refs` 是资源版本拥有的资产关系，不是正文内容，当前已
-上移为资源层 `assetRefs` field，并继续由既有 asset relation 按 draft/revision owner 解析。两者都不能为了兼容旧
+派生数据，当前已上移为 Article、DocDraft 等资源的 sibling `thumbnail` field；Article 从所选 Snapshot
+读取，Docs 从其当前文档版本读取。旧 `article_document.asset_refs` 是资源版本拥有的资产关系，不是正文内容，当前已
+上移为资源层 `assetRefs` field。Article 引用归属 `ArticleWorkingCopy` 或 `ArticleSnapshot`；Docs 引用继续按其
+当前文档版本归属。两者都不能为了兼容旧
 `article_document` 而进入 `ArtimentBody`。
+
+Publisher 输入 `BodyBag` 仍携带可信转换器生成的 `bodyHash` 供输入校验；Article WorkingCopy / Snapshot 不持久化或
+输出该字段。文章正文 Diff 直接比较保存的 Plate JSON；Docs 与 Comment 仍按各自当前模型保留 hash/version 字段。
 
 边界固定为：
 
@@ -384,7 +432,7 @@ cutover 按资源批次完成，而不是在同一个 GraphQL type 上临时双�
 valid service capability
 AND delegated user authorization
 AND domain validation
-AND expected version / command receipt constraints
+AND domain revision or expectedVersion / command receipt constraints
 ```
 
 ### 9.1 Service identity
@@ -436,7 +484,7 @@ Node: canonical BodyBag + validated target/payload
   -> Phoenix mutation
   -> Gate on canonical resource
   -> BodyBag.cast
-  -> expectedVersion
+  -> Article WorkingCopy revision or Docs/Comment expectedVersion
   -> CMS.Command
   -> body + title/tags/category/etc transaction
 ```
@@ -496,8 +544,8 @@ cms.comment_bodies
   updated_at
 ```
 
-这是有意与当前 Article 正文模型对齐：Article 使用字段化的 `ArticleBodyDraft` 和
-`ArticleBodySnapshot`，Comment 使用字段化的 `CommentBody`；目标不是为 Comment 单独引入 opaque
+这是有意与当前 Article 正文模型对齐：Article 使用字段化的 `ArticleWorkingCopy` 和
+`ArticleSnapshot`，Comment 使用字段化的 `CommentBody`；目标不是为 Comment 单独引入 opaque
 `body_bag` map。Wire `toc` 在持久化层映射为 `markdown_toc`，读取 projection 输出 `markdownToc`，
 三者分别遵守已有 wire、数据库和 GraphQL 命名约定。
 
@@ -578,8 +626,8 @@ transport result unknown
   -> reuse the same commandId for bounded recovery
 
 version conflict
-  -> do not retry with the stale expectedVersion
-  -> reload canonical body/version
+  -> do not retry with the stale Article revision or Docs expectedVersion
+  -> reload canonical body and concurrency field
   -> preserve local dirty body for explicit reconcile
 
 validation / forbidden
@@ -592,8 +640,10 @@ rate limited
   -> clear the wake-up on success, document switch, or unmount
 ```
 
-Phoenix 的稳定错误合同为：Doc draft 冲突使用 ErrorCat code `4539`，Comment body 冲突使用 `4540`；
-Publisher host 将两者映射为 HTTP `409` / `version_conflict`。服务 scope 拒绝使用字符串 code
+Phoenix 的稳定错误合同为：Doc draft 冲突使用 ErrorCat code `4539`，Comment body 冲突使用 `4540`，
+Article WorkingCopy 冲突使用 `4561`，映射为 HTTP `409` / `revision_conflict`；Docs 和 Comment 的各自版本冲突仍映射为
+`version_conflict`。
+Article 外部字段使用 `revision`，不使用 `expectedVersion`。服务 scope 拒绝使用字符串 code
 `SERVICE_SCOPE_FORBIDDEN`，映射为 HTTP `403` / `forbidden`。其他业务域数字 code 不得借作冲突或
 权限判断，避免将 community/profile 错误误分类。两个数字 code 由
 `packages/contracts/content-publish.contract.json` 唯一拥有，并生成 TypeScript 与 Elixir 合同；
@@ -619,7 +669,7 @@ forbidden 和 rate limit，并落实上述 reload/reconcile/retry 语义，不�
 - 每个 action 的成功与失败 fixture；
 - action/payload 不能串用；
 - unknown action/format fail closed；
-- command id、expected version、target 和 payload 边界；
+- command id、Article revision / Docs or Comment expectedVersion、target 和 payload 边界；
 - action 到 type/scope 的完整映射。
 
 ### Publisher
@@ -637,7 +687,7 @@ forbidden 和 rate limit，并落实上述 reload/reconcile/retry 语义，不�
 - explicit action 到 code-generated mutation；
 - user proof 与 service credential 分离；
 - BodyBag 不返回调用端；
-- `commandId`、`expectedVersion` 与业务 payload 原样传递；
+- Article `revision` 或 Docs/Comment `expectedVersion` 与业务 payload 原样传递；
 - HTML/invalid upstream response 返回稳定错误。
 - Publisher validation 的 status/code/diagnostics 不被改写为 `502`；
 - 多 GraphQL errors 按 `403 -> 429 -> 409 -> 422` 稳定归类；
@@ -660,7 +710,8 @@ forbidden 和 rate limit，并落实上述 reload/reconcile/retry 语义，不�
 - Dash publish route ownership：未认证请求返回 JSON 而不是页面 HTML；
 - `/home/doc/editor` autosave 成功、重放安全和版本冲突可见；
 - `/home/doc/editor` 在 `429` 冷却期合并编辑并于到期后保存最新 draft；
-- Article create/update 最小成功链路；
+- Article `createArticle` / `saveWorkingCopy` / `forkSnapshot` / `publishArticle` /
+  `createAndPublishArticle` / `deleteWorkingCopy` 的最小成功链路；
 - Comment create/update/reply 最小成功链路；
 - Agent Markdown 与 Web Plate 生成相同 canonical BodyBag。
 
@@ -700,12 +751,34 @@ forbidden 和 rate limit，并落实上述 reload/reconcile/retry 语义，不�
 - golden fixtures 和 diagnostics tests；
 - 不引入 adapter registry。
 
-### Batch 3：Article
+### Article WorkingCopy / Snapshot
 
-- create/update typed commands；
-- 正文和 title/tag/category 等 payload 原子提交；
+- `createArticle` 创建 Article 和默认 WorkingCopy；
+- `saveWorkingCopy` 使用当前 `revision` 保存正文、title/tag 等内容，正文与 metadata、tag、CoverEdit、Asset refs 原子提交；
+- Article Asset 只保存 WorkingCopy / Snapshot 对既有 Asset ID 的 owner 引用；patch 省略附件字段时保留现有引用，`assetRefs: []` 明确清空，清理 `coverEdit` 只移除该画布产生的引用；
+- `createAndPublishArticle` 由单一 command 创建并首发；
+- `forkSnapshot` 返回独立的 `workingCopy`，同一 command 重试返回原副本；
+- `publishArticle` 从指定 WorkingCopy 或已有 Snapshot 选择公开内容；
+- `deleteWorkingCopy` 不接收 `revision`；
+- 过期 revision 冲突返回 Article WorkingCopy revision ErrorCat；
 - Article capability scope；
 - Article 与公开 Doc read projection 从 `document` 到 `body` direct cutover，不保留双字段。
+
+对外 GraphQL mutation 字段只有基座合同中的六个名字。Editor 的 GraphQL 操作文档位于
+`frontend/core/unit/ArticleEditor/schema.ts`；operation label 与字段动作一致（例如
+`SaveWorkingCopy` 文档调用 GraphQL 字段 `saveWorkingCopy`）。
+Content Publisher HTTP action 是另一层传输合同，不作为 GraphQL mutation 名或 CMS facade 名：
+
+| GraphQL mutation          | 行为                                                                      | 结果                                       |
+| ------------------------- | ------------------------------------------------------------------------- | ------------------------------------------ |
+| `createArticle`           | 创建 Article 和默认 WorkingCopy                                           | `ArticleWorkingCopy`                       |
+| `saveWorkingCopy`         | 用客户端当前 `revision` 保存指定 WorkingCopy；成功返回推进后的 `revision` | `ArticleWorkingCopy`                       |
+| `forkSnapshot`            | 从 Snapshot 创建独立 WorkingCopy                                          | `ArticleWorkingCopyResult { workingCopy }` |
+| `publishArticle`          | 发布指定 WorkingCopy revision，或选择已有 Snapshot                        | `ArticlePublicSnapshot`                    |
+| `createAndPublishArticle` | 在一个命令和事务中创建并首发                                              | `ArticlePublicSnapshot`                    |
+| `deleteWorkingCopy`       | 删除可放弃的 WorkingCopy                                                  | `DoneState`；不接收 `revision`             |
+
+`revision` 只指 `ArticleWorkingCopy.revision` 并发序号。`saveWorkingCopy` 必须提交它；后端成功保存后推进，过期值映射为 Article WorkingCopy revision conflict。它不表示旧 `ArticleRevision` 实体。`forkSnapshot` 的 mutation 响应必须选择 `workingCopy` 字段；Receipt 重放也重建同一个副本。
 
 ### Batch 4：Comment
 

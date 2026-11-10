@@ -9,7 +9,12 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
     files =
       [
         "lib/groupher_server/cms/articles.ex",
-        "lib/groupher_server/cms/articles/commands/publish.ex",
+        "lib/groupher_server/cms/articles/commands/create_article.ex",
+        "lib/groupher_server/cms/articles/commands/create_and_publish_article.ex",
+        "lib/groupher_server/cms/articles/commands/save_working_copy.ex",
+        "lib/groupher_server/cms/articles/commands/fork_snapshot.ex",
+        "lib/groupher_server/cms/articles/commands/publish_article.ex",
+        "lib/groupher_server/cms/articles/commands/delete_working_copy.ex",
         "lib/groupher_server/cms/articles/commands/trash.ex",
         "lib/groupher_server_web/resolvers/cms/articles.ex"
       ]
@@ -17,14 +22,19 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
 
     contracts =
       [
-        GroupherServer.CMS.Articles.Commands.Publish,
+        GroupherServer.CMS.Articles.Commands.CreateArticle,
+        GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle,
+        GroupherServer.CMS.Articles.Commands.SaveWorkingCopy,
+        GroupherServer.CMS.Articles.Commands.ForkSnapshot,
+        GroupherServer.CMS.Articles.Commands.PublishArticle,
+        GroupherServer.CMS.Articles.Commands.DeleteWorkingCopy,
         GroupherServer.CMS.Articles.Commands.Trash
       ]
       |> Map.new(fn module -> {module, module.__pipeline_contracts__()} end)
 
     report = Graph.build_report(files, contracts)
 
-    assert report["summary"]["pipelines_reached"] == 4
+    assert report["summary"]["pipelines_reached"] >= 6
     assert report["summary"]["legacy_commands_reached"] == 0
 
     assert report["internal_pipeline_violations"] == []

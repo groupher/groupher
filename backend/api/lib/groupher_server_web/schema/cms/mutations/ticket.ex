@@ -118,7 +118,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Ticket do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:content, non_null(:ticket_content_input))
-      arg(:expected_draft_version, non_null(:integer))
+      arg(:revision, non_null(:integer))
       arg(:expected_lifecycle_version, non_null(:integer))
 
       middleware(M.Authorize, :login)
@@ -134,7 +134,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Ticket do
       arg(:id, non_null(:id))
       arg(:expected_preview, non_null(:string))
       arg(:reason, non_null(:string))
-      arg(:expected_draft_version, non_null(:integer))
+      arg(:revision, non_null(:integer))
       arg(:expected_lifecycle_version, non_null(:integer))
       arg(:expected_workflow_version, non_null(:integer))
 

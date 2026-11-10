@@ -61,32 +61,23 @@ defmodule GroupherServer.CMS.Seeds.Articles do
 
   ## Examples
 
-      CMS.Seeds.Articles.mock("elixir", :post)
+      CMS.Seeds.Articles.mock("elixir", :post,
+        command_id_factory: &Ecto.UUID.generate/0
+      )
 
   """
-  @spec mock(String.t(), atom()) :: T.domain_res(map())
-  def mock(community_slug, thread) when is_binary(community_slug) and is_atom(thread) do
+  @spec mock(String.t(), atom(), keyword()) :: T.domain_res(map())
+  def mock(community_slug, thread, opts)
+      when is_binary(community_slug) and is_atom(thread) and is_list(opts) do
     with {:ok, community} <- ORM.find_by(Community, slug: community_slug),
          {:ok, user} <- db_insert(:user) do
       attrs = mock_attrs(thread, %{community_id: community.id, community: community})
 
-      with {:ok, article} <- CMS.Articles.create(community, thread, attrs, user) do
+      with {:ok, command_id} <- command_id(opts),
+           {:ok, article} <- create_public_article(community, thread, attrs, user, command_id) do
         seed_views(article)
       end
     end
-  end
-
-  @spec mock(Community.t(), atom()) :: T.domain_res([map()])
-  def mock(%Community{} = community, thread) when is_atom(thread) do
-    mock(community, thread, count_range: @article_count_range)
-  end
-
-  def mock(community, thread, opts_or_count \\ [])
-
-  @spec mock(Community.t(), atom(), integer()) :: T.domain_res([map()])
-  def mock(%Community{} = community, thread, count)
-      when is_atom(thread) and is_integer(count) and count >= 0 do
-    mock(community, thread, count_range: {count, count})
   end
 
   @spec mock(Community.t(), atom(), keyword()) :: T.domain_res([map()])
@@ -110,34 +101,49 @@ defmodule GroupherServer.CMS.Seeds.Articles do
       end
 
     articles =
-      Enum.reduce(1..count, [], fn index, acc ->
+      Enum.reduce_while(1..count, {:ok, []}, fn index, {:ok, acc} ->
         {:ok, author} = db_insert(:user)
 
         attrs =
           mock_attrs(thread, %{community_id: community.id})
           |> maybe_put_post_title(index, count, thread)
 
-        {:ok, article} = CMS.Articles.create(community, thread, attrs, author)
-        article = seed_views(article)
+        with {:ok, command_id} <- command_id(opts),
+             {:ok, article} <-
+               create_public_article(community, thread, attrs, author, command_id) do
+          article = seed_views(article)
 
-        attach_tags(article, tag_ids)
-        {:ok, article} = seed_upvotes(article, article_upvotes_range)
-        {:ok, article} = seed_emotions(article)
+          attach_tags(article, tag_ids)
+          {:ok, article} = seed_upvotes(article, article_upvotes_range)
+          {:ok, article} = seed_emotions(article)
 
-        Comments.mock(
-          community,
-          thread,
-          article,
-          count_range: comment_range,
-          upvotes_range: comment_upvotes_range,
-          replies_range: replies_range,
-          seed_replies: true
-        )
+          Comments.mock(
+            community,
+            thread,
+            article,
+            count_range: comment_range,
+            upvotes_range: comment_upvotes_range,
+            replies_range: replies_range,
+            seed_replies: true
+          )
 
-        [article | acc]
+          {:cont, {:ok, [article | acc]}}
+        else
+          {:error, _reason} = error -> {:halt, error}
+        end
       end)
 
-    {:ok, Enum.reverse(articles)}
+    case articles do
+      {:ok, rows} -> {:ok, Enum.reverse(rows)}
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp command_id(opts) do
+    case Keyword.get(opts, :command_id_factory) do
+      factory when is_function(factory, 0) -> {:ok, factory.()}
+      _ -> {:error, :command_id_factory_required}
+    end
   end
 
   defp attach_tags(_article, []), do: {:ok, :pass}
@@ -202,4 +208,31 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   end
 
   defp seed_views(article), do: article
+
+  defp create_public_article(community, :doc, attrs, actor, command_id) do
+    CMS.Articles.create(community, :doc, attrs, actor, command_id: command_id)
+  end
+
+  defp create_public_article(community, thread, attrs, actor, command_id)
+       when thread in [:post, :blog, :changelog] do
+    attrs =
+      if is_map(Map.get(attrs, :body_bag)),
+        do: attrs,
+        else: Map.put(attrs, :body_bag, mock_body_bag(Map.get(attrs, :body, "")))
+
+    with {:ok, %{article: article}} <-
+           CMS.Articles.create_and_publish_article(community, thread, attrs, actor,
+             command_id: command_id
+           ),
+         {:ok, %{inner_id: inner_id}} <-
+           CMS.Articles.Bindings.fetch_binding(article.id, community.id),
+         {:ok, public} <-
+           CMS.FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: inner_id
+           }) do
+      {:ok, public}
+    end
+  end
 end

@@ -180,7 +180,9 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
     test "doc author create comment will not update active timestamp",
          ~m(community user)a do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
-      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+
+      {:ok, doc} =
+        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
 
       state_before =
         Repo.get_by!(CMS.Model.DocBranchState,
@@ -218,7 +220,9 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       #   Datetime.shift(Datetime.now(), days: -(active_period_days - 1)) |> Datetime.to_datetime()
 
       doc_attrs = mock_attrs(:doc)
-      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+
+      {:ok, doc} =
+        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
 
       Process.sleep(1000)
 
@@ -247,7 +251,9 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         |> Datetime.to_datetime()
 
       doc_attrs = mock_attrs(:doc)
-      {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+
+      {:ok, doc} =
+        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
 
       state =
         Repo.get_by!(CMS.Model.DocBranchState,

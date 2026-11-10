@@ -1,154 +1,233 @@
 import { graphql } from '~/graphql/authoring'
 
-const createPost = graphql(`
-  mutation CreatePost(
-    $title: String!
-    $bodyBag: ArtimentBodyBagInput!
+const createArticle = graphql(`
+  mutation CreateArticle(
     $community: String!
+    $thread: Thread!
     $commandId: ID!
-    $communityTags: [ID]
-    $cat: ArticleCatEnum
-    $linkAddr: String
+    $title: String
+    $digest: String
+    $slug: String
+    $bodyBag: ArtimentBodyBagInput!
+    $tagIds: [ID]
     $copyRight: String
-  ) {
-    createPost(
-      title: $title
-      bodyBag: $bodyBag
-      community: $community
-      commandId: $commandId
-      communityTags: $communityTags
-      cat: $cat
-      linkAddr: $linkAddr
-      copyRight: $copyRight
-    ) {
-      innerId
-      title
-      meta {
-        thread
-      }
-    }
-  }
-`)
-
-const updatePost = graphql(`
-  mutation UpdatePostFromEditor(
-    $article: ArticlePathInput!
-    $commandId: ID!
-    $expectedVersion: Int!
-    $title: String
-    $bodyBag: ArtimentBodyBagInput
     $linkAddr: String
-    $copyRight: String
-    $communityTags: [ID]
-    $cat: ArticleCatEnum
+    $subtitle: String
+    $templateKey: String
+    $coverUrl: String
+    $coverUrlDark: String
   ) {
-    updatePost(
-      article: $article
+    createArticle(
+      community: $community
+      thread: $thread
       commandId: $commandId
-      expectedVersion: $expectedVersion
       title: $title
+      digest: $digest
+      slug: $slug
       bodyBag: $bodyBag
-      linkAddr: $linkAddr
+      tagIds: $tagIds
       copyRight: $copyRight
-      communityTags: $communityTags
-      cat: $cat
+      linkAddr: $linkAddr
+      subtitle: $subtitle
+      templateKey: $templateKey
+      coverUrl: $coverUrl
+      coverUrlDark: $coverUrlDark
     ) {
-      innerId
+      id
+      articleId
+      scopeKind
+      scopeId
+      revision
       title
-      author {
-        ...ArticleEditorAuthorFields
-      }
-      meta {
-        thread
-      }
+      digest
+      slug
+      bodyJson
+      bodyMarkdown
+      bodyHtml
+      bodyMarkdownToc
+      bodyPlainText
+      bodyThumbnail
+      tagIds
+      threadFields
     }
   }
 `)
 
-const createBlog = graphql(`
-  mutation CreateBlogFromPublisher(
-    $title: String!
+const createAndPublishArticle = graphql(`
+  mutation CreateAndPublishArticle(
+    $community: String!
+    $thread: Thread!
+    $commandId: ID!
+    $title: String
+    $digest: String
+    $slug: String
     $bodyBag: ArtimentBodyBagInput!
+    $tagIds: [ID]
+    $copyRight: String
+    $linkAddr: String
+    $subtitle: String
+    $templateKey: String
+    $coverUrl: String
+    $coverUrlDark: String
+  ) {
+    createAndPublishArticle(
+      community: $community
+      thread: $thread
+      commandId: $commandId
+      title: $title
+      digest: $digest
+      slug: $slug
+      bodyBag: $bodyBag
+      tagIds: $tagIds
+      copyRight: $copyRight
+      linkAddr: $linkAddr
+      subtitle: $subtitle
+      templateKey: $templateKey
+      coverUrl: $coverUrl
+      coverUrlDark: $coverUrlDark
+    ) {
+      articleId
+      snapshotId
+      publishedAt
+      publishedById
+      title
+      digest
+      slug
+      plainText
+      thumbnail
+    }
+  }
+`)
+
+const saveWorkingCopy = graphql(`
+  mutation SaveWorkingCopy(
+    $articleId: ID!
+    $workingCopyId: ID!
     $community: String!
     $commandId: ID!
-    $communityTags: [ID]
-  ) {
-    createBlog(
-      title: $title
-      bodyBag: $bodyBag
-      community: $community
-      commandId: $commandId
-      communityTags: $communityTags
-    ) {
-      innerId
-      title
-    }
-  }
-`)
-
-const updateBlog = graphql(`
-  mutation UpdateBlogFromPublisher(
-    $article: ArticlePathInput!
-    $commandId: ID!
-    $expectedVersion: Int!
+    $revision: Int!
     $title: String
-    $bodyBag: ArtimentBodyBagInput
-    $communityTags: [ID]
-  ) {
-    updateBlog(
-      article: $article
-      commandId: $commandId
-      expectedVersion: $expectedVersion
-      title: $title
-      bodyBag: $bodyBag
-      communityTags: $communityTags
-    ) {
-      innerId
-      title
-    }
-  }
-`)
-
-const createChangelog = graphql(`
-  mutation CreateChangelogFromPublisher(
-    $title: String!
+    $digest: String
+    $slug: String
     $bodyBag: ArtimentBodyBagInput!
-    $community: String!
-    $commandId: ID!
-    $communityTags: [ID]
+    $tagIds: [ID]
+    $copyRight: String
+    $linkAddr: String
+    $subtitle: String
+    $templateKey: String
+    $coverUrl: String
+    $coverUrlDark: String
   ) {
-    createChangelog(
-      title: $title
-      bodyBag: $bodyBag
+    saveWorkingCopy(
+      articleId: $articleId
+      workingCopyId: $workingCopyId
       community: $community
       commandId: $commandId
-      communityTags: $communityTags
+      revision: $revision
+      title: $title
+      digest: $digest
+      slug: $slug
+      bodyBag: $bodyBag
+      tagIds: $tagIds
+      copyRight: $copyRight
+      linkAddr: $linkAddr
+      subtitle: $subtitle
+      templateKey: $templateKey
+      coverUrl: $coverUrl
+      coverUrlDark: $coverUrlDark
     ) {
-      innerId
+      id
+      articleId
+      scopeKind
+      scopeId
+      revision
       title
+      digest
+      slug
+      bodyJson
+      bodyMarkdown
+      bodyHtml
+      bodyMarkdownToc
+      bodyPlainText
+      bodyThumbnail
+      tagIds
+      threadFields
     }
   }
 `)
 
-const updateChangelog = graphql(`
-  mutation UpdateChangelogFromPublisher(
-    $article: ArticlePathInput!
+const forkSnapshot = graphql(`
+  mutation ForkSnapshot(
     $commandId: ID!
-    $expectedVersion: Int!
-    $title: String
-    $bodyBag: ArtimentBodyBagInput
-    $communityTags: [ID]
+    $snapshotId: ID!
+    $community: String!
+    $scopeKind: String!
+    $scopeId: ID!
   ) {
-    updateChangelog(
-      article: $article
+    forkSnapshot(
       commandId: $commandId
-      expectedVersion: $expectedVersion
-      title: $title
-      bodyBag: $bodyBag
-      communityTags: $communityTags
+      snapshotId: $snapshotId
+      community: $community
+      scopeKind: $scopeKind
+      scopeId: $scopeId
     ) {
-      innerId
+      workingCopy {
+        id
+        articleId
+        scopeKind
+        scopeId
+        revision
+        tagIds
+        threadFields
+        title
+      }
+    }
+  }
+`)
+
+const publishArticle = graphql(`
+  mutation PublishArticle(
+    $commandId: ID!
+    $articleId: ID!
+    $community: String!
+    $source: ArticleWorkingCopySourceInput!
+    $expectedPublicSnapshotId: ID
+  ) {
+    publishArticle(
+      commandId: $commandId
+      articleId: $articleId
+      community: $community
+      source: $source
+      expectedPublicSnapshotId: $expectedPublicSnapshotId
+    ) {
+      articleId
+      snapshotId
+      publishedAt
+      publishedById
       title
+      digest
+      slug
+      plainText
+      thumbnail
+    }
+  }
+`)
+
+const deleteWorkingCopy = graphql(`
+  mutation DeleteWorkingCopy(
+    $commandId: ID!
+    $articleId: ID!
+    $workingCopyId: ID!
+    $community: String!
+  ) {
+    deleteWorkingCopy(
+      commandId: $commandId
+      articleId: $articleId
+      workingCopyId: $workingCopyId
+      community: $community
+    ) {
+      done
+      commandId
     }
   }
 `)
@@ -165,45 +244,61 @@ const community = graphql(`
   }
 `)
 
-const post = graphql(`
-  query ArticleEditorPost($article: ArticlePathInput!) {
-    post(article: $article) {
-      innerId
-      version
+const workingCopies = graphql(`
+  query ArticleEditorWorkingCopies($articleId: ID!, $community: String!) {
+    articleWorkingCopies(articleId: $articleId, community: $community) {
+      id
+      articleId
+      scopeKind
+      scopeId
+      revision
       title
-      linkAddr
-      copyRight
-      lifecycle {
-        state
-        version
-        archivedAt
-      }
-      author {
-        ...ArticleEditorAuthorFields
-      }
-      community {
-        ...ArticleEditorCommunityFields
-      }
-      communityTags {
-        ...ArticleEditorTagFields
-      }
-      meta {
-        thread
-      }
-      body {
-        json
-      }
+      digest
+      slug
+      bodyJson
+      bodyMarkdown
+      bodyHtml
+      bodyMarkdownToc
+      bodyPlainText
+      bodyThumbnail
+      tagIds
+      threadFields
+      updatedAt
+    }
+  }
+`)
+
+const snapshots = graphql(`
+  query ArticleEditorSnapshots($articleId: ID!, $community: String!) {
+    articleSnapshots(articleId: $articleId, community: $community) {
+      id
+      articleId
+      sourceWorkingCopyId
+      sourceRevision
+      title
+      digest
+      slug
+      bodyJson
+      bodyMarkdown
+      bodyHtml
+      bodyMarkdownToc
+      bodyPlainText
+      bodyThumbnail
+      tagIds
+      threadFields
+      capturedAt
     }
   }
 `)
 
 export default {
-  post,
-  createBlog,
-  createChangelog,
-  updatePost,
-  updateBlog,
-  updateChangelog,
-  createPost,
+  workingCopies,
+  snapshots,
+  createArticle,
+  createAndPublishArticle,
+  saveWorkingCopy,
+  forkSnapshot,
+  publishArticle,
+  deleteWorkingCopy,
   community,
 }

@@ -151,7 +151,7 @@ defmodule GroupherServer.CommandPipelineCompileTest do
                   access: :open,
                   target: :resource,
                   params: [],
-                  confirmation: GroupherServer.CMS.Articles.Commands.PublishConfirmation
+                  confirmation: GroupherServer.CMS.Articles.Commands.PublishArticleConfirmation
         receipt_pipeline execute(resource, command_id) do
           change(fn value -> {:ok, value} end)
           confirm(fn value -> {:ok, value} end)

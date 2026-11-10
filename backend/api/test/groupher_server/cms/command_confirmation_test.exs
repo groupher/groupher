@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.CommandConfirmationTest do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.CollectFolders.MembershipConfirmation
-  alias CMS.Articles.Commands.PublishConfirmation
+  alias CMS.Articles.Commands.PublishArticleConfirmation
   alias CMS.Articles.Commands.RevisionConfirmation
   alias CMS.Command
   alias CMS.Comments.Commands.CommentConfirmation
@@ -28,39 +28,29 @@ defmodule GroupherServer.Test.CMS.CommandConfirmationTest do
       field_types: %{"value" => :string}
   end
 
-  test "Article Publish confirmation round-trips strict JSON" do
-    value = %PublishConfirmation{
-      article_id: "article-1",
-      revision_id: "revision-1",
-      publication_version: 3,
-      first_publish?: false,
-      changed_fields: [:title, :body_hash],
-      published_by_id: 7,
-      published_at: ~U[2026-10-03 00:00:00Z]
+  test "Article publishArticle confirmation round-trips strict Snapshot JSON" do
+    value = %PublishArticleConfirmation{
+      data: %{
+        "article_id" => "article-1",
+        "snapshot_id" => "snapshot-1",
+        "published_by_id" => 7,
+        "published_at" => "2026-10-03T00:00:00Z",
+        "command_id" => "command-1"
+      }
     }
 
-    assert {:ok, encoded} = PublishConfirmation.encode(value, :article_publish)
-    assert encoded["operation"] == "article.publish"
-    assert {:ok, ^value} = PublishConfirmation.decode(encoded, :article_publish)
-  end
-
-  test "Article Publish confirmation rejects extra fields and wrong operation" do
-    value = %PublishConfirmation{
-      article_id: "article-1",
-      revision_id: "revision-1",
-      publication_version: 1,
-      first_publish?: true,
-      changed_fields: [],
-      published_by_id: 7,
-      published_at: ~U[2026-10-03 00:00:00Z]
-    }
-
-    assert {:ok, encoded} = PublishConfirmation.encode(value, :article_publish)
+    assert {:ok, encoded} = PublishArticleConfirmation.encode(value, :article_publish_article)
+    assert encoded["operation"] == "article.publish_article"
+    assert {:ok, ^value} = PublishArticleConfirmation.decode(encoded, :article_publish_article)
 
     assert {:error, _} =
-             PublishConfirmation.decode(Map.put(encoded, "extra", true), :article_publish)
+             PublishArticleConfirmation.decode(
+               Map.put(encoded, "extra", true),
+               :article_publish_article
+             )
 
-    assert {:error, _} = PublishConfirmation.decode(encoded, :article_update)
+    assert {:error, _} =
+             PublishArticleConfirmation.decode(encoded, :article_create_and_publish_article)
   end
 
   test "Article Create and Update confirmations round-trip revision anchors" do

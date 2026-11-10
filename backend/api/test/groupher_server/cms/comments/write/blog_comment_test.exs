@@ -179,7 +179,15 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
     test "blog author create comment will not update active timestamp",
          ~m(community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
-      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+
+      {:ok, blog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          blog_attrs,
+          user
+        )
+
       article_before = Repo.get!(CMS.Model.Article, blog.article_id)
 
       Process.sleep(1000)
@@ -208,7 +216,14 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       #   Datetime.shift(Datetime.now(), days: -(active_period_days - 1)) |> Datetime.to_datetime()
 
       blog_attrs = mock_attrs(:blog)
-      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+
+      {:ok, blog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          blog_attrs,
+          user
+        )
 
       Process.sleep(1000)
 
@@ -233,7 +248,14 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         |> Datetime.to_datetime()
 
       blog_attrs = mock_attrs(:blog)
-      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
+
+      {:ok, blog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          blog_attrs,
+          user
+        )
 
       article = Repo.get!(CMS.Model.Article, blog.article_id)
 

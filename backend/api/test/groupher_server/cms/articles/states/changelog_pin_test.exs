@@ -14,7 +14,12 @@ defmodule GroupherServer.Test.CMS.Articles.ChangelogPin do
     {:ok, community} = mock_community(user)
 
     {:ok, changelog} =
-      CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+      GroupherServer.Support.Factory.create_published_article(
+        community,
+        :changelog,
+        mock_attrs(:changelog),
+        user
+      )
 
     {:ok, ~m(user community changelog)a}
   end
@@ -35,14 +40,24 @@ defmodule GroupherServer.Test.CMS.Articles.ChangelogPin do
     test "one community & thread can only pin certain count of changelog", ~m(community user)a do
       Enum.reduce(1..@max_pinned_article_count_per_thread, [], fn _, acc ->
         {:ok, new_changelog} =
-          CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+          GroupherServer.Support.Factory.create_published_article(
+            community,
+            :changelog,
+            mock_attrs(:changelog),
+            user
+          )
 
         {:ok, _} = CMS.Articles.pin(community, new_changelog.id, user, Ecto.UUID.generate())
         acc
       end)
 
       {:ok, new_changelog} =
-        CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          mock_attrs(:changelog),
+          user
+        )
 
       {:error, reason} = CMS.Articles.pin(community, new_changelog.id, user, Ecto.UUID.generate())
 

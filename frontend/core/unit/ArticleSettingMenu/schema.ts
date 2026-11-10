@@ -1,25 +1,43 @@
 import { graphql } from '~/graphql/authoring'
 
-const updatePost = graphql(`
-  mutation UpdatePostFromMenu(
-    $article: ArticlePathInput!
+const saveWorkingCopy = graphql(`
+  mutation SaveWorkingCopyFieldsFromMenu(
+    $articleId: ID!
+    $workingCopyId: ID!
+    $community: String!
     $commandId: ID!
-    $expectedVersion: Int!
+    $revision: Int!
     $title: String
-    $communityTags: [ID]
+    $tagIds: [ID]
   ) {
-    updatePost(
-      article: $article
+    saveWorkingCopy(
+      articleId: $articleId
+      workingCopyId: $workingCopyId
+      community: $community
       commandId: $commandId
-      expectedVersion: $expectedVersion
+      revision: $revision
       title: $title
-      communityTags: $communityTags
+      tagIds: $tagIds
     ) {
-      innerId
+      id
+      articleId
+      scopeKind
+      revision
       title
-      communityTags {
-        ...ArticleMenuTagFields
-      }
+      tagIds
+    }
+  }
+`)
+
+const articleWorkingCopies = graphql(`
+  query ArticleWorkingCopiesForMenu($articleId: ID!, $community: String!) {
+    articleWorkingCopies(articleId: $articleId, community: $community) {
+      id
+      articleId
+      scopeKind
+      revision
+      title
+      tagIds
     }
   }
 `)
@@ -64,7 +82,8 @@ const communityTagGroups = graphql(`
 `)
 
 export default {
-  updatePost,
+  saveWorkingCopy,
+  articleWorkingCopies,
   setPostCat,
   pinPost,
   undoPinPost,

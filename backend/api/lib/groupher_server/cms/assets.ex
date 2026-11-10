@@ -104,6 +104,11 @@ defmodule GroupherServer.CMS.Assets do
   def content_refs(:draft, body_draft_id), do: {:ok, Refs.draft_refs(body_draft_id)}
   def content_refs(:revision, revision_id), do: {:ok, Refs.revision_refs(revision_id)}
 
+  def content_refs(:working_copy, working_copy_id),
+    do: {:ok, Refs.working_copy_refs(working_copy_id)}
+
+  def content_refs(:snapshot, snapshot_id), do: {:ok, Refs.snapshot_refs(snapshot_id)}
+
   @doc """
   Returns the active public-read origin metadata for one asset public ref.
 

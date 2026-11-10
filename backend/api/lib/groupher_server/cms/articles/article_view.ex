@@ -2,16 +2,15 @@ defmodule GroupherServer.CMS.Articles.ArticleView do
   @moduledoc """
   Typed boundary for the assembled public Article view.
 
-      Article aggregate + immutable revision
+      Article aggregate + immutable selected content
           -> projection assembler
           -> ArticleView DTO
           -> transport / GraphQL
 
   The view is intentionally a DTO rather than an Ecto schema. Its immutable
-  content is anchored by `revision_id` and `body_hash`; operational fields
-  remain explicit on the same transport object for compatibility with existing
-  GraphQL resolvers. Extension fields are preserved as map keys so
-  thread-specific cover fields do not get dropped during assembly.
+  ordinary Article content is anchored by `snapshot_id`; operational fields
+  remain explicit on the transport object. Extension fields are preserved as
+  map keys so thread-specific cover fields do not get dropped during assembly.
   """
 
   @typedoc "Canonical Article transport projection."
@@ -35,12 +34,12 @@ defmodule GroupherServer.CMS.Articles.ArticleView do
     :community,
     :communities,
     :community_tags,
+    :article_tags,
     :comments_participants,
     :active_at,
     :inserted_at,
     :updated_at,
-    :revision_id,
-    :publication_version,
+    :snapshot_id,
     :version,
     :lifecycle,
     :is_pinned,

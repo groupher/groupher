@@ -16,7 +16,8 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
 
   test "basic graphql query on doc with login user",
        ~m(user_conn community user doc_attrs)a do
-    {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+    {:ok, doc} =
+      CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
 
     variables = %{
       article: %{
@@ -38,7 +39,8 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
 
   test "basic graphql query on doc with stranger(un-login user)",
        ~m(guest_conn community doc_attrs user)a do
-    {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+    {:ok, doc} =
+      CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
 
     variables = %{
       article: %{
@@ -56,7 +58,8 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
 
   test "returns cancan error when doc thread is disabled",
        ~m(guest_conn community doc_attrs user)a do
-    {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+    {:ok, doc} =
+      CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
 
     {:ok, _} =
       CMS.Dashboard.update(

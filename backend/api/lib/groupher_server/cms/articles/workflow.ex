@@ -15,23 +15,19 @@ defmodule GroupherServer.CMS.Articles.Workflow do
         -> Repo / domain event
   """
 
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.FrontDesk, as: RootFrontDesk
+  alias GroupherServer.{CMS, Repo}
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
 
   alias CMS.Model.{
     Article,
-    ArticleBinding,
-    ArticleBodySnapshot,
-    ArticleRevision,
     Author,
+    ArticlePublic,
+    ArticleWorkingCopy,
     Community
   }
 
-  alias CMS.Articles.Effects
-  alias CMS.Artiment.PlateJSON
-  alias CMS.ArtimentMentions
+  alias CMS.Articles.WorkingCopy.Publisher
   alias Helper.ORM
 
   @doc "Runs an Article workflow in the current transaction or opens one."
@@ -45,31 +41,95 @@ defmodule GroupherServer.CMS.Articles.Workflow do
 
   @doc "Publishes one Gate-authorized Article and commits all first-publish side effects atomically."
   def publish(%Article{} = article, %Author{} = author, actor, opts) do
-    transaction(fn ->
-      with {:ok, identity} <- outbox_identity(opts),
-           {:ok, published} <- CMS.Articles.Publish.Target.publish(article, author, opts),
-           {:ok, _ticket_cache} <- invalidate_linked_ticket_cache(published, identity),
-           {:ok, _finalized} <- finalize_first_publish(published, actor),
-           {:ok, _events} <- enqueue_publish_events(published, opts) do
-        published
-      else
-        {:error, reason} -> Repo.rollback(reason)
+    with %User{} = user <- publish_user(actor, author),
+         {:ok, %Community{} = community} <- publish_community(article, opts),
+         {:ok, source} <- publish_source(article, opts),
+         current_public <- Repo.get(ArticlePublic, article.id),
+         expected_public_snapshot_id <-
+           Keyword.get(
+             opts,
+             :expected_public_snapshot_id,
+             current_public && current_public.snapshot_id
+           ),
+         command_id <- publish_command_id(opts) do
+      result =
+        transaction(fn ->
+          Publisher.publish_in_transaction(
+            article,
+            community,
+            source,
+            expected_public_snapshot_id,
+            user,
+            command_id
+          )
+        end)
+
+      case result do
+        {:ok, {:ok, published}} -> {:ok, published}
+        {:ok, {:error, reason}} -> {:error, reason}
+        {:error, reason} -> {:error, reason}
       end
-    end)
+    else
+      {:error, _reason} = error -> error
+      _ -> {:error, :invalid_publish_context}
+    end
   end
 
-  defp invalidate_linked_ticket_cache(
-         %{article: %Article{thread: :post, id: post_id}},
-         identity
-       ) do
-    CMS.Tickets.SourceVisibility.revalidate_cache_in_transaction(
-      post_id,
-      identity,
-      "post_public_revision_changed:#{post_id}"
-    )
+  defp publish_user(%User{} = user, _author), do: user
+
+  defp publish_user(_actor, %Author{user_id: user_id}) do
+    case Repo.get(User, user_id) do
+      %User{} = user -> user
+      nil -> nil
+    end
   end
 
-  defp invalidate_linked_ticket_cache(_published, _identity), do: {:ok, :pass}
+  defp publish_community(_article, community: %Community{} = community), do: {:ok, community}
+
+  defp publish_community(_article, community_id: community_id) when is_integer(community_id) do
+    case CMS.FrontDesk.community(community_id, mode: :internal) do
+      {:ok, %Community{} = community} -> {:ok, community}
+      {:error, _reason} -> {:error, CMS.Communities.ErrorCat.not_exist()}
+    end
+  end
+
+  defp publish_community(article, _opts) do
+    case Map.get(article, :community) do
+      %Community{} = community -> {:ok, community}
+      _ -> {:error, :binding_context_required}
+    end
+  end
+
+  defp publish_source(article, opts) do
+    case Keyword.get(opts, :source) do
+      %{working_copy_id: _id, revision: _revision} = source ->
+        {:ok, source}
+
+      %{snapshot_id: _id} = source ->
+        {:ok, source}
+
+      nil ->
+        case Repo.get_by(ArticleWorkingCopy,
+               article_id: article.id,
+               scope_kind: :default,
+               scope_id: article.id
+             ) do
+          %ArticleWorkingCopy{id: id, revision: revision} ->
+            {:ok, %{working_copy_id: id, revision: revision}}
+
+          nil ->
+            {:error, :working_copy_not_found}
+        end
+
+      _ ->
+        {:error, :invalid_publish_source}
+    end
+  end
+
+  defp publish_command_id(opts) do
+    Keyword.get(opts, :command_id) || Keyword.get(opts, :outbox_command_id) ||
+      Ecto.UUID.generate()
+  end
 
   @doc "Returns or creates the CMS Author row associated with a User."
   @spec ensure_author_exists(User.t()) :: {:ok, Author.t()}
@@ -84,138 +144,6 @@ defmodule GroupherServer.CMS.Articles.Workflow do
         |> Ecto.Changeset.unique_constraint(:user_id)
         |> Ecto.Changeset.foreign_key_constraint(:user_id)
         |> Repo.insert()
-    end
-  end
-
-  defp enqueue_publish_events(
-         %{
-           article: %Article{} = article,
-           public: public,
-           first_publish?: first_publish?,
-           community: %Community{} = community,
-           binding: %ArticleBinding{inner_id: inner_id}
-         } = result,
-         opts
-       ) do
-    case outbox_identity(opts) do
-      {:ok, identity} ->
-        with {:ok, cache_event} <-
-               Effects.enqueue(
-                 if(first_publish?, do: "article.published", else: "article.updated"),
-                 "article",
-                 article.id,
-                 identity,
-                 %{
-                   community: community.slug,
-                   community_id: community.id,
-                   thread: article.thread,
-                   inner_id: inner_id,
-                   article_id: article.id,
-                   revision_id: public.revision_id
-                 },
-                 effect_key: "article-cache:#{community.id}:#{inner_id}",
-                 retry_failed: true
-               ),
-             {:ok, projection_event} <-
-               Effects.enqueue(
-                 "article.projections",
-                 "article",
-                 article.id,
-                 identity,
-                 %{
-                   first_publish?: first_publish?,
-                   community_id: community.id,
-                   inner_id: inner_id,
-                   changed_fields: Map.get(result, :changed_fields, []),
-                   published_by_id: Map.get(result, :published_by_id),
-                   revision_id: public.revision_id
-                 },
-                 effect_key: "article-projections:#{community.id}:#{inner_id}",
-                 retry_failed: true
-               ),
-             {:ok, mention_event} <-
-               capture_article_mentions(article, public, community, identity) do
-          {:ok, %{cache: cache_event, projections: projection_event, mentions: mention_event}}
-        else
-          {:error, reason} -> {:error, reason}
-        end
-
-      _ ->
-        {:error, CMS.ErrorCat.command_id_required()}
-    end
-  end
-
-  defp capture_article_mentions(%Article{} = article, public, community, identity) do
-    with %ArticleRevision{} = revision <- Repo.get(ArticleRevision, public.revision_id),
-         %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, revision.body_snapshot_id),
-         {:ok, ast} <- PlateJSON.decode(body.json),
-         true <- match?(%DateTime{}, public.updated_at),
-         {:ok, captured} <-
-           ArtimentMentions.update(
-             %{type: article.thread, article_id: article.id},
-             %{
-               published_revision_identity: "#{public.revision_id}:#{public.publication_version}",
-               ast: ast,
-               community_id: community.id,
-               mentioned_at: public.updated_at
-             },
-             identity
-           ) do
-      {:ok, captured}
-    else
-      nil -> {:error, :source_body_missing}
-      false -> {:error, :source_publication_time_missing}
-      {:error, _reason} = error -> error
-    end
-  end
-
-  defp outbox_identity(opts) do
-    case Keyword.get(opts, :outbox_command_id) do
-      command_id when is_binary(command_id) ->
-        case Ecto.UUID.cast(command_id) do
-          {:ok, command_id} -> {:ok, {:command, command_id}}
-          :error -> {:error, :outbox_command_id_required}
-        end
-
-      _ ->
-        case Keyword.get(opts, :outbox_workflow_ref) do
-          workflow_ref when is_binary(workflow_ref) and workflow_ref != "" ->
-            {:ok, {:workflow, workflow_ref}}
-
-          _ ->
-            {:error, :outbox_identity_required}
-        end
-    end
-  end
-
-  defp finalize_first_publish(%{first_publish?: false} = result, _actor), do: {:ok, result}
-
-  defp finalize_first_publish(
-         %{
-           first_publish?: true,
-           article: %Article{} = article,
-           community: %Community{} = community
-         } = result,
-         actor
-       ) do
-    with %User{} = user <- actor_user(actor),
-         {:ok, _community} <- CMS.Communities.update_count_field(community, article.thread),
-         {:ok, _user} <- Accounts.publish_update_states(user, article.thread),
-         {:ok, _throttle} <- CMS.Gate.RateLimit.Publish.record(user) do
-      {:ok, result}
-    else
-      {:error, reason} -> {:error, reason}
-      _ -> {:error, :publish_finalization_context_not_found}
-    end
-  end
-
-  defp actor_user(%User{} = user), do: user
-  defp actor_user(%Author{user: %User{} = user}), do: user
-
-  defp actor_user(%Author{user_id: user_id}) do
-    case RootFrontDesk.fresh_user(user_id) do
-      {:ok, %User{} = user} -> user
-      _ -> nil
     end
   end
 end

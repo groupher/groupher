@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUseConfirmation do
     data_keys: [
       "article_id",
       "command_id",
-      "draft_version",
+      "revision",
       "from_asset_id",
       "ref_id",
       "to_asset_id",
@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUseConfirmation do
     field_types: %{
       "article_id" => :string,
       "command_id" => :string,
-      "draft_version" => :integer,
+      "revision" => :integer,
       "from_asset_id" => :integer,
       "ref_id" => :integer,
       "to_asset_id" => :integer,

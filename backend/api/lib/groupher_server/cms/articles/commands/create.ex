@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.{Articles, Communities, Docs}
-  alias CMS.Articles.{Bindings, Effects, RevisionProjection, RevisionResult, Tags.Assignment}
+  alias CMS.Articles.{Bindings, Effects, RevisionResult, Tags.Assignment}
   alias CMS.FrontDesk
   alias CMS.Model.{Article, ArticleBinding, Community}
   alias CMS.Articles.Commands.RevisionConfirmation, as: Confirmation
@@ -51,46 +51,26 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     present(fn confirmation -> RevisionResult.build(confirmation, community) end)
   end
 
-  @pipeline operation: :article_create_write,
-            target: :community,
-            params: [:thread, :attrs],
-            operation_ref: :operation_ref
-  direct_pipeline run_direct(community, thread, attrs, user, opts, operation_ref) do
-    gate(fn candidate -> CMS.Gate.check_in_transaction(user, :create_article, candidate) end)
-
-    change(fn canonical_community ->
-      with {:ok, public} <-
-             create_and_publish(canonical_community, thread, attrs, user, operation_ref),
-           {:ok, confirmation} <-
-             confirmation_from_public(public, canonical_community, option(opts, :command_id)) do
-        RevisionResult.build(confirmation, canonical_community)
-      end
-    end)
-  end
-
   @doc "Creates and publishes one stable Article under an idempotent command id."
   @spec execute(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
           {:ok, map()} | {:error, term()}
-  def execute(%Community{} = community, thread, attrs, %User{} = user, opts) do
+  def execute(%Community{} = community, :doc, attrs, %User{} = user, opts) do
     attrs = attrs |> drop_command_id() |> Map.drop([:author, :community, :communities])
 
     run_receipt(
       community,
-      thread,
+      :doc,
       attrs,
       user,
       opts,
       option(opts, :command_id),
       {:article, community.id},
-      %{thread: thread, attrs: attrs}
+      %{thread: :doc, attrs: attrs}
     )
   end
 
-  @doc false
-  def execute_direct(%Community{} = community, thread, attrs, %User{} = user, opts) do
-    attrs = attrs |> drop_command_id() |> Map.drop([:author, :community, :communities])
-    run_direct(community, thread, attrs, user, opts, Ecto.UUID.generate())
-  end
+  def execute(_community, _thread, _attrs, _user, _opts),
+    do: {:error, :unsupported_article_thread}
 
   defp confirmation_from_public(public, community, command_id) do
     with {:ok, %Article{} = article} <- FrontDesk.article(public.article_id, mode: :internal),
@@ -146,40 +126,6 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     end
   end
 
-  defp create_and_publish(community, thread, attrs, user, command_id) do
-    with {:ok, %{article: article, draft: draft}} <-
-           Articles.Commands.CreateStableDraft.create_in_transaction(
-             community,
-             thread,
-             attrs,
-             user,
-             []
-           ),
-         publish_opts =
-           [
-             expected_draft_version: draft.version,
-             expected_lifecycle_version: 1,
-             community: community,
-             outbox_command_id: command_id,
-             outbox_workflow_ref: "article-create:#{community.id}:#{article.id}"
-           ] ++
-             community_tag_opts(attrs),
-         {:ok, publish_result} <-
-           Articles.Commands.Publish.publish_after_gate(article, user, publish_opts),
-         {:ok, public} <-
-           RevisionProjection.build(
-             publish_result.article,
-             community,
-             publish_result.revision,
-             publication_version: publish_result.public.publication_version,
-             published_at: publish_result.public.published_at
-           ),
-         {:ok, _activity} <-
-           Effects.activity(Map.put(public, :community_id, community.id), :created, actor: user) do
-      {:ok, public}
-    end
-  end
-
   defp public_projection(%Article{thread: thread, id: article_id}, community) do
     case Bindings.fetch_binding(article_id, community.id) do
       {:ok, %ArticleBinding{inner_id: inner_id}} when is_integer(inner_id) ->
@@ -214,19 +160,6 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
          ) do
       {:ok, _article} -> {:ok, :pass}
       {:error, _reason} = error -> error
-    end
-  end
-
-  defp community_tag_opts(attrs) do
-    cond do
-      Map.has_key?(attrs, :community_tags) ->
-        [community_tags: Map.get(attrs, :community_tags) || []]
-
-      Map.has_key?(attrs, "community_tags") ->
-        [community_tags: Map.get(attrs, "community_tags") || []]
-
-      true ->
-        []
     end
   end
 

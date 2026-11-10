@@ -260,14 +260,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:priority, non_null(:integer))
     field(:lifecycle_version, :integer)
     field(:workflow_version, :integer)
-    field(:draft_version, :integer)
+    field(:working_copy_revision, :integer)
     field(:rank, non_null(:integer))
     field(:title, non_null(:string))
     field(:digest, non_null(:string))
-    field(:body, non_null(:string), resolve: fn ticket, _, _ -> {:ok, ticket.body.json} end)
+    field(:body, non_null(:string), resolve: fn ticket, _, _ -> {:ok, ticket.body.body_json} end)
 
     field(:plain_text, non_null(:string),
-      resolve: fn ticket, _, _ -> {:ok, ticket.body.plain_text} end
+      resolve: fn ticket, _, _ -> {:ok, ticket.body.body_plain_text} end
     )
 
     field(:publication_preview, :string)
@@ -1226,6 +1226,96 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     )
   end
 
+  object :article_working_copy do
+    field(:id, non_null(:id))
+    field(:article_id, non_null(:id))
+
+    field(:scope_kind, non_null(:string),
+      resolve: fn work, _, _ -> {:ok, to_string(work.scope_kind)} end
+    )
+
+    field(:scope_id, non_null(:id))
+    field(:revision, non_null(:integer))
+    field(:title, non_null(:string))
+    field(:digest, non_null(:string))
+    field(:slug, :string)
+    field(:body_json, non_null(:string), resolve: fn work, _, _ -> {:ok, work.body_json} end)
+    field(:body_markdown, non_null(:string))
+    field(:body_html, non_null(:string))
+    field(:body_markdown_toc, non_null(:json))
+    field(:body_plain_text, non_null(:string))
+    field(:body_thumbnail, non_null(:json))
+    field(:cover_edit_working_copy_id, :id)
+
+    field(:tag_ids, non_null(list_of(non_null(:id))),
+      resolve: fn work, _, _ -> CMS.articles_working_copy_tag_ids(work) end
+    )
+
+    field(:thread_fields, non_null(:json),
+      resolve: fn result, _, _ ->
+        work = Map.get(result, :working_copy, result)
+        CMS.articles_working_copy_thread_fields(work)
+      end
+    )
+
+    field(:created_by_id, non_null(:id))
+    field(:updated_by_id, non_null(:id))
+    field(:inserted_at, non_null(:datetime))
+    field(:updated_at, non_null(:datetime))
+  end
+
+  object :article_snapshot do
+    field(:id, non_null(:id))
+    field(:article_id, non_null(:id))
+    field(:source_working_copy_id, non_null(:id))
+    field(:source_revision, non_null(:integer))
+    field(:title, non_null(:string))
+    field(:digest, non_null(:string))
+    field(:slug, :string)
+    field(:body_json, non_null(:string))
+    field(:body_markdown, non_null(:string))
+    field(:body_html, non_null(:string))
+    field(:body_markdown_toc, non_null(:json))
+    field(:body_plain_text, non_null(:string))
+    field(:body_thumbnail, non_null(:json))
+    field(:cover_edit_snapshot_id, :id)
+
+    field(:tag_ids, non_null(list_of(non_null(:id))),
+      resolve: fn snapshot, _, _ -> CMS.articles_snapshot_tag_ids(snapshot) end
+    )
+
+    field(:thread_fields, non_null(:json),
+      resolve: fn snapshot, _, _ -> CMS.articles_snapshot_thread_fields(snapshot) end
+    )
+
+    field(:captured_by_id, non_null(:id))
+    field(:captured_at, non_null(:datetime))
+  end
+
+  object :article_public_snapshot do
+    field(:article_id, non_null(:id))
+    field(:snapshot_id, non_null(:id))
+    field(:published_at, non_null(:datetime))
+    field(:published_by_id, non_null(:id))
+    field(:title, non_null(:string))
+    field(:digest, non_null(:string))
+    field(:slug, :string)
+    field(:plain_text, non_null(:string))
+    field(:thumbnail, non_null(:json))
+  end
+
+  input_object :article_working_copy_source_input do
+    field(:working_copy_id, :id)
+    field(:revision, :integer)
+    field(:snapshot_id, :id)
+  end
+
+  object :article_working_copy_result do
+    field(:working_copy, non_null(:article_working_copy),
+      resolve: fn result, _, _ -> {:ok, Map.fetch!(result, :working_copy)} end
+    )
+  end
+
   object :article_draft do
     field(:id, non_null(:id), resolve: fn draft, _, _ -> {:ok, draft.article_id} end)
 
@@ -1547,6 +1637,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:digest, non_null(:string))
     field(:body_hash, non_null(:string))
     field(:schema_version, non_null(:integer))
+    field(:thumbnail, non_null(:json))
   end
 
   object :artiment_body do
@@ -1567,8 +1658,9 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:html, non_null(:string))
     field(:plain_text, non_null(:string))
     field(:digest, non_null(:string))
-    field(:body_hash, non_null(:string))
+    field(:body_hash, :string)
     field(:schema_version, non_null(:integer))
+    field(:thumbnail, non_null(:json))
   end
 
   object :doc_branch_version_content do
@@ -1685,7 +1777,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:id, :id)
     field(:canvas_width, :integer)
     field(:canvas_height, :integer)
-    field(:version, :integer)
+    field(:format_version, :integer)
     field(:light, :cover_config)
     field(:dark, :cover_config)
 
@@ -1707,7 +1799,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   input_object :cover_edit_info_input do
     field(:canvas_width, non_null(:integer))
     field(:canvas_height, non_null(:integer))
-    field(:version, :integer)
+    field(:format_version, :integer)
     field(:light, non_null(:cover_config_input))
     field(:dark, non_null(:cover_config_input))
   end
@@ -2328,7 +2420,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:community_ref, non_null(:string))
     field(:thread, non_null(:thread))
     field(:article_id, non_null(:id))
-    field(:indexed_revision_id, non_null(:id))
+    field(:indexed_snapshot_id, :id)
     field(:title, non_null(:string))
     field(:digest, :string)
     field(:locator, non_null(:search_article_locator))
@@ -2339,7 +2431,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:published_at, :datetime)
     field(:inserted_at, non_null(:datetime))
     field(:updated_at, non_null(:datetime))
-    field(:content_hash, non_null(:string))
     field(:schema_version, non_null(:integer))
   end
 

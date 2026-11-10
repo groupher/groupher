@@ -3,8 +3,7 @@ defmodule GroupherServer.Test.Mutation.Analysis.Contribution do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Analysis
-  alias Analysis.Contribution.Model.{CommunityContribute, UserContribute}
+  alias GroupherServer.Analysis.Contribution.Model.UserContribute
 
   setup do
     {community, post, post_attr, user} = mock_article(:post)
@@ -16,43 +15,47 @@ defmodule GroupherServer.Test.Mutation.Analysis.Contribution do
     {:ok, ~m(guest_conn user_conn community post user user2 post_attr)a}
   end
 
-  describe "[analysis contribution] " do
-    test "user should have contribute list after create a post",
-         ~m(user_conn user2 community post_attr)a do
-      variables = %{
-        title: post_attr.title,
-        body: post_attr.body,
-        community: community.slug
-      }
-
-      user_conn |> gq_mutation(S.Article.m(:create_article, :post), variables)
-
-      {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
-      assert contributes.count == 1
-    end
-
-    test "community should have contribute list after create a post",
+  describe "[article creation] " do
+    test "creating a post returns its default WorkingCopy",
          ~m(user_conn community post_attr)a do
       variables = %{
         title: post_attr.title,
         body: post_attr.body,
-        community: community.slug
+        community: community.slug,
+        thread: "POST"
       }
 
-      user_conn |> gq_mutation(S.Article.m(:create_article, :post), variables)
-
-      {:ok, contributes} = ORM.find_by(CommunityContribute, community_id: community.id)
-      assert contributes.count == 1
+      created = user_conn |> gq_mutation(S.Article.m(:create_article), variables)
+      assert created["revision"] == 1
+      assert is_binary(created["id"])
     end
 
-    test "user should have contribute list after create a blog", ~m(user_conn user2 community)a do
+    test "creating a post creates one stable Article identity",
+         ~m(user_conn community post_attr)a do
+      variables = %{
+        title: post_attr.title,
+        body: post_attr.body,
+        community: community.slug,
+        thread: "POST"
+      }
+
+      created = user_conn |> gq_mutation(S.Article.m(:create_article), variables)
+      assert is_binary(created["articleId"])
+    end
+
+    test "creating a blog returns its default WorkingCopy", ~m(user_conn community)a do
       blog_attr = mock_attrs(:blog)
-      variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      user_conn |> gq_mutation(S.Article.m(:create_article, :blog), variables)
+      variables = %{
+        title: blog_attr.title,
+        body: blog_attr.body,
+        community: community.slug,
+        thread: "BLOG"
+      }
 
-      {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
-      assert contributes.count == 1
+      created = user_conn |> gq_mutation(S.Article.m(:create_article), variables)
+      assert created["revision"] == 1
+      assert is_binary(created["articleId"])
     end
 
     @write_comment_query S.Comment.m(:create_comment_2)

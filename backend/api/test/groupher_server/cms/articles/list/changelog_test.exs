@@ -11,8 +11,21 @@ defmodule GroupherServer.Test.CMS.Articles.ChangelogList do
 
   describe "[cms changelog list]" do
     test "can get paged changelogs", ~m(community changelog_attrs user)a do
-      {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-      {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
+
+      {:ok, _} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :changelog,
+          changelog_attrs,
+          user
+        )
 
       {:ok, paged_changelogs} =
         CMS.Articles.page(:changelog, %{}, %GroupherServer.Pagi.Params.Offset{page: 1, size: 20})

@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Articles do
   @moduledoc """
-  Public CMS facade for product Articles and the shared version lifecycle.
+  Public CMS facade for Article identity, WorkingCopy editing, and Snapshot publication.
 
       Post / Blog / Changelog
                     |
@@ -10,9 +10,7 @@ defmodule GroupherServer.CMS.Articles do
           +---------+----------+
           |                    |
           v                    v
-      mutable Draft       explicit Publish
-          |
-          +--> DraftDiff
+      mutable WorkingCopy -> immutable Snapshot -> selected Public content
 
   Doc-specific Branch, Lifecycle, Snapshot, Tree and Release composition lives
   under `CMS.Docs`; this facade only owns the ordinary Article core.
@@ -26,6 +24,8 @@ defmodule GroupherServer.CMS.Articles do
     Trash
   }
 
+  alias __MODULE__.WorkingCopy.Query, as: WorkingCopyQuery
+
   alias GroupherServer.{Accounts, CMS}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias Helper.T
@@ -33,10 +33,7 @@ defmodule GroupherServer.CMS.Articles do
   alias CMS.Artiment.Const
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
-  alias CMS.Model.{Article, Author, Community}
-
-  alias __MODULE__.Draft.Store, as: TargetDraft
-  alias __MODULE__.Draft.Diff, as: TargetDiff
+  alias CMS.Model.{Article, Community}
 
   @doc "Loads the Article's current path Community needed by cross-owner result readers."
   @spec load_community(struct()) :: {:ok, struct()} | {:error, term()}
@@ -107,201 +104,148 @@ defmodule GroupherServer.CMS.Articles do
     Query.count_published(thread, user)
   end
 
+  @doc "Lists an Article's editable WorkingCopies after caller-side Gate admission."
+  def working_copies(%Article{} = article, %Community{} = community) do
+    WorkingCopyQuery.working_copies(article, community)
+  end
+
+  @doc "Lists immutable Article Snapshots after caller-side Gate admission."
+  def snapshots(%Article{} = article, %Community{} = community) do
+    WorkingCopyQuery.snapshots(article, community)
+  end
+
+  @doc "Loads one immutable Snapshot owned by an Article."
+  def snapshot(%Article{} = article, %Community{} = community, snapshot_id) do
+    WorkingCopyQuery.snapshot(article, community, snapshot_id)
+  end
+
+  @doc "Loads one editable WorkingCopy owned by an Article."
+  def working_copy(%Article{} = article, %Community{} = community, working_copy_id) do
+    WorkingCopyQuery.working_copy(article, community, working_copy_id)
+  end
+
+  @doc "Loads the thread-specific fields of an Article WorkingCopy."
+  def working_copy_thread_fields(%CMS.Model.ArticleWorkingCopy{} = working_copy) do
+    WorkingCopyQuery.working_copy_thread_fields(working_copy)
+  end
+
+  @doc "Lists the tag IDs owned by one Article WorkingCopy."
+  def working_copy_tag_ids(%CMS.Model.ArticleWorkingCopy{} = working_copy) do
+    WorkingCopyQuery.working_copy_tag_ids(working_copy)
+  end
+
+  @doc "Loads the thread-specific fields of an Article Snapshot."
+  def snapshot_thread_fields(%CMS.Model.ArticleSnapshot{} = snapshot) do
+    WorkingCopyQuery.snapshot_thread_fields(snapshot)
+  end
+
+  @doc "Lists the tag IDs captured by one Article Snapshot."
+  def snapshot_tag_ids(%CMS.Model.ArticleSnapshot{} = snapshot) do
+    WorkingCopyQuery.snapshot_tag_ids(snapshot)
+  end
+
   # Write
 
-  @doc "Creates and immediately publishes an Article through the shared lifecycle."
+  @doc "Creates an unpublished stable Article with one default WorkingCopy."
+  @spec create_article(Community.t(), T.thread(), map(), User.t(), keyword()) ::
+          T.domain_res(map())
+  def create_article(%Community{} = community, thread, attrs, %User{} = actor, opts) do
+    Commands.CreateArticle.execute(community, thread, attrs, actor, opts)
+  end
+
+  @doc "Creates a new Article and publishes its first Snapshot under one command."
+  def create_and_publish_article(%Community{} = community, thread, attrs, %User{} = actor, opts) do
+    Commands.CreateAndPublishArticle.execute(community, thread, attrs, actor, opts)
+  end
+
+  @doc "Creates and publishes a Doc through the existing Docs branch workflow."
   @spec create(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
           T.domain_res(T.article())
-  def create(community, thread, attrs, %User{} = user) do
-    Commands.Create.execute_direct(community, thread, attrs, user, [])
+  def create(%Community{} = community, :doc, attrs, %User{} = user, opts) do
+    Commands.Create.execute(community, :doc, attrs, user, opts)
   end
 
-  def create(community, thread, attrs, %User{} = user, opts) do
-    Commands.Create.execute(community, thread, attrs, user, opts)
-  end
+  def create(_community, _thread, _attrs, _user, _opts), do: {:error, :unsupported_article_thread}
 
-  @doc "Updates an Article through the authenticated idempotent command boundary."
-  @spec update(T.article(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(T.article())
-  def update(article, attrs, %User{} = user, command_id) do
-    Commands.Update.execute(article, attrs, user, command_id)
-  end
-
-  # Shared Article Draft lifecycle
-
-  @doc "Creates the stable Article aggregate and its first mutable Draft workspace."
-  @spec create_stable_draft(Community.t(), T.thread(), map(), User.t() | Author.t(), keyword()) ::
-          {:ok, map()} | {:error, term()}
-  def create_stable_draft(%Community{} = community, thread, attrs, actor) do
-    Commands.CreateStableDraft.execute_direct(community, thread, attrs, actor, [])
-  end
-
-  def create_stable_draft(%Community{} = community, thread, attrs, actor, opts) do
-    case actor do
-      %Author{} ->
-        Commands.CreateStableDraft.execute_direct(community, thread, attrs, actor, opts)
-
-      %User{} ->
-        Commands.CreateStableDraft.execute(community, thread, attrs, actor, opts)
-
-      _ ->
-        {:error, :invalid_actor}
-    end
-  end
-
-  @doc "Creates a stable Draft through the explicit direct-direct pipeline."
-  def create_stable_draft_write(%Community{} = community, thread, attrs, actor, opts) do
-    Commands.CreateStableDraft.execute_direct(community, thread, attrs, actor, opts)
-  end
-
-  @doc "Creates a stable Article Draft and returns the editor mutation payload."
-  @spec create_stable_draft_result(Community.t(), T.thread(), map(), User.t(), keyword()) ::
-          T.domain_res(map())
-  def create_stable_draft_result(%Community{} = community, thread, attrs, %User{} = actor) do
-    with {:ok, result} <-
-           Commands.CreateStableDraft.execute_direct(community, thread, attrs, actor, []) do
-      __MODULE__.DraftResult.build(result)
-    end
-  end
-
-  def create_stable_draft_result(
+  @doc "Saves one WorkingCopy under the stable Article edit Gate and Receipt boundary."
+  def save_working_copy(
+        %Article{} = article,
         %Community{} = community,
-        thread,
+        working_copy_id,
         attrs,
+        revision,
         %User{} = actor,
-        opts
+        command_id
       ) do
-    with {:ok, result} <- create_stable_draft(community, thread, attrs, actor, opts) do
-      __MODULE__.DraftResult.build(result)
-    end
+    Commands.SaveWorkingCopy.execute(
+      article,
+      community,
+      working_copy_id,
+      attrs,
+      revision,
+      actor,
+      command_id
+    )
+  end
+
+  @doc "Creates an independent WorkingCopy from a frozen Snapshot under Article edit admission."
+  def fork_snapshot(
+        snapshot_id,
+        %Community{} = community,
+        scope_kind,
+        scope_id,
+        %User{} = actor,
+        command_id
+      ) do
+    Commands.ForkSnapshot.execute(
+      snapshot_id,
+      community,
+      scope_kind,
+      scope_id,
+      actor,
+      command_id
+    )
+  end
+
+  @doc "Selects an immutable Snapshot as the public Article version through Gate and Receipt."
+  def publish_article(
+        %Article{} = article,
+        %Community{} = community,
+        source,
+        expected_public_snapshot_id,
+        %User{} = actor,
+        command_id
+      ) do
+    Commands.PublishArticle.execute(
+      article,
+      community,
+      source,
+      expected_public_snapshot_id,
+      actor,
+      command_id
+    )
+  end
+
+  @doc "Discards one editable Article WorkingCopy under its Article edit Gate."
+  def delete_working_copy(
+        %Article{} = article,
+        %Community{} = community,
+        working_copy_id,
+        %User{} = actor,
+        command_id
+      ) do
+    Commands.DeleteWorkingCopy.execute(
+      article,
+      community,
+      working_copy_id,
+      actor,
+      command_id
+    )
   end
 
   @doc "Returns version-owned cover editor state when the viewer owns the Article."
   @spec cover_edit_info(map(), User.t() | nil) :: {:ok, map() | nil}
   def cover_edit_info(article, viewer), do: __MODULE__.CoverEdit.read(article, viewer)
-
-  @doc "Reads the current mutable workspace by stable Article UUID and actor."
-  @spec read_draft(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, struct()} | {:error, term()}
-  def read_draft(article_id, %User{} = actor, opts) when is_binary(article_id) do
-    with {:ok, article} <- stable_article(article_id),
-         {:ok, community} <- explicit_community(opts) do
-      CMS.Gate.with_community_check(actor, :edit, community, article, fn canonical ->
-        TargetDraft.get(canonical, opts)
-      end)
-    end
-  end
-
-  @doc "Reads the editor head, preferring Draft and falling back to the public projection."
-  @spec read_editor(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, struct()} | {:error, term()}
-  def read_editor(article_id, %User{} = actor, opts) when is_binary(article_id) do
-    with {:ok, article} <- stable_article(article_id),
-         {:ok, community} <- explicit_community(opts) do
-      CMS.Gate.with_community_check(actor, :edit, community, article, fn canonical ->
-        case TargetDraft.get(canonical, opts) do
-          {:ok, draft} -> {:ok, draft}
-          {:error, :not_found} -> stable_public(canonical, opts)
-        end
-      end)
-    end
-  end
-
-  @doc "Returns whether a stable Article Draft differs from its selected Public Revision."
-  @spec has_unpublished_changes(Ecto.UUID.t(), User.t(), keyword()) ::
-          {:ok, boolean()} | {:error, term()}
-  def has_unpublished_changes(article_id, %User{} = actor, opts)
-      when is_binary(article_id) do
-    with {:ok, article} <- stable_article(article_id),
-         {:ok, _} <- ordinary_article(article),
-         {:ok, community} <- explicit_community(opts) do
-      CMS.Gate.with_community_check(actor, :edit, community, article, fn canonical ->
-        TargetDiff.unpublished?(canonical)
-      end)
-    end
-  end
-
-  @doc "Returns a transient Draft-versus-Public diff for one stable Article."
-  @spec draft_diff(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def draft_diff(article_id, %User{} = actor, opts) when is_binary(article_id) do
-    with {:ok, article} <- stable_article(article_id),
-         {:ok, _} <- ordinary_article(article),
-         {:ok, community} <- explicit_community(opts) do
-      CMS.Gate.with_community_check(actor, :edit, community, article, fn canonical ->
-        TargetDiff.compare(canonical)
-      end)
-    end
-  end
-
-  @doc "Autosaves stable Article content with an optimistic Draft version guard."
-  @spec update_draft(Ecto.UUID.t(), map(), User.t() | Author.t(), keyword()) ::
-          {:ok, struct()} | {:error, term()}
-  def update_draft(article_id, attrs, actor, opts) when is_binary(article_id) do
-    Commands.UpdateDraft.execute(article_id, attrs, actor, opts)
-  end
-
-  @doc "Discards only the mutable workspace of a published stable Article."
-  @spec discard_draft(Ecto.UUID.t(), User.t(), keyword()) ::
-          {:ok, :done} | {:error, term()}
-  def discard_draft(article_id, %User{} = actor, opts) when is_binary(article_id) do
-    Commands.DiscardDraft.execute(article_id, actor, opts)
-  end
-
-  @doc "Publishes an ordinary stable Article Draft with atomic first-publish finalization."
-  @spec publish(Ecto.UUID.t() | Article.t(), User.t() | Author.t(), keyword()) ::
-          {:ok, map()} | {:error, term()}
-  def publish(%Article{} = article, actor, opts) do
-    case actor do
-      %Author{} -> Commands.Publish.execute_direct(article, actor, opts)
-      %User{} -> Commands.Publish.execute(article, actor, opts)
-      _ -> {:error, CMS.Articles.ErrorCat.invalid_publish_actor()}
-    end
-  end
-
-  def publish(article_id, actor, opts) when is_binary(article_id) do
-    with {:ok, %Article{} = article} <- stable_article(article_id) do
-      publish(article, actor, opts)
-    end
-  end
-
-  defp stable_article(article_id) do
-    case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{} = article} -> {:ok, article}
-      {:error, _} -> {:error, :article_not_found}
-    end
-  end
-
-  defp ordinary_article(%Article{thread: :doc}), do: {:error, :doc_branch_required}
-  defp ordinary_article(%Article{}), do: {:ok, :pass}
-
-  defp explicit_community(opts) do
-    case Keyword.get(opts, :community) do
-      %Community{} = community ->
-        {:ok, community}
-
-      _ ->
-        case Keyword.get(opts, :community_id) do
-          community_id when is_integer(community_id) ->
-            FrontDesk.community(community_id, mode: :internal)
-
-          _ ->
-            {:error, ArticleErrorCat.binding_context_required()}
-        end
-    end
-  end
-
-  defp stable_public(%Article{thread: :doc, id: article_id}, opts) do
-    branch_id = Keyword.fetch!(opts, :branch_id)
-
-    case CMS.Docs.Store.public(article_id, branch_id) do
-      {:ok, %CMS.Model.DocPublic{} = public} -> {:ok, public}
-      {:error, _} -> {:error, :not_found}
-    end
-  end
-
-  defp stable_public(%Article{id: article_id}, _opts) do
-    case Store.public(article_id) do
-      {:ok, %CMS.Model.ArticlePublic{} = public} -> {:ok, public}
-      {:error, _} -> {:error, :not_found}
-    end
-  end
 
   # Lifecycle
 

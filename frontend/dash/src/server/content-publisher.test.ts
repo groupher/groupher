@@ -96,6 +96,103 @@ describe('handleContentPublishRequest', () => {
     })
   })
 
+  it('creates an Article and its default WorkingCopy through createArticle', async () => {
+    const createCommand = {
+      action: CONTENT_PUBLISH_ACTION.CREATE_ARTICLE,
+      commandId: '00000000-0000-4000-8000-000000000002',
+      payload: {
+        content: {
+          format: CONTENT_SOURCE_FORMAT.PLATE,
+          value: [{ children: [{ text: 'Published' }], id: 'node-1', type: 'p' }],
+        },
+        digest: 'Published summary',
+        slug: 'published',
+        tagIds: [],
+        title: 'Published article',
+      },
+      target: { community: 'home', thread: 'post' },
+    } as const
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const upstream = JSON.parse(String(init?.body))
+      expect(upstream.query).toContain('mutation CreateArticle')
+      expect(upstream.query).toContain('createArticle(')
+      expect(upstream.query).not.toContain('createPost(')
+      expect(upstream.variables).toMatchObject({
+        commandId: createCommand.commandId,
+        community: 'home',
+        digest: 'Published summary',
+        slug: 'published',
+        thread: 'POST',
+        title: 'Published article',
+      })
+      return Response.json({
+        data: { createArticle: { articleId: 'article-id', revision: 1 } },
+      })
+    })
+
+    const response = await handleContentPublishRequest(request(createCommand), {
+      backendToken: 'user-token',
+      fetcher: fetcher as typeof fetch,
+      serviceAuthClient,
+    })
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      result: { articleId: 'article-id', revision: 1 },
+    })
+  })
+
+  it('sends the Article WorkingCopy revision unchanged to saveWorkingCopy', async () => {
+    const saveCommand = {
+      action: CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY,
+      commandId: '00000000-0000-4000-8000-000000000003',
+      revision: 7,
+      payload: {
+        content: {
+          format: CONTENT_SOURCE_FORMAT.PLATE,
+          value: [{ children: [{ text: 'Saved' }], id: 'node-2', type: 'p' }],
+        },
+        tagIds: ['tag-1'],
+        title: 'Saved article',
+        linkAddr: 'https://example.test/source',
+        subtitle: 'Saved subtitle',
+      },
+      target: { articleId: 'article-id', community: 'home', workingCopyId: 'working-copy-id' },
+    } as const
+    const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const upstream = JSON.parse(String(init?.body))
+      expect(upstream.query).toContain('mutation SaveWorkingCopy')
+      expect(upstream.query).toContain('saveWorkingCopy(')
+      expect(upstream.variables).toMatchObject({
+        articleId: 'article-id',
+        commandId: saveCommand.commandId,
+        revision: 7,
+        tagIds: ['tag-1'],
+        title: 'Saved article',
+        linkAddr: 'https://example.test/source',
+        subtitle: 'Saved subtitle',
+        workingCopyId: 'working-copy-id',
+      })
+      expect(upstream.variables).not.toHaveProperty('expectedVersion')
+      expect(typeof upstream.variables.bodyBag.thumbnail).toBe('string')
+      expect(JSON.parse(upstream.variables.bodyBag.thumbnail)).toMatchObject({ version: 1 })
+      return Response.json({ data: { saveWorkingCopy: { id: 'working-copy-id', revision: 8 } } })
+    })
+
+    const response = await handleContentPublishRequest(request(saveCommand), {
+      backendToken: 'user-token',
+      fetcher: fetcher as typeof fetch,
+      serviceAuthClient,
+    })
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      result: { id: 'working-copy-id', revision: 8 },
+    })
+  })
+
   it.each([
     ['unsupported content type', request(command, { 'content-type': 'text/plain' }), 415],
     [
@@ -195,9 +292,10 @@ describe('handleContentPublishRequest', () => {
   })
 
   it.each([
-    ['Doc Draft version conflict', 4539],
-    ['Comment body version conflict', 4540],
-  ])('maps %s to a stable 409 response', async (_name, code) => {
+    ['Doc Draft version conflict', 4539, 'version_conflict'],
+    ['Comment body version conflict', 4540, 'version_conflict'],
+    ['Article WorkingCopy revision conflict', 4561, 'revision_conflict'],
+  ])('maps %s to a stable 409 response', async (_name, code, errorCode) => {
     const response = await handleContentPublishRequest(request(), {
       backendToken: 'user-token',
       fetcher: vi.fn(async () =>
@@ -208,7 +306,7 @@ describe('handleContentPublishRequest', () => {
 
     expect(response.status).toBe(409)
     await expect(response.json()).resolves.toMatchObject({
-      error: { code: 'version_conflict' },
+      error: { code: errorCode },
       ok: false,
     })
   })

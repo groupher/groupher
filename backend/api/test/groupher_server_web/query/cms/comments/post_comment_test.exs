@@ -479,7 +479,13 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
           cat: GroupherServer.CMS.Artiment.Const.cat_map().qa
         })
 
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       total_count = 20
       thread = :post

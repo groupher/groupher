@@ -21,10 +21,31 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
 
   @policies %{
     article_create: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
-    article_create_draft:
-      {:fields, %{"thread" => :raw, "attrs" => :digest_each, "opts" => :digest_each}},
+    article_create_article: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
+    article_create_and_publish_article: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
+    article_save_working_copy:
+      {:fields,
+       %{
+         "working_copy_id" => :raw,
+         "attrs" => :digest_each,
+         "revision" => :raw,
+         "community_id" => :raw
+       }},
+    article_publish_article:
+      {:fields,
+       %{
+         "source" => :digest_each,
+         "expected_public_snapshot_id" => :raw
+       }},
+    article_fork_snapshot:
+      {:fields,
+       %{
+         "snapshot_id" => :raw,
+         "scope_kind" => :raw,
+         "scope_id" => :raw
+       }},
+    article_delete_working_copy: {:fields, %{"working_copy_id" => :raw}},
     article_update: :digest_each,
-    article_publish: :digest_each,
     article_mirror:
       {:fields,
        %{

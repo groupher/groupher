@@ -481,25 +481,70 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles,
     as: :cover_edit_info
 
-  @doc "Delegates GroupherServer.CMS.Articles.create_stable_draft_result/4 through the CMS Context boundary."
-  defdelegate articles_create_stable_draft_result(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Articles,
-    as: :create_stable_draft_result
-
-  @doc "Delegates GroupherServer.CMS.Articles.create_stable_draft_result/5 through the CMS Context boundary."
-  defdelegate articles_create_stable_draft_result(arg1, arg2, arg3, arg4, arg5),
-    to: GroupherServer.CMS.Articles,
-    as: :create_stable_draft_result
-
-  @doc "Delegates GroupherServer.CMS.Articles.create/4 through the CMS Context boundary."
-  defdelegate articles_create(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Articles,
-    as: :create
-
   @doc "Delegates GroupherServer.CMS.Articles.create/5 through the CMS Context boundary."
   defdelegate articles_create(arg1, arg2, arg3, arg4, arg5),
     to: GroupherServer.CMS.Articles,
     as: :create
+
+  @doc "Delegates stable Article WorkingCopy creation through the CMS boundary."
+  defdelegate articles_create_article(arg1, arg2, arg3, arg4, arg5),
+    to: GroupherServer.CMS.Articles,
+    as: :create_article
+
+  @doc "Delegates one-transaction Article creation and first publication through CMS."
+  defdelegate articles_create_and_publish_article(arg1, arg2, arg3, arg4, arg5),
+    to: GroupherServer.CMS.Articles,
+    as: :create_and_publish_article
+
+  @doc "Delegates Article WorkingCopy save through the CMS boundary."
+  defdelegate articles_save_working_copy(arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+    to: GroupherServer.CMS.Articles,
+    as: :save_working_copy
+
+  @doc "Delegates Snapshot-based WorkingCopy creation through the CMS boundary."
+  defdelegate articles_fork_snapshot(arg1, arg2, arg3, arg4, arg5, arg6),
+    to: GroupherServer.CMS.Articles,
+    as: :fork_snapshot
+
+  @doc "Lists editable WorkingCopies for one Article through the CMS boundary."
+  defdelegate articles_working_copies(arg1, arg2),
+    to: GroupherServer.CMS.Articles,
+    as: :working_copies
+
+  @doc "Lists immutable Snapshots for one Article through the CMS boundary."
+  defdelegate articles_snapshots(arg1, arg2),
+    to: GroupherServer.CMS.Articles,
+    as: :snapshots
+
+  @doc "Loads one immutable Article Snapshot through the CMS boundary."
+  defdelegate articles_snapshot(arg1, arg2, arg3),
+    to: GroupherServer.CMS.Articles,
+    as: :snapshot
+
+  @doc "Checks Article WorkingCopy admission through the owner capability."
+  defdelegate articles_working_copy_access_check(actor, action, article, community),
+    to: GroupherServer.CMS.Articles.WorkingCopy,
+    as: :access_check
+
+  @doc "Returns the typed fields owned by one WorkingCopy."
+  defdelegate articles_working_copy_thread_fields(working_copy),
+    to: GroupherServer.CMS.Articles.WorkingCopy,
+    as: :working_copy_thread_fields
+
+  @doc "Returns the tag IDs owned by one Article WorkingCopy."
+  defdelegate articles_working_copy_tag_ids(working_copy),
+    to: GroupherServer.CMS.Articles.WorkingCopy,
+    as: :working_copy_tag_ids
+
+  @doc "Returns the typed fields fixed into one Article Snapshot."
+  defdelegate articles_snapshot_thread_fields(snapshot),
+    to: GroupherServer.CMS.Articles.WorkingCopy,
+    as: :snapshot_thread_fields
+
+  @doc "Returns the tag IDs captured by one Article Snapshot."
+  defdelegate articles_snapshot_tag_ids(snapshot),
+    to: GroupherServer.CMS.Articles.WorkingCopy,
+    as: :snapshot_tag_ids
 
   @doc "Delegates GroupherServer.CMS.Articles.get_trashed/1 through the CMS Context boundary."
   defdelegate articles_get_trashed(arg1), to: GroupherServer.CMS.Articles, as: :get_trashed
@@ -882,8 +927,15 @@ defmodule GroupherServer.CMS do
   @doc "Delegates GroupherServer.CMS.Articles.pin/4 through the CMS Context boundary."
   defdelegate articles_pin(arg1, arg2, arg3, arg4), to: GroupherServer.CMS.Articles, as: :pin
 
-  @doc "Delegates GroupherServer.CMS.Articles.publish/3 through the CMS Context boundary."
-  defdelegate articles_publish(arg1, arg2, arg3), to: GroupherServer.CMS.Articles, as: :publish
+  @doc "Delegates Snapshot-based Article publication through the CMS boundary."
+  defdelegate articles_publish_article(arg1, arg2, arg3, arg4, arg5, arg6),
+    to: GroupherServer.CMS.Articles,
+    as: :publish_article
+
+  @doc "Delegates deletion of one Article WorkingCopy through CMS."
+  defdelegate articles_delete_working_copy(arg1, arg2, arg3, arg4, arg5),
+    to: GroupherServer.CMS.Articles,
+    as: :delete_working_copy
 
   @doc "Delegates GroupherServer.CMS.Articles.restore_trashed/2 through the CMS Context boundary."
   defdelegate articles_restore_trashed(arg1, arg2),
@@ -961,16 +1013,6 @@ defmodule GroupherServer.CMS do
   defdelegate articles_unmirror(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Articles,
     as: :unmirror
-
-  @doc "Delegates GroupherServer.CMS.Articles.update_draft/4 through the CMS Context boundary."
-  defdelegate articles_update_draft(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Articles,
-    as: :update_draft
-
-  @doc "Delegates GroupherServer.CMS.Articles.update/4 through the CMS Context boundary."
-  defdelegate articles_update(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Articles,
-    as: :update
 
   @doc "Delegates GroupherServer.CMS.Artiment.Config.comment_emotions/0 through the CMS Context boundary."
   defdelegate artiment_config_comment_emotions(),

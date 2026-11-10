@@ -1,30 +1,24 @@
 import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 
 import {
-  CreateBlogFromPublisherDocument,
-  CreateChangelogFromPublisherDocument,
+  CreateArticleDocument,
+  CreateAndPublishArticleDocument,
   CreateCommentDocument,
-  CreatePostDocument,
   ReplyCommentDocument,
-  UpdateBlogFromPublisherDocument,
-  UpdateChangelogFromPublisherDocument,
+  SaveWorkingCopyDocument,
   UpdateCommentDocument,
   UpdateDocDraftDocument,
-  UpdatePostFromEditorDocument,
 } from './generated/graphql'
 
 export type TContentPublishOperation = TypedDocumentNode<Record<string, unknown>, never>
 
 /** Node-safe generated operations used by the trusted Content Publisher adapter. */
 export const CONTENT_PUBLISH_OPERATIONS = {
-  createBlog: CreateBlogFromPublisherDocument,
-  createChangelog: CreateChangelogFromPublisherDocument,
+  createArticle: CreateArticleDocument,
+  createAndPublishArticle: CreateAndPublishArticleDocument,
   createComment: CreateCommentDocument,
-  createPost: CreatePostDocument,
   replyComment: ReplyCommentDocument,
-  updateBlog: UpdateBlogFromPublisherDocument,
-  updateChangelog: UpdateChangelogFromPublisherDocument,
   updateComment: UpdateCommentDocument,
   updateDocDraft: UpdateDocDraftDocument,
-  updatePost: UpdatePostFromEditorDocument,
+  saveWorkingCopy: SaveWorkingCopyDocument,
 } as const

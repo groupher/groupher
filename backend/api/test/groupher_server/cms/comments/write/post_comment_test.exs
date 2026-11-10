@@ -274,7 +274,15 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "post author create comment will not update active timestamp", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
+
       article_before = Repo.get!(CMS.Model.Article, post.article_id)
 
       Process.sleep(1000)
@@ -302,7 +310,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       #   Datetime.shift(Datetime.now(), days: -(active_period_days - 1)) |> Datetime.to_datetime()
 
       post_attrs = mock_attrs(:post)
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       Process.sleep(1000)
 
@@ -327,7 +342,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         |> Datetime.to_datetime()
 
       post_attrs = mock_attrs(:post)
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       article = Repo.get!(CMS.Model.Article, post.article_id)
 
@@ -1458,7 +1480,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   describe "[article comment qa type]" do
     test "create comment for normal post should have default qa flags", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, post_comment} =
         CMS.Comments.create_comment(
@@ -1477,7 +1506,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     test "create comment for question post should have flags", ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, cat: @article_cat.qa})
 
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -1489,7 +1524,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           Ecto.UUID.generate()
         )
 
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, post_comment} =
         CMS.Comments.create_comment(
@@ -1507,7 +1548,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     test "update comment with is_question should batch update exist comments is_for_question field",
          ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, cat: @article_cat.qa})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, comment1} =
         CMS.Comments.create_comment(

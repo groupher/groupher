@@ -32,6 +32,7 @@ import { sanitizeArtimentHtml } from './sanitize'
 import { createDigest, serializePlateJson } from './serialize'
 import type { TArtimentBodyBag } from './types'
 import { assertValidArtimentValue } from './validate'
+import { createArticleThumbnail } from './thumbnail'
 
 /** Validates one Plate value and derives the complete canonical persistence BodyBag. */
 export const publishArtiment = async (value: unknown): Promise<TArtimentBodyBag> => {
@@ -54,6 +55,7 @@ export const publishArtiment = async (value: unknown): Promise<TArtimentBodyBag>
     digest: createDigest(plainText),
     bodyHash: createBodyHash(canonicalJson),
     schemaVersion: RICH_EDITOR_SCHEMA_VERSION,
+    thumbnail: createArticleThumbnail(value),
   }
 }
 
@@ -87,5 +89,6 @@ export {
   assertValidArtimentValue,
 } from './validate'
 export { normalizeContentSource } from './normalize'
+export { createArticleThumbnail } from './thumbnail'
 export * from './constants'
 export type { TContentSource } from '@groupher/contracts/content-publish'

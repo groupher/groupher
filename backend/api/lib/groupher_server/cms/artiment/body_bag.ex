@@ -47,13 +47,14 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
     html:
       "<div class=\"slate-editor\"><div class=\"slate-p m-0 px-0 py-1\"><span><span><span>\uFEFF</span></span></span></div></div>",
     toc: [],
+    thumbnail: %{version: 1, blocks: []},
     plain_text: "",
     digest: "",
     body_hash: "b57d3e9ff51a3f143580177c53e096767fa8cd8047d0cb3b8c59722e9e714f79",
     schema_version: @schema_version
   }
 
-  @fields ~w(json markdown html toc plain_text digest body_hash schema_version)a
+  @fields ~w(json markdown html toc plain_text digest body_hash schema_version thumbnail)a
   @string_fields ~w(json markdown html plain_text digest body_hash)a
   @camel_atoms %{
     "plainText" => :plainText,
@@ -66,6 +67,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
     field(:markdown, :string)
     field(:html, :string)
     field(:toc, {:array, :map}, default: [])
+    field(:thumbnail, :map)
     field(:plain_text, :string)
     field(:digest, :string)
     field(:body_hash, :string)
@@ -114,13 +116,11 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
     |> validate_required(required_string_fields ++ [:schema_version])
     |> validate_inclusion(:schema_version, @supported_schema_versions)
     |> validate_format(:body_hash, ~r/\A[0-9a-f]{64}\z/)
-    |> validate_length(:plain_text,
-      min: min_plain_text_length,
-      max: @max_plain_text_length
-    )
+    |> validate_length(:plain_text, min: min_plain_text_length, max: @max_plain_text_length)
     |> validate_change(:plain_text, &validate_plain_text(&1, &2, options))
     |> validate_length(:digest, max: @max_digest_length)
     |> validate_length(:toc, max: @max_toc_items)
+    |> validate_change(:thumbnail, &validate_thumbnail/2)
     |> validate_change(:json, &validate_json/2)
     |> validate_change(:markdown, &validate_derived_size/2)
     |> validate_change(:html, &validate_derived_size/2)
@@ -155,6 +155,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
       markdown: document.markdown,
       html: document.html,
       toc: document_toc(document.markdown_toc),
+      thumbnail: document.thumbnail,
       plain_text: document.plain_text,
       digest: document.digest,
       body_hash: document.body_hash,
@@ -168,6 +169,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
       markdown: body.markdown,
       html: body.html,
       toc: document_toc(body.markdown_toc),
+      thumbnail: body.thumbnail,
       plain_text: body.plain_text,
       digest: body.plain_text || "",
       body_hash: body.body_hash,
@@ -182,6 +184,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
       json: body_bag.json,
       markdown: body_bag.markdown,
       markdown_toc: %{items: body_bag.toc},
+      thumbnail: body_bag.thumbnail,
       html: body_bag.html,
       plain_text: body_bag.plain_text,
       digest: body_bag.digest,
@@ -200,6 +203,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
       markdown: value(attrs, :markdown),
       html: value(attrs, :html),
       toc: value(attrs, :toc),
+      thumbnail: value(attrs, :thumbnail),
       plain_text: value(attrs, :plain_text, "plainText"),
       digest: value(attrs, :digest),
       body_hash: value(attrs, :body_hash, "bodyHash"),
@@ -267,15 +271,43 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   defp validate_derived_size(_field, _value), do: []
 
   defp validate_plain_text(:plain_text, "", options) do
-    if Keyword.get(options, :thread) == :doc, do: [], else: [plain_text: "can't be blank"]
+    if Keyword.get(options, :thread) == :doc or Keyword.get(options, :allow_empty, false),
+      do: [],
+      else: [plain_text: "can't be blank"]
   end
 
   defp validate_plain_text(:plain_text, value, _options) do
     if String.trim(value) == "", do: [plain_text: "can't be blank"], else: []
   end
 
+  defp validate_thumbnail(:thumbnail, %{version: 1, blocks: blocks}) when is_list(blocks) do
+    if length(blocks) <= 12 and Enum.all?(blocks, &valid_thumbnail_block?/1),
+      do: [],
+      else: [thumbnail: "must contain at most 12 valid preview blocks"]
+  end
+
+  defp validate_thumbnail(:thumbnail, %{"version" => 1, "blocks" => blocks})
+       when is_list(blocks) do
+    validate_thumbnail(:thumbnail, %{version: 1, blocks: blocks})
+  end
+
+  defp validate_thumbnail(:thumbnail, _value),
+    do: [thumbnail: "must contain a version 1 preview block list"]
+
+  defp valid_thumbnail_block?(%{type: type})
+       when type in ~w(heading paragraph callout list image table code),
+       do: true
+
+  defp valid_thumbnail_block?(%{"type" => type})
+       when type in ~w(heading paragraph callout list image table code),
+       do: true
+
+  defp valid_thumbnail_block?(_block), do: false
+
   defp min_plain_text_length(options) do
-    if Keyword.get(options, :thread) == :doc, do: 0, else: @min_plain_text_length
+    if Keyword.get(options, :thread) == :doc or Keyword.get(options, :allow_empty, false),
+      do: 0,
+      else: @min_plain_text_length
   end
 
   defp required_string_fields(options) do
@@ -289,7 +321,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   # Ecto normally treats empty strings as absent input. An empty Docs document
   # is a valid publisher result, so preserve its exact plain_text/digest values.
   defp cast_fields(body_bag, attrs, options) do
-    if Keyword.get(options, :thread) == :doc do
+    if Keyword.get(options, :thread) == :doc or Keyword.get(options, :allow_empty, false) do
       Ecto.Changeset.cast(body_bag, attrs, @fields, empty_values: [])
     else
       Ecto.Changeset.cast(body_bag, attrs, @fields)

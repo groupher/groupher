@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     ArticleBodySnapshot,
     ArticlePublic,
     ArticleRevision,
+    ArticleSnapshot,
     ArticleLifecycle,
     CommentBody,
     CommentLifecycle,
@@ -139,16 +140,14 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
          lifecycle: %ArticleLifecycle{state: state}
        })
        when state in [:published, :archived] do
-    with %ArticlePublic{revision_id: revision_id} = public <-
+    with %ArticlePublic{snapshot_id: snapshot_id} = public <-
            Repo.get_by(ArticlePublic, article_id: article.id),
-         %ArticleRevision{body_snapshot_id: body_id} = revision <-
-           Repo.get(ArticleRevision, revision_id),
-         %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, body_id) do
+         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id) do
       {:ok,
        %{
-         title: public.title || revision.title || "",
-         body: body.plain_text || "",
-         images: CMS.Review.Media.article_images(revision.id)
+         title: public.title || snapshot.title || "",
+         body: snapshot.body_plain_text || "",
+         images: CMS.Review.Media.article_snapshot_images(snapshot.id)
        }}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}

@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.ProductionSeed.References do
 
   alias CMS.Model.{
     Article,
+    ArticleWorkingCopy,
     ArticlePublic,
     DocDraft,
     DocLifecycle,
@@ -178,7 +179,7 @@ defmodule GroupherServer.CMS.ProductionSeed.References do
         community,
         id,
         %{body_bag: entry["bodyBag"]},
-        internal.draft_version,
+        internal.working_copy_revision,
         internal.lifecycle_version,
         admin,
         entry["commands"]["save"]
@@ -192,7 +193,7 @@ defmodule GroupherServer.CMS.ProductionSeed.References do
         community,
         id,
         "Acceptance reference graph",
-        internal.draft_version,
+        internal.working_copy_revision,
         internal.lifecycle_version,
         internal.workflow_version,
         admin,
@@ -201,24 +202,58 @@ defmodule GroupherServer.CMS.ProductionSeed.References do
       )
     )
 
-    Map.put(resource, "revisionId", Repo.get_by!(ArticlePublic, article_id: id).revision_id)
+    Map.put(resource, "snapshotId", Repo.get_by!(ArticlePublic, article_id: id).snapshot_id)
   end
 
-  defp update!(resource, entry, admin, _author) do
+  defp update!(resource, entry, _admin, author) do
     article = Repo.get!(Article, resource["articleId"])
     community = Repo.get_by!(Community, slug: resource["community"])
 
-    result =
+    working_copy =
+      Repo.get_by!(ArticleWorkingCopy,
+        article_id: article.id,
+        scope_kind: :default,
+        scope_id: article.id
+      )
+
+    save_command_id = seed_command_id(entry["commandId"], "save-working-copy")
+    publish_command_id = seed_command_id(entry["commandId"], "publish-article")
+
+    saved =
       command!(
-        CMS.Articles.update(
-          Map.put(article, :community, community),
+        CMS.Articles.save_working_copy(
+          article,
+          community,
+          working_copy.id,
           %{body_bag: entry["bodyBag"]},
-          admin,
-          entry["commandId"]
+          working_copy.revision,
+          author,
+          save_command_id
         )
       )
 
-    Map.put(resource, "revisionId", result.revision_id)
+    public = Repo.get_by(ArticlePublic, article_id: article.id)
+
+    published =
+      command!(
+        CMS.Articles.publish_article(
+          article,
+          community,
+          %{working_copy_id: saved.id, revision: saved.revision},
+          public && public.snapshot_id,
+          author,
+          publish_command_id
+        )
+      )
+
+    Map.put(resource, "snapshotId", published.public.snapshot_id)
+  end
+
+  defp seed_command_id(command_id, purpose) do
+    {:ok, binary_id} = Ecto.UUID.dump(command_id)
+    <<derived::binary-size(16), _rest::binary>> = :crypto.hash(:sha256, binary_id <> purpose)
+    {:ok, uuid} = Ecto.UUID.load(derived)
+    uuid
   end
 
   defp actor(id) do

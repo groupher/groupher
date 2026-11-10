@@ -9,7 +9,6 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
   defdelegate unpublished?(article), to: Diff
   defdelegate compare(article), to: Diff
-  defdelegate publish_changed_fields(article, draft, revision), to: Diff
   defdelegate get(article), to: Store
   defdelegate get(article, opts), to: Store
   defdelegate ensure_from_public(article, author), to: Store

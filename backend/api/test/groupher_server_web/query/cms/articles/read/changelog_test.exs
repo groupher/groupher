@@ -16,7 +16,13 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
   test "basic graphql query on changelog with login user",
        ~m(user_conn community user changelog_attrs)a do
-    {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+    {:ok, changelog} =
+      GroupherServer.Support.Factory.create_published_article(
+        community,
+        :changelog,
+        changelog_attrs,
+        user
+      )
 
     variables = %{
       article: %{
@@ -38,7 +44,13 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
   test "basic graphql query on changelog with stranger(un-login user)",
        ~m(guest_conn community changelog_attrs user)a do
-    {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+    {:ok, changelog} =
+      GroupherServer.Support.Factory.create_published_article(
+        community,
+        :changelog,
+        changelog_attrs,
+        user
+      )
 
     variables = %{
       article: %{
@@ -56,7 +68,13 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
 
   test "returns cancan error when changelog thread is disabled",
        ~m(guest_conn community changelog_attrs user)a do
-    {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
+    {:ok, changelog} =
+      GroupherServer.Support.Factory.create_published_article(
+        community,
+        :changelog,
+        changelog_attrs,
+        user
+      )
 
     {:ok, _} =
       CMS.Dashboard.update(

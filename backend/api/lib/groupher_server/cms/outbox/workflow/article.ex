@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
     ArticleBinding,
     ArticlePublic,
     ArticleRevision,
+    ArticleSnapshot,
     Community,
     DocBranch,
     DocBranchVersion,
@@ -153,14 +154,28 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
   end
 
   defp projection_result(event, %Article{} = article, community, binding) do
-    with %ArticlePublic{} = public <- Repo.get(ArticlePublic, article.id),
-         %ArticleRevision{} = revision <- Repo.get(ArticleRevision, public.revision_id) do
+    with %ArticlePublic{snapshot_id: snapshot_id} = public <- Repo.get(ArticlePublic, article.id),
+         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id) do
       CMS.Articles.Effects.run(
-        projection_payload(event, article, community, binding, public, revision)
+        snapshot_projection_payload(event, article, community, binding, public, snapshot)
       )
     else
       nil -> {:error, ArticleErrorCat.projection_not_found()}
     end
+  end
+
+  defp snapshot_projection_payload(event, article, community, binding, public, snapshot) do
+    %{
+      article: article,
+      community: community,
+      binding: binding,
+      public: public,
+      snapshot: snapshot,
+      actor: Repo.get(GroupherServer.Accounts.Model.User, Map.get(event.data, "published_by_id")),
+      first_publish?: Map.get(event.data, "first_publish?", false),
+      changed_fields: changed_fields(Map.get(event.data, "changed_fields", [])),
+      published_by_id: Map.get(event.data, "published_by_id")
+    }
   end
 
   defp projection_payload(event, article, community, binding, public, revision) do

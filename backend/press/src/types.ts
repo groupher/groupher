@@ -29,7 +29,7 @@ export type PressTag = { slug: string; title: string }
 export type PressArticle = {
   communityRef: string
   articleRef: string
-  articleRevision: string
+  contentVersion: string
   thread: Thread
   canonicalPath: string
   canonicalOrigin: string
@@ -39,7 +39,6 @@ export type PressArticle = {
   markdown: string
   html?: string
   digest?: string
-  bodyHash?: string
   publishedAt: string
   updatedAt: string
   author?: PressAuthor
@@ -50,7 +49,7 @@ export type PressArticle = {
 export type FeedItem = Pick<
   PressArticle,
   | 'articleRef'
-  | 'articleRevision'
+  | 'contentVersion'
   | 'thread'
   | 'title'
   | 'digest'

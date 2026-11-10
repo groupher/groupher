@@ -58,62 +58,188 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     )
   end
 
-  def create_post(root, args, info) do
-    create_article(root, Map.put(args, :thread, :post), info)
+  def article_working_copies(
+        _root,
+        %{article_id: article_id, community: %Community{} = community},
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, article} <- CMS.front_desk_article(article_id, mode: :internal),
+         {:ok, canonical} <-
+           CMS.articles_working_copy_access_check(user, :edit, article, community),
+         {:ok, rows} <- CMS.articles_working_copies(canonical, community) do
+      {:ok, rows}
+    end
   end
 
-  def create_blog(root, args, info) do
-    create_article(root, Map.put(args, :thread, :blog), info)
+  def article_snapshots(
+        _root,
+        %{article_id: article_id, community: %Community{} = community},
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, article} <- CMS.front_desk_article(article_id, mode: :internal),
+         {:ok, canonical} <-
+           CMS.articles_working_copy_access_check(user, :edit, article, community),
+         {:ok, rows} <- CMS.articles_snapshots(canonical, community) do
+      {:ok, rows}
+    end
   end
 
-  def create_changelog(root, args, info) do
-    create_article(root, Map.put(args, :thread, :changelog), info)
+  def article_snapshot(
+        _root,
+        %{article_id: article_id, snapshot_id: snapshot_id, community: %Community{} = community},
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, article} <- CMS.front_desk_article(article_id, mode: :internal),
+         {:ok, canonical} <-
+           CMS.articles_working_copy_access_check(user, :edit, article, community),
+         {:ok, snapshot} <- CMS.articles_snapshot(canonical, community, snapshot_id) do
+      {:ok, snapshot}
+    end
   end
 
-  def create_post_draft(root, args, info) do
-    create_article_draft(root, Map.put(args, :thread, :post), info)
+  def create_article(_root, %{community: %Community{} = community, thread: thread} = args, %{
+        context: %{cur_user: user}
+      }) do
+    attrs = Map.drop(args, [:community, :thread, :command_id])
+
+    case CMS.articles_create_article(
+           community,
+           thread,
+           attrs,
+           user,
+           command_id: args.command_id
+         ) do
+      {:ok, %{working_copy: working_copy}} -> {:ok, working_copy}
+      {:ok, {_article, working_copy}} -> {:ok, working_copy}
+      other -> other
+    end
   end
 
-  def create_blog_draft(root, args, info) do
-    create_article_draft(root, Map.put(args, :thread, :blog), info)
-  end
+  def create_and_publish_article(
+        _root,
+        %{community: %Community{} = community, thread: thread} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    attrs = Map.drop(args, [:community, :thread, :command_id])
 
-  def create_changelog_draft(root, args, info) do
-    create_article_draft(root, Map.put(args, :thread, :changelog), info)
-  end
-
-  def update_post_draft(root, args, info) do
-    update_article_draft(root, Map.put(args, :thread, :post), info)
-  end
-
-  def update_blog_draft(root, args, info) do
-    update_article_draft(root, Map.put(args, :thread, :blog), info)
-  end
-
-  def update_changelog_draft(root, args, info) do
-    update_article_draft(root, Map.put(args, :thread, :changelog), info)
-  end
-
-  def publish_post_draft(root, args, info) do
-    publish_article_draft(root, Map.put(args, :thread, :post), info)
-  end
-
-  def publish_blog_draft(root, args, info) do
-    publish_article_draft(root, Map.put(args, :thread, :blog), info)
-  end
-
-  def publish_changelog_draft(root, args, info) do
-    publish_article_draft(root, Map.put(args, :thread, :changelog), info)
-  end
-
-  def update_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
-    CMS.articles_update(
-      article,
-      args |> Map.drop([:article, :command_id]) |> Map.put(:cur_user, user),
+    CMS.articles_create_and_publish_article(
+      community,
+      thread,
+      attrs,
       user,
-      args[:command_id]
+      command_id: args.command_id
     )
+    |> case do
+      {:ok, %{public: public}} -> {:ok, public}
+      other -> other
+    end
   end
+
+  def save_working_copy(
+        _root,
+        %{community: %Community{} = community, article_id: article_id} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, article} <- CMS.front_desk_article(article_id, mode: :internal) do
+      attrs =
+        Map.drop(args, [:community, :article_id, :working_copy_id, :revision, :command_id])
+
+      CMS.articles_save_working_copy(
+        article,
+        community,
+        args.working_copy_id,
+        attrs,
+        args.revision,
+        user,
+        args.command_id
+      )
+    end
+  end
+
+  def fork_snapshot(
+        _root,
+        %{community: %Community{} = community, snapshot_id: snapshot_id} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, working_copy} <-
+           CMS.articles_fork_snapshot(
+             snapshot_id,
+             community,
+             scope_kind(args.scope_kind),
+             args.scope_id,
+             user,
+             args.command_id
+           ) do
+      {:ok, working_copy}
+    end
+  end
+
+  def publish_article(
+        _root,
+        %{community: %Community{} = community, article_id: article_id, source: source} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, article} <- CMS.front_desk_article(article_id, mode: :internal),
+         {:ok, source} <- publish_source(source) do
+      CMS.articles_publish_article(
+        article,
+        community,
+        source,
+        args[:expected_public_snapshot_id],
+        user,
+        args.command_id
+      )
+      |> case do
+        {:ok, %{public: public}} -> {:ok, public}
+        other -> other
+      end
+    end
+  end
+
+  def delete_working_copy(
+        _root,
+        %{
+          community: %Community{} = community,
+          article_id: article_id,
+          working_copy_id: working_copy_id
+        } = args,
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, article} <- CMS.front_desk_article(article_id, mode: :internal),
+         {:ok, _deleted} <-
+           CMS.articles_delete_working_copy(
+             article,
+             community,
+             working_copy_id,
+             user,
+             args.command_id
+           ) do
+      {:ok, :done}
+    end
+  end
+
+  defp scope_kind(:default), do: :default
+  defp scope_kind(:workspace), do: :workspace
+  defp scope_kind("default"), do: :default
+  defp scope_kind("workspace"), do: :workspace
+  defp scope_kind(_), do: :invalid
+
+  defp publish_source(source) when is_map(source) do
+    case {Map.get(source, :working_copy_id), Map.get(source, :revision),
+          Map.get(source, :snapshot_id)} do
+      {working_copy_id, revision, nil}
+      when is_binary(working_copy_id) and is_integer(revision) ->
+        {:ok, %{working_copy_id: working_copy_id, revision: revision}}
+
+      {nil, nil, snapshot_id} when is_binary(snapshot_id) ->
+        {:ok, %{snapshot_id: snapshot_id}}
+
+      _ ->
+        {:error, :invalid_publish_source}
+    end
+  end
+
+  defp publish_source(_), do: {:error, :invalid_publish_source}
 
   def trash_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
     CMS.articles_trash_receipt(article, user, command_id: args[:command_id])
@@ -227,54 +353,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
        ) do
     article_path = %{community: community, thread: thread, inner_id: inner_id}
     FrontDesk.article(article_path, Map.get(context, :cur_user))
-  end
-
-  defp create_article(_root, ~m(community thread)a = args, %{context: %{cur_user: user}}) do
-    CMS.articles_create(community, thread, Map.put(args, :cur_user, user), user,
-      command_id: args[:command_id]
-    )
-  end
-
-  defp create_article_draft(
-         _root,
-         ~m(community thread)a = args,
-         %{context: %{cur_user: user}}
-       ) do
-    CMS.articles_create_stable_draft_result(
-      community,
-      thread,
-      Map.put(args, :cur_user, user),
-      user
-    )
-  end
-
-  defp update_article_draft(
-         _root,
-         %{article: article, community: %Community{} = community} = args,
-         %{context: %{cur_user: user}}
-       ) do
-    CMS.articles_update_draft(
-      article.id,
-      args
-      |> Map.drop([:community, :thread, :id, :article, :passport_is_owner])
-      |> Map.put(:cur_user, user),
-      user,
-      expected_version: args[:expected_version],
-      community: community
-    )
-  end
-
-  defp publish_article_draft(
-         _root,
-         %{article: article, community: %Community{} = community} = args,
-         %{context: %{cur_user: user}}
-       ) do
-    CMS.articles_publish(article, user,
-      expected_draft_version: args[:expected_version],
-      expected_lifecycle_version: args[:expected_lifecycle_version],
-      community: community,
-      command_id: args[:command_id]
-    )
   end
 
   defp article_path_community(%{community: %Community{} = community}) do

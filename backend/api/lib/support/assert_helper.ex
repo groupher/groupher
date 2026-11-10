@@ -281,7 +281,7 @@ defmodule GroupherServer.Test.AssertHelper do
               "enabled"
             )
 
-          body_bag = Articles.body_bag(body)
+          body_bag = body |> Articles.body_bag() |> encode_body_bag_json_scalars()
           {conn, Map.put(variables, :bodyBag, body_bag)}
 
         {body_bag, variables} when is_map(body_bag) ->
@@ -293,6 +293,7 @@ defmodule GroupherServer.Test.AssertHelper do
             )
 
           variable_name = if String.contains?(query, "$bodyBag"), do: :bodyBag, else: :body
+          body_bag = encode_body_bag_json_scalars(body_bag)
           {conn, Map.put(variables, variable_name, body_bag)}
 
         {_body, variables} ->
@@ -301,6 +302,10 @@ defmodule GroupherServer.Test.AssertHelper do
     else
       {conn, variables}
     end
+  end
+
+  defp encode_body_bag_json_scalars(body_bag) do
+    Map.update(body_bag, :thumbnail, nil, &Jason.encode!/1)
   end
 
   defp pop_body(variables) do

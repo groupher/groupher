@@ -159,7 +159,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
 
       blog_with_tags = Map.merge(blog_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
-      {:ok, created} = CMS.Articles.create(community, :blog, blog_with_tags, user)
+      {:ok, created} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          blog_with_tags,
+          user
+        )
+
       {:ok, blog} = read_article(community, :blog, created.inner_id)
 
       assert exist_in?(article_tag, blog.community_tags)
@@ -193,7 +200,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
 
       blog_with_tags = Map.merge(blog_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
-      {:error, reason} = CMS.Articles.create(community, :blog, blog_with_tags, user)
+      {:error, reason} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          blog_with_tags,
+          user
+        )
+
       is_error?(reason, {{:cms, :community}, :invalid_domain_tag})
     end
   end
@@ -280,7 +294,13 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
           Ecto.UUID.generate()
         )
 
-      {:ok, old_blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
+      {:ok, old_blog} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :blog,
+          mock_attrs(:blog),
+          user
+        )
 
       from(article in Article, where: article.id == ^old_blog.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])

@@ -258,7 +258,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
                community,
                ticket.id,
                "Public release",
-               draft_ticket.draft_version,
+               draft_ticket.working_copy_revision,
                draft_ticket.lifecycle_version,
                draft_ticket.workflow_version,
                actor,
@@ -283,23 +283,15 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         }
       ])
 
-    {:ok, %{article: article, draft: draft}} =
-      CMS.Articles.create_stable_draft(
+    {:ok, %{article: article}} =
+      CMS.Articles.create_and_publish_article(
         community,
         :post,
         %{title: "Ticket reference", digest: "Ticket", body_bag: mock_body_bag(body)},
-        user
+        user,
+        command_id: Ecto.UUID.generate(),
+        check_publish_admission?: false
       )
-
-    command_id = Ecto.UUID.generate()
-
-    assert {:ok, _} =
-             CMS.Articles.publish(article.id, user,
-               community: community,
-               expected_draft_version: draft.version,
-               expected_lifecycle_version: 1,
-               command_id: command_id
-             )
 
     source_path = %{
       community: community.slug,
@@ -1160,21 +1152,15 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         }
       ])
 
-    {:ok, %{article: article, draft: draft}} =
-      CMS.Articles.create_stable_draft(
+    {:ok, %{article: article}} =
+      CMS.Articles.create_and_publish_article(
         community,
         :post,
         %{title: "Many references", digest: "Fanout", body_bag: mock_body_bag(body)},
-        user
+        user,
+        command_id: Ecto.UUID.generate(),
+        check_publish_admission?: false
       )
-
-    assert {:ok, _} =
-             CMS.Articles.publish(article.id, user,
-               community: community,
-               expected_draft_version: draft.version,
-               expected_lifecycle_version: 1,
-               command_id: Ecto.UUID.generate()
-             )
 
     project_article(article)
 
@@ -1437,9 +1423,37 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     {article, path} = published_source(ctx.community, ctx.blog, ctx.user)
     public = Repo.get!(CMS.Model.ArticlePublic, article.id)
 
-    public
-    |> Ecto.Changeset.change(publication_version: public.publication_version + 1)
-    |> Repo.update!()
+    {:ok, [working_copy]} = CMS.Articles.working_copies(article, ctx.community)
+
+    {:ok, saved_working_copy} =
+      CMS.Articles.save_working_copy(
+        article,
+        ctx.community,
+        working_copy.id,
+        %{digest: "Source updated"},
+        working_copy.revision,
+        ctx.user,
+        Ecto.UUID.generate()
+      )
+
+    {:ok, _throttle} =
+      CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
+        :last_publish_time,
+        ctx.user,
+        minutes: -4
+      )
+
+    assert {:ok, %{snapshot: %{id: snapshot_id}}} =
+             CMS.Articles.publish_article(
+               article,
+               ctx.community,
+               %{working_copy_id: saved_working_copy.id, revision: saved_working_copy.revision},
+               public.snapshot_id,
+               ctx.user,
+               Ecto.UUID.generate()
+             )
+
+    assert Repo.get!(CMS.Model.ArticlePublic, article.id).snapshot_id == snapshot_id
 
     result =
       gq_query(ctx.guest_conn, @mentions_query, %{
@@ -1508,23 +1522,15 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         }
       ])
 
-    {:ok, %{article: article, draft: draft}} =
-      CMS.Articles.create_stable_draft(
+    {:ok, %{article: article}} =
+      CMS.Articles.create_and_publish_article(
         community,
         :post,
         %{title: "Reference source", digest: "Source", body_bag: mock_body_bag(body)},
-        user
+        user,
+        command_id: Ecto.UUID.generate(),
+        check_publish_admission?: false
       )
-
-    command_id = Ecto.UUID.generate()
-
-    assert {:ok, _} =
-             CMS.Articles.publish(article.id, user,
-               community: community,
-               expected_draft_version: draft.version,
-               expected_lifecycle_version: 1,
-               command_id: command_id
-             )
 
     {article, %{inner_id: article_inner_id(article, community)}}
   end

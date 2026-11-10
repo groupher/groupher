@@ -4,7 +4,6 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Artiment.BodyBag
   alias CMS.Assets.ThreadIdentity
   alias CMS.Hash
 
@@ -12,11 +11,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     Article,
     ArticleAssetRef,
     ArticleBinding,
-    ArticleBodyDraft,
     ArticleDraft,
     ArticleLifecycle,
     ArticlePublic,
-    ArticleRevision,
+    ArticleSnapshot,
+    ArticleWorkingCopy,
     AssetUpload,
     AssetReplacementPlan,
     AssetWorkflowRun,
@@ -97,7 +96,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       |> ArticleAssetRef.changeset(%{
         community_id: community.id,
         asset_id: asset.id,
-        revision_id: public.revision_id,
+        snapshot_id: public.snapshot_id,
         usage: :inline,
         block_id: "ticket-source-ref"
       })
@@ -125,12 +124,14 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       ticket_article = Repo.get!(Article, ticket.id)
-      ticket_draft = Repo.get_by!(ArticleDraft, article_id: ticket.id)
+
+      ticket_working_copy =
+        Repo.get_by!(ArticleWorkingCopy, article_id: ticket.id, scope_kind: :default)
 
       assert [%ArticleAssetRef{asset_id: asset_id}] =
                Repo.all(
                  from(ref in ArticleAssetRef,
-                   where: ref.body_draft_id == ^ticket_draft.body_draft_id
+                   where: ref.working_copy_id == ^ticket_working_copy.id
                  )
                )
 
@@ -150,7 +151,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  community,
                  ticket.id,
                  "Reviewed Ticket assets",
-                 internal.draft_version,
+                 internal.working_copy_revision,
                  internal.lifecycle_version,
                  internal.workflow_version,
                  ticket_actor,
@@ -363,7 +364,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.storage_bytes == 96
     end
 
-    test "links article document refs without changing storage ownership",
+    test "links Article attachment and cover refs without changing storage ownership",
          ~m(community post user)a do
       body_asset = image_asset_attrs("body.png", 100)
       cover_asset = image_asset_attrs("cover.png", 200)
@@ -376,9 +377,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                    asset_refs: [
                      %{
                        asset: body_asset,
-                       block_id: "block-image-1",
-                       block_type: "image",
-                       alt: "body image"
+                       usage: :attachment,
+                       title: "document attachment",
+                       alt: "body attachment"
                      }
                    ],
                    cover_asset: cover_asset
@@ -387,9 +388,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       refs = article_refs(:post, post.id)
-      assert refs |> Enum.map(& &1.usage) |> Enum.sort() == [:cover, :inline]
-      body_ref = Enum.find(refs, &(&1.usage == :inline))
-      assert body_ref.block_id == "block-image-1"
+      assert refs |> Enum.map(& &1.usage) |> Enum.sort() == [:attachment, :cover]
+      body_ref = Enum.find(refs, &(&1.usage == :attachment))
+      assert body_ref.usage == :attachment
+      assert body_ref.title == "document attachment"
+      assert body_ref.alt == "body attachment"
 
       {:ok, summary} = CMS.Assets.usage_summary(community, body_ref.asset_id, user)
       assert summary.draft == 1
@@ -401,7 +404,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.asset_count == 2
       assert usage.storage_bytes == 300
 
-      assert {:ok, %{body: [], cover: []}} =
+      assert {:ok, %{body: [], cover: [_]}} =
                CMS.Assets.link_refs(
                  post,
                  %{
@@ -411,7 +414,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  community: community
                )
 
-      assert article_refs(:post, post.id) == []
+      assert [%ArticleAssetRef{usage: :cover}] = article_refs(:post, post.id)
 
       {:ok, usage} = CMS.Assets.usage(community)
       assert usage.asset_count == 2
@@ -431,7 +434,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  post,
-                 %{asset_refs: [%{asset_id: asset.id, block_id: "usage-query"}]},
+                 %{
+                   asset_refs: [
+                     %{usage: :attachment, asset_id: asset.id, block_id: "usage-query"}
+                   ]
+                 },
                  community: community
                )
 
@@ -455,7 +462,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  post,
-                 %{asset_refs: [%{asset_id: asset.id, block_id: "trashed-draft"}]},
+                 %{
+                   asset_refs: [
+                     %{usage: :attachment, asset_id: asset.id, block_id: "trashed-draft"}
+                   ]
+                 },
                  community: community
                )
 
@@ -482,7 +493,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  post,
-                 %{asset_refs: [%{asset_id: asset.id, block_id: "missing-binding"}]},
+                 %{
+                   asset_refs: [
+                     %{usage: :attachment, asset_id: asset.id, block_id: "missing-binding"}
+                   ]
+                 },
                  community: community
                )
 
@@ -503,31 +518,46 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       public = Repo.get_by!(ArticlePublic, article_id: post.id)
-      revision = Repo.get!(ArticleRevision, public.revision_id)
+      snapshot = Repo.get!(ArticleSnapshot, public.snapshot_id)
 
-      historical_revision =
-        %ArticleRevision{}
-        |> ArticleRevision.changeset(%{
-          article_id: post.id,
-          body_snapshot_id: revision.body_snapshot_id,
-          title: revision.title,
-          digest: revision.digest,
-          slug: revision.slug,
-          content_hash: revision.content_hash,
-          schema_version: revision.schema_version,
-          cleanup_after: revision.cleanup_after
-        })
+      historical_snapshot =
+        snapshot
+        |> Map.from_struct()
+        |> Map.take([
+          :article_id,
+          :source_working_copy_id,
+          :source_revision,
+          :title,
+          :digest,
+          :slug,
+          :body_json,
+          :body_schema_version,
+          :body_markdown,
+          :body_html,
+          :body_markdown_toc,
+          :body_plain_text,
+          :body_thumbnail,
+          :body_xml,
+          :body_rss,
+          :captured_by_id,
+          :captured_at,
+          :causation_command_id
+        ])
+        |> Map.update!(:source_revision, &(&1 + 1))
+        |> Map.put(:captured_at, DateTime.add(snapshot.captured_at, -1, :second))
+        |> Map.put(:causation_command_id, Ecto.UUID.generate())
+        |> then(&ArticleSnapshot.changeset(%ArticleSnapshot{}, &1))
         |> Repo.insert!()
 
       {_, trashed_post, _, _} = mock_article(:post, community, user)
       trashed_public = Repo.get_by!(ArticlePublic, article_id: trashed_post.id)
 
-      for revision_id <- [public.revision_id, historical_revision.id, trashed_public.revision_id] do
+      for snapshot_id <- [public.snapshot_id, historical_snapshot.id, trashed_public.snapshot_id] do
         %ArticleAssetRef{}
         |> ArticleAssetRef.changeset(%{
           community_id: community.id,
           asset_id: asset.id,
-          revision_id: revision_id,
+          snapshot_id: snapshot_id,
           usage: :inline
         })
         |> Repo.insert!()
@@ -569,7 +599,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         assert {:ok, %{body: [_]}} =
                  CMS.Assets.link_refs(
                    article,
-                   %{asset_refs: [%{asset_id: asset.id, block_id: "many-#{index}"}]},
+                   %{
+                     asset_refs: [
+                       %{usage: :attachment, asset_id: asset.id, block_id: "many-#{index}"}
+                     ]
+                   },
                    community: community
                  )
       end
@@ -620,7 +654,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  doc,
-                 %{asset_refs: [%{asset_id: asset.id, block_id: "doc-usage-query"}]},
+                 %{
+                   asset_refs: [
+                     %{usage: :attachment, asset_id: asset.id, block_id: "doc-usage-query"}
+                   ]
+                 },
                  community: doc_community
                )
 
@@ -682,8 +720,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  %{
                    cur_user: user,
                    asset_refs: [
-                     %{asset_id: asset_a.id, block_id: "asset-a"},
-                     %{asset_id: asset_b.id, block_id: "asset-b"}
+                     %{usage: :attachment, asset_id: asset_a.id, block_id: "asset-a"},
+                     %{usage: :attachment, asset_id: asset_b.id, block_id: "asset-b"}
                    ]
                  },
                  community: community
@@ -700,8 +738,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  %{
                    cur_user: user,
                    asset_refs: [
-                     %{asset_id: asset_b.id, block_id: "asset-b"},
-                     %{asset_id: asset_c.id, block_id: "asset-c"}
+                     %{usage: :attachment, asset_id: asset_b.id, block_id: "asset-b"},
+                     %{usage: :attachment, asset_id: asset_c.id, block_id: "asset-c"}
                    ]
                  },
                  community: community
@@ -719,7 +757,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert asset_ref_count(asset_c.id) == 1
     end
 
-    test "replaces one Draft asset use with a version and source guard",
+    test "replaces one WorkingCopy attachment with a revision and source guard",
          ~m(community post user)a do
       {:ok, from_asset} =
         CMS.Assets.register_to_community(
@@ -740,44 +778,44 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  post,
-                 %{asset_refs: [%{asset_id: from_asset.id, block_id: "replace-me"}]},
+                 %{
+                   asset_refs: [
+                     %{usage: :attachment, asset_id: from_asset.id, block_id: "replace-me"}
+                   ]
+                 },
                  community: community
                )
 
-      draft = Repo.get_by!(ArticleDraft, article_id: post.id)
-      body = Repo.get!(ArticleBodyDraft, draft.body_draft_id)
-      {:ok, body_bag} = BodyBag.from_document(body)
+      work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
       workflow_ref = "asset-replacement:test:#{post.id}"
 
-      assert {:ok, %{draft_version: version, workflow_ref: ^workflow_ref}} =
+      assert {:ok, %{revision: revision, workflow_ref: ^workflow_ref}} =
                CMS.Assets.replace_use_workflow(
                  post,
                  %{
-                   expected_draft_version: draft.version,
-                   usage: :inline,
+                   revision: work.revision,
+                   usage: :attachment,
                    block_id: "replace-me",
                    from_asset_id: from_asset.id,
-                   to_asset_id: to_asset.id,
-                   body_bag: body_bag
+                   to_asset_id: to_asset.id
                  },
                  user,
                  workflow_ref
                )
 
-      assert version == draft.version + 1
+      assert revision == work.revision + 1
       assert [%ArticleAssetRef{asset_id: asset_id}] = article_refs(:post, post.id)
       assert asset_id == to_asset.id
 
-      assert {:ok, %{draft_version: ^version, workflow_ref: ^workflow_ref}} =
+      assert {:ok, %{revision: ^revision, workflow_ref: ^workflow_ref}} =
                CMS.Assets.replace_use_workflow(
                  post,
                  %{
-                   expected_draft_version: draft.version,
-                   usage: :inline,
+                   revision: work.revision,
+                   usage: :attachment,
                    block_id: "replace-me",
                    from_asset_id: from_asset.id,
-                   to_asset_id: to_asset.id,
-                   body_bag: body_bag
+                   to_asset_id: to_asset.id
                  },
                  user,
                  workflow_ref
@@ -805,7 +843,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  post,
-                 %{asset_refs: [%{asset_id: from_asset.id, block_id: "plan-block"}]},
+                 %{
+                   asset_refs: [
+                     %{usage: :attachment, asset_id: from_asset.id, block_id: "plan-block"}
+                   ]
+                 },
                  community: community
                )
 
@@ -817,7 +859,10 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       assert (item[:article_id] || item["article_id"]) == post.id
-      assert (item[:observed_draft_version] || item["observed_draft_version"]) == 1
+
+      assert (item[:observed_working_copy_revision] || item["observed_working_copy_revision"]) ==
+               1
+
       assert (item[:decision] || item["decision"]) == "editable"
       locators = item[:usage_locators] || item["usage_locators"]
       assert [%{block_id: "plan-block"}] = locators
@@ -844,7 +889,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  post,
-                 %{asset_refs: [%{asset_id: from_asset.id, block_id: "resume-block"}]},
+                 %{
+                   asset_refs: [
+                     %{usage: :attachment, asset_id: from_asset.id, block_id: "resume-block"}
+                   ]
+                 },
                  community: community
                )
 
@@ -855,12 +904,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  user
                )
 
-      draft = Repo.get_by!(ArticleDraft, article_id: post.id)
-      body = Repo.get!(ArticleBodyDraft, draft.body_draft_id)
-      {:ok, body_bag} = BodyBag.from_document(body)
-
       assert {:ok, %AssetReplacementPlan{status: :completed, apply_run_ref: run_ref} = applied} =
-               CMS.Assets.apply_replacement_plan(plan, user, body_bags: %{post.id => body_bag})
+               CMS.Assets.apply_replacement_plan(plan, user)
 
       assert is_binary(run_ref)
       [item] = applied.items
@@ -873,7 +918,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert (persisted_result[:status] || persisted_result["status"]) in [:applied, "applied"]
 
       assert {:ok, %AssetReplacementPlan{status: :completed, apply_run_ref: ^run_ref}} =
-               CMS.Assets.apply_replacement_plan(applied, user, body_bags: %{post.id => body_bag})
+               CMS.Assets.apply_replacement_plan(applied, user)
     end
 
     test "keeps a subset apply run pending until every article is selected",
@@ -900,14 +945,22 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  post,
-                 %{asset_refs: [%{asset_id: from_asset.id, block_id: "subset-one"}]},
+                 %{
+                   asset_refs: [
+                     %{usage: :attachment, asset_id: from_asset.id, block_id: "subset-one"}
+                   ]
+                 },
                  community: community
                )
 
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  other_post,
-                 %{asset_refs: [%{asset_id: from_asset.id, block_id: "subset-two"}]},
+                 %{
+                   asset_refs: [
+                     %{usage: :attachment, asset_id: from_asset.id, block_id: "subset-two"}
+                   ]
+                 },
                  community: community
                )
 
@@ -918,15 +971,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  user
                )
 
-      post_body_bag = body_bag_for(post)
-      other_body_bag = body_bag_for(other_post)
-
       assert {:ok, %AssetReplacementPlan{status: :completed} = partial} =
                CMS.Assets.apply_replacement_plan(
                  plan,
                  user,
-                 article_ids: [post.id],
-                 body_bags: %{post.id => post_body_bag}
+                 article_ids: [post.id]
                )
 
       run = Repo.get_by!(AssetWorkflowRun, workflow_ref: partial.apply_run_ref)
@@ -940,8 +989,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                CMS.Assets.apply_replacement_plan(
                  partial,
                  user,
-                 article_ids: [other_post.id],
-                 body_bags: %{other_post.id => other_body_bag}
+                 article_ids: [other_post.id]
                )
 
       assert Repo.get_by!(AssetWorkflowRun, workflow_ref: partial.apply_run_ref).status ==
@@ -982,8 +1030,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
             %{
               article_id: historical_post.id,
               decision: "historical_only",
-              observed_live_revision_id: nil,
-              observed_draft_version: nil,
+              observed_live_snapshot_id: nil,
+              observed_working_copy_revision: nil,
               usage_locators: [%{step_ref: step_ref, usage: "inline", block_id: "historical"}],
               result: nil
             }
@@ -1028,6 +1076,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                    cur_user: user,
                    asset_refs: [
                      %{
+                       usage: :attachment,
                        asset_id: asset.id,
                        asset: image_asset_attrs("ignored.png", 60)
                      }
@@ -1054,7 +1103,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       for usage <- [:cover, "cover_dark"] do
-        assert {:error, %ErrorCat.Error{reason: :custom, details: "asset usage is invalid"}} =
+        assert {:error,
+                %ErrorCat.Error{
+                  reason: :custom,
+                  details: "explicit Article asset refs must be attachments"
+                }} =
                  CMS.Assets.link_refs(
                    post,
                    %{
@@ -1094,6 +1147,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                     cur_user: user,
                     asset_refs: [
                       %{
+                        usage: :attachment,
                         asset: image_asset_attrs(filename, 20 + index),
                         source: filename
                       }
@@ -1134,7 +1188,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       asset_refs =
         Enum.map(1..105, fn position ->
-          %{asset_id: asset.id, position: position}
+          %{usage: :attachment, asset_id: asset.id, position: position}
         end)
 
       assert {:ok, %{body: refs, cover: []}} =
@@ -1569,7 +1623,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  post,
-                 %{cur_user: user, asset_refs: [%{asset_id: referenced.id}]},
+                 %{cur_user: user, asset_refs: [%{usage: :attachment, asset_id: referenced.id}]},
                  community: community
                )
 
@@ -1598,7 +1652,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           post,
           %{
             cur_user: user,
-            asset_refs: [%{asset: asset_attrs, block_id: "referenced"}]
+            asset_refs: [%{usage: :attachment, asset: asset_attrs, block_id: "referenced"}]
           },
           community: community
         )
@@ -1623,7 +1677,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           post,
           %{
             cur_user: user,
-            asset_refs: [%{asset: asset_attrs, block_id: "soft-delete-keeps-refs"}]
+            asset_refs: [
+              %{usage: :attachment, asset: asset_attrs, block_id: "soft-delete-keeps-refs"}
+            ]
           },
           community: community
         )
@@ -1645,7 +1701,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           post,
           %{
             cur_user: user,
-            asset_refs: [%{asset: asset_attrs, block_id: "delete-cleanup"}]
+            asset_refs: [%{usage: :attachment, asset: asset_attrs, block_id: "delete-cleanup"}]
           },
           community: community
         )
@@ -1681,7 +1737,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  post,
                  %{
                    cur_user: user,
-                   asset_refs: [%{asset_id: asset.id, block_id: "shared-one"}]
+                   asset_refs: [%{usage: :attachment, asset_id: asset.id, block_id: "shared-one"}]
                  },
                  community: community
                )
@@ -1691,7 +1747,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  other_post,
                  %{
                    cur_user: user,
-                   asset_refs: [%{asset_id: asset.id, block_id: "shared-two"}]
+                   asset_refs: [%{usage: :attachment, asset_id: asset.id, block_id: "shared-two"}]
                  },
                  community: community
                )
@@ -1708,7 +1764,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert [_] = article_refs(:post, other_post.id)
     end
 
-    test "keeps the current Draft version when the newest usage row belongs to a Revision",
+    test "keeps the default WorkingCopy revision when usage also includes a Snapshot",
          ~m(community post user)a do
       {:ok, from_asset} =
         CMS.Assets.register_to_community(
@@ -1729,7 +1785,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
                  post,
-                 %{asset_refs: [%{asset_id: from_asset.id, block_id: "mixed-draft"}]},
+                 %{
+                   asset_refs: [
+                     %{usage: :attachment, asset_id: from_asset.id, block_id: "mixed-draft"}
+                   ]
+                 },
                  community: community
                )
 
@@ -1739,7 +1799,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       |> ArticleAssetRef.changeset(%{
         community_id: community.id,
         asset_id: from_asset.id,
-        revision_id: public.revision_id,
+        snapshot_id: public.snapshot_id,
         usage: :inline,
         block_id: "mixed-live"
       })
@@ -1756,7 +1816,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  user
                )
 
-      assert (item[:observed_draft_version] || item["observed_draft_version"]) == 1
+      assert (item[:observed_working_copy_revision] || item["observed_working_copy_revision"]) ==
+               1
     end
   end
 
@@ -1794,30 +1855,32 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
   end
 
   defp open_draft(article_view, user) do
+    _user = user
     article = Repo.get!(Article, article_view.article_id)
-    author = Repo.get_by!(Author, user_id: user.id)
-    CMS.Articles.Draft.Store.ensure_from_public(article, author)
-  end
 
-  defp body_bag_for(article_view) do
-    draft = Repo.get_by!(ArticleDraft, article_id: article_view.id)
-    body = Repo.get!(ArticleBodyDraft, draft.body_draft_id)
-    BodyBag.from_document(body) |> elem(1)
+    case Repo.get_by(ArticleWorkingCopy,
+           article_id: article.id,
+           scope_kind: :default,
+           scope_id: article.id
+         ) do
+      %ArticleWorkingCopy{} = working_copy -> {:ok, working_copy}
+      nil -> {:error, :working_copy_not_found}
+    end
   end
 
   defp article_refs(thread, article_id) do
     ArticleAssetRef
-    |> join(:left, [ref], draft in CMS.Model.ArticleDraft,
-      on: draft.body_draft_id == ref.body_draft_id
+    |> join(:left, [ref], working_copy in ArticleWorkingCopy,
+      on: working_copy.id == ref.working_copy_id
     )
-    |> join(:left, [ref, _draft], revision in CMS.Model.ArticleRevision,
-      on: revision.id == ref.revision_id
+    |> join(:left, [ref, _working_copy], snapshot in ArticleSnapshot,
+      on: snapshot.id == ref.snapshot_id
     )
-    |> join(:inner, [ref, draft, revision], article in Article,
-      on: article.id == draft.article_id or article.id == revision.article_id
+    |> join(:inner, [ref, working_copy, snapshot], article in Article,
+      on: article.id == working_copy.article_id or article.id == snapshot.article_id
     )
     |> where(
-      [_ref, _draft, _revision, article],
+      [_ref, _working_copy, _snapshot, article],
       article.thread == ^thread and article.id == ^article_id
     )
     |> order_by([ref], asc: ref.usage)

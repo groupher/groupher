@@ -114,6 +114,53 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
+  def m(:create_article) do
+    """
+    mutation(
+      $title: String!
+      $bodyBag: ArtimentBodyBagInput!
+      $community: String!
+      $thread: Thread!
+      $commandId: ID!
+    ) {
+      createArticle(
+        title: $title
+        bodyBag: $bodyBag
+        community: $community
+        thread: $thread
+        commandId: $commandId
+      ) {
+        id
+        articleId
+        revision
+      }
+    }
+    """
+  end
+
+  def m(:create_and_publish_article) do
+    """
+    mutation(
+      $title: String!
+      $bodyBag: ArtimentBodyBagInput!
+      $community: String!
+      $thread: Thread!
+      $commandId: ID!
+    ) {
+      createAndPublishArticle(
+        title: $title
+        bodyBag: $bodyBag
+        community: $community
+        thread: $thread
+        commandId: $commandId
+      ) {
+        articleId
+        snapshotId
+      }
+    }
+    """
+  end
+
   def m(:undo_upvote_article, thread) do
     """
     mutation($article: ArticlePathInput!, $commandId: ID!) {
@@ -234,103 +281,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
-  def m(:create_article_draft, thread) do
-    """
-    mutation($community: String!, $title: String!, $bodyBag: ArtimentBodyBagInput!, $commandId: ID!) {
-      create#{t(thread)}Draft(community: $community, title: $title, bodyBag: $bodyBag, commandId: $commandId) {
-        id
-        thread
-        stage
-        title
-        version
-      }
-    }
-    """
-  end
-
-  def m(:create_article, thread) do
-    """
-    mutation(
-      $title: String!
-      $bodyBag: ArtimentBodyBagInput!
-      $community: String!
-      $commandId: ID!
-      $communityTags: [ID]
-      $linkAddr: String
-    ) {
-      create#{t(thread)}(
-        title: $title
-        bodyBag: $bodyBag
-        community: $community
-        commandId: $commandId
-        communityTags: $communityTags
-        linkAddr: $linkAddr
-      ) {
-        innerId
-        title
-        linkAddr
-        body {
-          html
-        }
-        community {
-          slug
-        }
-      }
-    }
-    """
-  end
-
-  def m(:update_article_draft, thread) do
-    """
-    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput, $commandId: ID!) {
-      update#{t(thread)}Draft(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag, commandId: $commandId) {
-        id
-        thread
-        stage
-        title
-        version
-      }
-    }
-    """
-  end
-
-  def m(:publish_article_draft, thread) do
-    """
-    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $expectedLifecycleVersion: Int!, $commandId: ID!) {
-      publish#{t(thread)}Draft(community: $community, id: $id, expectedVersion: $expectedVersion, expectedLifecycleVersion: $expectedLifecycleVersion, commandId: $commandId) {
-        innerId
-        title
-      }
-    }
-    """
-  end
-
-  def m(:update_article, thread) do
-    """
-    mutation($article: ArticlePathInput!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput, $copyRight: String, $communityTags: [ID], $commandId: ID!){
-      update#{t(thread)}(article: $article, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag, copyRight: $copyRight, communityTags: $communityTags, commandId: $commandId) {
-        innerId
-        version
-        title
-        body {
-          html
-        }
-        copyRight
-        meta {
-          isEdited
-        }
-        commentsParticipants {
-          login
-          nickname
-        }
-        communityTags {
-          id
-        }
-      }
-    }
-    """
-  end
-
   def m(:upvote_article, thread) do
     """
     mutation($article: ArticlePathInput!, $commandId: ID!) {
@@ -369,59 +319,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         interactionState {
           innerId
           viewerHasUpvoted
-        }
-      }
-    }
-    """
-  end
-
-  def m(:create_document, operation) do
-    """
-    mutation($title: String!, $bodyBag: ArtimentBodyBagInput!, $community: String!, $commandId: ID!) {
-      #{operation}(title: $title, bodyBag: $bodyBag, community: $community, commandId: $commandId) {
-        innerId
-        version
-        title
-        body {
-          json
-          markdown
-          toc { id level title }
-          html
-        }
-      }
-    }
-    """
-  end
-
-  def m(:update_document, operation) do
-    """
-    mutation($article: ArticlePathInput!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput, $commandId: ID!) {
-      #{operation}(article: $article, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag, commandId: $commandId) {
-        innerId
-        title
-        body {
-          json
-          markdown
-          toc { id level title }
-          html
-        }
-      }
-    }
-    """
-  end
-
-  def m(:update_draft_document, operation) do
-    """
-    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput, $commandId: ID!) {
-      #{operation}(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag, commandId: $commandId) {
-        id
-        version
-        title
-        body {
-          json
-          markdown
-          toc { id level title }
-          html
         }
       }
     }
@@ -671,7 +568,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
               communityRef
               thread
               articleId
-              indexedRevisionId
+              indexedSnapshotId
               locator {
                 community
                 thread

@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Press.Projection do
     %{
       community_ref: community.slug,
       article_id: article.article_id,
-      article_revision: article_revision(article),
+      content_version: content_version(article),
       thread: thread,
       canonical_path: path,
       canonical_origin: @site_host,
@@ -30,7 +30,6 @@ defmodule GroupherServer.CMS.Press.Projection do
       markdown: article.body.markdown,
       html: article.body.html,
       digest: article.digest || article.body.digest,
-      body_hash: article.body_hash || article.body.body_hash,
       published_at: Map.get(article, :published_at, article.inserted_at),
       updated_at: Map.get(article, :updated_at, article.updated_at),
       author: author(article.author),
@@ -44,7 +43,7 @@ defmodule GroupherServer.CMS.Press.Projection do
     article(community, thread, article)
     |> Map.take([
       :article_id,
-      :article_revision,
+      :content_version,
       :thread,
       :title,
       :digest,
@@ -73,7 +72,7 @@ defmodule GroupherServer.CMS.Press.Projection do
 
     %{
       item_id: "#{community.slug}:docs:#{release.version_slug}",
-      article_revision: "release-#{release.release_number}",
+      content_version: "release-#{release.release_number}",
       thread: :doc,
       title: "#{community.title} Docs update",
       digest: digest,
@@ -129,7 +128,7 @@ defmodule GroupherServer.CMS.Press.Projection do
   def revision(items, config_revision) do
     value =
       items
-      |> Enum.map_join("|", &"#{&1.item_id}:#{&1.article_revision}")
+      |> Enum.map_join("|", &"#{&1.item_id}:#{&1.content_version}")
       |> then(&"#{config_revision}|#{&1}")
 
     :crypto.hash(:sha256, value) |> Base.encode16(case: :lower)
@@ -148,6 +147,20 @@ defmodule GroupherServer.CMS.Press.Projection do
 
   defp tag(tag), do: %{slug: tag.slug, title: tag.title}
 
+  defp content_version(article) do
+    Map.get(article, :content_version) ||
+      Map.get(article, :snapshot_id) ||
+      Map.get(article, :branch_version_id) ||
+      Map.get(article, :revision_id) || legacy_doc_content_version(article)
+  end
+
+  defp legacy_doc_content_version(%{thread: :doc, body_hash: body_hash, updated_at: updated_at})
+       when is_binary(body_hash) and is_struct(updated_at, DateTime) do
+    "#{body_hash}:#{DateTime.to_iso8601(updated_at)}"
+  end
+
+  defp legacy_doc_content_version(_article), do: nil
+
   defp canonical_path(community, :doc, article) do
     slug = if Map.get(article, :slug) in [nil, ""], do: nil, else: "/#{article.slug}"
     "/#{community}/doc/#{Map.fetch!(article, :inner_id)}#{slug}"
@@ -155,10 +168,5 @@ defmodule GroupherServer.CMS.Press.Projection do
 
   defp canonical_path(community, thread, article) do
     "/#{community}/#{thread}/#{Map.fetch!(article, :inner_id)}"
-  end
-
-  defp article_revision(article) do
-    body_revision = article.body_hash || article.body.body_hash || "no-body-hash"
-    "#{body_revision}:#{DateTime.to_iso8601(article.updated_at)}"
   end
 end

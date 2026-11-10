@@ -138,11 +138,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Query do
       when type in [:post, :blog, :changelog, :ticket] do
     with {:ok, %Article{thread: ^type} = article} <-
            CMS.FrontDesk.article(id, mode: :internal),
-         %ArticlePublic{} = public <- Repo.get(ArticlePublic, id) do
+         %ArticlePublic{snapshot_id: snapshot_id} = public <- Repo.get(ArticlePublic, id) do
       {:ok,
        %{
          content: article,
-         published_revision_identity: "#{public.revision_id}:#{public.publication_version}",
+         published_revision_identity: "article-snapshot:#{snapshot_id}",
          title: public.title,
          article_id: id,
          thread: type,

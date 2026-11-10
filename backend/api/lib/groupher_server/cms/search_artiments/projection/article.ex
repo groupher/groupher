@@ -28,10 +28,10 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
   @spec project(Artiment.thread(), struct()) :: {:ok, Artiment.t()} | {:error, term()}
   def project(thread, article) do
     with %{slug: community_ref} <- article.community,
-         %{plain_text: plain_text, body_hash: body_hash} = body <- article.body,
-         true <- is_binary(plain_text) and is_binary(body_hash),
+         %{plain_text: plain_text} = body <- article.body,
+         true <- is_binary(plain_text),
          true <- is_binary(article.id),
-         true <- is_binary(article.revision_id),
+         true <- is_binary(article.snapshot_id),
          inner_id when not is_nil(inner_id) <- Map.get(article, :inner_id),
          {:ok, counts} <- CMS.ArticleStats.search_counts(thread, article.id) do
       ref = Artiment.article_key(thread, article.id, community_ref)
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          community_ref: community_ref,
          thread: thread,
          article_id: article.id,
-         indexed_revision_id: article.revision_id,
+         indexed_snapshot_id: article.snapshot_id,
          title: article.title,
          plain_text: plain_text,
          digest: article.digest || body.digest,
@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          published_at: article.active_at,
          inserted_at: article.inserted_at,
          updated_at: article.updated_at,
-         content_hash: body_hash,
+         content_hash: nil,
          schema_version: body.schema_version || article.schema_version || 1
        }}
     else

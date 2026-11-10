@@ -88,13 +88,14 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
     assert %Ecto.Query{} = management_query
   end
 
-  test "Article Draft scope has an explicit management action" do
+  test "Article WorkingCopy scope has an explicit management action" do
     query =
       CMS.Gate.scope(Article, :operations, :read_draft, ArticleContext.draft(:post, :operations))
 
     assert %Ecto.Query{} = query
     {sql, params} = to_sql(query)
-    assert sql =~ "article_drafts"
+    assert sql =~ "article_working_copies"
+    assert sql =~ "scope_kind"
     assert ["draft", "published", "archived"] in params
 
     assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =

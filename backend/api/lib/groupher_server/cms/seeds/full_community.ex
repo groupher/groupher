@@ -49,12 +49,9 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
   ## Examples
 
-      CMS.Seeds.FullCommunity.mock("elixir")
+      CMS.Seeds.FullCommunity.mock("elixir", command_id_factory: &Ecto.UUID.generate/0)
 
   """
-  @spec mock(String.t() | atom()) :: T.domain_res(map())
-  def mock(slug), do: mock(slug, [])
-
   @spec mock(String.t() | atom(), keyword()) :: T.domain_res(map())
   def mock(slug, opts) when is_list(opts) do
     case Keyword.keyword?(opts) do
@@ -134,7 +131,8 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
       upvotes_range: article_upvotes_range,
       comment_range: comment_count_range,
       comment_upvotes_range: comment_upvotes_range,
-      replies_range: comment_replies_range
+      replies_range: comment_replies_range,
+      command_id_factory: Keyword.get(opts, :command_id_factory)
     ]
 
     posts = seed_content_threads(community, tags_by_thread, article_opts)

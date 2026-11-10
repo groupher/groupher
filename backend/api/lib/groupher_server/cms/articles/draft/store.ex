@@ -97,6 +97,31 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     end
   end
 
+  @doc "Creates only stable Article identity and runtime admission rows for a new content workspace."
+  def create_article_shell_loaded(
+        %Community{} = community,
+        thread,
+        attrs,
+        %Author{} = author,
+        opts
+      ) do
+    with {:ok, article} <- insert_article(community, thread, author, attrs),
+         {:ok, _binding} <- insert_community_binding(article, community),
+         {:ok, _lifecycle} <- insert_lifecycle(article, community, opts),
+         {:ok, _branch_state} <- create_workspace_branch_state(article, opts),
+         {:ok, _post_state} <- insert_post_state(article, attrs) do
+      {:ok, article}
+    end
+  end
+
+  defp create_workspace_branch_state(%Article{thread: :doc} = article, opts) do
+    if Keyword.has_key?(opts, :branch_id),
+      do: insert_branch_state(article, opts),
+      else: {:ok, :deferred_to_docs_workspace}
+  end
+
+  defp create_workspace_branch_state(%Article{}, _opts), do: {:ok, :not_applicable}
+
   @doc "Loads the current ordinary or branch-scoped Draft for a stable Article."
   @spec get(Article.t(), keyword()) ::
           {:ok, ArticleDraft.t() | DocDraft.t()} | {:error, :not_found}

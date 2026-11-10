@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, Repo}
   alias CMS.Comments.Lifecycle
   alias CMS.Snapshot
   alias Helper.Cache
@@ -155,13 +155,8 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
 
       snapshot = %{id: post.id, title: "old article title", thread: :post}
 
-      {:ok, _updated_post} =
-        CMS.Articles.update(
-          post,
-          %{title: "new article title", expected_version: post.version},
-          user,
-          Ecto.UUID.generate()
-        )
+      assert {:ok, _published} =
+               save_and_publish_title(post, user, "new article title")
 
       assert [%{title: "old article title"}] = Snapshot.articles(:post, [snapshot])
     end
@@ -186,13 +181,8 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
 
       snapshot = %{id: post.id, title: "old article title", thread: :post}
 
-      {:ok, _updated_post} =
-        CMS.Articles.update(
-          post,
-          %{title: "new article title", expected_version: post.version},
-          user,
-          Ecto.UUID.generate()
-        )
+      assert {:ok, _published} =
+               save_and_publish_title(post, user, "new article title")
 
       assert [%{title: "new article title"}] =
                Snapshot.articles(:post, [snapshot], mode: :blocking)
@@ -352,4 +342,34 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
   end
 
   defp first_entry(%{entries: [entry | _]}), do: entry
+
+  defp save_and_publish_title(article_view, user, title) do
+    article_id = Map.get(article_view, :article_id) || article_view.id
+    article = Repo.get!(CMS.Model.Article, article_id)
+    community = Repo.get!(CMS.Model.Community, article_view.community.id)
+    working_copy = Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id)
+    public = Repo.get!(CMS.Model.ArticlePublic, article.id)
+
+    with {:ok, saved} <-
+           CMS.Articles.save_working_copy(
+             article,
+             community,
+             working_copy.id,
+             %{title: title},
+             working_copy.revision,
+             user,
+             Ecto.UUID.generate()
+           ),
+         {:ok, published} <-
+           CMS.Articles.publish_article(
+             article,
+             community,
+             %{working_copy_id: saved.id, revision: saved.revision},
+             public.snapshot_id,
+             user,
+             Ecto.UUID.generate()
+           ) do
+      {:ok, published}
+    end
+  end
 end

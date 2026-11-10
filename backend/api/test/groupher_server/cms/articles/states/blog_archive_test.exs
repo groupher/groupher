@@ -97,10 +97,16 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
 
       archived_blog = archived_blogs |> List.first()
 
+      article = Repo.get!(CMS.Model.Article, archived_blog.id)
+      working_copy = Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id)
+
       {:error, reason} =
-        CMS.Articles.update(
-          Map.put(archived_blog, :community, community),
-          %{"title" => "new title"},
+        CMS.Articles.save_working_copy(
+          article,
+          community,
+          working_copy.id,
+          %{title: "new title"},
+          working_copy.revision,
           user,
           Ecto.UUID.generate()
         )

@@ -13,6 +13,8 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     Article,
     ArticleLifecycle,
     ArticleStats,
+    ArticlePublic,
+    ArticleWorkingCopy,
     Comment,
     TrashAction,
     TrashedArticle,
@@ -276,7 +278,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                community,
                ticket.id,
                "Publish before testing source restore",
-               internal.draft_version,
+               internal.working_copy_revision,
                internal.lifecycle_version,
                internal.workflow_version,
                ticket_actor,
@@ -444,6 +446,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
           "type" => "p",
           "id" => "mention-target",
           "children" => [
+            %{"text" => "See "},
             %{
               "type" => "mention",
               "key" => "post:#{target.article_id}",
@@ -454,16 +457,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
         }
       ])
 
-    assert {:ok, mentioner} =
-             CMS.Articles.update(
-               mentioner,
-               %{
-                 body_bag: mock_body_bag(body),
-                 expected_version: mentioner.version
-               },
-               user,
-               Ecto.UUID.generate()
-             )
+    assert {:ok, mentioner} = save_and_publish_mentioner(mentioner, community, user, body)
 
     source_endpoint =
       Repo.get_by!(Endpoint, type: :blog, article_id: mentioner.article_id)
@@ -482,15 +476,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     edited_body = String.replace(body, "target mention", "target again")
 
     assert {:ok, _edited_mentioner} =
-             CMS.Articles.update(
-               mentioner,
-               %{
-                 body_bag: mock_body_bag(edited_body),
-                 expected_version: mentioner.version
-               },
-               user,
-               Ecto.UUID.generate()
-             )
+             save_and_publish_mentioner(mentioner, community, user, edited_body)
 
     projected_edge =
       Repo.get_by!(Edge,
@@ -576,5 +562,39 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
       assert {:ok, _} = CMS.Articles.restore_trashed(item.hash_id, user)
       assert Repo.get!(CMS.Model.Community, community.id).meta |> Map.fetch!(count_field) == 1
     end)
+  end
+
+  defp save_and_publish_mentioner(mentioner_view, community, user, body_json) do
+    article = Repo.get!(Article, mentioner_view.article_id)
+    working_copy = Repo.get_by!(ArticleWorkingCopy, article_id: article.id, scope_kind: :default)
+    public = Repo.get!(ArticlePublic, article.id)
+
+    with {:ok, saved} <-
+           CMS.Articles.save_working_copy(
+             article,
+             community,
+             working_copy.id,
+             %{body_bag: mock_body_bag(body_json)},
+             working_copy.revision,
+             user,
+             Ecto.UUID.generate()
+           ),
+         {:ok, _throttle} <-
+           CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
+             :last_publish_time,
+             user,
+             minutes: -CMS.Gate.RateLimit.Publish.Config.publish_throttle().interval_minutes
+           ),
+         {:ok, _published} <-
+           CMS.Articles.publish_article(
+             article,
+             community,
+             %{working_copy_id: saved.id, revision: saved.revision},
+             public.snapshot_id,
+             user,
+             Ecto.UUID.generate()
+           ) do
+      {:ok, %{article_id: article.id}}
+    end
   end
 end

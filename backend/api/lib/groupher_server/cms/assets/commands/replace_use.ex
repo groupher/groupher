@@ -1,26 +1,26 @@
 defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   @moduledoc """
-  Replaces one asset locator in a mutable Article Draft.
+  Replaces one asset locator in the default Article WorkingCopy.
 
-  The command validates the observed Draft version and the old asset reference,
-  then updates the Draft and its Draft-owned `ArticleAssetRef` rows in the same
+  The command validates the observed WorkingCopy revision and the old asset reference,
+  then updates the WorkingCopy and its WorkingCopy-owned `ArticleAssetRef` rows in the same
   command transaction. Revision-owned refs are never selected by this module.
 
       CMS.Assets facade
         -> ReplaceUse command
-        -> Gate-authorized Draft update
+        -> Gate-authorized WorkingCopy update
         -> ArticleAssetRef synchronization
   """
 
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.Articles.{Draft.Store, Bindings}
+  alias CMS.Articles.{Bindings, WorkingCopy.Store}
   alias CMS.Assets.{Query, Refs}
   alias CMS.{ErrorCat, FrontDesk}
-  alias CMS.Model.{Article, ArticleAssetRef, ArticleDraft, Community, CommunityAsset}
+  alias CMS.Model.{Article, ArticleAssetRef, ArticleWorkingCopy, Community, CommunityAsset}
   alias CMS.Assets.Commands.ReplaceUseConfirmation, as: Confirmation
 
   @doc "Replaces one Draft-owned asset use without mutating an immutable Revision.
@@ -64,25 +64,23 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
         {:ok, result}
 
       :not_applied ->
-        with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(user),
-             {:ok, result} <- replace_loaded(article, community, params, author) do
+        with {:ok, result} <- replace_loaded(article, community, params, user) do
           {:ok, Map.put(result, :workflow_ref, workflow_ref)}
         end
     end
   end
 
   defp recover_existing_replacement(article, params, workflow_ref) do
-    with {:ok, draft} <- Store.get(article),
-         expected_version when is_integer(expected_version) <-
-           value(params, :expected_draft_version),
-         true <- draft.version == expected_version + 1,
-         refs <- Refs.draft_refs(draft.body_draft_id),
+    with {:ok, %ArticleWorkingCopy{} = work} <- default_working_copy(article),
+         revision when is_integer(revision) <- value(params, :revision),
+         true <- work.revision == revision + 1,
+         refs <- Refs.working_copy_refs(work.id),
          %ArticleAssetRef{} = ref <- Enum.find(refs, &same_locator?(&1, params)),
          true <- ref.asset_id == value(params, :to_asset_id) do
       {:ok,
        %{
          article_id: article.id,
-         draft_version: draft.version,
+         revision: work.revision,
          ref_id: ref.id,
          usage: ref.usage,
          from_asset_id: value(params, :from_asset_id),
@@ -116,9 +114,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     gate(fn candidate -> CMS.Gate.check_in_transaction(user, :edit, candidate, community) end)
 
     change(fn canonical ->
-      with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(user) do
-        replace_loaded(canonical, community, params, author)
-      end
+      replace_loaded(canonical, community, params, user)
     end)
 
     confirm(fn result ->
@@ -128,7 +124,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
            result
            |> Map.take([
              :article_id,
-             :draft_version,
+             :revision,
              :ref_id,
              :usage,
              :from_asset_id,
@@ -155,30 +151,20 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     end)
   end
 
-  defp replace_loaded(canonical, community, attrs, author) do
-    with {:ok, draft} <- Store.ensure_from_public(canonical, author),
-         {:ok, _} <- expected_version(attrs, draft.version),
-         {:ok, ref} <- locate_ref(draft, attrs),
+  defp replace_loaded(canonical, community, attrs, user) do
+    with {:ok, %ArticleWorkingCopy{} = work} <- default_working_copy(canonical),
+         {:ok, :pass} <- expected_revision(attrs, work.revision),
+         {:ok, ref} <- locate_ref(work, attrs),
          {:ok, target_asset} <- active_asset(community.id, value(attrs, :to_asset_id)),
          {:ok, _} <- same_asset(ref, value(attrs, :from_asset_id)),
          {:ok, _} <- replacement_body_bag_required(ref, attrs),
-         {:ok, updated_draft} <-
-           Store.update_loaded(
-             canonical,
-             draft_attrs(attrs, draft),
-             author,
-             expected_version: draft.version
-           ),
-         {:ok, _refs} <-
-           Refs.sync_refs(
-             community,
-             canonical,
-             replacement_refs(draft, ref, target_asset)
-           ) do
+         save_attrs <- replacement_attrs(work, ref, target_asset, attrs),
+         {:ok, updated_work} <-
+           Store.save_loaded(work, save_attrs, user, work.revision, community.id) do
       {:ok,
        %{
          article_id: canonical.id,
-         draft_version: updated_draft.version,
+         revision: updated_work.revision,
          ref_id: ref.id,
          usage: ref.usage,
          from_asset_id: ref.asset_id,
@@ -187,26 +173,28 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     end
   end
 
-  defp draft_attrs(attrs, _draft) do
-    case value(attrs, :body_bag) do
-      nil -> %{}
-      body_bag -> %{body_bag: body_bag}
-    end
-  end
+  defp replacement_attrs(work, ref, target_asset, attrs) do
+    case ref.usage do
+      :cover ->
+        %{cover_asset_id: target_asset.id}
 
-  defp replacement_refs(draft, ref, target_asset) do
-    if ref.usage in [:cover, :cover_dark] do
-      cover_key = if ref.usage == :cover, do: :cover_asset_id, else: :cover_asset_dark_id
-      %{cover_key => target_asset.id}
-    else
-      refs = Refs.draft_refs(draft.body_draft_id)
+      :cover_dark ->
+        %{cover_asset_dark_id: target_asset.id}
 
-      %{asset_refs: Enum.map(refs, &ref_input(&1, ref.id, target_asset.id))}
+      :attachment ->
+        refs =
+          Refs.working_copy_refs(work.id)
+          |> Enum.filter(&(&1.usage == :attachment))
+
+        %{asset_refs: Enum.map(refs, &ref_input(&1, ref.id, target_asset.id))}
+
+      _ ->
+        %{body_bag: value(attrs, :body_bag)}
     end
   end
 
   defp replacement_body_bag_required(%ArticleAssetRef{usage: usage}, _attrs)
-       when usage in [:cover, :cover_dark] do
+       when usage in [:cover, :cover_dark, :attachment] do
     {:ok, :pass}
   end
 
@@ -235,10 +223,10 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     |> Map.put(:asset_id, if(ref.id == replaced_id, do: target_asset_id, else: ref.asset_id))
   end
 
-  defp locate_ref(%ArticleDraft{body_draft_id: body_draft_id}, attrs) do
+  defp locate_ref(%ArticleWorkingCopy{id: working_copy_id}, attrs) do
     refs =
-      body_draft_id
-      |> Refs.lock_draft_refs(usage(attrs))
+      working_copy_id
+      |> lock_working_copy_refs(usage(attrs))
       |> Enum.filter(&locator_match?(&1, attrs))
 
     case refs do
@@ -248,7 +236,26 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     end
   end
 
-  defp locate_ref(_draft, _attrs), do: {:error, :doc_asset_replace_requires_branch_context}
+  defp default_working_copy(%Article{id: article_id}) do
+    case Repo.get_by(ArticleWorkingCopy,
+           article_id: article_id,
+           scope_kind: :default,
+           scope_id: article_id
+         ) do
+      %ArticleWorkingCopy{} = work -> {:ok, work}
+      nil -> {:error, :working_copy_not_found}
+    end
+  end
+
+  defp lock_working_copy_refs(working_copy_id, usage) do
+    import Ecto.Query
+
+    ArticleAssetRef
+    |> where([ref], ref.working_copy_id == ^working_copy_id and ref.usage == ^usage)
+    |> order_by([ref], asc: ref.position, asc: ref.inserted_at, asc: ref.id)
+    |> lock("FOR UPDATE")
+    |> Repo.all()
+  end
 
   defp locator_match?(ref, attrs) do
     matches?(attrs, :block_id, ref.block_id) and matches?(attrs, :position, ref.position)
@@ -273,19 +280,19 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
 
   defp active_asset(_community_id, _asset_id), do: {:error, :replacement_asset_required}
 
-  defp expected_version(attrs, version) do
-    case value(attrs, :expected_draft_version) do
-      ^version -> {:ok, :pass}
-      nil -> {:error, :expected_draft_version_required}
-      _ -> {:error, :draft_version_conflict}
+  defp expected_revision(attrs, revision) do
+    case value(attrs, :revision) do
+      ^revision -> {:ok, :pass}
+      nil -> {:error, :revision_required}
+      _ -> {:error, :revision_conflict}
     end
   end
 
   defp present_confirmation(%Confirmation{data: data}) do
     with article_id when is_binary(article_id) <- data["article_id"],
-         draft_version when is_integer(draft_version) <- data["draft_version"],
+         revision when is_integer(revision) <- data["revision"],
          command_id when is_binary(command_id) <- data["command_id"] do
-      {:ok, %{article_id: article_id, draft_version: draft_version, command_id: command_id}}
+      {:ok, %{article_id: article_id, revision: revision, command_id: command_id}}
     else
       _ -> {:error, ErrorCat.command_result_unavailable()}
     end

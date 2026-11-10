@@ -47,7 +47,14 @@ defmodule GroupherServer.Test.CMS.Communities.Count.UpdateCountField do
 
     test "update article count field for thread", ~m(community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
-      {:ok, _post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      {:ok, _post} =
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :post,
+          post_attrs,
+          user
+        )
 
       {:ok, updated_community} = CMS.Communities.update_count_field(community, :post)
       {:ok, updated_community} = ORM.find(Community, updated_community.id)

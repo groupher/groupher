@@ -72,6 +72,10 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:mentions_graph_invalid_request, code: 4553)
   error(:mentions_graph_integrity_error, code: 4554)
   error(:artiment_status_not_found, code: 4560)
+  error(:last_unpublished_work, code: 4562)
+  error(:work_in_use, code: 4563)
+  error(:cover_edit_delete_failed, code: 4564)
+  error(:working_copy_children_delete_failed, code: 4565)
   error(:invalid_mention_notification_event, code: 4555)
   error(:mention_url_too_long, code: 4556)
 end
