@@ -296,6 +296,8 @@ backend/api/lib/groupher_server/cms/articles/revision.ex
 backend/api/lib/groupher_server/cms/articles/revision/cleanup.ex
 ```
 
+上述 `revision/cleanup.ex` 为历史批次范围，现已删除；普通 Article Snapshot 清理由 `articles/snapshot_cleanup.ex` 负责。
+
 重点验证：事务 helper 保持 rollback 原因，revision cleanup 的 no-op 分支使用明确 marker，Draft
 写入仍返回当前 canonical draft/article result。
 

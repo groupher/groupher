@@ -114,18 +114,6 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
              nil,
              actor,
              command_id
-           ),
-         {:ok, article_public} <-
-           CMS.FrontDesk.article(%{
-             community: community.slug,
-             thread: thread,
-             inner_id: published.binding.inner_id
-           }),
-         {:ok, _activity} <-
-           CMS.Articles.Effects.activity(
-             Map.put(article_public, :community_id, community.id),
-             :created,
-             actor: actor
            ) do
       {:ok, Map.put(published, :working_copy, work)}
     end

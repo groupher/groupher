@@ -1650,7 +1650,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
 
     models = [
       Article,
-      CMS.Model.ArticleDraft,
+      CMS.Model.ArticleWorkingCopy,
       CMS.Model.ArticleBodyDraft,
       TicketState,
       CMS.Model.TicketWorker,

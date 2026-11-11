@@ -174,11 +174,11 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
 
   defp replace_loaded(canonical, community, attrs, user) do
     with {:ok, %ArticleWorkingCopy{} = work} <- target_working_copy(canonical, attrs),
+         {:ok, :pass} <- WorkingCopyAccess.generic_save(canonical, work),
          {:ok, :pass} <- expected_revision(attrs, work.revision),
          {:ok, ref} <- locate_ref(work, attrs),
          {:ok, target_asset} <- active_asset(community.id, value(attrs, :to_asset_id)),
          {:ok, _} <- same_asset(ref, value(attrs, :from_asset_id)),
-         {:ok, :pass} <- WorkingCopyAccess.generic_save(canonical, work),
          {:ok, _} <- replacement_body_bag_required(ref, attrs),
          save_attrs <- replacement_attrs(work, ref, target_asset, attrs),
          {:ok, updated_work} <-

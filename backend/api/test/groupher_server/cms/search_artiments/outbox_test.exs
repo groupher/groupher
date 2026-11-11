@@ -99,6 +99,17 @@ defmodule GroupherServer.Test.CMS.SearchArtiments.OutboxTest do
     assert press.content_version == original.snapshot_id
     assert press.title == original.title
 
+    assert {:ok, public_view} = CMS.FrontDesk.article(path)
+
+    legacy_only =
+      Map.merge(public_view, %{
+        snapshot_id: nil,
+        revision_id: Ecto.UUID.generate(),
+        content_version: "legacy"
+      })
+
+    assert CMS.Press.Projection.article(community, :post, legacy_only).content_version == nil
+
     assert {:ok, %{public: public}} =
              CMS.Articles.publish_article(
                article,

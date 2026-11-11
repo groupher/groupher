@@ -4,11 +4,11 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
 
       committed Publish result
         -> first-publication metadata (when applicable)
-        -> Activity for each committed publish
+        -> legacy Doc Activity after branch publication
 
   Press, Search and CDN delivery use independent durable outbox tasks; the
-  effects here consume only stable Article identity and the committed public
-  projection.
+  Ordinary Article content Activity is recorded in the Snapshot publication
+  transaction; the remaining Doc Activity follows the legacy branch workflow.
   """
 
   alias GroupherServer.{Activity, CMS, Messaging, Repo}
@@ -133,47 +133,6 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
 
   defp append_activity(%{snapshot: %CMS.Model.ArticleSnapshot{}}, _public), do: {:ok, :pass}
 
-  defp append_activity(result, public) do
-    with {:ok, actor} <- published_by(result),
-         {:ok, _} <- maybe_log_title_change(result, public, actor),
-         {:ok, _} <- maybe_log_body_change(result, public, actor) do
-      {:ok, :pass}
-    end
-  end
-
-  defp maybe_log_title_change(%{changed_fields: fields} = result, public, actor) do
-    if :title in fields do
-      normalize_activity(
-        Activity.log(public, :title_changed,
-          actor: actor,
-          changed_fields: [:title],
-          metadata: content_identity(result)
-        )
-      )
-    else
-      {:ok, :pass}
-    end
-  end
-
-  defp maybe_log_body_change(%{changed_fields: fields} = result, public, actor) do
-    if :body_hash in fields do
-      normalize_activity(
-        Activity.log(public, :body_updated,
-          actor: actor,
-          changed_fields: [:body_hash],
-          metadata: content_identity(result)
-        )
-      )
-    else
-      {:ok, :pass}
-    end
-  end
-
-  defp content_identity(%{snapshot: %CMS.Model.ArticleSnapshot{id: snapshot_id}}),
-    do: %{snapshot_id: snapshot_id}
-
-  defp content_identity(%{revision: %{id: revision_id}}), do: %{revision_id: revision_id}
-
   defp published_by(%{actor: %User{} = user}), do: {:ok, user}
 
   defp published_by(%{published_by_id: author_id}) do
@@ -182,7 +141,4 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
       nil -> {:error, :publish_actor_not_found}
     end
   end
-
-  defp normalize_activity({:ok, _event}), do: {:ok, :pass}
-  defp normalize_activity({:error, reason}), do: {:error, reason}
 end

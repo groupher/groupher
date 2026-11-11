@@ -113,7 +113,7 @@ scope 改变视为失败，而不只是统计信息。
 
 此外，相关 diff 路径还有一处同类实现：
 
-文件：[`cms/articles/draft/diff.ex`](../../backend/api/lib/groupher_server/cms/articles/draft/diff.ex)，共 1 处 `Repo.query*`
+历史文件 `cms/articles/draft/diff.ex` 已移除；当前比较由 [WorkingCopy Diff](../../backend/api/lib/groupher_server/cms/articles/working_copy/diff.ex) 负责。以下是原盘点记录，共 1 处 `Repo.query*`：
 
 - `query_tag_ids/3`：`table` 动态插入表名，`where` 整段动态插入 SQL。
 

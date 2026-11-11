@@ -567,6 +567,11 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
       end)
       |> MapSet.new(&function_key/1)
 
+    receipt_pipelines =
+      graph.functions
+      |> Enum.filter(&(&1.kind == :receipt_pipeline))
+      |> MapSet.new(&function_key/1)
+
     stage_scopes
     |> Enum.flat_map(fn %{pipeline: pipeline, stage: stage, edges: stage_edges} ->
       roots =
@@ -579,7 +584,11 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
 
       gate_targets
       |> MapSet.intersection(reachable)
-      |> Enum.reject(fn _target -> stage == :gate end)
+      |> Enum.reject(fn {_module, function, _arity} ->
+        stage == :gate or
+          (stage == :present and function == :access_check and
+             MapSet.member?(receipt_pipelines, pipeline))
+      end)
       |> Enum.map(fn target ->
         %{
           "pipeline" => function_manifest_by_key(pipeline),

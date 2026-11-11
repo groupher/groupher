@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Articles.RevisionProjection do
   @moduledoc """
-  Builds Article projections anchored to an immutable ArticleRevision.
+  Builds legacy Docs projections anchored to an immutable ArticleRevision.
 
   Revision projection is an Articles concern, not a FrontDesk lookup. The
   public `build/4` entry point accepts already-resolved command parts and owns
@@ -27,41 +27,40 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
     ArticleBodySnapshot,
     ArticleBinding,
     ArticleBindingTag,
-    ArticleLifecycle,
     ArticleRevision,
     Community,
     CommunityTag,
     DocBranchState,
     DocLifecycle,
     DocRevision,
-    PinnedArticle,
-    PostState
+    PinnedArticle
   }
 
   @doc "Builds a revision projection from loaded command action parts."
   @spec build(Article.t(), Community.t(), ArticleRevision.t(), keyword()) ::
           {:ok, ArticleView.t()} | {:error, term()}
+  def build(article, community, revision, opts \\ [])
+
   def build(
-        %Article{} = article,
+        %Article{thread: :doc} = article,
         %Community{} = community,
         %ArticleRevision{} = revision,
-        opts \\ []
+        opts
       )
       when is_list(opts) do
     article = Repo.preload(article, author: :user)
 
-    if article.thread == :doc do
-      revision_projection(article, community, revision, opts)
-    else
-      build_revision_projection(article, community, revision, opts)
-    end
+    revision_projection(article, community, revision, opts)
   end
+
+  def build(%Article{}, %Community{}, %ArticleRevision{}, opts) when is_list(opts),
+    do: {:error, ArticleErrorCat.article_not_found("legacy Doc revision required")}
 
   @doc false
   @spec build_stable(Article.t(), Community.t(), map(), ArticleRevision.t(), integer() | nil) ::
           {:ok, ArticleView.t()} | {:error, term()}
   def build_stable(
-        %Article{} = article,
+        %Article{thread: :doc} = article,
         %Community{} = community,
         public,
         %ArticleRevision{} = revision,
@@ -69,6 +68,9 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
       ) do
     build_stable_projection(article, community, public, revision, branch_id)
   end
+
+  def build_stable(%Article{}, %Community{}, _public, %ArticleRevision{}, _branch_id),
+    do: {:error, ArticleErrorCat.article_not_found("legacy Doc revision required")}
 
   defp revision_projection(%Article{thread: :doc} = article, community, revision, opts) do
     with %CMS.Model.DocBranch{id: branch_id} <-
@@ -179,7 +181,6 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
          meta: Map.fetch!(anchor, :meta)
        }
        |> Map.merge(stable_revision_extension(article.thread, revision.id))
-       |> Map.merge(stable_operational_extension(article, community.id))
        |> ArticleView.from_map()}
     end
   end
@@ -190,18 +191,6 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
       _ -> nil
     end
   end
-
-  defp stable_operational_extension(%Article{thread: :post, id: article_id}, _community_id) do
-    cat =
-      case Repo.get(PostState, article_id) do
-        %PostState{cat: cat} -> cat
-        nil -> nil
-      end
-
-    %{cat: cat}
-  end
-
-  defp stable_operational_extension(%Article{}, _community_id), do: %{}
 
   defp stable_meta(%Article{thread: :doc} = article, branch_id) when is_integer(branch_id) do
     case Repo.get_by(DocBranchState, article_id: article.id, branch_id: branch_id) do
@@ -270,17 +259,6 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
     revision_extension(DocRevision, revision_id)
   end
 
-  defp stable_revision_extension(thread, revision_id) do
-    model =
-      case thread do
-        :post -> CMS.Model.PostRevision
-        :blog -> CMS.Model.BlogRevision
-        :changelog -> CMS.Model.ChangelogRevision
-      end
-
-    revision_extension(model, revision_id)
-  end
-
   defp revision_extension(model, revision_id) do
     case Repo.get(model, revision_id) do
       nil -> %{}
@@ -290,10 +268,6 @@ defmodule GroupherServer.CMS.Articles.RevisionProjection do
 
   defp stable_lifecycle(%Article{thread: :doc, id: article_id}, branch_id) do
     Repo.get_by(DocLifecycle, article_id: article_id, branch_id: branch_id)
-  end
-
-  defp stable_lifecycle(%Article{id: article_id}, _branch_id) do
-    Repo.get_by(ArticleLifecycle, article_id: article_id)
   end
 
   defp stable_pinned?(article_id, community_id) do

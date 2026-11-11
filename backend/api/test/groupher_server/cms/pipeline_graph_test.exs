@@ -364,6 +364,41 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
     assert violation["gate"]["function"] == "access_check"
   end
 
+  test "allows read-only Gate reauthorization in a Receipt presenter only" do
+    fixture = GroupherServer.Test.PipelineGraphFixtures.GateInPresent
+    graph = GraphAnalyzer.build_modules([fixture, GroupherServer.CMS.Gate])
+    scopes = GraphAnalyzer.pipeline_stage_calls(graph, fixture.__pipeline_contracts__())
+
+    functions =
+      Enum.map(graph.functions, fn function ->
+        if function.module == fixture and function.name == :execute do
+          %{function | kind: :receipt_pipeline}
+        else
+          function
+        end
+      end)
+
+    assert [] == Graph.gate_stage_violations(%{graph | functions: functions}, scopes)
+
+    fixture = GroupherServer.Test.PipelineGraphFixtures.GateInChange
+    graph = GraphAnalyzer.build_modules([fixture, GroupherServer.CMS.Gate])
+    scopes = GraphAnalyzer.pipeline_stage_calls(graph, fixture.__pipeline_contracts__())
+
+    functions =
+      Enum.map(graph.functions, fn function ->
+        if function.module == fixture and function.name == :execute do
+          %{function | kind: :receipt_pipeline}
+        else
+          function
+        end
+      end)
+
+    present_scopes = Enum.map(scopes, &Map.put(&1, :stage, :present))
+
+    assert [%{"gate" => %{"function" => "check_in_transaction"}}] =
+             Graph.gate_stage_violations(%{graph | functions: functions}, present_scopes)
+  end
+
   test "fails closed when compiled pipeline stages cannot be attributed" do
     fixture = GroupherServer.Test.PipelineGraphFixtures.UnattributedStages
     contract = fixture.__pipeline_contracts__() |> List.first() |> Map.put(:access, :user)

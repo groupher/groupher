@@ -268,26 +268,18 @@ defmodule GroupherServer.CMS.Assets do
   end
 
   @doc """
-  Links an article to the assets used by its current saved content.
+  Synchronizes refs for the legacy Docs Draft workflow.
 
-  The article document row is locked while the article's ref set is updated to
-  match the saved body and cover inputs. Pass `community: community` when the
-  caller already resolved the community boundary, such as the GraphQL article
-  mutation path.
+  Ordinary Article refs are owned by `save_working_copy` and cannot be changed
+  through this entry point.
 
   ## Examples
 
-      CMS.Assets.link_refs(post, %{
+      CMS.Assets.link_refs(doc, %{
         asset_refs: [%{asset_id: asset.id, block_id: "hero"}],
         cur_user: user
       }, community: community)
       #=> {:ok, %{body: body_refs, cover: cover_refs}}
-
-      CMS.Assets.link_refs(post, %{asset_refs: [%{asset_id: asset.id}]})
-      #=> {:ok, %{body: body_refs, cover: cover_refs}}
-
-      CMS.Assets.link_refs(article_without_community, %{})
-      #=> {:ok, :pass}
 
   """
   @spec link_refs(T.article(), map(), Keyword.t()) :: T.domain_res(term())
@@ -298,7 +290,7 @@ defmodule GroupherServer.CMS.Assets do
     end
   end
 
-  @doc "Copies all derived document asset refs between two versions of one Article."
+  @doc "Copies legacy Docs Draft refs between branch-owned versions."
   @spec copy_refs(T.article(), T.article()) :: T.domain_res(term())
   def copy_refs(source, target), do: Refs.copy_refs(source, target)
 

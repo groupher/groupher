@@ -22,14 +22,8 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     ArticleBodyDraft,
     ArticleBodySnapshot,
     ArticleBinding,
-    ArticleDraft,
-    ArticlePublic,
     ArticleRevision,
     Author,
-    BlogDraft,
-    BlogRevision,
-    ChangelogDraft,
-    ChangelogRevision,
     Community,
     CoverBackground,
     DraftCoverEdit,
@@ -37,26 +31,18 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     DocBranchState,
     DocRevision,
     DocLifecycle,
-    PostDraft,
-    PostState,
-    PostRevision
+    PostState
   }
 
   alias CMS.Model.ArticleLifecycle
 
-  @typed_models %{
-    post: {PostDraft, PostRevision},
-    blog: {BlogDraft, BlogRevision},
-    changelog: {ChangelogDraft, ChangelogRevision}
-  }
   @shared_fields ~w(title digest slug)a
-  @ordinary_typed_fields ~w(copy_right link_addr cover_url cover_url_dark)a
   @doc_fields ~w(subtitle link_addr template_key cover_url cover_url_dark)a
   @doc_draft_fields ~w(subtitle link_addr template_key)a
 
   @doc "Creates a stable Article and its first mutable Draft without creating a Revision."
   @spec create(Community.t(), atom(), map(), Author.t(), keyword()) ::
-          {:ok, %{article: Article.t(), draft: ArticleDraft.t() | DocDraft.t()}}
+          {:ok, %{article: Article.t(), draft: DocDraft.t()}}
           | {:error, term()}
   def create(%Community{} = community, thread, attrs, %Author{} = author, opts \\ []) do
     Workflow.transaction(fn ->
@@ -69,7 +55,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
 
   @doc "Creates an ordinary workspace with its typed fields and tags in the caller transaction."
   @spec create_loaded(Community.t(), atom(), map(), Author.t(), keyword()) ::
-          {:ok, %{article: Article.t(), draft: ArticleDraft.t() | DocDraft.t()}}
+          {:ok, %{article: Article.t(), draft: DocDraft.t()}}
           | {:error, term()}
   def create_loaded(community, thread, attrs, author, opts) do
     with {:ok, %{article: article, draft: draft} = result} <-
@@ -82,9 +68,14 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   end
 
   @doc "Creates identity and shared body/head rows without ordinary typed or tag side effects."
-  def create_content_loaded(%Community{} = community, thread, attrs, %Author{} = author, opts) do
-    with {:ok, _} <- validate_thread_attrs(thread, attrs),
-         {:ok, _} <- validate_cover(attrs),
+  def create_content_loaded(
+        %Community{} = community,
+        :doc = thread,
+        attrs,
+        %Author{} = author,
+        opts
+      ) do
+    with {:ok, _} <- validate_cover(attrs),
          {:ok, body_bag} <- cast_body(attrs, thread),
          {:ok, article} <- insert_article(community, thread, author, attrs),
          {:ok, _community_binding} <- insert_community_binding(article, community),
@@ -96,6 +87,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
       {:ok, %{article: article, draft: draft}}
     end
   end
+
+  def create_content_loaded(%Community{}, _thread, _attrs, %Author{}, _opts),
+    do: {:error, :legacy_doc_only}
 
   @doc "Creates only stable Article identity and runtime admission rows for a new content workspace."
   def create_article_shell_loaded(
@@ -122,28 +116,28 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
 
   defp create_workspace_branch_state(%Article{}, _opts), do: {:ok, :not_applicable}
 
-  @doc "Loads the current ordinary or branch-scoped Draft for a stable Article."
+  @doc "Loads the current branch-scoped legacy Doc Draft."
   @spec get(Article.t(), keyword()) ::
-          {:ok, ArticleDraft.t() | DocDraft.t()} | {:error, :not_found}
-  def get(%Article{thread: thread, id: article_id}, opts \\ []) do
+          {:ok, DocDraft.t()} | {:error, term()}
+  def get(article, opts \\ [])
+
+  def get(%Article{thread: :doc, id: article_id}, opts) do
     result =
-      if thread == :doc do
-        Repo.get_by(DocDraft, article_id: article_id, branch_id: Keyword.fetch!(opts, :branch_id))
-      else
-        Repo.get(ArticleDraft, article_id)
-      end
+      Repo.get_by(DocDraft, article_id: article_id, branch_id: Keyword.fetch!(opts, :branch_id))
 
     if result, do: {:ok, result}, else: {:error, :not_found}
   end
 
-  @doc "Locks and loads the current ordinary or branch-scoped Draft for publication."
+  def get(%Article{}, _opts), do: {:error, :legacy_doc_only}
+
+  @doc "Locks and loads a legacy Doc Draft for publication."
   @spec get_for_update(Article.t(), keyword()) ::
-          {:ok, ArticleDraft.t() | DocDraft.t()} | {:error, :draft_not_found}
+          {:ok, DocDraft.t()} | {:error, term()}
   def get_for_update(%Article{} = article, opts \\ []), do: lock_draft(article, opts)
 
   @doc "Applies an optimistic autosave to Draft, body, typed fields, and tags in one transaction."
   @spec update(Article.t(), map(), Author.t(), keyword()) ::
-          {:ok, ArticleDraft.t() | DocDraft.t()} | {:error, term()}
+          {:ok, DocDraft.t()} | {:error, term()}
   def update(%Article{} = article, attrs, %Author{} = author, opts \\ []) do
     Workflow.transaction(fn ->
       case update_loaded(article, attrs, author, opts) do
@@ -155,7 +149,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
 
   @doc "Applies an autosave using the caller-owned transaction and an already canonical Article."
   @spec update_loaded(Article.t(), map(), Author.t(), keyword()) ::
-          {:ok, ArticleDraft.t() | DocDraft.t()} | {:error, term()}
+          {:ok, DocDraft.t()} | {:error, term()}
   def update_loaded(article, attrs, author, opts) do
     with {:ok, draft} <- update_content_loaded(article, attrs, author, opts),
          {:ok, _} <- update_typed_draft(article, draft, attrs),
@@ -169,8 +163,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   def update_content_loaded(%Article{} = article, attrs, %Author{} = author, opts) do
     expected_version = Keyword.fetch!(opts, :expected_version)
 
-    with {:ok, _} <- validate_thread_attrs(article.thread, attrs),
-         {:ok, _} <- validate_cover(attrs),
+    with {:ok, _} <- validate_cover(attrs),
          {:ok, article} <- lock_article(article.id),
          {:ok, draft} <- lock_draft(article, opts),
          {:ok, _} <- ensure_version(draft, expected_version),
@@ -191,11 +184,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     end
   end
 
-  defp maybe_put_body_digest(_article, attrs, _body), do: attrs
-
   @doc "Copies the current Public Revision into a new mutable Draft when editing begins."
   @spec ensure_from_public(Article.t(), Author.t(), keyword()) ::
-          {:ok, ArticleDraft.t() | DocDraft.t()} | {:error, term()}
+          {:ok, DocDraft.t()} | {:error, term()}
   def ensure_from_public(%Article{} = article, %Author{} = author, opts \\ []) do
     case get(article, opts) do
       {:ok, draft} ->
@@ -208,12 +199,15 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
             {:error, reason} -> Repo.rollback(reason)
           end
         end)
+
+      {:error, _reason} = error ->
+        error
     end
   end
 
   @doc "Copies one locked Public head into a mutable workspace in the caller's transaction."
   @spec ensure_from_public_loaded(Article.t(), Author.t(), keyword()) ::
-          {:ok, ArticleDraft.t() | DocDraft.t()} | {:error, term()}
+          {:ok, DocDraft.t()} | {:error, term()}
   def ensure_from_public_loaded(article, author, opts) do
     case get(article, opts) do
       {:ok, existing} ->
@@ -233,6 +227,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
              {:ok, _} <- copy_revision_tags(article, draft, revision) do
           {:ok, draft}
         end
+
+      {:error, _reason} = error ->
+        error
     end
   end
 
@@ -341,9 +338,9 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   end
 
   @doc "Removes a known Draft aggregate after Publish has selected its immutable Revision."
-  @spec delete_workspace(Article.t(), ArticleDraft.t() | DocDraft.t()) ::
+  @spec delete_workspace(Article.t(), DocDraft.t()) ::
           {:ok, :pass} | {:error, term()}
-  def delete_workspace(article, draft) do
+  def delete_workspace(%Article{thread: :doc} = article, %DocDraft{} = draft) do
     with {:ok, _} <- delete_draft_tags(article, draft),
          {:ok, _} <- delete_typed_draft(article, draft),
          {:ok, _} <- delete_content_workspace(article, draft) do
@@ -351,8 +348,10 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     end
   end
 
+  def delete_workspace(%Article{}, _draft), do: {:error, :legacy_doc_only}
+
   @doc "Deletes only the shared mutable body/head workspace."
-  def delete_content_workspace(%Article{}, draft) do
+  def delete_content_workspace(%Article{thread: :doc}, %DocDraft{} = draft) do
     with {:ok, _draft} <- Repo.delete(draft),
          %ArticleBodyDraft{} = body <- Repo.get(ArticleBodyDraft, draft.body_draft_id),
          {:ok, _body} <- Repo.delete(body) do
@@ -362,6 +361,8 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
       {:error, reason} -> {:error, reason}
     end
   end
+
+  def delete_content_workspace(%Article{}, _draft), do: {:error, :legacy_doc_only}
 
   defp insert_article(_community, thread, author, attrs) do
     %Article{id: value(attrs, :article_id)}
@@ -423,45 +424,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     %DocDraft{} |> DocDraft.changeset(attrs) |> Repo.insert()
   end
 
-  defp insert_draft(%Article{} = article, body, author, attrs, opts) do
-    attrs =
-      attrs
-      |> take(@shared_fields)
-      |> Map.merge(%{
-        article_id: article.id,
-        base_revision_id: Keyword.get(opts, :base_revision_id),
-        body_draft_id: body.id,
-        version: Keyword.get(opts, :version, 1),
-        updated_by_id: author.id,
-        digest:
-          first_present([
-            value(attrs, :digest),
-            body.plain_text,
-            value(attrs, :title),
-            "untitled"
-          ]),
-        content_hash: content_hash(article, attrs, body, nil)
-      })
-
-    %ArticleDraft{} |> ArticleDraft.changeset(attrs) |> Repo.insert()
-  end
-
   defp insert_typed_draft(%Article{thread: :doc}, %DocDraft{} = draft, _attrs), do: {:ok, draft}
-
-  defp insert_typed_draft(%Article{thread: :ticket}, %ArticleDraft{} = draft, _attrs) do
-    {:ok, draft}
-  end
-
-  defp insert_typed_draft(%Article{thread: thread}, draft, attrs) do
-    {model, _revision_model} = Map.fetch!(@typed_models, thread)
-
-    model
-    |> struct()
-    |> model.changeset(
-      Map.put(take(attrs, @ordinary_typed_fields), :article_id, draft.article_id)
-    )
-    |> Repo.insert()
-  end
 
   defp first_present(values) do
     Enum.find(values, &(is_binary(&1) and String.trim(&1) != ""))
@@ -478,13 +441,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     |> present()
   end
 
-  defp lock_draft(%Article{id: article_id}, _opts) do
-    ArticleDraft
-    |> where([draft], draft.article_id == ^article_id)
-    |> lock("FOR UPDATE")
-    |> Repo.one()
-    |> present()
-  end
+  defp lock_draft(%Article{}, _opts), do: {:error, :legacy_doc_only}
 
   defp lock_article(article_id) do
     case Article
@@ -518,10 +475,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   end
 
   defp update_draft_row(draft, attrs, author, content_hash) do
-    fields =
-      if match?(%DocDraft{}, draft),
-        do: @shared_fields ++ @doc_draft_fields,
-        else: @shared_fields
+    fields = @shared_fields ++ @doc_draft_fields
 
     draft
     |> Ecto.Changeset.cast(take(attrs, fields), fields)
@@ -535,45 +489,12 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
 
   defp update_typed_draft(%Article{thread: :doc}, draft, _attrs), do: {:ok, draft}
 
-  defp update_typed_draft(%Article{thread: :ticket}, draft, _attrs), do: {:ok, draft}
-
-  defp update_typed_draft(%Article{thread: thread}, draft, attrs) do
-    {model, _revision_model} = Map.fetch!(@typed_models, thread)
-    typed = Repo.get_by!(model, article_id: draft.article_id)
-
-    typed_attrs =
-      attrs
-      |> take(@ordinary_typed_fields)
-      |> put_explicit_nil(attrs, :cover_url)
-      |> put_explicit_nil(attrs, :cover_url_dark)
-
-    typed |> model.changeset(typed_attrs) |> Repo.update()
-  end
-
-  defp put_explicit_nil(target, source, field) do
-    if has_value?(source, field) and is_nil(value(source, field)) do
-      Map.put(target, field, nil)
-    else
-      target
-    end
-  end
-
-  defp mark_edited_if_published(%Article{thread: :ticket} = article, _opts), do: {:ok, article}
-
   defp mark_edited_if_published(%Article{thread: :doc} = article, opts) do
     case public_revision(article, opts) do
       {:ok, _public, _revision} -> mark_doc_branch_edited(article, opts)
       {:error, :public_not_found} -> {:ok, article}
     end
   end
-
-  defp mark_edited_if_published(%Article{is_edited: true} = article, _opts), do: {:ok, article}
-
-  defp mark_edited_if_published(article, _opts) do
-    if Repo.get(ArticlePublic, article.id), do: mark_edited(article), else: {:ok, article}
-  end
-
-  defp mark_edited(article), do: article |> Article.changeset(%{is_edited: true}) |> Repo.update()
 
   defp mark_doc_branch_edited(%Article{id: article_id} = article, opts) do
     branch_id = Keyword.fetch!(opts, :branch_id)
@@ -604,11 +525,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     if public && revision, do: {:ok, public, revision}, else: {:error, :public_not_found}
   end
 
-  defp public_revision(%Article{id: article_id}, _opts) do
-    public = Repo.get(ArticlePublic, article_id)
-    revision = public && Repo.get(ArticleRevision, public.revision_id)
-    if public && revision, do: {:ok, public, revision}, else: {:error, :public_not_found}
-  end
+  defp public_revision(%Article{}, _opts), do: {:error, :legacy_doc_only}
 
   defp public_revision_id(%{revision_id: revision_id}, _revision), do: revision_id
   defp public_revision_id(_public, revision), do: revision.id
@@ -630,17 +547,10 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     present(Repo.get_by(DocRevision, revision_id: revision.id))
   end
 
-  defp revision_extension(:ticket, _revision), do: {:ok, %{}}
-
-  defp revision_extension(thread, revision) do
-    {_draft_model, revision_model} = Map.fetch!(@typed_models, thread)
-    present(Repo.get_by(revision_model, revision_id: revision.id))
-  end
-
   defp revision_attrs(revision, extension) do
     extension_fields =
       if is_struct(extension) do
-        extension |> Map.from_struct() |> Map.take(@ordinary_typed_fields ++ @doc_fields)
+        extension |> Map.from_struct() |> Map.take(@doc_fields)
       else
         %{}
       end
@@ -767,58 +677,24 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   end
 
   defp replace_tags(article, draft, ids) do
-    if article.thread == :ticket do
-      if ids == [], do: {:ok, :pass}, else: {:error, :unsupported_ticket_draft_tags}
-    else
-      DraftTags.replace(article, draft, ids)
-    end
+    DraftTags.replace(article, draft, ids)
   end
 
   defp copy_revision_tags(article, draft, revision) do
-    if article.thread == :ticket do
-      {:ok, :pass}
-    else
-      DraftTags.copy_revision(article, draft, revision)
-    end
+    DraftTags.copy_revision(article, draft, revision)
   end
 
-  defp delete_draft_tags(%Article{thread: :ticket}, _draft), do: {:ok, :pass}
   defp delete_draft_tags(article, draft), do: DraftTags.delete(article, draft)
 
   defp delete_typed_draft(%Article{thread: :doc}, _draft), do: {:ok, :pass}
-  defp delete_typed_draft(%Article{thread: :ticket}, _draft), do: {:ok, :pass}
 
-  defp delete_typed_draft(%Article{thread: thread}, draft) do
-    {model, _revision_model} = Map.fetch!(@typed_models, thread)
-
-    case Repo.get_by(model, article_id: draft.article_id) do
-      nil ->
-        {:ok, :pass}
-
-      typed ->
-        case Repo.delete(typed) do
-          {:ok, _} -> {:ok, :pass}
-          {:error, reason} -> {:error, reason}
-        end
-    end
-  end
-
-  defp content_hash(%Article{thread: thread} = article, attrs, body, draft) do
-    fields =
-      cond do
-        thread == :doc -> @shared_fields ++ @doc_fields
-        thread == :ticket -> @shared_fields
-        true -> @shared_fields ++ @ordinary_typed_fields
-      end
+  defp content_hash(%Article{thread: :doc} = article, attrs, body, draft) do
+    fields = @shared_fields ++ @doc_fields
 
     stored = stored_typed_fields(article, draft)
 
     tags =
-      if thread == :ticket do
-        []
-      else
-        if has_value?(attrs, :tag_ids), do: tag_ids(attrs), else: stored_tag_ids(article, draft)
-      end
+      if has_value?(attrs, :tag_ids), do: tag_ids(attrs), else: stored_tag_ids(article, draft)
 
     payload = %{
       fields:
@@ -828,7 +704,7 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
         end),
       body_hash: body.body_hash,
       tag_ids: Enum.sort(tags),
-      cover_edit: if(thread == :ticket, do: nil, else: ContentFingerprint.draft(body.id))
+      cover_edit: ContentFingerprint.draft(body.id)
     }
 
     :crypto.hash(:sha256, CanonicalJSON.encode(payload)) |> Base.encode16(case: :lower)
@@ -864,17 +740,6 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
   end
 
   defp stored_typed_fields(%Article{thread: :doc}, nil), do: %{}
-  defp stored_typed_fields(%Article{thread: :ticket}, _draft), do: %{}
-
-  defp stored_typed_fields(%Article{thread: thread, id: article_id}, _draft) do
-    {model, _revision_model} = Map.fetch!(@typed_models, thread)
-
-    case Repo.get_by(model, article_id: article_id) do
-      nil -> %{}
-      typed -> Map.take(Map.from_struct(typed), @ordinary_typed_fields)
-    end
-  end
-
   defp stored_tag_ids(_article, nil), do: []
 
   defp stored_tag_ids(article, draft) do
@@ -905,23 +770,6 @@ defmodule GroupherServer.CMS.Articles.Draft.Store do
     })
     |> Repo.insert()
   end
-
-  defp validate_thread_attrs(:ticket, attrs) do
-    allowed = ~w(article_id title digest body_bag)
-
-    unsupported =
-      attrs
-      |> Map.keys()
-      |> Enum.reject(fn
-        key when is_atom(key) -> Atom.to_string(key) in allowed
-        key when is_binary(key) -> key in allowed
-        _key -> false
-      end)
-
-    if unsupported == [], do: {:ok, :pass}, else: {:error, :unsupported_ticket_content_field}
-  end
-
-  defp validate_thread_attrs(_thread, _attrs), do: {:ok, :pass}
 
   defp insert_community_binding(%Article{} = article, community) do
     %ArticleBinding{}

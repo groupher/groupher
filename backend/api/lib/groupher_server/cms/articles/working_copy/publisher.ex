@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
 
   import Ecto.Query
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.{Bindings, Lifecycle, MutationLock, Numbering, Publishable, Public}
   alias CMS.Artiment.PlateJSON
@@ -47,6 +47,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          {:ok, source_work, source_ref} <- resolve_source(locked_article, source),
          {:ok, public} <- lock_public(locked_article.id),
          {:ok, :pass} <- ensure_public_head(public, expected_public_snapshot_id),
+         {:ok, previous_snapshot} <- previous_snapshot(public),
          {:ok, snapshot} <-
            materialize_source(locked_article, source_work, source_ref, user, command_id),
          first_publish? <- is_nil(public),
@@ -64,6 +65,16 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          {:ok, _stats} <- maybe_initialize_stats(locked_article, first_publish?),
          {:ok, lifecycle} <- transition_lifecycle(lifecycle),
          {:ok, _review} <- register_review(locked_article, snapshot, lifecycle, first_publish?),
+         {:ok, _activity} <-
+           record_publication_changes(
+             locked_article,
+             community,
+             binding,
+             previous_snapshot,
+             snapshot,
+             user,
+             command_id
+           ),
          {:ok, _binding} <- CMS.Articles.BindingPersist.ensure_binding(locked_article, community),
          {:ok, _finalized} <-
            maybe_finalize_first_publish(user, locked_article, community, first_publish?),
@@ -179,6 +190,103 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
   defp ensure_public_head(nil, nil), do: {:ok, :pass}
   defp ensure_public_head(%ArticlePublic{snapshot_id: id}, id), do: {:ok, :pass}
   defp ensure_public_head(_public, _expected), do: {:error, :public_conflict}
+
+  defp previous_snapshot(nil), do: {:ok, nil}
+
+  defp previous_snapshot(%ArticlePublic{snapshot_id: id}) do
+    case Repo.get(ArticleSnapshot, id) do
+      %ArticleSnapshot{} = snapshot -> {:ok, snapshot}
+      nil -> {:error, :article_snapshot_projection_missing}
+    end
+  end
+
+  defp record_publication_changes(
+         article,
+         community,
+         binding,
+         nil,
+         snapshot,
+         user,
+         command_id
+       ) do
+    Activity.log(activity_resource(article, community, binding, snapshot), :created,
+      actor: user,
+      operation_ref: command_id,
+      metadata: %{snapshot_id: snapshot.id}
+    )
+  end
+
+  defp record_publication_changes(
+         article,
+         community,
+         binding,
+         previous,
+         snapshot,
+         user,
+         command_id
+       ) do
+    resource = activity_resource(article, community, binding, snapshot)
+
+    metadata = %{snapshot_id: snapshot.id}
+
+    with {:ok, _} <-
+           maybe_log_change(
+             previous.title != snapshot.title,
+             resource,
+             :title_changed,
+             user,
+             command_id,
+             metadata,
+             %{title: snapshot.title},
+             [:title]
+           ),
+         {:ok, _} <-
+           maybe_log_change(
+             previous.body_json != snapshot.body_json,
+             resource,
+             :body_updated,
+             user,
+             command_id,
+             metadata,
+             %{schema_version: snapshot.body_schema_version},
+             [:body]
+           ) do
+      {:ok, :pass}
+    end
+  end
+
+  defp activity_resource(article, community, binding, snapshot) do
+    %{
+      article_id: article.id,
+      thread: article.thread,
+      community_id: community.id,
+      inner_id: binding.inner_id,
+      title: snapshot.title
+    }
+  end
+
+  defp maybe_log_change(
+         false,
+         _resource,
+         _action,
+         _user,
+         _command_id,
+         _metadata,
+         _payload,
+         _fields
+       ),
+       do: {:ok, :unchanged}
+
+  defp maybe_log_change(true, resource, action, user, command_id, metadata, payload, fields) do
+    Activity.log(resource, action,
+      actor: user,
+      operation_ref: command_id,
+      operation_index: if(action == :title_changed, do: 0, else: 1),
+      metadata: metadata,
+      payload: payload,
+      changed_fields: fields
+    )
+  end
 
   defp published_at, do: {:ok, DateTime.utc_now(:second)}
 

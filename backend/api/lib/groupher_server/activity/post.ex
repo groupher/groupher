@@ -23,15 +23,17 @@ defmodule GroupherServer.Activity.Post do
   ]
 
   @contracts %{
-    created: Event.contract([], [], [:article_log, :community_log]),
+    created: Event.contract([], [:snapshot_id], [:article_log, :community_log]),
     ticket_created: Event.contract([], [], [:article_log], :ticket),
     ticket_linked: Event.contract([], [], [:article_log], :ticket),
-    title_changed: Event.contract([:title], [:revision_id], [:article_log, :community_log]),
+    title_changed: Event.contract([:title], [:snapshot_id], [:article_log, :community_log]),
     body_updated:
       Event.contract(
-        [:body_hash, :schema_version, :summary],
-        [:revision_id],
-        [:article_log, :community_log]
+        [:schema_version, :summary],
+        [:snapshot_id],
+        [:article_log, :community_log],
+        nil,
+        changed_fields: [:body]
       ),
     trashed:
       Event.contract([], [], [:community_log], nil,

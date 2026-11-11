@@ -1,8 +1,8 @@
 defmodule GroupherServer.CMS.Articles.Revision.Persist do
   @moduledoc """
-  Materializes immutable published content from the current mutable workspace.
+  Materializes immutable published content for the legacy Docs branch workflow.
 
-      ArticleDraft / DocDraft
+      DocDraft
                |
                `-> ArticleBodySnapshot + ArticleRevision + typed extension + tags
 
@@ -21,32 +21,18 @@ defmodule GroupherServer.CMS.Articles.Revision.Persist do
     ArticleAssetRef,
     ArticleBodyDraft,
     ArticleBodySnapshot,
-    ArticleDraft,
     ArticleRevision,
-    BlogDraft,
-    BlogRevision,
-    ChangelogDraft,
-    ChangelogRevision,
     DocDraft,
     DocRevision,
     DraftCoverEdit,
-    PostDraft,
-    PostRevision,
     RevisionCover,
     RevisionCoverEdit
   }
 
-  @typed_models %{
-    post: {PostDraft, PostRevision},
-    blog: {BlogDraft, BlogRevision},
-    changelog: {ChangelogDraft, ChangelogRevision},
-    doc: {DocDraft, DocRevision}
-  }
-  @ordinary_threads ~w(post blog changelog)a
   @retention_days 7
 
   @doc "Creates one immutable Revision and all thread-owned immutable bindings."
-  @spec create(Article.t(), ArticleDraft.t() | DocDraft.t()) ::
+  @spec create(Article.t(), DocDraft.t()) ::
           {:ok, ArticleRevision.t()} | {:error, Ecto.Changeset.t() | term()}
   def create(article, draft) do
     with {:ok, revision} <- create_content(article, draft),
@@ -68,39 +54,7 @@ defmodule GroupherServer.CMS.Articles.Revision.Persist do
     end
   end
 
-  @doc "Loads a Revision only when it belongs to the supplied stable Article."
-  @spec get(Article.t(), Ecto.UUID.t()) :: {:ok, ArticleRevision.t()} | {:error, :not_found}
-  def get(%Article{id: article_id}, revision_id) do
-    case Repo.get_by(ArticleRevision, id: revision_id, article_id: article_id) do
-      %ArticleRevision{} = revision -> {:ok, revision}
-      nil -> {:error, :not_found}
-    end
-  end
-
-  @doc "Returns the typed immutable extension for one Article Revision."
-  @spec get_extension(Article.t(), ArticleRevision.t()) ::
-          {:ok, struct() | map()} | {:error, :not_found}
-  def get_extension(%Article{thread: :ticket}, %ArticleRevision{}), do: {:ok, %{}}
-
-  def get_extension(%Article{thread: thread}, %ArticleRevision{id: revision_id}) do
-    {_draft_model, revision_model} = Map.fetch!(@typed_models, thread)
-
-    case Repo.get_by(revision_model, revision_id: revision_id) do
-      nil -> {:error, :not_found}
-      extension -> {:ok, extension}
-    end
-  end
-
-  defp validate_draft_owner(%Article{id: id, thread: thread}, %ArticleDraft{article_id: id})
-       when thread in @ordinary_threads do
-    {:ok, :pass}
-  end
-
   defp validate_draft_owner(%Article{id: id, thread: :doc}, %DocDraft{article_id: id}) do
-    {:ok, :pass}
-  end
-
-  defp validate_draft_owner(%Article{id: id, thread: :ticket}, %ArticleDraft{article_id: id}) do
     {:ok, :pass}
   end
 
@@ -227,24 +181,18 @@ defmodule GroupherServer.CMS.Articles.Revision.Persist do
     end)
   end
 
-  defp insert_typed_extension(:ticket, %ArticleDraft{}, _revision), do: {:ok, :pass}
+  defp insert_typed_extension(:doc, draft, revision) do
+    typed_draft = Repo.get_by(DocDraft, typed_draft_filter(:doc, draft))
+    attrs = extension_attrs(:doc, typed_draft || %DocDraft{})
 
-  defp insert_typed_extension(thread, draft, revision) do
-    {draft_model, revision_model} = Map.fetch!(@typed_models, thread)
-    typed_draft = Repo.get_by(draft_model, typed_draft_filter(thread, draft))
-    attrs = extension_attrs(thread, typed_draft || struct(draft_model))
-
-    revision_model
-    |> struct()
-    |> revision_model.changeset(Map.put(attrs, :revision_id, revision.id))
+    %DocRevision{}
+    |> DocRevision.changeset(Map.put(attrs, :revision_id, revision.id))
     |> Repo.insert()
   end
 
   defp typed_draft_filter(:doc, draft) do
     [article_id: draft.article_id, branch_id: draft.branch_id]
   end
-
-  defp typed_draft_filter(_thread, draft), do: [article_id: draft.article_id]
 
   defp extension_attrs(:doc, draft) do
     Map.take(
@@ -253,15 +201,7 @@ defmodule GroupherServer.CMS.Articles.Revision.Persist do
     )
   end
 
-  defp extension_attrs(_thread, draft) do
-    Map.take(Map.from_struct(draft), ~w(copy_right link_addr cover_url cover_url_dark)a)
-  end
-
   defp copy_tags(thread, draft, revision) do
-    if thread == :ticket do
-      {:ok, :pass}
-    else
-      DraftTags.copy_to_revision(thread, draft, revision)
-    end
+    DraftTags.copy_to_revision(thread, draft, revision)
   end
 end

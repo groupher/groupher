@@ -11,7 +11,6 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     Article,
     ArticleAssetRef,
     ArticleBinding,
-    ArticleDraft,
     ArticleLifecycle,
     ArticlePublic,
     ArticleSnapshot,
@@ -364,13 +363,24 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.storage_bytes == 96
     end
 
+    test "legacy ref linking cannot bypass a WorkingCopy save", ~m(community post user)a do
+      work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
+
+      assert {:error, :working_copy_save_required} =
+               CMS.Assets.link_refs(post, %{asset_refs: [], cur_user: user}, community: community)
+
+      assert {:error, :working_copy_save_required} = CMS.Assets.copy_refs(post, post)
+
+      assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision
+    end
+
     test "links Article attachment and cover refs without changing storage ownership",
          ~m(community post user)a do
       body_asset = image_asset_attrs("body.png", 100)
       cover_asset = image_asset_attrs("cover.png", 200)
 
       assert {:ok, %{body: [_], cover: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    cur_user: user,
@@ -405,7 +415,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.storage_bytes == 300
 
       assert {:ok, %{body: [], cover: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    asset_refs: [],
@@ -432,7 +442,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    asset_refs: [
@@ -460,7 +470,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    asset_refs: [
@@ -491,7 +501,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    asset_refs: [
@@ -597,7 +607,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         assert {:ok, _draft} = open_draft(article, user)
 
         assert {:ok, %{body: [_]}} =
-                 CMS.Assets.link_refs(
+                 test_link_refs(
                    article,
                    %{
                      asset_refs: [
@@ -652,7 +662,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  doc,
                  %{
                    asset_refs: [
@@ -715,7 +725,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: refs, cover: []}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    cur_user: user,
@@ -733,7 +743,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert asset_ref_count(asset_c.id) == 0
 
       assert {:ok, %{body: refs, cover: []}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    cur_user: user,
@@ -776,7 +786,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    asset_refs: [
@@ -1122,7 +1132,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    asset_refs: [
@@ -1142,7 +1152,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert (item[:article_id] || item["article_id"]) == post.id
 
       assert (item[:observed_working_copy_revision] || item["observed_working_copy_revision"]) ==
-               1
+               Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default).revision
 
       assert (item[:decision] || item["decision"]) == "editable"
       locators = item[:usage_locators] || item["usage_locators"]
@@ -1168,7 +1178,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    asset_refs: [
@@ -1224,7 +1234,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    asset_refs: [
@@ -1235,7 +1245,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  other_post,
                  %{
                    asset_refs: [
@@ -1320,7 +1330,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         })
         |> Repo.insert()
 
-      assert Repo.get_by(ArticleDraft, article_id: historical_post.id) == nil
+      before_copies =
+        Repo.all(from(work in ArticleWorkingCopy, where: work.article_id == ^historical_post.id))
 
       assert {:ok, %AssetReplacementPlan{status: :completed} = applied} =
                CMS.Assets.apply_replacement_plan(plan, user, article_ids: [historical_post.id])
@@ -1334,7 +1345,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert [%AssetWorkflowStep{status: :skipped, result: %{"reason" => "plan_decision"}}] =
                Repo.all(AssetWorkflowStep)
 
-      assert Repo.get_by(ArticleDraft, article_id: historical_post.id) == nil
+      assert Repo.all(
+               from(work in ArticleWorkingCopy, where: work.article_id == ^historical_post.id)
+             ) == before_copies
     end
 
     test "rejects refs with both asset_id and inline asset", ~m(community post user)a do
@@ -1351,7 +1364,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                 reason: :custom,
                 details: "asset_id and asset are mutually exclusive"
               }} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    cur_user: user,
@@ -1374,7 +1387,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       cover_asset = image_asset_attrs("body-usage-cover.png", 100)
 
       assert {:ok, %{body: [], cover: [cover_ref]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    cur_user: user,
@@ -1389,7 +1402,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                   reason: :custom,
                   details: "explicit Article asset refs must be attachments"
                 }} =
-                 CMS.Assets.link_refs(
+                 test_link_refs(
                    post,
                    %{
                      cur_user: user,
@@ -1410,8 +1423,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       end
     end
 
-    test "serializes concurrent ref linking for the same document", ~m(community post user)a do
+    test "concurrent ref saves reject a stale WorkingCopy revision", ~m(community post user)a do
       parent = self()
+
+      revision =
+        Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default).revision
 
       tasks =
         ["sync-a.png", "sync-b.png"]
@@ -1422,7 +1438,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
             receive do
               :go ->
-                CMS.Assets.link_refs(
+                test_link_refs(
                   post,
                   %{
                     cur_user: user,
@@ -1434,7 +1450,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                       }
                     ]
                   },
-                  community: community
+                  community: community,
+                  revision: revision
                 )
             end
           end)
@@ -1448,9 +1465,13 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       Enum.each(ready_pids, &send(&1, :go))
 
-      Enum.each(tasks, fn task ->
-        assert {:ok, %{body: [_], cover: []}} = Task.await(task, 5_000)
-      end)
+      results = Enum.map(tasks, &Task.await(&1, 5_000))
+      assert Enum.count(results, &match?({:ok, %{body: [_], cover: []}}, &1)) == 1
+
+      assert Enum.count(
+               results,
+               &match?({:error, %{reason: :article_working_copy_revision_conflict}}, &1)
+             ) == 1
 
       refs = article_refs(:post, post.id)
 
@@ -1473,7 +1494,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         end)
 
       assert {:ok, %{body: refs, cover: []}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    cur_user: user,
@@ -1902,7 +1923,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{cur_user: user, asset_refs: [%{usage: :attachment, asset_id: referenced.id}]},
                  community: community
@@ -1929,7 +1950,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       asset_attrs = image_asset_attrs("referenced.png", 80)
 
       {:ok, %{body: [ref]}} =
-        CMS.Assets.link_refs(
+        test_link_refs(
           post,
           %{
             cur_user: user,
@@ -1954,7 +1975,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       asset_attrs = image_asset_attrs("soft-delete-keeps-refs.png", 90)
 
       {:ok, %{body: [ref]}} =
-        CMS.Assets.link_refs(
+        test_link_refs(
           post,
           %{
             cur_user: user,
@@ -1978,7 +1999,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       asset_attrs = image_asset_attrs("delete-cleanup.png", 90)
 
       {:ok, %{body: [ref]}} =
-        CMS.Assets.link_refs(
+        test_link_refs(
           post,
           %{
             cur_user: user,
@@ -2014,7 +2035,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    cur_user: user,
@@ -2024,7 +2045,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  other_post,
                  %{
                    cur_user: user,
@@ -2064,7 +2085,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:ok, %{body: [_]}} =
-               CMS.Assets.link_refs(
+               test_link_refs(
                  post,
                  %{
                    asset_refs: [
@@ -2102,7 +2123,40 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert Enum.any?(items, &((&1[:decision] || &1["decision"]) == "live_snapshot_only"))
 
       assert (item[:observed_working_copy_revision] || item["observed_working_copy_revision"]) ==
-               1
+               Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default).revision
+    end
+  end
+
+  defp test_link_refs(%{thread: :doc} = doc, attrs, opts) do
+    CMS.Assets.link_refs(doc, attrs, opts)
+  end
+
+  defp test_link_refs(article, attrs, opts) do
+    community = Keyword.fetch!(opts, :community)
+    canonical = Repo.get!(Article, article.id)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id, scope_kind: :default)
+
+    actor =
+      Map.get(attrs, :cur_user) ||
+        Repo.get!(GroupherServer.Accounts.Model.User, work.updated_by_id)
+
+    with {:ok, saved} <-
+           CMS.Articles.save_working_copy(
+             canonical,
+             community,
+             work.id,
+             attrs,
+             Keyword.get(opts, :revision, work.revision),
+             actor,
+             Ecto.UUID.generate()
+           ) do
+      refs = CMS.Assets.Refs.working_copy_refs(saved.id)
+
+      {:ok,
+       %{
+         body: Enum.reject(refs, &(&1.usage in [:cover, :cover_dark])),
+         cover: Enum.filter(refs, &(&1.usage in [:cover, :cover_dark]))
+       }}
     end
   end
 

@@ -147,12 +147,13 @@ defmodule GroupherServer.CMS.Press.Projection do
 
   defp tag(tag), do: %{slug: tag.slug, title: tag.title}
 
-  defp content_version(article) do
+  defp content_version(%{thread: :doc} = article) do
     Map.get(article, :content_version) ||
-      Map.get(article, :snapshot_id) ||
       Map.get(article, :branch_version_id) ||
       Map.get(article, :revision_id) || legacy_doc_content_version(article)
   end
+
+  defp content_version(article), do: Map.get(article, :snapshot_id)
 
   defp legacy_doc_content_version(%{thread: :doc, body_hash: body_hash, updated_at: updated_at})
        when is_binary(body_hash) and is_struct(updated_at, DateTime) do

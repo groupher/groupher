@@ -20,10 +20,7 @@ defmodule GroupherServer.CMS.Articles.Store do
     Article,
     ArticleBodyDraft,
     ArticleBinding,
-    ArticleDraft,
     DraftCoverEdit,
-    ArticleLifecycle,
-    ArticlePublic,
     ArticleRevision,
     Author,
     Community
@@ -48,17 +45,8 @@ defmodule GroupherServer.CMS.Articles.Store do
     load_public_article(article_id, community)
   end
 
-  @doc "Loads one ArticleLifecycle row by stable Article id."
-  def lifecycle(article_id), do: ORM.find_by(ArticleLifecycle, article_id: article_id)
-
-  @doc "Loads one current mutable Article Draft row."
-  def draft(article_id), do: ORM.find_by(ArticleDraft, article_id: article_id)
-
   @doc "Loads one mutable rich-text body owned by an Article Draft."
   def body_draft(id), do: ORM.find(ArticleBodyDraft, id)
-
-  @doc "Loads one current ordinary Article public row."
-  def public(article_id), do: ORM.find(ArticlePublic, article_id)
 
   @doc "Loads one Article revision row."
   def revision(revision_id), do: ORM.find(ArticleRevision, revision_id)

@@ -28,7 +28,6 @@ defmodule GroupherServer.CMS.Assets.Refs do
     Article,
     ArticleBinding,
     ArticleAssetRef,
-    ArticleDraft,
     ArticleWorkingCopy,
     Community,
     CommunityAsset,
@@ -166,14 +165,14 @@ defmodule GroupherServer.CMS.Assets.Refs do
   end
 
   @doc """
-  Synchronizes refs for an article using an explicit community boundary.
+  Synchronizes legacy Docs Draft refs using an explicit community boundary.
 
   The body Draft row is locked while body and cover refs are replaced, so
   concurrent syncs for the same article cannot interleave delete/insert steps.
 
   ## Examples
 
-      Refs.sync_refs(community, post, %{
+      Refs.sync_refs(community, doc, %{
         asset_refs: [%{asset_id: asset.id, block_id: "image-1"}],
         cover_asset_id: cover_asset.id,
         cur_user: user
@@ -183,13 +182,12 @@ defmodule GroupherServer.CMS.Assets.Refs do
   """
   @spec sync_refs(Community.t(), T.article(), map()) :: T.domain_res(term())
   def sync_refs(%Community{} = community, article, attrs) do
-    case resolve_ordinary_article(article) do
-      {:ok, %Article{thread: thread} = canonical}
-      when thread in [:post, :blog, :changelog] ->
-        sync_default_working_copy_refs(community, canonical, attrs)
-
-      {:ok, _canonical} ->
+    case resolve_article(article) do
+      {:ok, %Article{thread: :doc}} ->
         do_sync_refs(community.id, article, attrs)
+
+      {:ok, %Article{}} ->
+        {:error, :working_copy_save_required}
 
       {:error, _reason} = error ->
         error
@@ -197,17 +195,14 @@ defmodule GroupherServer.CMS.Assets.Refs do
   end
 
   @doc """
-  Synchronizes refs for an Article using explicit ArticleBinding context.
-
-  This variant keeps article create/update flows concise. If the article is not
-  associated with a community, the sync is a no-op.
+  Synchronizes legacy Docs Draft refs using ArticleBinding context.
 
   ## Examples
 
-      Refs.sync_refs(post, %{asset_refs: [%{asset_id: asset.id}]})
+      Refs.sync_refs(doc, %{asset_refs: [%{asset_id: asset.id}]})
       #=> {:ok, %{body: body_refs, cover: cover_refs}}
 
-      Refs.sync_refs(post, %{asset_refs: []})
+      Refs.sync_refs(doc, %{asset_refs: []})
       #=> {:ok, :pass}
 
   """
@@ -219,7 +214,7 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  @doc "Copies the complete asset-ref projection from one Article version to another."
+  @doc "Copies legacy Docs Draft refs between branch-owned versions."
   @spec copy_refs(T.article(), T.article()) :: T.domain_res(term())
   def copy_refs(source, target) do
     with {:ok, %{community: %{id: target_community_id}}} <-
@@ -227,6 +222,7 @@ defmodule GroupherServer.CMS.Assets.Refs do
          {:ok, source_thread} <- FrontDesk.thread_of(source),
          {:ok, target_thread} <- FrontDesk.thread_of(target),
          true <- source_thread == target_thread,
+         {:ok, :pass} <- legacy_doc_copy(source_thread),
          {:ok, source_body_id} <- draft_body_id(source),
          {:ok, target_body_id} <- draft_body_id(target) do
       Repo.transaction(fn ->
@@ -260,6 +256,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
+  defp legacy_doc_copy(:doc), do: {:ok, :pass}
+  defp legacy_doc_copy(_thread), do: {:error, :working_copy_save_required}
+
   defp copy_ref(source_ref, {:ok, copied}, target, target_body_id) do
     attrs =
       source_ref
@@ -287,7 +286,7 @@ defmodule GroupherServer.CMS.Assets.Refs do
   end
 
   @doc """
-  Removes every Draft- and Revision-owned asset ref for an Article.
+  Removes WorkingCopy and Snapshot refs, plus legacy Docs-owned refs, for an Article.
 
   The community asset rows remain intact; only usage projections are deleted.
   This is used by article deletion cleanup.
@@ -302,7 +301,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
   def purge_refs(thread, article_id) do
     revision_ids =
       from(revision in CMS.Model.ArticleRevision,
-        where: revision.article_id == ^article_id,
+        join: article in Article,
+        on: article.id == revision.article_id,
+        where: revision.article_id == ^article_id and article.thread == :doc,
         select: revision.id
       )
 
@@ -372,40 +373,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  defp sync_default_working_copy_refs(%Community{} = community, %Article{} = article, attrs) do
-    if sync_requested?(attrs) do
-      Repo.transaction(fn ->
-        work =
-          Repo.one(
-            from(row in ArticleWorkingCopy,
-              where:
-                row.article_id == ^article.id and row.scope_kind == :default and
-                  row.scope_id == ^article.id,
-              lock: "FOR UPDATE"
-            )
-          )
+  defp resolve_article(%Article{} = article), do: {:ok, article}
 
-        with %ArticleWorkingCopy{} <- work,
-             %User{} = actor <- get_attr(attrs, :cur_user) || Repo.get(User, work.updated_by_id),
-             {:ok, refs} <- sync_working_copy_refs(community, article, work, attrs, actor) do
-          %{
-            body: Enum.reject(refs, &(&1.usage in [:cover, :cover_dark])),
-            cover: Enum.filter(refs, &(&1.usage in [:cover, :cover_dark]))
-          }
-        else
-          nil -> Repo.rollback(AssetErrorCat.not_exist("article WorkingCopy not found"))
-          {:error, reason} -> Repo.rollback(reason)
-          _ -> Repo.rollback(GateErrorCat.permission_denied())
-        end
-      end)
-    else
-      {:ok, :pass}
-    end
-  end
-
-  defp resolve_ordinary_article(%Article{} = article), do: {:ok, article}
-
-  defp resolve_ordinary_article(article) when is_map(article) do
+  defp resolve_article(article) when is_map(article) do
     article_id =
       Map.get(article, :article_id) || Map.get(article, "article_id") || Map.get(article, :id)
 
@@ -415,7 +385,7 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  defp resolve_ordinary_article(_article),
+  defp resolve_article(_article),
     do: {:error, AssetErrorCat.not_exist("article not found")}
 
   defp sync_requested?(attrs) when is_map(attrs) do
@@ -1009,27 +979,16 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  defp draft_body_id(%Article{thread: :doc}) do
+  defp draft_body_id(_article) do
     {:error, GateErrorCat.doc_branch_required()}
-  end
-
-  defp draft_body_id(%{id: article_id}) when is_binary(article_id) do
-    case Repo.get(ArticleDraft, article_id) do
-      %ArticleDraft{body_draft_id: body_draft_id} -> {:ok, body_draft_id}
-      nil -> {:error, AssetErrorCat.not_exist("article body draft not found")}
-    end
   end
 
   defp draft_body_ids(:doc, article_id) do
     from(draft in DocDraft, where: draft.article_id == ^article_id, select: draft.body_draft_id)
   end
 
-  defp draft_body_ids(_thread, article_id) do
-    from(draft in ArticleDraft,
-      where: draft.article_id == ^article_id,
-      select: draft.body_draft_id
-    )
-  end
+  defp draft_body_ids(_thread, _article_id),
+    do: from(draft in DocDraft, where: false, select: draft.body_draft_id)
 
   defp normalize_usage(nil), do: {:ok, :inline}
   defp normalize_usage(usage) when usage in @all_usages, do: {:ok, usage}

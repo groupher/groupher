@@ -78,15 +78,21 @@ defmodule GroupherServer.Test.CMS.Assets.ReplaceUseWorkflowConcurrency do
           Ecto.UUID.generate()
         )
 
+      initial_work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
+
       assert {:ok, _} =
-               CMS.Assets.link_refs(
-                 post,
+               CMS.Articles.save_working_copy(
+                 article,
+                 community,
+                 initial_work.id,
                  %{
                    asset_refs: [
                      %{usage: :attachment, asset_id: from_asset.id, block_id: "recovery-race"}
                    ]
                  },
-                 community: community
+                 initial_work.revision,
+                 user,
+                 Ecto.UUID.generate()
                )
 
       work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)

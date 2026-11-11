@@ -3,6 +3,8 @@
 > 状态：目标合同；Article WorkingCopy / Snapshot B0–B4 已完成实现与聚焦验证。Docs 发布队列的接入合同已单独定义，实施仍按其自身批次推进。当前旧运行时盘点见 [Revision / Draft](./revision-draft-target.md)，仅用于识别切换范围，不作为目标合同。
 > 本文只设计新的 Article 内容基座；目标环境从空的 Article 聚合启动，不迁移旧文章及其依赖数据，不提供兼容读取、双写或回填。Docs 的发布队列、目录和审核由 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md)另行编排。
 
+普通 Article 的旧 Draft、thread Revision 和标签表由 `20261112000000_retire_ordinary_draft_revision_tables` 退役。迁移先锁表并要求这些表及非 Docs 旧 Revision 均为空；任何入向外键都会使删除失败并回滚，不使用 `CASCADE`。共享的 Docs Draft / Revision 表及数据保留，迁移不可逆，不执行旧数据转换。
+
 ## 1. 内容模型
 
 ```text

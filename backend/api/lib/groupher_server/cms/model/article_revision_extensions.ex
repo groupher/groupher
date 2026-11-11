@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Model.ArticleRevisionExtensions do
   @moduledoc """
-  Defines typed immutable extension schemas for each Article thread.
+  Defines the legacy Docs immutable extension schema.
 
       ArticleRevision -> thread extension -> deterministic materialization
 
@@ -45,39 +45,6 @@ defmodule GroupherServer.CMS.Model.ArticleRevisionExtensions do
       end
     end
   end
-end
-
-defmodule GroupherServer.CMS.Model.PostRevision do
-  @moduledoc """
-  Immutable Post-specific content attached one-to-one to an ArticleRevision.
-
-      PostDraft -> PostRevision -> public projection
-  """
-  use GroupherServer.CMS.Model.ArticleRevisionExtensions,
-    table: "post_revisions",
-    fields: [copy_right: :string, link_addr: :string, cover_url: :string, cover_url_dark: :string]
-end
-
-defmodule GroupherServer.CMS.Model.BlogRevision do
-  @moduledoc """
-  Immutable Blog-specific content attached one-to-one to an ArticleRevision.
-
-      BlogDraft -> BlogRevision -> public projection
-  """
-  use GroupherServer.CMS.Model.ArticleRevisionExtensions,
-    table: "blog_revisions",
-    fields: [copy_right: :string, link_addr: :string, cover_url: :string, cover_url_dark: :string]
-end
-
-defmodule GroupherServer.CMS.Model.ChangelogRevision do
-  @moduledoc """
-  Immutable Changelog-specific content attached one-to-one to an ArticleRevision.
-
-      ChangelogDraft -> ChangelogRevision -> public projection
-  """
-  use GroupherServer.CMS.Model.ArticleRevisionExtensions,
-    table: "changelog_revisions",
-    fields: [copy_right: :string, link_addr: :string, cover_url: :string, cover_url_dark: :string]
 end
 
 defmodule GroupherServer.CMS.Model.DocRevision do
