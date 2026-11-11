@@ -51,6 +51,35 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     assert saved["pagiRevision"] == 1
   end
 
+  test "dashboard enable mutation exposes nullable published editing settings", %{
+    community: community
+  } do
+    query = """
+    mutation($community: String!, $post: Boolean, $blog: Boolean, $commandId: ID!) {
+      updateDashboardEnable(community: $community, postPublishedEditing: $post,
+                            blogPublishedEditing: $blog, commandId: $commandId) {
+        enable { postPublishedEditing blogPublishedEditing changelogPublishedEditing }
+      }
+    }
+    """
+
+    conn = simu_conn(:user, cms: %{"community.update" => true})
+
+    saved =
+      gq_mutation(conn, query, %{
+        community: community.slug,
+        post: false,
+        blog: nil,
+        commandId: Ecto.UUID.generate()
+      })
+
+    assert saved["enable"] == %{
+             "postPublishedEditing" => false,
+             "blogPublishedEditing" => nil,
+             "changelogPublishedEditing" => nil
+           }
+  end
+
   describe "mutation cms category" do
     @create_category_query S.Category.m(:create_category)
     test "auth user can create category", ~m(user community)a do

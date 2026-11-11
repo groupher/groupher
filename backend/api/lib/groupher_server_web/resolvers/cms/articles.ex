@@ -110,7 +110,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
            command_id: args.command_id
          ) do
       {:ok, %{working_copy: working_copy}} -> {:ok, working_copy}
-      {:ok, {_article, working_copy}} -> {:ok, working_copy}
       other -> other
     end
   end

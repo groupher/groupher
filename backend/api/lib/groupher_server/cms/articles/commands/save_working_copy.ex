@@ -34,7 +34,8 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
                      community_id
                    ) do
     gate(fn _article ->
-      WorkingCopyAccess.check_in_transaction(actor, :edit, article, community)
+      action = if article.thread in [:post, :blog, :changelog], do: :edit_article, else: :edit
+      WorkingCopyAccess.check_in_transaction(actor, action, article, community)
     end)
 
     change(fn canonical_article ->
@@ -44,6 +45,7 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
                  where: work.id == ^working_copy_id and work.article_id == ^canonical_article.id
                )
              ),
+           {:ok, :pass} <- WorkingCopyAccess.generic_save(canonical_article, work),
            {:ok, saved} <-
              Store.save_loaded(work, attrs, actor, revision, community_id) do
         {:ok, saved}
@@ -70,7 +72,7 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
        }}
     end)
 
-    present(fn confirmation -> present_confirmation(confirmation) end)
+    present(fn confirmation -> present_confirmation(confirmation, article, community, actor) end)
   end
 
   def execute(
@@ -101,15 +103,24 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
   def execute(_article, _community, _working_copy_id, _attrs, _expected, _actor, _command_id),
     do: {:error, :invalid_working_copy_command}
 
-  defp present_confirmation(%Confirmation{
-         data: %{"working_copy_id" => id, "revision" => revision}
-       }) do
-    case Repo.get(ArticleWorkingCopy, id) do
-      %ArticleWorkingCopy{revision: ^revision} = work -> {:ok, work}
+  defp present_confirmation(
+         %Confirmation{data: %{"working_copy_id" => id, "revision" => revision}},
+         %Article{} = article,
+         community,
+         actor
+       ) do
+    with {:ok, canonical} <- WorkingCopyAccess.access_check(actor, :edit, article, community),
+         %ArticleWorkingCopy{article_id: article_id, revision: ^revision} = work <-
+           Repo.get(ArticleWorkingCopy, id),
+         true <- article_id == canonical.id,
+         {:ok, :pass} <- WorkingCopyAccess.generic_save(canonical, work) do
+      {:ok, work}
+    else
+      {:error, _reason} -> {:error, CMS.ErrorCat.command_result_unavailable()}
       _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
 
-  defp present_confirmation(_confirmation),
+  defp present_confirmation(_confirmation, _article, _community, _actor),
     do: {:error, CMS.ErrorCat.command_result_unavailable()}
 end

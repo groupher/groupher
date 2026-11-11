@@ -135,7 +135,7 @@ defmodule GroupherServer.Messaging.Mentions.Persist do
 
   defp delivery_identity(_content), do: {:error, :mention_target_invalid}
 
-  defp article_token(%{revision_id: revision_id}, _article_id, _thread, _branch_id)
+  defp article_token(%{revision_id: revision_id}, _article_id, :doc, _branch_id)
        when is_binary(revision_id) do
     {:ok, "revision:#{revision_id}"}
   end
@@ -149,8 +149,11 @@ defmodule GroupherServer.Messaging.Mentions.Persist do
 
   defp article_token(_content, article_id, _thread, _branch_id) do
     case Repo.get(ArticlePublic, article_id) do
-      %{revision_id: revision_id} when is_binary(revision_id) -> {:ok, "revision:#{revision_id}"}
-      _ -> {:error, :mention_content_token_missing}
+      %ArticlePublic{snapshot_id: snapshot_id} when is_binary(snapshot_id) ->
+        {:ok, "article-snapshot:#{snapshot_id}"}
+
+      _ ->
+        {:error, :mention_content_token_missing}
     end
   end
 

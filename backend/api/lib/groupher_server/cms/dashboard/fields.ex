@@ -122,9 +122,12 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
   def macro_schema(:enable) do
     [
       [:post, :boolean, true],
+      [:post_published_editing, :boolean, nil],
       [:blog, :boolean, true],
+      [:blog_published_editing, :boolean, nil],
       [:kanban, :boolean, true],
       [:changelog, :boolean, true],
+      [:changelog_published_editing, :boolean, nil],
       # doc
       [:doc, :boolean, true],
       [:doc_last_update, :boolean, true],

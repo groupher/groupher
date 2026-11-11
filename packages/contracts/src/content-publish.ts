@@ -13,6 +13,11 @@ export const CONTENT_PUBLISH_ACTION = {
 } as const
 
 export const CONTENT_TYPE = { DOC: 'doc', ARTICLE: 'article', COMMENT: 'comment' } as const
+export const CONTENT_ARTICLE_THREAD = {
+  POST: 'post',
+  BLOG: 'blog',
+  CHANGELOG: 'changelog',
+} as const
 export const CONTENT_PUBLISH_SCOPE = {
   DOC_WRITE: 'content:doc:write',
   ARTICLE_WRITE: 'content:article:write',
@@ -24,6 +29,8 @@ export const CONTENT_PUBLISH_RESOURCE = 'https://api.groupher.com/content-publis
 export type TContentPublishAction =
   (typeof CONTENT_PUBLISH_ACTION)[keyof typeof CONTENT_PUBLISH_ACTION]
 export type TContentType = (typeof CONTENT_TYPE)[keyof typeof CONTENT_TYPE]
+export type TContentArticleThread =
+  (typeof CONTENT_ARTICLE_THREAD)[keyof typeof CONTENT_ARTICLE_THREAD]
 export type TContentPublishScope =
   (typeof CONTENT_PUBLISH_SCOPE)[keyof typeof CONTENT_PUBLISH_SCOPE]
 export type TContentSource =
@@ -53,7 +60,7 @@ export type TUpdateDocDraftCommand = TCommandBase<
 > & { expectedVersion: number }
 export type TCreateArticleCommand = TCommandBase<
   typeof CONTENT_PUBLISH_ACTION.CREATE_ARTICLE,
-  { community: string; thread: string },
+  { community: string; thread: TContentArticleThread },
   {
     content: TContentSource
     title?: string
@@ -64,7 +71,7 @@ export type TCreateArticleCommand = TCommandBase<
 >
 export type TCreateAndPublishArticleCommand = TCommandBase<
   typeof CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE,
-  { community: string; thread: string },
+  { community: string; thread: TContentArticleThread },
   {
     content: TContentSource
     title: string
@@ -139,6 +146,8 @@ const issue = (path: string, code: string, message: string): TContentPublishPars
 })
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value)
+const isContentArticleThread = (thread: string): thread is TContentArticleThread =>
+  Object.values(CONTENT_ARTICLE_THREAD).includes(thread as TContentArticleThread)
 const failed = (value: unknown): value is TContentPublishParseFailure =>
   isRecord(value) && value.ok === false
 const readString = (
@@ -156,7 +165,9 @@ const readRevision = (record: Record<string, unknown>): number | TContentPublish
     ? Number(record.revision)
     : issue('revision', 'invalid_revision', 'revision must be a positive integer.')
 }
-const readExpectedVersion = (record: Record<string, unknown>): number | TContentPublishParseFailure =>
+const readExpectedVersion = (
+  record: Record<string, unknown>,
+): number | TContentPublishParseFailure =>
   Number.isSafeInteger(record.expectedVersion) && Number(record.expectedVersion) > 0
     ? Number(record.expectedVersion)
     : issue('expectedVersion', 'invalid_version', 'expectedVersion must be a positive integer.')
@@ -227,6 +238,12 @@ export const parseContentPublishCommand = (input: unknown): TContentPublishParse
       if (failed(community)) return community
       const thread = readString(target, 'thread', 'target.thread')
       if (failed(thread)) return thread
+      if (!isContentArticleThread(thread))
+        return issue(
+          'target.thread',
+          'unsupported_thread',
+          'Article creation does not support Doc.',
+        )
       const title = readPatchString(payload, 'title')
       if (failed(title)) return title
       const digest = readPatchString(payload, 'digest')
@@ -324,6 +341,12 @@ export const parseContentPublishCommand = (input: unknown): TContentPublishParse
       if (failed(community)) return community
       const thread = readString(target, 'thread', 'target.thread')
       if (failed(thread)) return thread
+      if (!isContentArticleThread(thread))
+        return issue(
+          'target.thread',
+          'unsupported_thread',
+          'Article creation does not support Doc.',
+        )
       const title = readString(payload, 'title', 'payload.title')
       if (failed(title)) return title
       const digest = readPatchString(payload, 'digest')

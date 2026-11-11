@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
 
   alias CMS.Model.{
     Article,
+    ArticleSnapshot,
     ArticleWorkingCopy,
     ArticleWorkingCopyBlog,
     ArticleWorkingCopyChangelog,
@@ -29,6 +30,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
 
   @work_fields ~w(title digest slug)a
   @cover_fields ~w(format_version canvas_width canvas_height light dark)a
+  @body_fields ~w(body_json body_schema_version body_markdown body_html body_markdown_toc body_plain_text body_thumbnail body_xml body_rss)a
 
   @doc "Creates one WorkingCopy and its optional cover and tag relations in the current transaction."
   def create_loaded(%Article{} = article, attrs, %User{} = actor, community_id)
@@ -59,13 +61,64 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
         community_id
       )
       when is_map(attrs) and is_integer(revision) and is_integer(community_id) do
+    save_with_body(work, attrs, actor, revision, community_id, :input, :derived)
+  end
+
+  @doc "Copies a saved Doc body while applying the caller's complete merge patch in its transaction."
+  def save_stored_body_loaded(
+        %ArticleWorkingCopy{} = work,
+        source,
+        attrs,
+        %User{} = actor,
+        revision,
+        community_id
+      )
+      when is_map(attrs) and is_integer(revision) and is_integer(community_id) do
+    if fetch_present(attrs, :body_bag) == :missing do
+      save_with_body(work, attrs, actor, revision, community_id, {:stored, source}, :derived)
+    else
+      {:error, :ambiguous_body_source}
+    end
+  end
+
+  @doc "Saves a selected Doc merge, preserving complete selected cover asset references."
+  def save_merged_loaded(
+        %ArticleWorkingCopy{} = work,
+        source,
+        attrs,
+        cover_refs,
+        %User{} = actor,
+        revision,
+        community_id
+      )
+      when is_map(attrs) and is_list(cover_refs) and is_integer(revision) and
+             is_integer(community_id) do
+    if Enum.all?(
+         [:body_bag, :cover_asset, :cover_asset_id, :cover_asset_dark, :cover_asset_dark_id],
+         &(fetch_present(attrs, &1) == :missing)
+       ) do
+      save_with_body(
+        work,
+        attrs,
+        actor,
+        revision,
+        community_id,
+        {:stored, source},
+        {:selected, cover_refs}
+      )
+    else
+      {:error, :ambiguous_merge_input}
+    end
+  end
+
+  defp save_with_body(work, attrs, actor, revision, community_id, body_source, cover_selection) do
     attrs = normalize_cover_attrs(attrs)
 
     with {:ok, :pass} <- require_transaction(),
-         {:ok, _article} <- lock_article(work.article_id),
-         %ArticleWorkingCopy{revision: ^revision} = locked <- lock_work(work.id),
-         {:ok, article} <- fetch_article(locked.article_id),
-         {:ok, body_attrs} <- optional_body_attrs(attrs, article.thread, locked),
+         {:ok, article} <- lock_article(work.article_id),
+         %ArticleWorkingCopy{revision: ^revision} = locked <-
+           lock_save_work(work.id, article.id, body_source),
+         {:ok, body_attrs} <- selected_body_attrs(body_source, attrs, article, locked),
          {:ok, tags} <- requested_tags(attrs, article, locked, community_id),
          {:ok, cover_id, retired_cover_id, cover_changed?} <- update_cover(attrs, locked),
          {:ok, typed_changed?} <- update_typed_work(locked, article.thread, attrs),
@@ -86,7 +139,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
              updated,
              attrs,
              actor,
-             changed_fields?(locked, body_attrs) or cover_changed? or typed_changed?
+             changed_fields?(locked, body_attrs) or cover_changed? or typed_changed?,
+             cover_selection
            ) do
       {:ok, updated}
     else
@@ -96,6 +150,59 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
       {:error, _reason} = error -> error
     end
   end
+
+  defp selected_body_attrs(:input, attrs, article, locked) do
+    optional_body_attrs(attrs, article.thread, locked)
+  end
+
+  defp selected_body_attrs({:stored, source}, _attrs, %Article{thread: :doc} = article, locked) do
+    with {:ok, saved} <- lock_body_source(source, locked),
+         true <- saved.article_id == article.id do
+      {:ok, Map.take(saved, @body_fields)}
+    else
+      false -> {:error, :body_source_owner_mismatch}
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp selected_body_attrs({:stored, _source}, _attrs, _article, _locked) do
+    {:error, :unsupported_article_thread}
+  end
+
+  defp lock_body_source(%ArticleSnapshot{id: id}, locked) when is_binary(id) do
+    case Repo.one(
+           from(snapshot in ArticleSnapshot,
+             where: snapshot.id == ^id and snapshot.article_id == ^locked.article_id,
+             lock: "FOR SHARE"
+           )
+         ) do
+      %ArticleSnapshot{} = snapshot -> {:ok, snapshot}
+      nil -> {:error, :body_source_owner_mismatch}
+    end
+  end
+
+  defp lock_body_source(%ArticleWorkingCopy{id: id, revision: revision}, locked)
+       when is_binary(id) and is_integer(revision) do
+    current =
+      if id == locked.id do
+        locked
+      else
+        Repo.one(
+          from(work in ArticleWorkingCopy,
+            where: work.id == ^id and work.article_id == ^locked.article_id,
+            lock: "FOR UPDATE"
+          )
+        )
+      end
+
+    case current do
+      %ArticleWorkingCopy{revision: ^revision} = work -> {:ok, work}
+      %ArticleWorkingCopy{} -> {:error, :source_revision_conflict}
+      nil -> {:error, :body_source_owner_mismatch}
+    end
+  end
+
+  defp lock_body_source(_source, _locked), do: {:error, :invalid_body_source}
 
   defp insert_work(article, attrs, body, cover_id, actor) do
     body_attrs = body_document_attrs(body)
@@ -199,15 +306,27 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     end
   end
 
-  defp fetch_article(article_id) do
-    case Repo.get(Article, article_id) do
-      %Article{} = article -> {:ok, article}
-      nil -> {:error, :article_not_found}
-    end
+  defp lock_save_work(id, article_id, {:stored, %ArticleWorkingCopy{id: source_id}})
+       when is_binary(source_id) do
+    ids = Enum.uniq([id, source_id])
+
+    Repo.all(
+      from(work in ArticleWorkingCopy,
+        where: work.article_id == ^article_id and work.id in ^ids,
+        order_by: [asc: work.id],
+        lock: "FOR UPDATE"
+      )
+    )
+    |> Enum.find(&(&1.id == id))
   end
 
-  defp lock_work(id) do
-    Repo.one(from(work in ArticleWorkingCopy, where: work.id == ^id, lock: "FOR UPDATE"))
+  defp lock_save_work(id, article_id, _body_source) do
+    Repo.one(
+      from(work in ArticleWorkingCopy,
+        where: work.id == ^id and work.article_id == ^article_id,
+        lock: "FOR UPDATE"
+      )
+    )
   end
 
   defp cast_body(attrs, thread) do
@@ -243,11 +362,38 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     }
   end
 
-  defp maybe_sync_asset_refs(community_id, article, work, attrs, actor, content_changed?) do
-    if content_changed? or fetch_present(attrs, :asset_refs) != :missing do
-      sync_asset_refs(community_id, article, work, attrs, actor)
-    else
-      {:ok, :unchanged}
+  defp maybe_sync_asset_refs(
+         community_id,
+         article,
+         work,
+         attrs,
+         actor,
+         content_changed?,
+         cover_selection
+       ) do
+    explicit_ref_change? =
+      Enum.any?(
+        [:asset_refs, :cover_asset, :cover_asset_id, :cover_asset_dark, :cover_asset_dark_id],
+        &(fetch_present(attrs, &1) != :missing)
+      )
+
+    case cover_selection do
+      {:selected, refs} ->
+        AssetRefs.sync_merged_working_copy_refs(
+          %CMS.Model.Community{id: community_id},
+          article,
+          work,
+          attrs,
+          refs,
+          actor
+        )
+
+      :derived ->
+        if content_changed? or explicit_ref_change? do
+          sync_asset_refs(community_id, article, work, attrs, actor)
+        else
+          {:ok, :unchanged}
+        end
     end
   end
 

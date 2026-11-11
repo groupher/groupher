@@ -546,6 +546,20 @@ defmodule GroupherServer.CMS do
     to: GroupherServer.CMS.Articles.WorkingCopy,
     as: :snapshot_tag_ids
 
+  @doc "Deletes one bounded batch of expired, unselected ordinary Article Snapshots."
+  defdelegate articles_cleanup_expired_snapshots(),
+    to: GroupherServer.CMS.Articles,
+    as: :cleanup_expired_snapshots
+
+  defdelegate articles_cleanup_expired_snapshots(opts),
+    to: GroupherServer.CMS.Articles,
+    as: :cleanup_expired_snapshots
+
+  @doc "Deletes a bounded Article Snapshot page and returns its continuation cursor."
+  defdelegate articles_cleanup_expired_snapshots_page(opts),
+    to: GroupherServer.CMS.Articles,
+    as: :cleanup_expired_snapshots_page
+
   @doc "Delegates GroupherServer.CMS.Articles.get_trashed/1 through the CMS Context boundary."
   defdelegate articles_get_trashed(arg1), to: GroupherServer.CMS.Articles, as: :get_trashed
 

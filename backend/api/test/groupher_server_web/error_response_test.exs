@@ -31,13 +31,21 @@ defmodule GroupherServer.TestWeb.ErrorResponse do
 
     assert {:error,
             [
-              message: "当前内容处于只读状态。",
+              message: "当前账号没有执行此操作的权限。",
               extensions: %{
-                code: 4606,
+                code: 4616,
                 retryable: false,
-                actions: ["READ_ONLY_NOTICE"]
+                actions: ["SHOW_PERMISSION_NOTICE"]
               }
             ]} = ErrorResponse.format_error(decision)
+  end
+
+  test "published editing denial exposes its localized message and recovery action" do
+    assert {:error,
+            [
+              message: "此社区已关闭已发布内容的编辑。",
+              extensions: %{code: 4633, retryable: false, actions: ["READ_ONLY_NOTICE"]}
+            ]} = ErrorResponse.format_error(GateErrorCat.published_article_editing_disabled())
   end
 
   test "exposes only the bounded Pagi mismatch discriminator" do

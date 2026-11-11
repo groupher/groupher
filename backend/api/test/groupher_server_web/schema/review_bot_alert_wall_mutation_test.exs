@@ -187,6 +187,16 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
   test "submitReport succeeds through GraphQL" do
     {community, post, _attrs, reporter} = mock_article(:post)
+    observed_version = public_article_version(post)
+
+    assert {:ok, public_article} =
+             GroupherServer.CMS.FrontDesk.article(%{
+               community: community.slug,
+               thread: :post,
+               inner_id: Integer.to_string(article_inner_id(post, community))
+             })
+
+    assert public_article.version == observed_version
 
     mutation = """
     mutation Submit($input: AlertReportInput!, $commandId: ID!) {
@@ -203,7 +213,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
                  "input" => %{
                    "target" => %{
                      "type" => "ARTICLE",
-                     "observedVersion" => 1,
+                     "observedVersion" => observed_version,
                      "article" => %{
                        "community" => community.slug,
                        "thread" => "POST",
@@ -265,7 +275,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
                    target_type: :article,
                    target_id: post.id,
                    community_id: community.id,
-                   observed_version: 1
+                   observed_version: public_article_version(post)
                  },
                  :spam,
                  "Please review this post",
@@ -293,6 +303,11 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
     assert {:ok, %{data: %{"contentReviewNotice" => %{"status" => "waiting_human"}}}} =
              Absinthe.run(query, Schema, variables: variables, context: %{cur_user: author})
+  end
+
+  defp public_article_version(article) do
+    snapshot_id = Repo.get!(GroupherServer.CMS.Model.ArticlePublic, article.id).snapshot_id
+    GroupherServer.CMS.Review.SnapshotVersion.from_id(snapshot_id)
   end
 
   test "contentReviewHistory exposes a failed check for manual recheck" do

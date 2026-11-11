@@ -43,9 +43,9 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
   @solution_actions [:accept_solution, :revoke_solution]
 
   @doc "Checks Comment mutation admission without loading or locking resources."
-  @spec check_access(User.t() | nil, atom(), map(), CommentContext.t()) ::
+  @spec check_access(User.t() | nil, atom(), CommentContext.t()) ::
           {:ok, :pass} | {:error, ErrorCat.error()}
-  def check_access(%User{} = user, action, _comment, %CommentContext{} = context)
+  def check_access(%User{} = user, action, %CommentContext{} = context)
       when action in @actions do
     with {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
@@ -60,11 +60,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
     end
   end
 
-  def check_access(nil, action, _comment, _context) when action in @actions do
+  def check_access(nil, action, _context) when action in @actions do
     {:error, ErrorCat.permission_denied()}
   end
 
-  def check_access(_user, _action, _comment, _context), do: {:error, ErrorCat.unknown_action()}
+  def check_access(_user, _action, _context), do: {:error, ErrorCat.unknown_action()}
 
   defp public_readable(%{public_readable?: true}), do: {:ok, :pass}
   defp public_readable(_context), do: {:error, ErrorCat.permission_denied()}

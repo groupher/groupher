@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Dashboard.Commands.UpdateSection do
       args = if is_map(args), do: Map.delete(args, :command_id), else: args
       section_args = section_args(key, args)
 
-      with {:ok, dashboard} <- Persist.get_or_insert_dashboard(canonical),
+      with {:ok, dashboard} <- dashboard_for_update(canonical, key),
            {:ok, canonical} <- maybe_update_identity(canonical, key, args),
            {:ok, updated} <- update_dashboard(dashboard, key, section_args),
            {:ok, _event} <- enqueue_effect(canonical, key, section_args, command_id) do
@@ -43,6 +43,15 @@ defmodule GroupherServer.CMS.Dashboard.Commands.UpdateSection do
       end
     end)
   end
+
+  defp dashboard_for_update(community, :enable) do
+    case Persist.get_dashboard(community) do
+      {:ok, dashboard} -> {:ok, dashboard}
+      {:error, _reason} -> {:error, CMS.ErrorCat.dashboard_not_found()}
+    end
+  end
+
+  defp dashboard_for_update(community, _key), do: Persist.get_or_insert_dashboard(community)
 
   defp maybe_update_identity(community, :base_info, args) do
     CMS.Communities.Persist.update_identity_fields(community, args)

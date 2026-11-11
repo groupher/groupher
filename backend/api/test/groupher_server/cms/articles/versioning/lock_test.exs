@@ -6,6 +6,18 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.MutationLock do
   alias GroupherServer.CMS
   alias CMS.Articles.MutationLock
 
+  test "ordinary Article lock identity is shared by all Community bindings" do
+    article_id = Ecto.UUID.generate()
+    first = %CMS.Model.Community{id: 1}
+    second = %CMS.Model.Community{id: 2}
+
+    assert MutationLock.key(first, :post, article_id) ==
+             MutationLock.key(second, :post, article_id)
+
+    refute MutationLock.key(first, :post, article_id) ==
+             MutationLock.key(first, :post, Ecto.UUID.generate())
+  end
+
   test "Doc lock keys are scoped by branch" do
     {community, _existing_post, _attrs, _user} = mock_article(:post)
     article_id = Ecto.UUID.generate()

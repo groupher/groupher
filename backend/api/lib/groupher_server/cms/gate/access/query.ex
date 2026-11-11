@@ -246,8 +246,8 @@ defmodule GroupherServer.CMS.Gate.Access.Query do
 
   def check_in_transaction(actor, action, %Article{} = article, %Community{} = community) do
     with {:ok, :pass} <- require_transaction(),
-         {:ok, :pass} <- MutationLock.lock_community_admission(article.id),
-         {:ok, :pass} <- acquire_article_lock(community, article) do
+         {:ok, :pass} <- acquire_article_lock(community, article),
+         {:ok, :pass} <- MutationLock.lock_community_admission(article.id) do
       Check.with_authorized_article_binding(actor, action, {community, article}, fn value ->
         {:ok, value}
       end)

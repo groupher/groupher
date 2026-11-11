@@ -28,6 +28,19 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
   }
 
   @doc "Lists independent WorkingCopies after Article edit admission."
+  def working_copies(%Article{thread: :doc} = article, %Community{} = community) do
+    with {:ok, _binding} <- Bindings.get(article, community) do
+      {:ok,
+       Repo.all(
+         from(work in ArticleWorkingCopy,
+           where:
+             work.article_id == ^article.id and work.scope_kind == :default and
+               work.scope_id == ^article.id
+         )
+       )}
+    end
+  end
+
   def working_copies(%Article{} = article, %Community{} = community) do
     with {:ok, _binding} <- Bindings.get(article, community) do
       rows =
@@ -48,6 +61,10 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
   end
 
   @doc "Lists immutable Article Snapshots after Article edit admission."
+  def snapshots(%Article{thread: :doc} = article, %Community{} = community) do
+    with {:ok, _binding} <- Bindings.get(article, community), do: {:ok, []}
+  end
+
   def snapshots(%Article{} = article, %Community{} = community) do
     with {:ok, _binding} <- Bindings.get(article, community) do
       rows =
@@ -63,6 +80,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
   end
 
   @doc "Loads one immutable Snapshot after Article edit admission."
+  def snapshot(%Article{thread: :doc} = article, %Community{} = community, snapshot_id)
+      when is_binary(snapshot_id) do
+    with {:ok, _binding} <- Bindings.get(article, community), do: {:error, :snapshot_not_found}
+  end
+
   def snapshot(%Article{} = article, %Community{} = community, snapshot_id)
       when is_binary(snapshot_id) do
     with {:ok, _binding} <- Bindings.get(article, community) do
@@ -74,6 +96,21 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
   end
 
   @doc "Loads one editable Article WorkingCopy after Article edit admission."
+  def working_copy(%Article{thread: :doc} = article, %Community{} = community, working_copy_id)
+      when is_binary(working_copy_id) do
+    with {:ok, _binding} <- Bindings.get(article, community) do
+      case Repo.get_by(ArticleWorkingCopy,
+             id: working_copy_id,
+             article_id: article.id,
+             scope_kind: :default,
+             scope_id: article.id
+           ) do
+        %ArticleWorkingCopy{} = work -> {:ok, work}
+        nil -> {:error, :working_copy_not_found}
+      end
+    end
+  end
+
   def working_copy(%Article{} = article, %Community{} = community, working_copy_id)
       when is_binary(working_copy_id) do
     with {:ok, _binding} <- Bindings.get(article, community) do

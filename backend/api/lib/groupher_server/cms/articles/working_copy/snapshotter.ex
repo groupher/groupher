@@ -39,12 +39,16 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
     with {:ok, :pass} <- require_transaction(),
          {:ok, article} <- lock_article_for_work(working_copy_id),
          {:ok, work} <- lock_work(working_copy_id),
+         true <- work.article_id == article.id,
          {:ok, :pass} <- ensure_revision(work, revision),
          {:ok, existing} <- existing_snapshot(work) do
       case existing do
         %ArticleSnapshot{} = snapshot -> {:ok, snapshot}
         nil -> freeze_locked(article, work, actor, command_id)
       end
+    else
+      false -> {:error, :snapshot_owner_mismatch}
+      {:error, _reason} = error -> error
     end
   end
 
@@ -112,12 +116,16 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
   end
 
   defp lock_article_for_work(working_copy_id) do
+    owner =
+      from(work in ArticleWorkingCopy,
+        where: work.id == ^working_copy_id,
+        select: work.article_id
+      )
+
     query =
       from(article in Article,
-        join: work in ArticleWorkingCopy,
-        on: work.article_id == article.id,
-        where: work.id == ^working_copy_id,
-        lock: "FOR UPDATE OF article"
+        where: article.id in subquery(owner),
+        lock: "FOR UPDATE"
       )
 
     case Repo.one(query) do

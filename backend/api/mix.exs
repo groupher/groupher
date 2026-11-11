@@ -88,6 +88,7 @@ defmodule GroupherServer.Mixfile do
       {:inch_ex, "~> 2.0", only: [:dev, :test]},
       {:short_maps, "~> 0.1.2"},
       {:jason, "~> 1.4"},
+      {:rfc8785, "1.0.0"},
       {:credo, "1.7.19", only: [:dev, :test], runtime: false},
       {:bunt, "~> 1.0", only: [:dev, :test], override: true},
       {:dialyxir, "~> 1.4", only: :dev, runtime: false},

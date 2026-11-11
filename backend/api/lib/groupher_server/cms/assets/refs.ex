@@ -58,14 +58,40 @@ defmodule GroupherServer.CMS.Assets.Refs do
   def sync_working_copy_refs(
         %Community{id: community_id},
         %Article{id: article_id},
-        %ArticleWorkingCopy{article_id: article_id, id: working_copy_id} = work,
+        %ArticleWorkingCopy{article_id: article_id} = work,
         attrs,
         %User{} = user
       ) do
+    do_sync_working_copy_refs(community_id, work, attrs, user, :derived)
+  end
+
+  def sync_working_copy_refs(_community, _article, _work, _attrs, _user),
+    do: {:error, GateErrorCat.permission_denied()}
+
+  @doc "Rebuilds refs with already selected cover references inside an admitted Doc merge."
+  def sync_merged_working_copy_refs(
+        %Community{id: community_id},
+        %Article{id: article_id, thread: :doc},
+        %ArticleWorkingCopy{article_id: article_id} = work,
+        attrs,
+        cover_refs,
+        %User{} = user
+      ) do
+    with {:ok, refs} <- validate_selected_cover_refs(cover_refs) do
+      do_sync_working_copy_refs(community_id, work, attrs, user, {:selected, refs})
+    end
+  end
+
+  def sync_merged_working_copy_refs(_, _, _, _, _, _),
+    do: {:error, GateErrorCat.permission_denied()}
+
+  defp do_sync_working_copy_refs(community_id, work, attrs, user, selection) do
+    working_copy_id = work.id
+
     with true <- Repo.in_transaction?(),
          {:ok, _} <- Completeness.lock_scope(community_id),
          {:ok, _} <- lock_working_copy(working_copy_id),
-         {:ok, refs} <- working_copy_asset_refs(work, attrs) do
+         {:ok, refs} <- working_copy_asset_refs(work, attrs, selection) do
       ArticleAssetRef
       |> where([ref], ref.working_copy_id == ^working_copy_id)
       |> Repo.delete_all()
@@ -86,9 +112,6 @@ defmodule GroupherServer.CMS.Assets.Refs do
       {:error, _reason} = error -> error
     end
   end
-
-  def sync_working_copy_refs(_community, _article, _work, _attrs, _user),
-    do: {:error, GateErrorCat.permission_denied()}
 
   @doc "Copies owner refs as independent immutable Snapshot membership rows."
   def copy_working_copy_refs_to_snapshot(working_copy_id, snapshot_id)
@@ -573,7 +596,7 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  defp working_copy_asset_refs(%ArticleWorkingCopy{} = work, attrs) do
+  defp working_copy_asset_refs(%ArticleWorkingCopy{} = work, attrs, selection) do
     explicit_refs =
       if has_attr?(attrs, :asset_refs),
         do: get_attr(attrs, :asset_refs),
@@ -583,17 +606,41 @@ defmodule GroupherServer.CMS.Assets.Refs do
          {:ok, thread_refs} <- typed_cover_refs(work),
          {:ok, cover_edit_refs} <- cover_edit_refs(work.cover_edit_working_copy_id),
          {:ok, explicit_refs} <- normalize_explicit_refs(explicit_refs),
-         {:ok, selected_cover_refs} <- selected_cover_refs(work, attrs, thread_refs) do
+         {:ok, selected_cover_refs} <- selected_cover_refs(work, attrs, thread_refs, selection) do
       body_refs = collect_body_asset_refs(body)
       {:ok, body_refs ++ selected_cover_refs ++ cover_edit_refs ++ explicit_refs}
     end
   end
 
+  defp validate_selected_cover_refs(refs) when is_list(refs) do
+    usages = Enum.map(refs, &get_attr(&1, :usage))
+
+    if Enum.all?(
+         refs,
+         &(is_map(&1) and is_integer(Map.get(&1, :asset_id)) and
+             Map.has_key?(&1, :usage))
+       ) and
+         Enum.all?(usages, &(&1 in [:cover, :cover_dark])) and
+         length(usages) == length(Enum.uniq(usages)) do
+      {:ok,
+       Enum.map(
+         refs,
+         &Map.take(&1, ~w(asset_id usage position block_id block_type alt title source meta)a)
+       )}
+    else
+      {:error, AssetErrorCat.custom("selected Doc cover refs are invalid")}
+    end
+  end
+
+  defp validate_selected_cover_refs(_),
+    do: {:error, AssetErrorCat.custom("selected Doc cover refs are invalid")}
+
   defp existing_working_copy_attachment_refs(working_copy_id) do
     ArticleAssetRef
     |> where(
       [ref],
-      ref.working_copy_id == ^working_copy_id and ref.usage == :attachment
+      ref.working_copy_id == ^working_copy_id and ref.usage == :attachment and
+        (is_nil(ref.source) or ref.source != "plate")
     )
     |> order_by([ref], asc: ref.position, asc: ref.inserted_at, asc: ref.id)
     |> Repo.all()
@@ -601,6 +648,8 @@ defmodule GroupherServer.CMS.Assets.Refs do
       %{
         asset_id: ref.asset_id,
         usage: ref.usage,
+        block_id: ref.block_id,
+        block_type: ref.block_type,
         position: ref.position,
         title: ref.title,
         alt: ref.alt,
@@ -613,13 +662,19 @@ defmodule GroupherServer.CMS.Assets.Refs do
   defp normalize_explicit_refs(nil), do: {:ok, []}
 
   defp normalize_explicit_refs(refs) when is_list(refs) do
-    if Enum.all?(
-         refs,
-         &(normalize_explicit_asset_usage(get_attr(&1, :usage)) == {:ok, :attachment})
-       ) do
-      {:ok, refs}
-    else
-      {:error, AssetErrorCat.custom("explicit Article asset refs must be attachments")}
+    cond do
+      Enum.any?(
+        refs,
+        &(normalize_explicit_asset_usage(get_attr(&1, :usage)) != {:ok, :attachment})
+      ) ->
+        {:error, AssetErrorCat.custom("explicit Article asset refs must be attachments")}
+
+      Enum.any?(refs, &(get_attr(&1, :source) == "plate")) ->
+        {:error,
+         AssetErrorCat.custom("explicit Article asset refs cannot use the reserved plate source")}
+
+      true ->
+        {:ok, refs}
     end
   end
 
@@ -632,7 +687,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
   defp normalize_explicit_asset_usage(_usage),
     do: {:error, AssetErrorCat.custom("explicit Article asset refs must be attachments")}
 
-  defp selected_cover_refs(work, attrs, thread_refs) do
+  defp selected_cover_refs(_work, _attrs, _thread_refs, {:selected, refs}), do: {:ok, refs}
+
+  defp selected_cover_refs(work, attrs, thread_refs, :derived) do
     Enum.reduce_while(@cover_specs, {:ok, []}, fn spec, {:ok, acc} ->
       cond do
         has_attr?(attrs, spec.asset_key) or has_attr?(attrs, spec.asset_id_key) ->

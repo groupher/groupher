@@ -47,9 +47,10 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
 
   @doc "Loads a stable Doc, its branch lifecycle, and current actor Passport facts."
   def doc(actor, %Community{} = community, %Article{thread: :doc} = resource, branch_id) do
-    with {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
-         %Article{} = canonical <- Queries.resource(Article, resource.id),
-         %ArticleBinding{} <- Queries.article_binding(canonical.id, community.id),
+    with %Community{} = community <- Repo.get(Community, community.id),
+         {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
+         %Article{thread: :doc} = canonical <- Queries.resource(Article, resource.id),
+         %ArticleBinding{thread: :doc} <- Queries.article_binding(canonical.id, community.id),
          canonical <- preload_article_author(canonical),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
          %DocBranch{} = doc_branch <- Queries.doc_branch(community.id, branch_id),
@@ -71,6 +72,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
        }}
     else
       nil -> {:error, ErrorCat.lifecycle_not_found()}
+      %Article{} -> {:error, ErrorCat.gate_resource_mismatch()}
+      %ArticleBinding{} -> {:error, ErrorCat.gate_resource_mismatch()}
+      {:error, _reason} = error -> error
     end
   end
 
@@ -93,7 +97,8 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
   @spec community(term(), Community.t()) ::
           {:ok, CommunityContext.t()} | {:error, ErrorCat.error() | term()}
   def community(actor, %Community{} = community) do
-    with {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
+    with %Community{} = community <- Repo.get(Community, community.id),
+         {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
          %CommunityLifecycle{} = lifecycle <- Queries.community_lifecycle(community.id) do
       {:ok,
        %CommunityContext{
@@ -156,27 +161,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
         %Article{thread: thread} = resource
       )
       when thread in @article_threads do
-    with {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
-         %Article{} = canonical <- Queries.resource(Article, resource.id),
-         %ArticleBinding{} <- Queries.article_binding(canonical.id, community.id),
-         canonical <- preload_article_author(canonical),
-         %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
-         %ArticleLifecycle{} = article_lifecycle <- Queries.article_lifecycle(canonical.id),
-         review_scope_keys <-
-           Queries.article_review_scope_keys(article_lifecycle.id, community.id) do
-      {:ok,
-       %ArticleContext{
-         article: canonical,
-         community: %{community | lifecycle: community_lifecycle},
-         community_lifecycle: community_lifecycle,
-         article_lifecycle: article_lifecycle,
-         passport_rules: passport_rules,
-         review_scope_keys: review_scope_keys,
-         review_restricted?: review_scope_keys != []
-       }}
-    else
-      nil -> {:error, ErrorCat.lifecycle_not_found()}
-    end
+    article_in_community(actor, community, thread, resource)
   end
 
   def article(_actor, %Community{} = community, :doc, %{community_id: community_id})
@@ -196,9 +181,10 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
         %Article{thread: thread} = resource
       )
       when thread in @article_threads do
-    with {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
-         %Article{} = canonical <- Queries.resource(Article, resource.id),
-         %ArticleBinding{} <- Queries.article_binding(canonical.id, community.id),
+    with %Community{} = community <- Repo.get(Community, community.id),
+         {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
+         %Article{thread: ^thread} = canonical <- Queries.resource(Article, resource.id),
+         %ArticleBinding{thread: ^thread} <- Queries.article_binding(canonical.id, community.id),
          canonical <- preload_article_author(canonical),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
          %ArticleLifecycle{} = article_lifecycle <- Queries.article_lifecycle(canonical.id),
@@ -216,6 +202,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
        }}
     else
       nil -> {:error, ErrorCat.lifecycle_not_found()}
+      %Article{} -> {:error, ErrorCat.gate_resource_mismatch()}
+      %ArticleBinding{} -> {:error, ErrorCat.gate_resource_mismatch()}
+      {:error, _reason} = error -> error
     end
   end
 
@@ -231,7 +220,8 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
   mismatch fails closed rather than authorizing from caller-supplied structs.
   """
   def comment(actor, %Community{} = community, thread, article, %Comment{} = comment) do
-    with {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
+    with %Community{} = community <- Repo.get(Community, community.id),
+         {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
          canonical when not is_nil(canonical) <- Queries.resource(Comment, comment.id),
          true <- same_comment_identity?(canonical, comment, article, community, thread),
          {:ok, parent_context} <-

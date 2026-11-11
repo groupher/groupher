@@ -32,11 +32,13 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
                      command_id
                    ) do
     gate(fn _article ->
-      WorkingCopyAccess.check_in_transaction(actor, :edit, article, community)
+      action = if article.thread in [:post, :blog, :changelog], do: :edit_article, else: :edit
+      WorkingCopyAccess.check_in_transaction(actor, action, article, community)
     end)
 
     change(fn canonical_article ->
-      with %ArticleSnapshot{article_id: article_id} = snapshot <-
+      with {:ok, :pass} <- WorkingCopyAccess.generic_snapshot_mutation(canonical_article),
+           %ArticleSnapshot{article_id: article_id} = snapshot <-
              Repo.get(ArticleSnapshot, snapshot_id),
            true <- article_id == canonical_article.id,
            {:ok, work} <-
@@ -68,7 +70,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
        }}
     end)
 
-    present(fn confirmation -> present_confirmation(confirmation) end)
+    present(fn confirmation -> present_confirmation(confirmation, article, community, actor) end)
   end
 
   def execute(
@@ -83,7 +85,8 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
              is_binary(scope_id) and is_binary(command_id) do
     with %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id),
          {:ok, article} <- CMS.FrontDesk.article(snapshot.article_id, mode: :internal),
-         {:ok, _binding} <- Bindings.get(article, community) do
+         {:ok, _binding} <- Bindings.get(article, community),
+         {:ok, :pass} <- WorkingCopyAccess.generic_snapshot_mutation(article) do
       run_receipt(
         article,
         snapshot_id,
@@ -95,24 +98,31 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
       )
     else
       nil -> {:error, :snapshot_not_found}
-      {:error, _reason} = error -> error
+      {:error, %{reason: :docs_managed_content}} = error -> error
+      {:error, _reason} -> {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
 
   def execute(_snapshot_id, _community, _scope_kind, _scope_id, _actor, _command_id),
     do: {:error, :invalid_working_copy_command}
 
-  defp present_confirmation(%Confirmation{
-         data: %{"article_id" => article_id, "working_copy_id" => working_copy_id}
-       }) do
-    with {:ok, article} <- CMS.FrontDesk.article(article_id, mode: :internal),
+  defp present_confirmation(
+         %Confirmation{data: %{"article_id" => article_id, "working_copy_id" => working_copy_id}},
+         article,
+         community,
+         actor
+       ) do
+    with true <- article.id == article_id,
+         {:ok, article} <- WorkingCopyAccess.access_check(actor, :edit, article, community),
+         {:ok, :pass} <- WorkingCopyAccess.generic_snapshot_mutation(article),
          %ArticleWorkingCopy{} = work <- Repo.get(ArticleWorkingCopy, working_copy_id),
          true <- work.article_id == article.id do
       {:ok, %{working_copy: work}}
     else
+      {:error, _reason} -> {:error, CMS.ErrorCat.command_result_unavailable()}
       _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
 
-  defp present_confirmation(_), do: {:error, CMS.ErrorCat.command_result_unavailable()}
+  defp present_confirmation(_, _, _, _), do: {:error, CMS.ErrorCat.command_result_unavailable()}
 end

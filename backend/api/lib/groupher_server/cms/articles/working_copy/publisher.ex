@@ -50,6 +50,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          {:ok, snapshot} <-
            materialize_source(locked_article, source_work, source_ref, user, command_id),
          first_publish? <- is_nil(public),
+         {:ok, :pass} <- check_first_publish_rate_limit(user, first_publish?),
          {:ok, :pass} <- Publishable.validate(snapshot),
          {:ok, published_at} <- published_at(),
          {:ok, locked_article} <- ensure_active_at(locked_article, published_at),
@@ -265,15 +266,23 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
   end
 
   defp maybe_finalize_first_publish(user, article, community, first_publish?) do
-    with {:ok, _throttle} <- CMS.Gate.RateLimit.Publish.record(user) do
-      if first_publish? do
-        with {:ok, _community} <- CMS.Communities.update_count_field(community, article.thread),
-             {:ok, _user} <- Accounts.publish_update_states(user, article.thread) do
-          {:ok, :pass}
-        end
-      else
+    if first_publish? do
+      with {:ok, _throttle} <- CMS.Gate.RateLimit.Publish.record(user),
+           {:ok, _community} <- CMS.Communities.update_count_field(community, article.thread),
+           {:ok, _user} <- Accounts.publish_update_states(user, article.thread) do
         {:ok, :pass}
       end
+    else
+      {:ok, :pass}
+    end
+  end
+
+  defp check_first_publish_rate_limit(_user, false), do: {:ok, :pass}
+
+  defp check_first_publish_rate_limit(user, true) do
+    case CMS.Gate.RateLimit.Publish.check_in_transaction(user) do
+      {:ok, _admission} -> {:ok, :pass}
+      {:error, _reason} = error -> error
     end
   end
 

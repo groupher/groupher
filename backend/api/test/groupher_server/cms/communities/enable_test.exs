@@ -89,6 +89,28 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
   end
 
   describe "[thread visibility policy]" do
+    test "enable patches use the locked current embed instead of a stale dashboard",
+         ~m(community)a do
+      {:ok, stale} = CMS.Dashboard.Persist.get_dashboard(community)
+
+      assert {:ok, _} =
+               CMS.Dashboard.update(
+                 community,
+                 :enable,
+                 %{blog: false},
+                 :operations,
+                 Ecto.UUID.generate()
+               )
+
+      assert {:ok, {:ok, updated}} =
+               Repo.transaction(fn ->
+                 CMS.Dashboard.Persist.replace_section(stale, :enable, %{post: false})
+               end)
+
+      assert updated.enable.blog == false
+      assert updated.enable.post == false
+    end
+
     test "allow_thread returns thread in done format when enabled", ~m(community)a do
       assert {:ok, :post} = Enable.thread?(community.slug, :post)
     end

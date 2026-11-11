@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   CONTENT_PUBLISH_ACTION,
+  CONTENT_ARTICLE_THREAD,
   CONTENT_PUBLISH_SCOPE,
   CONTENT_SCOPE_BY_ACTION,
   CONTENT_SOURCE_FORMAT,
@@ -42,6 +43,24 @@ describe('content publish command parser', () => {
       ok: false,
       issues: [{ path, code }],
     })
+  })
+
+  it('rejects creating Docs through the Article WorkingCopy command', () => {
+    const articleCommand = {
+      action: CONTENT_PUBLISH_ACTION.CREATE_ARTICLE,
+      target: { community: 'home', thread: 'doc' },
+      payload: {
+        content: { format: CONTENT_SOURCE_FORMAT.PLATE, value: [] },
+        tagIds: [],
+      },
+      commandId: 'create-doc-1',
+    }
+
+    expect(parseContentPublishCommand(articleCommand)).toMatchObject({
+      ok: false,
+      issues: [{ path: 'target.thread', code: 'unsupported_thread' }],
+    })
+    expect(CONTENT_ARTICLE_THREAD).toEqual({ POST: 'post', BLOG: 'blog', CHANGELOG: 'changelog' })
   })
 
   it('maps every action to a content type and capability scope', () => {

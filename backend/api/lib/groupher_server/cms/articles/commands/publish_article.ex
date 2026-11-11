@@ -34,8 +34,7 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
     end)
 
     change(fn canonical_article ->
-      with {:ok, _publish_admission} <-
-             CMS.Gate.RateLimit.Publish.check_in_transaction(actor) do
+      with {:ok, :pass} <- WorkingCopyAccess.generic_snapshot_mutation(canonical_article) do
         case Publisher.publish_in_transaction(
                canonical_article,
                community,
@@ -78,7 +77,8 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
         command_id
       )
       when is_map(source) and is_binary(command_id) do
-    with {:ok, _binding} <- CMS.Articles.Bindings.get(article, community) do
+    with {:ok, _binding} <- CMS.Articles.Bindings.get(article, community),
+         {:ok, :pass} <- WorkingCopyAccess.generic_snapshot_mutation(article) do
       run_receipt(
         article,
         source,

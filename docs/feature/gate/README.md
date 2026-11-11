@@ -35,6 +35,7 @@ write command
 ## 补充与历史
 
 - [读取与操作准入收口](../../migrations/gate-admission-convergence.md)：已确认、待实施的调用覆盖与重复准入清理计划；不新增另一套 Gate 合同。
+- [Article WorkingCopy Gate 与已发布编辑策略收口](../../migrations/article-working-copy-gate-policy-fix.md)：Article 作者专属 `:edit_article`、默认允许且可配置的发布后编辑策略及 Receipt / Asset workflow 规则；实现和本地验收记录见合同 F4，完整后端套件未运行。
 
 - [`lifecycle-cleanup.md`](./lifecycle-cleanup.md)：已确认、待实施的 Lifecycle 清理设计。
 - [`implementation-history.md`](./implementation-history.md)：V2 一次性切换记录。

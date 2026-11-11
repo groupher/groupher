@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
   alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.Commands.CreateArticleConfirmation, as: Confirmation
   alias CMS.Articles.Tags.Assignment
+  alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
   alias CMS.Articles.WorkingCopy.Store
   alias CMS.Model.{ArticleWorkingCopy, Community}
 
@@ -47,12 +48,12 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
        }}
     end)
 
-    present(fn confirmation -> present_confirmation(confirmation) end)
+    present(fn confirmation -> present_confirmation(confirmation, community, actor) end)
   end
 
   @doc "Creates a default WorkingCopy using one retry-safe user command."
   def execute(%Community{} = community, thread, attrs, %User{} = actor, opts)
-      when is_map(attrs) and is_list(opts) and thread in [:post, :blog, :changelog, :doc] do
+      when is_map(attrs) and is_list(opts) and thread in [:post, :blog, :changelog] do
     command_id = Keyword.fetch!(opts, :command_id)
 
     attrs =
@@ -81,18 +82,20 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
     )
   end
 
+  def execute(_community, thread, _attrs, %User{}, _opts) when thread == :doc,
+    do: {:error, :unsupported_article_thread}
+
   def execute(_community, _thread, _attrs, _actor, _opts), do: {:error, :invalid_actor}
 
   defp create_in_transaction(community, thread, attrs, actor, command_id) do
-    with {:ok, shell_opts} <- article_shell_opts(community, thread),
-         {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(actor),
+    with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(actor),
          {:ok, article} <-
            CMS.Articles.Draft.Store.create_article_shell_loaded(
              community,
              thread,
              attrs,
              author,
-             shell_opts
+             []
            ),
          work_attrs =
            attrs
@@ -102,14 +105,6 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
       {:ok, %{article: article, working_copy: working_copy}}
     end
   end
-
-  defp article_shell_opts(%Community{} = community, :doc) do
-    with {:ok, branch} <- CMS.Docs.Branch.resolve(community, nil) do
-      {:ok, [branch_id: branch.id]}
-    end
-  end
-
-  defp article_shell_opts(%Community{}, _thread), do: {:ok, []}
 
   defp sync_community_tags(community, article, attrs, command_id) do
     case fetch(attrs, :community_tags) do
@@ -137,20 +132,24 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
     end
   end
 
-  defp present_confirmation(%Confirmation{
-         data: %{
-           "article_id" => article_id,
-           "working_copy_id" => working_copy_id
-         }
-       }) do
+  defp present_confirmation(
+         %Confirmation{
+           data: %{"article_id" => article_id, "working_copy_id" => working_copy_id}
+         },
+         community,
+         actor
+       ) do
     with {:ok, article} <- CMS.FrontDesk.article(article_id, mode: :internal),
-         %ArticleWorkingCopy{} = working_copy <- Repo.get(ArticleWorkingCopy, working_copy_id) do
+         {:ok, article} <- WorkingCopyAccess.access_check(actor, :edit, article, community),
+         %ArticleWorkingCopy{article_id: ^article_id} = working_copy <-
+           Repo.get(ArticleWorkingCopy, working_copy_id) do
       {:ok, %{article: article, working_copy: working_copy}}
     else
+      {:error, _reason} -> {:error, CMS.ErrorCat.command_result_unavailable()}
       _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
 
-  defp present_confirmation(_confirmation),
+  defp present_confirmation(_confirmation, _community, _actor),
     do: {:error, CMS.ErrorCat.command_result_unavailable()}
 end

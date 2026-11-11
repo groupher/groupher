@@ -5,7 +5,16 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
   import Ecto.Query
   alias GroupherServer.{CMS, Jobs, Messaging, Repo}
   alias CMS.Model.Mentions.{Edge, Endpoint}
-  alias CMS.Model.{CommentBody, DocBranch, DocLifecycle}
+
+  alias CMS.Model.{
+    Article,
+    ArticlePublic,
+    ArticleWorkingCopy,
+    CommentBody,
+    DocBranch,
+    DocLifecycle
+  }
+
   alias CMS.Outbox.Event
   alias Messaging.Model.Mention
   alias Jobs.CMSMentionNotifier
@@ -95,6 +104,41 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
            |> Enum.map(&{&1.edge_key, &1.mentioned_at})
            |> Enum.sort() ==
              original_edges |> Enum.map(&{&1.edge_key, &1.mentioned_at}) |> Enum.sort()
+  end
+
+  test "Article Snapshot publication delivers its User mention once", ctx do
+    {_, post, _, _} = mock_article(:post, ctx.community, ctx.author)
+    article = Repo.get!(Article, post.id)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id)
+    previous = Repo.get!(ArticlePublic, article.id)
+
+    assert {:ok, saved} =
+             CMS.Articles.save_working_copy(
+               article,
+               ctx.community,
+               work.id,
+               %{body_bag: bag(ctx)},
+               work.revision,
+               ctx.author,
+               Ecto.UUID.generate()
+             )
+
+    assert {:ok, %{public: public}} =
+             CMS.Articles.publish_article(
+               article,
+               ctx.community,
+               %{working_copy_id: work.id, revision: saved.revision},
+               previous.snapshot_id,
+               ctx.author,
+               Ecto.UUID.generate()
+             )
+
+    endpoint = Repo.get_by!(Endpoint, type: :post, article_id: article.id)
+    assert {:ok, :pass} = project(endpoint.id)
+    assert {:ok, :pass} = project(endpoint.id)
+    mention = Repo.get_by!(Mention, article_id: article.id, to_user_id: ctx.recipient.id)
+    assert mention.content_token == "article-snapshot:#{public.snapshot_id}"
+    assert Repo.aggregate(from(m in Mention, where: m.article_id == ^article.id), :count) == 1
   end
 
   test "soft deleting a Doc Comment keeps its incoming and outgoing edges", ctx do
@@ -276,6 +320,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
         "type" => "p",
         "id" => "joint",
         "children" => [
+          %{"text" => "Hello "},
           %{
             "type" => "mention",
             "key" => "blog:#{ctx.target.article_id}",

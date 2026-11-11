@@ -91,7 +91,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
              with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
                   %Decision{allowed: true} <-
                     Decision.from_result(
-                      Policy.comment(actor, action, comment, context),
+                      Policy.comment(actor, action, context),
                       context
                     ) do
                {:ok,
@@ -140,9 +140,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, thread} <- article_thread(resource) do
       Articles.MutationLock.with_article(community, resource, fn ->
         with {:ok, context} <- Load.article(actor, community, thread, resource),
+             {:ok, context} <- Articles.EditingPolicy.load(context, action),
              %Decision{allowed: true} <-
                Decision.from_result(
-                 Policy.article(actor, action, resource, context),
+                 Policy.article(actor, action, context),
                  context
                ) do
           {:ok, canonical_resource(context_resource(context), context.community)}
@@ -189,7 +190,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
-             Policy.comment(actor, action, context.comment, context),
+             Policy.comment(actor, action, context),
              context
            ) do
       decision.context.comment
@@ -215,7 +216,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, context} <- Load.comment(actor, community, thread, article, comment),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
-             Policy.comment(actor, action, context.comment, context),
+             Policy.comment(actor, action, context),
              context
            ) do
       parent = canonical_resource(decision.context.article, decision.context.community)
@@ -232,9 +233,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       when is_function(callback, 1) do
     with {:ok, thread} <- article_thread(article),
          {:ok, context} <- Load.article(actor, community, thread, article),
+         {:ok, context} <- Articles.EditingPolicy.load(context, action),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
-             Policy.article(actor, action, context_resource(context), context),
+             Policy.article(actor, action, context),
              context
            ) do
       decision.context
@@ -255,9 +257,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       when is_function(callback, 1) do
     with {:ok, thread} <- article_thread(article),
          {:ok, context} <- Load.article_in_community(actor, community, thread, article),
+         {:ok, context} <- Articles.EditingPolicy.load(context, action),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
-             Policy.article(actor, action, context_resource(context), context),
+             Policy.article(actor, action, context),
              context
            ) do
       decision.context
@@ -284,7 +287,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, context} <- Load.doc(actor, community, article, branch_id),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
-             Policy.article(actor, action, context_resource(context), context),
+             Policy.article(actor, action, context),
              context
            ) do
       decision.context

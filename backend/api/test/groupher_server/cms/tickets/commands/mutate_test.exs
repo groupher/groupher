@@ -830,7 +830,10 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
                    target_type: :article,
                    target_id: post.id,
                    community_id: community.id,
-                   observed_version: article_snapshot_review_version(post.id)
+                   observed_version:
+                     GroupherServer.CMS.Review.SnapshotVersion.from_id(
+                       Repo.get!(ArticlePublic, post.id).snapshot_id
+                     )
                  },
                  :spam,
                  "Please review this Post",
@@ -1391,15 +1394,6 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
              ),
              :count
            ) == snapshot_count + 1
-  end
-
-  defp article_snapshot_review_version(article_id) do
-    snapshot_id = Repo.get!(ArticlePublic, article_id).snapshot_id
-
-    <<value::unsigned-big-64, _rest::binary>> =
-      :crypto.hash(:sha256, Ecto.UUID.dump!(snapshot_id))
-
-    rem(value, 2_147_483_646) + 1
   end
 
   test "publication notification uses a Messaging-supported action", context do

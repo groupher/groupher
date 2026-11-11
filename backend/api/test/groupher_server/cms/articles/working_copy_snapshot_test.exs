@@ -8,50 +8,87 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.{ArticleAssetRef, ArticleWorkingCopyTag}
 
-  test "Doc WorkingCopy keeps its own subtitle and template fields" do
-    {:ok, actor} = db_insert(:user)
-    {:ok, community} = mock_community(actor)
+  test "saving only a cover asset selection synchronizes WorkingCopy refs" do
+    {community, public, _attrs, actor} = mock_article(:post)
+    article = Repo.get!(CMS.Model.Article, public.article_id)
 
-    assert {:ok, %{article: article, working_copy: work}} =
-             CMS.Articles.create_article(
+    work =
+      Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id, scope_kind: :default)
+
+    selected = Repo.get!(CMS.Model.ArticlePublic, article.id)
+
+    assert {:ok, asset} =
+             CMS.Assets.register_to_community(
                community,
-               :doc,
-               %{
-                 title: "Guide",
-                 body_bag: body_bag("Guide body"),
-                 subtitle: "A short guide",
-                 link_addr: "https://example.test/guide",
-                 template_key: "guide",
-                 cover_url: "https://example.test/guide-cover.png"
-               },
+               %{url: "https://assets.example.test/cover-only.png", size_bytes: 24},
                actor,
-               command_id: Ecto.UUID.generate()
+               Ecto.UUID.generate()
              )
-
-    assert {:ok, fields} = CMS.Articles.working_copy_thread_fields(work)
-
-    assert fields == %{
-             subtitle: "A short guide",
-             link_addr: "https://example.test/guide",
-             template_key: "guide",
-             cover_url: "https://example.test/guide-cover.png",
-             cover_url_dark: nil
-           }
 
     assert {:ok, saved} =
              CMS.Articles.save_working_copy(
                article,
                community,
                work.id,
-               %{subtitle: "Updated guide"},
+               %{cover_asset_id: asset.id},
                work.revision,
                actor,
                Ecto.UUID.generate()
              )
 
-    assert {:ok, saved_fields} = CMS.Articles.working_copy_thread_fields(saved)
-    assert saved_fields.subtitle == "Updated guide"
-    assert saved_fields.template_key == "guide"
+    assert Repo.get_by!(ArticleAssetRef, working_copy_id: work.id, usage: :cover).asset_id ==
+             asset.id
+
+    refute Repo.get_by(ArticleAssetRef, snapshot_id: selected.snapshot_id, usage: :cover)
+
+    assert {:ok, _} =
+             CMS.Articles.save_working_copy(
+               article,
+               community,
+               work.id,
+               %{cover_asset_id: nil},
+               saved.revision,
+               actor,
+               Ecto.UUID.generate()
+             )
+
+    refute Repo.get_by(ArticleAssetRef, working_copy_id: work.id, usage: :cover)
+    assert Repo.get!(CMS.Model.ArticlePublic, article.id).snapshot_id == selected.snapshot_id
+  end
+
+  test "new Article create command rejects Doc until Docs joins the snapshot publish path" do
+    {:ok, actor} = db_insert(:user)
+    {:ok, community} = mock_community(actor)
+
+    assert {:error, :unsupported_article_thread} =
+             CMS.Articles.create_article(community, :doc, %{}, actor,
+               command_id: Ecto.UUID.generate()
+             )
+  end
+
+  test "Public meta keeps Article edit, sink, and last-active state" do
+    {community, article, _attrs, _actor} = mock_article(:post)
+    inner_id = article.inner_id
+    last_active_at = DateTime.add(DateTime.utc_now(:second), -3, :day)
+
+    Repo.get!(CMS.Model.Article, article.id)
+    |> CMS.Model.Article.changeset(%{
+      is_edited: true,
+      is_sunk: true,
+      last_active_at: last_active_at
+    })
+    |> Repo.update!()
+
+    assert {:ok, public_article} =
+             CMS.FrontDesk.article(%{
+               community: community.slug,
+               thread: :post,
+               inner_id: Integer.to_string(inner_id)
+             })
+
+    assert public_article.meta.is_edited
+    assert public_article.meta.is_sunk
+    assert public_article.meta.last_active_at == last_active_at
   end
 
   test "saved WorkingCopy freezes, publishes, clones, and compares by immutable content" do
@@ -262,12 +299,6 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
     assert indexed_article.indexed_snapshot_id == snapshot.id
     assert is_nil(indexed_article.content_hash)
 
-    CMS.Gate.RateLimit.Publish.mock_publish_throttle_attr(
-      :last_publish_time,
-      actor,
-      minutes: -CMS.Gate.RateLimit.Publish.Config.publish_throttle().interval_minutes
-    )
-
     assert {:ok, %{public: republished}} =
              CMS.Articles.publish_article(
                article,
@@ -472,6 +503,9 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
     {:ok, actor} = db_insert(:user)
     {:ok, community} = mock_community(actor)
     initial_count = Repo.aggregate(CMS.Model.Article, :count)
+    initial_work_count = Repo.aggregate(CMS.Model.ArticleWorkingCopy, :count)
+    initial_snapshot_count = Repo.aggregate(CMS.Model.ArticleSnapshot, :count)
+    initial_public_count = Repo.aggregate(CMS.Model.ArticlePublic, :count)
 
     assert {:error, :invalid_body} =
              CMS.Articles.create_and_publish_article(
@@ -483,9 +517,9 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
              )
 
     assert Repo.aggregate(CMS.Model.Article, :count) == initial_count
-    assert Repo.aggregate(CMS.Model.ArticleWorkingCopy, :count) == 0
-    assert Repo.aggregate(CMS.Model.ArticleSnapshot, :count) == 0
-    assert Repo.aggregate(CMS.Model.ArticlePublic, :count) == 0
+    assert Repo.aggregate(CMS.Model.ArticleWorkingCopy, :count) == initial_work_count
+    assert Repo.aggregate(CMS.Model.ArticleSnapshot, :count) == initial_snapshot_count
+    assert Repo.aggregate(CMS.Model.ArticlePublic, :count) == initial_public_count
 
     assert {:ok, %{article: article, working_copy: work, public: public}} =
              CMS.Articles.create_and_publish_article(

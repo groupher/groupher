@@ -789,6 +789,42 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
       workflow_ref = "asset-replacement:test:#{post.id}"
 
+      params = %{
+        revision: work.revision,
+        usage: :attachment,
+        block_id: "replace-me",
+        from_asset_id: from_asset.id,
+        to_asset_id: to_asset.id
+      }
+
+      assert {:ok, _} =
+               CMS.Dashboard.update(
+                 community,
+                 :enable,
+                 %{post_published_editing: false},
+                 :operations,
+                 Ecto.UUID.generate()
+               )
+
+      assert {:error, %ErrorCat.Error{reason: :published_article_editing_disabled}} =
+               CMS.Assets.replace_use(post, params, user, Ecto.UUID.generate())
+
+      assert {:error, %ErrorCat.Error{reason: :published_article_editing_disabled}} =
+               CMS.Assets.replace_use_workflow(post, params, user, workflow_ref)
+
+      assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision
+      assert [%ArticleAssetRef{asset_id: old_id}] = article_refs(:post, post.id)
+      assert old_id == from_asset.id
+
+      assert {:ok, _} =
+               CMS.Dashboard.update(
+                 community,
+                 :enable,
+                 %{post_published_editing: nil},
+                 :operations,
+                 Ecto.UUID.generate()
+               )
+
       assert {:ok, %{revision: revision, workflow_ref: ^workflow_ref}} =
                CMS.Assets.replace_use_workflow(
                  post,
@@ -807,6 +843,15 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert [%ArticleAssetRef{asset_id: asset_id}] = article_refs(:post, post.id)
       assert asset_id == to_asset.id
 
+      assert {:ok, _} =
+               CMS.Dashboard.update(
+                 community,
+                 :enable,
+                 %{post_published_editing: false},
+                 :operations,
+                 Ecto.UUID.generate()
+               )
+
       assert {:ok, %{revision: ^revision, workflow_ref: ^workflow_ref}} =
                CMS.Assets.replace_use_workflow(
                  post,
@@ -820,6 +865,242 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  user,
                  workflow_ref
                )
+
+      assert {:error, %ErrorCat.Error{reason: :published_article_editing_disabled}} =
+               CMS.Assets.replace_use_workflow(
+                 post,
+                 %{
+                   revision: revision,
+                   usage: :attachment,
+                   block_id: "replace-me",
+                   from_asset_id: to_asset.id,
+                   to_asset_id: from_asset.id
+                 },
+                 user,
+                 "asset-replacement:new-step:#{post.id}"
+               )
+
+      assert Repo.get!(ArticleWorkingCopy, work.id).revision == revision
+
+      assert {:ok, _} =
+               CMS.Dashboard.update(
+                 community,
+                 :enable,
+                 %{post_published_editing: nil},
+                 :operations,
+                 Ecto.UUID.generate()
+               )
+
+      command_id = Ecto.UUID.generate()
+
+      receipt_params = %{
+        params
+        | revision: revision,
+          from_asset_id: to_asset.id,
+          to_asset_id: from_asset.id
+      }
+
+      assert {:ok, %{revision: receipt_revision}} =
+               CMS.Assets.replace_use(post, receipt_params, user, command_id)
+
+      assert {:ok, _} =
+               CMS.Dashboard.update(
+                 community,
+                 :enable,
+                 %{post_published_editing: false},
+                 :operations,
+                 Ecto.UUID.generate()
+               )
+
+      assert {:ok, %{revision: ^receipt_revision}} =
+               CMS.Assets.replace_use(post, receipt_params, user, command_id)
+
+      assert {:ok, _} =
+               CMS.Dashboard.update(
+                 community,
+                 :enable,
+                 %{post_published_editing: nil},
+                 :operations,
+                 Ecto.UUID.generate()
+               )
+
+      {:ok, editor} = db_insert(:user)
+
+      assert {:ok, _} =
+               CMS.Passport.stamp_passport(
+                 %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => true}}},
+                 editor
+               )
+
+      editor_params = %{
+        params
+        | revision: receipt_revision,
+          from_asset_id: from_asset.id,
+          to_asset_id: to_asset.id
+      }
+
+      editor_command_id = Ecto.UUID.generate()
+
+      assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+               CMS.Assets.replace_use(post, editor_params, editor, editor_command_id)
+
+      assert {:ok, _} =
+               CMS.Passport.stamp_passport(
+                 %{"global" => %{}, community.slug => %{"cms" => %{"post.edit" => false}}},
+                 editor
+               )
+
+      assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+               CMS.Assets.replace_use(post, editor_params, editor, editor_command_id)
+    end
+
+    test "replacement targets the selected WorkingCopy without changing the default copy",
+         ~m(community post user)a do
+      {:ok, from_asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("fork-a.png", 10),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, to_asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("fork-b.png", 10),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      public = Repo.get!(ArticlePublic, post.id)
+
+      assert {:ok, %{working_copy: work}} =
+               CMS.Articles.fork_snapshot(
+                 public.snapshot_id,
+                 community,
+                 :workspace,
+                 Ecto.UUID.generate(),
+                 user,
+                 Ecto.UUID.generate()
+               )
+
+      article = Repo.get!(Article, post.id)
+
+      assert {:ok, work} =
+               CMS.Articles.save_working_copy(
+                 article,
+                 community,
+                 work.id,
+                 %{
+                   asset_refs: [%{usage: :attachment, asset_id: from_asset.id, block_id: "fork"}]
+                 },
+                 work.revision,
+                 user,
+                 Ecto.UUID.generate()
+               )
+
+      default = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
+
+      params = %{
+        working_copy_id: work.id,
+        revision: work.revision,
+        usage: :attachment,
+        block_id: "fork",
+        from_asset_id: from_asset.id,
+        to_asset_id: to_asset.id
+      }
+
+      command_id = Ecto.UUID.generate()
+
+      assert {:ok, %{revision: next, working_copy_id: work_id}} =
+               CMS.Assets.replace_use(post, params, user, command_id)
+
+      assert work_id == work.id
+
+      assert {:ok, %{revision: ^next, working_copy_id: ^work_id}} =
+               CMS.Assets.replace_use(post, params, user, command_id)
+
+      assert next == work.revision + 1
+      assert Repo.get!(ArticleWorkingCopy, default.id).revision == default.revision
+
+      assert Repo.get_by!(ArticleAssetRef, working_copy_id: work.id, block_id: "fork").asset_id ==
+               to_asset.id
+    end
+
+    test "replacement plan keeps distinct WorkingCopies and identical locators separate",
+         ~m(community post user)a do
+      {:ok, from_asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("copies-a.png", 10),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      {:ok, to_asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("copies-b.png", 10),
+          user,
+          Ecto.UUID.generate()
+        )
+
+      article = Repo.get!(Article, post.id)
+      public = Repo.get!(ArticlePublic, post.id)
+      default = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
+
+      assert {:ok, %{working_copy: other}} =
+               CMS.Articles.fork_snapshot(
+                 public.snapshot_id,
+                 community,
+                 :workspace,
+                 Ecto.UUID.generate(),
+                 user,
+                 Ecto.UUID.generate()
+               )
+
+      copies =
+        for work <- [default, other] do
+          assert {:ok, saved} =
+                   CMS.Articles.save_working_copy(
+                     article,
+                     community,
+                     work.id,
+                     %{
+                       asset_refs: [
+                         %{usage: :attachment, asset_id: from_asset.id, block_id: "same"}
+                       ]
+                     },
+                     work.revision,
+                     user,
+                     Ecto.UUID.generate()
+                   )
+
+          saved
+        end
+
+      assert {:ok, plan} =
+               CMS.Assets.create_replacement_plan(
+                 community,
+                 %{from_asset_id: from_asset.id, to_asset_id: to_asset.id},
+                 user
+               )
+
+      assert MapSet.new(Enum.map(plan.items, &(&1[:working_copy_id] || &1["working_copy_id"]))) ==
+               MapSet.new(Enum.map(copies, & &1.id))
+
+      assert {:ok, applied} = CMS.Assets.apply_replacement_plan(plan, user)
+      assert applied.status == :completed
+
+      for work <- copies do
+        assert Repo.get_by!(ArticleAssetRef, working_copy_id: work.id, block_id: "same").asset_id ==
+                 to_asset.id
+
+        assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision + 1
+      end
+
+      assert {:ok, replayed} = CMS.Assets.apply_replacement_plan(applied, user)
+      assert replayed.status == :completed
     end
 
     test "creates a global replacement plan from observed usage facts",
@@ -1809,12 +2090,16 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       )
       |> Repo.insert!()
 
-      assert {:ok, %AssetReplacementPlan{items: [item]}} =
+      assert {:ok, %AssetReplacementPlan{items: items}} =
                CMS.Assets.create_replacement_plan(
                  community,
                  %{from_asset_id: from_asset.id, to_asset_id: to_asset.id},
                  user
                )
+
+      assert length(items) == 2
+      item = Enum.find(items, &((&1[:decision] || &1["decision"]) == "editable"))
+      assert Enum.any?(items, &((&1[:decision] || &1["decision"]) == "live_snapshot_only"))
 
       assert (item[:observed_working_copy_revision] || item["observed_working_copy_revision"]) ==
                1

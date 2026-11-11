@@ -8,6 +8,7 @@ defmodule GroupherServer.CMS.Articles.SnapshotProjection do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Review.SnapshotVersion
   alias CMS.Articles.ArticleView
 
   alias CMS.Model.{
@@ -79,7 +80,7 @@ defmodule GroupherServer.CMS.Articles.SnapshotProjection do
           active_at: article.active_at,
           inserted_at: public.published_at,
           updated_at: public.published_at,
-          version: snapshot.source_revision,
+          version: SnapshotVersion.from_id(snapshot.id),
           lifecycle: lifecycle,
           is_pinned: pinned?(binding.id),
           viewer_has_collected: false,
@@ -102,10 +103,16 @@ defmodule GroupherServer.CMS.Articles.SnapshotProjection do
   def build_stable(_article, _community, _public, _snapshot),
     do: {:error, :snapshot_owner_mismatch}
 
-  defp snapshot_extension(:post, id), do: extension(ArticleSnapshotPost, id)
-  defp snapshot_extension(:blog, id), do: extension(ArticleSnapshotBlog, id)
-  defp snapshot_extension(:changelog, id), do: extension(ArticleSnapshotChangelog, id)
-  defp snapshot_extension(:doc, id), do: extension(ArticleSnapshotDoc, id)
+  defp snapshot_extension(thread, id) do
+    case thread do
+      :post -> extension(ArticleSnapshotPost, id)
+      :blog -> extension(ArticleSnapshotBlog, id)
+      :changelog -> extension(ArticleSnapshotChangelog, id)
+      :doc -> extension(ArticleSnapshotDoc, id)
+      :ticket -> %{}
+      _ -> nil
+    end
+  end
 
   defp snapshot_tags(snapshot_id) do
     Repo.all(
@@ -137,10 +144,10 @@ defmodule GroupherServer.CMS.Articles.SnapshotProjection do
   defp article_meta(%Article{} = article, %ArticleLifecycle{} = lifecycle) do
     %{
       thread: article.thread,
-      is_edited: false,
+      is_edited: article.is_edited,
       is_comment_locked: article.comments_locked,
-      is_sunk: false,
-      last_active_at: article.active_at,
+      is_sunk: article.is_sunk,
+      last_active_at: article.last_active_at,
       next_floor: article.next_floor,
       next_comment_inner_id: article.next_comment_inner_id,
       lifecycle_version: lifecycle.version

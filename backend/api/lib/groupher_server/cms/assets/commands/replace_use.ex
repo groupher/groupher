@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Articles.{Bindings, WorkingCopy.Store}
+  alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
   alias CMS.Assets.{Query, Refs}
   alias CMS.{ErrorCat, FrontDesk}
   alias CMS.Model.{Article, ArticleAssetRef, ArticleWorkingCopy, Community, CommunityAsset}
@@ -71,7 +72,8 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   end
 
   defp recover_existing_replacement(article, params, workflow_ref) do
-    with {:ok, %ArticleWorkingCopy{} = work} <- default_working_copy(article),
+    with {:ok, %ArticleWorkingCopy{} = work} <- target_working_copy(article, params),
+         {:ok, :pass} <- WorkingCopyAccess.generic_save(article, work),
          revision when is_integer(revision) <- value(params, :revision),
          true <- work.revision == revision + 1,
          refs <- Refs.working_copy_refs(work.id),
@@ -80,6 +82,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
       {:ok,
        %{
          article_id: article.id,
+         working_copy_id: work.id,
          revision: work.revision,
          ref_id: ref.id,
          usage: ref.usage,
@@ -111,7 +114,9 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
             params: :params
 
   receipt_pipeline execute_receipt(article, community, params, user, command_id) do
-    gate(fn candidate -> CMS.Gate.check_in_transaction(user, :edit, candidate, community) end)
+    gate(fn candidate ->
+      CMS.Gate.check_in_transaction(user, edit_action(candidate), candidate, community)
+    end)
 
     change(fn canonical ->
       replace_loaded(canonical, community, params, user)
@@ -124,6 +129,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
            result
            |> Map.take([
              :article_id,
+             :working_copy_id,
              :revision,
              :ref_id,
              :usage,
@@ -137,26 +143,42 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
        }}
     end)
 
-    present(fn confirmation -> present_confirmation(confirmation) end)
+    present(fn confirmation -> present_confirmation(confirmation, article, community, user) end)
   end
 
   @pipeline operation: :article_replace_asset_workflow,
             target: :article,
             params: :params
   direct_pipeline execute_workflow(article, community, params, user, workflow_ref) do
-    gate(fn candidate -> CMS.Gate.check_in_transaction(user, :edit, candidate, community) end)
+    gate(fn candidate ->
+      with {:ok, canonical} <- CMS.Gate.check_in_transaction(user, :edit, candidate, community) do
+        case recover_existing_replacement(canonical, params, workflow_ref) do
+          {:ok, _result} ->
+            {:ok, canonical}
+
+          :not_applied ->
+            CMS.Gate.check_in_transaction(user, :edit_article, canonical, community)
+        end
+      end
+    end)
 
     change(fn canonical ->
       replace_with_workflow_recovery(canonical, community, params, user, workflow_ref)
     end)
   end
 
+  defp edit_action(%Article{thread: thread}) when thread in [:post, :blog, :changelog],
+    do: :edit_article
+
+  defp edit_action(%Article{}), do: :edit
+
   defp replace_loaded(canonical, community, attrs, user) do
-    with {:ok, %ArticleWorkingCopy{} = work} <- default_working_copy(canonical),
+    with {:ok, %ArticleWorkingCopy{} = work} <- target_working_copy(canonical, attrs),
          {:ok, :pass} <- expected_revision(attrs, work.revision),
          {:ok, ref} <- locate_ref(work, attrs),
          {:ok, target_asset} <- active_asset(community.id, value(attrs, :to_asset_id)),
          {:ok, _} <- same_asset(ref, value(attrs, :from_asset_id)),
+         {:ok, :pass} <- WorkingCopyAccess.generic_save(canonical, work),
          {:ok, _} <- replacement_body_bag_required(ref, attrs),
          save_attrs <- replacement_attrs(work, ref, target_asset, attrs),
          {:ok, updated_work} <-
@@ -164,6 +186,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
       {:ok,
        %{
          article_id: canonical.id,
+         working_copy_id: work.id,
          revision: updated_work.revision,
          ref_id: ref.id,
          usage: ref.usage,
@@ -247,6 +270,22 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     end
   end
 
+  defp target_working_copy(%Article{id: article_id} = article, attrs) do
+    case value(attrs, :working_copy_id) do
+      nil ->
+        default_working_copy(article)
+
+      id when is_binary(id) ->
+        case Repo.get_by(ArticleWorkingCopy, id: id, article_id: article_id) do
+          %ArticleWorkingCopy{} = work -> {:ok, work}
+          nil -> {:error, :working_copy_not_found}
+        end
+
+      _ ->
+        {:error, :working_copy_not_found}
+    end
+  end
+
   defp lock_working_copy_refs(working_copy_id, usage) do
     import Ecto.Query
 
@@ -288,12 +327,24 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     end
   end
 
-  defp present_confirmation(%Confirmation{data: data}) do
+  defp present_confirmation(%Confirmation{data: data}, article, community, actor) do
     with article_id when is_binary(article_id) <- data["article_id"],
+         true <- article.id == article_id,
+         {:ok, _} <- WorkingCopyAccess.access_check(actor, :edit, article, community),
          revision when is_integer(revision) <- data["revision"],
+         working_copy_id when is_binary(working_copy_id) <- data["working_copy_id"],
+         %ArticleWorkingCopy{article_id: ^article_id} <-
+           Repo.get(ArticleWorkingCopy, working_copy_id),
          command_id when is_binary(command_id) <- data["command_id"] do
-      {:ok, %{article_id: article_id, revision: revision, command_id: command_id}}
+      {:ok,
+       %{
+         article_id: article_id,
+         working_copy_id: working_copy_id,
+         revision: revision,
+         command_id: command_id
+       }}
     else
+      {:error, _reason} -> {:error, ErrorCat.command_result_unavailable()}
       _ -> {:error, ErrorCat.command_result_unavailable()}
     end
   end

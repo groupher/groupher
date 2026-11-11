@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.Messaging.Mention do
 
   alias GroupherServer.Messaging
   alias Messaging.Model.Mention
-  alias CMS.Model.{ArticleLifecycle, ArticleReviewBlock}
+  alias CMS.Model.{ArticleLifecycle, ArticlePublic, ArticleReviewBlock}
 
   setup do
     {community, post, _attrs, _author} = mock_article(:post)
@@ -77,6 +77,11 @@ defmodule GroupherServer.Test.Messaging.Mention do
 
       {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
 
+      snapshot_id = Repo.get!(ArticlePublic, post.id).snapshot_id
+
+      assert Repo.get_by!(Mention, article_id: post.id, to_user_id: user2.id).content_token ==
+               "article-snapshot:#{snapshot_id}"
+
       {:ok, result} =
         Messaging.paged_messages(:mention, user2, %{}, %GroupherServer.Pagi.Params.Offset{
           page: 1,
@@ -124,7 +129,7 @@ defmodule GroupherServer.Test.Messaging.Mention do
       assert hd(result.entries).read
     end
 
-    test "a new content revision delivers a new recipient without retracting history",
+    test "adding a recipient preserves existing mention history",
          ~m(post user user2 user3 mention_attr)a do
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user2.id})
@@ -148,13 +153,11 @@ defmodule GroupherServer.Test.Messaging.Mention do
 
       assert result.total_count == 0
 
-      next_revision = Map.put(post, :revision_id, Ecto.UUID.generate())
-
       mention_contents = [
         Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user3.id})
       ]
 
-      {:ok, :pass} = Messaging.send_mention(next_revision, mention_contents, user)
+      {:ok, :pass} = Messaging.send_mention(post, mention_contents, user)
 
       {:ok, result} =
         Messaging.paged_messages(:mention, user2, %{}, %GroupherServer.Pagi.Params.Offset{
@@ -171,6 +174,22 @@ defmodule GroupherServer.Test.Messaging.Mention do
         })
 
       assert result.total_count == 1
+    end
+
+    test "legacy revision fields cannot change the current Snapshot delivery identity",
+         ~m(post user user2 mention_attr)a do
+      mentions = [Map.merge(mention_attr, %{from_user_id: user.id, to_user_id: user2.id})]
+
+      assert {:ok, :pass} = Messaging.send_mention(post, mentions, user)
+      stale = Map.put(post, :revision_id, Ecto.UUID.generate())
+      assert {:ok, :pass} = Messaging.send_mention(stale, mentions, user)
+
+      assert Repo.aggregate(
+               from(mention in Mention,
+                 where: mention.article_id == ^post.id and mention.to_user_id == ^user2.id
+               ),
+               :count
+             ) == 1
     end
   end
 

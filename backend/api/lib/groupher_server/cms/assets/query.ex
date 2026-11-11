@@ -293,11 +293,6 @@ defmodule GroupherServer.CMS.Assets.Query do
           article.id == snapshot.article_id,
       left_join: current_draft in ArticleDraft,
       on: current_draft.article_id == article.id,
-      left_join: default_working_copy in ArticleWorkingCopy,
-      on:
-        default_working_copy.article_id == article.id and
-          default_working_copy.scope_kind == :default and
-          default_working_copy.scope_id == article.id,
       left_join: binding in ArticleBinding,
       on: binding.article_id == article.id and binding.community_id == ref.community_id,
       join: community_lifecycle in CommunityLifecycle,
@@ -334,7 +329,7 @@ defmodule GroupherServer.CMS.Assets.Query do
         doc_lifecycle,
         community_lifecycle,
         branch,
-        default_working_copy,
+        working_copy,
         snapshot
       }
     )
@@ -406,6 +401,7 @@ defmodule GroupherServer.CMS.Assets.Query do
       branch_id: branch && branch.id,
       resource_lifecycle: article_lifecycle || doc_lifecycle,
       community_lifecycle: community_lifecycle,
+      observed_working_copy_id: working_copy && working_copy.id,
       observed_working_copy_revision: working_copy && working_copy.revision,
       observed_snapshot_id: snapshot && snapshot.id,
       observed_live_snapshot_id: public && public.snapshot_id

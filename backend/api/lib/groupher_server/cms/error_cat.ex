@@ -76,6 +76,8 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:work_in_use, code: 4563)
   error(:cover_edit_delete_failed, code: 4564)
   error(:working_copy_children_delete_failed, code: 4565)
+  error(:docs_managed_content, code: 4566)
+  error(:article_snapshot_not_found, code: 4567)
   error(:invalid_mention_notification_event, code: 4555)
   error(:mention_url_too_long, code: 4556)
 end

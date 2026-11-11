@@ -103,4 +103,12 @@ defmodule GroupherServer.CMS.Gate.ErrorCat do
   error(:solution_not_supported, code: 4630)
   error(:gate_transaction_required, code: 4631)
   error(:gate_stage_required, code: 4632)
+
+  error(:published_article_editing_disabled,
+    code: 4633,
+    actions: [:read_only_notice],
+    message_key: "cms.gate.published_article_editing_disabled"
+  )
+
+  error(:dashboard_not_found, code: 4634, message_key: "cms.gate.dashboard_not_found")
 end

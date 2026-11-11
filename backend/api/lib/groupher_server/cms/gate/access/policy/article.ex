@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   """
 
   alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.ErrorCat.Error, as: DomainError
 
   alias Accounts.Model.User
 
@@ -36,6 +37,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     :read,
     :publish,
     :edit,
+    :edit_article,
     :discard_draft,
     :create_comment,
     :delete,
@@ -65,33 +67,39 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   @interaction_actions [:upvote, :emotion, :collect, :report]
 
   @doc "Checks Article or Doc mutation admission without loading or locking resources."
-  @spec check_access(User.t() | nil, atom(), map(), ArticleContext.t() | DocContext.t()) ::
+  @spec check_access(User.t() | atom() | nil, atom(), ArticleContext.t() | DocContext.t()) ::
           {:ok, :pass} | {:error, ErrorCat.error()}
-  def check_access(%User{} = user, action, article, context)
-      when action in @actions and is_map(article) and
-             (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
+  def check_access(actor, action, %ArticleContext{article: article} = context)
+      when is_map(article) do
+    check_loaded(actor, action, article, context)
+  end
+
+  def check_access(actor, action, %DocContext{doc: doc} = context) when is_map(doc) do
+    check_loaded(actor, action, doc, context)
+  end
+
+  def check_access(_actor, _action, _context), do: {:error, ErrorCat.unknown_action()}
+
+  defp check_loaded(%User{} = user, action, article, context) when action in @actions do
     check_allowed(user, action, article, context)
   end
 
-  def check_access(:operations, action, article, context)
-      when action in [:delete, :permanently_delete, :moderate] and is_map(article) and
-             (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
+  defp check_loaded(:operations, action, article, context)
+       when action in [:delete, :permanently_delete, :moderate] do
     check_allowed(:operations, action, article, context)
   end
 
-  def check_access(:system, :permanently_delete, article, context)
-      when is_map(article) and
-             (is_struct(context, ArticleContext) or is_struct(context, DocContext)) do
+  defp check_loaded(:system, :permanently_delete, article, context) do
     check_allowed(:operations, :permanently_delete, article, context)
   end
 
-  def check_access(nil, :read, article, context), do: check_allowed(nil, :read, article, context)
+  defp check_loaded(nil, :read, article, context), do: check_allowed(nil, :read, article, context)
 
-  def check_access(nil, action, _article, _context) when action in @actions do
+  defp check_loaded(nil, action, _article, _context) when action in @actions do
     {:error, ErrorCat.permission_denied()}
   end
 
-  def check_access(_user, _action, _article, _context), do: {:error, ErrorCat.unknown_action()}
+  defp check_loaded(_user, _action, _article, _context), do: {:error, ErrorCat.unknown_action()}
 
   defp check_allowed(actor, :read_insights, article, context) do
     with {:ok, community} <- community(context),
@@ -123,6 +131,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
          {:ok, true} <- Communities.Lifecycle.can_write(community),
          {:ok, _} <- doc_branch_allowed(action, context),
          {:ok, _} <- action_allowed(action, lifecycle, article),
+         {:ok, :pass} <- article_editing_allowed(action, context),
          {:ok, :pass} <- discussion_parent_readable(actor, action, article, context) do
       {:ok, :pass}
     else
@@ -130,6 +139,23 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
       {:error, _reason} = error -> error
     end
   end
+
+  defp article_editing_allowed(:edit_article, %ArticleContext{published_article_editable?: true}) do
+    {:ok, :pass}
+  end
+
+  defp article_editing_allowed(
+         :edit_article,
+         %ArticleContext{published_article_editing_error: %DomainError{} = error}
+       ) do
+    {:error, error}
+  end
+
+  defp article_editing_allowed(:edit_article, %ArticleContext{}) do
+    {:error, ErrorCat.published_article_editing_disabled()}
+  end
+
+  defp article_editing_allowed(_action, _context), do: {:ok, :pass}
 
   defp discussion_parent_readable(actor, :create_comment, article, context) do
     check_allowed(actor, :read, article, context)
@@ -196,6 +222,19 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     {:ok, :pass}
   end
 
+  defp authorize_action(%User{} = user, :edit_article, %{thread: thread} = article, _context)
+       when thread in [:post, :blog, :changelog] do
+    if article_owner?(user, article) do
+      {:ok, :pass}
+    else
+      {:error, ErrorCat.permission_denied()}
+    end
+  end
+
+  defp authorize_action(_actor, :edit_article, _article, _context) do
+    {:error, ErrorCat.permission_denied()}
+  end
+
   defp authorize_action(%User{} = user, action, article, context) do
     with {:ok, passport_action} <- passport_action(action, article, context),
          {:ok, community} <- community(context) do
@@ -252,8 +291,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   defp passport_action(:edit, %{thread: :doc}, _context), do: {:ok, CMS.GateAction.doc_update()}
 
-  defp passport_action(:edit, %{thread: thread}, _context)
-       when thread in [:post, :blog, :changelog] do
+  defp passport_action(action, %{thread: thread}, _context)
+       when action == :edit and thread in [:post, :blog, :changelog] do
     {:ok, "#{thread}.update"}
   end
 
@@ -359,7 +398,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   # Editing an existing public Article and updating its editor Draft share the
   # same logical lifecycle. Keep this separate from :publish so both write
   # entry points reject a non-writable ancestor before touching Draft rows.
-  defp action_allowed(:edit, %{state: state} = lifecycle, _article) do
+  defp action_allowed(action, %{state: state} = lifecycle, _article)
+       when action in [:edit, :edit_article] do
     case ArticleLifecycle.editable?(lifecycle) do
       {:ok, true} -> {:ok, :pass}
       {:ok, false} -> edit_lifecycle_error(state)

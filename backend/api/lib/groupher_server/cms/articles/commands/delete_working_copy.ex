@@ -29,7 +29,8 @@ defmodule GroupherServer.CMS.Articles.Commands.DeleteWorkingCopy do
     end)
 
     change(fn canonical_article ->
-      with %ArticleWorkingCopy{} = work <- lock_work(canonical_article.id, working_copy_id),
+      with {:ok, :pass} <- WorkingCopyAccess.generic_delete(canonical_article),
+           %ArticleWorkingCopy{} = work <- lock_work(canonical_article.id, working_copy_id),
            {:ok, :deleted} <- Deleter.delete_in_transaction(canonical_article, work) do
         {:ok, work.id}
       else
@@ -64,7 +65,7 @@ defmodule GroupherServer.CMS.Articles.Commands.DeleteWorkingCopy do
        }}
     end)
 
-    present(fn confirmation -> present_confirmation(confirmation) end)
+    present(fn confirmation -> present_confirmation(confirmation, article, community, actor) end)
   end
 
   def execute(%Article{} = article, %Community{} = community, id, %User{} = actor, command_id)
@@ -88,11 +89,19 @@ defmodule GroupherServer.CMS.Articles.Commands.DeleteWorkingCopy do
     )
   end
 
-  defp present_confirmation(%Confirmation{data: %{"article_id" => article_id}}) do
-    CMS.FrontDesk.article(article_id, mode: :internal)
+  defp present_confirmation(
+         %Confirmation{data: %{"article_id" => article_id}},
+         %Article{id: article_id} = article,
+         community,
+         actor
+       ) do
+    case WorkingCopyAccess.access_check(actor, :edit, article, community) do
+      {:ok, _article} = result -> result
+      {:error, _reason} -> {:error, CMS.ErrorCat.command_result_unavailable()}
+    end
   end
 
-  defp present_confirmation(_), do: {:error, CMS.ErrorCat.command_result_unavailable()}
+  defp present_confirmation(_, _, _, _), do: {:error, CMS.ErrorCat.command_result_unavailable()}
 
   defp map_delete_error({:error, :work_in_use}), do: {:error, CMS.ErrorCat.work_in_use()}
 

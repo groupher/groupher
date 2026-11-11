@@ -110,6 +110,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
 
       {:error, :not_found} ->
         delete_article(thread, article_id)
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -173,6 +176,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
 
       {:error, :not_found} ->
         delete_article(thread, article_id)
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -247,6 +253,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
       case public_article_for(thread, root) do
         {:ok, articles} -> {:cont, {:ok, [Enum.reverse(articles) | batches]}}
         {:error, :not_found} -> {:cont, {:ok, batches}}
+        {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
     |> case do
@@ -276,15 +283,20 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
       |> select([binding, community], {binding.inner_id, community.slug})
       |> Repo.all()
 
-    articles =
-      Enum.reduce(bindings, [], fn {inner_id, community}, acc ->
+    result =
+      Enum.reduce_while(bindings, {:ok, []}, fn {inner_id, community}, {:ok, acc} ->
         case FrontDesk.article(%{community: community, thread: thread, inner_id: inner_id}) do
-          {:ok, public} -> [public | acc]
-          {:error, _reason} -> acc
+          {:ok, public} -> {:cont, {:ok, [public | acc]}}
+          {:error, ErrorCat.error_pattern(reason: :not_exist)} -> {:cont, {:ok, acc}}
+          {:error, reason} -> {:halt, {:error, reason}}
         end
       end)
 
-    if articles == [], do: {:error, :not_found}, else: {:ok, Enum.reverse(articles)}
+    case result do
+      {:ok, []} -> {:error, :not_found}
+      {:ok, articles} -> {:ok, Enum.reverse(articles)}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp stable_id(%Article{id: article_id}), do: article_id

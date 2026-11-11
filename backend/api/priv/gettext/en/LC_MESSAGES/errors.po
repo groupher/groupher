@@ -99,6 +99,12 @@ msgstr ""
 msgid "cms.gate.read_only"
 msgstr "The content is read-only."
 
+msgid "cms.gate.published_article_editing_disabled"
+msgstr "Editing published content is disabled for this community."
+
+msgid "cms.gate.dashboard_not_found"
+msgstr "Community settings are unavailable. Please retry or contact support."
+
 msgid "cms.gate.unavailable"
 msgstr "The content is unavailable."
 

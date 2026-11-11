@@ -25,6 +25,7 @@ defmodule GroupherServer.CMS.Articles do
   }
 
   alias __MODULE__.WorkingCopy.Query, as: WorkingCopyQuery
+  alias __MODULE__.SnapshotCleanup
 
   alias GroupherServer.{Accounts, CMS}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
@@ -116,7 +117,10 @@ defmodule GroupherServer.CMS.Articles do
 
   @doc "Loads one immutable Snapshot owned by an Article."
   def snapshot(%Article{} = article, %Community{} = community, snapshot_id) do
-    WorkingCopyQuery.snapshot(article, community, snapshot_id)
+    case WorkingCopyQuery.snapshot(article, community, snapshot_id) do
+      {:error, :snapshot_not_found} -> {:error, CMS.ErrorCat.article_snapshot_not_found()}
+      result -> result
+    end
   end
 
   @doc "Loads one editable WorkingCopy owned by an Article."
@@ -143,6 +147,12 @@ defmodule GroupherServer.CMS.Articles do
   def snapshot_tag_ids(%CMS.Model.ArticleSnapshot{} = snapshot) do
     WorkingCopyQuery.snapshot_tag_ids(snapshot)
   end
+
+  @doc "Deletes one bounded batch of expired, unselected ordinary Article Snapshots."
+  def cleanup_expired_snapshots(opts \\ []), do: SnapshotCleanup.run(opts)
+
+  @doc "Deletes a bounded Snapshot page and returns its continuation cursor."
+  def cleanup_expired_snapshots_page(opts), do: SnapshotCleanup.run_page(opts)
 
   # Write
 

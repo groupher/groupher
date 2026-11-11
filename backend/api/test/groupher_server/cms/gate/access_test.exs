@@ -113,6 +113,78 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              CMS.Gate.access_check(owner, :manage_docs, %{community | lifecycle: lifecycle})
   end
 
+  test "Docs queue and history require separate Passport grants and Lifecycle capabilities" do
+    {:ok, owner} = db_insert(:user)
+    {:ok, editor} = db_insert(:user)
+    {:ok, community} = mock_community(owner)
+    lifecycle = Repo.get_by!(CommunityLifecycle, community_id: community.id)
+    community = %{community | lifecycle: lifecycle}
+
+    context = %CommunityContext{
+      community: community,
+      community_lifecycle: lifecycle,
+      passport_rules: %{
+        "global" => %{},
+        community.slug => %{"cms" => %{"doc.edit" => true, "doc.queue.preview" => true}}
+      }
+    }
+
+    assert {:ok, :pass} =
+             CommunityPolicy.check_access(editor, :docs_queue_preview, community, context)
+
+    for action <- [
+          :docs_queue_write,
+          :docs_queue_approve,
+          :docs_queue_configure,
+          :docs_queue_publish,
+          :docs_history_read
+        ] do
+      assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+               CommunityPolicy.check_access(editor, action, community, context)
+    end
+
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
+             CommunityPolicy.check_access(nil, :docs_queue_preview, community, context)
+
+    granted =
+      put_in(context.passport_rules[community.slug]["cms"], %{
+        "doc.queue.preview" => true,
+        "doc.queue.write" => true,
+        "doc.queue.approve" => true,
+        "doc.queue.configure" => true,
+        "doc.queue.publish" => true,
+        "doc.history.read" => true
+      })
+
+    for action <- [
+          :docs_queue_preview,
+          :docs_queue_write,
+          :docs_queue_approve,
+          :docs_queue_configure,
+          :docs_queue_publish,
+          :docs_history_read
+        ] do
+      assert {:ok, :pass} = CommunityPolicy.check_access(editor, action, community, granted)
+    end
+
+    read_only = %{lifecycle | state: :read_only}
+    read_only_context = %{granted | community_lifecycle: read_only}
+
+    assert {:ok, :pass} =
+             CommunityPolicy.check_access(
+               editor,
+               :docs_history_read,
+               community,
+               read_only_context
+             )
+
+    assert {:error, %ErrorCat.Error{reason: :ancestor_community_not_writable}} =
+             CommunityPolicy.check_access(editor, :docs_queue_write, community, read_only_context)
+
+    assert {:error, %Decision{allowed: false}} =
+             CMS.Gate.access_check(editor, :docs_queue_preview, community)
+  end
+
   test "Community access_check keeps owner reads on the public mode by default" do
     {:ok, owner} = db_insert(:user)
     {:ok, community} = mock_community(owner)
@@ -154,7 +226,6 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              ArticlePolicy.check_access(
                user,
                :publish,
-               article,
                archived_context
              )
 
@@ -162,12 +233,11 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              ArticlePolicy.check_access(
                user,
                :create_comment,
-               article,
                archived_context
              )
 
     decision =
-      ArticlePolicy.check_access(user, :publish, article, archived_context)
+      ArticlePolicy.check_access(user, :publish, archived_context)
       |> Decision.from_result(archived_context)
 
     refute decision.allowed
@@ -209,12 +279,12 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       article_lifecycle: %{state: :published}
     }
 
-    assert {:ok, :pass} = ArticlePolicy.check_access(user, :edit, article, state_only_context)
+    assert {:ok, :pass} = ArticlePolicy.check_access(user, :edit, state_only_context)
 
     invalid_context = %{state_only_context | article_lifecycle: %{state: :unknown}}
 
     assert {:error, %ErrorCat.Error{reason: :lifecycle_not_found}} =
-             ArticlePolicy.check_access(user, :edit, article, invalid_context)
+             ArticlePolicy.check_access(user, :edit, invalid_context)
   end
 
   test "single Article read denies active restrictions except to the author" do
@@ -244,10 +314,10 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       review_restricted?: true
     }
 
-    assert {:ok, :pass} = ArticlePolicy.check_access(author, :read, article, restricted_context)
+    assert {:ok, :pass} = ArticlePolicy.check_access(author, :read, restricted_context)
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
-             ArticlePolicy.check_access(other_user, :read, article, restricted_context)
+             ArticlePolicy.check_access(other_user, :read, restricted_context)
 
     community_reader = %{
       other_user
@@ -258,7 +328,6 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              ArticlePolicy.check_access(
                community_reader,
                :read,
-               article,
                %{
                  restricted_context
                  | passport_rules: community_reader.cur_passport,
@@ -270,7 +339,6 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              ArticlePolicy.check_access(
                community_reader,
                :read,
-               article,
                %{
                  restricted_context
                  | passport_rules: community_reader.cur_passport,
@@ -290,7 +358,6 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              ArticlePolicy.check_access(
                platform_reader,
                :read,
-               article,
                %{
                  restricted_context
                  | passport_rules: platform_reader.cur_passport,
@@ -328,7 +395,6 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
                ArticlePolicy.check_access(
                  user,
                  action,
-                 article,
                  published_context
                )
     end
@@ -343,7 +409,6 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
                ArticlePolicy.check_access(
                  user,
                  action,
-                 article,
                  archived_context
                )
     end
@@ -363,7 +428,6 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              ArticlePolicy.check_access(
                user,
                :upvote,
-               article,
                read_only_context
              )
 
@@ -371,7 +435,6 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              ArticlePolicy.check_access(
                user,
                :upvote,
-               article,
                %CMS.Gate.Context.Access.Doc{
                  doc: article,
                  doc_lifecycle: published_context.article_lifecycle,
@@ -411,13 +474,13 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       community_lifecycle: community.lifecycle
     }
 
-    assert {:ok, :pass} = ArticlePolicy.check_access(author, :edit, article, context)
+    assert {:ok, :pass} = ArticlePolicy.check_access(author, :edit, context)
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
-             ArticlePolicy.check_access(unrelated, :edit, article, context)
+             ArticlePolicy.check_access(unrelated, :edit, context)
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
-             ArticlePolicy.check_access(author, :pin, article, context)
+             ArticlePolicy.check_access(author, :pin, context)
 
     moderator = %{
       moderator
@@ -427,7 +490,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
         }
     }
 
-    assert {:ok, :pass} = ArticlePolicy.check_access(moderator, :pin, article, context)
+    assert {:ok, :pass} = ArticlePolicy.check_access(moderator, :pin, context)
 
     read_only_community = %{
       community
@@ -438,7 +501,6 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              ArticlePolicy.check_access(
                moderator,
                :pin,
-               article,
                %{
                  context
                  | community: read_only_community,
@@ -470,27 +532,26 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       community_lifecycle: community.lifecycle
     }
 
-    assert {:ok, :pass} = CommentPolicy.check_access(author, :edit, comment, context)
+    assert {:ok, :pass} = CommentPolicy.check_access(author, :edit, context)
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              CommentPolicy.check_access(
                author,
                :edit,
-               comment,
                %{context | public_readable?: false}
              )
 
     assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
-             CommentPolicy.check_access(unrelated, :edit, comment, context)
+             CommentPolicy.check_access(unrelated, :edit, context)
 
-    assert {:ok, :pass} = CommentPolicy.check_access(unrelated, :upvote, comment, context)
+    assert {:ok, :pass} = CommentPolicy.check_access(unrelated, :upvote, context)
 
     god = %{
       unrelated
       | cur_passport: %{"global" => %{"god" => true}}
     }
 
-    assert {:ok, :pass} = CommentPolicy.check_access(god, :delete, comment, context)
+    assert {:ok, :pass} = CommentPolicy.check_access(god, :delete, context)
   end
 
   test "article mutation admission rejects a read-only community before writing" do
@@ -517,7 +578,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     }
 
     assert {:error, %ErrorCat.Error{reason: :ancestor_community_not_writable}} =
-             ArticlePolicy.check_access(user, :create_comment, article, context)
+             ArticlePolicy.check_access(user, :create_comment, context)
   end
 
   test "comment creation preserves deleted parent reasons before public-read admission" do
@@ -543,7 +604,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       }
 
       assert {:error, %ErrorCat.Error{reason: ^reason}} =
-               ArticlePolicy.check_access(user, :create_comment, article, context)
+               ArticlePolicy.check_access(user, :create_comment, context)
     end
   end
 
@@ -577,24 +638,23 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              CommentPolicy.check_access(
                user,
                :reply_comment,
-               %Comment{},
                context
              )
 
     assert {:error, %ErrorCat.Error{reason: :ancestor_article_archived}} =
-             CommentPolicy.check_access(user, :edit, %Comment{}, context)
+             CommentPolicy.check_access(user, :edit, context)
 
     assert {:error, %ErrorCat.Error{reason: :ancestor_article_archived}} =
-             CommentPolicy.check_access(user, :delete, %Comment{}, context)
+             CommentPolicy.check_access(user, :delete, context)
 
     assert {:error, %ErrorCat.Error{reason: :ancestor_article_archived}} =
-             CommentPolicy.check_access(user, :upvote, %Comment{}, context)
+             CommentPolicy.check_access(user, :upvote, context)
 
     assert {:error, %ErrorCat.Error{reason: :ancestor_article_archived}} =
-             CommentPolicy.check_access(user, :emotion, %Comment{}, context)
+             CommentPolicy.check_access(user, :emotion, context)
 
     assert {:error, %ErrorCat.Error{reason: :ancestor_article_archived}} =
-             CommentPolicy.check_access(user, :pin, %Comment{}, context)
+             CommentPolicy.check_access(user, :pin, context)
   end
 
   test "viewer-aware community read hides suspended communities from non-owners" do
@@ -668,6 +728,27 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              )
 
     assert {:ok, %CMS.Model.Community{}} = CMS.Gate.access_check(actor, :update, community)
+  end
+
+  test "Docs queue admission loads its grant from the database Passport" do
+    {:ok, owner} = db_insert(:user)
+    {:ok, actor} = db_insert(:user)
+    {:ok, community} = mock_community(owner)
+
+    assert {:ok, _passport} =
+             CMS.Passport.stamp_passport(
+               %{
+                 "global" => %{},
+                 community.slug => %{"cms" => %{"doc.queue.preview" => true}}
+               },
+               actor
+             )
+
+    assert {:ok, %CMS.Model.Community{}} =
+             CMS.Gate.access_check(actor, :docs_queue_preview, community)
+
+    assert {:error, %Decision{primary: %{reason: :permission_denied}}} =
+             CMS.Gate.access_check(actor, :docs_queue_approve, community)
   end
 
   test "Community Access loader uses empty passport facts when no passport exists" do

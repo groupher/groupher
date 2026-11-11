@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   @moduledoc """
   Serializes commands that mutate the same logical Article aggregate.
 
-      ordinary Article: community + thread + article_id
+      ordinary Article: article_id (shared across all Community bindings)
       Doc Article:      community + branch_id + article_id
                                   |
                                   v
@@ -190,6 +190,10 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
 
   @doc "Returns the logical lock key for one ordinary Article."
   @spec key(Community.t(), T.thread(), Ecto.UUID.t()) :: String.t()
+  def key(%Community{}, thread, article_id) when thread in @article_threads do
+    "article_lifecycle:#{article_id}"
+  end
+
   def key(%Community{} = community, thread, article_id) do
     "article_lifecycle:#{community.id}:#{thread}:#{article_id}"
   end

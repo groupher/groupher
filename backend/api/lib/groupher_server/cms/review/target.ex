@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Review.Target do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Review.SnapshotVersion
 
   alias CMS.Model.{
     Article,
@@ -85,7 +86,7 @@ defmodule GroupherServer.CMS.Review.Target do
     case Repo.get(ArticlePublic, article.id) do
       %ArticlePublic{snapshot_id: snapshot_id} ->
         case Repo.get(ArticleSnapshot, snapshot_id) do
-          %ArticleSnapshot{} -> snapshot_review_version(snapshot_id)
+          %ArticleSnapshot{} -> SnapshotVersion.from_id(snapshot_id)
           nil -> nil
         end
 
@@ -118,13 +119,6 @@ defmodule GroupherServer.CMS.Review.Target do
   end
 
   defp current_public_version(_context), do: nil
-
-  defp snapshot_review_version(snapshot_id) do
-    <<value::unsigned-big-64, _rest::binary>> =
-      :crypto.hash(:sha256, Ecto.UUID.dump!(snapshot_id))
-
-    rem(value, 2_147_483_646) + 1
-  end
 
   defp parse_target("article:" <> id) do
     case Ecto.UUID.cast(id) do
