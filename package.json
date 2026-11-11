@@ -11,6 +11,7 @@
     "generate:fa-icons": "pnpm run generate:icons",
     "check:router-runtime": "node --test scripts/check-router-runtime.test.mjs && node scripts/check-router-runtime.mjs",
     "check:query-invalidation": "node scripts/check-query-invalidation-boundary.mjs",
+    "report:salon-props": "node --test scripts/report-salon-props.test.mjs && node scripts/report-salon-props.mjs",
     "check:cms-query-boundary": "node --test scripts/check-cms-query-boundary.test.mjs && node scripts/check-cms-query-boundary.mjs",
     "report:cms-context-boundary": "node --test scripts/check-cms-context-module-boundary.test.mjs && node scripts/check-cms-context-module-boundary.mjs",
     "report:policy-boundary": "node --test scripts/check-policy-boundary.test.mjs && node scripts/check-policy-boundary.mjs",

@@ -1,5 +1,12 @@
 # Repository Guidelines
 
+## Working in This Repository
+
+- Follow the user's authorization and preserve unrelated work in the current worktree. For frontend changes, discuss the approach first unless the user authorizes implementation.
+- Use the relevant repository skill in `.agents/skills/` for domain-specific workflows; for example, `fe` for frontend work and `gate-lifecycle` for CMS admission and lifecycle changes.
+- Select checks based on the changed behavior and its consumers. Start with [the validation matrix](docs/infra/tooling/validation.md); report checks that failed, were blocked, or were not run.
+- Local Git hooks are focused checks, not a substitute for relevant tests or CI. Inspect the staged diff before committing, especially after hooks that modify files.
+
 ## Backend Time Fields
 
 - Treat application time as UTC. Use `DateTime.utc_now()` directly or `Helper.Datetime` helpers for current datetimes, dates, shifts, and date-window boundaries.
