@@ -19,6 +19,14 @@ ARG RUNNER_OS_VERSION=noble-20260810
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-${BUILDER_OS_VERSION}"
 ARG RUNNER_IMAGE="ubuntu:${RUNNER_OS_VERSION}"
 
+FROM node:24-bookworm-slim AS graphiql
+WORKDIR /graphiql
+COPY graphiql/package.json graphiql/package-lock.json ./
+RUN npm ci --legacy-peer-deps --ignore-scripts
+COPY graphiql/index.html graphiql/vite.config.mjs ./
+COPY graphiql/src ./src
+RUN npm run build
+
 FROM ${BUILDER_IMAGE} as builder
 
 # install build dependencies
@@ -47,6 +55,7 @@ COPY config/config.exs config/${MIX_ENV}.exs config/
 RUN mix deps.compile
 
 COPY priv priv
+COPY --from=graphiql /priv/static/graphiql ./priv/static/graphiql
 
 COPY lib lib
 

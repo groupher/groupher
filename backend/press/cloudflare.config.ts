@@ -72,8 +72,8 @@ export default defineConfig(({ mode }) => {
         }),
         PHOENIX_GRAPHQL_ENDPOINT: bindings.text(
           local
-            ? process.env.PHOENIX_GRAPHQL_ENDPOINT || 'http://127.0.0.1:4001/graphiql'
-            : setting('PHOENIX_GRAPHQL_ENDPOINT', 'https://api.groupher.com/graphiql'),
+            ? process.env.PHOENIX_GRAPHQL_ENDPOINT || 'http://127.0.0.1:4001/graphql'
+            : setting('PHOENIX_GRAPHQL_ENDPOINT', 'https://api.groupher.com/graphql'),
         ),
         PHOENIX_PRESS_RESOURCE: bindings.text(
           setting('PHOENIX_PRESS_RESOURCE', 'https://api.groupher.com/press'),

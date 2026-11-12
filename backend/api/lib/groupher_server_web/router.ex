@@ -5,6 +5,7 @@ defmodule GroupherServerWeb.Router do
       /
       /health
       /api/og-info
+      /graphql
       /graphiql
 
   Frontend application routes are owned by the Next.js and TanStack Start apps;
@@ -45,6 +46,10 @@ defmodule GroupherServerWeb.Router do
     plug(GroupherServerWeb.Context)
   end
 
+  pipeline :graphql_guard do
+    plug(GroupherServerWeb.Middleware.GraphQLBatchLimit)
+  end
+
   pipeline :graph_no_store do
     plug(:no_store)
   end
@@ -59,16 +64,23 @@ defmodule GroupherServerWeb.Router do
     get("/og-info", GroupherServerWeb.Controller.OG, :index)
   end
 
-  scope "/graphiql" do
-    pipe_through([:api, :graph_no_store])
+  scope "/" do
+    pipe_through(:graph_no_store)
+
+    get("/graphiql", GroupherServerWeb.Controller.GraphiQL, :show)
+  end
+
+  scope "/graphql" do
+    pipe_through([:graph_no_store, :graphql_guard, :api])
 
     forward(
       "/",
-      Absinthe.Plug.GraphiQL,
+      Absinthe.Plug,
       schema: GroupherServerWeb.Schema,
-      # json_codec: Jason,
-      interface: :playground
-      # context: %{pubsub: GroupherServerWeb.Endpoint}
+      pipeline: {GroupherServerWeb.GraphQLCost, :pipeline},
+      token_limit: GroupherServerWeb.GraphQLLimits.token_limit(),
+      analyze_complexity: true,
+      max_complexity: GroupherServerWeb.GraphQLLimits.max_complexity()
     )
   end
 end

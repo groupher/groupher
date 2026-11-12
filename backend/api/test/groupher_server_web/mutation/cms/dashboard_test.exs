@@ -106,7 +106,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       response =
         rule_conn
-        |> post("/graphiql",
+        |> post("/graphql",
           query: @prepare_wallpaper_upload_query,
           variables: %{
             community: community.slug,

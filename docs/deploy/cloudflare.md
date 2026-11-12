@@ -94,7 +94,7 @@ Cloudflare Worker 下游使用 Service Binding，不通过公开的 `*.groupher.
    规则，以及根级单段文件规则 `^/[^/]+\.(ico|json|png|txt|webp|xml)$`，例如
    `/robots.txt`、`/llms.txt`、`/sitemap.xml` 和 favicon；该规则必须先于 community slug。
 4. `/api/auth`、`/api/auth/*` 交给 `auth`。
-5. `/api/graphql` 转发到 Phoenix `/graphiql`，并保持浏览器 cookie 清理策略。
+5. `/api/graphql` 转发到 Phoenix `/graphql`，并保持浏览器 cookie 清理策略。
 6. `/api/utils/slugify` 交给 Community。它是用户创建内容时使用的公共 Community 工具端点，
    不需要 community slug；Dashboard 独立域名可以拥有自己的同名实现。
 7. 下列 Press 公共输出交给 Press：

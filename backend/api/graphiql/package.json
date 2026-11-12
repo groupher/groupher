@@ -1,0 +1,21 @@
+{
+  "name": "@groupher/api-graphiql",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@graphiql/toolkit": "1.0.1",
+    "graphiql": "6.0.1",
+    "graphql": "17.0.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "vite": "8.3.4"
+  },
+  "overrides": {
+    "dompurify": "3.4.17"
+  }
+}

@@ -73,7 +73,7 @@ describe('dev-gateway/routing', () => {
 
     const graphql = resolve('/api/graphql', 'groupher.localhost', '', undefined, 'POST')
     expect(graphql.targetKind).toBe('phoenix')
-    expect(graphql.targetUrl.pathname).toBe('/graphiql')
+    expect(graphql.targetUrl.pathname).toBe('/graphql')
   })
 
   it('routes surviving dedicated product hosts directly', () => {

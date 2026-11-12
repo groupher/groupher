@@ -4,12 +4,22 @@ on:
   pull_request:
     paths:
       - 'backend/api/**'
+      - 'backend/auth/src/**'
+      - 'backend/import/src/**'
+      - 'backend/press/src/**'
+      - 'backend/assets-hub/src/**'
       - 'frontend/core/schemas/**'
       - 'frontend/core/schemas/fragments/**'
       - 'frontend/core/unit/**'
+      - 'frontend/core/query/**'
       - 'contracts/graphql/**'
       - 'frontend/core/lib/graphql/**'
       - 'frontend/apply/**'
+      - 'frontend/community/src/**'
+      - 'frontend/dash/src/**'
+      - 'frontend/landing/**'
+      - 'scripts/report-graphql-complexity.mjs'
+      - 'scripts/graphql-complexity-fixtures.mjs'
       - 'codegen.ts'
       - 'Makefile'
       - 'package.json'
@@ -18,12 +28,22 @@ on:
   push:
     paths:
       - 'backend/api/**'
+      - 'backend/auth/src/**'
+      - 'backend/import/src/**'
+      - 'backend/press/src/**'
+      - 'backend/assets-hub/src/**'
       - 'frontend/core/schemas/**'
       - 'frontend/core/schemas/fragments/**'
       - 'frontend/core/unit/**'
+      - 'frontend/core/query/**'
       - 'contracts/graphql/**'
       - 'frontend/core/lib/graphql/**'
       - 'frontend/apply/**'
+      - 'frontend/community/src/**'
+      - 'frontend/dash/src/**'
+      - 'frontend/landing/**'
+      - 'scripts/report-graphql-complexity.mjs'
+      - 'scripts/graphql-complexity-fixtures.mjs'
       - 'codegen.ts'
       - 'Makefile'
       - 'package.json'
@@ -85,3 +105,30 @@ jobs:
         run: |
           pnpm run graphql:codegen
           pnpm run contract:graphql:generated
+
+      - name: Install GraphiQL dependencies for its schema query
+        working-directory: backend/api/graphiql
+        run: npm ci --legacy-peer-deps --ignore-scripts
+
+      - name: Check repository operations against Absinthe complexity limit
+        run: |
+          set -o pipefail
+          node scripts/graphql-complexity-fixtures.mjs | (cd backend/api && mix run --no-start test/graphql_complexity/check.exs)
+
+  graphiql:
+    name: GraphiQL production asset build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/api/graphiql
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/api/graphiql/package-lock.json
+      - name: Install locked GraphiQL dependencies
+        run: npm ci --legacy-peer-deps --ignore-scripts
+      - name: Build GraphiQL assets
+        run: npm run build

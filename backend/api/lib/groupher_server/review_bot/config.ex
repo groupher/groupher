@@ -73,6 +73,14 @@ defmodule GroupherServer.ReviewBot.Config do
           {:ok, [ReviewBotConfig.t()]} | {:error, term()}
   def create_default_configs_for_community(community_id) when is_integer(community_id) do
     if Repo.in_transaction?() do
+      existing =
+        from(config in ReviewBotConfig,
+          where:
+            config.community_id == ^community_id and config.subject_type in [:article, :comment]
+        )
+        |> Repo.all()
+        |> Map.new(&{&1.subject_type, &1})
+
       Enum.reduce_while([:article, :comment], {:ok, []}, fn subject_type, {:ok, configs} ->
         attrs = %{
           community_id: community_id,
@@ -83,11 +91,11 @@ defmodule GroupherServer.ReviewBot.Config do
           version: 1
         }
 
-        case get_config(community_id, subject_type) do
-          {:ok, config} ->
+        case Map.get(existing, subject_type) do
+          %ReviewBotConfig{} = config ->
             {:cont, {:ok, [config | configs]}}
 
-          {:error, _reason} ->
+          nil ->
             case Repo.insert(ReviewBotConfig.changeset(%ReviewBotConfig{}, attrs)) do
               {:ok, config} -> {:cont, {:ok, [config | configs]}}
               {:error, reason} -> {:halt, {:error, reason}}

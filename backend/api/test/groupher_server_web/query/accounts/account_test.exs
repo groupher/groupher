@@ -52,9 +52,33 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       results =
         simu_conn(:guest)
         |> Plug.Test.put_req_cookie("groupher-auth.token", token)
+        |> put_req_header("content-type", "application/json")
         |> gq_query(@query, %{})
 
       assert results["login"] == user.login
+    end
+
+    test "GraphiQL origin can execute a cookie-authenticated mutation with CSRF proof",
+         ~m(user)a do
+      {:ok, token, _claims} =
+        BrowserAccess.encode(
+          user,
+          Ecto.UUID.generate(),
+          DateTime.add(DateTime.utc_now(), 3600, :second)
+        )
+
+      response =
+        simu_conn(:guest)
+        |> Plug.Test.put_req_cookie("groupher-auth.token", token)
+        |> Plug.Conn.put_req_header("content-type", "application/json")
+        |> Plug.Conn.put_req_header("origin", "https://api.groupher.com")
+        |> Plug.Conn.put_req_header("x-groupher-csrf", "1")
+        |> post("/graphql",
+          query: ~s|mutation { updateProfile(profile: {nickname: "GraphiQL"}) { nickname } }|
+        )
+        |> json_response(200)
+
+      assert get_in(response, ["data", "updateProfile", "nickname"]) == "GraphiQL"
     end
 
     test "guest user gets null current profile", ~m(guest_conn)a do
@@ -256,7 +280,8 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
       response =
         user_conn
-        |> post("/graphiql", query: @query, variables: %{})
+        |> put_req_header("content-type", "application/json")
+        |> post("/graphql", query: @query, variables: %{})
         |> json_response(200)
 
       assert get_in(response, ["errors", Access.at(0), "extensions", "code"]) ==

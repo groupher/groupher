@@ -1110,7 +1110,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
   @tag :b2_independent
   test "GraphQL Map responses are no-store", %{guest_conn: guest_conn} do
-    conn = post(guest_conn, "/graphiql", query: "{ __typename }", variables: %{})
+    conn = post(guest_conn, "/graphql", query: "{ __typename }", variables: %{})
     assert get_resp_header(conn, "cache-control") == ["no-store"]
   end
 

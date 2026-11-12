@@ -33,6 +33,17 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrfTest do
     refute conn.halted
   end
 
+  test "allows an authenticated mutation from the API GraphiQL origin" do
+    conn =
+      request(:post, %{"query" => "mutation Update { updateProfile(profile: {}) { id } }"}, [
+        {"content-type", "application/json"},
+        {"origin", "https://api.groupher.com"},
+        {"x-groupher-csrf", "1"}
+      ])
+
+    refute conn.halted
+  end
+
   test "allows an authenticated mutation from the local Community origin" do
     conn =
       request(:post, %{"query" => "mutation Update { updateProfile(profile: {}) { id } }"}, [
@@ -63,11 +74,19 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrfTest do
     refute conn.halted
   end
 
+  test "rejects a mutation inside JSON-encoded operations without CSRF proof" do
+    operations = Jason.encode!([%{query: "mutation { __typename }"}])
+    conn = request(:post, %{"operations" => operations})
+
+    assert conn.halted
+    assert conn.status == 400
+  end
+
   test "rejects mutations sent over GET" do
     conn =
       conn(
         :get,
-        "/graphiql?query=mutation%20Update%20%7B%20updateProfile(profile%3A%20%7B%7D)%20%7B%20id%20%7D%20%7D"
+        "/graphql?query=mutation%20Update%20%7B%20updateProfile(profile%3A%20%7B%7D)%20%7B%20id%20%7D%20%7D"
       )
       |> put_req_cookie("groupher-auth.token", "token")
       |> BrowserCsrf.call([])
@@ -77,7 +96,8 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrfTest do
   end
 
   defp request(method, params, headers \\ []) do
-    conn(method, "/graphiql")
+    conn(method, "/graphql")
+    |> put_req_header("content-type", "application/json")
     |> put_req_cookie("groupher-auth.token", "token")
     |> Map.put(:body_params, params)
     |> then(fn conn ->

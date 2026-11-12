@@ -33,7 +33,7 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
   test "keeps service verification failure separate from browser auth failure", %{key: key} do
     context =
       :post
-      |> conn("/graphiql")
+      |> conn("/graphql")
       |> put_req_header(
         "authorization",
         "Bearer #{service_token(key, %{"iss" => "https://wrong-issuer.test"})}"
@@ -88,7 +88,7 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
   test "distinguishes a missing delegation from a malformed delegation header", %{key: key} do
     service_context =
       :post
-      |> conn("/graphiql")
+      |> conn("/graphql")
       |> put_req_header("authorization", "Bearer #{service_token(key)}")
       |> Context.call([])
       |> request_context()
@@ -98,7 +98,7 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
 
     malformed_context =
       :post
-      |> conn("/graphiql")
+      |> conn("/graphql")
       |> put_req_header("authorization", "Bearer #{service_token(key)}")
       |> put_req_header("x-groupher-user-authorization", "not-a-bearer-token")
       |> Context.call([])
@@ -165,7 +165,7 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
     response_conn =
       conn
       |> request_conn(key, "invalid-browser-token")
-      |> post("/graphiql",
+      |> post("/graphql",
         query: mutation,
         variables: %{
           "article" => %{
@@ -206,7 +206,7 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
     response_conn =
       conn
       |> put_req_header("user-agent", "ExampleBot/1.0")
-      |> post("/graphiql",
+      |> post("/graphql",
         query: mutation,
         variables: %{
           "article" => %{
@@ -229,7 +229,7 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
 
   defp request_conn(key, delegated_token) do
     :post
-    |> conn("/graphiql")
+    |> conn("/graphql")
     |> request_conn(key, delegated_token)
   end
 
