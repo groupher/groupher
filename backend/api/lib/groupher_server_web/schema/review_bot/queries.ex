@@ -12,6 +12,7 @@ defmodule GroupherServerWeb.Schema.ReviewBot.Queries do
   use Helper.GqlSchemaSuite
 
   object :review_bot_queries do
+    @desc "Loads ReviewBot policy for a scope and subject type."
     field :review_bot_config, non_null(:review_bot_config) do
       arg(:scope, non_null(:review_bot_scope_input))
       arg(:subject_type, non_null(:review_bot_subject_type))

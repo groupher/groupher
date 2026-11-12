@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
 
       Access.Load.*
         -> Load.Queries
-        -> locked Lifecycle / branch rows
+        -> locked Lifecycle / binding rows
         -> typed Access Context
         -> Access policy
   """
@@ -26,10 +26,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     CommentLifecycle,
     CommunityLifecycle,
     ArticleReviewBlock,
-    DocReviewBlock,
-    DocBranch,
-    DocBranchState,
-    DocLifecycle
+    DocsLifecycle
   }
 
   @doc """
@@ -50,6 +47,11 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     |> Repo.one()
   end
 
+  @doc "Loads the current Article row without acquiring a new lock."
+  def resource_snapshot(CMS.Model.Article = schema, id) when not is_nil(id) do
+    Repo.get(schema, id)
+  end
+
   @doc "Loads one ArticleBinding binding under `FOR SHARE` while checking membership."
   def article_binding(article_id, community_id) do
     ArticleBinding
@@ -61,6 +63,15 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     |> Repo.one()
   end
 
+  @doc "Reads the Article binding inside an already admitted transaction."
+  def article_binding_snapshot(article_id, community_id) do
+    Repo.one(
+      from(binding in ArticleBinding,
+        where: binding.article_id == ^article_id and binding.community_id == ^community_id
+      )
+    )
+  end
+
   @doc """
   Loads a Community lifecycle row under `FOR SHARE` for ancestor-state checks.
   """
@@ -69,6 +80,13 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     |> where([lifecycle], lifecycle.community_id == ^community_id)
     |> lock("FOR SHARE")
     |> Repo.one()
+  end
+
+  @doc "Reads Community lifecycle facts without changing lock order."
+  def community_lifecycle_snapshot(community_id) do
+    Repo.one(
+      from(lifecycle in CommunityLifecycle, where: lifecycle.community_id == ^community_id)
+    )
   end
 
   @doc "Loads the Lifecycle keyed by one stable Article under `FOR UPDATE`."
@@ -96,86 +114,47 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
   def article_review_scope_keys(lifecycle_id, community_id) do
     case Repo.get(ArticleLifecycle, lifecycle_id) do
       %ArticleLifecycle{article_id: article_id} ->
-        ArticleReviewBlock
-        |> where(
-          [restriction],
-          restriction.article_id == ^article_id and is_nil(restriction.resolved_at) and
-            (is_nil(restriction.community_id) or restriction.community_id == ^community_id)
-        )
-        |> select([restriction], restriction.community_id)
-        |> Repo.all()
-        |> Enum.map(fn
-          nil -> "platform"
-          id -> "community:#{id}"
-        end)
+        article_review_scope_keys_for_article(article_id, community_id)
 
       nil ->
         []
     end
   end
 
-  @doc "Loads a branch Lifecycle keyed by one stable Doc Article under `FOR UPDATE`."
-  @spec doc_lifecycle(Ecto.UUID.t(), pos_integer()) :: DocLifecycle.t() | nil
-  def doc_lifecycle(article_id, branch_id) do
-    DocLifecycle
+  @doc "Returns active review scopes for an Article identity and its Community."
+  def article_review_scope_keys_for_article(article_id, community_id) do
+    ArticleReviewBlock
+    |> where(
+      [restriction],
+      restriction.article_id == ^article_id and is_nil(restriction.resolved_at) and
+        (is_nil(restriction.community_id) or restriction.community_id == ^community_id)
+    )
+    |> select([restriction], restriction.community_id)
+    |> Repo.all()
+    |> Enum.map(fn
+      nil -> "platform"
+      id -> "community:#{id}"
+    end)
+  end
+
+  @doc "Locks the branch-free Lifecycle for a Doc in its owner Community."
+  def doc_site_lifecycle(article_id, community_id) do
+    DocsLifecycle
     |> where(
       [lifecycle],
-      lifecycle.article_id == ^article_id and lifecycle.branch_id == ^branch_id
+      lifecycle.article_id == ^article_id and lifecycle.community_id == ^community_id
     )
     |> lock("FOR UPDATE")
     |> Repo.one()
   end
 
-  @doc """
-  Checks for an active platform restriction on one Doc branch lifecycle.
-
-  ## Examples
-
-      Queries.doc_review_restricted?(lifecycle_id)
-      #=> true | false
-  """
-  def doc_review_restricted?(lifecycle_id) do
-    doc_review_scope_keys(lifecycle_id) != []
-  end
-
-  @doc "Returns the active review scopes for a Doc branch."
-  def doc_review_scope_keys(lifecycle_id) do
-    case Repo.get(DocLifecycle, lifecycle_id) do
-      %DocLifecycle{article_id: article_id, branch_id: branch_id} ->
-        count =
-          Repo.aggregate(
-            from(restriction in DocReviewBlock,
-              where:
-                restriction.article_id == ^article_id and restriction.branch_id == ^branch_id and
-                  is_nil(restriction.resolved_at)
-            ),
-            :count
-          )
-
-        if count > 0, do: ["platform"], else: []
-
-      nil ->
-        []
-    end
-  end
-
-  @doc """
-  Loads a Doc branch under `FOR SHARE` so policy can enforce branch capability.
-  """
-  def doc_branch(community_id, branch_id) do
-    DocBranch
-    |> where([branch], branch.community_id == ^community_id and branch.id == ^branch_id)
-    |> lock("FOR SHARE")
-    |> Repo.one()
-  end
-
-  @doc "Loads branch-scoped Doc runtime facts under `FOR UPDATE`."
-  @spec doc_branch_state(Ecto.UUID.t(), pos_integer()) :: DocBranchState.t() | nil
-  def doc_branch_state(article_id, branch_id) do
-    DocBranchState
-    |> where([state], state.article_id == ^article_id and state.branch_id == ^branch_id)
-    |> lock("FOR UPDATE")
-    |> Repo.one()
+  @doc "Reads stable Doc lifecycle and review facts for its owner Community."
+  def doc_site_lifecycle_snapshot(article_id, community_id) do
+    Repo.one(
+      from(lifecycle in DocsLifecycle,
+        where: lifecycle.article_id == ^article_id and lifecycle.community_id == ^community_id
+      )
+    )
   end
 
   @doc """

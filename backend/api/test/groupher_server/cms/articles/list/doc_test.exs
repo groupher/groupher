@@ -4,18 +4,26 @@ defmodule GroupherServer.Test.CMS.Articles.DocList do
   use GroupherServer.TestMate
 
   setup do
-    {community, _, doc_attrs, user} = mock_article(:doc)
+    {community, _, _doc_attrs, user} = mock_article(:doc)
 
-    {:ok, ~m(community doc_attrs user)a}
+    {:ok, ~m(community user)a}
   end
 
   describe "[cms doc list]" do
-    test "can get paged docs", ~m(community doc_attrs user)a do
+    test "can get paged docs", ~m(community user)a do
       {:ok, _} =
-        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       {:ok, paged_docs} =
         CMS.Articles.page(:doc, %{}, %GroupherServer.Pagi.Params.Offset{page: 1, size: 20})

@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Mutation.Articles.WorkingCopyAPIContract do
 
   test "GraphQL forkSnapshot returns its WorkingCopy in the workingCopy field" do
     {:ok, actor} = db_insert(:user)
-    {:ok, community} = mock_community(actor)
+    {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(actor)
 
     conn =
       :user
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Mutation.Articles.WorkingCopyAPIContract do
 
   test "GraphQL create, save, publish, and delete use Article WorkingCopy revision" do
     {:ok, actor} = db_insert(:user)
-    {:ok, community} = mock_community(actor)
+    {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(actor)
 
     {:ok, tag} =
       CMS.Communities.create_tag(
@@ -293,7 +293,7 @@ defmodule GroupherServer.Test.Mutation.Articles.WorkingCopyAPIContract do
   for thread <- [:blog, :changelog] do
     test "GraphQL uses the same WorkingCopy contract for #{thread}" do
       {:ok, actor} = db_insert(:user)
-      {:ok, community} = mock_community(actor)
+      {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(actor)
 
       conn =
         :user

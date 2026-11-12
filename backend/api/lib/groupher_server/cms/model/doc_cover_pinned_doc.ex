@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Model.DocCoverPinnedDoc do
 
   alias __MODULE__
   alias GroupherServer.CMS
-  alias CMS.Model.{Community, DocTreeNode}
+  alias CMS.Model.{Community, DocsTreeNode}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Model.DocCoverPinnedDoc do
   @type t :: %DocCoverPinnedDoc{}
   schema "doc_cover_pinned_docs" do
     belongs_to(:community, Community)
-    belongs_to(:node, DocTreeNode)
+    belongs_to(:node, DocsTreeNode)
 
     field(:index, :integer, default: 0)
     field(:appearance, :map, default: @default_appearance)

@@ -7,8 +7,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
 
   import Ecto.Query
 
-  alias GroupherServer.{Accounts, Activity, CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Accounts, Activity, Repo}
+  alias Accounts.Model.User
   alias CMS.Articles.{Bindings, Lifecycle, MutationLock, Numbering, Publishable, Public}
   alias CMS.Artiment.PlateJSON
   alias CMS.ArtimentMentions
@@ -106,8 +106,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
     end
   end
 
-  def publish_in_transaction(_article, _community, _source, _expected, _user, _command_id),
-    do: {:error, :unsupported_article_thread}
+  def publish_in_transaction(_article, _community, _source, _expected, _user, _command_id) do
+    {:error, :unsupported_article_thread}
+  end
 
   defp resolve_source(article, %{working_copy_id: id, revision: revision})
        when is_binary(id) and is_integer(revision) do
@@ -143,8 +144,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
     end
   end
 
-  defp resolve_source(_article, _source),
-    do: {:error, :invalid_publish_source}
+  defp resolve_source(_article, _source) do
+    {:error, :invalid_publish_source}
+  end
 
   defp materialize_source(
          article,
@@ -242,13 +244,14 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
            ),
          {:ok, _} <-
            maybe_log_change(
-             previous.body_json != snapshot.body_json,
+             CMS.Articles.Body.document(previous).json !=
+               CMS.Articles.Body.document(snapshot).json,
              resource,
              :body_updated,
              user,
              command_id,
              metadata,
-             %{schema_version: snapshot.body_schema_version},
+             %{schema_version: CMS.Articles.Body.document(snapshot).schema_version},
              [:body]
            ) do
       {:ok, :pass}
@@ -274,8 +277,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          _metadata,
          _payload,
          _fields
-       ),
-       do: {:ok, :unchanged}
+       ) do
+    {:ok, :unchanged}
+  end
 
   defp maybe_log_change(true, resource, action, user, command_id, metadata, payload, fields) do
     Activity.log(resource, action,
@@ -290,19 +294,22 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
 
   defp published_at, do: {:ok, DateTime.utc_now(:second)}
 
-  defp ensure_active_at(%Article{active_at: %DateTime{}} = article, _published_at),
-    do: {:ok, article}
+  defp ensure_active_at(%Article{active_at: %DateTime{}} = article, _published_at) do
+    {:ok, article}
+  end
 
-  defp ensure_active_at(%Article{} = article, published_at),
-    do: article |> Article.changeset(%{active_at: published_at}) |> Repo.update()
+  defp ensure_active_at(%Article{} = article, published_at) do
+    article |> Article.changeset(%{active_at: published_at}) |> Repo.update()
+  end
 
   defp maybe_initialize_stats(article, true), do: CMS.ArticleStats.initialize(article)
   defp maybe_initialize_stats(_article, false), do: {:ok, :unchanged}
 
   defp mark_edited_on_republish(%Article{} = article, nil, _snapshot), do: {:ok, article}
 
-  defp mark_edited_on_republish(%Article{is_edited: true} = article, _public, _snapshot),
-    do: {:ok, article}
+  defp mark_edited_on_republish(%Article{is_edited: true} = article, _public, _snapshot) do
+    {:ok, article}
+  end
 
   defp mark_edited_on_republish(
          %Article{} = article,
@@ -327,11 +334,13 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
 
   defp revalidate_linked_tickets(%Article{}, _snapshot, _command_id), do: {:ok, :pass}
 
-  defp transition_lifecycle(%ArticleLifecycle{state: :published} = lifecycle),
-    do: {:ok, lifecycle}
+  defp transition_lifecycle(%ArticleLifecycle{state: :published} = lifecycle) do
+    {:ok, lifecycle}
+  end
 
-  defp transition_lifecycle(%ArticleLifecycle{} = lifecycle),
-    do: Lifecycle.transition(lifecycle, :published)
+  defp transition_lifecycle(%ArticleLifecycle{} = lifecycle) do
+    Lifecycle.transition(lifecycle, :published)
+  end
 
   defp register_review(article, snapshot, lifecycle, first_publish?) do
     community_ids =
@@ -345,7 +354,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
          content <- %{
            identity: "article-snapshot:#{snapshot.id}",
            title: snapshot.title,
-           body: snapshot.body_plain_text || "",
+           body: CMS.Articles.Body.document(snapshot).plain_text || "",
            images: review_images(snapshot.id)
          } do
       GroupherServer.CMS.Review.RequestSubmission.register_in_transaction(
@@ -435,7 +444,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Publisher do
   end
 
   defp capture_mentions(article, community, snapshot, public, command_id) do
-    with {:ok, ast} <- PlateJSON.decode(snapshot.body_json),
+    with {:ok, ast} <- PlateJSON.decode(CMS.Articles.Body.document(snapshot).json),
          true <- match?(%DateTime{}, public.updated_at),
          {:ok, captured} <-
            ArtimentMentions.update(

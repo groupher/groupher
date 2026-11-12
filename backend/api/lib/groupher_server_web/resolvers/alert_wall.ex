@@ -206,20 +206,21 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
   end
 
   defp resolve_report_target(
-         %{type: :doc, article: path, doc_branch_id: branch_id} = input,
+         %{type: :doc, article: path} = input,
          actor
        )
-       when is_map(path) and is_integer(branch_id) and branch_id > 0 do
+       when is_map(path) do
     with {:ok, projection} <- FrontDesk.article(path, actor),
+         :doc <- Map.get(projection, :thread),
          article_id when is_binary(article_id) <- Map.get(projection, :id),
-         ^branch_id <- Map.get(projection, :branch_id),
-         {:ok, %Article{} = article} <-
-           FrontDesk.article(article_id, mode: :internal, view: :command_context) do
+         {:ok, article} <-
+           FrontDesk.article(article_id, mode: :internal, view: :command_context),
+         :doc <- article.thread do
       {:ok,
        %{
          owner: :cms,
          target_type: :doc,
-         target_id: "#{article.id}:#{branch_id}",
+         target_id: article.id,
          observed_version: Map.get(input, :observed_version),
          community_id: nil
        }}

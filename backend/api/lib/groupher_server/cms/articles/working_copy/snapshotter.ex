@@ -8,8 +8,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
+  alias CMS.Articles.Body
   alias CMS.Assets.Refs, as: AssetRefs
 
   alias CMS.Model.{
@@ -30,8 +31,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
     CoverEditWorkingCopy
   }
 
-  @snapshot_fields ~w(title digest slug body_json body_schema_version body_markdown body_html
-                      body_markdown_toc body_plain_text body_thumbnail body_xml body_rss)a
+  @snapshot_fields ~w(title digest slug)a
 
   @doc "Freezes the expected saved revision; callers must already have authorized the command."
   def freeze_in_transaction(working_copy_id, revision, %User{} = actor, command_id)
@@ -75,6 +75,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
            work
            |> Map.take(@snapshot_fields)
            |> Map.merge(%{
+             body: Map.merge(Body.document(work), %{article_id: article.id, type: :snapshot}),
              article_id: article.id,
              source_working_copy_id: work.id,
              source_revision: work.revision,
@@ -202,6 +203,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
       snapshot
       |> Map.take(@snapshot_fields)
       |> Map.merge(%{
+        body:
+          Map.merge(Body.document(snapshot), %{
+            article_id: snapshot.article_id,
+            type: :working_copy
+          }),
         article_id: snapshot.article_id,
         scope_kind: Map.get(target_scope, :scope_kind),
         scope_id: Map.get(target_scope, :scope_id),
@@ -218,9 +224,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
       {:error, changeset} ->
         if Enum.any?(changeset.errors, fn {_field, {_message, meta}} ->
              meta[:constraint] == :unique
-           end),
-           do: {:error, :scope_occupied},
-           else: {:error, changeset}
+           end) do
+          {:error, :scope_occupied}
+        else
+          {:error, changeset}
+        end
     end
   end
 
@@ -280,25 +288,25 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
     end
   end
 
-  defp typed_extension(:post),
-    do:
+  defp typed_extension(:post) do
       {ArticleWorkingCopyPost, ArticleSnapshotPost,
        ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:blog),
-    do:
+  defp typed_extension(:blog) do
       {ArticleWorkingCopyBlog, ArticleSnapshotBlog,
        ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:changelog),
-    do:
+  defp typed_extension(:changelog) do
       {ArticleWorkingCopyChangelog, ArticleSnapshotChangelog,
        ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:doc),
-    do:
+  defp typed_extension(:doc) do
       {ArticleWorkingCopyDoc, ArticleSnapshotDoc,
        ~w(subtitle link_addr template_key cover_url cover_url_dark)a}
+  end
 
   defp freeze_tags(work, snapshot) do
     tags = Repo.all(from(tag in ArticleWorkingCopyTag, where: tag.working_copy_id == ^work.id))

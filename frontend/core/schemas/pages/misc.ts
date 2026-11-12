@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const communityTagGroups = graphql(`
+  "Get community tag groups"
   query PageCommunityTagGroups($community: String!, $thread: Thread) {
     communityTagGroups(community: $community, thread: $thread) {
       id
@@ -14,6 +15,7 @@ export const communityTagGroups = graphql(`
 `)
 
 export const communityTagStats = graphql(`
+  "Get community tag stats by community, thread and slug"
   query CommunityTagStats($community: String!, $thread: Thread!, $slug: String!) {
     communityTagStats(community: $community, thread: $thread, slug: $slug) {
       contentsCount
@@ -23,6 +25,7 @@ export const communityTagStats = graphql(`
 `)
 
 export const themePresets = graphql(`
+  "Dashboard theme preset registry"
   query ThemePresets {
     themePresets {
       value
@@ -32,6 +35,7 @@ export const themePresets = graphql(`
 `)
 
 export const categories = graphql(`
+  "Get all categories"
   query PageCategories {
     categories {
       id

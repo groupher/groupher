@@ -111,8 +111,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
   end
 
   defp compare_content(%{value: left} = l, %{value: right} = r) do
-    left_body = decode_body(left.body_json)
-    right_body = decode_body(right.body_json)
+    left_body = decode_body(CMS.Articles.Body.document(left).json)
+    right_body = decode_body(CMS.Articles.Body.document(right).json)
     left_tags = tag_ids(l)
     right_tags = tag_ids(r)
 
@@ -173,9 +173,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
       if is_binary(id) do
         Map.put(acc, id, {path, value})
       else
-        if is_binary(type),
-          do: Map.put(acc, "position:#{Enum.join(path, ".")}", {path, value}),
-          else: acc
+        if is_binary(type) do
+          Map.put(acc, "position:#{Enum.join(path, ".")}", {path, value})
+        else
+          acc
+        end
       end
 
     value
@@ -218,12 +220,13 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
     |> Enum.sort()
   end
 
-  defp cover_edit_content(%{kind: :working_copy, value: work}),
-    do:
+  defp cover_edit_content(%{kind: :working_copy, value: work}) do
       cover_values(GroupherServer.CMS.Model.CoverEditWorkingCopy, work.cover_edit_working_copy_id)
+  end
 
-  defp cover_edit_content(%{kind: :snapshot, value: snapshot}),
-    do: cover_values(GroupherServer.CMS.Model.CoverEditSnapshot, snapshot.cover_edit_snapshot_id)
+  defp cover_edit_content(%{kind: :snapshot, value: snapshot}) do
+    cover_values(GroupherServer.CMS.Model.CoverEditSnapshot, snapshot.cover_edit_snapshot_id)
+  end
 
   defp cover_values(_model, nil), do: nil
 
@@ -282,25 +285,25 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
   defp typed_model(:working_copy, working_copy_model, _snapshot_model), do: working_copy_model
   defp typed_model(:snapshot, _working_copy_model, snapshot_model), do: snapshot_model
 
-  defp typed_models(:post),
-    do:
+  defp typed_models(:post) do
       {ArticleWorkingCopyPost, ArticleSnapshotPost,
        ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_models(:blog),
-    do:
+  defp typed_models(:blog) do
       {ArticleWorkingCopyBlog, ArticleSnapshotBlog,
        ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_models(:changelog),
-    do:
+  defp typed_models(:changelog) do
       {ArticleWorkingCopyChangelog, ArticleSnapshotChangelog,
        ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_models(:doc),
-    do:
+  defp typed_models(:doc) do
       {ArticleWorkingCopyDoc, ArticleSnapshotDoc,
        ~w(subtitle link_addr template_key cover_url cover_url_dark)a}
+  end
 
   defp typed_models(_), do: {nil, nil, []}
 

@@ -5,21 +5,7 @@ defmodule GroupherServer.Test.CMS.Articles.SnapshotActivityTest do
   import Ecto.Query
   alias GroupherServer.{Activity, CMS, Repo}
   alias Activity.Model.PostLog
-  alias CMS.Model.{Article, ArticlePublic, ArticleRevision, ArticleWorkingCopy}
-
-  test "legacy Revision writer rejects ordinary Article Drafts" do
-    {community, post, _, _} = mock_article(:post)
-    article = Repo.get!(Article, post.id)
-
-    assert {:error, :revision_owner_mismatch} =
-             CMS.Articles.Revision.create(article, %{article_id: article.id})
-
-    assert {:error, :legacy_doc_only} = CMS.Articles.Draft.Store.get(article)
-    assert {:error, :legacy_doc_only} = CMS.Articles.Draft.Store.get_for_update(article)
-
-    assert {:error, _} =
-             CMS.Articles.RevisionProjection.build(article, community, %ArticleRevision{})
-  end
+  alias CMS.Model.{Article, ArticlePublic, ArticleWorkingCopy}
 
   test "first publication of an existing WorkingCopy records creation once" do
     {:ok, actor} = db_insert(:user)

@@ -6,7 +6,8 @@ defmodule GroupherServer.CMS.Model.ArticleWorkingCopyDoc do
   """
   use Ecto.Schema
   import Ecto.Changeset
-  alias GroupherServer.CMS.Model.ArticleWorkingCopy
+  alias GroupherServer.CMS
+  alias CMS.Model.ArticleWorkingCopy
   alias Helper.Constant.DBPrefix
   @primary_key false
   @schema_prefix DBPrefix.cms()
@@ -20,8 +21,7 @@ defmodule GroupherServer.CMS.Model.ArticleWorkingCopyDoc do
     timestamps(type: :utc_datetime)
   end
 
-  def changeset(row, attrs),
-    do:
+  def changeset(row, attrs) do
       cast(row, attrs, [
         :working_copy_id,
         :subtitle,
@@ -32,4 +32,5 @@ defmodule GroupherServer.CMS.Model.ArticleWorkingCopyDoc do
       ])
       |> validate_required([:working_copy_id])
       |> foreign_key_constraint(:working_copy_id)
+  end
 end

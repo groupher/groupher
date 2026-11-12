@@ -8,6 +8,6 @@ defmodule GroupherServer.Activity.Model.DocTreeLog do
   use GroupherServer.Activity.Model.Base,
     table: "doc_tree_logs",
     stream_field: :doc_tree_ref,
-    extra_fields: [branch_ref: :string],
+    extra_fields: [],
     actions: [:trashed, :restored, :permanently_deleted]
 end

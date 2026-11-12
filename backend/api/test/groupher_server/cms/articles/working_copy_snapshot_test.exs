@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
   alias CMS.Model.{ArticleAssetRef, ArticleWorkingCopyTag}
 
   test "saving only a cover asset selection synchronizes WorkingCopy refs" do
-    {community, public, _attrs, actor} = mock_article(:post)
+    {community, public, _attrs, actor} = GroupherServer.Test.ArticleContentFixture.article(:post)
     article = Repo.get!(CMS.Model.Article, public.article_id)
 
     work =
@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
 
   test "new Article create command rejects Doc until Docs joins the snapshot publish path" do
     {:ok, actor} = db_insert(:user)
-    {:ok, community} = mock_community(actor)
+    {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(actor)
 
     assert {:error, :unsupported_article_thread} =
              CMS.Articles.create_article(community, :doc, %{}, actor,
@@ -67,7 +67,9 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
   end
 
   test "Public meta keeps Article edit, sink, and last-active state" do
-    {community, article, _attrs, _actor} = mock_article(:post)
+    {community, article, _attrs, _actor} =
+      GroupherServer.Test.ArticleContentFixture.article(:post)
+
     inner_id = article.inner_id
     last_active_at = DateTime.add(DateTime.utc_now(:second), -3, :day)
 
@@ -93,7 +95,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
 
   test "saved WorkingCopy freezes, publishes, clones, and compares by immutable content" do
     {:ok, actor} = db_insert(:user)
-    {:ok, community} = mock_community(actor)
+    {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(actor)
     tag_attrs = mock_attrs(:community_tag)
 
     assert {:ok, article_tag} =
@@ -247,18 +249,10 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
     snapshot = Repo.get!(CMS.Model.ArticleSnapshot, public.snapshot_id)
 
     frozen_body =
-      Map.take(snapshot, [
-        :body_json,
-        :body_markdown,
-        :body_html,
-        :body_markdown_toc,
-        :body_plain_text,
-        :body_thumbnail,
-        :body_schema_version
-      ])
+      CMS.Articles.Body.document(snapshot)
 
     assert public.snapshot_id == snapshot.id
-    assert snapshot.body_json == autosaved.body_json
+    assert CMS.Articles.Body.document(snapshot).json == CMS.Articles.Body.document(autosaved).json
     assert {:ok, snapshot_fields} = CMS.Articles.snapshot_thread_fields(snapshot)
     assert snapshot_fields == work_fields
 
@@ -286,12 +280,12 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
              })
 
     assert public_article.snapshot_id == snapshot.id
-    assert public_article.body.json == snapshot.body_json
-    assert public_article.body.markdown == snapshot.body_markdown
-    assert public_article.body.html == snapshot.body_html
-    assert public_article.body.markdown_toc == snapshot.body_markdown_toc
-    assert public_article.body.plain_text == snapshot.body_plain_text
-    assert public_article.body.thumbnail == snapshot.body_thumbnail
+    assert public_article.body.json == CMS.Articles.Body.document(snapshot).json
+    assert public_article.body.markdown == CMS.Articles.Body.document(snapshot).markdown
+    assert public_article.body.html == CMS.Articles.Body.document(snapshot).html
+    assert public_article.body.markdown_toc == CMS.Articles.Body.document(snapshot).markdown_toc
+    assert public_article.body.plain_text == CMS.Articles.Body.document(snapshot).plain_text
+    assert public_article.body.thumbnail == CMS.Articles.Body.document(snapshot).thumbnail
 
     assert {:ok, indexed_article} =
              CMS.SearchArtiments.Projection.Article.project(:post, public_article)
@@ -322,7 +316,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
                Ecto.UUID.generate()
              )
 
-    assert Map.take(Repo.get!(CMS.Model.ArticleSnapshot, snapshot.id), Map.keys(frozen_body)) ==
+    assert CMS.Articles.Body.document(Repo.get!(CMS.Model.ArticleSnapshot, snapshot.id)) ==
              frozen_body
 
     snapshots_before_select =
@@ -391,7 +385,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
 
     assert clone.id != work.id
     assert clone.revision == 1
-    assert clone.body_json == snapshot.body_json
+    assert CMS.Articles.Body.document(clone).json == CMS.Articles.Body.document(snapshot).json
     assert clone.cover_edit_working_copy_id != snapshot.cover_edit_snapshot_id
     assert clone_two.cover_edit_working_copy_id != clone.cover_edit_working_copy_id
     assert working_copy_tag_ids(clone.id) == [article_tag.id]
@@ -501,7 +495,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
 
   test "CreateAndPublish commits one complete Snapshot or rolls the Article back" do
     {:ok, actor} = db_insert(:user)
-    {:ok, community} = mock_community(actor)
+    {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(actor)
     initial_count = Repo.aggregate(CMS.Model.Article, :count)
     initial_work_count = Repo.aggregate(CMS.Model.ArticleWorkingCopy, :count)
     initial_snapshot_count = Repo.aggregate(CMS.Model.ArticleSnapshot, :count)
@@ -534,9 +528,9 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
     assert public.digest == ""
     assert work.article_id == article.id
     snapshot = Repo.get!(CMS.Model.ArticleSnapshot, public.snapshot_id)
-    assert snapshot.body_plain_text == "complete body"
+    assert CMS.Articles.Body.document(snapshot).plain_text == "complete body"
 
-    assert snapshot.body_thumbnail == %{
+    assert CMS.Articles.Body.document(snapshot).thumbnail == %{
              "version" => 1,
              "blocks" => [%{"type" => "paragraph", "text" => "complete body"}]
            }
@@ -544,7 +538,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
 
   test "deleteWorkingCopy protects the last unpublished work and rolls back on any external FK" do
     {:ok, actor} = db_insert(:user)
-    {:ok, community} = mock_community(actor)
+    {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(actor)
 
     assert {:ok, %{article: unpublished, working_copy: only_work}} =
              CMS.Articles.create_article(
@@ -721,7 +715,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
   test "empty WorkingCopy saves, denied actors write nothing, and empty content cannot publish" do
     {:ok, actor} = db_insert(:user)
     {:ok, unauthorized_actor} = db_insert(:user)
-    {:ok, community} = mock_community(actor)
+    {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(actor)
 
     assert {:ok, %{article: article, working_copy: work}} =
              CMS.Articles.create_article(
@@ -758,7 +752,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
              )
 
     assert saved.revision == 2
-    assert saved.body_json == empty_body_bag().json
+    assert CMS.Articles.Body.document(saved).json == empty_body_bag().json
 
     assert {:error, :invalid_body} =
              CMS.Articles.publish_article(

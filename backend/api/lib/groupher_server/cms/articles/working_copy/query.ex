@@ -33,6 +33,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
       {:ok,
        Repo.all(
          from(work in ArticleWorkingCopy,
+           join: body in assoc(work, :body),
+           preload: [body: body],
            where:
              work.article_id == ^article.id and work.scope_kind == :default and
                work.scope_id == ^article.id
@@ -46,6 +48,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
       rows =
         Repo.all(
           from(work in ArticleWorkingCopy,
+            join: body in assoc(work, :body),
+            preload: [body: body],
             where: work.article_id == ^article.id,
             order_by: [
               asc: work.scope_kind,
@@ -70,6 +74,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
       rows =
         Repo.all(
           from(snapshot in ArticleSnapshot,
+            join: body in assoc(snapshot, :body),
+            preload: [body: body],
             where: snapshot.article_id == ^article.id,
             order_by: [desc: snapshot.captured_at, desc: snapshot.id]
           )
@@ -89,7 +95,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
       when is_binary(snapshot_id) do
     with {:ok, _binding} <- Bindings.get(article, community) do
       case Repo.get_by(ArticleSnapshot, id: snapshot_id, article_id: article.id) do
-        %ArticleSnapshot{} = snapshot -> {:ok, snapshot}
+        %ArticleSnapshot{} = snapshot -> {:ok, Repo.preload(snapshot, :body)}
         nil -> {:error, :snapshot_not_found}
       end
     end
@@ -105,7 +111,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
              scope_kind: :default,
              scope_id: article.id
            ) do
-        %ArticleWorkingCopy{} = work -> {:ok, work}
+        %ArticleWorkingCopy{} = work -> {:ok, Repo.preload(work, :body)}
         nil -> {:error, :working_copy_not_found}
       end
     end
@@ -118,7 +124,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
              id: working_copy_id,
              article_id: article.id
            ) do
-        %ArticleWorkingCopy{} = work -> {:ok, work}
+        %ArticleWorkingCopy{} = work -> {:ok, Repo.preload(work, :body)}
         nil -> {:error, :working_copy_not_found}
       end
     end
@@ -180,38 +186,40 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
     end
   end
 
-  defp typed_extension(:working_copy, :post),
-    do:
+  defp typed_extension(:working_copy, :post) do
       {ArticleWorkingCopyPost, :working_copy_id,
        ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:working_copy, :blog),
-    do:
+  defp typed_extension(:working_copy, :blog) do
       {ArticleWorkingCopyBlog, :working_copy_id,
        ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:working_copy, :changelog),
-    do:
+  defp typed_extension(:working_copy, :changelog) do
       {ArticleWorkingCopyChangelog, :working_copy_id,
        ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:working_copy, :doc),
-    do:
+  defp typed_extension(:working_copy, :doc) do
       {ArticleWorkingCopyDoc, :working_copy_id,
        ~w(subtitle link_addr template_key cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:snapshot, :post),
-    do: {ArticleSnapshotPost, :snapshot_id, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  defp typed_extension(:snapshot, :post) do
+    {ArticleSnapshotPost, :snapshot_id, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:snapshot, :blog),
-    do: {ArticleSnapshotBlog, :snapshot_id, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  defp typed_extension(:snapshot, :blog) do
+    {ArticleSnapshotBlog, :snapshot_id, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:snapshot, :changelog),
-    do:
+  defp typed_extension(:snapshot, :changelog) do
       {ArticleSnapshotChangelog, :snapshot_id, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:snapshot, :doc),
-    do:
+  defp typed_extension(:snapshot, :doc) do
       {ArticleSnapshotDoc, :snapshot_id,
        ~w(subtitle link_addr template_key cover_url cover_url_dark)a}
+  end
 end

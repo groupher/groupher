@@ -470,8 +470,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
 
   defp delete_physical_article(post) do
     Repo.transaction(fn ->
-      article = Repo.get!(CMS.Model.Article, post.article_id)
-      {:ok, _deleted} = Repo.delete(article)
+      owner = Repo.get_by!(CMS.Model.ArticleHistoryOwner, article_id: post.article_id)
+      community = Repo.get!(CMS.Model.Community, owner.community_id)
+      {:ok, :ok} = CMS.Seeds.FullCommunity.delete(community.slug)
       {:ok, :pass} = ViewTracker.delete_article_state(:post, post.article_id)
     end)
   end

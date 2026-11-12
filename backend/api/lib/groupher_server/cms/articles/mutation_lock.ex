@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   Serializes commands that mutate the same logical Article aggregate.
 
       ordinary Article: article_id (shared across all Community bindings)
-      Doc Article:      community + branch_id + article_id
+      Doc Article:      community + article_id
                                   |
                                   v
                     advisory transaction lock
@@ -19,7 +19,6 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Gate.ErrorCat
   alias CMS.Model.{Article, Community}
   alias Helper.{T, Transaction}
   alias Helper.ORM.AdvisoryLock
@@ -118,73 +117,24 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     transact_lock(key(community, :doc, article_id), fun)
   end
 
-  @doc "Starts a strict branch-scoped transaction for one stable Doc Article."
-  @spec transact_doc(Community.t(), Article.t(), pos_integer(), (-> {:ok, term()}
-                                                                    | {:error, term()})) ::
-          {:ok, term()} | {:error, term()}
-  def transact_doc(
-        %Community{} = community,
-        %Article{thread: :doc, id: article_id},
-        branch_id,
-        fun
-      )
-      when is_integer(branch_id) and is_function(fun, 0) do
-    transact_lock(doc_key(community, branch_id, article_id), fun)
-  end
-
   @doc "Locks one ordinary Article by its stable logical identity."
   @spec with_article(Community.t(), T.thread(), Ecto.UUID.t(), (-> term())) ::
           {:ok, term()} | {:error, term()}
-  def with_article(%Community{}, :doc, _article_id, _fun) do
-    {:error, ErrorCat.doc_branch_required()}
-  end
-
   def with_article(%Community{} = community, thread, article_id, fun)
-      when thread in @article_threads and is_binary(article_id) and
+      when thread in [:doc | @article_threads] and is_binary(article_id) and
              is_function(fun, 0) do
     lock(key(community, thread, article_id), fun)
-  end
-
-  @doc "Locks one Doc Article in one branch or across a deterministic branch set."
-  @spec with_article(Community.t(), :doc, term() | [term()], Ecto.UUID.t(), (-> term())) ::
-          {:ok, term()} | {:error, term()}
-  def with_article(%Community{} = community, :doc, branch_ids, article_id, fun)
-      when is_list(branch_ids) and is_binary(article_id) and is_function(fun, 0) do
-    branch_ids
-    |> clean_identities()
-    |> Enum.map(&doc_key(community, &1, article_id))
-    |> lock_keys_in_order(fun)
-  end
-
-  def with_article(%Community{} = community, :doc, branch_id, article_id, fun)
-      when is_binary(article_id) and is_function(fun, 0) do
-    lock(doc_key(community, branch_id, article_id), fun)
   end
 
   @doc "Locks several ordinary Articles using stable key ordering."
   @spec with_articles(Community.t(), T.thread(), [Ecto.UUID.t()], (-> term())) ::
           {:ok, term()} | {:error, term()}
-  def with_articles(%Community{}, :doc, _article_ids, _fun) do
-    {:error, ErrorCat.doc_branch_required()}
-  end
-
   def with_articles(%Community{} = community, thread, article_ids, fun)
-      when thread in @article_threads and is_list(article_ids) and
+      when thread in [:doc | @article_threads] and is_list(article_ids) and
              is_function(fun, 0) do
     article_ids
     |> clean_identities()
     |> Enum.map(&key(community, thread, &1))
-    |> lock_keys_in_order(fun)
-  end
-
-  @doc "Locks several Doc Articles within one branch using stable key ordering."
-  @spec with_articles(Community.t(), :doc, term(), [Ecto.UUID.t()], (-> term())) ::
-          {:ok, term()} | {:error, term()}
-  def with_articles(%Community{} = community, :doc, branch_id, article_ids, fun)
-      when is_list(article_ids) and is_function(fun, 0) do
-    article_ids
-    |> clean_identities()
-    |> Enum.map(&doc_key(community, branch_id, &1))
     |> lock_keys_in_order(fun)
   end
 
@@ -196,12 +146,6 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
 
   def key(%Community{} = community, thread, article_id) do
     "article_lifecycle:#{community.id}:#{thread}:#{article_id}"
-  end
-
-  @doc "Returns the branch-scoped logical lock key for one Doc Article."
-  @spec doc_key(Community.t(), term(), Ecto.UUID.t()) :: String.t()
-  def doc_key(%Community{} = community, branch_id, article_id) do
-    "doc_article_lifecycle:#{community.id}:#{branch_id}:#{article_id}"
   end
 
   defp clean_identities(identities) do

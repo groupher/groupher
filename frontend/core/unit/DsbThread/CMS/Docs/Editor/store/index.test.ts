@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { ARTICLE_STAGE } from '~/const/article'
 
-import { buildPublishView } from '.'
+import createDocsEditorStore, { buildPublishView } from '.'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
 import type { TSideTreeController } from '../SideTree/spec'
 import type { TDocPublishRuntime } from './spec'
@@ -11,9 +11,9 @@ const noop = (): void => undefined
 
 const runtime = (patch: Partial<TDocPublishRuntime> = {}): TDocPublishRuntime => ({
   isPublishing: false,
-  checklistLoaded: false,
+  queueLoaded: false,
   publishCount: 0,
-  hasSelectableChecklistItems: false,
+  queueHasItems: false,
   ...patch,
 })
 
@@ -61,6 +61,29 @@ const sideTree = (patch: Partial<TSideTreeController> = {}): TSideTreeController
 })
 
 describe('docs editor publish view', () => {
+  it('starts without a tree and activates tree actions after attachment', () => {
+    const addGroup = vi.fn()
+    const store = createDocsEditorStore()
+
+    expect(store.publishView.surfaceMode).toBe('hidden')
+    expect(store.publishView.publishDisabled).toBe(true)
+
+    store.attachSideTree(sideTree({ addGroup }))
+    store.addGroup()
+
+    expect(addGroup).toHaveBeenCalledOnce()
+  })
+
+  it('does not publish a new store view when an equivalent tree controller is attached', () => {
+    const store = createDocsEditorStore()
+    store.attachSideTree(sideTree())
+    const publishView = store.publishView
+
+    store.attachSideTree(sideTree())
+
+    expect(store.publishView).toBe(publishView)
+  })
+
   it('keeps tree actions visible for an unpublished pin change', () => {
     const view = buildPublishView(
       sideTree({

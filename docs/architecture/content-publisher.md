@@ -780,6 +780,8 @@ Content Publisher HTTP action 是另一层传输合同，不作为 GraphQL mutat
 
 `revision` 只指 `ArticleWorkingCopy.revision` 并发序号。`saveWorkingCopy` 必须提交它；后端成功保存后推进，过期值映射为 Article WorkingCopy revision conflict。它不表示旧 `ArticleRevision` 实体。`forkSnapshot` 的 mutation 响应必须选择 `workingCopy` 字段；Receipt 重放也重建同一个副本。
 
+Article 存储在 R2 / R3 改为独占 ArticleBody 和独立 ArticlePublicBody；可信 BodyBag 生成、HTTP action 和 GraphQL 字段不因此分叉。公开选择在同一事务复制完整正文并更新 Public，读取不重新生成格式。当前实现和隔离验收见 [R3 记录](../migrations/article-public-body-r3.md)，不代表目标环境已切换。
+
 ### Batch 4：Comment
 
 - `CommentBody` schema/table 与 full BodyBag persistence；

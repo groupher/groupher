@@ -7,7 +7,6 @@ defmodule GroupherServer.CMS.ProductionSeed.References do
 
   Projection rows are never inserted here. The normal Mention Outbox must run.
   """
-  import Ecto.Query
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.ProductionSeed
   alias Accounts.Model.User
@@ -16,9 +15,6 @@ defmodule GroupherServer.CMS.ProductionSeed.References do
     Article,
     ArticleWorkingCopy,
     ArticlePublic,
-    DocDraft,
-    DocLifecycle,
-    DocBranchVersion,
     Community,
     Comment,
     CommentBody
@@ -112,50 +108,20 @@ defmodule GroupherServer.CMS.ProductionSeed.References do
   end
 
   defp update!(%{"thread" => "doc", "articleId" => id} = resource, entry, admin, _author) do
-    version =
-      Repo.one!(
-        from(v in DocBranchVersion,
-          where: v.article_id == ^id and v.branch_id == ^resource["branchId"],
-          order_by: [desc: v.version_number],
-          limit: 1
-        )
-      )
-
-    draft = Repo.get_by(DocDraft, article_id: id, branch_id: version.branch_id)
-    expected = if draft, do: draft.version, else: version.version_number
-    lifecycle = Repo.get_by!(DocLifecycle, article_id: id, branch_id: version.branch_id)
-
-    updated =
-      command!(
-        CMS.Docs.update_draft(
-          id,
-          version.branch_id,
-          %{body_bag: entry["bodyBag"], expected_version: expected},
-          admin
-        )
-      )
-
     community = Repo.get_by!(Community, slug: resource["community"])
 
-    command!(
-      CMS.Docs.publish_branch(id, version.branch_id, admin,
-        expected_draft_version: updated.version,
-        expected_lifecycle_version: lifecycle.version,
-        community: community
-      )
-    )
-
-    Map.put(
-      resource,
-      "revisionId",
-      Repo.one!(
-        from(v in DocBranchVersion,
-          where: v.article_id == ^id and v.branch_id == ^version.branch_id,
-          order_by: [desc: v.version_number],
-          limit: 1
+    public =
+      command!(
+        CMS.Seeds.Docs.update(
+          community,
+          id,
+          %{body_bag: entry["bodyBag"]},
+          admin,
+          entry["commandId"]
         )
-      ).revision_id
-    )
+      )
+
+    Map.put(resource, "snapshotId", public.snapshot_id)
   end
 
   defp update!(%{"thread" => "ticket", "articleId" => id} = resource, entry, admin, _author) do

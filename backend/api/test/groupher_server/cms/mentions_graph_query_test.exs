@@ -17,14 +17,8 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     {_, target, _, _} = mock_article(:blog, community, user)
     endpoint = Repo.get_by!(Endpoint, type: :doc, article_id: doc.article_id)
 
-    public =
-      Repo.get_by!(CMS.Model.DocPublic, article_id: doc.article_id, branch_id: doc.branch_id)
-
-    token = "#{doc.branch_id}:#{public.branch_version_id}:#{public.publication_version + 1}"
-
-    public
-    |> Ecto.Changeset.change(publication_version: public.publication_version + 1)
-    |> Repo.update!()
+    public = Repo.get!(ArticlePublic, doc.article_id)
+    token = "article-snapshot:#{public.snapshot_id}"
 
     ast = [
       %{
@@ -198,7 +192,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: [
                      %{
                        "type" => "mention",
@@ -330,7 +324,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -368,7 +362,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                  CMS.ArtimentMentions.Capture.execute(
                    %{type: source.thread, article_id: source.article_id},
                    %{
-                     published_revision_identity: next_published_revision_identity(source),
+                     published_revision_identity: current_snapshot_identity(source),
                      ast: ast,
                      community_id: community.id,
                      mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -403,7 +397,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -451,7 +445,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
   @tag :b2_independent
   test "one-hop lists preserve User targets and resolve incoming User mentions" do
     {community, source, _attrs, user} = mock_article(:post)
-    token = next_published_revision_identity(source)
+    token = current_snapshot_identity(source)
 
     ast = [
       %{
@@ -530,7 +524,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -584,7 +578,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -642,7 +636,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -698,7 +692,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -770,7 +764,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                  CMS.ArtimentMentions.Capture.execute(
                    %{type: source.thread, article_id: source.article_id},
                    %{
-                     published_revision_identity: next_published_revision_identity(source),
+                     published_revision_identity: current_snapshot_identity(source),
                      ast: ast,
                      community_id: community.id,
                      mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -822,7 +816,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -876,7 +870,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -946,7 +940,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: [],
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now() |> DateTime.truncate(:second)
@@ -1071,7 +1065,7 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
                CMS.ArtimentMentions.Capture.execute(
                  %{type: :post, article_id: source.article_id},
                  %{
-                   published_revision_identity: next_published_revision_identity(source),
+                   published_revision_identity: current_snapshot_identity(source),
                    ast: ast,
                    community_id: community.id,
                    mentioned_at: DateTime.utc_now(:second)
@@ -1081,7 +1075,8 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
              end)
 
     # Exercise read-side UNION deduplication independently of Parser self-reference policy.
-    edge = Repo.one!(Edge)
+    endpoint = Repo.get_by!(Endpoint, article_id: source.article_id)
+    edge = Repo.one!(from(e in Edge, where: e.source_endpoint_id == ^endpoint.id))
 
     attrs =
       edge
@@ -1101,7 +1096,10 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
       })
 
     Repo.insert!(Edge.changeset(%Edge{}, attrs))
-    assert length(Repo.all(Edge)) == 2
+
+    assert Repo.aggregate(from(e in Edge, where: e.source_endpoint_id == ^endpoint.id), :count) ==
+             2
+
     focus = %{type: :post, article_inner_id: article_inner_id(source, community)}
     assert {:ok, first} = CMS.mentions_graph_page(community.slug, focus, nil, 1)
     assert first.has_next_page
@@ -1126,14 +1124,8 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     {_, target, _, _} = mock_article(:blog, community, user)
     endpoint = Repo.get_by!(Endpoint, type: :doc, article_id: doc.article_id)
 
-    public =
-      Repo.get_by!(CMS.Model.DocPublic, article_id: doc.article_id, branch_id: doc.branch_id)
-
-    token = "#{doc.branch_id}:#{public.branch_version_id}:#{public.publication_version + 1}"
-
-    public
-    |> Ecto.Changeset.change(publication_version: public.publication_version + 1)
-    |> Repo.update!()
+    public = Repo.get!(ArticlePublic, doc.article_id)
+    token = "article-snapshot:#{public.snapshot_id}"
 
     ast = [
       %{
@@ -1227,15 +1219,9 @@ defmodule GroupherServer.Test.CMS.MentionsGraphQueryTest do
     end
   end
 
-  defp next_published_revision_identity(article) do
+  defp current_snapshot_identity(article) do
     public = Repo.get!(ArticlePublic, article.article_id)
-    next_version = public.publication_version + 1
-
-    public
-    |> Ecto.Changeset.change(publication_version: next_version)
-    |> Repo.update!()
-
-    "#{public.revision_id}:#{next_version}"
+    "article-snapshot:#{public.snapshot_id}"
   end
 
   defp query_events(ref, acc) do

@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
         })
 
       assert deleted["done"]
-      refute Repo.get(CMS.Model.Article, post.article_id)
+      assert Repo.get(CMS.Model.Article, post.article_id)
     end
   end
 end

@@ -73,16 +73,16 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
            } = Enum.find(contracts, &(&1.name == :run_internal))
   end
 
-  test "traces default-argument internal entries through their generated super trampoline" do
+  test "traces current Docs workspace commands through the product facade" do
     modules = [
-      GroupherServer.CMS.DocTree.Commands.DeleteNode,
-      GroupherServer.CMS.DocTree.Commands.DuplicateNode,
-      GroupherServer.CMS.DocTree.Commands.MoveNode,
-      GroupherServer.CMS.DocTree.Commands.UpdateNode
+      GroupherServer.CMS.DocTree.Commands.DeleteWorkspaceNode,
+      GroupherServer.CMS.DocTree.Commands.DuplicateWorkspaceNode,
+      GroupherServer.CMS.DocTree.Commands.MoveWorkspaceNode,
+      GroupherServer.CMS.DocTree.Commands.UpdateWorkspaceNode
     ]
 
     files =
-      [GroupherServer.CMS.DocTree | modules]
+      [GroupherServer.CMS, GroupherServerWeb.Resolvers.CMS.Docs | modules]
       |> Enum.map(fn module ->
         module.module_info(:compile)
         |> Keyword.fetch!(:source)
@@ -99,7 +99,9 @@ defmodule GroupherServer.CMS.PipelineGraphTest do
       |> MapSet.new(&{&1["module"], &1["function"], &1["arity"]})
 
     Enum.each(modules, fn module ->
-      assert MapSet.member?(reached, {inspect(module), "run_tree_internal", 4})
+      entry = Enum.find(module.__pipeline_contracts__(), &(&1.name == :run_receipt))
+      assert entry
+      assert MapSet.member?(reached, {inspect(module), "run_receipt", entry.arity})
     end)
   end
 

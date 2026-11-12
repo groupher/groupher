@@ -34,8 +34,7 @@ defmodule GroupherServer.CMS.Insights.Query do
   @spec authorize(Article.t(), term(), atom(), keyword()) ::
           {:ok, :pass} | {:error, term()}
   def authorize(article, viewer, :doc, opts) do
-    with {:ok, :pass} <- validate_insights_options(opts),
-         {:ok, :pass} <- validate_doc_insights_options(opts) do
+    with {:ok, :pass} <- validate_insights_options(opts) do
       authorize_with_scope(article, viewer, DocContext.insights(passport_opts(opts)), opts)
     end
   end
@@ -119,14 +118,6 @@ defmodule GroupherServer.CMS.Insights.Query do
 
       {:error, _reason} = error ->
         error
-    end
-  end
-
-  defp validate_doc_insights_options(opts) do
-    case Keyword.fetch(opts, :branch_id) do
-      :error -> {:ok, :pass}
-      {:ok, :main} -> {:ok, :pass}
-      {:ok, _branch_id} -> {:error, GateErrorCat.scope_context_missing()}
     end
   end
 

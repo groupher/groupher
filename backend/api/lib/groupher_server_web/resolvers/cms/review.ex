@@ -140,9 +140,8 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:ok, "comment:#{id}", :comment, to_string(id)}
   end
 
-  defp recheck_target(%{type: :doc, article_id: id, branch_id: branch_id})
-       when is_binary(id) and is_integer(branch_id) do
-    {:ok, "doc:#{id}:#{branch_id}", :doc, "#{id}:#{branch_id}"}
+  defp recheck_target(%{type: :doc, article_id: id}) when is_binary(id) do
+    {:ok, "doc:#{id}", :doc, id}
   end
 
   defp recheck_target(_attrs), do: {:error, CMS.invalid_review_block_error()}
@@ -228,26 +227,27 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     end
   end
 
-  defp resolve_target(%{type: :doc, article: path, branch_id: requested_branch}, actor)
+  defp resolve_target(%{type: :doc, article: path}, actor)
        when is_map(path) do
     with {:ok, projection} <- FrontDesk.article(path, actor),
-         id when is_binary(id) <- Map.get(projection, :id),
-         branch_id when is_integer(branch_id) <- Map.get(projection, :branch_id),
-         true <- is_nil(requested_branch) or requested_branch == branch_id do
-      {:ok, %{type: :doc, article_id: id, branch_id: branch_id, community_id: nil}}
+         :doc <- Map.get(projection, :thread),
+         id when is_binary(id) <- Map.get(projection, :id) do
+      {:ok, %{type: :doc, article_id: id, community_id: nil}}
     else
       _ -> {:error, CMS.passport_error_cat_permission_denied()}
     end
   end
 
-  defp resolve_target(%{type: :doc, article_id: id, branch_id: branch_id}, _actor)
-       when is_binary(id) and is_integer(branch_id) do
+  defp resolve_target(%{type: :doc, article_id: id}, _actor) when is_binary(id) do
     case FrontDesk.article(id, mode: :internal, view: :command_context) do
-      {:ok, article} ->
-        {:ok, %{type: :doc, article_id: article.id, branch_id: branch_id, community_id: nil}}
+      {:ok, %{thread: :doc} = article} ->
+        {:ok, %{type: :doc, article_id: article.id, community_id: nil}}
 
       {:error, _reason} = error ->
         error
+
+      _ ->
+        {:error, CMS.invalid_review_block_error()}
     end
   end
 
@@ -304,13 +304,13 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
 
   defp decision_target(
          field_name,
-         %{type: :doc, article_id: id, branch_id: branch_id}
+         %{type: :doc, article_id: id}
        )
-       when is_binary(id) and is_integer(branch_id) do
+       when is_binary(id) do
     expected_type = field_target_type(field_name)
 
     if expected_type == :doc do
-      {:ok, "doc:#{id}:#{branch_id}", "platform", :doc, "#{id}:#{branch_id}"}
+      {:ok, "doc:#{id}", "platform", :doc, id}
     else
       {:error, CMS.invalid_review_block_error()}
     end
@@ -361,7 +361,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
       target_type: request.target_type,
       article_id: request.article_id,
       comment_id: request.comment_id,
-      branch_id: request.branch_id,
       community_id: request.community_id,
       state: review_state(request),
       replaced_at: request.replaced_at,

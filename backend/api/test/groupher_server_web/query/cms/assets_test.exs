@@ -9,9 +9,6 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
 
   setup do
     {community, post, _attrs, user} = mock_article(:post)
-    article = Repo.get!(CMS.Model.Article, post.article_id)
-    author = Repo.get_by!(CMS.Model.Author, user_id: user.id)
-    assert {:ok, _draft} = CMS.Articles.Draft.Store.ensure_from_public(article, author)
     asset_conn = simu_conn(:user, user, cms: %{community.slug => %{"asset.upload" => true}})
 
     server_conn =
@@ -33,20 +30,26 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
           Ecto.UUID.generate()
         )
 
-      asset_refs =
-        Enum.map(1..25, fn position ->
-          %{asset_id: asset.id, position: position, source: "query-refs.png"}
-        end)
+      work =
+        Repo.get_by!(CMS.Model.ArticleWorkingCopy,
+          article_id: post.article_id,
+          scope_kind: :default
+        )
 
-      assert {:ok, %{body: refs, cover: []}} =
-               CMS.Assets.link_refs(
-                 post,
-                 %{
-                   cur_user: user,
-                   asset_refs: asset_refs
-                 },
-                 community: community
-               )
+      refs =
+        Enum.map(1..25, fn position ->
+          %CMS.Model.ArticleAssetRef{}
+          |> CMS.Model.ArticleAssetRef.changeset(%{
+            working_copy_id: work.id,
+            community_id: community.id,
+            asset_id: asset.id,
+            block_id: "query-#{position}",
+            usage: :inline,
+            position: position,
+            source: "query-refs.png"
+          })
+          |> Repo.insert!()
+        end)
 
       assert length(refs) == 25
 

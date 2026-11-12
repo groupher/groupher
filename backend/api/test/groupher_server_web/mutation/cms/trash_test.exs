@@ -162,7 +162,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
     assert result["done"]
     assert result["commandId"] == command_id
-    refute Repo.get(Article, post.id)
+    assert Repo.get(Article, post.id)
     refute Repo.get_by(ArticleStats, thread: :post, article_id: post.id)
     refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.id)
     refute Repo.get_by(TrashedArticle, hash_id: trashed["id"])

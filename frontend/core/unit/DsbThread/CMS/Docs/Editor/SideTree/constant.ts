@@ -43,7 +43,6 @@ export const SIDE_TREE_GROUP_MENU_ACTION = {
 export const SIDE_TREE_NODE_MENU_ACTION = {
   RENAME: 'rename',
   DUPLICATE: 'duplicate',
-  MOVE_TO_DRAFT: 'move_to_draft',
   PIN_TO_COVER: 'pin_to_cover',
   UNPIN_FROM_COVER: 'unpin_from_cover',
   DELETE: 'delete',

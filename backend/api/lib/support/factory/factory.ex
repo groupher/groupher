@@ -212,7 +212,7 @@ defmodule GroupherServer.Support.Factory do
       mock_attrs(factory_name, attrs) |> Map.drop([:author, :community, :communities])
 
     if factory_name == :doc do
-      CMS.Articles.create(community, :doc, public_attrs, user, command_id: Ecto.UUID.generate())
+      create_published_doc(community, public_attrs, user)
     else
       create_published_article(community, factory_name, public_attrs, user)
     end
@@ -251,14 +251,18 @@ defmodule GroupherServer.Support.Factory do
     end
   end
 
-  def create_published_article(_community, _thread, _attrs, _user, _opts),
-    do: {:error, :unsupported_article_thread}
+  def create_published_article(%Community{} = community, :doc, attrs, %User{} = user, _opts) do
+    create_published_doc(community, attrs, user)
+  end
+
+  def create_published_article(_community, _thread, _attrs, _user, _opts) do
+    {:error, :unsupported_article_thread}
+  end
 
   defp db_insert_with_retry(factory_name, attributes, attempts_left) do
     factory_name
     |> mock(attributes)
     |> maybe_put_default_article_binding()
-    |> maybe_put_default_doc_branch()
     |> maybe_put_default_tag_group()
     |> Repo.insert()
     |> ensure_community_lifecycle()
@@ -287,8 +291,6 @@ defmodule GroupherServer.Support.Factory do
   defp maybe_put_default_tag_group(record), do: record
 
   defp maybe_put_default_article_binding(record), do: record
-
-  defp maybe_put_default_doc_branch(record), do: record
 
   defp ensure_community_lifecycle({:ok, %Community{} = community} = result) do
     with {:ok, _lifecycle} <- CMS.Communities.Lifecycle.ensure_created(community.id) do
@@ -450,9 +452,7 @@ defmodule GroupherServer.Support.Factory do
 
     {:ok, article} =
       if thread == :doc do
-        CMS.Articles.create(community, thread, with_body_bag(attrs), user,
-          command_id: Ecto.UUID.generate()
-        )
+        create_published_doc(community, attrs, user)
       else
         create_published_article(community, thread, attrs, user)
       end
@@ -479,14 +479,23 @@ defmodule GroupherServer.Support.Factory do
 
     {:ok, article} =
       if thread == :doc do
-        CMS.Articles.create(community, thread, with_body_bag(attrs), user,
-          command_id: Ecto.UUID.generate()
-        )
+        create_published_doc(community, attrs, user)
       else
         create_published_article(community, thread, attrs, user)
       end
 
     {community, article, attrs, user}
+  end
+
+  defp create_published_doc(community, attrs, user) do
+    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+
+    attrs =
+      attrs
+      |> with_body_bag()
+      |> Map.take([:title, :slug, :digest, :body_bag, :cover, :cover_edit, :tag_ids])
+
+    CMS.Seeds.Docs.create(community, attrs, actor, Ecto.UUID.generate())
   end
 
   defp with_body_bag(%{body: body} = attrs) when is_binary(body) do

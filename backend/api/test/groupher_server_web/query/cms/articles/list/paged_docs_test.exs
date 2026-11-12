@@ -54,7 +54,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
       {:ok, doc} =
-        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(community, :doc, doc_attrs, user,
+          command_id: Ecto.UUID.generate()
+        )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
@@ -121,7 +123,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
       {:ok, doc} =
-        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(community, :doc, doc_attrs, user,
+          command_id: Ecto.UUID.generate()
+        )
 
       track_view(doc, user)
       track_view(doc, user2)
@@ -137,7 +141,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       Process.sleep(2000)
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(community, :doc, doc_attrs, user,
+          command_id: Ecto.UUID.generate()
+        )
 
       variables = %{pagi: %{offset: %{page: 1, size: 10}}, filter: %{}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
@@ -151,7 +157,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
       {:ok, doc} =
-        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(community, :doc, doc_attrs, user,
+          command_id: Ecto.UUID.generate()
+        )
 
       community_tag_attrs = mock_attrs(:community_tag)
 
@@ -190,12 +198,16 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(community, :doc, doc_attrs, user,
+          command_id: Ecto.UUID.generate()
+        )
 
       doc_attrs2 = mock_attrs(:doc, %{community_id: community.id})
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, doc_attrs2, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(community, :doc, doc_attrs2, user,
+          command_id: Ecto.UUID.generate()
+        )
 
       variables = %{
         pagi: %{offset: %{page: 1, size: 10, config_revision: 0}},
@@ -278,9 +290,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     test "filter community should get docs which belongs to that community",
          ~m(guest_conn community user)a do
       {:ok, doc} =
-        CMS.Articles.create(community, :doc, mock_attrs(:doc), user,
-          command_id: Ecto.UUID.generate()
-        )
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
@@ -293,9 +307,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
     test "should have a active_at same with inserted_at", ~m(guest_conn community user)a do
       {:ok, _} =
-        CMS.Articles.create(community, :doc, mock_attrs(:doc), user,
-          command_id: Ecto.UUID.generate()
-        )
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
@@ -345,19 +361,25 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       user_conn = simu_conn(:user, user)
 
       {:ok, doc} =
-        CMS.Articles.create(community, :doc, mock_attrs(:doc), user,
-          command_id: Ecto.UUID.generate()
-        )
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, mock_attrs(:doc), user,
-          command_id: Ecto.UUID.generate()
-        )
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, mock_attrs(:doc), user,
-          command_id: Ecto.UUID.generate()
-        )
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       variables = %{filter: %{community: community.slug}}
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
@@ -437,9 +459,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     test "latest commented doc should appear on top",
          ~m(guest_conn community doc_last_week user2)a do
       {:ok, _fresh_doc} =
-        CMS.Articles.create(community, :doc, mock_attrs(:doc), user2,
-          command_id: Ecto.UUID.generate()
-        )
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user2, command_id: Ecto.UUID.generate())
 
       variables = %{
         pagi: %{offset: %{page: 1, size: 20, config_revision: 0}},
@@ -500,9 +524,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, user} = db_insert(:user)
 
       {:ok, _fresh_doc} =
-        CMS.Articles.create(community, :doc, mock_attrs(:doc), user,
-          command_id: Ecto.UUID.generate()
-        )
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       variables = %{
         pagi: %{offset: %{page: 1, size: 20, config_revision: 0}},
@@ -535,11 +561,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   end
 
   defp backdate(article, timestamp) do
-    CMS.Model.DocBranchState
-    |> Repo.get_by!(article_id: article.id, branch_id: article.branch_id)
-    |> Ecto.Changeset.change(%{active_at: timestamp})
-    |> Repo.update!()
-
     result =
       CMS.Model.Article
       |> Repo.get!(article.id)

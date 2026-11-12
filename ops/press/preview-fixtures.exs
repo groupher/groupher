@@ -26,9 +26,7 @@ defmodule GroupherServer.PressPreview.Fixtures do
     ArticleBinding,
     ArticleLifecycle,
     Community,
-    DocLifecycle,
-    DocPublic,
-    DocTreeNode
+    DocsLifecycle
   }
 
   @slug "press-preview"
@@ -50,38 +48,9 @@ defmodule GroupherServer.PressPreview.Fixtures do
                 })
 
               for thread <- [:post, :blog, :changelog, :doc] do
-                {_, article, _, _} = Factory.mock_article(thread, community, user)
+                {_, _article, _, _} = Factory.mock_article(thread, community, user)
 
-                if thread == :doc do
-                  for attrs <- [
-                        %{node_id: "press-tab", type: :tab, title: "Docs", index: 0},
-                        %{
-                          node_id: "press-group",
-                          parent_node_id: "press-tab",
-                          type: :group,
-                          title: "Guide",
-                          index: 0
-                        },
-                        %{
-                          node_id: "press-page",
-                          parent_node_id: "press-group",
-                          doc_id: article.id,
-                          type: :page,
-                          title: article.title,
-                          index: 0
-                        }
-                      ] do
-                    %DocTreeNode{}
-                    |> DocTreeNode.changeset(
-                      Map.merge(attrs, %{
-                        community_id: community.id,
-                        branch_id: article.branch_id,
-                        stage: :public
-                      })
-                    )
-                    |> Repo.insert!()
-                  end
-                end
+
               end
 
               {:ok, _config} =
@@ -468,11 +437,9 @@ defmodule GroupherServer.PressPreview.Fixtures do
     article = Enum.find(articles, &(&1.thread == thread))
 
     if thread == :doc do
-      public = Repo.get_by!(DocPublic, article_id: article.id)
-
       Repo.one!(
-        from(lifecycle in DocLifecycle,
-          where: lifecycle.article_id == ^article.id and lifecycle.branch_id == ^public.branch_id,
+        from(lifecycle in DocsLifecycle,
+          where: lifecycle.article_id == ^article.id,
           lock: "FOR UPDATE"
         )
       )

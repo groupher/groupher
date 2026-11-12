@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Model.DocCoverCard do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.{Community, DocTreeNode}
+  alias CMS.Model.{Community, DocsTreeNode}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.Model.DocCoverCard do
   @type t :: %__MODULE__{}
   schema "doc_cover_cards" do
     belongs_to(:community, Community)
-    belongs_to(:group_node, DocTreeNode)
+    belongs_to(:group_node, DocsTreeNode)
 
     field(:index, :integer, default: 0)
     field(:appearance, :map, default: %{})

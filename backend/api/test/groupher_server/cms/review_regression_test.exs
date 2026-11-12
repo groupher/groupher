@@ -4,7 +4,14 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
   import Ecto.Query
 
   alias GroupherServer.{AlertWall, CMS, Repo}
-  alias CMS.Model.{ArticleLifecycle, ArtimentReview, CommentLifecycle, DocLifecycle, DocPublic}
+
+  alias CMS.Model.{
+    ArticleLifecycle,
+    ArtimentReview,
+    CommentLifecycle,
+    DocsLifecycle,
+    ArticlePublic
+  }
 
   for target_type <- [:article, :comment, :doc, :doc_comment] do
     @target_type target_type
@@ -117,11 +124,11 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     assert hold.source_ref == "report_threshold:item:#{item_id}"
   end
 
-  test "Doc Comment recheck reads its public branch title and Comment body through the command" do
+  test "Doc Comment recheck reads its public title and Comment body through the command" do
     {community, doc, _author, comment} = doc_comment()
     reviewer = reviewer(community)
     command_id = Ecto.UUID.generate()
-    public = Repo.get_by!(DocPublic, article_id: comment.article_id)
+    public = Repo.get_by!(ArticlePublic, article_id: comment.article_id)
     body = Repo.get_by!(CMS.Model.CommentBody, comment_id: comment.id)
 
     assert {:ok, result} =
@@ -144,7 +151,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
         )
       )
 
-    assert is_nil(request.branch_id)
+    refute Map.has_key?(request, :branch_id)
     assert request.payload["text"]["title"] == public.title
     assert request.payload["text"]["body"] == body.plain_text
 
@@ -186,7 +193,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
 
   defp restriction_target(:doc) do
     {_community, doc, _attrs, _author} = mock_article(:doc)
-    {Repo.get_by!(DocLifecycle, article_id: doc.id, branch_id: doc.branch_id), "platform"}
+    {Repo.get_by!(DocsLifecycle, article_id: doc.id), "platform"}
   end
 
   defp restriction_target(:doc_comment) do

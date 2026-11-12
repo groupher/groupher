@@ -19,7 +19,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Deleter do
     ArticleWorkingCopyDoc,
     ArticleWorkingCopyPost,
     ArticleWorkingCopyTag,
-    CoverEditWorkingCopy
+    CoverEditWorkingCopy,
+    DocsLifecycle,
+    DocsQueueArticle
   }
 
   @doc "Deletes a locked Article-owned WorkingCopy, returning `work_in_use` for an external FK."
@@ -41,6 +43,37 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Deleter do
   end
 
   def delete_in_transaction(_article, _work), do: {:error, :invalid_working_copy}
+
+  @doc "Deletes a Doc's last default copy only after its owning Trash aggregate has been dismantled."
+  def delete_docs_aggregate_in_transaction(
+        %Article{thread: :doc} = article,
+        %ArticleWorkingCopy{} = work
+      ) do
+    with true <- Repo.in_transaction?(),
+         true <-
+           work.article_id == article.id and work.scope_kind == :default and
+             work.scope_id == article.id,
+         false <- Repo.exists?(from(l in DocsLifecycle, where: l.article_id == ^article.id)),
+         false <- Repo.exists?(from(p in ArticlePublic, where: p.article_id == ^article.id)),
+         false <- Repo.exists?(from(m in DocsQueueArticle, where: m.article_id == ^article.id)),
+         1 <-
+           Repo.aggregate(
+             from(w in ArticleWorkingCopy, where: w.article_id == ^article.id),
+             :count
+           ),
+         {:ok, :pass} <- delete_asset_refs(work.id),
+         {:ok, :pass} <- delete_tag_rows(work.id),
+         {:ok, :pass} <- delete_typed_row(:doc, work.id),
+         {:ok, cover_id} <- delete_work_parent(work),
+         {:ok, :pass} <- delete_cover(cover_id) do
+      {:ok, :deleted}
+    else
+      {:error, _} = error -> error
+      _ -> {:error, :work_in_use}
+    end
+  end
+
+  def delete_docs_aggregate_in_transaction(_, _), do: {:error, :invalid_working_copy}
 
   defp public_head(article_id) do
     {:ok, Repo.get(ArticlePublic, article_id)}
@@ -120,8 +153,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Deleter do
       {:error, :working_copy_children_delete_failed}
   end
 
-  defp parent_delete_error(%Postgrex.Error{postgres: %{code: :foreign_key_violation}}),
-    do: :work_in_use
+  defp parent_delete_error(%Postgrex.Error{postgres: %{code: :foreign_key_violation}}) do
+    :work_in_use
+  end
 
   defp parent_delete_error(%Ecto.ConstraintError{type: :foreign_key}), do: :work_in_use
   defp parent_delete_error(_error), do: :working_copy_delete_failed

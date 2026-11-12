@@ -6,7 +6,8 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshotDoc do
   """
   use Ecto.Schema
   import Ecto.Changeset
-  alias GroupherServer.CMS.Model.ArticleSnapshot
+  alias GroupherServer.CMS
+  alias CMS.Model.ArticleSnapshot
   alias Helper.Constant.DBPrefix
   @primary_key false
   @schema_prefix DBPrefix.cms()
@@ -20,8 +21,7 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshotDoc do
     timestamps(type: :utc_datetime, updated_at: false)
   end
 
-  def changeset(row, attrs),
-    do:
+  def changeset(row, attrs) do
       cast(row, attrs, [
         :snapshot_id,
         :subtitle,
@@ -32,4 +32,5 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshotDoc do
       ])
       |> validate_required([:snapshot_id])
       |> foreign_key_constraint(:snapshot_id)
+  end
 end

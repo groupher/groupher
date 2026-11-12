@@ -38,7 +38,8 @@ export const resolveDelegationSubject = async (backendToken: string): Promise<st
   const data = await requestGroupherGraphQL<{
     sessionState?: { delegationSubject?: string | null; isValid?: boolean | null } | null
   }>(
-    `query ResolveDelegationSubject {
+    `"Check the cur token is valid or not"
+query ResolveDelegationSubject {
       sessionState {
         delegationSubject
         isValid

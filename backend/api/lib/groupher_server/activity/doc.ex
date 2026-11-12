@@ -1,6 +1,6 @@
 defmodule GroupherServer.Activity.Doc do
   @moduledoc """
-  Owns branch-aware Doc Activity actions and projections.
+  Owns stable Article Doc Activity actions and projections.
 
       Doc command -> Doc Activity contract -> DocLog
   """
@@ -15,20 +15,14 @@ defmodule GroupherServer.Activity.Doc do
 
   @contracts %{
     created: Event.contract([], [], [:article_log, :community_log]),
-    title_changed: Event.contract([:title], [:revision_id], [:article_log, :community_log]),
+    title_changed: Event.contract([:title], [:snapshot_id], [:article_log, :community_log]),
     body_updated:
       Event.contract(
-        [:body_hash, :schema_version, :summary],
-        [:revision_id],
+        [:schema_version, :summary],
+        [:snapshot_id],
         [:article_log, :community_log]
       ),
-    draft_updated:
-      Event.contract([:body_hash, :schema_version], [:revision_id], [])
-      |> Event.contract_only(),
-    published:
-      Event.contract([], [:revision_id, :branch_version_id], [:article_log, :community_log]),
-    publish_restored:
-      Event.contract([], [:revision_id, :branch_version_id], [:article_log, :community_log]),
+    published: Event.contract([], [:snapshot_id], [:article_log, :community_log]),
     trashed: Event.contract([], [], [:community_log]),
     restored: Event.contract([], [], [:article_log, :community_log]),
     archived: Event.contract([], [:batch], [:article_log, :community_log]),

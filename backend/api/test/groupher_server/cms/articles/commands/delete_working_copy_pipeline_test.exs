@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.DeleteWorkingCopyPipeline do
   alias GroupherServer.CMS
 
   test "deletes the selected WorkingCopy without a revision precondition" do
-    {community, public, _attrs, user} = mock_article(:post)
+    {community, public, _attrs, user} = GroupherServer.Test.ArticleContentFixture.article(:post)
     article = Repo.get!(CMS.Model.Article, public.article_id)
     working_copy = Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id)
 
@@ -21,7 +21,9 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.DeleteWorkingCopyPipeline do
   end
 
   test "Receipt replay hides a deleted WorkingCopy when the editor loses read permission" do
-    {community, public, _attrs, _author} = mock_article(:post)
+    {community, public, _attrs, _author} =
+      GroupherServer.Test.ArticleContentFixture.article(:post)
+
     article = Repo.get!(CMS.Model.Article, public.article_id)
     working_copy = Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id)
     {:ok, editor} = db_insert(:user)
@@ -63,7 +65,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.DeleteWorkingCopyPipeline do
   end
 
   test "an external RESTRICT reference returns work_in_use and rolls child deletion back" do
-    {community, public, _attrs, user} = mock_article(:post)
+    {community, public, _attrs, user} = GroupherServer.Test.ArticleContentFixture.article(:post)
     article = Repo.get!(CMS.Model.Article, public.article_id)
     working_copy = Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id)
     extension = Repo.get_by!(CMS.Model.ArticleWorkingCopyPost, working_copy_id: working_copy.id)
@@ -112,7 +114,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.DeleteWorkingCopyPipeline do
 
   test "the last unpublished WorkingCopy cannot be deleted" do
     {:ok, user} = db_insert(:user)
-    {:ok, community} = mock_community(user)
+    {:ok, community} = GroupherServer.Test.ArticleContentFixture.community(user)
 
     assert {:ok, %{article: article, working_copy: working_copy}} =
              CMS.Articles.create_article(

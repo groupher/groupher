@@ -73,6 +73,29 @@ type RootQueryType {
   "paged published docs"
   pagedPublishedDocs(login: String!, filter: ArticlePageFilter, pagi: PagiInput, thread: DocThread): DocPage
 
+  docsQueuePolicy(community: String!): Json
+
+  "Authorized Docs publication read"
+  docsQueuePreview(community: String!, articleId: ID, versions: Json): Json
+
+  "Authorized Docs publication read"
+  docsApprovalDiff(community: String!, articleId: ID, versions: Json, baseline: DocsDiffBaseline): Json
+
+  "Authorized Docs publication read"
+  docsReleaseHistory(community: String!, beforeId: Int, limit: Int): Json
+
+  "Authorized Docs publication read"
+  docsReleaseDetail(community: String!, releaseId: Int!, articleId: ID): Json
+
+  "Authorized Docs publication read"
+  docsSnapshotHistory(community: String!, articleId: ID!, snapshotId: ID, cursor: Json): Json
+
+  "Authorized Docs publication read"
+  docsPublicationNotices(community: String!): Json
+
+  "Read the current post-publication conflict for an editable Doc"
+  docsPostPublishConflict(community: String!, articleId: ID!): DocsPostPublishConflict
+
   "Editable WorkingCopies for one Article"
   articleWorkingCopies(articleId: ID!, community: String!): [ArticleWorkingCopy!]!
 
@@ -162,29 +185,28 @@ type RootQueryType {
   "dashboard third-party analytics provider registry"
   thirdPartyAnalyticsProviders: [DsbThirdPartyAnalyticsProvider!]!
 
-  "community docs side tree"
-  docTree(community: String!): DocTree
+  "Authorized branch-free Docs workspace tree"
+  docsEditor(community: String!, articleId: ID!): DocsEditor
+
+  docsWorkspaceTree(community: String!): DocsWorkspaceTree
 
   "public community docs side tree"
   docPublicTree(community: String!): DocPublicTree
 
-  "dashboard docs unified publish checklist"
-  docPublishChecklist(community: String!): DocPublishChecklist
+  "Current authorized Docs publication queue"
+  docsPublishQueue(community: String!): DocsPublishQueue
+
+  "Check whether removing Docs from the Queue discards unique edits"
+  docsDequeuePreview(community: String!, queueRevision: Int!, articleIds: [ID!]!): DocsDequeuePreview
+
+  "Preview a workspace deletion and any Queue-only edits it would discard"
+  docsWorkspaceDeletePreview(community: String!, treeRevision: Int!, queueRevision: Int!, nodeId: ID!): DocsWorkspaceDeletePreview
 
   "dashboard docs trash items"
   docTreeTrashItems(community: String!, pagi: PagiInput): DocTreeTrashPage!
 
   "public community docs cover"
   docCover(community: String!, view: DocCoverView): DocCover
-
-  "dashboard docs editor document, preferring draft and falling back to public"
-  docDraft(community: String!, id: ID!): DocDraft
-
-  "immutable published versions for one stable Doc branch"
-  docBranchVersions(docId: ID!, branchId: ID!, pagi: PagiInput): DocBranchVersionPage!
-
-  "one immutable published version for a stable Doc branch"
-  docBranchVersion(docId: ID!, branchId: ID!, branchVersionId: ID!): DocBranchVersionView
 
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
@@ -270,13 +292,16 @@ type RootQueryType {
   "artiments mentioning an internal target"
   mentionedBy(community: String!, target: MentionTargetInput!, pagi: PagiInput): ArtimentMentionPage
 
+  "Pages mention relationships around a focused resource in a community."
   mentionsGraph(community: String!, focus: MentionsGraphLocatorInput!, after: String, first: Int): MentionsGraphPage!
 
   "Reads Artiment title, URL and body status by stable resource identity"
   artimentStatus(community: String!, locator: ArtimentStatusInput!): ArtimentStatus
 
+  "Reads the revision of the mention graph around a focused resource."
   mentionsGraphRevision(community: String!, focus: MentionsGraphLocatorInput!): ID!
 
+  "Pages article comments associated with a focused mention graph resource."
   mentionsGraphArticleComments(community: String!, focus: MentionsGraphLocatorInput!, after: ID, first: Int): MentionsGraphArticleCommentsPage!
 
   "search communities by title"
@@ -345,22 +370,31 @@ type RootQueryType {
   "get doc by id"
   doc(article: ArticlePathInput!): Doc!
 
+  "Lists pending content reviews in a review scope."
   pendingContentReviews(scope: ReviewBotScopeInput!, limit: Int, offset: Int): [CmsContentReview!]!
 
+  "Loads the current review for a content target."
   contentReview(target: CmsReviewTargetInput!): CmsContentReview
 
+  "Loads the review notice for a content target."
   contentReviewNotice(target: CmsReviewTargetInput!): CmsReviewNotice
 
+  "Lists past reviews for a content target."
   contentReviewHistory(target: CmsReviewTargetInput!, limit: Int, offset: Int): [CmsContentReview!]!
 
+  "Loads the Press configuration for a community."
   pressConfig(community: String!): PressConfig
 
+  "Loads an article for the Press service."
   pressArticle(article: ArticlePathInput!): PressArticle
 
+  "Loads a community RSS feed for the Press service."
   pressCommunityRssFeed(community: String!, input: PressCommunityRSSFeedInput!): PressCommunityRSSFeed
 
+  "Loads a thread RSS feed for the Press service."
   pressThreadRssFeed(community: String!, thread: Thread!, input: PressThreadRSSFeedInput!): PressThreadRSSFeed
 
+  "Loads a community site manifest for the Press service."
   pressSiteManifest(community: String!): PressSiteManifest
 
   "check one registered action against the current user's Passport"
@@ -372,14 +406,19 @@ type RootQueryType {
   "read one community-scoped ContentImport Job and its safe Doc preview"
   contentImportJob(community: String!, jobRef: ID!): ContentImportJob
 
+  "Lists reports submitted by the current user."
   myReports(filter: AlertReportFilter, pagi: PagiInput): AlertReportPage!
 
+  "Lists alert items in the requested review scope."
   alertItems(scope: ReviewBotScopeInput!, filter: AlertItemFilter, pagi: PagiInput): AlertItemPage!
 
+  "Loads an alert item by its ID."
   alertItem(id: ID!): AlertItem
 
+  "Lists reports associated with an alert item."
   alertItemReports(id: ID!, pagi: PagiInput): AlertReportPage!
 
+  "Loads ReviewBot policy for a scope and subject type."
   reviewBotConfig(scope: ReviewBotScopeInput!, subjectType: ReviewBotSubjectType!): ReviewBotConfig!
 }
 
@@ -402,8 +441,10 @@ type RootMutationType {
   "Revoke the current persisted Browser Session for canonical Auth only."
   revokeBrowserSession(browserSessionRef: String!): Done
 
+  "Revokes a browser session identified by its public reference through Auth."
   revokeBrowserSessionPublic(browserSessionRef: String!, publicRef: String!): Done
 
+  "Revokes the other browser sessions while retaining the current session."
   revokeOtherBrowserSessions(browserSessionRef: String!): Done
 
   "Link a verified OAuth identity through canonical Auth."
@@ -873,7 +914,7 @@ type RootMutationType {
 
   "update enable in dashboard"
   updateDashboardEnable(
-    community: String!, dsbSection: DsbSection, commandId: ID!, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean, visitorLocationMap: Boolean
+    community: String!, dsbSection: DsbSection, commandId: ID!, post: Boolean, postPublishedEditing: Boolean, blog: Boolean, blogPublishedEditing: Boolean, kanban: Boolean, changelog: Boolean, changelogPublishedEditing: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean, visitorLocationMap: Boolean
   ): Dsb
 
   "update thread-specific emotion settings in dashboard"
@@ -931,79 +972,79 @@ type RootMutationType {
   "update docs FAQ in dashboard"
   updateDashboardDocFaq(community: String!, dsbSection: DsbSection, commandId: ID!, docFaq: DsbDocFaqInput!): Dsb
 
+  "Updates a community's Press configuration."
   updatePressConfig(input: UpdatePressConfigInput!, commandId: ID!): PressConfigPayload
 
-  "create one recursive docs navigation node"
-  createDocTreeNode(
-    commandId: ID!
+  restoreDocsSnapshot(
+    community: String!, articleId: ID!, snapshotId: ID!, workingCopyId: ID, revision: Int, commandId: ID!
+  ): DocsBeginEditResult
 
-    community: String!
+  configureDocsQueue(
+    community: String!, approvalPolicyRevision: Int!, approvalRequired: Boolean!, allowSelfApproval: Boolean!, commandId: ID!
+  ): Json
 
-    baseRevision: Int!
+  "Begin editing a public Doc by explicitly creating its default copy when needed"
+  beginDocsEdit(commandId: ID!, community: String!, articleId: ID!, publicSnapshotId: ID!): DocsBeginEditResult
 
-    "Immediate parent logical node id; null only for a root Tab."
-    parentNodeId: ID
+  "Approve the current complete Docs queue"
+  approveDocsQueue(commandId: ID!, community: String!, queueRevision: Int!): DocsQueueApprovalResult
 
-    input: DocTreeNodeInput!
-  ): DocTreeMutationPayload
+  "Resolve a Doc's post-publication conflict into its default working copy"
+  resolveDocsPostPublish(
+    commandId: ID!, community: String!, articleId: ID!, workingCopyId: ID!, defaultRevision: Int!, publicSnapshotId: ID!, choices: [DocsMergeChoiceInput!]!
+  ): DocsPostPublishResolution
 
-  "update a docs tree node"
-  updateDocTreeNode(commandId: ID!, community: String!, id: ID!, baseRevision: Int!, patch: DocTreeNodePatchInput!): DocTreeMutationPayload
+  "Save the queued working copy of a Doc"
+  saveDocsQueueCopy(
+    commandId: ID!, community: String!, articleId: ID!, queueRevision: Int!, workingCopyRevision: Int!, title: String, digest: String, slug: String, bodyBag: ArtimentBodyBagInput, tagIds: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, copyRight: String, linkAddr: String, subtitle: String, templateKey: String, assetRefs: [ArticleAssetRefInput]
+  ): DocsQueueSaveResult
 
-  "update a docs draft document"
-  updateDocDraft(
-    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, subtitle: String, slug: String, bodyBag: ArtimentBodyBagInput
-  ): DocDraft
+  "Merge the current default Doc copy into its queued copy"
+  mergeDocsQueueCopy(
+    commandId: ID!, community: String!, queueRevision: Int!, articleId: ID!, defaultRevision: Int!, workingCopyRevision: Int!, choices: [DocsMergeChoiceInput!]!
+  ): DocsQueueMergeResult
 
-  "publish selected docs content and tree changes as one release"
-  publishDocChanges(commandId: ID!, community: String!, input: DocPublishChangesInput, mode: DocPublishMode): DocPublishChangesPayload
+  "Permanently remove an unreferenced Docs Trash action"
+  purgeDocsWorkspaceTrash(commandId: ID!, community: String!, queueRevision: Int!, trashActionId: ID!): DoneState
 
-  "move one published docs page back to draft visibility"
-  moveDocToDraft(commandId: ID!, community: String!, id: ID!): MoveDocToDraftPayload
+  "Restore a Docs workspace Trash action"
+  restoreDocsWorkspaceNode(
+    commandId: ID!, community: String!, treeRevision: Int!, queueRevision: Int!, trashActionId: ID!, targetParentNodeId: ID, targetIndex: Int
+  ): DocsWorkspaceRestoreResult
 
-  "create missing article drafts for every published Page in one navigation subtree"
-  moveDocTreeSubtreeToDraft(commandId: ID!, community: String!, nodeId: ID!): DoneState
+  "Move a Docs workspace subtree to Trash and queue its public deletion"
+  deleteDocsWorkspaceNode(
+    commandId: ID!, community: String!, treeRevision: Int!, queueRevision: Int!, nodeId: ID!, confirmation: DocsDiscardConfirmationInput
+  ): DocsWorkspaceDeleteResult
 
-  "restore one immutable Doc Revision into its branch Draft workspace"
-  restoreDocRevisionToDraft(commandId: ID!, docId: ID!, branchId: ID!, revisionId: ID!, expectedVersion: Int): DocDraft
+  "Remove Docs from the publication queue"
+  dequeueDocs(
+    commandId: ID!, community: String!, queueRevision: Int!, articleIds: [ID!]!, confirmation: DocsDiscardConfirmationInput
+  ): DocsQueueEnqueueResult
 
-  "delete a docs tree node"
-  deleteDocTreeNode(commandId: ID!, community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
+  "Move a Docs workspace directory node"
+  moveDocsWorkspaceNode(
+    commandId: ID!, community: String!, treeRevision: Int!, nodeId: ID!, parentNodeId: ID, position: Int!
+  ): DocsWorkspaceUpdateResult
 
-  "restore a docs tree item from product trash"
-  restoreDocTreeTrashItem(
-    commandId: ID!
+  "Update a Docs workspace directory node"
+  updateDocsWorkspaceNode(
+    commandId: ID!, community: String!, treeRevision: Int!, nodeId: ID!, patch: DocsWorkspaceNodePatchInput!
+  ): DocsWorkspaceUpdateResult
 
-    community: String!
+  "Duplicate a page or link into a new Docs workspace identity"
+  duplicateDocsWorkspaceNode(commandId: ID!, community: String!, treeRevision: Int!, nodeId: ID!): DocsWorkspaceNodeResult
 
-    id: ID!
+  "Create a Docs workspace directory node"
+  createDocsWorkspaceNode(
+    commandId: ID!, community: String!, treeRevision: Int!, parentNodeId: ID, input: DocsWorkspaceNodeInput!
+  ): DocsWorkspaceNodeResult
 
-    baseRevision: Int!
+  "Enqueue Doc working copies and their required navigation nodes"
+  enqueueDocs(commandId: ID!, community: String!, queueRevision: Int!, entries: [DocsQueueEntryInput!]!): DocsQueueEnqueueResult
 
-    "Replacement parent logical node id when the original parent no longer exists."
-    targetParentNodeId: ID
-
-    targetIndex: Int
-  ): DocTreeMutationPayload
-
-  "duplicate a docs tree node"
-  duplicateDocTreeNode(commandId: ID!, community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
-
-  "move a docs tree node"
-  moveDocTreeNode(
-    commandId: ID!
-
-    community: String!
-
-    id: ID!
-
-    baseRevision: Int!
-
-    "Target parent logical node id; null only when moving a root Tab."
-    targetParentNodeId: ID
-
-    targetIndex: Int
-  ): DocTreeMutationPayload
+  "Publish the complete Docs queue at its expected revision"
+  releaseDocsQueue(commandId: ID!, community: String!, queueRevision: Int!): DocsQueueReleaseResult
 
   "add a published Group as a Cover Card"
   addDocCoverCard(commandId: ID!, community: String!, groupNodeId: ID!): DocCoverCard
@@ -1046,30 +1087,40 @@ type RootMutationType {
   "cancel an unfinished import Job and discard its staged BodyBags"
   cancelDocContentImport(community: String!, jobRef: ID!): ContentImportJob!
 
+  "Requests another review of an article in the given scope."
   recheckArticleV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
+  "Requests another review of a comment in the given scope."
   recheckCommentV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
   recheckDocV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
+  "Approves the current review of an article."
   approveArticleV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
+  "Rejects the current review of an article."
   rejectArticleV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
+  "Approves the current review of a comment."
   approveCommentV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
+  "Rejects the current review of a comment."
   rejectCommentV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
   approveDocV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
   rejectDocV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
+  "Updates ReviewBot policy for the requested scope and subject type."
   updateReviewBotConfig(input: UpdateReviewBotConfigInput!, commandId: ID!): ReviewBotConfig!
 
+  "Submits a report for a target to AlertWall."
   submitReport(input: AlertReportInput!, commandId: ID!): AlertReport!
 
+  "Withdraws a report submitted by the current user."
   withdrawReport(reportId: ID!, commandId: ID!): AlertReport!
 
+  "Resolves an alert item using its expected version."
   resolveAlertItem(id: ID!, resolution: String!, expectedVersion: Int!, commandId: ID!): AlertWallCommandResult!
 }
 
@@ -1187,7 +1238,6 @@ type ContentImportJob {
   counts: ContentImportCounts!
   tree: Json!
   badSmells: Json!
-  targetBranch: String!
   firstImportedDocId: ID
 }
 
@@ -1212,7 +1262,6 @@ type ContentImportApplyResult {
   jobRef: ID!
   status: ContentImportJobStatus!
   firstImportedDocId: ID
-  targetBranch: String!
   counts: Json!
   failedItems: Json!
   skipped: Json!
@@ -1323,7 +1372,6 @@ input AlertReportTargetInput {
   observedVersion: Int
   article: ArticlePathInput
   comment: CommentPathInput
-  docBranchId: Int
   userLogin: String
 }
 
@@ -1781,7 +1829,6 @@ input CmsReviewTargetInput {
   comment: CommentPathInput
   articleId: ID
   commentId: ID
-  branchId: Int
   communityId: ID
 }
 
@@ -1801,7 +1848,6 @@ type CmsContentReview {
   targetType: ReviewBotSubjectType!
   articleId: ID
   commentId: ID
-  branchId: Int
   communityId: ID
   state: String!
   replacedAt: DateTime
@@ -2522,21 +2568,6 @@ enum DocTreeNodeType {
   PIN
 }
 
-enum ArticleStage {
-  DRAFT
-  PUBLIC
-}
-
-enum DocPublishMode {
-  WITH_COVER_SYNC
-  DOC_ONLY
-}
-
-enum DocPublishStatus {
-  DRAFT
-  PUBLIC
-}
-
 enum DocCoverView {
   PUBLIC
   DASHBOARD
@@ -2613,89 +2644,6 @@ input MarkerInput {
   appearance: MarkerAppearanceInput
 }
 
-type DocTreeNode {
-  """
-  Stable logical node identity (`doc_tree_nodes.node_id`). The physical
-  database row id is intentionally not exposed by the Tree API.
-  """
-  id: ID
-
-  """
-  Immediate parent logical node id in the same Community, Branch, and Stage.
-  This references another row's `node_id`, which is exposed as GraphQL `id`;
-  it never references the physical database row id. Null only for root Tabs.
-  """
-  parentNodeId: ID
-
-  docId: ID
-
-  type: DocTreeNodeType
-
-  title: String
-
-  index: Int
-
-  href: String
-
-  marker: Marker
-
-  badge: String
-
-  hidden: Boolean
-
-  publishState: DocTreeNodePublishState
-
-  groups: [DocTreeNode]
-
-  pages: [DocTreeNode]
-
-  pins: [DocTreeNode]
-}
-
-type DocTreeNodePublishState {
-  status: DocPublishStatus
-  published: Boolean
-  publishedBefore: Boolean
-  hasDraft: Boolean
-  publicNodeId: ID
-  publicDocId: ID
-  hasUnpublishedChanges: Boolean
-  lastPublishedAt: DateTime
-  inCover: Boolean
-  hiddenFromCover: Boolean
-  pinnedToCover: Boolean
-}
-
-type DocTreeState {
-  hasUnpublishedChanges: Boolean
-  stagedEventCount: Int
-  baseSnapshotId: ID
-  latestSnapshotId: ID
-  latestReleaseId: ID
-  latestReleaseNumber: Int
-  latestVersionSlug: String
-  revision: Int
-}
-
-type DocTreeEvent {
-  id: ID
-  seq: Int
-  eventType: String
-  payload: Json
-  inversePayload: Json
-  status: String
-  owner: String
-  docId: ID
-  insertedAt: DateTime
-}
-
-type DocTree {
-  revision: Int
-  treeState: DocTreeState
-  stagedEvents: [DocTreeEvent]
-  tabs: [DocTreeNode]
-}
-
 type DocPublicTreeNode {
   "Stable logical `node_id`; the physical database row id is not exposed."
   id: ID
@@ -2728,40 +2676,218 @@ type DocPublicTree {
   tabs: [DocPublicTreeNode]
 }
 
-type DocPublishChecklistItem {
-  id: ID!
-  title: String!
-  action: String!
-  selectedByDefault: Boolean!
-  selectable: Boolean!
-  disabledReason: String
+enum DocsQueueTreeChangeKind {
+  UPSERT
+  DELETE
 }
 
-type DocPublishChecklist {
+type DocsQueueArticle {
+  articleId: ID!
+  workingCopyId: ID!
   revision: Int!
-  totalCount: Int!
-  docChanges: [DocPublishChecklistItem!]!
-  treeChanges: [DocPublishChecklistItem!]!
+  title: String!
 }
 
-type DocPublishScope {
-  totalCount: Int!
+type DocsQueueTreeChange {
+  nodeId: ID!
+  changeKind: DocsQueueTreeChangeKind!
+  target: Json
 }
 
-type DocPublishRelease {
-  id: ID!
-  releaseNumber: Int!
-  versionSlug: String!
-  publishedAt: DateTime!
+type DocsPublishQueue {
+  revision: Int!
+  approvalRequired: Boolean!
+  allowSelfApproval: Boolean!
+  approvalPolicyRevision: Int!
+  approvalStatus: DocsQueueApprovalStatus
+  articles: [DocsQueueArticle!]!
+  treeChanges: [DocsQueueTreeChange!]!
+}
+
+enum DocsQueueApprovalStatus {
+  IDLE
+  PENDING
+  APPROVED
+  NEEDS_REAPPROVAL
+}
+
+type DocsQueueReleaseResult {
+  releaseId: ID!
+  queueRevision: Int!
+}
+
+input DocsQueueEntryInput {
+  articleId: ID!
+  defaultRevision: Int!
+}
+
+type DocsQueueEnqueueResult {
+  queueRevision: Int!
+}
+
+type DocsQueueSaveResult {
+  queueRevision: Int!
+  workingCopyRevision: Int!
+}
+
+type DocsQueueApprovalResult {
+  approvalId: ID!
+  queueRevision: Int!
+}
+
+enum DocsMergeField {
+  TITLE
+  DIGEST
+  SLUG
+  SUBTITLE
+  LINK_ADDR
+  TEMPLATE_KEY
+  COVER_URL
+  COVER_URL_DARK
+  BODY
+  TAGS
+  COVER_EDIT
+  ASSET_REFS
+}
+
+enum DocsMergeSide {
+  SOURCE
+  TARGET
+}
+
+input DocsMergeChoiceInput {
+  field: DocsMergeField!
+  side: DocsMergeSide!
+}
+
+type DocsQueueMergeConflict {
+  fields: [DocsMergeField!]!
+  queueRevision: Int!
+  defaultRevision: Int!
+  workingCopyRevision: Int!
+}
+
+type DocsQueueMergeResult {
+  queueRevision: Int
+  workingCopyRevision: Int
+  conflict: DocsQueueMergeConflict
+}
+
+type DocsPostPublishConflict {
+  publicSnapshotId: ID!
+  workingCopyId: ID!
+  defaultRevision: Int!
+}
+
+type DocsPostPublishResolution {
+  workingCopyRevision: Int
+  conflictFields: [DocsMergeField!]
+}
+
+type DocsDiscardDocument {
+  articleId: ID!
+  exclusiveFields: [String!]!
+}
+
+type DocsDequeuePreview {
+  requiresConfirmation: Boolean!
+  confirmation: DocsDiscardConfirmation
+  documents: [DocsDiscardDocument!]!
+}
+
+type DocsWorkspaceDeletePreview {
+  requiresConfirmation: Boolean!
+  confirmation: DocsDiscardConfirmation
+  documents: [DocsDiscardDocument!]!
+  publicCount: Int!
+  draftCount: Int!
+}
+
+type DocsWorkspaceDeleteResult {
+  trashActionId: ID!
+  treeRevision: Int!
+  queueRevision: Int!
+}
+
+type DocsWorkspaceRestoreResult {
+  nodeId: ID!
+  treeRevision: Int!
+  queueRevision: Int!
+}
+
+type DocsDiscardConfirmation {
+  formatVersion: Int!
+  hash: String!
+}
+
+input DocsDiscardConfirmationInput {
+  formatVersion: Int!
+  hash: String!
+}
+
+input DocsWorkspaceNodePatchInput {
+  title: String
+  href: String
+  marker: MarkerInput
+  badge: String
+  hidden: Boolean
+}
+
+type DocsWorkspaceNodeResult {
+  nodeId: ID!
+  articleId: ID
+  workingCopyId: ID
+  treeRevision: Int!
+}
+
+type DocsWorkspaceUpdateResult {
+  treeRevision: Int!
+}
+
+input DocsWorkspaceNodeInput {
+  type: DocTreeNodeType!
+  title: String!
+  index: Int
+  href: String
+  marker: MarkerInput
+  badge: String
+  hidden: Boolean
+}
+
+type DocsWorkspaceNode {
+  nodeId: ID!
+  type: DocTreeNodeType!
+  parentNodeId: ID
+  index: Int!
+  title: String!
+  href: String
+  docId: ID
+  marker: Json
+  badge: String
+  hidden: Boolean!
+  published: Boolean!
+  workingCopyId: ID
+  workingCopyRevision: Int
+}
+
+type DocsEditor {
+  workingCopy: ArticleWorkingCopy
+  publicSnapshot: ArticleSnapshot
+}
+
+type DocsBeginEditResult {
+  workingCopyId: ID!
+  revision: Int!
+}
+
+type DocsWorkspaceTree {
+  treeRevision: Int!
+  queueRevision: Int!
+  nodes: [DocsWorkspaceNode!]!
 }
 
 type DocTreeTrashPage {
   entries: [DocTreeTrashItem!]!
-  pageInfo: PageInfo!
-}
-
-type DocBranchVersionPage {
-  entries: [DocBranchVersionView!]!
   pageInfo: PageInfo!
 }
 
@@ -2790,21 +2916,6 @@ type CommentReconcileEntry {
 type CommentReconcilePayload {
   article: CommentMutationArticle!
   entries: [CommentReconcileEntry!]!
-}
-
-type DocPublishChangesPayload {
-  done: Boolean!
-  release: DocPublishRelease
-  checklist: DocPublishChecklist!
-  scope: DocPublishScope!
-  commandId: ID
-}
-
-input DocPublishChangesInput {
-  expectedChecklistRevision: Int
-  docChangeIds: [ID]
-  treeChangeIds: [ID]
-  restoreTreeChangeIds: [ID]
 }
 
 type DocCover {
@@ -2840,27 +2951,6 @@ type DocCoverPinnedDoc {
   appearance: Json!
   href: String!
   doc: Doc!
-}
-
-type DocDraft {
-  id: ID
-  docId: ID
-  branchId: ID!
-  version: Int!
-  contentHash: String
-  baseRevisionId: ID
-  title: String
-  subtitle: String
-  slug: String
-  commandId: ID
-  stage: ArticleStage
-  digest: String
-  author: User
-  insertedAt: DateTime
-  updatedAt: DateTime
-  body: ArtimentBody!
-  thumbnail: Json
-  assetRefs: [ArticleAssetRef!]!
 }
 
 type ArticleWorkingCopy {
@@ -2928,41 +3018,6 @@ input ArticleWorkingCopySourceInput {
 
 type ArticleWorkingCopyResult {
   workingCopy: ArticleWorkingCopy!
-}
-
-type DocTreeMutationPayload {
-  revision: Int
-  treeState: DocTreeState
-  node: DocTreeNode
-  affectedNodes: [DocTreeNode]
-  conflict: Boolean
-  commandId: ID
-}
-
-type MoveDocToDraftPayload {
-  docId: ID
-  stage: ArticleStage
-  publishState: DocTreeNodePublishState
-  commandId: ID
-}
-
-input DocTreeNodeInput {
-  type: DocTreeNodeType!
-  title: String!
-  docId: ID
-  index: Int
-  href: String
-  marker: MarkerInput
-  badge: String
-  hidden: Boolean
-}
-
-input DocTreeNodePatchInput {
-  title: String
-  href: String
-  marker: MarkerInput
-  badge: String
-  hidden: Boolean
 }
 
 type DsbThemePresetOption {
@@ -3189,28 +3244,6 @@ type ArtimentBody {
   bodyHash: String
   schemaVersion: Int!
   thumbnail: Json!
-}
-
-type DocBranchVersionContent {
-  title: String
-  slug: String
-  subtitle: String
-  digest: String
-  linkAddr: String
-  templateKey: String
-  bodyHash: String
-  body: ArtimentBody!
-  plainText: String
-  schemaVersion: Int
-}
-
-type DocBranchVersionView {
-  id: ID!
-  revisionId: ID!
-  versionNumber: Int!
-  publishedAt: DateTime
-  message: String
-  content: DocBranchVersionContent!
 }
 
 type Post implements Article {
@@ -3564,9 +3597,12 @@ type DsbLayout {
 
 type DsbEnable {
   post: Boolean
+  postPublishedEditing: Boolean
   blog: Boolean
+  blogPublishedEditing: Boolean
   kanban: Boolean
   changelog: Boolean
+  changelogPublishedEditing: Boolean
   doc: Boolean
   docLastUpdate: Boolean
   docReaction: Boolean
@@ -4282,6 +4318,11 @@ type OpenGraph {
   url: String
   favicon: String
   siteName: String
+}
+
+enum DocsDiffBaseline {
+  PUBLIC
+  APPROVAL
 }
 
 interface Article {

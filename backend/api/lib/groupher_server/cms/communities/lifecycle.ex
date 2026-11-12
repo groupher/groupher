@@ -563,6 +563,16 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   defp destroy_lifecycle(lifecycle, operation_ref, parent_event_ref) do
     case Repo.update(transition_changeset(lifecycle, :destroy)) do
       {:ok, destroyed} ->
+        case CMS.DocTree.HistoryPurge.run(destroyed, operation_ref) do
+          {:ok, :purged} -> {:ok, :pass}
+          {:error, reason} -> Repo.rollback(reason)
+        end
+
+        case CMS.Articles.RetainedHistory.purge_community(destroyed) do
+          {:ok, :purged} -> {:ok, :pass}
+          {:error, reason} -> Repo.rollback(reason)
+        end
+
         case write_audit(
                destroyed,
                operation_ref,

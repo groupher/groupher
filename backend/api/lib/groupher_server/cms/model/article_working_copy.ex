@@ -7,36 +7,27 @@ defmodule GroupherServer.CMS.Model.ArticleWorkingCopy do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Article, CoverEditWorkingCopy}
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.{Article, ArticleBody, CoverEditWorkingCopy}
   alias Helper.Constant.DBPrefix
 
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   @foreign_key_type Ecto.UUID
   @schema_prefix DBPrefix.cms()
-  @required_fields ~w(article_id scope_kind scope_id revision title digest body_json
-                      body_schema_version body_markdown body_html body_markdown_toc
-                      body_plain_text body_thumbnail created_by_id updated_by_id)a
-  @optional_fields ~w(slug body_xml body_rss cover_edit_working_copy_id)a
+  @required_fields ~w(article_id scope_kind scope_id revision title digest created_by_id updated_by_id)a
+  @optional_fields ~w(slug cover_edit_working_copy_id)a
   @type t :: %__MODULE__{}
 
   schema "article_working_copies" do
     belongs_to(:article, Article)
+    belongs_to(:body, ArticleBody, on_replace: :update)
     field(:scope_kind, Ecto.Enum, values: [:default, :workspace])
     field(:scope_id, Ecto.UUID)
     field(:revision, :integer, default: 1)
     field(:title, :string, default: "")
     field(:digest, :string, default: "")
     field(:slug, :string)
-    field(:body_json, :string)
-    field(:body_schema_version, :integer, default: 1)
-    field(:body_markdown, :string, default: "")
-    field(:body_html, :string, default: "")
-    field(:body_markdown_toc, :map, default: %{})
-    field(:body_plain_text, :string, default: "")
-    field(:body_thumbnail, :map, default: %{})
-    field(:body_xml, :string)
-    field(:body_rss, :string)
     belongs_to(:cover_edit_working_copy, CoverEditWorkingCopy)
     belongs_to(:created_by, User, type: :id)
     belongs_to(:updated_by, User, type: :id)
@@ -48,7 +39,8 @@ defmodule GroupherServer.CMS.Model.ArticleWorkingCopy do
     |> cast(attrs, @required_fields ++ @optional_fields, empty_values: [])
     |> validate_required(@required_fields)
     |> validate_number(:revision, greater_than: 0)
-    |> validate_number(:body_schema_version, greater_than: 0)
+    |> cast_assoc(:body, required: true)
+    |> foreign_key_constraint(:body_id, name: :article_working_copys_body_owner_fkey)
     |> validate_scope()
     |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:created_by_id)

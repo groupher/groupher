@@ -6,7 +6,8 @@ defmodule GroupherServer.CMS.Model.ArticleWorkingCopyTag do
   """
   use Ecto.Schema
   import Ecto.Changeset
-  alias GroupherServer.CMS.Model.{ArticleWorkingCopy, CommunityTag}
+  alias GroupherServer.CMS
+  alias CMS.Model.{ArticleWorkingCopy, CommunityTag}
   alias Helper.Constant.DBPrefix
 
   @primary_key false

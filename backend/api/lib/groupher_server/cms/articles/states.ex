@@ -18,12 +18,9 @@ defmodule GroupherServer.CMS.Articles.States do
 
   alias CMS.Articles.ErrorCat
   alias CMS.{Articles.Lifecycle, Artiment.Const, Comments.Persist}
-  alias CMS.Docs.Lifecycle, as: DocLifecycle
 
   alias CMS.Model.{
     Article,
-    DocBranch,
-    DocBranchState,
     PostState
   }
 
@@ -68,41 +65,22 @@ defmodule GroupherServer.CMS.Articles.States do
   end
 
   @spec archive(atom()) :: T.domain_res(term())
-  def archive(:doc) do
-    now = Datetime.now(:second)
-    threshold = Datetime.shift(now, @archive_threshold[:doc] || @archive_threshold[:default])
-
-    DocBranch
-    |> where([branch], branch.status == :active)
-    |> Repo.all()
-    |> Enum.reduce_while({:ok, 0}, fn branch, {:ok, archived_count} ->
-      case DocLifecycle.archive_before(branch, threshold) do
-        {:ok, count} -> {:cont, {:ok, archived_count + count}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
-  end
-
   def archive(thread) do
     with {:ok, _info} <- match(thread) do
       now = Datetime.now(:second)
       threshold = @archive_threshold[thread] || @archive_threshold[:default]
       archive_threshold = Datetime.shift(now, threshold)
 
-      Lifecycle.archive_before(thread, archive_threshold)
+      if thread == :doc do
+        CMS.DocTree.Archive.before(archive_threshold)
+      else
+        Lifecycle.archive_before(thread, archive_threshold)
+      end
     end
   end
 
-  @doc "Sinks an ordinary Article or an explicit Doc branch."
+  @doc "Sinks an Article."
   @spec sink(Article.t(), keyword()) :: T.domain_res(term())
-  def sink(%Article{thread: :doc} = article, opts) do
-    update_doc_branch_state(article, opts, %{
-      is_sunk: true,
-      last_active_at: article.inserted_at,
-      active_at: article.inserted_at
-    })
-  end
-
   def sink(%Article{inserted_at: inserted_at} = article, _opts) do
     update_stable_article(article, %{
       is_sunk: true,
@@ -111,22 +89,8 @@ defmodule GroupherServer.CMS.Articles.States do
     })
   end
 
-  @doc "Unsinks an ordinary Article or an explicit Doc branch."
+  @doc "Unsinks an Article."
   @spec undo_sink(Article.t(), keyword()) :: T.domain_res(term())
-  def undo_sink(%Article{thread: :doc} = article, opts) do
-    with branch_id when is_integer(branch_id) <- Keyword.get(opts, :branch_id),
-         %DocBranchState{} = state <-
-           Repo.get_by(DocBranchState, article_id: article.id, branch_id: branch_id),
-         true <- in_active_period?(:doc, state) do
-      state
-      |> DocBranchState.changeset(%{is_sunk: false, active_at: state.last_active_at})
-      |> Repo.update()
-    else
-      false -> undo_sink_old_article("can not undo sink old article")
-      _ -> {:error, ErrorCat.article_not_found("doc branch state not found")}
-    end
-  end
-
   def undo_sink(%Article{thread: thread} = article, _opts) do
     with true <- in_active_period?(thread, article),
          %Article{} = canonical <- Repo.get(Article, article.id) do
@@ -140,13 +104,13 @@ defmodule GroupherServer.CMS.Articles.States do
     end
   end
 
-  @doc "Locks comments in the Article aggregate or one Doc branch state."
+  @doc "Locks comments in the Article aggregate."
   @spec lock_comments(Article.t(), keyword()) :: T.domain_res(term())
   def lock_comments(%Article{} = article, _opts) do
     update_stable_article(article, %{comments_locked: true})
   end
 
-  @doc "Unlocks comments in the Article aggregate or one Doc branch state."
+  @doc "Unlocks comments in the Article aggregate."
   @spec undo_lock_comments(Article.t(), keyword()) :: T.domain_res(term())
   def undo_lock_comments(%Article{} = article, _opts) do
     update_stable_article(article, %{comments_locked: false})
@@ -163,16 +127,6 @@ defmodule GroupherServer.CMS.Articles.States do
 
   defp update_stable_article(%Article{} = article, attrs) do
     article |> Article.changeset(attrs) |> Repo.update()
-  end
-
-  defp update_doc_branch_state(article, opts, attrs) do
-    with branch_id when is_integer(branch_id) <- Keyword.get(opts, :branch_id),
-         %DocBranchState{} = state <-
-           Repo.get_by(DocBranchState, article_id: article.id, branch_id: branch_id) do
-      state |> DocBranchState.changeset(attrs) |> Repo.update()
-    else
-      _ -> {:error, ErrorCat.article_not_found("doc branch state not found")}
-    end
   end
 
   defp undo_sink_old_article(details), do: {:error, ErrorCat.undo_sink_old_article(details)}

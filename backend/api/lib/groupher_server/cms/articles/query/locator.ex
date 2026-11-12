@@ -54,8 +54,7 @@ defmodule GroupherServer.CMS.Articles.Query.Locator do
                %{
                  path: path,
                  article: result.article,
-                 binding: result.binding,
-                 branch_id: result.branch_id
+                 binding: result.binding
                }
              ]
          end
@@ -118,25 +117,15 @@ defmodule GroupherServer.CMS.Articles.Query.Locator do
     end
   end
 
-  defp select_results(query, :doc) do
-    select(query, [article, gate_article_binding: binding, gate_doc_branch: branch], %{
-      article: article,
-      binding: binding,
-      inner_id: binding.inner_id,
-      branch_id: branch.id
-    })
-  end
-
   defp select_results(query, _thread) do
     select(query, [article, gate_article_binding: binding], %{
       article: article,
       binding: binding,
-      inner_id: binding.inner_id,
-      branch_id: nil
+      inner_id: binding.inner_id
     })
   end
 
-  defp scope_context(:doc), do: DocContext.public_main()
+  defp scope_context(:doc), do: DocContext.public()
   defp scope_context(thread), do: ArticleContext.public(thread)
 
   defp supported_thread?(:doc), do: true

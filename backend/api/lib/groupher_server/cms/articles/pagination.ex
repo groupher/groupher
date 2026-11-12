@@ -32,11 +32,8 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     ArticlePublic,
     Community,
     CommunityTag,
-    DocBranch,
-    DocBranchState,
-    DocTreeNode,
-    DocLifecycle,
-    DocPublic,
+    DocsTreeNode,
+    DocsLifecycle,
     PinnedArticle,
     PostState
   }
@@ -162,7 +159,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   def public_binding_ids(thread, actor \\ nil) do
     context =
       if thread == :doc do
-        CMS.Gate.Context.Scope.Doc.public_main()
+        CMS.Gate.Context.Scope.Doc.public()
       else
         CMS.Gate.Context.Scope.Article.public(thread)
       end
@@ -300,24 +297,16 @@ defmodule GroupherServer.CMS.Articles.Pagination do
 
   defp add_public_joins(query, :doc) do
     query
-    |> join(:inner, [article_binding: binding], branch in DocBranch,
-      as: :doc_branch,
-      on: branch.community_id == binding.community_id and branch.type == :main
-    )
-    |> join(:inner, [article: article, doc_branch: branch], state in DocBranchState,
-      as: :stable_doc_state,
-      on: state.article_id == article.id and state.branch_id == branch.id
-    )
-    |> join(:inner, [article: article, doc_branch: branch], public in DocPublic,
+    |> join(:inner, [article: article], public in ArticlePublic,
       as: :stable_public,
-      on: public.article_id == article.id and public.branch_id == branch.id
+      on: public.article_id == article.id
     )
     |> join(
       :inner,
-      [article: article, doc_branch: branch],
-      lifecycle in DocLifecycle,
+      [article: article, article_binding: binding],
+      lifecycle in DocsLifecycle,
       as: :doc_lifecycle,
-      on: lifecycle.article_id == article.id and lifecycle.branch_id == branch.id
+      on: lifecycle.article_id == article.id and lifecycle.community_id == binding.community_id
     )
   end
 
@@ -341,10 +330,9 @@ defmodule GroupherServer.CMS.Articles.Pagination do
       where(
         query,
         exists(
-          from(node in DocTreeNode,
+          from(node in DocsTreeNode,
             where:
               node.community_id == parent_as(:article_community).id and
-                node.branch_id == parent_as(:doc_branch).id and
                 node.stage == ^CMS.Const.stage(:public) and node.type == :page and
                 node.doc_id == parent_as(:article).id
           )
@@ -549,22 +537,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
       on: user.id == author.user_id,
       left_join: public in ArticlePublic,
       on: public.article_id == article.id,
-      left_join: lifecycle in ArticleLifecycle,
-      on:
-        lifecycle.article_id == article.id and
-          lifecycle.state in [:published, :archived],
-      left_join: branch in DocBranch,
-      on: branch.community_id == binding.community_id and branch.type == :main,
-      left_join: doc_state in DocBranchState,
-      on: doc_state.article_id == article.id and doc_state.branch_id == branch.id,
-      left_join: doc_public in DocPublic,
-      on:
-        doc_public.article_id == article.id and doc_public.branch_id == branch.id and
-          doc_public.visible == true,
-      left_join: doc_lifecycle in DocLifecycle,
-      on:
-        doc_lifecycle.article_id == article.id and doc_lifecycle.branch_id == branch.id and
-          doc_lifecycle.state in [:published, :archived],
       where: ^path_filter,
       where: article.thread == ^thread,
       where: binding.id in subquery(visible_bindings),
@@ -574,10 +546,10 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         binding_id: binding.id,
         thread: article.thread,
         inner_id: binding.inner_id,
-        title: fragment("COALESCE(?, ?)", public.title, doc_public.title),
-        digest: fragment("COALESCE(?, ?)", public.digest, doc_public.digest),
-        active_at: fragment("COALESCE(?, ?)", article.active_at, doc_public.active_at),
-        published_at: fragment("COALESCE(?, ?)", public.published_at, doc_public.published_at),
+        title: public.title,
+        digest: public.digest,
+        active_at: article.active_at,
+        published_at: public.published_at,
         inserted_at: article.inserted_at,
         updated_at: article.updated_at,
         author: user,

@@ -32,21 +32,15 @@ defmodule GroupherServer.CMS.DocCover.Persist do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
   alias CMS.DocCover.Sync, as: CoverSync
-  alias CMS.DocTree.ChangeDetection
-  alias CMS.DocTree.Publish, as: DocTreePublish
 
   alias CMS.Model.{
-    Article,
-    ArticleBinding,
-    ArticleRevision,
     Community,
-    DocBranchVersion,
+    ArticlePublic,
+    ArticleWorkingCopy,
     DocCoverCard,
     DocCoverItem,
     DocCoverPinnedDoc,
-    DocDraft,
-    DocPublic,
-    DocTreeNode
+    DocsTreeNode
   }
 
   alias Helper.{ORM, T}
@@ -317,36 +311,27 @@ defmodule GroupherServer.CMS.DocCover.Persist do
   end
 
   defp ensure_clean_published(%Community{} = community, page) do
-    draft =
-      DocDraft
-      |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
-      |> join(:inner, [draft, _article], binding in ArticleBinding,
-        on: binding.article_id == draft.article_id
-      )
-      |> where([_draft, _article, binding], binding.community_id == ^community.id)
-      |> where([draft, _article, _binding], draft.branch_id == ^page.branch_id)
-      |> where([draft, _article, _binding], draft.article_id == ^page.doc_id)
-      |> limit(1)
-      |> Repo.one()
+    with %ArticlePublic{} = public <- Repo.get(ArticlePublic, page.doc_id),
+         true <- page.community_id == community.id do
+      Repo.all(from(w in ArticleWorkingCopy, where: w.article_id == ^page.doc_id))
+      |> Enum.reduce_while({:ok, :pass}, fn work, _ ->
+        case CMS.Articles.WorkingCopy.Diff.compare(work.id, public.snapshot_id) do
+          {:ok, diff} ->
+            if diff.body.equal and map_size(diff.fields) == 0 and diff.tags.added == [] and
+                 diff.tags.removed == [] and not diff.cover_edit and not diff.asset_refs do
+              {:cont, {:ok, :pass}}
+            else
+              {:halt,
+               {:error,
+                ErrorCat.custom("Publish the latest doc changes before pinning it to cover.")}}
+            end
 
-    public_revision =
-      ArticleRevision
-      |> join(:inner, [revision], version in DocBranchVersion,
-        on: version.revision_id == revision.id
-      )
-      |> join(:inner, [revision, version], public in DocPublic,
-        on: public.branch_version_id == version.id
-      )
-      |> where([revision, _version, public], revision.article_id == ^page.doc_id)
-      |> where([_revision, _version, public], public.branch_id == ^page.branch_id)
-      |> limit(1)
-      |> Repo.one()
-
-    if is_nil(draft) or
-         not ChangeDetection.draft_content_changed?(draft, public_revision) do
-      {:ok, :pass}
+          {:error, _} = error ->
+            {:halt, error}
+        end
+      end)
     else
-      {:error, ErrorCat.custom("Publish the latest doc changes before pinning it to cover.")}
+      _ -> {:error, ErrorCat.custom("This doc has not been published yet.")}
     end
   end
 
@@ -399,23 +384,24 @@ defmodule GroupherServer.CMS.DocCover.Persist do
   end
 
   defp resolve_published_node(%Community{} = community, draft_node_id) do
-    case DocTreePublish.public_node_for_draft(community, draft_node_id) do
-      {:ok, published} ->
-        {:ok, published}
-
-      {:error, _} ->
-        {:error, ErrorCat.custom("Publish it before adding it to cover.")}
+    case Repo.get_by(DocsTreeNode,
+           community_id: community.id,
+           stage: :public,
+           node_id: to_string(draft_node_id)
+         ) do
+      %DocsTreeNode{} = published -> {:ok, published}
+      nil -> {:error, ErrorCat.custom("Publish it before adding it to cover.")}
     end
   end
 
-  defp expect_type(%DocTreeNode{type: type}, type, _message), do: {:ok, :pass}
+  defp expect_type(%DocsTreeNode{type: type}, type, _message), do: {:ok, :pass}
   defp expect_type(_node, _type, message), do: {:error, ErrorCat.custom(message)}
 
   defp published_leaves_for_group(%Community{} = community, draft_group_node_id) do
     draft_nodes =
-      DocTreeNode
+      DocsTreeNode
       |> where([n], n.community_id == ^community.id)
-      |> where([n], n.stage == CMS.Const.stage(:draft))
+      |> where([n], n.stage == CMS.Const.stage(:public))
       |> order_by([n], asc: n.index, asc: n.id)
       |> Repo.all()
 
@@ -428,7 +414,7 @@ defmodule GroupherServer.CMS.DocCover.Persist do
       |> Enum.map(& &1.node_id)
 
     leaves_by_node_id =
-      DocTreeNode
+      DocsTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.stage == CMS.Const.stage(:public))
       |> where([n], n.type in [:page, :link])
@@ -460,7 +446,7 @@ defmodule GroupherServer.CMS.DocCover.Persist do
     end
   end
 
-  defp replace_descendant_cards(%Community{} = community, %DocTreeNode{} = group_node) do
+  defp replace_descendant_cards(%Community{} = community, %DocsTreeNode{} = group_node) do
     # Recursive ancestor/descendant traversal is intentionally kept as a
     # parameterized CTE; it has no direct Ecto tree-query equivalent.
     result =
@@ -471,9 +457,8 @@ defmodule GroupherServer.CMS.DocCover.Persist do
           SELECT node.node_id, node.parent_node_id
           FROM cms.doc_tree_nodes AS node
           WHERE node.community_id = $1
-            AND node.branch_id = $2
-            AND node.stage = $3
-            AND node.node_id = $4
+            AND node.stage = $2
+            AND node.node_id = $3
 
           UNION
 
@@ -481,16 +466,14 @@ defmodule GroupherServer.CMS.DocCover.Persist do
           FROM cms.doc_tree_nodes AS parent
           JOIN ancestors AS child ON parent.node_id = child.parent_node_id
           WHERE parent.community_id = $1
-            AND parent.branch_id = $2
-            AND parent.stage = $3
+            AND parent.stage = $2
         ),
         descendants(node_id) AS (
           SELECT node.node_id
           FROM cms.doc_tree_nodes AS node
           WHERE node.community_id = $1
-            AND node.branch_id = $2
-            AND node.stage = $3
-            AND node.node_id = $4
+            AND node.stage = $2
+            AND node.node_id = $3
 
           UNION
 
@@ -498,26 +481,24 @@ defmodule GroupherServer.CMS.DocCover.Persist do
           FROM cms.doc_tree_nodes AS child
           JOIN descendants AS parent ON child.parent_node_id = parent.node_id
           WHERE child.community_id = $1
-            AND child.branch_id = $2
-            AND child.stage = $3
+            AND child.stage = $2
         ),
         related_nodes AS (
           SELECT node_id, 'ancestor' AS binding
           FROM ancestors
-          WHERE node_id != $4
+          WHERE node_id != $3
 
           UNION ALL
 
           SELECT node_id, 'descendant' AS binding
           FROM descendants
-          WHERE node_id != $4
+          WHERE node_id != $3
         )
         SELECT card.id, card."index", related.binding
         FROM related_nodes AS related
         JOIN cms.doc_tree_nodes AS node
           ON node.community_id = $1
-         AND node.branch_id = $2
-         AND node.stage = $3
+         AND node.stage = $2
          AND node.node_id = related.node_id
         JOIN cms.doc_cover_cards AS card
           ON card.community_id = $1
@@ -526,7 +507,6 @@ defmodule GroupherServer.CMS.DocCover.Persist do
         """,
         [
           community.id,
-          group_node.branch_id,
           Atom.to_string(CMS.Const.stage(:public)),
           group_node.node_id
         ]

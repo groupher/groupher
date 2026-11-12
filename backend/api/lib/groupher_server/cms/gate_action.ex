@@ -70,10 +70,16 @@ defmodule GroupherServer.CMS.GateAction do
     "community_tag.update",
     "dashboard.rss.update",
     "dashboard.theme.update",
+    "doc.history.read",
     "doc.import",
     "doc.lock_comment",
     "doc.permanent_delete",
     "doc.pin",
+    "doc.queue.approve",
+    "doc.queue.configure",
+    "doc.queue.preview",
+    "doc.queue.publish",
+    "doc.queue.write",
     "doc.restore",
     "doc.sink",
     "doc.trash",
@@ -225,10 +231,16 @@ defmodule GroupherServer.CMS.GateAction do
     },
     "dashboard.rss.update" => %{scope: :context, context: :cms, grant: "community.update"},
     "dashboard.theme.update" => %{scope: :context, context: :cms, grant: "community.update"},
+    "doc.history.read" => %{scope: :context, context: :cms, grant: "doc.history.read"},
     "doc.import" => %{scope: :context, context: :cms, grant: "doc.import"},
     "doc.lock_comment" => %{scope: :context, context: :cms, grant: "doc.lock_comment"},
     "doc.permanent_delete" => %{scope: :context, context: :cms, grant: "doc.permanent_delete"},
     "doc.pin" => %{scope: :context, context: :cms, grant: "doc.pin"},
+    "doc.queue.approve" => %{scope: :context, context: :cms, grant: "doc.queue.approve"},
+    "doc.queue.configure" => %{scope: :context, context: :cms, grant: "doc.queue.configure"},
+    "doc.queue.preview" => %{scope: :context, context: :cms, grant: "doc.queue.preview"},
+    "doc.queue.publish" => %{scope: :context, context: :cms, grant: "doc.queue.publish"},
+    "doc.queue.write" => %{scope: :context, context: :cms, grant: "doc.queue.write"},
     "doc.restore" => %{scope: :context, context: :cms, grant: "doc.restore"},
     "doc.sink" => %{scope: :context, context: :cms, grant: "doc.sink"},
     "doc.trash" => %{scope: :context, context: :cms, grant: "doc.trash"},
@@ -528,6 +540,10 @@ defmodule GroupherServer.CMS.GateAction do
   @spec dashboard_theme_update() :: String.t()
   def dashboard_theme_update, do: "dashboard.theme.update"
 
+  @doc "Returns the stable `doc.history.read` Gate action name."
+  @spec doc_history_read() :: String.t()
+  def doc_history_read, do: "doc.history.read"
+
   @doc "Returns the stable `doc.import` Gate action name."
   @spec doc_import() :: String.t()
   def doc_import, do: "doc.import"
@@ -543,6 +559,26 @@ defmodule GroupherServer.CMS.GateAction do
   @doc "Returns the stable `doc.pin` Gate action name."
   @spec doc_pin() :: String.t()
   def doc_pin, do: "doc.pin"
+
+  @doc "Returns the stable `doc.queue.approve` Gate action name."
+  @spec doc_queue_approve() :: String.t()
+  def doc_queue_approve, do: "doc.queue.approve"
+
+  @doc "Returns the stable `doc.queue.configure` Gate action name."
+  @spec doc_queue_configure() :: String.t()
+  def doc_queue_configure, do: "doc.queue.configure"
+
+  @doc "Returns the stable `doc.queue.preview` Gate action name."
+  @spec doc_queue_preview() :: String.t()
+  def doc_queue_preview, do: "doc.queue.preview"
+
+  @doc "Returns the stable `doc.queue.publish` Gate action name."
+  @spec doc_queue_publish() :: String.t()
+  def doc_queue_publish, do: "doc.queue.publish"
+
+  @doc "Returns the stable `doc.queue.write` Gate action name."
+  @spec doc_queue_write() :: String.t()
+  def doc_queue_write, do: "doc.queue.write"
 
   @doc "Returns the stable `doc.restore` Gate action name."
   @spec doc_restore() :: String.t()

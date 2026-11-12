@@ -12,14 +12,14 @@ defmodule GroupherServer.Activity.ArticleLog do
   alias Activity.Artiment
   alias Activity.ErrorCat, as: ActivityErrorCat
 
-  alias CMS.Model.{Article, ArticleWorkingCopy, Community, DocDraft}
+  alias CMS.Model.{Article, ArticleWorkingCopy, Community}
   alias Helper.ORM
   alias Helper.ORM.Pagi.{Order}
   alias GroupherServer.{Pagi}
   alias Pagi.Params
 
   @doc """
-  Lists the permission-filtered Activity surface for one Article or Doc branch.
+  Lists the permission-filtered Activity surface for one Article.
 
   ## Examples
 
@@ -37,7 +37,6 @@ defmodule GroupherServer.Activity.ArticleLog do
         handler.schema()
         |> where([log], field(log, ^handler.stream_field()) == ^article_id)
         |> where([log], log.action in ^actions)
-        |> maybe_branch(article)
         |> maybe_community(community)
 
       with {:ok, paged} <-
@@ -50,8 +49,7 @@ defmodule GroupherServer.Activity.ArticleLog do
                  :crypto.hash(
                    :sha256,
                    :erlang.term_to_binary(
-                     {canonical.id, canonical.thread, Map.get(article, :branch_id),
-                      Map.get(article, :stage, :public)}
+                     {canonical.id, canonical.thread, Map.get(article, :stage, :public)}
                    )
                  )
                  |> Base.encode16(),
@@ -160,16 +158,11 @@ defmodule GroupherServer.Activity.ArticleLog do
     end
   end
 
-  defp authorize_read(%DocDraft{article_id: article_id, branch_id: branch_id}, actor) do
-    authorize_scoped(
-      article_id,
-      actor,
-      :read_draft,
-      GroupherServer.CMS.gate_context_scope_doc_draft(branch_id, :owner_management)
-    )
+  defp authorize_read(%Article{id: article_id, thread: :doc}, actor) do
+    authorize_scoped(article_id, actor, :read, GroupherServer.CMS.gate_context_scope_doc_public())
   end
 
-  defp authorize_read(%Article{id: article_id, thread: thread}, actor) when thread != :doc do
+  defp authorize_read(%Article{id: article_id, thread: thread}, actor) do
     authorize_scoped(
       article_id,
       actor,
@@ -201,15 +194,12 @@ defmodule GroupherServer.Activity.ArticleLog do
     end
   end
 
-  defp scope_context(%{stage: :draft, branch_id: branch_id}, :doc)
-       when is_integer(branch_id) do
-    {:ok, :read_draft,
-     GroupherServer.CMS.gate_context_scope_doc_draft(branch_id, :owner_management)}
+  defp scope_context(%{stage: :draft}, :doc) do
+    {:ok, :read_draft, GroupherServer.CMS.gate_context_scope_doc_draft(:owner_management)}
   end
 
-  defp scope_context(%{stage: :public, branch_id: branch_id}, :doc)
-       when is_integer(branch_id) do
-    {:ok, :read, GroupherServer.CMS.gate_context_scope_doc_public_branch(branch_id)}
+  defp scope_context(%{stage: :public}, :doc) do
+    {:ok, :read, GroupherServer.CMS.gate_context_scope_doc_public()}
   end
 
   defp scope_context(%{stage: :public}, thread) do
@@ -219,10 +209,4 @@ defmodule GroupherServer.Activity.ArticleLog do
   defp scope_context(_article, _thread) do
     {:error, ActivityErrorCat.custom("invalid Activity Article scope")}
   end
-
-  defp maybe_branch(query, %{branch_id: branch_id}) when not is_nil(branch_id) do
-    where(query, [log], log.branch_id == ^branch_id)
-  end
-
-  defp maybe_branch(query, _article), do: query
 end

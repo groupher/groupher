@@ -7,6 +7,7 @@ import type { MentionsGraphLocatorInput } from '~/lib/graphql/generated/graphql'
 import { readMentionsGraphWithRestart } from './mentionsGraphRecovery'
 
 export const mentionsGraphPage = graphql(`
+  "Pages mention relationships around a focused resource in a community."
   query MentionsGraphPage(
     $community: String!
     $focus: MentionsGraphLocatorInput!
@@ -42,6 +43,7 @@ export const mentionsGraphPage = graphql(`
 `)
 
 export const mentionsGraphArticleComments = graphql(`
+  "Pages article comments associated with a focused mention graph resource."
   query MentionsGraphArticleComments(
     $community: String!
     $focus: MentionsGraphLocatorInput!
@@ -67,6 +69,7 @@ export const mentionsGraphArticleComments = graphql(`
 `)
 
 export const mentionsGraphRevision = graphql(`
+  "Reads the revision of the mention graph around a focused resource."
   query MentionsGraphRevision($community: String!, $focus: MentionsGraphLocatorInput!) {
     mentionsGraphRevision(community: $community, focus: $focus)
   }

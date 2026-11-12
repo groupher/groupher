@@ -50,6 +50,7 @@ const graphQLErrorProjection = (errors: NonNullable<TGraphQLPayload['errors']>) 
   if (codes.has('RATE_LIMITED') || codes.has('429')) return { code: 'rate_limited', status: 429 }
   if (codes.has(String(CONTENT_PUBLISH_ERROR_CODE.ARTICLE_WORKING_COPY_REVISION_CONFLICT)))
     return { code: 'revision_conflict', status: 409 }
+  if (codes.has('4569')) return { code: 'revision_conflict', status: 409 }
   if (
     codes.has(String(CONTENT_PUBLISH_ERROR_CODE.DRAFT_VERSION_CONFLICT)) ||
     codes.has(String(CONTENT_PUBLISH_ERROR_CODE.COMMENT_BODY_VERSION_CONFLICT))
@@ -172,35 +173,6 @@ const graphqlBodyBag = <T extends { thumbnail: unknown }>(bodyBag: T) => ({
   ...bodyBag,
   thumbnail: JSON.stringify(bodyBag.thumbnail ?? null),
 })
-
-const updateDocDraft = async (
-  command: Extract<
-    TContentPublishCommand,
-    { action: typeof CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT }
-  >,
-  options: Required<Pick<THandlerOptions, 'backendToken' | 'fetcher'>> & {
-    environment: Record<string, string | undefined>
-    serviceAuthClient: TServiceAuthClient
-  },
-): Promise<Response> => {
-  const bodyBag = await publishContent(command.payload.content)
-  return executeMutation({
-    action: command.action,
-    document: CONTENT_PUBLISH_OPERATIONS.updateDocDraft,
-    field: 'updateDocDraft',
-    options,
-    variables: {
-      bodyBag: graphqlBodyBag(bodyBag),
-      commandId: command.commandId,
-      community: command.target.community,
-      expectedVersion: command.expectedVersion,
-      id: command.target.documentId,
-      slug: command.payload.slug,
-      subtitle: command.payload.subtitle,
-      title: command.payload.title,
-    },
-  })
-}
 
 const createComment = async (
   command: Extract<
@@ -352,6 +324,33 @@ const saveWorkingCopy = async (
   })
 }
 
+const saveDocQueueCopy = async (
+  command: Extract<
+    TContentPublishCommand,
+    { action: typeof CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY }
+  >,
+  options: TAdapterOptions,
+): Promise<Response> => {
+  const bodyBag = await publishContent(command.payload.content)
+  return executeMutation({
+    action: command.action,
+    document: CONTENT_PUBLISH_OPERATIONS.saveDocsQueueCopy,
+    field: 'saveDocsQueueCopy',
+    options,
+    variables: {
+      articleId: command.target.articleId,
+      bodyBag: graphqlBodyBag(bodyBag),
+      commandId: command.commandId,
+      community: command.target.community,
+      queueRevision: command.queueRevision,
+      workingCopyRevision: command.revision,
+      title: command.payload.title,
+      subtitle: command.payload.subtitle,
+      slug: command.payload.slug,
+    },
+  })
+}
+
 /** Authenticated same-origin Content Publisher HTTP boundary. */
 export const handleContentPublishRequest = async (
   request: Request,
@@ -379,13 +378,6 @@ export const handleContentPublishRequest = async (
       target: parsed.value.target,
     })
     switch (parsed.value.action) {
-      case CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT:
-        return await updateDocDraft(parsed.value, {
-          backendToken: options.backendToken,
-          environment,
-          fetcher,
-          serviceAuthClient: client,
-        })
       case CONTENT_PUBLISH_ACTION.CREATE_COMMENT:
         return await createComment(parsed.value, {
           backendToken: options.backendToken,
@@ -414,6 +406,13 @@ export const handleContentPublishRequest = async (
           fetcher,
           serviceAuthClient: client,
         })
+      case CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY:
+        return await saveDocQueueCopy(parsed.value, {
+          backendToken: options.backendToken,
+          environment,
+          fetcher,
+          serviceAuthClient: client,
+        })
       case CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE:
         return await createAndPublishArticle(parsed.value, {
           backendToken: options.backendToken,
@@ -421,7 +420,6 @@ export const handleContentPublishRequest = async (
           fetcher,
           serviceAuthClient: client,
         })
-
     }
   } catch (error) {
     if (error instanceof ArtimentPublisherError)

@@ -233,7 +233,6 @@ defmodule GroupherServer.Test.ActivityTest do
            ]},
           {Activity.Doc,
            [
-             :draft_updated,
              :comment_created,
              :comment_updated
            ]}
@@ -345,31 +344,24 @@ defmodule GroupherServer.Test.ActivityTest do
     stable_article = Repo.get!(CMS.Model.Article, post.article_id)
     assert {:ok, _} = Activity.list_article_logs(stable_article, nil)
 
-    {_doc_community, doc, _doc_attrs, doc_user} = mock_article(:doc)
+    {doc_community, doc, _doc_attrs, doc_user} = mock_article(:doc)
+    public = Repo.get!(CMS.Model.ArticlePublic, doc.article_id)
+    actor = %{doc_user | cur_passport: %{"global" => %{"god" => true}}}
 
-    assert {:ok, doc_draft} =
-             CMS.Docs.update_draft(
+    assert {:ok, edit} =
+             CMS.docs_begin_edit(
+               doc_community,
                doc.article_id,
-               doc.branch_id,
-               %{title: "branch-scoped draft", expected_version: doc.version},
-               doc_user
+               public.snapshot_id,
+               actor,
+               Ecto.UUID.generate()
              )
 
-    assert doc_draft.branch_id
-    assert {:ok, _} = Activity.list_article_logs(doc_draft, doc_user)
-
-    raw_doc_draft =
-      Repo.get_by!(CMS.Model.DocDraft,
-        article_id: doc.article_id,
-        branch_id: doc.branch_id
-      )
-
-    assert {:ok, _} = Activity.list_article_logs(raw_doc_draft, doc_user)
-    assert {:error, _} = Activity.list_article_logs(raw_doc_draft, nil)
-    assert {:error, _} = Activity.list_article_logs(doc_draft, nil)
+    work = Repo.get!(CMS.Model.ArticleWorkingCopy, edit.working_copy_id)
+    assert {:ok, _} = Activity.list_article_logs(work, doc_user)
+    assert {:error, _} = Activity.list_article_logs(work, nil)
     {:ok, stranger} = db_insert(:user)
-    assert {:error, _} = Activity.list_article_logs(raw_doc_draft, stranger)
-    assert {:error, _} = Activity.list_article_logs(doc_draft, stranger)
+    assert {:error, _} = Activity.list_article_logs(work, stranger)
 
     assert {:ok, _trashed} = CMS.Articles.trash(post, user)
     assert {:error, _} = Activity.list_article_logs(post, nil)
@@ -475,7 +467,7 @@ defmodule GroupherServer.Test.ActivityTest do
       assert check_values(table, :actor_type) == expected_actor_types
 
       expected_actions = Ecto.Enum.values(schema, :action) |> Enum.map(&to_string/1)
-      assert check_values(table, :action) == expected_actions
+      assert Enum.sort(check_values(table, :action)) == Enum.sort(expected_actions)
     end
 
     for handler <- Activity.CommunityLog.handlers(),

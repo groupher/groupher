@@ -20,6 +20,82 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
   alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
   object :cms_queries do
+    field :docs_queue_policy, :json do
+      arg(:community, non_null(:string))
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_queue_policy/3)
+    end
+
+    @desc "Authorized Docs publication read"
+    field :docs_queue_preview, :json do
+      arg(:community, non_null(:string))
+      arg(:article_id, :id)
+      arg(:versions, :json)
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_queue_preview/3)
+    end
+
+    @desc "Authorized Docs publication read"
+    field :docs_approval_diff, :json do
+      arg(:community, non_null(:string))
+      arg(:article_id, :id)
+      arg(:versions, :json)
+      arg(:baseline, :docs_diff_baseline)
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_approval_diff/3)
+    end
+
+    @desc "Authorized Docs publication read"
+    field :docs_release_history, :json do
+      arg(:community, non_null(:string))
+      arg(:before_id, :integer)
+      arg(:limit, :integer)
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_release_history/3)
+    end
+
+    @desc "Authorized Docs publication read"
+    field :docs_release_detail, :json do
+      arg(:community, non_null(:string))
+      arg(:release_id, non_null(:integer))
+      arg(:article_id, :id)
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_release_detail/3)
+    end
+
+    @desc "Authorized Docs publication read"
+    field :docs_snapshot_history, :json do
+      arg(:community, non_null(:string))
+      arg(:article_id, non_null(:id))
+      arg(:snapshot_id, :id)
+      arg(:cursor, :json)
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_snapshot_history/3)
+    end
+
+    @desc "Authorized Docs publication read"
+    field :docs_publication_notices, :json do
+      arg(:community, non_null(:string))
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_publication_notices/3)
+    end
+
+    @desc "Read the current post-publication conflict for an editable Doc"
+    field :docs_post_publish_conflict, :docs_post_publish_conflict do
+      arg(:community, non_null(:string))
+      arg(:article_id, non_null(:id))
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_post_publish_conflict/3)
+    end
+
     @desc "Editable WorkingCopies for one Article"
     field :article_working_copies, non_null(list_of(non_null(:article_working_copy))) do
       arg(:article_id, non_null(:id))
@@ -306,14 +382,20 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(fn _, _, _ -> {:ok, ThirdPartyAnalytics.providers()} end)
     end
 
-    @desc "community docs side tree"
-    field :doc_tree, :doc_tree do
+    @desc "Authorized branch-free Docs workspace tree"
+    field :docs_editor, :docs_editor do
       arg(:community, non_null(:string))
-
+      arg(:article_id, non_null(:id))
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.Docs.doc_tree/3)
+      resolve(&R.CMS.Docs.docs_editor/3)
+    end
+
+    field :docs_workspace_tree, :docs_workspace_tree do
+      arg(:community, non_null(:string))
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_workspace_tree/3)
     end
 
     @desc "public community docs side tree"
@@ -324,13 +406,34 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.Docs.doc_public_tree/3)
     end
 
-    @desc "dashboard docs unified publish checklist"
-    field :doc_publish_checklist, :doc_publish_checklist do
+    @desc "Current authorized Docs publication queue"
+    field :docs_publish_queue, :docs_publish_queue do
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.Docs.doc_publish_checklist/3)
+      resolve(&R.CMS.Docs.docs_publish_queue/3)
+    end
+
+    @desc "Check whether removing Docs from the Queue discards unique edits"
+    field :docs_dequeue_preview, :docs_dequeue_preview do
+      arg(:community, non_null(:string))
+      arg(:queue_revision, non_null(:integer))
+      arg(:article_ids, non_null(list_of(non_null(:id))))
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_dequeue_preview/3)
+    end
+
+    @desc "Preview a workspace deletion and any Queue-only edits it would discard"
+    field :docs_workspace_delete_preview, :docs_workspace_delete_preview do
+      arg(:community, non_null(:string))
+      arg(:tree_revision, non_null(:integer))
+      arg(:queue_revision, non_null(:integer))
+      arg(:node_id, non_null(:id))
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.Docs.docs_workspace_delete_preview/3)
     end
 
     @desc "dashboard docs trash items"
@@ -352,39 +455,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
       resolve(&R.CMS.Docs.doc_cover/3)
-    end
-
-    @desc "dashboard docs editor document, preferring draft and falling back to public"
-    field :doc_draft, :doc_draft do
-      arg(:community, non_null(:string))
-      arg(:id, non_null(:id))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.Docs.doc_draft/3)
-    end
-
-    @desc "immutable published versions for one stable Doc branch"
-    field :doc_branch_versions, non_null(:doc_branch_version_page) do
-      arg(:doc_id, non_null(:id))
-      arg(:branch_id, non_null(:id))
-      arg(:pagi, :pagi_input)
-
-      middleware(M.Authorize, :login)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.Docs.doc_branch_versions/3)
-    end
-
-    @desc "one immutable published version for a stable Doc branch"
-    field :doc_branch_version, :doc_branch_version_view do
-      arg(:doc_id, non_null(:id))
-      arg(:branch_id, non_null(:id))
-      arg(:branch_version_id, non_null(:id))
-
-      middleware(M.Authorize, :login)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.Docs.doc_branch_version/3)
     end
 
     @desc "spec community info"
@@ -638,6 +708,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.ArtimentMentions.mentioned_by/3)
     end
 
+    @desc "Pages mention relationships around a focused resource in a community."
     field :mentions_graph, non_null(:mentions_graph_page) do
       arg(:community, non_null(:string))
       arg(:focus, non_null(:mentions_graph_locator_input))
@@ -653,12 +724,14 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.ArtimentStatus.read/3)
     end
 
+    @desc "Reads the revision of the mention graph around a focused resource."
     field :mentions_graph_revision, non_null(:id) do
       arg(:community, non_null(:string))
       arg(:focus, non_null(:mentions_graph_locator_input))
       resolve(&R.CMS.ArtimentMentions.mentions_graph_revision/3)
     end
 
+    @desc "Pages article comments associated with a focused mention graph resource."
     field :mentions_graph_article_comments, non_null(:mentions_graph_article_comments_page) do
       arg(:community, non_null(:string))
       arg(:focus, non_null(:mentions_graph_locator_input))

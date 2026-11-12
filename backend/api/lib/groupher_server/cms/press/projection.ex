@@ -58,33 +58,6 @@ defmodule GroupherServer.CMS.Press.Projection do
     |> Map.delete(:article_id)
   end
 
-  @doc "Projects the latest Docs release as one feed item."
-  def doc_release_feed_item(community, release) do
-    digest =
-      release.articles
-      |> Enum.sort_by(&{&1.index || 1_000_000, &1.id})
-      |> Enum.map_join("; ", fn article ->
-        actions =
-          if article.actions == [], do: "published", else: Enum.join(article.actions, ", ")
-
-        "#{article.title} (#{actions})"
-      end)
-
-    %{
-      item_id: "#{community.slug}:docs:#{release.version_slug}",
-      content_version: "release-#{release.release_number}",
-      thread: :doc,
-      title: "#{community.title} Docs update",
-      digest: digest,
-      html: nil,
-      canonical_url: @site_host <> "/#{community.slug}/doc",
-      published_at: release.published_at,
-      updated_at: release.published_at,
-      author: user(release.author),
-      tags: []
-    }
-  end
-
   @doc "Builds one RSS feed projection."
   def feed(community, config, thread, items) do
     %{
@@ -139,28 +112,15 @@ defmodule GroupherServer.CMS.Press.Projection do
   defp author(%{login: _login} = user), do: user(user)
   defp author(_), do: nil
 
-  defp user(nil), do: nil
-
   defp user(user) do
     %{login: user.login, name: user.nickname || user.login, avatar: user.avatar}
   end
 
   defp tag(tag), do: %{slug: tag.slug, title: tag.title}
 
-  defp content_version(%{thread: :doc} = article) do
-    Map.get(article, :content_version) ||
-      Map.get(article, :branch_version_id) ||
-      Map.get(article, :revision_id) || legacy_doc_content_version(article)
+  defp content_version(article) do
+    Map.get(article, :snapshot_id)
   end
-
-  defp content_version(article), do: Map.get(article, :snapshot_id)
-
-  defp legacy_doc_content_version(%{thread: :doc, body_hash: body_hash, updated_at: updated_at})
-       when is_binary(body_hash) and is_struct(updated_at, DateTime) do
-    "#{body_hash}:#{DateTime.to_iso8601(updated_at)}"
-  end
-
-  defp legacy_doc_content_version(_article), do: nil
 
   defp canonical_path(community, :doc, article) do
     slug = if Map.get(article, :slug) in [nil, ""], do: nil, else: "/#{article.slug}"

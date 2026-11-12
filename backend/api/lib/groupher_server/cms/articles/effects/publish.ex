@@ -4,35 +4,26 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
 
       committed Publish result
         -> first-publication metadata (when applicable)
-        -> legacy Doc Activity after branch publication
+        -> administrator notification
 
   Press, Search and CDN delivery use independent durable outbox tasks; the
-  Ordinary Article content Activity is recorded in the Snapshot publication
-  transaction; the remaining Doc Activity follows the legacy branch workflow.
+  Article content Activity is recorded in its Snapshot publication transaction;
+  Docs publication Activity belongs to the Queue Release transaction.
   """
 
-  alias GroupherServer.{Activity, CMS, Messaging, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Messaging}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.FrontDesk
-  alias CMS.Model.{Article, Author}
+  alias CMS.Model.Article
 
   @doc """
   Enqueues or schedules the rebuildable projections for one committed result.
 
   ## Examples
 
-      Effects.run(%{article: article, branch_type: :main, revision: revision})
+      Effects.run(%{article: article, snapshot: snapshot})
   """
   @spec run(%{required(:article) => Article.t()}) :: {:ok, map()} | {:error, term()}
-  def run(%{article: %Article{thread: :doc}, branch_type: :main} = result) do
-    run_public_effects(result)
-  end
-
-  def run(%{article: %Article{thread: :doc}, branch_type: _branch_type} = result) do
-    {:ok, result}
-  end
-
   def run(%{article: %Article{}} = result), do: run_public_effects(result)
 
   def run(_result), do: {:error, ArticleErrorCat.binding_context_required()}
@@ -45,8 +36,7 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
          true <- is_integer(inner_id),
          {:ok, public} <- public_projection(article, community, inner_id),
          {:ok, _user} <- update_published_projection(result, public) do
-      with {:ok, _} <- notify_admin_on_first_publish(result, article),
-           {:ok, _} <- append_activity(result, Map.put(public, :community_id, community.id)) do
+      with {:ok, _} <- notify_admin_on_first_publish(result, article) do
         {:ok, result}
       end
     else
@@ -113,32 +103,5 @@ defmodule GroupherServer.CMS.Articles.Effects.Publish do
       thread: thread,
       inner_id: inner_id
     })
-  end
-
-  defp append_activity(%{article: %Article{thread: :doc}} = result, public) do
-    with {:ok, actor} <- published_by(result),
-         {:ok, _event} <-
-           Activity.log(public, :published,
-             actor: actor,
-             metadata: %{
-               revision_id: result.revision.id,
-               branch_version_id: result.version.id
-             }
-           ) do
-      {:ok, :pass}
-    end
-  end
-
-  defp append_activity(%{first_publish?: true}, _public), do: {:ok, :pass}
-
-  defp append_activity(%{snapshot: %CMS.Model.ArticleSnapshot{}}, _public), do: {:ok, :pass}
-
-  defp published_by(%{actor: %User{} = user}), do: {:ok, user}
-
-  defp published_by(%{published_by_id: author_id}) do
-    case Repo.get(Author, author_id) do
-      %Author{} = author -> {:ok, author |> Repo.preload(:user) |> Map.fetch!(:user)}
-      nil -> {:error, :publish_actor_not_found}
-    end
   end
 end

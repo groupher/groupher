@@ -6,6 +6,7 @@ import type { ArticlePathInput } from '~/lib/graphql/generated/graphql'
 import { viewerQueryKeys } from '~/query/key'
 
 export const articleActivityPage = graphql(`
+  "Safe product ArticleLog for one readable Article"
   query ArticleLogsPage($article: ArticlePathInput!, $pagi: PagiInput) {
     articleLogs(article: $article, pagi: $pagi) {
       entries {

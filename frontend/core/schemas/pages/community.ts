@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const subscribedCommunities = graphql(`
+  "Anyone can get anyone's subscribed communities"
   query PageSubscribedCommunities($login: String!, $filter: UserListFilter, $pagi: PagiInput) {
     subscribedCommunities(login: $login, filter: $filter, pagi: $pagi) {
       entries {
@@ -15,6 +16,7 @@ export const subscribedCommunities = graphql(`
 // Keep the dashboard's large selection inline so it remains one static document
 // while the list/detail-independent operations share generated fragments.
 export const community = graphql(`
+  "Spec community info"
   query PageCommunity($slug: String!, $userHasLogin: Boolean!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
       title
@@ -258,6 +260,7 @@ export const community = graphql(`
 `)
 
 export const pagedCommunities = graphql(`
+  "Communities with pagination info"
   query PagePagedCommunities(
     $filter: CommunitiesFilter
     $pagi: PagiInput

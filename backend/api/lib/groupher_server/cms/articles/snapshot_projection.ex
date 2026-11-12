@@ -1,8 +1,8 @@
 defmodule GroupherServer.CMS.Articles.SnapshotProjection do
   @moduledoc """
-  Builds public Article views from the immutable Snapshot selected by ArticlePublic.
+  Builds public Article views from PublicBody and the selected immutable Snapshot metadata.
 
-      Article + Public snapshot_id -> typed Snapshot content -> ArticleView projection
+      Article + matching PublicBody -> typed Snapshot metadata -> ArticleView projection
   """
 
   import Ecto.Query
@@ -24,6 +24,7 @@ defmodule GroupherServer.CMS.Articles.SnapshotProjection do
     Community,
     CommunityTag,
     ArticleSnapshotTag,
+    DocsLifecycle,
     PostState
   }
 
@@ -44,24 +45,15 @@ defmodule GroupherServer.CMS.Articles.SnapshotProjection do
          {:ok, community_tags} <- CMS.Articles.Bindings.Tags.list(binding),
          article_tags <- snapshot_tags(snapshot.id),
          extension when is_map(extension) <- snapshot_extension(article.thread, snapshot.id),
-         %ArticleLifecycle{} = lifecycle <- Repo.get_by(ArticleLifecycle, article_id: article.id) do
-      body = %{
-        json: snapshot.body_json,
-        markdown: snapshot.body_markdown,
-        html: snapshot.body_html,
-        markdown_toc: snapshot.body_markdown_toc,
-        plain_text: snapshot.body_plain_text,
-        digest: snapshot.digest,
-        schema_version: snapshot.body_schema_version,
-        thumbnail: snapshot.body_thumbnail
-      }
+         {:ok, lifecycle} <- lifecycle(article, community),
+         {:ok, stored_body} <- CMS.Articles.Public.body(public) do
+      body = Map.put(stored_body, :digest, public.digest)
 
       projection =
         %{
           id: article.id,
           article_id: article.id,
           snapshot_id: snapshot.id,
-          branch_id: nil,
           inner_id: binding.inner_id,
           thread: article.thread,
           stage: :public,
@@ -100,8 +92,9 @@ defmodule GroupherServer.CMS.Articles.SnapshotProjection do
     end
   end
 
-  def build_stable(_article, _community, _public, _snapshot),
-    do: {:error, :snapshot_owner_mismatch}
+  def build_stable(_article, _community, _public, _snapshot) do
+    {:error, :snapshot_owner_mismatch}
+  end
 
   defp snapshot_extension(thread, id) do
     case thread do
@@ -141,7 +134,21 @@ defmodule GroupherServer.CMS.Articles.SnapshotProjection do
 
   defp post_state(_), do: %{}
 
-  defp article_meta(%Article{} = article, %ArticleLifecycle{} = lifecycle) do
+  defp lifecycle(%Article{thread: :doc, id: article_id}, %Community{id: community_id}) do
+    case Repo.get_by(DocsLifecycle, article_id: article_id, community_id: community_id) do
+      %DocsLifecycle{} = lifecycle -> {:ok, lifecycle}
+      nil -> {:error, :article_snapshot_projection_missing}
+    end
+  end
+
+  defp lifecycle(%Article{id: article_id}, %Community{}) do
+    case Repo.get_by(ArticleLifecycle, article_id: article_id) do
+      %ArticleLifecycle{} = lifecycle -> {:ok, lifecycle}
+      nil -> {:error, :article_snapshot_projection_missing}
+    end
+  end
+
+  defp article_meta(%Article{} = article, lifecycle) do
     %{
       thread: article.thread,
       is_edited: article.is_edited,

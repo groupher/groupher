@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const communityBaseInfo = graphql(`
+  "Spec community info"
   query DashboardCommunityBaseInfo($slug: String!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
       dashboard {
@@ -29,6 +30,7 @@ export const communityBaseInfo = graphql(`
 `)
 
 export const communitySocialLinks = graphql(`
+  "Spec community info"
   query DashboardCommunitySocialLinks($slug: String!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
       dashboard {
@@ -42,6 +44,7 @@ export const communitySocialLinks = graphql(`
 `)
 
 export const communityOverview = graphql(`
+  "Spec community info"
   query DashboardCommunityOverview($slug: String!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
       views

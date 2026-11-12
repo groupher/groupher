@@ -1,8 +1,8 @@
 defmodule GroupherServer.CMS.Articles.WorkingCopy.Access do
   @moduledoc """
-  Resolves editing admission through the canonical Gate, with Doc branch context when needed.
+  Resolves editing admission through the canonical Article and site Gate.
 
-      Article + Community + actor/action -> Gate or Doc branch access -> admission result
+      Article + Community + actor/action -> Gate -> admission result
   """
 
   alias GroupherServer.CMS
@@ -24,27 +24,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Access do
   def generic_delete(%Article{}), do: {:ok, :pass}
 
   @doc "Rejects generic Doc Snapshot fork and publication; Docs owns these operations."
-  def generic_snapshot_mutation(%Article{thread: :doc}),
-    do: {:error, CMS.ErrorCat.docs_managed_content()}
+  def generic_snapshot_mutation(%Article{thread: :doc}) do
+    {:error, CMS.ErrorCat.docs_managed_content()}
+  end
 
   def generic_snapshot_mutation(%Article{}), do: {:ok, :pass}
-
-  def access_check(
-        actor,
-        action,
-        %Article{thread: :doc, id: article_id},
-        %Community{} = community
-      ) do
-    with {:ok, branch} <- CMS.Docs.Branch.resolve(community, nil) do
-      CMS.Gate.access_check(actor, action, %{
-        id: article_id,
-        thread: :doc,
-        community: community,
-        branch_id: branch.id
-      })
-      |> normalize_decision()
-    end
-  end
 
   def access_check(actor, action, %Article{} = article, %Community{} = community) do
     CMS.Gate.access_check(actor, action, %{
@@ -60,17 +44,6 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Access do
   end
 
   defp normalize_decision(result), do: result
-
-  def check_in_transaction(
-        actor,
-        action,
-        %Article{thread: :doc} = article,
-        %Community{} = community
-      ) do
-    with {:ok, branch} <- CMS.Docs.Branch.resolve(community, nil) do
-      CMS.Gate.check_in_transaction(actor, action, article, community, branch.id)
-    end
-  end
 
   def check_in_transaction(actor, action, %Article{} = article, %Community{} = community) do
     CMS.Gate.check_in_transaction(actor, action, article, community)

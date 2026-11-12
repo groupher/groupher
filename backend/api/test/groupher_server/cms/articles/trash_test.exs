@@ -161,15 +161,22 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert count_after == count_before - 1
   end
 
-  test "permanent delete removes the aggregate but keeps append-only audit" do
+  test "permanent delete removes the workspace but retains immutable Article history" do
     {community, post, _attrs, user} = mock_article(:post)
     assert {:ok, item} = CMS.Articles.trash(post, user)
 
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
-    refute Repo.get(CMS.Model.Article, post.article_id)
+    assert Repo.get(CMS.Model.Article, post.article_id)
+    assert Repo.get_by!(CMS.Model.ArticleHistoryOwner, article_id: post.article_id)
+
+    assert Repo.exists?(
+             from(s in CMS.Model.ArticleSnapshot, where: s.article_id == ^post.article_id)
+           )
+
+    refute Repo.get(CMS.Model.ArticlePublic, post.article_id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
-    refute Repo.get_by(ArticleLifecycle,
+    assert Repo.get_by(ArticleLifecycle,
              thread: :post,
              article_id: post.article_id
            )
@@ -231,7 +238,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, %{done: true}} =
              CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
 
-    refute Repo.get(Article, post.id)
+    assert Repo.get(Article, post.id)
     refute Repo.get_by(Source, ticket_id: ticket.id, post_id: post.id)
     assert Repo.get_by!(TicketState, article_id: ticket.id).type == :user
     assert Repo.get_by!(ArticleLifecycle, article_id: ticket.id, thread: :ticket).state == :draft
@@ -368,7 +375,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, %{done: true, command_id: ^command_id} = first} =
              CMS.Articles.permanently_delete_trashed_receipt(item.hash_id, user, opts)
 
-    refute Repo.get(CMS.Model.Article, post.article_id)
+    assert Repo.get(CMS.Model.Article, post.article_id)
 
     assert {:ok, replayed} =
              CMS.Articles.permanently_delete_trashed_receipt(item.hash_id, user, opts)
@@ -388,7 +395,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
-    refute Repo.get(CMS.Model.Article, post.article_id)
+    assert Repo.get(CMS.Model.Article, post.article_id)
     refute Repo.get_by(ArticleStats, thread: :post, article_id: post.article_id)
     refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.article_id)
   end
@@ -430,7 +437,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, item} = CMS.Articles.trash(post, user)
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
-    refute Repo.get(Comment, comment.id)
+    assert Repo.get(Comment, comment.id)
     assert is_nil(Repo.get!(Endpoint, comment_endpoint.id).deleted_at)
     refute Repo.get(Edge, edge.id)
     assert Repo.aggregate(Edge, :count) == 0
@@ -511,7 +518,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, %{deleted: 1, failed: []}} =
              CMS.Trash.purge_due(now: DateTime.utc_now(:second), size: 10)
 
-    refute Repo.get(CMS.Model.Article, post.article_id)
+    assert Repo.get(CMS.Model.Article, post.article_id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
     assert Repo.get_by(PostLog,

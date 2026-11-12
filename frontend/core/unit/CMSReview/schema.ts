@@ -6,13 +6,13 @@ import type {
 } from '~/graphql/generated/graphql'
 
 export const contentReview = graphql(`
+  "Loads the current review for a content target."
   query ContentReview($target: CmsReviewTargetInput!) {
     contentReview(target: $target) {
       artimentReviewId
       targetType
       articleId
       commentId
-      branchId
       communityId
       state
       replacedAt
@@ -43,6 +43,7 @@ export const contentReview = graphql(`
 `)
 
 export const contentReviewNotice = graphql(`
+  "Loads the review notice for a content target."
   query ContentReviewNotice($target: CmsReviewTargetInput!) {
     contentReviewNotice(target: $target) {
       status
@@ -52,13 +53,13 @@ export const contentReviewNotice = graphql(`
 `)
 
 export const pendingContentReviews = graphql(`
+  "Lists pending content reviews in a review scope."
   query PendingContentReviews($scope: ReviewBotScopeInput!, $limit: Int, $offset: Int) {
     pendingContentReviews(scope: $scope, limit: $limit, offset: $offset) {
       artimentReviewId
       targetType
       articleId
       commentId
-      branchId
       communityId
       state
       replacedAt
@@ -89,6 +90,7 @@ export const pendingContentReviews = graphql(`
 `)
 
 export const contentReviewHistory = graphql(`
+  "Lists past reviews for a content target."
   query ContentReviewHistory($target: CmsReviewTargetInput!, $limit: Int, $offset: Int) {
     contentReviewHistory(target: $target, limit: $limit, offset: $offset) {
       artimentReviewId
@@ -122,6 +124,7 @@ export const contentReviewHistory = graphql(`
 `)
 
 export const recheckArticleReview = graphql(`
+  "Requests another review of an article in the given scope."
   mutation RecheckArticle(
     $target: CmsReviewTargetInput!
     $scope: ReviewBotScopeInput!
@@ -137,6 +140,7 @@ export const recheckArticleReview = graphql(`
 `) as typeof RecheckArticleDocument
 
 export const recheckCommentReview = graphql(`
+  "Requests another review of a comment in the given scope."
   mutation RecheckComment(
     $target: CmsReviewTargetInput!
     $scope: ReviewBotScopeInput!
@@ -167,6 +171,7 @@ export const recheckDocReview = graphql(`
 `) as typeof RecheckDocDocument
 
 export const approveArticleReview = graphql(`
+  "Approves the current review of an article."
   mutation ApproveArticleReview($target: CmsReviewTargetInput!, $commandId: ID!) {
     approveArticleV2(target: $target, commandId: $commandId) {
       commandId
@@ -178,6 +183,7 @@ export const approveArticleReview = graphql(`
 `)
 
 export const approveCommentReview = graphql(`
+  "Approves the current review of a comment."
   mutation ApproveCommentReview($target: CmsReviewTargetInput!, $commandId: ID!) {
     approveCommentV2(target: $target, commandId: $commandId) {
       commandId
@@ -200,6 +206,7 @@ export const approveDocReview = graphql(`
 `)
 
 export const rejectArticleReview = graphql(`
+  "Rejects the current review of an article."
   mutation DenyArticleReview($target: CmsReviewTargetInput!, $commandId: ID!) {
     rejectArticleV2(target: $target, commandId: $commandId) {
       commandId
@@ -211,6 +218,7 @@ export const rejectArticleReview = graphql(`
 `)
 
 export const rejectCommentReview = graphql(`
+  "Rejects the current review of a comment."
   mutation DenyCommentReview($target: CmsReviewTargetInput!, $commandId: ID!) {
     rejectCommentV2(target: $target, commandId: $commandId) {
       commandId

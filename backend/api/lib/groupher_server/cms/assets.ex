@@ -101,11 +101,10 @@ defmodule GroupherServer.CMS.Assets do
 
   @doc "Returns the version-owned asset relations for one Draft or Revision body owner."
   @spec content_refs(:draft | :revision, Ecto.UUID.t()) :: T.domain_res([struct()])
-  def content_refs(:draft, body_draft_id), do: {:ok, Refs.draft_refs(body_draft_id)}
-  def content_refs(:revision, revision_id), do: {:ok, Refs.revision_refs(revision_id)}
 
-  def content_refs(:working_copy, working_copy_id),
-    do: {:ok, Refs.working_copy_refs(working_copy_id)}
+  def content_refs(:working_copy, working_copy_id) do
+    {:ok, Refs.working_copy_refs(working_copy_id)}
+  end
 
   def content_refs(:snapshot, snapshot_id), do: {:ok, Refs.snapshot_refs(snapshot_id)}
 
@@ -266,33 +265,6 @@ defmodule GroupherServer.CMS.Assets do
   def gc_candidates(%Community{} = community, opts \\ []) do
     GroupherServer.CMS.Assets.GC.candidates(community, opts)
   end
-
-  @doc """
-  Synchronizes refs for the legacy Docs Draft workflow.
-
-  Ordinary Article refs are owned by `save_working_copy` and cannot be changed
-  through this entry point.
-
-  ## Examples
-
-      CMS.Assets.link_refs(doc, %{
-        asset_refs: [%{asset_id: asset.id, block_id: "hero"}],
-        cur_user: user
-      }, community: community)
-      #=> {:ok, %{body: body_refs, cover: cover_refs}}
-
-  """
-  @spec link_refs(T.article(), map(), Keyword.t()) :: T.domain_res(term())
-  def link_refs(article, attrs, opts \\ []) do
-    case Keyword.get(opts, :community) do
-      %Community{} = community -> Refs.sync_refs(community, article, attrs)
-      nil -> Refs.sync_refs(article, attrs)
-    end
-  end
-
-  @doc "Copies legacy Docs Draft refs between branch-owned versions."
-  @spec copy_refs(T.article(), T.article()) :: T.domain_res(term())
-  def copy_refs(source, target), do: Refs.copy_refs(source, target)
 
   @doc """
   Cleans up all persisted asset refs for one permanently deleted article.

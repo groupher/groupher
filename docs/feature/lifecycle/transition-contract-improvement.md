@@ -368,7 +368,7 @@ Gate 必须在拥有 Lifecycle lock 的同一事务里完成准入。现在 reso
 普通 Article 的内容版本和资源生命周期是两套 version：Draft row 的 `version` 保护编辑内容，`ArticleLifecycle.version`
 保护资源状态。公开 Draft update 和 publish 分别携带对应的 expected version，publish 同时校验两者。
 
-实现位置：[Article Publish](../../../backend/api/lib/groupher_server/cms/articles/publish.ex)、[Article Lifecycle](../../../backend/api/lib/groupher_server/cms/articles/lifecycle.ex)、[Article Trash](../../../backend/api/lib/groupher_server/cms/articles/trash.ex)。
+实现位置：`Article Publish`（旧路径已在 R7 退场）、[Article Lifecycle](../../../backend/api/lib/groupher_server/cms/articles/lifecycle.ex)、[Article Trash](../../../backend/api/lib/groupher_server/cms/articles/trash.ex)。
 
 #### 切换前基线 action matrix
 
@@ -395,7 +395,7 @@ Gate 必须在拥有 Lifecycle lock 的同一事务里完成准入。现在 reso
 
 A 实际确认的是 version 4，却发布了 B 的 version 5。这里不会出现数据库冲突，因为代码主动读取了最新 Draft；但从用户意图看，这是错误的 last-observed-write 语义。
 
-尤其需要指出，[Article Publish](../../../backend/api/lib/groupher_server/cms/articles/publish.ex) 中的 `validate_version/1` 实际只校验 slug，并没有校验任何 version。这个命名会让维护者误以为 publish 已经有并发保护。
+尤其需要指出，`Article Publish`（旧路径已在 R7 退场） 中的 `validate_version/1` 实际只校验 slug，并没有校验任何 version。这个命名会让维护者误以为 publish 已经有并发保护。
 
 合理形态：publish 同时绑定内容和生命周期：
 
@@ -475,7 +475,7 @@ Community + DocBranch
 
 当前 tree mutation 已经要求 `baseRevision`，但 publish release 没有携带用户读取 checklist 时的 revision，也没有稳定的客户端 command identity。
 
-实现位置：[Doc Publish](../../../backend/api/lib/groupher_server/cms/doc_tree/publish.ex)、[Doc Lifecycle](../../../backend/api/lib/groupher_server/cms/docs/lifecycle.ex)、[Docs publish UI](../../../frontend/core/unit/DsbThread/CMS/Docs/ActionSnackbar/Publish/usePublishActions.ts)、[SideTree persistence](../../../frontend/core/unit/DsbThread/CMS/Docs/Editor/SideTree/usePersistence.ts)。
+历史实现位置：[Doc Publish](../../../backend/api/lib/groupher_server/cms/doc_tree/publish.ex)、`Doc Lifecycle`（旧路径已在 R7 退场）、[SideTree persistence](../../../frontend/core/unit/DsbThread/CMS/Docs/Editor/SideTree/usePersistence.ts)。旧发布 UI 已移除，新入口见 [Docs Queue 控制器](../../../frontend/core/unit/DsbThread/CMS/Docs/ActionSnackbar/Publish/usePublishQueue.ts)。
 
 #### 切换前基线 action matrix
 

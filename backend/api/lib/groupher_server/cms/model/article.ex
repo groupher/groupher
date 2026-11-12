@@ -63,7 +63,7 @@ defmodule GroupherServer.CMS.Model.Article do
         doc_active_at: [
           field_dynamic: {GroupherServer.CMS.Articles.ActivityTime, :effective_doc, []},
           ecto_type: :utc_datetime,
-          bindings: [:stable_doc_state, :stable_public]
+          bindings: [:stable_public]
         ]
       ]
     ]

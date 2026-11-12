@@ -343,7 +343,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
     test "can undo lock a doc's comment", ~m(community doc user)a do
       {:ok, _} =
-        CMS.Articles.lock_comments(doc.id, user, branch_id: doc.branch_id, community: community)
+        CMS.Articles.lock_comments(doc.id, user, community: community)
 
       {:ok, doc} = read_article(community, :doc, article_inner_id(doc, community))
       assert doc.meta.is_comment_locked

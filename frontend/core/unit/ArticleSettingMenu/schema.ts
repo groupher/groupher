@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 const saveWorkingCopy = graphql(`
+  "Save one Article WorkingCopy patch at its current revision"
   mutation SaveWorkingCopyFieldsFromMenu(
     $articleId: ID!
     $workingCopyId: ID!
@@ -30,6 +31,7 @@ const saveWorkingCopy = graphql(`
 `)
 
 const articleWorkingCopies = graphql(`
+  "Editable WorkingCopies for one Article"
   query ArticleWorkingCopiesForMenu($articleId: ID!, $community: String!) {
     articleWorkingCopies(articleId: $articleId, community: $community) {
       id
@@ -43,6 +45,7 @@ const articleWorkingCopies = graphql(`
 `)
 
 const setPostCat = graphql(`
+  "Set cat for a post"
   mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!, $commandId: ID!) {
     setPostCat(article: $article, cat: $cat, commandId: $commandId) {
       innerId
@@ -52,6 +55,7 @@ const setPostCat = graphql(`
 `)
 
 const pinPost = graphql(`
+  "Pin to post"
   mutation PinPost($article: ArticlePathInput!, $commandId: ID!) {
     pinPost(article: $article, commandId: $commandId) {
       innerId
@@ -60,6 +64,7 @@ const pinPost = graphql(`
 `)
 
 const undoPinPost = graphql(`
+  "Undo pin to post"
   mutation UndoPinPost($article: ArticlePathInput!, $commandId: ID!) {
     undoPinPost(article: $article, commandId: $commandId) {
       innerId
@@ -69,6 +74,7 @@ const undoPinPost = graphql(`
 `)
 
 const communityTagGroups = graphql(`
+  "Get community tag groups"
   query CommunityTagGroupsForMenu($community: String!, $thread: Thread) {
     communityTagGroups(community: $community, thread: $thread) {
       id

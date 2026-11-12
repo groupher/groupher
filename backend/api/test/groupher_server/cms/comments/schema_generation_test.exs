@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.CMS.Comments.SchemaGenerationTest do
 
   test "REL-01 target fingerprint detects removal of a required identity guard" do
     original = SchemaGeneration.schema_fingerprint!(Repo)
-    Repo.query!("DROP TRIGGER guard_doc_membership_owner ON cms.doc_drafts", [])
+    Repo.query!("DROP TRIGGER guard_doc_binding_identity ON cms.article_bindings", [])
     refute SchemaGeneration.schema_fingerprint!(Repo) == original
   end
 

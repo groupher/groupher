@@ -53,12 +53,11 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
                      body,
                      user,
                      command_id,
-                     branch_id,
                      community,
                      info,
                      command_target
                    ) do
-    gate(fn _target -> authorize_create(thread, article, branch_id, user, community, info) end)
+    gate(fn _target -> authorize_create(thread, article, user, community, info) end)
 
     change(fn context ->
       create_new(
@@ -154,7 +153,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         user,
         info,
         command_id,
-        nil,
         nil
       )
     end
@@ -172,7 +170,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         user,
         info,
         command_id,
-        Map.get(projection, :branch_id),
         Map.get(projection, :community)
       )
     else
@@ -197,7 +194,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
          %User{} = user,
          info,
          command_id,
-         branch_id,
          community
        ) do
     article = ArticleQuery.article_with_author(article)
@@ -211,7 +207,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
         body,
         user,
         command_id,
-        branch_id,
         community,
         info,
         {:comment, article.id}
@@ -241,17 +236,14 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
   defp authorize_create(
          :doc,
          article,
-         _requested_body_branch,
          user,
          %Community{} = community,
          info
        ) do
     with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article.id),
          true <- owner.id == community.id,
-         %CMS.Model.DocBranch{id: main_id} <-
-           GroupherServer.Repo.get_by(CMS.Model.DocBranch, community_id: owner.id, type: :main),
          {:ok, canonical} <-
-           CMS.Gate.check_in_transaction(user, :create_comment, article, community, main_id) do
+           CMS.Gate.check_in_transaction(user, :create_comment, article, community) do
       {:ok, %{article: canonical, community: community, info: info}}
     else
       {:error, _reason} = error -> error
@@ -259,7 +251,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     end
   end
 
-  defp authorize_create(_thread, article, _branch_id, user, community, info) do
+  defp authorize_create(_thread, article, user, community, info) do
     case community do
       %Community{} = community ->
         with {:ok, canonical} <-

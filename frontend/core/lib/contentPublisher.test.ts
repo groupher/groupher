@@ -4,9 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ContentPublishError, publishContentCommand } from './contentPublisher'
 
 const command = {
-  action: CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT,
+  action: CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY,
   commandId: '00000000-0000-4000-8000-000000000001',
-  expectedVersion: 1,
+  revision: 1,
   payload: {
     content: {
       format: CONTENT_SOURCE_FORMAT.PLATE,
@@ -16,7 +16,7 @@ const command = {
     subtitle: '',
     title: 'Draft',
   },
-  target: { community: 'home', documentId: 'doc-id' },
+  target: { community: 'home', articleId: 'doc-id', workingCopyId: 'work-id' },
 } as const
 
 describe('publishContentCommand', () => {

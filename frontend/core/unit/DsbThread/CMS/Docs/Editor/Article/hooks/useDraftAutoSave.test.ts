@@ -12,14 +12,14 @@ const mocks = vi.hoisted(() => ({
   attachSaveDocDraft: vi.fn(),
   patchSideTreeChild: vi.fn(),
   reconcileConflict: vi.fn(),
-  saveDocDraft: vi.fn(),
+  saveDocWorkingCopy: vi.fn(),
   browserGraphQLRequest: vi.fn(),
   setSaveError: vi.fn(),
   setSaving: vi.fn(),
 }))
 
 vi.mock('~/lib/artimentPublisher', () => ({
-  saveDocDraft: mocks.saveDocDraft,
+  saveDocWorkingCopy: mocks.saveDocWorkingCopy,
 }))
 vi.mock('~/lib/slug', () => ({ slugify: vi.fn(async () => 'guide') }))
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: mocks.browserGraphQLRequest }))
@@ -27,17 +27,20 @@ vi.mock('~/stores/community/hooks', () => ({
   default: () => ({ slug: 'home' }),
 }))
 vi.mock('~/ui/Toaster', () => ({ toast: vi.fn() }))
-vi.mock('../../helper', () => ({ reloadDocPublishChecklist: vi.fn() }))
+vi.mock('../../helper', () => ({ reloadDocsPublishQueue: vi.fn() }))
 vi.mock('../../store/hooks', () => ({
   default: () => ({ attachSaveDocDraft: mocks.attachSaveDocDraft }),
 }))
 
 const createDraftState = (): TDraftEditorState =>
   ({
+    workingCopyId: 'copy-a',
+    publicSnapshotId: null,
     activePage: {
       id: 'page-a',
       type: SIDE_TREE_NODE_TYPE.PAGE,
       docId: 'doc-a',
+      workingCopyId: 'copy-a',
       publishState: null,
     },
     applySaved: mocks.applySaved,
@@ -63,10 +66,10 @@ const createDraftState = (): TDraftEditorState =>
 describe('useDraftAutoSave', () => {
   beforeEach(() => {
     for (const mock of Object.values(mocks)) mock.mockReset()
-    mocks.saveDocDraft.mockResolvedValue({
-      docId: 'doc-a',
+    mocks.saveDocWorkingCopy.mockResolvedValue({
+      articleId: 'doc-a',
       slug: 'guide',
-      version: 4,
+      revision: 4,
     })
   })
 
@@ -83,11 +86,12 @@ describe('useDraftAutoSave', () => {
     await act(async () => view.result.current.save())
 
     expect(mocks.attachSaveDocDraft).toHaveBeenCalledWith(expect.any(Function))
-    expect(mocks.saveDocDraft).toHaveBeenCalledOnce()
-    expect(mocks.saveDocDraft).toHaveBeenCalledWith(
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledOnce()
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledWith(
       expect.objectContaining({
-        expectedVersion: 3,
-        id: 'doc-a',
+        revision: 3,
+        articleId: 'doc-a',
+        workingCopyId: 'copy-a',
         title: 'Guide',
       }),
     )
@@ -95,7 +99,7 @@ describe('useDraftAutoSave', () => {
 
   it('retries a failed save only manually or after the draft changes', async () => {
     vi.useFakeTimers()
-    mocks.saveDocDraft.mockRejectedValue(new Error('Slug: has already been taken'))
+    mocks.saveDocWorkingCopy.mockRejectedValue(new Error('Slug: has already been taken'))
     const draftState = createDraftState()
     const view = renderHook(
       ({ state }) =>
@@ -106,7 +110,7 @@ describe('useDraftAutoSave', () => {
     )
 
     await act(async () => vi.runOnlyPendingTimersAsync())
-    expect(mocks.saveDocDraft).toHaveBeenCalledOnce()
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledOnce()
 
     view.rerender({
       state: {
@@ -126,10 +130,10 @@ describe('useDraftAutoSave', () => {
     })
 
     await act(async () => vi.runOnlyPendingTimersAsync())
-    expect(mocks.saveDocDraft).toHaveBeenCalledOnce()
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledOnce()
 
     await act(async () => view.result.current.save())
-    expect(mocks.saveDocDraft).toHaveBeenCalledTimes(2)
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledTimes(2)
 
     view.rerender({
       state: {
@@ -138,30 +142,30 @@ describe('useDraftAutoSave', () => {
       },
     })
     await act(async () => vi.runOnlyPendingTimersAsync())
-    expect(mocks.saveDocDraft).toHaveBeenCalledTimes(3)
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledTimes(3)
   })
 
   it('reuses command identity for one bounded unknown-transport recovery', async () => {
-    mocks.saveDocDraft
+    mocks.saveDocWorkingCopy
       .mockRejectedValueOnce(
         new ContentPublishError('unknown', { code: 'transport_unknown', status: 0 }),
       )
-      .mockResolvedValueOnce({ docId: 'doc-a', slug: 'guide', version: 4 })
+      .mockResolvedValueOnce({ articleId: 'doc-a', slug: 'guide', revision: 4 })
     const view = renderHook(() =>
       useDraftAutoSave(createDraftState(), { patchSideTreeChild: mocks.patchSideTreeChild }),
     )
 
     await act(async () => view.result.current.save())
 
-    expect(mocks.saveDocDraft).toHaveBeenCalledTimes(2)
-    expect(mocks.saveDocDraft.mock.calls[0][0].commandId).toBe(
-      mocks.saveDocDraft.mock.calls[1][0].commandId,
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledTimes(2)
+    expect(mocks.saveDocWorkingCopy.mock.calls[0][0].commandId).toBe(
+      mocks.saveDocWorkingCopy.mock.calls[1][0].commandId,
     )
   })
 
   it('automatically retries the latest draft after Retry-After expires', async () => {
     vi.useFakeTimers()
-    mocks.saveDocDraft
+    mocks.saveDocWorkingCopy
       .mockRejectedValueOnce(
         new ContentPublishError('slow down', {
           code: 'rate_limited',
@@ -169,7 +173,7 @@ describe('useDraftAutoSave', () => {
           status: 429,
         }),
       )
-      .mockResolvedValueOnce({ docId: 'doc-a', slug: 'guide', version: 4 })
+      .mockResolvedValueOnce({ articleId: 'doc-a', slug: 'guide', revision: 4 })
     const draftState = createDraftState()
     const view = renderHook(
       ({ state }) => useDraftAutoSave(state, { patchSideTreeChild: mocks.patchSideTreeChild }),
@@ -177,7 +181,7 @@ describe('useDraftAutoSave', () => {
     )
 
     await act(async () => view.result.current.save())
-    expect(mocks.saveDocDraft).toHaveBeenCalledOnce()
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledOnce()
 
     view.rerender({
       state: {
@@ -187,16 +191,16 @@ describe('useDraftAutoSave', () => {
     })
     await act(async () => vi.advanceTimersByTimeAsync(1_000))
 
-    expect(mocks.saveDocDraft).toHaveBeenCalledTimes(2)
-    expect(mocks.saveDocDraft.mock.calls[1][0]).toMatchObject({ title: 'Latest guide' })
-    expect(mocks.saveDocDraft.mock.calls[1][0].commandId).not.toBe(
-      mocks.saveDocDraft.mock.calls[0][0].commandId,
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledTimes(2)
+    expect(mocks.saveDocWorkingCopy.mock.calls[1][0]).toMatchObject({ title: 'Latest guide' })
+    expect(mocks.saveDocWorkingCopy.mock.calls[1][0].commandId).not.toBe(
+      mocks.saveDocWorkingCopy.mock.calls[0][0].commandId,
     )
   })
 
   it('cancels a rate-limit retry when the editor unmounts', async () => {
     vi.useFakeTimers()
-    mocks.saveDocDraft.mockRejectedValueOnce(
+    mocks.saveDocWorkingCopy.mockRejectedValueOnce(
       new ContentPublishError('slow down', {
         code: 'rate_limited',
         retryAfter: 1,
@@ -211,12 +215,12 @@ describe('useDraftAutoSave', () => {
     view.unmount()
     await act(async () => vi.advanceTimersByTimeAsync(1_000))
 
-    expect(mocks.saveDocDraft).toHaveBeenCalledOnce()
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledOnce()
   })
 
   it('cancels a rate-limit retry when switching documents', async () => {
     vi.useFakeTimers()
-    mocks.saveDocDraft.mockRejectedValueOnce(
+    mocks.saveDocWorkingCopy.mockRejectedValueOnce(
       new ContentPublishError('slow down', {
         code: 'rate_limited',
         retryAfter: 1,
@@ -240,32 +244,104 @@ describe('useDraftAutoSave', () => {
     })
     await act(async () => vi.advanceTimersByTimeAsync(1_000))
 
-    expect(mocks.saveDocDraft).toHaveBeenCalledOnce()
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledOnce()
   })
 
   it('reloads canonical version while delegating local-edit preservation on conflict', async () => {
-    mocks.saveDocDraft.mockRejectedValueOnce(
-      new ContentPublishError('conflict', { code: 'version_conflict', status: 409 }),
+    vi.useFakeTimers()
+    mocks.saveDocWorkingCopy.mockRejectedValueOnce(
+      new ContentPublishError('conflict', { code: 'revision_conflict', status: 409 }),
     )
     mocks.browserGraphQLRequest.mockResolvedValueOnce({
-      docDraft: {
-        body: { json: '[{"type":"p","children":[{"text":"Server"}]}]' },
-        docId: 'doc-a',
-        id: 'draft-a',
-        slug: 'guide',
-        subtitle: '',
-        title: 'Guide',
-        version: 4,
-      },
+      articleWorkingCopies: [
+        {
+          bodyJson: '[{"type":"p","children":[{"text":"Server"}]}]',
+          articleId: 'doc-a',
+          id: 'copy-a',
+          scopeKind: 'default',
+          slug: 'guide',
+          threadFields: { subtitle: '' },
+          title: 'Guide',
+          revision: 4,
+        },
+      ],
     })
-    const view = renderHook(() =>
-      useDraftAutoSave(createDraftState(), { patchSideTreeChild: mocks.patchSideTreeChild }),
+    const state = createDraftState()
+    const view = renderHook(
+      ({ current }) => useDraftAutoSave(current, { patchSideTreeChild: mocks.patchSideTreeChild }),
+      { initialProps: { current: state } },
     )
 
     await act(async () => view.result.current.save())
 
     expect(mocks.browserGraphQLRequest).toHaveBeenCalledOnce()
     expect(mocks.reconcileConflict).toHaveBeenCalledWith(expect.objectContaining({ version: 4 }))
-    expect(mocks.saveDocDraft).toHaveBeenCalledOnce()
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledOnce()
+    view.rerender({ current: { ...state, draft: { ...state.draft, version: 4 } } })
+    await act(async () => vi.runOnlyPendingTimersAsync())
+    expect(mocks.saveDocWorkingCopy).toHaveBeenCalledOnce()
+  })
+  it('preserves local content when the old D is gone and never initializes another copy', async () => {
+    mocks.saveDocWorkingCopy.mockRejectedValueOnce(
+      new ContentPublishError('Working copy not found', { code: 'validation_failed', status: 400 }),
+    )
+    const state = createDraftState()
+    const original = { ...state.draft }
+    const view = renderHook(() =>
+      useDraftAutoSave(state, { patchSideTreeChild: mocks.patchSideTreeChild }),
+    )
+    await act(() => view.result.current.save())
+    expect(state.draft).toEqual(original)
+    expect(mocks.applySaved).not.toHaveBeenCalled()
+    expect(mocks.reconcileConflict).not.toHaveBeenCalled()
+    expect(mocks.browserGraphQLRequest).not.toHaveBeenCalled()
+    expect(mocks.setSaveError).toHaveBeenCalledWith('Working copy not found')
+  })
+
+  it('does not rebind local edits to a newly created D with the same Article ID', async () => {
+    mocks.saveDocWorkingCopy.mockRejectedValueOnce(
+      new ContentPublishError('Revision conflict', { code: 'revision_conflict', status: 409 }),
+    )
+    mocks.browserGraphQLRequest.mockResolvedValueOnce({
+      articleWorkingCopies: [{ id: 'replacement', scopeKind: 'default', revision: 1 }],
+    })
+    const view = renderHook(() =>
+      useDraftAutoSave(createDraftState(), { patchSideTreeChild: mocks.patchSideTreeChild }),
+    )
+    await act(() => view.result.current.save())
+    expect(mocks.reconcileConflict).not.toHaveBeenCalled()
+    expect(mocks.setSaveError).toHaveBeenCalledWith(
+      expect.stringContaining('local edits were preserved'),
+    )
+  })
+  it('ignores conflict recovery when the editor has already switched to a new D', async () => {
+    vi.useFakeTimers()
+    mocks.saveDocWorkingCopy.mockRejectedValueOnce(
+      new ContentPublishError('Revision conflict', { code: 'revision_conflict', status: 409 }),
+    )
+    let resolveRead!: (value: { articleWorkingCopies: unknown[] }) => void
+    mocks.browserGraphQLRequest.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveRead = resolve
+        }),
+    )
+    const state = createDraftState()
+    const view = renderHook(
+      ({ current }) => useDraftAutoSave(current, { patchSideTreeChild: mocks.patchSideTreeChild }),
+      { initialProps: { current: state } },
+    )
+    let pending!: Promise<void>
+    await act(async () => {
+      pending = view.result.current.save()
+    })
+    expect(mocks.browserGraphQLRequest).toHaveBeenCalledOnce()
+    view.rerender({ current: { ...state, workingCopyId: 'new-session', dirty: false } })
+    await act(async () => {
+      resolveRead({ articleWorkingCopies: [] })
+      await pending
+    })
+    expect(mocks.reconcileConflict).not.toHaveBeenCalled()
+    expect(mocks.setSaveError).not.toHaveBeenCalled()
   })
 })

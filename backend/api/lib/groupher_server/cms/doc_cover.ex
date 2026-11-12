@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.DocCover do
     UpdatePinnedDocAppearance
   }
 
-  alias CMS.Model.{Community, DocCoverCard, DocCoverPinnedDoc, DocTreeNode}
+  alias CMS.Model.{Community, DocCoverCard, DocCoverPinnedDoc, DocsTreeNode}
   alias Helper.T
 
   @doc """
@@ -209,9 +209,13 @@ defmodule GroupherServer.CMS.DocCover do
       DocCover.sync_published_page(community, group, page)
       #=> {:ok, value}
   """
-  @spec sync_published_page(Community.t(), DocTreeNode.t(), DocTreeNode.t()) ::
+  @spec sync_published_page(Community.t(), DocsTreeNode.t(), DocsTreeNode.t()) ::
           T.domain_res(term())
-  def sync_published_page(%Community{} = community, %DocTreeNode{} = group, %DocTreeNode{} = page) do
+  def sync_published_page(
+        %Community{} = community,
+        %DocsTreeNode{} = group,
+        %DocsTreeNode{} = page
+      ) do
     Sync.sync_published_page(community, group, page)
   end
 end

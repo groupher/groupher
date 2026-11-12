@@ -70,7 +70,7 @@ module，公共部分只复用经过验证的 Ecto query helper（如果确实�
 
 #### 2.2 Doc tree 批量重排
 
-文件：[`cms/doc_tree/persist/index.ex`](../../backend/api/lib/groupher_server/cms/doc_tree/persist/index.ex)
+文件：`cms/doc_tree/persist/index.ex`（旧路径已在 R7 退场）
 
 `batch_reindex_nodes!/2` 使用 `UNNEST` 同时更新：
 
@@ -102,7 +102,7 @@ scope 改变视为失败，而不只是统计信息。
 
 #### 2.4 动态 Article draft tag join-table 写入
 
-文件：[`cms/articles/draft/store.ex`](../../backend/api/lib/groupher_server/cms/articles/draft/store.ex)，共 4 处 `Repo.query*`
+文件：`cms/articles/draft/store.ex`（旧路径已在 R7 退场），共 4 处 `Repo.query*`
 
 当前有四类直接 SQL：
 
@@ -138,7 +138,7 @@ scope 改变视为失败，而不只是统计信息。
 
 #### 2.5 Revision tag copy
 
-文件：[`cms/articles/revision.ex`](../../backend/api/lib/groupher_server/cms/articles/revision.ex)
+历史文件：`cms/articles/revision.ex`（R7 已退场；以下为当时的盘点记录）。
 
 `copy_tags/3` 使用动态 source/target table 的 `INSERT INTO ... SELECT`。
 
@@ -198,7 +198,7 @@ owner，补齐 spec、输入类型和返回值合同。
 
 文件：
 
-- [`cms/doc_tree/persist/trash.ex`](../../backend/api/lib/groupher_server/cms/doc_tree/persist/trash.ex)
+- `cms/doc_tree/persist/trash.ex`（旧路径已在 R7 退场）
 - [`cms/doc_cover/persist.ex`](../../backend/api/lib/groupher_server/cms/doc_cover/persist.ex)
 
 两处使用 recursive CTE 查询树结构。Ecto 支持 CTE/subquery，但将递归树查询改写成

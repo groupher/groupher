@@ -78,13 +78,23 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
       transaction_result =
         Repo.transaction(
           fn ->
-            article_ids =
-              Repo.all(
-                from(binding in CMS.Model.ArticleBinding,
-                  where: binding.community_id == ^community.id,
-                  select: binding.article_id
-                )
-              )
+            with {:ok, _} <-
+                   CMS.Communities.Lifecycle.request_destroy(community.id,
+                     recover_until: DateTime.add(DateTime.utc_now(:second), -1, :second),
+                     operation_ref: Ecto.UUID.generate()
+                   ),
+                 {:ok, _} <-
+                   CMS.Communities.Lifecycle.schedule_destroy(community.id,
+                     operation_ref: Ecto.UUID.generate()
+                   ),
+                 {:ok, _} <-
+                   CMS.Communities.Lifecycle.destroy(community.id,
+                     operation_ref: Ecto.UUID.generate()
+                   ) do
+              {:ok, :pass}
+            else
+              {:error, reason} -> Repo.rollback(reason)
+            end
 
             delete_all(
               from(plan in AssetReplacementPlan, where: plan.community_id == ^community.id)
@@ -92,10 +102,21 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
             delete_all(from(upload in AssetUpload, where: upload.community_id == ^community.id))
             delete_all(from(run in AssetWorkflowRun, where: run.community_id == ^community.id))
-            delete_all(from(article in Article, where: article.id in ^article_ids))
 
             delete_all(
               from(config in ReviewBotConfig, where: config.community_id == ^community.id)
+            )
+
+            delete_all(
+              from(request in CMS.Model.ArtimentReview,
+                where: request.community_id == ^community.id
+              )
+            )
+
+            delete_all(
+              from(blocker in CMS.Model.CommunityLifecycleBlocker,
+                where: blocker.community_id == ^community.id and not is_nil(blocker.ended_at)
+              )
             )
 
             case Repo.delete(community, timeout: 300_000) do

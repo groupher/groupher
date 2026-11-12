@@ -5,8 +5,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
       stable Article -> Lifecycle :deleted -> TrashedArticle
                      -> restore or permanent aggregate deletion
 
-  Doc membership remains branch-scoped under `CMS.Docs.Trash`. Trash keeps the
-  Draft/Public/Revision aggregate intact until permanent deletion.
+  Docs Trash belongs to the workspace commands. Ordinary Trash retains the
+  WorkingCopy/Public/Snapshot aggregate until permanent deletion.
   """
 
   import Ecto.Query, warn: false
@@ -15,7 +15,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Articles.{Effects, Lifecycle, Bindings}
   alias CMS.Communities.Tags.Stats
-  alias CMS.Docs.Trash, as: DocTrash
 
   alias CMS.Model.{
     Article,
@@ -28,8 +27,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
     CommunityTag,
     TrashAction,
     TrashedArticle,
-    TrashedDocArticle,
-    TrashedDocTreeNode
+    DocsTrashedArticle,
+    DocsTrashedTreeNode
   }
 
   alias Helper.ORM
@@ -86,7 +85,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
   @spec delete_empty_action(pos_integer()) :: {:ok, :pass} | {:error, term()}
   def delete_empty_action(action_id) do
     occupied? =
-      Enum.any?([TrashedArticle, TrashedDocArticle, TrashedDocTreeNode], fn model ->
+      Enum.any?([TrashedArticle, DocsTrashedArticle, DocsTrashedTreeNode], fn model ->
         Repo.exists?(from(item in model, where: item.trash_action_id == ^action_id))
       end)
 
@@ -150,18 +149,9 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   @doc "Restores one ordinary Article membership or delegates branch-local Doc restore."
-  @spec restore(Ecto.UUID.t() | TrashedArticle.t() | TrashedDocArticle.t(), term(), keyword()) ::
+  @spec restore(Ecto.UUID.t() | TrashedArticle.t(), term(), keyword()) ::
           {:ok, Article.t()} | {:error, term()}
   def restore(item_or_id, actor, opts \\ [])
-
-  def restore(%TrashedDocArticle{} = item, actor, opts) do
-    with %Community{} = community <- Repo.get(Community, item.community_id),
-         %CMS.Model.DocBranch{} = branch <- Repo.get(CMS.Model.DocBranch, item.branch_id) do
-      DocTrash.restore(item, community, branch, actor, opts)
-    else
-      _ -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedDocArticle")}
-    end
-  end
 
   def restore(item_or_id, actor, opts) do
     with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
@@ -224,21 +214,12 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   @doc "Permanently deletes one trashed aggregate or delegates a Doc branch deletion."
   @spec permanently_delete(
-          Ecto.UUID.t() | TrashedArticle.t() | TrashedDocArticle.t(),
+          Ecto.UUID.t() | TrashedArticle.t(),
           term(),
           keyword()
         ) ::
           {:ok, map() | :done} | {:error, term()}
   def permanently_delete(item_or_id, actor, opts \\ [])
-
-  def permanently_delete(%TrashedDocArticle{} = item, actor, opts) do
-    with %Community{} = community <- Repo.get(Community, item.community_id),
-         %CMS.Model.DocBranch{} = branch <- Repo.get(CMS.Model.DocBranch, item.branch_id) do
-      DocTrash.permanently_delete(item, community, branch, actor, opts)
-    else
-      _ -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedDocArticle")}
-    end
-  end
 
   def permanently_delete(item_or_id, actor, opts) do
     with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
@@ -270,8 +251,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
                    type: canonical.thread,
                    article_id: canonical.id
                  }),
-               {:ok, _asset_refs} <- CMS.Assets.cleanup_refs(canonical.thread, canonical.id),
-               {:ok, _deleted} <- Repo.delete(canonical),
+               {:ok, _history} <- CMS.Articles.RetainedHistory.remove_workspace(canonical),
                {:ok, _} <- delete_empty_action(action_id) do
             _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)
             {:ok, %{done: true, article_id: canonical.id}}
@@ -326,8 +306,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
              type: canonical.thread,
              article_id: canonical.id
            }),
-         {:ok, _asset_refs} <- CMS.Assets.cleanup_refs(canonical.thread, canonical.id),
-         {:ok, _deleted} <- Repo.delete(canonical),
+         {:ok, _history} <- CMS.Articles.RetainedHistory.remove_workspace(canonical),
          {:ok, _} <- delete_empty_action(action_id) do
       _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)
       {:ok, %{done: true, article_id: canonical.id}}
@@ -370,20 +349,20 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   @doc "Gets a Trash membership by its opaque Trash hash id."
-  @spec get(Ecto.UUID.t()) :: {:ok, TrashedArticle.t() | TrashedDocArticle.t()} | {:error, term()}
+  @spec get(Ecto.UUID.t()) :: {:ok, TrashedArticle.t()} | {:error, term()}
   def get(hash_id) do
     case Repo.get_by(TrashedArticle, hash_id: hash_id) do
       %TrashedArticle{} = item ->
         {:ok, item |> Repo.preload([:article, :trash_action]) |> hydrate_item()}
 
       nil ->
-        get_doc_item(hash_id)
+        {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
     end
   end
 
   @doc "Gets one Trash membership and verifies its public Community/thread scope."
   @spec get_in_scope(Ecto.UUID.t(), pos_integer(), atom()) ::
-          {:ok, TrashedArticle.t() | TrashedDocArticle.t()} | {:error, term()}
+          {:ok, TrashedArticle.t()} | {:error, term()}
   def get_in_scope(hash_id, community_id, thread)
       when is_integer(community_id) and is_atom(thread) do
     with {:ok, item} <- get(hash_id),
@@ -616,13 +595,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   defp resolve_item(%TrashedArticle{} = item), do: {:ok, Repo.preload(item, :trash_action)}
   defp resolve_item(hash_id), do: get(hash_id)
-
-  defp get_doc_item(hash_id) do
-    case Repo.get_by(TrashedDocArticle, hash_id: hash_id) do
-      %TrashedDocArticle{} = item -> {:ok, Repo.preload(item, :trash_action)}
-      nil -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
-    end
-  end
 
   defp activity(article, action, actor, %TrashAction{} = trash_action, opts \\ []) do
     Effects.activity(article, action,

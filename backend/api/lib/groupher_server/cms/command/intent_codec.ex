@@ -20,6 +20,16 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
   @type policy :: :digest | :digest_each | :empty | {:fields, %{String.t() => policy() | :raw}}
 
   @policies %{
+    docs_restore_snapshot:
+      {:fields,
+       %{
+         "article_id" => :raw,
+         "snapshot_id" => :raw,
+         "working_copy_id" => :raw,
+         "revision" => :raw
+       }},
+    docs_configure_queue:
+      {:fields, %{"revision" => :raw, "required" => :raw, "self_approval" => :raw}},
     article_create: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
     article_create_article: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
     article_create_and_publish_article: {:fields, %{"thread" => :raw, "attrs" => :digest_each}},
@@ -172,6 +182,61 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
     upvote_add: {:fields, %{"operation" => :raw}},
     upvote_remove: {:fields, %{"operation" => :raw}},
     doc_publish_changes: :digest_each,
+    doc_release_queue: {:fields, %{"revision" => :raw}},
+    docs_approve_queue: {:fields, %{"revision" => :raw}},
+    doc_enqueue_queue: {:fields, %{"revision" => :raw, "entries" => :digest}},
+    docs_merge_queue:
+      {:fields,
+       %{
+         "queue_revision" => :raw,
+         "article_id" => :raw,
+         "default_revision" => :raw,
+         "work_revision" => :raw,
+         "choices" => :digest
+       }},
+    docs_save_queue:
+      {:fields,
+       %{
+         "queue_revision" => :raw,
+         "article_id" => :raw,
+         "work_revision" => :raw,
+         "attrs" => :digest_each
+       }},
+    docs_begin_edit: {:fields, %{"article_id" => :raw, "public_snapshot_id" => :raw}},
+    docs_resolve_post_publish:
+      {:fields,
+       %{
+         "article_id" => :raw,
+         "working_copy_id" => :raw,
+         "default_revision" => :raw,
+         "public_snapshot_id" => :raw,
+         "choices" => :digest
+       }},
+    docs_duplicate_workspace_node: {:fields, %{"revision" => :raw, "node_id" => :raw}},
+    docs_create_workspace_node: {:fields, %{"revision" => :raw, "attrs" => :digest_each}},
+    docs_update_workspace_node:
+      {:fields, %{"revision" => :raw, "node_id" => :raw, "patch" => :digest_each}},
+    docs_move_workspace_node:
+      {:fields, %{"revision" => :raw, "node_id" => :raw, "parent" => :raw, "position" => :raw}},
+    docs_dequeue: {:fields, %{"revision" => :raw, "ids" => :digest, "confirmation" => :digest}},
+    docs_delete_workspace_node:
+      {:fields,
+       %{
+         "tree_revision" => :raw,
+         "queue_revision" => :raw,
+         "node_id" => :raw,
+         "confirmation" => :digest
+       }},
+    docs_restore_workspace_node:
+      {:fields,
+       %{
+         "tree_revision" => :raw,
+         "queue_revision" => :raw,
+         "action_id" => :raw,
+         "target_parent" => :raw,
+         "target_index" => :raw
+       }},
+    docs_purge_workspace_trash: {:fields, %{"queue_revision" => :raw, "action_id" => :raw}},
     doc_move_to_draft: {:fields, %{"id" => :raw, "opts" => :digest_each}},
     doc_move_subtree_to_draft: {:fields, %{"id" => :raw, "opts" => :digest_each}},
     doc_update_draft: {:fields, %{"id" => :raw, "opts" => :digest_each}},

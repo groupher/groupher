@@ -9,8 +9,7 @@ defmodule GroupherServer.Test.CMS.Press do
     ArticleStats,
     ArticlePublic,
     CommunityLifecycle,
-    DocPublic,
-    DocTreeNode,
+    DocsTreeNode,
     PressConfig
   }
 
@@ -63,51 +62,21 @@ defmodule GroupherServer.Test.CMS.Press do
              })
   end
 
-  test "Docs Markdown requires membership in the current public main tree" do
+  test "Docs Markdown requires membership in the current public tree" do
     {community, doc, _attrs, _user} = mock_article(:doc)
     path = %{community: community.slug, thread: :doc, inner_id: article_inner_id(doc, community)}
-
-    assert {:error,
-            %ErrorCat.Error{
-              namespace: {:cms, :article},
-              reason: :not_exist,
-              details: "Published Doc"
-            }} = CMS.Press.article(path)
-
-    nodes = [
-      %{node_id: "tab-1", type: :tab, title: "Docs", index: 0},
-      %{
-        node_id: "group-1",
-        parent_node_id: "tab-1",
-        type: :group,
-        title: "Guide",
-        index: 0
-      },
-      %{
-        node_id: "page-1",
-        parent_node_id: "group-1",
-        doc_id: doc.id,
-        type: :page,
-        title: doc.title,
-        index: 0
-      }
-    ]
-
-    for attrs <- nodes do
-      %DocTreeNode{}
-      |> DocTreeNode.changeset(
-        Map.merge(attrs, %{
-          community_id: community.id,
-          branch_id: doc.branch_id,
-          stage: :public
-        })
-      )
-      |> Repo.insert!()
-    end
 
     assert {:ok, %{article_id: article_id, markdown: markdown}} = CMS.Press.article(path)
     assert article_id == doc.id
     assert is_binary(markdown)
+
+    Repo.delete_all(
+      from(n in DocsTreeNode,
+        where: n.community_id == ^community.id and n.stage == :public and n.doc_id == ^doc.id
+      )
+    )
+
+    assert {:error, _} = CMS.Press.article(path)
   end
 
   test "site manifest pages through the platform maximum instead of returning an empty list",
@@ -171,41 +140,16 @@ defmodule GroupherServer.Test.CMS.Press do
   test "Doc manifest keeps the public slug in its canonical URL",
        ~m(community user)a do
     {_, doc, _, _} = mock_article(:doc, community, user)
-    doc_public = Repo.get_by!(DocPublic, article_id: doc.id, branch_id: doc.branch_id)
+    actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
 
     assert {:ok, _} =
-             doc_public
-             |> DocPublic.changeset(%{slug: "canonical-page"})
-             |> Repo.update()
-
-    for attrs <- [
-          %{node_id: "press-tab", type: :tab, title: "Docs", index: 0},
-          %{
-            node_id: "press-group",
-            parent_node_id: "press-tab",
-            type: :group,
-            title: "Guide",
-            index: 0
-          },
-          %{
-            node_id: "press-page",
-            parent_node_id: "press-group",
-            type: :page,
-            title: doc.title,
-            doc_id: doc.id,
-            index: 0
-          }
-        ] do
-      %DocTreeNode{}
-      |> DocTreeNode.changeset(
-        Map.merge(attrs, %{
-          community_id: community.id,
-          branch_id: doc.branch_id,
-          stage: :public
-        })
-      )
-      |> Repo.insert!()
-    end
+             CMS.Seeds.Docs.update(
+               community,
+               doc.id,
+               %{slug: "canonical-page"},
+               actor,
+               Ecto.UUID.generate()
+             )
 
     assert {:ok, %{items: items}} = CMS.Press.site_manifest(community)
     item = Enum.find(items, &(&1.item_id == doc.id))
@@ -429,38 +373,9 @@ defmodule GroupherServer.Test.CMS.Press do
              MapSet.new(Enum.map(newer_posts, & &1.id))
   end
 
-  test "Docs Feed follows the current Gate projection and hides restricted branches",
+  test "Docs Feed follows the current Gate projection and hides restricted Docs",
        ~m(community user)a do
     {_, doc, _, _} = mock_article(:doc, community, user)
-
-    for attrs <- [
-          %{node_id: "feed-tab", type: :tab, title: "Docs", index: 0},
-          %{
-            node_id: "feed-group",
-            parent_node_id: "feed-tab",
-            type: :group,
-            title: "Guide",
-            index: 0
-          },
-          %{
-            node_id: "feed-page",
-            parent_node_id: "feed-group",
-            doc_id: doc.id,
-            type: :page,
-            title: doc.title,
-            index: 0
-          }
-        ] do
-      %DocTreeNode{}
-      |> DocTreeNode.changeset(
-        Map.merge(attrs, %{
-          community_id: community.id,
-          branch_id: doc.branch_id,
-          stage: :public
-        })
-      )
-      |> Repo.insert!()
-    end
 
     assert {:ok, _config} =
              CMS.Press.update_config(
@@ -474,13 +389,11 @@ defmodule GroupherServer.Test.CMS.Press do
     assert item.item_id == doc.id
     assert item.thread == :doc
 
-    branch = Repo.get!(CMS.Model.DocBranch, doc.branch_id)
-
     lifecycle =
-      Repo.get_by!(CMS.Model.DocLifecycle, article_id: doc.id, branch_id: branch.id)
+      Repo.get_by!(CMS.Model.DocsLifecycle, article_id: doc.id)
 
     lock_lifecycle = fn ->
-      CMS.Model.DocLifecycle
+      CMS.Model.DocsLifecycle
       |> where([row], row.id == ^lifecycle.id)
       |> lock("FOR UPDATE")
       |> Repo.one()
@@ -488,7 +401,7 @@ defmodule GroupherServer.Test.CMS.Press do
 
     assert {:ok, {:ok, restriction}} =
              Repo.transaction(fn ->
-               CMS.Docs.Lifecycle.apply_review_block(lock_lifecycle.(), %{
+               CMS.ReviewBlocks.apply(lock_lifecycle.(), %{
                  scope_key: "platform",
                  type: :manual_hold,
                  source_ref: "press-doc-feed-review",
@@ -501,7 +414,7 @@ defmodule GroupherServer.Test.CMS.Press do
 
     assert {:ok, {:ok, :pass}} =
              Repo.transaction(fn ->
-               CMS.Docs.Lifecycle.end_review_blocks(
+               CMS.ReviewBlocks.end_blocks(
                  lock_lifecycle.(),
                  "platform",
                  [restriction.id],

@@ -4,10 +4,19 @@ defmodule GroupherServer.Test.CMS.Assets.ReplaceUseWorkflowConcurrency do
   import GroupherServer.Support.Factory
   import Ecto.Query
 
-  alias Ecto.Adapters.SQL.Sandbox
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.ErrorCat.Error
-  alias CMS.Model.{Article, ArticleAssetRef, ArticleWorkingCopy, CommunityAsset}
+  alias Ecto.Adapters.SQL.Sandbox
+  alias GroupherServer.ErrorCat
+  alias ErrorCat.Error
+
+  alias CMS.Model.{
+    Article,
+    ArticleAssetRef,
+    ArticleHistoryOwner,
+    ArticleWorkingCopy,
+    Community,
+    CommunityAsset
+  }
 
   defp image_asset_attrs(filename, size_bytes) do
     %{
@@ -53,7 +62,21 @@ defmodule GroupherServer.Test.CMS.Assets.ReplaceUseWorkflowConcurrency do
           )
         )
 
-        Repo.delete_all(from(article in Article, where: article.id in ^article_ids))
+        community_slugs =
+          Repo.all(
+            from(owner in ArticleHistoryOwner,
+              join: community in Community,
+              on: community.id == owner.community_id,
+              where: owner.article_id in ^article_ids,
+              distinct: community.slug,
+              select: community.slug
+            )
+          )
+
+        Enum.each(community_slugs, fn slug ->
+          assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(slug)
+        end)
+
         Repo.delete_all(from(asset in CommunityAsset, where: asset.id in ^asset_ids))
       end)
     end)

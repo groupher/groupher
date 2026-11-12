@@ -101,6 +101,7 @@ const threadInput = (thread: TCommunityAssetUploadCapability['declaredThread']) 
   thread.toUpperCase()
 
 const completeUploadMutation = `
+  "Complete a verified assets-hub upload"
   mutation completeCommunityAssetUpload($input: CommunityAssetUploadCompletionInput!) {
     completeCommunityAssetUpload(input: $input) {
       id
@@ -118,6 +119,7 @@ const completeUploadMutation = `
 `
 
 const completeApplicationLogoMutation = `
+  "Complete an Application Logo upload from Assets Hub"
   mutation completeCommunityApplicationLogoUpload(
     $input: CommunityApplicationLogoCompletionInput!
   ) {
@@ -131,6 +133,7 @@ const completeApplicationLogoMutation = `
 `
 
 const originInfoQuery = `
+  "Service-scoped public-read origin metadata for one community asset"
   query communityAssetOriginInfo($publicRef: String!) {
     communityAssetOriginInfo(publicRef: $publicRef) {
       publicRef
@@ -149,6 +152,7 @@ const originInfoQuery = `
 `
 
 const applicationLogoOriginInfoQuery = `
+  "Server-trusted origin metadata for an Application Logo"
   query communityApplicationLogoOriginInfo($publicRef: ID!) {
     communityApplicationLogoOriginInfo(publicRef: $publicRef) {
       publicRef

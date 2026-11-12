@@ -8,13 +8,20 @@ defmodule GroupherServer.CMS.Articles.Publishable do
       saved WorkingCopy or Snapshot -> title / Plate content validation -> publish or invalid_body
   """
 
-  alias GroupherServer.CMS.Model.{ArticleSnapshot, ArticleWorkingCopy}
+  alias GroupherServer.CMS
+
+  alias CMS.Model.{ArticleSnapshot, ArticleWorkingCopy}
 
   @visible_node_types ~w(image img attachment file embed iframe table video audio)
 
   @doc "Returns `:pass` only when the saved title and Plate document meet the publish contract."
-  def validate(%ArticleWorkingCopy{} = work), do: validate_fields(work.title, work.body_json)
-  def validate(%ArticleSnapshot{} = snapshot), do: validate_fields(snapshot.title, snapshot.body_json)
+  def validate(%ArticleWorkingCopy{} = work) do
+    validate_fields(work.title, CMS.Articles.Body.document(work).json)
+  end
+
+  def validate(%ArticleSnapshot{} = snapshot) do
+    validate_fields(snapshot.title, CMS.Articles.Body.document(snapshot).json)
+  end
 
   def validate(%{title: title, body_json: body_json}), do: validate_fields(title, body_json)
 
@@ -37,6 +44,7 @@ defmodule GroupherServer.CMS.Articles.Publishable do
   defp visible_content?(%{} = node) do
     text = Map.get(node, "text") || Map.get(node, :text)
     type = Map.get(node, "type") || Map.get(node, :type)
+
     (is_binary(text) and String.trim(text) != "") or
       (is_binary(type) and String.downcase(type) in @visible_node_types) or
       Enum.any?(Map.values(node), &visible_content?/1)

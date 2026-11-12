@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConcurrencyTest do
   import GroupherServer.Support.Factory
   alias Ecto.Adapters.SQL.Sandbox
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Article, ArticleBinding, DocBranch, DocBranchState}
+  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, ArticleWorkingCopy}
 
   @tag timeout: 90_000
   test "OWNER-04 independent transactions cannot commit two owners, including first-writer rollback" do
@@ -84,31 +84,22 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConcurrencyTest do
           Repo.delete!(Repo.get!(Article, article_id))
         end
       after
-        Repo.delete_all(from(a in Article, where: a.author_id == ^author_id))
+        assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(owner.slug)
       end
     end)
   end
 
   @tag timeout: 60_000
-  test "OWNER-05 owner deletion races with membership never commit orphaned Doc rows" do
+  test "OWNER-05 owner deletion racing with BeginEdit cannot orphan its new D" do
     Sandbox.unboxed_run(Repo, fn ->
-      {community, doc, _, _} = mock_article(:doc)
+      {community, doc, _, user} = mock_article(:doc)
+      actor = %{user | cur_passport: %{"global" => %{"god" => true}}}
+      public = Repo.get!(ArticlePublic, doc.article_id)
       article_id = doc.article_id
       parent = self()
 
       try do
         for isolation <- [:read_committed, :repeatable_read] do
-          preview =
-            Repo.insert!(
-              DocBranch.changeset(%DocBranch{}, %{
-                community_id: community.id,
-                slug: "owner-race-#{isolation |> Atom.to_string() |> String.replace("_", "-")}",
-                title: "Preview",
-                type: :preview,
-                status: :active
-              })
-            )
-
           first =
             Task.async(fn ->
               unboxed_transaction(isolation, fn ->
@@ -140,11 +131,12 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConcurrencyTest do
               unboxed_transaction(isolation, fn ->
                 send(parent, :membership_attempting)
 
-                Repo.insert!(
-                  DocBranchState.changeset(%DocBranchState{}, %{
-                    article_id: article_id,
-                    branch_id: preview.id
-                  })
+                CMS.DocTree.Commands.BeginEdit.execute(
+                  community,
+                  article_id,
+                  public.snapshot_id,
+                  actor,
+                  Ecto.UUID.generate()
                 )
               end)
             end)
@@ -153,13 +145,27 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConcurrencyTest do
           assert Task.yield(second, 50) == nil
           send(first_pid, :finish)
           assert {:error, :rejected_owner_delete} = Task.await(first, 15_000)
-          assert {:ok, %DocBranchState{branch_id: branch_id}} = Task.await(second, 15_000)
-          assert branch_id == preview.id
+          assert {:ok, {:ok, %{working_copy_id: work_id}}} = Task.await(second, 15_000)
+          assert Repo.get!(ArticleWorkingCopy, work_id).article_id == article_id
           assert {:ok, %{id: owner_id}} = CMS.Articles.Bindings.doc_owner(article_id)
           assert owner_id == community.id
         end
       after
-        Repo.delete!(Repo.get!(Article, article_id))
+        assert {:ok, _} =
+                 CMS.Communities.Lifecycle.request_destroy(community.id,
+                   recover_until: DateTime.add(DateTime.utc_now(:second), -1, :second),
+                   operation_ref: Ecto.UUID.generate()
+                 )
+
+        assert {:ok, _} =
+                 CMS.Communities.Lifecycle.schedule_destroy(community.id,
+                   operation_ref: Ecto.UUID.generate()
+                 )
+
+        assert {:ok, _} =
+                 CMS.Communities.Lifecycle.destroy(community.id,
+                   operation_ref: Ecto.UUID.generate()
+                 )
       end
     end)
   end

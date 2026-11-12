@@ -4,9 +4,9 @@ export type { TContentPublishErrorCode } from './content-publish.generated'
 export const CONTENT_SOURCE_FORMAT = { PLATE: 'plate', MARKDOWN: 'markdown' } as const
 
 export const CONTENT_PUBLISH_ACTION = {
-  UPDATE_DOC_DRAFT: 'docDraft.update',
   CREATE_ARTICLE: 'article.create',
   SAVE_WORKING_COPY: 'article.working_copy.save',
+  SAVE_DOC_QUEUE_COPY: 'doc.queue_copy.save',
   CREATE_AND_PUBLISH_ARTICLE: 'article.create_and_publish',
   CREATE_COMMENT: 'comment.create',
   UPDATE_COMMENT: 'comment.update',
@@ -53,11 +53,6 @@ type TCommandBase<TAction extends TContentPublishAction, TTarget, TPayload> = {
   commandId: string
 }
 
-export type TUpdateDocDraftCommand = TCommandBase<
-  typeof CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT,
-  { community: string; documentId: string },
-  { content: TContentSource; title: string; subtitle: string; slug: string }
-> & { expectedVersion: number }
 export type TCreateArticleCommand = TCommandBase<
   typeof CONTENT_PUBLISH_ACTION.CREATE_ARTICLE,
   { community: string; thread: TContentArticleThread },
@@ -91,6 +86,11 @@ export type TSaveWorkingCopyCommand = TCommandBase<
     tagIds?: string[]
   } & TArticleContentFields
 > & { revision: number }
+export type TSaveDocQueueCopyCommand = TCommandBase<
+  typeof CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY,
+  { community: string; articleId: string },
+  { content: TContentSource; title: string; subtitle: string; slug: string }
+> & { revision: number; queueRevision: number }
 export type TCreateCommentCommand = TCommandBase<
   typeof CONTENT_PUBLISH_ACTION.CREATE_COMMENT,
   {
@@ -110,26 +110,26 @@ export type TUpdateCommentCommand = TCommandBase<
   { content: TContentSource }
 > & { expectedVersion: number }
 export type TContentPublishCommand =
-  | TUpdateDocDraftCommand
   | TCreateArticleCommand
   | TCreateAndPublishArticleCommand
   | TSaveWorkingCopyCommand
+  | TSaveDocQueueCopyCommand
   | TCreateCommentCommand
   | TUpdateCommentCommand
 
 export const CONTENT_TYPE_BY_ACTION = {
-  [CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT]: CONTENT_TYPE.DOC,
   [CONTENT_PUBLISH_ACTION.CREATE_ARTICLE]: CONTENT_TYPE.ARTICLE,
   [CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY]: CONTENT_TYPE.ARTICLE,
+  [CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY]: CONTENT_TYPE.DOC,
   [CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE]: CONTENT_TYPE.ARTICLE,
   [CONTENT_PUBLISH_ACTION.CREATE_COMMENT]: CONTENT_TYPE.COMMENT,
   [CONTENT_PUBLISH_ACTION.UPDATE_COMMENT]: CONTENT_TYPE.COMMENT,
 } as const satisfies Record<TContentPublishAction, TContentType>
 
 export const CONTENT_SCOPE_BY_ACTION = {
-  [CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT]: CONTENT_PUBLISH_SCOPE.DOC_WRITE,
   [CONTENT_PUBLISH_ACTION.CREATE_ARTICLE]: CONTENT_PUBLISH_SCOPE.ARTICLE_WRITE,
   [CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY]: CONTENT_PUBLISH_SCOPE.ARTICLE_WRITE,
+  [CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY]: CONTENT_PUBLISH_SCOPE.ARTICLE_WRITE,
   [CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE]: CONTENT_PUBLISH_SCOPE.ARTICLE_WRITE,
   [CONTENT_PUBLISH_ACTION.CREATE_COMMENT]: CONTENT_PUBLISH_SCOPE.COMMENT_WRITE,
   [CONTENT_PUBLISH_ACTION.UPDATE_COMMENT]: CONTENT_PUBLISH_SCOPE.COMMENT_WRITE,
@@ -312,29 +312,24 @@ export const parseContentPublishCommand = (input: unknown): TContentPublishParse
         },
       }
     }
-    case CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT: {
+    case CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY: {
       const community = readString(target, 'community', 'target.community')
       if (failed(community)) return community
-      const documentId = readString(target, 'documentId', 'target.documentId')
-      if (failed(documentId)) return documentId
+      const articleId = readString(target, 'articleId', 'target.articleId')
+      if (failed(articleId)) return articleId
       const title = readString(payload, 'title', 'payload.title')
       if (failed(title)) return title
       if (typeof payload.subtitle !== 'string')
         return issue('payload.subtitle', 'invalid_string', 'subtitle must be a string.')
       const slug = readString(payload, 'slug', 'payload.slug')
       if (failed(slug)) return slug
-      const expectedVersion = readExpectedVersion(input)
-      if (failed(expectedVersion)) return expectedVersion
-      return {
-        ok: true,
-        value: {
-          action,
-          target: { community, documentId },
-          payload: { content, title, subtitle: payload.subtitle, slug },
-          commandId,
-          expectedVersion,
-        },
-      }
+      const revision = readRevision(input)
+      if (failed(revision)) return revision
+      if (!Number.isSafeInteger(input.queueRevision) || Number(input.queueRevision) < 0)
+        return issue('queueRevision', 'invalid_revision', 'queueRevision must be a non-negative integer.')
+      return { ok: true, value: { action, target: { community, articleId },
+        payload: { content, title, subtitle: payload.subtitle, slug }, commandId,
+        revision, queueRevision: Number(input.queueRevision) } }
     }
     case CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE: {
       const community = readString(target, 'community', 'target.community')

@@ -3,6 +3,7 @@ import { changelogPage } from '~/schemas/pages/changelog'
 import { postPage } from '~/schemas/pages/post'
 
 export const trashedPosts = graphql(`
+  "Current Article Trash memberships"
   query DashboardTrashedPosts($community: String!, $pagi: PagiInput) {
     trashedArticles(community: $community, thread: POST, pagi: $pagi) {
       entries {
@@ -60,6 +61,7 @@ export const trashedPosts = graphql(`
 `)
 
 export const restoreTrashedPost = graphql(`
+  "Restore one logical Article from Trash"
   mutation restoreTrashedPost($community: String!, $id: ID!, $commandId: ID!) {
     restoreTrashedArticle(community: $community, id: $id, thread: POST, commandId: $commandId) {
       innerId
@@ -69,6 +71,7 @@ export const restoreTrashedPost = graphql(`
 `)
 
 export const permanentlyDeleteTrashedPost = graphql(`
+  "Permanently delete one standalone Article aggregate from Trash"
   mutation permanentlyDeleteTrashedPost($community: String!, $id: ID!, $commandId: ID!) {
     permanentlyDeleteTrashedArticle(
       community: $community

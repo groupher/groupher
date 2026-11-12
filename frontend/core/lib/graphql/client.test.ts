@@ -228,6 +228,26 @@ describe('createAuthFetch', () => {
     expect(fetcher).toHaveBeenCalledTimes(1)
   })
 
+  it('preserves oneOf validation errors returned by GraphQL', async () => {
+    const message =
+      'The Input Type "PagiInput" has the @oneOf directive. It must have exactly one non-null field.'
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(Response.json({ errors: [{ message }] }))
+
+    const request = browserGraphQLRequest(
+      parse('query Page { postPage { __typename } }'),
+      {},
+      { fetcher },
+    )
+
+    await expect(request).rejects.toMatchObject({
+      name: 'GraphQLRequestError',
+      message,
+      errors: [{ message }],
+    })
+  })
+
   it('formats structured changeset errors instead of collapsing them to object text', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       Response.json({

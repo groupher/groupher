@@ -35,11 +35,19 @@ defmodule GroupherServer.CMS.Dashboard.Commands.UpdateSection do
       args = if is_map(args), do: Map.delete(args, :command_id), else: args
       section_args = section_args(key, args)
 
-      with {:ok, dashboard} <- dashboard_for_update(canonical, key),
-           {:ok, canonical} <- maybe_update_identity(canonical, key, args),
-           {:ok, updated} <- update_dashboard(dashboard, key, section_args),
-           {:ok, _event} <- enqueue_effect(canonical, key, section_args, command_id) do
-        {:ok, updated}
+      write = fn ->
+        with {:ok, dashboard} <- dashboard_for_update(canonical, key),
+             {:ok, canonical} <- maybe_update_identity(canonical, key, args),
+             {:ok, updated} <- update_dashboard(dashboard, key, section_args),
+             {:ok, _event} <- enqueue_effect(canonical, key, section_args, command_id) do
+          {:ok, updated}
+        end
+      end
+
+      if key in [:doc_faq, :layout, :enable] do
+        CMS.DocTree.Publication.Presentation.write(canonical, write)
+      else
+        write.()
       end
     end)
   end

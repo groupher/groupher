@@ -2,7 +2,7 @@
 
 > 状态：**Article Gate 实施与指定本地验收完成**。本文冻结作者专属 `:edit_article`、必有 Dashboard 行、策略/生命周期错误顺序、Receipt 结果披露及 Asset workflow 恢复合同。F4 记录实际命令、结果和未覆盖项；全量后端套件未运行。Docs 发布队列不属于本文实施范围。
 >
-> 本文只覆盖 Post、Blog、Changelog 的 Article WorkingCopy / Snapshot 基座和 Gate。Docs 发布队列合同与实现均不在范围内；须待 Article 基座 B0–B4 验收后，另行重写 Docs 合同并评审。
+> 本文只覆盖 Post、Blog、Changelog 的 Article WorkingCopy / Snapshot 基座和 Gate。Docs 发布队列合同与实现均不在本文验收范围内；其合同已单独定义并进入实施，当前状态及剩余验收见 [Docs 发布队列合同](./docs-publish-queue-refactor.md)。
 
 相关合同：
 
@@ -19,7 +19,7 @@
 3. 发布后编辑开关是产品策略，只能限制作者，不能授予非作者编辑权，也不改变 Article 或 Community Lifecycle。策略按 Community/thread 配置并对共享 Article 的 bindings 采用 deny-wins；Community 在此处是配置 owner 和请求 binding 上下文，不是 Article 作者权限的来源。
 4. `ArticleWorkingCopy.revision` 是并发序号。保存提交当前 `revision`，成功后推进；它不是 `ArticleRevision` 实体、ID 或历史版本。命令名和结果使用 Article 基座合同中的 `saveWorkingCopy`、`forkSnapshot` 等既定名称。
 5. Asset 在本基座中是内容 owner 对既有 Asset 的引用。替换 Asset 会改写 WorkingCopy 内容及引用，故须经过内容编辑策略；此合同不扩展上传、对象存储或清理流程。
-6. Docs 使用独立队列 WorkingCopy、Doc branch 和 Doc Lifecycle。Article 策略不在本文直接接入 Docs，也不改变 Docs 发布队列合同。
+6. Docs 的目标模型使用默认副本 D、独立队列副本 Q 和无 Branch 的 Doc Lifecycle，按 Docs 专属合同编排；旧 Branch 路径仍待清理。Article 策略不在本文直接接入 Docs，本地 Article 验收不代表 Docs 权限或切换验收。
 
 ## 2. 已确认缺陷：Gate Policy 收到了两份资源事实
 

@@ -18,15 +18,19 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.MutationLock do
              MutationLock.key(first, :post, Ecto.UUID.generate())
   end
 
-  test "Doc lock keys are scoped by branch" do
-    {community, _existing_post, _attrs, _user} = mock_article(:post)
+  test "Doc lock keys use the stable Article and owner Community" do
+    community = %CMS.Model.Community{id: 1}
+    other = %CMS.Model.Community{id: 2}
     article_id = Ecto.UUID.generate()
 
-    refute MutationLock.doc_key(community, 11, article_id) ==
-             MutationLock.doc_key(community, 12, article_id)
+    assert MutationLock.key(community, :doc, article_id) ==
+             MutationLock.key(community, :doc, article_id)
 
-    assert MutationLock.key(community, :post, article_id) !=
-             MutationLock.doc_key(community, 11, article_id)
+    refute MutationLock.key(community, :doc, article_id) ==
+             MutationLock.key(other, :doc, article_id)
+
+    refute MutationLock.key(community, :doc, article_id) ==
+             MutationLock.key(community, :doc, Ecto.UUID.generate())
   end
 
   test "observed hold telemetry closes after the surrounding command transaction" do

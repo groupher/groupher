@@ -1,51 +1,456 @@
 import { graphql } from '~/graphql/authoring'
 
-export const docTree = graphql(`
-  query DashboardDocTree($community: String!) {
-    docTree(community: $community) {
-      revision
-      treeState {
-        hasUnpublishedChanges
-        stagedEventCount
-        baseSnapshotId
-        latestSnapshotId
-        latestReleaseId
-        latestReleaseNumber
-        revision
-      }
-      stagedEvents {
-        id
-        seq
-        eventType
-        payload
-        inversePayload
-        status
-        insertedAt
-      }
-      tabs {
-        ...DashboardDocTreeNodeFields
-        pins {
-          ...DashboardDocTreeNodeFields
-        }
-        groups {
-          ...DashboardDocTreeGroupFields
-        }
+export const docsPostPublishConflict = graphql(`
+  query DocsPostPublishConflict($community: String!, $articleId: ID!) {
+    docsPostPublishConflict(community: $community, articleId: $articleId) {
+      publicSnapshotId
+      workingCopyId
+      defaultRevision
+    }
+  }
+`)
+
+export const resolveDocsPostPublish = graphql(`
+  mutation ResolveDocsPostPublish(
+    $community: String!
+    $articleId: ID!
+    $workingCopyId: ID!
+    $defaultRevision: Int!
+    $publicSnapshotId: ID!
+    $choices: [DocsMergeChoiceInput!]!
+    $commandId: ID!
+  ) {
+    resolveDocsPostPublish(
+      community: $community
+      articleId: $articleId
+      workingCopyId: $workingCopyId
+      defaultRevision: $defaultRevision
+      publicSnapshotId: $publicSnapshotId
+      choices: $choices
+      commandId: $commandId
+    ) {
+      workingCopyRevision
+      conflictFields
+    }
+  }
+`)
+
+export const saveDocsQueueCopy = graphql(`
+  mutation SaveDocsQueueCopy(
+    $community: String!
+    $articleId: ID!
+    $queueRevision: Int!
+    $workingCopyRevision: Int!
+    $title: String!
+    $subtitle: String!
+    $slug: String!
+    $bodyBag: ArtimentBodyBagInput!
+    $commandId: ID!
+  ) {
+    saveDocsQueueCopy(
+      community: $community
+      articleId: $articleId
+      queueRevision: $queueRevision
+      workingCopyRevision: $workingCopyRevision
+      title: $title
+      subtitle: $subtitle
+      slug: $slug
+      bodyBag: $bodyBag
+      commandId: $commandId
+    ) {
+      queueRevision
+      workingCopyRevision
+    }
+  }
+`)
+
+export const mergeDocsQueueCopy = graphql(`
+  mutation MergeDocsQueueCopy(
+    $community: String!
+    $articleId: ID!
+    $queueRevision: Int!
+    $defaultRevision: Int!
+    $workingCopyRevision: Int!
+    $choices: [DocsMergeChoiceInput!]!
+    $commandId: ID!
+  ) {
+    mergeDocsQueueCopy(
+      community: $community
+      articleId: $articleId
+      queueRevision: $queueRevision
+      defaultRevision: $defaultRevision
+      workingCopyRevision: $workingCopyRevision
+      choices: $choices
+      commandId: $commandId
+    ) {
+      queueRevision
+      workingCopyRevision
+      conflict {
+        fields
+        queueRevision
+        defaultRevision
+        workingCopyRevision
       }
     }
   }
 `)
 
-export const docPublishChecklist = graphql(`
-  query DashboardDocPublishChecklist($community: String!) {
-    docPublishChecklist(community: $community) {
+export const docsWorkspaceTree = graphql(`
+  query DocsWorkspaceTree($community: String!) {
+    docsWorkspaceTree(community: $community) {
+      treeRevision
+      queueRevision
+      nodes {
+        nodeId
+        type
+        parentNodeId
+        index
+        title
+        href
+        docId
+        marker
+        badge
+        hidden
+        published
+        workingCopyId
+        workingCopyRevision
+      }
+    }
+  }
+`)
+
+export const docsEditor = graphql(`
+  query DocsEditor($community: String!, $articleId: ID!) {
+    docsEditor(community: $community, articleId: $articleId) {
+      workingCopy {
+        id
+        articleId
+        scopeKind
+        revision
+        title
+        slug
+        bodyJson
+        threadFields
+        insertedAt
+        updatedAt
+      }
+      publicSnapshot {
+        id
+        articleId
+        title
+        slug
+        bodyJson
+        threadFields
+      }
+    }
+  }
+`)
+
+export const beginDocsEdit = graphql(`
+  mutation BeginDocsEdit(
+    $community: String!
+    $articleId: ID!
+    $publicSnapshotId: ID!
+    $commandId: ID!
+  ) {
+    beginDocsEdit(
+      community: $community
+      articleId: $articleId
+      publicSnapshotId: $publicSnapshotId
+      commandId: $commandId
+    ) {
+      workingCopyId
       revision
-      totalCount
-      docChanges {
-        ...DashboardDocPublishChecklistItemFields
+    }
+  }
+`)
+
+export const docsWorkingCopies = graphql(`
+  query DocsWorkingCopies($community: String!, $articleId: ID!) {
+    articleWorkingCopies(community: $community, articleId: $articleId) {
+      id
+      articleId
+      scopeKind
+      revision
+      title
+      slug
+      digest
+      bodyJson
+      threadFields
+      insertedAt
+      updatedAt
+    }
+  }
+`)
+
+export const duplicateDocsWorkspaceNode = graphql(`
+  mutation DuplicateDocsWorkspaceNode(
+    $community: String!
+    $commandId: ID!
+    $treeRevision: Int!
+    $nodeId: ID!
+  ) {
+    duplicateDocsWorkspaceNode(
+      community: $community
+      commandId: $commandId
+      treeRevision: $treeRevision
+      nodeId: $nodeId
+    ) {
+      nodeId
+      articleId
+      workingCopyId
+      treeRevision
+    }
+  }
+`)
+
+export const createDocsWorkspaceNode = graphql(`
+  mutation CreateDocsWorkspaceNode(
+    $community: String!
+    $commandId: ID!
+    $treeRevision: Int!
+    $parentNodeId: ID
+    $input: DocsWorkspaceNodeInput!
+  ) {
+    createDocsWorkspaceNode(
+      community: $community
+      commandId: $commandId
+      treeRevision: $treeRevision
+      parentNodeId: $parentNodeId
+      input: $input
+    ) {
+      nodeId
+      articleId
+      workingCopyId
+      treeRevision
+    }
+  }
+`)
+
+export const updateDocsWorkspaceNode = graphql(`
+  mutation UpdateDocsWorkspaceNode(
+    $community: String!
+    $commandId: ID!
+    $treeRevision: Int!
+    $nodeId: ID!
+    $patch: DocsWorkspaceNodePatchInput!
+  ) {
+    updateDocsWorkspaceNode(
+      community: $community
+      commandId: $commandId
+      treeRevision: $treeRevision
+      nodeId: $nodeId
+      patch: $patch
+    ) {
+      treeRevision
+    }
+  }
+`)
+
+export const moveDocsWorkspaceNode = graphql(`
+  mutation MoveDocsWorkspaceNode(
+    $community: String!
+    $commandId: ID!
+    $treeRevision: Int!
+    $nodeId: ID!
+    $parentNodeId: ID
+    $position: Int!
+  ) {
+    moveDocsWorkspaceNode(
+      community: $community
+      commandId: $commandId
+      treeRevision: $treeRevision
+      nodeId: $nodeId
+      parentNodeId: $parentNodeId
+      position: $position
+    ) {
+      treeRevision
+    }
+  }
+`)
+
+export const docsWorkspaceDeletePreview = graphql(`
+  query DocsWorkspaceDeletePreview(
+    $community: String!
+    $treeRevision: Int!
+    $queueRevision: Int!
+    $nodeId: ID!
+  ) {
+    docsWorkspaceDeletePreview(
+      community: $community
+      treeRevision: $treeRevision
+      queueRevision: $queueRevision
+      nodeId: $nodeId
+    ) {
+      requiresConfirmation
+      publicCount
+      draftCount
+      confirmation {
+        formatVersion
+        hash
+      }
+      documents {
+        articleId
+        exclusiveFields
+      }
+    }
+  }
+`)
+
+export const deleteDocsWorkspaceNode = graphql(`
+  mutation DeleteDocsWorkspaceNode(
+    $community: String!
+    $commandId: ID!
+    $treeRevision: Int!
+    $queueRevision: Int!
+    $nodeId: ID!
+    $confirmation: DocsDiscardConfirmationInput
+  ) {
+    deleteDocsWorkspaceNode(
+      community: $community
+      commandId: $commandId
+      treeRevision: $treeRevision
+      queueRevision: $queueRevision
+      nodeId: $nodeId
+      confirmation: $confirmation
+    ) {
+      trashActionId
+      treeRevision
+      queueRevision
+    }
+  }
+`)
+
+export const restoreDocsWorkspaceNode = graphql(`
+  mutation RestoreDocsWorkspaceNode(
+    $community: String!
+    $commandId: ID!
+    $treeRevision: Int!
+    $queueRevision: Int!
+    $trashActionId: ID!
+    $targetParentNodeId: ID
+    $targetIndex: Int
+  ) {
+    restoreDocsWorkspaceNode(
+      community: $community
+      commandId: $commandId
+      treeRevision: $treeRevision
+      queueRevision: $queueRevision
+      trashActionId: $trashActionId
+      targetParentNodeId: $targetParentNodeId
+      targetIndex: $targetIndex
+    ) {
+      nodeId
+      treeRevision
+      queueRevision
+    }
+  }
+`)
+
+export const purgeDocsWorkspaceTrash = graphql(`
+  mutation PurgeDocsWorkspaceTrash(
+    $community: String!
+    $commandId: ID!
+    $queueRevision: Int!
+    $trashActionId: ID!
+  ) {
+    purgeDocsWorkspaceTrash(
+      community: $community
+      commandId: $commandId
+      queueRevision: $queueRevision
+      trashActionId: $trashActionId
+    ) {
+      done
+    }
+  }
+`)
+
+export const enqueueDocs = graphql(`
+  mutation EnqueueDocs(
+    $community: String!
+    $commandId: ID!
+    $queueRevision: Int!
+    $entries: [DocsQueueEntryInput!]!
+  ) {
+    enqueueDocs(
+      community: $community
+      commandId: $commandId
+      queueRevision: $queueRevision
+      entries: $entries
+    ) {
+      queueRevision
+    }
+  }
+`)
+
+export const docsDequeuePreview = graphql(`
+  query DocsDequeuePreview($community: String!, $queueRevision: Int!, $articleIds: [ID!]!) {
+    docsDequeuePreview(
+      community: $community
+      queueRevision: $queueRevision
+      articleIds: $articleIds
+    ) {
+      requiresConfirmation
+      confirmation {
+        formatVersion
+        hash
+      }
+      documents {
+        articleId
+        exclusiveFields
+      }
+    }
+  }
+`)
+
+export const dequeueDocs = graphql(`
+  mutation DequeueDocs(
+    $community: String!
+    $commandId: ID!
+    $queueRevision: Int!
+    $articleIds: [ID!]!
+    $confirmation: DocsDiscardConfirmationInput
+  ) {
+    dequeueDocs(
+      community: $community
+      commandId: $commandId
+      queueRevision: $queueRevision
+      articleIds: $articleIds
+      confirmation: $confirmation
+    ) {
+      queueRevision
+    }
+  }
+`)
+
+export const docsPublishQueue = graphql(`
+  query DocsPublishQueue($community: String!) {
+    docsPublishQueue(community: $community) {
+      revision
+      approvalRequired
+      allowSelfApproval
+      approvalPolicyRevision
+      approvalStatus
+      articles {
+        articleId
+        workingCopyId
+        revision
+        title
       }
       treeChanges {
-        ...DashboardDocPublishChecklistItemFields
+        nodeId
+        changeKind
+        target
       }
+    }
+  }
+`)
+
+export const releaseDocsQueue = graphql(`
+  mutation ReleaseDocsQueue($community: String!, $commandId: ID!, $queueRevision: Int!) {
+    releaseDocsQueue(community: $community, commandId: $commandId, queueRevision: $queueRevision) {
+      releaseId
+      queueRevision
     }
   }
 `)
@@ -79,336 +484,6 @@ export const docTreeTrashItems = graphql(`
           endCursor
         }
       }
-    }
-  }
-`)
-
-export const docDraft = graphql(`
-  query docDraft($community: String!, $id: ID!) {
-    docDraft(community: $community, id: $id) {
-      id
-      docId
-      branchId
-      version
-      contentHash
-      baseRevisionId
-      title
-      subtitle
-      slug
-      stage
-      digest
-      insertedAt
-      updatedAt
-      author {
-        login
-        nickname
-        avatar
-      }
-      body {
-        json
-        markdown
-        toc {
-          id
-
-          level
-
-          title
-        }
-        html
-      }
-    }
-  }
-`)
-
-export const docBranchVersions = graphql(`
-  query docBranchVersions($docId: ID!, $branchId: ID!, $pagi: PagiInput) {
-    docBranchVersions(docId: $docId, branchId: $branchId, pagi: $pagi) {
-      entries {
-        id
-        revisionId
-        versionNumber
-        publishedAt
-        message
-        content {
-          title
-          slug
-          subtitle
-          digest
-          body {
-            json
-          }
-          bodyHash
-          schemaVersion
-        }
-      }
-      pageInfo {
-        __typename
-        hasNextPage
-        hasPreviousPage
-        ... on OffsetPageInfo {
-          page
-          size
-          totalCount
-          totalPages
-        }
-        ... on CursorPageInfo {
-          startCursor
-          endCursor
-        }
-      }
-    }
-  }
-`)
-
-export const restoreDocRevisionToDraft = graphql(`
-  mutation restoreDocRevisionToDraft(
-    $commandId: ID!
-    $docId: ID!
-    $branchId: ID!
-    $revisionId: ID!
-    $expectedVersion: Int
-  ) {
-    restoreDocRevisionToDraft(
-      commandId: $commandId
-      docId: $docId
-      branchId: $branchId
-      revisionId: $revisionId
-      expectedVersion: $expectedVersion
-    ) {
-      docId
-      branchId
-      version
-      baseRevisionId
-      title
-      subtitle
-      slug
-      body {
-        json
-      }
-    }
-  }
-`)
-
-export const createDocTreeNode = graphql(`
-  mutation CreateDocTreeNode(
-    $community: String!
-    $commandId: ID!
-    $baseRevision: Int!
-    $parentNodeId: ID
-    $input: DocTreeNodeInput!
-  ) {
-    createDocTreeNode(
-      community: $community
-      commandId: $commandId
-      baseRevision: $baseRevision
-      parentNodeId: $parentNodeId
-      input: $input
-    ) {
-      ...DashboardDocTreeMutationPayload
-    }
-  }
-`)
-
-export const updateDocTreeNode = graphql(`
-  mutation UpdateDocTreeNode(
-    $community: String!
-    $id: ID!
-    $commandId: ID!
-    $baseRevision: Int!
-    $patch: DocTreeNodePatchInput!
-  ) {
-    updateDocTreeNode(
-      community: $community
-      id: $id
-      commandId: $commandId
-      baseRevision: $baseRevision
-      patch: $patch
-    ) {
-      ...DashboardDocTreeMutationPayload
-    }
-  }
-`)
-
-export const updateDocDraft = graphql(`
-  mutation UpdateDocDraft(
-    $community: String!
-    $id: ID!
-    $commandId: ID!
-    $expectedVersion: Int!
-    $title: String
-    $subtitle: String
-    $slug: String
-    $bodyBag: ArtimentBodyBagInput
-  ) {
-    updateDocDraft(
-      community: $community
-      id: $id
-      commandId: $commandId
-      expectedVersion: $expectedVersion
-      title: $title
-      subtitle: $subtitle
-      slug: $slug
-      bodyBag: $bodyBag
-    ) {
-      id
-      docId
-      version
-      title
-      subtitle
-      slug
-      digest
-      insertedAt
-      updatedAt
-      author {
-        login
-        nickname
-        avatar
-      }
-      body {
-        json
-        markdown
-        toc {
-          id
-
-          level
-
-          title
-        }
-        html
-      }
-    }
-  }
-`)
-
-export const publishDocChanges = graphql(`
-  mutation publishDocChanges(
-    $community: String!
-    $commandId: ID!
-    $input: DocPublishChangesInput
-    $mode: DocPublishMode
-  ) {
-    publishDocChanges(community: $community, commandId: $commandId, input: $input, mode: $mode) {
-      done
-      release {
-        id
-        releaseNumber
-        publishedAt
-      }
-      checklist {
-        revision
-        totalCount
-        docChanges {
-          ...DashboardDocPublishChecklistItemFields
-        }
-        treeChanges {
-          ...DashboardDocPublishChecklistItemFields
-        }
-      }
-    }
-  }
-`)
-
-export const moveDocToDraft = graphql(`
-  mutation moveDocToDraft($community: String!, $id: ID!, $commandId: ID!) {
-    moveDocToDraft(community: $community, id: $id, commandId: $commandId) {
-      docId
-      stage
-      publishState {
-        status
-        published
-        publishedBefore
-        hasDraft
-        publicNodeId
-        publicDocId
-        hasUnpublishedChanges
-        lastPublishedAt
-        inCover
-        hiddenFromCover
-        pinnedToCover
-      }
-    }
-  }
-`)
-
-export const moveDocTreeSubtreeToDraft = graphql(`
-  mutation moveDocTreeSubtreeToDraft($community: String!, $nodeId: ID!, $commandId: ID!) {
-    moveDocTreeSubtreeToDraft(community: $community, nodeId: $nodeId, commandId: $commandId) {
-      done
-    }
-  }
-`)
-
-export const deleteDocTreeNode = graphql(`
-  mutation DeleteDocTreeNode($community: String!, $id: ID!, $commandId: ID!, $baseRevision: Int!) {
-    deleteDocTreeNode(
-      community: $community
-      id: $id
-      commandId: $commandId
-      baseRevision: $baseRevision
-    ) {
-      ...DashboardDocTreeMutationPayload
-    }
-  }
-`)
-
-export const restoreDocTreeTrashItem = graphql(`
-  mutation RestoreDocTreeTrashItem(
-    $community: String!
-    $id: ID!
-    $commandId: ID!
-    $baseRevision: Int!
-    $targetParentNodeId: ID
-    $targetIndex: Int
-  ) {
-    restoreDocTreeTrashItem(
-      community: $community
-      id: $id
-      commandId: $commandId
-      baseRevision: $baseRevision
-      targetParentNodeId: $targetParentNodeId
-      targetIndex: $targetIndex
-    ) {
-      ...DashboardDocTreeMutationPayload
-    }
-  }
-`)
-
-export const duplicateDocTreeNode = graphql(`
-  mutation DuplicateDocTreeNode(
-    $community: String!
-    $id: ID!
-    $commandId: ID!
-    $baseRevision: Int!
-  ) {
-    duplicateDocTreeNode(
-      community: $community
-      id: $id
-      commandId: $commandId
-      baseRevision: $baseRevision
-    ) {
-      ...DashboardDocTreeMutationPayload
-    }
-  }
-`)
-
-export const moveDocTreeNode = graphql(`
-  mutation MoveDocTreeNode(
-    $community: String!
-    $id: ID!
-    $commandId: ID!
-    $baseRevision: Int!
-    $targetParentNodeId: ID
-    $targetIndex: Int
-  ) {
-    moveDocTreeNode(
-      community: $community
-      id: $id
-      commandId: $commandId
-      baseRevision: $baseRevision
-      targetParentNodeId: $targetParentNodeId
-      targetIndex: $targetIndex
-    ) {
-      ...DashboardDocTreeMutationPayload
     }
   }
 `)
@@ -506,22 +581,28 @@ export const updatePinnedDocAppearance = graphql(`
 `)
 
 export default {
-  docTree,
-  docPublishChecklist,
+  docsPostPublishConflict,
+  resolveDocsPostPublish,
+  saveDocsQueueCopy,
+  mergeDocsQueueCopy,
+  docsWorkspaceTree,
+  docsWorkingCopies,
+  docsEditor,
+  beginDocsEdit,
+  duplicateDocsWorkspaceNode,
+  createDocsWorkspaceNode,
+  updateDocsWorkspaceNode,
+  moveDocsWorkspaceNode,
+  docsWorkspaceDeletePreview,
+  deleteDocsWorkspaceNode,
+  restoreDocsWorkspaceNode,
+  purgeDocsWorkspaceTrash,
+  enqueueDocs,
+  docsDequeuePreview,
+  dequeueDocs,
+  docsPublishQueue,
+  releaseDocsQueue,
   docTreeTrashItems,
-  docDraft,
-  docBranchVersions,
-  createDocTreeNode,
-  updateDocTreeNode,
-  updateDocDraft,
-  publishDocChanges,
-  moveDocToDraft,
-  moveDocTreeSubtreeToDraft,
-  restoreDocRevisionToDraft,
-  deleteDocTreeNode,
-  restoreDocTreeTrashItem,
-  duplicateDocTreeNode,
-  moveDocTreeNode,
   addDocCoverCard,
   removeDocCoverCard,
   reorderDocCoverCards,

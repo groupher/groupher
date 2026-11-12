@@ -85,7 +85,6 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: :comment,
         thread: thread,
         article_id: stable_article_id(article),
-        branch_id: nil,
         title: article.title,
         comment_id: comment.id,
         user_id: author.id
@@ -107,7 +106,6 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: :reply,
         thread: thread,
         article_id: stable_article_id(article),
-        branch_id: nil,
         title: article.title,
         comment_id: reply_comment.id,
         user_id: reply_to_author_id
@@ -128,7 +126,6 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: action,
         thread: thread,
         article_id: article.id,
-        branch_id: nil,
         title: article.title,
         user_id: comment.author_id,
         comment_id: comment.id
@@ -149,7 +146,6 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: action,
         thread: thread,
         article_id: article.id,
-        branch_id: Map.get(article, :branch_id),
         title: article.title,
         user_id: author.id
       }
@@ -168,7 +164,6 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: action,
         thread: thread,
         article_id: article.id,
-        branch_id: nil,
         title: article.title,
         comment_id: comment.id,
         user_id: comment.author_id
@@ -206,7 +201,6 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: :comment,
         thread: thread,
         article_id: stable_article_id(article),
-        branch_id: nil,
         title: article.title,
         comment_id: comment.id,
         user_id: author.id,
@@ -228,7 +222,6 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: :reply,
         thread: thread,
         article_id: stable_article_id(article),
-        branch_id: nil,
         title: article.title,
         comment_id: reply.id,
         user_id: reply_to_author_id,
@@ -250,7 +243,6 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: action,
         thread: thread,
         article_id: article.id,
-        branch_id: nil,
         title: article.title,
         user_id: comment.author_id,
         comment_id: comment.id,
@@ -271,7 +263,6 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: action,
         thread: thread,
         article_id: article.id,
-        branch_id: Map.get(article, :branch_id),
         title: article.title,
         user_id: author.id,
         delivery_key: delivery_key

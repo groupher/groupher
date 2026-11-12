@@ -1,6 +1,6 @@
 defmodule GroupherServer.Activity.Model.DocLog do
   @moduledoc """
-  Stores append-only branch-aware Activity events for Doc streams.
+  Stores append-only stable Article Activity events for Doc streams.
 
       Doc Activity contract -> activity.doc_logs -> safe surfaces
   """
@@ -8,14 +8,12 @@ defmodule GroupherServer.Activity.Model.DocLog do
   use GroupherServer.Activity.Model.Base,
     table: "doc_logs",
     stream_field: :article_id,
-    extra_fields: [branch_id: :id],
+    extra_fields: [],
     actions: [
       :created,
       :title_changed,
       :body_updated,
-      :draft_updated,
       :published,
-      :publish_restored,
       :trashed,
       :restored,
       :archived,

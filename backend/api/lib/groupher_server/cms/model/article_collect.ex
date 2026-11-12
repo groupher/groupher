@@ -19,21 +19,20 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
   alias __MODULE__
   alias GroupherServer.{Accounts, CMS}
   alias CMS.Artiment.Threads
-  alias CMS.Model.{Article, DocBranch}
+  alias CMS.Model.{Article}
   alias Accounts.Model.{CollectFolder, User}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
 
   @required_fields ~w(user_id article_id thread)a
-  @optional_fields ~w(branch_id)a
+  @optional_fields ~w()a
 
   @type t :: %ArticleCollect{}
   schema "article_collects" do
     field(:thread, Ecto.Enum, values: Threads.article_enums())
     belongs_to(:user, User, foreign_key: :user_id)
     belongs_to(:article, Article, type: Ecto.UUID)
-    belongs_to(:branch, DocBranch)
     embeds_many(:collect_folders, CollectFolder, on_replace: :delete)
 
     timestamps(type: :utc_datetime)
@@ -50,8 +49,7 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
     |> cast_embed(:collect_folders, with: &CollectFolder.changeset/2)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:article_id)
-    |> foreign_key_constraint(:branch_id)
-    |> unique_constraint([:user_id, :article_id, :branch_id],
+    |> unique_constraint([:user_id, :article_id],
       name: :article_collects_user_stable_article_index
     )
   end

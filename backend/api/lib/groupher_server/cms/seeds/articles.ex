@@ -107,6 +107,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
         attrs =
           mock_attrs(thread, %{community_id: community.id})
           |> maybe_put_post_title(index, count, thread)
+          |> maybe_put_doc_tags(thread, tag_ids)
 
         with {:ok, command_id} <- command_id(opts),
              {:ok, article} <-
@@ -146,6 +147,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     end
   end
 
+  defp attach_tags(%{thread: :doc}, _ids), do: {:ok, :pass}
   defp attach_tags(_article, []), do: {:ok, :pass}
 
   defp attach_tags(article, tag_ids) do
@@ -209,8 +211,18 @@ defmodule GroupherServer.CMS.Seeds.Articles do
 
   defp seed_views(article), do: article
 
-  defp create_public_article(community, :doc, attrs, actor, command_id) do
-    CMS.Articles.create(community, :doc, attrs, actor, command_id: command_id)
+  defp maybe_put_doc_tags(attrs, :doc, tag_ids) do
+    Map.put(attrs, :tag_ids, Enum.take(tag_ids, 3))
+  end
+
+  defp maybe_put_doc_tags(attrs, _thread, _tag_ids), do: attrs
+
+  defp create_public_article(community, :doc, attrs, _actor, command_id) do
+    owner = GroupherServer.Repo.get!(GroupherServer.Accounts.Model.User, community.user_id)
+
+    with {:ok, passport} <- CMS.Passport.get_passport(owner) do
+      CMS.Seeds.Docs.create(community, attrs, %{owner | cur_passport: passport}, command_id)
+    end
   end
 
   defp create_public_article(community, thread, attrs, actor, command_id)

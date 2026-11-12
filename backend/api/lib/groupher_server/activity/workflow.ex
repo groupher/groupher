@@ -13,7 +13,7 @@ defmodule GroupherServer.Activity.Workflow do
 
   alias GroupherServer.{Activity, CMS}
   alias Activity.{Artiment, CommunityLog, ArticleLog, ErrorCat}
-  alias CMS.Model.{Community, DocTreeNode, PressConfig}
+  alias CMS.Model.{Community, DocsTreeNode, PressConfig}
 
   @type action ::
           :created
@@ -33,9 +33,7 @@ defmodule GroupherServer.Activity.Workflow do
           | :released
           | :release_rescheduled
           | :release_withdrawn
-          | :draft_updated
           | :published
-          | :publish_restored
           | :blocker_created
           | :blocker_released
           | :blocker_terminated
@@ -68,7 +66,7 @@ defmodule GroupherServer.Activity.Workflow do
     Activity.Community.log(resource, action, opts)
   end
 
-  def log(%DocTreeNode{} = resource, action, opts) do
+  def log(%DocsTreeNode{} = resource, action, opts) do
     Activity.DocTree.log(resource, action, opts)
   end
 

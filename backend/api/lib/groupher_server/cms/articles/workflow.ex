@@ -15,9 +15,8 @@ defmodule GroupherServer.CMS.Articles.Workflow do
         -> Repo / domain event
   """
 
-  alias GroupherServer.{CMS, Repo}
-
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
 
   alias CMS.Model.{
     Article,

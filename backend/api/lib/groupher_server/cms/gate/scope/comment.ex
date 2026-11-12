@@ -27,8 +27,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     CommentLifecycle,
     CommentReviewBlock,
     Community,
-    DocBranch,
-    DocLifecycle
+    DocsLifecycle
   }
 
   @behaviour Policy
@@ -108,17 +107,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
       on: lifecycle.comment_id == comment.id,
-      join: doc_branch in DocBranch,
-      as: :gate_doc_branch,
-      on: doc_branch.community_id == as(:gate_community).id and doc_branch.type == :main,
-      join: doc_lifecycle in DocLifecycle,
+      join: doc_lifecycle in DocsLifecycle,
       as: :gate_doc_lifecycle,
       on:
         doc_lifecycle.article_id == comment.article_id and
-          doc_lifecycle.branch_id == as(:gate_doc_branch).id,
+          doc_lifecycle.community_id == as(:gate_community).id,
       where: lifecycle.state != :destroy,
-      where: doc_lifecycle.state in [:published, :archived],
-      where: doc_branch.type == :main
+      where: doc_lifecycle.state in [:published, :archived]
     )
   end
 
@@ -133,21 +128,15 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       left_join: article_lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
       on: article_lifecycle.article_id == comment.article_id and comment.thread != ^:doc,
-      left_join: doc_branch in DocBranch,
-      as: :gate_doc_branch,
-      on:
-        doc_branch.community_id == as(:gate_community).id and doc_branch.type == :main and
-          comment.thread == ^:doc,
-      left_join: doc_lifecycle in DocLifecycle,
+      left_join: doc_lifecycle in DocsLifecycle,
       as: :gate_doc_lifecycle,
       on:
         doc_lifecycle.article_id == comment.article_id and
-          doc_lifecycle.branch_id == as(:gate_doc_branch).id and comment.thread == ^:doc,
+          doc_lifecycle.community_id == as(:gate_community).id and comment.thread == ^:doc,
       where: lifecycle.state != :destroy,
       where:
         (comment.thread != ^:doc and article_lifecycle.state in [:published, :archived]) or
-          (comment.thread == ^:doc and doc_lifecycle.state in [:published, :archived] and
-             doc_branch.type == :main)
+          (comment.thread == ^:doc and doc_lifecycle.state in [:published, :archived])
     )
   end
 
@@ -172,7 +161,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       Enum.reduce(threads, dynamic(false), fn thread, predicate ->
         scope =
           if thread == :doc do
-            GroupherServer.CMS.Gate.Context.Scope.Doc.public_main()
+            GroupherServer.CMS.Gate.Context.Scope.Doc.public()
           else
             GroupherServer.CMS.Gate.Context.Scope.Article.public(thread)
           end

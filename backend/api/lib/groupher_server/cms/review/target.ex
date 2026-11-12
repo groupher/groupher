@@ -22,8 +22,8 @@ defmodule GroupherServer.CMS.Review.Target do
     Comment,
     CommentBody,
     CommentLifecycle,
-    DocLifecycle,
-    DocPublic
+    Community,
+    DocsLifecycle
   }
 
   @doc """
@@ -109,12 +109,15 @@ defmodule GroupherServer.CMS.Review.Target do
   defp current_public_version(%{
          type: :doc,
          target: article,
-         lifecycle: %{state: state} = lifecycle
+         lifecycle: %{state: state}
        })
        when state in [:published, :archived] do
-    case Repo.get_by(DocPublic, article_id: article.id, branch_id: lifecycle.branch_id) do
-      %DocPublic{publication_version: version} -> version
-      nil -> nil
+    case Repo.get(ArticlePublic, article.id) do
+      %ArticlePublic{snapshot_id: snapshot_id} when is_binary(snapshot_id) ->
+        if Repo.get(ArticleSnapshot, snapshot_id), do: SnapshotVersion.from_id(snapshot_id)
+
+      _ ->
+        nil
     end
   end
 
@@ -134,18 +137,10 @@ defmodule GroupherServer.CMS.Review.Target do
     end
   end
 
-  defp parse_target("doc:" <> rest) do
-    case String.split(rest, ":", parts: 2) do
-      [article_id, branch_id] ->
-        with {:ok, article_id} <- Ecto.UUID.cast(article_id),
-             {branch_id, ""} when branch_id > 0 <- Integer.parse(branch_id) do
-          {:ok, {:doc, article_id, branch_id}}
-        else
-          _ -> {:error, CMS.ErrorCat.invalid_review_block()}
-        end
-
-      _ ->
-        {:error, CMS.ErrorCat.invalid_review_block()}
+  defp parse_target("doc:" <> id) do
+    case Ecto.UUID.cast(id) do
+      {:ok, id} -> {:ok, {:doc, id}}
+      :error -> {:error, CMS.ErrorCat.invalid_review_block()}
     end
   end
 
@@ -190,26 +185,29 @@ defmodule GroupherServer.CMS.Review.Target do
     end
   end
 
-  defp lock_target({:doc, article_id, branch_id}, "platform") do
-    with {:ok, article} <- lock_article(article_id),
-         %DocLifecycle{} = lifecycle <- lock_doc_lifecycle(article_id, branch_id) do
+  defp lock_target({:doc, article_id}, scope_key) do
+    with %DocsLifecycle{community_id: community_id} <-
+           Repo.get_by(DocsLifecycle, article_id: article_id),
+         %Community{} = community <- Repo.get(Community, community_id),
+         {:ok, :pass} <- CMS.Articles.MutationLock.lock_community_admission(article_id),
+         {:ok, :acquired} <- CMS.DocTree.Publish.SiteLock.acquire(community),
+         {:ok, %Article{thread: :doc} = article} <- lock_article(article_id),
+         {:ok, :pass} <- lock_article_scope(article, "community:#{community_id}"),
+         true <- scope_key in ["platform", "community:#{community_id}"],
+         %DocsLifecycle{community_id: ^community_id} = lifecycle <- lock_doc_lifecycle(article_id) do
       {:ok,
        %{
          type: :doc,
          target: article,
          lifecycle: lifecycle,
-         target_key: "doc:#{article.id}:#{branch_id}",
-         scope_key: "platform",
-         branch_id: branch_id
+         target_key: "doc:#{article.id}",
+         scope_key: scope_key
        }}
     else
       nil -> {:error, CMS.ErrorCat.lifecycle_not_found()}
       {:error, _reason} = error -> error
+      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
     end
-  end
-
-  defp lock_target({:doc, _article_id, _branch_id}, _scope_key) do
-    {:error, CMS.ErrorCat.invalid_review_block()}
   end
 
   defp lock_article(article_id) do
@@ -243,10 +241,10 @@ defmodule GroupherServer.CMS.Review.Target do
     )
   end
 
-  defp lock_doc_lifecycle(article_id, branch_id) do
+  defp lock_doc_lifecycle(article_id) do
     Repo.one(
-      from(lifecycle in DocLifecycle,
-        where: lifecycle.article_id == ^article_id and lifecycle.branch_id == ^branch_id,
+      from(lifecycle in DocsLifecycle,
+        where: lifecycle.article_id == ^article_id,
         lock: "FOR UPDATE"
       )
     )

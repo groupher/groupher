@@ -4,7 +4,7 @@
  *   repository operation -> one IndexedDB transaction -> content + derived usage
  */
 
-export const LOCAL_DRAFT_DATABASE_NAME = 'groupher-local-draft-history'
+export const LOCAL_DRAFT_DATABASE_NAME = 'groupher-local-draft-history-v2'
 export const LOCAL_DRAFT_DATABASE_VERSION = 1
 
 export const LOCAL_DRAFT_STORE = {
@@ -43,6 +43,12 @@ export const openLocalDraftDatabase = async (
   databaseName = LOCAL_DRAFT_DATABASE_NAME,
 ): Promise<IDBDatabase | null> => {
   if (typeof indexedDB === 'undefined') return null
+
+  if (databaseName === LOCAL_DRAFT_DATABASE_NAME) {
+    // Retire branch-keyed recovery data. An older open tab may delay deletion,
+    // but must never delay opening the new, independent workspace database.
+    indexedDB.deleteDatabase('groupher-local-draft-history')
+  }
 
   const request = indexedDB.open(databaseName, LOCAL_DRAFT_DATABASE_VERSION)
   request.onupgradeneeded = () => {

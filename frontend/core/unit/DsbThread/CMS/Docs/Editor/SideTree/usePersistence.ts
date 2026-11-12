@@ -3,14 +3,14 @@ import type { DocumentNode } from 'graphql'
 import { useCallback } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
-import useTrans from '~/hooks/useTrans'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
+import S from '~/unit/DsbThread/schema/docs'
 
-import { reloadDocPublishChecklist } from '../helper'
+import { reloadDocsPublishQueue } from '../helper'
 import { formatMutationError } from './helper'
-import type { TDocTreeMutationData, TDocTreeMutationPayload, TDocTreeState } from './spec'
+import type { TDocTreeMutationData, TDocTreeState } from './spec'
 
 export type TSideTreeMutationSchema =
   | DocumentNode
@@ -24,55 +24,8 @@ type TParams = {
 }
 
 /** Exposes side tree persistence state and actions through the shared React hook boundary. */
-export default function useSideTreePersistence({
-  revisionRef,
-  setTreeState,
-  setCoverWarning,
-  reload,
-}: TParams) {
-  const { t } = useTrans()
+export default function useSideTreePersistence({ revisionRef, setCoverWarning, reload }: TParams) {
   const { slug: community } = useCommunity()
-
-  const persist = useCallback(
-    async (
-      schema: TSideTreeMutationSchema,
-      variables: Record<string, unknown>,
-      pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
-    ): Promise<TDocTreeMutationPayload | null | undefined> => {
-      try {
-        const data = await executeCommand({
-          request: (transportVariables) =>
-            browserGraphQLRequest<TDocTreeMutationData>(schema, transportVariables),
-          variables: {
-            community,
-            baseRevision: revisionRef.current,
-            ...variables,
-          },
-        })
-        const payload = pickPayload(data)
-
-        if (payload?.conflict) {
-          reload()
-          toast(t('dsb.cms.docs.side_tree.error.tree_conflict'), 'error')
-          return payload
-        }
-
-        if (payload) {
-          revisionRef.current = payload.revision
-          setTreeState(payload.treeState ?? null)
-          reloadDocPublishChecklist()
-        }
-
-        return payload
-      } catch (err) {
-        console.error('## doc tree mutation error: ', err)
-        toast(formatMutationError(err), 'error')
-        reload()
-        return null
-      }
-    },
-    [community, reload, revisionRef, setTreeState, t],
-  )
 
   const persistCoverAction = useCallback(
     async (
@@ -97,8 +50,67 @@ export default function useSideTreePersistence({
     [community, reload, setCoverWarning],
   )
 
+  const persistWorkspaceUpdate = useCallback(
+    async (nodeId: string, patch: Record<string, unknown>): Promise<void> => {
+      if (revisionRef.current === null) {
+        reload()
+        return
+      }
+      try {
+        const data = await executeCommand({
+          request: (variables) =>
+            browserGraphQLRequest<{
+              updateDocsWorkspaceNode?: { treeRevision: number } | null
+            }>(S.updateDocsWorkspaceNode, variables),
+          variables: { community, treeRevision: revisionRef.current, nodeId, patch },
+        })
+        if (!data?.updateDocsWorkspaceNode) throw new Error('Directory update failed')
+        revisionRef.current = data.updateDocsWorkspaceNode.treeRevision
+        reloadDocsPublishQueue()
+        reload()
+      } catch (err) {
+        toast(formatMutationError(err), 'error')
+        reload()
+      }
+    },
+    [community, reload, revisionRef],
+  )
+
+  const persistWorkspaceMove = useCallback(
+    async (nodeId: string, parentNodeId: string | null, position: number): Promise<void> => {
+      if (revisionRef.current === null) {
+        reload()
+        return
+      }
+      try {
+        const data = await executeCommand({
+          request: (variables) =>
+            browserGraphQLRequest<{
+              moveDocsWorkspaceNode?: { treeRevision: number } | null
+            }>(S.moveDocsWorkspaceNode, variables),
+          variables: {
+            community,
+            treeRevision: revisionRef.current,
+            nodeId,
+            parentNodeId,
+            position,
+          },
+        })
+        if (!data?.moveDocsWorkspaceNode) throw new Error('Directory move failed')
+        revisionRef.current = data.moveDocsWorkspaceNode.treeRevision
+        reloadDocsPublishQueue()
+        reload()
+      } catch (err) {
+        toast(formatMutationError(err), 'error')
+        reload()
+      }
+    },
+    [community, reload, revisionRef],
+  )
+
   return {
-    persist,
     persistCoverAction,
+    persistWorkspaceUpdate,
+    persistWorkspaceMove,
   }
 }

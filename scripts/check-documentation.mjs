@@ -430,7 +430,7 @@ const checkElixirSharedFunctions = () => {
     'backend/api/lib/groupher_server/cms/front_desk/comment.ex',
     'backend/api/lib/groupher_server/cms/gate.ex',
     'backend/api/lib/groupher_server/cms/communities/lifecycle.ex',
-    'backend/api/lib/groupher_server/cms/docs/lifecycle.ex',
+    'backend/api/lib/groupher_server/cms/doc_tree/publish/lifecycle.ex',
     'backend/api/lib/groupher_server/cms/passport/authorization.ex',
     'backend/api/lib/groupher_server/cms/passport/registry.ex',
     'backend/api/lib/groupher_server/cms/outbox/workflow.ex',

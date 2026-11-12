@@ -2,19 +2,18 @@ import type { TRichEditorValue } from '@groupher/rich-editor'
 
 import type { TArticleStage } from '~/const/article'
 
-import type { TDocDraftInitialData } from '../Article/spec'
 import type { TDocTreeNodePublishState, TSideTreeController } from '../SideTree/spec'
 import type { TDocEditorMode } from '../spec'
 
 export type TDocSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
-export type TDocPublishChecklistStatus = 'checking' | 'pending' | 'none'
+export type TDocPublishQueueStatus = 'checking' | 'pending' | 'none'
 export type TDocActionSnackbarMode = 'hidden' | 'article' | 'tree'
 
 export type TDocPublishRuntime = {
   isPublishing: boolean
-  checklistLoaded: boolean
+  queueLoaded: boolean
   publishCount: number
-  hasSelectableChecklistItems: boolean
+  queueHasItems: boolean
 }
 
 export type TDocPublishView = {
@@ -22,7 +21,7 @@ export type TDocPublishView = {
   activeDocId: string | null
   surfaceMode: TDocActionSnackbarMode
   hasTreeChanges: boolean
-  hasChecklistItems: boolean
+  hasQueueItems: boolean
   isDirty: boolean
   isSaving: boolean
   isPublishing: boolean
@@ -30,7 +29,7 @@ export type TDocPublishView = {
   publishDisabled: boolean
   optionsDisabled: boolean
   publishCount: number
-  checklistStatus: TDocPublishChecklistStatus
+  queueStatus: TDocPublishQueueStatus
 }
 
 export type TDocDraftAuthor = {
@@ -41,7 +40,8 @@ export type TDocDraftAuthor = {
 
 export type TDocDraftInfo = {
   id: string
-  branchId: string
+  workingCopyId?: string | null
+  workingCopyRevision?: number
   title: string
   subtitle: string
   slug: string
@@ -55,8 +55,7 @@ export type TDocDraftInfo = {
 }
 
 export type TInit = {
-  sideTree: TSideTreeController
-  article?: TDocDraftInitialData | null
+  sideTree?: TSideTreeController
 }
 
 export type TStore = {

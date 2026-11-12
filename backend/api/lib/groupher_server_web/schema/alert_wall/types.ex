@@ -62,7 +62,6 @@ defmodule GroupherServerWeb.Schema.AlertWall.Types do
     field(:observed_version, :integer)
     field(:article, :article_path_input)
     field(:comment, :comment_path_input)
-    field(:doc_branch_id, :integer)
     field(:user_login, :string)
   end
 

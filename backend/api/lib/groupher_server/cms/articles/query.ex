@@ -71,7 +71,7 @@ defmodule GroupherServer.CMS.Articles.Query do
     end
   end
 
-  defp scope_context(:doc), do: DocContext.public_main()
+  defp scope_context(:doc), do: DocContext.public()
   defp scope_context(thread), do: ArticleContext.public(thread)
 
   @doc """

@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Comments.ConcurrencyTest do
   import GroupherServer.Support.Factory
   alias Ecto.Adapters.SQL.Sandbox
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Article, ArticleStats, Comment, PostReactionInfo}
+  alias CMS.Model.{ArticleStats, Comment, PostReactionInfo}
 
   @tag timeout: 90_000
   test "CNT-01 ACT-03 independent connections preserve counts, distinct authors and numbering" do
@@ -67,7 +67,7 @@ defmodule GroupherServer.Test.CMS.Comments.ConcurrencyTest do
         assert projection.latest_upvoted_users == []
         assert Repo.get_by!(ArticleStats, article_id: article.article_id).comments_revision == 9
       after
-        Repo.delete!(Repo.get!(Article, article.article_id))
+        assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(community.slug)
       end
     end)
   end

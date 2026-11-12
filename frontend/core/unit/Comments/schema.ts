@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 const commentPage = graphql(`
+  "Comment Lite page using the shared offset/cursor pagination contract"
   query CommentPage(
     $article: ArticlePathInput!
     $mode: CommentsMode
@@ -34,6 +35,7 @@ const commentPage = graphql(`
 `)
 
 const commentReplyPage = graphql(`
+  "A root comment's flat descendants through the shared Pagi contract"
   query CommentReplyPage(
     $comment: CommentPathInput!
     $filter: CommentPageFilter
@@ -51,6 +53,7 @@ const commentReplyPage = graphql(`
 `)
 
 const createComment = graphql(`
+  "Write a comment"
   mutation CreateComment(
     $article: ArticlePathInput!
     $bodyBag: ArtimentBodyBagInput!
@@ -69,6 +72,7 @@ const createComment = graphql(`
 `)
 
 const updateComment = graphql(`
+  "Update a comment"
   mutation UpdateComment(
     $comment: CommentPathInput!
     $bodyBag: ArtimentBodyBagInput!
@@ -100,6 +104,7 @@ const updateComment = graphql(`
 `)
 
 const commentsState = graphql(`
+  "Got basic comments state"
   query CommentsState($article: ArticlePathInput!, $freshkey: String) {
     commentsState(article: $article, freshkey: $freshkey) {
       totalCount
@@ -115,6 +120,7 @@ const commentsState = graphql(`
 `)
 
 const oneComment = graphql(`
+  "Got spec comment by ref"
   query OneComment($comment: CommentPathInput!) {
     oneComment(comment: $comment) {
       ...CommentFields
@@ -127,6 +133,7 @@ const oneComment = graphql(`
 `)
 
 const reconcileComments = graphql(`
+  "Reads up to 100 Comment projections for confirmed-write reconciliation in one request"
   query ReconcileComments($article: ArticlePathInput!, $commentInnerIds: [ID!]!) {
     commentReconcileStates(article: $article, commentInnerIds: $commentInnerIds) {
       article {
@@ -148,6 +155,7 @@ const reconcileComments = graphql(`
 `)
 
 const replyComment = graphql(`
+  "Reply to a comment"
   mutation ReplyComment(
     $comment: CommentPathInput!
     $bodyBag: ArtimentBodyBagInput!
@@ -169,6 +177,7 @@ const replyComment = graphql(`
 `)
 
 const deleteComment = graphql(`
+  "Delete a comment"
   mutation DeleteComment($comment: CommentPathInput!, $commandId: ID!) {
     deleteComment(comment: $comment, commandId: $commandId) {
       commandId
@@ -183,6 +192,7 @@ const deleteComment = graphql(`
 `)
 
 const upvoteComment = graphql(`
+  "Upvote to a comment"
   mutation UpvoteComment($comment: CommentPathInput!, $commandId: ID!) {
     upvoteComment(comment: $comment, commandId: $commandId) {
       innerId
@@ -204,6 +214,7 @@ const upvoteComment = graphql(`
 `)
 
 const undoUpvoteComment = graphql(`
+  "Undo upvote to a comment"
   mutation UndoUpvoteComment($comment: CommentPathInput!, $commandId: ID!) {
     undoUpvoteComment(comment: $comment, commandId: $commandId) {
       innerId
@@ -225,6 +236,7 @@ const undoUpvoteComment = graphql(`
 `)
 
 const emotionToComment = graphql(`
+  "Emotion to a comment"
   mutation EmotionToComment(
     $comment: CommentPathInput!
     $emotion: CommentEmotion!
@@ -247,6 +259,7 @@ const emotionToComment = graphql(`
 `)
 
 const undoEmotionToComment = graphql(`
+  "Undo emotion to a comment"
   mutation UndoEmotionToComment(
     $comment: CommentPathInput!
     $emotion: CommentEmotion!
@@ -269,6 +282,7 @@ const undoEmotionToComment = graphql(`
 `)
 
 const searchUsers = graphql(`
+  "Search user by name"
   query SearchUsers($name: String!) {
     searchUsers(name: $name) {
       ...CommentAuthorFields
@@ -277,6 +291,7 @@ const searchUsers = graphql(`
 `)
 
 const pagedPublishedComments = graphql(`
+  "Get paged published article comments"
   query PagedPublishedComments(
     $login: String!
     $thread: Thread

@@ -7,7 +7,27 @@ defmodule GroupherServer.Test.CMS.Articles.BindingsTest do
   alias CMS.Articles.Commands.BindingSupport
   alias CMS.ArtimentMentions.MentionsGraph.Revision, as: Revision
   alias CMS.Articles.Bindings.Tags
-  alias CMS.Model.{Article, ArticleBinding, ArticleBindingTag}
+  alias CMS.Model.{Article, ArticleBinding, ArticleBindingTag, ArticleHistoryOwner}
+
+  test "moving an Article preserves source history ownership and records the destination",
+       ~m(community destination post)a do
+    article = Repo.get!(Article, post.article_id)
+
+    assert {:ok, _} =
+             Repo.transact(fn -> BindingPersist.move(article, community, destination) end)
+
+    assert Repo.get_by!(ArticleHistoryOwner,
+             article_id: article.id,
+             community_id: community.id
+           )
+
+    assert Repo.get_by!(ArticleHistoryOwner,
+             article_id: article.id,
+             community_id: destination.id
+           )
+
+    refute Repo.get_by(ArticleBinding, article_id: article.id, community_id: community.id)
+  end
 
   setup do
     {community, post, _, user} = mock_article(:post)

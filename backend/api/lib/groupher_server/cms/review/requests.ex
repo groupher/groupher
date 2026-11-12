@@ -456,12 +456,15 @@ defmodule GroupherServer.CMS.Review.Requests do
     scope_query(query, attrs)
   end
 
-  defp current_scope_query(%{target_type: :doc, article_id: article_id, branch_id: branch_id}) do
-    from(request in ArtimentReview,
-      where:
-        request.target_type == :doc and request.article_id == ^article_id and
-          request.branch_id == ^branch_id and is_nil(request.replaced_at)
-    )
+  defp current_scope_query(%{target_type: :doc, article_id: article_id} = attrs) do
+    query =
+      from(request in ArtimentReview,
+        where:
+          request.target_type == :doc and request.article_id == ^article_id and
+            is_nil(request.replaced_at)
+      )
+
+    scope_query(query, attrs)
   end
 
   defp current_scope_query(_attrs), do: from(request in ArtimentReview, where: false)
@@ -484,11 +487,9 @@ defmodule GroupherServer.CMS.Review.Requests do
     )
   end
 
-  defp target_query(%{type: :doc, article_id: id, branch_id: branch_id}) do
+  defp target_query(%{type: :doc, article_id: id}) do
     from(request in ArtimentReview,
-      where:
-        request.target_type == :doc and request.article_id == ^id and
-          request.branch_id == ^branch_id
+      where: request.target_type == :doc and request.article_id == ^id
     )
   end
 

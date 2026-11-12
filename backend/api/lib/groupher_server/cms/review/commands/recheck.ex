@@ -20,16 +20,12 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
 
   alias CMS.Model.{
     ArticleBinding,
-    ArticleBodySnapshot,
     ArticlePublic,
-    ArticleRevision,
     ArticleSnapshot,
     ArticleLifecycle,
     CommentBody,
     CommentLifecycle,
-    DocBranchVersion,
-    DocLifecycle,
-    DocPublic
+    DocsLifecycle
   }
 
   @pipeline operation: :cms_review_recheck,
@@ -146,7 +142,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
       {:ok,
        %{
          title: public.title || snapshot.title || "",
-         body: snapshot.body_plain_text || "",
+         body: CMS.Articles.Body.document(snapshot).plain_text || "",
          images: CMS.Review.Media.article_snapshot_images(snapshot.id)
        }}
     else
@@ -181,21 +177,16 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   defp current_content(%{
          type: :doc,
          target: article,
-         lifecycle: %DocLifecycle{state: state},
-         branch_id: branch_id
+         lifecycle: %DocsLifecycle{state: state}
        })
        when state in [:published, :archived] do
-    with %DocPublic{branch_version_id: version_id, title: title} <-
-           Repo.get_by(DocPublic, article_id: article.id, branch_id: branch_id),
-         %DocBranchVersion{revision_id: revision_id} <- Repo.get(DocBranchVersion, version_id),
-         %ArticleRevision{body_snapshot_id: body_id} = revision <-
-           Repo.get(ArticleRevision, revision_id),
-         %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, body_id) do
+    with %ArticlePublic{snapshot_id: snapshot_id} = public <- Repo.get(ArticlePublic, article.id),
+         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id) do
       {:ok,
        %{
-         title: title || revision.title || "",
-         body: body.plain_text || "",
-         images: CMS.Review.Media.article_images(revision.id)
+         title: public.title || snapshot.title || "",
+         body: CMS.Articles.Body.document(snapshot).plain_text || "",
+         images: CMS.Review.Media.article_snapshot_images(snapshot.id)
        }}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
@@ -203,13 +194,8 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   end
 
   defp comment_parent_title(%{thread: :doc, id: article_id}, _comment) do
-    with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article_id),
-         %{id: branch_id} <- Repo.get_by(CMS.Model.DocBranch, community_id: owner.id, type: :main),
-         %DocPublic{branch_version_id: version_id, title: title} <-
-           Repo.get_by(DocPublic, article_id: article_id, branch_id: branch_id),
-         %DocBranchVersion{revision_id: revision_id} <- Repo.get(DocBranchVersion, version_id),
-         %ArticleRevision{title: revision_title} <- Repo.get(ArticleRevision, revision_id) do
-      {:ok, title || revision_title || ""}
+    with %ArticlePublic{title: title} <- Repo.get(ArticlePublic, article_id) do
+      {:ok, title || ""}
     else
       _ -> {:error, CMS.ErrorCat.invalid_review_block()}
     end
@@ -294,18 +280,15 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
   defp request_target(%{
          type: :doc,
          target: article,
-         lifecycle: %DocLifecycle{} = lifecycle,
-         branch_id: branch_id
+         lifecycle: %DocsLifecycle{} = lifecycle
        }) do
-    %{type: :doc, article_id: article.id, branch_id: branch_id, lifecycle: lifecycle}
+    %{type: :doc, article_id: article.id, lifecycle: lifecycle}
   end
 
   defp request_target_id(%{type: :article, target: article}), do: article.id
   defp request_target_id(%{type: :comment, target: comment}), do: to_string(comment.id)
 
-  defp request_target_id(%{type: :doc, target: article, branch_id: branch_id}) do
-    "#{article.id}:#{branch_id}"
-  end
+  defp request_target_id(%{type: :doc, target: article}), do: article.id
 
   defp parse_scope("platform"), do: {:ok, nil}
 

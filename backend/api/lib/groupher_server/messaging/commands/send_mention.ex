@@ -97,25 +97,16 @@ defmodule GroupherServer.Messaging.Commands.SendMention do
   end
 
   defp ensure_public_content(%Article{id: id, thread: :doc}) do
-    require_public_read(Article, id, CMS.gate_context_scope_doc_public_main())
+    require_public_read(Article, id, CMS.gate_context_scope_doc_public())
   end
 
   defp ensure_public_content(%Article{id: id, thread: thread}) do
     require_public_read(Article, id, CMS.gate_context_scope_article_public(thread))
   end
 
-  defp ensure_public_content(%{article_id: id, thread: :doc} = article)
+  defp ensure_public_content(%{article_id: id, thread: :doc})
        when is_binary(id) do
-    context =
-      case Map.get(article, :branch_id) do
-        branch_id when is_integer(branch_id) ->
-          CMS.gate_context_scope_doc_public_branch(branch_id)
-
-        _ ->
-          CMS.gate_context_scope_doc_public_main()
-      end
-
-    require_public_read(Article, id, context)
+    require_public_read(Article, id, CMS.gate_context_scope_doc_public())
   end
 
   defp ensure_public_content(%{article_id: id, thread: thread})

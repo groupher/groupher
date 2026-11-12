@@ -11,9 +11,7 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
     ArticleBinding,
     ArticleLifecycle,
     ArticleReviewBlock,
-    DocBranch,
-    DocLifecycle,
-    DocPublic
+    DocsLifecycle
   }
 
   alias CMS.Outbox.Event, as: OutboxEvent
@@ -199,14 +197,13 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
              end)
   end
 
-  test "a Doc restriction changes only the selected branch public projection" do
+  test "a Doc restriction changes its current public projection" do
     {_community, article_view, _attrs, _author} = mock_article(:doc)
     article = Repo.get!(Article, article_view.id)
-    branch = Repo.get_by!(DocBranch, type: :main, community_id: article_view.community.id)
-    lifecycle = Repo.get_by!(DocLifecycle, article_id: article.id, branch_id: branch.id)
+    lifecycle = Repo.get_by!(DocsLifecycle, article_id: article.id)
 
     lock_lifecycle = fn ->
-      DocLifecycle
+      DocsLifecycle
       |> where([row], row.id == ^lifecycle.id)
       |> lock("FOR UPDATE")
       |> Repo.one()
@@ -216,7 +213,7 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
              Repo.transaction(fn ->
                locked = lock_lifecycle.()
 
-               case CMS.Docs.Lifecycle.apply_review_block(
+               case CMS.ReviewBlocks.apply(
                       locked,
                       attrs(lifecycle, "platform", "doc-review")
                     ) do
@@ -225,7 +222,8 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
                end
              end)
 
-    assert Repo.get_by!(DocPublic, article_id: article.id, branch_id: branch.id).visible == false
+    binding = Repo.get_by!(ArticleBinding, article_id: article.id)
+    refute public_binding?(:doc, binding.id)
 
     assert %OutboxEvent{data: data} =
              Repo.get_by!(OutboxEvent,
@@ -233,7 +231,6 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
                resource_id: article.id
              )
 
-    assert data["branch_id"] == branch.id
     assert data["thread"] == "doc"
     assert data["community_id"] == article_view.community.id
 
@@ -241,7 +238,7 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
              Repo.transaction(fn ->
                locked = lock_lifecycle.()
 
-               CMS.Docs.Lifecycle.end_review_blocks(
+               CMS.ReviewBlocks.end_blocks(
                  locked,
                  "platform",
                  [restriction.id],
@@ -249,8 +246,6 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
                  "review_approved"
                )
              end)
-
-    assert Repo.get_by!(DocPublic, article_id: article.id, branch_id: branch.id).visible
 
     binding =
       Repo.get_by!(ArticleBinding,

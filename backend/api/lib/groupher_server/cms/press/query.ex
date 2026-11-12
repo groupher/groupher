@@ -16,7 +16,6 @@ defmodule GroupherServer.CMS.Press.Query do
   service-scoped request path and is not a pagination N+1 exception.
   """
 
-  require GroupherServer.CMS.Const
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
@@ -25,15 +24,11 @@ defmodule GroupherServer.CMS.Press.Query do
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
 
   alias CMS.Model.{
-    ArticleBodySnapshot,
     ArticlePublic,
-    ArticleRevision,
-    ArticleSnapshot,
+    ArticlePublicBody,
+    ArticleBodyDocument,
     Community,
-    DocBranch,
-    DocBranchVersion,
-    DocPublic,
-    DocTreeNode,
+    DocsTreeNode,
     PressConfig
   }
 
@@ -157,10 +152,9 @@ defmodule GroupherServer.CMS.Press.Query do
 
   defp validate_stable_public_doc(article, community) do
     visible =
-      DocTreeNode
+      DocsTreeNode
       |> where([node], node.community_id == ^community.id)
-      |> where([node], node.branch_id == ^article.branch_id)
-      |> where([node], node.stage == ^CMS.Const.stage(:public))
+      |> where([node], node.stage == :public)
       |> where([node], node.type == :page)
       |> where([node], node.doc_id == ^article.id)
       |> Repo.exists?()
@@ -289,48 +283,24 @@ defmodule GroupherServer.CMS.Press.Query do
     end)
   end
 
-  # Feed/manifest bodies belong to immutable public revisions, not list DTOs.
+  # Fetch public metadata and its matching independent body together.
   defp publications(entries) do
-    ordinary_ids = entries |> Enum.reject(&(&1.thread == :doc)) |> Enum.map(& &1.id)
-    doc_ids = entries |> Enum.filter(&(&1.thread == :doc)) |> Enum.map(& &1.id)
-    communities = Enum.map(entries, & &1.community.id)
+    article_ids = Enum.map(entries, & &1.id)
 
-    ordinary =
+    publications =
       from(public in ArticlePublic,
-        join: snapshot in ArticleSnapshot,
-        on: snapshot.id == public.snapshot_id and snapshot.article_id == public.article_id,
-        where: public.article_id in ^ordinary_ids,
-        select: {public.article_id, public, snapshot}
+        join: body in ArticlePublicBody,
+        on: body.snapshot_id == public.snapshot_id and body.article_id == public.article_id,
+        where: public.article_id in ^article_ids,
+        select: {public.article_id, public, body}
       )
       |> Repo.all()
-      |> Map.new(fn {id, public, snapshot} ->
-        {id, {public, snapshot_body(snapshot)}}
+      |> Map.new(fn {id, public, body} ->
+        {id, {public, Map.put(ArticleBodyDocument.document(body), :digest, public.digest)}}
       end)
 
-    docs =
-      from(public in DocPublic,
-        join: branch in DocBranch,
-        on: branch.id == public.branch_id and branch.type == :main,
-        join: version in DocBranchVersion,
-        on: version.id == public.branch_version_id,
-        join: revision in ArticleRevision,
-        on: revision.id == version.revision_id,
-        join: body in ArticleBodySnapshot,
-        on: body.id == revision.body_snapshot_id,
-        where:
-          public.article_id in ^doc_ids and branch.community_id in ^communities and public.visible,
-        select: {public.article_id, branch.community_id, public, body}
-      )
-      |> Repo.all()
-      |> Map.new(fn {id, community, public, body} -> {{id, community}, {public, body}} end)
-
     Enum.reduce_while(entries, {:ok, []}, fn entry, {:ok, collected} ->
-      publication =
-        if entry.thread == :doc do
-          Map.get(docs, {entry.id, entry.community.id})
-        else
-          Map.get(ordinary, entry.id)
-        end
+      publication = Map.get(publications, entry.id)
 
       case publication do
         {public, body} ->
@@ -342,14 +312,11 @@ defmodule GroupherServer.CMS.Press.Query do
               :subtitle,
               :slug,
               :snapshot_id,
-              :branch_version_id,
               :published_at,
               :updated_at
             ])
             |> Map.merge(%{
               article_id: entry.id,
-              content_version:
-                Map.get(public, :snapshot_id) || Map.get(public, :branch_version_id),
               inner_id: entry.inner_id,
               thread: entry.thread,
               body: body,
@@ -368,18 +335,6 @@ defmodule GroupherServer.CMS.Press.Query do
       {:ok, items} -> {:ok, Enum.reverse(items)}
       error -> error
     end
-  end
-
-  defp snapshot_body(snapshot) do
-    %{
-      markdown: snapshot.body_markdown,
-      html: snapshot.body_html,
-      plain_text: snapshot.body_plain_text,
-      digest: snapshot.digest,
-      thumbnail: snapshot.body_thumbnail,
-      markdown_toc: snapshot.body_markdown_toc,
-      schema_version: snapshot.body_schema_version
-    }
   end
 
   defp path_key(%{community: community, thread: thread, inner_id: inner_id}) do

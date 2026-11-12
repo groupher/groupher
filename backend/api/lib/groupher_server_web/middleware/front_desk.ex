@@ -121,11 +121,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
          opts
        ) do
     with {:ok, thread} <- Keyword.fetch(opts, :thread),
-         {:ok, article, branch_id} <- fetch_editor_article(community, thread, article_id) do
+         {:ok, article} <- fetch_editor_article(community, thread, article_id) do
       updated_arguments =
         arguments
         |> Map.put(:article, article)
-        |> maybe_put_branch_id(branch_id)
         |> maybe_put_article_passport_is_owner(article, resolution)
 
       %{resolution | arguments: updated_arguments}
@@ -141,24 +140,12 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
-  defp fetch_editor_article(%Community{id: community_id} = community, :doc, article_id) do
-    with {:ok, %CMS.Model.Article{thread: :doc} = article} <-
-           FrontDesk.article(article_id, mode: :internal, view: :with_author),
-         {:ok, %{community: %Community{id: ^community_id}}} <-
-           GroupherServer.CMS.articles_bindings_get(%{article_id: article.id}, community),
-         {:ok, branch} <- CMS.docs_branch_resolve(community, nil) do
-      {:ok, article, branch.id}
-    else
-      _ -> {:error, GroupherServer.CMS.articles_error_cat_not_exist("stable Doc not found")}
-    end
-  end
-
   defp fetch_editor_article(%Community{} = community, thread, article_id) do
     case FrontDesk.article(article_id, mode: :internal, view: :with_author) do
       {:ok, %CMS.Model.Article{thread: ^thread} = article} ->
         case GroupherServer.CMS.articles_bindings_get(%{article_id: article.id}, community) do
           {:ok, _context} ->
-            {:ok, article, nil}
+            {:ok, article}
 
           _ ->
             {:error, GroupherServer.CMS.articles_error_cat_not_exist("stable Article not found")}
@@ -168,9 +155,6 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         {:error, GroupherServer.CMS.articles_error_cat_not_exist("stable Article not found")}
     end
   end
-
-  defp maybe_put_branch_id(arguments, nil), do: arguments
-  defp maybe_put_branch_id(arguments, branch_id), do: Map.put(arguments, :branch_id, branch_id)
 
   defp fetch_comment(%{arguments: %{comment: comment_path} = arguments} = resolution) do
     case fetch_comment_by_path(comment_path) do

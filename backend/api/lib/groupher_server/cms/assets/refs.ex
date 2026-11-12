@@ -15,13 +15,11 @@ defmodule GroupherServer.CMS.Assets.Refs do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
 
   alias CMS.Assets.{Completeness, Persist}
-  alias CMS.Articles.Bindings
   alias CMS.Assets.ErrorCat, as: AssetErrorCat
-  alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
 
   alias CMS.Model.{
@@ -30,13 +28,11 @@ defmodule GroupherServer.CMS.Assets.Refs do
     ArticleAssetRef,
     ArticleWorkingCopy,
     Community,
-    CommunityAsset,
-    DocDraft
+    CommunityAsset
   }
 
-  alias Helper.{ORM, T}
+  alias Helper.T
 
-  @body_usages ~w(inline attachment embed)a
   @cover_specs [
     %{
       usage: :cover,
@@ -64,8 +60,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
     do_sync_working_copy_refs(community_id, work, attrs, user, :derived)
   end
 
-  def sync_working_copy_refs(_community, _article, _work, _attrs, _user),
-    do: {:error, GateErrorCat.permission_denied()}
+  def sync_working_copy_refs(_community, _article, _work, _attrs, _user) do
+    {:error, GateErrorCat.permission_denied()}
+  end
 
   @doc "Rebuilds refs with already selected cover references inside an admitted Doc merge."
   def sync_merged_working_copy_refs(
@@ -81,8 +78,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  def sync_merged_working_copy_refs(_, _, _, _, _, _),
-    do: {:error, GateErrorCat.permission_denied()}
+  def sync_merged_working_copy_refs(_, _, _, _, _, _) do
+    {:error, GateErrorCat.permission_denied()}
+  end
 
   defp do_sync_working_copy_refs(community_id, work, attrs, user, selection) do
     working_copy_id = work.id
@@ -124,22 +122,6 @@ defmodule GroupherServer.CMS.Assets.Refs do
     copy_owner_refs(:snapshot_id, snapshot_id, :working_copy_id, working_copy_id)
   end
 
-  @doc false
-  def draft_refs(body_draft_id) when is_binary(body_draft_id) do
-    ArticleAssetRef
-    |> where([ref], ref.body_draft_id == ^body_draft_id)
-    |> order_by([ref], asc: ref.position, asc: ref.inserted_at, asc: ref.id)
-    |> Repo.all()
-  end
-
-  @doc false
-  def revision_refs(revision_id) when is_binary(revision_id) do
-    ArticleAssetRef
-    |> where([ref], ref.revision_id == ^revision_id)
-    |> order_by([ref], asc: ref.position, asc: ref.inserted_at, asc: ref.id)
-    |> Repo.all()
-  end
-
   @doc "Returns all asset refs owned by one WorkingCopy."
   def working_copy_refs(working_copy_id) when is_binary(working_copy_id) do
     ArticleAssetRef
@@ -156,135 +138,6 @@ defmodule GroupherServer.CMS.Assets.Refs do
     |> Repo.all()
   end
 
-  @doc false
-  def lock_draft_refs(body_draft_id, usage) when is_binary(body_draft_id) do
-    ArticleAssetRef
-    |> where([ref], ref.body_draft_id == ^body_draft_id and ref.usage == ^usage)
-    |> lock("FOR UPDATE")
-    |> Repo.all()
-  end
-
-  @doc """
-  Synchronizes legacy Docs Draft refs using an explicit community boundary.
-
-  The body Draft row is locked while body and cover refs are replaced, so
-  concurrent syncs for the same article cannot interleave delete/insert steps.
-
-  ## Examples
-
-      Refs.sync_refs(community, doc, %{
-        asset_refs: [%{asset_id: asset.id, block_id: "image-1"}],
-        cover_asset_id: cover_asset.id,
-        cur_user: user
-      })
-      #=> {:ok, %{body: body_refs, cover: cover_refs}}
-
-  """
-  @spec sync_refs(Community.t(), T.article(), map()) :: T.domain_res(term())
-  def sync_refs(%Community{} = community, article, attrs) do
-    case resolve_article(article) do
-      {:ok, %Article{thread: :doc}} ->
-        do_sync_refs(community.id, article, attrs)
-
-      {:ok, %Article{}} ->
-        {:error, :working_copy_save_required}
-
-      {:error, _reason} = error ->
-        error
-    end
-  end
-
-  @doc """
-  Synchronizes legacy Docs Draft refs using ArticleBinding context.
-
-  ## Examples
-
-      Refs.sync_refs(doc, %{asset_refs: [%{asset_id: asset.id}]})
-      #=> {:ok, %{body: body_refs, cover: cover_refs}}
-
-      Refs.sync_refs(doc, %{asset_refs: []})
-      #=> {:ok, :pass}
-
-  """
-  @spec sync_refs(T.article(), map()) :: T.domain_res(term())
-  def sync_refs(article, attrs) do
-    case Bindings.get(article, Map.get(article, :community)) do
-      {:ok, %{community: %Community{} = community}} -> sync_refs(community, article, attrs)
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  @doc "Copies legacy Docs Draft refs between branch-owned versions."
-  @spec copy_refs(T.article(), T.article()) :: T.domain_res(term())
-  def copy_refs(source, target) do
-    with {:ok, %{community: %{id: target_community_id}}} <-
-           Bindings.get(target, Map.get(target, :community)),
-         {:ok, source_thread} <- FrontDesk.thread_of(source),
-         {:ok, target_thread} <- FrontDesk.thread_of(target),
-         true <- source_thread == target_thread,
-         {:ok, :pass} <- legacy_doc_copy(source_thread),
-         {:ok, source_body_id} <- draft_body_id(source),
-         {:ok, target_body_id} <- draft_body_id(target) do
-      Repo.transaction(fn ->
-        {:ok, _} = Completeness.lock_scope(target_community_id)
-
-        ArticleAssetRef
-        |> where([ref], ref.body_draft_id == ^target_body_id)
-        |> Repo.delete_all()
-
-        source_refs =
-          ArticleAssetRef
-          |> where([ref], ref.body_draft_id == ^source_body_id)
-          |> Repo.all()
-
-        Enum.reduce_while(
-          source_refs,
-          {:ok, []},
-          &copy_ref(&1, &2, target, target_body_id)
-        )
-        |> case do
-          {:ok, copied} -> Enum.reverse(copied)
-          {:error, reason} -> Repo.rollback(reason)
-        end
-      end)
-    else
-      false ->
-        {:error, AssetErrorCat.custom("Article asset refs can only copy within one thread")}
-
-      error ->
-        error
-    end
-  end
-
-  defp legacy_doc_copy(:doc), do: {:ok, :pass}
-  defp legacy_doc_copy(_thread), do: {:error, :working_copy_save_required}
-
-  defp copy_ref(source_ref, {:ok, copied}, target, target_body_id) do
-    attrs =
-      source_ref
-      |> Map.from_struct()
-      |> Map.take([
-        :asset_id,
-        :usage,
-        :block_id,
-        :block_type,
-        :position,
-        :title,
-        :alt,
-        :source,
-        :meta
-      ])
-      |> Map.merge(%{
-        community_id: target.community_id,
-        body_draft_id: target_body_id
-      })
-
-    case ORM.create(ArticleAssetRef, attrs) do
-      {:ok, ref} -> {:cont, {:ok, [ref | copied]}}
-      {:error, reason} -> {:halt, {:error, reason}}
-    end
-  end
-
   @doc """
   Removes WorkingCopy and Snapshot refs, plus legacy Docs-owned refs, for an Article.
 
@@ -298,17 +151,7 @@ defmodule GroupherServer.CMS.Assets.Refs do
 
   """
   @spec purge_refs(atom(), T.id()) :: T.domain_res(term())
-  def purge_refs(thread, article_id) do
-    revision_ids =
-      from(revision in CMS.Model.ArticleRevision,
-        join: article in Article,
-        on: article.id == revision.article_id,
-        where: revision.article_id == ^article_id and article.thread == :doc,
-        select: revision.id
-      )
-
-    body_draft_ids = draft_body_ids(thread, article_id)
-
+  def purge_refs(_thread, article_id) do
     working_copy_ids =
       from(work in ArticleWorkingCopy,
         where: work.article_id == ^article_id,
@@ -337,9 +180,7 @@ defmodule GroupherServer.CMS.Assets.Refs do
           ArticleAssetRef
           |> where(
             [ref],
-            ref.revision_id in subquery(revision_ids) or
-              ref.body_draft_id in subquery(body_draft_ids) or
-              ref.working_copy_id in subquery(working_copy_ids) or
+            ref.working_copy_id in subquery(working_copy_ids) or
               ref.snapshot_id in subquery(snapshot_ids)
           )
           |> Repo.delete_all()
@@ -348,186 +189,6 @@ defmodule GroupherServer.CMS.Assets.Refs do
       nil ->
         {:error, AssetErrorCat.custom("article not found")}
     end
-  end
-
-  defp do_sync_refs(community_id, article, attrs) do
-    case sync_requested?(attrs) do
-      false ->
-        {:ok, :pass}
-
-      true ->
-        Repo.transaction(fn ->
-          with {:ok, _thread} <- FrontDesk.thread_of(article),
-               {:ok, _} <- Completeness.lock_scope(community_id),
-               {:ok, body_draft_id} <- draft_body_id(article),
-               {:ok, _} <- lock_body_draft(body_draft_id),
-               base <- base_ref_attrs(community_id, body_draft_id),
-               user <- get_attr(attrs, :cur_user),
-               {:ok, body_refs} <- sync_body_refs(body_draft_id, base, attrs, user),
-               {:ok, cover_refs} <- sync_cover_refs(body_draft_id, base, attrs, user) do
-            %{body: body_refs, cover: cover_refs}
-          else
-            {:error, reason} -> Repo.rollback(reason)
-          end
-        end)
-    end
-  end
-
-  defp resolve_article(%Article{} = article), do: {:ok, article}
-
-  defp resolve_article(article) when is_map(article) do
-    article_id =
-      Map.get(article, :article_id) || Map.get(article, "article_id") || Map.get(article, :id)
-
-    case article_id do
-      id when is_binary(id) -> CMS.FrontDesk.article(id, mode: :internal)
-      _ -> {:error, AssetErrorCat.not_exist("article not found")}
-    end
-  end
-
-  defp resolve_article(_article),
-    do: {:error, AssetErrorCat.not_exist("article not found")}
-
-  defp sync_requested?(attrs) when is_map(attrs) do
-    has_attr?(attrs, :asset_refs) or has_attr?(attrs, :cover_asset) or
-      has_attr?(attrs, :cover_asset_id) or has_attr?(attrs, :cover_asset_dark) or
-      has_attr?(attrs, :cover_asset_dark_id) or removed_cover?(attrs)
-  end
-
-  defp sync_requested?(_), do: false
-
-  defp removed_cover?(attrs) do
-    has_attr?(attrs, :cover_edit_info) and is_nil(get_attr(attrs, :cover_edit_info))
-  end
-
-  defp sync_body_refs(document, base, attrs, user) do
-    case has_attr?(attrs, :asset_refs) do
-      false ->
-        {:ok, []}
-
-      true ->
-        inputs = get_attr(attrs, :asset_refs) || []
-
-        with {:ok, usages} <- replace_usages_for_inputs(inputs) do
-          replace_refs(document, usages, inputs, base, user, &normalize_body_usage/1)
-        end
-    end
-  end
-
-  defp sync_cover_refs(document, base, attrs, user) do
-    attrs
-    |> cover_ref_specs()
-    |> Enum.reduce_while({:ok, []}, fn {usage, inputs}, {:ok, acc} ->
-      case replace_refs(document, [usage], inputs, base, user, &normalize_usage/1) do
-        {:ok, refs} -> {:cont, {:ok, [refs | acc]}}
-        {:error, _} = error -> {:halt, error}
-      end
-    end)
-    |> case do
-      {:ok, refs} -> {:ok, refs |> Enum.reverse() |> List.flatten()}
-      error -> error
-    end
-  end
-
-  defp cover_ref_specs(attrs) do
-    if removed_cover?(attrs) do
-      Enum.map(@cover_specs, &{&1.usage, []})
-    else
-      Enum.flat_map(@cover_specs, fn spec ->
-        cover_ref_spec(attrs, spec)
-      end)
-    end
-  end
-
-  defp cover_ref_spec(attrs, spec) do
-    if has_attr?(attrs, spec.asset_key) or has_attr?(attrs, spec.asset_id_key) do
-      case cover_ref_input(attrs, spec) do
-        nil -> [{spec.usage, []}]
-        input -> [{spec.usage, [input]}]
-      end
-    else
-      []
-    end
-  end
-
-  defp cover_ref_input(attrs, spec) do
-    asset = get_attr(attrs, spec.asset_key)
-    asset_id = get_attr(attrs, spec.asset_id_key)
-
-    if is_nil(asset) and is_nil(asset_id) do
-      nil
-    else
-      %{
-        asset: asset,
-        asset_id: asset_id,
-        usage: spec.usage,
-        source: "cover"
-      }
-    end
-  end
-
-  defp replace_refs(
-         body_draft_id,
-         usages,
-         inputs,
-         base,
-         user,
-         normalize_usage_fun
-       ) do
-    ArticleAssetRef
-    |> where([ref], ref.body_draft_id == ^body_draft_id and ref.usage in ^usages)
-    |> Repo.delete_all()
-
-    inputs
-    |> Enum.with_index()
-    |> Enum.reduce_while({:ok, []}, fn {input, index}, {:ok, acc} ->
-      case create_ref(input, index, base, user, normalize_usage_fun) do
-        {:ok, ref} -> {:cont, {:ok, acc ++ [ref]}}
-        {:error, _} = error -> {:halt, error}
-      end
-    end)
-  end
-
-  defp replace_usages_for_inputs([]), do: {:ok, @body_usages}
-
-  defp replace_usages_for_inputs(inputs) do
-    inputs
-    |> Enum.reduce_while({:ok, MapSet.new(@body_usages)}, fn input, {:ok, usage_set} ->
-      case normalize_body_usage(get_attr(input, :usage)) do
-        {:ok, usage} -> {:cont, {:ok, MapSet.put(usage_set, usage)}}
-        {:error, _} = error -> {:halt, error}
-      end
-    end)
-    |> case do
-      {:ok, usage_set} -> {:ok, MapSet.to_list(usage_set)}
-      {:error, _} = error -> error
-    end
-  end
-
-  defp create_ref(input, index, %{community_id: community_id} = base, user, normalize_usage_fun)
-       when is_map(input) do
-    with {:ok, usage} <- normalize_usage_fun.(get_attr(input, :usage)),
-         {:ok, asset} <- resolve_asset(community_id, input, user) do
-      attrs =
-        base
-        |> Map.merge(%{
-          asset_id: asset.id,
-          usage: usage,
-          block_id: get_attr(input, :block_id),
-          block_type: get_attr(input, :block_type),
-          position: get_attr(input, :position) || index,
-          title: get_attr(input, :title),
-          alt: get_attr(input, :alt),
-          source: get_attr(input, :source),
-          meta: get_attr(input, :meta) || %{}
-        })
-
-      ORM.create(ArticleAssetRef, attrs)
-    end
-  end
-
-  defp create_ref(_, _, _, _, _) do
-    {:error, AssetErrorCat.custom("asset ref is invalid")}
   end
 
   defp create_working_copy_ref(community_id, working_copy_id, input, user, index)
@@ -552,8 +213,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  defp create_working_copy_ref(_community_id, _working_copy_id, _input, _user, _index),
-    do: {:error, AssetErrorCat.custom("asset ref is invalid")}
+  defp create_working_copy_ref(_community_id, _working_copy_id, _input, _user, _index) do
+    {:error, AssetErrorCat.custom("asset ref is invalid")}
+  end
 
   defp lock_working_copy(working_copy_id) do
     ArticleWorkingCopy
@@ -572,7 +234,7 @@ defmodule GroupherServer.CMS.Assets.Refs do
         do: get_attr(attrs, :asset_refs),
         else: existing_working_copy_attachment_refs(work.id)
 
-    with {:ok, body} <- decode_working_copy_body(work.body_json),
+    with {:ok, body} <- decode_working_copy_body(CMS.Articles.Body.document(work).json),
          {:ok, thread_refs} <- typed_cover_refs(work),
          {:ok, cover_edit_refs} <- cover_edit_refs(work.cover_edit_working_copy_id),
          {:ok, explicit_refs} <- normalize_explicit_refs(explicit_refs),
@@ -602,8 +264,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  defp validate_selected_cover_refs(_),
-    do: {:error, AssetErrorCat.custom("selected Doc cover refs are invalid")}
+  defp validate_selected_cover_refs(_) do
+    {:error, AssetErrorCat.custom("selected Doc cover refs are invalid")}
+  end
 
   defp existing_working_copy_attachment_refs(working_copy_id) do
     ArticleAssetRef
@@ -648,14 +311,27 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  defp normalize_explicit_refs(_refs),
-    do: {:error, AssetErrorCat.custom("Article asset refs must be a list")}
+  defp normalize_explicit_refs(_refs) do
+    {:error, AssetErrorCat.custom("Article asset refs must be a list")}
+  end
 
   defp normalize_explicit_asset_usage(:attachment), do: {:ok, :attachment}
   defp normalize_explicit_asset_usage("attachment"), do: {:ok, :attachment}
 
-  defp normalize_explicit_asset_usage(_usage),
-    do: {:error, AssetErrorCat.custom("explicit Article asset refs must be attachments")}
+  defp normalize_explicit_asset_usage(_usage) do
+    {:error, AssetErrorCat.custom("explicit Article asset refs must be attachments")}
+  end
+
+  defp cover_ref_input(attrs, spec) do
+    asset = get_attr(attrs, spec.asset_key)
+    asset_id = get_attr(attrs, spec.asset_id_key)
+
+    if is_nil(asset) and is_nil(asset_id) do
+      nil
+    else
+      %{asset: asset, asset_id: asset_id, usage: spec.usage, source: "cover"}
+    end
+  end
 
   defp selected_cover_refs(_work, _attrs, _thread_refs, {:selected, refs}), do: {:ok, refs}
 
@@ -731,14 +407,17 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  defp working_copy_typed_model(:post),
-    do: {CMS.Model.ArticleWorkingCopyPost, [:cover_url, :cover_url_dark]}
+  defp working_copy_typed_model(:post) do
+    {CMS.Model.ArticleWorkingCopyPost, [:cover_url, :cover_url_dark]}
+  end
 
-  defp working_copy_typed_model(:blog),
-    do: {CMS.Model.ArticleWorkingCopyBlog, [:cover_url, :cover_url_dark]}
+  defp working_copy_typed_model(:blog) do
+    {CMS.Model.ArticleWorkingCopyBlog, [:cover_url, :cover_url_dark]}
+  end
 
-  defp working_copy_typed_model(:changelog),
-    do: {CMS.Model.ArticleWorkingCopyChangelog, [:cover_url, :cover_url_dark]}
+  defp working_copy_typed_model(:changelog) do
+    {CMS.Model.ArticleWorkingCopyChangelog, [:cover_url, :cover_url_dark]}
+  end
 
   defp cover_url_refs(light, dark) do
     cover_ref(:cover, light) ++ cover_ref(:cover_dark, dark)
@@ -776,8 +455,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
 
   defp collect_body_asset_refs(body), do: walk_body_assets(body, 0, []) |> Enum.reverse()
 
-  defp walk_body_assets(value, _position, refs) when not is_map(value) and not is_list(value),
-    do: refs
+  defp walk_body_assets(value, _position, refs) when not is_map(value) and not is_list(value) do
+    refs
+  end
 
   defp walk_body_assets(values, position, refs) when is_list(values) do
     Enum.reduce(values, {position, refs}, fn value, {next_position, acc} ->
@@ -821,8 +501,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
     walk_explicit_assets(value, usage, source, []) |> Enum.reverse()
   end
 
-  defp walk_explicit_assets(values, usage, source, refs) when is_list(values),
-    do: Enum.reduce(values, refs, &walk_explicit_assets(&1, usage, source, &2))
+  defp walk_explicit_assets(values, usage, source, refs) when is_list(values) do
+    Enum.reduce(values, refs, &walk_explicit_assets(&1, usage, source, &2))
+  end
 
   defp walk_explicit_assets(value, usage, source, refs) when is_map(value) do
     ref =
@@ -881,8 +562,9 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  defp load_active_asset_by_public_ref(_community_id, _public_ref),
-    do: {:error, AssetErrorCat.custom("managed Article asset has no public ref")}
+  defp load_active_asset_by_public_ref(_community_id, _public_ref) do
+    {:error, AssetErrorCat.custom("managed Article asset has no public ref")}
+  end
 
   defp copy_owner_refs(source_field, source_id, target_field, target_id) do
     if Repo.in_transaction?() do
@@ -956,40 +638,6 @@ defmodule GroupherServer.CMS.Assets.Refs do
     end
   end
 
-  defp lock_body_draft(body_draft_id) do
-    CMS.Model.ArticleBodyDraft
-    |> where([body], body.id == ^body_draft_id)
-    |> lock("FOR UPDATE")
-    |> Repo.one()
-    |> case do
-      nil -> {:error, AssetErrorCat.not_exist("article body draft not found")}
-      _body -> {:ok, :pass}
-    end
-  end
-
-  defp base_ref_attrs(community_id, body_draft_id) do
-    %{community_id: community_id, body_draft_id: body_draft_id}
-  end
-
-  defp draft_body_id(%{thread: :doc, id: article_id, branch_id: branch_id})
-       when is_integer(branch_id) do
-    case Repo.get_by(DocDraft, article_id: article_id, branch_id: branch_id) do
-      %DocDraft{body_draft_id: body_draft_id} -> {:ok, body_draft_id}
-      nil -> {:error, AssetErrorCat.not_exist("article body draft not found")}
-    end
-  end
-
-  defp draft_body_id(_article) do
-    {:error, GateErrorCat.doc_branch_required()}
-  end
-
-  defp draft_body_ids(:doc, article_id) do
-    from(draft in DocDraft, where: draft.article_id == ^article_id, select: draft.body_draft_id)
-  end
-
-  defp draft_body_ids(_thread, _article_id),
-    do: from(draft in DocDraft, where: false, select: draft.body_draft_id)
-
   defp normalize_usage(nil), do: {:ok, :inline}
   defp normalize_usage(usage) when usage in @all_usages, do: {:ok, usage}
 
@@ -1003,16 +651,6 @@ defmodule GroupherServer.CMS.Assets.Refs do
   end
 
   defp normalize_usage(_), do: {:error, AssetErrorCat.custom("asset usage is invalid")}
-
-  defp normalize_body_usage(usage) do
-    with {:ok, usage} <- normalize_usage(usage),
-         true <- usage in @body_usages do
-      {:ok, usage}
-    else
-      false -> {:error, AssetErrorCat.custom("asset usage is invalid")}
-      {:error, _} = error -> error
-    end
-  end
 
   defp has_attr?(map, key) when is_map(map) do
     Map.has_key?(map, key) or Map.has_key?(map, Atom.to_string(key))

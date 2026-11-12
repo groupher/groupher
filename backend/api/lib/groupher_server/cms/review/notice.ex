@@ -15,20 +15,18 @@ defmodule GroupherServer.CMS.Review.Notice do
     ArtimentReview,
     Author,
     Comment,
-    CommentReviewBlock,
-    DocReviewBlock
+    CommentReviewBlock
   }
 
   @doc "Returns only the state that the target's author may see."
   def for_author(%{type: type} = target, %{id: user_id}) when is_integer(user_id) do
-    with {:ok, block_schema, target_field, target_id, community_id, branch_id} <-
+    with {:ok, block_schema, target_field, target_id, community_id} <-
            target_query(target),
          {:ok, :pass} <- authorize_author(type, target, user_id) do
       blocks =
         block_schema
         |> where([block], field(block, ^target_field) == ^target_id and is_nil(block.resolved_at))
         |> block_scope(type, community_id)
-        |> branch(branch_id)
         |> Repo.all()
 
       requests =
@@ -38,7 +36,6 @@ defmodule GroupherServer.CMS.Review.Notice do
           field(request, ^target_field) == ^target_id and is_nil(request.replaced_at)
         )
         |> scope(community_id)
-        |> branch(branch_id)
         |> Repo.all()
 
       {:ok, status(blocks, requests)}
@@ -49,19 +46,19 @@ defmodule GroupherServer.CMS.Review.Notice do
 
   defp target_query(%{type: :article, article_id: id, community_id: community_id})
        when is_binary(id) do
-    {:ok, ArticleReviewBlock, :article_id, id, community_id, nil}
+    {:ok, ArticleReviewBlock, :article_id, id, community_id}
   end
 
   defp target_query(%{type: :comment, comment_id: id})
        when is_integer(id) do
     case Repo.get(Comment, id) do
       %Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
-        {:ok, CommentReviewBlock, :comment_id, id, :all, nil}
+        {:ok, CommentReviewBlock, :comment_id, id, :all}
 
       %Comment{thread: :doc, article_id: article_id} ->
         case CMS.Articles.Bindings.doc_owner(article_id) do
           {:ok, %{id: community_id}} ->
-            {:ok, CommentReviewBlock, :comment_id, id, community_id, nil}
+            {:ok, CommentReviewBlock, :comment_id, id, community_id}
 
           _ ->
             {:error, CMS.ErrorCat.invalid_review_block()}
@@ -72,9 +69,11 @@ defmodule GroupherServer.CMS.Review.Notice do
     end
   end
 
-  defp target_query(%{type: :doc, article_id: id, branch_id: branch_id})
-       when is_binary(id) and is_integer(branch_id) do
-    {:ok, DocReviewBlock, :article_id, id, nil, branch_id}
+  defp target_query(%{type: :doc, article_id: id}) when is_binary(id) do
+    case CMS.Articles.Bindings.doc_owner(id) do
+      {:ok, %{id: community_id}} -> {:ok, ArticleReviewBlock, :article_id, id, community_id}
+      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+    end
   end
 
   defp target_query(_target), do: {:error, CMS.ErrorCat.invalid_review_block()}
@@ -107,12 +106,8 @@ defmodule GroupherServer.CMS.Review.Notice do
     where(query, [row], is_nil(row.community_id) or row.community_id == ^community_id)
   end
 
-  defp block_scope(query, :doc, _community_id), do: query
   defp block_scope(query, :comment, :all), do: where(query, [row], is_nil(row.community_id))
   defp block_scope(query, _type, community_id), do: scope(query, community_id)
-
-  defp branch(query, nil), do: query
-  defp branch(query, branch_id), do: where(query, [row], row.branch_id == ^branch_id)
 
   defp status(blocks, requests) do
     types = Enum.map(blocks, & &1.type)

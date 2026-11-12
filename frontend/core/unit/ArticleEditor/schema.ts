@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 const createArticle = graphql(`
+  "Create a stable Article and its default mutable WorkingCopy"
   mutation CreateArticle(
     $community: String!
     $thread: Thread!
@@ -54,6 +55,7 @@ const createArticle = graphql(`
 `)
 
 const createAndPublishArticle = graphql(`
+  "Create and publish an Article atomically through one command and Receipt"
   mutation CreateAndPublishArticle(
     $community: String!
     $thread: Thread!
@@ -100,6 +102,7 @@ const createAndPublishArticle = graphql(`
 `)
 
 const saveWorkingCopy = graphql(`
+  "Save one Article WorkingCopy patch at its current revision"
   mutation SaveWorkingCopy(
     $articleId: ID!
     $workingCopyId: ID!
@@ -157,6 +160,7 @@ const saveWorkingCopy = graphql(`
 `)
 
 const forkSnapshot = graphql(`
+  "Create an independent WorkingCopy from an immutable Article Snapshot"
   mutation ForkSnapshot(
     $commandId: ID!
     $snapshotId: ID!
@@ -186,6 +190,7 @@ const forkSnapshot = graphql(`
 `)
 
 const publishArticle = graphql(`
+  "Select a saved Article Snapshot as the current public version"
   mutation PublishArticle(
     $commandId: ID!
     $articleId: ID!
@@ -214,6 +219,7 @@ const publishArticle = graphql(`
 `)
 
 const deleteWorkingCopy = graphql(`
+  "Discard one editable WorkingCopy"
   mutation DeleteWorkingCopy(
     $commandId: ID!
     $articleId: ID!
@@ -233,6 +239,7 @@ const deleteWorkingCopy = graphql(`
 `)
 
 const community = graphql(`
+  "Spec community info"
   query ArticleEditorCommunity($slug: String!) {
     community(slug: $slug) {
       logo
@@ -245,6 +252,7 @@ const community = graphql(`
 `)
 
 const workingCopies = graphql(`
+  "Editable WorkingCopies for one Article"
   query ArticleEditorWorkingCopies($articleId: ID!, $community: String!) {
     articleWorkingCopies(articleId: $articleId, community: $community) {
       id
@@ -269,6 +277,7 @@ const workingCopies = graphql(`
 `)
 
 const snapshots = graphql(`
+  "Immutable Snapshots for one Article"
   query ArticleEditorSnapshots($articleId: ID!, $community: String!) {
     articleSnapshots(articleId: $articleId, community: $community) {
       id

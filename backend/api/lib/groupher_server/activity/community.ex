@@ -11,6 +11,7 @@ defmodule GroupherServer.Activity.Community do
   alias CMS.Model.Community
 
   @contracts %{
+    docs_approval_policy_changed: Event.contract([:before, :after], [], [:community_log]),
     blocker_created: Event.contract([], [:kind, :ref, :reason], [:community_log]),
     blocker_released: Event.contract([], [:kind, :ref, :reason], [:community_log]),
     blocker_terminated: Event.contract([], [:kind, :ref, :reason], [:community_log]),

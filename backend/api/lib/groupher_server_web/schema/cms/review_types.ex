@@ -17,7 +17,6 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Types do
     field(:comment, :comment_path_input)
     field(:article_id, :id)
     field(:comment_id, :id)
-    field(:branch_id, :integer)
     field(:community_id, :id)
   end
 
@@ -37,7 +36,6 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Types do
     field(:target_type, non_null(:review_bot_subject_type))
     field(:article_id, :id)
     field(:comment_id, :id)
-    field(:branch_id, :integer)
     field(:community_id, :id)
     field(:state, non_null(:string))
     field(:replaced_at, :datetime)

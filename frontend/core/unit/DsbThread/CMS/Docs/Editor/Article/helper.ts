@@ -6,9 +6,8 @@ import { ARTICLE_STAGE } from '~/const/article'
 import type { TSideTreePage } from '../SideTree/spec'
 import { EMPTY_EDITOR_VALUE } from './constant'
 import type {
-  TDocDraftDTO,
   TDocDraftSession,
-  TDocDraftSource,
+  TDocWorkingCopy,
   TEditorDraft,
   TEditorDraftMeta,
   TEditorDraftStorePatchInput,
@@ -121,14 +120,17 @@ export const composeEmptyEditorDraft = (): TEditorDraft =>
 /** Runs the compose saved draft operation at the frontend shared boundary. */
 export const composeSavedDraft = (
   draft: TEditorDraft,
-  server?: { contentHash?: string | null; baseRevisionId?: string | null },
+  server?: { workingCopyId?: string | null; publicSnapshotId?: string | null },
 ): TSavedDraft => ({
   bodyValue: draft.bodyValue,
   bodyJson: draft.bodyJson,
   docId: draft.docId,
   revisionSignature: draftSignature(draft),
-  serverContentHash: server?.contentHash || '',
-  baseRevisionId: server?.baseRevisionId || null,
+  base: {
+    workingCopyId: server?.workingCopyId ?? null,
+    revision: draft.version,
+    snapshotId: server?.publicSnapshotId ?? null,
+  },
   subtitle: draft.subtitle,
   title: draft.title,
   version: draft.version,
@@ -138,16 +140,11 @@ export const composeSavedDraft = (
 export const composeEmptySavedDraft = (): TSavedDraft =>
   composeSavedDraft(composeEmptyEditorDraft())
 
-/** Resolves draft source without leaking frontend shared routing details to callers. */
-export const resolveDraftSource = (draft?: Pick<TDocDraftDTO, 'stage'> | null): TDocDraftSource =>
-  draft?.stage === ARTICLE_STAGE.DRAFT ? 'draft' : 'public'
-
 /** Runs the compose editor draft meta operation at the frontend shared boundary. */
 export const composeEditorDraftMeta = (
   source?: Partial<TEditorDraftMeta> | null,
 ): TEditorDraftMeta => ({
   author: source?.author ?? null,
-  branchId: source?.branchId ?? '',
   insertedAt: source?.insertedAt ?? null,
   stage: source?.stage ?? null,
   updatedAt: source?.updatedAt ?? null,
@@ -197,15 +194,20 @@ export const composeEditorDraftFromSession = (session: TDocDraftSession): TEdito
 
 /** Runs the compose doc draft info operation at the frontend shared boundary. */
 export const composeDocDraftInfo = ({
+  workingCopyId,
   bodyStats,
   draft,
   meta,
   publishState,
-}: Pick<TEditorDraftStorePatchInput, 'bodyStats' | 'draft' | 'meta' | 'publishState'>) => ({
+}: Pick<
+  TEditorDraftStorePatchInput,
+  'bodyStats' | 'draft' | 'meta' | 'publishState' | 'workingCopyId'
+>) => ({
   author: meta.author,
-  branchId: meta.branchId,
   characterCount: bodyStats.characterCount,
   id: draft.docId,
+  workingCopyId: workingCopyId ?? null,
+  workingCopyRevision: workingCopyId ? draft.version : undefined,
   insertedAt: meta.insertedAt,
   publishState: publishState ?? null,
   slug: draft.slug,
@@ -232,6 +234,7 @@ export const composeEmptyDraftEditorStorePatch = () => ({
 
 /** Runs the compose draft editor store patch operation at the frontend shared boundary. */
 export const composeDraftEditorStorePatch = ({
+  workingCopyId,
   bodyStats,
   draft,
   meta,
@@ -242,51 +245,57 @@ export const composeDraftEditorStorePatch = ({
 }: TEditorDraftStorePatchInput) => ({
   baselineValue: savedDraft.bodyValue,
   bodyValue: draft.bodyValue,
-  docDraftInfo: composeDocDraftInfo({ bodyStats, draft, meta, publishState }),
+  docDraftInfo: composeDocDraftInfo({ bodyStats, draft, meta, publishState, workingCopyId }),
   saveError,
   saveStatus,
 })
 
-/**
- * Normalize a fetched draft and its active tree page into editor session state.
- *
- * @example
- * composeLoadedDraftSession(
- *   { docId: 'doc_1', title: 'Intro' },
- *   { docId: 'doc_1', title: 'Fallback' },
- * )
- * // => { title: 'Intro', slug: '', body: EMPTY_EDITOR_VALUE, ... }
- */
-export const composeLoadedDraftSession = (
-  draft: TDocDraftDTO | null | undefined,
+/** Builds editor state from the Article default WorkingCopy. */
+export const composeWorkingCopySession = (
+  copy: TDocWorkingCopy,
   activePage: TSideTreePage | null,
 ): TDocDraftSession => {
-  const title = draft?.title || activePage?.title || ''
-  const subtitle = draft?.subtitle || ''
-  const body = parseEditorValue(draft?.body?.json)
-
+  const body = parseEditorValue(copy.bodyJson)
+  const subtitle = copy.threadFields?.subtitle ?? ''
   return {
+    workingCopyId: copy.id,
     body,
     bodyJson: serializeEditorValue(body),
     info: {
-      id: draft?.docId || activePage?.docId || '',
-      branchId: draft?.branchId || '',
-      title,
+      id: copy.articleId,
+      workingCopyRevision: copy.revision,
+      title: copy.title,
       subtitle,
-      slug: draft?.slug || '',
-      stage: draft?.stage || null,
-      insertedAt: draft?.insertedAt || null,
-      updatedAt: draft?.updatedAt || null,
-      author: draft?.author || null,
-      publishState: activePage?.publishState || null,
+      slug: copy.slug ?? '',
+      stage: ARTICLE_STAGE.DRAFT,
+      insertedAt: copy.insertedAt ?? null,
+      updatedAt: copy.updatedAt ?? null,
+      author: null,
+      publishState: activePage?.publishState ?? null,
       ...countEditorText(body),
     },
-    source: resolveDraftSource(draft),
-    version: draft?.version ?? 0,
-    slug: draft?.slug || '',
+    source: 'draft',
+    version: copy.revision,
+    slug: copy.slug ?? '',
     subtitle,
-    title,
-    serverContentHash: draft?.contentHash || '',
-    baseRevisionId: draft?.baseRevisionId || null,
+    title: copy.title,
+  }
+}
+
+/** Loads the current public Snapshot without inventing a mutable working-copy identity. */
+export const composePublicSnapshotSession = (
+  snapshot: Omit<TDocWorkingCopy, 'scopeKind' | 'revision'>,
+  activePage: TSideTreePage | null,
+): TDocDraftSession => {
+  const session = composeWorkingCopySession(
+    { ...snapshot, scopeKind: 'default', revision: 0 },
+    activePage,
+  )
+  return {
+    ...session,
+    workingCopyId: null,
+    publicSnapshotId: snapshot.id,
+    source: 'public',
+    info: { ...session.info, stage: ARTICLE_STAGE.PUBLIC, workingCopyRevision: undefined },
   }
 }

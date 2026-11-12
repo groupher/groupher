@@ -6,16 +6,13 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
   alias GroupherServer.{AlertWall, CMS, Repo, ReviewBot}
 
   alias CMS.Model.{
-    ArticleLifecycle,
     ArticleReviewBlock,
     ArtimentReview,
-    CommentReviewBlock,
-    DocReviewBlock
+    CommentReviewBlock
   }
 
   alias AlertWall.Model.{Item, UserReport}
   alias ReviewBot.Model.ReviewBotConfig
-  import ExUnit.CaptureIO
 
   test "report threshold is read from validated runtime policy" do
     previous = Application.get_env(:groupher_server, :cms_review_report_threshold)
@@ -196,7 +193,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                      target_type: :article,
                      target_id: article.id,
                      community_id: community.id,
-                     observed_version: 1
+                     observed_version: public_version(article)
                    },
                    :spam,
                    "Please review",
@@ -245,7 +242,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                  target_type: :article,
                  target_id: article.id,
                  community_id: community.id,
-                 observed_version: 1
+                 observed_version: public_version(article)
                },
                :spam,
                "Further report",
@@ -306,7 +303,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                      target_type: :article,
                      target_id: article.id,
                      community_id: community.id,
-                     observed_version: 1
+                     observed_version: public_version(article)
                    },
                    :spam,
                    "threshold review",
@@ -383,7 +380,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                   target_type: :article,
                   target_id: article.id,
                   community_id: community.id,
-                  observed_version: 1
+                  observed_version: public_version(article)
                 },
                 :spam,
                 "concurrent threshold",
@@ -433,7 +430,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                    target_type: :article,
                    target_id: article.id,
                    community_id: community.id,
-                   observed_version: 1
+                   observed_version: public_version(article)
                  },
                  :spam,
                  "before threshold",
@@ -468,7 +465,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                  target_type: :article,
                  target_id: article.id,
                  community_id: community.id,
-                 observed_version: 1
+                 observed_version: public_version(article)
                },
                :spam,
                "crossing threshold",
@@ -506,7 +503,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                      target_type: :article,
                      target_id: article.id,
                      community_id: community.id,
-                     observed_version: 1
+                     observed_version: public_version(article)
                    },
                    :spam,
                    "threshold review",
@@ -662,7 +659,9 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
 
   test "the report threshold for a Doc uses platform scope" do
     {_community, doc, _attrs, _author} = mock_article(:doc)
-    target_id = "#{doc.id}:#{doc.branch_id}"
+    target_id = doc.id
+    public = Repo.get!(CMS.Model.ArticlePublic, doc.id)
+    version = CMS.Review.SnapshotVersion.from_id(public.snapshot_id)
 
     reports =
       Enum.map(1..3, fn _ ->
@@ -675,7 +674,7 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                      target_type: :doc,
                      target_id: target_id,
                      community_id: nil,
-                     observed_version: 1
+                     observed_version: version
                    },
                    :spam,
                    "Please review this doc",
@@ -688,12 +687,12 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
 
     source_ref = "report_threshold:item:#{List.last(reports).item_id}"
 
-    assert %DocReviewBlock{
+    assert %ArticleReviewBlock{
              type: :report_threshold_hold,
              source: :domain,
              source_ref: ^source_ref,
              resolved_at: nil
-           } = Repo.get_by!(DocReviewBlock, article_id: doc.id, branch_id: doc.branch_id)
+           } = Repo.get_by!(ArticleReviewBlock, article_id: doc.id)
   end
 
   test "an account report does not apply a CMS content restriction" do
@@ -729,8 +728,8 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     source_definitions =
       Enum.filter(definitions, fn [name, _] -> name == "cms_review_restriction_source_check" end)
 
-    assert length(type_definitions) == 3
-    assert length(source_definitions) == 3
+    assert length(type_definitions) == 2
+    assert length(source_definitions) == 2
 
     assert Enum.all?(type_definitions, fn [_name, definition] ->
              sql_values(definition) ==
@@ -770,59 +769,6 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     assert_raise RuntimeError, ~r/retired type\/source values/, fn ->
       CMS.Review.VocabularyGuard.assert_current!()
     end
-  end
-
-  test "V2 cutover preflight counts current holds, requests and open Wall items" do
-    {community, article, _attrs, _author} = mock_article(:post)
-
-    assert Repo.exists?(
-             from(request in ArtimentReview,
-               where:
-                 request.article_id == ^article.id and request.state in [:queued, :running] and
-                   is_nil(request.replaced_at) and is_nil(request.outdated_at)
-             )
-           )
-
-    {:ok, reporter} = db_insert(:user)
-
-    assert {:ok, _report} =
-             GroupherServer.AlertWall.Commands.SubmitReport.execute(
-               %{
-                 owner: :cms,
-                 target_type: :article,
-                 target_id: article.id,
-                 community_id: community.id,
-                 observed_version: 1
-               },
-               :spam,
-               "preflight",
-               reporter,
-               Ecto.UUID.generate()
-             )
-
-    lifecycle = Repo.get_by!(ArticleLifecycle, article_id: article.id)
-
-    assert {:ok, {:ok, _block}} =
-             Repo.transaction(fn ->
-               CMS.ReviewBlocks.apply(lifecycle, %{
-                 scope_key: "platform",
-                 type: :manual_hold,
-                 source: :human,
-                 source_ref: "preflight:#{Ecto.UUID.generate()}",
-                 operation_ref: Ecto.UUID.generate(),
-                 applied_at: DateTime.utc_now(:second)
-               })
-             end)
-
-    output =
-      capture_io(fn ->
-        assert_raise Mix.Error, fn -> Mix.Tasks.ReviewBot.V2.Preflight.run([]) end
-      end)
-
-    assert output =~ "\"article_review_blocks\": 1"
-    assert output =~ "\"active_restriction_count\": 1"
-    assert %{"pending_target_count" => count} = Jason.decode!(output)
-    assert count >= 2
   end
 
   test "recheck registers a new current request through the CMS Receipt command" do
@@ -945,6 +891,11 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
              )
 
     assert result.request_count == 1
+  end
+
+  defp public_version(article) do
+    Repo.get!(CMS.Model.ArticlePublic, article.id).snapshot_id
+    |> CMS.Review.SnapshotVersion.from_id()
   end
 
   defp sql_values(definition) do

@@ -52,9 +52,7 @@ defmodule GroupherServer.CMS.Assets.Backfill do
         where:
           ref.community_id == ^community_id and
             fragment(
-              "num_nonnulls(?, ?, ?, ?) <> 1",
-              ref.body_draft_id,
-              ref.revision_id,
+              "num_nonnulls(?, ?) <> 1",
               ref.working_copy_id,
               ref.snapshot_id
             )

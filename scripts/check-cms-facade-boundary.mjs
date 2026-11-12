@@ -23,9 +23,9 @@ export const facadeFiles = [
 
 /** Concrete commands that must remain behind a product facade. */
 export const commandFiles = [
-  'docs/commands/update_draft.ex',
-  'docs/commands/publish_branch.ex',
-  'docs/commands/restore_revision_to_draft.ex',
+  'doc_tree/commands/begin_edit.ex',
+  'doc_tree/commands/release_queue.ex',
+  'doc_tree/commands/restore_snapshot.ex',
   'review/commands/apply_result.ex',
   'tickets/commands/add_case_member.ex',
   'tickets/commands/add_case_worker.ex',

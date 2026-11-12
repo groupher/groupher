@@ -222,21 +222,6 @@ defmodule GroupherServer.AlertWall.Persist do
     )
   end
 
-  defp deleted_target_items(:doc, target_id) do
-    query =
-      from(item in Item,
-        where: item.owner == :cms and item.target_type == :doc and item.status == :open,
-        order_by: [asc: item.id],
-        lock: "FOR UPDATE"
-      )
-
-    if String.contains?(target_id, ":") do
-      Repo.all(where(query, [item], item.target_id == ^target_id))
-    else
-      Repo.all(where(query, [item], like(item.target_id, ^"#{target_id}:%")))
-    end
-  end
-
   defp deleted_target_items(target_type, target_id) do
     Repo.all(
       from(item in Item,

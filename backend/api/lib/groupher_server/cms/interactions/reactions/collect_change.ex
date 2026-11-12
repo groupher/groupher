@@ -123,7 +123,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.CollectChange do
   end
 
   defp collect_conflict_target(:article_id) do
-    {:unsafe_fragment, "(user_id, article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+    {:unsafe_fragment, "(user_id, article_id) WHERE article_id IS NOT NULL"}
   end
 
   defp collect_conflict_target(foreign_key), do: [:user_id, foreign_key]

@@ -9,12 +9,11 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
   alias CMS.Articles.Commands.CreateArticleConfirmation, as: Confirmation
-  alias CMS.Articles.Tags.Assignment
+  alias CMS.Articles.{Tags.Assignment, WorkingCopy.Store}
   alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
-  alias CMS.Articles.WorkingCopy.Store
   alias CMS.Model.{ArticleWorkingCopy, Community}
 
   @pipeline operation: :article_create_article,
@@ -82,20 +81,20 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
     )
   end
 
-  def execute(_community, thread, _attrs, %User{}, _opts) when thread == :doc,
-    do: {:error, :unsupported_article_thread}
+  def execute(_community, thread, _attrs, %User{}, _opts) when thread == :doc do
+    {:error, :unsupported_article_thread}
+  end
 
   def execute(_community, _thread, _attrs, _actor, _opts), do: {:error, :invalid_actor}
 
   defp create_in_transaction(community, thread, attrs, actor, command_id) do
     with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(actor),
          {:ok, article} <-
-           CMS.Articles.Draft.Store.create_article_shell_loaded(
+           CMS.Articles.Identity.create_loaded(
              community,
              thread,
              attrs,
-             author,
-             []
+             author
            ),
          work_attrs =
            attrs
@@ -150,6 +149,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
     end
   end
 
-  defp present_confirmation(_confirmation, _community, _actor),
-    do: {:error, CMS.ErrorCat.command_result_unavailable()}
+  defp present_confirmation(_confirmation, _community, _actor) do
+    {:error, CMS.ErrorCat.command_result_unavailable()}
+  end
 end

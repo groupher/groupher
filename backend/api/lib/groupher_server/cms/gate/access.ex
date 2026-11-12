@@ -19,10 +19,6 @@ defmodule GroupherServer.CMS.Gate.Access do
   defdelegate check_in_transaction(arg1, arg2, arg3, arg4),
     to: GroupherServer.CMS.Gate.Access.Query
 
-  @doc "Delegates check_in_transaction/5 to the owning implementation."
-  defdelegate check_in_transaction(arg1, arg2, arg3, arg4, arg5),
-    to: GroupherServer.CMS.Gate.Access.Query
-
   @doc "Delegates the interaction-specific join-only check to the owning implementation."
   defdelegate check_interaction_in_transaction(actor, action, resource),
     to: GroupherServer.CMS.Gate.Access.Query
@@ -45,10 +41,6 @@ defmodule GroupherServer.CMS.Gate.Access do
 
   @doc "Delegates with_application_check/4 to the owning implementation."
   defdelegate with_application_check(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.Gate.Access.Query
-
-  @doc "Delegates with_branch_check/6 to the owning implementation."
-  defdelegate with_branch_check(arg1, arg2, arg3, arg4, arg5, arg6),
     to: GroupherServer.CMS.Gate.Access.Query
 
   @doc "Delegates with_check/4 to the owning implementation."

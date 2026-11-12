@@ -249,7 +249,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   end
 
   defp article_conflict_target(:article_id) do
-    {:unsafe_fragment, "(user_id, article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+    {:unsafe_fragment, "(user_id, article_id) WHERE article_id IS NOT NULL"}
   end
 
   defp article_conflict_target(foreign_key), do: [:user_id, foreign_key]

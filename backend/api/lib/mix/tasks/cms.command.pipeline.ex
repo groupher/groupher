@@ -49,7 +49,7 @@ defmodule Mix.Tasks.Cms.Command.Pipeline do
              GroupherServer.ReviewBot
            ])
 
-  @internal_entry_modules MapSet.new([CMS.Articles.Maintenance])
+  @internal_entry_modules MapSet.new([CMS.Articles.Maintenance, Helper.Scheduler])
 
   @doc "Builds a deterministic call graph report from the supplied Elixir source files."
   def build_report(files, contracts \\ %{}) when is_list(files) and is_map(contracts) do

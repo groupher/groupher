@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const blog = graphql(`
+  "Get blog by id"
   query Blog($article: ArticlePathInput!) {
     blog(article: $article) {
       innerId

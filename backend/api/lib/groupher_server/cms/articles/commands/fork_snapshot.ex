@@ -9,12 +9,11 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
   alias CMS.Articles.Commands.ForkSnapshotConfirmation, as: Confirmation
-  alias CMS.Articles.Bindings
+  alias CMS.Articles.{Bindings, WorkingCopy.Snapshotter}
   alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
-  alias CMS.Articles.WorkingCopy.Snapshotter
   alias CMS.Model.{ArticleSnapshot, ArticleWorkingCopy, Community}
 
   @pipeline operation: :article_fork_snapshot,
@@ -103,8 +102,9 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
     end
   end
 
-  def execute(_snapshot_id, _community, _scope_kind, _scope_id, _actor, _command_id),
-    do: {:error, :invalid_working_copy_command}
+  def execute(_snapshot_id, _community, _scope_kind, _scope_id, _actor, _command_id) do
+    {:error, :invalid_working_copy_command}
+  end
 
   defp present_confirmation(
          %Confirmation{data: %{"article_id" => article_id, "working_copy_id" => working_copy_id}},

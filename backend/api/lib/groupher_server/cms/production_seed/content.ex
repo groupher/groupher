@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.ProductionSeed
   alias Accounts.Model.User
-  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, DocPublic, DocBranchVersion, Community}
+  alias CMS.Model.{Article, ArticleBinding, ArticlePublic, Community}
 
   @fixtures [
               {"PX", :post, "dev"},
@@ -71,13 +71,17 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
   defp valid_input?(_), do: false
 
   defp create_public_article(community, :doc, attrs, actor, command_id) do
-    CMS.Articles.create(community, :doc, attrs, actor, command_id: command_id)
+    CMS.Seeds.Docs.create(community, attrs, seed_publisher(actor), command_id)
   end
 
   defp create_public_article(community, thread, attrs, actor, command_id)
        when thread in [:post, :blog, :changelog] do
     with {:ok, %{article: article}} <-
-           CMS.Articles.create_and_publish_article(community, thread, attrs, actor,
+           CMS.Articles.create_and_publish_article(
+             community,
+             thread,
+             attrs,
+             seed_publisher(actor),
              command_id: command_id
            ),
          {:ok, %{inner_id: inner_id}} <-
@@ -91,6 +95,10 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
       {:ok, public}
     end
   end
+
+  # Only the admitted, fixed acceptance artifact uses this process-local authority.
+  # No passport or role is persisted; browser permission checks still use real accounts.
+  defp seed_publisher(actor), do: %{actor | cur_passport: %{"global" => %{"god" => true}}}
 
   defp seed!(run, input, checksum) do
     commands = input["commands"] || Repo.rollback(:seed_missing_command_ids)
@@ -280,16 +288,10 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
   defp describe(article, community, public) do
     binding = Repo.get_by!(ArticleBinding, article_id: article.id, community_id: community.id)
 
-    identity =
-      if article.thread == :doc do
-        %{"revisionId" => Map.get(public, :revision_id)}
-      else
-        %{"snapshotId" => Map.get(public, :snapshot_id)}
-      end
+    identity = %{"snapshotId" => Map.get(public, :snapshot_id)}
 
     Map.merge(identity, %{
       "articleId" => article.id,
-      "branchId" => Map.get(public, :branch_id),
       "thread" => to_string(article.thread),
       "community" => community.slug,
       "innerId" => binding.inner_id,
@@ -346,20 +348,6 @@ defmodule GroupherServer.CMS.ProductionSeed.Content do
 
           unless body && body.version == resource["bodyVersion"] && lifecycle &&
                    lifecycle.state == :visible do
-            Repo.rollback(:seed_content_changed)
-          end
-
-        resource["thread"] == "doc" and resource["revisionId"] ->
-          public =
-            Repo.get_by(DocPublic,
-              article_id: resource["articleId"],
-              branch_id: resource["branchId"]
-            )
-
-          revision_id =
-            public && Repo.get!(DocBranchVersion, public.branch_version_id).revision_id
-
-          unless revision_id == resource["revisionId"] do
             Repo.rollback(:seed_content_changed)
           end
 

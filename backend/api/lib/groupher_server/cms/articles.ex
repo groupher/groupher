@@ -25,7 +25,6 @@ defmodule GroupherServer.CMS.Articles do
   }
 
   alias __MODULE__.WorkingCopy.Query, as: WorkingCopyQuery
-  alias __MODULE__.SnapshotCleanup
 
   alias GroupherServer.{Accounts, CMS}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
@@ -148,12 +147,6 @@ defmodule GroupherServer.CMS.Articles do
     WorkingCopyQuery.snapshot_tag_ids(snapshot)
   end
 
-  @doc "Deletes one bounded batch of expired, unselected ordinary Article Snapshots."
-  def cleanup_expired_snapshots(opts \\ []), do: SnapshotCleanup.run(opts)
-
-  @doc "Deletes a bounded Snapshot page and returns its continuation cursor."
-  def cleanup_expired_snapshots_page(opts), do: SnapshotCleanup.run_page(opts)
-
   # Write
 
   @doc "Creates an unpublished stable Article with one default WorkingCopy."
@@ -167,15 +160,6 @@ defmodule GroupherServer.CMS.Articles do
   def create_and_publish_article(%Community{} = community, thread, attrs, %User{} = actor, opts) do
     Commands.CreateAndPublishArticle.execute(community, thread, attrs, actor, opts)
   end
-
-  @doc "Creates and publishes a Doc through the existing Docs branch workflow."
-  @spec create(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
-          T.domain_res(T.article())
-  def create(%Community{} = community, :doc, attrs, %User{} = user, opts) do
-    Commands.Create.execute(community, :doc, attrs, user, opts)
-  end
-
-  def create(_community, _thread, _attrs, _user, _opts), do: {:error, :unsupported_article_thread}
 
   @doc "Saves one WorkingCopy under the stable Article edit Gate and Receipt boundary."
   def save_working_copy(
@@ -396,7 +380,7 @@ defmodule GroupherServer.CMS.Articles do
 
   @doc "Locks comments and returns the caller-facing canonical projection shape."
   def lock_comments_result(article, %User{} = actor) do
-    with {:ok, updated} <- lock_comments(article.id, actor, branch_opts(article)) do
+    with {:ok, updated} <- lock_comments(article.id, actor, binding_opts(article)) do
       __MODULE__.ActionResult.merge(article, updated)
     end
   end
@@ -409,7 +393,7 @@ defmodule GroupherServer.CMS.Articles do
              article.id,
              actor,
              :lock_comments,
-             Keyword.put(branch_opts(article), :command_id, command_id)
+             Keyword.put(binding_opts(article), :command_id, command_id)
            ) do
       __MODULE__.ActionResult.merge(article, updated)
     end
@@ -417,7 +401,7 @@ defmodule GroupherServer.CMS.Articles do
 
   @doc "Unlocks comments and returns the caller-facing canonical projection shape."
   def undo_lock_comments_result(article, %User{} = actor) do
-    with {:ok, updated} <- undo_lock_comments(article.id, actor, branch_opts(article)) do
+    with {:ok, updated} <- undo_lock_comments(article.id, actor, binding_opts(article)) do
       __MODULE__.ActionResult.merge(article, updated)
     end
   end
@@ -430,7 +414,7 @@ defmodule GroupherServer.CMS.Articles do
              article.id,
              actor,
              :undo_lock_comments,
-             Keyword.put(branch_opts(article), :command_id, command_id)
+             Keyword.put(binding_opts(article), :command_id, command_id)
            ) do
       __MODULE__.ActionResult.merge(article, updated)
     end
@@ -438,7 +422,7 @@ defmodule GroupherServer.CMS.Articles do
 
   @doc "Sinks an Article and returns the caller-facing canonical projection shape."
   def sink_result(article, %User{} = actor) do
-    with {:ok, updated} <- sink(article.id, actor, branch_opts(article)) do
+    with {:ok, updated} <- sink(article.id, actor, binding_opts(article)) do
       __MODULE__.ActionResult.merge(article, updated)
     end
   end
@@ -451,7 +435,7 @@ defmodule GroupherServer.CMS.Articles do
              :sink,
              article.id,
              actor,
-             Keyword.put(branch_opts(article), :command_id, command_id)
+             Keyword.put(binding_opts(article), :command_id, command_id)
            ) do
       __MODULE__.ActionResult.merge(article, updated)
     end
@@ -459,7 +443,7 @@ defmodule GroupherServer.CMS.Articles do
 
   @doc "Restores a sunk Article and returns the caller-facing canonical projection shape."
   def undo_sink_result(article, %User{} = actor) do
-    with {:ok, updated} <- undo_sink(article.id, actor, branch_opts(article)) do
+    with {:ok, updated} <- undo_sink(article.id, actor, binding_opts(article)) do
       __MODULE__.ActionResult.merge(article, updated)
     end
   end
@@ -472,22 +456,16 @@ defmodule GroupherServer.CMS.Articles do
              :undo_sink,
              article.id,
              actor,
-             Keyword.put(branch_opts(article), :command_id, command_id)
+             Keyword.put(binding_opts(article), :command_id, command_id)
            ) do
       __MODULE__.ActionResult.merge(article, updated)
     end
   end
 
-  defp branch_opts(article) do
-    branch_opts =
-      case Map.get(article, :branch_id) do
-        branch_id when is_integer(branch_id) -> [branch_id: branch_id]
-        _ -> []
-      end
-
+  defp binding_opts(article) do
     case Map.get(article, :community) do
-      %Community{} = community -> Keyword.put(branch_opts, :community, community)
-      _ -> branch_opts
+      %Community{} = community -> [community: community]
+      _ -> []
     end
   end
 end

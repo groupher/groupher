@@ -323,7 +323,7 @@ defmodule GroupherServer.CMS.Comments.Query do
 
   defp visible_parent_article_ids(actor, :doc) do
     Article
-    |> CMS.Gate.scope(actor, :list, DocContext.public_main())
+    |> CMS.Gate.scope(actor, :list, DocContext.public())
     |> select([article, ...], article.id)
   end
 
@@ -343,7 +343,7 @@ defmodule GroupherServer.CMS.Comments.Query do
       |> Enum.flat_map(fn thread ->
         scope =
           if thread == :doc do
-            DocContext.public_main()
+            DocContext.public()
           else
             ArticleContext.public(thread)
           end
@@ -469,7 +469,7 @@ defmodule GroupherServer.CMS.Comments.Query do
   defp public_parent?(article, community_slug, viewer) do
     context =
       if article.thread == :doc do
-        DocContext.public_main()
+        DocContext.public()
       else
         ArticleContext.public(article.thread)
       end

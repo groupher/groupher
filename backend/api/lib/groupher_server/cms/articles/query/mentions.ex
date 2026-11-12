@@ -186,7 +186,7 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
     query = article_scope(:doc)
 
     filter =
-      Enum.reduce(pairs, dynamic(false), fn {article_id, community_id, _branch_id}, acc ->
+      Enum.reduce(pairs, dynamic(false), fn {article_id, community_id}, acc ->
         dynamic(
           [article, gate_article_binding: binding],
           ^acc or
@@ -199,7 +199,7 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
     |> article_projection(:doc)
     |> Repo.all()
     |> Map.new(fn article ->
-      {{article.id, article.community_id, nil}, article}
+      {{article.id, article.community_id}, article}
     end)
   end
 
@@ -207,7 +207,7 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
     query = article_scope(thread)
 
     filter =
-      Enum.reduce(pairs, dynamic(false), fn {article_id, community_id, nil}, acc ->
+      Enum.reduce(pairs, dynamic(false), fn {article_id, community_id}, acc ->
         dynamic(
           [article, gate_article_binding: binding],
           ^acc or (article.id == ^article_id and binding.community_id == ^community_id)
@@ -219,39 +219,16 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
     |> article_projection(thread)
     |> Repo.all()
     |> Map.new(fn article ->
-      {{article.id, article.community_id, nil}, article}
+      {{article.id, article.community_id}, article}
     end)
   end
 
   defp article_scope(:doc) do
-    CMS.Gate.scope(Article, nil, :list, DocContext.public_main())
+    CMS.Gate.scope(Article, nil, :list, DocContext.public())
   end
 
   defp article_scope(thread) do
     CMS.Gate.scope(Article, nil, :list, ArticleContext.public(thread))
-  end
-
-  defp article_projection(query, :doc) do
-    from(
-      [
-        article,
-        gate_article_binding: binding,
-        gate_community: community,
-        gate_article_public: public,
-        gate_doc_branch: branch
-      ] in query,
-      select: %{
-        id: article.id,
-        article_id: article.id,
-        branch_id: branch.id,
-        thread: article.thread,
-        community_id: community.id,
-        community_slug: community.slug,
-        inner_id: binding.inner_id,
-        slug: public.slug,
-        title: public.title
-      }
-    )
   end
 
   defp article_projection(query, _thread) do
@@ -265,7 +242,6 @@ defmodule GroupherServer.CMS.Articles.Query.Mentions do
       select: %{
         id: article.id,
         article_id: article.id,
-        branch_id: nil,
         thread: article.thread,
         community_id: community.id,
         community_slug: community.slug,

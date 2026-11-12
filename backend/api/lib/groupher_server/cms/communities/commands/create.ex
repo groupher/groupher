@@ -62,7 +62,6 @@ defmodule GroupherServer.CMS.Communities.Commands.Create do
          {:ok, _review_bot_configs} <-
            ReviewBot.create_default_configs_for_community(community.id),
          {:ok, _moderator} <- ModeratorSetup.add_root(community, user),
-         {:ok, _tree} <- CMS.DocTree.initialize(community),
          {:ok, canonical} <- FrontDesk.community(community.slug, mode: :internal),
          {:ok, _event} <-
            CMS.Dashboard.Effects.enqueue_presentation_changed(canonical, command_id),

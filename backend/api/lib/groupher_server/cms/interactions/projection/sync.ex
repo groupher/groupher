@@ -438,9 +438,6 @@ defmodule GroupherServer.CMS.Interactions.Projection.Sync do
     query = from(fact in schema, where: field(fact, ^foreign_key) == ^target_id)
 
     query =
-      if info.artiment == :comment, do: query, else: where(query, [fact], is_nil(fact.branch_id))
-
-    query =
       case reaction do
         {:emotion, emotion} -> where(query, [fact], fact.emotion == ^to_string(emotion))
         _ -> query
@@ -499,13 +496,13 @@ defmodule GroupherServer.CMS.Interactions.Projection.Sync do
   end
 
   defp projection_conflict_target(:article_id) do
-    {:unsafe_fragment, "(article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+    {:unsafe_fragment, "(article_id) WHERE article_id IS NOT NULL"}
   end
 
   defp projection_conflict_target(target_id_field), do: [target_id_field]
 
   defp emotion_projection_conflict_target(:article_id) do
-    {:unsafe_fragment, "(article_id, emotion) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+    {:unsafe_fragment, "(article_id, emotion) WHERE article_id IS NOT NULL"}
   end
 
   defp emotion_projection_conflict_target(target_id_field), do: [target_id_field, :emotion]

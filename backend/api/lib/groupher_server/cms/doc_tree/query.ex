@@ -14,77 +14,14 @@ defmodule GroupherServer.CMS.DocTree.Query do
   intentionally not exposed.
   """
 
-  require GroupherServer.CMS.DocTree.Const
-  require GroupherServer.CMS.Const
-
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Docs.Branch
-  alias CMS.DocTree.{ChangeDetection, Events}
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
+  alias CMS.Model.{Article, Community, DocsTreeNode}
 
-  alias CMS.Model.{
-    Article,
-    ArticleBinding,
-    ArticleRevision,
-    Community,
-    DocCoverCard,
-    DocCoverItem,
-    DocCoverPinnedDoc,
-    DocBranchVersion,
-    DocDraft,
-    DocPublishRelease,
-    DocPublic,
-    DocsSiteState,
-    DocTreeEvent,
-    DocTreeNode
-  }
-
-  alias Helper.{ORM, T}
-
-  @doc """
-  Reads the current docs editor tree.
-
-  ## Examples
-
-      iex> Query.read(community)
-      {:ok, %{groups: groups, pins: pins}}
-  """
-  @spec read(Community.t(), keyword() | map()) :: T.domain_res(map())
-  def read(%Community{} = community, opts \\ []) do
-    actor = option(opts, :actor, :operations)
-    policy_mode = option(opts, :policy_mode, :operations)
-
-    with {:ok, community} <- scoped_community(community, actor, policy_mode),
-         {:ok, branch} <- Branch.resolve(community, opts),
-         {:ok, state} <-
-           ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id) do
-      Repo.transaction(fn ->
-        nodes = tree_nodes_for_branch(community, branch, :draft)
-        context = publish_context(community, branch, nodes)
-
-        %{
-          revision: state.tree_lock_version,
-          tree_state: tree_state(community, state),
-          staged_events:
-            Enum.map(
-              Events.staged_events(community,
-                branch_id: branch.id,
-                owner: CMS.DocTree.Const.tree_event_owner(:tree)
-              ),
-              &event_to_map/1
-            ),
-          tabs: build_tabs(nodes, context)
-        }
-      end)
-      |> case do
-        {:ok, payload} -> {:ok, payload}
-        {:error, reason} -> {:error, reason}
-      end
-    end
-  end
+  alias Helper.T
 
   @doc """
   Reads the published docs tree used by the public docs site.
@@ -93,87 +30,23 @@ defmodule GroupherServer.CMS.DocTree.Query do
   staged events, and publish status. Page hrefs are resolved from the
   published docs article row so drafts cannot leak into the public reader.
   """
-  @spec read_public(Community.t(), keyword() | map()) :: T.domain_res(map())
-  def read_public(%Community{} = community, opts \\ []) do
-    with {:ok, community} <- public_community(community),
-         {:ok, branch} <- Branch.resolve(community, opts) do
-      nodes = tree_nodes_for_branch(community, branch, CMS.Const.stage(:public))
-      docs_by_doc_id = public_docs_by_doc_id(community, branch, nodes)
+  @spec read_public(Community.t()) :: T.domain_res(map())
+  def read_public(%Community{} = community) do
+    with {:ok, community} <- public_community(community) do
+      nodes =
+        Repo.all(
+          from(n in DocsTreeNode,
+            where: n.community_id == ^community.id and n.stage == :public,
+            order_by: [asc: n.index, asc: n.id]
+          )
+        )
+
+      docs_by_doc_id = public_docs_by_doc_id(community, nodes)
 
       {:ok, %{tabs: build_public_tabs(community, nodes, docs_by_doc_id)}}
     end
   end
 
-  @doc """
-  Returns the Tree-level draft/publish state for footer UI.
-
-  ## Examples
-
-      iex> Query.tree_state(community, state).has_unpublished_changes
-      true
-  """
-  @spec tree_state(Community.t(), DocsSiteState.t()) :: map()
-  def tree_state(%Community{} = community, %DocsSiteState{} = state) do
-    latest_release = latest_release(community, state.branch_id)
-    latest_snapshot = latest_release && latest_release.tree_snapshot
-    staged_event_count = Events.staged_tree_event_count(community, branch_id: state.branch_id)
-
-    %{
-      has_unpublished_changes: staged_event_count > 0,
-      staged_event_count: staged_event_count,
-      base_snapshot_id: state.base_snapshot_id,
-      latest_snapshot_id: latest_snapshot && latest_snapshot.id,
-      latest_release_id: latest_release && latest_release.id,
-      latest_release_number: latest_release && latest_release.release_number,
-      latest_version_slug: latest_release && latest_release.version_slug,
-      revision: state.tree_lock_version
-    }
-  end
-
-  @doc """
-  Reads one staged doc article version.
-
-  ## Examples
-
-      iex> Query.read_draft(community, page.doc_id)
-      {:ok, %{stage: :draft}}
-  """
-  @spec read_draft(Community.t(), String.t(), keyword() | map()) :: T.domain_res(map())
-  def read_draft(%Community{} = community, doc_id, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
-      case CMS.Docs.read_editor_head(community, doc_id, branch_id: branch.id) do
-        {:ok, %{stage: :draft} = draft} -> {:ok, draft}
-        {:ok, %{stage: :public}} -> {:error, CMS.Articles.ErrorCat.not_exist("Doc draft")}
-        {:error, reason} -> {:error, reason}
-      end
-    end
-  end
-
-  def tree_nodes(%Community{} = community, opts, stage) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
-      {:ok, tree_nodes_for_branch(community, branch, stage)}
-    end
-  end
-
-  def tree_nodes!(%Community{} = community, opts, stage) do
-    case tree_nodes(community, opts, stage) do
-      {:ok, nodes} -> nodes
-      {:error, _} -> []
-    end
-  end
-
-  defp tree_nodes_for_branch(%Community{} = community, branch, stage) do
-    DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.branch_id == ^branch.id)
-    |> where([n], n.stage == ^stage)
-    |> order_by([n], asc: n.index, asc: n.id)
-    |> Repo.all()
-  end
-
-  # `doc_public_tree` can receive a loaded Community from a parent resolver.
-  # Re-scope it here so that path cannot bypass the public Community lifecycle
-  # boundary merely because it did not originate from `Communities.read/1`.
   defp public_community(%Community{} = community) do
     case CMS.Gate.scope(Community, nil, :read, CommunityContext.public()) do
       %Ecto.Query{} = query ->
@@ -190,27 +63,7 @@ defmodule GroupherServer.CMS.DocTree.Query do
     end
   end
 
-  defp scoped_community(%Community{} = community, actor, policy_mode) do
-    case CMS.Gate.scope(Community, actor, :read, CommunityContext.new(policy_mode)) do
-      %Ecto.Query{} = query ->
-        query
-        |> where([candidate], candidate.id == ^community.id)
-        |> Repo.one()
-        |> case do
-          %Community{} = scoped -> {:ok, scoped}
-          nil -> {:error, CMS.Communities.ErrorCat.not_exist("Community")}
-        end
-
-      {:error, reason} ->
-        {:error, reason}
-    end
-  end
-
-  defp option(opts, key, default) when is_list(opts), do: Keyword.get(opts, key, default)
-  defp option(opts, key, default) when is_map(opts), do: Map.get(opts, key, default)
-  defp option(_opts, _key, default), do: default
-
-  defp public_docs_by_doc_id(%Community{} = community, branch, nodes) do
+  defp public_docs_by_doc_id(%Community{} = community, nodes) do
     doc_ids =
       nodes
       |> Enum.map(& &1.doc_id)
@@ -218,19 +71,12 @@ defmodule GroupherServer.CMS.DocTree.Query do
       |> Enum.uniq()
 
     Article
-    |> join(:inner, [article], binding in ArticleBinding, on: binding.article_id == article.id)
-    |> join(:inner, [article, _binding], public in DocPublic, on: public.article_id == article.id)
-    |> join(:inner, [article, _binding, public], lifecycle in CMS.Model.DocLifecycle,
-      on: lifecycle.article_id == article.id and lifecycle.branch_id == public.branch_id
-    )
-    |> where([_article, binding, _public, _lifecycle], binding.community_id == ^community.id)
-    |> where([_article, _binding, public, _lifecycle], public.branch_id == ^branch.id)
-    |> where([article, _binding, _public, _lifecycle], article.id in ^doc_ids)
+    |> CMS.Gate.scope(nil, :read, CMS.Gate.Context.Scope.Doc.public())
     |> where(
-      [_article, _binding, public, lifecycle],
-      public.visible and lifecycle.state == :published
+      [article, gate_article_binding: binding],
+      binding.community_id == ^community.id and article.id in ^doc_ids
     )
-    |> select([article, binding, public, _lifecycle], %{
+    |> select([article, gate_article_binding: binding, gate_article_public: public], %{
       id: article.id,
       inner_id: binding.inner_id,
       slug: public.slug,
@@ -280,50 +126,6 @@ defmodule GroupherServer.CMS.DocTree.Query do
     end)
   end
 
-  defp build_tabs(nodes, context) do
-    navigation_by_parent =
-      nodes
-      |> Enum.filter(&(&1.type in [:group, :page, :link]))
-      |> Enum.group_by(& &1.parent_node_id)
-
-    pins_by_tab = nodes |> pins(context) |> Enum.group_by(& &1.parent_node_id)
-
-    nodes
-    |> Enum.filter(&(&1.type == :tab))
-    |> Enum.map(fn tab ->
-      tab
-      |> to_map(context)
-      |> Map.put(:pins, Map.get(pins_by_tab, tab.node_id, []))
-      |> Map.put(
-        :groups,
-        build_children(tab.node_id, navigation_by_parent, context, MapSet.new())
-      )
-    end)
-  end
-
-  defp build_children(parent_node_id, children_by_parent, context, ancestors) do
-    if MapSet.member?(ancestors, parent_node_id) do
-      []
-    else
-      ancestors = MapSet.put(ancestors, parent_node_id)
-
-      children_by_parent
-      |> Map.get(parent_node_id, [])
-      |> Enum.sort_by(&{&1.index, &1.id})
-      |> Enum.map(fn node ->
-        node
-        |> to_map(context)
-        |> Map.put(
-          :pages,
-          if(node.type == :group,
-            do: build_children(node.node_id, children_by_parent, context, ancestors),
-            else: []
-          )
-        )
-      end)
-    end
-  end
-
   defp build_public_children(
          community,
          parent_node_id,
@@ -341,7 +143,7 @@ defmodule GroupherServer.CMS.DocTree.Query do
       |> Enum.sort_by(&{&1.index, &1.id})
       |> Enum.reject(&hidden_node?/1)
       |> Enum.flat_map(fn
-        %DocTreeNode{type: :group} = group ->
+        %DocsTreeNode{type: :group} = group ->
           pages =
             build_public_children(
               community,
@@ -368,22 +170,33 @@ defmodule GroupherServer.CMS.DocTree.Query do
 
   defp public_child_map(
          %Community{} = community,
-         %DocTreeNode{type: :page} = node,
+         %DocsTreeNode{type: :page} = node,
          docs_by_doc_id
        ) do
     case Map.get(docs_by_doc_id, node.doc_id) do
-      %{inner_id: inner_id, slug: slug}
-      when not is_nil(inner_id) and is_binary(slug) and slug != "" ->
+      %{inner_id: inner_id, slug: slug} when is_integer(inner_id) and inner_id > 0 ->
         node
         |> public_node_base()
-        |> Map.put(:href, "/#{community.slug}/doc/#{inner_id}/#{slug}")
+        |> Map.put(
+          :href,
+          CMS.FrontDesk.Article.url(%{
+            community_slug: community.slug,
+            thread: :doc,
+            inner_id: inner_id,
+            slug: slug
+          })
+        )
 
       _ ->
         nil
     end
   end
 
-  defp public_child_map(_community, %DocTreeNode{type: :link, href: href} = node, _docs_by_doc_id)
+  defp public_child_map(
+         _community,
+         %DocsTreeNode{type: :link, href: href} = node,
+         _docs_by_doc_id
+       )
        when is_binary(href) and href != "" do
     node
     |> public_node_base()
@@ -392,7 +205,7 @@ defmodule GroupherServer.CMS.DocTree.Query do
 
   defp public_child_map(_community, _node, _docs_by_doc_id), do: nil
 
-  defp public_node_base(%DocTreeNode{} = node) do
+  defp public_node_base(%DocsTreeNode{} = node) do
     %{
       id: node.node_id,
       parent_node_id: node.parent_node_id,
@@ -407,224 +220,6 @@ defmodule GroupherServer.CMS.DocTree.Query do
     }
   end
 
-  defp hidden_node?(%DocTreeNode{hidden: true}), do: true
+  defp hidden_node?(%{hidden: true}), do: true
   defp hidden_node?(_node), do: false
-
-  @doc "Builds every recursive Group subtree from a flat node list."
-  @spec build_groups(list(DocTreeNode.t()), map()) :: list(map())
-  def build_groups(nodes, context \\ %{}) do
-    children_by_parent =
-      nodes
-      |> Enum.filter(&(&1.type in [:group, :page, :link]))
-      |> Enum.group_by(& &1.parent_node_id)
-
-    nodes
-    |> Enum.filter(&(&1.type == :group))
-    |> Enum.map(fn group ->
-      group
-      |> to_map(context)
-      |> Map.put(
-        :pages,
-        build_children(group.node_id, children_by_parent, context, MapSet.new())
-      )
-    end)
-  end
-
-  @doc """
-  Converts a tree node into the GraphQL map shape.
-
-  ## Examples
-
-      iex> Query.to_map(node).id == node.node_id
-      true
-  """
-  @spec to_map(DocTreeNode.t(), map()) :: map()
-  def to_map(%DocTreeNode{} = node, context \\ %{}) do
-    context = default_context(context)
-
-    %{
-      id: node.node_id,
-      parent_node_id: node.parent_node_id,
-      doc_id: node.doc_id,
-      type: node.type,
-      title: node.title,
-      index: node.index,
-      href: node.href,
-      marker: node.marker,
-      badge: node.badge,
-      hidden: node.hidden,
-      publish_state: publish_state(node, context),
-      pages: []
-    }
-  end
-
-  defp default_context(context) do
-    %{
-      draft_versions: %{},
-      public_versions: %{},
-      public_nodes: %{},
-      cover_cards: %{},
-      cover_items: %{},
-      pinned_docs: MapSet.new()
-    }
-    |> Map.merge(context)
-  end
-
-  defp publish_context(%Community{} = community, branch, draft_nodes) do
-    node_ids = Enum.map(draft_nodes, & &1.node_id)
-
-    doc_ids =
-      draft_nodes |> Enum.map(& &1.doc_id) |> Enum.reject(&is_nil/1)
-
-    public_nodes =
-      DocTreeNode
-      |> where([n], n.community_id == ^community.id)
-      |> where([n], n.branch_id == ^branch.id)
-      |> where([n], n.stage == CMS.Const.stage(:public))
-      |> where([n], n.node_id in ^node_ids)
-      |> Repo.all()
-      |> Map.new(&{&1.node_id, &1})
-
-    draft_versions =
-      DocDraft
-      |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
-      |> join(:inner, [draft, _article], binding in ArticleBinding,
-        on: binding.article_id == draft.article_id
-      )
-      |> where([_draft, _article, binding], binding.community_id == ^community.id)
-      |> where([draft, _article, _binding], draft.branch_id == ^branch.id)
-      |> where([draft, _article, _binding], draft.article_id in ^doc_ids)
-      |> Repo.all()
-      |> Map.new(&{&1.article_id, &1})
-
-    public_versions =
-      ArticleRevision
-      |> join(:inner, [revision], version in DocBranchVersion,
-        on: version.revision_id == revision.id
-      )
-      |> join(:inner, [revision, version], public in DocPublic,
-        on: public.branch_version_id == version.id
-      )
-      |> join(:inner, [revision, _version, _public], article in Article,
-        on: article.id == revision.article_id
-      )
-      |> join(:inner, [revision, _version, _public, article], binding in ArticleBinding,
-        on: binding.article_id == article.id
-      )
-      |> where(
-        [_revision, _version, _public, _article, binding],
-        binding.community_id == ^community.id
-      )
-      |> where([_revision, _version, public, _article, _binding], public.branch_id == ^branch.id)
-      |> where(
-        [revision, _version, _public, _article, _binding],
-        revision.article_id in ^doc_ids
-      )
-      |> Repo.all()
-      |> Map.new(&{&1.article_id, &1})
-
-    public_row_ids =
-      public_nodes
-      |> Map.values()
-      |> Enum.map(& &1.id)
-
-    cover_cards =
-      DocCoverCard
-      |> where([card], card.community_id == ^community.id)
-      |> where([card], card.group_node_id in ^public_row_ids)
-      |> Repo.all()
-      |> Map.new(&{&1.group_node_id, &1})
-
-    cover_items =
-      DocCoverItem
-      |> where([i], i.community_id == ^community.id)
-      |> where([i], i.node_id in ^public_row_ids)
-      |> Repo.all()
-      |> Map.new(&{&1.node_id, &1})
-
-    pinned_docs =
-      DocCoverPinnedDoc
-      |> where([i], i.community_id == ^community.id)
-      |> where([i], i.node_id in ^public_row_ids)
-      |> Repo.all()
-      |> Enum.map(& &1.node_id)
-      |> MapSet.new()
-
-    %{
-      draft_versions: draft_versions,
-      public_versions: public_versions,
-      public_nodes: public_nodes,
-      cover_cards: cover_cards,
-      cover_items: cover_items,
-      pinned_docs: pinned_docs
-    }
-  end
-
-  defp pins(nodes, context) do
-    nodes
-    |> Enum.filter(&(&1.type == :pin))
-    |> Enum.map(&to_map(&1, context))
-  end
-
-  defp publish_state(%DocTreeNode{} = node, context) do
-    public_node = Map.get(context.public_nodes, node.node_id)
-    draft_version = get_when_present(context.draft_versions, node.doc_id)
-    public_version = get_when_present(context.public_versions, draft_version && node.doc_id)
-    public_row_id = field_when_present(public_node, :id)
-    cover_card = get_when_present(context.cover_cards, public_row_id)
-    cover_item = get_when_present(context.cover_items, public_row_id)
-
-    %{
-      status: if(public_node, do: :public, else: :draft),
-      published: not is_nil(public_node),
-      published_before: not is_nil(public_node),
-      has_draft: not is_nil(draft_version),
-      public_node_id: field_when_present(public_node, :node_id),
-      public_doc_id: field_when_present(public_node, :doc_id),
-      has_unpublished_changes: article_changed?(draft_version, public_version),
-      last_published_at: field_when_present(public_node, :updated_at),
-      in_cover: present_either?(cover_card, cover_item),
-      hidden_from_cover: field_when_present(cover_item, :hidden) || false,
-      pinned_to_cover: member_when_present?(context.pinned_docs, public_row_id)
-    }
-  end
-
-  defp get_when_present(_map, nil), do: nil
-  defp get_when_present(map, key), do: Map.get(map, key)
-
-  defp field_when_present(nil, _field), do: nil
-  defp field_when_present(value, field), do: Map.get(value, field)
-
-  defp present_either?(left, right), do: not is_nil(left) or not is_nil(right)
-
-  defp member_when_present?(_set, nil), do: nil
-  defp member_when_present?(set, value), do: MapSet.member?(set, value)
-
-  defp article_changed?(draft, public) do
-    ChangeDetection.draft_content_changed?(draft, public)
-  end
-
-  defp latest_release(%Community{} = community, branch_id) do
-    DocPublishRelease
-    |> where([r], r.community_id == ^community.id)
-    |> where([r], r.branch_id == ^branch_id)
-    |> order_by([r], desc: r.release_number, desc: r.id)
-    |> preload(:tree_snapshot)
-    |> limit(1)
-    |> Repo.one()
-  end
-
-  defp event_to_map(%DocTreeEvent{} = event) do
-    %{
-      id: event.id,
-      seq: event.seq,
-      event_type: event.event_type,
-      payload: event.payload,
-      inverse_payload: event.inverse_payload,
-      status: to_string(event.status),
-      owner: to_string(event.owner),
-      doc_id: event.doc_id,
-      inserted_at: event.inserted_at
-    }
-  end
 end

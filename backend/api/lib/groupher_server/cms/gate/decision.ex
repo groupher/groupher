@@ -45,7 +45,6 @@ defmodule GroupherServer.CMS.Gate.Decision do
   @known_reasons [
     :resource_not_found,
     :gate_resource_mismatch,
-    :doc_branch_required,
     :permission_denied,
     :lifecycle_not_found,
     :ancestor_community_not_writable,
@@ -76,7 +75,6 @@ defmodule GroupherServer.CMS.Gate.Decision do
     :resource_not_found,
     :unsupported_resource,
     :gate_resource_mismatch,
-    :doc_branch_required,
     :permission_denied,
     :lifecycle_not_found,
     :lifecycle_not_loaded,
@@ -163,7 +161,6 @@ defmodule GroupherServer.CMS.Gate.Decision do
 
   defp source(reason)
        when reason in [
-              :doc_branch_required,
               :ancestor_community_not_writable,
               :ancestor_article_archived,
               :ancestor_article_deleted,
@@ -190,7 +187,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
   defp source(:scope_policy_actor_mismatch), do: :scope
   defp source(_reason), do: :resource
 
-  defp retryable?(reason) when reason in [:lifecycle_not_loaded, :doc_branch_required] do
+  defp retryable?(reason) when reason in [:lifecycle_not_loaded] do
     true
   end
 
@@ -221,6 +218,5 @@ defmodule GroupherServer.CMS.Gate.Decision do
   defp actions(:permission_denied), do: [:show_permission_notice]
   defp actions(:published_article_editing_disabled), do: [:read_only_notice]
   defp actions(:lifecycle_not_loaded), do: [:retry]
-  defp actions(:doc_branch_required), do: [:return_to_list]
   defp actions(_reason), do: []
 end

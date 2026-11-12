@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const changelog = graphql(`
+  "Get changelog by id"
   query Changelog($article: ArticlePathInput!) {
     changelog(article: $article) {
       ...PageChangelogFields
@@ -10,6 +11,7 @@ export const changelog = graphql(`
 `)
 
 export const changelogPage = graphql(`
+  "Changelog Lite page using the shared offset/cursor pagination contract"
   query ChangelogPage(
     $pagi: PagiInput
     $filter: ChangelogFilter

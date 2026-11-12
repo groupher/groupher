@@ -136,8 +136,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
                variables: %{
                  "target" => %{
                    "type" => "DOC",
-                   "articleId" => doc.id,
-                   "branchId" => doc.branch_id
+                   "articleId" => doc.id
                  },
                  "scope" => %{"type" => "PLATFORM"},
                  "commandId" => Ecto.UUID.generate()
@@ -147,7 +146,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
     assert result["action"] == "RECHECK"
     assert result["targetType"] == "DOC"
-    assert result["targetId"] == "#{doc.id}:#{doc.branch_id}"
+    assert result["targetId"] == doc.id
   end
 
   test "approve and reject serialize through the ReviewAction enum" do

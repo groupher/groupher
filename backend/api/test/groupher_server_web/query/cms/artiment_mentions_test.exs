@@ -288,9 +288,8 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community,
         :post,
         %{title: "Ticket reference", digest: "Ticket", body_bag: mock_body_bag(body)},
-        user,
-        command_id: Ecto.UUID.generate(),
-        check_publish_admission?: false
+        %{user | cur_passport: %{"global" => %{"god" => true}}},
+        command_id: Ecto.UUID.generate()
       )
 
     source_path = %{
@@ -404,7 +403,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     )
 
     Repo.query!("DELETE FROM cms.artiment_reviews WHERE community_id = $1", [source_community.id])
-    Repo.delete!(source_community)
+    assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(source_community.slug)
 
     focus = %{type: "POST", article_inner_id: article_inner_id(post, destination)}
 
@@ -1038,8 +1037,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       })
 
     assert [%{"type" => "DOC", "locator" => %{"type" => "DOC"}}] = page["nodes"]
-    public = Repo.get_by!(CMS.Model.DocPublic, article_id: doc.article_id)
-    refute String.contains?(Jason.encode!(page), "\"#{public.branch_id}\"")
+    refute String.contains?(Jason.encode!(page), "branchId")
   end
 
   test "Doc main branch discovers its public Comment references",
@@ -1157,9 +1155,8 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community,
         :post,
         %{title: "Many references", digest: "Fanout", body_bag: mock_body_bag(body)},
-        user,
-        command_id: Ecto.UUID.generate(),
-        check_publish_admission?: false
+        %{user | cur_passport: %{"global" => %{"god" => true}}},
+        command_id: Ecto.UUID.generate()
       )
 
     project_article(article)
@@ -1527,9 +1524,8 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         community,
         :post,
         %{title: "Reference source", digest: "Source", body_bag: mock_body_bag(body)},
-        user,
-        command_id: Ecto.UUID.generate(),
-        check_publish_admission?: false
+        %{user | cur_passport: %{"global" => %{"god" => true}}},
+        command_id: Ecto.UUID.generate()
       )
 
     {article, %{inner_id: article_inner_id(article, community)}}

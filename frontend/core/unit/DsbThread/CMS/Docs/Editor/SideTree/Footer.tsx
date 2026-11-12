@@ -14,6 +14,7 @@ type TProps = {
   onPageChange?: (page: number) => void
   error?: string | null
   baseRevision: number | null
+  queueRevision: number | null
   tabs: TSideTreeTab[]
   trashItems: TDocTreeTrashItem[]
   trashLoading: boolean
@@ -26,6 +27,7 @@ const Footer: FC<TProps> = ({
   onPageChange,
   error,
   baseRevision,
+  queueRevision,
   tabs,
   trashItems,
   trashLoading,
@@ -88,6 +90,7 @@ const Footer: FC<TProps> = ({
         tabs={tabs}
         loading={trashLoading}
         baseRevision={baseRevision}
+        queueRevision={queueRevision}
         community={community}
         onClose={closeTrash}
         onReload={onReloadTrash}

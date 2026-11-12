@@ -12,7 +12,6 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias Accounts.Model.User
   alias CMS.Articles.States
-  alias CMS.Docs.Store, as: DocStore
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Article, Community}
@@ -64,28 +63,13 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
     end
   end
 
-  defp authorize_loaded_state_change(
-         action,
-         %Article{thread: :doc} = article,
-         community,
-         actor,
-         opts
-       ) do
-    branch_id = Keyword.get(opts, :branch_id) || main_branch_id(community.id)
-
-    with {:ok, canonical} <-
-           CMS.Gate.check_in_transaction(actor, action, article, community, branch_id) do
-      {:ok, {canonical, [branch_id: branch_id]}}
-    end
-  end
-
   defp authorize_loaded_state_change(action, %Article{} = article, community, actor, opts) do
     with {:ok, canonical} <- CMS.Gate.check_in_transaction(actor, action, article, community) do
       {:ok, {canonical, opts}}
     end
   end
 
-  defp resolve_community(opts, article) do
+  defp resolve_community(opts, _article) do
     case Keyword.get(opts, :community) do
       %Community{} = community ->
         {:ok, community}
@@ -99,21 +83,8 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
             end
 
           _ ->
-            resolve_branch_community(opts, article)
+            {:error, ArticleErrorCat.binding_context_required()}
         end
-    end
-  end
-
-  defp resolve_branch_community(opts, _article) do
-    case Keyword.get(opts, :branch_id) do
-      branch_id when is_integer(branch_id) ->
-        with {:ok, %{community_id: community_id}} <- CMS.Docs.Store.branch_context(branch_id),
-             {:ok, community} <- FrontDesk.community(community_id, mode: :internal) do
-          {:ok, community}
-        end
-
-      _ ->
-        {:error, ArticleErrorCat.binding_context_required()}
     end
   end
 
@@ -121,13 +92,6 @@ defmodule GroupherServer.CMS.Articles.Commands.StateChange do
     case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> {:ok, article}
       {:error, _} -> {:error, GateErrorCat.resource_not_found()}
-    end
-  end
-
-  defp main_branch_id(community_id) do
-    case DocStore.branch(community_id, :main) do
-      {:ok, %{id: branch_id}} -> branch_id
-      {:error, _} -> nil
     end
   end
 end

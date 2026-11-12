@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const moderatorPage = graphql(`
+  "Paged subscribers of a community"
   query DashboardModeratorPage($community: String!, $pagi: PagiInput) {
     pagedCommunityModerators(community: $community, pagi: $pagi) {
       entries {
@@ -34,6 +35,7 @@ export const moderatorPage = graphql(`
 `)
 
 export const userPassport = graphql(`
+  "Get user by login"
   query DashboardUserPassport($login: String!) {
     user(login: $login) {
       passportString
@@ -42,6 +44,7 @@ export const userPassport = graphql(`
 `)
 
 export const searchUsers = graphql(`
+  "Bounded user picker excluding current moderators"
   query DashboardSearchUsers($name: String!, $community: String!) {
     moderatorCandidates(name: $name, community: $community) {
       login
@@ -58,6 +61,7 @@ export const searchUsers = graphql(`
 `)
 
 export const addModerator = graphql(`
+  "Add a moderator for a community"
   mutation DashboardAddModerator($commandId: ID!, $community: String!, $user: String!) {
     addModerator(commandId: $commandId, community: $community, user: $user) {
       slug
@@ -66,6 +70,7 @@ export const addModerator = graphql(`
 `)
 
 export const addModerators = graphql(`
+  "Add moderators for a community"
   mutation DashboardAddModerators($commandId: ID!, $community: String!, $users: [String!]!) {
     addModerators(commandId: $commandId, community: $community, users: $users) {
       slug

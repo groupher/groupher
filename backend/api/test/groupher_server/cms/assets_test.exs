@@ -19,10 +19,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     AssetReplacementPlan,
     AssetWorkflowRun,
     AssetWorkflowStep,
-    Author,
     CommunityAsset,
-    CommunityApplicationLogoUpload,
-    DocBranchState
+    CommunityApplicationLogoUpload
   }
 
   describe "[cms assets]" do
@@ -122,8 +120,6 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  Ecto.UUID.generate()
                )
 
-      ticket_article = Repo.get!(Article, ticket.id)
-
       ticket_working_copy =
         Repo.get_by!(ArticleWorkingCopy, article_id: ticket.id, scope_kind: :default)
 
@@ -179,8 +175,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       ticket_usages = Enum.filter(usages, &(&1.thread == :ticket))
       assert Enum.frequencies_by(ticket_usages, & &1.lifecycle) == %{draft: 1, live: 1}
 
-      assert {:error, _reason} =
-               CMS.Assets.Refs.copy_refs(post, ticket_article)
+      refute function_exported?(CMS.Assets.Refs, :copy_refs, 2)
 
       assert {:error, _reason} =
                CMS.Assets.delete(community, asset.id, user, Ecto.UUID.generate())
@@ -363,15 +358,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.storage_bytes == 96
     end
 
-    test "legacy ref linking cannot bypass a WorkingCopy save", ~m(community post user)a do
-      work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
-
-      assert {:error, :working_copy_save_required} =
-               CMS.Assets.link_refs(post, %{asset_refs: [], cur_user: user}, community: community)
-
-      assert {:error, :working_copy_save_required} = CMS.Assets.copy_refs(post, post)
-
-      assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision
+    test "retired ref linking entry points are not exported" do
+      refute function_exported?(CMS.Assets, :link_refs, 3)
+      refute function_exported?(CMS.Assets, :copy_refs, 2)
     end
 
     test "links Article attachment and cover refs without changing storage ownership",
@@ -540,19 +529,17 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           :title,
           :digest,
           :slug,
-          :body_json,
-          :body_schema_version,
-          :body_markdown,
-          :body_html,
-          :body_markdown_toc,
-          :body_plain_text,
-          :body_thumbnail,
-          :body_xml,
-          :body_rss,
           :captured_by_id,
           :captured_at,
           :causation_command_id
         ])
+        |> Map.put(
+          :body,
+          Map.merge(CMS.Articles.Body.document(snapshot), %{
+            article_id: snapshot.article_id,
+            type: :snapshot
+          })
+        )
         |> Map.update!(:source_revision, &(&1 + 1))
         |> Map.put(:captured_at, DateTime.add(snapshot.captured_at, -1, :second))
         |> Map.put(:causation_command_id, Ecto.UUID.generate())
@@ -645,13 +632,19 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       refute Enum.any?(plan_queries, &String.contains?(&1, "pg_advisory_xact_lock"))
     end
 
-    test "includes branch-owned DocDraft asset refs in the batch usage query" do
+    test "includes Doc WorkingCopy asset refs in the batch usage query" do
       {doc_community, doc, _attrs, doc_user} = mock_article(:doc)
-      doc_article = Repo.get!(Article, doc.id)
-      doc_author = Repo.get_by!(Author, user_id: doc_user.id)
+      public = Repo.get!(ArticlePublic, doc.article_id)
+      actor = %{doc_user | cur_passport: %{"global" => %{"god" => true}}}
 
-      assert {:ok, _version} =
-               CMS.Docs.Editor.ensure_editable_draft(doc_article, doc.branch_id, doc_author, 1)
+      assert {:ok, _} =
+               CMS.DocTree.Commands.BeginEdit.execute(
+                 doc_community,
+                 doc.article_id,
+                 public.snapshot_id,
+                 actor,
+                 Ecto.UUID.generate()
+               )
 
       {:ok, asset} =
         CMS.Assets.register_to_community(
@@ -692,9 +685,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       assert (item[:decision] || item["decision"]) == "unsupported"
 
-      doc_state = Repo.get_by!(DocBranchState, article_id: doc.id, branch_id: doc.branch_id)
-      Repo.delete!(doc_state)
-
+      assert {:ok, _} = CMS.Seeds.Docs.delete(doc_community, doc.article_id, actor)
       assert {:ok, []} = CMS.Assets.usages(doc_community, asset.id, doc_user)
     end
 
@@ -1659,7 +1650,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %CommunityAsset{} = replayed} = CMS.Assets.complete_upload(completion)
       assert replayed.id == asset.id
       assert Repo.get_by!(AssetUpload, upload_ref: intent.upload_ref).state == :completed
-      assert Repo.aggregate(CommunityAsset, :count, :id) == 1
+
+      assert Repo.aggregate(
+               from(a in CommunityAsset, where: a.community_id == ^community.id),
+               :count,
+               :id
+             ) == 1
     end
 
     test "rejects completion facts that are not bound to the upload intent",
@@ -1678,7 +1674,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       assert Repo.get_by!(AssetUpload, upload_ref: intent.upload_ref).state == :failed
-      assert Repo.aggregate(CommunityAsset, :count, :id) == 0
+
+      assert Repo.aggregate(
+               from(a in CommunityAsset, where: a.community_id == ^community.id),
+               :count,
+               :id
+             ) == 0
     end
 
     test "records an expired upload intent when completion arrives after its lease",
@@ -2125,10 +2126,6 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert (item[:observed_working_copy_revision] || item["observed_working_copy_revision"]) ==
                Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default).revision
     end
-  end
-
-  defp test_link_refs(%{thread: :doc} = doc, attrs, opts) do
-    CMS.Assets.link_refs(doc, attrs, opts)
   end
 
   defp test_link_refs(article, attrs, opts) do

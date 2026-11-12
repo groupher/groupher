@@ -19,10 +19,7 @@ defmodule GroupherServer.CMS.Artiment.Status do
     CommentBody,
     CommentLifecycle,
     Community,
-    DocBranch,
-    DocBranchVersion,
-    DocLifecycle,
-    DocPublic,
+    DocsLifecycle,
     TicketState
   }
 
@@ -135,53 +132,15 @@ defmodule GroupherServer.CMS.Artiment.Status do
 
     working_copies = Map.new(working_copies, &{&1.article_id, &1})
 
-    doc_publics =
-      if doc_ids == [],
-        do: [],
-        else:
-          Repo.all(
-            from(public in DocPublic,
-              join: branch in DocBranch,
-              on: branch.id == public.branch_id and branch.type == :main,
-              where: public.article_id in ^doc_ids
-            )
-          )
-
-    doc_publics = Map.new(doc_publics, &{&1.article_id, &1})
-
-    doc_titles =
-      if doc_ids == [],
-        do: [],
-        else:
-          Repo.all(
-            from(branch in DocBranch,
-              join: version in DocBranchVersion,
-              on: version.branch_id == branch.id,
-              where: version.article_id in ^doc_ids and branch.type == :main,
-              select: {version.article_id, branch.title}
-            )
-          )
-
-    doc_titles = Map.new(doc_titles)
+    doc_publics = query_ids(doc_ids, ArticlePublic, :article_id) |> Map.new(&{&1.article_id, &1})
 
     article_states =
       query_ids(article_ids, ArticleLifecycle, :article_id)
       |> Map.new(&{&1.article_id, &1.state})
 
     doc_states =
-      if doc_ids == [],
-        do: [],
-        else:
-          Repo.all(
-            from(state in DocLifecycle,
-              join: branch in DocBranch,
-              on: branch.id == state.branch_id and branch.type == :main,
-              where: state.article_id in ^doc_ids,
-              select: {state.article_id, state.state}
-            )
-          )
+      query_ids(doc_ids, DocsLifecycle, :article_id) |> Map.new(&{&1.article_id, &1.state})
 
-    doc_states = Map.new(doc_states)
     comment_ids = Map.keys(comments)
 
     comment_states =
@@ -257,7 +216,7 @@ defmodule GroupherServer.CMS.Artiment.Status do
 
             title =
               if ref.type == :doc,
-                do: (public && public.title) || doc_titles[ref.article_id] || "",
+                do: (public && public.title) || "",
                 else:
                   (public && public.title) ||
                     (working_copies[ref.article_id] && working_copies[ref.article_id].title) || ""
@@ -343,7 +302,7 @@ defmodule GroupherServer.CMS.Artiment.Status do
 
         scope =
           case type do
-            :doc -> DocContext.public_main()
+            :doc -> DocContext.public()
             :ticket -> TicketContext.public(community)
             _ -> ArticleContext.public(type)
           end

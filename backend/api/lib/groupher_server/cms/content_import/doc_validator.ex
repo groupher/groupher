@@ -28,8 +28,8 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
   alias CMS.ErrorCat
 
   alias CMS.ContentImport.Model.{Connection, ImportSourceMapping}
-  alias CMS.Docs.Branch
-  alias CMS.Model.{Community, DocBranch, DocsSiteState}
+  alias CMS.Model.{Community, DocsLifecycle, ArticleWorkingCopy, ArticlePublic}
+  alias CMS.DocTree.Publish.Queue
 
   @max_depth CMS.DocTree.Const.max_depth()
   @max_nodes 6_000
@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
     with {:ok, info} <- normalize_source_info(source_info),
          {:ok, _} <- validate_source_tree(source_tree),
          {:ok, _} <- validate_source_match(info, source_tree) do
-      branch_slug = branch_slug(info["repo"], info["branch"])
+      branch_slug = site_namespace(community, info)
       mapping_refs = source_mapping_refs(community, info)
       target_tree = plan_target_tree(source_tree, branch_slug, mapping_refs)
       {target_revision, conflicts} = target_state(community)
@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
           {:ok, :pass} | {:error, term()}
   def validate_intent(%Community{} = community, source_info, target_tree, target_revision) do
     with {:ok, info} <- normalize_source_info(source_info),
-         branch_slug <- branch_slug(info["repo"], info["branch"]),
+         branch_slug <- site_namespace(community, info),
          mapping_refs <- source_mapping_refs(community, info),
          {:ok, _} <- validate_target_tree(target_tree, branch_slug, mapping_refs),
          {current_revision, conflicts} <- target_state(community),
@@ -77,6 +77,10 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
       error ->
         error
     end
+  end
+
+  defp site_namespace(%Community{id: id}, info) do
+    "site-#{id}-#{branch_slug(info["repo"], info["branch"])}"
   end
 
   @doc "Builds a deterministic source branch slug without exposing repository text as an ID."
@@ -321,7 +325,7 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
       end
 
     %{
-      "branchSlug" => branch_slug,
+      "namespace" => branch_slug,
       "schemaVersion" => 2,
       "source" => source,
       "tabs" => Enum.map(scopes, &plan_scope(&1, branch_slug, mapping_refs))
@@ -388,7 +392,7 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
   end
 
   defp validate_target_tree(
-         %{"branchSlug" => branch_slug, "schemaVersion" => 2, "tabs" => tabs},
+         %{"namespace" => branch_slug, "schemaVersion" => 2, "tabs" => tabs},
          branch_slug,
          mapping_refs
        )
@@ -551,27 +555,25 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
   end
 
   defp target_state(community) do
-    branch_slug = Branch.main_slug()
+    {:ok, queue} = Queue.read(community)
 
-    branch =
-      DocBranch
-      |> where([branch], branch.community_id == ^community.id)
-      |> where([branch], branch.slug == ^branch_slug)
-      |> Repo.one()
+    copies =
+      Repo.all(
+        from(l in DocsLifecycle,
+          left_join: w in ArticleWorkingCopy,
+          on: w.id == l.default_working_copy_id,
+          left_join: p in ArticlePublic,
+          on: p.article_id == l.article_id,
+          where: l.community_id == ^community.id,
+          order_by: l.article_id,
+          select: {l.article_id, l.version, w.id, w.revision, p.snapshot_id}
+        )
+      )
+      |> Enum.map(&Tuple.to_list/1)
 
-    case branch do
-      nil ->
-        {"doc:#{branch_slug}:0", []}
-
-      %DocBranch{} = branch ->
-        revision =
-          DocsSiteState
-          |> where([state], state.community_id == ^community.id and state.branch_id == ^branch.id)
-          |> select([state], state.tree_lock_version)
-          |> Repo.one() || 0
-
-        {"doc:#{branch.slug}:#{revision}", []}
-    end
+    # A structured revision captures D edits as well as navigation changes.
+    revision = Jason.encode!([queue.tree_lock_version, queue.queue_revision, copies])
+    {revision, []}
   end
 
   defp counts(target_tree) do

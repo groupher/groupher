@@ -167,8 +167,9 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
     end)
   end
 
-  defp edit_action(%Article{thread: thread}) when thread in [:post, :blog, :changelog],
-    do: :edit_article
+  defp edit_action(%Article{thread: thread}) when thread in [:post, :blog, :changelog] do
+    :edit_article
+  end
 
   defp edit_action(%Article{}), do: :edit
 

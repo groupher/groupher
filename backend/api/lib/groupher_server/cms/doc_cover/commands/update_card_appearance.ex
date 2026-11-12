@@ -26,6 +26,11 @@ defmodule GroupherServer.CMS.DocCover.Commands.UpdateCardAppearance do
   @pipeline operation: :doc_cover_update_card_appearance, target: :community
   direct_pipeline execute(community, card_id, appearance, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :manage_docs, candidate) end)
-    change(fn canonical -> Persist.update_card_appearance(canonical, card_id, appearance) end)
+
+    change(fn canonical ->
+      CMS.DocTree.Publication.Presentation.write(canonical, fn ->
+        Persist.update_card_appearance(canonical, card_id, appearance)
+      end)
+    end)
   end
 end

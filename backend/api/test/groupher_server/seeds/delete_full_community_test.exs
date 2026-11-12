@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
     Community,
     CommunityDashboard,
     CommunityTag,
-    DocPublic,
+    ArticlePublic,
     AssetReplacementPlan,
     CommunityAsset
   }
@@ -103,7 +103,7 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
       assert count(from(c in CommunityDashboard, where: c.community_id == ^community.id)) == 0
       assert count(from(c in CommunityTag, where: c.community_id == ^community.id)) == 0
       assert count(from(c in Article, where: c.id in ^article_ids)) == 0
-      assert count(from(c in DocPublic, where: c.article_id in ^doc_ids)) == 0
+      assert count(from(c in ArticlePublic, where: c.article_id in ^doc_ids)) == 0
       assert count(from(c in Comment, where: c.id in ^comment_ids)) == 0
       assert count(from(c in CommentReply, where: c.comment_id in ^comment_ids)) == 0
       assert count(from(c in CommentUpvote, where: c.comment_id in ^comment_ids)) == 0

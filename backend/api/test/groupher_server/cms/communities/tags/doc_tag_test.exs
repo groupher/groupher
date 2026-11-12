@@ -138,9 +138,9 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
     end
   end
 
-  describe "[create/update doc with tags]" do
-    test "can create doc with existed community tags",
-         ~m(community user doc_attrs article_tag_attrs article_tag_attrs2)a do
+  describe "[Doc community binding tags]" do
+    test "can assign existing community tags without changing the published Snapshot",
+         ~m(community user doc article_tag_attrs article_tag_attrs2)a do
       {:ok, article_tag} =
         CMS.Communities.create_tag(
           community,
@@ -159,22 +159,19 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
           Ecto.UUID.generate()
         )
 
-      doc_with_tags =
-        Map.merge(doc_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
+      public = Repo.get!(CMS.Model.ArticlePublic, doc.id)
+      {:ok, _} = CMS.Communities.set_tag(doc, article_tag.id, user, Ecto.UUID.generate())
+      {:ok, _} = CMS.Communities.set_tag(doc, article_tag2.id, user, Ecto.UUID.generate())
+      assert Repo.get!(CMS.Model.ArticlePublic, doc.id).snapshot_id == public.snapshot_id
 
-      {:ok, created} =
-        CMS.Articles.create(community, :doc, doc_with_tags, user,
-          command_id: Ecto.UUID.generate()
-        )
-
-      {:ok, tags} = binding_tags(created, community)
+      {:ok, tags} = binding_tags(doc, community)
 
       assert exist_in?(article_tag, tags)
       assert exist_in?(article_tag2, tags)
     end
 
-    test "can not create doc with other community's community tags",
-         ~m(community user doc_attrs article_tag_attrs article_tag_attrs2)a do
+    test "cannot assign tags from an unbound community",
+         ~m(community user doc article_tag_attrs article_tag_attrs2)a do
       community2_attrs = mock_attrs(:community)
 
       {:ok, community2} =
@@ -198,15 +195,14 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
           Ecto.UUID.generate()
         )
 
-      doc_with_tags =
-        Map.merge(doc_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
+      {:ok, _} = CMS.Communities.set_tag(doc, article_tag.id, user, Ecto.UUID.generate())
 
-      {:error, reason} =
-        CMS.Articles.create(community, :doc, doc_with_tags, user,
-          command_id: Ecto.UUID.generate()
-        )
+      assert {:error, _} =
+               CMS.Communities.set_tag(doc, article_tag2.id, user, Ecto.UUID.generate())
 
-      is_error?(reason, {{:cms, :community}, :invalid_domain_tag})
+      {:ok, tags} = binding_tags(doc, community)
+      assert exist_in?(article_tag, tags)
+      refute exist_in?(article_tag2, tags)
     end
   end
 

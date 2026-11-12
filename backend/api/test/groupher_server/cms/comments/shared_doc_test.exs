@@ -2,37 +2,22 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
   use GroupherServer.TestMate, async: false
   import Ecto.Query
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Article, ArticleStats, Comment, DocBranch, DocLifecycle}
+  alias CMS.Model.{Article, ArticleStats, Comment, DocsHistoryOwner, DocsLifecycle}
 
   setup do
     {community, doc, _, author} = mock_article(:doc)
     {:ok, viewer} = db_insert(:user)
 
-    preview =
-      %DocBranch{}
-      |> DocBranch.changeset(%{
-        community_id: community.id,
-        slug: "preview-shared-comments",
-        title: "Preview",
-        type: :preview,
-        status: :active,
-        source_branch_id: doc.branch_id,
-        created_by_id: author.id
-      })
-      |> Repo.insert!()
-
-    {:ok, %{community: community, doc: doc, author: author, viewer: viewer, preview: preview}}
+    {:ok, %{community: community, doc: doc, author: author, viewer: viewer}}
   end
 
-  test "DOC-01 body branch projections create one stable discussion and number sequence", ctx do
-    project = fn branch ->
-      %{id: ctx.doc.article_id, branch_id: branch, community: ctx.community}
-    end
+  test "DOC-01 repeated writes use one stable discussion and number sequence", ctx do
+    project = %{id: ctx.doc.article_id, community: ctx.community}
 
     {:ok, first} =
       CMS.Comments.Commands.Create.create(
         :doc,
-        project.(ctx.doc.branch_id),
+        project,
         mock_comment(),
         ctx.viewer,
         Ecto.UUID.generate()
@@ -41,7 +26,7 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
     {:ok, second} =
       CMS.Comments.Commands.Create.create(
         :doc,
-        project.(ctx.preview.id),
+        project,
         mock_comment(),
         ctx.viewer,
         Ecto.UUID.generate()
@@ -77,26 +62,26 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
     assert {:error, _} =
              CMS.Comments.Commands.Create.create(
                :doc,
-               %{id: ctx.doc.article_id, branch_id: ctx.preview.id, community: other},
+               %{id: ctx.doc.article_id, community: other},
                mock_comment(),
                ctx.viewer,
                Ecto.UUID.generate()
              )
   end
 
-  test "GATE-01 a readable preview does not admit discussion without a published main", ctx do
+  test "GATE-01 a deleted Doc does not admit discussion", ctx do
     {:ok, created} =
       CMS.Comments.Commands.Create.create(
         :doc,
-        %{id: ctx.doc.article_id, branch_id: ctx.preview.id, community: ctx.community},
+        %{id: ctx.doc.article_id, community: ctx.community},
         mock_comment(),
         ctx.viewer,
         Ecto.UUID.generate()
       )
 
     Repo.update_all(
-      from(l in DocLifecycle,
-        where: l.article_id == ^ctx.doc.article_id and l.branch_id == ^ctx.doc.branch_id
+      from(l in DocsLifecycle,
+        where: l.article_id == ^ctx.doc.article_id
       ),
       set: [state: :deleted]
     )
@@ -107,7 +92,7 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
     assert {:error, _} =
              CMS.Comments.Commands.Create.create(
                :doc,
-               %{id: ctx.doc.article_id, branch_id: ctx.preview.id, community: ctx.community},
+               %{id: ctx.doc.article_id, community: ctx.community},
                mock_comment(),
                ctx.author,
                Ecto.UUID.generate()
@@ -117,7 +102,7 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
     assert Repo.get_by!(ArticleStats, article_id: ctx.doc.article_id).comments_count == 1
   end
 
-  test "DEL-01 purging the last body branch preserves the stable discussion", ctx do
+  test "DEL-01 purging a Doc preserves its stable discussion and history", ctx do
     {:ok, comment} =
       CMS.Comments.create_comment(
         ctx.community,
@@ -128,26 +113,18 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
         Ecto.UUID.generate()
       )
 
-    branch = Repo.get!(DocBranch, ctx.doc.branch_id)
-
-    {:ok, action} =
-      CMS.Docs.Trash.create_action(ctx.community, ctx.author, %{
-        root_type: :article,
-        root_ref: ctx.doc.article_id
-      })
-
-    {:ok, item} =
-      CMS.Docs.Trash.attach(action, ctx.community, branch, ctx.doc.article_id, ctx.author)
-
-    assert {:ok, :done} =
-             CMS.Docs.Trash.permanently_delete(item, ctx.community, branch, ctx.author, [])
+    actor = %{ctx.author | cur_passport: %{"global" => %{"god" => true}}}
+    assert {:ok, _} = CMS.Seeds.Docs.delete(ctx.community, ctx.doc.article_id, actor)
 
     assert Repo.get!(Article, ctx.doc.article_id)
     assert Repo.get!(Comment, comment.id)
     assert Repo.get_by!(ArticleStats, article_id: ctx.doc.article_id).comments_count == 1
-    refute Repo.exists?(from(l in DocLifecycle, where: l.article_id == ^ctx.doc.article_id))
-    assert {:ok, %{id: owner_id}} = CMS.Articles.Bindings.doc_owner(ctx.doc.article_id)
-    assert owner_id == ctx.community.id
+    refute Repo.exists?(from(l in DocsLifecycle, where: l.article_id == ^ctx.doc.article_id))
+
+    assert Repo.get_by!(DocsHistoryOwner, article_id: ctx.doc.article_id).community_id ==
+             ctx.community.id
+
+    refute Repo.get_by(CMS.Model.ArticleBinding, article_id: ctx.doc.article_id)
   end
 
   test "ACT-02 comment activity and locking belong to the stable Article", ctx do
@@ -160,7 +137,7 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
     {:ok, _} =
       CMS.Comments.Commands.Create.create(
         :doc,
-        %{id: ctx.doc.article_id, branch_id: ctx.preview.id, community: ctx.community},
+        %{id: ctx.doc.article_id, community: ctx.community},
         mock_comment(),
         ctx.viewer,
         Ecto.UUID.generate()
@@ -169,17 +146,14 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
     assert DateTime.compare(Repo.get!(Article, ctx.doc.article_id).active_at, epoch) == :gt
 
     {:ok, _} =
-      CMS.Articles.lock_comments(ctx.doc.article_id, ctx.author,
-        community: ctx.community,
-        branch_id: ctx.preview.id
-      )
+      CMS.Articles.lock_comments(ctx.doc.article_id, ctx.author, community: ctx.community)
 
     assert Repo.get!(Article, ctx.doc.article_id).comments_locked
 
     assert {:error, _} =
              CMS.Comments.Commands.Create.create(
                :doc,
-               %{id: ctx.doc.article_id, branch_id: ctx.doc.branch_id, community: ctx.community},
+               %{id: ctx.doc.article_id, community: ctx.community},
                mock_comment(),
                ctx.viewer,
                Ecto.UUID.generate()

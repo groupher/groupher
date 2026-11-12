@@ -29,7 +29,6 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   alias CMS.ContentImport.Model.{Connection, Job}
   alias CMS.ContentImport.Model.Job.Body
   alias CMS.ContentImport.{DocValidator, Process}
-  alias CMS.Docs.Branch
   alias CMS.Model.Community
 
   @doc "Creates or idempotently resumes the Job bound to one confirmed Preview intent."
@@ -201,7 +200,6 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
       first_imported_doc_id: result["firstImportedDocId"],
       job_ref: job.hash_id,
       process: Process.project(job),
-      target_branch: result_or(result, "targetBranch", Branch.main_slug()),
       progress: job.progress || %{},
       skipped: result_or(result, "skipped", []),
       source_info: project_source_info(job.source_info),

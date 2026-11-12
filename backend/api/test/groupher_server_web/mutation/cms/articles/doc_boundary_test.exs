@@ -13,8 +13,10 @@ defmodule GroupherServer.Test.Mutation.Articles.DocBoundary do
 
     refute Map.has_key?(mutation_fields, :create_doc)
     refute Map.has_key?(mutation_fields, :update_doc)
-    assert Map.has_key?(mutation_fields, :update_doc_draft)
-    assert Map.has_key?(mutation_fields, :publish_doc_changes)
+    refute Map.has_key?(mutation_fields, :update_doc_draft)
+    assert Map.has_key?(mutation_fields, :begin_docs_edit)
+    refute Map.has_key?(mutation_fields, :publish_doc_changes)
+    assert Map.has_key?(mutation_fields, :release_docs_queue)
   end
 
   test "Docs Article deletion is routed through the Tree lifecycle", context do

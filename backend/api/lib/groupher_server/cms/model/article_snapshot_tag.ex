@@ -6,7 +6,8 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshotTag do
   """
   use Ecto.Schema
   import Ecto.Changeset
-  alias GroupherServer.CMS.Model.{ArticleSnapshot, CommunityTag}
+  alias GroupherServer.CMS
+  alias CMS.Model.{ArticleSnapshot, CommunityTag}
   alias Helper.Constant.DBPrefix
 
   @primary_key false

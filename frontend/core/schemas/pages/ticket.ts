@@ -182,6 +182,7 @@ export const ticketPageFields = graphql(`
 `)
 
 export const ticketKanban = graphql(`
+  "Public User Ticket Kanban columns"
   query TicketKanban($community: String!, $pagi: PagiInput) {
     ticketKanban(community: $community, pagi: $pagi) {
       todo {
@@ -198,6 +199,7 @@ export const ticketKanban = graphql(`
 `)
 
 export const ticketKanbanInternal = graphql(`
+  "Internal User Ticket Kanban columns"
   query TicketKanbanInternal($community: String!, $filter: TicketFilter, $pagi: PagiInput) {
     ticketKanbanInternal(community: $community, filter: $filter, pagi: $pagi) {
       todo {
@@ -214,6 +216,7 @@ export const ticketKanbanInternal = graphql(`
 `)
 
 export const ticketPage = graphql(`
+  "One public User Ticket page"
   query TicketPage($community: String!, $filter: TicketFilter, $pagi: PagiInput) {
     ticketPage(community: $community, filter: $filter, pagi: $pagi) {
       ...TicketPageFields
@@ -222,6 +225,7 @@ export const ticketPage = graphql(`
 `)
 
 export const ticketPageInternal = graphql(`
+  "One internal User Ticket page"
   query TicketPageInternal($community: String!, $filter: TicketFilter, $pagi: PagiInput) {
     ticketPageInternal(community: $community, filter: $filter, pagi: $pagi) {
       ...TicketPageFields
@@ -230,6 +234,7 @@ export const ticketPageInternal = graphql(`
 `)
 
 export const ticket = graphql(`
+  "One public User Ticket by Community-shared number"
   query Ticket($community: String!, $innerId: Int!) {
     ticket(community: $community, innerId: $innerId) {
       ...TicketFields
@@ -238,6 +243,7 @@ export const ticket = graphql(`
 `)
 
 export const ticketInternal = graphql(`
+  "One internal User, Worker or Case Ticket"
   query TicketInternal($community: String!, $id: ID!) {
     ticketInternal(community: $community, id: $id) {
       ...TicketFields
@@ -246,6 +252,7 @@ export const ticketInternal = graphql(`
 `)
 
 export const postTicketLinksInternal = graphql(`
+  "Internally visible User Tickets linked to one Post"
   query PostTicketLinksInternal($community: String!, $postId: ID!) {
     postTicketLinksInternal(community: $community, postId: $postId) {
       ...TicketFields
@@ -254,6 +261,7 @@ export const postTicketLinksInternal = graphql(`
 `)
 
 export const ticketSearch = graphql(`
+  "Internal Ticket title prefix search"
   query TicketSearch(
     $community: String!
     $query: String!
@@ -267,6 +275,7 @@ export const ticketSearch = graphql(`
 `)
 
 export const postTicketProgress = graphql(`
+  "Batched public Ticket progress for a Post page"
   query PostTicketProgress($community: String!, $postInnerIds: [Int!]!) {
     postTicketProgress(community: $community, postInnerIds: $postInnerIds) {
       postInnerId
@@ -284,6 +293,7 @@ export const postTicketProgress = graphql(`
 `)
 
 export const ticketAssigneeCandidates = graphql(`
+  "Paged subscribers of a community"
   query TicketAssigneeCandidates($community: String!, $pagi: PagiInput) {
     pagedCommunityModerators(community: $community, pagi: $pagi) {
       entries {
@@ -298,6 +308,7 @@ export const ticketAssigneeCandidates = graphql(`
 `)
 
 export const ticketTagGroups = graphql(`
+  "Get community tag groups"
   query TicketTagGroups($community: String!, $thread: Thread) {
     communityTagGroups(community: $community, thread: $thread) {
       id
@@ -313,6 +324,7 @@ export const ticketTagGroups = graphql(`
 `)
 
 export const createTicketFromPost = graphql(`
+  "Create a User Ticket Draft from a public Post"
   mutation CreateTicketFromPost(
     $commandId: ID!
     $community: String!
@@ -333,6 +345,7 @@ export const createTicketFromPost = graphql(`
 `)
 
 export const linkTicketSource = graphql(`
+  "Link a typed source to a User Ticket; currently only POST is supported"
   mutation LinkTicketSource(
     $commandId: ID!
     $community: String!
@@ -355,6 +368,7 @@ export const linkTicketSource = graphql(`
 `)
 
 export const unlinkTicketSource = graphql(`
+  "Unlink a TicketSource relation by its relation ID"
   mutation UnlinkTicketSource(
     $commandId: ID!
     $community: String!
@@ -375,6 +389,7 @@ export const unlinkTicketSource = graphql(`
 `)
 
 export const createWorkerTicket = graphql(`
+  "Create a private Worker Ticket under a User Ticket"
   mutation CreateWorkerTicket(
     $commandId: ID!
     $community: String!
@@ -397,6 +412,7 @@ export const createWorkerTicket = graphql(`
 `)
 
 export const createTicketCase = graphql(`
+  "Create an internal Case Ticket"
   mutation CreateTicketCase(
     $commandId: ID!
     $community: String!
@@ -419,6 +435,7 @@ export const createTicketCase = graphql(`
 `)
 
 export const transitionTicket = graphql(`
+  "Transition Ticket work status with an expected version"
   mutation TransitionTicket(
     $commandId: ID!
     $community: String!
@@ -439,6 +456,7 @@ export const transitionTicket = graphql(`
 `)
 
 export const updateTicket = graphql(`
+  "Update Ticket priority or planned dates"
   mutation UpdateTicket(
     $commandId: ID!
     $community: String!
@@ -463,6 +481,7 @@ export const updateTicket = graphql(`
 `)
 
 export const addTicketUpdate = graphql(`
+  "Append an internal or public Ticket progress update"
   mutation AddTicketUpdate(
     $commandId: ID!
     $community: String!
@@ -489,6 +508,7 @@ export const addTicketUpdate = graphql(`
 `)
 
 export const ensureTicketDraft = graphql(`
+  "Create a content Draft workspace for an already published Ticket"
   mutation EnsureTicketDraft(
     $commandId: ID!
     $community: String!
@@ -507,6 +527,7 @@ export const ensureTicketDraft = graphql(`
 `)
 
 export const saveTicketDraft = graphql(`
+  "Save the Ticket content Draft with Draft and Lifecycle versions"
   mutation SaveTicketDraft(
     $commandId: ID!
     $community: String!
@@ -529,6 +550,7 @@ export const saveTicketDraft = graphql(`
 `)
 
 export const publishTicket = graphql(`
+  "Publish the reviewed Ticket Draft with all three expected versions"
   mutation PublishTicket(
     $commandId: ID!
     $community: String!
@@ -555,6 +577,7 @@ export const publishTicket = graphql(`
 `)
 
 export const moveTicketToDraft = graphql(`
+  "Move a published Ticket to Draft with its lifecycle version"
   mutation MoveTicketToDraft(
     $commandId: ID!
     $community: String!
@@ -575,6 +598,7 @@ export const moveTicketToDraft = graphql(`
 `)
 
 export const addTicketCaseMember = graphql(`
+  "Add a User Ticket to a Case"
   mutation AddTicketCaseMember(
     $commandId: ID!
     $community: String!
@@ -595,6 +619,7 @@ export const addTicketCaseMember = graphql(`
 `)
 
 export const removeTicketCaseMember = graphql(`
+  "Remove a User Ticket from a Case"
   mutation RemoveTicketCaseMember(
     $commandId: ID!
     $community: String!
@@ -615,6 +640,7 @@ export const removeTicketCaseMember = graphql(`
 `)
 
 export const addTicketCaseWorker = graphql(`
+  "Reference a member-owned Worker as a shared Case fix"
   mutation AddTicketCaseWorker(
     $commandId: ID!
     $community: String!
@@ -635,6 +661,7 @@ export const addTicketCaseWorker = graphql(`
 `)
 
 export const setTicketAssignees = graphql(`
+  "Replace assigned Community moderators on a Ticket"
   mutation SetTicketAssignees(
     $commandId: ID!
     $community: String!
@@ -655,6 +682,7 @@ export const setTicketAssignees = graphql(`
 `)
 
 export const setTicketTags = graphql(`
+  "Replace internal Post tags on a Ticket"
   mutation SetTicketTags(
     $commandId: ID!
     $community: String!
@@ -675,6 +703,7 @@ export const setTicketTags = graphql(`
 `)
 
 export const setTicketFacets = graphql(`
+  "Replace normalized internal Ticket facets"
   mutation SetTicketFacets(
     $commandId: ID!
     $community: String!

@@ -60,12 +60,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
     const updated = toggle ? [...checkedIds, id] : reject((_id) => _id === id, checkedIds)
 
     setChecked(uniq(updated))
-    setTouched(
-      !equals(
-        [...updated].sort(),
-        ([...(workingCopy?.tagIds || [])] as TID[]).sort(),
-      ),
-    )
+    setTouched(!equals([...updated].sort(), ([...(workingCopy?.tagIds || [])] as TID[]).sort()))
   }
 
   const handleUpdate = async () => {

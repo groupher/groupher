@@ -61,7 +61,6 @@ export default function useLocalDraftHistory(
       communityId,
       thread: 'doc',
       articleId,
-      branchId: 'main',
     }
   }, [accountScope, communityId, draftState.activePage?.docId, draftState.draft.docId])
 
@@ -69,9 +68,7 @@ export default function useLocalDraftHistory(
     if (!identity) return null
     return {
       ...identity,
-      baseRevisionId: draftState.savedDraft.baseRevisionId,
-      baseServerDraftVersion: draftState.savedDraft.version,
-      baseServerContentHash: draftState.savedDraft.serverContentHash,
+      base: draftState.savedDraft.base,
       payload: toDocLocalDraftPayload(draftState),
       writerSessionId: writerSessionId.current,
     }
@@ -92,7 +89,7 @@ export default function useLocalDraftHistory(
     if (!identity || draftState.loadStatus.loading || !draftState.loadStatus.loadedDocId) return
     let cancelled = false
     void Promise.all([
-      repository.inspectWorkingCopy(identity, draftState.savedDraft.serverContentHash),
+      repository.inspectWorkingCopy(identity, draftState.savedDraft.base),
       repository.listRecoveryPoints(identity),
     ]).then(([nextInspection, points]) => {
       if (cancelled) return
@@ -111,7 +108,7 @@ export default function useLocalDraftHistory(
   }, [
     draftState.loadStatus.loadedDocId,
     draftState.loadStatus.loading,
-    draftState.savedDraft.serverContentHash,
+    draftState.savedDraft.base,
     identity,
     repository,
   ])

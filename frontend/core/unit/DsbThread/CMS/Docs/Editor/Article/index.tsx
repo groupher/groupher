@@ -4,6 +4,7 @@ import { useRef, type FC } from 'react'
 import { ARTICLE_STAGE } from '~/const/article'
 import { DSB_DOC_EVENT, type TDocPublishSuccessPayload } from '~/const/dsb/docs'
 import useEvent from '~/hooks/useEvent'
+import useTrans from '~/hooks/useTrans'
 
 import { DOC_EDITOR_MODE } from '../constant'
 import ImportDrawer from '../Import/Drawer'
@@ -17,22 +18,24 @@ import Footer from './Footer'
 import useLogic from './hooks/useLogic'
 import LocalDraftHistoryNotice from './LocalDraftHistoryNotice'
 import useSalon from './salon'
-import type { TDocDraftInitialData } from './spec'
 import Title from './Title'
 import Subtitle from './Title/Subtitle'
 import TitleActions from './TitleActions'
 import WorkspaceActions from './WorkspaceActions'
 
 type TProps = {
-  initialData?: TDocDraftInitialData | null
   sideTree: TSideTreeController
 }
 
-const Article: FC<TProps> = ({ initialData, sideTree }) => {
+const Article: FC<TProps> = ({ sideTree }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const { mode } = useDocsEditor()
   const editorRef = useRef<TRichEditorHandle | null>(null)
   const {
+    beginEdit,
+    starting,
+    canBeginEdit,
     activePage,
     bodyValue,
     editable,
@@ -45,7 +48,7 @@ const Article: FC<TProps> = ({ initialData, sideTree }) => {
     setTitle,
     subtitle,
     title,
-  } = useLogic(sideTree, initialData)
+  } = useLogic(sideTree)
   const docId = activePage?.docId ?? ''
   const coverVisible = useCover(docId)
   const docImport = useImport({ docId, editorRef })
@@ -83,6 +86,16 @@ const Article: FC<TProps> = ({ initialData, sideTree }) => {
     <>
       <article className={s.wrapper}>
         {coverVisible ? <Cover /> : null}
+        {canBeginEdit ? (
+          <button
+            className={s.beginEdit}
+            type='button'
+            disabled={loading || starting}
+            onClick={() => void beginEdit()}
+          >
+            {t('dsb.doc.begin_edit')}
+          </button>
+        ) : null}
         <TitleActions coverVisible={coverVisible} disabled={controlsDisabled} docId={docId} />
         <Title
           value={title}

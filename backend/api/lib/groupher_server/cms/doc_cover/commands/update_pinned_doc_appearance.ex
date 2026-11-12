@@ -28,7 +28,9 @@ defmodule GroupherServer.CMS.DocCover.Commands.UpdatePinnedDocAppearance do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :manage_docs, candidate) end)
 
     change(fn canonical ->
-      Persist.update_pinned_doc_appearance(canonical, node_id, appearance)
+      CMS.DocTree.Publication.Presentation.write(canonical, fn ->
+        Persist.update_pinned_doc_appearance(canonical, node_id, appearance)
+      end)
     end)
   end
 end

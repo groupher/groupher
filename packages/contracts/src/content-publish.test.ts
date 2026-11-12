@@ -12,8 +12,8 @@ import {
 } from './content-publish'
 
 const docCommand = {
-  action: CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT,
-  target: { community: 'home', documentId: 'doc-1' },
+  action: CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY,
+  target: { community: 'home', articleId: 'doc-1', workingCopyId: 'work-1' },
   payload: {
     content: { format: CONTENT_SOURCE_FORMAT.PLATE, value: [{ type: 'p', children: [] }] },
     title: 'Intro',
@@ -21,7 +21,7 @@ const docCommand = {
     slug: 'intro',
   },
   commandId: 'command-1',
-  expectedVersion: 3,
+  revision: 3,
 }
 
 describe('content publish command parser', () => {
@@ -31,7 +31,7 @@ describe('content publish command parser', () => {
 
   it.each([
     [{ ...docCommand, action: 'doc.delete' }, 'action', 'unknown_action'],
-    [{ ...docCommand, expectedVersion: -1 }, 'expectedVersion', 'invalid_version'],
+    [{ ...docCommand, revision: -1 }, 'revision', 'invalid_revision'],
     [
       { ...docCommand, payload: { ...docCommand.payload, content: { format: 'html' } } },
       'payload.content.format',
@@ -42,6 +42,12 @@ describe('content publish command parser', () => {
     expect(parseContentPublishCommand(command)).toMatchObject({
       ok: false,
       issues: [{ path, code }],
+    })
+  })
+
+  it('rejects the retired Doc Draft action', () => {
+    expect(parseContentPublishCommand({ ...docCommand, action: 'docDraft.update' })).toMatchObject({
+      ok: false, issues: [{ path: 'action', code: 'unknown_action' }],
     })
   })
 
@@ -65,9 +71,9 @@ describe('content publish command parser', () => {
 
   it('maps every action to a content type and capability scope', () => {
     expect(Object.keys(CONTENT_TYPE_BY_ACTION)).toEqual(Object.values(CONTENT_PUBLISH_ACTION))
-    expect(CONTENT_TYPE_BY_ACTION[CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT]).toBe(CONTENT_TYPE.DOC)
-    expect(CONTENT_SCOPE_BY_ACTION[CONTENT_PUBLISH_ACTION.UPDATE_DOC_DRAFT]).toBe(
-      CONTENT_PUBLISH_SCOPE.DOC_WRITE,
+    expect(CONTENT_TYPE_BY_ACTION[CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY]).toBe(CONTENT_TYPE.ARTICLE)
+    expect(CONTENT_SCOPE_BY_ACTION[CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY]).toBe(
+      CONTENT_PUBLISH_SCOPE.ARTICLE_WRITE,
     )
   })
 
@@ -97,5 +103,15 @@ describe('content publish command parser', () => {
     expect(
       parseContentPublishCommand({ ...saveCommand, action: 'article.work.save' }),
     ).toMatchObject({ ok: false, issues: [{ path: 'action', code: 'unknown_action' }] })
+  })
+
+  it('requires both Queue and queued-copy revisions for a Docs save', () => {
+    const command = { action: CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY,
+      target: { community: 'home', articleId: 'doc' },
+      payload: { content: { format: CONTENT_SOURCE_FORMAT.PLATE, value: [] }, title: 'Doc', subtitle: '', slug: 'doc' },
+      commandId: 'save-queue', revision: 3, queueRevision: 2 }
+    expect(parseContentPublishCommand(command)).toEqual({ ok: true, value: command })
+    expect(parseContentPublishCommand({ ...command, queueRevision: -1 })).toMatchObject({ ok: false, issues: [{ path: 'queueRevision' }] })
+    expect(parseContentPublishCommand({ ...command, revision: 0 })).toMatchObject({ ok: false, issues: [{ path: 'revision' }] })
   })
 })

@@ -113,7 +113,7 @@ B1 当前测试归属为 `backend/api/test/groupher_server/cms/mention_version_f
 - target 可以不在 S。Comment target 先由 canonical Comment 确定父身份，再创建 auxiliary parent endpoint。不能用父有没有 public selection 决定是否能创建 endpoint。
 - Article 多 mirror 不扩大 S，不产生多个 endpoint。Doc source 则按 Article+branch 区分。
 
-新增 [report-only 脚本](../../../backend/api/scripts/mentions_graph_b0_report.exs) 仅用 Ecto SELECT 汇总当前来源、缺正文、旧关系/水位及候选 worker/event 数；不读取私有正文、不初始化、不清队列。候选 worker 数含无关事件，不是可直接删除数量。
+新增 历史 report-only 脚本（R7 已随旧模型退场删除） 仅用 Ecto SELECT 汇总当前来源、缺正文、旧关系/水位及候选 worker/event 数；不读取私有正文、不初始化、不清队列。候选 worker 数含无关事件，不是可直接删除数量。
 
 本地 `groupher_server_test` 报告：Article/Doc/Comment 来源均 0，缺正文 0，旧关系/水位 0，候选任务和提及事件为空。仅说明 sandbox 测试结束后的本地环境，**不代表生产没有内容**。生产 manifest/counts 在 B4 暂停写入后生成。
 
@@ -325,7 +325,7 @@ Post Activity 涉及 Ticket 的部分仅包含“这个 Post 何时创建或关�
 cd backend/api
 mix test test/groupher_server_web/query/cms/artiment_mentions_test.exs --seed 0
 mix test test/groupher_server/cms/mentions_graph_b0_test.exs --include later --seed 0
-MIX_ENV=test mix run scripts/mentions_graph_b0_report.exs
+# 历史命令已退场：旧 B0 报告依赖被删除的 Draft / Revision / Branch 模型。
 ```
 
 实测：旧 GraphQL 基线 18 passed；B0 3/3 失败，均执行到业务断言：

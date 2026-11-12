@@ -9,10 +9,10 @@ defmodule GroupherServer.CMS.Model.ArticlePublic do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
 
-  alias CMS.Model.{Article, ArticleSnapshot}
+  alias CMS.Model.{Article, ArticleSnapshot, ArticlePublicBody}
   alias Helper.Constant.DBPrefix
 
   @primary_key false
@@ -27,6 +27,7 @@ defmodule GroupherServer.CMS.Model.ArticlePublic do
   schema "article_publics" do
     belongs_to(:article, Article, primary_key: true)
     belongs_to(:snapshot, ArticleSnapshot)
+    has_one(:body, ArticlePublicBody, foreign_key: :article_id, references: :article_id)
     belongs_to(:published_by, User, type: :id)
     field(:published_at, :utc_datetime)
     field(:title, :string)

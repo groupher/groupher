@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   alias GroupherServer.CMS
 
   alias CMS.Artiment.Config
-  alias CMS.Model.{ArticleBodyDraft, ArticleBodySnapshot}
+  alias CMS.Model.{ArticleBody, ArticlePublicBody}
 
   @primary_key false
 
@@ -133,9 +133,9 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   end
 
   @doc "Builds a validated BodyBag from a persisted body row or editor projection."
-  @spec from_document(ArticleBodyDraft.t() | ArticleBodySnapshot.t() | map()) ::
+  @spec from_document(ArticleBody.t() | ArticlePublicBody.t() | map()) ::
           {:ok, t()} | {:error, Ecto.Changeset.t()}
-  def from_document(%model{} = body) when model in [ArticleBodyDraft, ArticleBodySnapshot] do
+  def from_document(%model{} = body) when model in [ArticleBody, ArticlePublicBody] do
     body
     |> stable_body_map()
     |> cast(thread: :doc)
@@ -172,7 +172,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
       thumbnail: body.thumbnail,
       plain_text: body.plain_text,
       digest: body.plain_text || "",
-      body_hash: body.body_hash,
+      body_hash: :crypto.hash(:sha256, body.json) |> Base.encode16(case: :lower),
       schema_version: body.schema_version
     }
   end
@@ -271,9 +271,11 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   defp validate_derived_size(_field, _value), do: []
 
   defp validate_plain_text(:plain_text, "", options) do
-    if Keyword.get(options, :thread) == :doc or Keyword.get(options, :allow_empty, false),
-      do: [],
-      else: [plain_text: "can't be blank"]
+    if Keyword.get(options, :thread) == :doc or Keyword.get(options, :allow_empty, false) do
+      []
+    else
+      [plain_text: "can't be blank"]
+    end
   end
 
   defp validate_plain_text(:plain_text, value, _options) do
@@ -281,9 +283,11 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   end
 
   defp validate_thumbnail(:thumbnail, %{version: 1, blocks: blocks}) when is_list(blocks) do
-    if length(blocks) <= 12 and Enum.all?(blocks, &valid_thumbnail_block?/1),
-      do: [],
-      else: [thumbnail: "must contain at most 12 valid preview blocks"]
+    if length(blocks) <= 12 and Enum.all?(blocks, &valid_thumbnail_block?/1) do
+      []
+    else
+      [thumbnail: "must contain at most 12 valid preview blocks"]
+    end
   end
 
   defp validate_thumbnail(:thumbnail, %{"version" => 1, "blocks" => blocks})
@@ -291,23 +295,28 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
     validate_thumbnail(:thumbnail, %{version: 1, blocks: blocks})
   end
 
-  defp validate_thumbnail(:thumbnail, _value),
-    do: [thumbnail: "must contain a version 1 preview block list"]
+  defp validate_thumbnail(:thumbnail, _value) do
+    [thumbnail: "must contain a version 1 preview block list"]
+  end
 
   defp valid_thumbnail_block?(%{type: type})
-       when type in ~w(heading paragraph callout list image table code),
-       do: true
+       when type in ~w(heading paragraph callout list image table code) do
+    true
+  end
 
   defp valid_thumbnail_block?(%{"type" => type})
-       when type in ~w(heading paragraph callout list image table code),
-       do: true
+       when type in ~w(heading paragraph callout list image table code) do
+    true
+  end
 
   defp valid_thumbnail_block?(_block), do: false
 
   defp min_plain_text_length(options) do
-    if Keyword.get(options, :thread) == :doc or Keyword.get(options, :allow_empty, false),
-      do: 0,
-      else: @min_plain_text_length
+    if Keyword.get(options, :thread) == :doc or Keyword.get(options, :allow_empty, false) do
+      0
+    else
+      @min_plain_text_length
+    end
   end
 
   defp required_string_fields(options) do

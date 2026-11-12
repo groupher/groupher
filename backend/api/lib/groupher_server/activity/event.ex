@@ -15,7 +15,7 @@ defmodule GroupherServer.Activity.Event do
 
   ## Examples
 
-      Activity.Event.contract([:title], [:revision_id], [:article_log])
+      Activity.Event.contract([:title], [:snapshot_id], [:article_log])
   """
   def contract(
         payload \\ [],
@@ -104,7 +104,6 @@ defmodule GroupherServer.Activity.Event do
     title_changed: %{message_key: "activity.title_changed"},
     body_updated: %{message_key: "activity.body_updated"},
     published: %{message_key: "activity.published"},
-    publish_restored: %{message_key: "activity.publish_restored"},
     released: %{message_key: "activity.released"},
     release_rescheduled: %{message_key: "activity.release_rescheduled"},
     release_withdrawn: %{message_key: "activity.release_withdrawn"},
@@ -130,8 +129,7 @@ defmodule GroupherServer.Activity.Event do
     setup_failed: %{message_key: "activity.setup_failed"},
     setup_retried: %{message_key: "activity.setup_retried"},
     activated: %{message_key: "activity.activated"},
-    config_updated: %{message_key: "activity.config_updated"},
-    draft_updated: %{message_key: "activity.draft_updated"}
+    config_updated: %{message_key: "activity.config_updated"}
   }
 
   @doc """
@@ -333,7 +331,6 @@ defmodule GroupherServer.Activity.Event do
   defp category_for(action)
        when action in [
               :published,
-              :publish_restored,
               :released,
               :release_rescheduled,
               :release_withdrawn

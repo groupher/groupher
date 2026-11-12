@@ -20,7 +20,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   """
 
   alias GroupherServer.{Accounts, CMS}
-  alias GroupherServer.ErrorCat.Error, as: DomainError
+  alias GroupherServer.ErrorCat, as: DomainErrors
+  alias DomainErrors.Error, as: DomainError
 
   alias Accounts.Model.User
 
@@ -115,6 +116,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   defp check_allowed(actor, :read, article, context) do
     with {:ok, lifecycle} <- article_lifecycle(context),
          true <- lifecycle.state in [:published, :archived],
+         true <- not is_struct(context, DocContext) or context.public_available? != false,
+         {:ok, true} <- public_community_readable(context),
          true <-
            not Map.get(context, :review_restricted?, false) or article_owner?(actor, article) or
              review_scopes_readable?(actor, context) do
@@ -129,8 +132,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
          {:ok, lifecycle} <- article_lifecycle(context),
          {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
-         {:ok, _} <- doc_branch_allowed(action, context),
-         {:ok, _} <- action_allowed(action, lifecycle, article),
+         {:ok, :pass} <- doc_trash_allowed(action, context),
+         {:ok, _} <- context_action_allowed(action, lifecycle, article, context),
          {:ok, :pass} <- article_editing_allowed(action, context),
          {:ok, :pass} <- discussion_parent_readable(actor, action, article, context) do
       {:ok, :pass}
@@ -139,6 +142,35 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
       {:error, _reason} = error -> error
     end
   end
+
+  defp doc_trash_allowed(action, %DocContext{trashed?: true})
+       when action in [:edit, :edit_article, :delete] do
+    {:error, ErrorCat.article_deleted()}
+  end
+
+  defp doc_trash_allowed(_action, _context), do: {:ok, :pass}
+
+  defp context_action_allowed(:restore, %{state: state}, _article, %DocContext{trashed?: true})
+       when state in [:draft, :published, :archived, :deleted] do
+    {:ok, :pass}
+  end
+
+  defp context_action_allowed(:permanently_delete, %{state: state}, _article, %DocContext{
+         trashed?: true
+       })
+       when state in [:draft, :published, :deleted] do
+    {:ok, :pass}
+  end
+
+  defp context_action_allowed(action, lifecycle, article, _context) do
+    action_allowed(action, lifecycle, article)
+  end
+
+  defp public_community_readable(%DocContext{community_lifecycle: lifecycle}) do
+    Communities.Lifecycle.can_read(lifecycle)
+  end
+
+  defp public_community_readable(_context), do: {:ok, true}
 
   defp article_editing_allowed(:edit_article, %ArticleContext{published_article_editable?: true}) do
     {:ok, :pass}
@@ -188,6 +220,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
           false
       end)
   end
+
+  defp review_scopes_readable?(_, _context), do: false
 
   defp authorize_insights(:operations, _article, _community, _context), do: {:ok, :pass}
 
@@ -363,12 +397,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     Map.get(Map.get(article, :author, %{}), :user_id) == user_id
   end
 
-  defp doc_branch_allowed(action, %{doc_branch: %{type: type}})
-       when action in @interaction_actions and type != :main do
-    {:error, ErrorCat.article_not_mutable()}
-  end
-
-  defp doc_branch_allowed(_action, _context), do: {:ok, :pass}
+  defp article_owner?(_, _article), do: false
 
   defp article_lifecycle(%{article_lifecycle: %{state: _} = lifecycle}), do: {:ok, lifecycle}
   defp article_lifecycle(%{doc_lifecycle: %{state: _} = lifecycle}), do: {:ok, lifecycle}

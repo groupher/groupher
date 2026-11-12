@@ -29,7 +29,13 @@ defmodule GroupherServer.CMS.DocCover.Commands.ReorderCards do
             params: [:ids]
   receipt_pipeline execute(community, ids, actor, command_id) do
     gate(fn candidate -> CMS.Gate.check_in_transaction(actor, :manage_docs, candidate) end)
-    change(fn canonical -> Persist.reorder_cards(canonical, ids) end)
+
+    change(fn canonical ->
+      CMS.DocTree.Publication.Presentation.write(canonical, fn ->
+        Persist.reorder_cards(canonical, ids)
+      end)
+    end)
+
     confirm(fn result -> {:ok, ConfirmationSupport.confirmation(result, command_id)} end)
     present(fn confirmation -> ConfirmationSupport.present({:ok, confirmation}) end)
   end

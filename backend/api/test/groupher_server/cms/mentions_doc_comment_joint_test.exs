@@ -11,8 +11,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
     ArticlePublic,
     ArticleWorkingCopy,
     CommentBody,
-    DocBranch,
-    DocLifecycle
+    DocsLifecycle
   }
 
   alias CMS.Outbox.Event
@@ -24,37 +23,23 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
     {_, target, _, _} = mock_article(:blog, community, author)
     {:ok, recipient} = db_insert(:user)
 
-    preview =
-      %DocBranch{}
-      |> DocBranch.changeset(%{
-        community_id: community.id,
-        slug: "joint-preview",
-        title: "Joint preview",
-        type: :preview,
-        status: :active,
-        source_branch_id: doc.branch_id,
-        created_by_id: author.id
-      })
-      |> Repo.insert!()
-
     {:ok,
      %{
        community: community,
        doc: doc,
        author: author,
        target: target,
-       recipient: recipient,
-       preview: preview
+       recipient: recipient
      }}
   end
 
-  test "main and preview discussion Comments share the stable Doc parent and notify once", ctx do
+  test "multiple discussion Comments share the stable Doc parent and notify once", ctx do
     comments =
-      for branch <- [ctx.doc.branch_id, ctx.preview.id] do
+      for _ <- 1..2 do
         {:ok, %{comment: comment}} =
           CMS.Comments.Commands.Create.create(
             :doc,
-            %{id: ctx.doc.article_id, branch_id: branch, community: ctx.community},
+            %{id: ctx.doc.article_id, community: ctx.community},
             bag(ctx),
             ctx.author,
             Ecto.UUID.generate()
@@ -77,7 +62,8 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
              :count
            ) == 1
 
-    assert Repo.aggregate(Mention, :count) == 2
+    assert Repo.aggregate(from(m in Mention, where: m.to_user_id == ^ctx.recipient.id), :count) ==
+             2
 
     {comment, endpoint} = hd(comments)
 
@@ -98,7 +84,9 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
              )
 
     assert {:ok, :pass} = project(endpoint.id)
-    assert Repo.aggregate(Mention, :count) == 2
+
+    assert Repo.aggregate(from(m in Mention, where: m.to_user_id == ^ctx.recipient.id), :count) ==
+             2
 
     assert Repo.all(from(edge in Edge, where: edge.source_endpoint_id == ^endpoint.id))
            |> Enum.map(&{&1.edge_key, &1.mentioned_at})
@@ -189,7 +177,9 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
     assert Enum.any?(page.nodes, &(&1.type == :blog))
 
     assert {:ok, :pass} = project(endpoint.id)
-    assert Repo.aggregate(Mention, :count) == 0
+
+    assert Repo.aggregate(from(m in Mention, where: m.to_user_id == ^ctx.recipient.id), :count) ==
+             0
   end
 
   test "pending Comment notification waits for its parent to become readable again", ctx do
@@ -207,8 +197,8 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
     event = Repo.get_by!(Event, event: "mention.notify", resource_id: endpoint.id)
 
     Repo.update_all(
-      from(state in DocLifecycle,
-        where: state.article_id == ^ctx.doc.article_id and state.branch_id == ^ctx.doc.branch_id
+      from(state in DocsLifecycle,
+        where: state.article_id == ^ctx.doc.article_id
       ),
       set: [state: :deleted]
     )
@@ -224,20 +214,27 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
 
     assert {:snooze, 3_600} = project(endpoint.id)
     assert Repo.get!(Event, event.id).status != :done
-    assert Repo.aggregate(Mention, :count) == 0
+
+    assert Repo.aggregate(from(m in Mention, where: m.to_user_id == ^ctx.recipient.id), :count) ==
+             0
 
     Repo.update_all(
-      from(state in DocLifecycle,
-        where: state.article_id == ^ctx.doc.article_id and state.branch_id == ^ctx.doc.branch_id
+      from(state in DocsLifecycle,
+        where: state.article_id == ^ctx.doc.article_id
       ),
       set: [state: :published]
     )
 
     assert {:ok, :pass} = project(endpoint.id)
     assert Repo.get!(Event, event.id).status == :done
-    assert Repo.aggregate(Mention, :count) == 1
+
+    assert Repo.aggregate(from(m in Mention, where: m.to_user_id == ^ctx.recipient.id), :count) ==
+             1
+
     assert {:ok, :pass} = project(endpoint.id)
-    assert Repo.aggregate(Mention, :count) == 1
+
+    assert Repo.aggregate(from(m in Mention, where: m.to_user_id == ^ctx.recipient.id), :count) ==
+             1
   end
 
   test "restricted Comment notification expires after seven days", ctx do
@@ -255,8 +252,8 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
     event = Repo.get_by!(Event, event: "mention.notify", resource_id: endpoint.id)
 
     Repo.update_all(
-      from(state in DocLifecycle,
-        where: state.article_id == ^ctx.doc.article_id and state.branch_id == ^ctx.doc.branch_id
+      from(state in DocsLifecycle,
+        where: state.article_id == ^ctx.doc.article_id
       ),
       set: [state: :deleted]
     )
@@ -269,7 +266,9 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
 
     assert {:ok, :pass} = project(endpoint.id)
     assert Repo.get!(Event, event.id).status == :done
-    assert Repo.aggregate(Mention, :count) == 0
+
+    assert Repo.aggregate(from(m in Mention, where: m.to_user_id == ^ctx.recipient.id), :count) ==
+             0
   end
 
   test "a newer Comment revision carries an undelivered User mention once", ctx do
@@ -307,11 +306,18 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
                max_attempts: 5
              })
 
-    assert Repo.aggregate(Mention, :count) == 0
+    assert Repo.aggregate(from(m in Mention, where: m.to_user_id == ^ctx.recipient.id), :count) ==
+             0
+
     assert {:ok, :pass} = project(endpoint.id)
-    assert Repo.aggregate(Mention, :count) == 1
+
+    assert Repo.aggregate(from(m in Mention, where: m.to_user_id == ^ctx.recipient.id), :count) ==
+             1
+
     assert {:ok, :pass} = project(endpoint.id)
-    assert Repo.aggregate(Mention, :count) == 1
+
+    assert Repo.aggregate(from(m in Mention, where: m.to_user_id == ^ctx.recipient.id), :count) ==
+             1
   end
 
   defp bag(ctx) do

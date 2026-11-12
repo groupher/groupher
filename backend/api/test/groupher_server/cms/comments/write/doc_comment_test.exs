@@ -182,13 +182,12 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
       {:ok, doc} =
-        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(community, :doc, doc_attrs, user,
+          command_id: Ecto.UUID.generate()
+        )
 
       state_before =
-        Repo.get_by!(CMS.Model.DocBranchState,
-          article_id: doc.article_id,
-          branch_id: doc.branch_id
-        )
+        Repo.get!(CMS.Model.Article, doc.article_id)
 
       Process.sleep(1000)
       author = doc.author
@@ -204,10 +203,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         )
 
       state_after =
-        Repo.get_by!(CMS.Model.DocBranchState,
-          article_id: doc.article_id,
-          branch_id: doc.branch_id
-        )
+        Repo.get!(CMS.Model.Article, doc.article_id)
 
       assert not is_nil(state_after.active_at)
       assert state_after.active_at == state_before.active_at
@@ -222,7 +218,9 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       doc_attrs = mock_attrs(:doc)
 
       {:ok, doc} =
-        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(community, :doc, doc_attrs, user,
+          command_id: Ecto.UUID.generate()
+        )
 
       Process.sleep(1000)
 
@@ -237,10 +235,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         )
 
       state =
-        Repo.get_by!(CMS.Model.DocBranchState,
-          article_id: doc.article_id,
-          branch_id: doc.branch_id
-        )
+        Repo.get!(CMS.Model.Article, doc.article_id)
 
       assert state.active_at |> DateTime.to_date() == cur_date
 
@@ -253,13 +248,12 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       doc_attrs = mock_attrs(:doc)
 
       {:ok, doc} =
-        CMS.Articles.create(community, :doc, doc_attrs, user, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(community, :doc, doc_attrs, user,
+          command_id: Ecto.UUID.generate()
+        )
 
       state =
-        Repo.get_by!(CMS.Model.DocBranchState,
-          article_id: doc.article_id,
-          branch_id: doc.branch_id
-        )
+        Repo.get!(CMS.Model.Article, doc.article_id)
 
       {:ok, _state} =
         state
@@ -279,10 +273,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         )
 
       state =
-        Repo.get_by!(CMS.Model.DocBranchState,
-          article_id: doc.article_id,
-          branch_id: doc.branch_id
-        )
+        Repo.get!(CMS.Model.Article, doc.article_id)
 
       assert state.active_at == inserted_at
     end
@@ -1235,7 +1226,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         )
 
       {:ok, _} =
-        CMS.Articles.lock_comments(doc.id, user, branch_id: doc.branch_id, community: community)
+        CMS.Articles.lock_comments(doc.id, user, community: community)
 
       {:error, reason} =
         CMS.Comments.create_comment(
@@ -1250,10 +1241,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
       {:ok, _} =
-        CMS.Articles.undo_lock_comments(doc.id, user,
-          branch_id: doc.branch_id,
-          community: community
-        )
+        CMS.Articles.undo_lock_comments(doc.id, user, community: community)
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -1281,7 +1269,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
         CMS.Comments.reply_comment(parent_comment, mock_comment(), user, Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Articles.lock_comments(doc.id, user, branch_id: doc.branch_id, community: community)
+        CMS.Articles.lock_comments(doc.id, user, community: community)
 
       {:error, reason} =
         CMS.Comments.reply_comment(parent_comment, mock_comment(), user, Ecto.UUID.generate())
@@ -1289,10 +1277,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
       {:ok, _} =
-        CMS.Articles.undo_lock_comments(doc.id, user,
-          branch_id: doc.branch_id,
-          community: community
-        )
+        CMS.Articles.undo_lock_comments(doc.id, user, community: community)
 
       {:ok, _} =
         CMS.Comments.reply_comment(parent_comment, mock_comment(), user, Ecto.UUID.generate())

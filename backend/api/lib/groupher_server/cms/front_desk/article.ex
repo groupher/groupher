@@ -20,8 +20,6 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
   `read(id, nil, mode: :internal, view: :command_context)`.
   """
 
-  require GroupherServer.CMS.Docs.Const
-
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
@@ -55,11 +53,7 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
 
   alias CMS.Model.{
     Article,
-    ArticlePublic,
-    ArticleRevision,
-    ArticleSnapshot,
-    Community,
-    DocPublic
+    Community
   }
 
   alias Helper.ORM
@@ -149,7 +143,7 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
 
     context =
       if thread == :doc do
-        DocScopeContext.public_main(policy_mode: policy_mode)
+        DocScopeContext.public(policy_mode: policy_mode)
       else
         ArticleScopeContext.public(thread, policy_mode: policy_mode)
       end
@@ -166,33 +160,8 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     end
   end
 
-  defp stable_public_projection(%Article{thread: :doc} = article, community) do
-    with %CMS.Model.DocBranch{id: branch_id} <-
-           Repo.get_by(CMS.Model.DocBranch,
-             community_id: community.id,
-             type: CMS.Docs.Const.doc_branch_type(:main)
-           ),
-         %DocPublic{} = public <-
-           Repo.get_by(DocPublic, article_id: article.id, branch_id: branch_id),
-         %CMS.Model.DocBranchVersion{} = version <-
-           Repo.get(CMS.Model.DocBranchVersion, public.branch_version_id),
-         %ArticleRevision{} = revision <- Repo.get(ArticleRevision, version.revision_id) do
-      CMS.Articles.RevisionProjection.build_stable(
-        article,
-        community,
-        public,
-        revision,
-        branch_id
-      )
-    else
-      _ -> {:error, ArticleErrorCat.article_not_found("article not found")}
-    end
-  end
-
   defp stable_public_projection(%Article{} = article, community) do
-    with %ArticlePublic{snapshot_id: snapshot_id} = public when is_binary(snapshot_id) <-
-           Repo.get(ArticlePublic, article.id),
-         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id) do
+    with {:ok, {public, snapshot}} <- CMS.Articles.Public.current(article.id) do
       CMS.Articles.SnapshotProjection.build_stable(article, community, public, snapshot)
     else
       _ -> {:error, ArticleErrorCat.article_not_found("article not found")}

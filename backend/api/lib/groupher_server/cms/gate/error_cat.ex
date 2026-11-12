@@ -13,13 +13,6 @@ defmodule GroupherServer.CMS.Gate.ErrorCat do
   error(:resource_not_found, code: 4601)
   error(:gate_resource_mismatch, code: 4602)
 
-  error(:doc_branch_required,
-    code: 4603,
-    retryable: true,
-    actions: [:return_to_list],
-    message_key: "cms.gate.doc_branch_required"
-  )
-
   error(:lifecycle_not_found, code: 4604)
 
   error(:ancestor_community_not_writable,

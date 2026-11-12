@@ -19,7 +19,6 @@ defmodule GroupherServer.CMS.Articles.ArticleView do
   @fields [
     :id,
     :article_id,
-    :branch_id,
     :inner_id,
     :thread,
     :stage,

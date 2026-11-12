@@ -2,6 +2,8 @@ defmodule GroupherServerWeb.GraphQL.OneOfValidation do
   @moduledoc """
   Validates that OneOf input objects contain exactly one non-null supplied field.
 
+      GraphQL document -> OneOf input validation -> execution or input error
+
   Absinthe 1.12 counts only non-null values. This document phase replaces that
   check and distinguishes explicit nulls from fields backed by omitted variables.
   """

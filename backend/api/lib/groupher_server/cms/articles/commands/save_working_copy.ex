@@ -11,12 +11,11 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
   alias CMS.Articles.Commands.SaveWorkingCopyConfirmation, as: Confirmation
-  alias CMS.Articles.Bindings
+  alias CMS.Articles.{Bindings, WorkingCopy.Store}
   alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
-  alias CMS.Articles.WorkingCopy.Store
   alias CMS.Model.{Article, ArticleWorkingCopy, Community}
 
   @pipeline operation: :article_save_working_copy,
@@ -100,8 +99,9 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
     end
   end
 
-  def execute(_article, _community, _working_copy_id, _attrs, _expected, _actor, _command_id),
-    do: {:error, :invalid_working_copy_command}
+  def execute(_article, _community, _working_copy_id, _attrs, _expected, _actor, _command_id) do
+    {:error, :invalid_working_copy_command}
+  end
 
   defp present_confirmation(
          %Confirmation{data: %{"working_copy_id" => id, "revision" => revision}},
@@ -121,6 +121,7 @@ defmodule GroupherServer.CMS.Articles.Commands.SaveWorkingCopy do
     end
   end
 
-  defp present_confirmation(_confirmation, _article, _community, _actor),
-    do: {:error, CMS.ErrorCat.command_result_unavailable()}
+  defp present_confirmation(_confirmation, _article, _community, _actor) do
+    {:error, CMS.ErrorCat.command_result_unavailable()}
+  end
 end

@@ -38,35 +38,51 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
     CommentLifecycle,
     Community,
     CommunityLifecycle,
-    DocBranch,
-    DocLifecycle,
+    DocsLifecycle,
+    DocsTrashedArticle,
+    ArticlePublic,
     PostState
   }
 
   @article_threads Config.ordinary_article_threads()
 
-  @doc "Loads a stable Doc, its branch lifecycle, and current actor Passport facts."
-  def doc(actor, %Community{} = community, %Article{thread: :doc} = resource, branch_id) do
+  @doc "Loads a branch-free Doc and its current site, lifecycle and review facts."
+  def doc_site(actor, %Community{} = community, %Article{thread: :doc} = resource) do
+    load_doc_site(actor, community, resource, :locked)
+  end
+
+  def doc_site(_, _, _), do: {:error, ErrorCat.gate_resource_mismatch()}
+
+  @doc "Loads the same Doc policy facts without row locks in a read-only snapshot."
+  def doc_site_snapshot(actor, %Community{} = community, %Article{thread: :doc} = resource) do
+    load_doc_site(actor, community, resource, :snapshot)
+  end
+
+  def doc_site_snapshot(_, _, _), do: {:error, ErrorCat.gate_resource_mismatch()}
+
+  defp load_doc_site(actor, community, resource, mode) do
     with %Community{} = community <- Repo.get(Community, community.id),
          {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
-         %Article{thread: :doc} = canonical <- Queries.resource(Article, resource.id),
-         %ArticleBinding{thread: :doc} <- Queries.article_binding(canonical.id, community.id),
+         %Article{thread: :doc} = canonical <- site_article(resource.id, mode),
+         %ArticleBinding{thread: :doc} <- site_binding(canonical.id, community.id, mode),
          canonical <- preload_article_author(canonical),
-         %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
-         %DocBranch{} = doc_branch <- Queries.doc_branch(community.id, branch_id),
-         %DocLifecycle{} = doc_lifecycle <- Queries.doc_lifecycle(canonical.id, branch_id),
-         review_scope_keys <- Queries.doc_review_scope_keys(doc_lifecycle.id),
-         %CMS.Model.DocBranchState{} = doc_branch_state <-
-           Queries.doc_branch_state(canonical.id, branch_id) do
+         %CommunityLifecycle{} = community_lifecycle <-
+           site_community_lifecycle(community.id, mode),
+         %DocsLifecycle{} = doc_lifecycle <-
+           site_doc_lifecycle(canonical.id, community.id, mode),
+         review_scope_keys <-
+           Queries.article_review_scope_keys_for_article(canonical.id, community.id) do
       {:ok,
        %DocContext{
          doc: canonical,
          community: %{community | lifecycle: community_lifecycle},
          community_lifecycle: community_lifecycle,
          passport_rules: passport_rules,
-         doc_branch: doc_branch,
          doc_lifecycle: doc_lifecycle,
-         doc_branch_state: doc_branch_state,
+         public_available?:
+           Repo.exists?(from(p in ArticlePublic, where: p.article_id == ^canonical.id)),
+         trashed?:
+           Repo.exists?(from(t in DocsTrashedArticle, where: t.article_id == ^canonical.id)),
          review_scope_keys: review_scope_keys,
          review_restricted?: review_scope_keys != []
        }}
@@ -78,8 +94,26 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
     end
   end
 
-  def doc(_actor, _community, _resource, _branch_id) do
-    {:error, ErrorCat.gate_resource_mismatch()}
+  defp site_article(id, :locked), do: Queries.resource(Article, id)
+  defp site_article(id, :snapshot), do: Queries.resource_snapshot(Article, id)
+
+  defp site_binding(article_id, community_id, :locked) do
+    Queries.article_binding(article_id, community_id)
+  end
+
+  defp site_binding(article_id, community_id, :snapshot) do
+    Queries.article_binding_snapshot(article_id, community_id)
+  end
+
+  defp site_community_lifecycle(id, :locked), do: Queries.community_lifecycle(id)
+  defp site_community_lifecycle(id, :snapshot), do: Queries.community_lifecycle_snapshot(id)
+
+  defp site_doc_lifecycle(article_id, community_id, :locked) do
+    Queries.doc_site_lifecycle(article_id, community_id)
+  end
+
+  defp site_doc_lifecycle(article_id, community_id, :snapshot) do
+    Queries.doc_site_lifecycle_snapshot(article_id, community_id)
   end
 
   @doc """
@@ -97,9 +131,18 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
   @spec community(term(), Community.t()) ::
           {:ok, CommunityContext.t()} | {:error, ErrorCat.error() | term()}
   def community(actor, %Community{} = community) do
+    load_community(actor, community, :locked)
+  end
+
+  @doc "Loads Community policy facts without row locks in a read-only snapshot."
+  def community_snapshot(actor, %Community{} = community) do
+    load_community(actor, community, :snapshot)
+  end
+
+  defp load_community(actor, community, mode) do
     with %Community{} = community <- Repo.get(Community, community.id),
          {:ok, passport_rules} <- community_passport_rules(actor, community.slug),
-         %CommunityLifecycle{} = lifecycle <- Queries.community_lifecycle(community.id) do
+         %CommunityLifecycle{} = lifecycle <- site_community_lifecycle(community.id, mode) do
       {:ok,
        %CommunityContext{
          community: %{community | lifecycle: lifecycle},
@@ -164,9 +207,8 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
     article_in_community(actor, community, thread, resource)
   end
 
-  def article(_actor, %Community{} = community, :doc, %{community_id: community_id})
-      when community_id == community.id do
-    {:error, ErrorCat.doc_branch_required()}
+  def article(actor, %Community{} = community, :doc, %Article{thread: :doc} = resource) do
+    doc_site(actor, community, resource)
   end
 
   def article(_actor, _community, _thread, _resource) do
@@ -206,6 +248,15 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
       %ArticleBinding{} -> {:error, ErrorCat.gate_resource_mismatch()}
       {:error, _reason} = error -> error
     end
+  end
+
+  def article_in_community(
+        actor,
+        %Community{} = community,
+        :doc,
+        %Article{thread: :doc} = resource
+      ) do
+    doc_site(actor, community, resource)
   end
 
   def article_in_community(_actor, _community, _thread, _resource) do
@@ -260,9 +311,8 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
 
   defp parent_context(actor, community, :doc, %Article{thread: :doc} = article) do
     with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article.id),
-         true <- owner.id == community.id,
-         %DocBranch{id: branch_id} <- Repo.get_by(DocBranch, community_id: owner.id, type: :main) do
-      doc(actor, community, article, branch_id)
+         true <- owner.id == community.id do
+      doc_site(actor, community, article)
     else
       _ -> {:error, ErrorCat.gate_resource_mismatch()}
     end

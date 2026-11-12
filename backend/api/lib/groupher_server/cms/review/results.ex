@@ -19,8 +19,7 @@ defmodule GroupherServer.CMS.Review.Results do
     ArticlePublic,
     CommentBody,
     CommentLifecycle,
-    DocLifecycle,
-    DocPublic,
+    DocsLifecycle,
     ArtimentReview
   }
 
@@ -72,7 +71,7 @@ defmodule GroupherServer.CMS.Review.Results do
 
   defp lock_target(%ArtimentReview{target_type: :doc} = request) do
     CMS.Review.load_for_update(
-      "doc:#{request.article_id}:#{request.branch_id}",
+      "doc:#{request.article_id}",
       "platform"
     )
   end
@@ -103,11 +102,11 @@ defmodule GroupherServer.CMS.Review.Results do
 
   defp current_content?(%ArtimentReview{target_type: :doc} = request) do
     Repo.exists?(
-      from(public in DocPublic,
-        join: lifecycle in DocLifecycle,
-        on: lifecycle.article_id == public.article_id and lifecycle.branch_id == public.branch_id,
+      from(public in ArticlePublic,
+        join: lifecycle in DocsLifecycle,
+        on: lifecycle.article_id == public.article_id,
         where:
-          public.article_id == ^request.article_id and public.branch_id == ^request.branch_id and
+          public.article_id == ^request.article_id and
             lifecycle.state not in [:deleted, :destroy]
       )
     )
@@ -267,9 +266,7 @@ defmodule GroupherServer.CMS.Review.Results do
     }
   end
 
-  defp target_id(%ArtimentReview{target_type: :doc} = request) do
-    "#{request.article_id}:#{request.branch_id}"
-  end
+  defp target_id(%ArtimentReview{target_type: :doc, article_id: id}), do: id
 
   defp target_id(%ArtimentReview{target_type: :article, article_id: article_id}), do: article_id
 

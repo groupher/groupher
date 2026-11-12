@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.CMS.Interactions.CommentOutboxContext do
       )
     )
 
-    Repo.delete!(mirror)
+    assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(mirror.slug)
 
     assert {:ok, :pass} =
              Interaction.perform(%Oban.Job{

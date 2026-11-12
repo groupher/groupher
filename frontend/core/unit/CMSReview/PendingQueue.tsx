@@ -58,7 +58,7 @@ export default function PendingQueue({ community }: { community?: string }) {
       if (type !== 'ARTICLE' && type !== 'COMMENT' && type !== 'DOC') {
         throw new Error('Unsupported review target.')
       }
-      const key = `${type}:${target.articleId || target.commentId}:${target.branchId || ''}:${action}`
+      const key = `${type}:${target.articleId || target.commentId}:${action}`
       const commandId = commandIds.current.get(key) || crypto.randomUUID()
       commandIds.current.set(key, commandId)
       if (type === 'ARTICLE') {
@@ -89,7 +89,7 @@ export default function PendingQueue({ community }: { community?: string }) {
     onSuccess: async (_result, variables) => {
       const target = variables.target
       commandIds.current.delete(
-        `${target.type}:${target.articleId || target.commentId}:${target.branchId || ''}:${variables.action}`,
+        `${target.type}:${target.articleId || target.commentId}:${variables.action}`,
       )
       await invalidatePrefix(client, queryKey)
     },
@@ -149,16 +149,15 @@ export default function PendingQueue({ community }: { community?: string }) {
                 ? { type, articleId: request.articleId, communityId: request.communityId }
                 : type === 'COMMENT' && request.commentId
                   ? { type, commentId: request.commentId, communityId: request.communityId }
-                  : type === 'DOC' && request.articleId && request.branchId
-                    ? { type, articleId: request.articleId, branchId: request.branchId }
+                  : type === 'DOC' && request.articleId
+                    ? { type, articleId: request.articleId }
                     : null
 
             return (
               <li key={request.artimentReviewId} className='grid gap-3 p-4'>
                 <div>
                   <p className='font-medium'>
-                    {type.toLowerCase()} ·{' '}
-                    {request.articleId || request.commentId || request.branchId}
+                    {type.toLowerCase()} · {request.articleId || request.commentId}
                   </p>
                   <p className='text-digest mt-1 text-sm'>
                     {request.state.toLowerCase()} · {request.reviewMode || '—'}
@@ -200,7 +199,7 @@ export default function PendingQueue({ community }: { community?: string }) {
                       onClick={() =>
                         recheck.mutate({
                           target,
-                          key: `recheck:${scope.type}:${scope.community || 'platform'}:${type}:${target.articleId || target.commentId}:${target.branchId ?? 'main'}`,
+                          key: `recheck:${scope.type}:${scope.community || 'platform'}:${type}:${target.articleId || target.commentId}`,
                         })
                       }
                     >

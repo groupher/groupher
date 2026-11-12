@@ -77,8 +77,7 @@ defmodule GroupherServer.Activity.ArtimentEvent do
                subject_snapshot: Event.snapshot(resource, [:title, :inner_id]),
                target_type: target_type(target),
                target_ref: target_ref(target),
-               target_snapshot: target_snapshot(target),
-               branch_id: branch_id(resource)
+               target_snapshot: target_snapshot(target)
              }
              |> Map.take(@schema.__schema__(:fields))}
           end
@@ -121,10 +120,6 @@ defmodule GroupherServer.Activity.ArtimentEvent do
             end
         end
       end
-
-      defp branch_id(%{branch_id: branch_id}) when is_integer(branch_id), do: branch_id
-
-      defp branch_id(_), do: nil
     end
   end
 end

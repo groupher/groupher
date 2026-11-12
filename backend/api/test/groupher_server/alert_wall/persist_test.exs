@@ -167,6 +167,8 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
     {_community, article, _attrs, _author} = mock_article(:post)
     {:ok, reporter} = db_insert(:user)
     command_id = Ecto.UUID.generate()
+    public = Repo.get!(GroupherServer.CMS.Model.ArticlePublic, article.id)
+    version = GroupherServer.CMS.Review.SnapshotVersion.from_id(public.snapshot_id)
 
     assert {:ok, report} =
              AlertWall.submit_report(
@@ -174,7 +176,7 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
                  owner: :cms,
                  target_type: :article,
                  target_id: article.id,
-                 observed_version: 1,
+                 observed_version: version,
                  community_id: nil
                },
                :spam,
@@ -185,7 +187,7 @@ defmodule GroupherServer.Test.AlertWall.PersistTest do
 
     assert report.reporter_id == reporter.id
     assert report.target_id == article.id
-    assert report.observed_version == 1
+    assert report.observed_version == version
 
     assert {:ok, account_report} =
              AlertWall.submit_report(

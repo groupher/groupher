@@ -66,7 +66,8 @@ export type Origin = {
   siteManifest(community: string): Promise<SiteManifest>
 }
 
-const ARTICLE_QUERY = `query PressArticle($article: ArticlePathInput!) {
+const ARTICLE_QUERY = `"Loads an article for the Press service."
+query PressArticle($article: ArticlePathInput!) {
   pressArticle(article: $article) {
     communityRef articleRef: articleId contentVersion thread canonicalPath canonicalOrigin canonicalUrl
     title subtitle markdown html digest publishedAt updatedAt visibility
@@ -79,18 +80,21 @@ const FEED_FIELDS = `community { publicRef slug title description locale canonic
   configRevision feedRevision
   items { articleRef: itemId contentVersion thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }`
 
-const COMMUNITY_FEED_QUERY = `query PressCommunityFeed($community: String!, $input: PressCommunityRSSFeedInput!) {
+const COMMUNITY_FEED_QUERY = `"Loads a community RSS feed for the Press service."
+query PressCommunityFeed($community: String!, $input: PressCommunityRSSFeedInput!) {
   pressCommunityRSSFeed: pressCommunityRssFeed(community: $community, input: $input) { ${FEED_FIELDS} }
 }`
 
-const THREAD_FEED_QUERY = `query PressThreadFeed($community: String!, $thread: Thread!, $input: PressThreadRSSFeedInput!) {
+const THREAD_FEED_QUERY = `"Loads a thread RSS feed for the Press service."
+query PressThreadFeed($community: String!, $thread: Thread!, $input: PressThreadRSSFeedInput!) {
   pressThreadRSSFeed: pressThreadRssFeed(community: $community, thread: $thread, input: $input) {
     ${FEED_FIELDS}
     thread
   }
 }`
 
-const SITE_QUERY = `query PressSite($community: String!) {
+const SITE_QUERY = `"Loads a community site manifest for the Press service."
+query PressSite($community: String!) {
   pressSiteManifest(community: $community) {
     community { publicRef slug title description locale canonicalOrigin canonicalPath }
     config { markdownEnabled feedEnabled feedType feedCount feedThreads llmsEnabled sitemapEnabled revision }

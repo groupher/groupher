@@ -13,6 +13,8 @@ defmodule GroupherServer.CMS.Tickets.Persist do
 
   import Ecto.Query
 
+  alias GroupherServer.CMS
+
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias CMS.Artiment.BodyBag
   alias Accounts.Model.User
@@ -1315,19 +1317,20 @@ defmodule GroupherServer.CMS.Tickets.Persist do
   end
 
   defp body_bag_from_fields(document, thread) do
-    body_hash = :crypto.hash(:sha256, document.body_json) |> Base.encode16(case: :lower)
+    stored_body = CMS.Articles.Body.document(document)
+    body_hash = :crypto.hash(:sha256, stored_body.json) |> Base.encode16(case: :lower)
 
     BodyBag.cast(
       %{
-        json: document.body_json,
-        markdown: document.body_markdown,
-        html: document.body_html,
-        toc: get_in(document.body_markdown_toc || %{}, [:items]) || [],
-        thumbnail: document.body_thumbnail,
-        plain_text: document.body_plain_text,
+        json: stored_body.json,
+        markdown: stored_body.markdown,
+        html: stored_body.html,
+        toc: get_in(stored_body.markdown_toc || %{}, [:items]) || [],
+        thumbnail: stored_body.thumbnail,
+        plain_text: stored_body.plain_text,
         digest: document.digest,
         body_hash: body_hash,
-        schema_version: document.body_schema_version
+        schema_version: stored_body.schema_version
       },
       thread: thread,
       allow_empty: true
@@ -1431,7 +1434,7 @@ defmodule GroupherServer.CMS.Tickets.Persist do
         with {:ok, body_bag} <- BodyBag.cast(input, thread: article.thread) do
           next = BodyBag.to_document_attrs(body_bag)
 
-          if next.json == draft.body_json do
+          if next.json == CMS.Articles.Body.document(draft).json do
             {:ok, fields}
           else
             {:ok, Map.put(fields, :body_bag, input)}

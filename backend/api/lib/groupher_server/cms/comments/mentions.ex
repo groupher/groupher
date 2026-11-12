@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Comments.Mentions do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.PlateJSON
   alias CMS.ArtimentMentions
-  alias CMS.Model.{Article, Comment, CommentBody, DocBranch, DocBranchVersion}
+  alias CMS.Model.{Article, Comment, CommentBody, DocsHistoryOwner}
 
   @doc "Updates the graph for one selected Comment body in the owning transaction."
   def update(%Comment{id: id}, command_id, community_id)
@@ -65,12 +65,9 @@ defmodule GroupherServer.CMS.Comments.Mentions do
 
   defp comment_community_id(:doc, article_id, requested_community_id) do
     owners =
-      from(version in DocBranchVersion,
-        join: branch in DocBranch,
-        on: branch.id == version.branch_id and branch.type == :main,
-        where: version.article_id == ^article_id,
-        select: branch.community_id,
-        distinct: true
+      from(owner in DocsHistoryOwner,
+        where: owner.article_id == ^article_id,
+        select: owner.community_id
       )
       |> Repo.all()
 

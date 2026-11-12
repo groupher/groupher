@@ -21,7 +21,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Ecto.Query, warn: false, except: [union: 2]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
-  alias GroupherServer.{CMS, FrontDesk}
+  alias GroupherServer.CMS
 
   alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
@@ -264,10 +264,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:rank, non_null(:integer))
     field(:title, non_null(:string))
     field(:digest, non_null(:string))
-    field(:body, non_null(:string), resolve: fn ticket, _, _ -> {:ok, ticket.body.body_json} end)
+    field(:body, non_null(:string), resolve: fn ticket, _, _ -> {:ok, ticket.body.json} end)
 
     field(:plain_text, non_null(:string),
-      resolve: fn ticket, _, _ -> {:ok, ticket.body.body_plain_text} end
+      resolve: fn ticket, _, _ -> {:ok, ticket.body.plain_text} end
     )
 
     field(:publication_preview, :string)
@@ -853,23 +853,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:public)
   end
 
-  enum :doc_branch_type do
-    value(:main)
-    value(:preview)
-  end
-
-  enum :doc_branch_status do
-    value(:active)
-    value(:archived)
-  end
-
-  object :doc_branch do
-    field(:slug, non_null(:string))
-    field(:title, non_null(:string))
-    field(:type, non_null(:doc_branch_type))
-    field(:status, non_null(:doc_branch_status))
-  end
-
   enum :doc_publish_mode do
     value(:with_cover_sync)
     value(:doc_only)
@@ -968,78 +951,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:appearance, :marker_appearance_input)
   end
 
-  object :doc_tree_node do
-    @desc """
-    Stable logical node identity (`doc_tree_nodes.node_id`). The physical
-    database row id is intentionally not exposed by the Tree API.
-    """
-    field(:id, :id)
-
-    @desc """
-    Immediate parent logical node id in the same Community, Branch, and Stage.
-    This references another row's `node_id`, which is exposed as GraphQL `id`;
-    it never references the physical database row id. Null only for root Tabs.
-    """
-    field(:parent_node_id, :id)
-
-    field(:doc_id, :id)
-    field(:type, :doc_tree_node_type)
-    field(:title, :string)
-    field(:index, :integer)
-    field(:href, :string)
-    field(:marker, :marker)
-    field(:badge, :string)
-    field(:hidden, :boolean)
-    field(:publish_state, :doc_tree_node_publish_state)
-    field(:groups, list_of(:doc_tree_node))
-    field(:pages, list_of(:doc_tree_node))
-    field(:pins, list_of(:doc_tree_node))
-  end
-
-  object :doc_tree_node_publish_state do
-    field(:status, :doc_publish_status)
-    field(:published, :boolean)
-    field(:published_before, :boolean)
-    field(:has_draft, :boolean)
-    field(:public_node_id, :id)
-    field(:public_doc_id, :id)
-    field(:has_unpublished_changes, :boolean)
-    field(:last_published_at, :datetime)
-    field(:in_cover, :boolean)
-    field(:hidden_from_cover, :boolean)
-    field(:pinned_to_cover, :boolean)
-  end
-
-  object :doc_tree_state do
-    field(:has_unpublished_changes, :boolean)
-    field(:staged_event_count, :integer)
-    field(:base_snapshot_id, :id)
-    field(:latest_snapshot_id, :id)
-    field(:latest_release_id, :id)
-    field(:latest_release_number, :integer)
-    field(:latest_version_slug, :string)
-    field(:revision, :integer)
-  end
-
-  object :doc_tree_event do
-    field(:id, :id)
-    field(:seq, :integer)
-    field(:event_type, :string)
-    field(:payload, :json)
-    field(:inverse_payload, :json)
-    field(:status, :string)
-    field(:owner, :string)
-    field(:doc_id, :id)
-    field(:inserted_at, :datetime)
-  end
-
-  object :doc_tree do
-    field(:revision, :integer)
-    field(:tree_state, :doc_tree_state)
-    field(:staged_events, list_of(:doc_tree_event))
-    field(:tabs, list_of(:doc_tree_node))
-  end
-
   object :doc_public_tree_node do
     @desc "Stable logical `node_id`; the physical database row id is not exposed."
     field(:id, :id)
@@ -1062,40 +973,218 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:tabs, list_of(:doc_public_tree_node))
   end
 
-  object :doc_publish_checklist_item do
-    field(:id, non_null(:id))
-    field(:title, non_null(:string))
-    field(:action, non_null(:string))
-    field(:selected_by_default, non_null(:boolean))
-    field(:selectable, non_null(:boolean))
-    field(:disabled_reason, :string)
+  enum :docs_queue_tree_change_kind do
+    value(:upsert)
+    value(:delete)
   end
 
-  object :doc_publish_checklist do
+  object :docs_queue_article do
+    field(:article_id, non_null(:id))
+    field(:working_copy_id, non_null(:id))
     field(:revision, non_null(:integer))
-    field(:total_count, non_null(:integer))
-    field(:doc_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
-    field(:tree_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
+    field(:title, non_null(:string))
   end
 
-  object :doc_publish_scope do
-    field(:total_count, non_null(:integer))
+  object :docs_queue_tree_change do
+    field(:node_id, non_null(:id))
+    field(:change_kind, non_null(:docs_queue_tree_change_kind))
+    field(:target, :json)
   end
 
-  object :doc_publish_release do
-    field(:id, non_null(:id))
-    field(:release_number, non_null(:integer))
-    field(:version_slug, non_null(:string))
-    field(:published_at, non_null(:datetime))
+  object :docs_publish_queue do
+    field(:revision, non_null(:integer))
+    field(:approval_required, non_null(:boolean))
+    field(:allow_self_approval, non_null(:boolean))
+    field(:approval_policy_revision, non_null(:integer))
+    field(:approval_status, :docs_queue_approval_status)
+    field(:articles, non_null(list_of(non_null(:docs_queue_article))))
+    field(:tree_changes, non_null(list_of(non_null(:docs_queue_tree_change))))
+  end
+
+  enum :docs_queue_approval_status do
+    value(:idle)
+    value(:pending)
+    value(:approved)
+    value(:needs_reapproval)
+  end
+
+  object :docs_queue_release_result do
+    field(:release_id, non_null(:id))
+    field(:queue_revision, non_null(:integer))
+  end
+
+  input_object :docs_queue_entry_input do
+    field(:article_id, non_null(:id))
+    field(:default_revision, non_null(:integer))
+  end
+
+  object :docs_queue_enqueue_result do
+    field(:queue_revision, non_null(:integer))
+  end
+
+  object :docs_queue_save_result do
+    field(:queue_revision, non_null(:integer))
+    field(:working_copy_revision, non_null(:integer))
+  end
+
+  object :docs_queue_approval_result do
+    field(:approval_id, non_null(:id))
+    field(:queue_revision, non_null(:integer))
+  end
+
+  enum :docs_merge_field do
+    value(:title)
+    value(:digest)
+    value(:slug)
+    value(:subtitle)
+    value(:link_addr)
+    value(:template_key)
+    value(:cover_url)
+    value(:cover_url_dark)
+    value(:body)
+    value(:tags)
+    value(:cover_edit)
+    value(:asset_refs)
+  end
+
+  enum :docs_merge_side do
+    value(:source)
+    value(:target)
+  end
+
+  input_object :docs_merge_choice_input do
+    field(:field, non_null(:docs_merge_field))
+    field(:side, non_null(:docs_merge_side))
+  end
+
+  object :docs_queue_merge_conflict do
+    field(:fields, non_null(list_of(non_null(:docs_merge_field))))
+    field(:queue_revision, non_null(:integer))
+    field(:default_revision, non_null(:integer))
+    field(:working_copy_revision, non_null(:integer))
+  end
+
+  object :docs_queue_merge_result do
+    field(:queue_revision, :integer)
+    field(:working_copy_revision, :integer)
+    field(:conflict, :docs_queue_merge_conflict)
+  end
+
+  object :docs_post_publish_conflict do
+    field(:public_snapshot_id, non_null(:id))
+    field(:working_copy_id, non_null(:id))
+    field(:default_revision, non_null(:integer))
+  end
+
+  object :docs_post_publish_resolution do
+    field(:working_copy_revision, :integer)
+    field(:conflict_fields, list_of(non_null(:docs_merge_field)))
+  end
+
+  object :docs_discard_document do
+    field(:article_id, non_null(:id))
+    field(:exclusive_fields, non_null(list_of(non_null(:string))))
+  end
+
+  object :docs_dequeue_preview do
+    field(:requires_confirmation, non_null(:boolean))
+    field(:confirmation, :docs_discard_confirmation)
+    field(:documents, non_null(list_of(non_null(:docs_discard_document))))
+  end
+
+  object :docs_workspace_delete_preview do
+    field(:requires_confirmation, non_null(:boolean))
+    field(:confirmation, :docs_discard_confirmation)
+    field(:documents, non_null(list_of(non_null(:docs_discard_document))))
+    field(:public_count, non_null(:integer))
+    field(:draft_count, non_null(:integer))
+  end
+
+  object :docs_workspace_delete_result do
+    field(:trash_action_id, non_null(:id))
+    field(:tree_revision, non_null(:integer))
+    field(:queue_revision, non_null(:integer))
+  end
+
+  object :docs_workspace_restore_result do
+    field(:node_id, non_null(:id))
+    field(:tree_revision, non_null(:integer))
+    field(:queue_revision, non_null(:integer))
+  end
+
+  object :docs_discard_confirmation do
+    field(:format_version, non_null(:integer))
+    field(:hash, non_null(:string))
+  end
+
+  input_object :docs_discard_confirmation_input do
+    field(:format_version, non_null(:integer))
+    field(:hash, non_null(:string))
+  end
+
+  input_object :docs_workspace_node_patch_input do
+    field(:title, :string)
+    field(:href, :string)
+    field(:marker, :marker_input)
+    field(:badge, :string)
+    field(:hidden, :boolean)
+  end
+
+  object :docs_workspace_node_result do
+    field(:node_id, non_null(:id))
+    field(:article_id, :id)
+    field(:working_copy_id, :id)
+    field(:tree_revision, non_null(:integer))
+  end
+
+  object :docs_workspace_update_result do
+    field(:tree_revision, non_null(:integer))
+  end
+
+  input_object :docs_workspace_node_input do
+    field(:type, non_null(:doc_tree_node_type))
+    field(:title, non_null(:string))
+    field(:index, :integer)
+    field(:href, :string)
+    field(:marker, :marker_input)
+    field(:badge, :string)
+    field(:hidden, :boolean)
+  end
+
+  object :docs_workspace_node do
+    field(:node_id, non_null(:id))
+    field(:type, non_null(:doc_tree_node_type))
+    field(:parent_node_id, :id)
+    field(:index, non_null(:integer))
+    field(:title, non_null(:string))
+    field(:href, :string)
+    field(:doc_id, :id)
+    field(:marker, :json)
+    field(:badge, :string)
+    field(:hidden, non_null(:boolean))
+    field(:published, non_null(:boolean))
+    field(:working_copy_id, :id)
+    field(:working_copy_revision, :integer)
+  end
+
+  object :docs_editor do
+    field(:working_copy, :article_working_copy)
+    field(:public_snapshot, :article_snapshot)
+  end
+
+  object :docs_begin_edit_result do
+    field(:working_copy_id, non_null(:id))
+    field(:revision, non_null(:integer))
+  end
+
+  object :docs_workspace_tree do
+    field(:tree_revision, non_null(:integer))
+    field(:queue_revision, non_null(:integer))
+    field(:nodes, non_null(list_of(non_null(:docs_workspace_node))))
   end
 
   object :doc_tree_trash_page do
     field(:entries, non_null(list_of(non_null(:doc_tree_trash_item))))
-    pagi_fields()
-  end
-
-  object :doc_branch_version_page do
-    field(:entries, non_null(list_of(non_null(:doc_branch_version_view))))
     pagi_fields()
   end
 
@@ -1124,21 +1213,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :comment_reconcile_payload do
     field(:article, non_null(:comment_mutation_article))
     field(:entries, non_null(list_of(non_null(:comment_reconcile_entry))))
-  end
-
-  object :doc_publish_changes_payload do
-    field(:done, non_null(:boolean))
-    field(:release, :doc_publish_release)
-    field(:checklist, non_null(:doc_publish_checklist))
-    field(:scope, non_null(:doc_publish_scope))
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
-  end
-
-  input_object :doc_publish_changes_input do
-    field(:expected_checklist_revision, :integer)
-    field(:doc_change_ids, list_of(:id))
-    field(:tree_change_ids, list_of(:id))
-    field(:restore_tree_change_ids, list_of(:id))
   end
 
   object :doc_cover do
@@ -1176,56 +1250,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:doc, non_null(:doc))
   end
 
-  object :doc_draft do
-    field(:id, :id)
-
-    field(:doc_id, :id,
-      resolve: fn draft, _, _ ->
-        {:ok, Map.get(draft, :article_id)}
-      end
-    )
-
-    field(:branch_id, non_null(:id))
-    field(:version, non_null(:integer))
-    field(:content_hash, :string)
-    field(:base_revision_id, :id)
-    field(:title, :string)
-    field(:subtitle, :string)
-    field(:slug, :string)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
-    field(:stage, :article_stage)
-    field(:digest, :string)
-    field(:author, :user)
-    timestamp_fields()
-
-    field(:body, non_null(:artiment_body),
-      resolve: fn draft, _, _ ->
-        case Map.fetch(draft, :body) do
-          {:ok, body} -> {:ok, body}
-          :error -> {:error, CMS.error_cat_invalid_body("Doc Draft body is missing")}
-        end
-      end
-    )
-
-    field(:thumbnail, :json,
-      resolve: fn draft, _, _ ->
-        case Map.fetch(draft, :body) do
-          {:ok, body} -> {:ok, Map.get(body, :thumbnail)}
-          :error -> {:error, CMS.error_cat_invalid_body("Doc Draft body is missing")}
-        end
-      end
-    )
-
-    field(:asset_refs, non_null(list_of(non_null(:article_asset_ref))),
-      resolve: fn draft, _, _ ->
-        case Map.fetch(draft, :asset_refs) do
-          {:ok, asset_refs} -> {:ok, asset_refs}
-          :error -> {:error, CMS.error_cat_invalid_body("Doc Draft asset refs are missing")}
-        end
-      end
-    )
-  end
-
   object :article_working_copy do
     field(:id, non_null(:id))
     field(:article_id, non_null(:id))
@@ -1239,12 +1263,43 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:title, non_null(:string))
     field(:digest, non_null(:string))
     field(:slug, :string)
-    field(:body_json, non_null(:string), resolve: fn work, _, _ -> {:ok, work.body_json} end)
-    field(:body_markdown, non_null(:string))
-    field(:body_html, non_null(:string))
-    field(:body_markdown_toc, non_null(:json))
-    field(:body_plain_text, non_null(:string))
-    field(:body_thumbnail, non_null(:json))
+
+    field(:body_json, non_null(:string),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).json}
+      end
+    )
+
+    field(:body_markdown, non_null(:string),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).markdown}
+      end
+    )
+
+    field(:body_html, non_null(:string),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).html}
+      end
+    )
+
+    field(:body_markdown_toc, non_null(:json),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).markdown_toc}
+      end
+    )
+
+    field(:body_plain_text, non_null(:string),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).plain_text}
+      end
+    )
+
+    field(:body_thumbnail, non_null(:json),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).thumbnail}
+      end
+    )
+
     field(:cover_edit_working_copy_id, :id)
 
     field(:tag_ids, non_null(list_of(non_null(:id))),
@@ -1272,12 +1327,43 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:title, non_null(:string))
     field(:digest, non_null(:string))
     field(:slug, :string)
-    field(:body_json, non_null(:string))
-    field(:body_markdown, non_null(:string))
-    field(:body_html, non_null(:string))
-    field(:body_markdown_toc, non_null(:json))
-    field(:body_plain_text, non_null(:string))
-    field(:body_thumbnail, non_null(:json))
+
+    field(:body_json, non_null(:string),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).json}
+      end
+    )
+
+    field(:body_markdown, non_null(:string),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).markdown}
+      end
+    )
+
+    field(:body_html, non_null(:string),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).html}
+      end
+    )
+
+    field(:body_markdown_toc, non_null(:json),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).markdown_toc}
+      end
+    )
+
+    field(:body_plain_text, non_null(:string),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).plain_text}
+      end
+    )
+
+    field(:body_thumbnail, non_null(:json),
+      resolve: fn owner, _, _ ->
+        {:ok, CMS.articles_body_document(owner).thumbnail}
+      end
+    )
+
     field(:cover_edit_snapshot_id, :id)
 
     field(:tag_ids, non_null(list_of(non_null(:id))),
@@ -1314,82 +1400,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:working_copy, non_null(:article_working_copy),
       resolve: fn result, _, _ -> {:ok, Map.fetch!(result, :working_copy)} end
     )
-  end
-
-  object :article_draft do
-    field(:id, non_null(:id), resolve: fn draft, _, _ -> {:ok, draft.article_id} end)
-
-    field(:thread, non_null(:thread),
-      resolve: fn draft, _, _ ->
-        article =
-          case Map.get(draft, :article) do
-            %CMS.Model.Article{} = article ->
-              article
-
-            _not_loaded ->
-              {:ok, article} = FrontDesk.article(draft.article_id, mode: :internal)
-              article
-          end
-
-        {:ok, article.thread}
-      end
-    )
-
-    field(:version, non_null(:integer))
-    field(:content_hash, non_null(:string))
-    field(:base_revision_id, :id)
-    field(:stage, non_null(:article_stage), resolve: fn _, _, _ -> {:ok, :draft} end)
-    field(:title, non_null(:string))
-    field(:digest, :string)
-    field(:slug, :string)
-    field(:subtitle, :string)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
-
-    field(:body, non_null(:artiment_body),
-      resolve: fn draft, _, _ ->
-        case CMS.articles_store_body_draft(draft.body_draft_id) do
-          {:ok, body_draft} -> {:ok, body_draft}
-          {:error, reason} -> {:error, reason}
-        end
-      end
-    )
-
-    timestamp_fields()
-  end
-
-  object :doc_tree_mutation_payload do
-    field(:revision, :integer)
-    field(:tree_state, :doc_tree_state)
-    field(:node, :doc_tree_node)
-    field(:affected_nodes, list_of(:doc_tree_node))
-    field(:conflict, :boolean)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
-  end
-
-  object :move_doc_to_draft_payload do
-    field(:doc_id, :id)
-    field(:stage, :article_stage)
-    field(:publish_state, :doc_tree_node_publish_state)
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.CommandPayload.command_id/3)
-  end
-
-  input_object :doc_tree_node_input do
-    field(:type, non_null(:doc_tree_node_type))
-    field(:title, non_null(:string))
-    field(:doc_id, :id)
-    field(:index, :integer)
-    field(:href, :string)
-    field(:marker, :marker_input)
-    field(:badge, :string)
-    field(:hidden, :boolean)
-  end
-
-  input_object :doc_tree_node_patch_input do
-    field(:title, :string)
-    field(:href, :string)
-    field(:marker, :marker_input)
-    field(:badge, :string)
-    field(:hidden, :boolean)
   end
 
   object :dsb_theme_preset_option do
@@ -1661,32 +1671,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:body_hash, :string)
     field(:schema_version, non_null(:integer))
     field(:thumbnail, non_null(:json))
-  end
-
-  object :doc_branch_version_content do
-    field(:title, :string)
-    field(:slug, :string)
-    field(:subtitle, :string)
-    field(:digest, :string)
-    field(:link_addr, :string)
-    field(:template_key, :string)
-    field(:body_hash, :string)
-    field(:body, non_null(:artiment_body))
-    field(:plain_text, :string)
-    field(:schema_version, :integer)
-  end
-
-  object :doc_branch_version_view do
-    field(:id, non_null(:id), resolve: fn row, _, _ -> {:ok, row.version.id} end)
-    field(:revision_id, non_null(:id), resolve: fn row, _, _ -> {:ok, row.revision.id} end)
-
-    field(:version_number, non_null(:integer),
-      resolve: fn row, _, _ -> {:ok, row.version.version_number} end
-    )
-
-    field(:published_at, :datetime, resolve: fn row, _, _ -> {:ok, row.version.published_at} end)
-    field(:message, :string, resolve: fn row, _, _ -> {:ok, row.version.message} end)
-    field(:content, non_null(:doc_branch_version_content))
   end
 
   object :post do
@@ -2512,5 +2496,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     # Absinthe to preload. Use the stored background id as the Dataloader item
     # key so light/dark cover backgrounds still batch through the CMS loader.
     %{batch: {CoverBackground, args}, item: Map.get(config, field)}
+  end
+
+  enum :docs_diff_baseline do
+    value(:public)
+    value(:approval)
   end
 end

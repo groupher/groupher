@@ -85,8 +85,13 @@ defmodule GroupherServerWeb.Middleware.ErrorCatChainTest do
       |> GQLResultFmt.call([])
       |> GeneralError.call([])
 
-    assert Enum.map(result.errors, & &1.extensions.code) == [first.code, second.code, 4606]
-    assert Enum.at(result.errors, 2).extensions.actions == ["READ_ONLY_NOTICE"]
+    assert Enum.map(result.errors, & &1.extensions.code) == [
+             first.code,
+             second.code,
+             GateErrorCat.permission_denied().code
+           ]
+
+    assert Enum.at(result.errors, 2).extensions.actions == ["SHOW_PERMISSION_NOTICE"]
   end
 
   test "Pagi mismatch survives the complete transport formatter with only its allowlisted value" do

@@ -19,12 +19,8 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
     Article,
     ArticleBinding,
     ArticlePublic,
-    ArticleRevision,
     ArticleSnapshot,
-    Community,
-    DocBranch,
-    DocBranchVersion,
-    DocPublic
+    Community
   }
 
   @doc """
@@ -135,24 +131,6 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
     end
   end
 
-  defp projection_result(event, %Article{thread: :doc} = article, community, binding) do
-    branch_id = Map.get(event.data, "branch_id")
-
-    with %DocBranch{} = branch <- Repo.get(DocBranch, branch_id),
-         %DocPublic{} = public <-
-           Repo.get_by(DocPublic, article_id: article.id, branch_id: branch.id),
-         %DocBranchVersion{} = version <- Repo.get(DocBranchVersion, public.branch_version_id),
-         %ArticleRevision{} = revision <- Repo.get(ArticleRevision, version.revision_id) do
-      CMS.Articles.Effects.run(
-        projection_payload(event, article, community, binding, public, revision)
-        |> Map.put(:branch_type, branch.type)
-        |> Map.put(:version, version)
-      )
-    else
-      nil -> {:error, ArticleErrorCat.projection_not_found()}
-    end
-  end
-
   defp projection_result(event, %Article{} = article, community, binding) do
     with %ArticlePublic{snapshot_id: snapshot_id} = public <- Repo.get(ArticlePublic, article.id),
          %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id) do
@@ -172,19 +150,6 @@ defmodule GroupherServer.CMS.Outbox.Workflow.Article do
       public: public,
       snapshot: snapshot,
       actor: Repo.get(GroupherServer.Accounts.Model.User, Map.get(event.data, "published_by_id")),
-      first_publish?: Map.get(event.data, "first_publish?", false),
-      changed_fields: changed_fields(Map.get(event.data, "changed_fields", [])),
-      published_by_id: Map.get(event.data, "published_by_id")
-    }
-  end
-
-  defp projection_payload(event, article, community, binding, public, revision) do
-    %{
-      article: article,
-      community: community,
-      binding: binding,
-      public: public,
-      revision: revision,
       first_publish?: Map.get(event.data, "first_publish?", false),
       changed_fields: changed_fields(Map.get(event.data, "changed_fields", [])),
       published_by_id: Map.get(event.data, "published_by_id")

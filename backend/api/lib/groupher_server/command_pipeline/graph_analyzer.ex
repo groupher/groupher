@@ -65,8 +65,6 @@ defmodule GroupherServer.CommandPipeline.GraphAnalyzer do
   @trusted_dynamic_modules MapSet.new([
                              GroupherServer.Activity.Artiment,
                              GroupherServer.Activity.Event,
-                             GroupherServer.CMS.Articles.Draft.Store,
-                             GroupherServer.CMS.Articles.Revision.Persist,
                              GroupherServer.CMS.Command,
                              GroupherServer.CMS.Outbox,
                              GroupherServer.CMS.SearchArtiments.Indexer,

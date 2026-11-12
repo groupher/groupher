@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const updateDashboardLayout = graphql(`
+  "Update layout in dashboard"
   mutation UpdateDashboardLayout(
     $community: String!
     $commandId: ID!

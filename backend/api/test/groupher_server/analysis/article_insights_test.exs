@@ -148,16 +148,10 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
              )
   end
 
-  test "Doc Insights reject a non-main branch and missing lifecycle through Gate scope" do
+  test "Doc Insights reject missing lifecycle through Gate scope" do
     {community, doc, _attrs, author} = mock_article(:doc)
 
-    assert {:error,
-            %ErrorCat.Error{
-              namespace: {:cms, :gate},
-              reason: :scope_context_missing
-            }} = CMS.Insights.authorize(doc, author, :doc, branch_id: 999)
-
-    lifecycle = Repo.get_by!(GroupherServer.CMS.Model.DocLifecycle, article_id: doc.id)
+    lifecycle = Repo.get_by!(GroupherServer.CMS.Model.DocsLifecycle, article_id: doc.id)
     Repo.delete!(lifecycle)
 
     assert {:error,

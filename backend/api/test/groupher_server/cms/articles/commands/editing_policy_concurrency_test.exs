@@ -70,7 +70,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.EditingPolicyConcurrency do
 
         assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision
       after
-        Repo.delete!(Repo.get!(Article, article.id))
+        assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(community.slug)
       end
     end)
   end
@@ -155,7 +155,8 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.EditingPolicyConcurrency do
 
         assert Repo.get!(ArticleWorkingCopy, work.id).revision == work.revision
       after
-        Repo.delete!(Repo.get!(Article, article.id))
+        assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(community.slug)
+        assert {:ok, :ok} = CMS.Seeds.FullCommunity.delete(destination.slug)
       end
     end)
   end

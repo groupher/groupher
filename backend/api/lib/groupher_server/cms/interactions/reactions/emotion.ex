@@ -290,8 +290,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   defp author_user_id(%{author_id: author_id}), do: Repo.get!(Author, author_id).user_id
 
   defp emotion_conflict_target(:article_id) do
-    {:unsafe_fragment,
-     "(user_id, article_id, emotion) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+    {:unsafe_fragment, "(user_id, article_id, emotion) WHERE article_id IS NOT NULL"}
   end
 
   defp emotion_conflict_target(foreign_key) do

@@ -12,8 +12,8 @@ defmodule GroupherServer.CMS.Tickets.Content do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
   alias CMS.Articles.WorkingCopy.{Deleter, Snapshotter, Store}
 
   alias CMS.Model.{
@@ -29,15 +29,14 @@ defmodule GroupherServer.CMS.Tickets.Content do
   }
 
   @doc "Creates a Ticket Article and its default WorkingCopy in the caller transaction."
-  def create_workspace(%Community{} = community, attrs, %Author{} = author, opts \\ []) do
+  def create_workspace(%Community{} = community, attrs, %Author{} = author, _opts \\ []) do
     with {:ok, user} <- user_for_author(author),
          {:ok, article} <-
-           CMS.Articles.Draft.Store.create_article_shell_loaded(
+           CMS.Articles.Identity.create_loaded(
              community,
              :ticket,
              attrs,
-             author,
-             opts
+             author
            ),
          work_attrs <- Map.merge(attrs, %{scope_kind: :default, scope_id: article.id}),
          {:ok, working_copy} <- Store.create_loaded(article, work_attrs, user, community.id) do
@@ -63,8 +62,9 @@ defmodule GroupherServer.CMS.Tickets.Content do
     end
   end
 
-  def clone_snapshot_refs(_source, _snapshot, _target, _working_copy),
-    do: {:error, :invalid_ticket_asset_clone}
+  def clone_snapshot_refs(_source, _snapshot, _target, _working_copy) do
+    {:error, :invalid_ticket_asset_clone}
+  end
 
   @doc "Copies same-Community Ticket WorkingCopy asset references to a new Ticket."
   def clone_working_copy_refs(
@@ -84,8 +84,9 @@ defmodule GroupherServer.CMS.Tickets.Content do
     end
   end
 
-  def clone_working_copy_refs(_source, _source_working_copy, _target, _target_working_copy),
-    do: {:error, :invalid_ticket_asset_clone}
+  def clone_working_copy_refs(_source, _source_working_copy, _target, _target_working_copy) do
+    {:error, :invalid_ticket_asset_clone}
+  end
 
   @doc "Loads the current Ticket WorkingCopy or independently clones the selected Snapshot."
   def ensure_workspace(%Article{thread: :ticket} = article, %Author{} = author, opts) do
@@ -176,8 +177,9 @@ defmodule GroupherServer.CMS.Tickets.Content do
     end
   end
 
-  def save_workspace(%Article{}, _attrs, %Author{}, _opts),
-    do: {:error, :invalid_ticket_identity}
+  def save_workspace(%Article{}, _attrs, %Author{}, _opts) do
+    {:error, :invalid_ticket_identity}
+  end
 
   @doc "Freezes a Ticket WorkingCopy for the Ticket-specific publish transition."
   def freeze_working_copy(
@@ -189,8 +191,9 @@ defmodule GroupherServer.CMS.Tickets.Content do
     Snapshotter.freeze_locked(article, working_copy, actor, command_id)
   end
 
-  def freeze_working_copy(_article, _working_copy, _actor, _command_id),
-    do: {:error, :invalid_ticket_working_copy}
+  def freeze_working_copy(_article, _working_copy, _actor, _command_id) do
+    {:error, :invalid_ticket_working_copy}
+  end
 
   @doc "Selects a same-Article Snapshot without ordinary Article publish side effects."
   def select_public(article, snapshot, actor, opts \\ [])
@@ -208,8 +211,9 @@ defmodule GroupherServer.CMS.Tickets.Content do
     end
   end
 
-  def select_public(%Article{}, %ArticleSnapshot{}, %User{}, _opts),
-    do: {:error, :invalid_ticket_identity}
+  def select_public(%Article{}, %ArticleSnapshot{}, %User{}, _opts) do
+    {:error, :invalid_ticket_identity}
+  end
 
   @doc "Deletes only the mutable Ticket WorkingCopy after its Snapshot is selected."
   def delete_workspace(%Article{thread: :ticket} = article, %ArticleWorkingCopy{} = working_copy) do

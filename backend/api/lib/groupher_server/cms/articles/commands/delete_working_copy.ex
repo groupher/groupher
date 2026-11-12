@@ -11,8 +11,8 @@ defmodule GroupherServer.CMS.Articles.Commands.DeleteWorkingCopy do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
   alias CMS.Articles.Commands.DeleteWorkingCopyConfirmation, as: Confirmation
   alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
   alias CMS.Articles.WorkingCopy.Deleter
@@ -77,8 +77,9 @@ defmodule GroupherServer.CMS.Articles.Commands.DeleteWorkingCopy do
     end
   end
 
-  def execute(_article, _community, _id, _actor, _command_id),
-    do: {:error, :invalid_working_copy_command}
+  def execute(_article, _community, _id, _actor, _command_id) do
+    {:error, :invalid_working_copy_command}
+  end
 
   defp lock_work(article_id, id) do
     Repo.one(
@@ -105,11 +106,13 @@ defmodule GroupherServer.CMS.Articles.Commands.DeleteWorkingCopy do
 
   defp map_delete_error({:error, :work_in_use}), do: {:error, CMS.ErrorCat.work_in_use()}
 
-  defp map_delete_error({:error, :cover_edit_delete_failed}),
-    do: {:error, CMS.ErrorCat.cover_edit_delete_failed()}
+  defp map_delete_error({:error, :cover_edit_delete_failed}) do
+    {:error, CMS.ErrorCat.cover_edit_delete_failed()}
+  end
 
-  defp map_delete_error({:error, :working_copy_children_delete_failed}),
-    do: {:error, CMS.ErrorCat.working_copy_children_delete_failed()}
+  defp map_delete_error({:error, :working_copy_children_delete_failed}) do
+    {:error, CMS.ErrorCat.working_copy_children_delete_failed()}
+  end
 
   defp map_delete_error(result), do: result
 end

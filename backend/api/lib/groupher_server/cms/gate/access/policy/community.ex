@@ -37,6 +37,14 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   alias CMS.Passport.Registry
 
   @read_actions [:read, :list]
+  @docs_read_actions [:docs_queue_preview, :docs_history_read, :docs_trash_read]
+  @docs_write_actions [
+    :docs_queue_write,
+    :docs_queue_approve,
+    :docs_queue_publish,
+    :docs_queue_configure,
+    :docs_trash_purge
+  ]
   @command_actions [
     :update,
     :category_create,
@@ -119,6 +127,32 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  def check_access(%User{}, action, %Community{} = community, %CommunityContext{} = context)
+      when action in @docs_read_actions do
+    with {:ok, :pass} <- read_allowed?(community, context) do
+      relation_allowed(passport_allowed?(community, docs_passport_action(action), context))
+    end
+  end
+
+  def check_access(%User{}, action, %Community{} = community, %CommunityContext{} = context)
+      when action in @docs_write_actions do
+    case lifecycle_capability(context, :write) do
+      {:ok, true} ->
+        relation_allowed(passport_allowed?(community, docs_passport_action(action), context))
+
+      {:ok, false} ->
+        {:error, ErrorCat.ancestor_community_not_writable()}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  def check_access(_actor, action, %Community{}, %CommunityContext{})
+      when action in @docs_read_actions or action in @docs_write_actions do
+    {:error, ErrorCat.permission_denied()}
   end
 
   def check_access(
@@ -223,6 +257,15 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   defp category_passport_action(:category_delete), do: Const.passport_action(:category_delete)
   defp category_passport_action(:category_set), do: Const.passport_action(:category_set)
   defp category_passport_action(:category_unset), do: Const.passport_action(:category_unset)
+
+  defp docs_passport_action(:docs_queue_preview), do: CMS.GateAction.doc_queue_preview()
+  defp docs_passport_action(:docs_queue_write), do: CMS.GateAction.doc_queue_write()
+  defp docs_passport_action(:docs_queue_approve), do: CMS.GateAction.doc_queue_approve()
+  defp docs_passport_action(:docs_queue_configure), do: CMS.GateAction.doc_queue_configure()
+  defp docs_passport_action(:docs_queue_publish), do: CMS.GateAction.doc_queue_publish()
+  defp docs_passport_action(:docs_history_read), do: CMS.GateAction.doc_history_read()
+  defp docs_passport_action(:docs_trash_read), do: "doc.trash"
+  defp docs_passport_action(:docs_trash_purge), do: "doc.permanent_delete"
 
   defp ticket_passport_action(:ticket_create), do: CMS.GateAction.ticket_create()
   defp ticket_passport_action(:ticket_link_source), do: CMS.GateAction.ticket_link_source()

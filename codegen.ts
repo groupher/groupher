@@ -44,7 +44,7 @@ const config: CodegenConfig = {
     'frontend/core/unit/Comments/fragments.ts',
     'frontend/core/unit/DsbThread/Appearance/Wallpaper/schema.ts',
     'frontend/core/unit/DsbThread/schema/docs.ts',
-    'frontend/core/unit/DsbThread/schema/docs.fragments.ts',
+    'frontend/core/unit/DsbThread/CMS/Docs/ActionSnackbar/Publication/schema.ts',
     'frontend/core/unit/DsbThread/schema/fragments.ts',
     'frontend/core/unit/DsbThread/schema/integrations.ts',
     'frontend/core/unit/DsbThread/schema/settings.ts',

@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Mutation.Analysis.Contribution do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Analysis.Contribution.Model.UserContribute
+  alias GroupherServer.Analysis
+  alias Analysis.Contribution.Model.UserContribute
 
   setup do
     {community, post, post_attr, user} = mock_article(:post)

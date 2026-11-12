@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
 
   alias GroupherServer.CMS
   alias CMS.Artiment.BodyBag
-  alias CMS.Model.ArticleBodySnapshot
+  alias CMS.Model.ArticleBody
 
   @json Jason.encode!([
           %{"type" => "p", "children" => [%{"text" => "Published body content"}]}
@@ -25,16 +25,15 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
     assert body_hash == String.duplicate("a", 64)
   end
 
-  test "rebuilds the input contract from a persisted ArticleBodySnapshot" do
+  test "rebuilds the input contract from a persisted ArticleBody" do
     document =
-      struct(ArticleBodySnapshot, %{
+      struct(ArticleBody, %{
         json: @json,
         markdown: "Published body content",
         markdown_toc: %{"items" => [%{"id" => "intro", "title" => "Intro", "level" => 1}]},
         thumbnail: %{version: 1, blocks: []},
         html: "<p>Published body content</p>",
         plain_text: "Published body content",
-        body_hash: String.duplicate("a", 64),
         schema_version: 1
       })
 

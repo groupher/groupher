@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
     ArticlePublic,
     Comment,
     Community,
-    DocPublic,
+    ArticlePublic,
     PostState
   }
 
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
         from(article in Article,
           join: binding in CMS.Model.ArticleBinding,
           on: binding.article_id == article.id,
-          join: public in DocPublic,
+          join: public in ArticlePublic,
           on: public.article_id == article.id,
           where: binding.community_id == ^community.id and article.thread == :doc
         )

@@ -1,47 +1,9 @@
 defmodule GroupherServer.CMS.DocTree.Publish do
   @moduledoc """
-  Stable internal Facade. Infrastructure access belongs to the delegated Owner.
+  Docs Queue planning and Release namespace.
 
-      caller -> GroupherServer.CMS.DocTree.Publish -> result
+      Queue commands -> checked plan -> immutable Release and public projections
+
+  Concrete operations live in the Queue, Approval and QueueRelease owners.
   """
-
-  @doc "Delegates checklist/1 to the owning implementation."
-  defdelegate checklist(arg1), to: GroupherServer.CMS.DocTree.Publish.Workflow
-
-  @doc "Delegates checklist/2 to the owning implementation."
-  defdelegate checklist(arg1, arg2), to: GroupherServer.CMS.DocTree.Publish.Workflow
-
-  @doc "Delegates move_doc_to_draft/3 to the owning implementation."
-  defdelegate move_doc_to_draft(arg1, arg2, arg3), to: GroupherServer.CMS.DocTree.Publish.Workflow
-
-  @doc "Delegates move_doc_to_draft/4 to the owning implementation."
-  defdelegate move_doc_to_draft(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree.Publish.Workflow
-
-  @doc "Prepares move_doc_to_draft/4 for a Command-owned Gate stage."
-  defdelegate prepare_move_doc_to_draft(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree.Publish.Workflow
-
-  @doc "Persists a prepared move after the Command-owned Gate stage."
-  defdelegate move_doc_to_draft_after_gate(arg1),
-    to: GroupherServer.CMS.DocTree.Publish.Workflow
-
-  @doc "Delegates move_subtree_to_draft/3 to the owning implementation."
-  defdelegate move_subtree_to_draft(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree.Publish.Workflow
-
-  @doc "Delegates move_subtree_to_draft/4 to the owning implementation."
-  defdelegate move_subtree_to_draft(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree.Publish.Workflow
-
-  @doc "Delegates public_node_for_draft/2 to the owning implementation."
-  defdelegate public_node_for_draft(arg1, arg2), to: GroupherServer.CMS.DocTree.Publish.Workflow
-
-  @doc "Delegates public_node_for_draft/3 to the owning implementation."
-  defdelegate public_node_for_draft(arg1, arg2, arg3),
-    to: GroupherServer.CMS.DocTree.Publish.Workflow
-
-  @doc "Runs publish work after the Command gate stage admitted the Community."
-  defdelegate publish_after_gate(arg1, arg2, arg3, arg4),
-    to: GroupherServer.CMS.DocTree.Publish.Workflow
 end

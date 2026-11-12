@@ -31,8 +31,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     Community,
     CommunityLifecycle,
     CommunityModerator,
-    Author,
-    DocBranch
+    Author
   }
 
   @community_normal CMS.Communities.Const.pending_state(:normal)
@@ -42,9 +41,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     :gate_article_lifecycle,
     :gate_comment_lifecycle,
     :gate_community,
-    :gate_community_lifecycle,
-    :gate_doc_branch,
-    :gate_comment_doc_branch
+    :gate_community_lifecycle
   ]
 
   @doc false
@@ -99,8 +96,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
              CommentLifecycle,
              ArticleLifecycle,
              Community,
-             CommunityLifecycle,
-             DocBranch
+             CommunityLifecycle
            ]) do
       from(comment in query,
         join: binding in ArticleBinding,

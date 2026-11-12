@@ -244,12 +244,12 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
 
   test "Doc recheck preserves replaced holds and content edit clears outdated holds" do
     {_community, doc, _attrs, _author} = mock_article(:doc)
-    lifecycle = Repo.get_by!(CMS.Model.DocLifecycle, article_id: doc.id, branch_id: doc.branch_id)
+    lifecycle = Repo.get_by!(CMS.Model.DocsLifecycle, article_id: doc.id)
 
     assert_request_generation_behavior(
       lifecycle,
       "platform",
-      %{target_type: :doc, article_id: doc.id, branch_id: doc.branch_id}
+      %{target_type: :doc, article_id: doc.id}
     )
   end
 
@@ -552,7 +552,7 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
 
     assert {:ok, {:ok, :pass}} =
              Repo.transaction(fn ->
-               CMS.Articles.Publish.Target.remove_binding_review(
+               CMS.Articles.BindingReview.remove_binding_review(
                  Repo.get!(CMS.Model.Article, article.id),
                  community,
                  Ecto.UUID.generate()

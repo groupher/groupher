@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Tickets.Mentions do
            CMS.FrontDesk.article(article_id, mode: :internal),
          %ArticlePublic{} = public <- Repo.get(ArticlePublic, article.id),
          %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, public.snapshot_id),
-         {:ok, ast} <- PlateJSON.decode(snapshot.body_json),
+         {:ok, ast} <- PlateJSON.decode(CMS.Articles.Body.document(snapshot).json),
          true <- match?(%DateTime{}, public.updated_at) do
       ArtimentMentions.update(
         %{type: :ticket, article_id: article.id},

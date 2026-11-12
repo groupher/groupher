@@ -160,17 +160,11 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
      }}
   end
 
-  defp validate_target(%{
-         type: :doc,
-         article_id: article_id,
-         branch_id: branch_id
-       })
-       when is_binary(article_id) and is_integer(branch_id) do
+  defp validate_target(%{type: :doc, article_id: article_id}) when is_binary(article_id) do
     {:ok,
      %{
        target_type: :doc,
-       article_id: article_id,
-       branch_id: branch_id
+       article_id: article_id
      }}
   end
 
@@ -282,16 +276,15 @@ defmodule GroupherServer.CMS.Review.RequestSubmission do
     end
   end
 
-  defp end_previous_wall_items(%{type: :doc, article_id: id, branch_id: branch_id}, _trigger) do
+  defp end_previous_wall_items(%{type: :doc, article_id: id}, _trigger) do
     with {:ok, :pass} <-
            CMS.Review.Requests.mark_content_changed_in_transaction(%{
              type: :doc,
-             article_id: id,
-             branch_id: branch_id
+             article_id: id
            }) do
       AlertWall.mark_content_changed_in_transaction(
         :doc,
-        "#{id}:#{branch_id}",
+        id,
         Ecto.UUID.generate()
       )
     end

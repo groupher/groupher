@@ -293,7 +293,6 @@ config :groupher_server, Oban,
        {"5 * * * *", GroupherServer.Jobs.ProfileViewDedupeCleanup},
        {"* * * * *", GroupherServer.Jobs.ArticleInsightsAggregation},
        {"@daily", GroupherServer.Jobs.ArticleInsightsRetention},
-       {"@daily", GroupherServer.Jobs.ArticleSnapshotCleanup},
        {"@daily", GroupherServer.Jobs.CMSArtimentReviewRetention},
        {"@daily", GroupherServer.Jobs.CommandReceiptRetention}
      ]}

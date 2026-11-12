@@ -4,9 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --dir ../.. run sync:assets:community && pnpm run build:revision-worker && vite --config app.config.ts --host 127.0.0.1",
-    "build:revision-worker": "pnpm --dir ../.. exec vite build --config frontend/community/vite.worker.config.mts",
-    "build": "pnpm --dir ../.. run sync:assets:community && pnpm run build:revision-worker && CLOUDFLARE_ENV=production vite build --config app.config.ts",
+    "dev": "pnpm --dir ../.. run sync:assets:community && vite --config app.config.ts --host 127.0.0.1",
+    "build": "pnpm --dir ../.. run sync:assets:community && CLOUDFLARE_ENV=production vite build --config app.config.ts",
     "preview": "vite preview --config app.config.ts",
     "deploy": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) pnpm run build && cf deploy --prebuilt --mode production",
     "deploy:dry-run": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) pnpm run build && cf deploy --prebuilt --dry-run --mode production",

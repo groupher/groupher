@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const me = graphql(`
+  "Get cur user"
   query Me {
     me {
       login
@@ -13,6 +14,7 @@ export const me = graphql(`
 `)
 
 export const user = graphql(`
+  "Get user by login"
   query User($login: String!, $userHasLogin: Boolean!) {
     user(login: $login) {
       ...UserAuthorFields
@@ -51,6 +53,7 @@ export const user = graphql(`
 `)
 
 export const trackProfileView = graphql(`
+  "Records one visible public Profile read through ProfileViewTracker"
   mutation TrackProfileView($login: String!) {
     trackProfileView(login: $login) {
       tracked
@@ -60,6 +63,7 @@ export const trackProfileView = graphql(`
 `)
 
 export const sessionState = graphql(`
+  "Check the cur token is valid or not"
   query SessionState {
     sessionState {
       isValid

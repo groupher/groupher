@@ -26,16 +26,12 @@ defmodule GroupherServer.CMS.Assets.Query do
     ArticleBinding,
     ArticleLifecycle,
     ArticlePublic,
-    ArticleRevision,
     ArticleSnapshot,
     ArticleWorkingCopy,
     Community,
     CommunityAsset,
     CommunityLifecycle,
-    DocBranch,
-    DocBranchState,
-    DocDraft,
-    DocLifecycle,
+    DocsLifecycle,
     TicketState,
     TrashedArticle
   }
@@ -151,32 +147,16 @@ defmodule GroupherServer.CMS.Assets.Query do
     with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community_id, asset_id) do
       ArticleAssetRef
       |> where([ref], ref.community_id == ^community_id and ref.asset_id == ^asset_id)
-      |> join(:left, [ref], doc_draft in DocDraft,
-        on: doc_draft.body_draft_id == ref.body_draft_id
-      )
-      |> join(:left, [ref, _doc_draft], revision in ArticleRevision,
-        on: revision.id == ref.revision_id
-      )
-      |> join(:left, [ref, _doc_draft, _revision], working_copy in ArticleWorkingCopy,
+      |> join(:left, [ref], working_copy in ArticleWorkingCopy,
         on: working_copy.id == ref.working_copy_id
       )
-      |> join(
-        :left,
-        [ref, _doc_draft, _revision, _working_copy],
-        snapshot in ArticleSnapshot,
+      |> join(:left, [ref, _work], snapshot in ArticleSnapshot,
         on: snapshot.id == ref.snapshot_id
       )
-      |> join(
-        :inner,
-        [ref, doc_draft, revision, working_copy, snapshot],
-        article in Article,
-        on:
-          article.id == doc_draft.article_id or
-            (article.thread == :doc and article.id == revision.article_id) or
-            article.id == working_copy.article_id or
-            article.id == snapshot.article_id
+      |> join(:inner, [_ref, work, snapshot], article in Article,
+        on: article.id == work.article_id or article.id == snapshot.article_id
       )
-      |> select_merge([ref, _doc_draft, _revision, _working_copy, _snapshot, article], %{
+      |> select_merge([_ref, _work, _snapshot, article], %{
         article_id: article.id,
         thread: article.thread
       })
@@ -275,58 +255,34 @@ defmodule GroupherServer.CMS.Assets.Query do
   defp usage_query(community_id, asset_id, ticket_ids) do
     from(ref in ArticleAssetRef,
       where: ref.community_id == ^community_id and ref.asset_id == ^asset_id,
-      left_join: doc_draft in DocDraft,
-      on: doc_draft.body_draft_id == ref.body_draft_id,
-      left_join: revision in ArticleRevision,
-      on: revision.id == ref.revision_id,
-      left_join: working_copy in ArticleWorkingCopy,
-      on: working_copy.id == ref.working_copy_id,
+      left_join: work in ArticleWorkingCopy,
+      on: work.id == ref.working_copy_id,
       left_join: snapshot in ArticleSnapshot,
       on: snapshot.id == ref.snapshot_id,
       join: article in Article,
-      on:
-        article.id == doc_draft.article_id or
-          (article.thread == :doc and article.id == revision.article_id) or
-          article.id == working_copy.article_id or
-          article.id == snapshot.article_id,
+      on: article.id == work.article_id or article.id == snapshot.article_id,
       left_join: binding in ArticleBinding,
       on: binding.article_id == article.id and binding.community_id == ref.community_id,
       join: community_lifecycle in CommunityLifecycle,
       on: community_lifecycle.community_id == ref.community_id,
       left_join: article_lifecycle in ArticleLifecycle,
       on: article_lifecycle.article_id == article.id,
-      left_join: branch in DocBranch,
-      on: branch.id == doc_draft.branch_id and branch.community_id == ref.community_id,
-      left_join: doc_lifecycle in DocLifecycle,
-      on: doc_lifecycle.article_id == article.id and doc_lifecycle.branch_id == branch.id,
-      left_join: doc_branch_state in DocBranchState,
-      on: doc_branch_state.article_id == article.id and doc_branch_state.branch_id == branch.id,
+      left_join: doc_lifecycle in DocsLifecycle,
+      on:
+        doc_lifecycle.article_id == article.id and doc_lifecycle.community_id == ref.community_id,
       left_join: public in ArticlePublic,
       on: public.article_id == article.id,
       left_join: trash in TrashedArticle,
       on: trash.article_id == article.id,
       where:
-        ((is_nil(ref.body_draft_id) and is_nil(ref.working_copy_id)) or
-           not is_nil(trash.id) or
+        (not is_nil(ref.snapshot_id) or not is_nil(trash.id) or
            (not is_nil(binding.id) and community_lifecycle.state == :active and
               ((article.thread != :doc and article_lifecycle.state in [:draft, :published]) or
-                 (article.thread == :doc and not is_nil(doc_draft.id) and
-                    not is_nil(branch.id) and doc_lifecycle.state in [:draft, :published] and
-                    not is_nil(doc_branch_state.id))))) and
+                 (article.thread == :doc and doc_lifecycle.state in [:draft, :published, :deleted])))) and
           (article.thread != :ticket or article.id in subquery(ticket_ids)),
-      select: {
-        ref,
-        article,
-        doc_draft,
-        public,
-        trash,
-        article_lifecycle,
-        doc_lifecycle,
-        community_lifecycle,
-        branch,
-        working_copy,
-        snapshot
-      }
+      select:
+        {ref, article, public, trash, article_lifecycle, doc_lifecycle, community_lifecycle, work,
+         snapshot}
     )
   end
 
@@ -364,9 +320,7 @@ defmodule GroupherServer.CMS.Assets.Query do
     end
   end
 
-  defp format_usage_row(
-         {ref, article, _doc_draft, public, trash, article_lifecycle, doc_lifecycle, _, _, _, _}
-       ) do
+  defp format_usage_row({ref, article, public, trash, article_lifecycle, doc_lifecycle, _, _, _}) do
     Map.merge(Map.from_struct(ref), %{
       article_id: article.id,
       thread: article.thread,
@@ -374,24 +328,13 @@ defmodule GroupherServer.CMS.Assets.Query do
     })
   end
 
-  defp format_replacement_usage_row({
-         ref,
-         article,
-         doc_draft,
-         public,
-         trash,
-         article_lifecycle,
-         doc_lifecycle,
-         community_lifecycle,
-         branch,
-         working_copy,
-         snapshot
-       }) do
-    {ref, article, doc_draft, public, trash, article_lifecycle, doc_lifecycle,
-     community_lifecycle, branch, working_copy, snapshot}
+  defp format_replacement_usage_row(
+         {_ref, _article, public, _trash, article_lifecycle, doc_lifecycle, community_lifecycle,
+          working_copy, snapshot} = row
+       ) do
+    row
     |> format_usage_row()
     |> Map.merge(%{
-      branch_id: branch && branch.id,
       resource_lifecycle: article_lifecycle || doc_lifecycle,
       community_lifecycle: community_lifecycle,
       observed_working_copy_id: working_copy && working_copy.id,
@@ -445,15 +388,15 @@ defmodule GroupherServer.CMS.Assets.Query do
   end
 
   defp lifecycle(
-         %ArticleAssetRef{body_draft_id: body_draft_id},
+         %ArticleAssetRef{working_copy_id: id},
          _article,
          _public,
          _trash,
-         _article_lifecycle,
-         _doc_lifecycle
+         _lifecycle,
+         %DocsLifecycle{state: :deleted}
        )
-       when not is_nil(body_draft_id) do
-    :draft
+       when not is_nil(id) do
+    :trashed
   end
 
   defp lifecycle(
@@ -511,17 +454,6 @@ defmodule GroupherServer.CMS.Assets.Query do
          _doc_lifecycle
        )
        when not is_nil(snapshot_id) do
-    :historical
-  end
-
-  defp lifecycle(
-         %ArticleAssetRef{revision_id: _revision_id},
-         _article,
-         _public,
-         _trash,
-         _article_lifecycle,
-         _doc_lifecycle
-       ) do
     :historical
   end
 

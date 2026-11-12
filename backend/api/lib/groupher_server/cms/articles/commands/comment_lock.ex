@@ -9,8 +9,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
   alias GroupherServer.CMS
-  alias CMS.Articles.{Bindings, States}
-  alias CMS.Docs.Store, as: DocStore
+  alias CMS.Articles.States
   alias CMS.FrontDesk
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Article, Community}
@@ -28,9 +27,8 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
   direct_pipeline lock_comments(article_id, actor, opts) do
     gate(fn _candidate -> authorize(article_id, actor, :lock_comments, opts) end)
 
-    change(fn {canonical, branch_id} ->
-      change_opts = if is_integer(branch_id), do: [branch_id: branch_id], else: opts
-      States.lock_comments(canonical, change_opts)
+    change(fn canonical ->
+      States.lock_comments(canonical, opts)
     end)
   end
 
@@ -38,9 +36,8 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
   direct_pipeline unlock_comments(article_id, actor, opts) do
     gate(fn _candidate -> authorize(article_id, actor, :undo_lock_comments, opts) end)
 
-    change(fn {canonical, branch_id} ->
-      change_opts = if is_integer(branch_id), do: [branch_id: branch_id], else: opts
-      States.undo_lock_comments(canonical, change_opts)
+    change(fn canonical ->
+      States.undo_lock_comments(canonical, opts)
     end)
   end
 
@@ -48,27 +45,11 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
     gate_action = if action == :undo_lock_comments, do: :unlock_comments, else: action
 
     case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{thread: :doc} = article} ->
-        with {:ok, community} <- resolve_community(opts, article) do
-          branch_id = main_branch_id(community.id)
-
-          with {:ok, canonical} <-
-                 CMS.Gate.check_in_transaction(
-                   actor,
-                   gate_action,
-                   article,
-                   community,
-                   branch_id
-                 ) do
-            {:ok, {canonical, branch_id}}
-          end
-        end
-
       {:ok, %Article{} = article} ->
         with {:ok, community} <- resolve_community(opts, article) do
           with {:ok, canonical} <-
                  CMS.Gate.check_in_transaction(actor, gate_action, article, community) do
-            {:ok, {canonical, nil}}
+            {:ok, canonical}
           end
         end
 
@@ -77,7 +58,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
     end
   end
 
-  defp resolve_community(opts, article) do
+  defp resolve_community(opts, _article) do
     case Keyword.get(opts, :community) do
       %Community{} = community ->
         {:ok, community}
@@ -91,31 +72,8 @@ defmodule GroupherServer.CMS.Articles.Commands.CommentLock do
             end
 
           _ ->
-            resolve_branch_community(opts, article)
+            {:error, CMS.Articles.ErrorCat.binding_context_required()}
         end
-    end
-  end
-
-  defp resolve_branch_community(opts, article) do
-    case Keyword.get(opts, :branch_id) do
-      branch_id when is_integer(branch_id) ->
-        with {:ok, %{community_id: community_id}} <- CMS.Docs.Store.branch_context(branch_id),
-             {:ok, community} <- FrontDesk.community(community_id, mode: :internal) do
-          {:ok, community}
-        end
-
-      _ ->
-        case Bindings.get(article, Map.get(article, :community)) do
-          {:ok, %{community: community}} -> {:ok, community}
-          {:error, reason} -> {:error, reason}
-        end
-    end
-  end
-
-  defp main_branch_id(community_id) do
-    case DocStore.branch(community_id, :main) do
-      {:ok, %{id: branch_id}} -> branch_id
-      {:error, _} -> nil
     end
   end
 end

@@ -10,8 +10,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
+  alias CMS.Articles.Body
   alias CMS.Artiment.BodyBag
   alias CMS.Assets.Refs, as: AssetRefs
 
@@ -30,7 +31,6 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
 
   @work_fields ~w(title digest slug)a
   @cover_fields ~w(format_version canvas_width canvas_height light dark)a
-  @body_fields ~w(body_json body_schema_version body_markdown body_html body_markdown_toc body_plain_text body_thumbnail body_xml body_rss)a
 
   @doc "Creates one WorkingCopy and its optional cover and tag relations in the current transaction."
   def create_loaded(%Article{} = article, attrs, %User{} = actor, community_id)
@@ -49,6 +49,56 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     else
       {:error, %Ecto.Changeset{} = changeset} -> normalize_create_changeset(changeset)
       {:error, _reason} = error -> error
+    end
+  end
+
+  @doc "Duplicates admitted saved Doc content into a new Article, preserving every stored body format."
+  def duplicate_doc_loaded(
+        %Article{thread: :doc} = article,
+        source,
+        attrs,
+        actor,
+        community_id,
+        cover_refs
+      )
+      when is_struct(source, ArticleWorkingCopy) or is_struct(source, ArticleSnapshot) do
+    attrs = normalize_cover_attrs(attrs)
+    source_id = source.article_id
+    bindings = CMS.Model.ArticleBinding
+
+    with {:ok, :pass} <- require_transaction(),
+         true <-
+           Repo.exists?(
+             from(b in bindings,
+               where: b.article_id == ^source_id and b.community_id == ^community_id
+             )
+           ),
+         %Article{thread: :doc} <- Repo.get(Article, source_id),
+         {:ok, tags} <- requested_tags(attrs, article, attrs, community_id),
+         {:ok, cover_id} <- create_cover(attrs),
+         {:ok, work} <-
+           insert_work(
+             article,
+             attrs,
+             Map.put(Body.document(source), :digest, source.digest),
+             cover_id,
+             actor
+           ),
+         {:ok, _} <- insert_typed_work(work, :doc, attrs),
+         {:ok, _} <- replace_tags(work, tags),
+         {:ok, _} <-
+           AssetRefs.sync_merged_working_copy_refs(
+             %CMS.Model.Community{id: community_id},
+             article,
+             work,
+             attrs,
+             cover_refs,
+             actor
+           ) do
+      {:ok, work}
+    else
+      {:error, _} = error -> error
+      _ -> {:error, :invalid_doc_identity}
     end
   end
 
@@ -118,6 +168,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
          {:ok, article} <- lock_article(work.article_id),
          %ArticleWorkingCopy{revision: ^revision} = locked <-
            lock_save_work(work.id, article.id, body_source),
+         locked = Repo.preload(locked, :body, force: true),
          {:ok, body_attrs} <- selected_body_attrs(body_source, attrs, article, locked),
          {:ok, tags} <- requested_tags(attrs, article, locked, community_id),
          {:ok, cover_id, retired_cover_id, cover_changed?} <- update_cover(attrs, locked),
@@ -139,7 +190,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
              updated,
              attrs,
              actor,
-             changed_fields?(locked, body_attrs) or cover_changed? or typed_changed?,
+             changed_fields?(Body.document(locked), body_attrs) or cover_changed? or
+               typed_changed?,
              cover_selection
            ) do
       {:ok, updated}
@@ -158,7 +210,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
   defp selected_body_attrs({:stored, source}, _attrs, %Article{thread: :doc} = article, locked) do
     with {:ok, saved} <- lock_body_source(source, locked),
          true <- saved.article_id == article.id do
-      {:ok, Map.take(saved, @body_fields)}
+      {:ok, Body.document(saved)}
     else
       false -> {:error, :body_source_owner_mismatch}
       {:error, _reason} = error -> error
@@ -211,7 +263,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
       attrs
       |> take(@work_fields)
       |> Map.put_new(:digest, body.digest)
-      |> Map.merge(body_attrs)
+      |> Map.put(:body, Map.merge(body_attrs, %{article_id: article.id, type: :working_copy}))
       |> Map.merge(%{
         article_id: article.id,
         scope_kind: fetch!(attrs, :scope_kind),
@@ -227,9 +279,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
 
   defp update_work(work, attrs, body_attrs, cover_id, actor) do
     metadata = take(attrs, @work_fields)
-    changes = Map.merge(metadata, body_attrs) |> Map.put(:cover_edit_working_copy_id, cover_id)
+    changes = Map.put(metadata, :cover_edit_working_copy_id, cover_id)
+    changes = if map_size(body_attrs) == 0, do: changes, else: Map.put(changes, :body, body_attrs)
 
     work
+    |> Repo.preload(:body, force: true)
     |> ArticleWorkingCopy.changeset(
       Map.merge(changes, %{revision: work.revision + 1, updated_by_id: actor.id})
     )
@@ -281,17 +335,21 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     end
   end
 
-  defp typed_extension(:post),
-    do: {ArticleWorkingCopyPost, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  defp typed_extension(:post) do
+    {ArticleWorkingCopyPost, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:blog),
-    do: {ArticleWorkingCopyBlog, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  defp typed_extension(:blog) do
+    {ArticleWorkingCopyBlog, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:changelog),
-    do: {ArticleWorkingCopyChangelog, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  defp typed_extension(:changelog) do
+    {ArticleWorkingCopyChangelog, ~w(copy_right link_addr cover_url cover_url_dark)a}
+  end
 
-  defp typed_extension(:doc),
-    do: {ArticleWorkingCopyDoc, ~w(subtitle link_addr template_key cover_url cover_url_dark)a}
+  defp typed_extension(:doc) do
+    {ArticleWorkingCopyDoc, ~w(subtitle link_addr template_key cover_url cover_url_dark)a}
+  end
 
   defp typed_extension(:ticket), do: nil
 
@@ -346,19 +404,26 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     end
   end
 
-  defp body_document_attrs(body) do
+  defp body_document_attrs(%{markdown_toc: _} = saved) do
+    Map.take(
+      saved,
+      ~w(json schema_version markdown html markdown_toc plain_text thumbnail xml rss)a
+    )
+  end
+
+  defp body_document_attrs(%BodyBag{} = body) do
     generated = BodyBag.to_document_attrs(body)
 
     %{
-      body_json: generated.json,
-      body_schema_version: generated.schema_version,
-      body_markdown: generated.markdown,
-      body_html: generated.html,
-      body_markdown_toc: generated.markdown_toc,
-      body_plain_text: generated.plain_text,
-      body_thumbnail: generated.thumbnail,
-      body_xml: nil,
-      body_rss: nil
+      json: generated.json,
+      schema_version: generated.schema_version,
+      markdown: generated.markdown,
+      html: generated.html,
+      markdown_toc: generated.markdown_toc,
+      plain_text: generated.plain_text,
+      thumbnail: generated.thumbnail,
+      xml: nil,
+      rss: nil
     }
   end
 
@@ -499,8 +564,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     |> normalize_cover_format_version()
   end
 
-  defp normalize_cover_format_version(%{cover_edit: cover} = attrs) when is_map(cover),
-    do: Map.put_new(cover, :format_version, 1) |> then(&Map.put(attrs, :cover_edit, &1))
+  defp normalize_cover_format_version(%{cover_edit: cover} = attrs) when is_map(cover) do
+    Map.put_new(cover, :format_version, 1) |> then(&Map.put(attrs, :cover_edit, &1))
+  end
 
   defp normalize_cover_format_version(attrs), do: attrs
 
@@ -522,9 +588,11 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
   defp maybe_replace_tags(work, _attrs, tags) do
     requested_tag_ids = Enum.map(tags, & &1.id) |> Enum.sort()
 
-    if tag_ids(work) == requested_tag_ids,
-      do: {:ok, :unchanged},
-      else: replace_tags(work, tags)
+    if tag_ids(work) == requested_tag_ids do
+      {:ok, :unchanged}
+    else
+      replace_tags(work, tags)
+    end
   end
 
   defp tag_ids(work) do
@@ -552,8 +620,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     end
   end
 
-  defp take(map, fields),
-    do: Map.take(map, fields) |> then(&Map.merge(&1, string_keys(map, fields)))
+  defp take(map, fields) do
+    Map.take(map, fields) |> then(&Map.merge(&1, string_keys(map, fields)))
+  end
 
   defp string_keys(map, fields) do
     Enum.reduce(fields, %{}, fn field, acc ->
@@ -605,8 +674,9 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
     end
   end
 
-  defp normalize_save_changeset(%Ecto.Changeset{data: %ArticleWorkingCopy{}}),
-    do: {:error, :invalid_content}
+  defp normalize_save_changeset(%Ecto.Changeset{data: %ArticleWorkingCopy{}}) do
+    {:error, :invalid_content}
+  end
 
   defp normalize_save_changeset(%Ecto.Changeset{}), do: {:error, :invalid_content}
 end

@@ -25,6 +25,8 @@ defmodule GroupherServer.CMS.Tickets.Query do
     ArticleWorkingCopy,
     ArticleLifecycle,
     ArticlePublic,
+    ArticlePublicBody,
+    ArticleBodyDocument,
     ArticleSnapshot,
     ArticleReviewBlock,
     CommunityTag,
@@ -421,7 +423,14 @@ defmodule GroupherServer.CMS.Tickets.Query do
       |> Map.new(&{&1.id, &1})
 
     publics =
-      Repo.all(from(public in ArticlePublic, where: public.article_id in ^ids))
+      Repo.all(
+        from(public in ArticlePublic,
+          left_join: body in ArticlePublicBody,
+          on: body.article_id == public.article_id and body.snapshot_id == public.snapshot_id,
+          where: public.article_id in ^ids,
+          select: %{public | body: body}
+        )
+      )
       |> Map.new(&{&1.article_id, &1})
 
     lifecycles =
@@ -470,8 +479,8 @@ defmodule GroupherServer.CMS.Tickets.Query do
       snapshot = public && Map.get(snapshots, public.snapshot_id)
       draft = Map.get(drafts, state.article_id)
       draft_body = draft
-      public_body = snapshot
-      body = if draft, do: draft, else: snapshot
+      public_body = public && public.body
+      body = if draft, do: draft, else: public_body
 
       lifecycle = Map.get(lifecycles, state.article_id)
 
@@ -775,7 +784,7 @@ defmodule GroupherServer.CMS.Tickets.Query do
       binding: binding,
       community: community,
       snapshot: snapshot,
-      body: body,
+      body: body_document(body),
       title: current_content && current_content.title,
       digest: current_content && current_content.digest,
       publication_state: lifecycle && lifecycle.state,
@@ -818,24 +827,28 @@ defmodule GroupherServer.CMS.Tickets.Query do
 
   defp body_document(nil), do: nil
 
+  defp body_document(%ArticlePublicBody{} = body), do: ArticleBodyDocument.document(body)
+
   defp body_document(content) do
+    stored_body = CMS.Articles.Body.document(content)
+
     %{
-      json: content.body_json,
-      markdown: content.body_markdown,
-      html: content.body_html,
-      markdown_toc: content.body_markdown_toc,
-      plain_text: content.body_plain_text,
-      thumbnail: content.body_thumbnail,
-      schema_version: content.body_schema_version
+      json: stored_body.json,
+      markdown: stored_body.markdown,
+      html: stored_body.html,
+      markdown_toc: stored_body.markdown_toc,
+      plain_text: stored_body.plain_text,
+      thumbnail: stored_body.thumbnail,
+      schema_version: stored_body.schema_version
     }
   end
 
   defp working_copy_changed?(working_copy, snapshot) do
-    Enum.any?(
-      ~w(title digest slug body_json body_schema_version body_markdown body_html
-         body_markdown_toc body_plain_text body_thumbnail body_xml body_rss)a,
-      &(Map.get(working_copy, &1) != Map.get(snapshot, &1))
-    )
+    CMS.Articles.Body.document(working_copy) != CMS.Articles.Body.document(snapshot) or
+      Enum.any?(
+        ~w(title digest slug)a,
+        &(Map.get(working_copy, &1) != Map.get(snapshot, &1))
+      )
   end
 
   defp post_refs_by_ticket(ticket_ids, community_id, public?) do

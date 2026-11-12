@@ -1,8 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
 
-import type { TDocDraftInitialData } from '~/unit/DsbThread/CMS/Docs/Editor/Article/spec'
-import type { TDocTreeInitialData } from '~/unit/DsbThread/CMS/Docs/Editor/SideTree/spec'
-import type { TDocTreeNodeDTO } from '~/unit/DsbThread/CMS/Docs/Editor/SideTree/spec'
+import { findFirstPage } from '~/unit/DsbThread/CMS/Docs/Editor/SideTree/helper/tree'
+import { workspaceTabs } from '~/unit/DsbThread/CMS/Docs/Editor/SideTree/helper/workspace'
+import type { TWorkspaceNode } from '~/unit/DsbThread/CMS/Docs/Editor/SideTree/spec'
 import DashboardDocsSchema from '~/unit/DsbThread/schema/docs'
 
 import { fetchGraphQL, getAuthToken, GraphQLRequestError, setPrivateCacheHeader } from './graphql'
@@ -14,24 +14,6 @@ const COMMUNITY_NOT_ACCESSIBLE_CODE = 5504
 export type TDocEditorInitialData = {
   accessDenied: boolean
   activeDocId: string | null
-  docDraft?: TDocDraftInitialData | null
-  docTree?: TDocTreeInitialData | null
-}
-
-const isDocPageNode = (node: TDocTreeNodeDTO): boolean => String(node.type).toLowerCase() === 'page'
-
-const findDocPage = (
-  nodes: readonly TDocTreeNodeDTO[],
-  docId: string | null,
-): TDocTreeNodeDTO | null => {
-  for (const node of nodes) {
-    if (isDocPageNode(node) && (!docId || String(node.docId) === docId)) return node
-
-    const page = findDocPage(node.pages ?? [], docId)
-    if (page) return page
-  }
-
-  return null
 }
 
 export const loadDocEditorData = createServerFn({ method: 'GET', strict: false })
@@ -44,13 +26,11 @@ export const loadDocEditorData = createServerFn({ method: 'GET', strict: false }
       return {
         accessDenied: false,
         activeDocId: null,
-        docDraft: null,
-        docTree: null,
       }
     }
 
     const treeResult = await fetchGraphQL(
-      DashboardDocsSchema.docTree,
+      DashboardDocsSchema.docsWorkspaceTree,
       { community: data.community },
       token,
     ).catch((error: unknown) => {
@@ -68,35 +48,17 @@ export const loadDocEditorData = createServerFn({ method: 'GET', strict: false }
       return {
         accessDenied: true,
         activeDocId: null,
-        docDraft: null,
-        docTree: null,
       }
     }
-    const docTree = (treeResult.data?.docTree as unknown as TDocTreeInitialData | null) || null
-    const nodes = docTree?.tabs?.flatMap((tab) => tab.groups ?? []) ?? []
-    const activePage = findDocPage(nodes, data.docId) || findDocPage(nodes, null)
-    const activeDocId = activePage?.docId ? String(activePage.docId) : null
-
-    if (!activeDocId) {
-      return {
-        accessDenied: false,
-        activeDocId: null,
-        docDraft: null,
-        docTree,
-      }
-    }
-
-    const draftResult = await fetchGraphQL(
-      DashboardDocsSchema.docDraft,
-      { community: data.community, id: activeDocId },
-      token,
-    )
-    const docDraft = (draftResult.data?.docDraft as unknown as TDocDraftInitialData | null) || null
+    const nodes = (treeResult.data?.docsWorkspaceTree?.nodes ?? []) as TWorkspaceNode[]
+    const requested = nodes.find((node) => node.type === 'PAGE' && node.docId === data.docId)
+    const first = workspaceTabs(nodes)
+      .map((tab) => findFirstPage(tab.groups))
+      .find(Boolean)
+    const activeDocId = requested?.docId ?? (first && 'docId' in first ? first.docId : null) ?? null
 
     return {
       accessDenied: false,
       activeDocId,
-      docDraft,
-      docTree,
     }
   })

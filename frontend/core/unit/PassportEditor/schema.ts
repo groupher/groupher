@@ -1,6 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 const userPassport = graphql(`
+  "Get user by login"
   query UserPassport($login: String!) {
     user(login: $login) {
       passportString
@@ -14,6 +15,7 @@ const userPassport = graphql(`
 `)
 
 const allPassportRules = graphql(`
+  "Get all passport rules include system and community etc ..."
   query AllPassportRules {
     allPassportRulesString {
       cms
@@ -22,6 +24,7 @@ const allPassportRules = graphql(`
 `)
 
 const updateModeratorPassport = graphql(`
+  "Update cms moderator's title, passport is not effected"
   mutation UpdateModeratorPassport(
     $commandId: ID!
     $community: String!
@@ -40,6 +43,7 @@ const updateModeratorPassport = graphql(`
 `)
 
 const removeModerator = graphql(`
+  "Unset a moderator from a community, the user's passport also deleted"
   mutation RemoveModerator($commandId: ID!, $community: String!, $user: String!) {
     removeModerator(commandId: $commandId, community: $community, user: $user) {
       slug

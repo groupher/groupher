@@ -223,13 +223,22 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
     assert {:ok, _} = ProductionSeed.Cleanup.apply("purge", db, "purge", again.report_digest)
 
     for resource <- Map.values(manifest["resources"]) do
-      if resource["thread"] == "ticket" do
-        assert Repo.get(CMS.Model.Article, resource["articleId"])
+      case get_in(resource, ["locator", "thread"]) || resource["thread"] do
+        "doc" ->
+          assert Repo.get(CMS.Model.Article, resource["articleId"])
+          assert Repo.get(CMS.Model.DocsHistoryOwner, resource["articleId"])
+          refute Repo.get(CMS.Model.ArticlePublic, resource["articleId"])
+          refute Repo.get_by(CMS.Model.DocsLifecycle, article_id: resource["articleId"])
 
-        assert Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: resource["articleId"]).state ==
-                 :draft
-      else
-        refute Repo.get(CMS.Model.Article, resource["articleId"])
+        "ticket" ->
+          assert Repo.get(CMS.Model.Article, resource["articleId"])
+
+          assert Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: resource["articleId"]).state ==
+                   :draft
+
+        _ ->
+          assert Repo.get(CMS.Model.Article, resource["articleId"])
+          refute Repo.get(CMS.Model.ArticlePublic, resource["articleId"])
       end
     end
 

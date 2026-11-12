@@ -60,8 +60,8 @@ defmodule GroupherServer.CMS.Trash do
 
   def permanently_delete_action(%TrashAction{} = action, actor, opts) do
     cond do
-      String.starts_with?(action.root_type, "doc_tree_") ->
-        CMS.DocTree.Trash.permanently_delete_action(action, actor, opts)
+      action.root_type == "doc_tree_node" ->
+        {:error, :docs_trash_requires_workspace_command}
 
       action.root_type == "article" ->
         permanently_delete_article_action(action, actor, opts)
@@ -103,15 +103,19 @@ defmodule GroupherServer.CMS.Trash do
   end
 
   defp permanently_delete_action_in_scope_loaded(
-         %TrashAction{root_type: root_type} = action,
+         %TrashAction{root_type: "doc_tree_node"},
+         _actor,
+         _opts
+       ) do
+    {:error, :docs_trash_requires_workspace_command}
+  end
+
+  defp permanently_delete_action_in_scope_loaded(
+         %TrashAction{root_type: "article"} = action,
          actor,
          opts
        ) do
-    if String.starts_with?(root_type, "doc_tree_") do
-      CMS.DocTree.Commands.PermanentlyDeleteTrashItem.execute(action, actor, opts)
-    else
-      permanently_delete_article_action_receipt(action, actor, opts)
-    end
+    permanently_delete_article_action_receipt(action, actor, opts)
   end
 
   defp permanently_delete_article_action_receipt(action, %User{} = actor, opts) do
@@ -140,7 +144,7 @@ defmodule GroupherServer.CMS.Trash do
       |> Repo.all()
 
     Enum.reduce(actions, %{deleted: 0, failed: []}, fn action, result ->
-      case purge_action(action, source: "scheduler") do
+      case purge_action(action, source: "scheduler", now: now) do
         {:ok, _} ->
           %{result | deleted: result.deleted + 1}
 
@@ -151,15 +155,12 @@ defmodule GroupherServer.CMS.Trash do
     |> then(fn result -> {:ok, %{result | failed: Enum.reverse(result.failed)}} end)
   end
 
-  defp purge_action(%TrashAction{root_type: root_type} = action, opts) do
-    if String.starts_with?(root_type, "doc_tree_") do
-      CMS.DocTree.permanently_delete_trash_item_internal(
-        action,
-        Keyword.merge(opts, community_id: action.community_id, thread: :doc)
-      )
-    else
-      permanently_delete_article_action_internal(action, opts)
-    end
+  defp purge_action(%TrashAction{root_type: "doc_tree_node"} = action, opts) do
+    CMS.DocTree.Commands.PurgeWorkspaceTrash.execute_due(action, Keyword.fetch!(opts, :now))
+  end
+
+  defp purge_action(%TrashAction{root_type: "article"} = action, opts) do
+    permanently_delete_article_action_internal(action, opts)
   end
 
   defp permanently_delete_article_action_internal(action, opts) do

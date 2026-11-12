@@ -6,8 +6,8 @@ import {
   CreateCommentDocument,
   ReplyCommentDocument,
   SaveWorkingCopyDocument,
+  SaveDocsQueueCopyDocument,
   UpdateCommentDocument,
-  UpdateDocDraftDocument,
 } from './generated/graphql'
 
 export type TContentPublishOperation = TypedDocumentNode<Record<string, unknown>, never>
@@ -19,6 +19,6 @@ export const CONTENT_PUBLISH_OPERATIONS = {
   createComment: CreateCommentDocument,
   replyComment: ReplyCommentDocument,
   updateComment: UpdateCommentDocument,
-  updateDocDraft: UpdateDocDraftDocument,
   saveWorkingCopy: SaveWorkingCopyDocument,
+  saveDocsQueueCopy: SaveDocsQueueCopyDocument,
 } as const

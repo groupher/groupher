@@ -1333,7 +1333,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
 
     assert {:ok, item} = CMS.Articles.trash(post, actor, community: community)
     assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, actor)
-    refute Repo.get(Article, post.id)
+    assert Repo.get(Article, post.id)
     refute Repo.exists?(from(source in Source, where: source.post_id == ^post.id))
   end
 
@@ -1651,7 +1651,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     models = [
       Article,
       CMS.Model.ArticleWorkingCopy,
-      CMS.Model.ArticleBodyDraft,
+      CMS.Model.ArticleBody,
       TicketState,
       CMS.Model.TicketWorker,
       CMS.Model.ArticleAssetRef,

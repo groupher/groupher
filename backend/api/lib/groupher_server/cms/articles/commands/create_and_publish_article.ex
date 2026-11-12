@@ -9,8 +9,8 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
   alias CMS.Articles.Commands.CreateAndPublishArticleConfirmation, as: Confirmation
   alias CMS.Articles.Tags.Assignment
   alias CMS.Articles.WorkingCopy.{Publisher, Store}
@@ -90,22 +90,21 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
     )
   end
 
-  def execute(_community, _thread, _attrs, _actor, _opts),
-    do: {:error, :invalid_create_publish_command}
+  def execute(_community, _thread, _attrs, _actor, _opts) do
+    {:error, :invalid_create_publish_command}
+  end
 
   defp create_and_publish(community, thread, attrs, actor, command_id) do
     with {:ok, author} <- CMS.Articles.Persist.ensure_author_exists(actor),
          {:ok, article} <-
-           CMS.Articles.Draft.Store.create_article_shell_loaded(
+           CMS.Articles.Identity.create_loaded(
              community,
              thread,
              attrs,
-             author,
-             []
+             author
            ),
          work_attrs <- Map.merge(attrs, %{scope_kind: :default, scope_id: article.id}),
          {:ok, work} <- Store.create_loaded(article, work_attrs, actor, community.id),
-         {:ok, _binding_tags} <- sync_community_tags(community, article, attrs, command_id),
          {:ok, published} <-
            Publisher.publish_in_transaction(
              article,
@@ -114,7 +113,8 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
              nil,
              actor,
              command_id
-           ) do
+           ),
+         {:ok, _binding_tags} <- sync_community_tags(community, article, attrs, command_id) do
       {:ok, Map.put(published, :working_copy, work)}
     end
   end
@@ -157,9 +157,11 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
          true <- work.article_id == article.id,
          %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id),
          {:ok, public} <- CMS.Articles.Public.get(article) do
-      if public.snapshot_id == snapshot_id,
-        do: {:ok, %{article: article, working_copy: work, snapshot: snapshot, public: public}},
-        else: {:error, CMS.ErrorCat.command_result_unavailable()}
+      if public.snapshot_id == snapshot_id do
+        {:ok, %{article: article, working_copy: work, snapshot: snapshot, public: public}}
+      else
+        {:error, CMS.ErrorCat.command_result_unavailable()}
+      end
     else
       _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
     end

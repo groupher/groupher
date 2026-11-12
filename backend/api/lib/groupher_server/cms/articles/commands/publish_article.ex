@@ -9,8 +9,8 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
   use GroupherServer.CommandPipeline,
     adapter: GroupherServer.CMS.CommandPipelineAdapter
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo, Accounts}
+  alias Accounts.Model.User
   alias CMS.Articles.Commands.PublishArticleConfirmation, as: Confirmation
   alias CMS.Articles.WorkingCopy.Access, as: WorkingCopyAccess
   alias CMS.Articles.WorkingCopy.Publisher
@@ -90,8 +90,9 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishArticle do
     end
   end
 
-  def execute(_article, _community, _source, _expected, _actor, _command_id),
-    do: {:error, :invalid_publish_command}
+  def execute(_article, _community, _source, _expected, _actor, _command_id) do
+    {:error, :invalid_publish_command}
+  end
 
   defp present_confirmation(%Confirmation{
          data: %{

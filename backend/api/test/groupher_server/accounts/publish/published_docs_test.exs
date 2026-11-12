@@ -23,10 +23,16 @@ defmodule GroupherServer.Test.Accounts.Publish.Doc do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, doc_attrs, user2, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(community, :doc, doc_attrs, user2,
+          command_id: Ecto.UUID.generate()
+        )
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, doc_attrs, user2, command_id: Ecto.UUID.generate())
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user2, command_id: Ecto.UUID.generate())
 
       {:ok, user} = ORM.find(User, user2.id)
       assert user.meta.published_docs_count == 2
@@ -50,9 +56,11 @@ defmodule GroupherServer.Test.Accounts.Publish.Doc do
           doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
           {:ok, doc} =
-            CMS.Articles.create(community, :doc, doc_attrs, user,
-              command_id: Ecto.UUID.generate()
-            )
+            GroupherServer.Support.Factory.create_published_article(
+              community,
+              :doc,
+              doc_attrs,
+              user, command_id: Ecto.UUID.generate())
 
           acc ++ [doc]
         end)
@@ -62,9 +70,11 @@ defmodule GroupherServer.Test.Accounts.Publish.Doc do
           doc_attrs = mock_attrs(:doc, %{community_id: community2.id})
 
           {:ok, doc} =
-            CMS.Articles.create(community, :doc, doc_attrs, user,
-              command_id: Ecto.UUID.generate()
-            )
+            GroupherServer.Support.Factory.create_published_article(
+              community,
+              :doc,
+              doc_attrs,
+              user, command_id: Ecto.UUID.generate())
 
           acc ++ [doc]
         end)
@@ -74,7 +84,11 @@ defmodule GroupherServer.Test.Accounts.Publish.Doc do
         doc_attrs = mock_attrs(:doc, %{community_id: community.id})
 
         {:ok, doc} =
-          CMS.Articles.create(community, :doc, doc_attrs, user2, command_id: Ecto.UUID.generate())
+          GroupherServer.Support.Factory.create_published_article(
+            community,
+            :doc,
+            doc_attrs,
+            user2, command_id: Ecto.UUID.generate())
 
         acc ++ [doc]
       end)

@@ -50,19 +50,25 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
         )
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, mock_attrs(:doc), user,
-          command_id: Ecto.UUID.generate()
-        )
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, mock_attrs(:doc), user,
-          command_id: Ecto.UUID.generate()
-        )
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       {:ok, _} =
-        CMS.Articles.create(community, :doc, mock_attrs(:doc), user,
-          command_id: Ecto.UUID.generate()
-        )
+        GroupherServer.Support.Factory.create_published_article(
+          community,
+          :doc,
+          mock_attrs(:doc),
+          user, command_id: Ecto.UUID.generate())
 
       {:ok, _} =
         GroupherServer.Support.Factory.create_published_article(
