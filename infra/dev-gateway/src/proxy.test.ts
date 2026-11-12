@@ -1,4 +1,4 @@
-import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
+import { GROUPHER_AUTH_TOKEN_COOKIE, GROUPHER_VIEWER_COOKIE } from '@groupher/contracts/auth'
 import { describe, expect, it, vi } from 'vitest'
 
 import { buildProxyHeaders, buildProxyResponse, proxyRequest } from './proxy'
@@ -41,13 +41,14 @@ describe('gateway/proxy', () => {
     expect(headers.get('x-groupher-community-slug')).toBe('home')
   })
 
-  it('cleans browser GraphQL credentials and forwards only the Groupher auth token', () => {
+  it('cleans browser GraphQL credentials and forwards auth and viewer cookies', () => {
     const request = new Request('https://groupher.com/api/graphql', {
       headers: {
         authorization: 'Bearer browser-token',
         cookie: [
           'other=value',
           `${GROUPHER_AUTH_TOKEN_COOKIE}=${encodeURIComponent('phoenix token')}`,
+          `${GROUPHER_VIEWER_COOKIE}=${encodeURIComponent('viewer token')}`,
         ].join('; '),
         'content-type': 'application/json',
       },
@@ -63,10 +64,23 @@ describe('gateway/proxy', () => {
 
     expect(headers.has('authorization')).toBe(false)
     expect(headers.get('content-type')).toBe('application/json')
-    expect(headers.get('cookie')).toBe(`${GROUPHER_AUTH_TOKEN_COOKIE}=phoenix%20token`)
+    expect(headers.get('cookie')).toBe(
+      `${GROUPHER_AUTH_TOKEN_COOKIE}=phoenix%20token; ${GROUPHER_VIEWER_COOKIE}=viewer%20token`,
+    )
   })
 
-  it('removes browser GraphQL cookies when the Groupher auth token is absent', () => {
+  it('preserves the anonymous viewer cookie without an auth cookie', () => {
+    const request = new Request('https://groupher.com/api/graphql', {
+      headers: { cookie: 'other=value; groupher-viewer=viewer%20token' },
+    })
+    const headers = buildProxyHeaders(
+      request,
+      makeTarget({ targetKind: 'phoenix', requestHeaderPolicy: 'graphql-browser-clean' }),
+    )
+    expect(headers.get('cookie')).toBe('groupher-viewer=viewer%20token')
+  })
+
+  it('removes unrelated browser GraphQL cookies when both allowed cookies are absent', () => {
     const request = new Request('https://groupher.com/api/graphql', {
       headers: {
         authorization: 'Bearer browser-token',
@@ -112,7 +126,7 @@ describe('gateway/proxy', () => {
       request,
       makeTarget({
         targetKind: 'phoenix',
-        targetUrl: new URL('https://api.groupher.com/graphiql'),
+        targetUrl: new URL('https://api.groupher.com/graphql'),
         requiresBodyProxy: true,
       }),
       { fetcher },
@@ -123,7 +137,7 @@ describe('gateway/proxy', () => {
 
     expect(fetcher).toHaveBeenCalledTimes(1)
     const [url, init] = fetcher.mock.calls[0]
-    expect(url).toEqual(new URL('https://api.groupher.com/graphiql'))
+    expect(url).toEqual(new URL('https://api.groupher.com/graphql'))
     expect(init?.method).toBe('POST')
     expect(init?.headers).toBeInstanceOf(Headers)
     expect(init?.body).toBe(request.body)

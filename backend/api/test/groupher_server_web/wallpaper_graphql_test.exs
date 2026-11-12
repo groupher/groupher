@@ -167,7 +167,7 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
 
     loser_response =
       rule_conn
-      |> post("/graphiql",
+      |> post("/graphql",
         query: S.Dsb.m(:publish_wallpaper),
         variables: %{
           community: community.slug,

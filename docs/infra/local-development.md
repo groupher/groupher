@@ -101,7 +101,7 @@ Dev Gateway 接收浏览器请求，并按 host/path 路由：
 
 ```text
 /api/auth/*             -> Auth
-/api/graphql            -> Phoenix /graphiql with browser cookie cleanup
+/api/graphql            -> Phoenix /graphql with browser cookie cleanup
 /api/utils/slugify      -> Community
 /                       -> Landing
 /pricing                -> Landing
@@ -118,7 +118,7 @@ apply.groupher.localhost/*     -> Apply
 Dash 和 Apply 是独立产品入口，不通过 `groupher.localhost/:community/...` 路由。
 Dev Gateway 不包含旧产品 fallback 或 `/apply` 兼容产品路由，只保留真正的 dev-only 规则。
 
-对于浏览器 GraphQL，Dev Gateway 保持与生产路由器相同的安全边界：浏览器请求使用同源 `/api/graphql`，并且只将 HttpOnly 的 `groupher-auth.token` 转发给 Phoenix。
+对于浏览器 GraphQL，Dev Gateway 保持与生产路由器相同的安全边界：浏览器请求使用同源 `/api/graphql`，并且只将 HttpOnly 的 `groupher-auth.token` 和 `groupher-viewer` 转发给 Phoenix。
 
 Landing 的旧入口路由实现已清理。需要验证生产形态时，使用当前 `landing` Worker Static
 Assets 和 `edge-router` 的 dry-run/development 流程；现有 Dev Gateway 仍覆盖开发路由和 HMR。

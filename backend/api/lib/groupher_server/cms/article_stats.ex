@@ -248,6 +248,22 @@ defmodule GroupherServer.CMS.ArticleStats do
     end
   end
 
+  @doc "Reads search count fields for a bounded collection of Article identities."
+  def search_counts_batch(thread, article_ids)
+      when thread in @article_threads and is_list(article_ids) do
+    rows =
+      Repo.all(
+        from(stats in ArticleStats,
+          where: stats.thread == ^thread and stats.article_id in ^article_ids,
+          select:
+            {stats.article_id,
+             %{upvotes_count: stats.upvotes_count, comments_count: stats.comments_count}}
+        )
+      )
+
+    {:ok, Map.new(rows)}
+  end
+
   @doc "Returns one complete row by stable Article identity."
   @spec fetch(atom(), Ecto.UUID.t()) :: {:ok, map()} | {:error, :article_stats_not_found}
   def fetch(thread, article_id) when thread in @article_threads and is_binary(article_id) do

@@ -35,10 +35,10 @@ dev.app:
 	@bash local/dev-hub/scripts/install-app.sh
 
 fe.dev.dash:
-	PORT=3005 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://dash.groupher.localhost NEXT_PUBLIC_AUTH_ENDPOINT=https://auth.groupher.localhost/api/auth pnpm run dev:dash
+	PORT=3005 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphql NEXT_PUBLIC_SITE_URL=https://dash.groupher.localhost NEXT_PUBLIC_AUTH_ENDPOINT=https://auth.groupher.localhost/api/auth pnpm run dev:dash
 
 fe.dev.apply:
-	PORT=3006 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://groupher.localhost pnpm run dev:apply
+	PORT=3006 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphql NEXT_PUBLIC_SITE_URL=https://groupher.localhost pnpm run dev:apply
 
 fe.build.dash:
 	pnpm run build:prod:dash

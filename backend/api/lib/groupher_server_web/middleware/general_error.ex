@@ -39,8 +39,7 @@ defmodule GroupherServerWeb.Middleware.GeneralError do
 
   defp format_error(error) do
     Logger.warning("Unstructured GraphQL error reached GeneralError",
-      error_type: inspect(if(is_map(error), do: Map.get(error, :__struct__), else: nil)),
-      error: inspect(error, limit: 20, printable_limit: 200)
+      error_type: inspect(if(is_map(error), do: Map.get(error, :__struct__), else: nil))
     )
 
     format_declared(WebErrorCat.unexpected_error())

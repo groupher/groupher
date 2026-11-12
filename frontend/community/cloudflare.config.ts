@@ -21,8 +21,8 @@ export default defineConfig(({ mode }) => {
       env: {
         GRAPHQL_ENDPOINT: bindings.text(
           production
-            ? 'https://api.groupher.com/graphiql'
-            : 'http://api.groupher.localhost:4001/graphiql',
+            ? 'https://api.groupher.com/graphql'
+            : 'http://api.groupher.localhost:4001/graphql',
         ),
         SERVICE_AUTH_CLIENT_ID: bindings.text(
           production ? 'community-production' : 'community-development',

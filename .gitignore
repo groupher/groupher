@@ -167,3 +167,6 @@ backend/api/priv/pipeline_graph.json
 .trae/
 .windsurf/
 skills-lock.json
+
+# Generated GraphiQL assets (built locally or in the API image)
+backend/api/priv/static/graphiql/

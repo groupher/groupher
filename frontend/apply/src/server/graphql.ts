@@ -37,6 +37,7 @@ export const requestGraphQL = async <TData, TVariables extends object>(
   const response = await fetch(endpoint, {
     method: 'POST',
     cache: 'no-store',
+    signal: AbortSignal.timeout(10_000),
     headers: {
       'content-type': 'application/json',
       ...(token ? { cookie: `${GROUPHER_AUTH_TOKEN_COOKIE}=${token}` } : {}),

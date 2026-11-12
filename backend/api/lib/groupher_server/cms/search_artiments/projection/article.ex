@@ -27,13 +27,29 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
   """
   @spec project(Artiment.thread(), struct()) :: {:ok, Artiment.t()} | {:error, term()}
   def project(thread, article) do
+    project_with_counts(thread, article, fn ->
+      CMS.ArticleStats.search_counts(thread, article.id)
+    end)
+  end
+
+  @doc "Projects using previously batched search counts."
+  def project(thread, article, counts_by_id) when is_map(counts_by_id) do
+    project_with_counts(thread, article, fn ->
+      case Map.fetch(counts_by_id, article.id) do
+        {:ok, counts} -> {:ok, counts}
+        :error -> CMS.ArticleStats.search_counts(thread, article.id)
+      end
+    end)
+  end
+
+  defp project_with_counts(thread, article, get_counts) do
     with %{slug: community_ref} <- article.community,
          %{plain_text: plain_text, body_hash: body_hash} = body <- article.body,
          true <- is_binary(plain_text) and is_binary(body_hash),
          true <- is_binary(article.id),
          true <- is_binary(article.revision_id),
          inner_id when not is_nil(inner_id) <- Map.get(article, :inner_id),
-         {:ok, counts} <- CMS.ArticleStats.search_counts(thread, article.id) do
+         {:ok, counts} <- get_counts.() do
       ref = Artiment.article_key(thread, article.id, community_ref)
 
       {:ok,

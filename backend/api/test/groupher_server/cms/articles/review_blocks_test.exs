@@ -18,6 +18,78 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
 
   alias CMS.Outbox.Event, as: OutboxEvent
 
+  test "platform review visibility batches community lookups across bindings" do
+    {community, view, _attrs, author} = mock_article(:post)
+    article = Repo.get!(Article, view.id)
+    lifecycle = Repo.get_by!(ArticleLifecycle, article_id: article.id)
+    {:ok, second} = mock_community(author)
+    {:ok, third} = mock_community(author)
+
+    for destination <- [second, third] do
+      assert {:ok, {:ok, _}} =
+               Repo.transaction(fn ->
+                 CMS.Articles.BindingPersist.mirror(article, destination)
+               end)
+    end
+
+    owner = self()
+    ref = make_ref()
+    handler = {__MODULE__, ref}
+    event = Repo.config() |> Keyword.fetch!(:telemetry_prefix) |> Kernel.++([:query])
+
+    :ok =
+      :telemetry.attach(
+        handler,
+        event,
+        fn _, _, metadata, _ ->
+          if String.contains?(metadata.query, "communities") and
+               String.starts_with?(metadata.query, "SELECT") do
+            send(owner, {ref, metadata.query})
+          end
+        end,
+        nil
+      )
+
+    try do
+      assert {:ok, restriction} =
+               Repo.transaction(fn ->
+                 with {:ok, locked} <- CMS.Articles.Lifecycle.lock(article),
+                      {:ok, result} <-
+                        CMS.Articles.Lifecycle.apply_review_block(
+                          locked,
+                          attrs(lifecycle, "platform", "count-test")
+                        ) do
+                   result
+                 else
+                   {:error, reason} -> Repo.rollback(reason)
+                 end
+               end)
+
+      queries =
+        Stream.repeatedly(fn ->
+          receive do
+            {^ref, query} -> query
+          after
+            10 -> nil
+          end
+        end)
+        |> Enum.take_while(& &1)
+
+      IO.puts("REVIEW_VISIBILITY_COMMUNITY_SELECTS=#{length(queries)}")
+      assert length(queries) <= 7
+
+      for c <- [community, second, third] do
+        assert Repo.get_by!(OutboxEvent,
+                 event: "article.visibility_changed",
+                 resource_id: article.id,
+                 effect_key: "review:#{restriction.source_ref}:#{c.id}"
+               )
+      end
+    after
+      :telemetry.detach(handler)
+    end
+  end
+
   test "ending one scope restriction keeps other scope restrictions effective" do
     {community, article_view, _attrs, author} = mock_article(:post)
     article = Repo.get!(Article, article_view.id)

@@ -45,6 +45,26 @@ const validateGraphQLRequest = (request: Request, target: PublicRoute): Response
   return null
 }
 
+const limitGraphQLRequest = async (
+  request: Request,
+  target: PublicRoute,
+  env: Env,
+): Promise<Response | null> => {
+  if (target.requestHeaderPolicy !== 'graphql-browser-clean') return null
+  const ip = request.headers.get('cf-connecting-ip')
+  if (!ip) {
+    if ((env.NODE_ENV as string) === 'development' || (env.NODE_ENV as string) === 'test')
+      return null
+    return Response.json({ errors: [{ message: 'Client address unavailable.' }] }, { status: 503 })
+  }
+  const { success } = await env.GRAPHQL_RATE_LIMIT.limit({ key: ip })
+  if (success) return null
+  return Response.json(
+    { errors: [{ message: 'Too many GraphQL requests.', extensions: { code: 'RATE_LIMITED' } }] },
+    { status: 429, headers: { 'retry-after': '60', 'cache-control': 'no-store' } },
+  )
+}
+
 const readCustomDomains = (value: string): Record<string, string> => {
   try {
     const parsed: unknown = JSON.parse(value)
@@ -151,6 +171,7 @@ export default {
               : target.targetKind === 'press' && env.PRESS_PUBLIC_DISABLED !== 'false'
                 ? pressDisabled()
                 : validateGraphQLRequest(request, target) ||
+                  (await limitGraphQLRequest(request, target, env)) ||
                   (await proxyRequest(request, target, env))
 
       console.log(

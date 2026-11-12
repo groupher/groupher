@@ -20,6 +20,7 @@ const createEnv = () =>
     CUSTOM_DOMAIN_COMMUNITIES: '{"talk.example.com":"home"}',
     PREVIEW_PLATFORM_HOSTS: '',
     NODE_ENV: 'test',
+    GRAPHQL_RATE_LIMIT: { limit: vi.fn(async () => ({ success: true })) },
     CF_VERSION_METADATA: { id: 'version-1', tag: '', timestamp: '2026-08-24T00:00:00Z' },
   }) as unknown as Env
 
@@ -27,6 +28,31 @@ const dispatch = (request: Request, env = createEnv()) =>
   worker.fetch(request as Parameters<typeof worker.fetch>[0], env)
 
 describe('edge-router', () => {
+  it('rejects requests when the GraphQL IP rate limit is exhausted', async () => {
+    const env = createEnv()
+    vi.mocked(env.GRAPHQL_RATE_LIMIT.limit).mockResolvedValueOnce({ success: false })
+    const response = await dispatch(
+      new Request('https://groupher.com/api/graphql', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-groupher-csrf': '1',
+          'cf-connecting-ip': '192.0.2.1',
+        },
+        body: '{}',
+      }),
+      env,
+    )
+    expect(response.status).toBe(429)
+    expect(response.headers.get('retry-after')).toBe('60')
+    expect(env.GRAPHQL_RATE_LIMIT.limit).toHaveBeenCalledWith({ key: '192.0.2.1' })
+  })
+
+  it('fails closed for production GraphQL requests without a client address', async () => {
+    const env = { ...createEnv(), NODE_ENV: 'production' } as Env
+    const response = await dispatch(new Request('https://groupher.com/api/graphql'), env)
+    expect(response.status).toBe(503)
+  })
   it('forwards Publisher POST body and caller cookies to the Community binding', async () => {
     const env = createEnv()
     const body = JSON.stringify({ action: 'comment.create', commandId: 'acceptance-command' })
@@ -168,7 +194,7 @@ describe('edge-router', () => {
     }
   })
 
-  it('enforces browser GraphQL CSRF and keeps only the Groupher auth cookie', async () => {
+  it('enforces browser GraphQL CSRF and keeps only the GraphQL cookies', async () => {
     expect(
       (
         await dispatch(
@@ -185,16 +211,29 @@ describe('edge-router', () => {
           'content-type': 'application/json',
           [GROUPHER_AUTH_CSRF_HEADER]: GROUPHER_AUTH_CSRF_VALUE,
           authorization: 'Bearer secret',
-          cookie: 'other=no; groupher-auth.token=token%20value',
+          cookie: 'other=no; groupher-auth.token=token%20value; groupher-viewer=viewer%20value',
         },
         body: '{}',
       }),
     )
 
     const forwarded = fetchSpy.mock.calls[0][0] as Request
-    expect(forwarded.url).toBe('https://api.groupher.com/graphiql?op=viewer')
+    expect(forwarded.url).toBe('https://api.groupher.com/graphql?op=viewer')
     expect(forwarded.headers.has('authorization')).toBe(false)
-    expect(forwarded.headers.get('cookie')).toBe('groupher-auth.token=token%20value')
+    expect(forwarded.headers.get('cookie')).toBe(
+      'groupher-auth.token=token%20value; groupher-viewer=viewer%20value',
+    )
+  })
+
+  it('forwards an anonymous viewer cookie without an auth cookie', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('ok'))
+    await dispatch(
+      new Request('https://groupher.com/api/graphql', {
+        headers: { cookie: 'other=no; groupher-viewer=viewer%20value' },
+      }),
+    )
+    const forwarded = fetchSpy.mock.calls[0][0] as Request
+    expect(forwarded.headers.get('cookie')).toBe('groupher-viewer=viewer%20value')
   })
 
   it('does not know independent product hosts or removed root paths', async () => {

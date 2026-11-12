@@ -11,4 +11,5 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection do
 
   @doc "Projects one public Article DTO into a Search Artiment."
   defdelegate article(thread, article), to: Article, as: :project
+  defdelegate article(thread, article, counts), to: Article, as: :project
 end

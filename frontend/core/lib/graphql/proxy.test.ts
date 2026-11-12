@@ -4,7 +4,7 @@ import { proxyGraphQLRequest } from './proxy'
 
 describe('proxyGraphQLRequest', () => {
   beforeEach(() => {
-    vi.stubEnv('GRAPHQL_ENDPOINT', 'https://api.groupher.test/graphiql')
+    vi.stubEnv('GRAPHQL_ENDPOINT', 'https://api.groupher.test/graphql')
   })
 
   afterEach(() => {
@@ -34,7 +34,7 @@ describe('proxyGraphQLRequest', () => {
     const [url, init] = fetcher.mock.calls[0]! as unknown as [URL, RequestInit]
     const headers = init.headers as Headers
 
-    expect(String(url)).toBe('https://api.groupher.test/graphiql?query=%7Bme%7Blogin%7D%7D')
+    expect(String(url)).toBe('https://api.groupher.test/graphql?query=%7Bme%7Blogin%7D%7D')
     expect(headers.has('authorization')).toBe(false)
     expect(headers.get('cookie')).toBe(
       'groupher-auth.token=phoenix%20token; groupher-viewer=visitor-1',
