@@ -2,6 +2,96 @@ defmodule GroupherServerWeb.Query.PaginationContractTest do
   use ExUnit.Case, async: true
 
   alias GroupherServerWeb.Schema
+  alias GroupherServerWeb.GraphQL.OneOfValidation
+
+  test "OneOf rejects a value alongside an explicit null in literals and variables" do
+    for input <- ["{offset: {}, cursor: null}", "{offset: null, cursor: {}}"] do
+      query = "{ __typename postPage(pagi: #{input}) @skip(if: true) { __typename } }"
+      assert {:ok, %{errors: [%{message: message} | _]}} = run_validated(query)
+      assert message =~ "exactly one non-null field"
+    end
+
+    query = """
+    query PaginationValidation($pagi: PagiInput) {
+      __typename
+      postPage(pagi: $pagi) @skip(if: true) { __typename }
+    }
+    """
+
+    for input <- [%{"offset" => %{}, "cursor" => nil}, %{"offset" => nil, "cursor" => %{}}] do
+      assert {:ok, %{errors: [%{message: message} | _]}} =
+               run_validated(query, variables: %{"pagi" => input})
+
+      assert message =~ "exactly one non-null field"
+    end
+  end
+
+  test "GraphQL HTTP pipeline rejects an explicit null beside a value" do
+    query =
+      "{ __typename postPage(pagi: {offset: {}, cursor: null}) @skip(if: true) { __typename } }"
+
+    options =
+      Absinthe.Plug.GraphiQL.init(
+        schema: Schema,
+        pipeline: {OneOfValidation, :plug_pipeline}
+      )
+
+    conn =
+      :post
+      |> Plug.Test.conn("/", %{"query" => query})
+      |> Absinthe.Plug.GraphiQL.call(options)
+
+    assert %{"errors" => [%{"message" => message} | _]} = Jason.decode!(conn.resp_body)
+    assert message =~ "exactly one non-null field"
+  end
+
+  defp run_validated(query, options \\ []) do
+    Absinthe.run(
+      query,
+      Schema,
+      Keyword.put(options, :pipeline_modifier, &OneOfValidation.pipeline/2)
+    )
+  end
+
+  test "operation descriptions remain executable" do
+    assert {:ok, %{data: %{"__typename" => "RootQueryType"}}} =
+             Absinthe.run(
+               """
+               "Identifies the GraphQL root without loading application data."
+               query DescribeRoot { __typename }
+               """,
+               Schema
+             )
+  end
+
+  test "PagiInput validates inline values and variables before resolving fields" do
+    for input <- ["{offset: {page: 1}}", "{cursor: {first: 10}}"] do
+      query = "{ __typename postPage(pagi: #{input}) @skip(if: true) { __typename } }"
+      assert {:ok, %{data: %{"__typename" => _}}} = run_validated(query)
+    end
+
+    for input <- ["{}", "{offset: {}, cursor: {}}", "{offset: null}"] do
+      query = "{ __typename postPage(pagi: #{input}) @skip(if: true) { __typename } }"
+      assert {:ok, %{errors: [_ | _]}} = run_validated(query)
+    end
+
+    query = """
+    query PaginationValidation($pagi: PagiInput) {
+      __typename
+      postPage(pagi: $pagi) @skip(if: true) { __typename }
+    }
+    """
+
+    for input <- [%{"offset" => %{"page" => 1}}, %{"cursor" => %{"first" => 10}}] do
+      assert {:ok, %{data: %{"__typename" => _}}} =
+               run_validated(query, variables: %{"pagi" => input})
+    end
+
+    for input <- [%{}, %{"offset" => %{}, "cursor" => %{}}, %{"offset" => nil}] do
+      assert {:ok, %{errors: [_ | _]}} =
+               run_validated(query, variables: %{"pagi" => input})
+    end
+  end
 
   test "PagiInput is a standard GraphQL oneOf input" do
     assert {:ok, %{data: %{"__type" => type}}} =

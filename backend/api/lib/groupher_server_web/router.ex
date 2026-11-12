@@ -66,6 +66,7 @@ defmodule GroupherServerWeb.Router do
       "/",
       Absinthe.Plug.GraphiQL,
       schema: GroupherServerWeb.Schema,
+      pipeline: {GroupherServerWeb.GraphQL.OneOfValidation, :plug_pipeline},
       # json_codec: Jason,
       interface: :playground
       # context: %{pubsub: GroupherServerWeb.Endpoint}
