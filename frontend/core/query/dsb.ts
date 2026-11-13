@@ -3,7 +3,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { parseDashboard } from '~/lib/ssr/parse'
 import type { TParseDashboard } from '~/spec'
 
-import { fetchCommunitySnapshot } from './communitySource'
+import { fetchCommunity } from './communitySource'
 
 export const dsbKeys = {
   all: ['dsb'] as const,
@@ -25,7 +25,7 @@ const config = (community: string, seed?: TDsbConfigSeed) =>
     queryFn: async (): Promise<TParseDashboard> => {
       if (seed) return seed()
 
-      return parseDashboard(await fetchCommunitySnapshot(community))
+      return parseDashboard(await fetchCommunity(community))
     },
     enabled: !!community,
     staleTime: 60_000,

@@ -22,7 +22,7 @@ import {
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
-import type { PagePagedCommunitiesQuery } from '~/lib/graphql/generated/graphql'
+import type { PagedCommunitiesQuery } from '~/lib/graphql/generated/graphql'
 import { graphqlQueryOptions } from '~/query'
 import { pagedCommunities as pagedCommunitiesDocument } from '~/schemas/pages/community'
 import type { TCommunity } from '~/spec'
@@ -39,7 +39,7 @@ const CLASSIC_ALIGN_RIGHT = ['timestamps']
 export default function Communities() {
   const position = usePagiPosition('communities')
   const query = useQuery(
-    graphqlQueryOptions<PagePagedCommunitiesQuery>(pagedCommunitiesDocument, {
+    graphqlQueryOptions<PagedCommunitiesQuery>(pagedCommunitiesDocument, {
       pagi: position.input,
       userHasLogin: false,
     }),

@@ -113,7 +113,7 @@ CDN cache effect 随后由 server proxy 执行。purge 失败不得把已经成�
 | baseInfo     | `Q.community.config` + `Q.dsb.config` 各自领域字段 | 无独立 baseInfo cache/store                                                | baseInfo typed mutation response 同时 patch 两个 canonical key | Community brand/SEO、Dash baseInfo editor        |
 
 `loadCommunity` 可以只发起一次 GraphQL bootstrap；`projectCommunityConfig`、dashboard 和 wallpaper
-随后分别 seed canonical key。浏览器端三个领域同时 refetch 时由 `fetchCommunitySnapshot` 只合并
+随后分别 seed canonical key。浏览器端三个领域同时 refetch 时由 `fetchCommunity` 只合并
 当次 in-flight request，不保存第四份长期 confirmed cache。
 
 ### 3.1 公共读取

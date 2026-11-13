@@ -12,22 +12,22 @@ export const blog = graphql(`
       activeAt
       updatedAt
       author {
-        ...PageAuthorFields
+        ...AuthorFields
       }
       community {
-        ...PageCommunityFields
+        ...CommunityFields
       }
       communities {
-        ...PageCommunityFields
+        ...CommunityFields
       }
       communityTags {
-        ...PageTagFields
+        ...TagFields
       }
       meta {
         thread
         isEdited
         latestUpvotedUsers {
-          ...PageCommonUserFields
+          ...CommonUserFields
         }
       }
       body {

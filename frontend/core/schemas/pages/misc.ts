@@ -2,13 +2,13 @@ import { graphql } from '~/graphql/authoring'
 
 export const communityTagGroups = graphql(`
   "Get community tag groups"
-  query PageCommunityTagGroups($community: String!, $thread: Thread) {
+  query CommunityTagGroups($community: String!, $thread: Thread) {
     communityTagGroups(community: $community, thread: $thread) {
       id
       title
       index
       tags {
-        ...PageTagFields
+        ...TagFields
       }
     }
   }
@@ -36,7 +36,7 @@ export const themePresets = graphql(`
 
 export const categories = graphql(`
   "Get all categories"
-  query PageCategories {
+  query Categories {
     categories {
       id
       title

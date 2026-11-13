@@ -4,8 +4,8 @@ export const changelog = graphql(`
   "Get changelog by id"
   query Changelog($article: ArticlePathInput!) {
     changelog(article: $article) {
-      ...PageChangelogFields
-      ...PageChangelogDetailFields
+      ...ChangelogFields
+      ...ChangelogDetailFields
     }
   }
 `)
@@ -19,10 +19,10 @@ export const changelogPage = graphql(`
   ) {
     changelogPage(pagi: $pagi, filter: $filter, thread: $thread) {
       pinnedEntries {
-        ...PageChangelogLiteFields
+        ...ChangelogLiteFields
       }
       entries {
-        ...PageChangelogLiteFields
+        ...ChangelogLiteFields
       }
       pageInfo {
         __typename

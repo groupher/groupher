@@ -3,7 +3,7 @@ import { queryOptions } from '@tanstack/react-query'
 import { parseWallpaper } from '~/lib/ssr/parse'
 import type { TParsedWallpaper } from '~/spec'
 
-import { fetchCommunitySnapshot } from './communitySource'
+import { fetchCommunity } from './communitySource'
 
 export const wallpaperKeys = {
   all: ['wallpaper'] as const,
@@ -18,7 +18,7 @@ const config = (community: string, seed?: TWallpaperSeed) =>
     queryFn: async (): Promise<TParsedWallpaper> => {
       if (seed) return seed()
 
-      return parseWallpaper(await fetchCommunitySnapshot(community))
+      return parseWallpaper(await fetchCommunity(community))
     },
     enabled: !!community,
     staleTime: 60_000,

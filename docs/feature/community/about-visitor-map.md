@@ -356,7 +356,7 @@ WebGL 不可用
   -> 保留国家列表，隐藏 Cobe
 ```
 
-About 保持 client 模式。`visitorLocationMap` 沿用现有 `PageCommunity -> community.dashboard.enable -> dashboard store`
+About 保持 client 模式。`visitorLocationMap` 沿用现有 `Community -> community.dashboard.enable -> dashboard store`
 配置链路，AboutThread 从现有 store 读取，不单独请求开关配置。组件只在开关开启时请求 Route Handler；加载期间为
 地图区域预留稳定尺寸，避免数据返回后产生明显布局跳动。
 

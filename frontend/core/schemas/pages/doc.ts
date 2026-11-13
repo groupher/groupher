@@ -1,25 +1,25 @@
 import { graphql } from '~/graphql/authoring'
 
 export const doc = graphql(`
-  query PageDoc($article: ArticlePathInput!) {
+  query Doc($article: ArticlePathInput!) {
     doc(article: $article) {
-      ...PageDocFields
+      ...DocFields
       subtitle
-      ...PageDocDetailFields
+      ...DocDetailFields
     }
   }
 `)
 
 export const docPublicTree = graphql(`
-  query PageDocPublicTree($community: String!) {
+  query DocPublicTree($community: String!) {
     docPublicTree(community: $community) {
       tabs {
-        ...PageDocPublicTreeNodeFields
+        ...DocPublicTreeNodeFields
         pins {
-          ...PageDocPublicTreeNodeFields
+          ...DocPublicTreeNodeFields
         }
         groups {
-          ...PageDocPublicTreeGroupFields
+          ...DocPublicTreeGroupFields
         }
       }
     }
@@ -30,10 +30,10 @@ export const docPage = graphql(`
   query DocPage($pagi: PagiInput, $filter: ArticlePageFilter) {
     docPage(pagi: $pagi, filter: $filter) {
       pinnedEntries {
-        ...PageDocLiteFields
+        ...DocLiteFields
       }
       entries {
-        ...PageDocLiteFields
+        ...DocLiteFields
       }
       pageInfo {
         __typename

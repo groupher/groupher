@@ -48,18 +48,18 @@ Phase 0 冻结的 Community 公共入口如下；所有公开 SSR loader 都不�
 或登录用户 selection。`Q.viewer.session/communityState/articleStates/commentStates` 是 hydration
 后的私有 owner，`Q.dsb.config` 是已确认 Dsb 配置的 Query owner。
 
-| Loader           | GraphQL / Query key                                                                               | 公共缓存边界                               |
-| ---------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `loadCommunity`  | `PageCommunity(userHasLogin: false)`；`['community', slug]`，Dsb 同时 seed `dsbKeys.config(slug)` | community tag                              |
-| `loadPosts`      | `PagedPosts(userHasLogin: false)`；`articleKeys.posts(default filter)`                            | POST articles tag                          |
-| `loadPost`       | `Post(userHasLogin: false)`；`articleKeys.detail`                                                 | POST article + articles tag                |
-| `loadChangelogs` | `PagedChangelogs(userHasLogin: false)`；`articleKeys.changelogs(default filter)`                  | CHANGELOG articles tag                     |
-| `loadChangelog`  | `Changelog(userHasLogin: false)`；`articleKeys.detail`                                            | CHANGELOG article + articles tag           |
-| `loadKanban`     | `TicketKanbanInternal`；`ticketQueryKeys.kanban(community, internal, size)`                       | 内部 Ticket query；不进入公共 HTML cache   |
-| `loadDocTree`    | `PageDocPublicTree`；`docTreeClientQuery`                                                         | `community[slug]-doc-tree`                 |
-| `loadDoc`        | `PageDoc(userHasLogin: false)`；`articleKeys.detail`                                              | DOC article tag                            |
-| `loadComments`   | `PublicPagedComments`；`commentKeys.list`                                                         | comments tag；selection 不含 viewer fields |
-| `loadThemeSeed`  | 固定 `PUBLIC_THEME_SEED`                                                                          | 不读取 cookie；pre-paint 负责用户 theme    |
+| Loader           | GraphQL / Query key                                                                           | 公共缓存边界                               |
+| ---------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `loadCommunity`  | `Community(userHasLogin: false)`；`['community', slug]`，Dsb 同时 seed `dsbKeys.config(slug)` | community tag                              |
+| `loadPosts`      | `PagedPosts(userHasLogin: false)`；`articleKeys.posts(default filter)`                        | POST articles tag                          |
+| `loadPost`       | `Post(userHasLogin: false)`；`articleKeys.detail`                                             | POST article + articles tag                |
+| `loadChangelogs` | `PagedChangelogs(userHasLogin: false)`；`articleKeys.changelogs(default filter)`              | CHANGELOG articles tag                     |
+| `loadChangelog`  | `Changelog(userHasLogin: false)`；`articleKeys.detail`                                        | CHANGELOG article + articles tag           |
+| `loadKanban`     | `TicketKanbanInternal`；`ticketQueryKeys.kanban(community, internal, size)`                   | 内部 Ticket query；不进入公共 HTML cache   |
+| `loadDocTree`    | `DocPublicTree`；`docTreeClientQuery`                                                         | `community[slug]-doc-tree`                 |
+| `loadDoc`        | `Doc(userHasLogin: false)`；`articleKeys.detail`                                              | DOC article tag                            |
+| `loadComments`   | `PublicPagedComments`；`commentKeys.list`                                                     | comments tag；selection 不含 viewer fields |
+| `loadThemeSeed`  | 固定 `PUBLIC_THEME_SEED`                                                                      | 不读取 cookie；pre-paint 负责用户 theme    |
 
 保留的 viewer 领域只返回当前用户拥有的字段：article 为 viewed/upvoted，comment 为 upvoted、
 reported 和 emotion reaction；未知值保持 `undefined`。所有 refs 先排序去重，超过 100 条自动分片，

@@ -2,7 +2,7 @@ import { type QueryClient, queryOptions } from '@tanstack/react-query'
 
 import type { TCommunity } from '~/spec'
 
-import { fetchCommunitySnapshot } from './communitySource'
+import { fetchCommunity } from './communitySource'
 
 export const communityKeys = {
   all: ['community-config'] as const,
@@ -24,7 +24,7 @@ const config = (community: string, seed?: TCommunityConfigSeed) =>
     queryFn: async (): Promise<TCommunity> => {
       if (seed) return projectCommunityConfig(await seed())
 
-      return projectCommunityConfig(await fetchCommunitySnapshot(community))
+      return projectCommunityConfig(await fetchCommunity(community))
     },
     enabled: !!community,
     staleTime: 60_000,

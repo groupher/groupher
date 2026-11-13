@@ -4,8 +4,8 @@ export const post = graphql(`
   "Get post by id"
   query Post($article: ArticlePathInput!) {
     post(article: $article) {
-      ...PagePostFields
-      ...PagePostDetailFields
+      ...PostFields
+      ...PostDetailFields
     }
   }
 `)
@@ -15,10 +15,10 @@ export const pagedPublishedPosts = graphql(`
   query PagedPublishedPosts($login: String!, $filter: ArticlePageFilter, $pagi: PagiInput) {
     pagedPublishedPosts(login: $login, filter: $filter, pagi: $pagi) {
       pinnedEntries {
-        ...PagePostLiteFields
+        ...PostLiteFields
       }
       entries {
-        ...PagePostLiteFields
+        ...PostLiteFields
       }
       pageInfo {
         __typename
@@ -44,10 +44,10 @@ export const postPage = graphql(`
   query PostPage($pagi: PagiInput, $filter: PostFilter, $thread: PostThread = POST) {
     postPage(pagi: $pagi, filter: $filter, thread: $thread) {
       pinnedEntries {
-        ...PagePostLiteFields
+        ...PostLiteFields
       }
       entries {
-        ...PagePostLiteFields
+        ...PostLiteFields
       }
       pageInfo {
         __typename
