@@ -4,6 +4,11 @@
 > Wallpaper projection、compatibility facade 退出和 server-owned CacheEffect 已收口。真实 Cloudflare
 > purge、跨 PoP 行为和生产告警仍是独立发布门。
 >
+> 2026-11 后续：Community / Dsb / DsbShell 的状态边界以 [store-boundary-refactor.md](./store-boundary-refactor.md)
+> 为准。Demo 不再按只读 Demo 处理，而是与 Dash 共用 DsbShell 会话，Dsb 字段保存走本地适配器；
+> `submenuCollapsed` 合并到 `DsbShellStore.ui`。下方 Phase 4 的“只读 Demo”和独立 shell UI state
+> 表述属于上一轮历史。
+>
 > 本文只负责执行顺序、任务依赖和验收入口，不重复设计细节：
 >
 > - Query、GraphQL transport、SSR hydration 与 public/viewer ownership：

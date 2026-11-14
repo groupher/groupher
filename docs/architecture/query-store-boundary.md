@@ -1,6 +1,6 @@
 # Query / Store 边界收口与简化计划
 
-> 历史实施合同：本文的 Query confirmed owner、后台 reconcile 和发布缓存边界继续有效；Dsb 公共读取入口、`DsbEditStore` 命名及 BND-10 的编辑器临时状态归属，下一轮以 [Community / Dsb / DsbEditor 状态边界重构](../dash/store-boundary-refactor.md)为目标。新目标尚未实施。
+> 历史实施合同：本文的 Query confirmed owner、后台 reconcile 和发布缓存边界继续有效；Dsb 公共读取入口、`DsbShellStore` 命名及 BND-10 的编辑器临时状态归属，下一轮以 [Community / Dsb / DsbShell 状态边界重构](../dash/store-boundary-refactor.md)为目标。公共 Dsb 边界、pagi/contentShadow 与 DsbShell 命名已实施，其余 Editor 边界仍在迁移。
 >
 > 状态：2026-08-29 本地实现与自动验收已完成。真实 Cloudflare purge、跨 PoP 行为和生产告警
 > 仍属于发布门，不把本地测试结果冒充线上证据。

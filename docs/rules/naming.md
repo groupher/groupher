@@ -191,6 +191,55 @@ fragment PagedCommunitiesPageInfo on CommunityPage {
 `frontend/core/lib/graphql/generated/**`；不要手改生成文件。GraphQL operationName 会出现在服务端
 日志和指标中，operation 重命名应作为独立、可回滚的清理提交。
 
+## GraphQL enum runtime map
+
+`graphql:codegen` 同时生成 `frontend/core/lib/graphql/generated/enums.ts`：每个 enum 都有 `as const`
+运行时对象和对应 type。前端常量不再手写枚举值，而是用 `valueKeyedEnum` 或显式 alias 从生成对象派生：
+
+```ts
+export const ARTICLE_CAT = valueKeyedEnum(ArticleCatEnum)
+export type TArticleCat = ArticleCatEnum
+```
+
+- 类型直接 alias 生成 type
+- 运行时值从生成对象派生
+- UI 需要小写 key 时用 `lowerEnumValue` 在展示层派生
+- 不手写第二份 enum 值，也不在组件里散落大小写转换
+
+### 尚存的协议边界
+
+- `packages/contracts` 的 pagination fallback 仍使用小写 HTTP 值；当前只在
+  `frontend/core/lib/pagination/params.ts` 映射一次。若要彻底统一，需要同步修改 backend contract 测试和
+  HTTP DTO。
+- CMS Review 的 `state` 和部分 opinion/notice 字段在 GraphQL 中仍是 `string`；需要先补 backend enum
+  和 schema SDL，再生成前端类型。
+- Wallpaper 的 render profile/theme 使用小写 UI key，但 wire enum 已由生成对象提供；只允许在
+  wallpaper adapter 中做大小写派生。
+
+## GraphQL enum 单一词汇
+
+GraphQL enum 的 schema 值是前端数据层的 canonical 值。前端不要为同一语义再维护一套大小写不同、
+成员相同的 enum；能直接复用生成类型时直接复用：
+
+```ts
+import type { PagiMode } from '~/lib/graphql/generated/graphql'
+
+export type TPaginationMode = PagiMode
+```
+
+`TDsbRaw` / `TDsb` 这类 wire 与 parsed 分层只用于结构差异（嵌套、默认值、规范化），不用于复制
+同一组 enum。
+
+只有外部协议确实使用不同字面值时，才允许在唯一的 transport adapter 转换，例如：
+
+- `packages/contracts` 的 HTTP pagination fallback 仍使用小写；在 `lib/pagination/params.ts`
+  集中映射到前端 `PagiMode`。
+- Wallpaper render profile 使用小写 UI key；只在 GraphQL publish/upload adapter 转成
+  `WallpaperProfile`。
+- Doc tree 本地模型使用小写；`DOC_TREE_NODE_TYPE_WIRE` 只承担 GraphQL boundary 映射。
+
+禁止在组件、query 和测试里散落 `.toLowerCase()` / `.toUpperCase()` 来处理 enum。
+
 ## Elixir 折行使用完整 block
 
 Elixir 的 inline `do:` 只用于完整表达式能放在同一物理行的情况。`def`、`defp`、`defmacro`、
