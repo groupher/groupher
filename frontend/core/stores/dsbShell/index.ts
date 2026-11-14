@@ -3,7 +3,7 @@ import { proxy } from 'valtio'
 
 import type { TDsbEditableFieldKey } from '~/spec'
 
-import type { TDsbEditStore, TDsbEditableFields, TDsbReconcileInput } from './spec'
+import type { TDsbShellStore, TDsbEditableFields, TDsbShellUi, TDsbReconcileInput } from './spec'
 
 const hasOwn = (value: object, key: PropertyKey): boolean =>
   Object.prototype.hasOwnProperty.call(value, key)
@@ -11,8 +11,8 @@ const hasOwn = (value: object, key: PropertyKey): boolean =>
 const cloneFields = (fields: TDsbEditableFields): TDsbEditableFields => clone(fields)
 
 /** Creates the editable Dsb working copy; Query remains the confirmed-data owner. */
-export const createDsbEditStore = (initial: TDsbEditableFields): TDsbEditStore => {
-  let store: TDsbEditStore
+export const createDsbShellStore = (initial: TDsbEditableFields): TDsbShellStore => {
+  let store: TDsbShellStore
 
   const updateTouched = (field: TDsbEditableFieldKey): void => {
     const touched = !equals(store[field], store.original[field])
@@ -22,7 +22,7 @@ export const createDsbEditStore = (initial: TDsbEditableFields): TDsbEditStore =
     }
 
     const { [field]: _removed, ...rest } = store.touchedFields
-    store.touchedFields = rest as TDsbEditStore['touchedFields']
+    store.touchedFields = rest as TDsbShellStore['touchedFields']
   }
 
   const edit = <K extends TDsbEditableFieldKey>(field: K, value: TDsbEditableFields[K]): void => {
@@ -70,6 +70,14 @@ export const createDsbEditStore = (initial: TDsbEditableFields): TDsbEditStore =
     }
   }
 
+  const resetEditor = (): void => {
+    store.editingTag = null
+    store.settingTag = null
+    store.editingAlias = null
+    store.docFaqSaveZone = null
+    store.activeModerator = null
+  }
+
   const reconcileConfirmed = (confirmed: TDsbEditableFields): void => {
     const fields = Object.keys(store.original) as TDsbEditableFieldKey[]
     const nextOriginal = cloneFields(confirmed)
@@ -90,6 +98,38 @@ export const createDsbEditStore = (initial: TDsbEditableFields): TDsbEditStore =
     ...cloneFields(initial),
     original: cloneFields(initial),
     touchedFields: {},
+    ui: {
+      submenuCollapsed: false,
+      setSubmenuCollapsed: (value: boolean) => {
+        store.ui.submenuCollapsed = value
+      },
+    },
+    editingTag: null,
+    settingTag: null,
+    editingAlias: null,
+    docFaqSaveZone: null,
+    activeModerator: null,
+    setEditingTag: (tag) => {
+      store.editingTag = tag
+    },
+    setSettingTag: (tag) => {
+      store.settingTag = tag
+    },
+    setTag: (mode, tag) => {
+      if (mode === 'editingTag') store.settingTag = null
+      else store.editingTag = null
+      store[mode] = tag
+    },
+    setEditingAlias: (alias) => {
+      store.editingAlias = alias
+    },
+    setDocFaqSaveZone: (zone) => {
+      store.docFaqSaveZone = zone
+    },
+    setActiveModerator: (user) => {
+      store.activeModerator = user
+    },
+    resetEditor,
     edit,
     editMany,
     rollback,
@@ -99,9 +139,9 @@ export const createDsbEditStore = (initial: TDsbEditableFields): TDsbEditStore =
     isTouched: (field: TDsbEditableFieldKey) => Boolean(store.touchedFields[field]),
     anyTouched: (fields: readonly TDsbEditableFieldKey[]) =>
       fields.some((field) => store.isTouched(field)),
-  } as TDsbEditStore)
+  } as TDsbShellStore)
 
   return store
 }
 
-export type { TDsbEditStore, TDsbEditableFields, TDsbReconcileInput }
+export type { TDsbShellStore, TDsbEditableFields, TDsbShellUi, TDsbReconcileInput }

@@ -4,8 +4,8 @@ import { useCallback } from 'react'
 
 import type { TDocFaq, TDocFaqGroup } from '~/spec'
 import type { TDocFaqSaveZone } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
-import { useFaqEditorUi } from '~/stores/dsbEditorUi/hooks'
+import { useFaqEditorState } from '~/stores/dsbShell/editor'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import {
   DEFAULT_GROUP_ID,
@@ -49,20 +49,20 @@ type TDocFaqItemAction = (typeof DOC_FAQ_ITEM_ACTION)[keyof typeof DOC_FAQ_ITEM_
  * dashboard field, and assigns the save zone used by SavingBar.
  */
 export default function useDocFaqActions(): TRet {
-  const dsb$ = useDsbEdit()
-  const faqUi$ = useFaqEditorUi()
+  const dsb$ = useDsbShell()
+  const faqEditor = useFaqEditorState()
   const docFaq = dsb$.docFaq
 
   const setSaveZone = useCallback(
     (zone: TDocFaqSaveZone): void => {
-      faqUi$.patch({ docFaqSaveZone: zone })
+      faqEditor.setDocFaqSaveZone(zone)
     },
-    [faqUi$],
+    [faqEditor],
   )
 
   const clearSaveZone = useCallback((): void => {
-    faqUi$.patch({ docFaqSaveZone: null })
-  }, [faqUi$])
+    faqEditor.setDocFaqSaveZone(null)
+  }, [faqEditor])
 
   const updateFaq = useCallback(
     (nextFaq: TDocFaq): void => {
@@ -75,11 +75,9 @@ export default function useDocFaqActions(): TRet {
     (nextFaq: TDocFaq, zone: Exclude<TDocFaqSaveZone, null>): void => {
       const normalizedFaq = normalizeDocFaq(nextFaq)
       dsb$.edit(DOC_FAQ_FIELD, normalizedFaq)
-      faqUi$.patch({
-        docFaqSaveZone: sameDocFaq(normalizedFaq, dsb$.original.docFaq) ? null : zone,
-      })
+      faqEditor.setDocFaqSaveZone(sameDocFaq(normalizedFaq, dsb$.original.docFaq) ? null : zone)
     },
-    [dsb$, faqUi$],
+    [dsb$, faqEditor],
   )
 
   const setTitle = useCallback(

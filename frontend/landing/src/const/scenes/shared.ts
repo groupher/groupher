@@ -1,7 +1,7 @@
 import { DSB_ROUTE } from '~/const/route'
 import { THREAD } from '~/const/thread'
-import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import type { TBgPattern } from '~/lib/bg/spec'
+import type { TWallpaperType } from '~/spec'
 import type { TPublishedWallpaper, TResolvedThemePreset } from '~/spec'
 
 import type { TSceneBackground, TSceneSurface } from './style'
@@ -28,7 +28,7 @@ export const publishedProfiles = (url: string): NonNullable<TPublishedWallpaper[
 }
 
 type TLandingWallpaper = {
-  type: WALLPAPER_TYPE
+  type: TWallpaperType
   source: string
   assets: NonNullable<TPublishedWallpaper['light']>
   preview: TLandingAssetRef

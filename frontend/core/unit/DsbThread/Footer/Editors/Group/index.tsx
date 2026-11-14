@@ -3,7 +3,7 @@ import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Plus'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 import Button from '~/ui/Buttons/Button'
 import { FIELD } from '~/unit/DsbThread/constant'
 
@@ -28,7 +28,7 @@ const Group: FC = () => {
 
   const { footerLinks: links } = useFooter()
   const editor = useFooterEditorActions(links)
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
 
   return (
     <div className={s.wrapper}>

@@ -1,17 +1,14 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
 import { useRouterState } from '@tanstack/react-router'
 import { type ReactNode, useEffect, useMemo } from 'react'
 
 import { GlobalProvider } from '~/app/providers'
 import METRIC from '~/const/metric'
 import { parseWallpaper } from '~/lib/ssr/parse'
-import { Q } from '~/query'
-import type { TCommunity } from '~/spec'
-import ContentShadowProvider from '~/stores/contentShadow/provider'
-import DsbConfigProvider from '~/stores/dsbConfig/provider'
-import DsbEditProvider from '~/stores/dsbEdit/provider'
-import { DsbEditorUiProvider } from '~/stores/dsbEditorUi'
-import { DsbShellUiProvider } from '~/stores/dsbShellUi'
+import { dsbKeys, Q } from '~/query'
+import type { TCommunity, TDsb } from '~/spec'
+import DsbProvider from '~/stores/dsb/provider'
+import DsbShellProvider from '~/stores/dsbShell/provider'
 import { MetricProvider } from '~/stores/metric'
 import StaticWallpaperProvider from '~/stores/staticWallpaper/provider'
 import ThemePresetStoreProvider from '~/stores/ThemePreset/provider'
@@ -31,6 +28,7 @@ type TProps = {
 }
 
 export default function DsbShell({ children, data }: TProps) {
+  const queryClient = useQueryClient()
   const { data: dashboard } = useSuspenseQuery(Q.dsb.slug(data.community))
   const { data: wallpaper } = useSuspenseQuery(Q.wallpaper.slug(data.community))
   const wallpaperRuntimeMode = useRouterState({
@@ -52,6 +50,14 @@ export default function DsbShell({ children, data }: TProps) {
     if (!isEditorRoute || !editorData?.community) return dashboard.contentShadow
     return editorData.community.dashboard?.contentShadow ?? dashboard.contentShadow
   }, [dashboard.contentShadow, editorData?.community, isEditorRoute])
+  useEffect(() => {
+    if (!isEditorRoute || editorContentShadow === undefined) return
+
+    queryClient.setQueryData<TDsb>(dsbKeys.slug(data.community), (current) =>
+      current ? { ...current, contentShadow: editorContentShadow } : current,
+    )
+  }, [data.community, editorContentShadow, isEditorRoute, queryClient])
+
   const wallpaperInit = useMemo(
     () =>
       editorWallpaper
@@ -70,7 +76,7 @@ export default function DsbShell({ children, data }: TProps) {
   }, [])
 
   const shellContent = (
-    <DsbConfigProvider initData={dashboard}>
+    <DsbProvider initData={dashboard}>
       <ThemePresetStoreProvider initData={dashboard}>
         <StaticWallpaperProvider initData={wallpaper?.wallpaper}>
           <WallpaperRuntimeProvider mode={wallpaperRuntimeMode}>
@@ -96,28 +102,20 @@ export default function DsbShell({ children, data }: TProps) {
           </WallpaperRuntimeProvider>
         </StaticWallpaperProvider>
       </ThemePresetStoreProvider>
-    </DsbConfigProvider>
+    </DsbProvider>
   )
 
   const content = isEditorRoute ? (
-    <ContentShadowProvider initData={editorContentShadow}>
-      <WallpaperStoreProvider initData={wallpaperInit}>{shellContent}</WallpaperStoreProvider>
-    </ContentShadowProvider>
+    <WallpaperStoreProvider initData={wallpaperInit}>{shellContent}</WallpaperStoreProvider>
   ) : (
     shellContent
   )
 
   return (
     <MetricProvider value={METRIC.DASHBOARD}>
-      <DsbShellUiProvider>
-        <DsbEditorUiProvider>
-          {data.demoMode ? (
-            content
-          ) : (
-            <DsbEditProvider initialData={dashboard}>{content}</DsbEditProvider>
-          )}
-        </DsbEditorUiProvider>
-      </DsbShellUiProvider>
+      <DsbShellProvider community={data.community} demoMode={data.demoMode} initialData={dashboard}>
+        {content}
+      </DsbShellProvider>
     </MetricProvider>
   )
 }

@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import type { TMediaReport } from '~/spec'
-import useDsbEdit, { useDsbEditStore } from '~/stores/dsbEdit/hooks'
+import useDsbShell, { useDsbShellStore } from '~/stores/dsbShell/hooks'
 import S from '~/unit/DsbThread/schema/integrations'
 
 import { EMPTY_MEDIA_REPORT } from '../../constant'
@@ -22,8 +22,8 @@ export type TRet = {
 
 /** Exposes media reports state and actions through the shared React hook boundary. */
 export default function useMediaReports(): TRet {
-  const dsb$ = useDsbEdit()
-  const dsbStore = useDsbEditStore()
+  const dsb$ = useDsbShell()
+  const dsbStore = useDsbShellStore()
 
   const { mediaReports, original } = dsb$
   const [queryingMediaReportIndex, setQueryingMediaReportIndex] = useState<number | null>(null)

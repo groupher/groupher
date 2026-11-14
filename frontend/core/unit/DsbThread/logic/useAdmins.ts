@@ -8,7 +8,7 @@ import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TUser } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
-import { useModeratorEditorUi } from '~/stores/dsbEditorUi/hooks'
+import { useAdminEditor } from '~/stores/dsbShell/editor'
 import S from '~/unit/DsbThread/schema/admins'
 
 /** Pages moderator memberships; permissions are loaded only for the selected editor target. */
@@ -16,7 +16,7 @@ export default function useAdmins() {
   const client = useQueryClient()
   const { slug } = useCommunity()
   const { accountScope } = useAccount()
-  const ui = useModeratorEditorUi()
+  const { activeModerator, setActiveModerator } = useAdminEditor()
   const position = usePagiPosition(`${accountScope}:${slug}`)
   const prefix = [...viewerQueryKeys.all, accountScope, 'moderators', slug]
   const query = useQuery({
@@ -28,8 +28,8 @@ export default function useAdmins() {
   })
   return {
     moderators: query.data?.entries ?? [],
-    activeModerator: ui.activeModerator,
-    setActiveSettingAdmin: (user: TUser) => ui.patch({ activeModerator: user }),
+    activeModerator,
+    setActiveSettingAdmin: setActiveModerator,
     pageInfo: query.data?.pageInfo,
     loading: query.isFetching,
     error: query.error,

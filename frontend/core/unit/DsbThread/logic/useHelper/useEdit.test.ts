@@ -7,7 +7,7 @@ const rollback = vi.fn()
 const commit = vi.fn()
 const edit = vi.fn()
 
-vi.mock('~/stores/dsbEdit/hooks', () => ({
+vi.mock('~/stores/dsbShell/hooks', () => ({
   default: () => ({
     original: {
       themePreset: 'DEFAULT',
@@ -20,12 +20,20 @@ vi.mock('~/stores/dsbEdit/hooks', () => ({
   }),
 }))
 
-vi.mock('~/stores/dsbEditorUi/hooks', () => ({
-  useAliasEditorUi: () => ({
+vi.mock('~/stores/dsbShell/editor', () => ({
+  useAliasEditor: () => ({
     editingAlias: { slug: '' },
-    patch: commit,
+    reset: commit,
+    setEditingAlias: commit,
   }),
-  useTagEditorUi: () => ({ editingTag: null, settingTag: null, patch: commit }),
+  useTagsEditor: () => ({
+    editingTag: null,
+    settingTag: null,
+    setEditingTag: commit,
+    setSettingTag: commit,
+    setTag: commit,
+    reset: commit,
+  }),
 }))
 
 vi.mock('~/query/mutation/useDsbFieldSave', () => ({

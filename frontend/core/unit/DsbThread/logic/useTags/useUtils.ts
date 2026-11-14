@@ -10,8 +10,8 @@ import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TColorName, TTag, TTagGroup, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
-import { useTagEditorUi } from '~/stores/dsbEditorUi/hooks'
+import { useTagsEditor } from '~/stores/dsbShell/editor'
+import useDsbShell from '~/stores/dsbShell/hooks'
 import S from '~/unit/DsbThread/schema/tags'
 import { slugify } from '~/utils/slug'
 
@@ -30,8 +30,8 @@ type TRet = {
 
 /** Exposes utils state and actions through the shared React hook boundary. */
 export default function useUtils(): TRet {
-  const dsb$ = useDsbEdit()
-  const tagUi$ = useTagEditorUi()
+  const dsb$ = useDsbShell()
+  const tagsEditor = useTagsEditor()
   const community$ = useCommunity()
   const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
@@ -95,7 +95,7 @@ export default function useUtils(): TRet {
         tags: group.tags.map((item) => (item.id === nextTag.id ? nextTag : item)),
       }))
       confirmTagGroups(updatedTagGroups)
-      tagUi$.patch({ editingTag: null })
+      tagsEditor.setEditingTag(null)
     },
   })
   const renameGroupMutation = useMutation({

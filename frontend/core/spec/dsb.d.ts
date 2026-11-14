@@ -24,6 +24,7 @@ import type {
   TNameAlias,
   TNavActiveLayout,
   TPostLayout,
+  TPaginationMode,
   TResolvedThemePreset,
   TSizeSML,
   TSocialItem,
@@ -128,6 +129,9 @@ export type TDsbFieldMap = {
   nameAlias: readonly TNameAlias[]
   enable: TEnableConf
   docFaq: TDocFaq
+  contentShadow: boolean
+  pagiMode: TPaginationMode
+  pagiMobileMode: TPaginationMode
   headerLayout: THeaderLayout
   footerLayout: TFooterLayout
   footerLinks: readonly TLinkItem[]

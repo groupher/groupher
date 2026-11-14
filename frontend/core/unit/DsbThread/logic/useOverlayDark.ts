@@ -1,5 +1,5 @@
 import type { TEditFunc } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -13,7 +13,7 @@ type TRet = {
 
 /** Exposes overlay dark state and actions through the shared React hook boundary. */
 export default function useOverlayDark(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { edit, isChanged, isPending } = useHelper()
 
   const { overlayDark } = dsb$

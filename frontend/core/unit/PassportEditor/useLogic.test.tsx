@@ -13,8 +13,8 @@ vi.mock('~/stores/account/hooks', () => ({
   }),
 }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'xx' }) }))
-vi.mock('~/stores/dsbEditorUi/hooks', () => ({
-  useModeratorEditorUi: () => ({ activeModerator: { login: state.login } }),
+vi.mock('~/stores/dsbShell/editor', () => ({
+  useAdminEditor: () => ({ activeModerator: { login: state.login } }),
 }))
 vi.mock('~/signal', () => ({ closeDrawer: vi.fn() }))
 vi.mock('~/ui/Toaster', () => ({ toast: vi.fn() }))

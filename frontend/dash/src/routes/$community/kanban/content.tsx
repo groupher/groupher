@@ -4,7 +4,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { toEffectivePagiConfig } from '~/lib/pagination/params'
 import { dsbKeys } from '~/query'
-import type { TParseDashboard } from '~/spec'
+import type { TDsb } from '~/spec'
 import Kanban from '~/unit/KanbanThread'
 
 export const Route = createFileRoute('/$community/kanban/content')({
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/$community/kanban/content')({
       dashQueries.kanban(
         params.community,
         toEffectivePagiConfig(
-          context.queryClient.getQueryData<TParseDashboard>(dsbKeys.slug(params.community)),
+          context.queryClient.getQueryData<TDsb>(dsbKeys.slug(params.community)),
         ),
       ),
     ),

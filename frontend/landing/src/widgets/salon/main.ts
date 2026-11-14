@@ -1,9 +1,9 @@
 import useTwBelt from '~/hooks/useTwBelt'
-import useDsbConfig from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 export default function useSalon() {
   const { bg, cn, container, containerWrapper, page } = useTwBelt()
-  const dashboard = useDsbConfig()
+  const dashboard = useDsb()
 
   return {
     wrapper: cn(

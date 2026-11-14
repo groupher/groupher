@@ -1,5 +1,5 @@
 import type { TSimpleUser } from './account'
-import type { TDsb, TParseDashboard } from './dashboard'
+import type { TDsbRaw, TDsb } from './dashboard'
 import type { TMarkerValue } from './marker'
 import type { TGraphQLPagiPageInfo } from './pagination'
 import type { TThread, TCommunityThread } from './thread'
@@ -42,12 +42,12 @@ export type TCommunity = {
   views?: number
 
   // TODO:
-  dashboard?: TDsb
+  dashboard?: TDsbRaw
 }
 
 export type TCommunityInfo = {
   community: TCommunity
-  dashboard?: TParseDashboard
+  dashboard?: TDsb
   wallpaper?: TParsedWallpaper
 }
 

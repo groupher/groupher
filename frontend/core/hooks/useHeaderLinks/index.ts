@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import type { THeaderLayout, TLinkItem, TResolvedHeaderLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsb from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 import { resolveHeaderLinks } from './helper'
 

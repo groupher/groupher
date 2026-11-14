@@ -1,12 +1,13 @@
-import { createDsbEditStore } from '..'
+import { createDsbShellStore } from '..'
+import { readDemoFields, writeDemoFields } from '../demoFields'
 import type { TDsbEditableFields } from '../spec'
 
 const fields = (title: string, desc: string): TDsbEditableFields =>
   ({ title, desc }) as TDsbEditableFields
 
-describe('DsbEditStore', () => {
+describe('DsbShellStore', () => {
   it('keeps new input while reconciling a confirmed submitted value', () => {
-    const store = createDsbEditStore(fields('A', 'old'))
+    const store = createDsbShellStore(fields('A', 'old'))
 
     store.edit('title', 'B')
     store.reconcile({ fields: ['title'], submitted: { title: 'B' }, confirmed: { title: 'B' } })
@@ -24,7 +25,7 @@ describe('DsbEditStore', () => {
   })
 
   it('uses the server-normalized value as the new baseline', () => {
-    const store = createDsbEditStore(fields('A', 'old'))
+    const store = createDsbShellStore(fields('A', 'old'))
 
     store.edit('title', '  B  ')
     store.reconcile({
@@ -39,7 +40,7 @@ describe('DsbEditStore', () => {
   })
 
   it('keeps newer input touched when a normalized response arrives', () => {
-    const store = createDsbEditStore(fields('A', 'old'))
+    const store = createDsbShellStore(fields('A', 'old'))
 
     store.edit('title', 'B')
     store.edit('title', 'C')
@@ -55,7 +56,7 @@ describe('DsbEditStore', () => {
   })
 
   it('rolls back a field group to its confirmed baseline', () => {
-    const store = createDsbEditStore(fields('A', 'old'))
+    const store = createDsbShellStore(fields('A', 'old'))
 
     store.editMany({ title: 'B', desc: 'new' })
     expect(store.anyTouched(['title', 'desc'])).toBe(true)
@@ -68,7 +69,7 @@ describe('DsbEditStore', () => {
   })
 
   it('applies background confirmed data only to untouched fields', () => {
-    const store = createDsbEditStore(fields('A', 'old'))
+    const store = createDsbShellStore(fields('A', 'old'))
 
     store.edit('title', 'local')
     store.reconcileConfirmed(fields('remote title', 'remote desc'))
@@ -82,7 +83,7 @@ describe('DsbEditStore', () => {
   })
 
   it('clears touched when background confirmed data matches the local edit', () => {
-    const store = createDsbEditStore(fields('A', 'old'))
+    const store = createDsbShellStore(fields('A', 'old'))
 
     store.edit('title', 'shared')
     store.reconcileConfirmed(fields('shared', 'old'))
@@ -90,5 +91,21 @@ describe('DsbEditStore', () => {
     expect(store.title).toBe('shared')
     expect(store.original.title).toBe('shared')
     expect(store.isTouched('title')).toBe(false)
+  })
+  it('keeps shell UI outside the editable field baseline', () => {
+    const store = createDsbShellStore(fields('A', 'old'))
+
+    store.ui.setSubmenuCollapsed(true)
+
+    expect(store.ui.submenuCollapsed).toBe(true)
+    expect(store.isTouched('title')).toBe(false)
+    expect(store.original.title).toBe('A')
+  })
+  it('persists demo fields per community', () => {
+    window.localStorage.clear()
+    writeDemoFields('home', { contentShadow: true, title: 'Demo' })
+
+    expect(readDemoFields('home')).toMatchObject({ contentShadow: true, title: 'Demo' })
+    expect(readDemoFields('other')).toEqual({})
   })
 })

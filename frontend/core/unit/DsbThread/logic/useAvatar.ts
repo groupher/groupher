@@ -1,5 +1,5 @@
 import type { TAvatarLayout, TEditFunc } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -13,7 +13,7 @@ type TRet = {
 
 /** Exposes avatar state and actions through the shared React hook boundary. */
 export default function useAvatar(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { isChanged, edit, isPending } = useHelper()
 
   const { avatarLayout } = dsb$

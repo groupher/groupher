@@ -1,5 +1,5 @@
 import type { TCommunityLayout, TEditFunc } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -13,7 +13,7 @@ type TRet = {
 
 /** Exposes community layout state and actions through the shared React hook boundary. */
 export default function useCommunityLayout(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { isChanged, edit: rawEdit, rollbackEdit, isPending } = useHelper()
 
   const { communityLayout } = dsb$

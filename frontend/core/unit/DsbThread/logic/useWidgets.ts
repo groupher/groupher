@@ -1,7 +1,7 @@
 import { pick, reject } from 'ramda'
 
 import type { TColorName, TEditFunc, TSizeSML, TThread } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -20,7 +20,7 @@ type TRet = {
 
 /** Exposes widgets state and actions through the shared React hook boundary. */
 export default function useWidgets(): TRet {
-  const dsb$ = useDsbEdit()
+  const dsb$ = useDsbShell()
   const { isChanged, edit, isPending } = useHelper()
 
   const { widgetsThreads } = dsb$

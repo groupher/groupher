@@ -3,7 +3,7 @@
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable'
 
 import PlusSVG from '~/icons/Plus'
-import useDocFaqActions from '~/stores/dsbEdit/docFaq/actions'
+import useDocFaqActions from '~/stores/dsbShell/docFaq/actions'
 import Button from '~/ui/Buttons/Button'
 import SegmentTab from '~/ui/Switcher/SegmentTab'
 

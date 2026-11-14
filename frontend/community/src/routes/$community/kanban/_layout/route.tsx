@@ -6,7 +6,7 @@ import { THREAD } from '~/const/thread'
 import { toEffectivePagiConfig } from '~/lib/pagination/params'
 import { readPagiMobileLayout } from '~/lib/pagination/viewport'
 import { dsbKeys } from '~/query'
-import type { TParseDashboard } from '~/spec'
+import type { TDsb } from '~/spec'
 import KanbanThread from '~/unit/KanbanThread'
 
 export const Route = createFileRoute('/$community/kanban/_layout')({
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/$community/kanban/_layout')({
     const mobile = readPagiMobileLayout()
     if (mobile === null) return
     const config = toEffectivePagiConfig(
-      context.queryClient.getQueryData<TParseDashboard>(dsbKeys.slug(params.community)),
+      context.queryClient.getQueryData<TDsb>(dsbKeys.slug(params.community)),
       mobile,
     )
     return context.queryClient

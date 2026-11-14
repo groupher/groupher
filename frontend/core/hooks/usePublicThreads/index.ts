@@ -5,7 +5,7 @@ import { sortByIndex } from '~/helper'
 import { normalizeHeaderLinks, shouldFoldAboutToMore } from '~/hooks/useHeaderLinks/helper'
 import type { TCommunityThread, TNameAlias } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsb from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 /**
  * Computes the public thread list after dashboard configuration is applied.

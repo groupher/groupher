@@ -1,6 +1,6 @@
 import type { TEditFunc, TNameAlias } from '~/spec'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
-import { useAliasEditorUi } from '~/stores/dsbEditorUi/hooks'
+import { useAliasEditor } from '~/stores/dsbShell/editor'
+import useDsbShell from '~/stores/dsbShell/hooks'
 
 import { FIELD } from '../constant'
 import useHelper from './useHelper'
@@ -17,15 +17,15 @@ type TRet = {
 
 /** Exposes alias state and actions through the shared React hook boundary. */
 export default function useAlias(): TRet {
-  const dsb$ = useDsbEdit()
-  const aliasUi$ = useAliasEditorUi()
+  const dsb$ = useDsbShell()
+  const aliasEditor = useAliasEditor()
   const { edit, resetEdit, isPending } = useHelper()
 
-  const { editingAlias } = aliasUi$
+  const { editingAlias } = aliasEditor
   const { nameAlias } = dsb$
 
   const updateEditingAlias = (alias: TNameAlias): void => {
-    aliasUi$.patch({ editingAlias: alias })
+    aliasEditor.setEditingAlias(alias)
   }
 
   return {

@@ -8,7 +8,7 @@ import { executeCommand } from '~/query/mutation/optimistic/execute'
 import { closeDrawer } from '~/signal'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
-import { useModeratorEditorUi } from '~/stores/dsbEditorUi/hooks'
+import { useAdminEditor } from '~/stores/dsbShell/editor'
 import { toast } from '~/ui/Toaster'
 
 import { PASSPORT_SCOPE } from './constant'
@@ -33,8 +33,7 @@ export default function useLogic() {
   const client = useQueryClient()
   const account = useAccount()
   const { slug } = useCommunity()
-  const ui = useModeratorEditorUi()
-  const activeModerator = ui.activeModerator
+  const { activeModerator } = useAdminEditor()
   const login = activeModerator?.login
   const identity = `${account.accountScope}:${slug}:${login}`
   const prefix = [...viewerQueryKeys.all, account.accountScope]

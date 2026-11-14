@@ -1,25 +1,27 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
+import { FIELDS } from '~/constant/dsb-fields'
+import DsbShellProvider from '~/stores/dsbShell/provider'
+
 import PagiModeSettings from './Settings'
 const state = vi.hoisted(() => ({ request: vi.fn() }))
 vi.mock('~/graphql/client', () => ({ browserGraphQLRequest: state.request }))
-vi.mock('~/query', () => ({ dsbKeys: { config: (slug: string) => ['dsb', 'config', slug] } }))
+vi.mock('~/query', () => ({ dsbKeys: { slug: (slug: string) => ['dsb', slug] } }))
 vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key }) }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'xx' }) }))
-vi.mock('~/stores/dsbConfig/hooks', () => ({
-  default: () => ({ pagiMode: 'page', pagiMobileMode: 'infinite_scroll', pagiRevision: 4 }),
+vi.mock('~/stores/dsb/hooks', () => ({
+  default: () => ({ pagiMode: 'PAGE', pagiMobileMode: 'INFINITE_SCROLL', pagiRevision: 4 }),
 }))
 vi.mock('~/query/mutation/optimistic/execute', () => ({
   executeCommand: ({ request, variables }: any) => request(variables),
 }))
 it('saves one community mode with revision and patches the canonical dashboard owner', async () => {
   const client = new QueryClient()
-  client.setQueryData(['dsb', 'config', 'xx'], {
-    pagiMode: 'page',
-    pagiMobileMode: 'infinite_scroll',
+  client.setQueryData(['dsb', 'xx'], {
+    pagiMode: 'PAGE',
+    pagiMobileMode: 'INFINITE_SCROLL',
     pagiRevision: 4,
-    original: {},
   })
   state.request.mockResolvedValue({
     updateDashboardPagiMode: {
@@ -30,7 +32,18 @@ it('saves one community mode with revision and patches the canonical dashboard o
   })
   render(
     <QueryClientProvider client={client}>
-      <PagiModeSettings />
+      <DsbShellProvider
+        community='xx'
+        demoMode={false}
+        initialData={{
+          ...FIELDS,
+          pagiMode: 'PAGE',
+          pagiMobileMode: 'INFINITE_SCROLL',
+          pagiRevision: 4,
+        }}
+      >
+        <PagiModeSettings />
+      </DsbShellProvider>
     </QueryClientProvider>,
   )
   expect(screen.getAllByRole('radio')).toHaveLength(6)
@@ -44,7 +57,9 @@ it('saves one community mode with revision and patches the canonical dashboard o
       name: 'dsb.pagi.load_more',
     }),
   )
-  fireEvent.click(screen.getByRole('button', { name: 'dsb.pagi.save' }))
+  const saveButton = screen.getByRole('button', { name: 'dsb.pagi.save' })
+  await waitFor(() => expect(saveButton).toBeEnabled())
+  fireEvent.click(saveButton)
   await waitFor(() => expect(state.request).toHaveBeenCalledTimes(1))
   expect(state.request.mock.calls[0][1]).toEqual({
     community: 'xx',
@@ -53,9 +68,9 @@ it('saves one community mode with revision and patches the canonical dashboard o
     expectedRevision: 4,
   })
   await waitFor(() =>
-    expect(client.getQueryData(['dsb', 'config', 'xx'])).toMatchObject({
-      pagiMode: 'infinite_scroll',
-      pagiMobileMode: 'load_more',
+    expect(client.getQueryData(['dsb', 'xx'])).toMatchObject({
+      pagiMode: 'INFINITE_SCROLL',
+      pagiMobileMode: 'LOAD_MORE',
       pagiRevision: 5,
     }),
   )

@@ -1,7 +1,7 @@
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import { hasPreviewWallpaper } from '~/shell/GlobalLayout/background'
-import useContentShadowStore from '~/stores/contentShadow/hooks'
+import useDsbShell from '~/stores/dsbShell/hooks'
 import { pickWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
@@ -13,7 +13,7 @@ export default function useSalon() {
   const { isDarkTheme } = useTheme()
   const wallpaper = useWallpaperDomain()
   const wallpaperState = pickWallpaperThemeState(wallpaper, isDarkTheme)
-  const contentShadow = useContentShadowStore().enabled
+  const contentShadow = useDsbShell().contentShadow
   const hasWallpaper = hasPreviewWallpaper(wallpaperState)
   const base = useBase()
 

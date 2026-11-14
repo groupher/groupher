@@ -41,7 +41,7 @@ import type {
   TPagedTickets,
   TPostTicketProgress,
   TPost,
-  TParseDashboard,
+  TDsb,
   TThread,
 } from '~/spec'
 
@@ -55,7 +55,7 @@ import {
 
 export type TCommunityShell = {
   community: TCommunity
-  dashboard: TParseDashboard
+  dashboard: TDsb
   wallpaper: ReturnType<typeof parseWallpaper>
 }
 

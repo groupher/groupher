@@ -6,7 +6,7 @@ import { FIELDS } from '~/constant/dsb-fields'
 import { removeEmptyValuesFromObject } from '~/helper'
 import { decodeWallpaperSettings } from '~/lib/wallpaperSettingsCodec'
 import type { TWallpaperSettingsTransport } from '~/lib/wallpaperSettingsCodec'
-import type { TCommunity, TNameAlias, TParseDashboard, TParsedWallpaper } from '~/spec'
+import type { TCommunity, TNameAlias, TDsb, TParsedWallpaper } from '~/spec'
 import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
 /** Parses wallpaper into the canonical frontend shared representation. */
@@ -44,15 +44,13 @@ const parseDashboardAlias = (nameAlias: TNameAlias[]): TNameAlias[] => {
 }
 
 /** Parses dashboard into the canonical frontend shared representation. */
-export const parseDashboard = (community: TCommunity): TParseDashboard => {
+export const parseDashboard = (community: TCommunity): TDsb => {
   if (!community) {
     const defaultFields = {
       ...FIELDS,
-      pagiMode: 'page' as const,
-      pagiMobileMode: 'infinite_scroll' as const,
       pagiRevision: 0,
     }
-    return { ...defaultFields, original: defaultFields }
+    return defaultFields
   }
 
   const { dashboard } = community
@@ -60,11 +58,9 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
   if (!dashboard || Object.keys(dashboard).length === 0) {
     const defaultFields = {
       ...FIELDS,
-      pagiMode: 'page' as const,
-      pagiMobileMode: 'infinite_scroll' as const,
       pagiRevision: 0,
     }
-    return { ...defaultFields, original: defaultFields }
+    return defaultFields
   }
 
   const {
@@ -105,11 +101,10 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     thirdPartyAnalytics,
     enabledThirdPartyAnalytics,
     contentShadow: contentShadow as boolean | undefined,
-    pagiMode: (pagiMode?.toLowerCase() || 'page') as TParseDashboard['pagiMode'],
-    pagiMobileMode: (pagiMobileMode?.toLowerCase() ||
-      'infinite_scroll') as TParseDashboard['pagiMobileMode'],
+    pagiMode: pagiMode ?? 'PAGE',
+    pagiMobileMode: pagiMobileMode ?? 'INFINITE_SCROLL',
     pagiRevision: pagiRevision ?? 0,
-  }) as Partial<TParseDashboard>
+  }) as Partial<TDsb>
 
   if (layout?.kanbanBoards?.length) {
     fieldsObj.kanbanBoards = normalizeKanbanBoards(layout.kanbanBoards)
@@ -120,13 +115,10 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
   if (Object.keys(fieldsObj).length === 0) {
     const defaultFields = {
       ...FIELDS,
-      pagiMode: 'page' as const,
-      pagiMobileMode: 'infinite_scroll' as const,
       pagiRevision: 0,
     }
-    return { ...defaultFields, original: defaultFields }
+    return defaultFields
   }
 
-  const mergedFields = { ...FIELDS, ...fieldsObj }
-  return { ...mergedFields, original: mergedFields }
+  return { ...FIELDS, ...fieldsObj }
 }

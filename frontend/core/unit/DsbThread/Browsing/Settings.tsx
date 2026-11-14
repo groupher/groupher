@@ -5,9 +5,10 @@ import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { dsbKeys } from '~/query'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
-import type { TPaginationMode, TParseDashboard } from '~/spec'
+import type { TDsb } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDsbConfig from '~/stores/dsbConfig/hooks'
+import useDsb from '~/stores/dsb/hooks'
+import useDsbShell, { useDsbShellStore } from '~/stores/dsbShell/hooks'
 
 import { updateDashboardPagiMode } from '../schema/settings'
 import ModeOptions from './ModeOptions'
@@ -18,19 +19,16 @@ export default function PagiModeSettings() {
   const s = useSalon()
   const { t } = useTrans()
   const { slug } = useCommunity()
-  const dashboard = useDsbConfig()
+  const dashboard = useDsb()
+  const dsb$ = useDsbShell()
+  const liveDsb$ = useDsbShellStore()
   const client = useQueryClient()
-  const [draft, setDraft] = useState<{
-    slug: string
-    mode: TPaginationMode
-    mobileMode: TPaginationMode
-  } | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const current = dashboard.pagiMode ?? 'page'
-  const currentMobile = dashboard.pagiMobileMode ?? 'infinite_scroll'
-  const mode = draft?.slug === slug ? draft.mode : current
-  const mobileMode = draft?.slug === slug ? draft.mobileMode : currentMobile
+  const current = dashboard.pagiMode ?? 'PAGE'
+  const currentMobile = dashboard.pagiMobileMode ?? 'INFINITE_SCROLL'
+  const mode = dsb$.pagiMode
+  const mobileMode = dsb$.pagiMobileMode
   const save = async () => {
     setSaving(true)
     setError(null)
@@ -39,22 +37,24 @@ export default function PagiModeSettings() {
         request: (variables) => browserGraphQLRequest(updateDashboardPagiMode, variables),
         variables: {
           community: slug,
-          mode: mode.toUpperCase() as Uppercase<TPaginationMode>,
-          mobileMode: mobileMode.toUpperCase() as Uppercase<TPaginationMode>,
+          mode,
+          mobileMode,
           expectedRevision: dashboard.pagiRevision ?? 0,
         },
       })
       const saved = result.updateDashboardPagiMode
       if (saved) {
-        const patch = {
-          pagiMode: saved.pagiMode.toLowerCase() as TPaginationMode,
-          pagiMobileMode: saved.pagiMobileMode.toLowerCase() as TPaginationMode,
-          pagiRevision: saved.pagiRevision,
+        const confirmed = {
+          pagiMode: saved.pagiMode,
+          pagiMobileMode: saved.pagiMobileMode,
         }
-        client.setQueryData<TParseDashboard>(dsbKeys.slug(slug), (previous) =>
-          previous
-            ? { ...previous, ...patch, original: { ...previous.original, ...patch } }
-            : previous,
+        liveDsb$.reconcile({
+          fields: ['pagiMode', 'pagiMobileMode'],
+          submitted: { pagiMode: mode, pagiMobileMode: mobileMode },
+          confirmed,
+        })
+        client.setQueryData<TDsb>(dsbKeys.slug(slug), (previous) =>
+          previous ? { ...previous, ...confirmed, pagiRevision: saved.pagiRevision } : previous,
         )
       }
     } catch (failure) {
@@ -71,14 +71,14 @@ export default function PagiModeSettings() {
         title={t('dsb.pagi.desktop')}
         mode={mode}
         disabled={saving}
-        onChange={(value) => setDraft({ slug, mode: value, mobileMode })}
+        onChange={(value) => liveDsb$.edit('pagiMode', value)}
       />
       <ModeOptions
         name='pagi-mobile-mode'
         title={t('dsb.pagi.mobile')}
         mode={mobileMode}
         disabled={saving}
-        onChange={(value) => setDraft({ slug, mode, mobileMode: value })}
+        onChange={(value) => liveDsb$.edit('pagiMobileMode', value)}
       />
       <p className={s.hint}>{t('dsb.pagi.replies')}</p>
       {error && <p role='alert'>{error}</p>}

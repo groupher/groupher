@@ -1,7 +1,7 @@
 import { queryOptions } from '@tanstack/react-query'
 
 import { parseDashboard } from '~/lib/ssr/parse'
-import type { TParseDashboard } from '~/spec'
+import type { TDsb } from '~/spec'
 
 import { fetchCommunity } from './communitySource'
 
@@ -25,12 +25,12 @@ export const dsbMutationKeys = {
   contentShadow: (community: string) => [...dsbKeys.all, 'content-shadow', community] as const,
 }
 
-type TDsbSeed = () => TParseDashboard | Promise<TParseDashboard>
+type TDsbSeed = () => TDsb | Promise<TDsb>
 
 const slug = (community: string, seed?: TDsbSeed) =>
   queryOptions({
     queryKey: dsbKeys.slug(community),
-    queryFn: async (): Promise<TParseDashboard> => {
+    queryFn: async (): Promise<TDsb> => {
       if (seed) return seed()
 
       return parseDashboard(await fetchCommunity(community))
