@@ -168,8 +168,8 @@ export const CommentPublicReplyFields = graphql(`
   }
 `)
 
-export const CommentPagiInfo = graphql(`
-  fragment CommentPagiInfo on PageInfo {
+export const CommentPageInfo = graphql(`
+  fragment CommentPageInfo on PageInfo {
     __typename
     hasPreviousPage
     hasNextPage

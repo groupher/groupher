@@ -65,7 +65,7 @@ export const makeStoreWrapper = (opts: TWrapperOpts = {}): FC<{ children: ReactN
     },
   }
   const queryClient = providedQueryClient ?? createQueryClient()
-  queryClient.setQueryData(dsbKeys.config(initCommunity.slug), initDashboard)
+  queryClient.setQueryData(dsbKeys.slug(initCommunity.slug), initDashboard)
 
   const Wrapper: FC<{ children: ReactNode }> = ({ children }) => {
     const content = (

@@ -192,7 +192,7 @@ describe('createAuthFetch', () => {
         {},
         { fetcher },
       )
-      await browserGraphQLRequest(parse('mutation QueryUpvotePost { upvotePost }'), {}, { fetcher })
+      await browserGraphQLRequest(parse('mutation UpvotePost { upvotePost }'), {}, { fetcher })
       expect(changed).not.toHaveBeenCalled()
 
       await browserGraphQLRequest(

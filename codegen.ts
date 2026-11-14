@@ -16,6 +16,7 @@ const config: CodegenConfig = {
     'frontend/core/schemas/pages/community.ts',
     'frontend/core/schemas/pages/action.ts',
     'frontend/core/schemas/pages/misc.ts',
+    'frontend/core/schemas/pages/press.ts',
     'frontend/core/schemas/pages/activity.ts',
     'frontend/core/unit/AboutThread/schema.ts',
     'frontend/core/unit/ChangelogThread/schema.ts',

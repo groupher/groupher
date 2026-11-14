@@ -24,7 +24,6 @@ import type {
   TNameAlias,
   TNavActiveLayout,
   TPostLayout,
-  TRSSType,
   TResolvedThemePreset,
   TSizeSML,
   TSocialItem,
@@ -129,8 +128,6 @@ export type TDsbFieldMap = {
   nameAlias: readonly TNameAlias[]
   enable: TEnableConf
   docFaq: TDocFaq
-  rssFeedType: TRSSType
-  rssFeedCount: number
   headerLayout: THeaderLayout
   footerLayout: TFooterLayout
   footerLinks: readonly TLinkItem[]

@@ -2,7 +2,7 @@ import { graphql } from '~/graphql/authoring'
 
 const commentPage = graphql(`
   "Comment Lite page using the shared offset/cursor pagination contract"
-  query CommentPage(
+  query PagedComments(
     $article: ArticlePathInput!
     $mode: CommentsMode
     $filter: CommentPageFilter
@@ -28,7 +28,7 @@ const commentPage = graphql(`
         }
       }
       pageInfo {
-        ...CommentPagiInfo
+        ...CommentPageInfo
       }
     }
   }
@@ -36,7 +36,7 @@ const commentPage = graphql(`
 
 const commentReplyPage = graphql(`
   "A root comment's flat descendants through the shared Pagi contract"
-  query CommentReplyPage(
+  query PagedCommentReplies(
     $comment: CommentPathInput!
     $filter: CommentPageFilter
     $pagi: PagiInput
@@ -46,7 +46,7 @@ const commentReplyPage = graphql(`
         ...CommentPublicReplyFields
       }
       pageInfo {
-        ...CommentPagiInfo
+        ...CommentPageInfo
       }
     }
   }
@@ -315,7 +315,7 @@ const pagedPublishedComments = graphql(`
         }
       }
       pageInfo {
-        ...CommentPagiInfo
+        ...CommentPageInfo
       }
     }
   }

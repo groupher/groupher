@@ -4,6 +4,7 @@ import type { Query } from '@tanstack/react-query'
 import { resolve as resolveArticle } from './article'
 import { resolve as resolveComment } from './comment'
 import { resolve as resolveCommunity } from './community'
+import { resolve as resolvePress } from './press'
 import type {
   TQueryInvalidationFailure,
   TQueryInvalidationResult,
@@ -19,6 +20,8 @@ const resolverFor = (target: TQueryInvalidationTarget) => {
       return resolveComment(target)
     case 'community':
       return resolveCommunity(target)
+    case 'press':
+      return resolvePress(target)
     case 'viewer':
       return resolveViewer(target)
   }

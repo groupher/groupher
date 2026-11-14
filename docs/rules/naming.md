@@ -73,8 +73,8 @@ query Categories {
 禁止新增：PageCommunity、PageDoc、CommunityPageShell、CommunityBootstrap
 ```
 
-既有 `PostPage`、`DocPage`、`ChangelogPage`、`CommentPage` 等 `*Page` 分页查询属于历史命名，
-后续按 `PagedXxx` 在触及时收敛，不与本轮 `Page*` 前缀清理混做。
+分页查询统一使用 `PagedXxx`；`PostPage`、`DocPage`、`ChangelogPage`、`CommentPage` 等
+`*Page` 查询已完成收敛，新代码不得再使用 `*Page` 作为分页查询名。
 
 ### 分页集合
 
@@ -122,37 +122,69 @@ fragment PagedCommunitiesPageInfo on CommunityPage {
   `communityPage` 等别名。
 - 取数函数使用 `fetch<Resource>`，例如 `fetchCommunity`；不要使用 `fetchCommunitySnapshot`
   等缓存或实现术语。
-- TanStack Query key 保持在 `Q.<domain>.<query>` 命名空间，例如 `Q.community.config`、
-  `Q.dsb.config`；Query key 不是网络请求，GraphQL operation 名也不描述 cache key。
+- TanStack Query key 保持在 `Q.<domain>.<query>` 命名空间，例如 `Q.community.slug`、
+  `Q.dsb.slug`；Query key 不是网络请求，GraphQL operation 名也不描述 cache key。
 - codegen 类型跟随 operation 名，例如 `CommunityQuery`、`PagedCommunitiesQuery`；不手写旧名称
   别名或兼容类型。
+- 单 canonical query 的 domain 使用 `.slug`（`Q.community.slug`、`Q.dsb.slug`、
+  `Q.wallpaper.slug`、`Q.wallpaperEditor.slug`、`Q.press.slug`）；多 query domain 使用语义方法
+  （`Q.article.posts`、`Q.ticket.page`、`Q.activity.config`）。真正的 config 资源可以保留
+  `.config`，但不要为同一个 canonical query 同时保留 `.config` 和 `.slug`。
+- mutation key 由 domain 的 `*MutationKeys` 提供，例如 `dsbMutationKeys.save`、
+  `pressMutationKeys.update`、`wallpaperMutationKeys.publish`；不要在组件里手写 mutation key
+  数组。
+- GraphQL mutation operation 不使用 `Query*` 前缀，例如 `UpvotePost`、`EmotionToDoc`、
+  `AddToCollect`，不要命名为 `QueryUpvotePost`。
+- 独立领域使用自己的 query 域和 invalidation 域；例如 Press 使用 `Q.press.slug` /
+  `pressKeys` / `QueryInvalidation.press`，不要挂在 `communityKeys.pressConfig` 下。
 
 ### 一个 operation，多个 Query key
 
 一个 GraphQL operation 可以被投影到多个 TanStack Query key。例如 `Community` operation 的同一
-响应 seed `Q.community.config`、`Q.dsb.config`、`Q.wallpaper.config`。命名时分别按资源
+响应 seed `Q.community.slug`、`Q.dsb.slug`、`Q.wallpaper.slug`。命名时分别按资源
 （operation）和缓存所有权（Query key）判断，不要把 Query key 数量当作网络请求数量。
 
 ### 存量命名清理
 
 触及相关查询时按以下方向收敛，不做长期 alias：
 
-| 当前                        | 目标                         |
-| --------------------------- | ---------------------------- |
-| `PageCommunity`             | `Community`                  |
-| `PagePagedCommunities`      | `PagedCommunities`           |
-| `PageSubscribedCommunities` | `PagedSubscribedCommunities` |
-| `PageCommunityFields`       | `CommunityFields`            |
-| `PageCommunityPageInfo`     | `PagedCommunitiesPageInfo`   |
-| `PageDoc`                   | `Doc`                        |
-| `PageDocPublicTree`         | `DocPublicTree`              |
-| `PageCommunityTagGroups`    | `CommunityTagGroups`         |
-| `PageCategories`            | `Categories`                 |
-| `Page*Fields`               | `*Fields`                    |
-| `fetchCommunitySnapshot`    | `fetchCommunity`             |
+| 当前                                      | 目标                           |
+| ----------------------------------------- | ------------------------------ |
+| `PageCommunity`                           | `Community`                    |
+| `PagePagedCommunities`                    | `PagedCommunities`             |
+| `PageSubscribedCommunities`               | `PagedSubscribedCommunities`   |
+| `PageCommunityFields`                     | `CommunityFields`              |
+| `PageCommunityPageInfo`                   | `PagedCommunitiesPageInfo`     |
+| `PageDoc`                                 | `Doc`                          |
+| `PageDocPublicTree`                       | `DocPublicTree`                |
+| `PageCommunityTagGroups`                  | `CommunityTagGroups`           |
+| `PageCategories`                          | `Categories`                   |
+| `Page*Fields`                             | `*Fields`                      |
+| `PostPage`                                | `PagedPosts`                   |
+| `ChangelogPage`                           | `PagedChangelogs`              |
+| `DocPage`                                 | `PagedDocs`                    |
+| `CommentPage`                             | `PagedComments`                |
+| `CommentReplyPage`                        | `PagedCommentReplies`          |
+| `TicketPage`                              | `PagedTickets`                 |
+| `TicketPageInternal`                      | `PagedTicketsInternal`         |
+| `DashboardModeratorPage`                  | `PagedCommunityModerators`     |
+| `ArticleLogsPage`                         | `PagedArticleLogs`             |
+| `MentionsGraphPage`                       | `PagedMentionsGraph`           |
+| `CommentPagiInfo`                         | `CommentPageInfo`              |
+| `communityKeys.pressConfig`               | `pressKeys.slug`               |
+| `DashboardPressConfig`                    | `PressConfig`                  |
+| `UpdateDashboardPressConfig`              | `UpdatePressConfig`            |
+| `QueryInvalidation.community.pressConfig` | `QueryInvalidation.press.slug` |
+| `Q.community.config`                      | `Q.community.slug`             |
+| `Q.dsb.config`                            | `Q.dsb.slug`                   |
+| `Q.wallpaper.config`                      | `Q.wallpaper.slug`             |
+| `Q.wallpaperEditor.config`                | `Q.wallpaperEditor.slug`       |
+| `projectCommunityConfig`                  | `pickCommunityFields`          |
+| `patchCommunityConfig`                    | `patchCommunity`               |
+| `fetchCommunitySnapshot`                  | `fetchCommunity`               |
 
-主要落点：`frontend/core/schemas/pages/{community,doc,misc,blog,post,changelog}.ts`、
-`frontend/core/schemas/pages/{article,doc}.fragments.ts` 和
+主要落点：`frontend/core/schemas/pages/{community,doc,misc,blog,post,changelog,press}.ts`、
+`frontend/core/schemas/pages/{article,doc}.fragments.ts`、`frontend/core/query/press.ts` 和
 `frontend/core/query/communitySource.ts`。
 
 重命名 operation 时同批运行 `pnpm run graphql:codegen`，并更新

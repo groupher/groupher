@@ -51,7 +51,7 @@ export default function PagiModeSettings() {
           pagiMobileMode: saved.pagiMobileMode.toLowerCase() as TPaginationMode,
           pagiRevision: saved.pagiRevision,
         }
-        client.setQueryData<TParseDashboard>(dsbKeys.config(slug), (previous) =>
+        client.setQueryData<TParseDashboard>(dsbKeys.slug(slug), (previous) =>
           previous
             ? { ...previous, ...patch, original: { ...previous.original, ...patch } }
             : previous,

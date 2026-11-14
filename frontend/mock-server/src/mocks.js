@@ -365,10 +365,6 @@ const makeDashboard = (slug = 'home') => {
       city: 'Shanghai',
       techstack: 'GraphQL / Next.js',
     },
-    rss: {
-      rssFeedType: 'FULL',
-      rssFeedCount: 20,
-    },
     nameAlias: [],
     headerLinks: [
       {

@@ -30,7 +30,7 @@ const result = {
 describe('SSR comments Pagi', () => {
   it('hydrates the exact browser infinite key selected by bootstrap', async () => {
     const client = new QueryClient()
-    client.setQueryData(dsbKeys.config('home'), {
+    client.setQueryData(dsbKeys.slug('home'), {
       pagiMode: cursor.mode,
       pagiRevision: cursor.revision,
     } as TParseDashboard)
@@ -47,7 +47,7 @@ describe('SSR comments Pagi', () => {
   })
   it('prefetches an explicit offset link even when bootstrap defaults to cursor', async () => {
     const client = new QueryClient()
-    client.setQueryData(dsbKeys.config('home'), {
+    client.setQueryData(dsbKeys.slug('home'), {
       pagiMode: cursor.mode,
       pagiRevision: cursor.revision,
     } as TParseDashboard)
@@ -65,13 +65,13 @@ describe('SSR comments Pagi', () => {
 
 it('refreshes bootstrap once on revision mismatch and retains an explicit cursor location', async () => {
   const client = new QueryClient()
-  client.setQueryData(dsbKeys.config('home'), {
+  client.setQueryData(dsbKeys.slug('home'), {
     pagiMode: cursor.mode,
     pagiRevision: cursor.revision,
   } as TParseDashboard)
   loadComments.mockRejectedValueOnce({ revision: true }).mockResolvedValueOnce(result)
   refresh.mockImplementation(async () =>
-    client.setQueryData(dsbKeys.config('home'), {
+    client.setQueryData(dsbKeys.slug('home'), {
       pagiMode: cursor.mode,
       pagiRevision: 3,
     }),
@@ -118,7 +118,7 @@ afterEach(() =>
 it('uses the mobile preference for a phone or tablet entry', async () => {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 768 })
   const client = new QueryClient()
-  client.setQueryData(dsbKeys.config('home'), {
+  client.setQueryData(dsbKeys.slug('home'), {
     pagiMode: 'page',
     pagiMobileMode: 'infinite_scroll',
     pagiRevision: 2,

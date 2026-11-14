@@ -1,142 +1,116 @@
 import type { VariablesOf } from '@graphql-typed-document-node/core'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { pick } from 'ramda'
 import { useEffect, useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
-import { communityKeys, graphqlQueryOptions } from '~/query'
+import { pressMutationKeys, pressQueries } from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
-import type { TEditFunc, TRSSType } from '~/spec'
+import { updatePressConfig } from '~/schemas/pages/press'
 import useCommunity from '~/stores/community/hooks'
-import useDsbEdit from '~/stores/dsbEdit/hooks'
 
-import { FIELD } from '../constant'
-import S from '../schema/integrations'
-import useHelper from './useHelper'
-
-type TUpdatePressConfigInput = NonNullable<VariablesOf<typeof S.updatePressConfig>['input']>
+type TUpdatePressConfigInput = NonNullable<VariablesOf<typeof updatePressConfig>['input']>
 type TFeedThread = NonNullable<TUpdatePressConfigInput['feedThreads']>[number]
-type TUpdatePressConfigRequest = TUpdatePressConfigInput & {
-  options: TOptions
+type TFeedType = 'full' | 'digest'
+
+type TPressDraft = {
+  feedEnabled: boolean
+  markdownEnabled: boolean
+  llmsEnabled: boolean
+  sitemapEnabled: boolean
+  feedThreads: string[]
+  feedType: TFeedType
+  feedCount: number
 }
 
 type TOutputField = 'feedEnabled' | 'markdownEnabled' | 'llmsEnabled' | 'sitemapEnabled'
-type TOptions = Record<TOutputField, boolean> & { feedThreads: string[] }
 
-type TRet = TOptions & {
-  rssFeedType: TRSSType
-  rssFeedCount: number
+type TRet = TPressDraft & {
   saving: boolean
   isTouched: boolean
   canSave: boolean
-  edit: TEditFunc
+  setFeedType: (type: TFeedType) => void
+  setFeedCount: (count: number) => void
   toggleOutput: (field: TOutputField, value: boolean) => void
   toggleThread: (thread: string, value: boolean) => void
   rssOnSave: () => void
   rssOnCancel: () => void
 }
 
-const DEFAULT_OPTIONS: TOptions = {
+const DEFAULT_DRAFT: TPressDraft = {
   feedEnabled: false,
   markdownEnabled: true,
   llmsEnabled: true,
   sitemapEnabled: true,
   feedThreads: [],
+  feedType: 'digest',
+  feedCount: 20,
 }
 
-/** Exposes rss state and actions through the shared React hook boundary. */
+/** Exposes the community Press configuration draft and save actions. */
 export default function useRSS(): TRet {
-  const dsb$ = useDsbEdit()
-  const reconcile = dsb$.reconcile
   const { slug: community } = useCommunity()
-  const { edit, isChanged } = useHelper()
-  const pressConfigQuery = graphqlQueryOptions(
-    S.pressConfig,
-    { community },
-    {
-      queryKey: communityKeys.pressConfig(community),
-    },
-  )
-  const { data } = useQuery(pressConfigQuery)
   const queryClient = useQueryClient()
-  const [options, setOptions] = useState<TOptions>(DEFAULT_OPTIONS)
-  const original = useRef<TOptions>(DEFAULT_OPTIONS)
+  const { data } = useQuery(pressQueries.slug(community))
+  const [draft, setDraft] = useState<TPressDraft>(DEFAULT_DRAFT)
+  const original = useRef<TPressDraft>(DEFAULT_DRAFT)
 
   const updateMutation = useMutation({
-    mutationKey: ['dsb', 'press-config', community],
-    mutationFn: ({ options: _options, ...input }: TUpdatePressConfigRequest) =>
+    mutationKey: pressMutationKeys.update(community),
+    mutationFn: (submitted: TPressDraft) =>
       executeCommand({
-        request: (variables) => browserGraphQLRequest(S.updatePressConfig, variables),
-        variables: { input },
+        request: (variables) => browserGraphQLRequest(updatePressConfig, variables),
+        variables: {
+          input: {
+            community,
+            feedEnabled: submitted.feedEnabled,
+            feedType: submitted.feedType.toUpperCase() as TUpdatePressConfigInput['feedType'],
+            feedCount: submitted.feedCount,
+            feedThreads: submitted.feedThreads.map((thread) => thread.toUpperCase() as TFeedThread),
+            llmsEnabled: submitted.llmsEnabled,
+            markdownEnabled: submitted.markdownEnabled,
+            sitemapEnabled: submitted.sitemapEnabled,
+          },
+        },
       }),
-    onSuccess: (_data, input) => {
-      original.current = input.options
-      dsb$.accept([FIELD.RSS_FEED_TYPE, FIELD.RSS_FEED_COUNT])
-      void invalidate(queryClient, QueryInvalidation.community.pressConfig(community))
+    onSuccess: (_data, submitted) => {
+      original.current = submitted
+      void invalidate(queryClient, QueryInvalidation.press.slug(community))
     },
   })
 
   useEffect(() => {
-    if (!data?.pressConfig) return
-    const config = data.pressConfig
-    const next = {
-      feedEnabled: config.feedEnabled,
-      markdownEnabled: config.markdownEnabled,
-      llmsEnabled: config.llmsEnabled,
-      sitemapEnabled: config.sitemapEnabled,
-      feedThreads: config.feedThreads.map((thread) => thread.toLowerCase()),
+    if (!data) return
+
+    const next: TPressDraft = {
+      feedEnabled: data.feedEnabled,
+      markdownEnabled: data.markdownEnabled,
+      llmsEnabled: data.llmsEnabled,
+      sitemapEnabled: data.sitemapEnabled,
+      feedThreads: data.feedThreads.map((thread) => thread.toLowerCase()),
+      feedType: data.feedType.toLowerCase() as TFeedType,
+      feedCount: data.feedCount,
     }
-    setOptions(next)
+    setDraft(next)
     original.current = next
-    const confirmed = {
-      rssFeedType: config.feedType.toLowerCase() as TRSSType,
-      rssFeedCount: config.feedCount,
-    }
-    reconcile({
-      fields: [FIELD.RSS_FEED_TYPE, FIELD.RSS_FEED_COUNT],
-      submitted: confirmed,
-      confirmed,
-    })
-  }, [data?.pressConfig, reconcile])
-
-  const isTouched =
-    isChanged(FIELD.RSS_FEED_TYPE) ||
-    isChanged(FIELD.RSS_FEED_COUNT) ||
-    JSON.stringify(options) !== JSON.stringify(original.current)
-
-  const rssOnSave = (): void => {
-    updateMutation.mutate({
-      community,
-      feedType: dsb$.rssFeedType.toUpperCase() as TUpdatePressConfigInput['feedType'],
-      feedCount: dsb$.rssFeedCount,
-      options,
-      ...options,
-      feedThreads: options.feedThreads.map((thread) => thread.toUpperCase() as TFeedThread),
-    })
-  }
-
-  const rssOnCancel = (): void => {
-    setOptions(original.current)
-    dsb$.rollback([FIELD.RSS_FEED_TYPE, FIELD.RSS_FEED_COUNT])
-  }
+  }, [data])
 
   return {
-    edit,
-    ...pick(['rssFeedType', 'rssFeedCount'], dsb$),
+    ...draft,
     saving: updateMutation.isPending,
-    ...options,
-    isTouched,
-    canSave: !options.feedEnabled || options.feedThreads.length > 0,
-    toggleOutput: (field, value) => setOptions((current) => ({ ...current, [field]: value })),
+    isTouched: JSON.stringify(draft) !== JSON.stringify(original.current),
+    canSave: !draft.feedEnabled || draft.feedThreads.length > 0,
+    setFeedType: (feedType) => setDraft((current) => ({ ...current, feedType })),
+    setFeedCount: (feedCount) => setDraft((current) => ({ ...current, feedCount })),
+    toggleOutput: (field, value) => setDraft((current) => ({ ...current, [field]: value })),
     toggleThread: (thread, value) =>
-      setOptions((current) => ({
+      setDraft((current) => ({
         ...current,
         feedThreads: value
           ? Array.from(new Set([...current.feedThreads, thread]))
           : current.feedThreads.filter((item) => item !== thread),
       })),
-    rssOnSave,
-    rssOnCancel,
+    rssOnSave: () => updateMutation.mutate(draft),
+    rssOnCancel: () => setDraft(original.current),
   }
 }

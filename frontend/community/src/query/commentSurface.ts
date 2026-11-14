@@ -20,7 +20,7 @@ export async function prefetchComments(
   const prefetch = () => {
     const mobile = readPagiMobileLayout()
     const config = toEffectivePagiConfig(
-      client.getQueryData<TParseDashboard>(dsbKeys.config(community)),
+      client.getQueryData<TParseDashboard>(dsbKeys.slug(community)),
       mobile === true,
     )
     const position = resolveCommentPosition(config, new URLSearchParams(search))

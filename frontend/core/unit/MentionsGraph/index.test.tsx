@@ -3,8 +3,8 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { print } from 'graphql'
 
 import { GraphQLRequestError } from '~/graphql/client'
-import type { MentionsGraphPageQuery } from '~/lib/graphql/generated/graphql'
-import { mentionsGraphQueries } from '~/query/mentionsGraph'
+import type { PagedMentionsGraphQuery } from '~/lib/graphql/generated/graphql'
+import { mentionsGraphKeys } from '~/query/mentionsGraph'
 
 import MentionsGraph from './index'
 
@@ -137,7 +137,7 @@ it('links an unnumbered Article through its stable ID locator', async () => {
   state.request.mockReset().mockImplementation(async (document) => {
     if (print(document).includes('query MentionsGraphRevision'))
       return { mentionsGraphRevision: '1' }
-    const result = page() as unknown as MentionsGraphPageQuery['mentionsGraph']
+    const result = page() as unknown as PagedMentionsGraphQuery['mentionsGraph']
     result.nodes[1].locator = {
       type: 'POST',
       articleId,
@@ -266,7 +266,7 @@ it('refreshes the graph when its active revision query observes a change', async
     return { mentionsGraph: { ...page(), revision } }
   })
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const revisionKey = mentionsGraphQueries.revisionKey('home', focus)
+  const revisionKey = mentionsGraphKeys.revision('home', focus)
   client.setQueryData(revisionKey, revision)
 
   render(
@@ -363,7 +363,7 @@ it('clears previously readable graph fields before refetching a changed revision
     return { mentionsGraph: page() }
   })
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  client.setQueryData(mentionsGraphQueries.revisionKey('home', focus), '1')
+  client.setQueryData(mentionsGraphKeys.revision('home', focus), '1')
   const { unmount } = render(
     <QueryClientProvider client={client}>
       <MentionsGraph community='home' focus={focus} />
@@ -372,7 +372,7 @@ it('clears previously readable graph fields before refetching a changed revision
   try {
     await screen.findByRole('link', { name: 'Target' })
     holdRefresh = true
-    await act(async () => client.setQueryData(mentionsGraphQueries.revisionKey('home', focus), '2'))
+    await act(async () => client.setQueryData(mentionsGraphKeys.revision('home', focus), '2'))
     await waitFor(() =>
       expect(
         state.request.mock.calls.filter(

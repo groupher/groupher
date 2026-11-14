@@ -14,7 +14,7 @@ export const Route = createFileRoute('/$community/kanban/content')({
       dashQueries.kanban(
         params.community,
         toEffectivePagiConfig(
-          context.queryClient.getQueryData<TParseDashboard>(dsbKeys.config(params.community)),
+          context.queryClient.getQueryData<TParseDashboard>(dsbKeys.slug(params.community)),
         ),
       ),
     ),

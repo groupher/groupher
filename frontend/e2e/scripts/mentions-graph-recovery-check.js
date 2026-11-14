@@ -15,7 +15,7 @@ async function checkMentionsGraphRecovery(page) {
   await page.route('**/api/graphql', async (route) => {
     const input = route.request().postDataJSON()
     const operation = /\bquery\s+(\w+)/.exec(input.query)?.[1]
-    if (operation !== 'MentionsGraphPage') return route.continue()
+    if (operation !== 'PagedMentionsGraph') return route.continue()
 
     const hasCursor = Boolean(input.variables.after)
     requests.push({ mode, hasCursor })

@@ -27,7 +27,7 @@ export const docPublicTree = graphql(`
 `)
 
 export const docPage = graphql(`
-  query DocPage($pagi: PagiInput, $filter: ArticlePageFilter) {
+  query PagedDocs($pagi: PagiInput, $filter: ArticlePageFilter) {
     docPage(pagi: $pagi, filter: $filter) {
       pinnedEntries {
         ...DocLiteFields

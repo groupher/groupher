@@ -66,6 +66,8 @@ const exportActivity = (community: string, selection: TActivitySelection, format
     format,
   })
 
+export const activityCommands = { export: exportActivity }
+
 const event = (community: string, eventRef: string) =>
   queryOptions({
     queryKey: activityKeys.event(community, eventRef),
@@ -76,4 +78,4 @@ const event = (community: string, eventRef: string) =>
     enabled: !!community && !!eventRef,
   })
 
-export const activityQueries = { list, stats, config, export: exportActivity, event }
+export const activityQueries = { list, stats, config, event }

@@ -36,6 +36,7 @@ import PostThreadSchema from '../unit/PostThread/schema'
 import RichEditorSchema from '../unit/RichEditor/schema'
 import TagSettingSchema from '../unit/TagSettingEditor/schema'
 import { pageDocuments } from './pages/contract-inventory'
+import PressSchema from './pages/press'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const schemaPath = path.join(__dirname, '../../../backend/api/schema.graphql')
@@ -115,6 +116,7 @@ const featureDocuments: Record<string, Record<string, SchemaValue>> = {
   },
   dashboardAnalysis: AnalysisSchema,
   dashboardTheme: ThemeSchema,
+  press: PressSchema,
   dashboardWallpaper: WallpaperSchema,
   docsImport: ImportSchema,
   docCovers: DocCoversSchema,
@@ -146,9 +148,9 @@ describe('feature GraphQL documents', () => {
 
   it('keeps the Dashboard document tree at three visible levels', () => {
     const document =
-      typeof DashboardDocsSchema.docTree === 'string'
-        ? parse(DashboardDocsSchema.docTree)
-        : DashboardDocsSchema.docTree
+      typeof DocSchema.docPublicTree === 'string'
+        ? parse(DocSchema.docPublicTree)
+        : DocSchema.docPublicTree
 
     expect(documentPagesDepth(document) + 1).toBe(DOC_TREE_MAX_VISIBLE_LEVELS)
   })

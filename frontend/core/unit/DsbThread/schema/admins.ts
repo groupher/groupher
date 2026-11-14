@@ -2,7 +2,7 @@ import { graphql } from '~/graphql/authoring'
 
 export const moderatorPage = graphql(`
   "Paged subscribers of a community"
-  query DashboardModeratorPage($community: String!, $pagi: PagiInput) {
+  query PagedCommunityModerators($community: String!, $pagi: PagiInput) {
     pagedCommunityModerators(community: $community, pagi: $pagi) {
       entries {
         id

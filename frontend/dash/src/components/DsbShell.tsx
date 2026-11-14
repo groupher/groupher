@@ -24,15 +24,15 @@ import { clearAuthRouteRecoveryAttempt } from '../utils/auth-route-recovery'
 
 type TProps = {
   children: ReactNode
-  shell: {
+  data: {
     community: string
     demoMode: boolean
   }
 }
 
-export default function DsbShell({ children, shell }: TProps) {
-  const { data: dashboard } = useSuspenseQuery(Q.dsb.config(shell.community))
-  const { data: wallpaper } = useSuspenseQuery(Q.wallpaper.config(shell.community))
+export default function DsbShell({ children, data }: TProps) {
+  const { data: dashboard } = useSuspenseQuery(Q.dsb.slug(data.community))
+  const { data: wallpaper } = useSuspenseQuery(Q.wallpaper.slug(data.community))
   const wallpaperRuntimeMode = useRouterState({
     select: (state) =>
       state.matches.some((match) => match.routeId === '/$community/appearance/wallpaper')
@@ -41,7 +41,7 @@ export default function DsbShell({ children, shell }: TProps) {
   })
   const isEditorRoute = wallpaperRuntimeMode === 'editor'
   const { data: editorData } = useQuery({
-    ...Q.wallpaperEditor.config(shell.community),
+    ...Q.wallpaperEditor.slug(data.community),
     enabled: isEditorRoute,
   })
   const editorWallpaper = useMemo(() => {
@@ -77,7 +77,7 @@ export default function DsbShell({ children, shell }: TProps) {
             <GlobalProvider authLoginModal={false}>
               <div
                 className='column-center min-h-full w-full justify-start'
-                data-demo-mode={shell.demoMode}
+                data-demo-mode={data.demoMode}
               >
                 <div className='container-dashboard relative w-full transition-all duration-150 ease-out'>
                   <CommunityDigest />
@@ -111,7 +111,7 @@ export default function DsbShell({ children, shell }: TProps) {
     <MetricProvider value={METRIC.DASHBOARD}>
       <DsbShellUiProvider>
         <DsbEditorUiProvider>
-          {shell.demoMode ? (
+          {data.demoMode ? (
             content
           ) : (
             <DsbEditProvider initialData={dashboard}>{content}</DsbEditProvider>

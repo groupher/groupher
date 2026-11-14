@@ -49,7 +49,7 @@ export default function useDsbSaveRunner({ community, dashboardStore }: TArgs) {
       }
     }
 
-    queryClient.setQueryData<TParseDashboard>(dsbKeys.config(community), (previous) =>
+    queryClient.setQueryData<TParseDashboard>(dsbKeys.slug(community), (previous) =>
       previous
         ? { ...previous, ...confirmed, original: { ...previous.original, ...confirmed } }
         : previous,

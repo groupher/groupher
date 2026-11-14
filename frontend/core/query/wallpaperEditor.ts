@@ -10,7 +10,7 @@ type TWallpaperEditorSeed = () => TWallpaperEditorData | Promise<TWallpaperEdito
 
 export const wallpaperEditorKeys = {
   all: ['wallpaper-editor'] as const,
-  config: (community: string) => [...wallpaperEditorKeys.all, community] as const,
+  slug: (community: string) => [...wallpaperEditorKeys.all, community] as const,
 }
 
 const fetchWallpaperEditor = (community: string): Promise<TWallpaperEditorData> =>
@@ -19,13 +19,13 @@ const fetchWallpaperEditor = (community: string): Promise<TWallpaperEditorData> 
     VariablesOf<typeof wallpaperDocument.wallpaperEditor>
   >(wallpaperDocument.wallpaperEditor, { community })
 
-const config = (community: string, seed?: TWallpaperEditorSeed) =>
+const slug = (community: string, seed?: TWallpaperEditorSeed) =>
   queryOptions({
-    queryKey: wallpaperEditorKeys.config(community),
+    queryKey: wallpaperEditorKeys.slug(community),
     queryFn: async (): Promise<TWallpaperEditorData> =>
       seed ? seed() : fetchWallpaperEditor(community),
     enabled: !!community,
     staleTime: 60_000,
   })
 
-export const wallpaperEditorQueries = { config }
+export const wallpaperEditorQueries = { slug }

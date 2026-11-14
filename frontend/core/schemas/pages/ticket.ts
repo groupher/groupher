@@ -159,7 +159,7 @@ export const ticketFields = graphql(`
 `)
 
 export const ticketPageFields = graphql(`
-  fragment TicketPageFields on TicketPage {
+  fragment PagedTicketsFields on TicketPage {
     entries {
       ...TicketFields
     }
@@ -186,13 +186,13 @@ export const ticketKanban = graphql(`
   query TicketKanban($community: String!, $pagi: PagiInput) {
     ticketKanban(community: $community, pagi: $pagi) {
       todo {
-        ...TicketPageFields
+        ...PagedTicketsFields
       }
       wip {
-        ...TicketPageFields
+        ...PagedTicketsFields
       }
       done {
-        ...TicketPageFields
+        ...PagedTicketsFields
       }
     }
   }
@@ -203,13 +203,13 @@ export const ticketKanbanInternal = graphql(`
   query TicketKanbanInternal($community: String!, $filter: TicketFilter, $pagi: PagiInput) {
     ticketKanbanInternal(community: $community, filter: $filter, pagi: $pagi) {
       todo {
-        ...TicketPageFields
+        ...PagedTicketsFields
       }
       wip {
-        ...TicketPageFields
+        ...PagedTicketsFields
       }
       done {
-        ...TicketPageFields
+        ...PagedTicketsFields
       }
     }
   }
@@ -217,18 +217,18 @@ export const ticketKanbanInternal = graphql(`
 
 export const ticketPage = graphql(`
   "One public User Ticket page"
-  query TicketPage($community: String!, $filter: TicketFilter, $pagi: PagiInput) {
+  query PagedTickets($community: String!, $filter: TicketFilter, $pagi: PagiInput) {
     ticketPage(community: $community, filter: $filter, pagi: $pagi) {
-      ...TicketPageFields
+      ...PagedTicketsFields
     }
   }
 `)
 
 export const ticketPageInternal = graphql(`
   "One internal User Ticket page"
-  query TicketPageInternal($community: String!, $filter: TicketFilter, $pagi: PagiInput) {
+  query PagedTicketsInternal($community: String!, $filter: TicketFilter, $pagi: PagiInput) {
     ticketPageInternal(community: $community, filter: $filter, pagi: $pagi) {
-      ...TicketPageFields
+      ...PagedTicketsFields
     }
   }
 `)
@@ -269,7 +269,7 @@ export const ticketSearch = graphql(`
     $pagi: PagiInput
   ) {
     ticketSearch(community: $community, query: $query, type: $type, pagi: $pagi) {
-      ...TicketPageFields
+      ...PagedTicketsFields
     }
   }
 `)

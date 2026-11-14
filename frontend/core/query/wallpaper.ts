@@ -7,21 +7,26 @@ import { fetchCommunity } from './communitySource'
 
 export const wallpaperKeys = {
   all: ['wallpaper'] as const,
-  config: (community: string) => [...wallpaperKeys.all, community] as const,
+  slug: (community: string) => [...wallpaperKeys.all, community] as const,
+}
+
+export const wallpaperMutationKeys = {
+  publish: (community: string) => [...wallpaperKeys.all, community, 'publish'] as const,
 }
 
 type TWallpaperSeed = () => TParsedWallpaper | Promise<TParsedWallpaper>
 
-const config = (community: string, seed?: TWallpaperSeed) =>
+const slug = (community: string, seed?: TWallpaperSeed) =>
   queryOptions({
-    queryKey: wallpaperKeys.config(community),
+    queryKey: wallpaperKeys.slug(community),
     queryFn: async (): Promise<TParsedWallpaper> => {
       if (seed) return seed()
 
       return parseWallpaper(await fetchCommunity(community))
     },
     enabled: !!community,
+    meta: { hydration: 'public' },
     staleTime: 60_000,
   })
 
-export const wallpaperQueries = { config }
+export const wallpaperQueries = { slug }

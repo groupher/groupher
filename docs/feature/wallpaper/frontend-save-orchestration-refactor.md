@@ -1,5 +1,7 @@
 # Wallpaper 前端保存编排简化方案
 
+> 历史实施合同：本文记录 Wallpaper 发布协议和既有前端编排。Dashboard `contentShadow` 的前端 store 归属将按 [Community / Dsb / DsbEditor 状态边界重构](../../dash/store-boundary-refactor.md)调整；独立 Dashboard mutation、Wallpaper 发布事务及双 lane 顺序不因此改变。该新状态边界尚未实施。
+>
 > 文档角色：Implemented contract；记录本轮已落地的边界、读点迁移和保存编排，不再把目标状态当作待实施项
 >
 > 日期：2026-09-07

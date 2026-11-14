@@ -15,7 +15,13 @@ import {
   isMeshGradientRecipe,
 } from '~/lib/wallpaperMesh'
 import type { TGradientRecipe, TGradientRenderer } from '~/lib/wallpaperMesh'
-import { dsbKeys, wallpaperKeys, wallpaperQueries } from '~/query'
+import {
+  dsbKeys,
+  dsbMutationKeys,
+  wallpaperKeys,
+  wallpaperMutationKeys,
+  wallpaperQueries,
+} from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import type { TParseDashboard, TParsedWallpaper, TWallpaperData, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -175,7 +181,7 @@ export function useLogicValue(): TWallpaperLogic {
   const { isDarkTheme } = useTheme()
   const { t } = useTrans()
   const queryClient = useQueryClient()
-  const { data: wallpaperConfig } = useQuery(wallpaperQueries.config(community$.slug))
+  const { data: wallpaperConfig } = useQuery(wallpaperQueries.slug(community$.slug))
   const wallpaperStateVersion = wallpaperConfig?.wallpaper?.version ?? 0
   const pendingSaveRef = useRef<TPendingWallpaperSave | null>(null)
   const savePlanRef = useRef<{
@@ -236,7 +242,7 @@ export function useLogicValue(): TWallpaperLogic {
   ])
 
   const wallpaperMutation = useMutation({
-    mutationKey: ['dsb', 'wallpaper', community$.slug],
+    mutationKey: wallpaperMutationKeys.publish(community$.slug),
     mutationFn: async ({
       community,
       baseVersion,
@@ -257,7 +263,7 @@ export function useLogicValue(): TWallpaperLogic {
     },
     onSuccess: ({ result, submitted }, { community }) => {
       liveWallpaper$.acceptSubmitted(submitted)
-      queryClient.setQueryData<TParsedWallpaper>(wallpaperKeys.config(community), (current) =>
+      queryClient.setQueryData<TParsedWallpaper>(wallpaperKeys.slug(community), (current) =>
         updatePublishedWallpaperVersion(current, result.version),
       )
       pendingSaveRef.current = null
@@ -271,7 +277,7 @@ export function useLogicValue(): TWallpaperLogic {
       console.error('## wallpaper publish error: ', err)
       if (graphqlErrorCode(err) === '5702' || graphqlErrorCode(err) === '5708') {
         void invalidate(queryClient, QueryInvalidation.community.wallpaper(community$.slug))
-          .then(() => queryClient.fetchQuery(wallpaperQueries.config(community$.slug)))
+          .then(() => queryClient.fetchQuery(wallpaperQueries.slug(community$.slug)))
           .catch(() => undefined)
       }
       toast(extractErrorMessage(err), 'error')
@@ -279,11 +285,11 @@ export function useLogicValue(): TWallpaperLogic {
   })
 
   const contentShadowMutation = useMutation({
-    mutationKey: ['dsb', 'content-shadow', community$.slug],
+    mutationKey: dsbMutationKeys.contentShadow(community$.slug),
     mutationFn: (plan: TContentShadowSavePlan) => executeContentShadowUpdate(plan),
     onSuccess: ({ contentShadow }, { community, enabled }) => {
       liveContentShadow$.acceptSubmitted(contentShadow ?? enabled)
-      queryClient.setQueryData<TParseDashboard>(dsbKeys.config(community), (current) =>
+      queryClient.setQueryData<TParseDashboard>(dsbKeys.slug(community), (current) =>
         current
           ? {
               ...current,

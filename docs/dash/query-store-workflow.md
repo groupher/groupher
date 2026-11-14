@@ -46,27 +46,27 @@ mutation
 
 Phase 0 冻结的 Community 公共入口如下；所有公开 SSR loader 都不读取请求 cookie、auth token
 或登录用户 selection。`Q.viewer.session/communityState/articleStates/commentStates` 是 hydration
-后的私有 owner，`Q.dsb.config` 是已确认 Dsb 配置的 Query owner。
+后的私有 owner，`Q.dsb.slug` 是已确认 Dsb 配置的 Query owner。
 
-| Loader           | GraphQL / Query key                                                                           | 公共缓存边界                               |
-| ---------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| `loadCommunity`  | `Community(userHasLogin: false)`；`['community', slug]`，Dsb 同时 seed `dsbKeys.config(slug)` | community tag                              |
-| `loadPosts`      | `PagedPosts(userHasLogin: false)`；`articleKeys.posts(default filter)`                        | POST articles tag                          |
-| `loadPost`       | `Post(userHasLogin: false)`；`articleKeys.detail`                                             | POST article + articles tag                |
-| `loadChangelogs` | `PagedChangelogs(userHasLogin: false)`；`articleKeys.changelogs(default filter)`              | CHANGELOG articles tag                     |
-| `loadChangelog`  | `Changelog(userHasLogin: false)`；`articleKeys.detail`                                        | CHANGELOG article + articles tag           |
-| `loadKanban`     | `TicketKanbanInternal`；`ticketQueryKeys.kanban(community, internal, size)`                   | 内部 Ticket query；不进入公共 HTML cache   |
-| `loadDocTree`    | `DocPublicTree`；`docTreeClientQuery`                                                         | `community[slug]-doc-tree`                 |
-| `loadDoc`        | `Doc(userHasLogin: false)`；`articleKeys.detail`                                              | DOC article tag                            |
-| `loadComments`   | `PublicPagedComments`；`commentKeys.list`                                                     | comments tag；selection 不含 viewer fields |
-| `loadThemeSeed`  | 固定 `PUBLIC_THEME_SEED`                                                                      | 不读取 cookie；pre-paint 负责用户 theme    |
+| Loader           | GraphQL / Query key                                                                         | 公共缓存边界                               |
+| ---------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `loadCommunity`  | `Community(userHasLogin: false)`；`['community', slug]`，Dsb 同时 seed `dsbKeys.slug(slug)` | community tag                              |
+| `loadPosts`      | `PagedPosts(userHasLogin: false)`；`articleKeys.posts(default filter)`                      | POST articles tag                          |
+| `loadPost`       | `Post(userHasLogin: false)`；`articleKeys.detail`                                           | POST article + articles tag                |
+| `loadChangelogs` | `PagedChangelogs(userHasLogin: false)`；`articleKeys.changelogs(default filter)`            | CHANGELOG articles tag                     |
+| `loadChangelog`  | `Changelog(userHasLogin: false)`；`articleKeys.detail`                                      | CHANGELOG article + articles tag           |
+| `loadKanban`     | `TicketKanbanInternal`；`ticketQueryKeys.kanban(community, internal, size)`                 | 内部 Ticket query；不进入公共 HTML cache   |
+| `loadDocTree`    | `DocPublicTree`；`docTreeClientQuery`                                                       | `community[slug]-doc-tree`                 |
+| `loadDoc`        | `Doc(userHasLogin: false)`；`articleKeys.detail`                                            | DOC article tag                            |
+| `loadComments`   | `PublicPagedComments`；`commentKeys.list`                                                   | comments tag；selection 不含 viewer fields |
+| `loadThemeSeed`  | 固定 `PUBLIC_THEME_SEED`                                                                    | 不读取 cookie；pre-paint 负责用户 theme    |
 
 保留的 viewer 领域只返回当前用户拥有的字段：article 为 viewed/upvoted，comment 为 upvoted、
 reported 和 emotion reaction；未知值保持 `undefined`。所有 refs 先排序去重，超过 100 条自动分片，
 且 immutable `accountScope` 进入实体 query key。评论 viewer 请求的 ID 必须由
 `gatherCommentViewerIds` 递归遍历 entries、全部 replies 和 replyToComment 后产生；该 helper
 只是收集查询 ID，不涉及 article collect/收藏功能。无有效 session 时服务端返回空数组。
-Phase 0 的 Dsb 基线同时覆盖 `Q.dsb.config`、`DsbEditStore`、SavingBar、Dsb 领域请求函数、
+Phase 0 的 Dsb 基线同时覆盖 `Q.dsb.slug`、`DsbEditStore`、SavingBar、Dsb 领域请求函数、
 tag CRUD/reindex 以及 cache-tag revalidation。
 
 本地基线验收证据：仓库全量前端测试 194 个文件、792 个用例通过；全仓类型检查
@@ -178,18 +178,18 @@ Apollo/urql/Graffle 或新的 client framework。
 
 Store 边界见 [`dashboard_store_reorg.md#2-核心结论`](./store-reorganization.md#2-核心结论)。
 
-- [x] 建立 `Q.dsb.config` 的 key、query options、SSR prefetch/hydration 和 cache-tag 映射。
+- [x] 建立 `Q.dsb.slug` 的 key、query options、SSR prefetch/hydration 和 cache-tag 映射。
 - [x] Community 和只读 Demo 直接读取 Query；Landing 使用静态配置，不创建 Dsb Valtio store。
 - [x] 将 `useDsb()` 收敛为 Query 的薄读取 hook，或让 consumer 直接使用领域 Query hook。
 - [x] 显式迁移 `frontend/dash/src/components/DsbShell.tsx` 的 Provider/init 组合；不再创建通用
       `DsbStoreProvider`。
-- [x] 将 CommunityDigest、展示 hooks 等确认配置 reader 切到 `Q.dsb.config`。
+- [x] 将 CommunityDigest、展示 hooks 等确认配置 reader 切到 `Q.dsb.slug`。
 - [x] 将 `SubMenuContentLayout`、`createCmsSectionLayout` 使用的 `submenuCollapsed` 切到 Dash shell
       UI state，不能跟随配置 reader 迁入 Query。
 - [x] 切走 overview、CMS list、tag groups 等仍残留在 Dsb store 的独立 server state。
 - [x] 保证 Community/Landing/只读 Demo 不静态导入 Dsb 编辑、SavingBar 和 save modules。
 
-完成标准：`Q.dsb.config` 是已确认 Dsb 配置的唯一客户端 owner，非 Dash route 不再创建通用
+完成标准：`Q.dsb.slug` 是已确认 Dsb 配置的唯一客户端 owner，非 Dash route 不再创建通用
 `DsbStore`。
 
 ## Phase 5：按产品语义建立 DsbEditStore
@@ -198,7 +198,7 @@ Store 边界见 [`dashboard_store_reorg.md#2-核心结论`](./store-reorganizati
 [`dashboard_store_reorg.md#4-dsbeditstore为-dsb-编辑而设计`](./store-reorganization.md#4-dsbeditstore为-dsb-编辑而设计)
 和 [`dashboard_store_reorg.md#6-保存成功后的-reconcile`](./store-reorganization.md#6-保存成功后的-reconcile)。
 
-- [x] 仅在可编辑 Dash route 中，以 `Q.dsb.config` confirmed data 创建 `DsbEditStore`。
+- [x] 仅在可编辑 Dash route 中，以 `Q.dsb.slug` confirmed data 创建 `DsbEditStore`。
 - [x] 当前编辑字段直接放 store 顶层；保留 `original`、touched、`edit`、`editMany`、`rollback`、
       `reconcile`、`isTouched`、`anyTouched`，不增加 `.draft`。
 - [x] 将现有字段级/字段组 dirty helper 收敛到 Dsb 领域实现；删除过度泛化且无其他消费者的
@@ -270,7 +270,7 @@ reader、旧 key 和旧 store 入口全部删除。
 “先正确性、再唯一 owner、再退出兼容层、最后分离 CacheEffect”的顺序实施。
 
 - [x] 冻结 community/dashboard/themePreset/wallpaper/viewer/baseInfo 的真实 owner、reader 和 writer；
-- [x] 接通 `Q.dsb.config` 后台更新与 `DsbEditStore.reconcileConfirmed`；
+- [x] 接通 `Q.dsb.slug` 后台更新与 `DsbEditStore.reconcileConfirmed`；
 - [x] 复验并收口 ThemePreset confirmed、preview 和 CSS projection；
 - [x] 验证父子 loader 最终 response-context `Cache-Tag` 聚合；
 - [x] 消除 shell/Query/Valtio confirmed duplicate，不新增 Query → Valtio confirmed mirror；

@@ -14,7 +14,6 @@ import type {
   KANBAN_LAYOUT,
   NAV_ACTIVE_LAYOUT,
   POST_LAYOUT,
-  RSS_TYPE,
   TAG_LAYOUT,
 } from '~/const/layout'
 import type { DSB_TAB } from '~/const/route'
@@ -60,7 +59,6 @@ export type TFooterLinks = {
   links: readonly TLinkItem[]
   onelineLinks: readonly TFooterOnelineLink[]
 }
-export type TRSSType = TConstValues<typeof RSS_TYPE>
 export type TBroadcastLayout = TConstValues<typeof BROADCAST_LAYOUT>
 export type TBroadcastArticleLayout = TConstValues<typeof BROADCAST_ARTICLE_LAYOUT>
 
@@ -134,11 +132,6 @@ export type TDsb = {
     headerLayout: THeaderLayout
     footerLayout: TFooterLayout
   } | null
-
-  rss?: {
-    rssFeedType: TRSSType
-    rssFeedCount: number
-  }
 
   headerLinks?: readonly TLinkItem[]
   footerLinks?: readonly TLinkItem[]

@@ -41,7 +41,7 @@ export const pagedPublishedPosts = graphql(`
 
 export const postPage = graphql(`
   "Article Lite page using the shared offset/cursor pagination contract"
-  query PostPage($pagi: PagiInput, $filter: PostFilter, $thread: PostThread = POST) {
+  query PagedPosts($pagi: PagiInput, $filter: PostFilter, $thread: PostThread = POST) {
     postPage(pagi: $pagi, filter: $filter, thread: $thread) {
       pinnedEntries {
         ...PostLiteFields

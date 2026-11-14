@@ -18,7 +18,7 @@ type TProps = {
 }
 
 export default function CommunityBoundary({ children, account, community, locale }: TProps) {
-  const { data: communityConfig } = useSuspenseQuery(Q.community.config(community))
+  const { data: communityConfig } = useSuspenseQuery(Q.community.slug(community))
 
   return (
     <LocaleStoreProvider initData={locale}>

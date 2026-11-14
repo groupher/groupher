@@ -12,7 +12,7 @@ export const changelog = graphql(`
 
 export const changelogPage = graphql(`
   "Changelog Lite page using the shared offset/cursor pagination contract"
-  query ChangelogPage(
+  query PagedChangelogs(
     $pagi: PagiInput
     $filter: ChangelogFilter
     $thread: ChangelogThread = CHANGELOG

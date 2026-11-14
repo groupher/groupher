@@ -37,7 +37,7 @@ export default function RSS() {
   const { t } = useTrans()
 
   const rss = useRSS()
-  const { rssFeedType, rssFeedCount, isTouched, edit, rssOnSave, rssOnCancel } = rss
+  const { feedType, feedCount, isTouched, setFeedType, setFeedCount, rssOnSave, rssOnCancel } = rss
 
   return (
     <div className={s.wrapper}>
@@ -111,8 +111,8 @@ export default function RSS() {
                 key: 'digest',
               },
             ]}
-            activeKey={rssFeedType}
-            onChange={(item) => edit(item.key, 'rssFeedType')}
+            activeKey={feedType}
+            onChange={(item) => setFeedType(item.key as 'full' | 'digest')}
           />
         </div>
 
@@ -121,10 +121,10 @@ export default function RSS() {
           <RangeSlider
             width='w-48'
             bottom={12}
-            value={rssFeedCount}
+            value={feedCount}
             min={5}
             max={50}
-            onChange={(v) => edit(v, 'rssFeedCount')}
+            onChange={setFeedCount}
             unit={t('dsb.rss.unit')}
           />
         </div>

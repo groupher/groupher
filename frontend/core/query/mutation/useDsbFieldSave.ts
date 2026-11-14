@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useDsbTab from '~/hooks/useDsbTab'
-import { patchCommunityConfig } from '~/query'
+import { patchCommunity } from '~/query'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import type { TDsbFieldMap } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -219,7 +219,7 @@ export default function useDsbFieldSave(): TRet {
             if (request.params[key] !== undefined) communityPatch[key] = request.params[key]
           }
 
-          patchCommunityConfig(queryClient, community, communityPatch)
+          patchCommunity(queryClient, community, communityPatch)
         },
         savedFields,
       )

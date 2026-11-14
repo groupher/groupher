@@ -52,7 +52,7 @@ const page = (api: 'offset' | 'cursor' = 'offset') => ({
 })
 const setup = () => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  client.setQueryData(dsbKeys.config('home'), {
+  client.setQueryData(dsbKeys.slug('home'), {
     pagiMode: config.mode,
     pagiRevision: config.revision,
   })
