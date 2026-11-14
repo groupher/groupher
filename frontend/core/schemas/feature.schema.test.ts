@@ -9,7 +9,6 @@ import { describe, expect, it } from 'vitest'
 import { DOC_TREE_MAX_VISIBLE_LEVELS } from '../constant/dsb/docs'
 import { THREAD, THREAD_PATH } from '../constant/thread'
 import AboutSchema from '../unit/AboutThread/schema'
-import ArticleEditorSchema from '../unit/ArticleEditor/schema'
 import ArticleMenuSchema from '../unit/ArticleSettingMenu/schema'
 import ArticleViewSchema from '../unit/ArticleView/schema'
 import ChangelogSchema from '../unit/ChangelogThread/schema'
@@ -91,7 +90,6 @@ type SchemaValue = string | DocumentNode
 const featureDocuments: Record<string, Record<string, SchemaValue>> = {
   pages: pageDocuments,
   about: AboutSchema,
-  articleEditor: ArticleEditorSchema,
   articleMenu: ArticleMenuSchema,
   articleView: {
     setTag: ArticleViewSchema.setTag,
