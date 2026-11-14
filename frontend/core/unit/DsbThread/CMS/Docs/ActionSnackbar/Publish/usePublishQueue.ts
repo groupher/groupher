@@ -5,6 +5,10 @@ import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import { browserGraphQLRequest } from '~/graphql/client'
 import type { DocsMergeChoiceInput, DocsMergeField } from '~/graphql/generated/graphql'
 import useEvent from '~/hooks/useEvent'
+import type {
+  DocsQueueApprovalStatus,
+  DocsQueueTreeChangeKind,
+} from '~/lib/graphql/generated/enums'
 import { graphqlQueryOptions } from '~/query'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
@@ -18,9 +22,9 @@ type TQueue = {
   approvalRequired: boolean
   allowSelfApproval: boolean
   approvalPolicyRevision: number
-  approvalStatus: 'IDLE' | 'PENDING' | 'APPROVED' | 'NEEDS_REAPPROVAL' | null
+  approvalStatus: DocsQueueApprovalStatus | null
   articles: { articleId: string; workingCopyId: string; revision: number; title: string }[]
-  treeChanges: { nodeId: string; changeKind: string }[]
+  treeChanges: { nodeId: string; changeKind: DocsQueueTreeChangeKind }[]
 }
 
 type TDequeueConfirmation = { formatVersion: number; hash: string }

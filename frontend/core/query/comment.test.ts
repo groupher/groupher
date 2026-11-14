@@ -54,7 +54,7 @@ const collection = {
   mode: 'REPLIES' as const,
 }
 const offsetConfig = DEFAULT_EFFECTIVE_PAGI_CONFIG
-const cursorConfig = { ...offsetConfig, api: 'cursor' as const, mode: 'load_more' as const }
+const cursorConfig = { ...offsetConfig, api: 'cursor' as const, mode: 'LOAD_MORE' as const }
 const offsetInfo = {
   __typename: 'OffsetPageInfo',
   page: 1,
@@ -139,13 +139,13 @@ import { resolveCommentPosition } from './commentPage'
 it('explicit offset/cursor links survive default changes and keep positions outside config revision', () => {
   const offsetLink = new URLSearchParams('commentsApi=offset&commentsPage=4')
   expect(resolveCommentPosition(cursorConfig, offsetLink)).toMatchObject({
-    config: { api: 'offset', mode: 'page' },
+    config: { api: 'offset', mode: 'PAGE' },
     page: 4,
   })
   const cursorLink = new URLSearchParams('commentsApi=cursor&commentsAfter=opaque')
   const position = resolveCommentPosition({ ...offsetConfig, revision: 8 }, cursorLink)
   expect(position).toMatchObject({
-    config: { api: 'cursor', mode: 'load_more', revision: 8 },
+    config: { api: 'cursor', mode: 'LOAD_MORE', revision: 8 },
     initialAfter: 'opaque',
   })
   expect(

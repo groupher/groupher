@@ -18,7 +18,7 @@ import { isPaginationRevisionMismatch, loadArticleSurface } from './articleSurfa
 
 const config: TEffectivePagiConfig = {
   api: 'offset',
-  mode: 'page',
+  mode: 'PAGE',
   schemaVersion: 1,
   revision: 1,
   defaultSize: 20,
@@ -70,7 +70,7 @@ it.each(['posts', 'changelogs'] as const)(
     const fresh = {
       ...config,
       api: 'cursor' as const,
-      mode: 'infinite_scroll' as const,
+      mode: 'INFINITE_SCROLL' as const,
       revision: 2,
     }
     transport.refreshCommunity.mockResolvedValue({

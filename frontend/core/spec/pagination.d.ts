@@ -1,8 +1,10 @@
 import type { PagiInput, PagiPageInfo, PagiPage } from '@groupher/contracts/pagination'
 
+import type { PagiMode } from '~/lib/graphql/generated/graphql'
+
 /** Transport-neutral pagination request used by Core adapters. */
 export type TPaginationApi = 'offset' | 'cursor'
-export type TPaginationMode = 'page' | 'load_more' | 'infinite_scroll'
+export type TPaginationMode = PagiMode
 
 export type TOffsetPagi = {
   api: 'offset'

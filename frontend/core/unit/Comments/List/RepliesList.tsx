@@ -51,7 +51,7 @@ function RepliesList({
             rootInnerId: String(parentId),
             initialAfter: undefined,
           }}
-          config={{ ...parentFeed.config, api: 'cursor', mode: 'load_more' }}
+          config={{ ...parentFeed.config, api: 'cursor', mode: 'LOAD_MORE' }}
           page={page}
           setPage={setPage}
         >

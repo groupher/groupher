@@ -65,10 +65,10 @@ vi.mock('./ReviewStep', () => ({ default: () => null }))
 vi.mock('./Stepper', () => ({ default: () => null }))
 
 const runningProcess = {
-  progress: { completed: 3, total: 5, unit: 'document' as const },
+  progress: { completed: 3, total: 5, unit: 'DOCUMENT' as const },
   recentBatch: [],
-  stage: 'preparing' as const,
-  state: 'running' as const,
+  stage: 'PREPARING' as const,
+  state: 'RUNNING' as const,
   updatedAt: '2026-07-22T08:00:00.000Z',
 }
 
@@ -81,7 +81,7 @@ describe('DocumentImport importing state', () => {
       pollingDisconnected: false,
       process: {
         ...runningProcess,
-        progress: { completed: 0, total: 3, unit: 'document' },
+        progress: { completed: 0, total: 3, unit: 'DOCUMENT' },
       },
     }
   })

@@ -76,7 +76,7 @@ describe('article detail content query', () => {
         { community: 'home', page: 2, size: 40 },
         {
           api: 'offset',
-          mode: 'page',
+          mode: 'PAGE',
           schemaVersion: 1,
           revision: 7,
           defaultSize: 20,
@@ -90,7 +90,7 @@ describe('article detail content query', () => {
         { community: 'home', size: 10 },
         {
           api: 'cursor',
-          mode: 'load_more',
+          mode: 'LOAD_MORE',
           schemaVersion: 1,
           revision: 8,
           defaultSize: 20,
@@ -107,7 +107,7 @@ describe('article detail content query', () => {
         { community: 'home', page: 0, size: 0 },
         {
           api: 'offset',
-          mode: 'page',
+          mode: 'PAGE',
           schemaVersion: 1,
           revision: 7,
           defaultSize: 20,
@@ -124,7 +124,7 @@ describe('configured route pagination size', () => {
     (api) => {
       const config = {
         api,
-        mode: api === 'offset' ? ('page' as const) : ('load_more' as const),
+        mode: api === 'offset' ? ('PAGE' as const) : ('LOAD_MORE' as const),
         schemaVersion: 1,
         revision: 7,
         defaultSize: 10,

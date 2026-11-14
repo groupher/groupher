@@ -17,11 +17,11 @@ describe('decodeImportProcess', () => {
     })
 
     expect(process).toMatchObject({
-      progress: { completed: 2, total: 8, unit: 'document' },
-      stage: 'preparing',
-      state: 'running',
+      progress: { completed: 2, total: 8, unit: 'DOCUMENT' },
+      stage: 'PREPARING',
+      state: 'RUNNING',
     })
     expect(process.recentBatch).toHaveLength(5)
-    expect(process.recentBatch[0]?.state).toBe('skipped')
+    expect(process.recentBatch[0]?.state).toBe('SKIPPED')
   })
 })

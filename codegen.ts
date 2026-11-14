@@ -89,6 +89,13 @@ const config: CodegenConfig = {
         fragmentMasking: false,
       },
     },
+    'frontend/core/lib/graphql/generated/enums.ts': {
+      plugins: ['typescript'],
+      config: {
+        onlyEnums: true,
+        enumsAsConst: true,
+      },
+    },
   },
 }
 

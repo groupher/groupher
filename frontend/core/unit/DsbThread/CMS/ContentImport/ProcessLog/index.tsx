@@ -6,31 +6,31 @@ import RecentBatch from './RecentBatch'
 import useSalon from './salon'
 import type { TImportProcess, TImportProcessStage } from './spec'
 
-const PREVIEW_STAGES: TImportProcessStage[] = ['analyzing', 'building_preview']
-const JOB_STAGES: TImportProcessStage[] = ['preparing', 'applying']
+const PREVIEW_STAGES: TImportProcessStage[] = ['ANALYZING', 'BUILDING_PREVIEW']
+const JOB_STAGES: TImportProcessStage[] = ['PREPARING', 'APPLYING']
 
 const STAGE_LABELS: Record<TImportProcessStage, TTransKey> = {
-  analyzing: 'dsb.content_import.process.analyzing',
-  applying: 'dsb.content_import.process.applying',
-  building_preview: 'dsb.content_import.process.building_preview',
-  preparing: 'dsb.content_import.process.preparing',
+  ANALYZING: 'dsb.content_import.process.analyzing',
+  APPLYING: 'dsb.content_import.process.applying',
+  BUILDING_PREVIEW: 'dsb.content_import.process.building_preview',
+  PREPARING: 'dsb.content_import.process.preparing',
 }
 
 const STAGE_DETAILS: Record<TImportProcessStage, TTransKey[]> = {
-  analyzing: [
+  ANALYZING: [
     'dsb.content_import.process.analyzing_read',
     'dsb.content_import.process.analyzing_detect',
     'dsb.content_import.process.analyzing_parse',
   ],
-  applying: [
+  APPLYING: [
     'dsb.content_import.process.applying_write',
     'dsb.content_import.process.applying_finalize',
   ],
-  building_preview: [
+  BUILDING_PREVIEW: [
     'dsb.content_import.process.preview_validate',
     'dsb.content_import.process.preview_assemble',
   ],
-  preparing: [
+  PREPARING: [
     'dsb.content_import.process.preparing_convert',
     'dsb.content_import.process.preparing_stage',
     'dsb.content_import.process.preparing_track',
@@ -65,9 +65,9 @@ export default function ImportProcessLog({ disconnected = false, process }: TPro
           {stages.map((stage, index) => {
             const isCurrent = index === currentIndex
             const status =
-              index < currentIndex || (isCurrent && process.state === 'completed')
+              index < currentIndex || (isCurrent && process.state === 'COMPLETED')
                 ? 'completed'
-                : isCurrent && process.state === 'failed'
+                : isCurrent && process.state === 'FAILED'
                   ? 'failed'
                   : isCurrent
                     ? 'active'

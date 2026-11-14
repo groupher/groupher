@@ -1,8 +1,9 @@
+import type { CommunityAssetStatus, CommunityAssetType } from '~/lib/graphql/generated/enums'
 import type { TPagiPage, TSimpleUser, TGraphQLPagiPageInfo } from '~/spec'
 import type { TThread } from '~/spec/thread'
 
-export type TAssetType = 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE'
-export type TAssetStatus = 'ACTIVE' | 'DELETED'
+export type TAssetType = CommunityAssetType
+export type TAssetStatus = CommunityAssetStatus
 export type TAssetListViewMode = 'single' | 'double' | 'masonry'
 export type TAssetThreadFilter = 'ALL' | TThread
 

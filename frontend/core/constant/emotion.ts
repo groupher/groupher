@@ -1,12 +1,6 @@
-const EMOTION = {
-  DOWNVOTE: 'downvote',
-  BEER: 'beer',
-  HEART: 'heart',
-  BICEPS: 'biceps',
-  ORZ: 'orz',
-  CONFUSED: 'confused',
-  POPCORN: 'popcorn',
-  PILL: 'pill',
-} as const
+import { valueKeyedEnum } from '~/lib/enumValues'
+import { EmotionType } from '~/lib/graphql/generated/enums'
+
+const { UPVOTE: _upvote, ...EMOTION } = valueKeyedEnum(EmotionType)
 
 export default EMOTION

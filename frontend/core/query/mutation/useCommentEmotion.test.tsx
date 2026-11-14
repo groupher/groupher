@@ -60,7 +60,7 @@ describe('useCommentEmotion', () => {
     )
     const { result } = renderHook(() => useCommentEmotion(comment), { wrapper })
 
-    act(() => result.current.toggle('heart'))
+    act(() => result.current.toggle('HEART'))
 
     await waitFor(() => expect(result.current.emotions[0]?.count).toBe(2))
     await act(async () => {

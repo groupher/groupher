@@ -4,26 +4,24 @@ import {
   DEFAULT_PAGE_MARKER,
   DEFAULT_PIN_MARKER,
 } from '~/const/marker'
+import { lowerEnumValue, valueKeyedEnum } from '~/lib/enumValues'
+import { DocTreeNodeType } from '~/lib/graphql/generated/enums'
 
 import type { TSideTreeGroup } from './spec'
 
 export { DEFAULT_GROUP_MARKER, DEFAULT_LINK_MARKER, DEFAULT_PAGE_MARKER, DEFAULT_PIN_MARKER }
 
+const DOC_TREE_NODE_TYPE_VALUES = valueKeyedEnum(DocTreeNodeType)
+
 export const SIDE_TREE_NODE_TYPE = {
-  PIN: 'pin',
-  GROUP: 'group',
-  PAGE: 'page',
-  LINK: 'link',
+  PIN: lowerEnumValue(DOC_TREE_NODE_TYPE_VALUES.PIN),
+  GROUP: lowerEnumValue(DOC_TREE_NODE_TYPE_VALUES.GROUP),
+  PAGE: lowerEnumValue(DOC_TREE_NODE_TYPE_VALUES.PAGE),
+  LINK: lowerEnumValue(DOC_TREE_NODE_TYPE_VALUES.LINK),
 } as const
 
 /** Absinthe enum values used only at the GraphQL transport boundary. */
-export const DOC_TREE_NODE_TYPE_WIRE = {
-  TAB: 'TAB',
-  PIN: 'PIN',
-  GROUP: 'GROUP',
-  PAGE: 'PAGE',
-  LINK: 'LINK',
-} as const
+export const DOC_TREE_NODE_TYPE_WIRE = DOC_TREE_NODE_TYPE_VALUES
 
 export const SIDE_TREE_CHILD_MENU_ACTION = {
   PAGE: SIDE_TREE_NODE_TYPE.PAGE,

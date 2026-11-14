@@ -14,6 +14,7 @@ import type {
 /** The platform fallback used before a community exposes an effective surface config. */
 export const DEFAULT_EFFECTIVE_PAGI_CONFIG: TEffectivePagiConfig = {
   ...paginationDefaultV1,
+  mode: paginationDefaultV1.mode.toUpperCase() as TEffectivePagiConfig['mode'],
 }
 
 /** Derives all list execution defaults from the community-wide product preference. */
@@ -22,12 +23,12 @@ export const toEffectivePagiConfig = (
   mobile = false,
 ): TEffectivePagiConfig => {
   const mode = mobile
-    ? (preference?.pagiMobileMode ?? 'infinite_scroll')
-    : (preference?.pagiMode ?? 'page')
+    ? (preference?.pagiMobileMode ?? 'INFINITE_SCROLL')
+    : (preference?.pagiMode ?? 'PAGE')
   return {
     ...DEFAULT_EFFECTIVE_PAGI_CONFIG,
     mode,
-    api: mode === 'page' ? 'offset' : 'cursor',
+    api: mode === 'PAGE' ? 'offset' : 'cursor',
     revision: preference?.pagiRevision ?? 0,
   }
 }
@@ -86,9 +87,9 @@ export const resolvePagiPosition = (
       api,
       mode:
         api === 'offset'
-          ? ('page' as const)
-          : config.mode === 'page'
-            ? ('load_more' as const)
+          ? ('PAGE' as const)
+          : config.mode === 'PAGE'
+            ? ('LOAD_MORE' as const)
             : config.mode,
     },
     page: Number.isInteger(pageValue) && pageValue >= 1 ? pageValue : 1,

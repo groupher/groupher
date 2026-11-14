@@ -596,7 +596,7 @@ describe('article query mutation helpers', () => {
       },
     })
 
-    await setArticleEmotion(queryClient, 'alice', article, 'heart', true, 'emotion-command')
+    await setArticleEmotion(queryClient, 'alice', article, 'HEART', true, 'emotion-command')
 
     expect(queryClient.getQueryData<typeof stats>(statsKey)?.emotionCounts).toEqual([
       { type: 'HEART', count: 1 },

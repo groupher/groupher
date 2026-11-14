@@ -82,7 +82,7 @@ describe('query keys', () => {
       { community: 'home' },
       {
         api: 'cursor',
-        mode: 'infinite_scroll',
+        mode: 'INFINITE_SCROLL',
         schemaVersion: 1,
         revision: 3,
         defaultSize: 20,
@@ -94,7 +94,7 @@ describe('query keys', () => {
       { community: 'home' },
       {
         api: 'cursor',
-        mode: 'infinite_scroll',
+        mode: 'INFINITE_SCROLL',
         schemaVersion: 1,
         revision: 3,
         defaultSize: 20,
@@ -160,7 +160,7 @@ describe('query keys', () => {
 it('isolates a shared cursor link from an infinite collection that starts at the head', () => {
   const config = {
     api: 'cursor' as const,
-    mode: 'load_more' as const,
+    mode: 'LOAD_MORE' as const,
     schemaVersion: 1,
     revision: 9,
     defaultSize: 20,

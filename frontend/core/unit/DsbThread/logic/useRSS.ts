@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
+import type { PressFeedType } from '~/graphql/generated/graphql'
 import { pressMutationKeys, pressQueries } from '~/query'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
@@ -11,14 +12,14 @@ import useCommunity from '~/stores/community/hooks'
 
 type TUpdatePressConfigInput = NonNullable<VariablesOf<typeof updatePressConfig>['input']>
 type TFeedThread = NonNullable<TUpdatePressConfigInput['feedThreads']>[number]
-type TFeedType = 'full' | 'digest'
+type TFeedType = PressFeedType
 
 type TPressDraft = {
   feedEnabled: boolean
   markdownEnabled: boolean
   llmsEnabled: boolean
   sitemapEnabled: boolean
-  feedThreads: string[]
+  feedThreads: TFeedThread[]
   feedType: TFeedType
   feedCount: number
 }
@@ -32,7 +33,7 @@ type TRet = TPressDraft & {
   setFeedType: (type: TFeedType) => void
   setFeedCount: (count: number) => void
   toggleOutput: (field: TOutputField, value: boolean) => void
-  toggleThread: (thread: string, value: boolean) => void
+  toggleThread: (thread: TFeedThread, value: boolean) => void
   rssOnSave: () => void
   rssOnCancel: () => void
 }
@@ -43,7 +44,7 @@ const DEFAULT_DRAFT: TPressDraft = {
   llmsEnabled: true,
   sitemapEnabled: true,
   feedThreads: [],
-  feedType: 'digest',
+  feedType: 'DIGEST',
   feedCount: 20,
 }
 
@@ -64,9 +65,9 @@ export default function useRSS(): TRet {
           input: {
             community,
             feedEnabled: submitted.feedEnabled,
-            feedType: submitted.feedType.toUpperCase() as TUpdatePressConfigInput['feedType'],
+            feedType: submitted.feedType,
             feedCount: submitted.feedCount,
-            feedThreads: submitted.feedThreads.map((thread) => thread.toUpperCase() as TFeedThread),
+            feedThreads: submitted.feedThreads,
             llmsEnabled: submitted.llmsEnabled,
             markdownEnabled: submitted.markdownEnabled,
             sitemapEnabled: submitted.sitemapEnabled,
@@ -87,8 +88,8 @@ export default function useRSS(): TRet {
       markdownEnabled: data.markdownEnabled,
       llmsEnabled: data.llmsEnabled,
       sitemapEnabled: data.sitemapEnabled,
-      feedThreads: data.feedThreads.map((thread) => thread.toLowerCase()),
-      feedType: data.feedType.toLowerCase() as TFeedType,
+      feedThreads: data.feedThreads,
+      feedType: data.feedType,
       feedCount: data.feedCount,
     }
     setDraft(next)

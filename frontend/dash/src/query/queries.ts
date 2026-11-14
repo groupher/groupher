@@ -20,7 +20,7 @@ export const dashQueries = {
     queryOptions({
       queryKey: articleQueryKeys.pagiPosts(
         { community, page: 1, size: config.defaultSize },
-        { ...config, api: 'offset', mode: 'page' },
+        { ...config, api: 'offset', mode: 'PAGE' },
       ),
       queryFn: () =>
         loadPagedPosts({
@@ -37,7 +37,7 @@ export const dashQueries = {
     queryOptions({
       queryKey: articleQueryKeys.pagiChangelogs(
         { community, page: 1, size: config.defaultSize },
-        { ...config, api: 'offset', mode: 'page' },
+        { ...config, api: 'offset', mode: 'PAGE' },
       ),
       queryFn: () =>
         loadPagedChangelogs({

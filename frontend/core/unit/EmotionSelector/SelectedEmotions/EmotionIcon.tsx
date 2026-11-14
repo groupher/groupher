@@ -10,12 +10,12 @@ type TProps = {
 }
 
 const EMOTION_ICON: Partial<Record<TEmotionType, string>> = {
-  orz: 'pao',
+  ORZ: 'pao',
 }
 
 const EmotionIcon: FC<TProps> = ({ name }) => {
   const s = useSalon()
-  const iconName = EMOTION_ICON[name] || name
+  const iconName = EMOTION_ICON[name] || name.toLowerCase()
 
   return <Img src={`/icons/emotion/${iconName}.png`} className={s.icon} noLazy />
 }

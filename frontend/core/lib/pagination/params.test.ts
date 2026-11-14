@@ -42,13 +42,13 @@ describe('pagination params adapter', () => {
     expect(
       pagiConfigKey({
         api: 'cursor',
-        mode: 'infinite_scroll',
+        mode: 'INFINITE_SCROLL',
         schemaVersion: 1,
         revision: 7,
         defaultSize: 20,
         maxSize: 100,
       }),
-    ).toEqual({ api: 'cursor', mode: 'infinite_scroll', schemaVersion: 1, revision: 7 })
+    ).toEqual({ api: 'cursor', mode: 'INFINITE_SCROLL', schemaVersion: 1, revision: 7 })
   })
 
   it('normalizes GraphQL offset metadata with an explicit API discriminator', () => {
@@ -81,7 +81,7 @@ describe('pagination params adapter', () => {
 it('preserves explicit links when administrators switch defaults', () => {
   const config = {
     api: 'cursor' as const,
-    mode: 'load_more' as const,
+    mode: 'LOAD_MORE' as const,
     schemaVersion: 1,
     revision: 9,
     defaultSize: 20,
@@ -89,16 +89,16 @@ it('preserves explicit links when administrators switch defaults', () => {
   }
   expect(resolvePagiPosition(config, new URLSearchParams('page=3'))).toMatchObject({
     page: 3,
-    config: { api: 'offset', mode: 'page', revision: 9 },
+    config: { api: 'offset', mode: 'PAGE', revision: 9 },
   })
   expect(
     resolvePagiPosition(
-      { ...config, api: 'offset', mode: 'page' },
+      { ...config, api: 'offset', mode: 'PAGE' },
       new URLSearchParams('pagiApi=cursor&after=signed'),
     ),
   ).toMatchObject({
     initialAfter: 'signed',
-    config: { api: 'cursor', mode: 'load_more', revision: 9 },
+    config: { api: 'cursor', mode: 'LOAD_MORE', revision: 9 },
   })
   expect(
     resolvePagiPosition(config, new URLSearchParams('commentsPage=2'), {
@@ -109,7 +109,7 @@ it('preserves explicit links when administrators switch defaults', () => {
   ).toMatchObject({ page: 2, config: { api: 'offset' } })
 })
 
-it.each(['page', 'load_more', 'infinite_scroll'] as const)(
+it.each(['PAGE', 'LOAD_MORE', 'INFINITE_SCROLL'] as const)(
   'derives one shared policy for %s',
   (mode) => {
     expect(toEffectivePagiConfig({ pagiMode: mode, pagiRevision: 7 })).toEqual({
@@ -118,25 +118,25 @@ it.each(['page', 'load_more', 'infinite_scroll'] as const)(
       defaultSize: 20,
       maxSize: 100,
       mode,
-      api: mode === 'page' ? 'offset' : 'cursor',
+      api: mode === 'PAGE' ? 'offset' : 'cursor',
     })
   },
 )
 
 it('resolves separate desktop/mobile defaults and preserves explicit saved positions', () => {
   const preference = {
-    pagiMode: 'page',
-    pagiMobileMode: 'infinite_scroll',
+    pagiMode: 'PAGE',
+    pagiMobileMode: 'INFINITE_SCROLL',
     pagiRevision: 7,
   } as const
   const mobile = toEffectivePagiConfig(preference, true)
   expect(toEffectivePagiConfig(undefined, true)).toMatchObject({
     api: 'cursor',
-    mode: 'infinite_scroll',
+    mode: 'INFINITE_SCROLL',
   })
-  expect(mobile).toMatchObject({ api: 'cursor', mode: 'infinite_scroll', revision: 7 })
+  expect(mobile).toMatchObject({ api: 'cursor', mode: 'INFINITE_SCROLL', revision: 7 })
   expect(resolvePagiPosition(mobile, new URLSearchParams('page=4'))).toMatchObject({
-    config: { api: 'offset', mode: 'page' },
+    config: { api: 'offset', mode: 'PAGE' },
     page: 4,
   })
   expect(

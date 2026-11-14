@@ -11,22 +11,22 @@ import useSalon from './salon'
 
 const FEED_THREADS = [
   {
-    id: 'post',
+    id: 'POST',
     title: 'dsb.press.thread.post.title',
     desc: 'dsb.press.thread.post.desc',
   },
   {
-    id: 'blog',
+    id: 'BLOG',
     title: 'dsb.press.thread.blog.title',
     desc: 'dsb.press.thread.blog.desc',
   },
   {
-    id: 'changelog',
+    id: 'CHANGELOG',
     title: 'dsb.press.thread.changelog.title',
     desc: 'dsb.press.thread.changelog.desc',
   },
   {
-    id: 'doc',
+    id: 'DOC',
     title: 'dsb.press.thread.doc.title',
     desc: 'dsb.press.thread.doc.desc',
   },
@@ -104,15 +104,15 @@ export default function RSS() {
             items={[
               {
                 value: t('dsb.rss.feed_full'),
-                key: 'full',
+                key: 'FULL',
               },
               {
                 value: t('dsb.rss.feed_digest'),
-                key: 'digest',
+                key: 'DIGEST',
               },
             ]}
             activeKey={feedType}
-            onChange={(item) => setFeedType(item.key as 'full' | 'digest')}
+            onChange={(item) => setFeedType(item.key as 'FULL' | 'DIGEST')}
           />
         </div>
 

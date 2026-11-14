@@ -45,7 +45,7 @@ const requestArticleEmotion = async (
   const path = articlePathOf(target.article)
   const variables = {
     article: path,
-    emotion: target.emotion.toUpperCase(),
+    emotion: target.emotion,
     commandId: context.commandId,
   }
   const request = (document: unknown) =>

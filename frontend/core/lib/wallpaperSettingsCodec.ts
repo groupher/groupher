@@ -1,20 +1,21 @@
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import { normalizePersistedAngle } from '~/lib/angle'
+import type { CustomWallpaperType, WallpaperType } from '~/lib/graphql/generated/graphql'
 import { GRADIENT_RENDERER, GRADIENT_SHAPE, MESH_GRADIENT_RENDERERS } from '~/lib/wallpaperMesh'
 import type { TCustomWallpaper } from '~/spec'
 import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
 export const WALLPAPER_SETTINGS_SCHEMA_VERSION = 1
 
-type TRenderableWallpaperType = Exclude<TWallpaperThemeState['type'], WALLPAPER_TYPE.NONE>
+type TRenderableWallpaperType = Exclude<TWallpaperThemeState['type'], typeof WALLPAPER_TYPE.NONE>
 
 export type TWallpaperSettings =
-  | { type: WALLPAPER_TYPE.NONE }
+  | { type: typeof WALLPAPER_TYPE.NONE }
   | (Omit<TWallpaperThemeState, 'type'> & { type: TRenderableWallpaperType })
 
 export type TWallpaperSettingsTransport = {
   settingsSchemaVersion: number
-  type: 'NONE' | 'PICTURE' | 'GRADIENT' | 'UPLOAD'
+  type: WallpaperType
   source: string | null
   customWallpaper: TCustomWallpaperTransport | null
   renderConfig: Record<string, unknown> | null
@@ -29,7 +30,7 @@ export type TWallpaperSettingsInput = {
 }
 
 type TCustomWallpaperTransport = {
-  type: 'GRADIENT' | 'PICTURE'
+  type: CustomWallpaperType
   assetPublicRef: string | null
   config: unknown
 }
