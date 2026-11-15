@@ -6,6 +6,8 @@
 > 本方案是一次单向切换：完成数据迁移后，只保留新的 Trash 模型。
 > 不引入 `mark_delete` 兼容分支、双读、双写或运行时 fallback。
 
+> **2026-11-14 Docs 目标更新：**Doc 允许同一 Article 被多个 Community Binding；`trashed_articles` 的 `community_id + thread + article_hash_id` 只表达站点级 Trash membership，不是全局 Article 删除。站点移除 / 解绑必须按 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 走 Queue / Release，不得把单站 Trash 映射为全局 `deleted`。本文的 branch、主 Tree、单 Doc owner 和 `doc_tree:<community>:<branch>` 锁描述均为 R9 前历史实现；多社区目标以 Docs 合同为准。
+
 ## 1. 背景
 
 当前 Article 删除使用各产品表上的 `mark_delete` 布尔字段。公开列表通过

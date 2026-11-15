@@ -6,9 +6,13 @@
 >
 > 不考虑旧数据或旧逻辑兼容；未操作既有生产/开发库，未提交或发布，也未干预另一个 session。历史审计正文与 SHA 保留。
 
+> **2026-11-14 架构决定 supersedes：**Doc 可像普通 Article 一样有多个 Community Binding；评论、回复、互动、统计与正文归 stable Article 共享，不按社区或 Docs Release 复制。评论请求必须显式携带当前 Community 并验证对应 Binding；审核范围沿用 Article / Comment 的平台与社区规则，不通过 Doc 单一 owner 推断。Docs Release 负责本站发布历史；单站销毁不得删除仍绑定或保留在其他社区的 Article。下文“Doc 单 owner / 禁止 mirror / 唯一 owner”均是旧实现计划基线，不再是目标合同；B1–B4 的旧验收不能证明多社区 Doc 目标已实现。实现前须按 [Article–Community 合同](../feature/article/article-community.md) 与 [Docs 发布队列合同](./docs-publish-queue-refactor.md) 更新相关 cases、Gate、Mention 和社区清理验收。
+
+> 本文后续出现的 DocPublic、DocLifecycle 或 branch-scoped Doc 可见性 / 清理方式也仅是旧实现记录；当前 Docs 正文和单篇状态分别读取 ArticlePublic / ArticlePublicBody 与 ArticleLifecycle，站点成员资格按请求社区校验 ArticleBinding。
+
 ## 1. 范围与交付原则
 
-覆盖文章评论参与者、根评论回复参与者，以及 Article/Comment 常规 upvote、emotion 的有限用户快照和持久化 count。普通 Article 包含现有支持评论的 Post、Blog、Changelog；不为 Ticket 新增评论。**同一稳定 Doc 只有一个 owner Community、一个评论区，列表、回复、参与者和 count 均不随 branch 分裂，不跨社区。** Doc 不支持 mirror/move，正文仍保留 branch 的发布、访问和审核边界，公开正文入口仍只开放 main branch。
+覆盖 Article/Comment 参与者、根评论回复参与者，以及常规 upvote、emotion 的有限用户快照和持久化 count。普通 Article 与 Doc 都按 stable Article ID 共享同一评论区、回复、参与者和 count；多社区 Binding 不复制互动事实。Ticket 不新增评论。社区可见性由请求 Community 对应的 Article Binding 和 Gate 决定。
 
 已确定原则：
 

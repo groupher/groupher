@@ -2,9 +2,13 @@
 
 > **历史证据（2026-11-04 至 2026-11-06）：**本文的 set／occurrence／初始化／重建、请求级 SQL 预算及按资源状态裁剪图标题、URL 或边的条款均不适用于 2026-11-07 当前关系实现。现行代码合同见[当前关系合同](./mentions-graph-sync-contract.md)，新目标只用全新空库，不迁 B4 内容。下文原始测量与当时的执行事实保留供追溯，不能作为本轮发布指引。
 
+> **2026-11-14 Docs 目标更新：**本文中的 DocPublic / Doc branch 选版与同步段落也是旧 Docs 运行态证据。Doc 当前正文投影使用 ArticlePublic / ArticlePublicBody，站点可见资格按请求社区的 ArticleBinding 校验；新目标实现须按 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 重审。
+
 > 状态：本文记录 B0–B4 原异步投影切换合同及当时证据；2026-11-06 工作区已实施后续同步重构（当前 parser version 4），**当前拟发布实现以[同步实现合同](mentions-graph-sync-contract.md)为准**。本文 §4、§7 中的 desired/synced、投影 Outbox、`projectionPending`、`syncState` 等仅作为历史合同，不再指导新版本实施。新版本尚未部署；B2 目标容量与生产数据驱动验收仍未完成。B4 历史状态与证据见[切换手册](../../deploy/runbooks/mentions-graph-cutover.md)。
 >
 > 新版本运行时合同由[同步实现合同](mentions-graph-sync-contract.md)接管。本文和更早合同保留为历史记录。
+
+> **2026-11-14 Docs 目标更新：**本文件与同步合同中的 Doc 单 owner / main branch 约束是旧实现与验收记录。新目标允许 Doc 多社区 Binding，并通过显式 Community scope 访问共享 Article；Docs Release 负责站点发布历史。后续实施按 [Article–Community 合同](./article-community.md) 和 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 更新，不据本文件历史证据保留唯一 owner。
 
 > 2026-11-05 目标合同修订：与 [Doc 共享评论计划](../../migrations/comment-reaction-snapshot-counts.md#49-mentionsgraph-身份与在途合同同步) 同步，Doc 单 owner Community 下跨正文分支共用评论。Doc endpoint 改为稳定 `(doc, article_id)`，Comment endpoint 为 `comment_id`，父 endpoint 为稳定 Article/Doc；endpoint 不再保存 branch 身份。Doc 正文的真实 branch/version 仍在 source_token 中，用于选版，公开 projection 只取 owner 的当前 main。Mentions endpoint、Parser/Capture、Store、Query/NodeStatus 与初始化的身份改动及定向复验见 inventory §9.34；共享评论存储及通用 Gate 已在另一条 Replies 会话完成；本会话独立重跑的稳定身份、真实读取及产品联合证据见 inventory §9.39。原 branch 必填身份的 B1–B3 定向证据不覆盖新合同，B4 不得据旧证据放行。
 
@@ -28,6 +32,8 @@
 相关权威：[Content Publisher](../../architecture/content-publisher.md)、[Command 写入边界](../../migrations/cms-command-gate-lifecycle-persist-boundary.md)、[Gate](../gate/README.md)、[审核](../alert-wall/v2.md)、[Article 版本](revision-draft-target.md)。本文不建立第二套权限或生命周期规则。
 
 ## 2. 产品规则与公开边界
+
+> **Doc 旧实现规则：**本节对 Doc Comment 单 owner Community、main 正文选版和 branch token 的说明只记录当时运行态；新目标按请求社区 ArticleBinding 校验共享 Article，不再推断单一 owner。
 
 ```text
 公开文章 A ----引用----> 评论 C ----属于----> 文章 B
@@ -334,6 +340,8 @@ focus 是上下文起点，不是额外隐含 frontier；仅展开 frontiers 指
 
 ## 7. 专用 GraphQL 合同
 
+> 本节 Doc 唯一 owner、DocPublic 与 branch locator 约束属于旧定位合同；多社区 locator 和 Comment parent 验收按 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 重做。
+
 沿用原功能的独立 query 形状，统一重命名为：
 
 - `mentionsGraph`：focus 与最多 10 个 frontier 的关系页。
@@ -597,6 +605,8 @@ MentionsGraph 只维护一个全局递增整数列 `revision`，存于 `mentions
 B2 必测：单次写入使 `revision` 增加；worker 追平（包括零边结果）使 `revision` 增加；幂等 no-op 不增加；查询前后 revision 不同则整页失效；停机验收能逐类证明旧任务已终结且不能重新领取。无需 UUID、外部 epoch 配置或多套版本名。
 
 ## 10. 验收矩阵与可运行检查
+
+> **历史验收说明：**本节中的 Doc main branch / DocPublic 验收项对应旧运行态。多社区 Docs 切换后，须改为验证请求社区 Binding、共享 ArticlePublic 基线与跨站投影失效；本文旧断言不得直接作为当前验收清单。
 
 ### 10.1 行为与边界测试
 

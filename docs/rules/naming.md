@@ -3,24 +3,18 @@
 本文记录适用于整个 Groupher 仓库的命名约束。新代码、数据库字段、GraphQL schema、类型定义和文档都应
 使用同一术语；不为未发布设计保留旧字段或 alias。
 
-## 使用 `type`，禁止 `_kind`
+## 分类字段统一使用 `type`
 
-项目统一使用 `type` 表示封闭分类，不新增以 `_kind` 结尾的命名：
+`type` 是分类字段名的基础词，不要求字段只能叫 `type`。允许使用领域限定的 `<domain>_type` 及对应集合 `<domain>_types`；字段名任何位置都禁止出现 `kind`：
 
 ```text
-正确                          禁止
-actor_type                    actor_kind
-viewer_type                   viewer_kind
-resource_type                 resource_kind
-actor_types                   actor_kinds
+允许：type、target_type、actor_type、asset_type、event_type、node_type、change_type
+允许集合：types、target_types、actor_types、asset_types
 ```
 
-该规则覆盖变量、函数参数、结构字段、数据库列、GraphQL 字段/enum、TypeScript 类型和文档术语。仓库中
-已有的 `snapshot_kind`、`body_kind` 等存量命名不要求发起独立的全仓迁移；当功能改动实际触及其所属
-模型、协议或字段时，在同一改动中收敛为 `type`。仅修改同模块的无关代码不应被迫扩大成命名迁移。
-实施尚未发布的设计时直接替换旧命名，不保留 alias、双写或兼容读取。
+该规则覆盖变量、函数参数、结构字段、数据库列、GraphQL 字段/enum、TypeScript 类型和文档术语。存量字段若违反此规则也必须迁移，不能以“已经存在”为由豁免；可按明确批次完成，但不得在新设计、新协议或触及该字段的改动中继续使用旧名。重命名直接切换，不保留 alias、双写或兼容读取。仅修改无关代码时不要求顺带扩大迁移范围。
 
-`type` 表示分类，boolean 表示相互独立的二元事实。不要为了把多个维度塞进一个 enum 而制造组合类型。
+`type` 及领域限定的 `<domain>_type` 表示分类，boolean 表示相互独立的二元事实。不要为了把多个维度塞进一个 enum 而制造组合类型。
 例如访问者协议使用：
 
 ```text

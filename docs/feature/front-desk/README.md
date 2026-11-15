@@ -34,15 +34,17 @@ GraphQL / application / cross-domain caller
 
 `CMS.FrontDesk.artiment_status(community, locator)` 读取单项标题、URL 和正文状态；传入已解析资源身份列表时，批量返回按输入 `key` 索引的状态供图节点组装。业务调用不传数据库超时；单项与批量都不要求存在 Mention 边。
 
+> 2026-11-14 Docs 目标：Doc 不再有 branch，公开读取身份由 ArticleBinding + ArticlePublic 决定；下表已按目标移除 `branch_id`。R9 前现有实现可能仍返回该历史字段，但它不是新合同，调用方不得继续依赖。
+
 批量返回形状与错误：
 
-| 入口                                             | 输入                             | 成功项                                 | 超过 100 个输入         |
-| ------------------------------------------------ | -------------------------------- | -------------------------------------- | ----------------------- |
-| `CMS.FrontDesk.article(paths)`                   | Article 公开路径                 | `%{path, article, binding, branch_id}` | `:batch_limit_exceeded` |
-| `CMS.FrontDesk.article(ids, mode: :internal)`    | 稳定 Article ID                  | 仅含 `id/thread` 的 Article 身份       | `:batch_limit_exceeded` |
-| `CMS.FrontDesk.comment(paths)`                   | 带父 Article 路径的 Comment 路径 | `%{comment, article, thread}`          | `:invalid_body`         |
-| `CMS.FrontDesk.comment(ids, mode: :internal)`    | 稳定 Comment ID                  | `%{comment, article, thread}`          | `:invalid_body`         |
-| `CMS.FrontDesk.artiment_status(community, refs)` | 已解析的 Artiment 身份列表       | 以输入 `key` 为键的状态 map            | `:invalid_body`         |
+| 入口                                             | 输入                             | 成功项                           | 超过 100 个输入         |
+| ------------------------------------------------ | -------------------------------- | -------------------------------- | ----------------------- |
+| `CMS.FrontDesk.article(paths)`                   | Article 公开路径                 | `%{path, article, binding}`      | `:batch_limit_exceeded` |
+| `CMS.FrontDesk.article(ids, mode: :internal)`    | 稳定 Article ID                  | 仅含 `id/thread` 的 Article 身份 | `:batch_limit_exceeded` |
+| `CMS.FrontDesk.comment(paths)`                   | 带父 Article 路径的 Comment 路径 | `%{comment, article, thread}`    | `:invalid_body`         |
+| `CMS.FrontDesk.comment(ids, mode: :internal)`    | 稳定 Comment ID                  | `%{comment, article, thread}`    | `:invalid_body`         |
+| `CMS.FrontDesk.artiment_status(community, refs)` | 已解析的 Artiment 身份列表       | 以输入 `key` 为键的状态 map      | `:invalid_body`         |
 
 四种模式都省略无效或不存在的项，保留有效输入的顺序与重复项；空列表返回空列表。不支持的 mode 返回 `:invalid_body`。公开读取按目标及 Comment 父级的 Gate 状态过滤，内部模式只供可信 Command/维护流程核实身份，绝不可直接投影到公开 GraphQL。
 

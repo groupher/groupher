@@ -240,7 +240,7 @@ type VisitorLocationMap = {
     percentage: number
   }>
   markers: Array<{
-    kind: 'country' | 'region'
+    type: 'country' | 'region'
     countryCode: string
     latitude: number
     longitude: number

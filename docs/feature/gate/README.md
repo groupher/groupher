@@ -4,6 +4,8 @@
 
 本文是 Gate 的当前入口。Gate 只负责读取 scope 和写入 admission，不拥有业务状态迁移或 transport：
 
+> **2026-11-14 Docs 目标更新：**当前 Gate 运行态仍按单一 Docs owner / DocsLifecycle 执行；这只是待迁移的实现事实。新目标允许 Doc 多社区 Binding，Gate 按显式请求 Community 验证对应 Binding，并从共享 ArticleLifecycle 读取单篇状态。Docs 站点读取和发布继续使用站点级 Queue / Release。当前运行态说明不得作为新目标合同。
+
 ```text
 read caller
   -> Gate.scope(queryable, actor, action, typed scope context)
@@ -23,7 +25,7 @@ write command
 - 新代码以本文、V4 typed context 和对应资源 Lifecycle 合同为准，不从历史版本恢复旧入口。
 - 审核限制、内容待审、AI 意见和 AlertWall 的职责见 [ReviewBot / AlertWall V2](../alert-wall/v2.md)。
 
-> 共享评论当前合同：`Comment.for_thread(thread, community_id: canonical_id)` 强制显式请求社区，`all_public()` 为跨 thread 公共聚合入口；Comment 不接受 branch selector。Doc 评论通过唯一 owner 的当前可读 main 准入，评论身份和统计仍归稳定 Article。Doc/Document 正文的 branch selector 保持。实现及验收见 [共享评论计划](../../migrations/comment-reaction-snapshot-counts.md) 与 [实施记录](../../migrations/comment-reaction-snapshot-counts-implementation.md)。
+> 共享评论运行态：`Comment.for_thread(thread, community_id: canonical_id)` 强制显式请求社区，`all_public()` 为跨 thread 公共聚合入口；Comment 不接受 branch selector。Doc 评论当前仍按旧 owner/main 实现；切换后按对应 Binding 和 Article Gate 读取，评论身份与统计继续归稳定 Article。实施目标见 [共享评论计划](../../migrations/comment-reaction-snapshot-counts.md) 与 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md)。
 
 ## 版本状态
 

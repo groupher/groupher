@@ -2,6 +2,8 @@
 
 > 状态：生产验收及 P7 收口已完成，25 PASS / 2 用户授权 SKIP，证据已共享归档并完成独立下载校验；详见 [2026-11-04 执行记录](./production-seed-acceptance-2026-11-04.md)。搜索与告警实际送达由用户明确记 SKIP；旧库误迁移事故及尚未完成的旧库恢复评估必须保留。本手册仍是后续执行的前置合同，不能据既有结果直接重开生产窗口。
 
+> **2026-11-14 Docs 目标更新：**本手册中的 Doc owner / 社区销毁验收反映此前单社区模型，不能验收多社区 Doc。重新执行生产验收前，按 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 重写 Doc mirror、共享 Article 清理和站点 Release cases；原 2026-11-04 证据保持历史。
+
 ## 1. 目标与执行边界
 
 以同一个待发布 revision，在真实生产数据库服务上建立空库、执行完整 migration，连接正式 API、Cloudflare Workers、认证、CDN 和 AI 服务，再用固定 seed 数据完成真实请求和浏览器验收。

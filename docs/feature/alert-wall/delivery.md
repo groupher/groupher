@@ -1,5 +1,7 @@
 # AlertBoard / ReviewBot 实施批次与验收
 
+> **2026-11-14 Docs 目标更新：**本文关于 DocPublic、DocLifecycle、branch 和 Doc 专属审核 / 可见性路径的交付内容仅是当时实现证据。当前 Doc 与 Article 共用 Review target、ArticleLifecycle 和 Public 投影，站点归属按 ArticleBinding 校验；目标以 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 与 [AlertWall V2](./v2.md) 为准。
+
 > 版本说明：本文只记录 V1 的 D/N 批次；[V2：ReviewBot / AlertWall](./v2.md) 使用独立 R0–R7 批次；当前实现状态和验证结果以 V2 文档为准。
 
 > 状态：运行时代码与自动化验证记录见本轮 PR；2026-10-23 移除了普通 Article 的 Binding/Public 可见性投影列。真实浏览器验收、生产部署、目标环境维护切换和真实 provider/数据验收仍未完成，当前不能视为已上线。

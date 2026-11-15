@@ -54,21 +54,21 @@ type TLandingScene = {
 }
 
 type TColor =
-  | { kind: 'hex'; value: string } // 校验合法 hex，允许 alpha
-  | { kind: 'oklch'; l: number; c: number; h: number; alpha?: number }
+  | { type: 'hex'; value: string } // 校验合法 hex，允许 alpha
+  | { type: 'oklch'; l: number; c: number; h: number; alpha?: number }
   | {
-      kind: 'token'
+      type: 'token'
       name: 'pageBg' | 'cardColor' | 'dividerColor' | 'primaryColor' | 'accentColor'
     }
 type TColorStop = { offset: number; color: TColor } // offset: 0..1
 type TBackground =
-  | { kind: 'inherit' }
-  | { kind: 'none' }
-  | { kind: 'solid'; color: TColor }
-  | { kind: 'gradient'; stops: readonly TColorStop[]; angle?: number }
-  | { kind: 'image'; asset: TLandingStaticAssetRef; overlay?: TColor }
-type TEffect = { kind: 'inherit' | 'none' } | { kind: 'color'; color: TColor }
-type TLandingStaticAssetRef = { kind: 'bundled'; path: string } // 仅允许清单内路径；将来可加 Assets Hub 已发布引用
+  | { type: 'inherit' }
+  | { type: 'none' }
+  | { type: 'solid'; color: TColor }
+  | { type: 'gradient'; stops: readonly TColorStop[]; angle?: number }
+  | { type: 'image'; asset: TLandingStaticAssetRef; overlay?: TColor }
+type TEffect = { type: 'inherit' | 'none' } | { type: 'color'; color: TColor }
+type TLandingStaticAssetRef = { type: 'bundled'; path: string } // 仅允许清单内路径；将来可加 Assets Hub 已发布引用
 type TPublishedWallpaperProfiles = NonNullable<TPublishedWallpaper['light']>
 type TSurface = { background: TBackground; border?: TEffect; shadow?: TEffect }
 

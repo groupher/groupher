@@ -1,5 +1,7 @@
 # Groupher Action Matrix 与 Transition Contract
 
+> **2026-11-14 Docs 目标更新：**本文中的 Doc branch / DocLifecycle action matrix 是旧架构基线，不再定义当前 Docs 生命周期。Doc 单篇状态使用 ArticleLifecycle，站点发布状态使用 Docs Queue / Release；按新边界重做 Docs actions 与验收时以 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 为准。其他资源的 transition 分析不因此自动变更。
+
 本文只回答三个问题：
 
 1. Community、普通 Article、Doc branch 当前有哪些 action，它们的理想 transition contract 是什么；

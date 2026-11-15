@@ -1,5 +1,7 @@
 # 旧内容 Audit 全链路退役
 
+> **2026-11-14 Docs 目标更新：**本文的 ArticlePublic / Binding / DocPublic 可见性盘点描述旧审核链路切换时的运行态。Doc 新目标使用 ArticleLifecycle、ArticlePublic / ArticlePublicBody 和多社区 Binding；本文件仅作旧内容 Audit 退役证据。
+
 > 状态：2026-10-22 当前工作树已完成 D1–D5 运行时删除与本地 schema 清理；旧链扫描、全套测试和旧数据库 key 断言通过。目标环境停旧 worker/cron、维护窗口迁移仍待 N8 执行。以 [AlertBoard 批次记录](../feature/alert-wall/delivery.md) 为当前实现快照。
 > 证据基于当前共享工作树，不代表远端分支或生产状态；工作树包含未提交的并行修改。
 > 新合同：[AlertBoard / ReviewBot](../feature/alert-wall/design.md)；逐文件证据：[扫描清单](./legacy-content-audit-inventory.md)。

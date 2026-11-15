@@ -2,6 +2,8 @@
 
 日期：2026-11-12。当前 `doc-redesign` 工作区，未提交、未正式切换。依据 [Docs 合同](./docs-publish-queue-refactor.md)、[Article 基座](../feature/article/working-copy-snapshot-target.md)与 [批次清单](./article-docs-r0-r1-inventory.md)。本文记录 R6 实现及实际验证，不代表 R7 / R8 或目标环境验收完成。
 
+> **2026-11-14 架构更新：**本文的 `DocsHistoryOwner` 与单社区历史读取属于 R6 实现事实，已被 Article 多社区 Binding 目标 supersede。未来 Docs Release 历史由各自 Release 社区引用读取；非 Release 的 Article 历史保留沿用通用 ArticleHistoryOwner，不保留 Doc 专属唯一 owner。
+
 ## 本批实现
 
 ```text

@@ -1,5 +1,7 @@
 # Gate / Lifecycle Cleanup：删除历史兼容与双权威
 
+> **2026-11-14 Docs 目标更新：**本文关于 Doc branch-scoped Lifecycle 的设计和盘点属于旧目标。Doc 单篇状态现在并入 ArticleLifecycle，站点 Queue / Release 保留各社区编排与历史；当前合同以 [Docs 发布队列](../../migrations/docs-publish-queue-refactor.md) 为准。本文其余通用 Gate / Lifecycle 原则仍可参考。
+
 > 2026-10-22 审核合同更新：本文旧内容 legal/illegal/audit_failed 与 Sentinel/计划 Moderation
 > 相关目标已由 [AlertBoard / ReviewBot](../alert-wall/design.md) 替代，运行时尚未切换。
 > 其他 Lifecycle、Draft/Revision/Public、Doc 历史与分支合同保持；普通 UGC 不新增待审版本。

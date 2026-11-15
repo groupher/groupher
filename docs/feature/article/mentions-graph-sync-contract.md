@@ -2,9 +2,13 @@
 
 > 状态：2026-11-08 工作区简化实现，尚未部署。发布目标必须是全新空库；B4 内容和旧边不带入。本合同描述当前代码；产品决策与剩余验收见[简化清单](./mentions-graph-simplification-plan.md)。2026-11-06 的同步 set 实现与初始化步骤已失效，保留在[设计评审](./mentions-graph-design-review.md)中作为历史。
 
+> **2026-11-14 Docs 目标更新：**本文仍描述当时单 owner / branch 的 MentionsGraph 运行态，不能作为新 Docs 目标。Doc 可有多个 Community Binding；Comment / Mention 的社区范围来自显式请求和对应 Binding，Article / Snapshot 身份共享。迁移时要更新 Doc 的 Community 解析与历史清理；本文件现有代码证据保留，不代表该目标已实现。
+
 > 图节点 ID、资源 URL 入口及 Effects 文件收口已在工作区实现；发布验收仍按简化清单执行。FrontDesk 在本轮提供资源 URL 与 Artiment 状态读取，并继续承担原有的资源读取边界；普通外链规范化留在 Mentions 的关系键处理流程。
 
 ## 写入
+
+> **历史实现说明：**下方 `Doc main / preview branch`、Doc branch token 与单一 owner 的运行态描述保留作代码证据；新 Docs 目标按共享 Article 身份和 ArticlePublic 选版，并按请求社区校验 Binding。当前切换与验收以 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md) 为准。
 
 ```text
 Article / Doc main / Comment（含回复）/ Ticket 所属 Command 事务
@@ -22,6 +26,8 @@ Article / Doc main / Comment（含回复）/ Ticket 所属 Command 事务
 关系键区分目标身份、mention case 和规范化 URL。两个独立 Plate 节点指向同一关系时只存一条边，`occurrences_count` 为 2。编辑后仍在的边沿用 `mentioned_at`；移除后重新加入使用新发布时间。正文和关系提交在同一所属事务，失败回滚。结构化 `@ Article` 以稳定 ID 和类型确认，目标即使处于 draft 也保存关系；普通链接按当前 URL 确认规则处理，不沿用旧版本事实。Ticket 不产生 User 提及通知。
 
 ## 存储和接口
+
+> 本节及后续 Doc branch、main、DocPublic 选版和 owner 文字描述是 2026-11-08 的实现证据，不是新 Docs 目标。改造验收须覆盖共享 ArticlePublic 基线、所有有效 Binding 与跨站失效，见 [Docs 发布队列合同](../../migrations/docs-publish-queue-refactor.md)。
 
 Ecto schema 位于 `CMS.Model.Mentions`：`Endpoint` 保存稳定资源身份，`Edge` 保存当前可查询关系，`GraphState` 保存全局图 revision。数据库对应 `cms.mention_endpoints`、`cms.mention_current_edges`、`cms.mentions_graph_state`。没有历史 set、occurrence 表、current set 指针、parser version、水位或异步关系投影。新结构由 `20261107100000_simplify_mention_current_edges` 在空目标库建立；迁移明确拒绝非空旧关系库，不提供旧数据兼容或回填。
 
