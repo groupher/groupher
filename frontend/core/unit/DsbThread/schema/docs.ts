@@ -125,7 +125,7 @@ export const docsEditor = graphql(`
       workingCopy {
         id
         articleId
-        scopeKind
+        scopeType
         revision
         title
         slug
@@ -170,7 +170,7 @@ export const docsWorkingCopies = graphql(`
     articleWorkingCopies(community: $community, articleId: $articleId) {
       id
       articleId
-      scopeKind
+      scopeType
       revision
       title
       slug
@@ -439,7 +439,7 @@ export const docsPublishQueue = graphql(`
       }
       treeChanges {
         nodeId
-        changeKind
+        changeType
         target
       }
     }

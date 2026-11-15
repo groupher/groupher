@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
     approvalRequired: false,
     approvalStatus: null as 'PENDING' | 'APPROVED' | null,
     articles: [] as { articleId: string; title: string; workingCopyId: string; revision: number }[],
-    treeChanges: [] as { nodeId: string; changeKind: string }[],
+    treeChanges: [] as { nodeId: string; changeType: string }[],
   },
   dirty: false,
 }))

@@ -171,7 +171,7 @@ export default function useDraftAutoSave(
         )
         if (latestDocIdRef.current !== requestDocId || latestCopyIdRef.current !== workingCopyId)
           return
-        const copy = data.articleWorkingCopies.find((item) => item.scopeKind === 'default')
+        const copy = data.articleWorkingCopies.find((item) => item.scopeType === 'default')
         if (!copy || copy.id !== workingCopyId) {
           setSaveError('This editing session has ended. Your local edits were preserved.')
           toast('This editing session has ended. Your local edits were preserved.', 'error')

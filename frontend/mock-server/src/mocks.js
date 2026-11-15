@@ -24,7 +24,6 @@ const initialDocDraftState = () => ({
   draft: {
     id: 'e2e-draft',
     docId: 'e2e-doc',
-    branchId: '1',
     version: 4,
     contentHash: 'e2e-content-hash',
     title: 'Canonical title',

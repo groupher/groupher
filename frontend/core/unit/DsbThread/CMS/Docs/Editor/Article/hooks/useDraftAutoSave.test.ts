@@ -258,7 +258,7 @@ describe('useDraftAutoSave', () => {
           bodyJson: '[{"type":"p","children":[{"text":"Server"}]}]',
           articleId: 'doc-a',
           id: 'copy-a',
-          scopeKind: 'default',
+          scopeType: 'default',
           slug: 'guide',
           threadFields: { subtitle: '' },
           title: 'Guide',
@@ -303,7 +303,7 @@ describe('useDraftAutoSave', () => {
       new ContentPublishError('Revision conflict', { code: 'revision_conflict', status: 409 }),
     )
     mocks.browserGraphQLRequest.mockResolvedValueOnce({
-      articleWorkingCopies: [{ id: 'replacement', scopeKind: 'default', revision: 1 }],
+      articleWorkingCopies: [{ id: 'replacement', scopeType: 'default', revision: 1 }],
     })
     const view = renderHook(() =>
       useDraftAutoSave(createDraftState(), { patchSideTreeChild: mocks.patchSideTreeChild }),

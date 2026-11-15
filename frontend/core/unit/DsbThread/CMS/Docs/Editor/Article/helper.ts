@@ -284,11 +284,11 @@ export const composeWorkingCopySession = (
 
 /** Loads the current public Snapshot without inventing a mutable working-copy identity. */
 export const composePublicSnapshotSession = (
-  snapshot: Omit<TDocWorkingCopy, 'scopeKind' | 'revision'>,
+  snapshot: Omit<TDocWorkingCopy, 'scopeType' | 'revision'>,
   activePage: TSideTreePage | null,
 ): TDocDraftSession => {
   const session = composeWorkingCopySession(
-    { ...snapshot, scopeKind: 'default', revision: 0 },
+    { ...snapshot, scopeType: 'default', revision: 0 },
     activePage,
   )
   return {

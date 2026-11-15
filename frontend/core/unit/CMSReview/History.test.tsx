@@ -10,7 +10,7 @@ vi.mock('~/hooks/useTrans', () => ({ default: () => ({ t: (key: string) => key }
 
 it('shows an earlier check separately from a check of edited content', async () => {
   request.mockResolvedValue({
-    contentReviewHistory: [
+    artimentReviewHistory: [
       {
         artimentReviewId: 'current',
         state: 'FAILED',

@@ -36,7 +36,7 @@ const createArticle = graphql(`
     ) {
       id
       articleId
-      scopeKind
+      scopeType
       scopeId
       revision
       title
@@ -141,7 +141,7 @@ const saveWorkingCopy = graphql(`
     ) {
       id
       articleId
-      scopeKind
+      scopeType
       scopeId
       revision
       title
@@ -165,20 +165,20 @@ const forkSnapshot = graphql(`
     $commandId: ID!
     $snapshotId: ID!
     $community: String!
-    $scopeKind: String!
+    $scopeType: String!
     $scopeId: ID!
   ) {
     forkSnapshot(
       commandId: $commandId
       snapshotId: $snapshotId
       community: $community
-      scopeKind: $scopeKind
+      scopeType: $scopeType
       scopeId: $scopeId
     ) {
       workingCopy {
         id
         articleId
-        scopeKind
+        scopeType
         scopeId
         revision
         tagIds
@@ -257,7 +257,7 @@ const workingCopies = graphql(`
     articleWorkingCopies(articleId: $articleId, community: $community) {
       id
       articleId
-      scopeKind
+      scopeType
       scopeId
       revision
       title

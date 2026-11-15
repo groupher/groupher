@@ -39,7 +39,7 @@ describe('QueueEditorDrawer', () => {
       articleWorkingCopies: [
         {
           id: 'default',
-          scopeKind: 'default',
+          scopeType: 'default',
           title: 'Default',
           bodyJson: '[]',
           articleId: 'doc',
@@ -47,7 +47,7 @@ describe('QueueEditorDrawer', () => {
         },
         {
           id: 'queued',
-          scopeKind: 'workspace',
+          scopeType: 'workspace',
           title: 'Queued',
           subtitle: '',
           slug: 'queued',

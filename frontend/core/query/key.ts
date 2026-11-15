@@ -212,7 +212,7 @@ export const viewerQueryKeys = {
     [...viewerQueryKeys.all, accountScope || 'anonymous', 'my-reports'] as const,
   myReports: (accountScope: string, page: number) =>
     [...viewerQueryKeys.myReportsPrefix(accountScope), page] as const,
-  contentReview: (accountScope: string, target: unknown) =>
+  artimentReview: (accountScope: string, target: unknown) =>
     [...viewerQueryKeys.all, accountScope || 'anonymous', 'content-review', target] as const,
 }
 

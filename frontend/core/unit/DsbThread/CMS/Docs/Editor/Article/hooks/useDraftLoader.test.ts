@@ -31,7 +31,7 @@ describe('Docs default working copy loader', () => {
         workingCopy: {
           id: 'default',
           articleId: 'doc',
-          scopeKind: 'default',
+          scopeType: 'default',
           revision: 3,
           title: 'Draft',
           bodyJson: '[]',

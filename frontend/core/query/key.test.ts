@@ -143,8 +143,8 @@ describe('query keys', () => {
     expect(viewerQueryKeys.myReports('account-a', 2)).not.toEqual(
       viewerQueryKeys.myReports('account-b', 2),
     )
-    expect(viewerQueryKeys.contentReview('account-a', { kind: 'ARTICLE' })).not.toEqual(
-      viewerQueryKeys.contentReview('account-b', { kind: 'ARTICLE' }),
+    expect(viewerQueryKeys.artimentReview('account-a', { kind: 'ARTICLE' })).not.toEqual(
+      viewerQueryKeys.artimentReview('account-b', { kind: 'ARTICLE' }),
     )
   })
 

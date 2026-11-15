@@ -15,7 +15,7 @@ describe('Docs working copy editor session', () => {
       {
         id: 'copy-1',
         articleId: 'doc-1',
-        scopeKind: 'default',
+        scopeType: 'default',
         revision: 4,
         title: 'Intro',
         slug: 'intro',

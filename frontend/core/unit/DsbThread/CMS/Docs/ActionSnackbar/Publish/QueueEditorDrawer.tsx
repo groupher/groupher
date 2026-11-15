@@ -57,7 +57,7 @@ const QueueEditorDrawer: FC<TProps> = ({
       .then((data) => {
         if (cancelled) return
         const copy = data.articleWorkingCopies.find(
-          (item) => item.id === workingCopyId && item.scopeKind === 'workspace',
+          (item) => item.id === workingCopyId && item.scopeType === 'workspace',
         )
         if (!copy) throw new Error('Queue copy not found')
         const loaded = {

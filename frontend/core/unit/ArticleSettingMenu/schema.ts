@@ -22,7 +22,7 @@ const saveWorkingCopy = graphql(`
     ) {
       id
       articleId
-      scopeKind
+      scopeType
       revision
       title
       tagIds
@@ -36,7 +36,7 @@ const articleWorkingCopies = graphql(`
     articleWorkingCopies(articleId: $articleId, community: $community) {
       id
       articleId
-      scopeKind
+      scopeType
       revision
       title
       tagIds

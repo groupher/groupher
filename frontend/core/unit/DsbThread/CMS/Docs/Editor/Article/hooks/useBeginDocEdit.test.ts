@@ -46,7 +46,7 @@ describe('explicit Doc editing initialization', () => {
           workingCopy: {
             id: 'new',
             articleId: 'doc',
-            scopeKind: 'default',
+            scopeType: 'default',
             revision: 1,
             title: 'Public',
             bodyJson: '[]',

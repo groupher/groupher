@@ -9,7 +9,7 @@ import type { TDocDraftInfo } from '../store/spec'
 export type TDocWorkingCopy = {
   id: string
   articleId: string
-  scopeKind: string
+  scopeType: string
   revision: number
   title: string
   slug?: string | null
@@ -92,5 +92,5 @@ export type TDocDraftSession = {
 
 export type TDocEditorSource = {
   workingCopy: TDocWorkingCopy | null
-  publicSnapshot: Omit<TDocWorkingCopy, 'scopeKind' | 'revision'> | null
+  publicSnapshot: Omit<TDocWorkingCopy, 'scopeType' | 'revision'> | null
 }

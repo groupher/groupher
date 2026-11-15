@@ -34,7 +34,7 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
     },
   })
   const workingCopy = workingCopiesQuery.data?.articleWorkingCopies?.find(
-    (candidate) => candidate.scopeKind === 'default',
+    (candidate) => candidate.scopeType === 'default',
   )
   const [result, saveWorkingCopy] = useArticleSettingMutation(S.saveWorkingCopy)
 

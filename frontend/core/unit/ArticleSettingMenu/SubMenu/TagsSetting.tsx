@@ -45,7 +45,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
     },
   })
   const workingCopy = workingCopiesQuery.data?.articleWorkingCopies?.find(
-    (candidate) => candidate.scopeKind === 'default',
+    (candidate) => candidate.scopeType === 'default',
   )
   const [saveResult, saveWorkingCopy] = useArticleSettingMutation(S.saveWorkingCopy)
 

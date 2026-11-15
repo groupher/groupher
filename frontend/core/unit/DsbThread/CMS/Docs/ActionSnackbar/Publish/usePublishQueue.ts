@@ -7,7 +7,7 @@ import type { DocsMergeChoiceInput, DocsMergeField } from '~/graphql/generated/g
 import useEvent from '~/hooks/useEvent'
 import type {
   DocsQueueApprovalStatus,
-  DocsQueueTreeChangeKind,
+  DocsQueueTreeChangeType,
 } from '~/lib/graphql/generated/enums'
 import { graphqlQueryOptions } from '~/query'
 import { executeCommand } from '~/query/mutation/optimistic/execute'
@@ -24,7 +24,7 @@ type TQueue = {
   approvalPolicyRevision: number
   approvalStatus: DocsQueueApprovalStatus | null
   articles: { articleId: string; workingCopyId: string; revision: number; title: string }[]
-  treeChanges: { nodeId: string; changeKind: DocsQueueTreeChangeKind }[]
+  treeChanges: { nodeId: string; changeType: DocsQueueTreeChangeType }[]
 }
 
 type TDequeueConfirmation = { formatVersion: number; hash: string }
