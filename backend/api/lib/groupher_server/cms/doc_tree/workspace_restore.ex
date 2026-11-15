@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
   alias Accounts.Model.User
   alias CMS.DocTree.Publish.{Queue, TargetTree, TreeCodec, TreeOrder}
   alias CMS.DocTree.{Publish.Queue.Dependencies, WorkspacePersist}
-  alias CMS.Model.{Article, ArticlePublic, Community, DocsLifecycle, DocsPublishQueue}
+  alias CMS.Model.{Article, ArticleLifecycle, ArticlePublic, Community, DocsPublishQueue}
 
   alias CMS.Model.{
     DocsQueueTreeChange,
@@ -248,10 +248,10 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
           []
 
         %{"node_id" => id} = snapshot when id == entry.node_id ->
-          [%{node_id: id, change_kind: :upsert, target: Map.delete(snapshot, "node_id")}]
+          [%{node_id: id, change_type: :upsert, target: Map.delete(snapshot, "node_id")}]
 
         _ ->
-          [%{node_id: entry.node_id, change_kind: :invalid, target: nil}]
+          [%{node_id: entry.node_id, change_type: :invalid, target: nil}]
       end
     end)
     |> TreeCodec.decode_changes()
@@ -307,9 +307,9 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
     if MapSet.size(empty) == 0 do
       nodes
     else
-        nodes
-        |> Enum.reject(&MapSet.member?(empty, &1.node_id))
-        |> prune_empty_private(public_ids)
+      nodes
+      |> Enum.reject(&MapSet.member?(empty, &1.node_id))
+      |> prune_empty_private(public_ids)
     end
   end
 
@@ -321,12 +321,12 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
     end
   end
 
-  defp restore_lifecycles(community, docs) do
+  defp restore_lifecycles(_community, docs) do
     Enum.reduce_while(docs, {:ok, :pass}, fn doc, _ ->
       lifecycle =
         Repo.one(
-          from(l in DocsLifecycle,
-            where: l.article_id == ^doc.article_id and l.community_id == ^community.id,
+          from(l in ArticleLifecycle,
+            where: l.article_id == ^doc.article_id,
             lock: "FOR UPDATE"
           )
         )
@@ -335,22 +335,13 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
 
       result =
         case {lifecycle, public?} do
-          {%DocsLifecycle{state: :deleted} = item, false} ->
-            now = DateTime.utc_now(:second)
+          {%ArticleLifecycle{state: :deleted} = item, false} ->
+            CMS.Articles.Lifecycle.transition(item, :draft)
 
-            item
-            |> DocsLifecycle.changeset(%{
-              state: :draft,
-              deleted_at: nil,
-              version: item.version + 1,
-              changed_at: now
-            })
-            |> Repo.update()
-
-          {%DocsLifecycle{state: :draft} = item, false} ->
+          {%ArticleLifecycle{state: :draft} = item, false} ->
             {:ok, item}
 
-          {%DocsLifecycle{state: state} = item, true} when state in [:published, :archived] ->
+          {%ArticleLifecycle{state: state} = item, true} when state in [:published, :archived] ->
             {:ok, item}
 
           _ ->
@@ -393,23 +384,23 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRestore do
   end
 
   defp nodes(community, stage) do
-      Repo.all(
-        from(n in DocsTreeNode,
-          where: n.community_id == ^community.id and n.stage == ^stage,
-          order_by: n.node_id,
-          lock: "FOR SHARE"
-        )
+    Repo.all(
+      from(n in DocsTreeNode,
+        where: n.community_id == ^community.id and n.stage == ^stage,
+        order_by: n.node_id,
+        lock: "FOR SHARE"
       )
-      |> Enum.map(&Map.take(&1, @fields))
+    )
+    |> Enum.map(&Map.take(&1, @fields))
   end
 
   defp changes(queue) do
-      Repo.all(
-        from(c in DocsQueueTreeChange,
-          where: c.queue_id == ^queue.id,
-          order_by: c.node_id,
-          lock: "FOR UPDATE"
-        )
+    Repo.all(
+      from(c in DocsQueueTreeChange,
+        where: c.queue_id == ^queue.id,
+        order_by: c.node_id,
+        lock: "FOR UPDATE"
       )
+    )
   end
 end

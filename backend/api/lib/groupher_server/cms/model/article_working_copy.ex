@@ -15,14 +15,14 @@ defmodule GroupherServer.CMS.Model.ArticleWorkingCopy do
   @primary_key {:id, Ecto.UUID, autogenerate: true}
   @foreign_key_type Ecto.UUID
   @schema_prefix DBPrefix.cms()
-  @required_fields ~w(article_id scope_kind scope_id revision title digest created_by_id updated_by_id)a
+  @required_fields ~w(article_id scope_type scope_id revision title digest created_by_id updated_by_id)a
   @optional_fields ~w(slug cover_edit_working_copy_id)a
   @type t :: %__MODULE__{}
 
   schema "article_working_copies" do
     belongs_to(:article, Article)
     belongs_to(:body, ArticleBody, on_replace: :update)
-    field(:scope_kind, Ecto.Enum, values: [:default, :workspace])
+    field(:scope_type, Ecto.Enum, values: [:default, :workspace])
     field(:scope_id, Ecto.UUID)
     field(:revision, :integer, default: 1)
     field(:title, :string, default: "")
@@ -45,11 +45,11 @@ defmodule GroupherServer.CMS.Model.ArticleWorkingCopy do
     |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:created_by_id)
     |> foreign_key_constraint(:updated_by_id)
-    |> unique_constraint([:article_id, :scope_kind, :scope_id])
+    |> unique_constraint([:article_id, :scope_type, :scope_id])
   end
 
   defp validate_scope(changeset) do
-    if get_field(changeset, :scope_kind) == :default and
+    if get_field(changeset, :scope_type) == :default and
          get_field(changeset, :scope_id) != get_field(changeset, :article_id) do
       add_error(changeset, :scope_id, "must equal article_id for the default workspace")
     else

@@ -51,11 +51,6 @@ defmodule GroupherServer.Test.CMS.Communities.Persist do
       assert community_config.community_id == community.id
       assert is_nil(system.review_mode)
       assert community_config.review_mode == :immediate
-
-      assert {:ok, %{system: platform_doc_config, community: nil}} =
-               GroupherServer.ReviewBot.configs_for_target(community.id, :doc)
-
-      assert platform_doc_config.community_id == nil
     end
 
     test "create community replays the canonical row for the same command id", ~m(user)a do

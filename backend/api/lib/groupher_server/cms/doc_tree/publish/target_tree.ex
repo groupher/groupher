@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.TargetTree do
 
   defp apply_changes(public, changes) do
     Enum.reduce_while(changes, {:ok, public, MapSet.new()}, fn change, {:ok, nodes, seen} ->
-      with %{node_id: id, change_kind: kind, target: target} <- change,
+      with %{node_id: id, change_type: kind, target: target} <- change,
            true <- is_binary(id) and byte_size(id) > 0 and not MapSet.member?(seen, id),
            {:ok, nodes} <- apply_change(nodes, id, kind, target) do
         {:cont, {:ok, nodes, MapSet.put(seen, id)}}

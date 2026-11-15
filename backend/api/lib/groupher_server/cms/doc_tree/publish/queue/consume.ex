@@ -300,7 +300,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Consume do
           work =
             Repo.one!(
               from(w in ArticleWorkingCopy,
-                where: w.article_id == ^entry.article_id and w.scope_kind == :default
+                where: w.article_id == ^entry.article_id and w.scope_type == :default
               )
             )
 

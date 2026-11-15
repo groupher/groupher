@@ -390,10 +390,10 @@ defmodule GroupherServer.Test.CMS.Press do
     assert item.thread == :doc
 
     lifecycle =
-      Repo.get_by!(CMS.Model.DocsLifecycle, article_id: doc.id)
+      Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: doc.id)
 
     lock_lifecycle = fn ->
-      CMS.Model.DocsLifecycle
+      CMS.Model.ArticleLifecycle
       |> where([row], row.id == ^lifecycle.id)
       |> lock("FOR UPDATE")
       |> Repo.one()

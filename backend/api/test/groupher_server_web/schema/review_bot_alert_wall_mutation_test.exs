@@ -13,7 +13,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
 
     assert Map.has_key?(fields, :recheck_article_v2)
     assert Map.has_key?(fields, :recheck_comment_v2)
-    assert Map.has_key?(fields, :recheck_doc_v2)
+    refute Map.has_key?(fields, :recheck_doc_v2)
     assert Map.has_key?(fields, :approve_article_v2)
     assert Map.has_key?(fields, :reject_article_v2)
     refute Map.has_key?(fields, :deny_article)
@@ -41,7 +41,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     reviewer = put_community_permission(reviewer, community.slug, "review.decide")
 
     mutation = """
-    mutation Recheck($target: CmsReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
+    mutation Recheck($target: ArtimentReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
       recheckArticleV2(target: $target, scope: $scope, commandId: $commandId) {
         commandId
         targetType
@@ -87,7 +87,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
 
     mutation = """
-    mutation Recheck($target: CmsReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
+    mutation Recheck($target: ArtimentReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
       recheckCommentV2(target: $target, scope: $scope, commandId: $commandId) {
         commandId
         targetType
@@ -115,14 +115,13 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     assert result["targetId"] == to_string(comment.id)
   end
 
-  test "recheckDocV2 succeeds through GraphQL" do
-    {_community, doc, _attrs, _author} = mock_article(:doc)
-    {:ok, reviewer} = db_insert(:user)
-    reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.decide" => true}}}
+  test "a Doc recheck uses the shared Article command" do
+    {community, doc, _attrs, reviewer} = mock_article(:doc)
+    reviewer = put_community_permission(reviewer, community.slug, "review.decide")
 
     mutation = """
-    mutation Recheck($target: CmsReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
-      recheckDocV2(target: $target, scope: $scope, commandId: $commandId) {
+    mutation Recheck($target: ArtimentReviewTargetInput!, $scope: ReviewBotScopeInput!, $commandId: ID!) {
+      recheckArticleV2(target: $target, scope: $scope, commandId: $commandId) {
         commandId
         targetType
         targetId
@@ -131,21 +130,22 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     }
     """
 
-    assert {:ok, %{data: %{"recheckDocV2" => result}}} =
+    assert {:ok, %{data: %{"recheckArticleV2" => result}}} =
              Absinthe.run(mutation, Schema,
                variables: %{
                  "target" => %{
-                   "type" => "DOC",
-                   "articleId" => doc.id
+                   "type" => "ARTICLE",
+                   "articleId" => doc.id,
+                   "communityId" => community.id
                  },
-                 "scope" => %{"type" => "PLATFORM"},
+                 "scope" => %{"type" => "COMMUNITY", "community" => community.slug},
                  "commandId" => Ecto.UUID.generate()
                },
                context: %{cur_user: reviewer}
              )
 
     assert result["action"] == "RECHECK"
-    assert result["targetType"] == "DOC"
+    assert result["targetType"] == "ARTICLE"
     assert result["targetId"] == doc.id
   end
 
@@ -164,7 +164,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     }
 
     reject = """
-    mutation Decide($target: CmsReviewTargetInput!, $commandId: ID!) {
+    mutation Decide($target: ArtimentReviewTargetInput!, $commandId: ID!) {
       rejectArticleV2(target: $target, commandId: $commandId) { action }
     }
     """
@@ -173,7 +173,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
              Absinthe.run(reject, Schema, variables: variables, context: %{cur_user: reviewer})
 
     approve = """
-    mutation Decide($target: CmsReviewTargetInput!, $commandId: ID!) {
+    mutation Decide($target: ArtimentReviewTargetInput!, $commandId: ID!) {
       approveArticleV2(target: $target, commandId: $commandId) { action }
     }
     """
@@ -236,8 +236,8 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     {:ok, other_reader} = db_insert(:user)
 
     query = """
-    query Notice($target: CmsReviewTargetInput!) {
-      contentReviewNotice(target: $target) { status failureCode }
+    query Notice($target: ArtimentReviewTargetInput!) {
+      artimentReviewNotice(target: $target) { status failureCode }
     }
     """
 
@@ -252,12 +252,12 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
       }
     }
 
-    assert {:ok, %{data: %{"contentReviewNotice" => notice}}} =
+    assert {:ok, %{data: %{"artimentReviewNotice" => notice}}} =
              Absinthe.run(query, Schema, variables: variables, context: %{cur_user: author})
 
     assert Map.keys(notice) |> Enum.sort() == ["failureCode", "status"]
 
-    assert {:ok, %{data: %{"contentReviewNotice" => nil}, errors: [_ | _]}} =
+    assert {:ok, %{data: %{"artimentReviewNotice" => nil}, errors: [_ | _]}} =
              Absinthe.run(query, Schema, variables: variables, context: %{cur_user: other_reader})
   end
 
@@ -284,8 +284,8 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     end)
 
     query = """
-    query Notice($target: CmsReviewTargetInput!) {
-      contentReviewNotice(target: $target) { status failureCode }
+    query Notice($target: ArtimentReviewTargetInput!) {
+      artimentReviewNotice(target: $target) { status failureCode }
     }
     """
 
@@ -300,7 +300,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
       }
     }
 
-    assert {:ok, %{data: %{"contentReviewNotice" => %{"status" => "waiting_human"}}}} =
+    assert {:ok, %{data: %{"artimentReviewNotice" => %{"status" => "waiting_human"}}}} =
              Absinthe.run(query, Schema, variables: variables, context: %{cur_user: author})
   end
 
@@ -309,7 +309,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     GroupherServer.CMS.Review.SnapshotVersion.from_id(snapshot_id)
   end
 
-  test "contentReviewHistory exposes a failed check for manual recheck" do
+  test "artimentReviewHistory exposes a failed check for manual recheck" do
     {_community, post, _attrs, reviewer} = mock_article(:post)
     reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
 
@@ -328,8 +328,8 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     |> Repo.update!()
 
     query = """
-    query History($target: CmsReviewTargetInput!) {
-      contentReviewHistory(target: $target) {
+    query History($target: ArtimentReviewTargetInput!) {
+      artimentReviewHistory(target: $target) {
         artimentReviewId
         state
         failureCode
@@ -339,7 +339,7 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     }
     """
 
-    assert {:ok, %{data: %{"contentReviewHistory" => [entry | _]}}} =
+    assert {:ok, %{data: %{"artimentReviewHistory" => [entry | _]}}} =
              Absinthe.run(query, Schema,
                variables: %{"target" => %{"type" => "ARTICLE", "articleId" => post.id}},
                context: %{cur_user: reviewer}
@@ -369,12 +369,12 @@ defmodule GroupherServer.TestWeb.Schema.ReviewBotAlertWallMutationTest do
     reviewer = %{reviewer | cur_passport: %{"global" => %{"review.platform.read" => true}}}
 
     query = """
-    query History($target: CmsReviewTargetInput!) {
-      contentReviewHistory(target: $target) { artimentReviewId communityId }
+    query History($target: ArtimentReviewTargetInput!) {
+      artimentReviewHistory(target: $target) { artimentReviewId communityId }
     }
     """
 
-    assert {:ok, %{data: %{"contentReviewHistory" => [entry | _]}}} =
+    assert {:ok, %{data: %{"artimentReviewHistory" => [entry | _]}}} =
              Absinthe.run(query, Schema,
                variables: %{
                  "target" => %{

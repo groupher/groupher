@@ -91,7 +91,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Enqueue do
     defaults =
       Repo.all(
         from(w in ArticleWorkingCopy,
-          where: w.article_id in ^ids and w.scope_kind == :default,
+          where: w.article_id in ^ids and w.scope_type == :default,
           order_by: w.id,
           lock: "FOR UPDATE"
         )
@@ -127,15 +127,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Enqueue do
 
       true ->
         with {:ok, locked} <- validate_defaults(entries, articles, defaults),
-             {:ok, lifecycles} <- Lifecycle.lock(community, ids, []),
-             true <-
-               Enum.all?(locked, fn {article, default} ->
-                 lifecycles[article.id].default_working_copy_id == default.id
-               end) do
+             {:ok, _lifecycles} <- Lifecycle.lock(community, ids, []) do
           {:ok, locked}
-        else
-          false -> {:error, :invalid_doc_lifecycle}
-          {:error, _reason} = error -> error
         end
     end
   end
@@ -171,7 +164,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Enqueue do
            {:ok, copy} <-
              Snapshotter.fork_snapshot_in_transaction(
                snapshot.id,
-               %{article_id: article.id, scope_kind: :workspace, scope_id: queue.id},
+               %{article_id: article.id, scope_type: :workspace, scope_id: queue.id},
                actor
              ) do
         entry = %{

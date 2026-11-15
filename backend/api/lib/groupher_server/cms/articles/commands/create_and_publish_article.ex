@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateAndPublishArticle do
              attrs,
              author
            ),
-         work_attrs <- Map.merge(attrs, %{scope_kind: :default, scope_id: article.id}),
+         work_attrs <- Map.merge(attrs, %{scope_type: :default, scope_id: article.id}),
          {:ok, work} <- Store.create_loaded(article, work_attrs, actor, community.id),
          {:ok, published} <-
            Publisher.publish_in_transaction(

@@ -738,7 +738,7 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
     refute Repo.get_by(ArticleWorkingCopy,
              article_id: article.id,
-             scope_kind: :workspace,
+             scope_type: :workspace,
              scope_id: scope_id
            )
   end

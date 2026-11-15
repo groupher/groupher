@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   alias CMS.Model.{Article, ArticleLifecycle}
   alias CMS.ReviewBlocks
 
-  @article_threads CMS.Artiment.Threads.identity_values_list() -- [:doc]
+  @article_threads CMS.Artiment.Threads.identity_values_list()
 
   @states [:draft, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]

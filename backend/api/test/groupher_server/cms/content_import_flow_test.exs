@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   alias CMS.DocTree.Workflows.ContentImport
   alias CMS.DocTree.Publish.Queue
   alias CMS.DocTree.Commands.{Enqueue, ReleaseQueue, DeleteWorkspaceNode, CreateWorkspaceNode}
-  alias CMS.Model.{DocsLifecycle, DocsTreeNode}
+  alias CMS.Model.{ArticleLifecycle, DocsTreeNode}
 
   test "an imported canonical Doc enters Mention capture only through its publish Command" do
     %{actor: actor, community: community, job: job} =
@@ -296,7 +296,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert {:ok, first_import} = ContentImport.apply(community, first_job.job_ref)
     first_doc_id = first_import.first_imported_doc_id
 
-    assert Repo.get_by(DocsLifecycle, article_id: first_doc_id)
+    assert Repo.get_by(ArticleLifecycle, article_id: first_doc_id)
 
     documents = [document("docs/start.md", "/start", "b")]
     next_source_info = Map.put(source_info(), "commit", String.duplicate("d", 40))
@@ -358,7 +358,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     page = Repo.get_by!(DocsTreeNode, community_id: community.id, type: :page)
     assert page.doc_id == first_doc_id
 
-    assert Repo.get_by(DocsLifecycle, article_id: first_doc_id)
+    assert Repo.get_by(ArticleLifecycle, article_id: first_doc_id)
     assert {:ok, queue} = Queue.read(community)
 
     assert {:ok, _deleted} =

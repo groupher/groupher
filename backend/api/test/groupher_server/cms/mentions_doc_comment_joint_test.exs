@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
     ArticlePublic,
     ArticleWorkingCopy,
     CommentBody,
-    DocsLifecycle
+    ArticleLifecycle
   }
 
   alias CMS.Outbox.Event
@@ -197,7 +197,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
     event = Repo.get_by!(Event, event: "mention.notify", resource_id: endpoint.id)
 
     Repo.update_all(
-      from(state in DocsLifecycle,
+      from(state in ArticleLifecycle,
         where: state.article_id == ^ctx.doc.article_id
       ),
       set: [state: :deleted]
@@ -219,7 +219,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
              0
 
     Repo.update_all(
-      from(state in DocsLifecycle,
+      from(state in ArticleLifecycle,
         where: state.article_id == ^ctx.doc.article_id
       ),
       set: [state: :published]
@@ -252,7 +252,7 @@ defmodule GroupherServer.Test.CMS.MentionsDocCommentJointTest do
     event = Repo.get_by!(Event, event: "mention.notify", resource_id: endpoint.id)
 
     Repo.update_all(
-      from(state in DocsLifecycle,
+      from(state in ArticleLifecycle,
         where: state.article_id == ^ctx.doc.article_id
       ),
       set: [state: :deleted]

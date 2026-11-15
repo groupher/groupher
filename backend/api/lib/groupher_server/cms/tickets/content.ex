@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Tickets.Content do
              attrs,
              author
            ),
-         work_attrs <- Map.merge(attrs, %{scope_kind: :default, scope_id: article.id}),
+         work_attrs <- Map.merge(attrs, %{scope_type: :default, scope_id: article.id}),
          {:ok, working_copy} <- Store.create_loaded(article, work_attrs, user, community.id) do
       {:ok, %{article: article, working_copy: working_copy}}
     end
@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.Tickets.Content do
              {:ok, working_copy} <-
                Snapshotter.fork_snapshot_in_transaction(
                  snapshot.id,
-                 %{article_id: article.id, scope_kind: :default, scope_id: article.id},
+                 %{article_id: article.id, scope_type: :default, scope_id: article.id},
                  user
                ) do
           {:ok, working_copy}
@@ -122,7 +122,7 @@ defmodule GroupherServer.CMS.Tickets.Content do
   def get_workspace(%Article{thread: :ticket, id: article_id}) do
     case Repo.get_by(ArticleWorkingCopy,
            article_id: article_id,
-           scope_kind: :default,
+           scope_type: :default,
            scope_id: article_id
          ) do
       %ArticleWorkingCopy{} = working_copy -> {:ok, working_copy}
@@ -156,7 +156,7 @@ defmodule GroupherServer.CMS.Tickets.Content do
          %ArticleWorkingCopy{} = working_copy <-
            Repo.get_by(ArticleWorkingCopy,
              article_id: article.id,
-             scope_kind: :default,
+             scope_type: :default,
              scope_id: article.id
            ),
          {:ok, user} <- user_for_author(author),

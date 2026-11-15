@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Gate.Scope.DocsContent do
   alias GroupherServer.CMS
   alias CMS.Gate.Context.Access.Community, as: Context
   alias CMS.Gate.Scope.ReviewRead
-  alias CMS.Model.{Article, ArticleBinding, ArticleReviewBlock, Author, DocsLifecycle}
+  alias CMS.Model.{Article, ArticleBinding, ArticleLifecycle, ArticleReviewBlock, Author}
 
   @doc "Builds a batched Doc visibility query from admitted site facts."
   def query(actor, %Context{community: site, passport_rules: rules}, mode)
@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Gate.Scope.DocsContent do
     case mode do
       :history ->
         from(a in query,
-          join: owner in CMS.Model.DocsHistoryOwner,
+          join: owner in CMS.Model.ArticleHistoryOwner,
           on: owner.article_id == a.id and owner.community_id == ^site.id
         )
 
@@ -55,8 +55,8 @@ defmodule GroupherServer.CMS.Gate.Scope.DocsContent do
           on:
             binding.article_id == a.id and binding.community_id == ^site.id and
               binding.thread == :doc,
-          join: l in DocsLifecycle,
-          on: l.article_id == a.id and l.community_id == ^site.id,
+          join: l in ArticleLifecycle,
+          on: l.article_id == a.id,
           where: l.state in ^states
         )
     end

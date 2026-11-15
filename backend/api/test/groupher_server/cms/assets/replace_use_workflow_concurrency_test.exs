@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.CMS.Assets.ReplaceUseWorkflowConcurrency do
           Ecto.UUID.generate()
         )
 
-      initial_work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
+      initial_work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default)
 
       assert {:ok, _} =
                CMS.Articles.save_working_copy(
@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.CMS.Assets.ReplaceUseWorkflowConcurrency do
                  Ecto.UUID.generate()
                )
 
-      work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
+      work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default)
       workflow_ref = "asset-replacement:recovery-race:#{post.id}"
 
       params = %{

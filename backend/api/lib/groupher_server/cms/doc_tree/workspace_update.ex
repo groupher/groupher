@@ -224,7 +224,7 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceUpdate do
 
       node ->
         target = node |> Map.merge(patch) |> Map.delete(:node_id)
-        TargetTree.build(nodes, [%{node_id: id, change_kind: :upsert, target: target}])
+        TargetTree.build(nodes, [%{node_id: id, change_type: :upsert, target: target}])
     end
   end
 

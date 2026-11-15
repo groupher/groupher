@@ -134,10 +134,9 @@ defmodule GroupherServer.AlertWall.Commands.SubmitReport do
          } = target
        ) do
     owner in [:cms, :accounts] and
-      ((owner == :cms and target_type in [:article, :comment, :doc]) or
+      ((owner == :cms and target_type in [:article, :comment]) or
          (owner == :accounts and target_type == :user)) and
       is_binary(target_id) and target_id != "" and
-      (target_type != :doc or is_nil(Map.get(target, :community_id))) and
       (owner != :cms or
          (is_integer(Map.get(target, :observed_version)) and target.observed_version > 0))
   end

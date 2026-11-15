@@ -15,10 +15,10 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceTrashPurge do
 
   alias CMS.Model.{
     Article,
+    ArticleLifecycle,
     ArticlePublic,
     ArticleWorkingCopy,
     Community,
-    DocsLifecycle,
     DocsPostPublishConflict
   }
 
@@ -153,29 +153,28 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceTrashPurge do
   end
 
   defp purge_document(community, _doc, %Article{thread: :doc} = article, command_id) do
-    with %DocsLifecycle{} = lifecycle <-
+    with %ArticleLifecycle{} = _lifecycle <-
            Repo.one(
-             from(l in DocsLifecycle,
-               where: l.article_id == ^article.id and l.community_id == ^community.id,
+             from(l in ArticleLifecycle,
+               where: l.article_id == ^article.id,
                lock: "FOR UPDATE"
              )
            ),
-         {:ok, work} <- load_optional_default(lifecycle, article),
+         {:ok, work} <- load_optional_default(article),
          {:ok, :pass} <- CMS.ArtimentMentions.mark_deleted(%{type: :doc, article_id: article.id}),
          {:ok, :pass} <-
            CMS.Review.Requests.mark_content_changed_in_transaction(%{
-             type: :doc,
+             type: :article,
              article_id: article.id
            }),
          {:ok, :pass} <-
-           AlertWall.mark_target_deleted_in_transaction(:doc, article.id, command_id),
+           AlertWall.mark_target_deleted_in_transaction(:article, article.id, command_id),
          {_count, _} <-
            Repo.delete_all(
              from(c in DocsPostPublishConflict,
                where: c.community_id == ^community.id and c.article_id == ^article.id
              )
            ),
-         {:ok, _} <- Repo.delete(lifecycle),
          {:ok, :deleted} <- delete_optional_default(article, work),
          {_count, _} <-
            Repo.delete_all(
@@ -192,23 +191,17 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceTrashPurge do
 
   defp purge_document(_, _, _, _), do: {:error, :invalid_doc_identity}
 
-  defp load_optional_default(%{default_working_copy_id: nil}, article) do
-    if Repo.exists?(from(w in ArticleWorkingCopy, where: w.article_id == ^article.id)) do
-      {:error, :invalid_doc_lifecycle}
-    else
-      {:ok, nil}
-    end
-  end
-
-  defp load_optional_default(lifecycle, article) do
+  defp load_optional_default(article) do
     case Repo.one(
            from(w in ArticleWorkingCopy,
-             where: w.id == ^lifecycle.default_working_copy_id and w.article_id == ^article.id,
+             where:
+               w.article_id == ^article.id and w.scope_type == :default and
+                 w.scope_id == ^article.id,
              lock: "FOR UPDATE"
            )
          ) do
       %ArticleWorkingCopy{} = work -> {:ok, work}
-      nil -> {:error, :invalid_doc_lifecycle}
+      nil -> {:ok, nil}
     end
   end
 

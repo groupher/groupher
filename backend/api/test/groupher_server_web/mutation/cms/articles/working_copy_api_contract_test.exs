@@ -48,14 +48,14 @@ defmodule GroupherServer.Test.Mutation.Articles.WorkingCopyAPIContract do
     mutation ForkSnapshot(
       $snapshotId: ID!,
       $community: String!,
-      $scopeKind: String!,
+      $scopeType: String!,
       $scopeId: ID!,
       $commandId: ID!
     ) {
       forkSnapshot(
         snapshotId: $snapshotId,
         community: $community,
-        scopeKind: $scopeKind,
+        scopeType: $scopeType,
         scopeId: $scopeId,
         commandId: $commandId
       ) {
@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.Mutation.Articles.WorkingCopyAPIContract do
     fork_variables = %{
       snapshotId: published["snapshotId"],
       community: community.slug,
-      scopeKind: "workspace",
+      scopeType: "workspace",
       scopeId: fork_scope_id,
       commandId: fork_command_id
     }
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Mutation.Articles.WorkingCopyAPIContract do
     create_query = """
     mutation CreateArticle($community: String!, $thread: Thread!, $title: String!, $bodyBag: ArtimentBodyBagInput!, $tagIds: [ID], $commandId: ID!) {
       createArticle(community: $community, thread: $thread, title: $title, bodyBag: $bodyBag, tagIds: $tagIds, commandId: $commandId) {
-        id articleId scopeKind revision title bodyJson tagIds
+        id articleId scopeType revision title bodyJson tagIds
       }
     }
     """
@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.Mutation.Articles.WorkingCopyAPIContract do
         commandId: Ecto.UUID.generate()
       })
 
-    assert created["scopeKind"] == "default"
+    assert created["scopeType"] == "default"
     assert created["revision"] == 1
     assert created["bodyJson"] =~ "initial body"
     assert created["tagIds"] == [to_string(tag.id)]

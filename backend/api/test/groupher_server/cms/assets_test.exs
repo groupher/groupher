@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       ticket_working_copy =
-        Repo.get_by!(ArticleWorkingCopy, article_id: ticket.id, scope_kind: :default)
+        Repo.get_by!(ArticleWorkingCopy, article_id: ticket.id, scope_type: :default)
 
       assert [%ArticleAssetRef{asset_id: asset_id}] =
                Repo.all(
@@ -787,7 +787,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  community: community
                )
 
-      work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
+      work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default)
       workflow_ref = "asset-replacement:test:#{post.id}"
 
       params = %{
@@ -1000,7 +1000,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  Ecto.UUID.generate()
                )
 
-      default = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
+      default = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default)
 
       params = %{
         working_copy_id: work.id,
@@ -1048,7 +1048,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       article = Repo.get!(Article, post.id)
       public = Repo.get!(ArticlePublic, post.id)
-      default = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
+      default = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default)
 
       assert {:ok, %{working_copy: other}} =
                CMS.Articles.fork_snapshot(
@@ -1143,7 +1143,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert (item[:article_id] || item["article_id"]) == post.id
 
       assert (item[:observed_working_copy_revision] || item["observed_working_copy_revision"]) ==
-               Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default).revision
+               Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default).revision
 
       assert (item[:decision] || item["decision"]) == "editable"
       locators = item[:usage_locators] || item["usage_locators"]
@@ -1418,7 +1418,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       parent = self()
 
       revision =
-        Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default).revision
+        Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default).revision
 
       tasks =
         ["sync-a.png", "sync-b.png"]
@@ -2124,14 +2124,14 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert Enum.any?(items, &((&1[:decision] || &1["decision"]) == "live_snapshot_only"))
 
       assert (item[:observed_working_copy_revision] || item["observed_working_copy_revision"]) ==
-               Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default).revision
+               Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default).revision
     end
   end
 
   defp test_link_refs(article, attrs, opts) do
     community = Keyword.fetch!(opts, :community)
     canonical = Repo.get!(Article, article.id)
-    work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id, scope_kind: :default)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id, scope_type: :default)
 
     actor =
       Map.get(attrs, :cur_user) ||
@@ -2196,7 +2196,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
     case Repo.get_by(ArticleWorkingCopy,
            article_id: article.id,
-           scope_kind: :default,
+           scope_type: :default,
            scope_id: article.id
          ) do
       %ArticleWorkingCopy{} = working_copy -> {:ok, working_copy}

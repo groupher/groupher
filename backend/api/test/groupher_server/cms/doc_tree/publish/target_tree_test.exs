@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.TargetTreeTest do
   end
 
   defp upsert(node) do
-    %{node_id: node.node_id, change_kind: :upsert, target: Map.delete(node, :node_id)}
+    %{node_id: node.node_id, change_type: :upsert, target: Map.delete(node, :node_id)}
   end
 
   test "overlays complete changes deterministically and preserves fields and independent pin order" do
@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.TargetTreeTest do
 
     assert {:error, :invalid_tree_parent} =
              TargetTree.build([tab, group, link], [
-               %{node_id: "group", change_kind: :delete, target: nil}
+               %{node_id: "group", change_type: :delete, target: nil}
              ])
 
     assert {:error, :invalid_tree_parent} =
@@ -129,7 +129,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.TargetTreeTest do
 
     assert {:error, :invalid_tree_change} =
              TargetTree.build([tab], [
-               %{node_id: "group", change_kind: :upsert, target: %{type: :group}}
+               %{node_id: "group", change_type: :upsert, target: %{type: :group}}
              ])
 
     assert {:error, :invalid_tree_change} =

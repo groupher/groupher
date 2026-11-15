@@ -977,7 +977,7 @@ defmodule GroupherServer.Test.CMS.Tickets.Commands.MutateTest do
     work =
       Repo.get_by!(ArticleWorkingCopy,
         article_id: article.id,
-        scope_kind: :default,
+        scope_type: :default,
         scope_id: article.id
       )
 

@@ -17,9 +17,10 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
 
   alias CMS.Model.{
     Article,
+    ArticleBinding,
+    ArticleLifecycle,
     ArticlePublic,
     Community,
-    DocsLifecycle,
     DocsPublishQueue,
     DocsQueueArticle
   }
@@ -280,8 +281,10 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
 
     lifecycles =
       Repo.all(
-        from(l in DocsLifecycle,
-          where: l.article_id in ^plan.doc_ids and l.community_id == ^community.id,
+        from(l in ArticleLifecycle,
+          join: b in ArticleBinding,
+          on: b.article_id == l.article_id and b.community_id == ^community.id,
+          where: l.thread == :doc and l.article_id in ^plan.doc_ids,
           order_by: l.article_id,
           lock: "FOR UPDATE"
         )
@@ -428,23 +431,23 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceDelete do
   end
 
   defp nodes(community, stage) do
-      Repo.all(
-        from(n in DocsTreeNode,
-          where: n.community_id == ^community.id and n.stage == ^stage,
-          order_by: n.node_id,
-          lock: "FOR SHARE"
-        )
+    Repo.all(
+      from(n in DocsTreeNode,
+        where: n.community_id == ^community.id and n.stage == ^stage,
+        order_by: n.node_id,
+        lock: "FOR SHARE"
       )
-      |> Enum.map(&Map.take(&1, @fields))
+    )
+    |> Enum.map(&Map.take(&1, @fields))
   end
 
   defp changes(queue) do
-      Repo.all(
-        from(c in DocsQueueTreeChange,
-          where: c.queue_id == ^queue.id,
-          order_by: c.node_id,
-          lock: "FOR UPDATE"
-        )
+    Repo.all(
+      from(c in DocsQueueTreeChange,
+        where: c.queue_id == ^queue.id,
+        order_by: c.node_id,
+        lock: "FOR UPDATE"
       )
+    )
   end
 end

@@ -19,7 +19,6 @@ defmodule GroupherServer.CMS.Review.Results do
     ArticlePublic,
     CommentBody,
     CommentLifecycle,
-    DocsLifecycle,
     ArtimentReview
   }
 
@@ -69,13 +68,6 @@ defmodule GroupherServer.CMS.Review.Results do
     CMS.Review.load_for_update("comment:#{request.comment_id}", scope)
   end
 
-  defp lock_target(%ArtimentReview{target_type: :doc} = request) do
-    CMS.Review.load_for_update(
-      "doc:#{request.article_id}",
-      "platform"
-    )
-  end
-
   defp lock_target(_request), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
   defp current_content?(%ArtimentReview{target_type: :article} = request) do
@@ -96,18 +88,6 @@ defmodule GroupherServer.CMS.Review.Results do
         join: lifecycle in CommentLifecycle,
         on: lifecycle.comment_id == body.comment_id,
         where: body.comment_id == ^request.comment_id and lifecycle.state == :visible
-      )
-    )
-  end
-
-  defp current_content?(%ArtimentReview{target_type: :doc} = request) do
-    Repo.exists?(
-      from(public in ArticlePublic,
-        join: lifecycle in DocsLifecycle,
-        on: lifecycle.article_id == public.article_id,
-        where:
-          public.article_id == ^request.article_id and
-            lifecycle.state not in [:deleted, :destroy]
       )
     )
   end
@@ -265,8 +245,6 @@ defmodule GroupherServer.CMS.Review.Results do
       summary: result["summary"] || ""
     }
   end
-
-  defp target_id(%ArtimentReview{target_type: :doc, article_id: id}), do: id
 
   defp target_id(%ArtimentReview{target_type: :article, article_id: article_id}), do: article_id
 

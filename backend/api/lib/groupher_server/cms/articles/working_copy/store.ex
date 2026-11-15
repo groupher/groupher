@@ -266,7 +266,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Store do
       |> Map.put(:body, Map.merge(body_attrs, %{article_id: article.id, type: :working_copy}))
       |> Map.merge(%{
         article_id: article.id,
-        scope_kind: fetch!(attrs, :scope_kind),
+        scope_type: fetch!(attrs, :scope_type),
         scope_id: fetch!(attrs, :scope_id),
         revision: 1,
         cover_edit_working_copy_id: cover_id,

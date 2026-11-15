@@ -14,7 +14,6 @@ defmodule GroupherServer.CMS.DocTree.PostPublishConflictRead do
     ArticlePublic,
     ArticleWorkingCopy,
     Community,
-    DocsLifecycle,
     DocsPostPublishConflict
   }
 
@@ -27,10 +26,10 @@ defmodule GroupherServer.CMS.DocTree.PostPublishConflictRead do
            {:ok, :pass} <- QueueAccess.authorize(community, article_id, actor) do
         case Repo.one(
                from(c in DocsPostPublishConflict,
-                 join: l in DocsLifecycle,
-                 on: l.community_id == c.community_id and l.article_id == c.article_id,
                  join: w in ArticleWorkingCopy,
-                 on: w.id == l.default_working_copy_id and w.article_id == c.article_id,
+                 on:
+                   w.article_id == c.article_id and w.scope_type == :default and
+                     w.scope_id == c.article_id,
                  join: p in ArticlePublic,
                  on: p.article_id == c.article_id and p.snapshot_id == c.published_snapshot_id,
                  where: c.community_id == ^community.id and c.article_id == ^article_id,

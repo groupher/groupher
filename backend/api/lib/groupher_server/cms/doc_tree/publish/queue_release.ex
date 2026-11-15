@@ -342,9 +342,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.QueueRelease do
   end
 
   defp register_review(article, snapshot, lifecycle, first_publish?) do
-    with {:ok, configs} <- ReviewBot.configs(nil, :doc) do
+    with {:ok, configs} <- ReviewBot.configs(nil, :article) do
       CMS.Review.RequestSubmission.register_in_transaction(
-        %{type: :doc, article_id: article.id, lifecycle: lifecycle},
+        %{type: :article, article_id: article.id, lifecycle: lifecycle},
         %{
           title: snapshot.title || "",
           body: CMS.Articles.Body.document(snapshot).plain_text || "",
@@ -404,10 +404,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.QueueRelease do
                {:ok, _} <- ArtimentMentions.hide_source(%{type: :doc, article_id: id}),
                {:ok, :pass} <-
                  CMS.Review.Requests.mark_content_changed_in_transaction(%{
-                   type: :doc,
+                   type: :article,
                    article_id: id
                  }),
-               {:ok, :pass} <- AlertWall.mark_content_changed_in_transaction(:doc, id, command_id),
+               {:ok, :pass} <-
+                 AlertWall.mark_content_changed_in_transaction(:article, id, command_id),
                {:ok, _} <- enqueue_removal(community, binding, id, command_id) do
             {:cont, {:ok, :pass}}
           else

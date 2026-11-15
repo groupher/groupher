@@ -30,8 +30,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     ArticlePublic,
     ArticleWorkingCopy,
     Author,
-    ArticleReviewBlock,
-    DocsLifecycle
+    ArticleReviewBlock
   }
 
   @behaviour Policy
@@ -271,11 +270,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
 
   defp doc_lifecycle_scope(query) do
     from(article in query,
-      join: lifecycle in DocsLifecycle,
+      join: lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
-      on:
-        lifecycle.article_id == article.id and
-          lifecycle.community_id == as(:gate_community).id,
+      on: lifecycle.article_id == article.id,
       where: article.thread == ^:doc
     )
   end
@@ -383,7 +380,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
       join: work in ArticleWorkingCopy,
       as: :gate_article_working_copy,
       on:
-        work.article_id == article.id and work.scope_kind == :default and
+        work.article_id == article.id and work.scope_type == :default and
           work.scope_id == article.id
     )
   end

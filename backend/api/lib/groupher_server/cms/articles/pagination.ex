@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     Community,
     CommunityTag,
     DocsTreeNode,
-    DocsLifecycle,
+    ArticleLifecycle,
     PinnedArticle,
     PostState
   }
@@ -304,9 +304,9 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     |> join(
       :inner,
       [article: article, article_binding: binding],
-      lifecycle in DocsLifecycle,
+      lifecycle in ArticleLifecycle,
       as: :doc_lifecycle,
-      on: lifecycle.article_id == article.id and lifecycle.community_id == binding.community_id
+      on: lifecycle.article_id == article.id
     )
   end
 

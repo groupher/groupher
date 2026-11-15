@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreSnapshot do
   alias CMS.DocTree.{DefaultCopy, Publish}
   alias CMS.DocTree.Commands.{QueueAccess, RestoreSnapshotConfirmation}
   alias CMS.Articles.WorkingCopy.{Snapshotter, Store}
-  alias CMS.Model.{ArticleSnapshot, DocsLifecycle}
+  alias CMS.Model.ArticleSnapshot
 
   @pipeline operation: :docs_restore_snapshot,
             confirmation: RestoreSnapshotConfirmation,
@@ -83,23 +83,16 @@ defmodule GroupherServer.CMS.DocTree.Commands.RestoreSnapshot do
     end
   end
 
-  defp restore(%{work: nil, lifecycle: lifecycle}, snapshot, nil, nil, actor, _command, _site_id) do
-    with {:ok, work} <-
-           Snapshotter.fork_snapshot_in_transaction(
-             snapshot.id,
-             %{
-               article_id: snapshot.article_id,
-               scope_kind: :default,
-               scope_id: snapshot.article_id
-             },
-             actor
-           ),
-         {:ok, _} <-
-           lifecycle
-           |> DocsLifecycle.changeset(%{default_working_copy_id: work.id})
-           |> Repo.update() do
-      {:ok, work}
-    end
+  defp restore(%{work: nil}, snapshot, nil, nil, actor, _command, _site_id) do
+    Snapshotter.fork_snapshot_in_transaction(
+      snapshot.id,
+      %{
+        article_id: snapshot.article_id,
+        scope_type: :default,
+        scope_id: snapshot.article_id
+      },
+      actor
+    )
   end
 
   defp restore(

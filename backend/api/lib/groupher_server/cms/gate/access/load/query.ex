@@ -38,7 +38,6 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
     CommentLifecycle,
     Community,
     CommunityLifecycle,
-    DocsLifecycle,
     DocsTrashedArticle,
     ArticlePublic,
     PostState
@@ -68,7 +67,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
          canonical <- preload_article_author(canonical),
          %CommunityLifecycle{} = community_lifecycle <-
            site_community_lifecycle(community.id, mode),
-         %DocsLifecycle{} = doc_lifecycle <-
+         %ArticleLifecycle{} = doc_lifecycle <-
            site_doc_lifecycle(canonical.id, community.id, mode),
          review_scope_keys <-
            Queries.article_review_scope_keys_for_article(canonical.id, community.id) do
@@ -310,12 +309,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Query do
   end
 
   defp parent_context(actor, community, :doc, %Article{thread: :doc} = article) do
-    with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article.id),
-         true <- owner.id == community.id do
-      doc_site(actor, community, article)
-    else
-      _ -> {:error, ErrorCat.gate_resource_mismatch()}
-    end
+    doc_site(actor, community, article)
   end
 
   defp parent_context(actor, community, thread, article) do

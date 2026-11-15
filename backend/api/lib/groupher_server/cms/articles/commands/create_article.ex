@@ -98,7 +98,7 @@ defmodule GroupherServer.CMS.Articles.Commands.CreateArticle do
            ),
          work_attrs =
            attrs
-           |> Map.merge(%{scope_kind: :default, scope_id: article.id}),
+           |> Map.merge(%{scope_type: :default, scope_id: article.id}),
          {:ok, working_copy} <- Store.create_loaded(article, work_attrs, actor, community.id),
          {:ok, _binding_tags} <- sync_community_tags(community, article, attrs, command_id) do
       {:ok, %{article: article, working_copy: working_copy}}

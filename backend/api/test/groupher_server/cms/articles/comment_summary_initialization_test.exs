@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.CMS.Articles.CommentSummaryInitializationTest do
         )
 
       before = Repo.get_by!(ArticleStats, article_id: article.id)
-      work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id, scope_kind: :default)
+      work = Repo.get_by!(ArticleWorkingCopy, article_id: article.id, scope_type: :default)
       public = Repo.get!(ArticlePublic, article.id)
 
       assert {:ok, saved} =

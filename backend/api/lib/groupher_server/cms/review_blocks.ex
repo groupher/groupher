@@ -22,8 +22,7 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     Comment,
     CommentLifecycle,
     CommentReviewBlock,
-    Community,
-    DocsLifecycle
+    Community
   }
 
   @doc "Adds a restriction and its effective Comment summary delta in one transaction."
@@ -86,10 +85,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   end
 
   defp bump_graph(%ArticleLifecycle{}) do
-    Revision.bump()
-  end
-
-  defp bump_graph(%DocsLifecycle{}) do
     Revision.bump()
   end
 
@@ -181,14 +176,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     end
   end
 
-  def recompute(%DocsLifecycle{article_id: article_id}) do
-    if Repo.in_transaction?() and Repo.get(Article, article_id) do
-      {:ok, :pass}
-    else
-      {:error, CMS.ErrorCat.lifecycle_not_found()}
-    end
-  end
-
   def recompute(_lifecycle), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
   defp defaults(attrs) do
@@ -207,16 +194,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
   defp restriction_target(%CommentLifecycle{comment_id: id}, attrs) do
     with {:ok, community_id} <- scope_community_id(attrs) do
       {:ok, CommentReviewBlock, %{comment_id: id, community_id: community_id}}
-    end
-  end
-
-  defp restriction_target(%DocsLifecycle{article_id: id, community_id: owner_id}, attrs) do
-    with {:ok, community_id} <- scope_community_id(attrs),
-         true <- is_nil(community_id) or community_id == owner_id do
-      {:ok, ArticleReviewBlock, %{article_id: id, community_id: community_id}}
-    else
-      false -> {:error, CMS.ErrorCat.invalid_review_block()}
-      {:error, _reason} = error -> error
     end
   end
 
@@ -281,11 +258,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
     end
   end
 
-  defp validate_scope(%DocsLifecycle{article_id: id}, %{community_id: nil}) do
-    if Repo.get(Article, id), do: {:ok, :pass}, else: {:error, CMS.ErrorCat.lifecycle_not_found()}
-  end
-
-  defp validate_scope(%DocsLifecycle{community_id: id}, %{community_id: id}), do: {:ok, :pass}
   defp validate_scope(_lifecycle, _attrs), do: {:error, CMS.ErrorCat.invalid_review_block()}
 
   defp insert_or_get(ArticleReviewBlock, attrs) do
@@ -392,14 +364,6 @@ defmodule GroupherServer.CMS.ReviewBlocks do
 
   defp enqueue_visibility_change(
          %ArticleLifecycle{article_id: article_id},
-         %{community_id: community_id},
-         key
-       ) do
-    enqueue_article_visibility(article_id, community_id, key)
-  end
-
-  defp enqueue_visibility_change(
-         %DocsLifecycle{article_id: article_id},
          %{community_id: community_id},
          key
        ) do

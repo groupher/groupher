@@ -89,13 +89,13 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Save do
           from(w in ArticleWorkingCopy,
             where:
               w.article_id == ^article_id and
-                (w.scope_kind == :default or w.id == ^member.working_copy_id),
+                (w.scope_type == :default or w.id == ^member.working_copy_id),
             order_by: w.id,
             lock: "FOR UPDATE"
           )
         )
 
-      default = Enum.find(works, &(&1.scope_kind == :default))
+      default = Enum.find(works, &(&1.scope_type == :default))
       work = Enum.find(works, &(&1.id == member.working_copy_id))
 
       source =
@@ -115,11 +115,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Save do
 
   defp validate_locked(article_id, queue_id, default, work, source, revision) do
     cond do
-      not match?(%ArticleWorkingCopy{scope_kind: :default, scope_id: ^article_id}, default) ->
+      not match?(%ArticleWorkingCopy{scope_type: :default, scope_id: ^article_id}, default) ->
         {:error, :invalid_queue_member_owner}
 
       not match?(
-        %ArticleWorkingCopy{article_id: ^article_id, scope_kind: :workspace, scope_id: ^queue_id},
+        %ArticleWorkingCopy{article_id: ^article_id, scope_type: :workspace, scope_id: ^queue_id},
         work
       ) ->
         {:error, :invalid_queue_member_owner}

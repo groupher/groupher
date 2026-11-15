@@ -219,11 +219,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
       Enum.map(operations, fn operation ->
         case operation do
           %{node_id: id, action: :delete, target: nil} ->
-            %{node_id: id, change_kind: :delete, target: nil}
+            %{node_id: id, change_type: :delete, target: nil}
 
           %{node_id: id, action: action, target: node}
           when action in [:create, :update] and is_map(node) ->
-            %{node_id: id, change_kind: :upsert, target: Map.delete(node, :node_id)}
+            %{node_id: id, change_type: :upsert, target: Map.delete(node, :node_id)}
 
           _ ->
             :invalid

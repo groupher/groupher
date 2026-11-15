@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
       {:fields,
        %{
          "snapshot_id" => :raw,
-         "scope_kind" => :raw,
+         "scope_type" => :raw,
          "scope_id" => :raw
        }},
     article_delete_working_copy: {:fields, %{"working_copy_id" => :raw}},

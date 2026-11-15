@@ -95,10 +95,6 @@ defmodule GroupherServer.CMS.Review.Decisions do
     %{type: :comment, comment_id: comment.id, community_id: scope_community_id(scope_key)}
   end
 
-  defp request_scope(%{type: :doc, target: article, scope_key: scope_key}) do
-    %{type: :doc, article_id: article.id, community_id: scope_community_id(scope_key)}
-  end
-
   defp request_scope(_context), do: %{}
 
   defp update_restrictions(context, action, requests, actor, operation_ref) do
@@ -180,10 +176,6 @@ defmodule GroupherServer.CMS.Review.Decisions do
 
   defp wall_target(%{type: :comment, comment_id: id, community_id: community_id}) do
     %{owner: :cms, target_type: :comment, target_id: to_string(id), community_id: community_id}
-  end
-
-  defp wall_target(%{type: :doc, article_id: id, community_id: community_id}) do
-    %{owner: :cms, target_type: :doc, target_id: id, community_id: community_id}
   end
 
   defp scope_community_id("community:" <> id) do

@@ -9,7 +9,6 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
     ArticleLifecycle,
     ArtimentReview,
     CommentLifecycle,
-    DocsLifecycle,
     ArticlePublic
   }
 
@@ -45,7 +44,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
 
   test "Doc Comment author notices include current checks and branch Community holds" do
     {community, _doc, author, comment} = doc_comment()
-    target = %{type: :comment, comment_id: comment.id}
+    target = %{type: :comment, comment_id: comment.id, community_id: community.id}
 
     assert {:ok, request} =
              Repo.transact_result(fn ->
@@ -193,7 +192,7 @@ defmodule GroupherServer.Test.CMS.ReviewRegressionTest do
 
   defp restriction_target(:doc) do
     {_community, doc, _attrs, _author} = mock_article(:doc)
-    {Repo.get_by!(DocsLifecycle, article_id: doc.id), "platform"}
+    {Repo.get_by!(ArticleLifecycle, article_id: doc.id), "platform"}
   end
 
   defp restriction_target(:doc_comment) do

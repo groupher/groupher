@@ -973,7 +973,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:tabs, list_of(:doc_public_tree_node))
   end
 
-  enum :docs_queue_tree_change_kind do
+  enum :docs_queue_tree_change_type do
     value(:upsert)
     value(:delete)
   end
@@ -987,7 +987,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :docs_queue_tree_change do
     field(:node_id, non_null(:id))
-    field(:change_kind, non_null(:docs_queue_tree_change_kind))
+    field(:change_type, non_null(:docs_queue_tree_change_type))
     field(:target, :json)
   end
 
@@ -1254,8 +1254,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:id, non_null(:id))
     field(:article_id, non_null(:id))
 
-    field(:scope_kind, non_null(:string),
-      resolve: fn work, _, _ -> {:ok, to_string(work.scope_kind)} end
+    field(:scope_type, non_null(:string),
+      resolve: fn work, _, _ -> {:ok, to_string(work.scope_type)} end
     )
 
     field(:scope_id, non_null(:id))

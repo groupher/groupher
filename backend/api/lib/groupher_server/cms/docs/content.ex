@@ -4,13 +4,13 @@ defmodule GroupherServer.CMS.Docs.Content do
 
     The admitted Docs command owns the site lock, directory, Receipt and rollback.
 
-      Docs create command -> Content -> Article identity / default copy / Doc lifecycle
+      Docs create command -> Content -> Article identity / default copy / shared ArticleLifecycle
   """
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Articles.WorkingCopy.Store
-  alias CMS.Model.{Article, ArticleBinding, Community, DocsLifecycle}
+  alias CMS.Model.{Article, ArticleBinding, ArticleLifecycle, Community}
 
   @doc "Creates the Article, binding, default WorkingCopy and Lifecycle in the caller transaction."
   def create_workspace(community, attrs, actor, source \\ nil)
@@ -28,19 +28,13 @@ defmodule GroupherServer.CMS.Docs.Content do
            %ArticleBinding{}
            |> ArticleBinding.changeset(%{article_id: article.id, community_id: community_id})
            |> Repo.insert(),
-         {:ok, _history_owner} <-
-           Repo.insert(%CMS.Model.DocsHistoryOwner{
-             article_id: article.id,
-             community_id: community_id
-           }),
-         work_attrs = Map.merge(attrs, %{scope_kind: :default, scope_id: article.id}),
+         work_attrs = Map.merge(attrs, %{scope_type: :default, scope_id: article.id}),
          {:ok, work} <- create_copy(article, work_attrs, actor, community_id, source),
          {:ok, lifecycle} <-
-           %DocsLifecycle{}
-           |> DocsLifecycle.changeset(%{
-             community_id: community_id,
+           %ArticleLifecycle{}
+           |> ArticleLifecycle.changeset(%{
              article_id: article.id,
-             default_working_copy_id: work.id,
+             thread: :doc,
              state: :draft,
              version: 1,
              changed_at: DateTime.utc_now(:second)

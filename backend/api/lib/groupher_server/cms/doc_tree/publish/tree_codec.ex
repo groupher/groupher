@@ -85,13 +85,13 @@ defmodule GroupherServer.CMS.DocTree.Publish.TreeCodec do
     end
   end
 
-  defp decode_change(%{node_id: id, change_kind: :delete, target: nil}) when is_binary(id) do
-    {:ok, %{node_id: id, change_kind: :delete, target: nil}}
+  defp decode_change(%{node_id: id, change_type: :delete, target: nil}) when is_binary(id) do
+    {:ok, %{node_id: id, change_type: :delete, target: nil}}
   end
 
-  defp decode_change(%{node_id: id, change_kind: :upsert, target: target}) when is_binary(id) do
+  defp decode_change(%{node_id: id, change_type: :upsert, target: target}) when is_binary(id) do
     with {:ok, decoded} <- decode_target(target) do
-      {:ok, %{node_id: id, change_kind: :upsert, target: decoded}}
+      {:ok, %{node_id: id, change_type: :upsert, target: decoded}}
     end
   end
 

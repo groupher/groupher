@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
       work =
         Repo.get_by!(CMS.Model.ArticleWorkingCopy,
           article_id: post.article_id,
-          scope_kind: :default
+          scope_type: :default
         )
 
       refs =

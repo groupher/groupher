@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Diff do
       Repo.one(
         from(work in ArticleWorkingCopy,
           where:
-            work.article_id == ^article_id and work.scope_kind == :default and
+            work.article_id == ^article_id and work.scope_type == :default and
               work.scope_id == ^article_id
         )
       )

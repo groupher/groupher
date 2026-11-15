@@ -81,11 +81,11 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
       |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:doc, community_id: 123))
 
     {doc_sql, _doc_params} = to_sql(doc)
-    assert doc_sql =~ ~s(JOIN "cms"."doc_lifecycles")
+    assert doc_sql =~ ~s(JOIN "cms"."article_lifecycles")
     refute doc_sql =~ "doc_branches"
 
     {all_sql, _all_params} = to_sql(contextless)
-    assert all_sql =~ ~s(JOIN "cms"."doc_lifecycles")
+    assert all_sql =~ ~s(JOIN "cms"."article_lifecycles")
     refute all_sql =~ "doc_branches"
   end
 

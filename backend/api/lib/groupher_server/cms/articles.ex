@@ -186,7 +186,7 @@ defmodule GroupherServer.CMS.Articles do
   def fork_snapshot(
         snapshot_id,
         %Community{} = community,
-        scope_kind,
+        scope_type,
         scope_id,
         %User{} = actor,
         command_id
@@ -194,7 +194,7 @@ defmodule GroupherServer.CMS.Articles do
     Commands.ForkSnapshot.execute(
       snapshot_id,
       community,
-      scope_kind,
+      scope_type,
       scope_id,
       actor,
       command_id

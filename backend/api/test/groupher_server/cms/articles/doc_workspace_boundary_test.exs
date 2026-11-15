@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocWorkspaceBoundaryTest do
                {:ok, default} =
                  Store.create_loaded(
                    article,
-                   %{scope_kind: :default, scope_id: article.id, title: "Default"},
+                   %{scope_type: :default, scope_id: article.id, title: "Default"},
                    actor,
                    community.id
                  )
@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocWorkspaceBoundaryTest do
                {:ok, workspace} =
                  Store.create_loaded(
                    article,
-                   %{scope_kind: :workspace, scope_id: Ecto.UUID.generate(), title: "Private"},
+                   %{scope_type: :workspace, scope_id: Ecto.UUID.generate(), title: "Private"},
                    actor,
                    community.id
                  )

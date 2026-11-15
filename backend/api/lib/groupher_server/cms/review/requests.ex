@@ -456,17 +456,6 @@ defmodule GroupherServer.CMS.Review.Requests do
     scope_query(query, attrs)
   end
 
-  defp current_scope_query(%{target_type: :doc, article_id: article_id} = attrs) do
-    query =
-      from(request in ArtimentReview,
-        where:
-          request.target_type == :doc and request.article_id == ^article_id and
-            is_nil(request.replaced_at)
-      )
-
-    scope_query(query, attrs)
-  end
-
   defp current_scope_query(_attrs), do: from(request in ArtimentReview, where: false)
 
   defp target_scope_query(attrs) do
@@ -484,12 +473,6 @@ defmodule GroupherServer.CMS.Review.Requests do
   defp target_query(%{type: :comment, comment_id: id}) do
     from(request in ArtimentReview,
       where: request.target_type == :comment and request.comment_id == ^id
-    )
-  end
-
-  defp target_query(%{type: :doc, article_id: id}) do
-    from(request in ArtimentReview,
-      where: request.target_type == :doc and request.article_id == ^id
     )
   end
 

@@ -168,7 +168,7 @@ defmodule GroupherServer.AlertWall.Persist do
   @spec mark_content_changed_in_transaction(atom(), String.t(), Ecto.UUID.t()) ::
           {:ok, :pass} | {:error, term()}
   def mark_content_changed_in_transaction(target_type, target_id, operation_ref)
-      when target_type in [:article, :comment, :doc] and is_binary(target_id) and
+      when target_type in [:article, :comment] and is_binary(target_id) and
              is_binary(operation_ref) do
     with {:ok, :pass} <- require_transaction(),
          items <- deleted_target_items(target_type, target_id),
@@ -183,7 +183,7 @@ defmodule GroupherServer.AlertWall.Persist do
 
   @doc "Supersedes open items for a target being permanently deleted."
   def mark_target_deleted_in_transaction(target_type, target_id, operation_ref)
-      when target_type in [:article, :comment, :doc] and is_binary(target_id) and
+      when target_type in [:article, :comment] and is_binary(target_id) and
              is_binary(operation_ref) do
     with {:ok, :pass} <- require_transaction(),
          items <- deleted_target_items(target_type, target_id),
@@ -445,12 +445,11 @@ defmodule GroupherServer.AlertWall.Persist do
         {:error, AlertWall.ErrorCat.invalid_item()}
 
       attrs.owner not in [:cms, :accounts] or
-          attrs.target_type not in [:article, :comment, :doc, :user] ->
+          attrs.target_type not in [:article, :comment, :user] ->
         {:error, AlertWall.ErrorCat.invalid_item()}
 
       (attrs.owner == :cms and attrs.target_type == :user) or
-        (attrs.owner == :accounts and attrs.target_type != :user) or
-          (attrs.target_type == :doc and not is_nil(Map.get(attrs, :community_id))) ->
+          (attrs.owner == :accounts and attrs.target_type != :user) ->
         {:error, AlertWall.ErrorCat.invalid_item()}
 
       not is_binary(attrs.target_id) or attrs.target_id == "" ->
@@ -507,13 +506,12 @@ defmodule GroupherServer.AlertWall.Persist do
         {:error, AlertWall.ErrorCat.invalid_report()}
 
       attrs.owner not in [:cms, :accounts] or
-        attrs.target_type not in [:article, :comment, :doc, :user] or
+        attrs.target_type not in [:article, :comment, :user] or
           attrs.report_type not in @report_types ->
         {:error, AlertWall.ErrorCat.invalid_report()}
 
       (attrs.owner == :cms and attrs.target_type == :user) or
-        (attrs.owner == :accounts and attrs.target_type != :user) or
-          (attrs.target_type == :doc and not is_nil(Map.get(attrs, :community_id))) ->
+          (attrs.owner == :accounts and attrs.target_type != :user) ->
         {:error, AlertWall.ErrorCat.invalid_report()}
 
       not is_integer(attrs.reporter_id) or not is_binary(attrs.target_id) or

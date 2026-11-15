@@ -23,10 +23,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.TreeOperationsTest do
   end
 
   defp upsert(node) do
-    %{node_id: node.node_id, change_kind: :upsert, target: Map.delete(node, :node_id)}
+    %{node_id: node.node_id, change_type: :upsert, target: Map.delete(node, :node_id)}
   end
 
-  defp delete(id), do: %{node_id: id, change_kind: :delete, target: nil}
+  defp delete(id), do: %{node_id: id, change_type: :delete, target: nil}
   defp ids(ops), do: Enum.map(ops, &{&1.action, &1.node_id})
 
   test "creates parents first, sorts available nodes, and is input-order independent" do

@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.CMS.Docs.PlatformReviewTest do
       Repo.one!(
         from(request in ArtimentReview,
           where:
-            request.target_type == :doc and request.article_id == ^doc.article_id and
+            request.target_type == :article and request.article_id == ^doc.article_id and
               is_nil(request.community_id)
         )
       )

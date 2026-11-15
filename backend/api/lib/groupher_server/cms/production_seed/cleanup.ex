@@ -248,7 +248,7 @@ defmodule GroupherServer.CMS.ProductionSeed.Cleanup do
                       a.id
                     )) or
                    fragment(
-                     "EXISTS (SELECT 1 FROM cms.doc_lifecycles l WHERE l.article_id=?)",
+                     "EXISTS (SELECT 1 FROM cms.article_lifecycles l WHERE l.article_id=?)",
                      a.id
                    ))
           ),

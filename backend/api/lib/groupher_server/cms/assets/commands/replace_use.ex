@@ -263,7 +263,7 @@ defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   defp default_working_copy(%Article{id: article_id}) do
     case Repo.get_by(ArticleWorkingCopy,
            article_id: article_id,
-           scope_kind: :default,
+           scope_type: :default,
            scope_id: article_id
          ) do
       %ArticleWorkingCopy{} = work -> {:ok, work}

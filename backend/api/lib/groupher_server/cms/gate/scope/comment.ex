@@ -26,8 +26,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     ArticleLifecycle,
     CommentLifecycle,
     CommentReviewBlock,
-    Community,
-    DocsLifecycle
+    Community
   }
 
   @behaviour Policy
@@ -107,11 +106,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
       on: lifecycle.comment_id == comment.id,
-      join: doc_lifecycle in DocsLifecycle,
+      join: doc_lifecycle in ArticleLifecycle,
       as: :gate_doc_lifecycle,
-      on:
-        doc_lifecycle.article_id == comment.article_id and
-          doc_lifecycle.community_id == as(:gate_community).id,
+      on: doc_lifecycle.article_id == comment.article_id,
       where: lifecycle.state != :destroy,
       where: doc_lifecycle.state in [:published, :archived]
     )
@@ -128,11 +125,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       left_join: article_lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
       on: article_lifecycle.article_id == comment.article_id and comment.thread != ^:doc,
-      left_join: doc_lifecycle in DocsLifecycle,
+      left_join: doc_lifecycle in ArticleLifecycle,
       as: :gate_doc_lifecycle,
-      on:
-        doc_lifecycle.article_id == comment.article_id and
-          doc_lifecycle.community_id == as(:gate_community).id and comment.thread == ^:doc,
+      on: doc_lifecycle.article_id == comment.article_id and comment.thread == ^:doc,
       where: lifecycle.state != :destroy,
       where:
         (comment.thread != ^:doc and article_lifecycle.state in [:published, :archived]) or

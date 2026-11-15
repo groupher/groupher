@@ -24,7 +24,6 @@ defmodule GroupherServer.CMS.Articles.SnapshotProjection do
     Community,
     CommunityTag,
     ArticleSnapshotTag,
-    DocsLifecycle,
     PostState
   }
 
@@ -133,13 +132,6 @@ defmodule GroupherServer.CMS.Articles.SnapshotProjection do
   end
 
   defp post_state(_), do: %{}
-
-  defp lifecycle(%Article{thread: :doc, id: article_id}, %Community{id: community_id}) do
-    case Repo.get_by(DocsLifecycle, article_id: article_id, community_id: community_id) do
-      %DocsLifecycle{} = lifecycle -> {:ok, lifecycle}
-      nil -> {:error, :article_snapshot_projection_missing}
-    end
-  end
 
   defp lifecycle(%Article{id: article_id}, %Community{}) do
     case Repo.get_by(ArticleLifecycle, article_id: article_id) do

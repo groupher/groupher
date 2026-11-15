@@ -28,16 +28,34 @@ defmodule GroupherServer.CMS.DocTree.HistoryPurge do
   defp purge(id, operation_ref) do
     rows =
       Repo.query!(
-        "SELECT article_id FROM cms.docs_history_owners WHERE community_id=$1 ORDER BY article_id FOR UPDATE",
+        "SELECT article_id FROM cms.article_history_owners WHERE community_id=$1 ORDER BY article_id FOR UPDATE",
         [id]
       ).rows
 
     ids = Enum.map(rows, &hd/1)
 
-    Enum.each(ids, fn raw_id ->
+    delete_community("article_history_owners", id)
+
+    retained_ids =
+      Repo.query!(
+        """
+        SELECT DISTINCT article_id FROM cms.article_bindings
+        WHERE article_id=ANY($1::uuid[]) AND community_id<>$2
+        UNION
+        SELECT DISTINCT article_id FROM cms.article_history_owners
+        WHERE article_id=ANY($1::uuid[])
+        """,
+        [ids, id]
+      ).rows
+      |> Enum.map(&hd/1)
+      |> MapSet.new()
+
+    deletable_ids = Enum.reject(ids, &MapSet.member?(retained_ids, &1))
+
+    Enum.each(deletable_ids, fn raw_id ->
       article_id = Ecto.UUID.load!(raw_id)
 
-      case AlertWall.mark_target_deleted_in_transaction(:doc, article_id, operation_ref) do
+      case AlertWall.mark_target_deleted_in_transaction(:article, article_id, operation_ref) do
         {:ok, _} -> {:ok, :pass}
         {:error, reason} -> Repo.rollback(reason)
       end
@@ -73,27 +91,37 @@ defmodule GroupherServer.CMS.DocTree.HistoryPurge do
     cover_work =
       Repo.query!(
         "SELECT cover_edit_working_copy_id FROM cms.article_working_copies WHERE article_id=ANY($1::uuid[]) AND cover_edit_working_copy_id IS NOT NULL",
-        [ids]
+        [deletable_ids]
       ).rows
       |> Enum.map(&hd/1)
 
     cover_snapshot =
       Repo.query!(
         "SELECT cover_edit_snapshot_id FROM cms.article_snapshots WHERE article_id=ANY($1::uuid[]) AND cover_edit_snapshot_id IS NOT NULL",
-        [ids]
+        [deletable_ids]
       ).rows
       |> Enum.map(&hd/1)
 
-    delete_community("doc_lifecycles", id)
-    Repo.query!("DELETE FROM cms.article_publics WHERE article_id=ANY($1::uuid[])", [ids])
+    Repo.query!("DELETE FROM cms.article_lifecycles WHERE article_id=ANY($1::uuid[])", [
+      deletable_ids
+    ])
+
+    Repo.query!("DELETE FROM cms.article_publics WHERE article_id=ANY($1::uuid[])", [
+      deletable_ids
+    ])
 
     Repo.query!(
       "DELETE FROM cms.article_asset_refs WHERE working_copy_id IN (SELECT id FROM cms.article_working_copies WHERE article_id=ANY($1::uuid[])) OR snapshot_id IN (SELECT id FROM cms.article_snapshots WHERE article_id=ANY($1::uuid[]))",
-      [ids]
+      [deletable_ids]
     )
 
-    Repo.query!("DELETE FROM cms.article_working_copies WHERE article_id=ANY($1::uuid[])", [ids])
-    Repo.query!("DELETE FROM cms.article_snapshots WHERE article_id=ANY($1::uuid[])", [ids])
+    Repo.query!("DELETE FROM cms.article_working_copies WHERE article_id=ANY($1::uuid[])", [
+      deletable_ids
+    ])
+
+    Repo.query!("DELETE FROM cms.article_snapshots WHERE article_id=ANY($1::uuid[])", [
+      deletable_ids
+    ])
 
     Repo.query!(
       "DELETE FROM cms.cover_edit_working_copies WHERE id=ANY($1::uuid[]) AND NOT EXISTS (SELECT 1 FROM cms.article_working_copies w WHERE w.cover_edit_working_copy_id=cover_edit_working_copies.id)",
@@ -106,11 +134,11 @@ defmodule GroupherServer.CMS.DocTree.HistoryPurge do
     )
 
     Repo.query!("DELETE FROM account.collect_folder_entries WHERE article_id=ANY($1::uuid[])", [
-      ids
+      deletable_ids
     ])
 
-    delete_community("docs_history_owners", id)
-    Repo.query!("DELETE FROM cms.articles WHERE id=ANY($1::uuid[]) AND thread='doc'", [ids])
+    Repo.query!("DELETE FROM cms.articles WHERE id=ANY($1::uuid[])", [deletable_ids])
+
     {:ok, :purged}
   end
 

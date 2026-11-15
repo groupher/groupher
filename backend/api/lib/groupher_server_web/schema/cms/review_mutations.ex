@@ -18,7 +18,7 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
 
   object :review_command_result do
     field(:command_id, non_null(:id))
-    field(:target_type, non_null(:review_bot_subject_type))
+    field(:target_type, non_null(:artiment_review_target_type))
     field(:target_id, non_null(:string))
     field(:action, non_null(:review_action))
   end
@@ -26,7 +26,7 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
   object :cms_review_mutations do
     @desc "Requests another review of an article in the given scope."
     field :recheck_article_v2, non_null(:review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
+      arg(:target, non_null(:artiment_review_target_input))
       arg(:scope, non_null(:review_bot_scope_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
@@ -35,24 +35,16 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
 
     @desc "Requests another review of a comment in the given scope."
     field :recheck_comment_v2, non_null(:review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
+      arg(:target, non_null(:artiment_review_target_input))
       arg(:scope, non_null(:review_bot_scope_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Review.recheck_comment/3)
     end
 
-    field :recheck_doc_v2, non_null(:review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
-      arg(:scope, non_null(:review_bot_scope_input))
-      arg(:command_id, non_null(:id))
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.Review.recheck_doc/3)
-    end
-
     @desc "Approves the current review of an article."
     field :approve_article_v2, non_null(:review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
+      arg(:target, non_null(:artiment_review_target_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Review.decide_content/3)
@@ -60,7 +52,7 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
 
     @desc "Rejects the current review of an article."
     field :reject_article_v2, non_null(:review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
+      arg(:target, non_null(:artiment_review_target_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Review.decide_content/3)
@@ -68,7 +60,7 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
 
     @desc "Approves the current review of a comment."
     field :approve_comment_v2, non_null(:review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
+      arg(:target, non_null(:artiment_review_target_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Review.decide_content/3)
@@ -76,21 +68,7 @@ defmodule GroupherServerWeb.Schema.CMS.Review.Mutations do
 
     @desc "Rejects the current review of a comment."
     field :reject_comment_v2, non_null(:review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
-      arg(:command_id, non_null(:id))
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.Review.decide_content/3)
-    end
-
-    field :approve_doc_v2, non_null(:review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
-      arg(:command_id, non_null(:id))
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.Review.decide_content/3)
-    end
-
-    field :reject_doc_v2, non_null(:review_command_result) do
-      arg(:target, non_null(:cms_review_target_input))
+      arg(:target, non_null(:artiment_review_target_input))
       arg(:command_id, non_null(:id))
       middleware(M.Authorize, :login)
       resolve(&R.CMS.Review.decide_content/3)

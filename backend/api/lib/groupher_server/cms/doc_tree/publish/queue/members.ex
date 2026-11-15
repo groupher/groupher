@@ -145,7 +145,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Members do
     works =
       Repo.all(
         from(w in ArticleWorkingCopy,
-          where: w.article_id in ^ids and (w.scope_kind == :default or w.id in ^copy_ids),
+          where: w.article_id in ^ids and (w.scope_type == :default or w.id in ^copy_ids),
           order_by: w.id,
           lock: "FOR UPDATE"
         )
@@ -197,7 +197,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Members do
   end
 
   defp validate_content(entries, queue_id, works, snapshots) do
-    defaults = Map.new(Enum.filter(works, &(&1.scope_kind == :default)), &{&1.article_id, &1})
+    defaults = Map.new(Enum.filter(works, &(&1.scope_type == :default)), &{&1.article_id, &1})
     by_copy = Map.new(works, &{&1.id, &1})
     by_snapshot = Map.new(snapshots, &{&1.id, &1})
 
@@ -207,7 +207,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Members do
            {:ok, :pass} <- check_default_revision(default, entry.default_revision),
            %ArticleWorkingCopy{} = copy <- by_copy[entry.working_copy_id],
            true <-
-             copy.article_id == entry.article_id and copy.scope_kind == :workspace and
+             copy.article_id == entry.article_id and copy.scope_type == :workspace and
                copy.scope_id == queue_id and copy.revision == 1,
            %ArticleSnapshot{} = snapshot <- by_snapshot[entry.source_snapshot_id],
            true <-

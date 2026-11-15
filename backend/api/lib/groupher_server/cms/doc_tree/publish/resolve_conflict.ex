@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.ResolveConflict do
          %ArticleWorkingCopy{} = default <-
            Repo.one(
              from(w in ArticleWorkingCopy,
-               where: w.article_id == ^article_id and w.scope_kind == :default,
+               where: w.article_id == ^article_id and w.scope_type == :default,
                lock: "FOR UPDATE"
              )
            ),

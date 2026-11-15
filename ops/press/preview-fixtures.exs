@@ -26,7 +26,6 @@ defmodule GroupherServer.PressPreview.Fixtures do
     ArticleBinding,
     ArticleLifecycle,
     Community,
-    DocsLifecycle
   }
 
   @slug "press-preview"
@@ -436,20 +435,11 @@ defmodule GroupherServer.PressPreview.Fixtures do
     %{articles: articles} = snapshot()
     article = Enum.find(articles, &(&1.thread == thread))
 
-    if thread == :doc do
-      Repo.one!(
-        from(lifecycle in DocsLifecycle,
-          where: lifecycle.article_id == ^article.id,
-          lock: "FOR UPDATE"
-        )
+    Repo.one!(
+      from(lifecycle in ArticleLifecycle,
+        where: lifecycle.article_id == ^article.id and lifecycle.thread == ^thread,
+        lock: "FOR UPDATE"
       )
-    else
-      Repo.one!(
-        from(lifecycle in ArticleLifecycle,
-          where: lifecycle.article_id == ^article.id,
-          lock: "FOR UPDATE"
-        )
-      )
-    end
+    )
   end
 end

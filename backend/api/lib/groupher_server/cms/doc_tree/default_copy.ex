@@ -12,10 +12,11 @@ defmodule GroupherServer.CMS.DocTree.DefaultCopy do
 
   alias CMS.Model.{
     Article,
+    ArticleBinding,
+    ArticleLifecycle,
     ArticlePublic,
     ArticleSnapshot,
     ArticleWorkingCopy,
-    DocsLifecycle,
     DocsQueueArticle,
     DocsPostPublishConflict
   }
@@ -25,15 +26,22 @@ defmodule GroupherServer.CMS.DocTree.DefaultCopy do
     with true <- Repo.in_transaction?(),
          %Article{thread: :doc} = article <-
            Repo.one(from(a in Article, where: a.id == ^article_id, lock: "FOR UPDATE")),
-         %DocsLifecycle{community_id: community_id} = lifecycle <-
-           Repo.one(
-             from(l in DocsLifecycle, where: l.article_id == ^article_id, lock: "FOR UPDATE")
+         true <-
+           Repo.exists?(
+             from(b in ArticleBinding,
+               where: b.article_id == ^article_id and b.community_id == ^community.id
+             )
            ),
-         true <- community_id == community.id do
+         %ArticleLifecycle{state: state} = lifecycle when state not in [:deleted, :destroy] <-
+           Repo.one(
+             from(l in ArticleLifecycle, where: l.article_id == ^article_id, lock: "FOR UPDATE")
+           ) do
       work =
         Repo.one(
           from(w in ArticleWorkingCopy,
-            where: w.article_id == ^article_id and w.scope_kind == :default,
+            where:
+              w.article_id == ^article_id and w.scope_type == :default and
+                w.scope_id == ^article_id,
             lock: "FOR UPDATE"
           )
         )
@@ -44,11 +52,11 @@ defmodule GroupherServer.CMS.DocTree.DefaultCopy do
       valid =
         case work do
           nil ->
-            is_nil(lifecycle.default_working_copy_id) and not is_nil(public) and
+            state in [:published, :archived] and not is_nil(public) and
               not blocked?(article_id)
 
           %ArticleWorkingCopy{} ->
-            work.id == lifecycle.default_working_copy_id and work.scope_id == article_id
+            true
         end
 
       if valid do
@@ -73,13 +81,9 @@ defmodule GroupherServer.CMS.DocTree.DefaultCopy do
           with {:ok, work} <-
                  Snapshotter.fork_snapshot_in_transaction(
                    snapshot_id,
-                   %{scope_kind: :default, scope_id: article_id, article_id: article_id},
+                   %{scope_type: :default, scope_id: article_id, article_id: article_id},
                    actor
-                 ),
-               {:ok, _} <-
-                 state.lifecycle
-                 |> DocsLifecycle.changeset(%{default_working_copy_id: work.id})
-                 |> Repo.update() do
+                 ) do
             {:ok, work}
           end
       end
@@ -98,10 +102,6 @@ defmodule GroupherServer.CMS.DocTree.DefaultCopy do
          true <- not is_nil(state.lifecycle.first_published_at),
          %ArticlePublic{} <- state.public,
          false <- blocked?(work.article_id),
-         {:ok, _} <-
-           state.lifecycle
-           |> DocsLifecycle.changeset(%{default_working_copy_id: nil})
-           |> Repo.update(),
          {:ok, :deleted} <- Deleter.delete_in_transaction(state.article, state.work) do
       {:ok, :deleted}
     else

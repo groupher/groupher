@@ -13,7 +13,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
   alias GroupherServer.{CMS, FrontDesk}
   alias CMS.Model.Community
 
-  def pending_content_reviews(_parent, %{scope: scope} = args, %{context: %{cur_user: actor}}) do
+  def pending_artiment_reviews(_parent, %{scope: scope} = args, %{context: %{cur_user: actor}}) do
     with {:ok, normalized, attrs, permission, params} <- resolve_scope(scope),
          {:ok, :pass} <- authorize(actor, permission, params),
          {:ok, requests} <-
@@ -26,11 +26,11 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     end
   end
 
-  def pending_content_reviews(_parent, _args, _resolution) do
+  def pending_artiment_reviews(_parent, _args, _resolution) do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
-  def content_review(_parent, %{target: target}, %{context: %{cur_user: actor}}) do
+  def artiment_review(_parent, %{target: target}, %{context: %{cur_user: actor}}) do
     with {:ok, attrs} <- resolve_target(target, actor),
          {:ok, scope, permission, params} <- target_scope(attrs),
          {:ok, :pass} <- authorize(actor, permission, params),
@@ -39,21 +39,21 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     end
   end
 
-  def content_review(_parent, _args, _resolution) do
+  def artiment_review(_parent, _args, _resolution) do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
-  def content_review_notice(_parent, %{target: target}, %{context: %{cur_user: actor}}) do
+  def artiment_review_notice(_parent, %{target: target}, %{context: %{cur_user: actor}}) do
     with {:ok, attrs} <- resolve_target(target, actor) do
       CMS.review_notice_for_author(attrs, actor)
     end
   end
 
-  def content_review_notice(_parent, _args, _resolution) do
+  def artiment_review_notice(_parent, _args, _resolution) do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
-  def content_review_history(_parent, %{target: target} = args, %{
+  def artiment_review_history(_parent, %{target: target} = args, %{
         context: %{cur_user: actor}
       }) do
     with {:ok, attrs} <- resolve_target(target, actor),
@@ -69,7 +69,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     end
   end
 
-  def content_review_history(_parent, _args, _resolution) do
+  def artiment_review_history(_parent, _args, _resolution) do
     {:error, CMS.passport_error_cat_permission_denied()}
   end
 
@@ -101,10 +101,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
 
   def recheck_comment(parent, args, resolution) do
     recheck_target(parent, args, resolution, :comment)
-  end
-
-  def recheck_doc(parent, args, resolution) do
-    recheck_target(parent, args, resolution, :doc)
   end
 
   defp recheck_target(
@@ -140,13 +136,8 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     {:ok, "comment:#{id}", :comment, to_string(id)}
   end
 
-  defp recheck_target(%{type: :doc, article_id: id}) when is_binary(id) do
-    {:ok, "doc:#{id}", :doc, id}
-  end
-
   defp recheck_target(_attrs), do: {:error, CMS.invalid_review_block_error()}
 
-  defp recheck_scope(%{type: :platform}, %{type: :doc}), do: {:ok, "platform"}
   defp recheck_scope(%{type: :platform}, _attrs), do: {:ok, "platform"}
 
   defp recheck_scope(%{type: :community, community: slug}, attrs) when is_binary(slug) do
@@ -227,30 +218,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     end
   end
 
-  defp resolve_target(%{type: :doc, article: path}, actor)
-       when is_map(path) do
-    with {:ok, projection} <- FrontDesk.article(path, actor),
-         :doc <- Map.get(projection, :thread),
-         id when is_binary(id) <- Map.get(projection, :id) do
-      {:ok, %{type: :doc, article_id: id, community_id: nil}}
-    else
-      _ -> {:error, CMS.passport_error_cat_permission_denied()}
-    end
-  end
-
-  defp resolve_target(%{type: :doc, article_id: id}, _actor) when is_binary(id) do
-    case FrontDesk.article(id, mode: :internal, view: :command_context) do
-      {:ok, %{thread: :doc} = article} ->
-        {:ok, %{type: :doc, article_id: article.id, community_id: nil}}
-
-      {:error, _reason} = error ->
-        error
-
-      _ ->
-        {:error, CMS.invalid_review_block_error()}
-    end
-  end
-
   defp resolve_target(_target, _actor), do: {:error, CMS.passport_error_cat_permission_denied()}
 
   defp target_scope(%{community_id: nil}) do
@@ -297,20 +264,6 @@ defmodule GroupherServerWeb.Resolvers.CMS.Review do
     if expected_type == :comment do
       scope_key = if is_nil(community_id), do: "platform", else: "community:#{community_id}"
       {:ok, "comment:#{id}", scope_key, :comment, id}
-    else
-      {:error, CMS.invalid_review_block_error()}
-    end
-  end
-
-  defp decision_target(
-         field_name,
-         %{type: :doc, article_id: id}
-       )
-       when is_binary(id) do
-    expected_type = field_target_type(field_name)
-
-    if expected_type == :doc do
-      {:ok, "doc:#{id}", "platform", :doc, id}
     else
       {:error, CMS.invalid_review_block_error()}
     end

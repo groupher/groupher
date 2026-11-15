@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
       assert sql =~ ~s(LEFT OUTER JOIN "cms"."community_lifecycles")
 
       if thread == :doc do
-        assert sql =~ ~s(JOIN "cms"."doc_lifecycles")
+        assert sql =~ ~s(JOIN "cms"."article_lifecycles")
         refute sql =~ "doc_branches"
       else
         assert sql =~ ~s(JOIN "cms"."article_lifecycles")
@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
 
     assert %Ecto.Query{} = query = CMS.Gate.scope(Article, nil, :read, DocContext.public())
     {sql, _params} = to_sql(query)
-    assert sql =~ "doc_lifecycles"
+    assert sql =~ "article_lifecycles"
     refute sql =~ "doc_branches"
 
     assert %Ecto.Query{} =
@@ -89,7 +89,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
     assert %Ecto.Query{} = query
     {sql, params} = to_sql(query)
     assert sql =~ "article_working_copies"
-    assert sql =~ "scope_kind"
+    assert sql =~ "scope_type"
     assert ["draft", "published", "archived"] in params
 
     assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =

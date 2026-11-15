@@ -24,8 +24,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     ArticleSnapshot,
     ArticleLifecycle,
     CommentBody,
-    CommentLifecycle,
-    DocsLifecycle
+    CommentLifecycle
   }
 
   @pipeline operation: :cms_review_recheck,
@@ -71,7 +70,7 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     with {:ok, _community_id} <- parse_scope(scope_key) do
       target_type = target_key |> String.split(":") |> hd()
 
-      if target_type in ["article", "comment", "doc"] do
+      if target_type in ["article", "comment"] do
         {:ok, %{target_key: target_key, scope_key: scope_key, target_type: target_type},
          target: {:cms_review_target, target_key}, params: %{scope_key: scope_key}}
       else
@@ -174,25 +173,6 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     end
   end
 
-  defp current_content(%{
-         type: :doc,
-         target: article,
-         lifecycle: %DocsLifecycle{state: state}
-       })
-       when state in [:published, :archived] do
-    with %ArticlePublic{snapshot_id: snapshot_id} = public <- Repo.get(ArticlePublic, article.id),
-         %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id) do
-      {:ok,
-       %{
-         title: public.title || snapshot.title || "",
-         body: CMS.Articles.Body.document(snapshot).plain_text || "",
-         images: CMS.Review.Media.article_snapshot_images(snapshot.id)
-       }}
-    else
-      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
-    end
-  end
-
   defp comment_parent_title(%{thread: :doc, id: article_id}, _comment) do
     with %ArticlePublic{title: title} <- Repo.get(ArticlePublic, article_id) do
       {:ok, title || ""}
@@ -248,8 +228,6 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     end
   end
 
-  defp current_configs(%{type: :doc}, _scope_key), do: ReviewBot.configs(nil, :doc)
-
   defp request_scope("platform"), do: {:ok, :system}
 
   defp request_scope("community:" <> id) do
@@ -277,18 +255,8 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
     %{type: :comment, comment_id: comment.id, lifecycle: lifecycle}
   end
 
-  defp request_target(%{
-         type: :doc,
-         target: article,
-         lifecycle: %DocsLifecycle{} = lifecycle
-       }) do
-    %{type: :doc, article_id: article.id, lifecycle: lifecycle}
-  end
-
   defp request_target_id(%{type: :article, target: article}), do: article.id
   defp request_target_id(%{type: :comment, target: comment}), do: to_string(comment.id)
-
-  defp request_target_id(%{type: :doc, target: article}), do: article.id
 
   defp parse_scope("platform"), do: {:ok, nil}
 
@@ -318,5 +286,4 @@ defmodule GroupherServer.CMS.Review.Commands.Recheck do
 
   defp target_type("article"), do: :article
   defp target_type("comment"), do: :comment
-  defp target_type("doc"), do: :doc
 end

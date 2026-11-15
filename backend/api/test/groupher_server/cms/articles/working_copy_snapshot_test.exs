@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.CMS.Articles.WorkingCopySnapshotTest do
     article = Repo.get!(CMS.Model.Article, public.article_id)
 
     work =
-      Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id, scope_kind: :default)
+      Repo.get_by!(CMS.Model.ArticleWorkingCopy, article_id: article.id, scope_type: :default)
 
     selected = Repo.get!(CMS.Model.ArticlePublic, article.id)
 

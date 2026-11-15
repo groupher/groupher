@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.CMS.DocTree.HistoryPurgeTest do
     ArticlePublic,
     ArticleSnapshot,
     CommunityLifecycle,
-    DocsHistoryOwner
+    ArticleHistoryOwner
   }
 
   test "a failed history deletion rolls back Community destroy and every content change" do
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.CMS.DocTree.HistoryPurgeTest do
     assert Repo.get_by!(CommunityLifecycle, community_id: community.id).state == :pending_destroy
     assert Repo.get!(ArticlePublic, doc.id).snapshot_id == snapshot.id
     assert Repo.get!(ArticleBody, snapshot.body_id)
-    assert Repo.get_by!(DocsHistoryOwner, article_id: doc.id)
+    assert Repo.get_by!(ArticleHistoryOwner, article_id: doc.id)
     Repo.query!("DROP TRIGGER reject_history_purge_test ON cms.doc_publish_releases")
     Repo.query!("DROP FUNCTION cms.reject_history_purge_test()")
 

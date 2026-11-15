@@ -290,12 +290,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
              to_string(canonical.id),
              Ecto.UUID.generate()
            ),
-         {:ok, :pass} <-
-           AlertWall.mark_target_deleted_in_transaction(
-             :doc,
-             to_string(canonical.id),
-             Ecto.UUID.generate()
-           ),
          {:ok, :pass} <- mark_comment_items_deleted(comment_ids),
          {:ok, _event} <-
            activity(canonical, :permanently_deleted, actor, item.trash_action,

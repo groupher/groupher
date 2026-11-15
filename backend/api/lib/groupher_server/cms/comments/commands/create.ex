@@ -233,24 +233,6 @@ defmodule GroupherServer.CMS.Comments.Commands.Create do
     {:error, CmsErrorCat.command_result_unavailable()}
   end
 
-  defp authorize_create(
-         :doc,
-         article,
-         user,
-         %Community{} = community,
-         info
-       ) do
-    with {:ok, owner} <- CMS.Articles.Bindings.doc_owner(article.id),
-         true <- owner.id == community.id,
-         {:ok, canonical} <-
-           CMS.Gate.check_in_transaction(user, :create_comment, article, community) do
-      {:ok, %{article: canonical, community: community, info: info}}
-    else
-      {:error, _reason} = error -> error
-      _ -> {:error, ArticleErrorCat.binding_context_required()}
-    end
-  end
-
   defp authorize_create(_thread, article, user, community, info) do
     case community do
       %Community{} = community ->

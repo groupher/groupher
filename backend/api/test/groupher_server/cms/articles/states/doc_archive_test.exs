@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.DocArchive do
   use GroupherServer.TestMate, async: false
   alias GroupherServer.CMS
-  alias CMS.Model.{ArticlePublic, DocsLifecycle}
+  alias CMS.Model.{ArticlePublic, ArticleLifecycle}
 
   test "archive retains Public and Snapshot and rejects further editing" do
     {community, doc, _, user} = mock_article(:doc)
@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.CMS.DocArchive do
     public |> Ecto.Changeset.change(inserted_at: @last_year) |> Repo.update!()
     assert {:ok, count} = CMS.Articles.Maintenance.archive(:doc)
     assert count >= 1
-    assert Repo.get_by!(DocsLifecycle, article_id: doc.article_id).state == :archived
+    assert Repo.get_by!(ArticleLifecycle, article_id: doc.article_id).state == :archived
     assert Repo.get!(ArticlePublic, doc.article_id).snapshot_id == public.snapshot_id
 
     assert {:ok, _} =

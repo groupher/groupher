@@ -437,7 +437,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
                :upvote,
                %CMS.Gate.Context.Access.Doc{
                  doc: article,
-                 doc_lifecycle: %CMS.Model.DocsLifecycle{state: :draft},
+                 doc_lifecycle: %CMS.Model.ArticleLifecycle{state: :draft},
                  community: community,
                  community_lifecycle: community.lifecycle
                }

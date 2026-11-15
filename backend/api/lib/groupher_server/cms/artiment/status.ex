@@ -17,9 +17,9 @@ defmodule GroupherServer.CMS.Artiment.Status do
     ArticleWorkingCopy,
     Comment,
     CommentBody,
+    ArticleLifecycle,
     CommentLifecycle,
     Community,
-    DocsLifecycle,
     TicketState
   }
 
@@ -125,7 +125,7 @@ defmodule GroupherServer.CMS.Artiment.Status do
           Repo.all(
             from(work in ArticleWorkingCopy,
               where:
-                work.article_id in ^ordinary_ids and work.scope_kind == :default and
+                work.article_id in ^ordinary_ids and work.scope_type == :default and
                   work.scope_id == work.article_id
             )
           )
@@ -139,7 +139,7 @@ defmodule GroupherServer.CMS.Artiment.Status do
       |> Map.new(&{&1.article_id, &1.state})
 
     doc_states =
-      query_ids(doc_ids, DocsLifecycle, :article_id) |> Map.new(&{&1.article_id, &1.state})
+      query_ids(doc_ids, ArticleLifecycle, :article_id) |> Map.new(&{&1.article_id, &1.state})
 
     comment_ids = Map.keys(comments)
 

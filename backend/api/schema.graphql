@@ -371,16 +371,16 @@ type RootQueryType {
   doc(article: ArticlePathInput!): Doc!
 
   "Lists pending content reviews in a review scope."
-  pendingContentReviews(scope: ReviewBotScopeInput!, limit: Int, offset: Int): [CmsContentReview!]!
+  pendingArtimentReviews(scope: ReviewBotScopeInput!, limit: Int, offset: Int): [CmsArtimentReview!]!
 
   "Loads the current review for a content target."
-  contentReview(target: CmsReviewTargetInput!): CmsContentReview
+  artimentReview(target: ArtimentReviewTargetInput!): CmsArtimentReview
 
   "Loads the review notice for a content target."
-  contentReviewNotice(target: CmsReviewTargetInput!): CmsReviewNotice
+  artimentReviewNotice(target: ArtimentReviewTargetInput!): ArtimentReviewNotice
 
   "Lists past reviews for a content target."
-  contentReviewHistory(target: CmsReviewTargetInput!, limit: Int, offset: Int): [CmsContentReview!]!
+  artimentReviewHistory(target: ArtimentReviewTargetInput!, limit: Int, offset: Int): [CmsArtimentReview!]!
 
   "Loads the Press configuration for a community."
   pressConfig(community: String!): PressConfig
@@ -589,7 +589,7 @@ type RootMutationType {
   ): ArticleWorkingCopy
 
   "Create an independent WorkingCopy from an immutable Article Snapshot"
-  forkSnapshot(commandId: ID!, snapshotId: ID!, community: String!, scopeKind: String!, scopeId: ID!): ArticleWorkingCopyResult
+  forkSnapshot(commandId: ID!, snapshotId: ID!, community: String!, scopeType: String!, scopeId: ID!): ArticleWorkingCopyResult
 
   "Discard one editable WorkingCopy"
   deleteWorkingCopy(commandId: ID!, articleId: ID!, workingCopyId: ID!, community: String!): DoneState
@@ -1088,28 +1088,22 @@ type RootMutationType {
   cancelDocContentImport(community: String!, jobRef: ID!): ContentImportJob!
 
   "Requests another review of an article in the given scope."
-  recheckArticleV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
+  recheckArticleV2(target: ArtimentReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
   "Requests another review of a comment in the given scope."
-  recheckCommentV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
-
-  recheckDocV2(target: CmsReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
+  recheckCommentV2(target: ArtimentReviewTargetInput!, scope: ReviewBotScopeInput!, commandId: ID!): ReviewCommandResult!
 
   "Approves the current review of an article."
-  approveArticleV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
+  approveArticleV2(target: ArtimentReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
   "Rejects the current review of an article."
-  rejectArticleV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
+  rejectArticleV2(target: ArtimentReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
   "Approves the current review of a comment."
-  approveCommentV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
+  approveCommentV2(target: ArtimentReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
   "Rejects the current review of a comment."
-  rejectCommentV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
-
-  approveDocV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
-
-  rejectDocV2(target: CmsReviewTargetInput!, commandId: ID!): ReviewCommandResult!
+  rejectCommentV2(target: ArtimentReviewTargetInput!, commandId: ID!): ReviewCommandResult!
 
   "Updates ReviewBot policy for the requested scope and subject type."
   updateReviewBotConfig(input: UpdateReviewBotConfigInput!, commandId: ID!): ReviewBotConfig!
@@ -1283,7 +1277,6 @@ enum ReviewBotScopeType {
 enum ReviewBotSubjectType {
   ARTICLE
   COMMENT
-  DOC
 }
 
 enum ReviewBotMode {
@@ -1331,7 +1324,6 @@ enum AlertItemStatus {
 enum AlertTargetType {
   ARTICLE
   COMMENT
-  DOC
   USER
 }
 
@@ -1818,13 +1810,18 @@ enum ReviewAction {
 
 type ReviewCommandResult {
   commandId: ID!
-  targetType: ReviewBotSubjectType!
+  targetType: ArtimentReviewTargetType!
   targetId: String!
   action: ReviewAction!
 }
 
-input CmsReviewTargetInput {
-  type: ReviewBotSubjectType!
+enum ArtimentReviewTargetType {
+  ARTICLE
+  COMMENT
+}
+
+input ArtimentReviewTargetInput {
+  type: ArtimentReviewTargetType!
   article: ArticlePathInput
   comment: CommentPathInput
   articleId: ID
@@ -1832,20 +1829,20 @@ input CmsReviewTargetInput {
   communityId: ID
 }
 
-type CmsReviewOpinion {
+type ArtimentReviewOpinion {
   status: String
   summary: String
   susNotes: [SusNote!]!
 }
 
-type CmsReviewNotice {
+type ArtimentReviewNotice {
   status: String!
   failureCode: String
 }
 
-type CmsContentReview {
+type CmsArtimentReview {
   artimentReviewId: ID
-  targetType: ReviewBotSubjectType!
+  targetType: ArtimentReviewTargetType!
   articleId: ID
   commentId: ID
   communityId: ID
@@ -1855,8 +1852,8 @@ type CmsContentReview {
   failureCode: String
   failureMessage: String
   reviewMode: String
-  systemOpinion: CmsReviewOpinion
-  communityOpinion: CmsReviewOpinion
+  systemOpinion: ArtimentReviewOpinion
+  communityOpinion: ArtimentReviewOpinion
 }
 
 enum ArtimentType {
@@ -2676,7 +2673,7 @@ type DocPublicTree {
   tabs: [DocPublicTreeNode]
 }
 
-enum DocsQueueTreeChangeKind {
+enum DocsQueueTreeChangeType {
   UPSERT
   DELETE
 }
@@ -2690,7 +2687,7 @@ type DocsQueueArticle {
 
 type DocsQueueTreeChange {
   nodeId: ID!
-  changeKind: DocsQueueTreeChangeKind!
+  changeType: DocsQueueTreeChangeType!
   target: Json
 }
 
@@ -2956,7 +2953,7 @@ type DocCoverPinnedDoc {
 type ArticleWorkingCopy {
   id: ID!
   articleId: ID!
-  scopeKind: String!
+  scopeType: String!
   scopeId: ID!
   revision: Int!
   title: String!

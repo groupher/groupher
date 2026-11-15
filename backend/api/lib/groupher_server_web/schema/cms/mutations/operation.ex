@@ -84,7 +84,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       arg(:command_id, non_null(:id))
       arg(:snapshot_id, non_null(:id))
       arg(:community, non_null(:string))
-      arg(:scope_kind, non_null(:string))
+      arg(:scope_type, non_null(:string))
       arg(:scope_id, non_null(:id))
 
       middleware(M.Authorize, :login)

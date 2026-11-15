@@ -21,7 +21,6 @@ defmodule GroupherServerWeb.Schema.AlertWall.Types do
   enum :alert_target_type do
     value(:article)
     value(:comment)
-    value(:doc)
     value(:user)
   end
 

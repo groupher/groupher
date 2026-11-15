@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Doc do
   Authoritative facts for one site-owned Doc mutation admission.
 
   The Gate Doc loader constructs this context with the canonical Doc, its
-  site-owned DocsLifecycle, ancestor Community facts,
+  shared ArticleLifecycle, ancestor Community facts,
   and current actor Passport rules. It is intentionally not interchangeable
   with Article access context.
 

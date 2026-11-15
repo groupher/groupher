@@ -9,11 +9,8 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
     {:ok, %{owner: owner, doc: doc, author: author, other: other}}
   end
 
-  test "the stable owner resolver and database reject a second Doc binding", ctx do
-    assert {:ok, owner} = CMS.Articles.Bindings.doc_owner(ctx.doc.article_id)
-    assert owner.id == ctx.owner.id
-
-    assert {:error, changeset} =
+  test "a Doc can have multiple independent Bindings and retained history", ctx do
+    assert {:ok, _binding} =
              Repo.insert(
                ArticleBinding.changeset(%ArticleBinding{}, %{
                  article_id: ctx.doc.article_id,
@@ -22,7 +19,10 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
                mode: :savepoint
              )
 
-    assert changeset.errors[:article_id]
+    assert Repo.get_by!(CMS.Model.ArticleHistoryOwner,
+             article_id: ctx.doc.article_id,
+             community_id: ctx.other.id
+           )
   end
 
   test "direct SQL cannot fake a thread, move ownership or delete the owner binding", ctx do
@@ -35,18 +35,19 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
       "23514"
     )
 
-    rejected("DELETE FROM cms.article_bindings WHERE article_id=$1", [id], "23503")
+    assert {:ok, _} =
+             Repo.query("DELETE FROM cms.article_bindings WHERE article_id=$1", [id],
+               mode: :savepoint
+             )
   end
 
-  test "an owner Community cannot be physically deleted while its stable Doc exists", ctx do
+  test "a Community cannot be physically deleted while its stable Doc binding exists", ctx do
     rejected("DELETE FROM cms.communities WHERE id=$1", [ctx.owner.id], "23503")
-    assert {:ok, owner} = CMS.Articles.Bindings.doc_owner(ctx.doc.article_id)
-    assert owner.id == ctx.owner.id
   end
 
   test "retained history ownership cannot move to another Community", ctx do
     rejected(
-      "UPDATE cms.docs_history_owners SET community_id=$2 WHERE article_id=$1",
+      "UPDATE cms.article_history_owners SET community_id=$2 WHERE article_id=$1",
       [Ecto.UUID.dump!(ctx.doc.article_id), ctx.other.id],
       "23514"
     )
@@ -60,7 +61,7 @@ defmodule GroupherServer.Test.CMS.Articles.DocOwnerConstraintsTest do
     )
 
     assert Repo.get!(CMS.Model.Article, ctx.doc.article_id)
-    assert Repo.get_by!(CMS.Model.DocsHistoryOwner, article_id: ctx.doc.article_id)
+    assert Repo.get_by!(CMS.Model.ArticleHistoryOwner, article_id: ctx.doc.article_id)
   end
 
   test "OWNER-03 raw SQL cannot scope a Doc Comment review block to another Community", ctx do

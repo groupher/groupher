@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.CMS.Articles.BodyStorageTest do
                {:ok, cloned} =
                  Snapshotter.fork_snapshot_in_transaction(
                    snapshot.id,
-                   %{scope_kind: :workspace, scope_id: Ecto.UUID.generate()},
+                   %{scope_type: :workspace, scope_id: Ecto.UUID.generate()},
                    actor
                  )
 
@@ -148,7 +148,7 @@ defmodule GroupherServer.Test.CMS.Articles.BodyStorageTest do
                {:ok, clone} =
                  Snapshotter.fork_snapshot_in_transaction(
                    frozen.id,
-                   %{scope_kind: :workspace, scope_id: Ecto.UUID.generate()},
+                   %{scope_type: :workspace, scope_id: Ecto.UUID.generate()},
                    actor
                  )
 
@@ -235,7 +235,7 @@ defmodule GroupherServer.Test.CMS.Articles.BodyStorageTest do
     assert_sql_error(
       """
       INSERT INTO cms.article_working_copies
-        (id, article_id, body_id, scope_kind, scope_id, revision, title, digest, created_by_id, updated_by_id, inserted_at, updated_at)
+        (id, article_id, body_id, scope_type, scope_id, revision, title, digest, created_by_id, updated_by_id, inserted_at, updated_at)
       SELECT gen_random_uuid(), article_id, $1, 'workspace', gen_random_uuid(), 1, title, digest,
         created_by_id, updated_by_id, inserted_at, updated_at
       FROM cms.article_working_copies WHERE id = $2
@@ -248,7 +248,7 @@ defmodule GroupherServer.Test.CMS.Articles.BodyStorageTest do
     assert_sql_error(
       """
       INSERT INTO cms.article_working_copies
-        (id, article_id, body_id, scope_kind, scope_id, revision, title, digest, created_by_id, updated_by_id, inserted_at, updated_at)
+        (id, article_id, body_id, scope_type, scope_id, revision, title, digest, created_by_id, updated_by_id, inserted_at, updated_at)
       SELECT gen_random_uuid(), article_id, $1, 'workspace', gen_random_uuid(), 1, title, digest,
         created_by_id, updated_by_id, inserted_at, updated_at
       FROM cms.article_working_copies WHERE id = $2
@@ -260,7 +260,7 @@ defmodule GroupherServer.Test.CMS.Articles.BodyStorageTest do
     assert_sql_error(
       """
       INSERT INTO cms.article_working_copies
-        (id, article_id, body_id, scope_kind, scope_id, revision, title, digest, created_by_id, updated_by_id, inserted_at, updated_at)
+        (id, article_id, body_id, scope_type, scope_id, revision, title, digest, created_by_id, updated_by_id, inserted_at, updated_at)
       SELECT gen_random_uuid(), article_id, body_id, 'workspace', gen_random_uuid(), 1, title, digest,
         created_by_id, updated_by_id, inserted_at, updated_at
       FROM cms.article_working_copies WHERE id = $1

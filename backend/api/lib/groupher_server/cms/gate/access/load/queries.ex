@@ -25,8 +25,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     ArticleBinding,
     CommentLifecycle,
     CommunityLifecycle,
-    ArticleReviewBlock,
-    DocsLifecycle
+    ArticleReviewBlock
   }
 
   @doc """
@@ -137,22 +136,19 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     end)
   end
 
-  @doc "Locks the branch-free Lifecycle for a Doc in its owner Community."
-  def doc_site_lifecycle(article_id, community_id) do
-    DocsLifecycle
-    |> where(
-      [lifecycle],
-      lifecycle.article_id == ^article_id and lifecycle.community_id == ^community_id
-    )
+  @doc "Locks the shared Lifecycle for a Doc."
+  def doc_site_lifecycle(article_id, _community_id) do
+    ArticleLifecycle
+    |> where([lifecycle], lifecycle.article_id == ^article_id)
     |> lock("FOR UPDATE")
     |> Repo.one()
   end
 
-  @doc "Reads stable Doc lifecycle and review facts for its owner Community."
-  def doc_site_lifecycle_snapshot(article_id, community_id) do
+  @doc "Reads the shared Doc lifecycle."
+  def doc_site_lifecycle_snapshot(article_id, _community_id) do
     Repo.one(
-      from(lifecycle in DocsLifecycle,
-        where: lifecycle.article_id == ^article_id and lifecycle.community_id == ^community_id
+      from(lifecycle in ArticleLifecycle,
+        where: lifecycle.article_id == ^article_id
       )
     )
   end

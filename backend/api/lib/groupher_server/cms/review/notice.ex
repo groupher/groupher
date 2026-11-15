@@ -49,30 +49,28 @@ defmodule GroupherServer.CMS.Review.Notice do
     {:ok, ArticleReviewBlock, :article_id, id, community_id}
   end
 
-  defp target_query(%{type: :comment, comment_id: id})
-       when is_integer(id) do
+  defp target_query(%{type: :comment, comment_id: id, community_id: community_id})
+       when is_integer(id) and is_integer(community_id) do
     case Repo.get(Comment, id) do
       %Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
         {:ok, CommentReviewBlock, :comment_id, id, :all}
 
-      %Comment{thread: :doc, article_id: article_id} ->
-        case CMS.Articles.Bindings.doc_owner(article_id) do
-          {:ok, %{id: community_id}} ->
-            {:ok, CommentReviewBlock, :comment_id, id, community_id}
-
-          _ ->
-            {:error, CMS.ErrorCat.invalid_review_block()}
-        end
+      %Comment{thread: :doc} ->
+        {:ok, CommentReviewBlock, :comment_id, id, community_id}
 
       _ ->
         {:error, CMS.ErrorCat.invalid_review_block()}
     end
   end
 
-  defp target_query(%{type: :doc, article_id: id}) when is_binary(id) do
-    case CMS.Articles.Bindings.doc_owner(id) do
-      {:ok, %{id: community_id}} -> {:ok, ArticleReviewBlock, :article_id, id, community_id}
-      _ -> {:error, CMS.ErrorCat.invalid_review_block()}
+  defp target_query(%{type: :comment, comment_id: id})
+       when is_integer(id) do
+    case Repo.get(Comment, id) do
+      %Comment{thread: thread} when thread in [:post, :blog, :changelog] ->
+        {:ok, CommentReviewBlock, :comment_id, id, :all}
+
+      _ ->
+        {:error, CMS.ErrorCat.invalid_review_block()}
     end
   end
 
@@ -85,7 +83,7 @@ defmodule GroupherServer.CMS.Review.Notice do
     end
   end
 
-  defp authorize_author(type, %{article_id: id}, user_id) when type in [:article, :doc] do
+  defp authorize_author(type, %{article_id: id}, user_id) when type == :article do
     case Repo.one(
            from(article in Article,
              join: author in Author,

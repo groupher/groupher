@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
   alias CMS.ErrorCat
 
   alias CMS.ContentImport.Model.{Connection, ImportSourceMapping}
-  alias CMS.Model.{Community, DocsLifecycle, ArticleWorkingCopy, ArticlePublic}
+  alias CMS.Model.{ArticleBinding, ArticleLifecycle, ArticlePublic, ArticleWorkingCopy, Community}
   alias CMS.DocTree.Publish.Queue
 
   @max_depth CMS.DocTree.Const.max_depth()
@@ -559,12 +559,16 @@ defmodule GroupherServer.CMS.ContentImport.DocValidator do
 
     copies =
       Repo.all(
-        from(l in DocsLifecycle,
+        from(l in ArticleLifecycle,
+          join: b in ArticleBinding,
+          on: b.article_id == l.article_id and b.community_id == ^community.id,
           left_join: w in ArticleWorkingCopy,
-          on: w.id == l.default_working_copy_id,
+          on:
+            w.article_id == l.article_id and w.scope_type == :default and
+              w.scope_id == l.article_id,
           left_join: p in ArticlePublic,
           on: p.article_id == l.article_id,
-          where: l.community_id == ^community.id,
+          where: l.thread == :doc,
           order_by: l.article_id,
           select: {l.article_id, l.version, w.id, w.revision, p.snapshot_id}
         )

@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.CMS.Articles.SnapshotActivityTest do
   test "republishing records the selected Snapshot changes once" do
     {community, post, _, actor} = mock_article(:post)
     article = Repo.get!(Article, post.id)
-    work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_kind: :default)
+    work = Repo.get_by!(ArticleWorkingCopy, article_id: post.id, scope_type: :default)
     original = Repo.get!(ArticlePublic, post.id)
 
     created =

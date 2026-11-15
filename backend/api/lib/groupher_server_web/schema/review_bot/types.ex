@@ -19,7 +19,6 @@ defmodule GroupherServerWeb.Schema.ReviewBot.Types do
   enum :review_bot_subject_type do
     value(:article)
     value(:comment)
-    value(:doc)
   end
 
   enum :review_bot_mode do

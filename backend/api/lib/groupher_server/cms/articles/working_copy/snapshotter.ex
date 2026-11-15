@@ -166,12 +166,12 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
   end
 
   defp ensure_scope_available(article_id, target_scope) do
-    scope_kind = Map.get(target_scope, :scope_kind)
+    scope_type = Map.get(target_scope, :scope_type)
     scope_id = Map.get(target_scope, :scope_id)
 
     case Repo.get_by(ArticleWorkingCopy,
            article_id: article_id,
-           scope_kind: scope_kind,
+           scope_type: scope_type,
            scope_id: scope_id
          ) do
       nil -> {:ok, :pass}
@@ -209,7 +209,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Snapshotter do
             type: :working_copy
           }),
         article_id: snapshot.article_id,
-        scope_kind: Map.get(target_scope, :scope_kind),
+        scope_type: Map.get(target_scope, :scope_type),
         scope_id: Map.get(target_scope, :scope_id),
         revision: 1,
         cover_edit_working_copy_id: cover_id,

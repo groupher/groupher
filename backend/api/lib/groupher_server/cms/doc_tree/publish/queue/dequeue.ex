@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Dequeue do
     works =
       Repo.all(
         from(w in ArticleWorkingCopy,
-          where: w.article_id in ^ids and (w.scope_kind == :default or w.id in ^copy_ids),
+          where: w.article_id in ^ids and (w.scope_type == :default or w.id in ^copy_ids),
           order_by: w.id,
           lock: "FOR UPDATE"
         )
@@ -134,7 +134,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Dequeue do
   end
 
   defp build_documents(queue, articles, members, works, snapshots) do
-    defaults = Map.new(Enum.filter(works, &(&1.scope_kind == :default)), &{&1.article_id, &1})
+    defaults = Map.new(Enum.filter(works, &(&1.scope_type == :default)), &{&1.article_id, &1})
     copies = Map.new(works, &{&1.id, &1})
     snapshots = Map.new(snapshots, &{&1.id, &1})
     articles = Map.new(articles, &{&1.id, &1})
@@ -144,7 +144,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Dequeue do
            true <- default.scope_id == member.article_id,
            %ArticleWorkingCopy{} = copy <- copies[member.working_copy_id],
            true <-
-             copy.article_id == member.article_id and copy.scope_kind == :workspace and
+             copy.article_id == member.article_id and copy.scope_type == :workspace and
                copy.scope_id == queue.id,
            %ArticleSnapshot{} = source <- snapshots[member.source_snapshot_id],
            true <-

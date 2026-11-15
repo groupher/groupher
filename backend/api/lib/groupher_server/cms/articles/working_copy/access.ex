@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Access do
 
   @doc "Rejects generic writes to Docs-managed workspace copies."
   def generic_save(%Article{thread: :doc, id: article_id}, %ArticleWorkingCopy{} = work) do
-    if work.scope_kind == :default and work.scope_id == article_id do
+    if work.scope_type == :default and work.scope_id == article_id do
       {:ok, :pass}
     else
       {:error, CMS.ErrorCat.docs_managed_content()}

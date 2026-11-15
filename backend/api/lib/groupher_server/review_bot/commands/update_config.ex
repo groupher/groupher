@@ -120,7 +120,7 @@ defmodule GroupherServer.ReviewBot.Commands.UpdateConfig do
     end
   end
 
-  defp validate_attrs(subject_type, attrs) do
+  defp validate_attrs(_subject_type, attrs) do
     allowed = [:review_mode, :ban_words, :prompt]
 
     with true <- Map.keys(attrs) -- allowed == [],
@@ -129,8 +129,7 @@ defmodule GroupherServer.ReviewBot.Commands.UpdateConfig do
          true <- Map.has_key?(attrs, :prompt),
          true <- attrs.review_mode in [:immediate, :ai_first, :human_first],
          true <- is_list(attrs.ban_words) and Enum.all?(attrs.ban_words, &is_binary/1),
-         true <- is_binary(attrs.prompt),
-         true <- subject_type != :doc or attrs.review_mode == :immediate do
+         true <- is_binary(attrs.prompt) do
       {:ok, attrs}
     else
       _ -> {:error, ReviewBot.ErrorCat.invalid_config()}

@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PlanTest do
   end
 
   defp upsert(node) do
-    %{node_id: node.node_id, change_kind: :upsert, target: Map.delete(node, :node_id)}
+    %{node_id: node.node_id, change_type: :upsert, target: Map.delete(node, :node_id)}
   end
 
   defp page(id, doc_id, index) do
@@ -164,7 +164,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PlanTest do
     id = Ecto.UUID.generate()
     member = %{article_id: id, working_copy_id: Ecto.UUID.generate(), revision: 1}
     baseline = [tab(), group(), page("page", id, 0)]
-    removal = %{node_id: "page", change_kind: :delete, target: nil}
+    removal = %{node_id: "page", change_type: :delete, target: nil}
 
     assert {:error, {:removed_pages_with_queued_articles, [^id]}} =
              Plan.build(1, baseline, [removal], [member], [id])

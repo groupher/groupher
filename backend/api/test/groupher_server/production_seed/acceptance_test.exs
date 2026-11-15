@@ -226,9 +226,9 @@ defmodule GroupherServer.CMS.ProductionSeed.AcceptanceTest do
       case get_in(resource, ["locator", "thread"]) || resource["thread"] do
         "doc" ->
           assert Repo.get(CMS.Model.Article, resource["articleId"])
-          assert Repo.get(CMS.Model.DocsHistoryOwner, resource["articleId"])
+          assert Repo.get_by(CMS.Model.ArticleHistoryOwner, article_id: resource["articleId"])
           refute Repo.get(CMS.Model.ArticlePublic, resource["articleId"])
-          refute Repo.get_by(CMS.Model.DocsLifecycle, article_id: resource["articleId"])
+          assert Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: resource["articleId"])
 
         "ticket" ->
           assert Repo.get(CMS.Model.Article, resource["articleId"])

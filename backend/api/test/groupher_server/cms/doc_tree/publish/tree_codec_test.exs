@@ -47,8 +47,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.TreeCodecTest do
     assert {:error, :tree_node_not_found} = TreeCodec.encode_target(baseline, "missing")
 
     [[stored_target]] = Repo.query!("SELECT $1::jsonb", [target_json]).rows
-    rows = [%{node_id: "link", change_kind: :upsert, target: stored_target}]
-    typed = [%{node_id: "link", change_kind: :upsert, target: Map.delete(link, :node_id)}]
+    rows = [%{node_id: "link", change_type: :upsert, target: stored_target}]
+    typed = [%{node_id: "link", change_type: :upsert, target: Map.delete(link, :node_id)}]
 
     assert {:ok, from_storage} = Plan.build_from_storage(1, stored, rows, [], [])
     assert {:ok, from_typed} = Plan.build(1, baseline, typed, [], [])
@@ -71,6 +71,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.TreeCodecTest do
              TreeCodec.decode(%{encoded | "nodes" => [Map.put(tab, "type", "unknown")]})
 
     assert {:error, :invalid_tree_change} =
-             TreeCodec.decode_changes([%{node_id: "tab", change_kind: :delete, target: %{}}])
+             TreeCodec.decode_changes([%{node_id: "tab", change_type: :delete, target: %{}}])
   end
 end

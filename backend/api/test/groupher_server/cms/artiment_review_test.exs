@@ -244,12 +244,12 @@ defmodule GroupherServer.Test.CMS.ArtimentReviewTest do
 
   test "Doc recheck preserves replaced holds and content edit clears outdated holds" do
     {_community, doc, _attrs, _author} = mock_article(:doc)
-    lifecycle = Repo.get_by!(CMS.Model.DocsLifecycle, article_id: doc.id)
+    lifecycle = Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: doc.id)
 
     assert_request_generation_behavior(
       lifecycle,
       "platform",
-      %{target_type: :doc, article_id: doc.id}
+      %{target_type: :article, article_id: doc.id}
     )
   end
 

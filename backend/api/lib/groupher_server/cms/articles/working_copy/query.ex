@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
            join: body in assoc(work, :body),
            preload: [body: body],
            where:
-             work.article_id == ^article.id and work.scope_kind == :default and
+             work.article_id == ^article.id and work.scope_type == :default and
                work.scope_id == ^article.id
          )
        )}
@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
             preload: [body: body],
             where: work.article_id == ^article.id,
             order_by: [
-              asc: work.scope_kind,
+              asc: work.scope_type,
               asc: work.scope_id,
               asc: work.inserted_at,
               asc: work.id
@@ -108,7 +108,7 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Query do
       case Repo.get_by(ArticleWorkingCopy,
              id: working_copy_id,
              article_id: article.id,
-             scope_kind: :default,
+             scope_type: :default,
              scope_id: article.id
            ) do
         %ArticleWorkingCopy{} = work -> {:ok, Repo.preload(work, :body)}

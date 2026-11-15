@@ -20,7 +20,6 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Deleter do
     ArticleWorkingCopyPost,
     ArticleWorkingCopyTag,
     CoverEditWorkingCopy,
-    DocsLifecycle,
     DocsQueueArticle
   }
 
@@ -51,9 +50,8 @@ defmodule GroupherServer.CMS.Articles.WorkingCopy.Deleter do
       ) do
     with true <- Repo.in_transaction?(),
          true <-
-           work.article_id == article.id and work.scope_kind == :default and
+           work.article_id == article.id and work.scope_type == :default and
              work.scope_id == article.id,
-         false <- Repo.exists?(from(l in DocsLifecycle, where: l.article_id == ^article.id)),
          false <- Repo.exists?(from(p in ArticlePublic, where: p.article_id == ^article.id)),
          false <- Repo.exists?(from(m in DocsQueueArticle, where: m.article_id == ^article.id)),
          1 <-

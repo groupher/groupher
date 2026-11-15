@@ -151,7 +151,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
   test "Doc Insights reject missing lifecycle through Gate scope" do
     {community, doc, _attrs, author} = mock_article(:doc)
 
-    lifecycle = Repo.get_by!(GroupherServer.CMS.Model.DocsLifecycle, article_id: doc.id)
+    lifecycle = Repo.get_by!(GroupherServer.CMS.Model.ArticleLifecycle, article_id: doc.id)
     Repo.delete!(lifecycle)
 
     assert {:error,

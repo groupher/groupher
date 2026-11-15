@@ -657,8 +657,8 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
     assert community_id == community.id
   end
 
-  test "the report threshold for a Doc uses platform scope" do
-    {_community, doc, _attrs, _author} = mock_article(:doc)
+  test "the report threshold for a Doc uses its request community scope" do
+    {community, doc, _attrs, _author} = mock_article(:doc)
     target_id = doc.id
     public = Repo.get!(CMS.Model.ArticlePublic, doc.id)
     version = CMS.Review.SnapshotVersion.from_id(public.snapshot_id)
@@ -671,9 +671,9 @@ defmodule GroupherServer.Test.CMS.ReviewDecisionTest do
                  GroupherServer.AlertWall.Commands.SubmitReport.execute(
                    %{
                      owner: :cms,
-                     target_type: :doc,
+                     target_type: :article,
                      target_id: target_id,
-                     community_id: nil,
+                     community_id: community.id,
                      observed_version: version
                    },
                    :spam,

@@ -164,7 +164,7 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
            CMS.articles_fork_snapshot(
              snapshot_id,
              community,
-             scope_kind(args.scope_kind),
+             scope_type(args.scope_type),
              args.scope_id,
              user,
              args.command_id
@@ -217,11 +217,11 @@ defmodule GroupherServerWeb.Resolvers.CMS.Articles do
     end
   end
 
-  defp scope_kind(:default), do: :default
-  defp scope_kind(:workspace), do: :workspace
-  defp scope_kind("default"), do: :default
-  defp scope_kind("workspace"), do: :workspace
-  defp scope_kind(_), do: :invalid
+  defp scope_type(:default), do: :default
+  defp scope_type(:workspace), do: :workspace
+  defp scope_type("default"), do: :default
+  defp scope_type("workspace"), do: :workspace
+  defp scope_type(_), do: :invalid
 
   defp publish_source(source) when is_map(source) do
     case {Map.get(source, :working_copy_id), Map.get(source, :revision),

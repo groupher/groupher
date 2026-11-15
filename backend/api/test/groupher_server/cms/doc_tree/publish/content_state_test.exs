@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.ContentStateTest do
                  Store.create_loaded(
                    article,
                    %{
-                     scope_kind: :default,
+                     scope_type: :default,
                      scope_id: article.id,
                      title: "Attachment ownership",
                      body_bag: bag,
@@ -176,7 +176,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.ContentStateTest do
                  Store.create_loaded(
                    article,
                    %{
-                     scope_kind: :default,
+                     scope_type: :default,
                      scope_id: article.id,
                      title: "Doc",
                      body_bag: body_bag("body")
@@ -212,7 +212,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.ContentStateTest do
                    snapshot.id,
                    %{
                      article_id: article.id,
-                     scope_kind: :workspace,
+                     scope_type: :workspace,
                      scope_id: Ecto.UUID.generate()
                    },
                    actor
@@ -331,7 +331,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.ContentStateTest do
                  Store.create_loaded(
                    article,
                    %{
-                     scope_kind: :default,
+                     scope_type: :default,
                      scope_id: article.id,
                      title: "Doc content",
                      subtitle: "Subtitle",
@@ -511,7 +511,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.ContentStateTest do
                {:ok, other_work} =
                  Store.create_loaded(
                    other,
-                   %{scope_kind: :default, scope_id: other.id, title: "Other"},
+                   %{scope_type: :default, scope_id: other.id, title: "Other"},
                    actor,
                    community.id
                  )
@@ -549,7 +549,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.ContentStateTest do
                      Store.create_loaded(
                        article,
                        %{
-                         scope_kind: :workspace,
+                         scope_type: :workspace,
                          scope_id: Ecto.UUID.generate(),
                          title: text,
                          body_bag: body_bag(text)

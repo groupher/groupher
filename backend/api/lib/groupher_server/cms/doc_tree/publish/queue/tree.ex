@@ -117,8 +117,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Tree do
      Enum.flat_map(ids, fn id ->
        case {before[id], after_nodes[id]} do
          {value, value} -> []
-         {_, nil} -> [%{node_id: id, change_kind: :delete, target: nil}]
-         {_, value} -> [%{node_id: id, change_kind: :upsert, target: Map.delete(value, :node_id)}]
+         {_, nil} -> [%{node_id: id, change_type: :delete, target: nil}]
+         {_, value} -> [%{node_id: id, change_type: :upsert, target: Map.delete(value, :node_id)}]
        end
      end)}
   end
@@ -197,7 +197,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Queue.Tree do
       queue_id: queue.id,
       community_id: community.id,
       node_id: item.id,
-      change_kind: if(is_nil(item.target), do: :delete, else: :upsert),
+      change_type: if(is_nil(item.target), do: :delete, else: :upsert),
       target: encoded,
       source_event_id: nil
     }

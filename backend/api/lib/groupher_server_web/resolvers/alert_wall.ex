@@ -205,30 +205,6 @@ defmodule GroupherServerWeb.Resolvers.AlertWall do
     end
   end
 
-  defp resolve_report_target(
-         %{type: :doc, article: path} = input,
-         actor
-       )
-       when is_map(path) do
-    with {:ok, projection} <- FrontDesk.article(path, actor),
-         :doc <- Map.get(projection, :thread),
-         article_id when is_binary(article_id) <- Map.get(projection, :id),
-         {:ok, article} <-
-           FrontDesk.article(article_id, mode: :internal, view: :command_context),
-         :doc <- article.thread do
-      {:ok,
-       %{
-         owner: :cms,
-         target_type: :doc,
-         target_id: article.id,
-         observed_version: Map.get(input, :observed_version),
-         community_id: nil
-       }}
-    else
-      _ -> {:error, AlertWall.invalid_report_error()}
-    end
-  end
-
   defp resolve_report_target(%{type: :user, user_login: login}, actor)
        when is_binary(login) and login != "" do
     with {:ok, %User{} = user} <- FrontDesk.user(login, mode: :public, view: :default),

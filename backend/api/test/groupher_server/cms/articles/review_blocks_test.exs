@@ -10,8 +10,7 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
     Article,
     ArticleBinding,
     ArticleLifecycle,
-    ArticleReviewBlock,
-    DocsLifecycle
+    ArticleReviewBlock
   }
 
   alias CMS.Outbox.Event, as: OutboxEvent
@@ -200,10 +199,10 @@ defmodule GroupherServer.Test.CMS.Articles.ReviewBlocksTest do
   test "a Doc restriction changes its current public projection" do
     {_community, article_view, _attrs, _author} = mock_article(:doc)
     article = Repo.get!(Article, article_view.id)
-    lifecycle = Repo.get_by!(DocsLifecycle, article_id: article.id)
+    lifecycle = Repo.get_by!(ArticleLifecycle, article_id: article.id)
 
     lock_lifecycle = fn ->
-      DocsLifecycle
+      ArticleLifecycle
       |> where([row], row.id == ^lifecycle.id)
       |> lock("FOR UPDATE")
       |> Repo.one()

@@ -573,7 +573,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   defp save_and_publish_mentioner(mentioner_view, community, user, body_json) do
     article = Repo.get!(Article, mentioner_view.article_id)
-    working_copy = Repo.get_by!(ArticleWorkingCopy, article_id: article.id, scope_kind: :default)
+    working_copy = Repo.get_by!(ArticleWorkingCopy, article_id: article.id, scope_type: :default)
     public = Repo.get!(ArticlePublic, article.id)
 
     with {:ok, saved} <-

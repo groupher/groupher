@@ -110,7 +110,7 @@ defmodule GroupherServer.CMS.Articles.Workflow do
       nil ->
         case Repo.get_by(ArticleWorkingCopy,
                article_id: article.id,
-               scope_kind: :default,
+               scope_type: :default,
                scope_id: article.id
              ) do
           %ArticleWorkingCopy{id: id, revision: revision} ->

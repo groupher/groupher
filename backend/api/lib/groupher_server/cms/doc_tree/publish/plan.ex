@@ -78,7 +78,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Plan do
     valid? =
       Enum.all?(nodes, &fields?(&1, @node_fields)) and
         Enum.all?(changes, fn change ->
-          fields?(change, [:node_id, :change_kind, :target]) and
+          fields?(change, [:node_id, :change_type, :target]) and
             (is_nil(change.target) or fields?(change.target, @node_fields -- [:node_id]))
         end)
 

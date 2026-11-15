@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration do
   Migrations cannot mint this record. No business row is initialized or repaired.
   """
   @contract "shared-comments-v1"
-  @tables ~w(articles article_bindings article_stats comments comment_review_blocks pinned_comments communities doc_lifecycles trashed_doc_articles doc_tree_nodes doc_publish_release_articles post_reaction_infos blog_reaction_infos changelog_reaction_infos doc_reaction_infos comment_reaction_infos post_emotion_infos blog_emotion_infos changelog_emotion_infos doc_emotion_infos comment_emotion_infos)
+  @tables ~w(articles article_bindings article_stats comments comment_review_blocks pinned_comments communities article_history_owners trashed_doc_articles doc_tree_nodes doc_publish_release_articles post_reaction_infos blog_reaction_infos changelog_reaction_infos doc_reaction_infos comment_reaction_infos post_emotion_infos blog_emotion_infos changelog_emotion_infos doc_emotion_infos comment_emotion_infos)
   @functions ~w(guard_doc_binding_identity guard_immutable_identity guard_doc_binding_delete guard_doc_owner_community_delete guard_comment_parent_identity enforce_comment_review_block_scope require_doc_owner_at_commit)
 
   @doc "Attests an explicitly named empty database before business DDL."
@@ -190,7 +190,7 @@ defmodule GroupherServer.CMS.Comments.SchemaGeneration do
         SELECT table_name,column_name,data_type,is_nullable
         FROM information_schema.columns
         WHERE table_schema='messaging' AND table_name IN ('mentions','notifications')
-          AND column_name IN ('comment_id','branch_id')
+          AND column_name = 'comment_id'
         ORDER BY table_name,column_name
         """,
         []

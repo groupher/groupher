@@ -19,12 +19,12 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
   @pipeline operation: :article_fork_snapshot,
             confirmation: Confirmation,
             target: :article,
-            params: [:snapshot_id, :scope_kind, :scope_id]
+            params: [:snapshot_id, :scope_type, :scope_id]
 
   receipt_pipeline run_receipt(
                      article,
                      snapshot_id,
-                     scope_kind,
+                     scope_type,
                      scope_id,
                      community,
                      actor,
@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
                snapshot.id,
                %{
                  article_id: canonical_article.id,
-                 scope_kind: scope_kind,
+                 scope_type: scope_type,
                  scope_id: scope_id
                },
                actor
@@ -75,12 +75,12 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
   def execute(
         snapshot_id,
         %Community{} = community,
-        scope_kind,
+        scope_type,
         scope_id,
         %User{} = actor,
         command_id
       )
-      when is_binary(snapshot_id) and scope_kind in [:default, :workspace] and
+      when is_binary(snapshot_id) and scope_type in [:default, :workspace] and
              is_binary(scope_id) and is_binary(command_id) do
     with %ArticleSnapshot{} = snapshot <- Repo.get(ArticleSnapshot, snapshot_id),
          {:ok, article} <- CMS.FrontDesk.article(snapshot.article_id, mode: :internal),
@@ -89,7 +89,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
       run_receipt(
         article,
         snapshot_id,
-        scope_kind,
+        scope_type,
         scope_id,
         community,
         actor,
@@ -102,7 +102,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ForkSnapshot do
     end
   end
 
-  def execute(_snapshot_id, _community, _scope_kind, _scope_id, _actor, _command_id) do
+  def execute(_snapshot_id, _community, _scope_type, _scope_id, _actor, _command_id) do
     {:error, :invalid_working_copy_command}
   end
 

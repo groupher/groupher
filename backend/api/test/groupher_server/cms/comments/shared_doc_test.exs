@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
   use GroupherServer.TestMate, async: false
   import Ecto.Query
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Article, ArticleStats, Comment, DocsHistoryOwner, DocsLifecycle}
+  alias CMS.Model.{Article, ArticleStats, Comment, ArticleHistoryOwner, ArticleLifecycle}
 
   setup do
     {community, doc, _, author} = mock_article(:doc)
@@ -80,7 +80,7 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
       )
 
     Repo.update_all(
-      from(l in DocsLifecycle,
+      from(l in ArticleLifecycle,
         where: l.article_id == ^ctx.doc.article_id
       ),
       set: [state: :deleted]
@@ -119,9 +119,9 @@ defmodule GroupherServer.Test.CMS.Comments.SharedDocTest do
     assert Repo.get!(Article, ctx.doc.article_id)
     assert Repo.get!(Comment, comment.id)
     assert Repo.get_by!(ArticleStats, article_id: ctx.doc.article_id).comments_count == 1
-    refute Repo.exists?(from(l in DocsLifecycle, where: l.article_id == ^ctx.doc.article_id))
+    assert Repo.get_by!(ArticleLifecycle, article_id: ctx.doc.article_id)
 
-    assert Repo.get_by!(DocsHistoryOwner, article_id: ctx.doc.article_id).community_id ==
+    assert Repo.get_by!(ArticleHistoryOwner, article_id: ctx.doc.article_id).community_id ==
              ctx.community.id
 
     refute Repo.get_by(CMS.Model.ArticleBinding, article_id: ctx.doc.article_id)

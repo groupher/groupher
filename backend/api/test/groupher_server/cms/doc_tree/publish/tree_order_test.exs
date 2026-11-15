@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.TreeOrderTest do
 
     changes =
       Enum.map(changed, fn node ->
-        %{node_id: node.node_id, change_kind: :upsert, target: Map.delete(node, :node_id)}
+        %{node_id: node.node_id, change_type: :upsert, target: Map.delete(node, :node_id)}
       end)
 
     assert {:ok, %{target: ^target, payload: %{"tree_operations" => operations}}} =

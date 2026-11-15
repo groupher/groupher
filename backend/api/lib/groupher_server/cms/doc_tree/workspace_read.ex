@@ -13,10 +13,11 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRead do
 
   alias CMS.Model.{
     Article,
+    ArticleBinding,
+    ArticleLifecycle,
     ArticlePublic,
     ArticleWorkingCopy,
     Community,
-    DocsLifecycle,
     DocsTreeNode
   }
 
@@ -52,12 +53,15 @@ defmodule GroupherServer.CMS.DocTree.WorkspaceRead do
 
     works =
       Repo.all(
-        from(l in DocsLifecycle,
+        from(l in ArticleLifecycle,
+          join: b in ArticleBinding,
+          on: b.article_id == l.article_id and b.community_id == ^community.id,
           left_join: w in ArticleWorkingCopy,
-          on: w.id == l.default_working_copy_id and w.article_id == l.article_id,
+          on:
+            w.article_id == l.article_id and w.scope_type == :default and
+              w.scope_id == l.article_id,
           where:
-            l.community_id == ^community.id and l.article_id in ^ids and
-              l.state not in [:deleted, :destroy],
+            l.thread == :doc and l.article_id in ^ids and l.state not in [:deleted, :destroy],
           select: {l.article_id, w.id, w.revision}
         )
       )
