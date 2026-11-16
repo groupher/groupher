@@ -87,6 +87,8 @@ defmodule GroupherServer.CMS.Communities.Count do
   @spec update(Community.t(), atom()) :: T.domain_res(Community.t())
   def update(%Community{} = community, thread) do
     if thread in @threads do
+      # Doc report-only expectations mirror this Scope + Trash + Binding count in
+      # CMS.Articles.Query.PublicReadReport.community_counts; keep both aligned.
       active_articles = Trash.not_trashed_scope(Article, thread)
       public_binding_ids = CMS.Articles.Pagination.public_binding_ids(thread)
 

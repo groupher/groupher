@@ -12,7 +12,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   Ordinary Article visibility is evaluated from Lifecycle and active
   `ArticleReviewBlock` rows. `ArticleBinding` carries the community
   relationship only; `ArticlePublic` identifies the selected public head.
-  Doc visibility uses the site-owned Lifecycle and selected ArticlePublic head.
+  Public Doc visibility additionally requires a page in the row's Community
+  public tree and a body matching the selected ArticlePublic head. Management
+  and Insights keep their independent policy modes and shared Lifecycle rules.
   """
 
   import Ecto.Query, warn: false
@@ -28,9 +30,11 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   alias CMS.Model.{
     ArticleLifecycle,
     ArticlePublic,
+    ArticlePublicBody,
     ArticleWorkingCopy,
     Author,
-    ArticleReviewBlock
+    ArticleReviewBlock,
+    DocsTreeNode
   }
 
   @behaviour Policy
@@ -164,7 +168,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
 
   defp stage(_context, _action), do: {:error, ErrorCat.scope_context_missing()}
 
-  defp apply_stage(query, :public, actor, _policy_mode, context) do
+  defp apply_stage(query, :public, actor, policy_mode, context) do
     query = public_binding_scope(query, actor, context)
 
     query = public_head_scope(query, context, actor)
@@ -174,7 +178,10 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
         where: as(:gate_article_lifecycle).state in ^@public_lifecycle_states
       )
 
-    {:ok, public_article(query, actor, context)}
+    {:ok,
+     query
+     |> public_article(actor, context)
+     |> doc_public_read_scope(policy_mode, context)}
   end
 
   defp apply_stage(_query, :draft, _actor, :public, _context) do
@@ -187,6 +194,39 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
      |> draft_head_scope(context)
      |> where([_article, ...], as(:gate_article_lifecycle).state in ^@draft_lifecycle_states)}
   end
+
+  # Read admission only: Public/Body alignment does not guarantee Snapshot metadata
+  # or its typed extension can be projected. Public.current/SnapshotProjection own
+  # those failures; PublicReadReport diagnoses them independently of Scope.
+  # Depends on the publish tree retaining community_id/stage/type/doc_id semantics
+  # and the unique public page (community_id, stage, doc_id) index. Queue cutovers
+  # must preserve this contract; EXISTS keeps membership out of consumer joins.
+  defp doc_public_read_scope(query, :public, %DocContext{}) do
+    from([_article, ...] in query,
+      where:
+        exists(
+          from(node in DocsTreeNode,
+            where:
+              node.community_id == parent_as(:gate_community).id and
+                node.doc_id == parent_as(:gate_article_lifecycle).article_id and
+                node.stage == :public and node.type == :page,
+            select: 1
+          )
+        ),
+      where:
+        exists(
+          from(body in ArticlePublicBody,
+            where:
+              body.article_id == parent_as(:gate_article_public).article_id and
+                body.snapshot_id == parent_as(:gate_article_public).snapshot_id,
+            select: 1
+          )
+        )
+    )
+  end
+
+  # Other threads and management/insights deliberately retain their own policies.
+  defp doc_public_read_scope(query, _policy_mode, _context), do: query
 
   defp public_binding_scope(query, actor, %DocContext{}) do
     public_binding_scope(query, actor, %ArticleContext{

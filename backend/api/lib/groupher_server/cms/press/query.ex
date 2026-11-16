@@ -28,7 +28,6 @@ defmodule GroupherServer.CMS.Press.Query do
     ArticlePublicBody,
     ArticleBodyDocument,
     Community,
-    DocsTreeNode,
     PressConfig
   }
 
@@ -136,34 +135,8 @@ defmodule GroupherServer.CMS.Press.Query do
     end
   end
 
-  defp current_article(community, :doc, inner_id) do
-    with {:ok, article} <-
-           FrontDesk.article(%{community: community.slug, thread: :doc, inner_id: inner_id}),
-         {:ok, _} <- validate_stable_public_doc(article, community) do
-      {:ok, article}
-    else
-      {:error, _reason} = error -> error
-    end
-  end
-
   defp current_article(community, thread, inner_id) do
     FrontDesk.article(%{community: community.slug, thread: thread, inner_id: inner_id})
-  end
-
-  defp validate_stable_public_doc(article, community) do
-    visible =
-      DocsTreeNode
-      |> where([node], node.community_id == ^community.id)
-      |> where([node], node.stage == :public)
-      |> where([node], node.type == :page)
-      |> where([node], node.doc_id == ^article.id)
-      |> Repo.exists?()
-
-    if visible do
-      {:ok, :pass}
-    else
-      {:error, CMS.Articles.ErrorCat.not_exist("Published Doc")}
-    end
   end
 
   defp feed_items(community, threads, limit, hydrate) do
@@ -222,7 +195,6 @@ defmodule GroupherServer.CMS.Press.Query do
 
   defp article_paths(community, thread, limit) do
     page_count = div(limit + @pagination_page_size - 1, @pagination_page_size)
-    public_tree = thread == :doc
 
     1..page_count
     |> Enum.reduce_while({[], 0, limit}, fn page, {path_batches, collected, target} ->
@@ -240,8 +212,7 @@ defmodule GroupherServer.CMS.Press.Query do
                  config_revision: 0
                },
                nil,
-               config: press_pagination_config(),
-               public_tree: public_tree
+               config: press_pagination_config()
              ) do
           {:ok, %{entries: entries, pinned_entries: pinned_entries}} ->
             page_entries = if page == 1, do: pinned_entries ++ entries, else: entries

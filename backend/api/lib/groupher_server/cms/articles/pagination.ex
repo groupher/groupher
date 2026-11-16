@@ -13,8 +13,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   they are never folded into the live cursor sequence.
   """
 
-  require GroupherServer.CMS.Const
-
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Accounts, CMS, Pagi, Repo}
@@ -32,7 +30,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     ArticlePublic,
     Community,
     CommunityTag,
-    DocsTreeNode,
     ArticleLifecycle,
     PinnedArticle,
     PostState
@@ -181,10 +178,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
   end
 
   defp run_page(thread, filter, params, order, opts, viewer) do
-    query_opts = [
-      include_pinned: Keyword.get(opts, :include_pinned, false),
-      public_tree: Keyword.get(opts, :public_tree, false)
-    ]
+    query_opts = [include_pinned: Keyword.get(opts, :include_pinned, false)]
 
     query = public_query(thread, filter, order, query_opts, viewer)
     count = count_query(thread, filter, query_opts, viewer)
@@ -290,7 +284,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
       where: article.thread == ^thread and binding.id in subquery(visible)
     )
     |> add_public_joins(thread)
-    |> maybe_add_public_tree(thread, opts)
     |> apply_filter(filter)
     |> maybe_exclude_pinned(include_pinned)
   end
@@ -324,26 +317,6 @@ defmodule GroupherServer.CMS.Articles.Pagination do
       on: lifecycle.article_id == article.id
     )
   end
-
-  defp maybe_add_public_tree(query, :doc, opts) do
-    if Keyword.get(opts, :public_tree, false) do
-      where(
-        query,
-        exists(
-          from(node in DocsTreeNode,
-            where:
-              node.community_id == parent_as(:article_community).id and
-                node.stage == ^CMS.Const.stage(:public) and node.type == :page and
-                node.doc_id == parent_as(:article).id
-          )
-        )
-      )
-    else
-      query
-    end
-  end
-
-  defp maybe_add_public_tree(query, _thread, _opts), do: query
 
   defp apply_filter(query, filter) do
     Enum.reduce(filter, query, fn
@@ -444,7 +417,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
 
   defp page_pins(_thread, _filter, _viewer, %Params.Cursor{}, _order, _opts), do: {:ok, []}
 
-  defp load_pinned(thread, filter, viewer, order, opts) do
+  defp load_pinned(thread, filter, viewer, order, _opts) do
     content_order = %{order | bindings: [], projection: []}
 
     pinned_query =
@@ -452,7 +425,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
         thread,
         filter,
         content_order,
-        [include_pinned: true, public_tree: Keyword.get(opts, :public_tree, false)],
+        [include_pinned: true],
         viewer
       )
 
@@ -501,7 +474,7 @@ defmodule GroupherServer.CMS.Articles.Pagination do
     :crypto.hash(
       :sha256,
       :erlang.term_to_binary(
-        {thread, query_filter, Order.identity(order), Keyword.get(opts, :public_tree, false),
+        {thread, query_filter, Order.identity(order), thread == :doc,
          Keyword.get(opts, :include_pinned, false)}
       )
     )
