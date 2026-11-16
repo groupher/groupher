@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "2.0.0-beta.sha-ad79608dd",
-    "@cloudflare/workers-types": "^5.20261013.1",
+    "@cloudflare/workers-types": "^5.20261115.1",
     "@types/node": "^24.0.0",
     "@types/pg": "^8.23.1",
     "cf": "1.0.0-beta.21",
@@ -43,6 +43,6 @@
     "tsx": "^4.23.15",
     "typescript": "7.0.2",
     "vite": "^8.3.8",
-    "vitest": "^5.0.4"
+    "vitest": "^5.1.0"
   }
 }
