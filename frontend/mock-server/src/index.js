@@ -41,7 +41,13 @@ const schemaPath = (() => {
 })()
 
 const typeDefs = readFileSync(schemaPath, 'utf8')
-const schema = makeExecutableSchema({ typeDefs, resolvers })
+// @graphql-tools/schema v11 defaults to rejecting resolvers that no longer exist in the
+// schema; the mock server carries a few drifted handlers, so keep the v10 leniency and warn.
+const schema = makeExecutableSchema({
+  typeDefs,
+  resolvers,
+  resolverValidationOptions: { requireResolversToMatchSchema: 'warn' },
+})
 const mockedSchema = addMocksToSchema({ schema, mocks, preserveResolvers: true })
 
 const handler = createHandler({
