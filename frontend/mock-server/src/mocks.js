@@ -1,5 +1,3 @@
-import { GraphQLError } from 'graphql'
-
 import {
   createAuthSession,
   listAuthSessions,
@@ -489,48 +487,6 @@ export const resolvers = {
       ),
     me: () => makeUser(),
     sessionState: () => ({ isValid: true, user: makeUser() }),
-    docTree: () => ({
-      revision: 1,
-      treeState: { hasUnpublishedChanges: true, stagedEventCount: 1, revision: 1 },
-      stagedEvents: [],
-      tabs: [
-        {
-          id: 'e2e-tab',
-          type: 'TAB',
-          title: 'Docs',
-          index: 0,
-          pins: [],
-          groups: [
-            {
-              id: 'e2e-group',
-              parentNodeId: 'e2e-tab',
-              type: 'GROUP',
-              title: 'Guides',
-              index: 0,
-              pages: [
-                {
-                  id: 'e2e-page',
-                  parentNodeId: 'e2e-group',
-                  docId: 'e2e-doc',
-                  type: 'PAGE',
-                  title: 'Canonical title',
-                  index: 0,
-                  pages: [],
-                  publishState: {
-                    status: 'DRAFT',
-                    published: false,
-                    publishedBefore: false,
-                    hasDraft: true,
-                    hasUnpublishedChanges: true,
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    }),
-    docDraft: () => docDraftState.draft,
 
     community: (_parent, args) => {
       const slug = args?.slug ?? 'home'
@@ -564,36 +520,6 @@ export const resolvers = {
   },
   RootMutationType: {
     ...ticketMutations,
-    updateDocDraft: (_parent, args) => {
-      docDraftState.calls += 1
-      const receipt = docDraftState.receipts.get(args.commandId)
-      if (receipt) return receipt
-      if (docDraftState.scenario === 'conflict')
-        throw new GraphQLError('draft version conflict', { extensions: { code: 4539 } })
-      if (docDraftState.scenario === 'rate_limit_then_success' && docDraftState.calls === 1)
-        throw new GraphQLError('rate limited', { extensions: { code: 'RATE_LIMITED' } })
-
-      const next = {
-        ...docDraftState.draft,
-        version: docDraftState.draft.version + 1,
-        title: args.title ?? docDraftState.draft.title,
-        subtitle: args.subtitle ?? docDraftState.draft.subtitle,
-        slug: args.slug ?? docDraftState.draft.slug,
-        digest: args.subtitle ?? docDraftState.draft.digest,
-        updatedAt: nowISO(),
-        body: args.bodyBag
-          ? {
-              json: args.bodyBag.json,
-              markdown: args.bodyBag.markdown,
-              toc: args.bodyBag.toc,
-              html: args.bodyBag.html,
-            }
-          : docDraftState.draft.body,
-      }
-      docDraftState.draft = next
-      docDraftState.receipts.set(args.commandId, next)
-      return next
-    },
     refreshBrowserSession: (_parent, args) => refreshAuthSession(args.browserSessionRef),
     revokeBrowserSession: (_parent, args) => revokeAuthSession(args.browserSessionRef),
     revokeBrowserSessionPublic: (_parent, args) =>
