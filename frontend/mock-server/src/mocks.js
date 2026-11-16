@@ -15,56 +15,6 @@ const todayISO = () => new Date().toISOString().slice(0, 10)
 let __mockStrId = 0
 const nextMockString = () => `mock_${++__mockStrId}`
 
-const initialDocDraftState = () => ({
-  scenario: 'conflict',
-  calls: 0,
-  receipts: new Map(),
-  draft: {
-    id: 'e2e-draft',
-    docId: 'e2e-doc',
-    version: 4,
-    contentHash: 'e2e-content-hash',
-    title: 'Canonical title',
-    subtitle: 'Canonical subtitle',
-    slug: 'canonical-title',
-    stage: 'DRAFT',
-    digest: 'Canonical subtitle',
-    insertedAt: nowISO(),
-    updatedAt: nowISO(),
-    author: makeUser(),
-    body: {
-      json: JSON.stringify([{ type: 'p', children: [{ text: 'Canonical body' }] }]),
-      markdown: 'Canonical body',
-      toc: [],
-      html: '<p>Canonical body</p>',
-    },
-    assetRefs: [],
-  },
-})
-
-let docDraftState
-
-/** Resets the Docs autosave mock to one isolated scenario and canonical draft. */
-export const resetDocDraftState = (scenario = 'conflict') => {
-  docDraftState = initialDocDraftState()
-  docDraftState.scenario = scenario
-}
-
-/** Selects and resets the deterministic Docs autosave scenario used by browser tests. */
-export const setDocDraftScenario = (scenario) => {
-  if (!['success', 'conflict', 'rate_limit_then_success'].includes(scenario))
-    throw new Error(`Unknown Doc Draft scenario: ${scenario}`)
-  resetDocDraftState(scenario)
-}
-
-/** Returns observable Docs autosave calls, receipts, and persisted draft state for assertions. */
-export const getDocDraftState = () => ({
-  calls: docDraftState.calls,
-  draft: docDraftState.draft,
-  receiptCount: docDraftState.receipts.size,
-  scenario: docDraftState.scenario,
-})
-
 const THEME_PRESET = {
   DEFAULT: 'DEFAULT',
 }
@@ -260,8 +210,6 @@ const makeUser = (overrides = {}) => {
     ...safeOverrides,
   }
 }
-
-resetDocDraftState()
 
 const makeDashboard = (slug = 'home') => {
   const lightWallpaper = makeWallpaperTheme()

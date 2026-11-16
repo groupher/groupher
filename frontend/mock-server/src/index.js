@@ -13,14 +13,7 @@ import {
   recordProtectedRequest,
   resetAuthState,
 } from './auth-state.js'
-import {
-  getDocDraftState,
-  mocks,
-  resetDocDraftState,
-  resolvers,
-  setDocDraftScenario,
-  setThirdPartyAnalyticsScenario,
-} from './mocks.js'
+import { mocks, resolvers, setThirdPartyAnalyticsScenario } from './mocks.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -220,33 +213,9 @@ createServer((req, res) => {
 
   if (AUTH_E2E_ENABLED && req.method === 'POST' && req.url === '/__e2e/auth/reset') {
     resetAuthState()
-    resetDocDraftState()
     res.statusCode = 200
     res.setHeader('content-type', 'application/json; charset=utf-8')
     res.end(JSON.stringify({ ok: true }))
-    return
-  }
-
-  if (AUTH_E2E_ENABLED && req.method === 'POST' && req.url === '/__e2e/doc-draft/scenario') {
-    readJsonBody(req)
-      .then((body) => {
-        setDocDraftScenario(body?.scenario)
-        res.statusCode = 200
-        res.setHeader('content-type', 'application/json; charset=utf-8')
-        res.end(JSON.stringify({ ok: true }))
-      })
-      .catch((error) => {
-        res.statusCode = 400
-        res.setHeader('content-type', 'application/json; charset=utf-8')
-        res.end(JSON.stringify({ ok: false, error: error.message }))
-      })
-    return
-  }
-
-  if (AUTH_E2E_ENABLED && req.method === 'GET' && req.url === '/__e2e/doc-draft/state') {
-    res.statusCode = 200
-    res.setHeader('content-type', 'application/json; charset=utf-8')
-    res.end(JSON.stringify(getDocDraftState()))
     return
   }
 
@@ -278,9 +247,6 @@ createServer((req, res) => {
     }
 
     if (AUTH_E2E_ENABLED && req.method === 'POST') {
-      if (getDocDraftState().scenario === 'rate_limit_then_success') {
-        res.setHeader('retry-after', '2')
-      }
       const trusted = req.headers.authorization === 'Bearer e2e-service-token'
       if (!trusted) {
         const code = recordProtectedRequest(req.headers.cookie)
