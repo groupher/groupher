@@ -16,11 +16,11 @@
     "@mjackson/multipart-parser": "0.10.1"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "2.0.0-beta.sha-ad79608dd",
+    "@cloudflare/vite-plugin": "2.0.0-beta.v.16",
     "@cloudflare/vitest-plugin": "^1.8.2",
     "@cloudflare/workers-types": "^5.20261115.1",
     "@types/node": "^26.6.6",
-    "cf": "1.0.0-beta.13",
+    "cf": "1.0.0-beta.31",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",

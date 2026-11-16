@@ -29,7 +29,7 @@
     "typewriter-effect": "^3.3.0"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "2.0.0-beta.sha-ad79608dd",
+    "@cloudflare/vite-plugin": "2.0.0-beta.v.16",
     "@tailwindcss/vite": "4.3.5",
     "@tanstack/redact": "0.3.1",
     "@tanstack/router-generator": "1.168.0",
@@ -37,7 +37,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
-    "cf": "1.0.0-beta.13",
+    "cf": "1.0.0-beta.31",
     "rimraf": "^6.1.4",
     "vite": "^8.3.8"
   }

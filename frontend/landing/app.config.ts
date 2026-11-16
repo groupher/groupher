@@ -105,12 +105,17 @@ export default defineConfig(({ command }) => ({
     landingPreviewAssetRewrite,
     cloudflare({
       assetsOnly: true,
+      types: { includeRuntime: false },
       config:
         command === 'serve'
-          ? {
-              compatibilityFlags: ['nodejs_compat'],
-              entrypoint: '@tanstack/react-start/server-entry',
-            }
+          ? (loadedConfig) => ({
+              ...loadedConfig,
+              worker: {
+                ...loadedConfig.worker,
+                compatibilityFlags: ['nodejs_compat'],
+                entrypoint: '@tanstack/react-start/server-entry',
+              },
+            })
           : undefined,
       viteEnvironment: { name: 'ssr' },
       prerenderWorker: {

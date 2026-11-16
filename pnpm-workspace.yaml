@@ -86,10 +86,10 @@ minimumReleaseAgeExclude:
   - oxfmt@0.78.0
   - oxlint@1.93.0
   - '@cloudflare/codemods@0.2.1'
-  - '@cloudflare/vite-plugin@2.0.0-beta.sha-ad79608dd'
+  - '@cloudflare/vite-plugin@2.0.0-beta.v.16'
   - '@cloudflare/vitest-plugin@1.8.2'
   - '@cloudflare/workers-types@5.20261115.1'
-  - cf@1.0.0-beta.5
+  - cf@1.0.0-beta.31
   - wrangler@4.162.0
   # Reviewed security update for sanitize-html XSS/allowlist bypasses.
   - sanitize-html@2.18.2

@@ -38,7 +38,7 @@ export default defineConfig({
   },
   ssr: { noExternal: true },
   plugins: [
-    cloudflare({ viteEnvironment: { name: 'ssr' } }),
+    cloudflare({ viteEnvironment: { name: 'ssr' }, types: { includeRuntime: false } }),
     tanstackStart(),
     createVgpuWgslVitePlugin(),
     viteReact(),
