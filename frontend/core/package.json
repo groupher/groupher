@@ -81,8 +81,8 @@
     "vgpu": "0.3.1"
   },
   "devDependencies": {
-    "@tanstack/react-query": "^5.104.2",
-    "@tanstack/react-router": "1.170.44",
+    "@tanstack/react-query": "^5.107.1",
+    "@tanstack/react-router": "1.170.46",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@types/node": "24.13.3",
@@ -100,8 +100,8 @@
     "vitest": "^5.1.0"
   },
   "peerDependencies": {
-    "@tanstack/react-query": "^5.104.0",
-    "@tanstack/react-router": "1.170.44",
+    "@tanstack/react-query": "^5.107.1",
+    "@tanstack/react-router": "1.170.46",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   }

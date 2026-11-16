@@ -140,7 +140,7 @@
     "@groupher/use-mobile-detect-hook": "^2.0.2",
     "@platejs/basic-nodes": "^53.0.0",
     "@platejs/core": "^53.5.2",
-    "@tanstack/react-query": "^5.104.2",
+    "@tanstack/react-query": "^5.107.1",
     "@tanstack/react-table": "^9.3.1",
     "@tanstack/react-virtual": "^3.14.26",
     "@tippyjs/react": "^4.2.6",

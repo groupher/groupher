@@ -19,8 +19,8 @@ pmOnFail: ignore
 # Keep shared TanStack runtime packages singular across every workspace and
 # override transitive ranges that would otherwise resolve independently.
 overrides:
-  '@tanstack/query-core': 5.104.2
-  '@tanstack/react-query': 5.104.2
+  '@tanstack/query-core': 5.107.1
+  '@tanstack/react-query': 5.107.1
   '@tanstack/router-ssr-query-core': 1.169.3
 
 # graphql-http@1.23.1 declares `graphql <=17`, which excludes the current
@@ -96,6 +96,6 @@ minimumReleaseAgeExclude:
   - files-sdk@3.1.1
   - devalue@6.0.3
   # Reviewed Redact runtime used by all TanStack apps in this PR.
-  - '@tanstack/redact@0.2.3'
+  - '@tanstack/redact@0.3.1'
 patchedDependencies:
   pinyin-pro@3.29.3: patches/pinyin-pro@3.29.3.patch
