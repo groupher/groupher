@@ -30,9 +30,9 @@ import { createBodyHash } from './hash'
 import { normalizeContentSource } from './normalize'
 import { sanitizeArtimentHtml } from './sanitize'
 import { createDigest, serializePlateJson } from './serialize'
+import { createArticleThumbnail } from './thumbnail'
 import type { TArtimentBodyBag } from './types'
 import { assertValidArtimentValue } from './validate'
-import { createArticleThumbnail } from './thumbnail'
 
 /** Validates one Plate value and derives the complete canonical persistence BodyBag. */
 export const publishArtiment = async (value: unknown): Promise<TArtimentBodyBag> => {

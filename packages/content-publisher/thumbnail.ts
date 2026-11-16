@@ -5,8 +5,7 @@ type TRecord = Record<string, unknown>
 const isRecord = (value: unknown): value is TRecord =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 
-const childrenOf = (node: TRecord): unknown[] =>
-  Array.isArray(node.children) ? node.children : []
+const childrenOf = (node: TRecord): unknown[] => (Array.isArray(node.children) ? node.children : [])
 
 const textOf = (value: unknown): string => {
   if (typeof value === 'string') return value
@@ -17,7 +16,9 @@ const textOf = (value: unknown): string => {
 
 const compactText = (value: string, maxLength = 180): string => {
   const normalized = value.replace(/\s+/g, ' ').trim()
-  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 1).trimEnd()}…` : normalized
+  return normalized.length > maxLength
+    ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
+    : normalized
 }
 
 const listItems = (node: TRecord): string[] =>
@@ -29,10 +30,7 @@ const listItems = (node: TRecord): string[] =>
 
 const tableShape = (node: TRecord): TThumbnailBlock => {
   const rows = childrenOf(node)
-  const columns = Math.max(
-    0,
-    ...rows.map((row) => (isRecord(row) ? childrenOf(row).length : 0)),
-  )
+  const columns = Math.max(0, ...rows.map((row) => (isRecord(row) ? childrenOf(row).length : 0)))
   return { type: 'table', rows: Math.min(rows.length, 20), columns: Math.min(columns, 12) }
 }
 
