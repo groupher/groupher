@@ -47,7 +47,8 @@ describe('content publish command parser', () => {
 
   it('rejects the retired Doc Draft action', () => {
     expect(parseContentPublishCommand({ ...docCommand, action: 'docDraft.update' })).toMatchObject({
-      ok: false, issues: [{ path: 'action', code: 'unknown_action' }],
+      ok: false,
+      issues: [{ path: 'action', code: 'unknown_action' }],
     })
   })
 
@@ -71,7 +72,9 @@ describe('content publish command parser', () => {
 
   it('maps every action to a content type and capability scope', () => {
     expect(Object.keys(CONTENT_TYPE_BY_ACTION)).toEqual(Object.values(CONTENT_PUBLISH_ACTION))
-    expect(CONTENT_TYPE_BY_ACTION[CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY]).toBe(CONTENT_TYPE.ARTICLE)
+    expect(CONTENT_TYPE_BY_ACTION[CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY]).toBe(
+      CONTENT_TYPE.ARTICLE,
+    )
     expect(CONTENT_SCOPE_BY_ACTION[CONTENT_PUBLISH_ACTION.SAVE_WORKING_COPY]).toBe(
       CONTENT_PUBLISH_SCOPE.ARTICLE_WRITE,
     )
@@ -106,12 +109,27 @@ describe('content publish command parser', () => {
   })
 
   it('requires both Queue and queued-copy revisions for a Docs save', () => {
-    const command = { action: CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY,
+    const command = {
+      action: CONTENT_PUBLISH_ACTION.SAVE_DOC_QUEUE_COPY,
       target: { community: 'home', articleId: 'doc' },
-      payload: { content: { format: CONTENT_SOURCE_FORMAT.PLATE, value: [] }, title: 'Doc', subtitle: '', slug: 'doc' },
-      commandId: 'save-queue', revision: 3, queueRevision: 2 }
+      payload: {
+        content: { format: CONTENT_SOURCE_FORMAT.PLATE, value: [] },
+        title: 'Doc',
+        subtitle: '',
+        slug: 'doc',
+      },
+      commandId: 'save-queue',
+      revision: 3,
+      queueRevision: 2,
+    }
     expect(parseContentPublishCommand(command)).toEqual({ ok: true, value: command })
-    expect(parseContentPublishCommand({ ...command, queueRevision: -1 })).toMatchObject({ ok: false, issues: [{ path: 'queueRevision' }] })
-    expect(parseContentPublishCommand({ ...command, revision: 0 })).toMatchObject({ ok: false, issues: [{ path: 'revision' }] })
+    expect(parseContentPublishCommand({ ...command, queueRevision: -1 })).toMatchObject({
+      ok: false,
+      issues: [{ path: 'queueRevision' }],
+    })
+    expect(parseContentPublishCommand({ ...command, revision: 0 })).toMatchObject({
+      ok: false,
+      issues: [{ path: 'revision' }],
+    })
   })
 })

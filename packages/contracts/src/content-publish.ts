@@ -326,10 +326,22 @@ export const parseContentPublishCommand = (input: unknown): TContentPublishParse
       const revision = readRevision(input)
       if (failed(revision)) return revision
       if (!Number.isSafeInteger(input.queueRevision) || Number(input.queueRevision) < 0)
-        return issue('queueRevision', 'invalid_revision', 'queueRevision must be a non-negative integer.')
-      return { ok: true, value: { action, target: { community, articleId },
-        payload: { content, title, subtitle: payload.subtitle, slug }, commandId,
-        revision, queueRevision: Number(input.queueRevision) } }
+        return issue(
+          'queueRevision',
+          'invalid_revision',
+          'queueRevision must be a non-negative integer.',
+        )
+      return {
+        ok: true,
+        value: {
+          action,
+          target: { community, articleId },
+          payload: { content, title, subtitle: payload.subtitle, slug },
+          commandId,
+          revision,
+          queueRevision: Number(input.queueRevision),
+        },
+      }
     }
     case CONTENT_PUBLISH_ACTION.CREATE_AND_PUBLISH_ARTICLE: {
       const community = readString(target, 'community', 'target.community')
