@@ -1,9 +1,9 @@
 diff --git a/dist/esm/common/segmentit/index.mjs b/dist/esm/common/segmentit/index.mjs
-index 92ca5b3845745f17107589ae86edd358392a2152..b6cd50dd7acdc0383d9f3f89682b7da9bf499086 100644
+index 1f1c4e9..579ec2c 100644
 --- a/dist/esm/common/segmentit/index.mjs
 +++ b/dist/esm/common/segmentit/index.mjs
-@@ -193,6 +193,4 @@ function scheduleAcBuild() {
-         setTimeout(ensureAcBuilt, 0);
+@@ -213,6 +213,4 @@ function scheduleAcBuild() {
+         // Some runtimes forbid scheduling asynchronous work during module initialization.
      }
  }
 -scheduleAcBuild();

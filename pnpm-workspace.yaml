@@ -92,10 +92,10 @@ minimumReleaseAgeExclude:
   - cf@1.0.0-beta.5
   - wrangler@4.162.0
   # Reviewed security update for sanitize-html XSS/allowlist bypasses.
-  - sanitize-html@2.18.1
-  - files-sdk@3.1.1
+  - sanitize-html@2.18.2
+  - files-sdk@3.2.0
   - devalue@6.0.3
   # Reviewed Redact runtime used by all TanStack apps in this PR.
   - '@tanstack/redact@0.3.1'
 patchedDependencies:
-  pinyin-pro@3.29.3: patches/pinyin-pro@3.29.3.patch
+  pinyin-pro@3.29.5: patches/pinyin-pro@3.29.5.patch

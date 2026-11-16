@@ -18,7 +18,7 @@
     "lit": "^3.3.3"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "4.3.3",
+    "@tailwindcss/vite": "4.3.5",
     "jsdom": "^29.1.1",
     "typescript": "7.0.2",
     "vite": "^8.3.8",

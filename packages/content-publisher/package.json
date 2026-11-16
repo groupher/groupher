@@ -16,10 +16,10 @@
   },
   "dependencies": {
     "@groupher/contracts": "workspace:*",
-    "@groupher/rich-editor": "0.0.35",
+    "@groupher/rich-editor": "0.0.36",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "sanitize-html": "2.18.1"
+    "sanitize-html": "2.18.2"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
