@@ -1,5 +1,7 @@
 # Community Gate
 
+> **2026-11-16 Doc 公共读取本地实施：**Doc root 继续使用 typed Doc Context 和 Gate.Scope.Article，不新增 Scope facade。仅 public stage 且 policy_mode: public 增加行内 Binding Community 的公开 page EXISTS 与当前 PublicBody 版本 EXISTS；Scope 无请求 Community 参数，由调用方限定目标站点。owner_management / insights_management 保持原合同。读取子批次已完成本地验证、尚未部署；历史 Doc branch / 独占 owner 说明不作为当前读取实现依据。实施及发布边界见 [公共读取专项](../../migrations/docs-public-read-scope-fix.md) 与 [验收记录](../../migrations/docs-public-read-scope-implementation.md)，整体产品合同归 [Mirror Fix](../../migrations/docs-mirror-fix.md)。
+
 > 状态：current
 
 本文是 Gate 的当前入口。Gate 只负责读取 scope 和写入 admission，不拥有业务状态迁移或 transport：

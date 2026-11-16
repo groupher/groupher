@@ -37,6 +37,8 @@
 - [CMS Assets：现状审计与独立重构完成记录](./cms-assets-refactor.md)：单独梳理 Assets 的用户 Command、Query、Persist、Article refs、Upload、Provider 和 Replacement workflow，以及已完成的 workflow recovery、partial-success 与 lease 收口结果。
 - [CMS Facade 边界修复](./cms-facade-fix.md)：Context 根 Facade、internal capability、Outbox 与结构门禁的阶段性修复记录。
 - [CMS DocTree / ContentImport：现状审计与独立重构计划](./cms-doctree-refactor.md)：单独梳理 Docs tree、publish/trash workflow、ContentImport Job、Gate、事务 owner、identity/recovery 和目标目录边界。
+- [Docs Mirror Fix：正文共享与站点编排分离](./docs-mirror-fix.md)：目标已确认、工作区局部实现；整体依赖 Passport → 修改历史 / Diff → co-authors，公共读取子批次可提前发布，实施与专项验收见下项。
+- [Docs 公共读取 Scope 收口](./docs-public-read-scope-fix.md)：R0–R3 [本地实施与验收](./docs-public-read-scope-implementation.md) 完成，17 文件 173 项通过，未部署；用户确认无已知外部 cursor 消费者、Y 保留状态卡；须满足 R0–R3 全部相关退出条件并保持管理 / insights、普通 Article 写入保护、非 Doc cursor 兼容及实际客户端 4203 恢复后才可提前发布，不代表 D2 整体完成。
 - [Docs 独立发布队列与去 Branch 重构](./docs-publish-queue-refactor.md)：待实施的每站点唯一发布队列、审核增量 diff、队列预览和原子 Release；新合同从空 Docs 数据启动，不迁移旧内容与讨论。
 - [CMS Command 客户端 Identity 边界修复](./cms-command-client-identity-fix.md)：保留 GraphQL
   `commandId`，将创建、retry 复用和 unknown outcome 恢复统一收回 mutation executor。
