@@ -22,7 +22,7 @@ type TProps = {
 const Footer: FC<TProps> = ({ article, stats, viewerState, ticketProgress }) => {
   const s = useSalon()
   const { author, insertedAt, meta } = article
-  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
+  const { count, isUpvoted, error, toggle } = useArticleUpvote(article, stats, viewerState)
 
   return (
     <div className={s.wrapper}>
@@ -37,6 +37,7 @@ const Footer: FC<TProps> = ({ article, stats, viewerState, ticketProgress }) => 
           count={count}
           avatarList={meta?.latestUpvotedUsers}
           viewerHasUpvoted={isUpvoted}
+          error={error}
           onAction={() => toggle()}
         />
 

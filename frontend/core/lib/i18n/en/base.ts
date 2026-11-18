@@ -1,4 +1,5 @@
 export default {
+  'operation.failed_retry': 'Action failed. Please try again.',
   post: 'post',
   'article.sort': 'sort',
   'article.cat': 'category',

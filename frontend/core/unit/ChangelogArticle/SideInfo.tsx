@@ -13,7 +13,7 @@ import useSalon from './salon/side_info'
 export default function SideInfo() {
   const s = useSalon()
   const { article, stats, viewerState } = useArticle()
-  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
+  const { count, isUpvoted, error, toggle } = useArticleUpvote(article, stats, viewerState)
 
   if (!article) {
     return <h1>Error article</h1>
@@ -29,6 +29,7 @@ export default function SideInfo() {
           count={count}
           avatarList={latestUpvotedUsers}
           viewerHasUpvoted={isUpvoted}
+          error={error}
           onAction={() => toggle()}
           type={UPVOTE_LAYOUT.ARTICLE}
           bottom={8}

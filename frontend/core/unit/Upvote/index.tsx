@@ -7,6 +7,7 @@
 import { type ElementType, type FC, memo } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
+import useTrans from '~/hooks/useTrans'
 import type { TSpace, TUpvoteLayout, TUser } from '~/spec'
 
 import ArticleLayout from './ArticleLayout'
@@ -29,17 +30,20 @@ type TProps = {
   alias?: string // 觉得很赞(default), 觉得很酷(works), 学到了(blog), 感兴趣(meetup), 有意思(Radar)
   avatarList?: readonly TUser[]
   noLazyLoad?: boolean
+  error?: unknown | null
   onAction?: (did: boolean) => void
 } & TSpace
 
 const Upvote: FC<TProps> = ({
   type = UPVOTE_LAYOUT.DEFAULT,
+  error,
   left = 0,
   right = 0,
   top = 0,
   bottom = 0,
   ...restProps
 }) => {
+  const { t } = useTrans()
   const spacing = { left, right, top, bottom }
 
   const s = useSalon(spacing)
@@ -88,6 +92,9 @@ const Upvote: FC<TProps> = ({
   return (
     <div className={s.wrapper}>
       <Layout {...restProps} />
+      <p className='sr-only' role='status' aria-live='polite'>
+        {error != null ? t('operation.failed_retry') : ''}
+      </p>
     </div>
   )
 }

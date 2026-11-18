@@ -1,9 +1,11 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import useAccount from '~/stores/account/hooks'
+import { toast } from '~/ui/Toaster'
 
 import { enqueueOptimisticToggle } from './toggle'
 import type { TOptimisticToggleOperation, TReadOperationContext } from './types'
@@ -15,10 +17,17 @@ export default function useOptimisticToggle<TTarget, TResult>(
 ) {
   const queryClient = useQueryClient()
   const account = useAccount()
+  const { t } = useTrans()
   const accountScope = account.accountScope
   const [pendingState, setPendingState] = useState<boolean | null>(null)
+  const [error, setError] = useState<unknown | null>(null)
   const [, forceRender] = useState(0)
+  const executionRef = useRef(0)
+  const mountedRef = useRef(true)
   const targetKey = target ? operation.entityKey(target) : null
+  const currentToggleScope = `${accountScope || ''}:${targetKey || ''}`
+  const renderedScopeRef = useRef(currentToggleScope)
+  const pendingScopeRef = useRef(currentToggleScope)
   const context = useMemo<TReadOperationContext>(
     () => ({ queryClient, accountScope }),
     [accountScope, queryClient],
@@ -31,6 +40,26 @@ export default function useOptimisticToggle<TTarget, TResult>(
   useEffect(() => {
     selectedStateRef.current = currentState
   }, [currentState])
+
+  useLayoutEffect(() => {
+    renderedScopeRef.current = currentToggleScope
+  }, [currentToggleScope])
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      executionRef.current += 1
+    }
+  }, [])
+
+  useEffect(() => {
+    if (pendingScopeRef.current === currentToggleScope) return
+    pendingScopeRef.current = currentToggleScope
+    executionRef.current += 1
+    setPendingState(null)
+    setError(null)
+  }, [currentToggleScope])
 
   // QueryClient is the canonical owner. Cache events are global, so compare the
   // operation's entity selector before scheduling a render; unrelated query
@@ -49,19 +78,40 @@ export default function useOptimisticToggle<TTarget, TResult>(
       if (!target || !targetKey || !accountScope) return
       const nextState = next ?? !visibleState
       setPendingState(nextState)
-      void enqueueOptimisticToggle({ queryClient, accountScope, operation, target, next })
-        .catch(() => undefined)
+      setError(null)
+      const scopeAtStart = `${accountScope}:${targetKey}`
+      const handle = enqueueOptimisticToggle({ queryClient, accountScope, operation, target, next })
+      if (handle.created) executionRef.current += 1
+      const executionAtStart = executionRef.current
+      void handle.promise
+        .catch((requestError: unknown) => {
+          if (
+            mountedRef.current &&
+            renderedScopeRef.current === scopeAtStart &&
+            executionRef.current === executionAtStart
+          ) {
+            if (handle.created) toast(t('operation.failed_retry'), 'error')
+            else setError(requestError ?? new Error('Optimistic toggle failed'))
+          }
+        })
         .finally(() => {
-          setPendingState(null)
-          forceRender((value) => value + 1)
+          if (
+            mountedRef.current &&
+            renderedScopeRef.current === scopeAtStart &&
+            executionRef.current === executionAtStart
+          ) {
+            setPendingState(null)
+            forceRender((value) => value + 1)
+          }
         })
     },
-    [accountScope, operation, queryClient, target, targetKey, visibleState],
+    [accountScope, operation, queryClient, t, target, targetKey, visibleState],
   )
 
   return {
     currentState,
     visibleState,
+    error,
     toggle,
   }
 }

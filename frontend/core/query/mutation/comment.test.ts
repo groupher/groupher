@@ -2,20 +2,26 @@ import { QueryClient } from '@tanstack/react-query'
 
 import { THREAD } from '~/const/thread'
 import type { TCommentViewerStates } from '~/lib/commentViewerState'
-import { publishContentCommand } from '~/lib/contentPublisher'
+import { plateSourceFromJson, publishContentCommand } from '~/lib/contentPublisher'
+import { DEFAULT_EFFECTIVE_PAGI_CONFIG } from '~/lib/pagination/params'
 import type { TComment } from '~/spec'
 
+import { commentQueries } from '../comment'
 import { articleQueryKeys, commentKeys, viewerQueryKeys } from '../key'
 import {
+  commentUpvoteOperation,
   deleteCommentOperation,
+  createCommentOperation,
   insertPendingComment,
   patchCommentEverywhere,
   patchCommentViewerState,
   reconcileCreatedComment,
   updateCommentOperation,
   updateCommentEmotion,
+  replyCommentOperation,
 } from './comment'
 import { markChange, rollbackChanges } from './optimistic/effects'
+import { executeOptimisticOperation } from './optimistic/execute'
 
 vi.mock('~/lib/contentPublisher', () => ({
   plateSourceFromJson: vi.fn(() => ({ format: 'plate', value: [] })),
@@ -48,6 +54,33 @@ const articleStats = {
 }
 
 describe('comment query mutation helpers', () => {
+  it('keeps cancellation and authority target contracts separate', () => {
+    const queryClient = new QueryClient()
+    const viewerKey = viewerQueryKeys.commentStates('alice', 'home:POST:42', ['1'])
+    queryClient.setQueryData(key, { entries: [root] })
+    queryClient.setQueryData(viewerKey, { '1': { viewerHasUpvoted: false, emotionFlags: {} } })
+    const target = {
+      comment: root,
+      scope,
+      articlePath: { community: 'home', thread: THREAD.POST, innerId: '42' },
+      articleKey: 'home:POST:42',
+      commentInnerId: '1',
+      commentPath: {
+        article: { community: 'home', thread: THREAD.POST, innerId: '42' },
+        innerId: '1',
+      },
+    }
+    const context = { queryClient, accountScope: 'alice', commandId: 'targets' }
+    const cancelTargets = commentUpvoteOperation.queriesToCancel(context, target)
+    const authorityTargets = commentUpvoteOperation.authorityTargets(context, target)
+
+    expect(cancelTargets.map(({ queryKey }) => queryKey)).toEqual(
+      authorityTargets.map(({ queryKey }) => queryKey),
+    )
+    expect(cancelTargets.every(({ exact }) => exact === true)).toBe(true)
+    expect(authorityTargets.every((authorityTarget) => !('exact' in authorityTarget))).toBe(true)
+  })
+
   it('patches a nested reply across loaded comment lists', () => {
     const queryClient = new QueryClient()
     queryClient.setQueryData(key, { entries: [root], totalCount: 2 })
@@ -152,14 +185,117 @@ describe('comment query mutation helpers', () => {
       },
     }
     const context = { queryClient, accountScope: 'alice', commandId: 'op-1' }
-    const plan = deleteCommentOperation.apply(context, target)
+    const plan = deleteCommentOperation.prepare(context, target)
 
     for (const change of plan.changes) markChange(queryClient, change)
+    for (const change of plan.changes) change.commit()
     expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries).toEqual([])
 
     rollbackChanges(queryClient, plan.changes)
     expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries[0].innerId).toBe('1')
   })
+
+  it('prepares reply changes without writes and still sends when a real cached shape is malformed', async () => {
+    const queryClient = new QueryClient()
+    const listKey = commentKeys.list('home', THREAD.POST, '42')
+    const malformedKey = commentQueries.infinite(
+      { article: { community: 'home', thread: THREAD.POST, innerId: '42' }, mode: 'REPLIES' },
+      DEFAULT_EFFECTIVE_PAGI_CONFIG,
+    ).queryKey
+    const original = { entries: [root], totalCount: 1 }
+    const malformed = { pages: [{ entries: [null] }], pageParams: [undefined] }
+    queryClient.setQueryData(listKey, original)
+    queryClient.setQueryData(malformedKey, malformed)
+    vi.mocked(publishContentCommand).mockResolvedValueOnce({
+      commandId: 'reply-command',
+      comment: { ...root, innerId: 'confirmed-reply' },
+      articleStats,
+    })
+    const target = {
+      scope,
+      articlePath: { community: 'home', thread: THREAD.POST, innerId: '42' },
+      articleKey: 'home:POST:42',
+      parentId: '1',
+      parent: root,
+    }
+
+    await expect(
+      executeOptimisticOperation({
+        queryClient,
+        accountScope: 'alice',
+        operation: replyCommentOperation,
+        target,
+        input: '[]',
+      }),
+    ).resolves.toMatchObject({ comment: { innerId: 'confirmed-reply' } })
+
+    expect(publishContentCommand).toHaveBeenCalledOnce()
+    expect(queryClient.getQueryData(listKey)).toBe(original)
+    expect(queryClient.getQueryData(malformedKey)).toBe(malformed)
+    expect(plateSourceFromJson).toHaveBeenCalledWith('[]')
+  })
+
+  it.each([
+    { failure: 'before structural sharing', landsSecondWrite: false },
+    { failure: 'after subscriber notification', landsSecondWrite: true },
+  ])(
+    'cleans the first comment cache when a later setter throws $failure',
+    async ({ landsSecondWrite }) => {
+      const queryClient = new QueryClient()
+      const firstKey = commentKeys.list('home', THREAD.POST, '42')
+      const secondKey = commentQueries.infinite(
+        { article: { community: 'home', thread: THREAD.POST, innerId: '42' }, mode: 'TIMELINE' },
+        DEFAULT_EFFECTIVE_PAGI_CONFIG,
+      ).queryKey
+      queryClient.setQueryData(firstKey, { entries: [root], totalCount: 1 })
+      queryClient.setQueryData(secondKey, {
+        pages: [{ entries: [root], pageInfo: { page: 1, api: 'offset' } }],
+        pageParams: [undefined],
+      })
+      const setQueryData = queryClient.setQueryData.bind(queryClient)
+      let writes = 0
+      let thrown = false
+      queryClient.setQueryData = ((queryKey, updater, options) => {
+        writes += 1
+        if (writes === 2 && !landsSecondWrite && !thrown) {
+          thrown = true
+          throw new Error('structural sharing failed before cache write')
+        }
+        const result = setQueryData(queryKey, updater, options)
+        if (writes === 2 && landsSecondWrite && !thrown) {
+          thrown = true
+          throw new Error('subscriber failed after cache write')
+        }
+        return result
+      }) as typeof queryClient.setQueryData
+      vi.mocked(publishContentCommand).mockResolvedValueOnce({
+        commandId: 'create-command',
+        comment: { ...root, innerId: 'confirmed-comment' },
+        articleStats,
+      })
+      const target = {
+        scope,
+        articlePath: { community: 'home', thread: THREAD.POST, innerId: '42' },
+        articleKey: 'home:POST:42',
+      }
+
+      await expect(
+        executeOptimisticOperation({
+          queryClient,
+          accountScope: 'alice',
+          operation: createCommentOperation,
+          target,
+          input: '[]',
+        }),
+      ).resolves.toMatchObject({ comment: { innerId: 'confirmed-comment' } })
+
+      expect(publishContentCommand).toHaveBeenCalledOnce()
+      expect(queryClient.getQueryData<{ entries: TComment[] }>(firstKey)?.entries).toEqual([root])
+      expect(
+        queryClient.getQueryData<{ pages: { entries: TComment[] }[] }>(secondKey)?.pages[0].entries,
+      ).toEqual([root])
+    },
+  )
 
   it('reconciles the Article comment revision returned by an update', () => {
     const queryClient = new QueryClient()

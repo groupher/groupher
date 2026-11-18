@@ -2,7 +2,7 @@ import { QueryClient } from '@tanstack/react-query'
 import { afterEach } from 'vitest'
 import { beforeEach, expect, it, vi } from 'vitest'
 
-import { dsbKeys } from '~/query'
+import { articleQueryKeys, dsbKeys } from '~/query'
 import { articleQueries } from '~/query/article'
 import type { TEffectivePagiConfig } from '~/spec'
 
@@ -93,7 +93,9 @@ it.each(['posts', 'changelogs'] as const)(
         browser({ community: 'home', page: 1, size: 20, order: 'PUBLISH' }, fresh).queryKey,
       ),
     ).toMatchObject({ pages: [page('cursor')], pageParams: [null] })
-    expect(client.getQueryCache().findAll({ queryKey: ['article', surface] })).toHaveLength(1)
+    expect(
+      client.getQueryCache().findAll({ queryKey: [...articleQueryKeys.all, surface, 'pagi'] }),
+    ).toHaveLength(1)
   },
 )
 
@@ -106,7 +108,9 @@ it.each(['api', 'missing'] as const)('does not refresh or retry %s mismatch', as
   })
   expect(transport.loadPosts).toHaveBeenCalledTimes(1)
   expect(transport.refreshCommunity).not.toHaveBeenCalled()
-  expect(client.getQueryCache().findAll({ queryKey: ['article', 'posts'] })).toHaveLength(0)
+  expect(
+    client.getQueryCache().findAll({ queryKey: [...articleQueryKeys.all, 'posts', 'pagi'] }),
+  ).toHaveLength(0)
 })
 
 it.each([4209, 4210, 4212])('does not refresh or retry config error %s', async (code) => {
@@ -146,7 +150,9 @@ it('returns a recoverable shell on repeated revision mismatch, records it, and p
       resetPage: false,
     })
     expect(transport.loadPosts).toHaveBeenCalledTimes(2)
-    expect(client.getQueryCache().findAll({ queryKey: ['article', 'posts'] })).toHaveLength(0)
+    expect(
+      client.getQueryCache().findAll({ queryKey: [...articleQueryKeys.all, 'posts', 'pagi'] }),
+    ).toHaveLength(0)
     expect(client.getQueryData(other)).toMatchObject({
       entries: [],
       pinnedEntries: [],

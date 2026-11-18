@@ -1,4 +1,5 @@
 import { CONTENT_PUBLISH_ACTION } from '@groupher/contracts/content-publish'
+import type { QueryKey } from '@tanstack/react-query'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import { stripCommentViewerState } from '~/lib/commentViewerState'
@@ -10,11 +11,16 @@ import commentsSchema from '~/unit/Comments/schema'
 import { articleStatsCache, normalizeArticleStats } from '../../articleStats'
 import type { TArticleStatsResponse } from '../../articleStatsNormalize'
 import { writeCommentFeedReceipt } from '../commentReceipt'
-import type { TOptimisticPlan, TOperationContext, TQueryTarget } from '../optimistic/types'
+import type {
+  TAuthorityTarget,
+  TOptimisticPlan,
+  TOperationContext,
+  TQueryTarget,
+} from '../optimistic/types'
 import {
-  authorityQueries,
   commentOperationQueueKey,
   commentQueryTargets,
+  deleteCommentChanges,
   isCommentQueryForArticle,
   insertPendingCommentChanges,
   insertPendingReplyChanges,
@@ -32,15 +38,27 @@ type TCreatedCommentResult = {
   articleStats: TArticleStatsResponse
 }
 
-const lifecycleQueryTargets = (
+const lifecycleQueryKeys = (
   context: TOperationContext,
   target: TCommentLifecycleTarget,
-): readonly TQueryTarget[] => [
-  ...commentQueryTargets(context.queryClient, target.scope),
+): readonly QueryKey[] => [
+  ...commentQueryTargets(context.queryClient, target.scope).map(({ queryKey }) => queryKey),
   ...articleStatsCache
     .queries(context.queryClient, target.articlePath)
-    .map(({ queryKey }) => ({ queryKey, exact: true as const })),
+    .map(({ queryKey }) => queryKey),
 ]
+
+const lifecycleCancelTargets = (
+  context: TOperationContext,
+  target: TCommentLifecycleTarget,
+): readonly TQueryTarget[] =>
+  lifecycleQueryKeys(context, target).map((queryKey) => ({ queryKey, exact: true }))
+
+const lifecycleAuthorityTargets = (
+  context: TOperationContext,
+  target: TCommentLifecycleTarget,
+): readonly TAuthorityTarget[] =>
+  lifecycleQueryKeys(context, target).map((queryKey) => ({ queryKey }))
 
 const makeCommentCreatePlan = (
   context: TOperationContext,
@@ -52,7 +70,7 @@ const makeCommentCreatePlan = (
   const changes = reply
     ? insertPendingReplyChanges(context.queryClient, { ...target, pending }, context)
     : insertPendingCommentChanges(context.queryClient, { ...target, pending }, context)
-  return { changes, refetchOnFailure: authorityQueries(changes) }
+  return { changes }
 }
 
 const reconcileCreated = (
@@ -95,8 +113,9 @@ export const createCommentOperation = {
   name: 'comment.create',
   entityKey: (target: TCommentLifecycleTarget) => target.articleKey,
   queueKey: (target: TCommentLifecycleTarget) => commentOperationQueueKey(target),
-  queriesToCancel: lifecycleQueryTargets,
-  apply: (context: TOperationContext, target: TCommentLifecycleTarget, _body: string) =>
+  queriesToCancel: lifecycleCancelTargets,
+  authorityTargets: lifecycleAuthorityTargets,
+  prepare: (context: TOperationContext, target: TCommentLifecycleTarget, _body: string) =>
     makeCommentCreatePlan(context, target, _body, false),
   execute: async (
     _context: TOperationContext,
@@ -118,8 +137,9 @@ export const replyCommentOperation = {
   name: 'comment.reply',
   entityKey: (target: TCommentLifecycleTarget) => `${target.articleKey}:${target.parentId}`,
   queueKey: (target: TCommentLifecycleTarget) => commentOperationQueueKey(target),
-  queriesToCancel: lifecycleQueryTargets,
-  apply: (context: TOperationContext, target: TCommentLifecycleTarget, _body: string) =>
+  queriesToCancel: lifecycleCancelTargets,
+  authorityTargets: lifecycleAuthorityTargets,
+  prepare: (context: TOperationContext, target: TCommentLifecycleTarget, _body: string) =>
     makeCommentCreatePlan(context, target, _body, true),
   execute: async (
     _context: TOperationContext,
@@ -155,7 +175,13 @@ export const updateCommentOperation = {
       .queries(context.queryClient, target.articlePath)
       .map(({ queryKey }) => ({ queryKey, exact: true as const })),
   ],
-  apply: (context: TOperationContext, target: TCommentTarget, body: string): TOptimisticPlan => {
+  authorityTargets: (context: TOperationContext, target: TCommentTarget) => [
+    ...commentQueryTargets(context.queryClient, target.scope),
+    ...articleStatsCache
+      .queries(context.queryClient, target.articlePath)
+      .map(({ queryKey }) => ({ queryKey })),
+  ],
+  prepare: (context: TOperationContext, target: TCommentTarget, body: string): TOptimisticPlan => {
     const changes = patchCommentChanges(
       context.queryClient,
       target,
@@ -163,7 +189,7 @@ export const updateCommentOperation = {
       (comment) => ({ ...comment, body: { ...(comment.body || {}), json: body } }),
       context,
     )
-    return { changes, refetchOnFailure: authorityQueries(changes) }
+    return { changes }
   },
   execute: async (
     _context: TOperationContext,
@@ -221,9 +247,15 @@ export const deleteCommentOperation = {
       .queries(context.queryClient, target.articlePath)
       .map(({ queryKey }) => ({ queryKey, exact: true as const })),
   ],
-  apply: (context: TOperationContext, target: TCommentTarget): TOptimisticPlan => {
-    const changes = patchCommentChanges(context.queryClient, target, 'innerId', () => null, context)
-    return { changes, refetchOnFailure: authorityQueries(changes) }
+  authorityTargets: (context: TOperationContext, target: TCommentTarget) => [
+    ...commentQueryTargets(context.queryClient, target.scope),
+    ...articleStatsCache
+      .queries(context.queryClient, target.articlePath)
+      .map(({ queryKey }) => ({ queryKey })),
+  ],
+  prepare: (context: TOperationContext, target: TCommentTarget): TOptimisticPlan => {
+    const changes = deleteCommentChanges(context.queryClient, target, context)
+    return { changes }
   },
   execute: async (
     _context: TOperationContext,

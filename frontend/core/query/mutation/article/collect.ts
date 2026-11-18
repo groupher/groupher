@@ -52,7 +52,10 @@ export const articleCollectOperation = {
     articleStatsCache
       .queries(context.queryClient, articlePathOf(target.article))
       .map(({ queryKey }) => ({ queryKey, exact: true as const })),
-  apply: () => ({ changes: [], refetchOnFailure: [] }),
+  authorityTargets: (context, target) =>
+    articleStatsCache
+      .queries(context.queryClient, articlePathOf(target.article))
+      .map(({ queryKey }) => ({ queryKey })),
   execute: requestArticleCollect,
   reconcile: (context, target, _next, result) => {
     applyArticleInteractionResult(

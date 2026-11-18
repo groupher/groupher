@@ -15,7 +15,7 @@ export default function useArticleUpvote(
   viewerState?: TArticleViewerState,
 ) {
   const account = useAccount()
-  const { visibleState, toggle } = useOptimisticToggle(articleUpvoteOperation, article)
+  const { visibleState, error, toggle } = useOptimisticToggle(articleUpvoteOperation, article)
 
   const accountScope = account.accountScope
   const entityKey = article ? articlePathKey(articlePathOf(article)) : ''
@@ -30,6 +30,7 @@ export default function useArticleUpvote(
       viewerState?.viewerHasUpvoted ??
       visibleState ??
       false,
+    error,
     toggle,
   }
 }

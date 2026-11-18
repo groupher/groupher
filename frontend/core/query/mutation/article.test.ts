@@ -113,7 +113,7 @@ const queueArticleUpvoteToggle = (
     accountScope,
     operation: articleUpvoteOperation,
     target,
-  })
+  }).promise
 
 describe('article query mutation helpers', () => {
   beforeEach(() => {
@@ -217,15 +217,15 @@ describe('article query mutation helpers', () => {
       },
     })
 
-    await expect(
-      enqueueOptimisticToggle({
-        queryClient,
-        accountScope: 'alice',
-        operation: articleUpvoteOperation,
-        target: article,
-        next: true,
-      }),
-    ).resolves.toBeUndefined()
+    const handle = enqueueOptimisticToggle({
+      queryClient,
+      accountScope: 'alice',
+      operation: articleUpvoteOperation,
+      target: article,
+      next: true,
+    })
+    expect(handle.created).toBe(false)
+    await expect(handle.promise).resolves.toBeUndefined()
 
     expect(browserGraphQLRequest).not.toHaveBeenCalled()
     expect(queryClient.getQueryData<TArticle>(detailKey)).toEqual(article)
@@ -291,10 +291,12 @@ describe('article query mutation helpers', () => {
     const queryClient = setupClient()
     const firstContext = { queryClient, accountScope: 'alice', commandId: 'op-first' }
     const secondContext = { queryClient, accountScope: 'alice', commandId: 'op-second' }
-    const first = articleUpvoteOperation.apply(firstContext, article, true)
+    const first = articleUpvoteOperation.prepare(firstContext, article, true)
     for (const change of first.changes) markChange(queryClient, change)
-    const second = articleUpvoteOperation.apply(secondContext, article, false)
+    for (const change of first.changes) change.commit()
+    const second = articleUpvoteOperation.prepare(secondContext, article, false)
     for (const change of second.changes) markChange(queryClient, change)
+    for (const change of second.changes) change.commit()
 
     rollbackChanges(queryClient, first.changes)
 
@@ -309,8 +311,9 @@ describe('article query mutation helpers', () => {
   it('does not restore viewer state after its authority revision advances', () => {
     const queryClient = setupClient()
     const context = { queryClient, accountScope: 'alice', commandId: 'op-stale-viewer' }
-    const plan = articleUpvoteOperation.apply(context, article, true)
+    const plan = articleUpvoteOperation.prepare(context, article, true)
     for (const change of plan.changes) markChange(queryClient, change)
+    for (const change of plan.changes) change.commit()
 
     queryClient.setQueryData<Record<string, TArticleInteractionState>>(viewerKey, (current) => ({
       ...current,
@@ -379,7 +382,9 @@ describe('article query mutation helpers', () => {
     const unsubscribe = observer.subscribe(() => undefined)
     const context = { queryClient, accountScope: 'alice', commandId: 'op-batch-count' }
 
-    articleUpvoteOperation.apply(context, article, true)
+    const plan = articleUpvoteOperation.prepare(context, article, true)
+    for (const change of plan.changes) markChange(queryClient, change)
+    for (const change of plan.changes) change.commit()
     unsubscribe()
 
     const batch = queryClient.getQueryData<(typeof stats)[]>(batchKey)
@@ -455,11 +460,13 @@ describe('article query mutation helpers', () => {
     })
     const unsubscribe = observer.subscribe(() => undefined)
 
-    articleUpvoteOperation.apply(
+    const plan = articleUpvoteOperation.prepare(
       { queryClient, accountScope: 'alice', commandId: 'op-undo-count' },
       article,
       false,
     )
+    for (const change of plan.changes) markChange(queryClient, change)
+    for (const change of plan.changes) change.commit()
     unsubscribe()
 
     expect(queryClient.getQueryData<typeof stats>(statsKey)?.upvotesCount).toBe(2)

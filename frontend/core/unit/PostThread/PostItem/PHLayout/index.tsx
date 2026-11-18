@@ -23,7 +23,7 @@ const DigestView: FC<TProps> = ({ viewModel }) => {
   const isActive = usePreviewItemActive(String(article.innerId ?? ''), THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
   const { author } = article
-  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
+  const { count, isUpvoted, error, toggle } = useArticleUpvote(article, stats, viewerState)
 
   return (
     <div className={s.wrapper}>
@@ -48,6 +48,7 @@ const DigestView: FC<TProps> = ({ viewModel }) => {
           type={UPVOTE_LAYOUT.POST_MINIMAL}
           count={count}
           viewerHasUpvoted={isUpvoted}
+          error={error}
           onAction={() => toggle()}
         />
       </div>

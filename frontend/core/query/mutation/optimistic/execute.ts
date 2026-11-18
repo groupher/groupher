@@ -2,7 +2,8 @@ import type { QueryClient } from '@tanstack/react-query'
 
 import { invalidateExact } from '../../invalidation'
 import { clearChanges, markChange, rollbackChanges } from './effects'
-import type { TOptimisticPlan, TOptimisticOperation } from './types'
+import { isOptimisticCacheError } from './errors'
+import type { TAuthorityTarget, TOptimisticPlan, TOptimisticOperation } from './types'
 
 /**
  * Creates the client command identity used by the mutation executor.
@@ -114,7 +115,36 @@ export type TExecuteOptimisticOperationArgs<TTarget, TInput, TResult> = {
   commandId?: string
 }
 
-/** Runs one typed operation through cancel, optimistic apply, transport, reconcile, and rollback. */
+const diagnose = (message: string, details: Record<string, unknown>): void => {
+  try {
+    console.error(`[optimistic-operation] ${message}`, details)
+  } catch {
+    // Diagnostics must never change a command result.
+  }
+}
+
+const causeName = (error: unknown): string => (error instanceof Error ? error.name : typeof error)
+
+const uniqueAuthorityTargets = (targets: readonly TAuthorityTarget[]): TAuthorityTarget[] => [
+  ...new Map(targets.map((target) => [JSON.stringify(target.queryKey), target])).values(),
+]
+
+const calibrate = async (
+  queryClient: QueryClient,
+  targets: readonly TAuthorityTarget[],
+  context: { operation: string; commandId: string },
+): Promise<void> => {
+  try {
+    await invalidateExact(queryClient, uniqueAuthorityTargets(targets))
+  } catch (error) {
+    diagnose('authority calibration could not be scheduled', {
+      ...context,
+      causeName: causeName(error),
+    })
+  }
+}
+
+/** Runs one typed operation through cancel, prepare, commit, transport, reconcile, and cleanup. */
 export const executeOptimisticOperation = async <TTarget, TInput, TResult>({
   queryClient,
   accountScope,
@@ -130,17 +160,79 @@ export const executeOptimisticOperation = async <TTarget, TInput, TResult>({
   return enqueue(queryClient, lane, async () => {
     const context = { queryClient, accountScope, commandId: commandId || createCommandId() }
     const cancelTargets = operation.queriesToCancel(context, target, input)
+    const authorityTargets = operation.authorityTargets(context, target, input)
+    const pendingCalibrationTargets = new Map<string, TAuthorityTarget>()
+    const requestCalibration = (targets: readonly TAuthorityTarget[]): void => {
+      for (const authorityTarget of uniqueAuthorityTargets(targets)) {
+        const key = JSON.stringify(authorityTarget.queryKey)
+        pendingCalibrationTargets.set(key, authorityTarget)
+      }
+    }
+    const scheduleCalibration = (): void => {
+      const pending = [...pendingCalibrationTargets.values()]
+      if (pending.length === 0) return
+      pendingCalibrationTargets.clear()
+      void calibrate(queryClient, pending, {
+        operation: operation.name,
+        commandId: context.commandId,
+      })
+    }
     await Promise.all(cancelTargets.map((target) => queryClient.cancelQueries(target)))
 
-    const plan: TOptimisticPlan = operation.apply(context, target, input)
-    for (const change of plan.changes) markChange(queryClient, change)
+    let plan: TOptimisticPlan = { changes: [] }
+    try {
+      plan = operation.prepare?.(context, target, input) ?? { changes: [] }
+    } catch (error) {
+      requestCalibration(authorityTargets)
+      if (!isOptimisticCacheError(error)) {
+        scheduleCalibration()
+        throw error
+      }
+      diagnose('optimistic preparation degraded to command-only execution', {
+        operation: operation.name,
+        commandId: context.commandId,
+        causeName: causeName(error),
+      })
+    }
+
+    if (plan.changes.length) {
+      for (const change of plan.changes) markChange(queryClient, change)
+      try {
+        for (const change of plan.changes) change.commit()
+      } catch (error) {
+        const cleanupFailures = rollbackChanges(queryClient, plan.changes)
+        diagnose('optimistic commit failed and cleanup was attempted', {
+          operation: operation.name,
+          commandId: context.commandId,
+          causeName: causeName(error),
+          cleanupFailureCount: cleanupFailures.length,
+          cleanupFailureNames: cleanupFailures.map(causeName),
+        })
+        requestCalibration(authorityTargets)
+        if (!isOptimisticCacheError(error)) {
+          scheduleCalibration()
+          throw error
+        }
+        // A recognized cache-only commit failure drops the optimistic effect
+        // and lets the server result own the outcome.
+        plan = { changes: [] }
+      }
+    }
 
     let result: TResult
     try {
       result = await operation.execute(context, target, input)
     } catch (error) {
-      rollbackChanges(queryClient, plan.changes)
-      await invalidateExact(queryClient, plan.refetchOnFailure)
+      const cleanupFailures = rollbackChanges(queryClient, plan.changes)
+      diagnose('command failed; optimistic cleanup was attempted', {
+        operation: operation.name,
+        commandId: context.commandId,
+        causeName: causeName(error),
+        cleanupFailureCount: cleanupFailures.length,
+        cleanupFailureNames: cleanupFailures.map(causeName),
+      })
+      requestCalibration(authorityTargets)
+      scheduleCalibration()
       throw error
     }
 
@@ -149,11 +241,26 @@ export const executeOptimisticOperation = async <TTarget, TInput, TResult>({
     // as a safe convergence fallback, then return the confirmed result.
     try {
       operation.reconcile(context, target, input, result)
-    } catch {
-      await invalidateExact(queryClient, plan.refetchOnFailure)
+    } catch (error) {
+      diagnose('confirmed command could not reconcile locally', {
+        operation: operation.name,
+        commandId: context.commandId,
+        causeName: causeName(error),
+      })
+      requestCalibration(authorityTargets)
     } finally {
-      clearChanges(queryClient, plan.changes)
+      try {
+        clearChanges(queryClient, plan.changes)
+      } catch (error) {
+        diagnose('optimistic ownership cleanup failed after command confirmation', {
+          operation: operation.name,
+          commandId: context.commandId,
+          causeName: causeName(error),
+        })
+        requestCalibration(authorityTargets)
+      }
     }
+    scheduleCalibration()
     return result
   })
 }
