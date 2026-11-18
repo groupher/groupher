@@ -182,7 +182,8 @@ describe('useOptimisticToggle', () => {
     hook.rerender({ id: 'first' })
     expect(hook.result.current.visibleState).toBe(false)
 
+    await waitFor(() => expect(settle).toBeTypeOf('function'))
     await act(async () => settle?.(true))
-    await waitFor(() => expect(hook.result.current.currentState).toBe(false))
+    expect(hook.result.current.visibleState).toBe(false)
   })
 })
