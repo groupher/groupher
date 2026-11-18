@@ -10,7 +10,7 @@ vi.mock('~/hooks/useTrans', () => ({
   default: () => ({ t: () => 'Action failed. Please try again.' }),
 }))
 
-it('keeps the live region mounted and fills it when the optimistic action fails', () => {
+it('keeps the live region mounted and clears it when the action is retried', () => {
   const { rerender } = render(<Upvote type={UPVOTE_LAYOUT.GENERAL} />)
   const status = screen.getByRole('status')
 
@@ -21,4 +21,8 @@ it('keeps the live region mounted and fills it when the optimistic action fails'
 
   expect(screen.getByRole('status')).toBe(status)
   expect(status).toHaveTextContent('Action failed. Please try again.')
+
+  rerender(<Upvote type={UPVOTE_LAYOUT.GENERAL} />)
+  expect(screen.getByRole('status')).toBe(status)
+  expect(status).toBeEmptyDOMElement()
 })

@@ -83,7 +83,7 @@ describe('useOptimisticToggle', () => {
 
     await waitFor(() => expect(mocks.toast).toHaveBeenCalledTimes(1))
     expect(mocks.toast).toHaveBeenLastCalledWith('Action failed. Please try again.', 'error')
-    expect(first.result.current.error).toBeNull()
+    expect(first.result.current.error).toEqual(new Error('first failed'))
     expect(second.result.current.error).toEqual(new Error('first failed'))
 
     act(() => first.result.current.toggle(true))
@@ -120,5 +120,32 @@ describe('useOptimisticToggle', () => {
     hook.unmount()
     await act(async () => rejectRequest?.(new Error('late failure')))
     expect(mocks.toast).not.toHaveBeenCalled()
+  })
+
+  it('does not show the previous target pending state after switching targets', () => {
+    const queryClient = new QueryClient()
+    const operation: TOptimisticToggleOperation<{ id: string }, boolean> = {
+      name: 'test.toggle.target-scope',
+      entityKey: (target) => target.id,
+      read: () => false,
+      queriesToCancel: () => [],
+      authorityTargets: () => [],
+      prepare: () => emptyPlan,
+      execute: async (_context, _target, state) => state,
+      reconcile: () => undefined,
+    }
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    )
+    const hook = renderHook(({ id }) => useOptimisticToggle(operation, { id }), {
+      initialProps: { id: 'first' },
+      wrapper,
+    })
+
+    act(() => hook.result.current.toggle(true))
+    expect(hook.result.current.visibleState).toBe(true)
+
+    hook.rerender({ id: 'second' })
+    expect(hook.result.current.visibleState).toBe(false)
   })
 })

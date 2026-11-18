@@ -2,8 +2,8 @@ import type { QueryClient } from '@tanstack/react-query'
 
 import { invalidateExact } from '../../invalidation'
 import { clearChanges, markChange, rollbackChanges } from './effects'
-import { isOptimisticCacheError } from './errors'
-import type { TAuthorityTarget, TOptimisticPlan, TOptimisticOperation } from './types'
+import { isOptimisticCacheError, OptimisticCacheError } from './errors'
+import type { TAuthorityTarget, TOptimisticPlan, TOptimisticOperation, TQueryTarget } from './types'
 
 /**
  * Creates the client command identity used by the mutation executor.
@@ -85,7 +85,10 @@ export const executeCommand = async <TVariables extends { commandId: string | nu
   request({ ...variables, commandId: commandId || createCommandId() } as TVariables)
 
 const operationQueues = new WeakMap<QueryClient, Map<string, Promise<unknown>>>()
-const pendingCalibrations = new WeakMap<QueryClient, Map<string, Promise<void>>>()
+const pendingCalibrations = new WeakMap<
+  QueryClient,
+  Map<string, { target: TAuthorityTarget; promise: Promise<void> }>
+>()
 
 const enqueue = <T>(queryClient: QueryClient, key: string, run: () => Promise<T>): Promise<T> => {
   let queues = operationQueues.get(queryClient)
@@ -124,22 +127,39 @@ const diagnose = (message: string, details: Record<string, unknown>): void => {
   }
 }
 
-const causeName = (error: unknown): string => (error instanceof Error ? error.name : typeof error)
+const causeName = (error: unknown): string => {
+  if (error instanceof OptimisticCacheError && error.cause !== undefined)
+    return causeName(error.cause)
+  return error instanceof Error ? error.name : typeof error
+}
 
 const uniqueAuthorityTargets = (targets: readonly TAuthorityTarget[]): TAuthorityTarget[] => [
   ...new Map(targets.map((target) => [JSON.stringify(target.queryKey), target])).values(),
 ]
 
-const waitForPendingCalibration = async (
+const cancellationMatches = (cancelTarget: TQueryTarget, target: TAuthorityTarget): boolean => {
+  const cancelKey = cancelTarget.queryKey
+  const authorityKey = target.queryKey
+  if (cancelTarget.exact && cancelKey.length !== authorityKey.length) return false
+  if (cancelKey.length > authorityKey.length) return false
+  return cancelKey.every(
+    (part, index) => JSON.stringify(part) === JSON.stringify(authorityKey[index]),
+  )
+}
+
+const getPendingCalibrationTargets = (
   queryClient: QueryClient,
-  targets: readonly { queryKey: readonly unknown[] }[],
-): Promise<void> => {
+  cancelTargets: readonly TQueryTarget[],
+): TAuthorityTarget[] => {
   const calibrations = pendingCalibrations.get(queryClient)
-  if (!calibrations) return
-  const pending = targets
-    .map((target) => calibrations.get(JSON.stringify(target.queryKey)))
-    .filter((calibration): calibration is Promise<void> => calibration !== undefined)
-  await Promise.all(pending)
+  if (!calibrations) return []
+  return uniqueAuthorityTargets(
+    [...calibrations.values()]
+      .filter(({ target }) =>
+        cancelTargets.some((cancelTarget) => cancellationMatches(cancelTarget, target)),
+      )
+      .map(({ target }) => target),
+  )
 }
 
 const calibrate = async (
@@ -190,25 +210,32 @@ export const executeOptimisticOperation = async <TTarget, TInput, TResult>({
         calibrations = new Map()
         pendingCalibrations.set(queryClient, calibrations)
       }
-      const calibration = Promise.resolve().then(() =>
-        calibrate(queryClient, pending, {
-          operation: operation.name,
-          commandId: context.commandId,
-        }),
-      )
       for (const target of pending) {
         const key = JSON.stringify(target.queryKey)
-        const previous = calibrations.get(key)
-        const combined = previous
-          ? Promise.all([previous, calibration]).then(() => undefined)
-          : calibration
-        calibrations.set(key, combined)
-        void combined.then(() => {
-          if (calibrations?.get(key) === combined) calibrations.delete(key)
+        const previous = calibrations.get(key)?.promise
+        const calibration = previous
+          ? previous.then(() =>
+              calibrate(queryClient, [target], {
+                operation: operation.name,
+                commandId: context.commandId,
+              }),
+            )
+          : Promise.resolve().then(() =>
+              calibrate(queryClient, [target], {
+                operation: operation.name,
+                commandId: context.commandId,
+              }),
+            )
+        calibrations.set(key, { target, promise: calibration })
+        void calibration.then(() => {
+          if (calibrations?.get(key)?.promise === calibration) calibrations.delete(key)
         })
       }
     }
-    await waitForPendingCalibration(queryClient, cancelTargets)
+    // A new action may cancel an in-flight recovery refetch. Carry that target
+    // forward so recovery is re-scheduled after this action settles, without
+    // blocking independent lanes on a slow or paused network request.
+    requestCalibration(getPendingCalibrationTargets(queryClient, cancelTargets))
     await Promise.all(cancelTargets.map((target) => queryClient.cancelQueries(target)))
 
     let plan: TOptimisticPlan = { changes: [] }

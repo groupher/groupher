@@ -18,6 +18,7 @@ import type { TArticle, TEmotionType } from '~/spec'
 
 import { articlePathKey, articlePathOf } from '../../articlePath'
 import { articleStatsCache } from '../../articleStats'
+import { articleInteractionStateQueries } from '../../viewer'
 import { executeOptimisticOperation } from '../optimistic/execute'
 import type { TOptimisticOperation, TOperationContext } from '../optimistic/types'
 import { applyArticleInteractionResult, type TArticleInteractionResult } from './result'
@@ -84,10 +85,18 @@ export const articleEmotionOperation = {
     articleStatsCache
       .queries(context.queryClient, articlePathOf(target.article))
       .map(({ queryKey }) => ({ queryKey, exact: true as const })),
-  authorityTargets: (context, target) =>
-    articleStatsCache
+  authorityTargets: (context, target) => [
+    ...articleStatsCache
       .queries(context.queryClient, articlePathOf(target.article))
       .map(({ queryKey }) => ({ queryKey })),
+    ...(context.accountScope
+      ? articleInteractionStateQueries(
+          context.queryClient,
+          context.accountScope,
+          articlePathOf(target.article),
+        ).map(({ queryKey }) => ({ queryKey }))
+      : []),
+  ],
   execute: requestArticleEmotion,
   reconcile: (context, target, _next, result) => {
     applyArticleInteractionResult(

@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, QueryObserver } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
@@ -81,6 +81,12 @@ describe('useCommentEmotion', () => {
     queryClient.setQueryData(viewerKey, {
       '1': { emotionFlags: { HEART: false }, viewerHasUpvoted: false },
     })
+    const observer = new QueryObserver(queryClient, {
+      queryKey: listKey,
+      queryFn: async () => ({ entries: [comment] }),
+      staleTime: Number.POSITIVE_INFINITY,
+    })
+    const unsubscribe = observer.subscribe(() => undefined)
     mocks.browserGraphQLRequest.mockRejectedValueOnce(new Error('request failed'))
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -91,7 +97,9 @@ describe('useCommentEmotion', () => {
 
     await waitFor(() => expect(mocks.toast).toHaveBeenCalledTimes(1))
     expect(mocks.toast).toHaveBeenCalledWith('Action failed. Please try again.', 'error')
-    expect(result.current.error).toBeNull()
+    expect(result.current.error).toEqual(new Error('request failed'))
+    await waitFor(() => expect(result.current.emotions[0]?.count).toBe(1))
     expect(mocks.browserGraphQLRequest).toHaveBeenCalledOnce()
+    unsubscribe()
   })
 })

@@ -55,6 +55,41 @@ describe('optimistic operation executor', () => {
     ).resolves.toBe('confirmed')
   })
 
+  it('keeps the original cache failure type in diagnostics', async () => {
+    const queryClient = new QueryClient()
+    const diagnostic = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const operation: TOptimisticOperation<{ id: string }, void, string> = {
+      name: 'test.cache-cause',
+      entityKey: ({ id }) => id,
+      queriesToCancel: () => [],
+      authorityTargets: () => [],
+      prepare: () =>
+        prepareOptimisticCache(() => {
+          throw new TypeError('malformed cache shape')
+        }),
+      execute: async () => 'confirmed',
+      reconcile: () => undefined,
+    }
+
+    try {
+      await expect(
+        executeOptimisticOperation({
+          queryClient,
+          accountScope: 'acct-a',
+          operation,
+          target: { id: '42' },
+          input: undefined,
+        }),
+      ).resolves.toBe('confirmed')
+      expect(diagnostic).toHaveBeenCalledWith(
+        '[optimistic-operation] optimistic preparation degraded to command-only execution',
+        expect.objectContaining({ causeName: 'TypeError' }),
+      )
+    } finally {
+      diagnostic.mockRestore()
+    }
+  })
+
   it('cancels affected queries and serializes one queue lane', async () => {
     const queryClient = new QueryClient()
     const cancelQueries = vi.spyOn(queryClient, 'cancelQueries').mockResolvedValue()
@@ -320,30 +355,32 @@ describe('optimistic operation executor', () => {
     expect(invalidate).toHaveBeenCalledOnce()
   })
 
-  it('waits for a pending failure calibration before the next same-lane cancellation', async () => {
+  it('reschedules cancelled recovery after an independent action settles', async () => {
     const queryClient = new QueryClient()
     const events: string[] = []
-    let finishCalibration: (() => void) | undefined
+    const finishCalibrations: Array<() => void> = []
+    let finishNextCommand: ((result: string) => void) | undefined
     vi.spyOn(queryClient, 'invalidateQueries').mockImplementation(
       () =>
         new Promise((resolve) => {
-          events.push('calibrate-start')
-          finishCalibration = () => {
-            events.push('calibrate-finish')
+          events.push(`calibrate-start-${finishCalibrations.length + 1}`)
+          finishCalibrations.push(() => {
+            events.push(`calibrate-finish-${finishCalibrations.length}`)
             resolve(undefined as never)
-          }
+          })
         }),
     )
     vi.spyOn(queryClient, 'cancelQueries').mockImplementation(async () => {
-      events.push('cancel')
+      events.push(`cancel-${events.filter((event) => event.startsWith('cancel-')).length + 1}`)
+      if (finishCalibrations.length === 1) finishCalibrations[0]?.()
       return undefined as never
     })
     const operation: TOptimisticOperation<{ id: string }, 'fail' | 'succeed', string> = {
       name: 'test.pending-calibration',
       entityKey: ({ id }) => id,
-      queueKey: () => 'shared-lane',
-      queriesToCancel: () => [{ queryKey: ['authority'], exact: true }],
-      authorityTargets: () => [{ queryKey: ['authority'] }],
+      queueKey: ({ id }) => `article:${id}:reaction`,
+      queriesToCancel: () => [{ queryKey: ['shared-stats'], exact: true }],
+      authorityTargets: () => [{ queryKey: ['shared-stats'] }],
       prepare: (_context, _target, input) =>
         input === 'fail'
           ? prepareOptimisticCache(() => {
@@ -353,7 +390,9 @@ describe('optimistic operation executor', () => {
       execute: async (_context, _target, input) => {
         events.push(`execute-${input}`)
         if (input === 'fail') throw new Error('request failed')
-        return 'confirmed'
+        return new Promise((resolve) => {
+          finishNextCommand = resolve
+        })
       },
       reconcile: () => undefined,
     }
@@ -367,27 +406,40 @@ describe('optimistic operation executor', () => {
         input: 'fail',
       }),
     ).rejects.toMatchObject({ message: 'request failed' })
+    await vi.waitFor(() => expect(events).toContain('calibrate-start-1'))
 
     const nextExecution = executeOptimisticOperation({
       queryClient,
       accountScope: 'acct-a',
       operation,
-      target: { id: '43' },
+      target: { id: '7' },
       input: 'succeed',
     })
 
-    await vi.waitFor(() => expect(events).toContain('calibrate-start'))
-    expect(events).toEqual(['cancel', 'execute-fail', 'calibrate-start'])
-    finishCalibration?.()
-    await expect(nextExecution).resolves.toBe('confirmed')
+    await vi.waitFor(() => expect(events).toContain('execute-succeed'))
     expect(events).toEqual([
-      'cancel',
+      'cancel-1',
       'execute-fail',
-      'calibrate-start',
-      'calibrate-finish',
-      'cancel',
+      'calibrate-start-1',
+      'cancel-2',
+      'calibrate-finish-1',
       'execute-succeed',
     ])
+    expect(finishCalibrations).toHaveLength(1)
+
+    finishNextCommand?.('confirmed')
+    await expect(nextExecution).resolves.toBe('confirmed')
+    await vi.waitFor(() => expect(events).toContain('calibrate-start-2'))
+    expect(events).toEqual([
+      'cancel-1',
+      'execute-fail',
+      'calibrate-start-1',
+      'cancel-2',
+      'calibrate-finish-1',
+      'execute-succeed',
+      'calibrate-start-2',
+    ])
+    finishCalibrations[1]?.()
   })
 
   it('cleans multiple landed writes after the second commit throws, then sends the command', async () => {

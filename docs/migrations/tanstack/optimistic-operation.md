@@ -35,7 +35,7 @@ Promise；Action 会保存并抛出错误，Toggle 包装入口则会捕获后�
 | Comment upvote/emotion       | public aggregate 与 viewer flag        | 拆准备，保留 public refetch 与 private 恢复的差异  |
 | Comment create/reply         | 临时实体                               | 准备插入位置，按 command identity 清理临时项       |
 | Comment update               | body 字段                              | 准备字段变化与恢复依据                             |
-| Comment delete               | 移除实体，目前借用 innerId 字段表示    | 保证删除位置与安全恢复；显式动作类型按实现成本整理 |
+| Comment delete               | 通过 `entity-delete` 动作移除实体      | 保证删除位置与安全恢复                             |
 | Article collect/emotion      | 空 plan，无乐观写入                    | 失败校准；不要求实现 prepare                       |
 | ArticleStats confirmed merge | 按 owner revision 合并成功结果         | 保持现有 owner 语义，不改成通用 prepare/collection |
 
@@ -96,6 +96,7 @@ lane 隔离不代替 marker，也不等于会话复验。commandId 不作为跨�
 进入现有 accountScope + lane
   -> 解析 cancel targets 与 authority targets
   -> 等待取消相关在途读取
+  -> 若新操作取消了恢复中的校准读取，将其目标延后到本次操作结束后重新校准
   -> 只读准备
   -> 对即将提交的变化提前登记 ownership
   -> 通过领域提交方式写入乐观变化
@@ -160,9 +161,8 @@ ArticleStats 乐观提交目前使用与 confirmed structuralSharing 不同的�
 
 删除路径必须保存实体身份、稳定页身份与恢复依据，不能按普通字段恢复来验收。InfiniteData 按 pageParam 找回原页，
 有限页按 pageInfo.page 或单页身份匹配；原页已不存在时不把实体插入其他页，并依靠失败路径的 authority 校准追平。
-退出 innerId 隐藏协议、
-改成显式删除类型是整理候选，不作为 A 的强制发布条件；若准备结果自然需要区分删除且直接表达
-更简单，则随 A 完成。不得为了延期再建长期兼容模型，或把新接口永久锁定为只能表达字段修改。
+Comment 删除已使用显式 `entity-delete` 动作，不再通过 `innerId` 字段修改表达。
+不得为了延期再建长期兼容模型，或把新接口永久锁定为只能表达字段修改。
 不能为形式统一而给所有动作添加值或 revision 检查，也不能以仅比较值替代 marker。
 
 当前 Comment public count/emotions 失败主要走 refetch；Article upvote 的 count 则保留
@@ -252,7 +252,7 @@ cause；执行器只据该标识授予降级资格。不得把整个 operation �
 
 A 已将 operation 迁移到只读 `prepare`、分开的 `authorityTargets`、预登记 ownership、逐项提交和条件化清理；
 Comment 删除使用独立 `entity-delete` 动作。prepare 失败跳过乐观效果并发送有效命令，commit 部分失败
-先做安全清理与校准，再按故障标识决定是否降级发送。
+先做安全清理并记录校准目标，再按故障标识决定是否降级发送；校准在命令结束后安排。
 
 A 不要求新建可观察 phase、通用策略组合器、错误订阅 Map 或任意操作解释器。没有实际用途的
 intent 字段、空 callbacks 和重复配置不作为新接口的强制项。
@@ -287,7 +287,7 @@ useCommentEmotion，以及实际展示入口。只增加 hook.error 而没有展
 B 验收必须覆盖：两个入口参与同一次共享执行，只弹一条失败 toast；参与者可各自展示错误；
 下一轮执行失败仍可提示；no-op 不产生创建者提示；新执行及目标/账号切换不残留旧错误。
 
-实现已覆盖共享失败的单次 toast、每个参与 hook 的本地 error、重试清错、no-op 和创建者卸载后的提示抑制；
+实现已覆盖共享失败的单次 toast、每个参与 hook（包括创建者）的本地 error、重试清错、no-op 和创建者卸载后的提示抑制；
 Toast 使用既有全局 Toaster。行内 live status 不参与布局，提示文案使用 `operation.failed_retry` 中英文案。账号/目标切换清除 hook error。
 
 ### 4.3 C：评论 adapter（整体待收益评估）
@@ -432,3 +432,15 @@ Article 与 Comment 的同 revision 接受规则保持各自合同；正常成�
 
 文档只记录当前合同、待实施边界和验收证据。历史 O0–O5 的主链接线不等于本次 A/B/C 已完成；
 后续更新状态时分别记录实现、测试和发布证据。
+
+历史迁移阶段仍被 RYW 与 Query Sync Cache 文档引用，定义如下；它们是已完成的基础迁移，不是本轮 A/B/C 的子阶段：
+
+| 历史阶段 | 已完成的基础范围                           |
+| -------- | ------------------------------------------ |
+| O0       | 冻结现状、operation 合同与回归基线         |
+| O1       | Article upvote 竖切与 optimistic operation |
+| O2a      | 后端 commandId 幂等                        |
+| O2b      | Article revision 与权威写后同步            |
+| O3       | Comment reaction                           |
+| O4       | Comment create/update/delete 生命周期      |
+| O5       | View operation identity                    |

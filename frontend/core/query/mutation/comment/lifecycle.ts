@@ -176,7 +176,7 @@ export const updateCommentOperation = {
       .map(({ queryKey }) => ({ queryKey, exact: true as const })),
   ],
   authorityTargets: (context: TOperationContext, target: TCommentTarget) => [
-    ...commentQueryTargets(context.queryClient, target.scope),
+    ...commentQueryTargets(context.queryClient, target.scope).map(({ queryKey }) => ({ queryKey })),
     ...articleStatsCache
       .queries(context.queryClient, target.articlePath)
       .map(({ queryKey }) => ({ queryKey })),
@@ -248,7 +248,7 @@ export const deleteCommentOperation = {
       .map(({ queryKey }) => ({ queryKey, exact: true as const })),
   ],
   authorityTargets: (context: TOperationContext, target: TCommentTarget) => [
-    ...commentQueryTargets(context.queryClient, target.scope),
+    ...commentQueryTargets(context.queryClient, target.scope).map(({ queryKey }) => ({ queryKey })),
     ...articleStatsCache
       .queries(context.queryClient, target.articlePath)
       .map(({ queryKey }) => ({ queryKey })),

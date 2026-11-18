@@ -7,7 +7,7 @@ import { articleStats, articleStatsBatch } from '../articleStats'
 import { articleQueryKeys, viewerQueryKeys } from '../key'
 import { articleUpvoteOperation } from './article'
 import { setArticleCollected } from './article/collect'
-import { setArticleEmotion } from './article/emotion'
+import { articleEmotionOperation, setArticleEmotion } from './article/emotion'
 import {
   clearArticleUpvoteReceipts,
   readArticleUpvoteReceipt,
@@ -606,5 +606,16 @@ describe('article query mutation helpers', () => {
         'home:POST:42'
       ].viewerEmotion,
     ).toBe('HEART')
+  })
+
+  it('includes private interaction state in emotion authority targets', () => {
+    const queryClient = setupClient()
+    const targets = articleEmotionOperation.authorityTargets(
+      { queryClient, accountScope: 'alice', commandId: 'emotion-targets' },
+      { article, emotion: 'heart' },
+      true,
+    )
+
+    expect(targets.map(({ queryKey }) => queryKey)).toContainEqual(viewerKey)
   })
 })

@@ -11,7 +11,10 @@ vi.mock('~/ui/Tooltip', () => ({
   default: ({ children }: { children: ReactNode }) => children,
 }))
 vi.mock('~/hooks/useTrans', () => ({
-  default: () => ({ t: () => 'Action failed. Please try again.' }),
+  default: () => ({
+    t: (key: string) =>
+      key === 'operation.failed_retry' ? 'Action failed. Please try again.' : key,
+  }),
 }))
 
 it('keeps the live region mounted and fills it when the optimistic action fails', () => {

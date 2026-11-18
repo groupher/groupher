@@ -81,6 +81,28 @@ describe('comment query mutation helpers', () => {
     expect(authorityTargets.every((authorityTarget) => !('exact' in authorityTarget))).toBe(true)
   })
 
+  it('keeps lifecycle authority targets free of cancellation filters', () => {
+    const queryClient = new QueryClient()
+    queryClient.setQueryData(key, { entries: [root] })
+    const target = {
+      comment: root,
+      scope,
+      articlePath: { community: 'home', thread: THREAD.POST, innerId: '42' },
+      articleKey: 'home:POST:42',
+      commentInnerId: '1',
+      commentPath: {
+        article: { community: 'home', thread: THREAD.POST, innerId: '42' },
+        innerId: '1',
+      },
+    }
+    const context = { queryClient, accountScope: 'alice', commandId: 'lifecycle-targets' }
+
+    const updateTargets = updateCommentOperation.authorityTargets(context, target, 'updated')
+    const deleteTargets = deleteCommentOperation.authorityTargets(context, target, undefined)
+    expect(updateTargets.every((authorityTarget) => !('exact' in authorityTarget))).toBe(true)
+    expect(deleteTargets.every((authorityTarget) => !('exact' in authorityTarget))).toBe(true)
+  })
+
   it('patches a nested reply across loaded comment lists', () => {
     const queryClient = new QueryClient()
     queryClient.setQueryData(key, { entries: [root], totalCount: 2 })
