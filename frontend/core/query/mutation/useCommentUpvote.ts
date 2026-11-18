@@ -12,12 +12,13 @@ import useCommentTarget from './useCommentTarget'
 export default function useCommentUpvote(comment: TComment) {
   const queryClient = useQueryClient()
   const target = useCommentTarget(comment)
-  const { visibleState, toggle } = useOptimisticToggle(commentUpvoteOperation, target)
+  const { visibleState, error, toggle } = useOptimisticToggle(commentUpvoteOperation, target)
   const visibleComment = selectCommentFromCache(queryClient, target.scope, comment)
 
   return {
     count: visibleComment.upvotesCount || 0,
     isUpvoted: Boolean(visibleState),
+    error,
     toggle,
   }
 }

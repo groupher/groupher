@@ -8,6 +8,7 @@ import useAccount from '~/stores/account/hooks'
 
 import { commentEmotionOperation, type TCommentEmotionTarget } from './comment'
 import { enqueueOptimisticToggle } from './optimistic/toggle'
+import useOptimisticToggleFeedback from './optimistic/useOptimisticToggleFeedback'
 import useCommentProjection from './useCommentProjection'
 import useCommentTarget from './useCommentTarget'
 
@@ -18,23 +19,31 @@ export default function useCommentEmotion(comment: TComment) {
   const accountScope = account.accountScope || ''
   const target = useCommentTarget(comment)
   const visibleComment = useCommentProjection(comment, target.scope)
+  const scopeKey = `${accountScope}:${target.articleKey}:${target.commentInnerId}`
+  const { clear: clearError, error, reportFailure, track } = useOptimisticToggleFeedback(scopeKey)
 
   const toggle = useCallback(
     (name: TEmotionType): void => {
       if (!accountScope) return
+      clearError()
       const emotionTarget: TCommentEmotionTarget = { ...target, emotionName: name }
-      void enqueueOptimisticToggle({
+      const handle = enqueueOptimisticToggle({
         queryClient,
         accountScope,
         operation: commentEmotionOperation,
         target: emotionTarget,
-      }).catch(() => undefined)
+      })
+      const attempt = track(handle, commentEmotionOperation.entityKey(emotionTarget))
+      void handle.promise.catch((requestError: unknown) => {
+        reportFailure(attempt, requestError, 'Comment emotion request failed')
+      })
     },
-    [accountScope, queryClient, target],
+    [accountScope, clearError, queryClient, reportFailure, target, track],
   )
 
   return {
     emotions: visibleComment.emotions || [],
+    error,
     toggle,
   }
 }

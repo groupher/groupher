@@ -42,18 +42,23 @@ const clearChange = (queryClient: QueryClient, change: TOptimisticChange): void 
 export const rollbackChanges = (
   queryClient: QueryClient,
   changes: readonly TOptimisticChange[],
-): void => {
+): unknown[] => {
+  const failures: unknown[] = []
   for (const change of changes) {
     if (ownsChange(queryClient, change)) {
-      // Public aggregate/count changes normally use refetch because they can hit ABA. A guarded
-      // restore-if-owned is reserved for callers that additionally verify the authority revision
-      // before restoring, then still refetch the authority target.
-      if (change.rollback === 'restore-if-owned' || change.type === 'pending-entity') {
-        change.restore()
+      // Non-invertible public aggregate changes use refetch; invertible changes
+      // supply their value or value/revision guard in the domain restore callback.
+      if (change.type === 'pending-entity' || change.rollback !== 'refetch') {
+        try {
+          change.restore()
+        } catch (error) {
+          failures.push(error)
+        }
       }
       clearChange(queryClient, change)
     }
   }
+  return failures
 }
 
 /** Clears operation markers after reconcile or rollback without changing Query data. */

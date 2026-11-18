@@ -8,7 +8,8 @@ import { writeCommentReactionReceipt } from '../commentReactionReceipt'
 import type { TOperationContext, TReadOperationContext } from '../optimistic/types'
 import {
   commentOperationQueueKey,
-  commentTargetQueries,
+  commentReactionAuthorityTargets,
+  commentReactionCancelTargets,
   makeCommentReactionPlan,
   patchCommentEverywhere,
   patchCommentViewerState,
@@ -38,8 +39,9 @@ export const commentUpvoteOperation = {
       selectCommentFromCache(context.queryClient, target.scope, target.comment).viewerHasUpvoted,
     )
   },
-  queriesToCancel: commentTargetQueries,
-  apply: (context: TOperationContext, target: TCommentTarget, next: boolean) =>
+  queriesToCancel: commentReactionCancelTargets,
+  authorityTargets: commentReactionAuthorityTargets,
+  prepare: (context: TOperationContext, target: TCommentTarget, next: boolean) =>
     makeCommentReactionPlan(
       context,
       target,
@@ -146,8 +148,9 @@ export const commentEmotionOperation = {
     )
     return Boolean(emotion?.viewerHasReacted)
   },
-  queriesToCancel: commentTargetQueries,
-  apply: (context: TOperationContext, target: TCommentEmotionTarget, next: boolean) =>
+  queriesToCancel: commentReactionCancelTargets,
+  authorityTargets: commentReactionAuthorityTargets,
+  prepare: (context: TOperationContext, target: TCommentEmotionTarget, next: boolean) =>
     makeCommentReactionPlan(
       context,
       target,

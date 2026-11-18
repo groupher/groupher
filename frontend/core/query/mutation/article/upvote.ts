@@ -25,8 +25,8 @@ import {
   readArticleUpvoteReceipt,
   writeArticleUpvoteReceipt,
 } from '../articleReceipt'
+import { commitOptimisticCache, prepareOptimisticCache } from '../optimistic/errors'
 import type {
-  TAuthorityRefetch,
   TOptimisticChange,
   TOptimisticPlan,
   TOptimisticToggleOperation,
@@ -45,6 +45,7 @@ import {
   upvoteDoc,
   upvotePost,
 } from './schema'
+import { articleInteractionAuthorityTargets } from './targets'
 
 type TArticleReactionResult = TArticleInteractionResult & {
   reactionOutcome: ReactionOutcome
@@ -67,69 +68,71 @@ const patchActiveStatsChanges = (
   path: TArticlePath,
   nextViewerState: boolean,
   context: TOperationContext,
-): Pick<TOptimisticPlan, 'changes' | 'refetchOnFailure'> => {
-  const changes: TOptimisticChange[] = []
-  const refetchOnFailure: TAuthorityRefetch[] = []
-  const articleKey = articlePathKey(path)
+): Pick<TOptimisticPlan, 'changes'> => {
+  return prepareOptimisticCache(() => {
+    const changes: TOptimisticChange[] = []
+    const articleKey = articlePathKey(path)
 
-  for (const query of articleStatsCache.queries(queryClient, path)) {
-    if (!query.isActive()) continue
-    const previous = query.state.data as TStatsCacheValue | undefined
-    const target = Array.isArray(previous)
-      ? previous.find((stats) => sameArticle(stats, path))
-      : previous
-    if (!target || !sameArticle(target, path)) continue
+    for (const query of articleStatsCache.queries(queryClient, path)) {
+      if (!query.isActive()) continue
+      const previous = query.state.data as TStatsCacheValue | undefined
+      const target = Array.isArray(previous)
+        ? previous.find((stats) => sameArticle(stats, path))
+        : previous
+      if (!target || !sameArticle(target, path)) continue
 
-    const before = target.upvotesCount
-    const beforeRevision = target.interactionRevision
-    const optimistic = Math.max(0, before + (nextViewerState ? 1 : -1))
-    if (optimistic === before) continue
+      const before = target.upvotesCount
+      const beforeRevision = target.interactionRevision
+      const optimistic = Math.max(0, before + (nextViewerState ? 1 : -1))
+      if (optimistic === before) continue
 
-    patchOptimisticStats(query, (current) => {
-      if (Array.isArray(current)) {
-        return current.map((stats) =>
-          sameArticle(stats, path) ? { ...stats, upvotesCount: optimistic } : stats,
-        )
-      }
-      return current && sameArticle(current, path)
-        ? { ...current, upvotesCount: optimistic }
-        : current
-    })
-    changes.push({
-      type: 'field',
-      queryKey: query.queryKey,
-      entityKey: articleKey,
-      field: 'upvotesCount',
-      before,
-      optimistic,
-      commandId: context.commandId,
-      // Restore the still-owned optimistic value before refetching. Without this guarded restore,
-      // ArticleStats structural sharing rejects the equal-revision authority count as a conflict.
-      rollback: 'restore-if-owned',
-      restore: () => {
-        patchOptimisticStats(query, (current) => {
-          if (Array.isArray(current)) {
-            return current.map((stats) =>
-              sameArticle(stats, path) &&
-              stats.upvotesCount === optimistic &&
-              stats.interactionRevision === beforeRevision
-                ? { ...stats, upvotesCount: before }
-                : stats,
-            )
-          }
-          return current &&
-            sameArticle(current, path) &&
-            current.upvotesCount === optimistic &&
-            current.interactionRevision === beforeRevision
-            ? { ...current, upvotesCount: before }
-            : current
-        })
-      },
-    })
-    refetchOnFailure.push({ queryKey: query.queryKey, exact: true })
-  }
+      const nextData = (() => {
+        const current = previous
+        if (Array.isArray(current)) {
+          return current.map((stats) =>
+            sameArticle(stats, path) ? { ...stats, upvotesCount: optimistic } : stats,
+          )
+        }
+        return current && sameArticle(current, path)
+          ? { ...current, upvotesCount: optimistic }
+          : current
+      })()
+      changes.push({
+        type: 'field',
+        queryKey: query.queryKey,
+        entityKey: articleKey,
+        field: 'upvotesCount',
+        before,
+        optimistic,
+        commandId: context.commandId,
+        // Restore the still-owned optimistic value before refetching. Without this guarded restore,
+        // ArticleStats structural sharing rejects the equal-revision authority count as a conflict.
+        rollback: 'restore-if-owned-value-and-revision-match',
+        commit: () => commitOptimisticCache(() => query.setState({ data: nextData })),
+        restore: () => {
+          patchOptimisticStats(query, (current) => {
+            if (Array.isArray(current)) {
+              return current.map((stats) =>
+                sameArticle(stats, path) &&
+                stats.upvotesCount === optimistic &&
+                stats.interactionRevision === beforeRevision
+                  ? { ...stats, upvotesCount: before }
+                  : stats,
+              )
+            }
+            return current &&
+              sameArticle(current, path) &&
+              current.upvotesCount === optimistic &&
+              current.interactionRevision === beforeRevision
+              ? { ...current, upvotesCount: before }
+              : current
+          })
+        },
+      })
+    }
 
-  return { changes, refetchOnFailure }
+    return { changes }
+  })
 }
 
 const patchViewerChanges = (
@@ -137,44 +140,45 @@ const patchViewerChanges = (
   accountScope: string,
   articleKey: string,
   nextViewerState: boolean,
-  context?: TOperationContext,
+  context: TOperationContext,
 ): TOptimisticChange[] => {
-  const changes: TOptimisticChange[] = []
-  const prefix = viewerQueryKeys.articleInteractionStatePrefix(accountScope)
-  for (const { queryKey } of queryClient.getQueryCache().findAll({ queryKey: prefix })) {
-    const previous = queryClient.getQueryData<Record<string, TArticleInteractionState>>(queryKey)
-    const before = previous?.[articleKey]?.viewerHasUpvoted
-    const beforeRevision = previous?.[articleKey]?.interactionRevision
-    if (!previous || typeof before !== 'boolean') continue
-    const next = {
-      ...previous,
-      [articleKey]: { ...previous[articleKey], articleKey, viewerHasUpvoted: nextViewerState },
+  return prepareOptimisticCache(() => {
+    const changes: TOptimisticChange[] = []
+    const prefix = viewerQueryKeys.articleInteractionStatePrefix(accountScope)
+    for (const { queryKey } of queryClient.getQueryCache().findAll({ queryKey: prefix })) {
+      const previous = queryClient.getQueryData<Record<string, TArticleInteractionState>>(queryKey)
+      const before = previous?.[articleKey]?.viewerHasUpvoted
+      const beforeRevision = previous?.[articleKey]?.interactionRevision
+      if (!previous || typeof before !== 'boolean') continue
+      const next = {
+        ...previous,
+        [articleKey]: { ...previous[articleKey], articleKey, viewerHasUpvoted: nextViewerState },
+      }
+      changes.push({
+        type: 'field',
+        queryKey,
+        entityKey: articleKey,
+        field: 'viewerHasUpvoted',
+        before,
+        optimistic: nextViewerState,
+        commandId: context.commandId,
+        rollback: 'restore-if-owned-value-and-revision-match',
+        commit: () => commitOptimisticCache(() => queryClient.setQueryData(queryKey, next)),
+        restore: () => {
+          queryClient.setQueryData<Record<string, TArticleInteractionState>>(queryKey, (current) =>
+            current?.[articleKey]?.viewerHasUpvoted === nextViewerState &&
+            current[articleKey].interactionRevision === beforeRevision
+              ? {
+                  ...current,
+                  [articleKey]: { ...current[articleKey], viewerHasUpvoted: before },
+                }
+              : current,
+          )
+        },
+      })
     }
-    queryClient.setQueryData(queryKey, next)
-    if (!context) continue
-    changes.push({
-      type: 'field',
-      queryKey,
-      entityKey: articleKey,
-      field: 'viewerHasUpvoted',
-      before,
-      optimistic: nextViewerState,
-      commandId: context.commandId,
-      rollback: 'restore-if-owned',
-      restore: () => {
-        queryClient.setQueryData<Record<string, TArticleInteractionState>>(queryKey, (current) =>
-          current?.[articleKey]?.viewerHasUpvoted === nextViewerState &&
-          current[articleKey].interactionRevision === beforeRevision
-            ? {
-                ...current,
-                [articleKey]: { ...current[articleKey], viewerHasUpvoted: before },
-              }
-            : current,
-        )
-      },
-    })
-  }
-  return changes
+    return changes
+  })
 }
 
 const requestArticleReaction = async (
@@ -243,7 +247,9 @@ export const articleUpvoteOperation = {
         ).map(({ queryKey }) => ({ queryKey, exact: true }))
       : []),
   ],
-  apply: (
+  authorityTargets: (context: TOperationContext, article: TArticle) =>
+    articleInteractionAuthorityTargets(context, article),
+  prepare: (
     context: TOperationContext,
     article: TArticle,
     nextViewerState: boolean,
@@ -263,10 +269,7 @@ export const articleUpvoteOperation = {
         ),
       )
     }
-    return {
-      changes,
-      refetchOnFailure: statsPlan.refetchOnFailure,
-    }
+    return { changes }
   },
   execute: (context: TOperationContext, article: TArticle, nextViewerState: boolean) =>
     requestArticleReaction(articlePathOf(article), nextViewerState, context.commandId),

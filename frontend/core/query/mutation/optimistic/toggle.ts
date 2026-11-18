@@ -8,6 +8,11 @@ type TToggleIntent = {
   promise: Promise<unknown>
 }
 
+export type TToggleHandle<TResult> = {
+  promise: Promise<TResult | void>
+  created: boolean
+}
+
 const intents = new WeakMap<QueryClient, Map<string, TToggleIntent>>()
 
 const getIntents = (queryClient: QueryClient): Map<string, TToggleIntent> => {
@@ -32,7 +37,7 @@ export const enqueueOptimisticToggle = <TTarget, TResult>({
   operation: TOptimisticToggleOperation<TTarget, TResult>
   target: TTarget
   next?: boolean
-}): Promise<TResult | void> => {
+}): TToggleHandle<TResult> => {
   const context: TReadOperationContext = { queryClient, accountScope }
   const key = `${accountScope}:${operation.name}:${operation.entityKey(target)}`
   const map = getIntents(queryClient)
@@ -41,10 +46,11 @@ export const enqueueOptimisticToggle = <TTarget, TResult>({
   const nextState = next ?? !current
   // A set-state intent that already matches the known server state does not
   // create an execute attempt or commandId.
-  if (!active && nextState === current) return Promise.resolve(undefined)
+  if (!active && nextState === current)
+    return { promise: Promise.resolve(undefined), created: false }
   if (active) {
     active.pendingState = nextState
-    return active.promise as Promise<TResult | void>
+    return { promise: active.promise as Promise<TResult | void>, created: false }
   }
 
   const intent: TToggleIntent = { pendingState: nextState, promise: Promise.resolve() }
@@ -73,5 +79,5 @@ export const enqueueOptimisticToggle = <TTarget, TResult>({
     },
   )
   map.set(key, intent)
-  return intent.promise as Promise<TResult | void>
+  return { promise: intent.promise as Promise<TResult | void>, created: true }
 }

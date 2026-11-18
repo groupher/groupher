@@ -7,7 +7,12 @@ import { articlePageEntries } from '~/lib/pagination/merge'
 import { resolvePagiPosition, toEffectivePagiConfig } from '~/lib/pagination/params'
 import { recordPaginationEvent } from '~/lib/pagination/telemetry'
 import { hasExplicitPagiPosition, readPagiMobileLayout } from '~/lib/pagination/viewport'
-import { communityQueries as coreCommunityQueries, dsbKeys, projectCommunityConfig } from '~/query'
+import {
+  articleQueryKeys,
+  communityQueries as coreCommunityQueries,
+  dsbKeys,
+  projectCommunityConfig,
+} from '~/query'
 import type { TParseDashboard } from '~/spec'
 
 import { refreshCommunity } from '../server/community'
@@ -45,7 +50,7 @@ export const refreshArticleBootstrap = async (client: QueryClient, community: st
 export const resetArticleSurface = (client: QueryClient, community: string, surface: TSurface) => {
   client.removeQueries({
     predicate: ({ queryKey }) =>
-      queryKey[0] === 'article' &&
+      queryKey[0] === articleQueryKeys.all[0] &&
       queryKey[1] === surface &&
       queryKey[2] === 'pagi' &&
       (queryKey[4] as { community?: string } | undefined)?.community === community,

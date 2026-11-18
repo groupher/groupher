@@ -7,6 +7,9 @@ import useAccount from '~/stores/account/hooks'
 
 import { enqueueOptimisticToggle } from './toggle'
 import type { TOptimisticToggleOperation, TReadOperationContext } from './types'
+import useOptimisticToggleFeedback, {
+  type TOptimisticToggleAttempt,
+} from './useOptimisticToggleFeedback'
 
 /** Adapter for idempotent set-state operations with last-intent coalescing. */
 export default function useOptimisticToggle<TTarget, TResult>(
@@ -16,16 +19,31 @@ export default function useOptimisticToggle<TTarget, TResult>(
   const queryClient = useQueryClient()
   const account = useAccount()
   const accountScope = account.accountScope
-  const [pendingState, setPendingState] = useState<boolean | null>(null)
+  const [pendingState, setPendingState] = useState<{
+    attempt: TOptimisticToggleAttempt
+    scope: string
+    state: boolean
+  } | null>(null)
   const [, forceRender] = useState(0)
   const targetKey = target ? operation.entityKey(target) : null
+  const currentToggleScope = `${accountScope || ''}:${targetKey || ''}`
+  const {
+    clear: clearError,
+    error,
+    isCurrent,
+    reportFailure,
+    track,
+  } = useOptimisticToggleFeedback(currentToggleScope)
   const context = useMemo<TReadOperationContext>(
     () => ({ queryClient, accountScope }),
     [accountScope, queryClient],
   )
 
   const currentState = target ? operation.read(context, target) : null
-  const visibleState = pendingState ?? currentState
+  const visibleState =
+    pendingState?.scope === currentToggleScope && isCurrent(pendingState.attempt)
+      ? pendingState.state
+      : currentState
   const selectedStateRef = useRef<boolean | null>(currentState)
 
   useEffect(() => {
@@ -48,20 +66,40 @@ export default function useOptimisticToggle<TTarget, TResult>(
     (next?: boolean): void => {
       if (!target || !targetKey || !accountScope) return
       const nextState = next ?? !visibleState
-      setPendingState(nextState)
-      void enqueueOptimisticToggle({ queryClient, accountScope, operation, target, next })
-        .catch(() => undefined)
+      const scopeAtStart = `${accountScope}:${targetKey}`
+      clearError()
+      const handle = enqueueOptimisticToggle({ queryClient, accountScope, operation, target, next })
+      const attempt = track(handle, targetKey)
+      setPendingState({ attempt, scope: scopeAtStart, state: nextState })
+      void handle.promise
+        .catch((requestError: unknown) => {
+          reportFailure(attempt, requestError, 'Optimistic toggle failed')
+        })
         .finally(() => {
-          setPendingState(null)
-          forceRender((value) => value + 1)
+          if (isCurrent(attempt)) {
+            setPendingState(null)
+            forceRender((value) => value + 1)
+          }
         })
     },
-    [accountScope, operation, queryClient, target, targetKey, visibleState],
+    [
+      accountScope,
+      clearError,
+      isCurrent,
+      operation,
+      queryClient,
+      reportFailure,
+      target,
+      targetKey,
+      track,
+      visibleState,
+    ],
   )
 
   return {
     currentState,
     visibleState,
+    error,
     toggle,
   }
 }

@@ -26,8 +26,8 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
   const s = useSalon()
 
   const { isLogin } = useAccount()
-  const { count, isUpvoted, toggle: toggleUpvote } = useCommentUpvote(data)
-  const { emotions, toggle: toggleEmotion } = useCommentEmotion(data)
+  const { count, isUpvoted, error: upvoteError, toggle: toggleUpvote } = useCommentUpvote(data)
+  const { emotions, error: emotionError, toggle: toggleEmotion } = useCommentEmotion(data)
   const { t } = useTrans()
 
   const { meta } = data
@@ -63,6 +63,7 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
           type={UPVOTE_LAYOUT.COMMENT}
           count={count}
           viewerHasUpvoted={isUpvoted}
+          error={upvoteError}
           onAction={toggleUpvote}
         />
 
@@ -70,6 +71,7 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
 
         <EmotionSelector
           emotions={emotions}
+          error={emotionError}
           onAction={(name) => {
             if (!isLogin) return authWarn()
             toggleEmotion(name)

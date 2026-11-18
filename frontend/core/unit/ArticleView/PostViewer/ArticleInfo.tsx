@@ -17,7 +17,7 @@ type TProps = {
 const ArticleInfo: FC<TProps> = ({ article, stats, viewerState }) => {
   const s = useSalon()
   const { meta } = article
-  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
+  const { count, isUpvoted, error, toggle } = useArticleUpvote(article, stats, viewerState)
 
   return (
     <div className={s.wrapper}>
@@ -28,6 +28,7 @@ const ArticleInfo: FC<TProps> = ({ article, stats, viewerState }) => {
           avatarList={meta?.latestUpvotedUsers}
           noLazyLoad
           viewerHasUpvoted={isUpvoted}
+          error={error}
           onAction={() => toggle()}
         />
         <div className='grow' />

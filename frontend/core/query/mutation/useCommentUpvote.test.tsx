@@ -23,6 +23,9 @@ vi.mock('~/hooks/useViewingArticle', () => ({
 vi.mock('~/stores/account/hooks', () => ({
   default: () => ({ isLogin: true, accountScope: 'user:alice', user: { login: 'alice' } }),
 }))
+vi.mock('~/hooks/useTrans', () => ({
+  default: () => ({ t: () => 'Action failed. Please try again.' }),
+}))
 
 const comment = {
   innerId: '1',

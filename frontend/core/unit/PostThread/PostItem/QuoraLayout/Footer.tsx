@@ -21,7 +21,7 @@ const Footer: FC<TProps> = ({ article, stats, viewerState, ticketProgress }) => 
   const { meta } = article
 
   const s = useSalon()
-  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
+  const { count, isUpvoted, error, toggle } = useArticleUpvote(article, stats, viewerState)
 
   return (
     <div className={s.wrapper}>
@@ -30,6 +30,7 @@ const Footer: FC<TProps> = ({ article, stats, viewerState, ticketProgress }) => 
         avatarList={meta?.latestUpvotedUsers}
         onAction={() => toggle()}
         viewerHasUpvoted={isUpvoted}
+        error={error}
         type={UPVOTE_LAYOUT.GENERAL}
       />
       {article.cat && <ArticleCatStatus left={2} cat={article.cat} />}

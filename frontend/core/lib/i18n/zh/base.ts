@@ -1,4 +1,5 @@
 export default {
+  'operation.failed_retry': '操作失败，请稍后重试。',
   post: '帖子',
   'article.sort': '排序',
   'article.cat': '分类',

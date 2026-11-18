@@ -14,7 +14,20 @@ export type TOptimisticChange =
       before: unknown
       optimistic: unknown
       commandId: string
-      rollback: 'restore-if-owned' | 'refetch'
+      rollback:
+        | 'restore-if-owned-and-value-matches'
+        | 'restore-if-owned-value-and-revision-match'
+        | 'refetch'
+      commit: () => void
+      restore: () => void
+    }
+  | {
+      type: 'entity-delete'
+      queryKey: QueryKey
+      entityKey: string
+      commandId: string
+      rollback: 'restore-if-owned-and-absent'
+      commit: () => void
       restore: () => void
     }
   | {
@@ -23,17 +36,16 @@ export type TOptimisticChange =
       entityKey: `pending:${string}`
       commandId: string
       rollback: 'remove-if-owned'
+      commit: () => void
       restore: () => void
     }
 
-export type TAuthorityRefetch = {
+export type TAuthorityTarget = {
   queryKey: QueryKey
-  exact: true
 }
 
 export type TOptimisticPlan = {
   changes: readonly TOptimisticChange[]
-  refetchOnFailure: readonly TAuthorityRefetch[]
 }
 
 /** Context available while deriving current state; no command has started yet. */
@@ -56,7 +68,12 @@ export type TOptimisticOperation<TTarget, TInput, TResult> = {
     target: TTarget,
     input: TInput,
   ) => readonly TQueryTarget[]
-  apply: (context: TOperationContext, target: TTarget, input: TInput) => TOptimisticPlan
+  authorityTargets: (
+    context: TOperationContext,
+    target: TTarget,
+    input: TInput,
+  ) => readonly TAuthorityTarget[]
+  prepare?: (context: TOperationContext, target: TTarget, input: TInput) => TOptimisticPlan
   execute: (context: TOperationContext, target: TTarget, input: TInput) => Promise<TResult>
   reconcile: (context: TOperationContext, target: TTarget, input: TInput, result: TResult) => void
 }
