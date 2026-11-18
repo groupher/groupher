@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "activityTypes": [
+    "upvote",
+    "comment",
+    "reply",
+    "collect",
+    "follow",
+    "ticket_status",
+    "ticket_update",
+    "ticket_visibility"
+  ],
+  "requestTypes": ["article_co_author", "community_admin"],
+  "requestActions": ["invite", "apply", "result"],
+  "requestEvents": ["created", "decided", "cancelled", "expired"]
+}
