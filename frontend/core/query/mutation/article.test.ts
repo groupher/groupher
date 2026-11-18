@@ -619,6 +619,16 @@ describe('article query mutation helpers', () => {
     expect(targets.map(({ queryKey }) => queryKey)).toContainEqual(viewerKey)
   })
 
+  it('cancels private interaction reads before emotion reconciliation', () => {
+    const queryClient = setupClient()
+    const targets = articleEmotionOperation.queriesToCancel(
+      { queryClient, accountScope: 'alice', commandId: 'emotion-cancel' },
+      { article, emotion: 'heart' },
+    )
+
+    expect(targets.map(({ queryKey }) => queryKey)).toContainEqual(viewerKey)
+  })
+
   it('includes private interaction state in collect authority targets', () => {
     const queryClient = setupClient()
     const targets = articleCollectOperation.authorityTargets(

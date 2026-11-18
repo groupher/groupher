@@ -99,6 +99,8 @@ describe('comment query mutation helpers', () => {
 
     const updateTargets = updateCommentOperation.authorityTargets(context, target, 'updated')
     const deleteTargets = deleteCommentOperation.authorityTargets(context, target, undefined)
+    expect(updateTargets).not.toHaveLength(0)
+    expect(deleteTargets).not.toHaveLength(0)
     expect(updateTargets.every((authorityTarget) => !('exact' in authorityTarget))).toBe(true)
     expect(deleteTargets.every((authorityTarget) => !('exact' in authorityTarget))).toBe(true)
   })

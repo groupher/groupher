@@ -102,4 +102,36 @@ describe('useCommentEmotion', () => {
     expect(mocks.browserGraphQLRequest).toHaveBeenCalledOnce()
     unsubscribe()
   })
+
+  it('keeps failure feedback independent for different emotions on one comment', async () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const listKey = commentKeys.list('home', THREAD.POST, '42')
+    const viewerKey = viewerQueryKeys.commentStates('user:alice', 'home:POST:42', ['1'])
+    queryClient.setQueryData(listKey, { entries: [comment] })
+    queryClient.setQueryData(viewerKey, {
+      '1': { emotionFlags: { HEART: false, BEER: false }, viewerHasUpvoted: false },
+    })
+    const rejectRequests: Array<(error: Error) => void> = []
+    mocks.browserGraphQLRequest.mockImplementation(
+      () => new Promise((_resolve, reject) => rejectRequests.push(reject)),
+    )
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(() => useCommentEmotion(comment), { wrapper })
+
+    act(() => {
+      result.current.toggle('heart')
+      result.current.toggle('beer')
+    })
+    await waitFor(() => expect(rejectRequests).toHaveLength(1))
+    await act(async () => rejectRequests.shift()?.(new Error('heart failed')))
+    await waitFor(() => expect(rejectRequests).toHaveLength(1))
+    await act(async () => rejectRequests.shift()?.(new Error('beer failed')))
+
+    await waitFor(() => expect(mocks.toast).toHaveBeenCalledTimes(2))
+    expect(mocks.toast).toHaveBeenNthCalledWith(1, 'Action failed. Please try again.', 'error')
+    expect(mocks.toast).toHaveBeenNthCalledWith(2, 'Action failed. Please try again.', 'error')
+    expect(result.current.error).toEqual(new Error('beer failed'))
+  })
 })

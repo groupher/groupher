@@ -169,18 +169,8 @@ export const updateCommentOperation = {
   name: 'comment.update',
   entityKey: (target: TCommentTarget) => `${target.articleKey}:${target.commentInnerId}`,
   queueKey: (target: TCommentTarget) => commentOperationQueueKey(target),
-  queriesToCancel: (context: TOperationContext, target: TCommentTarget) => [
-    ...commentQueryTargets(context.queryClient, target.scope),
-    ...articleStatsCache
-      .queries(context.queryClient, target.articlePath)
-      .map(({ queryKey }) => ({ queryKey, exact: true as const })),
-  ],
-  authorityTargets: (context: TOperationContext, target: TCommentTarget) => [
-    ...commentQueryTargets(context.queryClient, target.scope).map(({ queryKey }) => ({ queryKey })),
-    ...articleStatsCache
-      .queries(context.queryClient, target.articlePath)
-      .map(({ queryKey }) => ({ queryKey })),
-  ],
+  queriesToCancel: lifecycleCancelTargets,
+  authorityTargets: lifecycleAuthorityTargets,
   prepare: (context: TOperationContext, target: TCommentTarget, body: string): TOptimisticPlan => {
     const changes = patchCommentChanges(
       context.queryClient,
@@ -241,18 +231,8 @@ export const deleteCommentOperation = {
   name: 'comment.delete',
   entityKey: (target: TCommentTarget) => `${target.articleKey}:${target.commentInnerId}`,
   queueKey: (target: TCommentTarget) => commentOperationQueueKey(target),
-  queriesToCancel: (context: TOperationContext, target: TCommentTarget) => [
-    ...commentQueryTargets(context.queryClient, target.scope),
-    ...articleStatsCache
-      .queries(context.queryClient, target.articlePath)
-      .map(({ queryKey }) => ({ queryKey, exact: true as const })),
-  ],
-  authorityTargets: (context: TOperationContext, target: TCommentTarget) => [
-    ...commentQueryTargets(context.queryClient, target.scope).map(({ queryKey }) => ({ queryKey })),
-    ...articleStatsCache
-      .queries(context.queryClient, target.articlePath)
-      .map(({ queryKey }) => ({ queryKey })),
-  ],
+  queriesToCancel: lifecycleCancelTargets,
+  authorityTargets: lifecycleAuthorityTargets,
   prepare: (context: TOperationContext, target: TCommentTarget): TOptimisticPlan => {
     const changes = deleteCommentChanges(context.queryClient, target, context)
     return { changes }

@@ -151,4 +151,38 @@ describe('useOptimisticToggle', () => {
     hook.rerender({ id: 'second' })
     expect(hook.result.current.visibleState).toBe(false)
   })
+
+  it('does not revive a pending value after leaving and returning to its scope', async () => {
+    const queryClient = new QueryClient()
+    let settle: ((value: boolean) => void) | undefined
+    const operation: TOptimisticToggleOperation<{ id: string }, boolean> = {
+      name: 'test.toggle.returned-scope',
+      entityKey: (target) => target.id,
+      read: () => false,
+      queriesToCancel: () => [],
+      authorityTargets: () => [],
+      prepare: () => emptyPlan,
+      execute: async (_context, _target, state) =>
+        new Promise<boolean>((resolve) => {
+          settle = resolve
+        }).then(() => state),
+      reconcile: () => undefined,
+    }
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    )
+    const hook = renderHook(({ id }) => useOptimisticToggle(operation, { id }), {
+      initialProps: { id: 'first' },
+      wrapper,
+    })
+
+    act(() => hook.result.current.toggle(true))
+    expect(hook.result.current.visibleState).toBe(true)
+    hook.rerender({ id: 'second' })
+    hook.rerender({ id: 'first' })
+    expect(hook.result.current.visibleState).toBe(false)
+
+    await act(async () => settle?.(true))
+    await waitFor(() => expect(hook.result.current.currentState).toBe(false))
+  })
 })

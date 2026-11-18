@@ -45,6 +45,7 @@ import {
   upvoteDoc,
   upvotePost,
 } from './schema'
+import { articleInteractionAuthorityTargets } from './targets'
 
 type TArticleReactionResult = TArticleInteractionResult & {
   reactionOutcome: ReactionOutcome
@@ -246,18 +247,8 @@ export const articleUpvoteOperation = {
         ).map(({ queryKey }) => ({ queryKey, exact: true }))
       : []),
   ],
-  authorityTargets: (context: TOperationContext, article: TArticle) => [
-    ...articleStatsCache
-      .queries(context.queryClient, articlePathOf(article))
-      .map(({ queryKey }) => ({ queryKey })),
-    ...(context.accountScope
-      ? articleInteractionStateQueries(
-          context.queryClient,
-          context.accountScope,
-          articlePathOf(article),
-        ).map(({ queryKey }) => ({ queryKey }))
-      : []),
-  ],
+  authorityTargets: (context: TOperationContext, article: TArticle) =>
+    articleInteractionAuthorityTargets(context, article),
   prepare: (
     context: TOperationContext,
     article: TArticle,

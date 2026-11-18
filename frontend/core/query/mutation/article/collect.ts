@@ -16,11 +16,11 @@ import type { TArticle } from '~/spec'
 
 import { articlePathKey, articlePathOf } from '../../articlePath'
 import { articleStatsCache } from '../../articleStats'
-import { articleInteractionStateQueries } from '../../viewer'
 import { executeOptimisticOperation } from '../optimistic/execute'
 import type { TOptimisticOperation, TOperationContext } from '../optimistic/types'
 import { applyArticleInteractionResult, type TArticleInteractionResult } from './result'
 import { addToCollect, removeFromCollect } from './schema'
+import { articleInteractionAuthorityTargets } from './targets'
 
 type TArticleCollectTarget = { article: TArticle; folderId: string }
 type TCollectFolder = Record<string, unknown> & { id?: string | number | null }
@@ -53,18 +53,8 @@ export const articleCollectOperation = {
     articleStatsCache
       .queries(context.queryClient, articlePathOf(target.article))
       .map(({ queryKey }) => ({ queryKey, exact: true as const })),
-  authorityTargets: (context, target) => [
-    ...articleStatsCache
-      .queries(context.queryClient, articlePathOf(target.article))
-      .map(({ queryKey }) => ({ queryKey })),
-    ...(context.accountScope
-      ? articleInteractionStateQueries(
-          context.queryClient,
-          context.accountScope,
-          articlePathOf(target.article),
-        ).map(({ queryKey }) => ({ queryKey }))
-      : []),
-  ],
+  authorityTargets: (context, target) =>
+    articleInteractionAuthorityTargets(context, target.article),
   execute: requestArticleCollect,
   reconcile: (context, target, _next, result) => {
     applyArticleInteractionResult(

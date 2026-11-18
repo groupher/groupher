@@ -33,7 +33,7 @@ export default function useCommentEmotion(comment: TComment) {
         operation: commentEmotionOperation,
         target: emotionTarget,
       })
-      const attempt = track(handle)
+      const attempt = track(handle, commentEmotionOperation.entityKey(emotionTarget))
       void handle.promise.catch((requestError: unknown) => {
         reportFailure(attempt, requestError, 'Comment emotion request failed')
       })

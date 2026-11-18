@@ -32,6 +32,7 @@ import {
   undoEmotionToDoc,
   undoEmotionToPost,
 } from './schema'
+import { articleInteractionAuthorityTargets } from './targets'
 
 type TArticleEmotionTarget = { article: TArticle; emotion: TEmotionType }
 type TArticleEmotionResult = TArticleInteractionResult & { reactionOutcome: ReactionOutcome }
@@ -81,22 +82,20 @@ export const articleEmotionOperation = {
     `${articlePathKey(articlePathOf(target.article))}:${target.emotion}`,
   queueKey: (target: TArticleEmotionTarget) =>
     `article:${articlePathKey(articlePathOf(target.article))}:reaction`,
-  queriesToCancel: (context, target) =>
-    articleStatsCache
-      .queries(context.queryClient, articlePathOf(target.article))
-      .map(({ queryKey }) => ({ queryKey, exact: true as const })),
-  authorityTargets: (context, target) => [
+  queriesToCancel: (context, target) => [
     ...articleStatsCache
       .queries(context.queryClient, articlePathOf(target.article))
-      .map(({ queryKey }) => ({ queryKey })),
+      .map(({ queryKey }) => ({ queryKey, exact: true as const })),
     ...(context.accountScope
       ? articleInteractionStateQueries(
           context.queryClient,
           context.accountScope,
           articlePathOf(target.article),
-        ).map(({ queryKey }) => ({ queryKey }))
+        ).map(({ queryKey }) => ({ queryKey, exact: true as const }))
       : []),
   ],
+  authorityTargets: (context, target) =>
+    articleInteractionAuthorityTargets(context, target.article),
   execute: requestArticleEmotion,
   reconcile: (context, target, _next, result) => {
     applyArticleInteractionResult(
